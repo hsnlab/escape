@@ -1,6 +1,3 @@
-__author__ = 'mininet'
-
-
 class AbstractVirtualizer():
     """
     Abstract class for actual virtualizers
@@ -29,7 +26,7 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
 
 class VirtualizerManager():
     """
-    Stores, handles and organizes Virtualizer instances
+    Store, handle and organize Virtualizer instances
     """
     def __init__(self):
         pass

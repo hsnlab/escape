@@ -1,8 +1,6 @@
 from escape.orchestration.resource.mapping_strategy import AbstractMappingStrategy
 from escape.orchestration.resource.nffg_mapping import AbstractMapper
 
-__author__ = 'mininet'
-
 
 class ServiceGraphMapper(AbstractMapper):
     """

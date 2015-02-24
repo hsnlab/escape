@@ -1,11 +1,8 @@
-__author__ = 'mininet'
-
-
 class AbstractAdapter():
     """
     Abstract class for different domain adapters
 
-    Follows the Adapter design pattern
+    Follow the Adapter design pattern
     """
     def __init__(self):
         pass

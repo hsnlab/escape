@@ -1,6 +1,3 @@
-__author__ = 'BME-TMIT'
-
-
 class ServiceOrchestrator():
     """
     Main class for the actual Service Graph processing
@@ -11,7 +8,7 @@ class ServiceOrchestrator():
 
 class SGManager():
     """
-    Stores, handles and organizes Service Graphs
+    Store, handle and organize Service Graphs
     """
     def __init__(self):
         pass
@@ -19,7 +16,7 @@ class SGManager():
 
 class VirtualResourceManager():
     """
-    Supports Service Graph mapping, follows the used virtual resources according to the Service Graph(s) in effect
+    Support Service Graph mapping, follows the used virtual resources according to the Service Graph(s) in effect
     """
     def __init__(self):
         pass
@@ -27,7 +24,7 @@ class VirtualResourceManager():
 
 class NFIBManager():
     """
-    Manages the handling of Network Function Information Base
+    Manage the handling of Network Function Information Base
     """
     def __init__(self):
         pass

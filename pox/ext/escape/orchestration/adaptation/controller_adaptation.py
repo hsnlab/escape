@@ -1,7 +1,5 @@
 from escape.orchestration.resource.virtualization_management import AbstractVirtualizer
 
-__author__ = 'mininet'
-
 
 class ControllerAdapter():
     """
@@ -15,7 +13,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     Specific virtualizer class for global domain virtualization
 
-    Should be implement the same interface as AbstractVirtualizer
+    Should implement the same interface as AbstractVirtualizer
     """
     def __init__(self):
         AbstractVirtualizer.__init__(self)
@@ -23,7 +21,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
 class DomainResourceManager():
     """
-    Handles and stores global resources
+    Handle and store global resources
     """
     def __init__(self):
         pass

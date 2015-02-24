@@ -1,6 +1,3 @@
-__author__ = 'BME-TMIT'
-
-
 class AbstractElementManager():
     """
     Abstract class for element management components (EM)

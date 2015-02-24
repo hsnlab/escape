@@ -1,6 +1,3 @@
-__author__ = 'mininet'
-
-
 class ResourceOrchestrator():
     """
     Main class for the handling of the Orchestration-level mapping functions
@@ -11,7 +8,7 @@ class ResourceOrchestrator():
 
 class NFFGManager():
     """
-    Stores, handles and organizes Network Function Forwarding Graphs
+    Store, handle and organize Network Function Forwarding Graphs
     """
     def __init__(self):
         pass
