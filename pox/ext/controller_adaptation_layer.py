@@ -22,10 +22,10 @@ from escape.orchestration.adaptation.controller_adaptation_API import Controller
 import pox.lib.util as poxutil
 import pox.core as core
 
-log = core.getLogger()
+log = core.getLogger("adaptation")
 
 
 @poxutil.eval_args
 def launch():
     ControllerAdaptationAPI()
-    log.info("Controller Adaptation Layer has been initiated!")
+    log.info("Initiating Controller Adaptation Layer...")

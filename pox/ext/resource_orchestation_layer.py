@@ -22,10 +22,10 @@ from escape.orchestration.resource.resource_orchestration_API import ResourceOrc
 import pox.lib.util as poxutil
 import pox.core as core
 
-log = core.getLogger()
+log = core.getLogger("orchestration")
 
 
 @poxutil.eval_args
 def launch():
     ResourceOrchestrationAPI()
-    log.info("Resource Orchestration Layer has been initiated!")
+    log.info("Initiating Resource Orchestration Layer...")

@@ -22,10 +22,10 @@ from escape.service.service_layer_API import ServiceLayerAPI
 import pox.lib.util as poxutil
 import pox.core as core
 
-log = core.getLogger()
+log = core.getLogger("service")
 
 
 @poxutil.eval_args
 def launch():
     ServiceLayerAPI()
-    log.info("Service Layer has been initiated!")
+    log.info("Initiating Service Layer...")

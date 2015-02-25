@@ -15,15 +15,15 @@
 """
 Basic POX module for ESCAPE
 
-Initiates appropriate APIs
-Follows POX module conventions
+Initiate appropriate APIs
+Follow POX module conventions
 """
 import pox.lib.util as poxutil
 
 
 def _start_components(event):
     """
-    Start ESCAPE components
+    Initiate ESCAPE components
     """
     from pox.samples.pretty_log import launch
     launch()
