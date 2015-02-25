@@ -1,0 +1,13 @@
+==== ESCAPEv2 ====
+
+Basic commad:
+    ./pox.py unify
+
+Basic command for debugging:
+    ./pox.py --verbose --no-openflow unify py
+
+Minimal command with explicitly-defined components:
+    ./pox.py service_layer resource_orchestration_layer controller_adaptation_layer
+
+Long version with debugging and explicitly-defined components (analogous with ./pox.py unify):
+    ./pox.py log.level --DEBUG samples.pretty_log service_layer resource_orchestration_layer controller_adaptation_layer
