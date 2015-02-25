@@ -18,7 +18,7 @@ Basic POX module for ESCAPE Controller Adaptation sublayer
 Initiate appropriate API class which implements Or-Ca reference point
 Follow POX module conventions
 """
-from escape.orchestration.adaptation.controller_adaptation_API import ControllerAdaptationAPI
+from escape.adaptation.controller_adaptation_API import ControllerAdaptationAPI
 import pox.lib.util as poxutil
 import pox.core as core
 

@@ -18,7 +18,7 @@ Basic POX module for ESCAPE Resource Orchestration sublayer
 Initiate appropriate API class which implements Sl-Or reference point
 Follow POX module conventions
 """
-from escape.orchestration.resource.resource_orchestration_API import ResourceOrchestrationAPI
+from escape.orchestration.resource_orchestration_API import ResourceOrchestrationAPI
 import pox.lib.util as poxutil
 import pox.core as core
 

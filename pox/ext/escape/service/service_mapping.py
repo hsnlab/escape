@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from escape.orchestration.resource.mapping_strategy import AbstractMappingStrategy
-from escape.orchestration.resource.nffg_mapping import AbstractMapper
+from escape.orchestration.mapping_strategy import AbstractMappingStrategy
+from escape.orchestration.nffg_mapping import AbstractMapper
 
 
 class ServiceGraphMapper(AbstractMapper):

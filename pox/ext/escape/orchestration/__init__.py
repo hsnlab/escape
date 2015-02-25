@@ -13,5 +13,5 @@
 # limitations under the License.
 
 """
-Unifying package for functions related to UNIFY Orchestration layer
+Subpackage for classes related to UNIFY's Resource Orchestration sublayer
 """

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from escape.orchestration.resource.virtualization_management import AbstractVirtualizer
+from escape.orchestration.virtualization_management import AbstractVirtualizer
 
 
 class ControllerAdapter():
