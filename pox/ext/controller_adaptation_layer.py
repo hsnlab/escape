@@ -19,13 +19,14 @@ Initiate appropriate API class which implements Or-Ca reference point
 Follow POX module conventions
 """
 from escape.adaptation.controller_adaptation_API import ControllerAdaptationAPI
+from pox.core import core
 import pox.lib.util as poxutil
-import pox.core as core
-
-log = core.getLogger("adaptation")
 
 
 @poxutil.eval_args
 def launch():
-    ControllerAdaptationAPI()
-    log.info("Initiating Controller Adaptation Layer...")
+    # Initialize the API class, wait for the necessery POX component until they are resolved and set up event handlers.
+    # For this function event handler must follow the long naming convention: _handle_component_event().
+    # See more in POXCore document.
+    core.core.registerNew(ControllerAdaptationAPI)
+    core.core.listen_to_dependencies(getattr(core, ControllerAdaptationAPI._core_name))

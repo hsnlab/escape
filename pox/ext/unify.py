@@ -19,23 +19,28 @@ Initiate appropriate APIs
 Follow POX module conventions
 """
 import pox.lib.util as poxutil
+from pox.core import core
 
 
 def _start_components(event):
     """
-    Initiate ESCAPE components
+    Initiate and run POX with ESCAPE components
     """
+    # Run POX with DEBUG logging level
+    from pox.log.level import launch
+    launch(DEBUG=True)
+    # Import colouful logging
     from pox.samples.pretty_log import launch
     launch()
-    from controller_adaptation_layer import launch
+    # Launch ESCAPE components
+    from service_layer import launch
     launch()
     from resource_orchestation_layer import launch
     launch()
-    from service_layer import launch
+    from controller_adaptation_layer import launch
     launch()
 
 
 @poxutil.eval_args
 def launch():
-    from pox.core import core
     core.addListenerByName("UpEvent", _start_components)

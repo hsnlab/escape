@@ -11,14 +11,41 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from lib.revent.revent import EventMixin, Event
+import pox.core as core
+
+log = core.getLogger("orchestration")
 
 
-class ResourceOrchestrationAPI():
+class ResourceEvent(Event):
+    """
+    Dummy event to force dependency checking working
+    Should/Will be removed shortly!
+    """
+    def __init__(self):
+        super(ResourceEvent, self).__init__()
+
+
+class ResourceOrchestrationAPI(EventMixin):
     """
     Entry point for Resource Orchestration Sublayer
 
     Maintain the contact with other UNIFY layers
     Implement the Sl - Or reference point
     """
+    _core_name = "orchestration"
+    _eventMixin_events = {ResourceEvent}
+
     def __init__(self):
+        log.info("Initiating Resource Orchestration Layer...")
+
+    def _all_dependencies_met(self):
+        """
+        Called when every componenet on which depends are initialized and registered in pox.core
+        Contain dependency relevant initialization
+        """
+        log.info("Resource Orchestration Layer has been initialized!")
+
+    def _handle_adaptation_AdaptationEvent(self, event):
+        # placeholder for adaptation dependency
         pass

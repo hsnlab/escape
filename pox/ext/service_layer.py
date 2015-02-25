@@ -19,13 +19,14 @@ Initiate appropriate API class which implements U-Sl reference point
 Follow POX module conventions
 """
 from escape.service.service_layer_API import ServiceLayerAPI
+from pox.core import core
 import pox.lib.util as poxutil
-import pox.core as core
-
-log = core.getLogger("service")
 
 
 @poxutil.eval_args
 def launch():
-    ServiceLayerAPI()
-    log.info("Initiating Service Layer...")
+    # Initialize the API class, wait for the necessery POX component until they are resolved and set up event handlers.
+    # For this function event handler must follow the long naming convention: _handle_component_event().
+    # See more in POXCore document.
+    core.core.registerNew(ServiceLayerAPI)
+    core.core.listen_to_dependencies(getattr(core, ServiceLayerAPI._core_name))

@@ -19,13 +19,14 @@ Initiate appropriate API class which implements Sl-Or reference point
 Follow POX module conventions
 """
 from escape.orchestration.resource_orchestration_API import ResourceOrchestrationAPI
+from pox.core import core
 import pox.lib.util as poxutil
-import pox.core as core
-
-log = core.getLogger("orchestration")
 
 
 @poxutil.eval_args
 def launch():
-    ResourceOrchestrationAPI()
-    log.info("Initiating Resource Orchestration Layer...")
+    # Initialize the API class, wait for the necessery POX component until they are resolved and set up event handlers.
+    # For this function event handler must follow the long naming convention: _handle_component_event().
+    # See more in POXCore document.
+    core.core.registerNew(ResourceOrchestrationAPI)
+    core.core.listen_to_dependencies(getattr(core, ResourceOrchestrationAPI._core_name))
