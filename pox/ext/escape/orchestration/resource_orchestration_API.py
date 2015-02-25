@@ -14,7 +14,8 @@
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
 
-log = core.getLogger("orchestration")
+LAYER_NAME = "orchestration"
+log = core.getLogger(LAYER_NAME)
 
 
 class ResourceEvent(Event):
@@ -33,7 +34,9 @@ class ResourceOrchestrationAPI(EventMixin):
     Maintain the contact with other UNIFY layers
     Implement the Sl - Or reference point
     """
-    _core_name = "orchestration"
+    # Define specific name for core object i.e. pox.core.<_core_name>
+    _core_name = LAYER_NAME
+    # Events raised by this class
     _eventMixin_events = {ResourceEvent}
 
     def __init__(self):

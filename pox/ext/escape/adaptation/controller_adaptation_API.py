@@ -14,7 +14,8 @@
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
 
-log = core.getLogger("adaptation")
+LAYER_NAME = "adaptation"
+log = core.getLogger(LAYER_NAME)
 
 
 class AdaptationEvent(Event):
@@ -33,7 +34,9 @@ class ControllerAdaptationAPI(EventMixin):
     Maintain the contact with other UNIFY layers
     Implement the Or - Ca reference point
     """
-    _core_name = "adaptation"
+    # Define specific name for core object i.e. pox.core.<_core_name>
+    _core_name = LAYER_NAME
+    # Events raised by this class
     _eventMixin_events = {AdaptationEvent}
 
     def __init__(self):
