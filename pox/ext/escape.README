@@ -6,8 +6,12 @@ Basic commad:
 Basic command for debugging:
     ./pox.py --verbose --no-openflow unify py
 
-Minimal command with explicitly-defined components:
+Minimal command with explicitly-defined components (components' order is irrelevant):
     ./pox.py service_layer resource_orchestration_layer controller_adaptation_layer
 
+Without the service layer:
+    ./pox.py resource_orchestration_layer controller_adaptation_layer
+
 Long version with debugging and explicitly-defined components (analogous with ./pox.py unify):
-    ./pox.py log.level --DEBUG samples.pretty_log service_layer resource_orchestration_layer controller_adaptation_layer
+    ./pox.py --verbose log.level --DEBUG samples.pretty_log service_layer resource_orchestration_layer controller_adaptation_layer
+

@@ -35,7 +35,7 @@ def _start_components(event):
     # Launch ESCAPE components
     from service_layer import launch
     launch()
-    from resource_orchestation_layer import launch
+    from resource_orchestration_layer import launch
     launch()
     from controller_adaptation_layer import launch
     launch()
