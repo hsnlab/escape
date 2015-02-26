@@ -24,9 +24,11 @@ import pox.lib.util as poxutil
 
 
 @poxutil.eval_args
-def launch():
-    # Initialize the API class, wait for the necessery POX component until they are resolved and set up event handlers.
+def launch(mapped_nffg=''):
+    # Instantiate the API class and register into pox.core only once
+    core.core.registerNew(ControllerAdaptationAPI, mapped_nffg)
+    # Wait for the necessery POX component until they are resolved and set up event handlers.
     # For this function event handler must follow the long naming convention: _handle_component_event().
+    # The relevant components are registered on the API class by default withe the name: _<comp-name>_
     # See more in POXCore document.
-    core.core.registerNew(ControllerAdaptationAPI)
-    core.core.listen_to_dependencies(getattr(core, ControllerAdaptationAPI._core_name))
+    core.core.listen_to_dependencies(getattr(core, ControllerAdaptationAPI._core_name), attrs=True)

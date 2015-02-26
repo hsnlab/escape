@@ -13,8 +13,10 @@
 # limitations under the License.
 import json
 
+from escape.util.api import AbstractAPI
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
+
 
 LAYER_NAME = "service"
 log = core.getLogger(LAYER_NAME)
@@ -29,7 +31,7 @@ class ServiceEvent(Event):
         super(ServiceEvent, self).__init__()
 
 
-class ServiceLayerAPI(EventMixin):
+class ServiceLayerAPI(EventMixin, AbstractAPI):
     """
     Entry point for Service Layer
 
@@ -45,11 +47,10 @@ class ServiceLayerAPI(EventMixin):
         super(ServiceLayerAPI, self).__init__()
         log.info("Initiating Service Layer...")
         if sg_file:
-            self._read_sg_from_file(sg_file)
+            self._read_graph_from_file(sg_file)
         if gui:
             self._initiate_gui()
-        else:
-            self._initiate_rest_api()
+        self._initiate_rest_api()
 
     def _all_dependencies_met(self):
         """
@@ -61,15 +62,6 @@ class ServiceLayerAPI(EventMixin):
     def _handle_orchestration_ResourceEvent(self, event):
         # palceholder for orchestration dependency
         pass
-
-    def _read_sg_from_file(self, sg_file):
-        try:
-            with open(sg_file, 'r') as f:
-                service_graph = json.load(f)
-        except (ValueError, IOError) as e:
-            log.error("Can't load service graph from file because: " + str(e))
-        else:
-            return self._convert_json_to_sg(service_graph)
 
     def _convert_json_to_sg(self, service_graph):
         # TODO - need standard SG form to implement this

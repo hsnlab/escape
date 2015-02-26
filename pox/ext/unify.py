@@ -21,6 +21,8 @@ Follow POX module conventions
 import pox.lib.util as poxutil
 from pox.core import core
 
+# Initial parameters
+init_param = {}
 
 def _start_components(event):
     """
@@ -42,5 +44,7 @@ def _start_components(event):
 
 
 @poxutil.eval_args
-def launch():
+def launch(sg='', nffg='', mapped_nffg=''):
+    global init_param
+    init_param.update(locals())
     core.addListenerByName("UpEvent", _start_components)

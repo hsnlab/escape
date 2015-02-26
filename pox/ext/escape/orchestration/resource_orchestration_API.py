@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from escape.util.api import AbstractAPI
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
 
@@ -27,7 +28,7 @@ class ResourceEvent(Event):
         super(ResourceEvent, self).__init__()
 
 
-class ResourceOrchestrationAPI(EventMixin):
+class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
     """
     Entry point for Resource Orchestration Sublayer
 
@@ -39,8 +40,11 @@ class ResourceOrchestrationAPI(EventMixin):
     # Events raised by this class
     _eventMixin_events = {ResourceEvent}
 
-    def __init__(self):
+    def __init__(self, nffg_file):
+        super(ResourceOrchestrationAPI, self).__init__()
         log.info("Initiating Resource Orchestration Layer...")
+        if nffg_file:
+            self._read_graph_from_file(nffg_file)
 
     def _all_dependencies_met(self):
         """

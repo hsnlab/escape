@@ -39,8 +39,11 @@ class ControllerAdaptationAPI(EventMixin):
     # Events raised by this class
     _eventMixin_events = {AdaptationEvent}
 
-    def __init__(self):
+    def __init__(self, mapped_nffg_file):
+        super(ControllerAdaptationAPI, self).__init__()
         log.info("Initiating Controller Adaptation Layer...")
+        if mapped_nffg_file:
+            self._read_graph_from_file(mapped_nffg_file)
 
     def _all_dependencies_met(self):
         """
