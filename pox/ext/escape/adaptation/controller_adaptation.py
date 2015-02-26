@@ -15,7 +15,7 @@
 from escape.orchestration.virtualization_management import AbstractVirtualizer
 
 
-class ControllerAdapter():
+class ControllerAdapter(object):
     """
     Higher-level class for NFFG adaptation between multiple domains
     """
@@ -33,7 +33,7 @@ class DomainVirtualizer(AbstractVirtualizer):
         AbstractVirtualizer.__init__(self)
 
 
-class DomainResourceManager():
+class DomainResourceManager(object):
     """
     Handle and store global resources
     """

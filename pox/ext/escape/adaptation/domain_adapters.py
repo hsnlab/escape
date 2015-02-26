@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-class AbstractAdapter():
+class AbstractAdapter(object):
     """
     Abstract class for different domain adapters
 

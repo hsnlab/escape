@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-class AbstractVirtualizer():
+class AbstractVirtualizer(object):
     """
     Abstract class for actual virtualizers
 
@@ -39,7 +39,7 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
         AbstractVirtualizer.__init__(self)
 
 
-class VirtualizerManager():
+class VirtualizerManager(object):
     """
     Store, handle and organize Virtualizer instances
     """

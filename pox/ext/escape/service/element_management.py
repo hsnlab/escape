@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-class AbstractElementManager():
+class AbstractElementManager(object):
     """
     Abstract class for element management components (EM)
     """

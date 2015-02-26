@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-class AbstractMapper():
+class AbstractMapper(object):
     """
     Abstract class for graph mapping function
 

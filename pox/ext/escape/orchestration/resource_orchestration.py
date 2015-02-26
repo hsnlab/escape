@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-class ResourceOrchestrator():
+class ResourceOrchestrator(object):
     """
     Main class for the handling of the Orchestration-level mapping functions
     """
@@ -21,7 +21,7 @@ class ResourceOrchestrator():
         pass
 
 
-class NFFGManager():
+class NFFGManager(object):
     """
     Store, handle and organize Network Function Forwarding Graphs
     """

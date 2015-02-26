@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-class ServiceOrchestrator():
+class ServiceOrchestrator(object):
     """
     Main class for the actual Service Graph processing
     """
@@ -29,7 +29,7 @@ class SGManager():
         pass
 
 
-class VirtualResourceManager():
+class VirtualResourceManager(object):
     """
     Support Service Graph mapping, follows the used virtual resources according to the Service Graph(s) in effect
     """
@@ -37,7 +37,7 @@ class VirtualResourceManager():
         pass
 
 
-class NFIBManager():
+class NFIBManager(object):
     """
     Manage the handling of Network Function Information Base
     """

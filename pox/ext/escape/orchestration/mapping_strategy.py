@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-class AbstractMappingStrategy():
+class AbstractMappingStrategy(object):
     """
     Abstract class for the mapping strategies
 
