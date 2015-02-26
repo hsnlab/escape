@@ -18,15 +18,19 @@ Basic POX module for ESCAPE Service (Graph Adaptation) sublayer
 Initiate appropriate API class which implements U-Sl reference point
 Follow POX module conventions
 """
+import os.path
+
 from escape.service.service_layer_API import ServiceLayerAPI
 from pox.core import core
 import pox.lib.util as poxutil
 
 
 @poxutil.eval_args
-def launch():
+def launch(sg='', gui=False):
     # Initialize the API class, wait for the necessery POX component until they are resolved and set up event handlers.
     # For this function event handler must follow the long naming convention: _handle_component_event().
     # See more in POXCore document.
-    core.core.registerNew(ServiceLayerAPI)
+    if sg and not sg.startswith('/'):
+        sg = os.path.abspath(sg)
+    core.core.registerNew(ServiceLayerAPI, sg, gui)
     core.core.listen_to_dependencies(getattr(core, ServiceLayerAPI._core_name))

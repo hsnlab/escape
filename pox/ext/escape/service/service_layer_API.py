@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
+
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
 
@@ -39,8 +41,15 @@ class ServiceLayerAPI(EventMixin):
     # Events raised by this class
     _eventMixin_events = {ServiceEvent}
 
-    def __init__(self):
+    def __init__(self, sg_file, gui):
+        super(ServiceLayerAPI, self).__init__()
         log.info("Initiating Service Layer...")
+        if sg_file:
+            self._read_sg_from_file(sg_file)
+        if gui:
+            self._initiate_gui()
+        else:
+            self._initiate_rest_api()
 
     def _all_dependencies_met(self):
         """
@@ -51,4 +60,25 @@ class ServiceLayerAPI(EventMixin):
 
     def _handle_orchestration_ResourceEvent(self, event):
         # palceholder for orchestration dependency
+        pass
+
+    def _read_sg_from_file(self, sg_file):
+        try:
+            with open(sg_file, 'r') as f:
+                service_graph = json.load(f)
+        except (ValueError, IOError) as e:
+            log.error("Can't load service graph from file because: " + str(e))
+        else:
+            return self._convert_json_to_sg(service_graph)
+
+    def _convert_json_to_sg(self, service_graph):
+        # TODO - need standard SG form to implement this
+        pass
+
+    def _initiate_gui(self):
+        # TODO - set up and initiate MiniEdit here
+        pass
+
+    def _initiate_rest_api(self):
+        # TODO - initiate and set up REST-API here
         pass

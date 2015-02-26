@@ -15,3 +15,8 @@ Without the service layer:
 Long version with debugging and explicitly-defined components (analogous with ./pox.py unify):
     ./pox.py --verbose log.level --DEBUG samples.pretty_log service_layer resource_orchestration_layer controller_adaptation_layer
 
+Start only service layer with service graph contained in a specific file
+    ./pox.py service_layer --sg=<path>
+
+Start with GUI:
+    ./pox.py service _layer --gui ...
