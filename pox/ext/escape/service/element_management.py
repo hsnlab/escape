@@ -28,4 +28,4 @@ class ClickManager(AbstractElementManager):
     """
 
     def __init__(self):
-        AbstractElementManager.__init__(self)
+        super(ClickManager, self).__init__()

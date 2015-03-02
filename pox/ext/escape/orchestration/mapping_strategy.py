@@ -30,4 +30,4 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     """
 
     def __init__(self):
-        AbstractMappingStrategy.__init__(self)
+        super(ESCAPEMappingStrategy, self).__init__()

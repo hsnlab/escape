@@ -30,7 +30,7 @@ class PolicyEnforcement(AbstractVirtualizer):
     """
 
     def __init__(self):
-        AbstractVirtualizer.__init__(self)
+        super(PolicyEnforcement, self).__init__()
 
 
 class ESCAPEVirtualizer(AbstractVirtualizer):
@@ -39,7 +39,7 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
     """
 
     def __init__(self):
-        AbstractVirtualizer.__init__(self)
+        super(ESCAPEVirtualizer, self).__init__()
 
 
 class VirtualizerManager(object):

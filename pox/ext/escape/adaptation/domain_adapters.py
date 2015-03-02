@@ -30,7 +30,7 @@ class MininetDomainAdapter(AbstractAdapter):
     """
 
     def __init__(self):
-        AbstractAdapter.__init__(self)
+        super(MininetDomainAdapter, self).__init__()
 
 
 class POXControllerAdapter(AbstractAdapter):
@@ -39,13 +39,13 @@ class POXControllerAdapter(AbstractAdapter):
     """
 
     def __init__(self):
-        AbstractAdapter.__init__(self)
+        super(POXControllerAdapter, self).__init__()
 
 
-class OpenStckDomainAdapter(AbstractAdapter):
+class OpenStackDomainAdapter(AbstractAdapter):
     """
     Adapter class to handle communication with OpenStack
     """
 
     def __init__(self):
-        AbstractAdapter.__init__(self)
+        super(OpenStackDomainAdapter, self).__init__()

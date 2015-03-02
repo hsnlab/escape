@@ -22,7 +22,7 @@ class ServiceGraphMapper(AbstractMapper):
     """
 
     def __init__(self):
-        AbstractMapper.__init__(self)
+        super(ServiceGraphMapper, self).__init__()
 
 
 class DefaultServiceMappingStrategy(AbstractMappingStrategy):
@@ -31,4 +31,4 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     """
 
     def __init__(self):
-        AbstractMappingStrategy.__init__(self)
+        super(DefaultServiceMappingStrategy, self).__init__()

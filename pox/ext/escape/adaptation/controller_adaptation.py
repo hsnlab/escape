@@ -32,7 +32,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
 
     def __init__(self):
-        AbstractVirtualizer.__init__(self)
+        super(DomainVirtualizer, self).__init__()
 
 
 class DomainResourceManager(object):

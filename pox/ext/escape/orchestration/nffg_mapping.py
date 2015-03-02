@@ -32,4 +32,4 @@ class ResourceOrchestrationMapper(AbstractMapper):
     """
 
     def __init__(self):
-        AbstractMapper.__init__(self)
+        super(ResourceOrchestrationMapper, self).__init__()
