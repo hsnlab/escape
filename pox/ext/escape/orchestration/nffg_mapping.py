@@ -19,6 +19,7 @@ class AbstractMapper(object):
 
     Contain common functions and initialization
     """
+
     def __init__(self):
         pass
 
@@ -29,5 +30,6 @@ class ResourceOrchestrationMapper(AbstractMapper):
 
     Use the given mapping strategy
     """
+
     def __init__(self):
         AbstractMapper.__init__(self)

@@ -30,7 +30,6 @@ class AbstractAPI(object):
 
     def __init__(self):
         super(AbstractAPI, self).__init__()
-        print "abstract init"
 
     def _all_dependencies_met(self):
         """

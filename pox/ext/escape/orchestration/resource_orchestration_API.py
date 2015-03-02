@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from escape.util.api import AbstractAPI
+from escape.orchestration import LAYER_NAME
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
 
-LAYER_NAME = "orchestration"
 log = core.getLogger(LAYER_NAME)
 
 
@@ -24,6 +24,7 @@ class ResourceEvent(Event):
     Dummy event to force dependency checking working
     Should/Will be removed shortly!
     """
+
     def __init__(self):
         super(ResourceEvent, self).__init__()
 
@@ -41,7 +42,10 @@ class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
     _eventMixin_events = {ResourceEvent}
 
     def __init__(self, nffg_file):
-        super(ResourceOrchestrationAPI, self).__init__()
+        # Initializations after this class is instantiated
+        # Call base class init explicitly because Python super() with multiple inheritance is tricky
+        EventMixin.__init__(self)
+        AbstractAPI.__init__(self)
         log.info("Initiating Resource Orchestration Layer...")
         if nffg_file:
             self._read_graph_from_file(nffg_file)

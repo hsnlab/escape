@@ -11,14 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
-
 from escape.util.api import AbstractAPI
+from escape.service import LAYER_NAME
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
 
-
-LAYER_NAME = "service"
 log = core.getLogger(LAYER_NAME)
 
 
@@ -27,6 +24,7 @@ class ServiceEvent(Event):
     Dummy event to force dependency checking working
     Should/Will be removed shortly!
     """
+
     def __init__(self):
         super(ServiceEvent, self).__init__()
 
@@ -44,7 +42,10 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
     _eventMixin_events = {ServiceEvent}
 
     def __init__(self, sg_file, gui):
-        super(ServiceLayerAPI, self).__init__()
+        # Initializations after this class is instantiated
+        # Call base class init explicitly because Python super() with multiple inheritance is tricky
+        EventMixin.__init__(self)
+        AbstractAPI.__init__(self)
         log.info("Initiating Service Layer...")
         if sg_file:
             self._read_graph_from_file(sg_file)

@@ -15,3 +15,4 @@
 """
 Subpackage for classes related to UNIFY's Resource Orchestration sublayer
 """
+LAYER_NAME = "orchestration"

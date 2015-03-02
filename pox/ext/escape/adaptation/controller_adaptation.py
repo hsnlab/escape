@@ -19,6 +19,7 @@ class ControllerAdapter(object):
     """
     Higher-level class for NFFG adaptation between multiple domains
     """
+
     def __init__(self):
         pass
 
@@ -29,6 +30,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
     Should implement the same interface as AbstractVirtualizer
     """
+
     def __init__(self):
         AbstractVirtualizer.__init__(self)
 
@@ -37,5 +39,6 @@ class DomainResourceManager(object):
     """
     Handle and store global resources
     """
+
     def __init__(self):
         pass

@@ -24,27 +24,33 @@ from pox.core import core
 # Initial parameters
 init_param = {}
 
+
 def _start_components(event):
     """
     Initiate and run POX with ESCAPE components
     """
     # Run POX with DEBUG logging level
     from pox.log.level import launch
+
     launch(DEBUG=True)
     # Import colouful logging
     from pox.samples.pretty_log import launch
+
     launch()
     # Launch ESCAPE components
     from service_layer import launch
-    launch()
+
+    launch(sg=init_param['sg'], gui=init_param['gui'])
     from resource_orchestration_layer import launch
+
     launch()
     from controller_adaptation_layer import launch
+
     launch()
 
 
 @poxutil.eval_args
-def launch(sg='', nffg='', mapped_nffg=''):
+def launch(sg='', gui=False):
     global init_param
     init_param.update(locals())
     core.addListenerByName("UpEvent", _start_components)
