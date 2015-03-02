@@ -11,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from escape.orchestration import LAYER_NAME
+from escape.orchestration.policy_enforcement import PolicyEnforcementMetaClass
+import pox.core as core
+
+log = core.getLogger(LAYER_NAME)
 
 
 class AbstractVirtualizer(object):
@@ -24,22 +29,21 @@ class AbstractVirtualizer(object):
         pass
 
 
-class PolicyEnforcement(AbstractVirtualizer):
-    """
-    Proxy class for policy checking
-    """
-
-    def __init__(self):
-        super(PolicyEnforcement, self).__init__()
-
-
 class ESCAPEVirtualizer(AbstractVirtualizer):
     """
     Actual virtualizer class for ESCAPE
     """
 
+    __metaclass__ = PolicyEnforcementMetaClass
+
     def __init__(self):
         super(ESCAPEVirtualizer, self).__init__()
+
+    def test_func(self):
+        """
+        Test function for policy checking debug. Should be removed soon.
+        """
+        print 'Invoke ESCAPEVirtualizer test_func'
 
 
 class VirtualizerManager(object):
