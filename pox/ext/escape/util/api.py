@@ -27,17 +27,36 @@ class AbstractAPI(object):
     """
     # Default value for logger. Should be overwritten by child classes
     _core_name = "LayerAPI"
+    # Explicitly defined dependencies as POX componenents
+    _dependencies = ()
 
     def __init__(self):
+        """
+        Abstract class constructor
+        Handle core registration along with _all_dependencies_met()
+        Base constructor have to be called as the last call in inherited constructore
+        Same situation with _all_dependencies_met() respectively
+        """
         super(AbstractAPI, self).__init__()
+        # Register this component on POX core if there is no dependent component
+        # Due to registration _all_dependencies_met will be called automatically
+        if not self._dependencies:
+            self._register_on_pox()
 
     def _all_dependencies_met(self):
         """
         Called when every componenet on which depends are initialized and registered in pox.core
         Contain dependency relevant initialization
         This function should be overwritten by child classes
+        Actual APIs have to call this base function as last function call to handle core registration
         """
-        pass
+        # If there are dependent component, this function will be called after all the dependency has been registered
+        # In this case register this component as the last step
+        if self._dependencies:
+            self._register_on_pox()
+
+    def _register_on_pox(self):
+        core.core.register(self._core_name, self)
 
     def _read_graph_from_file(self, graph_file):
         try:
@@ -48,6 +67,6 @@ class AbstractAPI(object):
         except (ValueError, IOError, TypeError) as e:
             core.getLogger(self._core_name).error("Can't load graph representation from file because of: " + str(e))
         else:
-            # return self._convert_json_to_sg(service_graph)
+            # TODO - return self._convert_json_to_sg(service_graph)
             core.getLogger(self._core_name).info("Graph representation is loaded sucessfully!")
             return graph

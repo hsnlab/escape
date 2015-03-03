@@ -40,21 +40,25 @@ class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
     _core_name = LAYER_NAME
     # Events raised by this class
     _eventMixin_events = {ResourceEvent}
+    # Dependencies
+    _dependencies = ('adaptation',)
 
     def __init__(self, nffg_file):
         # Initializations after this class is instantiated
         # Call base class init explicitly because Python super() with multiple inheritance is tricky
+        log.info("Initiating Resource Orchestration Layer...")
+        self.nffg_file = nffg_file
         EventMixin.__init__(self)
         AbstractAPI.__init__(self)
-        log.info("Initiating Resource Orchestration Layer...")
-        if nffg_file:
-            self._read_graph_from_file(nffg_file)
 
     def _all_dependencies_met(self):
         """
         Called when every componenet on which depends are initialized and registered in pox.core
         Contain dependency relevant initialization
         """
+        if self.nffg_file:
+            self._read_graph_from_file(self.nffg_file)
+        super(ResourceOrchestrationAPI, self)._all_dependencies_met()
         log.info("Resource Orchestration Layer has been initialized!")
 
     def _handle_adaptation_AdaptationEvent(self, event):

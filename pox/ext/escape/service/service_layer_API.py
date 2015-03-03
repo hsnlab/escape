@@ -40,24 +40,30 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
     _core_name = LAYER_NAME
     # Events raised by this class
     _eventMixin_events = {ServiceEvent}
+    # Dependencies
+    _dependencies = ('orchestration',)
 
     def __init__(self, sg_file, gui):
         # Initializations after this class is instantiated
         # Call base class init explicitly because Python super() with multiple inheritance is tricky
+        # and several base contructor are not called in some special cases (such this case)
+        log.info("Initiating Service Layer...")
+        self.sg_file = sg_file
+        self.gui = gui
         EventMixin.__init__(self)
         AbstractAPI.__init__(self)
-        log.info("Initiating Service Layer...")
-        if sg_file:
-            self._read_graph_from_file(sg_file)
-        if gui:
-            self._initiate_gui()
-        self._initiate_rest_api()
 
     def _all_dependencies_met(self):
         """
         Called when every componenet on which depends are initialized and registered in pox.core
         Contain dependency relevant initialization
         """
+        if self.sg_file:
+            self._read_graph_from_file(self.sg_file)
+        if self.gui:
+            self._initiate_gui()
+        self._initiate_rest_api()
+        super(ServiceLayerAPI, self)._all_dependencies_met()
         log.info("Service Layer has been initialized!")
 
     def _handle_orchestration_ResourceEvent(self, event):
