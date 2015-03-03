@@ -66,6 +66,9 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
         super(ServiceLayerAPI, self)._all_dependencies_met()
         log.info("Service Layer has been initialized!")
 
+    def _shutdown(self, event):
+        log.info("Service Layer is going down...")
+
     def _handle_orchestration_ResourceEvent(self, event):
         # palceholder for orchestration dependency
         pass

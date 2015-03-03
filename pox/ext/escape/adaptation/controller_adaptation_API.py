@@ -60,3 +60,7 @@ class ControllerAdaptationAPI(EventMixin, AbstractAPI):
             self._read_graph_from_file(self.mapped_nffg_file)
         super(ControllerAdaptationAPI, self)._all_dependencies_met()
         log.info("Controller Adaptation Layer has been initialized!")
+
+    def _shutdown(self, event):
+        log.info("Controller Adaptation Layer is going down...")
+

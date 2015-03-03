@@ -29,21 +29,16 @@ def _start_components(event):
     """
     Initiate and run POX with ESCAPE components
     """
-    # Run POX with DEBUG logging level
-    from pox.log.level import launch
-
-    launch(DEBUG=True)
-    # Import colouful logging
-    from pox.samples.pretty_log import launch
-
-    launch()
     # Launch ESCAPE components
+    # Launch Service Layer
     from service_layer import launch
 
     launch(sg=init_param['sg'], gui=init_param['gui'])
+    # Launch Resource Orchestration Layer
     from resource_orchestration_layer import launch
 
     launch()
+    # Lauch Controller Adaptation Layer
     from controller_adaptation_layer import launch
 
     launch()
@@ -53,4 +48,15 @@ def _start_components(event):
 def launch(sg='', gui=False):
     global init_param
     init_param.update(locals())
-    core.addListenerByName("UpEvent", _start_components)
+
+    # Run POX with DEBUG logging level
+    from pox.log.level import launch
+
+    launch(DEBUG=True)
+
+    # Import colouful logging
+    from pox.samples.pretty_log import launch
+
+    launch()
+
+    core.addListenerByName("GoingUpEvent", _start_components)

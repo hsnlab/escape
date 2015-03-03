@@ -61,6 +61,9 @@ class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
         super(ResourceOrchestrationAPI, self)._all_dependencies_met()
         log.info("Resource Orchestration Layer has been initialized!")
 
+    def _shutdown(self, event):
+        log.info("Resource Orchestration Layer is going down...")
+
     def _handle_adaptation_AdaptationEvent(self, event):
         # placeholder for adaptation dependency
         pass

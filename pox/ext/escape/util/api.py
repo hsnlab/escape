@@ -14,10 +14,7 @@
 import json
 import os.path
 
-import pox.core as core
-
-
-log = core.getLogger()
+from pox.core import core
 
 
 class AbstractAPI(object):
@@ -41,7 +38,10 @@ class AbstractAPI(object):
         # Register this component on POX core if there is no dependent component
         # Due to registration _all_dependencies_met will be called automatically
         if not self._dependencies:
-            self._register_on_pox()
+            core.core.register(self._core_name, self)
+        # Subscribe for GoingDownEvent to finalize API classes
+        # _shutdown function will be called if POX's core going down
+        core.addListenerByName('GoingDownEvent', self._shutdown)
 
     def _all_dependencies_met(self):
         """
@@ -53,10 +53,14 @@ class AbstractAPI(object):
         # If there are dependent component, this function will be called after all the dependency has been registered
         # In this case register this component as the last step
         if self._dependencies:
-            self._register_on_pox()
+            core.core.register(self._core_name, self)
 
-    def _register_on_pox(self):
-        core.core.register(self._core_name, self)
+    def _shutdown(self, event):
+        """
+        Finalization, deallocation, etc. of actual component
+        Should be overwritten by child classes
+        """
+        pass
 
     def _read_graph_from_file(self, graph_file):
         try:
