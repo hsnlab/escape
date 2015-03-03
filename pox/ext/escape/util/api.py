@@ -11,10 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import json
 import os.path
+import threading
 
 from pox.core import core
+
+
+log = core.getLogger('REST-API')
 
 
 class AbstractAPI(object):
@@ -74,3 +79,77 @@ class AbstractAPI(object):
             # TODO - return self._convert_json_to_sg(service_graph)
             core.getLogger(self._core_name).info("Graph representation is loaded sucessfully!")
             return graph
+
+
+class ESCAPERequestHandler(BaseHTTPRequestHandler):
+    """
+    Minimalistic REST API for Service Layer
+    Handle /escape/* URLs
+    Method calling permitions represented in escape_intf dictionary
+    """
+    static_prefix = 'escape'
+    escape_intf = {'GET': ('proba', 'list_sg'),
+                   'POST': (),
+                   'PUT': (),
+                   'DELETE': ()}
+
+    def do_GET(self):
+        # TODO - Implement GET/POST/HEAD/PUT/DELETE processes
+        print 'GET'
+        self.process_url(self.path, 'GET')
+
+    def process_url(self, path, http_method):
+        """
+        Split HTTP path and call the carved function if it is defined in this class and in escape_intf
+        """
+        if path.startswith('/{prefix}/'.format(prefix=self.static_prefix)):
+            name = path.split('/')[2]
+            if http_method in self.escape_intf:
+                if name in self.escape_intf[http_method]:
+                    if hasattr(self, name):
+                        func = getattr(self, name)
+                        func()
+                else:
+                    self.send_error(404, message="Method not supported!")
+            else:
+                self.send_error(501)
+        else:
+            self.send_error(400, message="URL not recognized!")
+
+    def send_error(self, code, message=None):
+        # TODO - need to overwritten
+        log.warning(message)
+
+    def send_response(self, code, message=None):
+        # TODO - need to overwritten
+        pass
+
+    def send_header(self, keyword, value):
+        # TODO - need to overwritten
+        pass
+
+
+class RESTServer(object):
+    """
+    Base HTTP server for REST API
+    Initiate an HTTPServer and run it in different thread
+    """
+
+    def __init__(self, address='localhost', port=8008):
+        self.server = HTTPServer((address, port), ESCAPERequestHandler)
+        self.thread = threading.Thread(target=self.run)
+        self.thread.daemon = True
+        self.started = False
+
+    def start(self):
+        self.started = True
+        self.thread.start()
+
+    def stop(self):
+        if self.started:
+            self.server.shutdown()
+
+    def run(self):
+        log.info("REST-API is initiated!")
+        self.server.serve_forever()
+        log.info("REST-API is shutting down...")

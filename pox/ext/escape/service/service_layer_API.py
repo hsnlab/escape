@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.util.api import AbstractAPI
+from escape.util.api import AbstractAPI, RESTServer
 from escape.service import LAYER_NAME
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
@@ -68,6 +68,8 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
 
     def _shutdown(self, event):
         log.info("Service Layer is going down...")
+        if hasattr(self, 'api'):
+            self.api.stop()
 
     def _handle_orchestration_ResourceEvent(self, event):
         # palceholder for orchestration dependency
@@ -83,4 +85,5 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
 
     def _initiate_rest_api(self):
         # TODO - initiate and set up REST-API here
-        pass
+        self.api = RESTServer(address='')
+        self.api.start()
