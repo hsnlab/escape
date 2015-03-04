@@ -100,30 +100,31 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
         """
         Get information about an entity. R for CRUD convention.
         """
-        self.process_url('GET')
+        self.process_url()
 
     def do_POST(self):
         """
         Create an entity. C for CRUD convention.
         """
-        self.process_url('POST')
+        self.process_url()
 
     def do_PUT(self):
         """
         Update an entity. U for CRUD convention.
         """
-        self.process_url('PUT')
+        self.process_url()
 
     def do_DELETE(self):
         """
         Delete an entity. D for CRUD convention.
         """
-        self.process_url('DELETE')
+        self.process_url()
 
-    def process_url(self, http_method):
+    def process_url(self):
         """
         Split HTTP path and call the carved function if it is defined in this class and in escape_intf
         """
+        http_method = self.command.upper()
         real_path = urlparse.urlparse(self.path).path
         if real_path.startswith('/{prefix}/'.format(prefix=self.static_prefix)):
             func_name = real_path.split('/')[2]
@@ -145,7 +146,6 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
         """
         try:
             splitted_type = self.headers['Content-Type'].split('charset=')
-            print splitted_type
             if len(splitted_type) > 1:
                 charset = splitted_type[1]
         except:
@@ -170,6 +170,12 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
 
     def log_message(self, mformat, *args):
         """
+        Disable logging incoming messages by default
+        """
+        pass
+
+    def log_full_message(self, mformat, *args):
+        """
         Overwritten to use POX logging mechanism
         """
         log.debug("%s - - [%s] %s" % (self.client_address[0], self.log_date_time_string(), mformat % args))
@@ -178,8 +184,9 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
         """
         Test function to REST-API
         """
-        self.log_message("ECHO: %s - %s", self.raw_requestline, self._parse_json_body())
-        self._send_json_response({})
+        self.log_full_message("ECHO: %s - %s", str(self.raw_requestline.replace('\n', ' ')),
+                              str(self._parse_json_body()).replace('\n', ' '))
+        self._send_json_response({'echo': True})
 
     def _send_json_response(self, data, content_encoding='utf-8'):
         """
@@ -199,7 +206,7 @@ class RESTServer(object):
     Initiate an HTTPServer and run it in different thread
     """
 
-    def __init__(self, address='localhost', port=8008):
+    def __init__(self, address, port):
         self.server = HTTPServer((address, port), ESCAPERequestHandler)
         self.thread = threading.Thread(target=self.run)
         self.thread.daemon = True
@@ -214,6 +221,6 @@ class RESTServer(object):
             self.server.shutdown()
 
     def run(self):
-        log.info("REST-API is initiated on %s : %d!" % self.server.server_address)
+        log.info("REST-API is initiated on %s:%d!" % self.server.server_address)
         self.server.serve_forever()
         log.info("REST-API is shutting down...")
