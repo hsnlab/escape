@@ -15,3 +15,4 @@
 """
 Unifying package for ESCAPEv2 functions
 """
+__version__ = '2.0.0'

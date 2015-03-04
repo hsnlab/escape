@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from mercurial.fileset import encoding
+import urlparse
+from escape import __version__
 import json
 import os.path
 import threading
 
 from pox.core import core
-
 
 log = core.getLogger('REST-API')
 
@@ -87,46 +89,99 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     Handle /escape/* URLs
     Method calling permitions represented in escape_intf dictionary
     """
-    static_prefix = 'escape'
-    escape_intf = {'GET': ('proba', 'list_sg'),
-                   'POST': (),
-                   'PUT': (),
-                   'DELETE': ()}
+    server_version = "ESCAPE/" + __version__
+    static_prefix = "escape"
+    escape_intf = {'GET': ('echo',),
+                   'POST': ('echo',),
+                   'PUT': ('echo',),
+                   'DELETE': ('echo',)}
 
     def do_GET(self):
-        # TODO - Implement GET/POST/HEAD/PUT/DELETE processes
-        print 'GET'
-        self.process_url(self.path, 'GET')
+        """
+        Get information about an entity. R for CRUD convention.
+        """
+        self.process_url('GET')
 
-    def process_url(self, path, http_method):
+    def do_POST(self):
+        """
+        Create an entity. C for CRUD convention.
+        """
+        self.process_url('POST')
+
+    def do_PUT(self):
+        """
+        Update an entity. U for CRUD convention.
+        """
+        self.process_url('PUT')
+
+    def do_DELETE(self):
+        """
+        Delete an entity. D for CRUD convention.
+        """
+        self.process_url('DELETE')
+
+    def process_url(self, http_method):
         """
         Split HTTP path and call the carved function if it is defined in this class and in escape_intf
         """
-        if path.startswith('/{prefix}/'.format(prefix=self.static_prefix)):
-            name = path.split('/')[2]
+        real_path = urlparse.urlparse(self.path).path
+        if real_path.startswith('/{prefix}/'.format(prefix=self.static_prefix)):
+            func_name = real_path.split('/')[2]
             if http_method in self.escape_intf:
-                if name in self.escape_intf[http_method]:
-                    if hasattr(self, name):
-                        func = getattr(self, name)
-                        func()
+                if func_name in self.escape_intf[http_method]:
+                    if hasattr(self, func_name):
+                        getattr(self, func_name)()
                 else:
-                    self.send_error(404, message="Method not supported!")
+                    self.send_error(404, message="Method not supported by ESCAPE!")
             else:
                 self.send_error(501)
         else:
             self.send_error(400, message="URL not recognized!")
 
-    def send_error(self, code, message=None):
-        # TODO - need to overwritten
-        log.warning(message)
+    def _parse_json_body(self):
+        """
+        Parse HTTP request body in json format
+        Parsed object is unicode
+        """
+        try:
+            splitted_type = self.headers['Content-Type'].split('charset=')
+            print splitted_type
+            if len(splitted_type) > 1:
+                charset = splitted_type[1]
+        except:
+            # charset is not defined in Content-Type header
+            charset = 'utf-8'
+        print self.headers
+        print charset
+        print int(self.headers['Content-Length'])
+        try:
+            return json.loads(self.rfile.read(int(self.headers['Content-Length'])), encoding=charset)
+        except KeyError:
+            # Content-Length header is not defined
+            # Return empty dict
+            pass
+        except ValueError as e:
+            # Failed to parse request body to JSON
+            self.log_error("Request parsing failed: %s", e)
+        return {}
 
-    def send_response(self, code, message=None):
-        # TODO - need to overwritten
-        pass
+    def log_error(self, mformat, *args):
+        """
+        Overwritten to use POX logging mechanism
+        """
+        log.warning("%s - - [%s] %s" % (self.client_address[0], self.log_date_time_string(), mformat % args))
 
-    def send_header(self, keyword, value):
-        # TODO - need to overwritten
-        pass
+    def log_message(self, mformat, *args):
+        """
+        Overwritten to use POX logging mechanism
+        """
+        log.debug("%s - - [%s] %s" % (self.client_address[0], self.log_date_time_string(), mformat % args))
+
+    def echo(self):
+        """
+        Test function to REST-API
+        """
+        self.log_message("ECHO: %s - %s", self.raw_requestline, self._parse_json_body())
 
 
 class RESTServer(object):
@@ -150,6 +205,6 @@ class RESTServer(object):
             self.server.shutdown()
 
     def run(self):
-        log.info("REST-API is initiated!")
+        log.info("REST-API is initiated on %s:%d!" % self.server.server_address)
         self.server.serve_forever()
         log.info("REST-API is shutting down...")

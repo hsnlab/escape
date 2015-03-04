@@ -75,6 +75,10 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
         # palceholder for orchestration dependency
         pass
 
+    def _initiate_rest_api(self):
+        self.api = RESTServer(address='')
+        self.api.start()
+
     def _convert_json_to_sg(self, service_graph):
         # TODO - need standard SG form to implement this
         pass
@@ -82,8 +86,3 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
     def _initiate_gui(self):
         # TODO - set up and initiate MiniEdit here
         pass
-
-    def _initiate_rest_api(self):
-        # TODO - initiate and set up REST-API here
-        self.api = RESTServer(address='')
-        self.api.start()

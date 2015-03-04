@@ -19,6 +19,9 @@ log = core.getLogger(LAYER_NAME)
 
 
 class PolicyEnforcementError(object):
+    """
+    Exception class to signal policy enforcement error
+    """
     pass
 
 
@@ -31,6 +34,7 @@ class PolicyEnforcementMetaClass(type):
     Therefore the function names must be identical!
     If the policy checking function retuns with True value, the original function will be called next
     If policy checking fails a PolicyEnforcementError should be raised and handled in a higher layer
+    or/and at least return with False value
     To use policy checking set the following class attribute: __metaclass__ = PolicyEnforcementMetaClass
     """
 
@@ -48,7 +52,7 @@ class PolicyEnforcementMetaClass(type):
         def wrapper(*args, **kwargs):
             log.debug("Invoke Policy checking function for: " + func_name)
             pep_function = getattr(PolicyEnforcement(), func_name)
-            # Call Policy checking function
+            # Call Policy checking function before original
             if pep_function():
                 result = orig_func(*args, **kwargs)
             # Do nothing after the original function called
