@@ -151,9 +151,6 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
         except:
             # charset is not defined in Content-Type header
             charset = 'utf-8'
-        print self.headers
-        print charset
-        print int(self.headers['Content-Length'])
         try:
             return json.loads(self.rfile.read(int(self.headers['Content-Length'])), encoding=charset)
         except KeyError:
@@ -182,6 +179,18 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
         Test function to REST-API
         """
         self.log_message("ECHO: %s - %s", self.raw_requestline, self._parse_json_body())
+        self._send_json_response({})
+
+    def _send_json_response(self, data, content_encoding='utf-8'):
+        """
+        Send requested data in json format
+        """
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/json; charset=' + content_encoding)
+        self.send_header('Content-Length', len(data))
+        self.end_headers()
+        self.wfile.write(json.dumps(data, encoding=content_encoding))
+        return
 
 
 class RESTServer(object):
@@ -205,6 +214,6 @@ class RESTServer(object):
             self.server.shutdown()
 
     def run(self):
-        log.info("REST-API is initiated on %s:%d!" % self.server.server_address)
+        log.info("REST-API is initiated on %s : %d!" % self.server.server_address)
         self.server.serve_forever()
         log.info("REST-API is shutting down...")
