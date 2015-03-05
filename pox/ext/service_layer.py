@@ -30,20 +30,12 @@ init_param = {}
 def _start_layer (event):
   # Instantiate the API class and register into pox.core only once
   # core.core.registerNew(ServiceLayerAPI, sg, gui)
-  service = ServiceLayerAPI(sg_file = init_param['sg'],
-    gui = init_param['gui'])
-  # Wait for the necessery POX component until they are resolved and set up
-  # event handlers. For this function event handler must follow the long naming
-  # convention: _handle_component_event(). The relevant components are
-  # registered on the API class by default with the name: _<comp-name>_ But for
-  # fail-safe operation, the dependencies are given explicitly which are defined
-  # in the actual API. See more in POXCore document.
-  core.core.listen_to_dependencies(service, attrs = True,
-    components = getattr(service, '_dependencies', ()))
+  ServiceLayerAPI(sg_file = init_param['sg'], gui = init_param['gui'],
+    standalone = init_param['standalone'])
 
 
 @poxutil.eval_args
-def launch (sg = '', gui = False):
+def launch (sg = '', gui = False, standalone = False):
   global init_param
   init_param.update(locals())
   core.addListenerByName("UpEvent", _start_layer)

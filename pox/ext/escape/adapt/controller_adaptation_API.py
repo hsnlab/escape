@@ -43,7 +43,7 @@ class ControllerAdaptationAPI(EventMixin, AbstractAPI):
   # Dependencies
   # None
 
-  def __init__ (self, mapped_nffg_file):
+  def __init__ (self, mapped_nffg_file = '', standalone = False):
     """
     Initializations after this class is instantiated
     Call base class init explicitly because Python super() with multiple
@@ -53,7 +53,7 @@ class ControllerAdaptationAPI(EventMixin, AbstractAPI):
     log.info("Initiating Controller Adaptation Layer...")
     self.mapped_nffg_file = mapped_nffg_file
     EventMixin.__init__(self)
-    AbstractAPI.__init__(self)
+    AbstractAPI.__init__(self, standalone = standalone)
 
   def _all_dependencies_met (self):
     """

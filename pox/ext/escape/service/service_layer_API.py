@@ -43,7 +43,7 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
   # Dependencies
   _dependencies = ('orchestration',)
 
-  def __init__ (self, sg_file, gui):
+  def __init__ (self, sg_file = '', gui = False, standalone = False):
     """
     Initializations after this class is instantiated
     Call base class init explicitly because Python super() with multiple
@@ -54,7 +54,7 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
     self.sg_file = sg_file
     self.gui = gui
     EventMixin.__init__(self)
-    AbstractAPI.__init__(self)
+    AbstractAPI.__init__(self, standalone=standalone)
 
   def _all_dependencies_met (self):
     """

@@ -18,10 +18,8 @@ import os.path
 import threading
 
 from escape import __version__
+from escape.service import LAYER_NAME as SERVICE_LAYER_NAME
 from pox.core import core
-
-
-log = core.getLogger('REST-API')
 
 
 class AbstractAPI(object):
@@ -35,7 +33,7 @@ class AbstractAPI(object):
   # Explicitly defined dependencies as POX componenents
   _dependencies = ()
 
-  def __init__ (self):
+  def __init__ (self, standalone = False):
     """
     Abstract class constructor
     Handle core registration along with _all_dependencies_met()
@@ -47,6 +45,28 @@ class AbstractAPI(object):
     # Due to registration _all_dependencies_met will be called automatically
     if not self._dependencies:
       core.core.register(self._core_name, self)
+    # Signals if need to skip dependency handling
+    self._standalone = standalone
+    if standalone:
+      # Skip setting up Event listeners
+      # Initiate component manually also
+      self._all_dependencies_met()
+      # Initiate dependency references with Logger object
+      for dep in self._dependencies:
+        setattr(self, dep, StandaloneHelper())
+    else:
+      # Wait for the necessery POX component until they are resolved and set up
+      # event handlers. For this function event handler must follow the long
+      # naming
+      # convention: _handle_component_event(). The relevant components are
+      # registered on the API class by default with the name: <comp-name>.
+      # But for
+      # fail-safe operation, the dependencies are given explicitly which are
+      # defined
+      # in the actual API. See more in POXCore document.
+      core.core.listen_to_dependencies(self,
+        components = getattr(self, '_dependencies', ()), attrs = True,
+        short_attrs = True)
     # Subscribe for GoingDownEvent to finalize API classes
     # _shutdown function will be called if POX's core going down
     core.addListenerByName('GoingDownEvent', self._shutdown)
@@ -86,6 +106,36 @@ class AbstractAPI(object):
       core.getLogger(self._core_name).info(
         "Graph representation is loaded sucessfully!")
       return graph
+
+
+log = core.getLogger(SERVICE_LAYER_NAME + ' - REST-API')
+
+
+class RESTServer(object):
+  """
+  Base HTTP server for REST API
+
+  Initiate an HTTPServer and run it in different thread
+  """
+
+  def __init__ (self, address, port):
+    self.server = HTTPServer((address, port), ESCAPERequestHandler)
+    self.thread = threading.Thread(target = self.run)
+    self.thread.daemon = True
+    self.started = False
+
+  def start (self):
+    self.started = True
+    self.thread.start()
+
+  def stop (self):
+    if self.started:
+      self.server.shutdown()
+
+  def run (self):
+    log.info("REST-API is initiated on %s:%d!" % self.server.server_address)
+    self.server.serve_forever()
+    log.info("REST-API is shutting down...")
 
 
 class ESCAPERequestHandler(BaseHTTPRequestHandler):
@@ -141,7 +191,7 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
             getattr(self, func_name)()
         else:
           self.send_error(404,
-                          message = "Method not supported by ESCAPE!")
+            message = "Method not supported by ESCAPE!")
       else:
         self.send_error(501)
     else:
@@ -149,23 +199,26 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
 
   def _parse_json_body (self):
     """
-    Parse HTTP request body in json format
-    Parsed object is unicode
+    Parse HTTP request body in JSON format
+    Parsed JSON object is unicode
+    GET, DELETE messages don't contain parameters - Return empty dict by default
     """
     charset = 'utf-8'
-    try:
-      splitted_type = self.headers['Content-Type'].split('charset=')
-      if len(splitted_type) > 1:
-        charset = splitted_type[1]
-      raw_data = self.rfile.read(int(self.headers['Content-Length']))
-      return json.loads(raw_data, encoding = charset)
-    except KeyError:
-      # Content-Length header is not defined or charset is not defined in
-      # Content-Type header. Return empty dictionary.
-      pass
-    except ValueError as e:
-      # Failed to parse request body to JSON
-      self.log_error("Request parsing failed: %s", e)
+    # For fail-safe
+    if self.command not in ('GET', 'DELETE'):
+      try:
+        splitted_type = self.headers['Content-Type'].split('charset=')
+        if len(splitted_type) > 1:
+          charset = splitted_type[1]
+        raw_data = self.rfile.read(int(self.headers['Content-Length']))
+        return json.loads(raw_data, encoding = charset)
+      except KeyError:
+        # Content-Length header is not defined or charset is not defined in
+        # Content-Type header. Return empty dictionary.
+        pass
+      except ValueError as e:
+        # Failed to parse request body to JSON
+        self.log_error("Request parsing failed: %s", e)
     return {}
 
   def log_error (self, mformat, *args):
@@ -195,43 +248,41 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     Test function to REST-API
     """
     self.log_full_message("ECHO: %s - %s", self.raw_requestline,
-                          self._parse_json_body())
+      self._parse_json_body())
     self._send_json_response({'echo': True})
 
-  def _send_json_response (self, data, encode = 'utf-8'):
+  def _send_json_response (self, data, encoding = 'utf-8'):
     """
     Send requested data in json format
     """
     self.send_response(200)
-    self.send_header('Content-Type', 'text/json; charset=' + encode)
+    self.send_header('Content-Type', 'text/json; charset=' + encoding)
     self.send_header('Content-Length', len(data))
     self.end_headers()
-    self.wfile.write(json.dumps(data, encoding = encode))
+    self.wfile.write(json.dumps(data, encoding = encoding))
     return
 
 
-class RESTServer(object):
+class StandaloneHelper(object):
   """
-  Base HTTP server for REST API
+  Represent a component on which an actual running component (stated in
+  standalone mode) depends
 
-  Initiate an HTTPServer and run it in different thread
+  Catch and log every function call
   """
 
-  def __init__ (self, address, port):
-    self.server = HTTPServer((address, port), ESCAPERequestHandler)
-    self.thread = threading.Thread(target = self.run)
-    self.thread.daemon = True
-    self.started = False
+  def __init__ (self):
+    super(StandaloneHelper, self).__init__()
 
-  def start (self):
-    self.started = True
-    self.thread.start()
+  def __getattribute__ (self, name):
+    """
+    Catch all function call
+    """
+    # TODO - catch attrs too, need check against hidden API class funcions?
+    def logger (*args, **kwargs):
+      # Wrapper function for logging
+      msg = "Called function %s - with params:\n%s\n%s" % (name, args, kwargs)
+      core.getLogger("standalone").info(msg)
+      return  # Do nothing just log
 
-  def stop (self):
-    if self.started:
-      self.server.shutdown()
-
-  def run (self):
-    log.info("REST-API is initiated on %s:%d!" % self.server.server_address)
-    self.server.serve_forever()
-    log.info("REST-API is shutting down...")
+    return logger
