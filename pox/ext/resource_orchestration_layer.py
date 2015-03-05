@@ -18,7 +18,7 @@ Basic POX module for ESCAPE Resource Orchestration sublayer
 Initiate appropriate API class which implements Sl-Or reference point
 Follow POX module conventions
 """
-from escape.orchestration.resource_orchestration_API import ResourceOrchestrationAPI
+from escape.orchest.resource_orchestration_API import ResourceOrchestrationAPI
 from pox.core import core
 import pox.lib.util as poxutil
 
@@ -26,20 +26,23 @@ import pox.lib.util as poxutil
 init_param = {}
 
 
-def _start_layer(event):
-    # Instantiate the API class and register into pox.core only once
-    # core.core.registerNew(ResourceOrchestrationAPI, nffg)
-    orchestration = ResourceOrchestrationAPI(nffg_file=init_param['nffg'])
-    # Wait for the necessery POX component until they are resolved and set up event handlers.
-    # For this function event handler must follow the long naming convention: _handle_component_event().
-    # The relevant components are registered on the API class by default with the name: _<comp-name>_
-    # But for fail-safe operation, the dependencies are given explicitly which are defined in the actual API
-    # See more in POXCore document.
-    core.core.listen_to_dependencies(orchestration, attrs=True, components=getattr(orchestration, '_dependencies', ()))
+# noinspection PyUnusedLocal
+def _start_layer (event):
+  # Instantiate the API class and register into pox.core only once
+  # core.core.registerNew(ResourceOrchestrationAPI, nffg)
+  orchestration = ResourceOrchestrationAPI(nffg_file = init_param['nffg'])
+  # Wait for the necessery POX component until they are resolved and set up
+  # event handlers. For this function event handler must follow the long naming
+  # convention: _handle_component_event(). The relevant components are
+  # registered on the API class by default with the name: _<comp-name>_ But for
+  # fail-safe operation, the dependencies are given explicitly which are defined
+  # in the actual API. See more in POXCore document.
+  core.core.listen_to_dependencies(orchestration, attrs = True,
+    components = getattr(orchestration, '_dependencies', ()))
 
 
 @poxutil.eval_args
-def launch(nffg=''):
-    global init_param
-    init_param.update(locals())
-    core.addListenerByName("UpEvent", _start_layer)
+def launch (nffg = ''):
+  global init_param
+  init_param.update(locals())
+  core.addListenerByName("UpEvent", _start_layer)

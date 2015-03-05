@@ -12,23 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from escape.orchestration.mapping_strategy import AbstractMappingStrategy
-from escape.orchestration.nffg_mapping import AbstractMapper
+from escape.orchest.mapping_strategy import AbstractMappingStrategy
+from escape.orchest.nffg_mapping import AbstractMapper
 
 
 class ServiceGraphMapper(AbstractMapper):
-    """
-    Helper class for mapping Service Graph to NFFG
-    """
+  """
+  Helper class for mapping Service Graph to NFFG
+  """
 
-    def __init__(self):
-        super(ServiceGraphMapper, self).__init__()
+  def __init__ (self):
+    super(ServiceGraphMapper, self).__init__()
 
 
 class DefaultServiceMappingStrategy(AbstractMappingStrategy):
-    """
-    Mapping class which maps given Service Graph into a single BiS-BiS
-    """
+  """
+  Mapping class which maps given Service Graph into a single BiS-BiS
+  """
 
-    def __init__(self):
-        super(DefaultServiceMappingStrategy, self).__init__()
+  def __init__ (self):
+    super(DefaultServiceMappingStrategy, self).__init__()

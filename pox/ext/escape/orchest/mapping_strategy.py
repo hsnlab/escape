@@ -13,23 +13,21 @@
 # limitations under the License.
 
 
-class AbstractMapper(object):
-    """
-    Abstract class for graph mapping function
+class AbstractMappingStrategy(object):
+  """
+  Abstract class for the mapping strategies
 
-    Contain common functions and initialization
-    """
+  Follow the Strategy design pattern
+  """
 
-    def __init__(self):
-        pass
+  def __init__ (self):
+    pass
 
 
-class ResourceOrchestrationMapper(AbstractMapper):
-    """
-    Main class for NFFG mapping
+class ESCAPEMappingStrategy(AbstractMappingStrategy):
+  """
+  Implement a strategy to map initial NFFG into extNFFG
+  """
 
-    Use the given mapping strategy
-    """
-
-    def __init__(self):
-        super(ResourceOrchestrationMapper, self).__init__()
+  def __init__ (self):
+    super(ESCAPEMappingStrategy, self).__init__()

@@ -14,18 +14,18 @@
 
 
 class AbstractElementManager(object):
-    """
-    Abstract class for element management components (EM)
-    """
+  """
+  Abstract class for element management components (EM)
+  """
 
-    def __init__(self):
-        pass
+  def __init__ (self):
+    pass
 
 
 class ClickManager(AbstractElementManager):
-    """
-    Manager class for specific VNF management based on Clicky
-    """
+  """
+  Manager class for specific VNF management based on Clicky
+  """
 
-    def __init__(self):
-        super(ClickManager, self).__init__()
+  def __init__ (self):
+    super(ClickManager, self).__init__()

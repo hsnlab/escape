@@ -11,82 +11,63 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.util.api import AbstractAPI, RESTServer
-from escape.service import LAYER_NAME
+from escape.util.api import AbstractAPI
+from escape.orchest import LAYER_NAME
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
 
 log = core.getLogger(LAYER_NAME)
 
 
-class ServiceEvent(Event):
+class ResourceEvent(Event):
   """
   Dummy event to force dependency checking working
   Should/Will be removed shortly!
   """
 
   def __init__ (self):
-    super(ServiceEvent, self).__init__()
+    super(ResourceEvent, self).__init__()
 
 
-class ServiceLayerAPI(EventMixin, AbstractAPI):
+class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
   """
-  Entry point for Service Layer
+  Entry point for Resource Orchestration Sublayer
 
   Maintain the contact with other UNIFY layers
-  Implement the U - Sl reference point
+  Implement the Sl - Or reference point
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {ServiceEvent}
+  _eventMixin_events = {ResourceEvent}
   # Dependencies
-  _dependencies = ('orchestration',)
+  _dependencies = ('adaptation',)
 
-  def __init__ (self, sg_file, gui):
+  def __init__ (self, nffg_file):
     """
     Initializations after this class is instantiated
     Call base class init explicitly because Python super() with multiple
     inheritance is tricky  and several base contructor are not called in some
     special cases (such this case).
     """
-    log.info("Initiating Service Layer...")
-    self.sg_file = sg_file
-    self.gui = gui
+    log.info("Initiating Resource Orchestration Layer...")
+    self.nffg_file = nffg_file
     EventMixin.__init__(self)
     AbstractAPI.__init__(self)
 
   def _all_dependencies_met (self):
     """
     Called when every componenet on which depends are initialized and registered
-    in pox.core.
-    Contain dependency relevant initialization
+    in pox.core. Contain dependency relevant initialization
     """
-    if self.sg_file:
-      self._read_graph_from_file(self.sg_file)
-    if self.gui:
-      self._initiate_gui()
-    self._initiate_rest_api(address = '')
-    super(ServiceLayerAPI, self)._all_dependencies_met()
-    log.info("Service Layer has been initialized!")
+    if self.nffg_file:
+      self._read_graph_from_file(self.nffg_file)
+    super(ResourceOrchestrationAPI, self)._all_dependencies_met()
+    log.info("Resource Orchestration Layer has been initialized!")
 
   def _shutdown (self, event):
-    log.info("Service Layer is going down...")
-    if hasattr(self, 'api'):
-      self.api.stop()
+    log.info("Resource Orchestration Layer is going down...")
 
-  def _handle_orchestration_ResourceEvent (self, event):
-    # palceholder for orchestration dependency
-    pass
-
-  def _initiate_rest_api (self, address = 'localhost', port = 8008):
-    self.api = RESTServer(address = address, port = port)
-    self.api.start()
-
-  def _convert_json_to_sg (self, service_graph):
-    # TODO - need standard SG form to implement this
-    pass
-
-  def _initiate_gui (self):
-    # TODO - set up and initiate MiniEdit here
+  def _handle_adaptation_AdaptationEvent (self, event):
+    # placeholder for adaptation dependency
     pass

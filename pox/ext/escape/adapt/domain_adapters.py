@@ -14,38 +14,38 @@
 
 
 class AbstractAdapter(object):
-    """
-    Abstract class for different domain adapters
+  """
+  Abstract class for different domain adapters
 
-    Follow the Adapter design pattern
-    """
+  Follow the Adapter design pattern
+  """
 
-    def __init__(self):
-        pass
+  def __init__ (self):
+    pass
 
 
 class MininetDomainAdapter(AbstractAdapter):
-    """
-    Adapter class to handle communication with Mininet
-    """
+  """
+  Adapter class to handle communication with Mininet
+  """
 
-    def __init__(self):
-        super(MininetDomainAdapter, self).__init__()
+  def __init__ (self):
+    super(MininetDomainAdapter, self).__init__()
 
 
 class POXControllerAdapter(AbstractAdapter):
-    """
-    Adapter class to handle communication with POX OpenFlow controller
-    """
+  """
+  Adapter class to handle communication with POX OpenFlow controller
+  """
 
-    def __init__(self):
-        super(POXControllerAdapter, self).__init__()
+  def __init__ (self):
+    super(POXControllerAdapter, self).__init__()
 
 
 class OpenStackDomainAdapter(AbstractAdapter):
-    """
-    Adapter class to handle communication with OpenStack
-    """
+  """
+  Adapter class to handle communication with OpenStack
+  """
 
-    def __init__(self):
-        super(OpenStackDomainAdapter, self).__init__()
+  def __init__ (self):
+    super(OpenStackDomainAdapter, self).__init__()

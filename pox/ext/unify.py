@@ -25,38 +25,39 @@ from pox.core import core
 init_param = {}
 
 
-def _start_components(event):
-    """
-    Initiate and run POX with ESCAPE components
-    """
-    # Launch ESCAPE components
-    # Launch Service Layer
-    from service_layer import launch
+# noinspection PyUnusedLocal
+def _start_components (event):
+  """
+  Initiate and run POX with ESCAPE components
+  """
+  # Launch ESCAPE components
+  # Launch Service Layer
+  from service_layer import launch
 
-    launch(sg=init_param['sg'], gui=init_param['gui'])
-    # Launch Resource Orchestration Layer
-    from resource_orchestration_layer import launch
+  launch(sg = init_param['sg'], gui = init_param['gui'])
+  # Launch Resource Orchestration Layer
+  from resource_orchestration_layer import launch
 
-    launch()
-    # Lauch Controller Adaptation Layer
-    from controller_adaptation_layer import launch
+  launch()
+  # Lauch Controller Adaptation Layer
+  from controller_adaptation_layer import launch
 
-    launch()
+  launch()
 
 
 @poxutil.eval_args
-def launch(sg='', gui=False):
-    global init_param
-    init_param.update(locals())
+def launch (sg = '', gui = False):
+  global init_param
+  init_param.update(locals())
 
-    # Run POX with DEBUG logging level
-    from pox.log.level import launch
+  # Run POX with DEBUG logging level
+  from pox.log.level import launch
 
-    launch(DEBUG=True)
+  launch(DEBUG = True)
 
-    # Import colouful logging
-    from pox.samples.pretty_log import launch
+  # Import colouful logging
+  from pox.samples.pretty_log import launch
 
-    launch()
+  launch()
 
-    core.addListenerByName("GoingUpEvent", _start_components)
+  core.addListenerByName("GoingUpEvent", _start_components)

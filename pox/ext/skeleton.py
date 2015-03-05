@@ -23,14 +23,16 @@ import pox.lib.util as poxutil
 init_param = {}
 
 
-def _start_layer(event):
-    # Instantiate the API class and register into pox.core only once
-    pass
-    # Wait for the necessery POX component until they are resolved and set up event handlers.
+# noinspection PyUnusedLocal
+def _start_layer (event):
+  # Instantiate the API class and register into pox.core only once
+  pass
+  # Wait for the necessery POX component until they are resolved and set up
+  # event handlers.
 
 
 @poxutil.eval_args
-def launch():
-    global init_param
-    init_param.update(locals())
-    core.addListenerByName("UpEvent", _start_layer)
+def launch ():
+  global init_param
+  init_param.update(locals())
+  core.addListenerByName("UpEvent", _start_layer)
