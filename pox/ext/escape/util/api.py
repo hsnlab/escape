@@ -16,6 +16,7 @@ import urlparse
 import json
 import os.path
 import threading
+import weakref
 
 from escape import __version__
 from escape.service import LAYER_NAME as SERVICE_LAYER_NAME
@@ -53,7 +54,7 @@ class AbstractAPI(object):
       self._all_dependencies_met()
       # Initiate dependency references with Logger object
       for dep in self._dependencies:
-        setattr(self, dep, StandaloneHelper())
+        setattr(self, dep, StandaloneHelper(self))
     else:
       # Wait for the necessery POX component until they are resolved and set up
       # event handlers. For this function event handler must follow the long
@@ -271,18 +272,19 @@ class StandaloneHelper(object):
   Catch and log every function call
   """
 
-  def __init__ (self):
+  def __init__ (self, container):
     super(StandaloneHelper, self).__init__()
+    self.container = weakref.proxy(container)  # Garbage-Collector safe
 
-  def __getattribute__ (self, name):
+  def __getattr__ (self, name):
     """
-    Catch all function call
+    Catch all attribute/function that don't exists
     """
-    # TODO - catch attrs too, need check against hidden API class funcions?
+    # TODO - what if somebody want to access to an atrribute instead of function
     def logger (*args, **kwargs):
       # Wrapper function for logging
       msg = "Called function %s - with params:\n%s\n%s" % (name, args, kwargs)
-      core.getLogger("standalone").info(msg)
+      core.getLogger(self.container._core_name + '-standalone').info(msg)
       return  # Do nothing just log
 
     return logger
