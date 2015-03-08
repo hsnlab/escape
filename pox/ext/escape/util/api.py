@@ -34,7 +34,7 @@ class AbstractAPI(object):
   # Explicitly defined dependencies as POX componenents
   _dependencies = ()
 
-  def __init__ (self, standalone = False):
+  def __init__ (self, standalone = False, *args, **kwargs):
     """
     Abstract class constructor
     Handle core registration along with _all_dependencies_met()
@@ -42,6 +42,7 @@ class AbstractAPI(object):
     Same situation with _all_dependencies_met() respectively
     """
     super(AbstractAPI, self).__init__()
+    self.initialize(*args, **kwargs)
     # Register this component on POX core if there is no dependent component
     # Due to registration _all_dependencies_met will be called automatically
     if not self._dependencies:
@@ -71,6 +72,12 @@ class AbstractAPI(object):
     # Subscribe for GoingDownEvent to finalize API classes
     # _shutdown function will be called if POX's core going down
     core.addListenerByName('GoingDownEvent', self._shutdown)
+
+  def initialize (self, *args, **kwargs):
+    """
+    Unique initialization steps. Should be overwritten by child classes.
+    """
+    pass
 
   def _all_dependencies_met (self):
     """
@@ -107,6 +114,32 @@ class AbstractAPI(object):
       core.getLogger(self._core_name).info(
         "Graph representation is loaded sucessfully!")
       return graph
+
+
+class StandaloneHelper(object):
+  """
+  Represent a component on which an actual running component (stated in
+  standalone mode) depends
+
+  Catch and log every function call
+  """
+
+  def __init__ (self, container):
+    super(StandaloneHelper, self).__init__()
+    self.container = weakref.proxy(container)  # Garbage-Collector safe
+
+  def __getattr__ (self, name):
+    """
+    Catch all attribute/function that don't exists
+    """
+    # TODO - what if somebody want to access to an atrribute instead of function
+    def logger (*args, **kwargs):
+      # Wrapper function for logging
+      msg = "Called function %s - with params:\n%s\n%s" % (name, args, kwargs)
+      core.getLogger(self.container._core_name + '-standalone').info(msg)
+      return  # Do nothing just log
+
+    return logger
 
 
 log = core.getLogger(SERVICE_LAYER_NAME + ' - REST-API')
@@ -262,29 +295,3 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     self.end_headers()
     self.wfile.write(json.dumps(data, encoding = encoding))
     return
-
-
-class StandaloneHelper(object):
-  """
-  Represent a component on which an actual running component (stated in
-  standalone mode) depends
-
-  Catch and log every function call
-  """
-
-  def __init__ (self, container):
-    super(StandaloneHelper, self).__init__()
-    self.container = weakref.proxy(container)  # Garbage-Collector safe
-
-  def __getattr__ (self, name):
-    """
-    Catch all attribute/function that don't exists
-    """
-    # TODO - what if somebody want to access to an atrribute instead of function
-    def logger (*args, **kwargs):
-      # Wrapper function for logging
-      msg = "Called function %s - with params:\n%s\n%s" % (name, args, kwargs)
-      core.getLogger(self.container._core_name + '-standalone').info(msg)
-      return  # Do nothing just log
-
-    return logger
