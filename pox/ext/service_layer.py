@@ -29,13 +29,11 @@ init_param = {}
 # noinspection PyUnusedLocal
 def _start_layer (event):
   # Instantiate the API class and register into pox.core only once
-  # core.core.registerNew(ServiceLayerAPI, sg, gui)
-  ServiceLayerAPI(sg_file = init_param['sg'], gui = init_param['gui'],
-    standalone = init_param['standalone'])
+  ServiceLayerAPI(**init_param)
 
 
 @poxutil.eval_args
-def launch (sg = '', gui = False, standalone = False):
+def launch (sg_file='', gui=False, standalone=False):
   global init_param
   init_param.update(locals())
   core.addListenerByName("UpEvent", _start_layer)

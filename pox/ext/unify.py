@@ -34,7 +34,7 @@ def _start_components (event):
   # Launch Service Layer
   from service_layer import launch
 
-  launch(sg = init_param['sg'], gui = init_param['gui'])
+  launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
   # Launch Resource Orchestration Layer
   from resource_orchestration_layer import launch
 
@@ -46,14 +46,14 @@ def _start_components (event):
 
 
 @poxutil.eval_args
-def launch (sg = '', gui = False):
+def launch (sg_file='', gui=False):
   global init_param
   init_param.update(locals())
 
   # Run POX with DEBUG logging level
   from pox.log.level import launch
 
-  launch(DEBUG = True)
+  launch(DEBUG=True)
 
   # Import colouful logging
   from pox.samples.pretty_log import launch

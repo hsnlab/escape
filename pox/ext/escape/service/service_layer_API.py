@@ -43,7 +43,7 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
   # Dependencies
   _dependencies = ('orchestration',)
 
-  def __init__ (self, sg_file = '', gui = False, standalone = False):
+  def __init__ (self, standalone=False, **kwargs):
     """
     Initializations after this class is instantiated
     Call base class init explicitly because Python super() with multiple
@@ -51,10 +51,8 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
     special cases (such this case).
     """
     log.info("Initiating Service Layer...")
-    self.sg_file = sg_file
-    self.gui = gui
     EventMixin.__init__(self)
-    AbstractAPI.__init__(self, standalone=standalone)
+    AbstractAPI.__init__(self, standalone=standalone, **kwargs)
 
   def _all_dependencies_met (self):
     """
@@ -66,7 +64,7 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
       self._read_graph_from_file(self.sg_file)
     if self.gui:
       self._initiate_gui()
-    self._initiate_rest_api(address = '')
+    self._initiate_rest_api(address='')
     super(ServiceLayerAPI, self)._all_dependencies_met()
     log.info("Service Layer has been initialized!")
 
@@ -79,8 +77,8 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
     # palceholder for orchestration dependency
     pass
 
-  def _initiate_rest_api (self, address = 'localhost', port = 8008):
-    self.api = RESTServer(address = address, port = port)
+  def _initiate_rest_api (self, address='localhost', port=8008):
+    self.api = RESTServer(address=address, port=port)
     self.api.start()
 
   def _convert_json_to_sg (self, service_graph):

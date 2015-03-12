@@ -29,13 +29,11 @@ init_param = {}
 # noinspection PyUnusedLocal
 def _start_layer (event):
   # Instantiate the API class and register into pox.core only once
-  # core.core.registerNew(ResourceOrchestrationAPI, nffg)
-  ResourceOrchestrationAPI(nffg_file = init_param['nffg'],
-    standalone = init_param['standalone'])
+  ResourceOrchestrationAPI(**init_param)
 
 
 @poxutil.eval_args
-def launch (nffg = '', standalone = False):
+def launch (nffg_file='', standalone=False):
   global init_param
   init_param.update(locals())
   core.addListenerByName("UpEvent", _start_layer)

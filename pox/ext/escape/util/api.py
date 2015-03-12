@@ -34,21 +34,24 @@ class AbstractAPI(object):
   # Explicitly defined dependencies as POX componenents
   _dependencies = ()
 
-  def __init__ (self, standalone = False, *args, **kwargs):
+  def __init__ (self, standalone=False, **kwargs):
     """
     Abstract class constructor
     Handle core registration along with _all_dependencies_met()
-    Base constructor have to be called as the last call in inherited constructor
+    Set given parameters (standalone parameter is mandatory)
+    Base constructor funtions have to be called as the last step
     Same situation with _all_dependencies_met() respectively
     """
     super(AbstractAPI, self).__init__()
-    self.initialize(*args, **kwargs)
+    # Save custom parameters with the given name
+    for key, value in kwargs.iteritems():
+      setattr(self, key, value)
     # Register this component on POX core if there is no dependent component
     # Due to registration _all_dependencies_met will be called automatically
     if not self._dependencies:
       core.core.register(self._core_name, self)
     # Signals if need to skip dependency handling
-    self._standalone = standalone
+    self.standalone = standalone
     if standalone:
       # Skip setting up Event listeners
       # Initiate component manually also
@@ -57,27 +60,19 @@ class AbstractAPI(object):
       for dep in self._dependencies:
         setattr(self, dep, StandaloneHelper(self))
     else:
-      # Wait for the necessery POX component until they are resolved and set up
-      # event handlers. For this function event handler must follow the long
-      # naming
-      # convention: _handle_component_event(). The relevant components are
-      # registered on the API class by default with the name: <comp-name>.
-      # But for
-      # fail-safe operation, the dependencies are given explicitly which are
-      # defined
-      # in the actual API. See more in POXCore document.
+      # Wait for the necessery POX component until they are resolved and set
+      # up event handlers. For this function event handler must follow the
+      # long naming convention: _handle_component_event(). The relevant
+      # components are registered on the API class by default with the name:
+      # <comp-name>. But for fail-safe operation, the dependencies are given
+      # explicitly which are defined in the actual API. See more in POXCore
+      # document.
       core.core.listen_to_dependencies(self,
-        components = getattr(self, '_dependencies', ()), attrs = True,
-        short_attrs = True)
+                                       components=getattr(self, '_dependencies',
+                                         ()), attrs=True, short_attrs=True)
     # Subscribe for GoingDownEvent to finalize API classes
     # _shutdown function will be called if POX's core going down
     core.addListenerByName('GoingDownEvent', self._shutdown)
-
-  def initialize (self, *args, **kwargs):
-    """
-    Unique initialization steps. Should be overwritten by child classes.
-    """
-    pass
 
   def _all_dependencies_met (self):
     """
@@ -154,7 +149,7 @@ class RESTServer(object):
 
   def __init__ (self, address, port):
     self.server = HTTPServer((address, port), ESCAPERequestHandler)
-    self.thread = threading.Thread(target = self.run)
+    self.thread = threading.Thread(target=self.run)
     self.thread.daemon = True
     self.started = False
 
@@ -181,9 +176,7 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
   """
   server_version = "ESCAPE/" + __version__
   static_prefix = "escape"
-  escape_intf = {'GET': ('echo',),
-                 'POST': ('echo',),
-                 'PUT': ('echo',),
+  escape_intf = {'GET': ('echo',), 'POST': ('echo',), 'PUT': ('echo',),
                  'DELETE': ('echo',)}
 
   def do_GET (self):
@@ -224,12 +217,11 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
           if hasattr(self, func_name):
             getattr(self, func_name)()
         else:
-          self.send_error(404,
-            message = "Method not supported by ESCAPE!")
+          self.send_error(404, message="Method not supported by ESCAPE!")
       else:
         self.send_error(501)
     else:
-      self.send_error(400, message = "URL not recognized!")
+      self.send_error(400, message="URL not recognized!")
 
   def _parse_json_body (self):
     """
@@ -245,7 +237,7 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
         if len(splitted_type) > 1:
           charset = splitted_type[1]
         raw_data = self.rfile.read(int(self.headers['Content-Length']))
-        return json.loads(raw_data, encoding = charset)
+        return json.loads(raw_data, encoding=charset)
       except KeyError:
         # Content-Length header is not defined or charset is not defined in
         # Content-Type header. Return empty dictionary.
@@ -259,9 +251,8 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     """
     Overwritten to use POX logging mechanism
     """
-    log.warning("%s - - [%s] %s" % (self.client_address[0],
-                                    self.log_date_time_string(),
-                                    mformat % args))
+    log.warning("%s - - [%s] %s" % (
+      self.client_address[0], self.log_date_time_string(), mformat % args))
 
   def log_message (self, mformat, *args):
     """
@@ -273,19 +264,18 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     """
     Overwritten to use POX logging mechanism
     """
-    log.debug("%s - - [%s] %s" % (self.client_address[0],
-                                  self.log_date_time_string(),
-                                  mformat % args))
+    log.debug("%s - - [%s] %s" % (
+      self.client_address[0], self.log_date_time_string(), mformat % args))
 
   def echo (self):
     """
     Test function to REST-API
     """
     self.log_full_message("ECHO: %s - %s", self.raw_requestline,
-      self._parse_json_body())
+                          self._parse_json_body())
     self._send_json_response({'echo': True})
 
-  def _send_json_response (self, data, encoding = 'utf-8'):
+  def _send_json_response (self, data, encoding='utf-8'):
     """
     Send requested data in json format
     """
@@ -293,5 +283,5 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     self.send_header('Content-Type', 'text/json; charset=' + encoding)
     self.send_header('Content-Length', len(data))
     self.end_headers()
-    self.wfile.write(json.dumps(data, encoding = encoding))
+    self.wfile.write(json.dumps(data, encoding=encoding))
     return

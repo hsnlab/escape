@@ -43,7 +43,7 @@ class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
   # Dependencies
   _dependencies = ('adaptation',)
 
-  def __init__ (self, nffg_file = '', standalone = False):
+  def __init__ (self, standalone=False, **kwargs):
     """
     Initializations after this class is instantiated
     Call base class init explicitly because Python super() with multiple
@@ -51,9 +51,8 @@ class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
     special cases (such this case).
     """
     log.info("Initiating Resource Orchestration Layer...")
-    self.nffg_file = nffg_file
     EventMixin.__init__(self)
-    AbstractAPI.__init__(self, standalone = standalone)
+    AbstractAPI.__init__(self, standalone=standalone, **kwargs)
 
   def _all_dependencies_met (self):
     """

@@ -16,8 +16,8 @@ Long version with debugging and explicitly-defined components (analogous with ./
     ./pox.py --verbose log.level --DEBUG samples.pretty_log service_layer resource_orchestration_layer controller_adaptation_layer
 
 Start layers with graph-represented input contained in a specific file:
-    ./pox.py service_layer --sg=<path>
-    ./pox.py unify --sg=<path>
+    ./pox.py service_layer --sg_file=<path>
+    ./pox.py unify --sg_file=<path>
 
     ./pox.py resource_orchestration_layer --nffg_file=<path>
     ./pox.py controller_adaptation_layer --mapped_nffg_file=<path>
@@ -25,3 +25,10 @@ Start layers with graph-represented input contained in a specific file:
 Start ESCAPEv2 with built-in GUI:
     ./pox.py service_layer --gui ...
     ./pox.py unify --gui
+
+Start layer in standalone mode (no dependency handling) for test/debug
+    ./pox.py service_layer --standalone
+    ./pox.py resource_orchestration_layer --standalone
+    ./pox.py controller_adaptation_layer --standalone
+
+    ./pox.py service_layer controller_adaptation_layer --standalone
