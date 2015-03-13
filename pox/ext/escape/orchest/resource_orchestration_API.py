@@ -50,7 +50,7 @@ class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
     inheritance is tricky  and several base contructor are not called in some
     special cases (such this case).
     """
-    log.info("Initiating Resource Orchestration Layer...")
+    log.info("Starting Resource Orchestration Layer...")
     EventMixin.__init__(self)
     AbstractAPI.__init__(self, standalone=standalone, **kwargs)
 

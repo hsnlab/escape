@@ -137,9 +137,6 @@ class StandaloneHelper(object):
     return logger
 
 
-log = core.getLogger(SERVICE_LAYER_NAME + ' - REST-API')
-
-
 class RESTServer(object):
   """
   Base HTTP server for REST API
@@ -147,8 +144,8 @@ class RESTServer(object):
   Initiate an HTTPServer and run it in different thread
   """
 
-  def __init__ (self, address, port):
-    self.server = HTTPServer((address, port), ESCAPERequestHandler)
+  def __init__ (self, RequestHandlerClass, address, port):
+    self.server = HTTPServer((address, port), RequestHandlerClass)
     self.thread = threading.Thread(target=self.run)
     self.thread.daemon = True
     self.started = False
@@ -162,9 +159,10 @@ class RESTServer(object):
       self.server.shutdown()
 
   def run (self):
-    log.info("REST-API is initiated on %s:%d!" % self.server.server_address)
+    self.server.RequestHandlerClass.log.info(
+      "REST-API is initiated on %s:%d!" % self.server.server_address)
     self.server.serve_forever()
-    log.info("REST-API is shutting down...")
+    self.server.RequestHandlerClass.log.info("REST-API is shutting down...")
 
 
 class ESCAPERequestHandler(BaseHTTPRequestHandler):
@@ -174,10 +172,15 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
   Handle /escape/* URLs
   Method calling permitions represented in escape_intf dictionary
   """
+  # For HTTP Response messages
   server_version = "ESCAPE/" + __version__
   static_prefix = "escape"
+  # Bind HTTP verbs to UNIFY's API functions
   escape_intf = {'GET': ('echo',), 'POST': ('echo',), 'PUT': ('echo',),
                  'DELETE': ('echo',)}
+  # Logger for the actual Request handler
+  # Must define
+  log = core.getLogger(SERVICE_LAYER_NAME + ' - REST-API')
 
   def do_GET (self):
     """
@@ -251,7 +254,7 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     """
     Overwritten to use POX logging mechanism
     """
-    log.warning("%s - - [%s] %s" % (
+    self.log.warning("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
 
   def log_message (self, mformat, *args):
@@ -264,7 +267,7 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     """
     Overwritten to use POX logging mechanism
     """
-    log.debug("%s - - [%s] %s" % (
+    self.log.debug("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
 
   def echo (self):

@@ -33,7 +33,7 @@ def _start_layer (event):
 
 
 @poxutil.eval_args
-def launch (mapped_nffg_file = '', standalone = False):
+def launch (mapped_nffg_file='', standalone=False):
   global init_param
   init_param.update(locals())
   core.addListenerByName("UpEvent", _start_layer)

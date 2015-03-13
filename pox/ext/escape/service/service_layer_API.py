@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.util.api import AbstractAPI, RESTServer
+from escape.util.api import AbstractAPI, RESTServer, ESCAPERequestHandler
 from escape.service import LAYER_NAME
 from lib.revent.revent import EventMixin, Event
 import pox.core as core
@@ -50,7 +50,7 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
     inheritance is tricky  and several base contructor are not called in some
     special cases (such this case).
     """
-    log.info("Initiating Service Layer...")
+    log.info("Starting Service Layer...")
     EventMixin.__init__(self)
     AbstractAPI.__init__(self, standalone=standalone, **kwargs)
 
@@ -78,7 +78,7 @@ class ServiceLayerAPI(EventMixin, AbstractAPI):
     pass
 
   def _initiate_rest_api (self, address='localhost', port=8008):
-    self.api = RESTServer(address=address, port=port)
+    self.api = RESTServer(ESCAPERequestHandler, address, port)
     self.api.start()
 
   def _convert_json_to_sg (self, service_graph):

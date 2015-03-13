@@ -50,7 +50,7 @@ class ControllerAdaptationAPI(EventMixin, AbstractAPI):
     inheritance is tricky  and several base contructor are not called in some
     special cases (such this case).
     """
-    log.info("Initiating Controller Adaptation Layer...")
+    log.info("Starting Controller Adaptation Layer...")
     EventMixin.__init__(self)
     AbstractAPI.__init__(self, standalone=standalone, **kwargs)
 
