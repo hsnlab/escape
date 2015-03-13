@@ -13,7 +13,7 @@
 # limitations under the License.
 from escape.util.api import AbstractAPI
 from escape.orchest import LAYER_NAME
-from lib.revent.revent import EventMixin, Event
+from lib.revent.revent import Event
 import pox.core as core
 
 log = core.getLogger(LAYER_NAME)
@@ -29,7 +29,7 @@ class ResourceEvent(Event):
     super(ResourceEvent, self).__init__()
 
 
-class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
+class ResourceOrchestrationAPI(AbstractAPI):
   """
   Entry point for Resource Orchestration Sublayer
 
@@ -44,24 +44,18 @@ class ResourceOrchestrationAPI(EventMixin, AbstractAPI):
   _dependencies = ('adaptation',)
 
   def __init__ (self, standalone=False, **kwargs):
-    """
-    Initializations after this class is instantiated
-    Call base class init explicitly because Python super() with multiple
-    inheritance is tricky  and several base contructor are not called in some
-    special cases (such this case).
-    """
     log.info("Starting Resource Orchestration Layer...")
-    EventMixin.__init__(self)
-    AbstractAPI.__init__(self, standalone=standalone, **kwargs)
+    # Mandatory super() call
+    super(ResourceOrchestrationAPI, self).__init__(standalone=standalone,
+      **kwargs)
 
-  def _all_dependencies_met (self):
+  def initialize (self):
     """
     Called when every componenet on which depends are initialized and registered
-    in pox.core. Contain dependency relevant initialization
+    in pox.core. Contain actual initialization steps.
     """
     if self.nffg_file:
-      self._read_graph_from_file(self.nffg_file)
-    super(ResourceOrchestrationAPI, self)._all_dependencies_met()
+      self._read_json_from_file(self.nffg_file)
     log.info("Resource Orchestration Layer has been initialized!")
 
   def _shutdown (self, event):

@@ -13,7 +13,7 @@
 # limitations under the License.
 from escape.adapt import LAYER_NAME
 from escape.util.api import AbstractAPI
-from lib.revent.revent import EventMixin, Event
+from lib.revent.revent import Event
 import pox.core as core
 
 log = core.getLogger(LAYER_NAME)
@@ -29,7 +29,7 @@ class AdaptationEvent(Event):
     super(AdaptationEvent, self).__init__()
 
 
-class ControllerAdaptationAPI(EventMixin, AbstractAPI):
+class ControllerAdaptationAPI(AbstractAPI):
   """
   Entry point for Controller Adaptation Sublayer
 
@@ -44,25 +44,20 @@ class ControllerAdaptationAPI(EventMixin, AbstractAPI):
   # None
 
   def __init__ (self, standalone=False, **kwargs):
-    """
-    Initializations after this class is instantiated
-    Call base class init explicitly because Python super() with multiple
-    inheritance is tricky  and several base contructor are not called in some
-    special cases (such this case).
-    """
     log.info("Starting Controller Adaptation Layer...")
-    EventMixin.__init__(self)
-    AbstractAPI.__init__(self, standalone=standalone, **kwargs)
+    # Mandatory super() call
+    super(ControllerAdaptationAPI, self).__init__(standalone=standalone,
+      **kwargs)
 
-  def _all_dependencies_met (self):
+  def initialize (self):
     """
     Called when every componenet on which depends are initialized and registered
-    in pox.core. Contain dependency relevant initialization.
+    in pox.core. Contain actual initialization steps.
     """
     if self.mapped_nffg_file:
-      self._read_graph_from_file(self.mapped_nffg_file)
-    super(ControllerAdaptationAPI, self)._all_dependencies_met()
+      self._read_json_from_file(self.mapped_nffg_file)
     log.info("Controller Adaptation Layer has been initialized!")
+
 
   def _shutdown (self, event):
     log.info("Controller Adaptation Layer is going down...")
