@@ -116,6 +116,9 @@ class AbstractAPI(EventMixin):
     return graph
 
   def __str__ (self):
+    """
+    Print class type and non-private attributes with their types for debugging
+    """
     print '<%s.%s object at %s>' % (
       self.__class__.__module__, self.__class__.__name__, hex(id(self)))
     print "Non-private attributes:"
