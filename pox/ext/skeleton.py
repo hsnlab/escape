@@ -15,6 +15,7 @@
 """
 ESCAPEv2 layer skeleton
 """
+from escape.util.api import AbstractAPI
 
 from pox.core import core
 import pox.lib.util as poxutil
@@ -24,11 +25,25 @@ init_param = {}
 
 
 # noinspection PyUnusedLocal
+class SkeletonAPI(AbstractAPI):
+  def __init__ (self, standalone=False, **kwargs):
+    super(SkeletonAPI, self).__init__(standalone=standalone, **kwargs)
+
+  def initialize (self):
+    # Init here
+    pass
+
+  def unique_API_fuction (self):
+    # Define API functions here
+    pass
+
+
 def _start_layer (event):
   # Instantiate the API class and register into pox.core only once
   pass
   # Wait for the necessery POX component until they are resolved and set up
   # event handlers.
+  SkeletonAPI(**init_param)
 
 
 @poxutil.eval_args

@@ -34,8 +34,8 @@ class AbstractAPI(EventMixin):
   _core_name = "AbstractAPI"
   # Explicitly defined dependencies as POX componenents
   _dependencies = ()
-  # Events raised by this class
-  _eventMixin_events = set()
+  # Events raised by this class, but already defined in superclass
+  #_eventMixin_events = set()
 
   def __init__ (self, standalone=False, **kwargs):
     """
@@ -74,8 +74,8 @@ class AbstractAPI(EventMixin):
       # explicitly which are defined in the actual API. See more in POXCore
       # document.
       core.core.listen_to_dependencies(self,
-        components=getattr(self, '_dependencies', ()), attrs=True,
-        short_attrs=True)
+                                       components=getattr(self, '_dependencies',
+                                         ()), attrs=True, short_attrs=True)
     # Subscribe for GoingDownEvent to finalize API classes
     # _shutdown function will be called if POX's core going down
     core.addListenerByName('GoingDownEvent', self._shutdown)
@@ -176,13 +176,21 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
 
   Handle /escape/* URLs
   Method calling permitions represented in escape_intf dictionary
+
+  IMPORTANT!
+  This class is out of the context of the recoco's co-operative thread context!
+  While you don't need to worry much about synchronization between recoco
+  tasks, you do need to think about synchronization between recoco task and
+  normal threads.
+  Synchronisation is needed to take care manually or use relevant helper
+  function of core object: callLater/raiseLater etc.
   """
   # For HTTP Response messages
   server_version = "ESCAPE/" + __version__
   static_prefix = "escape"
   # Bind HTTP verbs to UNIFY's API functions
   escape_intf = {'GET': ('echo',), 'POST': ('echo',), 'PUT': ('echo',),
-    'DELETE': ('echo',)}
+                 'DELETE': ('echo',)}
   # Logger for the actual Request handler
   # Must define
   log = core.getLogger(SERVICE_LAYER_NAME + ' - REST-API')
@@ -280,7 +288,7 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     Test function to REST-API
     """
     self.log_full_message("ECHO: %s - %s", self.raw_requestline,
-      self._parse_json_body())
+                          self._parse_json_body())
     self._send_json_response({'echo': True})
 
   def _send_json_response (self, data, encoding='utf-8'):
