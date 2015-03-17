@@ -35,7 +35,7 @@ class AbstractAPI(EventMixin):
   # Explicitly defined dependencies as POX componenents
   _dependencies = ()
   # Events raised by this class, but already defined in superclass
-  #_eventMixin_events = set()
+  # _eventMixin_events = set()
 
   def __init__ (self, standalone=False, **kwargs):
     """
@@ -115,10 +115,19 @@ class AbstractAPI(EventMixin):
       graph = json.load(f)
     return graph
 
+  def __str__ (self):
+    print '<%s.%s object at %s>' % (
+      self.__class__.__module__, self.__class__.__name__, hex(id(self)))
+    print "Non-private attributes:"
+    import pprint
+
+    return pprint.pformat(
+      [(f, type(getattr(self, f))) for f in dir(self) if not f.startswith('_')])
+
 
 class StandaloneHelper(object):
   """
-  Represent a component on which an actual running component (stated in
+  Represent a component on which an actual running component (started in
   standalone mode) depends
 
   Catch and log every function call

@@ -33,8 +33,8 @@ class SkeletonAPI(AbstractAPI):
     # Init here
     pass
 
+  # Define API functions here
   def unique_API_fuction (self):
-    # Define API functions here
     pass
 
 

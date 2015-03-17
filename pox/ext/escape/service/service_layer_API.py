@@ -13,6 +13,8 @@
 # limitations under the License.
 from escape.util.api import AbstractAPI, RESTServer, ESCAPERequestHandler
 from escape.service import LAYER_NAME
+from escape.util.misc import schedule_as_coop_task
+from lib.recoco import Task
 from lib.revent.revent import Event
 import pox.core as core
 
@@ -78,8 +80,8 @@ class ServiceLayerAPI(AbstractAPI):
     pass
 
   def _initiate_rest_api (self, address='localhost', port=8008):
-    self.api = RESTServer(ESCAPERequestHandler, address, port)
-    self.api.start()
+    self.rest_api = RESTServer(ESCAPERequestHandler, address, port)
+    self.rest_api.start()
 
   def _convert_json_to_sg (self, service_graph):
     # TODO - need standard SG form to implement this
