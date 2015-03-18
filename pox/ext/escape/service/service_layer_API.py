@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.util.api import AbstractAPI, RESTServer, ESCAPERequestHandler
+from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.service import LAYER_NAME
 from escape.util.misc import schedule_as_coop_task
-from lib.recoco import Task
+from escape.util.nffg import NFFG
 from lib.revent.revent import Event
 import pox.core as core
 
@@ -58,8 +58,8 @@ class ServiceLayerAPI(AbstractAPI):
     if self.sg_file:
       try:
         graph_json = self._read_json_from_file(self.sg_file)
-        # TODO - handle return value self._convert_json_to_sg(graph)
-        self._convert_json_to_sg(graph_json)
+        # TODO - handle return value NFFG.init_from_json(graph_json)
+        NFFG.init_from_json(graph_json)
       except (ValueError, IOError, TypeError) as e:
         log.error(
           "Can't load graph representation from file because of: " + str(e))
@@ -70,23 +70,76 @@ class ServiceLayerAPI(AbstractAPI):
     self._initiate_rest_api(address='')
     log.info("Service Layer has been initialized!")
 
-  def _shutdown (self, event):
+  def shutdown (self, event):
     log.info("Service Layer is going down...")
-    if hasattr(self, 'api'):
-      self.api.stop()
+    if hasattr(self, 'rest_api'):
+      self.rest_api.stop()
 
   def _handle_orchestration_ResourceEvent (self, event):
     # palceholder for orchestration dependency
     pass
 
   def _initiate_rest_api (self, address='localhost', port=8008):
-    self.rest_api = RESTServer(ESCAPERequestHandler, address, port)
+    self.rest_api = RESTServer(ServiceRequestHandler, address, port)
     self.rest_api.start()
-
-  def _convert_json_to_sg (self, service_graph):
-    # TODO - need standard SG form to implement this
-    pass
 
   def _initiate_gui (self):
     # TODO - set up and initiate MiniEdit here
     pass
+
+  # UNIFY U - Sl API functions starts here
+
+  @schedule_as_coop_task
+  def request_service (self, sg):
+    """
+    Initiate service graph
+    :param sg service graph represented as NFFG instance
+    """
+    # Initiate service graph
+    # TODO
+    log.debug("Call request_service in %s with param: %s " % (
+      self.__class__.__name__, sg))
+    pass
+
+
+class ServiceRequestHandler(AbstractRequestHandler):
+  """
+  Request Handler for Service layer
+
+  IMPORTANT!
+  This class is out of the context of the recoco's co-operative thread context!
+  While you don't need to worry much about synchronization between recoco
+  tasks, you do need to think about synchronization between recoco task and
+  normal threads.
+  Synchronisation is needed to take care manually: use relevant helper
+  function of core object: callLater/raiseLater or use schedule_as_coop_task
+  decorator defined in util.misc on the called function
+  """
+  # Bind HTTP verbs to UNIFY's API functions
+  request_perm = {'GET': ('echo',), 'POST': ('echo', 'sg'), 'PUT': ('echo',),
+                  'DELETE': ('echo',)}
+  # Statically defined layer component to which this handler is bounded
+  bounded_layer = ServiceLayerAPI._core_name
+  # Logger. Must define
+  log = core.getLogger(str(bounded_layer) + "-REST-API")
+
+  # REST API call --> UNIFY U-Sl call
+
+  def echo (self):
+    """
+    Test function for REST-API
+    """
+    self.log_full_message("ECHO: %s - %s", self.raw_requestline,
+                          self._parse_json_body())
+    self._send_json_response({'echo': True})
+
+  def sg (self):
+    """
+    Initiate sg graph
+    Bounded to POST verb
+    """
+    self.log.debug("Call REST API function: sg")
+    body = self._parse_json_body()
+    self.log.debug("sg - Parsed input: %s" % body)
+    sg = NFFG.init_from_json(body)
+    self.proceed_API_call('request_service', sg)

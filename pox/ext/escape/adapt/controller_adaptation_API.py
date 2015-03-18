@@ -47,7 +47,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.info("Starting Controller Adaptation Layer...")
     # Mandatory super() call
     super(ControllerAdaptationAPI, self).__init__(standalone=standalone,
-      **kwargs)
+                                                  **kwargs)
 
   def initialize (self):
     """
@@ -59,6 +59,6 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.info("Controller Adaptation Layer has been initialized!")
 
 
-  def _shutdown (self, event):
+  def shutdown (self, event):
     log.info("Controller Adaptation Layer is going down...")
 

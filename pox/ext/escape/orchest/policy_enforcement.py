@@ -46,12 +46,12 @@ class PolicyEnforcementMetaClass(type):
   def __new__ (mcs, name, bases, attrs):
     for attr_name, attr_value in attrs.iteritems():
       if isinstance(attr_value,
-          types.FunctionType) and not attr_name.startswith('__'):
+                    types.FunctionType) and not attr_name.startswith('__'):
         if hasattr(PolicyEnforcement, attr_name):
           attrs[attr_name] = mcs.get_wrapper(attr_name, attr_value)
 
     return super(PolicyEnforcementMetaClass, mcs).__new__(mcs, name, bases,
-      attrs)
+                                                          attrs)
 
   @classmethod
   def get_wrapper (mcs, func_name, orig_func):

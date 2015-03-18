@@ -47,7 +47,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.info("Starting Resource Orchestration Layer...")
     # Mandatory super() call
     super(ResourceOrchestrationAPI, self).__init__(standalone=standalone,
-      **kwargs)
+                                                   **kwargs)
 
   def initialize (self):
     """
@@ -58,7 +58,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       self._read_json_from_file(self.nffg_file)
     log.info("Resource Orchestration Layer has been initialized!")
 
-  def _shutdown (self, event):
+  def shutdown (self, event):
     log.info("Resource Orchestration Layer is going down...")
 
   def _handle_adaptation_AdaptationEvent (self, event):

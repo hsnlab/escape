@@ -19,7 +19,6 @@ import threading
 import weakref
 
 from escape import __version__
-from escape.service import LAYER_NAME as SERVICE_LAYER_NAME
 from lib.revent import EventMixin
 from pox.core import core
 
@@ -73,12 +72,14 @@ class AbstractAPI(EventMixin):
       # <comp-name>. But for fail-safe operation, the dependencies are given
       # explicitly which are defined in the actual API. See more in POXCore
       # document.
-      core.core.listen_to_dependencies(self,
-                                       components=getattr(self, '_dependencies',
-                                         ()), attrs=True, short_attrs=True)
+      # core.core.listen_to_dependencies(self,
+      # components=getattr(self, '_dependencies',
+      # ()), attrs=True, short_attrs=True)
+
+      core.core.listen_to_dependencies(self, getattr(self, '_dependencies', ()))
     # Subscribe for GoingDownEvent to finalize API classes
     # _shutdown function will be called if POX's core going down
-    core.addListenerByName('GoingDownEvent', self._shutdown)
+    core.addListenerByName('GoingDownEvent', self.shutdown)
 
   def _all_dependencies_met (self):
     """
@@ -101,7 +102,7 @@ class AbstractAPI(EventMixin):
     """
     pass
 
-  def _shutdown (self, event):
+  def shutdown (self, event):
     """
     Finalization, deallocation, etc. of actual component
     Should be overwritten by child classes
@@ -134,6 +135,7 @@ class StandaloneHelper(object):
   standalone mode) depends
 
   Catch and log every function call
+  Not used in case of fully event-driven inter-layer communication
   """
 
   def __init__ (self, container):
@@ -178,13 +180,15 @@ class RESTServer(object):
   def run (self):
     self.server.RequestHandlerClass.log.info(
       "REST-API is initiated on %s:%d!" % self.server.server_address)
+    # Start API loop
     self.server.serve_forever()
-    self.server.RequestHandlerClass.log.info("REST-API is shutting down...")
+    self.server.RequestHandlerClass.log.info(
+      "REST-API on %s:%d is shutting down..." % self.server.server_address)
 
 
-class ESCAPERequestHandler(BaseHTTPRequestHandler):
+class AbstractRequestHandler(BaseHTTPRequestHandler):
   """
-  Minimalistic REST API for Service Layer
+  Minimalistic REST API for Layer APIs
 
   Handle /escape/* URLs
   Method calling permitions represented in escape_intf dictionary
@@ -194,18 +198,19 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
   While you don't need to worry much about synchronization between recoco
   tasks, you do need to think about synchronization between recoco task and
   normal threads.
-  Synchronisation is needed to take care manually or use relevant helper
-  function of core object: callLater/raiseLater etc.
+  Synchronisation is needed to take care manually: use relevant helper
+  function of core object: callLater/raiseLater or use schedule_as_coop_task
+  decorator defined in util.misc on the called function
   """
   # For HTTP Response messages
   server_version = "ESCAPE/" + __version__
   static_prefix = "escape"
   # Bind HTTP verbs to UNIFY's API functions
-  escape_intf = {'GET': ('echo',), 'POST': ('echo',), 'PUT': ('echo',),
-                 'DELETE': ('echo',)}
-  # Logger for the actual Request handler
-  # Must define
-  log = core.getLogger(SERVICE_LAYER_NAME + ' - REST-API')
+  request_perm = {'GET': (), 'POST': (), 'PUT': (), 'DELETE': ()}
+  # Name of the layer API to which the server bounded
+  bounded_layer = None
+  # Logger. Should be overdefined in child classes
+  log = core.getLogger("REST-API")
 
   def do_GET (self):
     """
@@ -234,14 +239,14 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
   def process_url (self):
     """
     Split HTTP path and call the carved function
-    if it is defined in this class and in escape_intf
+    if it is defined in this class and in request_perm
     """
     http_method = self.command.upper()
     real_path = urlparse.urlparse(self.path).path
     if real_path.startswith('/%s/' % self.static_prefix):
       func_name = real_path.split('/')[2]
-      if http_method in self.escape_intf:
-        if func_name in self.escape_intf[http_method]:
+      if http_method in self.request_perm:
+        if func_name in self.request_perm[http_method]:
           if hasattr(self, func_name):
             getattr(self, func_name)()
         else:
@@ -258,22 +263,33 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     GET, DELETE messages don't contain parameters - Return empty dict by default
     """
     charset = 'utf-8'
-    # For fail-safe
-    if self.command not in ('GET', 'DELETE'):
-      try:
-        splitted_type = self.headers['Content-Type'].split('charset=')
-        if len(splitted_type) > 1:
-          charset = splitted_type[1]
-        raw_data = self.rfile.read(int(self.headers['Content-Length']))
-        return json.loads(raw_data, encoding=charset)
-      except KeyError:
-        # Content-Length header is not defined or charset is not defined in
-        # Content-Type header. Return empty dictionary.
-        pass
-      except ValueError as e:
-        # Failed to parse request body to JSON
-        self.log_error("Request parsing failed: %s", e)
+    try:
+      splitted_type = self.headers['Content-Type'].split('charset=')
+      if len(splitted_type) > 1:
+        charset = splitted_type[1]
+      content_len = int(self.headers.getheader('Content-Length', 0))
+      raw_data = self.rfile.read(content_len)
+      return json.loads(raw_data, encoding=charset)
+    except KeyError:
+      # Content-Length header is not defined or charset is not defined in
+      # Content-Type header. Return empty dictionary.
+      pass
+    except ValueError as e:
+      # Failed to parse request body to JSON
+      self.log_error("Request parsing failed: %s", e)
     return {}
+
+  def _send_json_response (self, data, encoding='utf-8'):
+    """
+    Send requested data in json format
+    """
+    response_body = json.dumps(data, encoding=encoding)
+    self.send_response(200)
+    self.send_header('Content-Type', 'text/json; charset=' + encoding)
+    self.send_header('Content-Length', len(response_body))
+    self.end_headers()
+    self.wfile.write(response_body)
+    return
 
   def log_error (self, mformat, *args):
     """
@@ -284,7 +300,7 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
 
   def log_message (self, mformat, *args):
     """
-    Disable logging incoming messages by default
+    Disable logging of incoming messages
     """
     pass
 
@@ -295,21 +311,20 @@ class ESCAPERequestHandler(BaseHTTPRequestHandler):
     self.log.debug("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
 
-  def echo (self):
+  def proceed_API_call (self, function, *args, **kwargs):
     """
-    Test function to REST-API
+    Fail-safe method to call API function
+    The cooperative microtask context is handled by actual APIs
+    Should call this with params, not directly the function of actual API
     """
-    self.log_full_message("ECHO: %s - %s", self.raw_requestline,
-                          self._parse_json_body())
-    self._send_json_response({'echo': True})
-
-  def _send_json_response (self, data, encoding='utf-8'):
-    """
-    Send requested data in json format
-    """
-    self.send_response(200)
-    self.send_header('Content-Type', 'text/json; charset=' + encoding)
-    self.send_header('Content-Length', len(data))
-    self.end_headers()
-    self.wfile.write(json.dumps(data, encoding=encoding))
-    return
+    if core.core.hasComponent(self.bounded_layer):
+      layer = core.components[self.bounded_layer]
+      if hasattr(layer, function):
+        getattr(layer, function)(*args, **kwargs)
+      else:
+        # raise NotImplementedError()
+        self.log.warning(
+          'Mistyped or not implemented API function call: %s ' % function)
+    else:
+      self.log.error('Error: No componenet has registered with the name: %s, '
+                     'ABORT function call!' % self.bounded_layer)
