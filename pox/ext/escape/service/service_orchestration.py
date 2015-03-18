@@ -22,13 +22,31 @@ class ServiceOrchestrator(object):
     pass
 
 
-class SGManager():
+class SGManager(object):
   """
   Store, handle and organize Service Graphs
+
+  Currently it just stores SGs in one central place
   """
+  service_graphs = dict()
 
   def __init__ (self):
-    pass
+    super(SGManager, self).__init__()
+
+  def save (self, sg):
+    """
+    Save SG in a dict
+    :return computed id of givven SG
+    """
+    graph_id = len(self.service_graphs)
+    self.service_graphs[graph_id] = sg
+    return graph_id
+
+  def get (self, graph_id):
+    """
+    Return service graph with given id
+    """
+    return self.service_graphs[graph_id]
 
 
 class VirtualResourceManager(object):

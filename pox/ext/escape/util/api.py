@@ -28,6 +28,7 @@ class AbstractAPI(EventMixin):
   Abstract class for UNIFY's API
 
   Contain common functions
+  Follows Facade design pattern
   """
   # Default value for logger. Should be overwritten by child classes
   _core_name = "AbstractAPI"

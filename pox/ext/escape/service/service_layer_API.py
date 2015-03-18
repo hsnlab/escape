@@ -99,7 +99,6 @@ class ServiceLayerAPI(AbstractAPI):
     # TODO
     log.debug("Call request_service in %s with param: %s " % (
       self.__class__.__name__, sg))
-    pass
 
 
 class ServiceRequestHandler(AbstractRequestHandler):
@@ -141,5 +140,5 @@ class ServiceRequestHandler(AbstractRequestHandler):
     self.log.debug("Call REST API function: sg")
     body = self._parse_json_body()
     self.log.debug("sg - Parsed input: %s" % body)
-    sg = NFFG.init_from_json(body)
+    sg = NFFG.init_from_json(body)  # Convert text based SG to object instance
     self.proceed_API_call('request_service', sg)

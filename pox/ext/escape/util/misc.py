@@ -16,8 +16,9 @@ from pox.core import core
 
 def schedule_as_coop_task (func):
   """
-  Decorator for fuctions to run in an asynchronous way as a microtask in
-  recoco's cooperative multitasking context (in wich POX was written)
+  Decorator fuctions for running functions in an asynchronous way as a
+  microtask in recoco's cooperative multitasking context (in wich POX was
+  written)
   """
 
   def decorator (*args, **kwargs):
