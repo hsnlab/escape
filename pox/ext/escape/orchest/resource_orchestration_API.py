@@ -14,7 +14,7 @@
 from escape.util.api import AbstractAPI
 from escape.orchest import LAYER_NAME
 from escape.orchest import log as log  # Orchestration layer logger
-from lib.revent.revent import Event
+from pox.lib.revent.revent import Event
 
 
 class ResourceEvent(Event):

@@ -14,7 +14,7 @@
 from escape.util.api import AbstractAPI
 from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
-from lib.revent.revent import Event
+from pox.lib.revent.revent import Event
 
 
 class AdaptationEvent(Event):

@@ -17,7 +17,7 @@ from escape.util.nffg import NFFG
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.service_orchestration import ServiceOrchestrator
-from lib.revent.revent import Event
+from pox.lib.revent.revent import Event
 
 
 class SGMappingFinishedEvent(Event):
@@ -100,7 +100,7 @@ class ServiceLayerAPI(AbstractAPI):
     log.info("Invoke request_service on Service layer with param: %s " % sg)
     nffg = self.service_orchestrator.initiate_service_graph(sg)
     # Sending mapped SG / NF-FG to Orchestration layer
-    self.raiseEventNoErrors(SGMappingFinishedEvent(nffg))
+    self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
     log.info("Mapped SG has been sended to Orchestration layer")
 
 
