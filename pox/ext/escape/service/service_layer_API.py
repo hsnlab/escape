@@ -12,23 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
-from escape.service import LAYER_NAME
 from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
+from escape.service import LAYER_NAME
+from escape.service import log as log  # Service layer logger
+from escape.service.service_orchestration import ServiceOrchestrator
 from lib.revent.revent import Event
-import pox.core as core
-
-log = core.getLogger(LAYER_NAME)
 
 
-class ServiceEvent(Event):
+class SGMappingFinishedEvent(Event):
   """
-  Dummy event to force dependency checking working
-  Should/Will be removed shortly!
+  Event for passing NFFG (mapped SG) to Orchestration layer
   """
 
-  def __init__ (self):
-    super(ServiceEvent, self).__init__()
+  def __init__ (self, nffg):
+    super(SGMappingFinishedEvent, self).__init__()
+    self.nffg = nffg
+
+  @property
+  def nffg (self):
+    return self.nffg
 
 
 class ServiceLayerAPI(AbstractAPI):
@@ -41,7 +44,7 @@ class ServiceLayerAPI(AbstractAPI):
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {ServiceEvent}
+  _eventMixin_events = {SGMappingFinishedEvent}
   # Dependencies
   _dependencies = ('orchestration',)
 
@@ -55,19 +58,25 @@ class ServiceLayerAPI(AbstractAPI):
     Called when every componenet on which depends are initialized and registered
     in pox.core. Contain actual initialization steps.
     """
+    # Init central object of Service layer
+    self.service_orchestrator = ServiceOrchestrator()
+    # Read input from file if it's given and initiate SG
     if self.sg_file:
       try:
         graph_json = self._read_json_from_file(self.sg_file)
-        # TODO - handle return value NFFG.init_from_json(graph_json)
-        NFFG.init_from_json(graph_json)
+        sg_graph = NFFG.init_from_json(graph_json)
+        self.request_service(sg_graph)
       except (ValueError, IOError, TypeError) as e:
         log.error(
           "Can't load graph representation from file because of: " + str(e))
       else:
         log.info("Graph representation is loaded sucessfully!")
+    else:
+      # Init REST-API if no input file is given
+      self._initiate_rest_api(address='')
+    # Init GUI
     if self.gui:
       self._initiate_gui()
-    self._initiate_rest_api(address='')
     log.info("Service Layer has been initialized!")
 
   def shutdown (self, event):
@@ -93,12 +102,15 @@ class ServiceLayerAPI(AbstractAPI):
   def request_service (self, sg):
     """
     Initiate service graph
-    :param sg service graph represented as NFFG instance
+
+    :param sg: service graph represented as NFFG instance
     """
-    # Initiate service graph
-    # TODO
-    log.debug("Call request_service in %s with param: %s " % (
+    log.info("Call request_service in %s with param: %s " % (
       self.__class__.__name__, sg))
+    mapped_graph = self.service_orchestrator.initiate_service_graph(sg)
+    # Sending mapped_graph to Orchestration layer
+    self.raiseEvent("SGMappingFinishedEvent", mapped_graph)
+    log.info("Mapped SG has been sended to Orchestration layer")
 
 
 class ServiceRequestHandler(AbstractRequestHandler):
@@ -120,7 +132,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
   # Statically defined layer component to which this handler is bounded
   bounded_layer = ServiceLayerAPI._core_name
   # Logger. Must define
-  log = core.getLogger(str(bounded_layer) + "-REST-API")
+  log = log.getChild("REST-API")
 
   # REST API call --> UNIFY U-Sl call
 
@@ -137,8 +149,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
     Initiate sg graph
     Bounded to POST verb
     """
-    self.log.debug("Call REST API function: sg")
+    log.getChild("REST-API").debug("Call REST API function: sg")
     body = self._parse_json_body()
-    self.log.debug("sg - Parsed input: %s" % body)
+    log.getChild("REST-API").debug("sg - Parsed input: %s" % body)
     sg = NFFG.init_from_json(body)  # Convert text based SG to object instance
     self.proceed_API_call('request_service', sg)

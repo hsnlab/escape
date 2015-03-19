@@ -14,6 +14,7 @@
 
 from escape.orchest.mapping_strategy import AbstractMappingStrategy
 from escape.orchest.nffg_mapping import AbstractMapper
+from escape.service import log as log
 
 
 class ServiceGraphMapper(AbstractMapper):
@@ -21,8 +22,14 @@ class ServiceGraphMapper(AbstractMapper):
   Helper class for mapping Service Graph to NFFG
   """
 
-  def __init__ (self):
-    super(ServiceGraphMapper, self).__init__()
+  def __init__ (self, strategy=DefaultServiceMappingStrategy):
+    super(ServiceGraphMapper, self).__init__(strategy)
+
+  def orchestrate (self, input_graph, resource_view):
+    log.info("Invoke Service Graph mapper to start ")
+    # Steps before mapping (optional)
+    # Run actual mapping algoritm
+    return self.strategy.map()
 
 
 class DefaultServiceMappingStrategy(AbstractMappingStrategy):
@@ -32,3 +39,14 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
 
   def __init__ (self):
     super(DefaultServiceMappingStrategy, self).__init__()
+
+  @classmethod
+  def map (cls, graph, resource):
+    """
+
+    :param graph:
+    :param resource:
+    :return:
+    """
+    # TODO implement
+    pass

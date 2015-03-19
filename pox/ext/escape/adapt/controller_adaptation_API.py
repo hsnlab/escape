@@ -11,12 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.adapt import LAYER_NAME
 from escape.util.api import AbstractAPI
+from escape.adapt import LAYER_NAME
+from escape.adapt import log as log  # Adaptation layer logger
 from lib.revent.revent import Event
-import pox.core as core
-
-log = core.getLogger(LAYER_NAME)
 
 
 class AdaptationEvent(Event):
@@ -57,7 +55,6 @@ class ControllerAdaptationAPI(AbstractAPI):
     if self.mapped_nffg_file:
       self._read_json_from_file(self.mapped_nffg_file)
     log.info("Controller Adaptation Layer has been initialized!")
-
 
   def shutdown (self, event):
     log.info("Controller Adaptation Layer is going down...")

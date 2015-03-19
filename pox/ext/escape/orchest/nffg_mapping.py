@@ -20,8 +20,18 @@ class AbstractMapper(object):
   Contain common functions and initialization
   """
 
-  def __init__ (self):
-    pass
+  def __init__ (self, strategy):
+    super(AbstractMapper, self).__init__()
+    self.strategy = strategy
+
+  def orchestrate(self, input_graph, resource_view):
+    """
+
+    :param input_graph:
+    :param resource_view:
+    :return:
+    """
+    raise NotImplementedError("Derived class must override this function!")
 
 
 class ResourceOrchestrationMapper(AbstractMapper):
@@ -31,5 +41,8 @@ class ResourceOrchestrationMapper(AbstractMapper):
   Use the given mapping strategy
   """
 
-  def __init__ (self):
-    super(ResourceOrchestrationMapper, self).__init__()
+  def orchestrate (self, input_graph, resource_view):
+    pass
+
+  def __init__ (self, strategy):
+    super(ResourceOrchestrationMapper, self).__init__(strategy)

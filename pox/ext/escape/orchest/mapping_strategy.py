@@ -23,6 +23,16 @@ class AbstractMappingStrategy(object):
   def __init__ (self):
     pass
 
+  @classmethod
+  def map (cls, graph, resource):
+    """
+
+    :param graph:
+    :param resource:
+    :return:
+    """
+    raise NotImplementedError("Derived class must override this function!")
+
 
 class ESCAPEMappingStrategy(AbstractMappingStrategy):
   """
@@ -31,3 +41,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
 
   def __init__ (self):
     super(ESCAPEMappingStrategy, self).__init__()
+
+  @classmethod
+  def map (cls, graph, resource):
+    pass
+

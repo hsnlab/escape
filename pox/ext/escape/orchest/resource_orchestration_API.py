@@ -13,10 +13,8 @@
 # limitations under the License.
 from escape.util.api import AbstractAPI
 from escape.orchest import LAYER_NAME
+from escape.orchest import log as log  # Orchestration layer logger
 from lib.revent.revent import Event
-import pox.core as core
-
-log = core.getLogger(LAYER_NAME)
 
 
 class ResourceEvent(Event):

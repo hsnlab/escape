@@ -15,4 +15,7 @@
 """
 Subpackage for classes related to UNIFY's Resource Orchestration sublayer
 """
+from pox.core import core
+
 LAYER_NAME = "orchestration"
+log = core.getLogger(LAYER_NAME)

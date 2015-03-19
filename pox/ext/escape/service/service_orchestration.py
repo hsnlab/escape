@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from escape.service.service_mapping import ServiceGraphMapper
+from escape.util.nffg import NFFG
+from escape.service import log as log
 
 
 class ServiceOrchestrator(object):
@@ -19,7 +22,19 @@ class ServiceOrchestrator(object):
   """
 
   def __init__ (self):
-    pass
+    super(ServiceOrchestrator, self).__init__()
+    self.sg_manager = SGManager()
+    self.virt_res_manager = VirtualResourceManager()
+    self.sg_mapper = ServiceGraphMapper()
+
+  def initiate_service_graph (self, sg):
+    log.info("Invoke Service Orchestrator component to handle given SG")
+    # Store newly created SG
+    self.sg_manager.save(sg)
+    # Get virtual resource info
+    virt_resource = self.virt_res_manager.get_virtual_resouce_info()
+    # Run mapping algoritm
+    return self.sg_mapper.orchestrate(sg, virt_resource)
 
 
 class SGManager(object):
@@ -36,10 +51,13 @@ class SGManager(object):
   def save (self, sg):
     """
     Save SG in a dict
-    :return computed id of givven SG
+
+    :param sg:
+    :return: computed id of given SG
     """
     graph_id = len(self.service_graphs)
     self.service_graphs[graph_id] = sg
+    log.info("SG is saved by SGManager")
     return graph_id
 
   def get (self, graph_id):
@@ -56,7 +74,12 @@ class VirtualResourceManager(object):
   """
 
   def __init__ (self):
-    pass
+    super(VirtualResourceManager, self).__init__()
+
+  def get_virtual_resouce_info (self):
+    log.info("Requesting virtual resource info")
+    # TODO - implement
+    return NFFG()
 
 
 class NFIBManager(object):
@@ -65,4 +88,4 @@ class NFIBManager(object):
   """
 
   def __init__ (self):
-    pass
+    super(NFIBManager, self).__init__()

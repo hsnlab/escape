@@ -89,12 +89,12 @@ class AbstractAPI(EventMixin):
     Actual APIs have to call this base function as last function call to handle
     core registration
     """
-    self.initialize()
     # If there are dependent component, this function will be called after all
     # the dependency has been registered. In this case register this component
     # as the last step.
     if self._dependencies:
       core.core.register(self._core_name, self)
+    self.initialize()
 
   def initialize (self):
     """

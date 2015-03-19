@@ -15,4 +15,7 @@
 """
 Subpackage for classes related mostly to Service (Graph) Adaptation sublayer
 """
+from pox.core import core
+
 LAYER_NAME = "service"
+log = core.getLogger(LAYER_NAME)

@@ -15,4 +15,7 @@
 """
 Sublayer for classes related to UNIFY's Controller Adaptation sublayer
 """
+from pox.core import core
+
 LAYER_NAME = "adaptation"
+log = core.getLogger(LAYER_NAME)

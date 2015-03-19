@@ -24,7 +24,6 @@ import pox.lib.util as poxutil
 init_param = {}
 
 
-# noinspection PyUnusedLocal
 class SkeletonAPI(AbstractAPI):
   def __init__ (self, standalone=False, **kwargs):
     super(SkeletonAPI, self).__init__(standalone=standalone, **kwargs)
