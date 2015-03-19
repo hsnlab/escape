@@ -29,10 +29,6 @@ class SGMappingFinishedEvent(Event):
     super(SGMappingFinishedEvent, self).__init__()
     self.nffg = nffg
 
-  @property
-  def nffg (self):
-    return self.nffg
-
 
 class ServiceLayerAPI(AbstractAPI):
   """
@@ -84,10 +80,6 @@ class ServiceLayerAPI(AbstractAPI):
     if hasattr(self, 'rest_api'):
       self.rest_api.stop()
 
-  def _handle_orchestration_ResourceEvent (self, event):
-    # palceholder for orchestration dependency
-    pass
-
   def _initiate_rest_api (self, address='localhost', port=8008):
     self.rest_api = RESTServer(ServiceRequestHandler, address, port)
     self.rest_api.start()
@@ -103,13 +95,12 @@ class ServiceLayerAPI(AbstractAPI):
     """
     Initiate service graph
 
-    :param sg: service graph represented as NFFG instance
+    :param sg: service graph represented as NF-FG instance
     """
-    log.info("Call request_service in %s with param: %s " % (
-      self.__class__.__name__, sg))
-    mapped_graph = self.service_orchestrator.initiate_service_graph(sg)
-    # Sending mapped_graph to Orchestration layer
-    self.raiseEvent("SGMappingFinishedEvent", mapped_graph)
+    log.info("Invoke request_service on Service layer with param: %s " % sg)
+    nffg = self.service_orchestrator.initiate_service_graph(sg)
+    # Sending mapped SG / NF-FG to Orchestration layer
+    self.raiseEventNoErrors(SGMappingFinishedEvent(nffg))
     log.info("Mapped SG has been sended to Orchestration layer")
 
 

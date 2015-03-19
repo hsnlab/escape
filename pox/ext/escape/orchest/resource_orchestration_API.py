@@ -59,6 +59,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def shutdown (self, event):
     log.info("Resource Orchestration Layer is going down...")
 
-  def _handle_adaptation_AdaptationEvent (self, event):
-    # placeholder for adaptation dependency
-    pass
+  def _handle_SGMappingFinishedEvent(self, event):
+    # Got mapped SG
+    # TODO - implement
+    log.info("Received Network Function Forwarding Graph from Service layer")

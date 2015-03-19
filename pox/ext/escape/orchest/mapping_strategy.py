@@ -21,7 +21,7 @@ class AbstractMappingStrategy(object):
   """
 
   def __init__ (self):
-    pass
+    super(AbstractMappingStrategy, self).__init__()
 
   @classmethod
   def map (cls, graph, resource):

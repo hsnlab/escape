@@ -16,6 +16,9 @@
 class NFFG(object):
   def __init__ (self):
     super(NFFG, self).__init__()
+    self.id = None
+    # TODO - implement
+    self.error = "NotImplemented"
 
   @staticmethod
   def init_from_json (json):
@@ -23,11 +26,11 @@ class NFFG(object):
     TODO
     """
     # TODO - implement! This function has already used in layer APIs
-    return {"error": "NotImplemented"}
+    return NFFG()
 
   def __str__ (self):
     # TODO - implement for debug logging, need to be compact but easy to read
-    pass
+    return str(self.__dict__)
 
   def __repr__ (self):
     # TODO - implement for debug logging and for check in interactive console
