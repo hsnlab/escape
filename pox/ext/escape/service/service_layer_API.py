@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import inspect
+
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
@@ -97,11 +99,14 @@ class ServiceLayerAPI(AbstractAPI):
 
     :param sg: service graph represented as NF-FG instance
     """
-    log.info("Invoke request_service on Service layer with param: %s " % sg)
+    log.info("Invoke request_service on %s with SG: %s " % (
+      self.__class__.__name__, sg))
     nffg = self.service_orchestrator.initiate_service_graph(sg)
+    log.info(
+      "Invoked request_service on %s is finished" % self.__class__.__name__)
     # Sending mapped SG / NF-FG to Orchestration layer
     self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
-    log.info("Mapped SG has been sended to Orchestration layer")
+    log.info("Generated NF-FG has been sent to Orchestration")
 
 
 class ServiceRequestHandler(AbstractRequestHandler):
@@ -140,8 +145,9 @@ class ServiceRequestHandler(AbstractRequestHandler):
     Initiate sg graph
     Bounded to POST verb
     """
-    log.getChild("REST-API").debug("Call REST API function: sg")
+    log.getChild("REST-API").debug("Call REST-API function: %s" % (
+      inspect.currentframe().f_back.f_code.co_name,))
     body = self._parse_json_body()
-    log.getChild("REST-API").debug("sg - Parsed input: %s" % body)
+    log.getChild("REST-API").debug("Parsed input: %s" % body)
     sg = NFFG.init_from_json(body)  # Convert text based SG to object instance
     self.proceed_API_call('request_service', sg)

@@ -242,6 +242,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     Split HTTP path and call the carved function
     if it is defined in this class and in request_perm
     """
+    self.log.debug("Got HTTP request: %s" % str(self.raw_requestline).rstrip())
     http_method = self.command.upper()
     real_path = urlparse.urlparse(self.path).path
     if real_path.startswith('/%s/' % self.static_prefix):
@@ -251,11 +252,11 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
           if hasattr(self, func_name):
             getattr(self, func_name)()
         else:
-          self.send_error(404, message="Method not supported by ESCAPE!")
+          self.send_error(405)
       else:
         self.send_error(501)
     else:
-      self.send_error(400, message="URL not recognized!")
+      self.send_error(404)
 
   def _parse_json_body (self):
     """
