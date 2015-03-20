@@ -73,11 +73,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
     :param event: event object contains NF-FG
     """
-    log.info("Received Network Function Forwarding Graph from Service layer")
-    log.info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
+    log.getChild('API').info("Received NF-FG from Service layer")
+    log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, event.nffg))
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(event.nffg)
-    log.debug(
+    log.getChild('API').debug(
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
     self.raiseEventNoErrors(NFFGMappingFinishedEvent, mapped_nffg)
-    log.info("Mapped NF-FG has been sent to Adaptation...")
+    log.getChild('API').info("Mapped NF-FG has been sent to Adaptation...")

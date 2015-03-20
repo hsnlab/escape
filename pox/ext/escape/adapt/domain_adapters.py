@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from escape.adapt import log as log
 
 
-class AbstractAdapter(object):
+class AbstractDomainAdapter(object):
   """
   Abstract class for different domain adapters
 
@@ -21,31 +22,34 @@ class AbstractAdapter(object):
   """
 
   def __init__ (self):
-    pass
+    super(AbstractDomainAdapter, self).__init__()
 
 
-class MininetDomainAdapter(AbstractAdapter):
+class MininetDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with Mininet
   """
 
   def __init__ (self):
     super(MininetDomainAdapter, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
 
 
-class POXControllerAdapter(AbstractAdapter):
+class POXDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with POX OpenFlow controller
   """
 
   def __init__ (self):
-    super(POXControllerAdapter, self).__init__()
+    super(POXDomainAdapter, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
 
 
-class OpenStackDomainAdapter(AbstractAdapter):
+class OpenStackDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with OpenStack
   """
 
   def __init__ (self):
     super(OpenStackDomainAdapter, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)

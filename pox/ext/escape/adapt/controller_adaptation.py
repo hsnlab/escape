@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from escape.orchest.virtualization_management import AbstractVirtualizer
+from escape.adapt.domain_adapters import POXDomainAdapter, MininetDomainAdapter
+from escape.adapt import log as log
 
 
 class ControllerAdapter(object):
@@ -21,7 +22,18 @@ class ControllerAdapter(object):
   """
 
   def __init__ (self):
-    pass
+    super(ControllerAdapter, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
+    self.pox = POXDomainAdapter()
+    self.mininet = MininetDomainAdapter()
+
+  def install_nffg (self, mapped_nffg):
+    """
+    Start NF-FG installation
+    """
+    log.debug("Invoke %s to install NF-FG" % self.__class__.__name__)
+    # TODO - implement
+    log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
 
 
 class DomainVirtualizer(AbstractVirtualizer):
@@ -33,6 +45,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   def __init__ (self):
     super(DomainVirtualizer, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
 
 
 class DomainResourceManager(object):
@@ -41,4 +54,5 @@ class DomainResourceManager(object):
   """
 
   def __init__ (self):
-    pass
+    super(DomainResourceManager, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)

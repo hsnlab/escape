@@ -13,12 +13,12 @@
 # limitations under the License.
 import inspect
 
-from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
-from escape.util.misc import schedule_as_coop_task
-from escape.util.nffg import NFFG
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.service_orchestration import ServiceOrchestrator
+from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
+from escape.util.misc import schedule_as_coop_task
+from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
 
@@ -100,14 +100,15 @@ class ServiceLayerAPI(AbstractAPI):
 
     :param sg: service graph instance
     """
-    log.info("Invoke request_service on %s with SG: %s " % (
+    log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
       self.__class__.__name__, sg))
     nffg = self.service_orchestrator.initiate_service_graph(sg)
-    log.debug(
+    log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # Sending mapped SG / NF-FG to Orchestration layer
     self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
-    log.info("Generated NF-FG has been sent to Orchestration...")
+    log.getChild('API').info(
+      "Generated NF-FG has been sent to Orchestration...")
 
 
 class ServiceRequestHandler(AbstractRequestHandler):

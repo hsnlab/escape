@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.util.api import AbstractAPI
 from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
+from escape.adapt.controller_adaptation import ControllerAdapter
+from escape.util.api import AbstractAPI
+from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event
 
 
@@ -53,6 +55,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     in pox.core. Contain actual initialization steps.
     """
     log.debug("Initializing Controller Adaptation Layer...")
+    self.controller_adapter = ControllerAdapter()
     if self.mapped_nffg_file:
       self._read_json_from_file(self.mapped_nffg_file)
     log.info("Controller Adaptation Layer has been initialized!")
@@ -60,3 +63,16 @@ class ControllerAdaptationAPI(AbstractAPI):
   def shutdown (self, event):
     log.info("Controller Adaptation Layer is going down...")
 
+  # UNIFY U - Sl API functions starts here
+
+  @schedule_as_coop_task
+  def _handle_NFFGMappingFinishedEvent (self, event):
+    """
+    Install mapped Nf-FG
+    """
+    log.getChild('API').info("Received mapped NF-FG from Orchestration Layer")
+    log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
+      self.__class__.__name__, event.mapped_nffg))
+    self.controller_adapter.install_nffg(event.mapped_nffg)
+    log.getChild('API').debug(
+      "Invoked install_nffg on %s is finished" % self.__class__.__name__)

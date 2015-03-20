@@ -32,14 +32,14 @@ class ResourceOrchestrator(object):
     """
     Start NF-FG instantiation
     """
-    log.debug("Invoke %s to initiate NF-FG" % self.__class__.__name__)
+    log.debug("Invoke %s to instantiate NF-FG" % self.__class__.__name__)
     # Store newly created NF-FG
     self.nffg_manager.save(nffg)
     # Get Domain Virtualizer to aquire global domain view
     global_resource = self.virtualizer_manager.get_domain_view()
     # Run Nf-FG mapping algorithm
     mapped_nffg = self.nffg_mapper.orchestrate(nffg, global_resource)
-    log.debug("NF-FG initiation is finished by %s" % self.__class__.__name__)
+    log.debug("NF-FG instantiation is finished by %s" % self.__class__.__name__)
     return mapped_nffg
 
 
