@@ -33,10 +33,10 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     :param resource:
     :return:
     """
-    log.info(
+    log.debug(
       "Invoke mapping algorithm: %s on SG(%s)" % (cls.__name__, graph.id))
     # TODO implement
-    log.info(
+    log.debug(
       "Mapping algorithm: %s is finished on SG(%s)" % (cls.__name__, graph.id))
 
 
@@ -47,17 +47,17 @@ class ServiceGraphMapper(AbstractMapper):
 
   def __init__ (self, strategy=DefaultServiceMappingStrategy):
     super(ServiceGraphMapper, self).__init__(strategy)
-    log.debug("Initialize %s with strategy: %s" % (
+    log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, strategy.__name__))
 
   def orchestrate (self, input_graph, resource_view):
-    log.info("Request %s to lauch orchestration on SG(%s)..." % (
+    log.debug("Request %s to lauch orchestration on SG(%s)..." % (
       self.__class__.__name__, input_graph.id))
     # Steps before mapping (optional)
     # Run actual mapping algorithm
     nffg = self.strategy.map(graph=input_graph, resource=resource_view)
     # Steps after mapping (optional)
-    log.info("SG(%s) orchestration is finished by %s" % (
+    log.debug("SG(%s) orchestration is finished by %s" % (
       input_graph.id, self.__class__.__name__))
     return nffg
 

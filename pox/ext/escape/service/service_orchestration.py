@@ -26,17 +26,17 @@ class ServiceOrchestrator(object):
     self.sg_manager = SGManager()
     self.virt_res_manager = VirtualResourceManager()
     self.sg_mapper = ServiceGraphMapper()
-    log.debug("Initialize %s" % self.__class__.__name__)
+    log.debug("Init %s" % self.__class__.__name__)
 
   def initiate_service_graph (self, sg):
-    log.info("Invoke %s to initiate SG" % self.__class__.__name__)
+    log.debug("Invoke %s to initiate SG" % self.__class__.__name__)
     # Store newly created SG
     self.sg_manager.save(sg)
     # Get virtual resource info
     virt_resource = self.virt_res_manager.get_virtual_resouce_info()
     # Run mapping algorithm
     nffg = self.sg_mapper.orchestrate(sg, virt_resource)
-    log.info("SG initiation is finished by %s" % self.__class__.__name__)
+    log.debug("SG initiation is finished by %s" % self.__class__.__name__)
     return nffg
 
 
@@ -50,7 +50,7 @@ class SGManager(object):
 
   def __init__ (self):
     super(SGManager, self).__init__()
-    log.debug("Initialize %s" % self.__class__.__name__)
+    log.debug("Init %s" % self.__class__.__name__)
 
   def save (self, sg):
     """
@@ -61,7 +61,8 @@ class SGManager(object):
     """
     sg.id = len(self.service_graphs)
     self.service_graphs[sg.id] = sg
-    log.info("SG is saved by %s with id: %s" % (self.__class__.__name__, sg.id))
+    log.debug(
+      "SG is saved by %s with id: %s" % (self.__class__.__name__, sg.id))
     return sg.id
 
   def get (self, graph_id):
@@ -79,12 +80,12 @@ class VirtualResourceManager(object):
 
   def __init__ (self):
     super(VirtualResourceManager, self).__init__()
-    log.debug("Initialize %s" % self.__class__.__name__)
+    log.debug("Init %s" % self.__class__.__name__)
 
   def get_virtual_resouce_info (self):
-    log.info("Requesting virtual resource info")
+    log.debug("Requesting virtual resource info")
     # TODO - implement
-    log.info("Got requested virtual resource info")
+    log.debug("Got requested virtual resource info")
     return NFFG()
 
 

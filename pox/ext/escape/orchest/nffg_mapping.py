@@ -24,7 +24,7 @@ class AbstractMapper(object):
     super(AbstractMapper, self).__init__()
     self.strategy = strategy
 
-  def orchestrate(self, input_graph, resource_view):
+  def orchestrate (self, input_graph, resource_view):
     """
 
     :param input_graph:

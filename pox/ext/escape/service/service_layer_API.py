@@ -56,6 +56,7 @@ class ServiceLayerAPI(AbstractAPI):
     Called when every componenet on which depends are initialized and registered
     in pox.core. Contain actual initialization steps.
     """
+    log.debug("Initializing Service Layer...")
     # Init central object of Service layer
     self.service_orchestrator = ServiceOrchestrator()
     # Read input from file if it's given and initiate SG
@@ -75,7 +76,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Init GUI
     if self.gui:
       self._initiate_gui()
-    log.info("Service Layer has been initialized!")
+    log.debug("Service Layer has been initialized!")
 
   def shutdown (self, event):
     log.info("Service Layer is going down...")
@@ -102,7 +103,7 @@ class ServiceLayerAPI(AbstractAPI):
     log.info("Invoke request_service on %s with SG: %s " % (
       self.__class__.__name__, sg))
     nffg = self.service_orchestrator.initiate_service_graph(sg)
-    log.info(
+    log.debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # Sending mapped SG / NF-FG to Orchestration layer
     self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)

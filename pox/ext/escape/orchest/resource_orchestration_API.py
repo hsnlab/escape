@@ -14,6 +14,7 @@
 from escape.util.api import AbstractAPI
 from escape.orchest import LAYER_NAME
 from escape.orchest import log as log  # Orchestration layer logger
+from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event
 
 
@@ -52,6 +53,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     Called when every componenet on which depends are initialized and registered
     in pox.core. Contain actual initialization steps.
     """
+    log.debug("Initializing Resource Orchestration Layer...")
     if self.nffg_file:
       self._read_json_from_file(self.nffg_file)
     log.info("Resource Orchestration Layer has been initialized!")
@@ -59,7 +61,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def shutdown (self, event):
     log.info("Resource Orchestration Layer is going down...")
 
-  def _handle_SGMappingFinishedEvent(self, event):
+  @schedule_as_coop_task
+  def _handle_SGMappingFinishedEvent (self, event):
     # Got mapped SG
     # TODO - implement
     log.info("Received Network Function Forwarding Graph from Service layer")

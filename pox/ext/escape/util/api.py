@@ -16,7 +16,6 @@ import urlparse
 import json
 import os.path
 import threading
-import weakref
 
 from escape import __version__
 from lib.revent import EventMixin
@@ -42,10 +41,11 @@ class AbstractAPI(EventMixin):
     Abstract class constructor
     Handle core registration along with _all_dependencies_met()
     Set given parameters (standalone parameter is mandatory) automatically
-    Base constructor funtions have to be called as the last step
-    Same situation with _all_dependencies_met() respectively
-    Must not override, just  use initialize() function instead
-    Actual API classes must call super with the form:
+    Base constructor funtions have to be called as the last step in derived
+    classes. Same situation with _all_dependencies_met() respectively.
+    Must not override these fuction, just use initialize() function for init
+    steps. Actual API classes must only call super() in their constructor
+    with the form:
     super(<API Class name>, self).__init__(standalone=standalone, **kwargs)
     """
     super(AbstractAPI, self).__init__()
@@ -53,48 +53,50 @@ class AbstractAPI(EventMixin):
     self.standalone = standalone
     for key, value in kwargs.iteritems():
       setattr(self, key, value)
-    # Register this component on POX core if there is no dependent component
-    # Due to registration _all_dependencies_met will be called automatically
-    if not self._dependencies:
-      core.core.register(self._core_name, self)
     # Check if need to skip dependency handling
     if standalone:
-      # Skip setting up Event listeners
-      # Initiate component manually also
+      # Initiate component manually
       self._all_dependencies_met()
-      # Initiate dependency references with Logger object
-      for dep in self._dependencies:
-        setattr(self, dep, StandaloneHelper(self))
     else:
       # Wait for the necessery POX component until they are resolved and set
-      # up event handlers. For this function event handler must follow the
-      # long naming convention: _handle_component_event(). The relevant
-      # components are registered on the API class by default with the name:
-      # <comp-name>. But for fail-safe operation, the dependencies are given
-      # explicitly which are defined in the actual API. See more in POXCore
-      # document.
-      # core.core.listen_to_dependencies(self,
-      # components=getattr(self, '_dependencies',
-      # ()), attrs=True, short_attrs=True)
-
+      # up event handlers. The dependencies are given explicitly which are
+      # defined in the actual API and not use automatic event handler based
+      # dependency discovery to avoid issues come from fully event-driven
+      # structure.
+      # See more in POXCore document.
       core.core.listen_to_dependencies(self, getattr(self, '_dependencies', ()))
-    # Subscribe for GoingDownEvent to finalize API classes
-    # _shutdown function will be called if POX's core going down
-    core.addListenerByName('GoingDownEvent', self.shutdown)
 
   def _all_dependencies_met (self):
     """
-    Called when every componenet on which depends are initialized and registered
-    in pox.core. Contain dependency relevant initialization.
-    Actual APIs have to call this base function as last function call to handle
-    core registration
+    Called when every componenet on which depends are initialized on
+    pox.core. Contain dependency relevant initialization.
     """
-    # If there are dependent component, this function will be called after all
-    # the dependency has been registered. In this case register this component
-    # as the last step.
-    if self._dependencies:
-      core.core.register(self._core_name, self)
     self.initialize()
+    # With fully event-driven communication between the layers the dependency
+    # handling takes care by listen_to_dependencies() run into a dead-lock.
+    # The root of this problem is the bidirectional or cyclic dependency
+    # between the componenets, so basicly the layers will always wait to each
+    # other to be registered on core. To avoid this situation the naming
+    # convention of event handlers on which the dependency checking based is
+    # not followed (aka leave _handle_<component name>_<event name>) and
+    # the event listeners is set up manually. For automatic core registration
+    # the components have to containt dependencies explicitly.
+    if not self.standalone:
+      for dep in self._dependencies:
+        if core.core.hasComponent(dep):
+          dep_layer = core.components[dep]
+          # Register actual event handlers on dependent layer
+          dep_layer.addListeners(self)
+          # Register dependent layer's event handlers on actual layer
+          self.addListeners(dep_layer)
+        else:
+          raise AttributeError("Component is not registered on core")
+    # Subscribe for GoingDownEvent to finalize API classes
+    # shutdown() function will be called if POX's core going down
+    core.addListenerByName('GoingDownEvent', self.shutdown)
+    # Everything is set up an "running" so register the component on pox.core
+    # as a final step. Other dependent component can finish initialization now.
+    core.core.register(self._core_name, self)
 
   def initialize (self):
     """
@@ -130,33 +132,6 @@ class AbstractAPI(EventMixin):
       [(f, type(getattr(self, f))) for f in dir(self) if not f.startswith('_')])
 
 
-class StandaloneHelper(object):
-  """
-  Represent a component on which an actual running component (started in
-  standalone mode) depends
-
-  Catch and log every function call
-  Not used in case of fully event-driven inter-layer communication
-  """
-
-  def __init__ (self, container):
-    super(StandaloneHelper, self).__init__()
-    self.container = weakref.proxy(container)  # Garbage-Collector safe
-
-  def __getattr__ (self, name):
-    """
-    Catch all attribute/function that don't exists
-    """
-    # TODO - what if somebody want to access to an atrribute instead of function
-    def logger (*args, **kwargs):
-      # Wrapper function for logging
-      msg = "Called function %s - with params:\n%s\n%s" % (name, args, kwargs)
-      core.getLogger(self.container._core_name + '-standalone').info(msg)
-      return  # Do nothing just log
-
-    return logger
-
-
 class RESTServer(object):
   """
   Base HTTP server for REST API
@@ -179,11 +154,11 @@ class RESTServer(object):
       self.server.shutdown()
 
   def run (self):
-    self.server.RequestHandlerClass.log.info(
-      "REST-API is initiated on %s:%d!" % self.server.server_address)
+    self.server.RequestHandlerClass.log.debug(
+      "Init REST-API on %s:%d!" % self.server.server_address)
     # Start API loop
     self.server.serve_forever()
-    self.server.RequestHandlerClass.log.info(
+    self.server.RequestHandlerClass.log.debug(
       "REST-API on %s:%d is shutting down..." % self.server.server_address)
 
 
