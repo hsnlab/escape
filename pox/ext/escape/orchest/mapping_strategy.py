@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from escape.service import log as log
 
 
 class AbstractMappingStrategy(object):
@@ -25,12 +26,6 @@ class AbstractMappingStrategy(object):
 
   @classmethod
   def map (cls, graph, resource):
-    """
-
-    :param graph:
-    :param resource:
-    :return:
-    """
     raise NotImplementedError("Derived class must override this function!")
 
 
@@ -44,5 +39,18 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
 
   @classmethod
   def map (cls, graph, resource):
-    pass
+    """
+    Default mapping algorithm of ESCAPE
+
+    :param graph: Network Function forwarding Graph
+    :param resource: global virtual resource
+    :return: mapped Network Fuction Forwarding Graph
+    """
+    log.debug(
+      "Invoke mapping algorithm: %s on NF-FG(%s)" % (cls.__name__, graph.id))
+    # TODO implement
+    log.debug("Mapping algorithm: %s is finished on NF-FG(%s)" % (
+      cls.__name__, graph.id))
+    # for testing return with graph
+    return graph
 

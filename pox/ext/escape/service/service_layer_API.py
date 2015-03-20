@@ -98,7 +98,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     Initiate service graph
 
-    :param sg: service graph represented as NF-FG instance
+    :param sg: service graph instance
     """
     log.info("Invoke request_service on %s with SG: %s " % (
       self.__class__.__name__, sg))
@@ -107,7 +107,7 @@ class ServiceLayerAPI(AbstractAPI):
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # Sending mapped SG / NF-FG to Orchestration layer
     self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
-    log.info("Generated NF-FG has been sent to Orchestration")
+    log.info("Generated NF-FG has been sent to Orchestration...")
 
 
 class ServiceRequestHandler(AbstractRequestHandler):

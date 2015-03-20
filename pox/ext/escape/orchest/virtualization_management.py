@@ -11,11 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.orchest import LAYER_NAME
+from escape.util.nffg import NFFG
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
-import pox.core as core
-
-log = core.getLogger(LAYER_NAME)
+from escape.orchest import log as log
 
 
 class AbstractVirtualizer(object):
@@ -26,7 +24,7 @@ class AbstractVirtualizer(object):
   """
 
   def __init__ (self):
-    pass
+    super(AbstractVirtualizer, self).__init__()
 
 
 class ESCAPEVirtualizer(AbstractVirtualizer):
@@ -39,17 +37,21 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
   def __init__ (self):
     super(ESCAPEVirtualizer, self).__init__()
 
-  def test_func (self):
-    """
-    Test function for policy checking debug. Should be removed soon.
-    """
-    print 'Invoke ESCAPEVirtualizer test_func'
-
 
 class VirtualizerManager(object):
   """
   Store, handle and organize Virtualizer instances
   """
+  virtualizers = dict()
 
   def __init__ (self):
-    pass
+    super(VirtualizerManager, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
+    # TODO - request/get/create domain virtualizer
+    self.virtualizers['DoV'] = NFFG()
+
+  def get_domain_view (self):
+    log.debug("Requesting Domain Virtualizer...")
+    # TODO - implement
+    log.debug("Got requested Domain virtualizer")
+    return self.virtualizers.get('DoV', None)

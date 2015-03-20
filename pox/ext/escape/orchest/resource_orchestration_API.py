@@ -11,21 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.util.api import AbstractAPI
 from escape.orchest import LAYER_NAME
 from escape.orchest import log as log  # Orchestration layer logger
+from escape.orchest.resource_orchestration import ResourceOrchestrator
+from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event
 
 
-class ResourceEvent(Event):
+class NFFGMappingFinishedEvent(Event):
   """
   Dummy event to force dependency checking working
   Should/Will be removed shortly!
   """
 
-  def __init__ (self):
-    super(ResourceEvent, self).__init__()
+  def __init__ (self, mapped_nffg):
+    super(NFFGMappingFinishedEvent, self).__init__()
+    self.mapped_nffg = mapped_nffg
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -38,7 +40,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {ResourceEvent}
+  _eventMixin_events = {NFFGMappingFinishedEvent}
   # Dependencies
   _dependencies = ('adaptation',)
 
@@ -54,6 +56,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     in pox.core. Contain actual initialization steps.
     """
     log.debug("Initializing Resource Orchestration Layer...")
+    self.resource_orchestrator = ResourceOrchestrator()
     if self.nffg_file:
       self._read_json_from_file(self.nffg_file)
     log.info("Resource Orchestration Layer has been initialized!")
@@ -61,8 +64,20 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def shutdown (self, event):
     log.info("Resource Orchestration Layer is going down...")
 
+  # UNIFY Sl- Or API functions starts here
+
   @schedule_as_coop_task
   def _handle_SGMappingFinishedEvent (self, event):
-    # Got mapped SG
-    # TODO - implement
+    """
+    Instantiate given NF-FG
+
+    :param event: event object contains NF-FG
+    """
     log.info("Received Network Function Forwarding Graph from Service layer")
+    log.info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
+      self.__class__.__name__, event.nffg))
+    mapped_nffg = self.resource_orchestrator.instantiate_nffg(event.nffg)
+    log.debug(
+      "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
+    self.raiseEventNoErrors(NFFGMappingFinishedEvent, mapped_nffg)
+    log.info("Mapped NF-FG has been sent to Adaptation...")

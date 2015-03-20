@@ -23,10 +23,10 @@ class ServiceOrchestrator(object):
 
   def __init__ (self):
     super(ServiceOrchestrator, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
     self.sg_manager = SGManager()
     self.virt_res_manager = VirtualResourceManager()
     self.sg_mapper = ServiceGraphMapper()
-    log.debug("Init %s" % self.__class__.__name__)
 
   def initiate_service_graph (self, sg):
     log.debug("Invoke %s to initiate SG" % self.__class__.__name__)
@@ -34,7 +34,7 @@ class ServiceOrchestrator(object):
     self.sg_manager.save(sg)
     # Get virtual resource info
     virt_resource = self.virt_res_manager.get_virtual_resouce_info()
-    # Run mapping algorithm
+    # Run service mapping algorithm
     nffg = self.sg_mapper.orchestrate(sg, virt_resource)
     log.debug("SG initiation is finished by %s" % self.__class__.__name__)
     return nffg
@@ -56,7 +56,7 @@ class SGManager(object):
     """
     Save SG in a dict
 
-    :param sg:
+    :param sg: Service Graph
     :return: computed id of given SG
     """
     sg.id = len(self.service_graphs)
@@ -69,7 +69,7 @@ class SGManager(object):
     """
     Return service graph with given id
     """
-    return self.service_graphs[graph_id]
+    return self.service_graphs.get(graph_id, None)
 
 
 class VirtualResourceManager(object):
@@ -83,7 +83,7 @@ class VirtualResourceManager(object):
     log.debug("Init %s" % self.__class__.__name__)
 
   def get_virtual_resouce_info (self):
-    log.debug("Requesting virtual resource info")
+    log.debug("Requesting virtual resource info...")
     # TODO - implement
     log.debug("Got requested virtual resource info")
     return NFFG()

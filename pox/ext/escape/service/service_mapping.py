@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from escape.orchest.mapping_strategy import AbstractMappingStrategy
 from escape.orchest.nffg_mapping import AbstractMapper
 from escape.service import log as log
@@ -28,21 +27,24 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
   @classmethod
   def map (cls, graph, resource):
     """
+    Default mapping algorithm which maps given Service Graph on one BiS-BiS
 
-    :param graph:
-    :param resource:
-    :return:
+    :param graph: Service Graph
+    :param resource: virtual resource
+    :return: Network Function Forwarding Graph
     """
     log.debug(
       "Invoke mapping algorithm: %s on SG(%s)" % (cls.__name__, graph.id))
     # TODO implement
     log.debug(
       "Mapping algorithm: %s is finished on SG(%s)" % (cls.__name__, graph.id))
+    # for testing return with graph
+    return graph
 
 
 class ServiceGraphMapper(AbstractMapper):
   """
-  Helper class for mapping Service Graph to NFFG
+  Helper class for mapping Service Graph to NF-FG
   """
 
   def __init__ (self, strategy=DefaultServiceMappingStrategy):
@@ -51,13 +53,20 @@ class ServiceGraphMapper(AbstractMapper):
       self.__class__.__name__, strategy.__name__))
 
   def orchestrate (self, input_graph, resource_view):
+    """
+    Orchestrate mapping of given service graph on given virtual resource
+
+    :param input_graph: Service Graph
+    :param resource_view: virtual resource
+    :return: Network Function Forwarding Graph
+    """
     log.debug("Request %s to lauch orchestration on SG(%s)..." % (
       self.__class__.__name__, input_graph.id))
     # Steps before mapping (optional)
     # Run actual mapping algorithm
     nffg = self.strategy.map(graph=input_graph, resource=resource_view)
     # Steps after mapping (optional)
-    log.debug("SG(%s) orchestration is finished by %s" % (
+    log.info("SG(%s) orchestration is finished by %s" % (
       input_graph.id, self.__class__.__name__))
     return nffg
 

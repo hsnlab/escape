@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from escape.orchest.mapping_strategy import ESCAPEMappingStrategy
+from escape.orchest import log as log
 
 
 class AbstractMapper(object):
@@ -25,24 +27,33 @@ class AbstractMapper(object):
     self.strategy = strategy
 
   def orchestrate (self, input_graph, resource_view):
-    """
-
-    :param input_graph:
-    :param resource_view:
-    :return:
-    """
     raise NotImplementedError("Derived class must override this function!")
 
 
 class ResourceOrchestrationMapper(AbstractMapper):
   """
-  Main class for NFFG mapping
-
-  Use the given mapping strategy
+  Helper class for mapping NF-FG on global virtual view
   """
 
-  def orchestrate (self, input_graph, resource_view):
-    pass
-
-  def __init__ (self, strategy):
+  def __init__ (self, strategy=ESCAPEMappingStrategy):
     super(ResourceOrchestrationMapper, self).__init__(strategy)
+    log.debug("Init %s with strategy: %s" % (
+      self.__class__.__name__, strategy.__name__))
+
+  def orchestrate (self, input_graph, resource_view):
+    """
+    Orchestrate mapping of given NF-FG on given virtual resource
+
+    :param input_graph: Network Function Forwarding Graph
+    :param resource_view: virtual resource
+    :return: mapped Network Function Forwarding Graph
+    """
+    log.debug("Request %s to lauch orchestration on NF-FG(%s)..." % (
+      self.__class__.__name__, input_graph.id))
+    # Steps before mapping (optional)
+    # Run actual mapping algorithm
+    mapped_nffg = self.strategy.map(graph=input_graph, resource=resource_view)
+    # Steps after mapping (optional)
+    log.info("Nf-FG(%s) orchestration is finished by %s" % (
+      input_graph.id, self.__class__.__name__))
+    return mapped_nffg

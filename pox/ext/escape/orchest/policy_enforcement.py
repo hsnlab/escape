@@ -13,11 +13,7 @@
 # limitations under the License.
 import types
 
-from escape.orchest import LAYER_NAME
-import pox.core as core
-
-
-log = core.getLogger(LAYER_NAME)
+from escape.orchest import log as log
 
 
 class PolicyEnforcementError(object):
@@ -74,10 +70,3 @@ class PolicyEnforcement(object):
 
   def __init__ (self):
     super(PolicyEnforcement, self).__init__()
-
-  def test_func (self):
-    """
-    Test function for policy checking debug. Should be removed soon.
-    """
-    print 'Policy Enforcement test_func OK'
-    return True
