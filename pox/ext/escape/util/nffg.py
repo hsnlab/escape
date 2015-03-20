@@ -27,11 +27,3 @@ class NFFG(object):
     """
     # TODO - implement! This function has already used in layer APIs
     return NFFG()
-
-  def __str__ (self):
-    # TODO - implement for debug logging, need to be compact but easy to read
-    return str(self.__dict__)
-
-  def __repr__ (self):
-    # TODO - implement for debug logging and for check in interactive console
-    pass

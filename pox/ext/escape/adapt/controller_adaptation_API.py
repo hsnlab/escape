@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import repr
+
 from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
 from escape.adapt.controller_adaptation import ControllerAdapter
@@ -72,7 +74,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.getChild('API').info("Received mapped NF-FG from Orchestration Layer")
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
-      self.__class__.__name__, event.mapped_nffg))
+      self.__class__.__name__, repr.repr(event.mapped_nffg)))
     self.controller_adapter.install_nffg(event.mapped_nffg)
     log.getChild('API').debug(
       "Invoked install_nffg on %s is finished" % self.__class__.__name__)

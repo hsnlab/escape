@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import repr
+
 from escape.orchest import LAYER_NAME
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest.resource_orchestration import ResourceOrchestrator
@@ -75,7 +77,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Received NF-FG from Service layer")
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
-      self.__class__.__name__, event.nffg))
+      self.__class__.__name__, repr.repr(event.nffg)))
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(event.nffg)
     log.getChild('API').debug(
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)

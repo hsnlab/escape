@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+import repr
 
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
@@ -101,7 +102,7 @@ class ServiceLayerAPI(AbstractAPI):
     :param sg: service graph instance
     """
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
-      self.__class__.__name__, sg))
+      self.__class__.__name__, repr.repr(sg)))
     nffg = self.service_orchestrator.initiate_service_graph(sg)
     log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
