@@ -38,6 +38,9 @@ class ServiceOrchestrator(object):
     log.debug("SG initiation is finished by %s" % self.__class__.__name__)
     return nffg
 
+  def set_virt_res_info (self, virt_res_info):
+    self.virtResManager.virtal_view = virt_res_info
+
 
 class SGManager(object):
   """
