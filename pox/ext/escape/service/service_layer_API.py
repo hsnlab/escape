@@ -16,21 +16,33 @@ import repr
 
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
-from escape.service.service_orchestration import ServiceOrchestrator
+from escape.service.service_orchestration import ServiceOrchestrator, \
+  VirtualResourceManager
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
 
-class SGMappingFinishedEvent(Event):
+class InstantiateNFFGEvent(Event):
   """
   Event for passing NFFG (mapped SG) to Orchestration layer
   """
 
   def __init__ (self, nffg):
-    super(SGMappingFinishedEvent, self).__init__()
+    super(InstantiateNFFGEvent, self).__init__()
     self.nffg = nffg
+
+
+class GetVirtResInfoEvent(Event):
+  """
+  Event for requesting virtual resource info from Orchestration layer
+  """
+
+  def __init__ (self, sid):
+    super(GetVirtResInfoEvent, self).__init__()
+    # service layer ID
+    self.sid = sid
 
 
 class ServiceLayerAPI(AbstractAPI):
@@ -43,7 +55,7 @@ class ServiceLayerAPI(AbstractAPI):
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {SGMappingFinishedEvent}
+  _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent}
   # Dependencies
   _dependencies = ('orchestration',)
 
@@ -58,8 +70,11 @@ class ServiceLayerAPI(AbstractAPI):
     in pox.core. Contain actual initialization steps.
     """
     log.debug("Initializing Service Layer...")
+    self.sid = hash(self)
+    # Init virtual resource manager with self as communication interface
+    virtResManager = VirtualResourceManager(self)
     # Init central object of Service layer
-    self.service_orchestrator = ServiceOrchestrator()
+    self.service_orchestrator = ServiceOrchestrator(virtResManager)
     # Read input from file if it's given and initiate SG
     if self.sg_file:
       try:
@@ -108,9 +123,21 @@ class ServiceLayerAPI(AbstractAPI):
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # Sending mapped SG / NF-FG to Orchestration layer as an Event
     # Exceptions in event handlers are caugth by default in a non-blocking way
-    self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
+    self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
     log.getChild('API').info(
       "Generated NF-FG has been sent to Orchestration...\n")
+
+  # UNIFY Sl - Or API functions starts here
+
+  def get_virtual_resource_info (self):
+    # Requesting virtual resource info from Orchestration layer
+    # Service layer is identified with the sid value
+    log.getChild('API').debug(
+      "Send virtual resource info request to Orchestration layer...\n")
+    self.raiseEventNoErrors(GetVirtResInfoEvent, self.sid)
+
+  def _handle_VirtResInfoEvent (self, event):
+    self.service_orchestrator.set_virt_res_info(event.resource_info)
 
 
 class ServiceRequestHandler(AbstractRequestHandler):

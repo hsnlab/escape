@@ -18,18 +18,29 @@ from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest.resource_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
+from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
 
-class NFFGMappingFinishedEvent(Event):
+class InstallNFFGEvent(Event):
   """
   Dummy event to force dependency checking working
   Should/Will be removed shortly!
   """
 
   def __init__ (self, mapped_nffg):
-    super(NFFGMappingFinishedEvent, self).__init__()
+    super(InstallNFFGEvent, self).__init__()
     self.mapped_nffg = mapped_nffg
+
+
+class VirtResInfoEvent(Event):
+  """
+  Event for sending back requested virtual resource info
+  """
+
+  def __init__ (self, resource_info):
+    super(VirtResInfoEvent, self).__init__()
+    self.resource_info = resource_info
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -42,7 +53,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {NFFGMappingFinishedEvent}
+  _eventMixin_events = {InstallNFFGEvent, VirtResInfoEvent}
   # Dependencies
   _dependencies = ('adaptation',)
 
@@ -69,7 +80,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # UNIFY Sl- Or API functions starts here
 
   @schedule_as_coop_task
-  def _handle_SGMappingFinishedEvent (self, event):
+  def _handle_InstantiateNFFGEvent (self, event):
     """
     Instantiate given NF-FG
 
@@ -83,5 +94,16 @@ class ResourceOrchestrationAPI(AbstractAPI):
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
     # Sending NF-FG to Adaptation layer as an Event
     # Exceptions in event handlers are caugth by default in a non-blocking way
-    self.raiseEventNoErrors(NFFGMappingFinishedEvent, mapped_nffg)
+    self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
     log.getChild('API').info("Mapped NF-FG has been sent to Adaptation...\n")
+
+  def _handle_GetVirtResInfoEvent (self, event):
+    """
+    Generate virtual resource info and send back to Service layer
+    """
+    log.getChild('API').debug(
+      "Received virtual resource info request from Service layer")
+    # TODO - implement - responded data should be deap copied
+    # response dummy NFFG
+    log.getChild('API').debug("Sending back virtual resource info...\n")
+    self.raiseEventNoErrors(VirtResInfoEvent, NFFG())

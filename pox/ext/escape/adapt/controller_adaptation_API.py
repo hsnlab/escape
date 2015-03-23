@@ -68,7 +68,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   # UNIFY U - Sl API functions starts here
 
   @schedule_as_coop_task
-  def _handle_NFFGMappingFinishedEvent (self, event):
+  def _handle_InstallNFFGEvent (self, event):
     """
     Install mapped Nf-FG
     """
