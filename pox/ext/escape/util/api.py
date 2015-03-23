@@ -47,6 +47,11 @@ class AbstractAPI(EventMixin):
     steps. Actual API classes must only call super() in their constructor
     with the form:
     super(<API Class name>, self).__init__(standalone=standalone, **kwargs)
+    IMPORTANT!
+    Do not use prefixes in the name of event handlers, because of automatic
+    dependecy discovery considers that as a dependent componenet and this
+    situation casue a dead lock (component will be waiting to each other to
+    set up)
     """
     super(AbstractAPI, self).__init__()
     # Save custom parameters with the given name

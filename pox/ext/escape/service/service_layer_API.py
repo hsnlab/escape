@@ -106,10 +106,11 @@ class ServiceLayerAPI(AbstractAPI):
     nffg = self.service_orchestrator.initiate_service_graph(sg)
     log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
-    # Sending mapped SG / NF-FG to Orchestration layer
+    # Sending mapped SG / NF-FG to Orchestration layer as an Event
+    # Exceptions in event handlers are caugth by default in a non-blocking way
     self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
     log.getChild('API').info(
-      "Generated NF-FG has been sent to Orchestration...")
+      "Generated NF-FG has been sent to Orchestration...\n")
 
 
 class ServiceRequestHandler(AbstractRequestHandler):
@@ -149,7 +150,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
     Bounded to POST verb
     """
     log.getChild("REST-API").debug("Call REST-API function: %s" % (
-      inspect.currentframe().f_back.f_code.co_name,))
+      inspect.currentframe().f_code.co_name,))
     body = self._parse_json_body()
     log.getChild("REST-API").debug("Parsed input: %s" % body)
     sg = NFFG.init_from_json(body)  # Convert text based SG to object instance
