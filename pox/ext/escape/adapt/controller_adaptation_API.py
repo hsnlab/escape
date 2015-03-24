@@ -72,7 +72,8 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     Install mapped Nf-FG
     """
-    log.getChild('API').info("Received mapped NF-FG from Orchestration Layer")
+    log.getChild('API').info("Received mapped NF-FG from %s Layer" % str(
+      event.source._core_name).title())
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, repr.repr(event.mapped_nffg)))
     self.controller_adapter.install_nffg(event.mapped_nffg)

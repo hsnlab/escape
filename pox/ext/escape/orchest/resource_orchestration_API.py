@@ -18,7 +18,6 @@ from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest.resource_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
-from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
 
@@ -86,7 +85,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
     :param event: event object contains NF-FG
     """
-    log.getChild('API').info("Received NF-FG from Service layer")
+    log.getChild('API').info(
+      "Received NF-FG from %s layer" % str(event.source._core_name).title())
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, repr.repr(event.nffg)))
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(event.nffg)
@@ -105,5 +105,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       "Received virtual resource info request from Service layer")
     # TODO - implement - responded data should be deap copied
     # response dummy NFFG
+    view = self.resource_orchestrator.virtualizerManager.get_virtual_view(
+      event.sid)
     log.getChild('API').debug("Sending back virtual resource info...\n")
-    self.raiseEventNoErrors(VirtResInfoEvent, NFFG())
+    self.raiseEventNoErrors(VirtResInfoEvent, view)

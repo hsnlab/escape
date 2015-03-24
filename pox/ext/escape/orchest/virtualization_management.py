@@ -26,16 +26,23 @@ class AbstractVirtualizer(object):
   def __init__ (self):
     super(AbstractVirtualizer, self).__init__()
 
+  def get_resource_info (self):
+    raise NotImplementedError("Derived class have to override this function")
+
 
 class ESCAPEVirtualizer(AbstractVirtualizer):
   """
   Actual virtualizer class for ESCAPE
   """
-
   __metaclass__ = PolicyEnforcementMetaClass
 
   def __init__ (self):
     super(ESCAPEVirtualizer, self).__init__()
+
+  def get_resource_info (self):
+    # dummy NFFG TODO - implement
+    # deep copy???
+    return NFFG()
 
 
 class VirtualizerManager(object):
@@ -55,3 +62,8 @@ class VirtualizerManager(object):
     # TODO - implement
     log.debug("Got requested Domain virtualizer")
     return self.virtualizers.get('DoV', None)
+
+  def get_virtual_view (self, view_id):
+    if self.virtualizers.has_key(view_id):
+      return self.virtualizers[view_id]
+    # TODO implement view request/generation/creation
