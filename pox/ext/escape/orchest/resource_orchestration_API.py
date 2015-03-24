@@ -104,7 +104,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.getChild('API').debug(
       "Received virtual resource info request from Service layer")
     # TODO - implement - responded data should be deap copied
-    # response dummy NFFG
+    # Currently view is a Virtualizer to keep ESCAPE fast
+    #
     view = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid)
     log.getChild('API').debug("Sending back virtual resource info...\n")

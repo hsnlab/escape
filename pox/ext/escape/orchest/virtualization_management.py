@@ -49,21 +49,26 @@ class VirtualizerManager(object):
   """
   Store, handle and organize Virtualizer instances
   """
-  virtualizers = dict()
 
   def __init__ (self):
     super(VirtualizerManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
-    # TODO - request/get/create domain virtualizer
-    self.virtualizers['DoV'] = NFFG()
+    self._virtualizers = dict()
 
-  def get_domain_view (self):
+  def get_global_domain_view (self):
     log.debug("Requesting Domain Virtualizer...")
-    # TODO - implement
-    log.debug("Got requested Domain virtualizer")
-    return self.virtualizers.get('DoV', None)
+    # If DoV is not set up, need to request from Adaptation layer
+    if 'DoV' not in self._virtualizers:
+      log.debug("Missing global view! Requesting global resource info...")
+    log.debug("Got requested Domain Virtualizer")
+    return self._virtualizers.get('DoV', None)
 
-  def get_virtual_view (self, view_id):
-    if self.virtualizers.has_key(view_id):
-      return self.virtualizers[view_id]
-    # TODO implement view request/generation/creation
+  def get_virtual_view (self, layer_id):
+    # If this is the first request, need to generate the view
+    if layer_id not in self._virtualizers:
+      self.generate_virtual_view(self.get_global_domain_view(), layer_id)
+    return self._virtualizers[layer_id]
+
+  def generate_virtual_view (self, global_view, layer_id):
+    # TODO - implement
+    pass

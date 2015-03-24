@@ -137,7 +137,7 @@ class ServiceLayerAPI(AbstractAPI):
     self.raiseEventNoErrors(GetVirtResInfoEvent, self.sid)
 
   def _handle_VirtResInfoEvent (self, event):
-    self.service_orchestrator.virtResManager.virtal_view = event.resource_info
+    self.service_orchestrator.virtResManager.virtual_view = event.resource_info
 
 
 class ServiceRequestHandler(AbstractRequestHandler):

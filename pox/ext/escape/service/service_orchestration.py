@@ -32,14 +32,11 @@ class ServiceOrchestrator(object):
     # Store newly created SG
     self.sg_manager.save(sg)
     # Get virtual resource info
-    virt_resource = self.virtResManager.get_virtual_resouce_info()
+    virt_resource = self.virtResManager.get_resource_info()
     # Run service mapping algorithm
     nffg = self.sg_mapper.orchestrate(sg, virt_resource)
     log.debug("SG initiation is finished by %s" % self.__class__.__name__)
     return nffg
-
-  def set_virt_res_info (self, virt_res_info):
-    self.virtResManager.virtal_view = virt_res_info
 
 
 class SGManager(object):
@@ -84,12 +81,13 @@ class VirtualResourceManager(object):
     super(VirtualResourceManager, self).__init__()
     # service layer API for comminucation with other layers
     self.serviceAPI = serviceAPI
-    # NFFG object which represent the virtual view of this layer
+    # Derived object from AbstractVirtualizer which represent the virtual
+    # view of this layer
     self._virtual_view = None
     log.debug("Init %s" % self.__class__.__name__)
 
-  def get_virtual_resouce_info (self):
-    log.debug("Invoke %s to get virtual view" % self.__class__.__name__)
+  def get_resource_info (self):
+    log.debug("Invoke %s to get virtual resource" % self.__class__.__name__)
     if not self.virtual_view:
       log.debug("Missing virtual view! Requesting virtual resource info...")
       self.serviceAPI.get_virtual_resource_info()
@@ -101,8 +99,8 @@ class VirtualResourceManager(object):
     return self._virtual_view
 
   @virtual_view.setter
-  def virtual_view (self, virtual_view):
-    self._virtual_view = virtual_view
+  def virtual_view (self, view):
+    self._virtual_view = view
 
 
 class NFIBManager(object):
