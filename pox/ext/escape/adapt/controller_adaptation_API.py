@@ -89,4 +89,5 @@ class ControllerAdaptationAPI(AbstractAPI):
         event.source._core_name).title())
     # Currently global view is a Virtualizer to keep ESCAPE fast
     log.getChild('API').debug("Sending back global resource info...\n")
-    self.raiseEventNoErrors(GlobalResInfoEvent, self.controller_adapter.domainResManager._dov)
+    self.raiseEventNoErrors(GlobalResInfoEvent,
+                            self.controller_adapter.domainResManager.dov)

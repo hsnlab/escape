@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from escape.orchest.nffg_mapping import ResourceOrchestrationMapper
-from escape.orchest.virtualization_management import VirtualizerManager
 from escape.orchest import log as log
 
 

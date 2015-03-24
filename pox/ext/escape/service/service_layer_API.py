@@ -16,6 +16,7 @@ import repr
 
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
+from escape.service.element_management import ClickManager
 from escape.service.service_orchestration import ServiceOrchestrator, \
   VirtualResourceManager
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
@@ -71,6 +72,8 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.debug("Initializing Service Layer...")
     self.sid = hash(self)
+    # Set element manager
+    self.elementManager = ClickManager()
     # Init virtual resource manager with self as communication interface
     virtResManager = VirtualResourceManager(self)
     # Init central object of Service layer
