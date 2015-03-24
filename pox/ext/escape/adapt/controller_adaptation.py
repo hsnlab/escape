@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import weakref
+
 from escape.orchest.virtualization_management import AbstractVirtualizer
 from escape.adapt.domain_adapters import POXDomainAdapter, MininetDomainAdapter
 from escape.adapt import log as log
@@ -24,6 +26,7 @@ class ControllerAdapter(object):
   def __init__ (self):
     super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    self.domainResManager = DomainResourceManager()
     self.pox = POXDomainAdapter()
     self.mininet = MininetDomainAdapter()
 
@@ -43,9 +46,15 @@ class DomainVirtualizer(AbstractVirtualizer):
   Should implement the same interface as AbstractVirtualizer
   """
 
-  def __init__ (self):
+  def __init__ (self, domainResManager):
     super(DomainVirtualizer, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    # Garbage-collector safe
+    self.domainResManager = weakref.proxy(domainResManager)
+
+  def get_resource_info (self):
+    # TODO - implement - possibly don't store anything just convert??
+    pass
 
 
 class DomainResourceManager(object):
@@ -56,3 +65,8 @@ class DomainResourceManager(object):
   def __init__ (self):
     super(DomainResourceManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    self._dov = DomainVirtualizer(self)
+
+  @property
+  def dov (self):
+    return self._dov

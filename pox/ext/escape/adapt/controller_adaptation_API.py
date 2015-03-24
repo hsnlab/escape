@@ -21,14 +21,14 @@ from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event
 
 
-class AdaptationEvent(Event):
+class GlobalResInfoEvent(Event):
   """
-  Dummy event to force dependency checking working
-  Should/Will be removed shortly!
+  Event for sending back requested global resource info
   """
 
-  def __init__ (self):
-    super(AdaptationEvent, self).__init__()
+  def __init__ (self, resource_info):
+    super(GlobalResInfoEvent, self).__init__()
+    self.resource_info = resource_info
 
 
 class ControllerAdaptationAPI(AbstractAPI):
@@ -41,7 +41,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {AdaptationEvent}
+  _eventMixin_events = {GlobalResInfoEvent}
   # Dependencies
   # None
 
@@ -65,7 +65,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   def shutdown (self, event):
     log.info("Controller Adaptation Layer is going down...")
 
-  # UNIFY U - Sl API functions starts here
+  # UNIFY Or - Ca API functions starts here
 
   @schedule_as_coop_task
   def _handle_InstallNFFGEvent (self, event):
@@ -79,3 +79,14 @@ class ControllerAdaptationAPI(AbstractAPI):
     self.controller_adapter.install_nffg(event.mapped_nffg)
     log.getChild('API').debug(
       "Invoked install_nffg on %s is finished" % self.__class__.__name__)
+
+  def _handle_GetGlobalResInfoEvent (self, event):
+    """
+    Generate global resource info and send back to Orchestration layer
+    """
+    log.getChild('API').debug(
+      "Received global resource info request from %s layer" % str(
+        event.source._core_name).title())
+    # Currently global view is a Virtualizer to keep ESCAPE fast
+    log.getChild('API').debug("Sending back global resource info...\n")
+    self.raiseEventNoErrors(GlobalResInfoEvent, self.controller_adapter.domainResManager._dov)

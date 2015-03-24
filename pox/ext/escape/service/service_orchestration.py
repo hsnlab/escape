@@ -75,12 +75,13 @@ class VirtualResourceManager(object):
   """
   Support Service Graph mapping, follows the used virtual resources according to
   the Service Graph(s) in effect
+  Handles object derived from AbstractVirtualizer and requested from lower layer
   """
 
-  def __init__ (self, serviceAPI):
+  def __init__ (self, layerAPI):
     super(VirtualResourceManager, self).__init__()
     # service layer API for comminucation with other layers
-    self.serviceAPI = serviceAPI
+    self.layerAPI = layerAPI
     # Derived object from AbstractVirtualizer which represent the virtual
     # view of this layer
     self._virtual_view = None
@@ -90,9 +91,10 @@ class VirtualResourceManager(object):
     log.debug("Invoke %s to get virtual resource" % self.__class__.__name__)
     if not self.virtual_view:
       log.debug("Missing virtual view! Requesting virtual resource info...")
-      self.serviceAPI.get_virtual_resource_info()
-    log.debug("Got requested virtual resource info")
-    return self.virtual_view
+      self.layerAPI.request_virtual_resource_info()
+      log.debug("Got requested virtual resource info")
+    # Hide Virtualizer just return with actual resource info (NFFG instance)
+    return self.virtual_view.get_resource_info()
 
   @property
   def virtual_view (self):

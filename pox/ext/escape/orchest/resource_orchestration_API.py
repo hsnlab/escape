@@ -16,6 +16,7 @@ import repr
 from escape.orchest import LAYER_NAME
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest.resource_orchestration import ResourceOrchestrator
+from escape.orchest.virtualization_management import VirtualizerManager
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event
@@ -23,8 +24,7 @@ from pox.lib.revent.revent import Event
 
 class InstallNFFGEvent(Event):
   """
-  Dummy event to force dependency checking working
-  Should/Will be removed shortly!
+  Event for passing mapped NFFG to Adaptation layer
   """
 
   def __init__ (self, mapped_nffg):
@@ -42,6 +42,15 @@ class VirtResInfoEvent(Event):
     self.resource_info = resource_info
 
 
+class GetGlobalResInfoEvent(Event):
+  """
+  Event for requesting Domain Virtualizer from Adaptation layer
+  """
+
+  def __init__ (self):
+    super(GetGlobalResInfoEvent, self).__init__()
+
+
 class ResourceOrchestrationAPI(AbstractAPI):
   """
   Entry point for Resource Orchestration Sublayer
@@ -52,7 +61,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {InstallNFFGEvent, VirtResInfoEvent}
+  _eventMixin_events = {InstallNFFGEvent, GetGlobalResInfoEvent,
+                        VirtResInfoEvent}
   # Dependencies
   _dependencies = ('adaptation',)
 
@@ -68,7 +78,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     in pox.core. Contain actual initialization steps.
     """
     log.debug("Initializing Resource Orchestration Layer...")
-    self.resource_orchestrator = ResourceOrchestrator()
+    virtualizerManager = VirtualizerManager(self)
+    self.resource_orchestrator = ResourceOrchestrator(virtualizerManager)
     if self.nffg_file:
       self._read_json_from_file(self.nffg_file)
     log.info("Resource Orchestration Layer has been initialized!")
@@ -102,11 +113,30 @@ class ResourceOrchestrationAPI(AbstractAPI):
     Generate virtual resource info and send back to Service layer
     """
     log.getChild('API').debug(
-      "Received virtual resource info request from Service layer")
-    # TODO - implement - responded data should be deap copied
+      "Received virtual resource info request from %s layer" % str(
+        event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
-    #
     view = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid)
     log.getChild('API').debug("Sending back virtual resource info...\n")
     self.raiseEventNoErrors(VirtResInfoEvent, view)
+
+  # UNIFY Or - Ca API functions starts here
+
+  def request_domain_resource_info (self):
+    """
+    Request global resource info from Adaptation layer
+    """
+    log.getChild('API').debug(
+      "Send global resource info request to Adaptation layer...\n")
+    self.raiseEventNoErrors(GetGlobalResInfoEvent)
+
+  def _handle_GlobalResInfoEvent (self, event):
+    """
+    Save requested global resource info as the DomainVirtualizer
+    """
+    log.getChild('API').debug(
+      "Received global resource info from %s layer" % str(
+        event.source._core_name).title())
+    self.resource_orchestrator.virtualizerManager.dov = event.resource_info
+    pass

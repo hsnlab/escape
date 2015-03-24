@@ -48,7 +48,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     """
     log.debug(
       "Invoke mapping algorithm: %s on NF-FG(%s)" % (cls.__name__, graph.id))
-    # TODO implement
+    # TODO - implement algorithm here
     log.debug("Mapping algorithm: %s is finished on NF-FG(%s)" % (
       cls.__name__, graph.id))
     # for testing return with graph

@@ -129,14 +129,23 @@ class ServiceLayerAPI(AbstractAPI):
 
   # UNIFY Sl - Or API functions starts here
 
-  def get_virtual_resource_info (self):
-    # Requesting virtual resource info from Orchestration layer
-    # Service layer is identified with the sid value
+  def request_virtual_resource_info (self):
+    """
+    Request virtual resource info from Orchestration layer
+    Service layer is identified with the sid value
+    """
     log.getChild('API').debug(
-      "Send virtual resource info request to Orchestration layer...\n")
+      "Send virtual resource info request(layer ID: %s) to Orchestration "
+      "layer...\n" % self.sid)
     self.raiseEventNoErrors(GetVirtResInfoEvent, self.sid)
 
   def _handle_VirtResInfoEvent (self, event):
+    """
+    Save requested virtual resource info as a Virtualizer
+    """
+    log.getChild('API').debug(
+      "Received virtual resource info from %s layer" % str(
+        event.source._core_name).title())
     self.service_orchestrator.virtResManager.virtual_view = event.resource_info
 
 

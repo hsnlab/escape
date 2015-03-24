@@ -27,6 +27,11 @@ class AbstractVirtualizer(object):
     super(AbstractVirtualizer, self).__init__()
 
   def get_resource_info (self):
+    """
+    Hides object's mechanism and return with a resource object derived from NFFG
+
+    :return: resource object (NFFG)
+    """
     raise NotImplementedError("Derived class have to override this function")
 
 
@@ -45,30 +50,60 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
     return NFFG()
 
 
+DoV_ID = 'DoV'
+
+
 class VirtualizerManager(object):
   """
   Store, handle and organize Virtualizer instances
   """
 
-  def __init__ (self):
+  def __init__ (self, layerAPI):
     super(VirtualizerManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    self.layerAPI = layerAPI
     self._virtualizers = dict()
 
-  def get_global_domain_view (self):
-    log.debug("Requesting Domain Virtualizer...")
+  @property
+  def dov (self):
+    """
+    Getter method for Domain Virtualizer
+    Request DoV from Adaptation if it hasn't set yet
+    Usage: virtualizerManager.dov
+    """
+    log.debug("Invoke %s to get global resource" % self.__class__.__name__)
     # If DoV is not set up, need to request from Adaptation layer
-    if 'DoV' not in self._virtualizers:
+    if DoV_ID not in self._virtualizers:
       log.debug("Missing global view! Requesting global resource info...")
-    log.debug("Got requested Domain Virtualizer")
-    return self._virtualizers.get('DoV', None)
+      self.layerAPI.request_domain_resource_info()
+    # Hide Virtualizer and return with resours info as an NFFG()
+    return self._virtualizers.get(DoV_ID, None).get_resource_info()
+
+  @dov.setter
+  def dov (self, dov):
+    self._virtualizers[DoV_ID] = dov
 
   def get_virtual_view (self, layer_id):
+    log.debug("Invoke %s to get virtual resource view (layer ID: %s)" % (
+      self.__class__.__name__, layer_id))
     # If this is the first request, need to generate the view
     if layer_id not in self._virtualizers:
-      self.generate_virtual_view(self.get_global_domain_view(), layer_id)
+      # Pass the global resource as NFFG not the Virtualizer
+      self._virtualizers[layer_id] = self.generate_virtual_view(self.dov,
+                                                                layer_id)
     return self._virtualizers[layer_id]
 
-  def generate_virtual_view (self, global_view, layer_id):
+  def generate_virtual_view (self, dov, layer_id):
+    """
+    Generate a Virtualizer for other layer using global view (DoV) and a
+    layer id
+
+    :param dov: Domain Virtualizer derived from AbstractVirtualizer
+    :param layer_id: identifier of a layer
+    :return: ESCAPEVirtualizer or a derived class of AbstractVirtualizer
+    """
     # TODO - implement
-    pass
+    log.debug(
+      "Generating virtual resource view for upper layer (layer ID: %s)" %
+      layer_id)
+    return ESCAPEVirtualizer()
