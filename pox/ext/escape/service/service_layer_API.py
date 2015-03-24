@@ -58,7 +58,7 @@ class ServiceLayerAPI(AbstractAPI):
   # Events raised by this class
   _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent}
   # Dependencies
-  _dependencies = ('orchestration',)
+  dependencies = ('orchestration',)
 
   def __init__ (self, standalone=False, **kwargs):
     log.info("Starting Service Layer...")
@@ -71,7 +71,7 @@ class ServiceLayerAPI(AbstractAPI):
     in pox.core. Contain actual initialization steps.
     """
     log.debug("Initializing Service Layer...")
-    self.sid = hash(self)
+    self.__sid = hash(self)
     # Set element manager
     self.elementManager = ClickManager()
     # Init virtual resource manager with self as communication interface
@@ -79,9 +79,9 @@ class ServiceLayerAPI(AbstractAPI):
     # Init central object of Service layer
     self.service_orchestrator = ServiceOrchestrator(virtResManager)
     # Read input from file if it's given and initiate SG
-    if self.sg_file:
+    if self._sg_file:
       try:
-        graph_json = self._read_json_from_file(self.sg_file)
+        graph_json = self._read_json_from_file(self._sg_file)
         sg_graph = NFFG.init_from_json(graph_json)
         self.request_service(sg_graph)
       except (ValueError, IOError, TypeError) as e:
@@ -93,7 +93,7 @@ class ServiceLayerAPI(AbstractAPI):
       # Init REST-API if no input file is given
       self._initiate_rest_api(address='')
     # Init GUI
-    if self.gui:
+    if self._gui:
       self._initiate_gui()
     log.debug("Service Layer has been initialized!")
 
@@ -139,8 +139,8 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.getChild('API').debug(
       "Send virtual resource info request(layer ID: %s) to Orchestration "
-      "layer...\n" % self.sid)
-    self.raiseEventNoErrors(GetVirtResInfoEvent, self.sid)
+      "layer...\n" % self.__sid)
+    self.raiseEventNoErrors(GetVirtResInfoEvent, self.__sid)
 
   def _handle_VirtResInfoEvent (self, event):
     """
@@ -193,4 +193,4 @@ class ServiceRequestHandler(AbstractRequestHandler):
     body = self._parse_json_body()
     log.getChild("REST-API").debug("Parsed input: %s" % body)
     sg = NFFG.init_from_json(body)  # Convert text based SG to object instance
-    self.proceed_API_call('request_service', sg)
+    self._proceed_API_call('request_service', sg)

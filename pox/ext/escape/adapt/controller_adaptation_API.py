@@ -58,7 +58,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.debug("Initializing Controller Adaptation Layer...")
     self.controller_adapter = ControllerAdapter()
-    if self.mapped_nffg_file:
+    if self._mapped_nffg_file:
       self._read_json_from_file(self.mapped_nffg_file)
     log.info("Controller Adaptation Layer has been initialized!")
 

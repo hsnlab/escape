@@ -32,7 +32,7 @@ class AbstractAPI(EventMixin):
   # Default value for logger. Should be overwritten by child classes
   _core_name = "AbstractAPI"
   # Explicitly defined dependencies as POX componenents
-  _dependencies = ()
+  dependencies = ()
   # Events raised by this class, but already defined in superclass
   # _eventMixin_events = set()
 
@@ -40,7 +40,8 @@ class AbstractAPI(EventMixin):
     """
     Abstract class constructor
     Handle core registration along with _all_dependencies_met()
-    Set given parameters (standalone parameter is mandatory) automatically
+    Set given parameters (standalone parameter is mandatory) automatically as
+    self._<param_name> = <param_value>
     Base constructor funtions have to be called as the last step in derived
     classes. Same situation with _all_dependencies_met() respectively.
     Must not override these fuction, just use initialize() function for init
@@ -55,9 +56,9 @@ class AbstractAPI(EventMixin):
     """
     super(AbstractAPI, self).__init__()
     # Save custom parameters with the given name
-    self.standalone = standalone
+    self._standalone = standalone
     for key, value in kwargs.iteritems():
-      setattr(self, key, value)
+      setattr(self, '_' + key, value)
     # Check if need to skip dependency handling
     if standalone:
       # Initiate component manually
@@ -69,7 +70,7 @@ class AbstractAPI(EventMixin):
       # dependency discovery to avoid issues come from fully event-driven
       # structure.
       # See more in POXCore document.
-      core.core.listen_to_dependencies(self, getattr(self, '_dependencies', ()))
+      core.core.listen_to_dependencies(self, getattr(self, 'dependencies', ()))
 
   def _all_dependencies_met (self):
     """
@@ -86,8 +87,8 @@ class AbstractAPI(EventMixin):
     # not followed (aka leave _handle_<component name>_<event name>) and
     # the event listeners is set up manually. For automatic core registration
     # the components have to containt dependencies explicitly.
-    if not self.standalone:
-      for dep in self._dependencies:
+    if not self._standalone:
+      for dep in self.dependencies:
         if core.core.hasComponent(dep):
           dep_layer = core.components[dep]
           # Register actual event handlers on dependent layer
@@ -145,26 +146,26 @@ class RESTServer(object):
   """
 
   def __init__ (self, RequestHandlerClass, address, port):
-    self.server = HTTPServer((address, port), RequestHandlerClass)
-    self.thread = threading.Thread(target=self.run)
-    self.thread.daemon = True
+    self._server = HTTPServer((address, port), RequestHandlerClass)
+    self._thread = threading.Thread(target=self.run)
+    self._thread.daemon = True
     self.started = False
 
   def start (self):
     self.started = True
-    self.thread.start()
+    self._thread.start()
 
   def stop (self):
     if self.started:
-      self.server.shutdown()
+      self._server.shutdown()
 
   def run (self):
-    self.server.RequestHandlerClass.log.debug(
-      "Init REST-API on %s:%d!" % self.server.server_address)
+    self._server.RequestHandlerClass.log.debug(
+      "Init REST-API on %s:%d!" % self._server.server_address)
     # Start API loop
-    self.server.serve_forever()
-    self.server.RequestHandlerClass.log.debug(
-      "REST-API on %s:%d is shutting down..." % self.server.server_address)
+    self._server.serve_forever()
+    self._server.RequestHandlerClass.log.debug(
+      "REST-API on %s:%d is shutting down..." % self._server.server_address)
 
 
 class AbstractRequestHandler(BaseHTTPRequestHandler):
@@ -197,27 +198,27 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     """
     Get information about an entity. R for CRUD convention.
     """
-    self.process_url()
+    self._process_url()
 
   def do_POST (self):
     """
     Create an entity. C for CRUD convention.
     """
-    self.process_url()
+    self._process_url()
 
   def do_PUT (self):
     """
     Update an entity. U for CRUD convention.
     """
-    self.process_url()
+    self._process_url()
 
   def do_DELETE (self):
     """
     Delete an entity. D for CRUD convention.
     """
-    self.process_url()
+    self._process_url()
 
-  def process_url (self):
+  def _process_url (self):
     """
     Split HTTP path and call the carved function
     if it is defined in this class and in request_perm
@@ -293,7 +294,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     self.log.debug("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
 
-  def proceed_API_call (self, function, *args, **kwargs):
+  def _proceed_API_call (self, function, *args, **kwargs):
     """
     Fail-safe method to call API function
     The cooperative microtask context is handled by actual APIs

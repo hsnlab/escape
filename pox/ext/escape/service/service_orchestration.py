@@ -45,11 +45,11 @@ class SGManager(object):
 
   Currently it just stores SGs in one central place
   """
-  service_graphs = dict()
 
   def __init__ (self):
     super(SGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    self._service_graphs = dict()
 
   def save (self, sg):
     """
@@ -58,8 +58,8 @@ class SGManager(object):
     :param sg: Service Graph
     :return: computed id of given SG
     """
-    sg.id = len(self.service_graphs)
-    self.service_graphs[sg.id] = sg
+    sg.id = len(self._service_graphs)
+    self._service_graphs[sg.id] = sg
     log.debug(
       "SG is saved by %s with id: %s" % (self.__class__.__name__, sg.id))
     return sg.id
@@ -68,7 +68,7 @@ class SGManager(object):
     """
     Return service graph with given id
     """
-    return self.service_graphs.get(graph_id, None)
+    return self._service_graphs.get(graph_id, None)
 
 
 class VirtualResourceManager(object):
@@ -81,7 +81,7 @@ class VirtualResourceManager(object):
   def __init__ (self, layerAPI):
     super(VirtualResourceManager, self).__init__()
     # service layer API for comminucation with other layers
-    self.layerAPI = layerAPI
+    self._layerAPI = layerAPI
     # Derived object from AbstractVirtualizer which represent the virtual
     # view of this layer
     self._virtual_view = None
@@ -91,7 +91,7 @@ class VirtualResourceManager(object):
     log.debug("Invoke %s to get virtual resource" % self.__class__.__name__)
     if not self.virtual_view:
       log.debug("Missing virtual view! Requesting virtual resource info...")
-      self.layerAPI.request_virtual_resource_info()
+      self._layerAPI.request_virtual_resource_info()
       log.debug("Got requested virtual resource info")
     # Hide Virtualizer just return with actual resource info (NFFG instance)
     return self.virtual_view.get_resource_info()

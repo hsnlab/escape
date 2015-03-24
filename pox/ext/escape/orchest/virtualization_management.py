@@ -61,7 +61,7 @@ class VirtualizerManager(object):
   def __init__ (self, layerAPI):
     super(VirtualizerManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
-    self.layerAPI = layerAPI
+    self._layerAPI = layerAPI
     self._virtualizers = dict()
 
   @property
@@ -75,7 +75,7 @@ class VirtualizerManager(object):
     # If DoV is not set up, need to request from Adaptation layer
     if DoV_ID not in self._virtualizers:
       log.debug("Missing global view! Requesting global resource info...")
-      self.layerAPI.request_domain_resource_info()
+      self._layerAPI.request_domain_resource_info()
     # Hide Virtualizer and return with resours info as an NFFG()
     return self._virtualizers.get(DoV_ID, None).get_resource_info()
 
@@ -89,11 +89,11 @@ class VirtualizerManager(object):
     # If this is the first request, need to generate the view
     if layer_id not in self._virtualizers:
       # Pass the global resource as NFFG not the Virtualizer
-      self._virtualizers[layer_id] = self.generate_virtual_view(self.dov,
+      self._virtualizers[layer_id] = self._generate_virtual_view(self.dov,
                                                                 layer_id)
     return self._virtualizers[layer_id]
 
-  def generate_virtual_view (self, dov, layer_id):
+  def _generate_virtual_view (self, dov, layer_id):
     """
     Generate a Virtualizer for other layer using global view (DoV) and a
     layer id

@@ -46,11 +46,11 @@ class NFFGManager(object):
   """
   Store, handle and organize Network Function Forwarding Graphs
   """
-  nffgs = dict()
 
   def __init__ (self):
     super(NFFGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    self._nffgs = dict()
 
   def save (self, nffg):
     """
@@ -59,8 +59,8 @@ class NFFGManager(object):
     :param nffg: Network Function Forwarding Graph
     :return: computed id of given NF-FG
     """
-    nffg.id = len(self.nffgs)
-    self.nffgs[nffg.id] = nffg
+    nffg.id = len(self._nffgs)
+    self._nffgs[nffg.id] = nffg
     log.debug(
       "NF-FG is saved by %s with id: %s" % (self.__class__.__name__, nffg.id))
     return nffg.id
@@ -69,4 +69,4 @@ class NFFGManager(object):
     """
     Return NF-FG with given id
     """
-    return self.nffgs.get(nffg_id, default=None)
+    return self._nffgs.get(nffg_id, default=None)

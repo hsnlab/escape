@@ -27,8 +27,8 @@ class ControllerAdapter(object):
     super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.domainResManager = DomainResourceManager()
-    self.pox = POXDomainAdapter()
-    self.mininet = MininetDomainAdapter()
+    self.poxAdapter = POXDomainAdapter()
+    self.mnAdapter = MininetDomainAdapter()
 
   def install_nffg (self, mapped_nffg):
     """

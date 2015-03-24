@@ -64,7 +64,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   _eventMixin_events = {InstallNFFGEvent, GetGlobalResInfoEvent,
                         VirtResInfoEvent}
   # Dependencies
-  _dependencies = ('adaptation',)
+  dependencies = ('adaptation',)
 
   def __init__ (self, standalone=False, **kwargs):
     log.info("Starting Resource Orchestration Layer...")
@@ -80,7 +80,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.debug("Initializing Resource Orchestration Layer...")
     virtualizerManager = VirtualizerManager(self)
     self.resource_orchestrator = ResourceOrchestrator(virtualizerManager)
-    if self.nffg_file:
+    if self._nffg_file:
       self._read_json_from_file(self.nffg_file)
     log.info("Resource Orchestration Layer has been initialized!")
 
