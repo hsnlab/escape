@@ -23,18 +23,19 @@ class ServiceOrchestrator(object):
   def __init__ (self, virtResManager):
     super(ServiceOrchestrator, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
-    self.sg_manager = SGManager()
+    self.sgManager = SGManager()
     self.virtResManager = virtResManager
-    self.sg_mapper = ServiceGraphMapper()
+    self.sgMapper = ServiceGraphMapper()
+    self.nfibManager = NFIBManager()
 
   def initiate_service_graph (self, sg):
     log.debug("Invoke %s to initiate SG" % self.__class__.__name__)
     # Store newly created SG
-    self.sg_manager.save(sg)
+    self.sgManager.save(sg)
     # Get virtual resource info
     virt_resource = self.virtResManager.get_resource_info()
     # Run service mapping algorithm
-    nffg = self.sg_mapper.orchestrate(sg, virt_resource)
+    nffg = self.sgMapper.orchestrate(sg, virt_resource)
     log.debug("SG initiation is finished by %s" % self.__class__.__name__)
     return nffg
 

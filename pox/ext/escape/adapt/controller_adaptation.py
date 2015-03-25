@@ -14,7 +14,9 @@
 import weakref
 
 from escape.orchest.virtualization_management import AbstractVirtualizer
-from escape.adapt.domain_adapters import POXDomainAdapter, MininetDomainAdapter
+from escape.adapt.domain_adapters import POXDomainAdapter, \
+  MininetDomainAdapter, \
+  OpenStackDomainAdapter
 from escape.adapt import log as log
 
 
@@ -29,6 +31,7 @@ class ControllerAdapter(object):
     self.domainResManager = DomainResourceManager()
     self.poxAdapter = POXDomainAdapter()
     self.mnAdapter = MininetDomainAdapter()
+    self.ostackAdapter = OpenStackDomainAdapter()
 
   def install_nffg (self, mapped_nffg):
     """

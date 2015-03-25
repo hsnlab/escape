@@ -23,9 +23,9 @@ class ResourceOrchestrator(object):
   def __init__ (self, virtualizerManager):
     super(ResourceOrchestrator, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
-    self.nffg_manager = NFFGManager()
+    self.nffgManager = NFFGManager()
     self.virtualizerManager = virtualizerManager
-    self.nffg_mapper = ResourceOrchestrationMapper()
+    self.nffgMapper = ResourceOrchestrationMapper()
 
   def instantiate_nffg (self, nffg):
     """
@@ -33,11 +33,11 @@ class ResourceOrchestrator(object):
     """
     log.debug("Invoke %s to instantiate NF-FG" % self.__class__.__name__)
     # Store newly created NF-FG
-    self.nffg_manager.save(nffg)
+    self.nffgManager.save(nffg)
     # Get Domain Virtualizer to aquire global domain view
     global_resource = self.virtualizerManager.dov
     # Run Nf-FG mapping algorithm
-    mapped_nffg = self.nffg_mapper.orchestrate(nffg, global_resource)
+    mapped_nffg = self.nffgMapper.orchestrate(nffg, global_resource)
     log.debug("NF-FG instantiation is finished by %s" % self.__class__.__name__)
     return mapped_nffg
 
