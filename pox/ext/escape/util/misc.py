@@ -19,6 +19,11 @@ def schedule_as_coop_task (func):
   Decorator fuctions for running functions in an asynchronous way as a
   microtask in recoco's cooperative multitasking context (in wich POX was
   written)
+
+  :param func: decorated function
+  :type func: func
+  :return: decorater function
+  :rtype: func
   """
 
   def decorator (*args, **kwargs):

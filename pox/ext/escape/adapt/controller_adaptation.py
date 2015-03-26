@@ -18,6 +18,7 @@ from escape.adapt.domain_adapters import POXDomainAdapter, \
   MininetDomainAdapter, \
   OpenStackDomainAdapter
 from escape.adapt import log as log
+from escape.util.nffg import NFFG
 
 
 class ControllerAdapter(object):
@@ -36,6 +37,9 @@ class ControllerAdapter(object):
   def install_nffg (self, mapped_nffg):
     """
     Start NF-FG installation
+
+    :param mapped_nffg: mapped NF-FG instance which need to be installed
+    :type mapped_nffg: NFFG
     """
     log.debug("Invoke %s to install NF-FG" % self.__class__.__name__)
     # TODO - implement
@@ -56,8 +60,14 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.domainResManager = weakref.proxy(domainResManager)
 
   def get_resource_info (self):
+    """
+    Return the global resource info represented this class
+
+    :return: global resource info
+    :rtype: NFFG
+    """
     # TODO - implement - possibly don't store anything just convert??
-    pass
+    return NFFG()
 
 
 class DomainResourceManager(object):
@@ -72,4 +82,10 @@ class DomainResourceManager(object):
 
   @property
   def dov (self):
+    """
+    Getter for Domain Virtualizer
+
+    :return: Domain Virtualizer
+    :rtype: ESCAPEVirtualizer
+    """
     return self._dov

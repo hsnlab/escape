@@ -52,10 +52,6 @@ class ControllerAdaptationAPI(AbstractAPI):
                                                   **kwargs)
 
   def initialize (self):
-    """
-    Called when every componenet on which depends are initialized and registered
-    in pox.core. Contain actual initialization steps.
-    """
     log.debug("Initializing Controller Adaptation Layer...")
     self.controller_adapter = ControllerAdapter()
     if self._mapped_nffg_file:
@@ -71,6 +67,9 @@ class ControllerAdaptationAPI(AbstractAPI):
   def _handle_InstallNFFGEvent (self, event):
     """
     Install mapped Nf-FG
+
+    :param event: evetn object contains mapped NF-FG
+    :type event: InstallNFFGEvent
     """
     log.getChild('API').info("Received mapped NF-FG from %s Layer" % str(
       event.source._core_name).title())
@@ -83,6 +82,9 @@ class ControllerAdaptationAPI(AbstractAPI):
   def _handle_GetGlobalResInfoEvent (self, event):
     """
     Generate global resource info and send back to Orchestration layer
+
+    :param event: event object
+    :type event: GetGlobalResInfoEvent
     """
     log.getChild('API').debug(
       "Received global resource info request from %s layer" % str(

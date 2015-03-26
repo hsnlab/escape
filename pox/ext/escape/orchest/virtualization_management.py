@@ -30,7 +30,8 @@ class AbstractVirtualizer(object):
     """
     Hides object's mechanism and return with a resource object derived from NFFG
 
-    :return: resource object (NFFG)
+    :return: resource info
+    :rtype: NFFG
     """
     raise NotImplementedError("Derived class have to override this function")
 
@@ -70,37 +71,57 @@ class VirtualizerManager(object):
     Getter method for Domain Virtualizer
     Request DoV from Adaptation if it hasn't set yet
     Usage: virtualizerManager.dov
+
+    :return: Domain Virtualizer (DoV)
+    :rtype: DomainVirtualizer
     """
     log.debug("Invoke %s to get global resource" % self.__class__.__name__)
     # If DoV is not set up, need to request from Adaptation layer
     if DoV_ID not in self._virtualizers:
       log.debug("Missing global view! Requesting global resource info...")
       self._layerAPI.request_domain_resource_info()
-    # Hide Virtualizer and return with resours info as an NFFG()
-    return self._virtualizers.get(DoV_ID, None).get_resource_info()
+    # Hide Virtualizer and return with resours info as a DomainVirtualizer
+    return self._virtualizers.get(DoV_ID, None)
 
   @dov.setter
   def dov (self, dov):
+    """
+    DoV setter
+
+    :param dov: Domain Virtualizer (DoV)
+    :type dov: DomainVirtualizer
+    """
     self._virtualizers[DoV_ID] = dov
 
   def get_virtual_view (self, layer_id):
+    """
+    Return the virtual view as a derived class of AbstractVirtualizer
+
+    :param layer_id: layer ID
+    :type layer_id: int
+    :return: virtual view
+    :rtype: ESCAPEVirtualizer
+    """
     log.debug("Invoke %s to get virtual resource view (layer ID: %s)" % (
       self.__class__.__name__, layer_id))
     # If this is the first request, need to generate the view
     if layer_id not in self._virtualizers:
       # Pass the global resource as NFFG not the Virtualizer
       self._virtualizers[layer_id] = self._generate_virtual_view(self.dov,
-                                                                layer_id)
+                                                                 layer_id)
     return self._virtualizers[layer_id]
 
   def _generate_virtual_view (self, dov, layer_id):
     """
-    Generate a Virtualizer for other layer using global view (DoV) and a
+    Generate a missing Virtualizer for other layer using global view (DoV) and a
     layer id
 
     :param dov: Domain Virtualizer derived from AbstractVirtualizer
-    :param layer_id: identifier of a layer
-    :return: ESCAPEVirtualizer or a derived class of AbstractVirtualizer
+    :type dov: DomainVirtualizer
+    :param layer_id: layer ID
+    :type layer_id: int
+    :return: generated virtualizer derived from AbstractVirtualizer
+    :rtype: ESCAPEVirtualizer
     """
     # TODO - implement
     log.debug(

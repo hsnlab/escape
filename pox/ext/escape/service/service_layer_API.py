@@ -66,10 +66,6 @@ class ServiceLayerAPI(AbstractAPI):
     super(ServiceLayerAPI, self).__init__(standalone=standalone, **kwargs)
 
   def initialize (self):
-    """
-    Called when every componenet on which depends are initialized and registered
-    in pox.core. Contain actual initialization steps.
-    """
     log.debug("Initializing Service Layer...")
     self.__sid = hash(self)
     # Set element manager
@@ -103,10 +99,21 @@ class ServiceLayerAPI(AbstractAPI):
       self.rest_api.stop()
 
   def _initiate_rest_api (self, address='localhost', port=8008):
+    """
+    Initialize and set up REST API in a different thread
+
+    :param address: server address, default localhost
+    :type address: str
+    :param port: port number, defualt 8008
+    :type port: int
+    """
     self.rest_api = RESTServer(ServiceRequestHandler, address, port)
     self.rest_api.start()
 
   def _initiate_gui (self):
+    """
+    Initiate and set up GUI
+    """
     # TODO - set up and initiate MiniEdit here
     pass
 
@@ -118,6 +125,7 @@ class ServiceLayerAPI(AbstractAPI):
     Initiate service graph
 
     :param sg: service graph instance
+    :type sg: NFFG
     """
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
       self.__class__.__name__, repr.repr(sg)))
@@ -135,7 +143,7 @@ class ServiceLayerAPI(AbstractAPI):
   def request_virtual_resource_info (self):
     """
     Request virtual resource info from Orchestration layer
-    Service layer is identified with the sid value
+    Service layer is identified with the sid value automatically
     """
     log.getChild('API').debug(
       "Send virtual resource info request(layer ID: %s) to Orchestration "
@@ -186,7 +194,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
   def sg (self):
     """
     Initiate sg graph
-    Bounded to POST verb
+    Bounded to POST HTTP verb
     """
     log.getChild("REST-API").debug("Call REST-API function: %s" % (
       inspect.currentframe().f_code.co_name,))

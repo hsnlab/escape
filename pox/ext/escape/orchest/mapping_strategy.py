@@ -26,6 +26,16 @@ class AbstractMappingStrategy(object):
 
   @classmethod
   def map (cls, graph, resource):
+    """
+    Abstract function for mapping algorithm
+
+    :param graph: Input graph which need to be mapped
+    :type graph: NFFG
+    :param resource: resource info
+    :type resource: NFFG
+    :return: mapped graph
+    :rtype: NFFG
+    """
     raise NotImplementedError("Derived class must override this function!")
 
 
@@ -43,8 +53,11 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     Default mapping algorithm of ESCAPE
 
     :param graph: Network Function forwarding Graph
-    :param resource: global virtual resource
+    :type graph: NFFG
+    :param resource: global virtual resource info
+    :type resource: NFFG
     :return: mapped Network Fuction Forwarding Graph
+    :rtype: NFFG
     """
     log.debug(
       "Invoke mapping algorithm: %s on NF-FG(%s)" % (cls.__name__, graph.id))

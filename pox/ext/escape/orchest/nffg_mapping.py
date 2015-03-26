@@ -27,6 +27,17 @@ class AbstractMapper(object):
     self.strategy = strategy
 
   def orchestrate (self, input_graph, resource_view):
+    """
+    Abstract function for wrapping optional steps connected to orchestration
+    Implemented function call the mapping algorithm
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: NFFG
+    :param resource_view: resource information
+    :type resource_view: AbstractVirtualizer
+    :return: mapped graph
+    :rtype: NFFG
+    """
     raise NotImplementedError("Derived class must override this function!")
 
 
@@ -42,17 +53,21 @@ class ResourceOrchestrationMapper(AbstractMapper):
 
   def orchestrate (self, input_graph, resource_view):
     """
-    Orchestrate mapping of given NF-FG on given virtual resource
+    Orchestrate mapping of given NF-FG on given global resource
 
     :param input_graph: Network Function Forwarding Graph
-    :param resource_view: virtual resource
+    :type input_graph: NFFG
+    :param resource_view: global resource view
+    :type resource_view: DomainVirtualizer
     :return: mapped Network Function Forwarding Graph
+    :rtype: NFFG
     """
     log.debug("Request %s to lauch orchestration on NF-FG(%s)..." % (
       self.__class__.__name__, input_graph.id))
     # Steps before mapping (optional)
     # Run actual mapping algorithm
-    mapped_nffg = self.strategy.map(graph=input_graph, resource=resource_view)
+    mapped_nffg = self.strategy.map(graph=input_graph,
+                                    resource=resource_view.get_resource_info())
     # Steps after mapping (optional)
     log.info("Nf-FG(%s) orchestration is finished by %s" % (
       input_graph.id, self.__class__.__name__))

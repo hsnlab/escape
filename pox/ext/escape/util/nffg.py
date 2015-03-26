@@ -14,6 +14,10 @@
 
 
 class NFFG(object):
+  """
+  Wrapper class which represent an NF-FG
+  """
+
   def __init__ (self):
     super(NFFG, self).__init__()
     self.id = None
@@ -23,7 +27,20 @@ class NFFG(object):
   @staticmethod
   def init_from_json (json):
     """
-    TODO
+    Create and initialize an NFFG object from JSON data
+
+    :param json: NF-FG represented in JSON format
+    :type json: str
+    :return: NFFG instance
+    :rtype: NFFG
     """
     # TODO - implement! This function has already used in layer APIs
     return NFFG()
+
+  def to_json (self):
+    """
+    Return a JSON string represent this instance
+
+    :return: JSON formatted string
+    :rtype: str
+    """

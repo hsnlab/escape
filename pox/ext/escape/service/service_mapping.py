@@ -30,8 +30,11 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     Default mapping algorithm which maps given Service Graph on one BiS-BiS
 
     :param graph: Service Graph
+    :type graph: NFFG
     :param resource: virtual resource
+    :type resource: NFFG
     :return: Network Function Forwarding Graph
+    :rtype: NFFG
     """
     log.debug(
       "Invoke mapping algorithm: %s on SG(%s)" % (cls.__name__, graph.id))
@@ -57,14 +60,18 @@ class ServiceGraphMapper(AbstractMapper):
     Orchestrate mapping of given service graph on given virtual resource
 
     :param input_graph: Service Graph
-    :param resource_view: virtual resource
+    :type input_graph: NFFG
+    :param resource_view: virtual resource view
+    :param resource_view: ESCAPEVirtualizer
     :return: Network Function Forwarding Graph
+    :rtype: NFFG
     """
     log.debug("Request %s to lauch orchestration on SG(%s)..." % (
       self.__class__.__name__, input_graph.id))
     # Steps before mapping (optional)
     # Run actual mapping algorithm
-    nffg = self.strategy.map(graph=input_graph, resource=resource_view)
+    nffg = self.strategy.map(graph=input_graph,
+                             resource=resource_view.get_resource_info())
     # Steps after mapping (optional)
     log.info("SG(%s) orchestration is finished by %s" % (
       input_graph.id, self.__class__.__name__))

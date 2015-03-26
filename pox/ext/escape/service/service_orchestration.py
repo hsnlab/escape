@@ -29,13 +29,21 @@ class ServiceOrchestrator(object):
     self.nfibManager = NFIBManager()
 
   def initiate_service_graph (self, sg):
+    """
+    Main function for initiating Service Graphs
+
+    :param sg: service graph storeg in NFFG instance
+    :type sg: NFFG
+    :return: NF-FG description
+    :rtype: NFFG
+    """
     log.debug("Invoke %s to initiate SG" % self.__class__.__name__)
     # Store newly created SG
     self.sgManager.save(sg)
-    # Get virtual resource info
-    virt_resource = self.virtResManager.get_resource_info()
+    # Get virtual resource info as a Virtualizer
+    virtual_view = self.virtResManager.get_virtual_resource_view()
     # Run service mapping algorithm
-    nffg = self.sgMapper.orchestrate(sg, virt_resource)
+    nffg = self.sgMapper.orchestrate(sg, virtual_view)
     log.debug("SG initiation is finished by %s" % self.__class__.__name__)
     return nffg
 
@@ -57,7 +65,9 @@ class SGManager(object):
     Save SG in a dict
 
     :param sg: Service Graph
-    :return: computed id of given SG
+    :type sg: NFFG
+    :return: computed id of given Service Graph
+    :rtype: int
     """
     sg.id = len(self._service_graphs)
     self._service_graphs[sg.id] = sg
@@ -68,6 +78,11 @@ class SGManager(object):
   def get (self, graph_id):
     """
     Return service graph with given id
+
+    :param graph_id: graph ID
+    :type graph_id: int
+    :return: stored Service Graph
+    :rtype: NFFG
     """
     return self._service_graphs.get(graph_id, None)
 
@@ -88,22 +103,41 @@ class VirtualResourceManager(object):
     self._virtual_view = None
     log.debug("Init %s" % self.__class__.__name__)
 
-  def get_resource_info (self):
+  def get_virtual_resource_view (self):
+    """
+    Return resource info of actual layer as an NFFG instance
+    If it isn't exist reqiures it from Orchestration layer
+
+    :return: resource info as a Virtualizer
+    :rtype: ESCAPEVirtualizer
+    """
     log.debug("Invoke %s to get virtual resource" % self.__class__.__name__)
     if not self.virtual_view:
       log.debug("Missing virtual view! Requesting virtual resource info...")
       self._layerAPI.request_virtual_resource_info()
       log.debug("Got requested virtual resource info")
-    # Hide Virtualizer just return with actual resource info (NFFG instance)
-    return self.virtual_view.get_resource_info()
+    return self.virtual_view
 
   @property
   def virtual_view (self):
+    """
+    Virtual view getter
+    """
     return self._virtual_view
 
   @virtual_view.setter
   def virtual_view (self, view):
+    """
+    Virtual view setter
+    """
     self._virtual_view = view
+
+  @virtual_view.deleter
+  def virtual_view (self):
+    """
+    Virtual view deleter
+    """
+    del self.virtual_view
 
 
 class NFIBManager(object):

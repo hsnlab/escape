@@ -40,6 +40,9 @@ class PolicyEnforcementMetaClass(type):
   """
 
   def __new__ (mcs, name, bases, attrs):
+    """
+    Magic function called before subordinated class even created
+    """
     for attr_name, attr_value in attrs.iteritems():
       if isinstance(attr_value,
                     types.FunctionType) and not attr_name.startswith('__'):
@@ -51,6 +54,15 @@ class PolicyEnforcementMetaClass(type):
 
   @classmethod
   def get_wrapper (mcs, func_name, orig_func):
+    """
+    Return decorator function which do the policy enforment check
+
+    :param func_name: function name
+    :type func_name: str
+    :return: decorator function
+    :rtype: func
+    """
+
     def wrapper (*args, **kwargs):
       pep_function = getattr(PolicyEnforcement(), func_name)
       # Call Policy checking function before original
@@ -66,6 +78,9 @@ class PolicyEnforcementMetaClass(type):
 class PolicyEnforcement(object):
   """
   Proxy class for policy checking
+  Contains the policy checking function
+  Binding is based on function name (cheking function have to exist in this
+  class and tis name have to be identical to subordinate function's name)
   """
 
   def __init__ (self):

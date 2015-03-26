@@ -73,10 +73,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
                                                    **kwargs)
 
   def initialize (self):
-    """
-    Called when every componenet on which depends are initialized and registered
-    in pox.core. Contain actual initialization steps.
-    """
     log.debug("Initializing Resource Orchestration Layer...")
     virtualizerManager = VirtualizerManager(self)
     self.resource_orchestrator = ResourceOrchestrator(virtualizerManager)
@@ -95,6 +91,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     Instantiate given NF-FG
 
     :param event: event object contains NF-FG
+    :type event: InstantiateNFFGEvent
     """
     log.getChild('API').info(
       "Received NF-FG from %s layer" % str(event.source._core_name).title())
@@ -111,6 +108,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def _handle_GetVirtResInfoEvent (self, event):
     """
     Generate virtual resource info and send back to Service layer
+
+    :param event: event object contains service layer id
+    :type event: GetVirtResInfoEvent
     """
     log.getChild('API').debug(
       "Received virtual resource info request from %s layer" % str(
@@ -134,6 +134,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def _handle_GlobalResInfoEvent (self, event):
     """
     Save requested global resource info as the DomainVirtualizer
+
+    :param event: event object contains resource info
+    :type event: GlobalResInfoEvent
     """
     log.getChild('API').debug(
       "Received global resource info from %s layer" % str(

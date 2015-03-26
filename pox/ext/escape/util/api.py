@@ -53,6 +53,9 @@ class AbstractAPI(EventMixin):
     dependecy discovery considers that as a dependent componenet and this
     situation casue a dead lock (component will be waiting to each other to
     set up)
+
+    :param standalone: started in standalone mode or not
+    :type standalone: bool
     """
     super(AbstractAPI, self).__init__()
     # Save custom parameters with the given name
@@ -107,6 +110,8 @@ class AbstractAPI(EventMixin):
   def initialize (self):
     """
     Init function for child API classes to symplify dynamic initilization
+    Called when every componenet on which depends are initialized and
+    registeredmin pox.core.
     This function should be overwritten by child classes.
     """
     pass
@@ -115,10 +120,22 @@ class AbstractAPI(EventMixin):
     """
     Finalization, deallocation, etc. of actual component
     Should be overwritten by child classes
+
+    :param event: shutdown event raised by POX core
+    :type event: GoingDownEvent
     """
     pass
 
-  def _read_json_from_file (self, graph_file):
+  @staticmethod
+  def _read_json_from_file (graph_file):
+    """
+    Read the given file and return a string formatted as JSON
+
+    :param graph_file: file path
+    :type graph_file: str
+    :return: JSON data
+    :rtype: str
+    """
     if graph_file and not graph_file.startswith('/'):
       graph_file = os.path.abspath(graph_file)
     with open(graph_file, 'r') as f:
@@ -128,6 +145,9 @@ class AbstractAPI(EventMixin):
   def __str__ (self):
     """
     Print class type and non-private attributes with their types for debugging
+
+    :return: specific string
+    :rtype: str
     """
     print '<%s.%s object at %s>' % (
       self.__class__.__module__, self.__class__.__name__, hex(id(self)))
@@ -243,7 +263,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     """
     Parse HTTP request body in JSON format
     Parsed JSON object is unicode
-    GET, DELETE messages don't contain parameters - Return empty dict by default
+    GET, DELETE messages don't have body - return empty dict by default
+
+    :return: request body in JSON format
+    :rtype: str
     """
     charset = 'utf-8'
     try:
@@ -265,6 +288,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   def _send_json_response (self, data, encoding='utf-8'):
     """
     Send requested data in json format
+
+    :param data: data in JSON format
+    :type data: dict
     """
     response_body = json.dumps(data, encoding=encoding)
     self.send_response(200)
@@ -272,7 +298,6 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     self.send_header('Content-Length', len(response_body))
     self.end_headers()
     self.wfile.write(response_body)
-    return
 
   def log_error (self, mformat, *args):
     """
@@ -299,6 +324,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     Fail-safe method to call API function
     The cooperative microtask context is handled by actual APIs
     Should call this with params, not directly the function of actual API
+
+    :param function: function name
+    :type function: str
     """
     if core.core.hasComponent(self.bounded_layer):
       layer = core.components[self.bounded_layer]

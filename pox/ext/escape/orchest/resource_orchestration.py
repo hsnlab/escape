@@ -30,14 +30,19 @@ class ResourceOrchestrator(object):
   def instantiate_nffg (self, nffg):
     """
     Start NF-FG instantiation
+
+    :param nffg: NFFG instance
+    :type nffg: NFFG
+    :return: mapped NFFG instance
+    :rtype: NFFG
     """
     log.debug("Invoke %s to instantiate NF-FG" % self.__class__.__name__)
     # Store newly created NF-FG
     self.nffgManager.save(nffg)
     # Get Domain Virtualizer to aquire global domain view
-    global_resource = self.virtualizerManager.dov
+    global_view = self.virtualizerManager.dov
     # Run Nf-FG mapping algorithm
-    mapped_nffg = self.nffgMapper.orchestrate(nffg, global_resource)
+    mapped_nffg = self.nffgMapper.orchestrate(nffg, global_view)
     log.debug("NF-FG instantiation is finished by %s" % self.__class__.__name__)
     return mapped_nffg
 
@@ -57,7 +62,9 @@ class NFFGManager(object):
     Save NF-FG in a dict
 
     :param nffg: Network Function Forwarding Graph
-    :return: computed id of given NF-FG
+    :type nffg: NFFG
+    :return: generated ID of given NF-FG
+    :rtype: int
     """
     nffg.id = len(self._nffgs)
     self._nffgs[nffg.id] = nffg
@@ -68,5 +75,10 @@ class NFFGManager(object):
   def get (self, nffg_id):
     """
     Return NF-FG with given id
+
+    :param nffg_id: ID of NF-FG
+    :type nffg_id: int
+    :return: NF-Fg instance
+    :rtype: NFFG
     """
     return self._nffgs.get(nffg_id, default=None)
