@@ -16,3 +16,13 @@
 Unifying package for ESCAPEv2 functions
 """
 __version__ = '2.0.0'
+CONFIG = {'SMS': {  # Service Management Sublayer
+                    'REQUEST-handler': 'ServiceRequestHandler'},  # REST-API
+          'SAS': {  # Service Adaptation Sublayer
+                    'STRATEGY': 'DefaultServiceMappingStrategy'},
+          'ROS': {  # Resource Orchestration Sublayer
+                    'STRATEGY': 'ESCAPEMappingStrategy'},  # ROS Mapping stategy
+          'CAS': {  # Controller Adaptation Sublayer
+                    'POX': 'POXDomainAdapter',  # POX Adapter
+                    'MN': 'MininetDomainAdapter',  # Mininet Adapter
+                    'OS': 'OpenStackDomainAdapter'}}  # OpenStack Adapter

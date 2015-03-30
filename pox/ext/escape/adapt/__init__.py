@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Sublayer for classes related to UNIFY's Controller Adaptation sublayer
+Sublayer for classes related to UNIFY's Controller Adaptation Sublayer (CAS)
 """
 from pox.core import core
 

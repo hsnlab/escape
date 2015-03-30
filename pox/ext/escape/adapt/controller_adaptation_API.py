@@ -33,7 +33,7 @@ class GlobalResInfoEvent(Event):
 
 class ControllerAdaptationAPI(AbstractAPI):
   """
-  Entry point for Controller Adaptation Sublayer
+  Entry point for Controller Adaptation Sublayer (CAS)
 
   Maintain the contact with other UNIFY layers
   Implement the Or - Ca reference point
@@ -46,20 +46,20 @@ class ControllerAdaptationAPI(AbstractAPI):
   # None
 
   def __init__ (self, standalone=False, **kwargs):
-    log.info("Starting Controller Adaptation Layer...")
+    log.info("Starting Controller Adaptation Sublayer...")
     # Mandatory super() call
     super(ControllerAdaptationAPI, self).__init__(standalone=standalone,
                                                   **kwargs)
 
   def initialize (self):
-    log.debug("Initializing Controller Adaptation Layer...")
+    log.debug("Initializing Controller Adaptation Sublayer...")
     self.controller_adapter = ControllerAdapter()
     if self._mapped_nffg_file:
       self._read_json_from_file(self.mapped_nffg_file)
-    log.info("Controller Adaptation Layer has been initialized!")
+    log.info("Controller Adaptation Sublayer has been initialized!")
 
   def shutdown (self, event):
-    log.info("Controller Adaptation Layer is going down...")
+    log.info("Controller Adaptation Sublayer is going down...")
 
   # UNIFY Or - Ca API functions starts here
 

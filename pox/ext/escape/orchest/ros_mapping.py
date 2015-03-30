@@ -11,34 +11,38 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.orchest.mapping_strategy import ESCAPEMappingStrategy
+from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.orchest import log as log
+from escape import CONFIG
 
 
-class AbstractMapper(object):
+class ESCAPEMappingStrategy(AbstractMappingStrategy):
   """
-  Abstract class for graph mapping function
-
-  Contain common functions and initialization
+  Implement a strategy to map initial NFFG into extNFFG
   """
 
-  def __init__ (self, strategy):
-    super(AbstractMapper, self).__init__()
-    self.strategy = strategy
+  def __init__ (self):
+    super(ESCAPEMappingStrategy, self).__init__()
 
-  def orchestrate (self, input_graph, resource_view):
+  @classmethod
+  def map (cls, graph, resource):
     """
-    Abstract function for wrapping optional steps connected to orchestration
-    Implemented function call the mapping algorithm
+    Default mapping algorithm of ESCAPE
 
-    :param input_graph: graph representation which need to be mapped
-    :type input_graph: NFFG
-    :param resource_view: resource information
-    :type resource_view: AbstractVirtualizer
-    :return: mapped graph
+    :param graph: Network Function forwarding Graph
+    :type graph: NFFG
+    :param resource: global virtual resource info
+    :type resource: NFFG
+    :return: mapped Network Fuction Forwarding Graph
     :rtype: NFFG
     """
-    raise NotImplementedError("Derived class must override this function!")
+    log.debug(
+      "Invoke mapping algorithm: %s on NF-FG(%s)" % (cls.__name__, graph.id))
+    # TODO - implement algorithm here
+    log.debug("Mapping algorithm: %s is finished on NF-FG(%s)" % (
+      cls.__name__, graph.id))
+    # for testing return with graph
+    return graph
 
 
 class ResourceOrchestrationMapper(AbstractMapper):
@@ -47,6 +51,19 @@ class ResourceOrchestrationMapper(AbstractMapper):
   """
 
   def __init__ (self, strategy=ESCAPEMappingStrategy):
+    if hasattr(CONFIG['ROS'], 'STRATEGY'):
+      if issubclass(CONFIG['ROS']['STATEGY'], AbstractMappingStrategy):
+        try:
+          strategy = getattr(self.__module__, CONFIG['ROS']['STATEGY'])
+        except AttributeError:
+          log.warning(
+            "Mapping strategy: %s is not found in module: %s, fall back to "
+            "%s" % (CONFIG['ROS']['STATEGY'], self.__module__,
+                    strategy.__class__.__name__))
+      else:
+        log.warning(
+          "ROS mappig strategy is not subclass of AbstractMappingStrategy, "
+          "fall back to %s" % strategy.__class__.__name__)
     super(ResourceOrchestrationMapper, self).__init__(strategy)
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, strategy.__name__))

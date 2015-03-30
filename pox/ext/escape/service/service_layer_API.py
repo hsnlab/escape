@@ -14,6 +14,7 @@
 import inspect
 import repr
 
+from escape import CONFIG
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.element_management import ClickManager
@@ -44,6 +45,51 @@ class GetVirtResInfoEvent(Event):
     super(GetVirtResInfoEvent, self).__init__()
     # service layer ID
     self.sid = sid
+
+
+class ServiceRequestHandler(AbstractRequestHandler):
+  """
+  Request Handler for Service layer
+
+  IMPORTANT!
+  This class is out of the context of the recoco's co-operative thread context!
+  While you don't need to worry much about synchronization between recoco
+  tasks, you do need to think about synchronization between recoco task and
+  normal threads.
+  Synchronisation is needed to take care manually: use relevant helper
+  function of core object: callLater/raiseLater or use schedule_as_coop_task
+  decorator defined in util.misc on the called function
+  """
+  # Bind HTTP verbs to UNIFY's API functions
+  request_perm = {'GET': ('echo',), 'POST': ('echo', 'sg'), 'PUT': ('echo',),
+                  'DELETE': ('echo',)}
+  # Statically defined layer component to which this handler is bounded
+  # Need to be set by container class
+  bounded_layer = 'service'
+  # Logger. Must define
+  log = log.getChild("REST-API")
+
+  # REST API call --> UNIFY U-Sl call
+
+  def echo (self):
+    """
+    Test function for REST-API
+    """
+    self.log_full_message("ECHO: %s - %s", self.raw_requestline,
+                          self._parse_json_body())
+    self._send_json_response({'echo': True})
+
+  def sg (self):
+    """
+    Initiate sg graph
+    Bounded to POST HTTP verb
+    """
+    log.getChild("REST-API").debug("Call REST-API function: %s" % (
+      inspect.currentframe().f_code.co_name,))
+    body = self._parse_json_body()
+    log.getChild("REST-API").debug("Parsed input: %s" % body)
+    sg = NFFG.init_from_json(body)  # Convert text based SG to object instance
+    self._proceed_API_call('request_service', sg)
 
 
 class ServiceLayerAPI(AbstractAPI):
@@ -95,10 +141,11 @@ class ServiceLayerAPI(AbstractAPI):
 
   def shutdown (self, event):
     log.info("Service Layer is going down...")
-    if hasattr(self, 'rest_api'):
+    if hasattr(self, 'rest_api') and self.rest_api:
       self.rest_api.stop()
 
-  def _initiate_rest_api (self, address='localhost', port=8008):
+  def _initiate_rest_api (self, handler=ServiceRequestHandler,
+                          address='localhost', port=8008):
     """
     Initialize and set up REST API in a different thread
 
@@ -107,7 +154,22 @@ class ServiceLayerAPI(AbstractAPI):
     :param port: port number, defualt 8008
     :type port: int
     """
-    self.rest_api = RESTServer(ServiceRequestHandler, address, port)
+    if hasattr(CONFIG['SMS'], 'REQUEST-handler'):
+      if issubclass(CONFIG['ROS']['REQUEST-handler'], AbstractRequestHandler):
+        try:
+          handler = getattr(__import__('escape.util.api'),
+                            CONFIG['ROS']['REQUEST-handler'])
+        except AttributeError:
+          log.warning(
+            "Request handler: %s is not found in module: escape.util.api, "
+            "fall back to "
+            "%s" % (CONFIG['SAS']['STATEGY'], handler.__class__.__name__))
+      else:
+        log.warning("REST handler is not subclass of AbstractRequestHandler, "
+                    "fall back to %s" % handler.__class__.__name__)
+    # set bounded layer name here to avoid circular dependency problem
+    handler.bounded_layer = self._core_name
+    self.rest_api = RESTServer(handler, address, port)
     self.rest_api.start()
 
   def _initiate_gui (self):
@@ -146,7 +208,7 @@ class ServiceLayerAPI(AbstractAPI):
     Service layer is identified with the sid value automatically
     """
     log.getChild('API').debug(
-      "Send virtual resource info request(layer ID: %s) to Orchestration "
+      "Send virtual resource info request(with layer ID: %s) to Orchestration "
       "layer...\n" % self.__sid)
     self.raiseEventNoErrors(GetVirtResInfoEvent, self.__sid)
 
@@ -158,47 +220,3 @@ class ServiceLayerAPI(AbstractAPI):
       "Received virtual resource info from %s layer" % str(
         event.source._core_name).title())
     self.service_orchestrator.virtResManager.virtual_view = event.resource_info
-
-
-class ServiceRequestHandler(AbstractRequestHandler):
-  """
-  Request Handler for Service layer
-
-  IMPORTANT!
-  This class is out of the context of the recoco's co-operative thread context!
-  While you don't need to worry much about synchronization between recoco
-  tasks, you do need to think about synchronization between recoco task and
-  normal threads.
-  Synchronisation is needed to take care manually: use relevant helper
-  function of core object: callLater/raiseLater or use schedule_as_coop_task
-  decorator defined in util.misc on the called function
-  """
-  # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('echo',), 'POST': ('echo', 'sg'), 'PUT': ('echo',),
-                  'DELETE': ('echo',)}
-  # Statically defined layer component to which this handler is bounded
-  bounded_layer = ServiceLayerAPI._core_name
-  # Logger. Must define
-  log = log.getChild("REST-API")
-
-  # REST API call --> UNIFY U-Sl call
-
-  def echo (self):
-    """
-    Test function for REST-API
-    """
-    self.log_full_message("ECHO: %s - %s", self.raw_requestline,
-                          self._parse_json_body())
-    self._send_json_response({'echo': True})
-
-  def sg (self):
-    """
-    Initiate sg graph
-    Bounded to POST HTTP verb
-    """
-    log.getChild("REST-API").debug("Call REST-API function: %s" % (
-      inspect.currentframe().f_code.co_name,))
-    body = self._parse_json_body()
-    log.getChild("REST-API").debug("Parsed input: %s" % body)
-    sg = NFFG.init_from_json(body)  # Convert text based SG to object instance
-    self._proceed_API_call('request_service', sg)

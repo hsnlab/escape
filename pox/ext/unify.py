@@ -35,11 +35,11 @@ def _start_components (event):
   from service_layer import launch
 
   launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
-  # Launch Resource Orchestration Layer
+  # Launch Resource Orchestration Sublayer
   from resource_orchestration_layer import launch
 
   launch()
-  # Lauch Controller Adaptation Layer
+  # Lauch Controller Adaptation Sublayer (CAS)
   from controller_adaptation_layer import launch
 
   launch()

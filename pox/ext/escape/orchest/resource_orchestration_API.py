@@ -13,10 +13,10 @@
 # limitations under the License.
 import repr
 
-from escape.orchest import LAYER_NAME
-from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest.resource_orchestration import ResourceOrchestrator
 from escape.orchest.virtualization_management import VirtualizerManager
+from escape.orchest import log as log  # Orchestration layer logger
+from escape.orchest import LAYER_NAME
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event
@@ -53,7 +53,7 @@ class GetGlobalResInfoEvent(Event):
 
 class ResourceOrchestrationAPI(AbstractAPI):
   """
-  Entry point for Resource Orchestration Sublayer
+  Entry point for Resource Orchestration Sublayer (ROS)
 
   Maintain the contact with other UNIFY layers
   Implement the Sl - Or reference point
@@ -67,21 +67,21 @@ class ResourceOrchestrationAPI(AbstractAPI):
   dependencies = ('adaptation',)
 
   def __init__ (self, standalone=False, **kwargs):
-    log.info("Starting Resource Orchestration Layer...")
+    log.info("Starting Resource Orchestration Sublayer...")
     # Mandatory super() call
     super(ResourceOrchestrationAPI, self).__init__(standalone=standalone,
                                                    **kwargs)
 
   def initialize (self):
-    log.debug("Initializing Resource Orchestration Layer...")
+    log.debug("Initializing Resource Orchestration Sublayer...")
     virtualizerManager = VirtualizerManager(self)
     self.resource_orchestrator = ResourceOrchestrator(virtualizerManager)
     if self._nffg_file:
       self._read_json_from_file(self.nffg_file)
-    log.info("Resource Orchestration Layer has been initialized!")
+    log.info("Resource Orchestration Sublayer has been initialized!")
 
   def shutdown (self, event):
-    log.info("Resource Orchestration Layer is going down...")
+    log.info("Resource OrchestrationSublayer is going down...")
 
   # UNIFY Sl- Or API functions starts here
 

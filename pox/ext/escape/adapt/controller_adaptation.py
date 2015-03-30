@@ -13,6 +13,7 @@
 # limitations under the License.
 import weakref
 
+from escape import CONFIG
 from escape.orchest.virtualization_management import AbstractVirtualizer
 from escape.adapt.domain_adapters import POXDomainAdapter, \
   MininetDomainAdapter, \
@@ -30,9 +31,9 @@ class ControllerAdapter(object):
     super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.domainResManager = DomainResourceManager()
-    self.poxAdapter = POXDomainAdapter()
-    self.mnAdapter = MininetDomainAdapter()
-    self.ostackAdapter = OpenStackDomainAdapter()
+    self.poxAdapter = POXDomainAdapter() if CONFIG['CAS']['POX'] else None
+    self.mnAdapter = MininetDomainAdapter() if CONFIG['CAS']['MN'] else None
+    self.osAdapter = OpenStackDomainAdapter() if CONFIG['CAS']['OS'] else None
 
   def install_nffg (self, mapped_nffg):
     """

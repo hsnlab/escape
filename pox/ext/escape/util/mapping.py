@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.orchest import log as log
 
 
 class AbstractMappingStrategy(object):
@@ -39,31 +38,27 @@ class AbstractMappingStrategy(object):
     raise NotImplementedError("Derived class must override this function!")
 
 
-class ESCAPEMappingStrategy(AbstractMappingStrategy):
+class AbstractMapper(object):
   """
-  Implement a strategy to map initial NFFG into extNFFG
+  Abstract class for graph mapping function
+
+  Contain common functions and initialization
   """
 
-  def __init__ (self):
-    super(ESCAPEMappingStrategy, self).__init__()
+  def __init__ (self, strategy):
+    super(AbstractMapper, self).__init__()
+    self.strategy = strategy
 
-  @classmethod
-  def map (cls, graph, resource):
+  def orchestrate (self, input_graph, resource_view):
     """
-    Default mapping algorithm of ESCAPE
+    Abstract function for wrapping optional steps connected to orchestration
+    Implemented function call the mapping algorithm
 
-    :param graph: Network Function forwarding Graph
-    :type graph: NFFG
-    :param resource: global virtual resource info
-    :type resource: NFFG
-    :return: mapped Network Fuction Forwarding Graph
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: NFFG
+    :param resource_view: resource information
+    :type resource_view: AbstractVirtualizer
+    :return: mapped graph
     :rtype: NFFG
     """
-    log.debug(
-      "Invoke mapping algorithm: %s on NF-FG(%s)" % (cls.__name__, graph.id))
-    # TODO - implement algorithm here
-    log.debug("Mapping algorithm: %s is finished on NF-FG(%s)" % (
-      cls.__name__, graph.id))
-    # for testing return with graph
-    return graph
-
+    raise NotImplementedError("Derived class must override this function!")

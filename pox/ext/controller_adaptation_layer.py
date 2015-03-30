@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Basic POX module for ESCAPE Controller Adaptation sublayer
+Basic POX module for ESCAPE Controller Adaptation Sublayer (CAS)
 
 Initiate appropriate API class which implements Or-Ca reference point
 Follow POX module conventions

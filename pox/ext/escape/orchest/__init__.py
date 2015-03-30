@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Subpackage for classes related to UNIFY's Resource Orchestration sublayer
+Subpackage for classes related to UNIFY's Resource Orchestration Sublayer (ROS)
 """
 from pox.core import core
 

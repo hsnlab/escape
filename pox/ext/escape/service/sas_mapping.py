@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from escape.orchest.mapping_strategy import AbstractMappingStrategy
-from escape.orchest.nffg_mapping import AbstractMapper
+from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
 from escape.service import log as log
+from escape import CONFIG
 
 
 class DefaultServiceMappingStrategy(AbstractMappingStrategy):
@@ -51,6 +51,19 @@ class ServiceGraphMapper(AbstractMapper):
   """
 
   def __init__ (self, strategy=DefaultServiceMappingStrategy):
+    if hasattr(CONFIG['SAS'], 'STRATEGY'):
+      if issubclass(CONFIG['SAS']['STATEGY'], AbstractMappingStrategy):
+        try:
+          strategy = getattr(self.__module__, CONFIG['SAS']['STATEGY'])
+        except AttributeError:
+          log.warning(
+            "Mapping strategy: %s is not found in module: %s, fall back to "
+            "%s" % (CONFIG['SAS']['STATEGY'], self.__module__,
+                    strategy.__class__.__name__))
+      else:
+        log.warning(
+          "SAS mappig strategy is not subclass of AbstractMappingStrategy, "
+          "fall back to %s" % strategy.__class__.__name__)
     super(ServiceGraphMapper, self).__init__(strategy)
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, strategy.__name__))

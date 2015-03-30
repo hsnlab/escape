@@ -102,7 +102,7 @@ class VirtualizerManager(object):
     :return: virtual view
     :rtype: ESCAPEVirtualizer
     """
-    log.debug("Invoke %s to get virtual resource view (layer ID: %s)" % (
+    log.debug("Invoke %s to get virtual resource view (for layer ID: %s)" % (
       self.__class__.__name__, layer_id))
     # If this is the first request, need to generate the view
     if layer_id not in self._virtualizers:

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Basic POX module for ESCAPE Resource Orchestration sublayer
+Basic POX module for ESCAPE Resource Orchestration Sublayer (ROS)
 
 Initiate appropriate API class which implements Sl-Or reference point
 Follow POX module conventions
