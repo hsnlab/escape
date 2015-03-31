@@ -36,7 +36,7 @@ class PolicyEnforcementMetaClass(type):
   If policy checking fails a PolicyEnforcementError should be raised and handled
   in a higher layer or/and at least return with False value.
   To use policy checking set the following class attribute:
-      __metaclass__ = PolicyEnforcementMetaClass
+  __metaclass__ = PolicyEnforcementMetaClass
   """
 
   def __new__ (mcs, name, bases, attrs):
@@ -51,6 +51,7 @@ class PolicyEnforcementMetaClass(type):
 
     return super(PolicyEnforcementMetaClass, mcs).__new__(mcs, name, bases,
                                                           attrs)
+
 
   @classmethod
   def get_wrapper (mcs, func_name, orig_func):

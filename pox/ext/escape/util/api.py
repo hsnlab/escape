@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import urlparse
 import json
 import os.path
 import threading
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 from escape import __version__
-from lib.revent import EventMixin
+from pox.lib.revent import EventMixin
 from pox.core import core
 
 
