@@ -80,7 +80,9 @@ class VirtualizerManager(object):
     if DoV_ID not in self._virtualizers:
       log.debug("Missing global view! Requesting global resource info...")
       self._layerAPI.request_domain_resource_info()
-    # Hide Virtualizer and return with resours info as a DomainVirtualizer
+      if self._virtualizers[DoV_ID] is not None:
+        log.debug("Got requested global resource info")
+    # Return with resource info as a DomainVirtualizer
     return self._virtualizers.get(DoV_ID, None)
 
   @dov.setter
@@ -92,6 +94,13 @@ class VirtualizerManager(object):
     :type dov: DomainVirtualizer
     """
     self._virtualizers[DoV_ID] = dov
+
+  @dov.deleter
+  def dov (self):
+    """
+    DoV deleter
+    """
+    del self._virtualizers[DoV_ID]
 
   def get_virtual_view (self, layer_id):
     """
@@ -106,7 +115,7 @@ class VirtualizerManager(object):
       self.__class__.__name__, layer_id))
     # If this is the first request, need to generate the view
     if layer_id not in self._virtualizers:
-      # Pass the global resource as NFFG not the Virtualizer
+      # Pass the global resource as the DomainVirtualizer
       self._virtualizers[layer_id] = self._generate_virtual_view(self.dov,
                                                                  layer_id)
     return self._virtualizers[layer_id]
@@ -124,7 +133,7 @@ class VirtualizerManager(object):
     :rtype: ESCAPEVirtualizer
     """
     # TODO - implement
+    resource_info = dov.get_resource_info()
     log.debug(
-      "Generating virtual resource view for upper layer (layer ID: %s)" %
-      layer_id)
+      "Generating virtual resource view for upper layer (layer ID: %s)" % layer_id)
     return ESCAPEVirtualizer()

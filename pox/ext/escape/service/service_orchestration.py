@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from escape.orchest.virtualization_management import AbstractVirtualizer
 from escape.service.sas_mapping import ServiceGraphMapper
 from escape.service import log as log
 
@@ -41,11 +42,18 @@ class ServiceOrchestrator(object):
     # Store newly created SG
     self.sgManager.save(sg)
     # Get virtual resource info as a Virtualizer
-    virtual_view = self.virtResManager.get_virtual_resource_view()
-    # Run service mapping algorithm
-    nffg = self.sgMapper.orchestrate(sg, virtual_view)
-    log.debug("SG initiation is finished by %s" % self.__class__.__name__)
-    return nffg
+    virtual_view = self.virtResManager.virtual_view
+    if virtual_view is not None:
+      if issubclass(virtual_view, AbstractVirtualizer):
+        # Run service mapping algorithm
+        nffg = self.sgMapper.orchestrate(sg, virtual_view)
+        log.debug("SG initiation is finished by %s" % self.__class__.__name__)
+        return nffg
+      else:
+        log.warning("Virtual view is not subclass of AbstractVirtualizer!")
+    else:
+      log.warning("Virtual view is not aquired correctly!")
+    log.error("Abort mapping process!")
 
 
 class SGManager(object):
@@ -103,7 +111,8 @@ class VirtualResourceManager(object):
     self._virtual_view = None
     log.debug("Init %s" % self.__class__.__name__)
 
-  def get_virtual_resource_view (self):
+  @property
+  def virtual_view (self):
     """
     Return resource info of actual layer as an NFFG instance
     If it isn't exist reqiures it from Orchestration layer
@@ -112,17 +121,11 @@ class VirtualResourceManager(object):
     :rtype: ESCAPEVirtualizer
     """
     log.debug("Invoke %s to get virtual resource" % self.__class__.__name__)
-    if not self.virtual_view:
+    if not self._virtual_view:
       log.debug("Missing virtual view! Requesting virtual resource info...")
       self._layerAPI.request_virtual_resource_info()
-      log.debug("Got requested virtual resource info")
-    return self.virtual_view
-
-  @property
-  def virtual_view (self):
-    """
-    Virtual view getter
-    """
+      if self._virtual_view is not None:
+        log.debug("Got requested virtual resource info")
     return self._virtual_view
 
   @virtual_view.setter
@@ -137,7 +140,7 @@ class VirtualResourceManager(object):
     """
     Virtual view deleter
     """
-    del self.virtual_view
+    del self._virtual_view
 
 
 class NFIBManager(object):

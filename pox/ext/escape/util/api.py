@@ -18,6 +18,7 @@ import threading
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 from escape import __version__
+from escape.util.misc import SimpleStandaloneHelper
 from pox.lib.revent import EventMixin
 from pox.core import core
 
@@ -90,8 +91,8 @@ class AbstractAPI(EventMixin):
     # not followed (aka leave _handle_<component name>_<event name>) and
     # the event listeners is set up manually. For automatic core registration
     # the components have to containt dependencies explicitly.
-    if not self._standalone:
-      for dep in self.dependencies:
+    for dep in self.dependencies:
+      if not self._standalone:
         if core.core.hasComponent(dep):
           dep_layer = core.components[dep]
           # Register actual event handlers on dependent layer
@@ -100,6 +101,10 @@ class AbstractAPI(EventMixin):
           self.addListeners(dep_layer)
         else:
           raise AttributeError("Component is not registered on core")
+      else:
+        # In case of standalone mode set up a StandaloneHelper in this object
+        # with the name of the dependency to handle raised events automatically
+        setattr(self, dep, SimpleStandaloneHelper(self, dep))
     # Subscribe for GoingDownEvent to finalize API classes
     # shutdown() function will be called if POX's core going down
     core.addListenerByName('GoingDownEvent', self.shutdown)

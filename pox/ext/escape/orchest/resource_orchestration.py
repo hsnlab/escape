@@ -13,6 +13,7 @@
 # limitations under the License.
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.orchest import log as log
+from escape.orchest.virtualization_management import AbstractVirtualizer
 
 
 class ResourceOrchestrator(object):
@@ -41,10 +42,18 @@ class ResourceOrchestrator(object):
     self.nffgManager.save(nffg)
     # Get Domain Virtualizer to aquire global domain view
     global_view = self.virtualizerManager.dov
-    # Run Nf-FG mapping algorithm
-    mapped_nffg = self.nffgMapper.orchestrate(nffg, global_view)
-    log.debug("NF-FG instantiation is finished by %s" % self.__class__.__name__)
-    return mapped_nffg
+    if global_view is not None:
+      if issubclass(global_view, AbstractVirtualizer):
+        # Run Nf-FG mapping orchestration
+        mapped_nffg = self.nffgMapper.orchestrate(nffg, global_view)
+        log.debug(
+          "NF-FG instantiation is finished by %s" % self.__class__.__name__)
+        return mapped_nffg
+      else:
+        log.warning("Global view is not subclass of AbstractVirtualizer!")
+    else:
+      log.warning("Global view is not aquired correctly!")
+    log.error("Abort mapping process!")
 
 
 class NFFGManager(object):
