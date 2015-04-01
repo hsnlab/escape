@@ -94,7 +94,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     # Steps before mapping (optional)
     # Run actual mapping algorithm
     mapped_nffg = self.strategy.map(graph=input_graph,
-                                    resource=resource_view.get_resource_info())
+      resource=resource_view.get_resource_info())
     # Steps after mapping (optional)
     log.info("Nf-FG(%s) orchestration is finished by %s" % (
       input_graph.id, self.__class__.__name__))

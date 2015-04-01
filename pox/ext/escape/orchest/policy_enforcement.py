@@ -14,6 +14,7 @@
 import types
 
 from escape.orchest import log as log
+import escape.orchest.virtualization_management
 
 
 class PolicyEnforcementError(RuntimeError):
@@ -57,12 +58,12 @@ class PolicyEnforcementMetaClass(type):
     """
     for attr_name, attr_value in attrs.iteritems():
       if isinstance(attr_value,
-                    types.FunctionType) and not attr_name.startswith('__'):
+          types.FunctionType) and not attr_name.startswith('__'):
         if hasattr(PolicyEnforcement, attr_name):
           attrs[attr_name] = mcs.get_wrapper(attr_name, attr_value)
 
     return super(PolicyEnforcementMetaClass, mcs).__new__(mcs, name, bases,
-                                                          attrs)
+      attrs)
 
 
   @classmethod
@@ -74,18 +75,30 @@ class PolicyEnforcementMetaClass(type):
     :type func_name: str
     :param orig_func: original function
     :type orig_func: func
+    :raise: PolicyEnforcementError
     :return: decorator function
     :rtype: func
     """
 
     def wrapper (*args, **kwargs):
-      pep_function = getattr(PolicyEnforcement(), func_name)
-      # Call Policy checking function before original
-      log.debug("Invoke Policy checking function for: " + func_name)
-      if pep_function():
-        return orig_func(*args, **kwargs)
-      # Do nothing after the original function called
-      return None
+      # existence of PEP function is checked before
+      pep_function = getattr(PolicyEnforcement, func_name)
+      log.debug("Invoke Policy checking function for %s" % func_name)
+      if len(args) > 0:
+        if isinstance(args[0],
+            escape.orchest.virtualization_management.AbstractVirtualizer):
+          # Call Policy checking function before original
+          if pep_function(args, kwargs):
+            return orig_func(*args, **kwargs)
+            # Do nothing after the original function called
+        else:
+          log.warning(
+            "Binder class of policy checker function is not a subclass of "
+            "ESCAPEVirtualizer!")
+      else:
+        log.warning("Something went wrong during binding Policy checker!")
+      log.error("Abort policy enforcement checking!")
+      raise PolicyEnforcementError("Policy enforcement checking is aborted")
 
     return wrapper
 
@@ -93,10 +106,34 @@ class PolicyEnforcementMetaClass(type):
 class PolicyEnforcement(object):
   """
   Proxy class for policy checking
+
   Contains the policy checking function
+
   Binding is based on function name (cheking function have to exist in this
   class and tis name have to be identical to subordinate function's name)
+
+  Every policy checking function is classmethod and need to have two parameter
+  for nameless (args) and named(kwargs) params.
+  The first element of args is the supervised Virtualizer ('self' param in the
+  original function)
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(PolicyEnforcement, self).__init__()
+
+  @classmethod
+  def get_resource_info (cls, args, kwargs):
+    log.debug("PolicyEnforcement: get_resource_info")
+    virtualizer = args[0]
+    return True
+
+  @classmethod
+  def sanity_check (cls, args, kwargs):
+    virtualizer = args[0]
+    nffg = kwargs['nffg']
+    log.debug(
+      "Invoke sanity check for NF-FG(%s) on %s" % (nffg.id, virtualizer))
+    return True

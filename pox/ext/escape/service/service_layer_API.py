@@ -91,7 +91,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     """
     self.log_full_message("ECHO: %s - %s", self.raw_requestline,
-                          self._parse_json_body())
+      self._parse_json_body())
     self._send_json_response({'echo': True})
 
   def sg (self):
@@ -176,7 +176,7 @@ class ServiceLayerAPI(AbstractAPI):
       if issubclass(CONFIG['ROS']['REQUEST-handler'], AbstractRequestHandler):
         try:
           handler = getattr(__import__('escape.util.api'),
-                            CONFIG['ROS']['REQUEST-handler'])
+            CONFIG['ROS']['REQUEST-handler'])
         except AttributeError:
           log.warning(
             "Request handler: %s is not found in module: escape.util.api, "

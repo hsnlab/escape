@@ -73,7 +73,7 @@ class SimpleStandaloneHelper(object):
       handler_name = "_handle_" + event.__class__.__name__
       if hasattr(self, handler_name):
         self._container.addListener(event, getattr(self, handler_name),
-                                    weak=True)
+          weak=True)
       else:
         self._container.addListener(event, self._log_event, weak=True)
 

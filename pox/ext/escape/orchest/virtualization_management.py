@@ -39,6 +39,12 @@ class AbstractVirtualizer(object):
     """
     raise NotImplementedError("Derived class have to override this function")
 
+  def sanity_check (self, nffg):
+    """
+    Placeholder for sanity check which implemented in PolicyEnforcementMetaClass
+    """
+    pass
+
 
 class ESCAPEVirtualizer(AbstractVirtualizer):
   """
@@ -140,7 +146,7 @@ class VirtualizerManager(object):
     if layer_id not in self._virtualizers:
       # Pass the global resource as the DomainVirtualizer
       self._virtualizers[layer_id] = self._generate_virtual_view(self.dov,
-                                                                 layer_id)
+        layer_id)
     return self._virtualizers[layer_id]
 
   def _generate_virtual_view (self, dov, layer_id):
@@ -158,5 +164,6 @@ class VirtualizerManager(object):
     # TODO - implement
     resource_info = dov.get_resource_info()
     log.debug(
-      "Generating virtual resource view for upper layer (layer ID: %s)" % layer_id)
+      "Generating virtual resource view for upper layer (layer ID: %s)" %
+      layer_id)
     return ESCAPEVirtualizer()

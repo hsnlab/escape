@@ -55,7 +55,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.info("Starting Controller Adaptation Sublayer...")
     # Mandatory super() call
     super(ControllerAdaptationAPI, self).__init__(standalone=standalone,
-                                                  **kwargs)
+      **kwargs)
 
   def initialize (self):
     log.debug("Initializing Controller Adaptation Sublayer...")
@@ -100,4 +100,4 @@ class ControllerAdaptationAPI(AbstractAPI):
     # Currently global view is a Virtualizer to keep ESCAPE fast
     log.getChild('API').debug("Sending back global resource info...\n")
     self.raiseEventNoErrors(GlobalResInfoEvent,
-                            self.controller_adapter.domainResManager.dov)
+      self.controller_adapter.domainResManager.dov)

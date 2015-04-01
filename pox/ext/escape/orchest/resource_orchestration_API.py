@@ -85,7 +85,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.info("Starting Resource Orchestration Sublayer...")
     # Mandatory super() call
     super(ResourceOrchestrationAPI, self).__init__(standalone=standalone,
-                                                   **kwargs)
+      **kwargs)
 
   def initialize (self):
     log.debug("Initializing Resource Orchestration Sublayer...")
