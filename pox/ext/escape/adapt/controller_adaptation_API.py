@@ -27,6 +27,12 @@ class GlobalResInfoEvent(Event):
   """
 
   def __init__ (self, resource_info):
+    """
+    Init
+
+    :param resource_info: resource info
+    :type resource_info: ESCAPEVirtualizer
+    """
     super(GlobalResInfoEvent, self).__init__()
     self.resource_info = resource_info
 
@@ -70,6 +76,7 @@ class ControllerAdaptationAPI(AbstractAPI):
 
     :param event: evetn object contains mapped NF-FG
     :type event: InstallNFFGEvent
+    :return: None
     """
     log.getChild('API').info("Received mapped NF-FG from %s Layer" % str(
       event.source._core_name).title())
@@ -85,6 +92,7 @@ class ControllerAdaptationAPI(AbstractAPI):
 
     :param event: event object
     :type event: GetGlobalResInfoEvent
+    :return: None
     """
     log.getChild('API').debug(
       "Received global resource info request from %s layer" % str(

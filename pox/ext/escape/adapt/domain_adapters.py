@@ -22,6 +22,9 @@ class AbstractDomainAdapter(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(AbstractDomainAdapter, self).__init__()
 
 
@@ -31,6 +34,9 @@ class MininetDomainAdapter(AbstractDomainAdapter):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(MininetDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
@@ -41,6 +47,9 @@ class POXDomainAdapter(AbstractDomainAdapter):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(POXDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
@@ -51,5 +60,8 @@ class OpenStackDomainAdapter(AbstractDomainAdapter):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(OpenStackDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)

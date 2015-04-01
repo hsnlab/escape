@@ -22,6 +22,13 @@ class ResourceOrchestrator(object):
   """
 
   def __init__ (self, virtualizerManager):
+    """
+    Init
+
+    :param virtualizerManager: virtualizer manager object
+    :type virtualizerManager: VirtualizerManager
+    :return: None
+    """
     super(ResourceOrchestrator, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.nffgManager = NFFGManager()
@@ -30,7 +37,7 @@ class ResourceOrchestrator(object):
 
   def instantiate_nffg (self, nffg):
     """
-    Start NF-FG instantiation
+    Main API function for NF-FG instantiation
 
     :param nffg: NFFG instance
     :type nffg: NFFG
@@ -43,7 +50,7 @@ class ResourceOrchestrator(object):
     # Get Domain Virtualizer to aquire global domain view
     global_view = self.virtualizerManager.dov
     if global_view is not None:
-      if issubclass(global_view, AbstractVirtualizer):
+      if isinstance(global_view, AbstractVirtualizer):
         # Run Nf-FG mapping orchestration
         mapped_nffg = self.nffgMapper.orchestrate(nffg, global_view)
         log.debug(
@@ -62,6 +69,9 @@ class NFFGManager(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(NFFGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self._nffgs = dict()

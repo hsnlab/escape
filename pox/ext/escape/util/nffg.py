@@ -19,6 +19,9 @@ class NFFG(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(NFFG, self).__init__()
     self.id = None
     # TODO - implement

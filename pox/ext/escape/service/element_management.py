@@ -19,6 +19,9 @@ class AbstractElementManager(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     pass
 
 
@@ -28,4 +31,7 @@ class ClickManager(AbstractElementManager):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(ClickManager, self).__init__()

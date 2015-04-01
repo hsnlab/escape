@@ -78,12 +78,12 @@
 # conf.py --> insert
 # sys.path.insert(0, os.path.abspath('../..'))  # ext dir
 # sys.path.insert(0, os.path.abspath('../../..'))  # main pox dir
-# sys.path.insert(0, os.path.abspath('../../../pox'))  # little bit of hack
 # html_theme = 'classic'
 
-# cd doc && make html
+# cd doc
 # sphinx-apidoc -f -o source/ ../
 
 # index.rst --> insert
 #    modules.rst
 
+make html

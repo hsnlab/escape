@@ -24,12 +24,16 @@ class AbstractVirtualizer(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(AbstractVirtualizer, self).__init__()
 
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource object derived from NFFG
 
+    :raise: NotImplementedError
     :return: resource info
     :rtype: NFFG
     """
@@ -43,9 +47,18 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
   __metaclass__ = PolicyEnforcementMetaClass
 
   def __init__ (self):
+    """
+    Init
+    """
     super(ESCAPEVirtualizer, self).__init__()
 
   def get_resource_info (self):
+    """
+    Hides object's mechanism and return with a resource object derived from NFFG
+
+    :return: resource info
+    :rtype: NFFG
+    """
     # dummy NFFG TODO - implement
     # deep copy???
     return NFFG()
@@ -60,6 +73,13 @@ class VirtualizerManager(object):
   """
 
   def __init__ (self, layerAPI):
+    """
+    Init
+
+    :param layerAPI: Layer API object which contains this manager
+    :type layerAPI: AbstractAPI
+    :return: None
+    """
     super(VirtualizerManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self._layerAPI = layerAPI
@@ -92,6 +112,7 @@ class VirtualizerManager(object):
 
     :param dov: Domain Virtualizer (DoV)
     :type dov: DomainVirtualizer
+    :return: None
     """
     self._virtualizers[DoV_ID] = dov
 
@@ -99,6 +120,8 @@ class VirtualizerManager(object):
   def dov (self):
     """
     DoV deleter
+
+    :return: None
     """
     del self._virtualizers[DoV_ID]
 

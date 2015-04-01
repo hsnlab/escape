@@ -16,7 +16,7 @@ import types
 from escape.orchest import log as log
 
 
-class PolicyEnforcementError(object):
+class PolicyEnforcementError(RuntimeError):
   """
   Exception class to signal policy enforcement error
   """
@@ -33,15 +33,27 @@ class PolicyEnforcementMetaClass(type):
   Therefore the function names must be identical!
   If the policy checking function retuns with True value, the original function
   will be called next.
+
   If policy checking fails a PolicyEnforcementError should be raised and handled
   in a higher layer or/and at least return with False value.
+
   To use policy checking set the following class attribute:
+
   __metaclass__ = PolicyEnforcementMetaClass
   """
 
   def __new__ (mcs, name, bases, attrs):
     """
     Magic function called before subordinated class even created
+
+    :param name: given class name
+    :type name: str
+    :param bases: bases of the class
+    :type bases: tuple
+    :param attrs: given attributes
+    :type attrs: dict
+    :return: inferred class instance
+    :rtype: AbstractVirtualizer
     """
     for attr_name, attr_value in attrs.iteritems():
       if isinstance(attr_value,
@@ -60,6 +72,8 @@ class PolicyEnforcementMetaClass(type):
 
     :param func_name: function name
     :type func_name: str
+    :param orig_func: original function
+    :type orig_func: func
     :return: decorator function
     :rtype: func
     """

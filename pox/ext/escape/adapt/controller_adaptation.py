@@ -28,6 +28,9 @@ class ControllerAdapter(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.domainResManager = DomainResourceManager()
@@ -41,6 +44,7 @@ class ControllerAdapter(object):
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: NFFG
+    :return: None
     """
     log.debug("Invoke %s to install NF-FG" % self.__class__.__name__)
     # TODO - implement
@@ -55,6 +59,13 @@ class DomainVirtualizer(AbstractVirtualizer):
   """
 
   def __init__ (self, domainResManager):
+    """
+    Init
+
+    :param domainResManager: domain resource manager
+    :type domainResManager: DomainResourceManager
+    :return: None
+    """
     super(DomainVirtualizer, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     # Garbage-collector safe
@@ -77,6 +88,9 @@ class DomainResourceManager(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(DomainResourceManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self._dov = DomainVirtualizer(self)

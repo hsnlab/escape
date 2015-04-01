@@ -22,6 +22,13 @@ class ServiceOrchestrator(object):
   """
 
   def __init__ (self, virtResManager):
+    """
+    Initialize main Service Layer components
+
+    :param virtResManager: virtual resource manager
+    :type virtResManager: VirtualResourceManager
+    :return: None
+    """
     super(ServiceOrchestrator, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.sgManager = SGManager()
@@ -33,7 +40,7 @@ class ServiceOrchestrator(object):
     """
     Main function for initiating Service Graphs
 
-    :param sg: service graph storeg in NFFG instance
+    :param sg: service graph stored in NFFG instance
     :type sg: NFFG
     :return: NF-FG description
     :rtype: NFFG
@@ -44,7 +51,7 @@ class ServiceOrchestrator(object):
     # Get virtual resource info as a Virtualizer
     virtual_view = self.virtResManager.virtual_view
     if virtual_view is not None:
-      if issubclass(virtual_view, AbstractVirtualizer):
+      if isinstance(virtual_view, AbstractVirtualizer):
         # Run service mapping algorithm
         nffg = self.sgMapper.orchestrate(sg, virtual_view)
         log.debug("SG initiation is finished by %s" % self.__class__.__name__)
@@ -64,6 +71,9 @@ class SGManager(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(SGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self._service_graphs = dict()
@@ -99,10 +109,18 @@ class VirtualResourceManager(object):
   """
   Support Service Graph mapping, follows the used virtual resources according to
   the Service Graph(s) in effect
+
   Handles object derived from AbstractVirtualizer and requested from lower layer
   """
 
   def __init__ (self, layerAPI):
+    """
+    Initialize virtual resource manager
+
+    :param layerAPI: layer API object which contain this manager
+    :type layerAPI: AbstractVirtualizer
+    :return: None
+    """
     super(VirtualResourceManager, self).__init__()
     # service layer API for comminucation with other layers
     self._layerAPI = layerAPI
@@ -118,7 +136,7 @@ class VirtualResourceManager(object):
     If it isn't exist reqiures it from Orchestration layer
 
     :return: resource info as a Virtualizer
-    :rtype: ESCAPEVirtualizer
+    :rtype: AbstractVirtualizer
     """
     log.debug("Invoke %s to get virtual resource" % self.__class__.__name__)
     if not self._virtual_view:
@@ -132,6 +150,10 @@ class VirtualResourceManager(object):
   def virtual_view (self, view):
     """
     Virtual view setter
+
+    :param view: virtual view
+    :type view: AbstractVirtualizer
+    :return: None
     """
     self._virtual_view = view
 
@@ -139,6 +161,8 @@ class VirtualResourceManager(object):
   def virtual_view (self):
     """
     Virtual view deleter
+
+    :return: None
     """
     del self._virtual_view
 
@@ -149,4 +173,7 @@ class NFIBManager(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(NFIBManager, self).__init__()

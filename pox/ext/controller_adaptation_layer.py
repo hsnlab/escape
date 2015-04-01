@@ -28,12 +28,28 @@ init_param = {}
 
 # noinspection PyUnusedLocal
 def _start_layer (event):
+  """
+  Initiate and run POX with ESCAPE components
+
+  :param event: POX's going up event
+  :type event: GoingUpEvent
+  :return: None
+  """
   # Instantiate the API class and register into pox.core only once
   ControllerAdaptationAPI(**init_param)
 
 
 @poxutil.eval_args
 def launch (mapped_nffg_file='', standalone=False):
+  """
+  Launch function called by POX core when core is up
+
+  :param mapped_nffg_file: Path of the mapped NF-FG graph (optional)
+  :type mapped_nffg_file: str
+  :param standalone: Run layer without dependency checking (optional)
+  :type standalone: bool
+  :return: None
+  """
   global init_param
   init_param.update(locals())
   core.addListenerByName("UpEvent", _start_layer)

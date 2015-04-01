@@ -32,6 +32,12 @@ class InstantiateNFFGEvent(Event):
   """
 
   def __init__ (self, nffg):
+    """
+    Init
+
+    :param nffg: NF-FG need to be initiated
+    :type nffg: NFFG
+    """
     super(InstantiateNFFGEvent, self).__init__()
     self.nffg = nffg
 
@@ -42,6 +48,12 @@ class GetVirtResInfoEvent(Event):
   """
 
   def __init__ (self, sid):
+    """
+    Init
+
+    :param sid: Service layer ID
+    :type sid: int
+    """
     super(GetVirtResInfoEvent, self).__init__()
     # service layer ID
     self.sid = sid
@@ -52,6 +64,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
   Request Handler for Service layer
 
   IMPORTANT!
+
   This class is out of the context of the recoco's co-operative thread context!
   While you don't need to worry much about synchronization between recoco
   tasks, you do need to think about synchronization between recoco task and
@@ -74,6 +87,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
   def echo (self):
     """
     Test function for REST-API
+
+
     """
     self.log_full_message("ECHO: %s - %s", self.raw_requestline,
                           self._parse_json_body())
@@ -81,8 +96,10 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
   def sg (self):
     """
-    Initiate sg graph
+    Main API function for Service graph initiation
     Bounded to POST HTTP verb
+
+
     """
     log.getChild("REST-API").debug("Call REST-API function: %s" % (
       inspect.currentframe().f_code.co_name,))
@@ -97,6 +114,7 @@ class ServiceLayerAPI(AbstractAPI):
   Entry point for Service Layer
 
   Maintain the contact with other UNIFY layers
+
   Implement the U - Sl reference point
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
@@ -188,6 +206,7 @@ class ServiceLayerAPI(AbstractAPI):
 
     :param sg: service graph instance
     :type sg: NFFG
+    :return: None
     """
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
       self.__class__.__name__, repr.repr(sg)))
@@ -207,6 +226,8 @@ class ServiceLayerAPI(AbstractAPI):
     """
     Request virtual resource info from Orchestration layer
     Service layer is identified with the sid value automatically
+
+    :return: None
     """
     log.getChild('API').debug(
       "Send virtual resource info request(with layer ID: %s) to Orchestration "
@@ -216,6 +237,8 @@ class ServiceLayerAPI(AbstractAPI):
   def _handle_VirtResInfoEvent (self, event):
     """
     Save requested virtual resource info as a Virtualizer
+
+    :return: None
     """
     log.getChild('API').debug(
       "Received virtual resource info from %s layer" % str(

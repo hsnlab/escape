@@ -21,5 +21,4 @@ pypy/
 
 ext/skeleton.py
 ext/doc/build/
-ext/doc/source/
 ext/doc/Makefile

@@ -25,6 +25,10 @@ init_param = {}
 
 
 class SkeletonAPI(AbstractAPI):
+  """
+  Skeleton API class for initiate layer subcomponents and handle possible events
+  """
+
   def __init__ (self, standalone=False, **kwargs):
     super(SkeletonAPI, self).__init__(standalone=standalone, **kwargs)
 
@@ -38,8 +42,14 @@ class SkeletonAPI(AbstractAPI):
 
 
 def _start_layer (event):
+  """
+  Initiate and run POX with ESCAPE components
+
+  :param event: POX's going up event
+  :type event: GoingUpEvent
+  :return: None
+  """
   # Instantiate the API class and register into pox.core only once
-  pass
   # Wait for the necessery POX component until they are resolved and set up
   # event handlers.
   SkeletonAPI(**init_param)
@@ -47,6 +57,11 @@ def _start_layer (event):
 
 @poxutil.eval_args
 def launch ():
+  """
+  Launch function called by POX core when core is up
+
+  :return: None
+  """
   global init_param
   init_param.update(locals())
   core.addListenerByName("UpEvent", _start_layer)

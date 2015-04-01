@@ -21,6 +21,9 @@ class AbstractMappingStrategy(object):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(AbstractMappingStrategy, self).__init__()
 
   @classmethod
@@ -32,6 +35,7 @@ class AbstractMappingStrategy(object):
     :type graph: NFFG
     :param resource: resource info
     :type resource: NFFG
+    :raise: NotImplementedError
     :return: mapped graph
     :rtype: NFFG
     """
@@ -46,6 +50,12 @@ class AbstractMapper(object):
   """
 
   def __init__ (self, strategy):
+    """
+    Init
+
+    :param strategy: Class of mapping strategy
+    :type strategy: AbstractMappingStrategy
+    """
     super(AbstractMapper, self).__init__()
     self.strategy = strategy
 
@@ -58,6 +68,7 @@ class AbstractMapper(object):
     :type input_graph: NFFG
     :param resource_view: resource information
     :type resource_view: AbstractVirtualizer
+    :raise: NotImplementedError
     :return: mapped graph
     :rtype: NFFG
     """

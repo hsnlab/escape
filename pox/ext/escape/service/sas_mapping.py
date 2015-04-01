@@ -22,6 +22,9 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(DefaultServiceMappingStrategy, self).__init__()
 
   @classmethod
@@ -51,6 +54,13 @@ class ServiceGraphMapper(AbstractMapper):
   """
 
   def __init__ (self, strategy=DefaultServiceMappingStrategy):
+    """
+    Init mapper class
+
+    :param strategy: mapping strategy (default DefaultServiceMappingStrategy)
+    :type strategy: AbstractMappingStrategy
+    :return: None
+    """
     if hasattr(CONFIG['SAS'], 'STRATEGY'):
       if issubclass(CONFIG['SAS']['STATEGY'], AbstractMappingStrategy):
         try:

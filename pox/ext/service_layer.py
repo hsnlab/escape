@@ -28,12 +28,30 @@ init_param = {}
 
 # noinspection PyUnusedLocal
 def _start_layer (event):
+  """
+  Initiate and run POX with ESCAPE components
+
+  :param event: POX's going up event
+  :type event: GoingUpEvent
+  :return: None
+  """
   # Instantiate the API class and register into pox.core only once
   ServiceLayerAPI(**init_param)
 
 
 @poxutil.eval_args
 def launch (sg_file='', gui=False, standalone=False):
+  """
+  Launch function called by POX core when core is up
+
+  :param sg_file: Path of the input Service graph (optional)
+  :type sg_file: str
+  :param gui: Initiate built-in GUI (optional)
+  :type gui: bool
+  :param standalone: Run layer without dependency checking (optional)
+  :type standalone: bool
+  :return: None
+  """
   global init_param
   init_param.update(locals())
   core.addListenerByName("UpEvent", _start_layer)

@@ -28,6 +28,7 @@ class AbstractAPI(EventMixin):
   Abstract class for UNIFY's API
 
   Contain common functions
+
   Follows Facade design pattern
   """
   # Default value for logger. Should be overwritten by child classes
@@ -40,16 +41,21 @@ class AbstractAPI(EventMixin):
   def __init__ (self, standalone=False, **kwargs):
     """
     Abstract class constructor
+
     Handle core registration along with _all_dependencies_met()
+
     Set given parameters (standalone parameter is mandatory) automatically as
     self._<param_name> = <param_value>
+
     Base constructor funtions have to be called as the last step in derived
     classes. Same situation with _all_dependencies_met() respectively.
     Must not override these fuction, just use initialize() function for init
     steps. Actual API classes must only call super() in their constructor
     with the form:
-    super(<API Class name>, self).__init__(standalone=standalone, **kwargs)
+    super(<API Class name>, self).__init__(standalone=standalone, \*\*kwargs)
+
     IMPORTANT!
+
     Do not use prefixes in the name of event handlers, because of automatic
     dependecy discovery considers that as a dependent componenet and this
     situation casue a dead lock (component will be waiting to each other to
@@ -80,6 +86,8 @@ class AbstractAPI(EventMixin):
     """
     Called when every componenet on which depends are initialized on
     pox.core. Contain dependency relevant initialization.
+
+    :return: None
     """
     self.initialize()
     # With fully event-driven communication between the layers the dependency
@@ -118,6 +126,8 @@ class AbstractAPI(EventMixin):
     Called when every componenet on which depends are initialized and
     registeredmin pox.core.
     This function should be overwritten by child classes.
+
+    :return: None
     """
     pass
 
@@ -128,6 +138,7 @@ class AbstractAPI(EventMixin):
 
     :param event: shutdown event raised by POX core
     :type event: GoingDownEvent
+    :return: None
     """
     pass
 
@@ -171,20 +182,39 @@ class RESTServer(object):
   """
 
   def __init__ (self, RequestHandlerClass, address, port):
+    """
+    Set up a HTTPServer in a different trhead
+
+    :param RequestHandlerClass: Class of a handler which handles HTTP request
+    :type RequestHandlerClass: AbstractRequestHandler
+    :param address: Used IP address
+    :type address: str
+    :param port: Used port number
+    :type port: int
+    """
     self._server = HTTPServer((address, port), RequestHandlerClass)
     self._thread = threading.Thread(target=self.run)
     self._thread.daemon = True
     self.started = False
 
   def start (self):
+    """
+    Start RESTServer thread
+    """
     self.started = True
     self._thread.start()
 
   def stop (self):
+    """
+    Stop RESTServer thread
+    """
     if self.started:
       self._server.shutdown()
 
   def run (self):
+    """
+    Handle one request at a time until shutdown.
+    """
     self._server.RequestHandlerClass.log.debug(
       "Init REST-API on %s:%d!" % self._server.server_address)
     # Start API loop
@@ -197,10 +227,11 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   """
   Minimalistic REST API for Layer APIs
 
-  Handle /escape/* URLs
+  Handle /escape/* URLs.
   Method calling permitions represented in escape_intf dictionary
 
   IMPORTANT!
+
   This class is out of the context of the recoco's co-operative thread context!
   While you don't need to worry much about synchronization between recoco
   tasks, you do need to think about synchronization between recoco task and
@@ -247,6 +278,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     """
     Split HTTP path and call the carved function
     if it is defined in this class and in request_perm
+
+    :return: None
     """
     self.log.debug("Got HTTP request: %s" % str(self.raw_requestline).rstrip())
     http_method = self.command.upper()
@@ -296,6 +329,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
     :param data: data in JSON format
     :type data: dict
+    :param encoding: Set data encoding (optional)
+    :type encoding: str
+    :return: None
     """
     response_body = json.dumps(data, encoding=encoding)
     self.send_response(200)
@@ -332,6 +368,11 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
     :param function: function name
     :type function: str
+    :param args: Optional params
+    :type args: tuple
+    :param kwargs: Optional named params
+    :type kwargs: dict
+    :return: None
     """
     if core.core.hasComponent(self.bounded_layer):
       layer = core.components[self.bounded_layer]

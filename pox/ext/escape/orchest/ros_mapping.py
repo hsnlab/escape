@@ -22,6 +22,9 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(ESCAPEMappingStrategy, self).__init__()
 
   @classmethod
@@ -51,6 +54,13 @@ class ResourceOrchestrationMapper(AbstractMapper):
   """
 
   def __init__ (self, strategy=ESCAPEMappingStrategy):
+    """
+    Init mapper
+
+    :param strategy: mapping strategy
+    :type strategy: AbstractMappingStrategy (default ESCAPEMappingStrategy)
+    :return: None
+    """
     if hasattr(CONFIG['ROS'], 'STRATEGY'):
       if issubclass(CONFIG['ROS']['STATEGY'], AbstractMappingStrategy):
         try:

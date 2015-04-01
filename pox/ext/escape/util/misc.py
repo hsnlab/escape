@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from functools import wraps
 import weakref
 
 from pox.core import core
-from pox.lib.revent import EventMixin
+from pox.lib.revent.revent import EventMixin
 
 
 def schedule_as_coop_task (func):
@@ -28,7 +29,8 @@ def schedule_as_coop_task (func):
   :return: decorater function
   :rtype: func
   """
-
+  # copy meta info from func to decorator for documentation generation
+  @wraps(func)
   def decorator (*args, **kwargs):
     # Use POX internal thread-safe wrapper for scheduling
     core.callLater(func, *args, **kwargs)
@@ -43,8 +45,16 @@ class SimpleStandaloneHelper(object):
   """
 
   def __init__ (self, container, cover_name):
+    """
+    Init
+
+    :param container: Container class reference
+    :type: EventMixin
+    :param cover_name: Container's name for logging
+    :type cover_name: str
+    """
     super(SimpleStandaloneHelper, self).__init__()
-    if issubclass(container.__class__, EventMixin):
+    if isinstance(container, EventMixin):
       self._container = weakref.proxy(container)
       self._cover_name = cover_name
     else:
@@ -56,6 +66,8 @@ class SimpleStandaloneHelper(object):
     Register event listeners
     If a listener is explicitly defined in the class use this function
     otherwise use the common logger function
+
+    :return: None
     """
     for event in self._container._eventMixin_events:
       handler_name = "_handle_" + event.__class__.__name__
@@ -66,6 +78,13 @@ class SimpleStandaloneHelper(object):
         self._container.addListener(event, self._log_event, weak=True)
 
   def _log_event (self, event):
+    """
+    Log given event
+
+    :param event: Event object which need to be logged
+    :type event: Event
+    :return: None
+    """
     core.getLogger("StandaloneHelper").getChild(self._cover_name).info(
       "Got event: %s from %s Layer" % (
         event.__class__.__name__, str(event.source._core_name).title()))

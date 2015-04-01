@@ -28,6 +28,12 @@ class InstallNFFGEvent(Event):
   """
 
   def __init__ (self, mapped_nffg):
+    """
+    Init
+
+    :param mapped_nffg: NF-FG graph need to be installed
+    :type mapped_nffg: NFFG
+    """
     super(InstallNFFGEvent, self).__init__()
     self.mapped_nffg = mapped_nffg
 
@@ -38,6 +44,12 @@ class VirtResInfoEvent(Event):
   """
 
   def __init__ (self, resource_info):
+    """
+    Init
+
+    :param resource_info: virtual resource info
+    :type resource_info: ESCAPEVirtualizer
+    """
     super(VirtResInfoEvent, self).__init__()
     self.resource_info = resource_info
 
@@ -48,6 +60,9 @@ class GetGlobalResInfoEvent(Event):
   """
 
   def __init__ (self):
+    """
+    Init
+    """
     super(GetGlobalResInfoEvent, self).__init__()
 
 
@@ -92,6 +107,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
     :param event: event object contains NF-FG
     :type event: InstantiateNFFGEvent
+    :return: None
     """
     log.getChild('API').info(
       "Received NF-FG from %s layer" % str(event.source._core_name).title())
@@ -112,6 +128,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
     :param event: event object contains service layer id
     :type event: GetVirtResInfoEvent
+    :return: None
     """
     log.getChild('API').debug(
       "Received virtual resource info request from %s layer" % str(
@@ -127,6 +144,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def request_domain_resource_info (self):
     """
     Request global resource info from Adaptation layer
+
+    :return: None
     """
     log.getChild('API').debug(
       "Send global resource info request to Adaptation layer...\n")
@@ -138,6 +157,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
     :param event: event object contains resource info
     :type event: GlobalResInfoEvent
+    :return: None
     """
     log.getChild('API').debug(
       "Received global resource info from %s layer" % str(
