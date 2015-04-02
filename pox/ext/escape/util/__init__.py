@@ -13,5 +13,5 @@
 # limitations under the License.
 
 """
-Additional functions, classes, componenets
+Additional functions, classes, components
 """

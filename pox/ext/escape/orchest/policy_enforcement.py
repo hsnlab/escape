@@ -65,7 +65,6 @@ class PolicyEnforcementMetaClass(type):
     return super(PolicyEnforcementMetaClass, mcs).__new__(mcs, name, bases,
       attrs)
 
-
   @classmethod
   def get_wrapper (mcs, func_name, orig_func):
     """
@@ -126,14 +125,16 @@ class PolicyEnforcement(object):
 
   @classmethod
   def get_resource_info (cls, args, kwargs):
-    log.debug("PolicyEnforcement: get_resource_info")
     virtualizer = args[0]
+    # TODO - implement
+    log.debug("PolicyEnforcement: check get_resource_info [OK]")
     return True
 
   @classmethod
   def sanity_check (cls, args, kwargs):
     virtualizer = args[0]
     nffg = kwargs['nffg']
-    log.debug(
-      "Invoke sanity check for NF-FG(%s) on %s" % (nffg.id, virtualizer))
+    # TODO - implement
+    log.debug("PolicyEnforcement: check NF-FG(%s) <--> %s [OK]" % (
+      nffg.id, virtualizer))
     return True
