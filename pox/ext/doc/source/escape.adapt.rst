@@ -1,8 +1,8 @@
-escape.adapt package
-====================
+The *escape.adapt* package
+==========================
 
-Module contents
----------------
+Package contents
+----------------
 
 .. automodule:: escape.adapt
    :members:
@@ -12,8 +12,8 @@ Module contents
    :undoc-members:
    :show-inheritance:
 
-controller_adaptation module
-----------------------------
+*controller_adaptation.py* module
+---------------------------------
 
 .. automodule:: escape.adapt.controller_adaptation
    :members:
@@ -23,8 +23,8 @@ controller_adaptation module
    :undoc-members:
    :show-inheritance:
 
-controller_adaptation_API module
---------------------------------
+*controller_adaptation_API.py* module
+-------------------------------------
 
 .. automodule:: escape.adapt.controller_adaptation_API
    :members:
@@ -34,8 +34,8 @@ controller_adaptation_API module
    :undoc-members:
    :show-inheritance:
 
-domain_adapters module
-----------------------
+*domain_adapters.py* module
+---------------------------
 
 .. automodule:: escape.adapt.domain_adapters
    :members:

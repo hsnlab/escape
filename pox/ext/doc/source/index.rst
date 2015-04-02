@@ -7,7 +7,7 @@ Overview
 --------
 
 `Mininet <http://mininet.org/>`_ is a great prototyping tool which takes
-existing SDN-relatedsoftware components (e.g. Open vSwitch, OpenFlow
+existing SDN-related software components (e.g. Open vSwitch, OpenFlow
 controllers, network namespaces, cgroups, etc.) and combines them into a
 framework, which can automatically set up and configure customized OpenFlow
 testbeds scaling up to hundreds of nodes. Standing on the shoulders of Mininet,

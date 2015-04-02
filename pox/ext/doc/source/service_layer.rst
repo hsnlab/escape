@@ -1,5 +1,5 @@
-service_layer module
-====================
+The *service_layer* main module
+===============================
 
 .. automodule:: service_layer
    :members:

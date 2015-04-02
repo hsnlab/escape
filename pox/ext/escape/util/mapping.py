@@ -11,6 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains abstract classes for NFFG mapping
+
+AbstractMapper is an abstract class for orchestration method which should
+implement mapping preparations and invoke actual mapping algorithm
+
+AbstractMappingStrategy is an abstract class for containing entirely thy
+mapping algorithm as a class method
+"""
 
 
 class AbstractMappingStrategy(object):

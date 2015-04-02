@@ -1,8 +1,8 @@
-escape.service package
-======================
+The *escape.service* package
+============================
 
-Module contents
----------------
+Package contents
+----------------
 
 .. automodule:: escape.service
    :members:
@@ -12,8 +12,8 @@ Module contents
    :undoc-members:
    :show-inheritance:
 
-element_management module
--------------------------
+*element_management.py* module
+------------------------------
 
 .. automodule:: escape.service.element_management
    :members:
@@ -23,8 +23,8 @@ element_management module
    :undoc-members:
    :show-inheritance:
 
-sas_mapping module
-------------------
+*sas_mapping.py* module
+-----------------------
 
 .. automodule:: escape.service.sas_mapping
    :members:
@@ -34,8 +34,8 @@ sas_mapping module
    :undoc-members:
    :show-inheritance:
 
-service_layer_API module
-------------------------
+*service_layer_API.py* module
+-----------------------------
 
 .. automodule:: escape.service.service_layer_API
    :members:
@@ -45,8 +45,8 @@ service_layer_API module
    :undoc-members:
    :show-inheritance:
 
-service_orchestration module
-----------------------------
+*service_orchestration.py* module
+---------------------------------
 
 .. automodule:: escape.service.service_orchestration
    :members:

@@ -1,5 +1,5 @@
-controller_adaptation_layer module
-==================================
+The *controller_adaptation_layer.py* main module
+================================================
 
 .. automodule:: controller_adaptation_layer
    :members:

@@ -1,8 +1,8 @@
-escape.util package
-===================
+The *escape.util* package
+=========================
 
-Module contents
----------------
+Package contents
+----------------
 
 .. automodule:: escape.util
    :members:
@@ -12,8 +12,8 @@ Module contents
    :undoc-members:
    :show-inheritance:
 
-api module
-----------
+*api.py* module
+---------------
 
 .. automodule:: escape.util.api
    :members:
@@ -23,8 +23,8 @@ api module
    :undoc-members:
    :show-inheritance:
 
-mapping module
---------------
+*mapping.py* module
+-------------------
 
 .. automodule:: escape.util.mapping
    :members:
@@ -34,8 +34,8 @@ mapping module
    :undoc-members:
    :show-inheritance:
 
-misc module
------------
+*misc.py* module
+----------------
 
 .. automodule:: escape.util.misc
    :members:
@@ -45,8 +45,8 @@ misc module
    :undoc-members:
    :show-inheritance:
 
-nffg module
------------
+*nffg.py* module
+----------------
 
 .. automodule:: escape.util.nffg
    :members:

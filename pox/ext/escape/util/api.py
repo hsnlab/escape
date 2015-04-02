@@ -11,6 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains abstract classes for concrete layer API modules
+
+AbstractAPI contains the register mechanism into the POX core for layer APIs,
+the event handling/registering logic and defines the geeneral functions for
+initialization and finalization steps
+
+RESTServer is a general HTTP server which parse HTTP request and forward to
+explicitly given request handler
+
+AbstractRequestHandler is a base class for concrete request handling. It
+implements the general URL and request body parsing functions
+"""
 import urlparse
 import json
 import os.path

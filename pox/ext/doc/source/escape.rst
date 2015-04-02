@@ -1,8 +1,8 @@
-escape package
-==============
+The *escape* package
+====================
 
-Module contents
----------------
+Package contents
+----------------
 
 .. automodule:: escape
    :members:

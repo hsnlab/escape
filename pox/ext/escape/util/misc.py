@@ -11,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains miscellaneous helper functions such as invoking a function in POX's
+cooperative microtask environment or a helper class for mimic a minimasl
+layer API as a dependency for other layer APIs to handles events
+"""
 from functools import wraps
 import weakref
 

@@ -1,8 +1,8 @@
-escape.orchest package
-======================
+The *escape.orchest* package
+============================
 
-Module contents
----------------
+Package contents
+----------------
 
 .. automodule:: escape.orchest
    :members:
@@ -12,8 +12,8 @@ Module contents
    :undoc-members:
    :show-inheritance:
 
-policy_enforcement module
--------------------------
+*policy_enforcement.py* module
+------------------------------
 
 .. automodule:: escape.orchest.policy_enforcement
    :members:
@@ -23,8 +23,8 @@ policy_enforcement module
    :undoc-members:
    :show-inheritance:
 
-resource_orchestration module
------------------------------
+*resource_orchestration.py* module
+----------------------------------
 
 .. automodule:: escape.orchest.resource_orchestration
    :members:
@@ -34,8 +34,8 @@ resource_orchestration module
    :undoc-members:
    :show-inheritance:
 
-resource_orchestration_API module
----------------------------------
+*resource_orchestration_API.py* module
+--------------------------------------
 
 .. automodule:: escape.orchest.resource_orchestration_API
    :members:
@@ -45,8 +45,8 @@ resource_orchestration_API module
    :undoc-members:
    :show-inheritance:
 
-ros_mapping module
-------------------
+*ros_mapping.py* module
+-----------------------
 .. automodule:: escape.orchest.ros_mapping
    :members:
    :private-members:
@@ -55,8 +55,8 @@ ros_mapping module
    :undoc-members:
    :show-inheritance:
 
-virtualization_management module
---------------------------------
+*virtualization_management.py* module
+-------------------------------------
 
 .. automodule:: escape.orchest.virtualization_management
    :members:

@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath('../../..'))  # pox dir to handle lib/...
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+# needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -115,7 +115,7 @@ html_theme = 'classic'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+html_theme_options = {'collapsiblesidebar': True}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -148,7 +148,7 @@ html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-#html_last_updated_fmt = '%b %d, %Y'
+html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
@@ -206,7 +206,7 @@ htmlhelp_basename = 'ESCAPEv2doc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {# The paper size ('letterpaper' or 'a4paper').
+latex_elements = {}  # The paper size ('letterpaper' or 'a4paper').
   #'papersize': 'letterpaper',
 
   # The font size ('10pt', '11pt' or '12pt').
@@ -216,8 +216,7 @@ latex_elements = {# The paper size ('letterpaper' or 'a4paper').
   #'preamble': '',
 
   # Latex figure (float) alignment
-  #'figure_align': 'htbp',
-  }
+  #'figure_align': 'htbp',}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,

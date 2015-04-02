@@ -52,7 +52,7 @@ def _start_components (event):
 @poxutil.eval_args
 def launch (sg_file='', gui=False):
   """
-  Lanuch function called by POX core when core is up
+  Launch function called by POX core when core is up
 
   :param sg_file: Path of the input Service graph (optional)
   :type sg_file: str

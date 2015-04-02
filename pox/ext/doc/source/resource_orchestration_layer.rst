@@ -1,5 +1,5 @@
-resource_orchestration_layer module
-===================================
+The *resource_orchestration_layer* main module
+==============================================
 
 .. automodule:: resource_orchestration_layer
    :members:

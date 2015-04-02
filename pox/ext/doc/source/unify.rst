@@ -1,5 +1,5 @@
-unify module
-============
+The *unify* top module
+======================
 
 .. automodule:: unify
    :members:
