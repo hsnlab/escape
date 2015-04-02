@@ -86,5 +86,5 @@
 # index.rst --> insert
 #    modules.rst
 
-#make html
-sphinx-build -b html -d build/doctrees   source build/html
+make html
+#sphinx-build -b html -d build/doctrees   source build/html
