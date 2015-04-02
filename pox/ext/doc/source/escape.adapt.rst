@@ -12,10 +12,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*controller_adaptation.py* module
----------------------------------
+*controller_adapt.py* module
+----------------------------
 
-.. automodule:: escape.adapt.controller_adaptation
+.. automodule:: escape.adapt.controller_adapt
    :members:
    :private-members:
    :special-members:
@@ -23,10 +23,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*controller_adaptation_API.py* module
--------------------------------------
+*controller_adapt_API.py* module
+--------------------------------
 
-.. automodule:: escape.adapt.controller_adaptation_API
+.. automodule:: escape.adapt.controller_adapt_API
    :members:
    :private-members:
    :special-members:

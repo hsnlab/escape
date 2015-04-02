@@ -14,7 +14,7 @@
 import weakref
 
 from escape import CONFIG
-from escape.orchest.virtualization_management import AbstractVirtualizer
+from escape.orchest.virtualization_mngt import AbstractVirtualizer
 from escape.adapt.domain_adapters import POXDomainAdapter, \
   MininetDomainAdapter, \
   OpenStackDomainAdapter

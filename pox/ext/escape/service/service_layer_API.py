@@ -17,8 +17,8 @@ import repr
 from escape import CONFIG
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
-from escape.service.element_management import ClickManager
-from escape.service.service_orchestration import ServiceOrchestrator, \
+from escape.service.element_mngt import ClickManager
+from escape.service.service_orchest import ServiceOrchestrator, \
   VirtualResourceManager
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task

@@ -23,10 +23,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*resource_orchestration.py* module
-----------------------------------
+*resource_orchest.py* module
+----------------------------
 
-.. automodule:: escape.orchest.resource_orchestration
+.. automodule:: escape.orchest.resource_orchest
    :members:
    :private-members:
    :special-members:
@@ -34,10 +34,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*resource_orchestration_API.py* module
---------------------------------------
+*resource_orchest_API.py* module
+--------------------------------
 
-.. automodule:: escape.orchest.resource_orchestration_API
+.. automodule:: escape.orchest.resource_orchest_API
    :members:
    :private-members:
    :special-members:
@@ -55,10 +55,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*virtualization_management.py* module
--------------------------------------
+*virtualization_mngt.py* module
+-------------------------------
 
-.. automodule:: escape.orchest.virtualization_management
+.. automodule:: escape.orchest.virtualization_mngt
    :members:
    :private-members:
    :special-members:

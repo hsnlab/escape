@@ -14,7 +14,7 @@
 import types
 
 from escape.orchest import log as log
-import escape.orchest.virtualization_management
+import escape.orchest.virtualization_mngt
 
 
 class PolicyEnforcementError(RuntimeError):
@@ -85,7 +85,7 @@ class PolicyEnforcementMetaClass(type):
       log.debug("Invoke Policy checking function for %s" % func_name)
       if len(args) > 0:
         if isinstance(args[0],
-            escape.orchest.virtualization_management.AbstractVirtualizer):
+            escape.orchest.virtualization_mngt.AbstractVirtualizer):
           # Call Policy checking function before original
           if pep_function(args, kwargs):
             return orig_func(*args, **kwargs)
