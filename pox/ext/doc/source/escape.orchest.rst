@@ -55,10 +55,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*virtualization_mngt.py* module
+*virtualization_mgmt.py* module
 -------------------------------
 
-.. automodule:: escape.orchest.virtualization_mngt
+.. automodule:: escape.orchest.virtualization_mgmt
    :members:
    :private-members:
    :special-members:

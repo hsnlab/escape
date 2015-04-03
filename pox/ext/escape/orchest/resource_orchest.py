@@ -13,7 +13,7 @@
 # limitations under the License.
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.orchest import log as log
-from escape.orchest.virtualization_mngt import AbstractVirtualizer
+from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 
 
 class ResourceOrchestrator(object):

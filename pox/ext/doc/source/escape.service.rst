@@ -12,10 +12,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*element_mngt.py* module
+*element_mgmt.py* module
 ------------------------
 
-.. automodule:: escape.service.element_mngt
+.. automodule:: escape.service.element_mgmt
    :members:
    :private-members:
    :special-members:
