@@ -21,7 +21,7 @@ CONFIG = {'SMS': {  # Service Management Sublayer
           'SAS': {  # Service Adaptation Sublayer
                     'STRATEGY': 'DefaultServiceMappingStrategy'},
           'ROS': {  # Resource Orchestration Sublayer
-                    'STRATEGY': 'ESCAPEMappingStrategy'},  # ROS Mapping stategy
+                    'STRATEGY': 'ESCAPEMappingStrategy'},  # ROS Mapping strategy
           'CAS': {  # Controller Adaptation Sublayer
                     'POX': 'POXDomainAdapter',  # POX Adapter
                     'MN': 'MininetDomainAdapter',  # Mininet Adapter

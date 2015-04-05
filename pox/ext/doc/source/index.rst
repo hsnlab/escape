@@ -70,7 +70,7 @@ README
 
 ESCAPEv2 starting commands
 
-Basic commad:
+Basic command:
 
 .. code-block:: bash
 

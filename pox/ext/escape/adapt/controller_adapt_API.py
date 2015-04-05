@@ -72,9 +72,9 @@ class ControllerAdaptationAPI(AbstractAPI):
   @schedule_as_coop_task
   def _handle_InstallNFFGEvent (self, event):
     """
-    Install mapped Nf-FG
+    Install mapped NF-FG
 
-    :param event: evetn object contains mapped NF-FG
+    :param event: event object contains mapped NF-FG
     :type event: InstallNFFGEvent
     :return: None
     """

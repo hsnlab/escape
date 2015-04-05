@@ -117,7 +117,7 @@ class ServiceLayerAPI(AbstractAPI):
 
   Implement the U - Sl reference point
   """
-  # Define specific name for core object i.e. pox.core.<_core_name>
+  # Define specific name for core object as pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
   _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent}
@@ -148,7 +148,7 @@ class ServiceLayerAPI(AbstractAPI):
         log.error(
           "Can't load graph representation from file because of: " + str(e))
       else:
-        log.info("Graph representation is loaded sucessfully!")
+        log.info("Graph representation is loaded successfully!")
     else:
       # Init REST-API if no input file is given
       self._initiate_rest_api(address='')
@@ -169,7 +169,7 @@ class ServiceLayerAPI(AbstractAPI):
 
     :param address: server address, default localhost
     :type address: str
-    :param port: port number, defualt 8008
+    :param port: port number, default 8008
     :type port: int
     """
     if hasattr(CONFIG['SMS'], 'REQUEST-handler'):
@@ -215,7 +215,7 @@ class ServiceLayerAPI(AbstractAPI):
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     if nffg is not None:
       # Sending mapped SG / NF-FG to Orchestration layer as an Event
-      # Exceptions in event handlers are caugth by default in a non-blocking way
+      # Exceptions in event handlers are caught by default in a non-blocking way
       self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
       log.getChild('API').info(
         "Generated NF-FG has been sent to Orchestration...\n")

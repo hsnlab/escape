@@ -59,7 +59,7 @@ class ServiceOrchestrator(object):
       else:
         log.warning("Virtual view is not subclass of AbstractVirtualizer!")
     else:
-      log.warning("Virtual view is not aquired correctly!")
+      log.warning("Virtual view is not acquired correctly!")
     log.error("Abort mapping process!")
 
 
@@ -122,7 +122,7 @@ class VirtualResourceManager(object):
     :return: None
     """
     super(VirtualResourceManager, self).__init__()
-    # service layer API for comminucation with other layers
+    # service layer API for communication with other layers
     self._layerAPI = layerAPI
     # Derived object from AbstractVirtualizer which represent the virtual
     # view of this layer
@@ -133,7 +133,7 @@ class VirtualResourceManager(object):
   def virtual_view (self):
     """
     Return resource info of actual layer as an NFFG instance
-    If it isn't exist reqiures it from Orchestration layer
+    If it isn't exist requires it from Orchestration layer
 
     :return: resource info as a Virtualizer
     :rtype: AbstractVirtualizer

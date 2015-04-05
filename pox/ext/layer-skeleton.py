@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 ESCAPEv2 layer skeleton
 """
@@ -50,7 +49,7 @@ def _start_layer (event):
   :return: None
   """
   # Instantiate the API class and register into pox.core only once
-  # Wait for the necessery POX component until they are resolved and set up
+  # Wait for the necessary POX component until they are resolved and set up
   # event handlers.
   SkeletonAPI(**init_param)
 

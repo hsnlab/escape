@@ -36,7 +36,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :type graph: NFFG
     :param resource: global virtual resource info
     :type resource: NFFG
-    :return: mapped Network Fuction Forwarding Graph
+    :return: mapped Network Function Forwarding Graph
     :rtype: NFFG
     """
     log.debug(
@@ -72,7 +72,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
                     strategy.__class__.__name__))
       else:
         log.warning(
-          "ROS mappig strategy is not subclass of AbstractMappingStrategy, "
+          "ROS mapping strategy is not subclass of AbstractMappingStrategy, "
           "fall back to %s" % strategy.__class__.__name__)
     super(ResourceOrchestrationMapper, self).__init__(strategy)
     log.debug("Init %s with strategy: %s" % (
@@ -89,13 +89,13 @@ class ResourceOrchestrationMapper(AbstractMapper):
     :return: mapped Network Function Forwarding Graph
     :rtype: NFFG
     """
-    log.debug("Request %s to lauch orchestration on NF-FG(%s)..." % (
+    log.debug("Request %s to launch orchestration on NF-FG(%s)..." % (
       self.__class__.__name__, input_graph.id))
     # Steps before mapping (optional)
     # Run actual mapping algorithm
     mapped_nffg = self.strategy.map(graph=input_graph,
       resource=resource_view.get_resource_info())
     # Steps after mapping (optional)
-    log.info("Nf-FG(%s) orchestration is finished by %s" % (
+    log.info("NF-FG(%s) orchestration is finished by %s" % (
       input_graph.id, self.__class__.__name__))
     return mapped_nffg
