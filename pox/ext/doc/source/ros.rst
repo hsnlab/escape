@@ -1,7 +1,7 @@
-The *controller_adaptation_layer.py* main module
-================================================
+The *ros.py* main module
+========================
 
-.. automodule:: controller_adaptation_layer
+.. automodule:: ros
    :members:
    :private-members:
    :special-members:

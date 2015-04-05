@@ -23,10 +23,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*resource_orchest.py* module
-----------------------------
+*ros_orchestration.py* module
+-----------------------------
 
-.. automodule:: escape.orchest.resource_orchest
+.. automodule:: escape.orchest.ros_orchestration
    :members:
    :private-members:
    :special-members:
@@ -34,10 +34,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*resource_orchest_API.py* module
---------------------------------
+*ros_API.py* module
+-------------------
 
-.. automodule:: escape.orchest.resource_orchest_API
+.. automodule:: escape.orchest.ros_API
    :members:
    :private-members:
    :special-members:

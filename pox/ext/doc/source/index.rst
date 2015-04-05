@@ -61,9 +61,9 @@ Main modules for layers/sublayers
 .. toctree::
     :maxdepth: 1
 
-    Service layer <service_layer>
-    Resource Orchestration sublayer <resource_orchestration_layer>
-    Controller Adaptation sublayer <controller_adaptation_layer>
+    Service layer <sas>
+    Resource Orchestration sublayer <ros>
+    Controller Adaptation sublayer <cas>
 
 README
 ++++++
@@ -86,46 +86,46 @@ Minimal command with explicitly-defined components (components' order is irrelev
 
 .. code-block:: bash
 
-    $ ./pox.py service_layer resource_orchestration_layer controller_adaptation_layer
+    $ ./pox.py sas ros cas
 
 Without the service layer:
 
 .. code-block:: bash
 
-    $ ./pox.py resource_orchestration_layer controller_adaptation_layer
+    $ ./pox.py ros cas
 
 Long version with debugging and explicitly-defined components (analogous with ./pox.py unify):
 
 .. code-block:: bash
 
-     $./pox.py --verbose log.level --DEBUG samples.pretty_log service_layer resource_orchestration_layer controller_adaptation_layer
+     $./pox.py --verbose log.level --DEBUG samples.pretty_log sas ros cas
 
 Start layers with graph-represented input contained in a specific file:
 
 .. code-block:: bash
 
-    $ ./pox.py service_layer --sg_file=<path>
+    $ ./pox.py sas --sg_file=<path>
     $ ./pox.py unify --sg_file=<path>
 
-    $ ./pox.py resource_orchestration_layer --nffg_file=<path>
-    $ ./pox.py controller_adaptation_layer --mapped_nffg_file=<path>
+    $ ./pox.py ros --nffg_file=<path>
+    $ ./pox.py cas --mapped_nffg_file=<path>
 
 Start ESCAPEv2 with built-in GUI:
 
 .. code-block:: bash
 
-    $ ./pox.py service_layer --gui ...
+    $ ./pox.py sas --gui ...
     $ ./pox.py unify --gui
 
 Start layer in standalone mode (no dependency handling) for test/debug:
 
 .. code-block:: bash
 
-    $ ./pox.py service_layer --standalone
-    $ ./pox.py resource_orchestration_layer --standalone
-    $ ./pox.py controller_adaptation_layer --standalone
+    $ ./pox.py sas --standalone
+    $ ./pox.py ros --standalone
+    $ ./pox.py cas --standalone
 
-    $ ./pox.py service_layer controller_adaptation_layer --standalone
+    $ ./pox.py sas ros --standalone
 
 Indices and tables
 ==================

@@ -1,7 +1,7 @@
-The *resource_orchestration_layer* main module
-==============================================
+The *sas.py* main module
+========================
 
-.. automodule:: resource_orchestration_layer
+.. automodule:: sas
    :members:
    :private-members:
    :special-members:

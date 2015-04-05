@@ -1,7 +1,7 @@
-The *service_layer* main module
-===============================
+The *cas.py* main module
+========================
 
-.. automodule:: service_layer
+.. automodule:: cas
    :members:
    :private-members:
    :special-members:

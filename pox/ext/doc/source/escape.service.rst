@@ -34,10 +34,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*service_layer_API.py* module
------------------------------
+*sas_API.py* module
+-------------------
 
-.. automodule:: escape.service.service_layer_API
+.. automodule:: escape.service.sas_API
    :members:
    :private-members:
    :special-members:
@@ -45,10 +45,10 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
-*service_orchest.py* module
----------------------------
+*sas_orchestration.py* module
+-----------------------------
 
-.. automodule:: escape.service.service_orchest
+.. automodule:: escape.service.sas_orchestration
    :members:
    :private-members:
    :special-members:
