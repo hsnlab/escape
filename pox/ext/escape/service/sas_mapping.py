@@ -72,7 +72,7 @@ class ServiceGraphMapper(AbstractMapper):
                     strategy.__class__.__name__))
       else:
         log.warning(
-          "SAS mappig strategy is not subclass of AbstractMappingStrategy, "
+          "SAS mapping strategy is not subclass of AbstractMappingStrategy, "
           "fall back to %s" % strategy.__class__.__name__)
     super(ServiceGraphMapper, self).__init__(strategy)
     log.debug("Init %s with strategy: %s" % (
@@ -89,7 +89,7 @@ class ServiceGraphMapper(AbstractMapper):
     :return: Network Function Forwarding Graph
     :rtype: NFFG
     """
-    log.debug("Request %s to lauch orchestration on SG(%s)..." % (
+    log.debug("Request %s to launch orchestration on SG(%s)..." % (
       self.__class__.__name__, input_graph.id))
     # Steps before mapping (optional)
     # Run actual mapping algorithm

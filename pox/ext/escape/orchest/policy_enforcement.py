@@ -26,13 +26,13 @@ class PolicyEnforcementError(RuntimeError):
 
 class PolicyEnforcementMetaClass(type):
   """
-  Meta class for handling policy enforcement in the context of classes inhereted
+  Meta class for handling policy enforcement in the context of classes inherited
   from AbstractVirtualizer
 
   If the PolicyEnforcement class contains a function which name matches one in
   the actual Virtualizer then PolicyEnforcement's function will be called first
   Therefore the function names must be identical!
-  If the policy checking function retuns with True value, the original function
+  If the policy checking function returns with True value, the original function
   will be called next.
 
   If policy checking fails a PolicyEnforcementError should be raised and handled
@@ -68,7 +68,7 @@ class PolicyEnforcementMetaClass(type):
   @classmethod
   def get_wrapper (mcs, func_name, orig_func):
     """
-    Return decorator function which do the policy enforment check
+    Return decorator function which do the policy enforcement check
 
     :param func_name: function name
     :type func_name: str
@@ -108,8 +108,8 @@ class PolicyEnforcement(object):
 
   Contains the policy checking function
 
-  Binding is based on function name (cheking function have to exist in this
-  class and tis name have to be identical to subordinate function's name)
+  Binding is based on function name (checking function have to exist in this
+  class and this name have to be identical to subordinate function's name)
 
   Every policy checking function is classmethod and need to have two parameter
   for nameless (args) and named(kwargs) params.

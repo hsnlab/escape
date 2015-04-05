@@ -25,7 +25,7 @@ class ResourceOrchestrator(object):
     """
     Init
 
-    :param virtualizerManager: virtualizer manager object
+    :param virtualizerManager: Virtualizer manager object
     :type virtualizerManager: VirtualizerManager
     :return: None
     """
@@ -47,7 +47,7 @@ class ResourceOrchestrator(object):
     log.debug("Invoke %s to instantiate NF-FG" % self.__class__.__name__)
     # Store newly created NF-FG
     self.nffgManager.save(nffg)
-    # Get Domain Virtualizer to aquire global domain view
+    # Get Domain Virtualizer to acquire global domain view
     global_view = self.virtualizerManager.dov
     if global_view is not None:
       if isinstance(global_view, AbstractVirtualizer):
@@ -59,7 +59,7 @@ class ResourceOrchestrator(object):
       else:
         log.warning("Global view is not subclass of AbstractVirtualizer!")
     else:
-      log.warning("Global view is not aquired correctly!")
+      log.warning("Global view is not acquired correctly!")
     log.error("Abort mapping process!")
 
 

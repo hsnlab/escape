@@ -13,7 +13,7 @@
 # limitations under the License.
 """
 Contains miscellaneous helper functions such as invoking a function in POX's
-cooperative microtask environment or a helper class for mimic a minimasl
+cooperative microtask environment or a helper class for mimic a minimal
 layer API as a dependency for other layer APIs to handles events
 """
 from functools import wraps
@@ -25,13 +25,13 @@ from pox.lib.revent.revent import EventMixin
 
 def schedule_as_coop_task (func):
   """
-  Decorator fuctions for running functions in an asynchronous way as a
-  microtask in recoco's cooperative multitasking context (in wich POX was
+  Decorator functions for running functions in an asynchronous way as a
+  microtask in recoco's cooperative multitasking context (in which POX was
   written)
 
   :param func: decorated function
   :type func: func
-  :return: decorater function
+  :return: decorator function
   :rtype: func
   """
   # copy meta info from func to decorator for documentation generation

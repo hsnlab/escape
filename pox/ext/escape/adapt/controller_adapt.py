@@ -53,7 +53,7 @@ class ControllerAdapter(object):
 
 class DomainVirtualizer(AbstractVirtualizer):
   """
-  Specific virtualizer class for global domain virtualization
+  Specific Virtualizer class for global domain virtualization
 
   Should implement the same interface as AbstractVirtualizer
   """

@@ -118,7 +118,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
     if mapped_nffg is not None:
       # Sending NF-FG to Adaptation layer as an Event
-      # Exceptions in event handlers are caugth by default in a non-blocking way
+      # Exceptions in event handlers are caught by default in a non-blocking way
       self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
       log.getChild('API').info("Mapped NF-FG has been sent to Adaptation...\n")
 

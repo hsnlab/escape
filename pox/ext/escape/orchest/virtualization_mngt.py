@@ -18,7 +18,7 @@ from escape.orchest import log as log
 
 class AbstractVirtualizer(object):
   """
-  Abstract class for actual virtualizers
+  Abstract class for actual Virtualizers
 
   Follows the Proxy design pattern
   """
@@ -41,14 +41,14 @@ class AbstractVirtualizer(object):
 
   def sanity_check (self, nffg):
     """
-    Placeholder for sanity check which implemented in PolicyEnforcementMetaClass
+    Place-holder for sanity check which implemented in PolicyEnforcementMetaClass
     """
     pass
 
 
 class ESCAPEVirtualizer(AbstractVirtualizer):
   """
-  Actual virtualizer class for ESCAPE
+  Actual Virtualizer class for ESCAPE
   """
   __metaclass__ = PolicyEnforcementMetaClass
 
@@ -158,7 +158,7 @@ class VirtualizerManager(object):
     :type dov: DomainVirtualizer
     :param layer_id: layer ID
     :type layer_id: int
-    :return: generated virtualizer derived from AbstractVirtualizer
+    :return: generated Virtualizer derived from AbstractVirtualizer
     :rtype: ESCAPEVirtualizer
     """
     # TODO - implement

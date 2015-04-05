@@ -43,7 +43,7 @@ def _start_components (event):
   from resource_orchestration_layer import launch
 
   launch()
-  # Lauch Controller Adaptation Sublayer (CAS)
+  # Launch Controller Adaptation Sublayer (CAS)
   from controller_adaptation_layer import launch
 
   launch()
@@ -68,7 +68,7 @@ def launch (sg_file='', gui=False):
 
   launch(DEBUG=True)
 
-  # Import colouful logging
+  # Import colourful logging
   from pox.samples.pretty_log import launch
 
   launch()

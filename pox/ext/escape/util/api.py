@@ -15,7 +15,7 @@
 Contains abstract classes for concrete layer API modules
 
 AbstractAPI contains the register mechanism into the POX core for layer APIs,
-the event handling/registering logic and defines the geeneral functions for
+the event handling/registering logic and defines the general functions for
 initialization and finalization steps
 
 RESTServer is a general HTTP server which parse HTTP request and forward to
@@ -46,7 +46,7 @@ class AbstractAPI(EventMixin):
   """
   # Default value for logger. Should be overwritten by child classes
   _core_name = "AbstractAPI"
-  # Explicitly defined dependencies as POX componenents
+  # Explicitly defined dependencies as POX components
   dependencies = ()
   # Events raised by this class, but already defined in superclass
   # _eventMixin_events = set()
@@ -60,9 +60,9 @@ class AbstractAPI(EventMixin):
     Set given parameters (standalone parameter is mandatory) automatically as
     self._<param_name> = <param_value>
 
-    Base constructor funtions have to be called as the last step in derived
+    Base constructor functions have to be called as the last step in derived
     classes. Same situation with _all_dependencies_met() respectively.
-    Must not override these fuction, just use initialize() function for init
+    Must not override these function, just use initialize() function for init
     steps. Actual API classes must only call super() in their constructor
     with the form:
     super(<API Class name>, self).__init__(standalone=standalone, \*\*kwargs)
@@ -70,8 +70,8 @@ class AbstractAPI(EventMixin):
     IMPORTANT!
 
     Do not use prefixes in the name of event handlers, because of automatic
-    dependecy discovery considers that as a dependent componenet and this
-    situation casue a dead lock (component will be waiting to each other to
+    dependency discovery considers that as a dependent component and this
+    situation cause a dead lock (component will be waiting to each other to
     set up)
 
     :param standalone: started in standalone mode or not
@@ -87,7 +87,7 @@ class AbstractAPI(EventMixin):
       # Initiate component manually
       self._all_dependencies_met()
     else:
-      # Wait for the necessery POX component until they are resolved and set
+      # Wait for the necessary POX component until they are resolved and set
       # up event handlers. The dependencies are given explicitly which are
       # defined in the actual API and not use automatic event handler based
       # dependency discovery to avoid issues come from fully event-driven
@@ -97,7 +97,7 @@ class AbstractAPI(EventMixin):
 
   def _all_dependencies_met (self):
     """
-    Called when every componenet on which depends are initialized on
+    Called when every component on which depends are initialized on
     pox.core. Contain dependency relevant initialization.
 
     :return: None
@@ -106,12 +106,12 @@ class AbstractAPI(EventMixin):
     # With fully event-driven communication between the layers the dependency
     # handling takes care by listen_to_dependencies() run into a dead-lock.
     # The root of this problem is the bidirectional or cyclic dependency
-    # between the componenets, so basicly the layers will always wait to each
+    # between the components, so basically the layers will always wait to each
     # other to be registered on core. To avoid this situation the naming
     # convention of event handlers on which the dependency checking based is
     # not followed (aka leave _handle_<component name>_<event name>) and
     # the event listeners is set up manually. For automatic core registration
-    # the components have to containt dependencies explicitly.
+    # the components have to contain dependencies explicitly.
     for dep in self.dependencies:
       if not self._standalone:
         if core.core.hasComponent(dep):
@@ -135,9 +135,9 @@ class AbstractAPI(EventMixin):
 
   def initialize (self):
     """
-    Init function for child API classes to symplify dynamic initilization
-    Called when every componenet on which depends are initialized and
-    registeredmin pox.core.
+    Init function for child API classes to simplify dynamic initialization
+    Called when every component on which depends are initialized and
+    registered in pox.core.
     This function should be overwritten by child classes.
 
     :return: None
@@ -196,7 +196,7 @@ class RESTServer(object):
 
   def __init__ (self, RequestHandlerClass, address, port):
     """
-    Set up a HTTPServer in a different trhead
+    Set up a HTTPServer in a different thread
 
     :param RequestHandlerClass: Class of a handler which handles HTTP request
     :type RequestHandlerClass: AbstractRequestHandler
@@ -241,7 +241,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   Minimalistic REST API for Layer APIs
 
   Handle /escape/* URLs.
-  Method calling permitions represented in escape_intf dictionary
+  Method calling permissions represented in escape_intf dictionary
 
   IMPORTANT!
 
@@ -260,7 +260,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   request_perm = {'GET': (), 'POST': (), 'PUT': (), 'DELETE': ()}
   # Name of the layer API to which the server bounded
   bounded_layer = None
-  # Logger. Should be overdefined in child classes
+  # Logger. Should be overrided in child classes
   log = core.getLogger("REST-API")
 
   def do_GET (self):
@@ -313,7 +313,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   def _parse_json_body (self):
     """
     Parse HTTP request body in JSON format
-    Parsed JSON object is unicode
+    Parsed JSON object is Unicode
     GET, DELETE messages don't have body - return empty dict by default
 
     :return: request body in JSON format
@@ -338,7 +338,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def _send_json_response (self, data, encoding='utf-8'):
     """
-    Send requested data in json format
+    Send requested data in JSON format
 
     :param data: data in JSON format
     :type data: dict
@@ -376,7 +376,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   def _proceed_API_call (self, function, *args, **kwargs):
     """
     Fail-safe method to call API function
-    The cooperative microtask context is handled by actual APIs
+    The cooperative micro-task context is handled by actual APIs
     Should call this with params, not directly the function of actual API
 
     :param function: function name
