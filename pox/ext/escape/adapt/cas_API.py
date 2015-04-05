@@ -15,7 +15,7 @@ import repr
 
 from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
-from escape.adapt.controller_adapt import ControllerAdapter
+from escape.adapt.adaptation import ControllerAdapter
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event

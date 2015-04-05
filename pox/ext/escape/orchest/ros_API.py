@@ -13,7 +13,7 @@
 # limitations under the License.
 import repr
 
-from escape.orchest.resource_orchest import ResourceOrchestrator
+from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.orchest.virtualization_mgmt import VirtualizerManager
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest import LAYER_NAME

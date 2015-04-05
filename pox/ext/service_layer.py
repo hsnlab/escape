@@ -18,7 +18,7 @@ Basic POX module for ESCAPE Service (Graph Adaptation) sublayer
 Initiate appropriate API class which implements U-Sl reference point
 Follow POX module conventions
 """
-from escape.service.service_layer_API import ServiceLayerAPI
+from escape.service.sas_API import ServiceLayerAPI
 from pox.core import core
 import pox.lib.util as poxutil
 
