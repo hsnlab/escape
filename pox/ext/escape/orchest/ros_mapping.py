@@ -92,9 +92,9 @@ class ResourceOrchestrationMapper(AbstractMapper):
     log.debug("Request %s to launch orchestration on NF-FG(%s)..." % (
       self.__class__.__name__, input_graph.id))
     # Steps before mapping (optional)
+    virt_resource = resource_view.get_resource_info()
     # Run actual mapping algorithm
-    mapped_nffg = self.strategy.map(graph=input_graph,
-      resource=resource_view.get_resource_info())
+    mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
     # Steps after mapping (optional)
     log.info("NF-FG(%s) orchestration is finished by %s" % (
       input_graph.id, self.__class__.__name__))

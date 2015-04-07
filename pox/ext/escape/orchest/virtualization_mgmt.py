@@ -22,6 +22,7 @@ class AbstractVirtualizer(object):
 
   Follows the Proxy design pattern
   """
+  __metaclass__ = PolicyEnforcementMetaClass
 
   def __init__ (self):
     """
@@ -41,7 +42,8 @@ class AbstractVirtualizer(object):
 
   def sanity_check (self, nffg):
     """
-    Place-holder for sanity check which implemented in PolicyEnforcementMetaClass
+    Place-holder for sanity check which implemented in
+    PolicyEnforcementMetaClass
     """
     pass
 
@@ -50,7 +52,6 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
   """
   Actual Virtualizer class for ESCAPE
   """
-  __metaclass__ = PolicyEnforcementMetaClass
 
   def __init__ (self):
     """
