@@ -93,6 +93,7 @@ class ServiceGraphMapper(AbstractMapper):
       self.__class__.__name__, input_graph.id))
     # Steps before mapping (optional)
     virt_resource = resource_view.get_resource_info()
+    resource_view.sanity_check(input_graph)
     # Run actual mapping algorithm
     nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
     # Steps after mapping (optional)

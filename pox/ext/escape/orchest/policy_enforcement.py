@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import types
+from functools import wraps
+import repr
 
 from escape.orchest import log as log
 import escape.orchest.virtualization_mgmt
@@ -32,11 +33,9 @@ class PolicyEnforcementMetaClass(type):
   If the PolicyEnforcement class contains a function which name matches one in
   the actual Virtualizer then PolicyEnforcement's function will be called first
   Therefore the function names must be identical!
-  If the policy checking function returns with True value, the original function
-  will be called next.
 
   If policy checking fails a PolicyEnforcementError should be raised and handled
-  in a higher layer or/and at least return with False value.
+  in a higher layer..
 
   To use policy checking set the following class attribute:
 
@@ -56,40 +55,55 @@ class PolicyEnforcementMetaClass(type):
     :return: inferred class instance
     :rtype: AbstractVirtualizer
     """
+    # Check Virtualizer methods
     for attr_name, attr_value in attrs.iteritems():
-      if isinstance(attr_value,
-          types.FunctionType) and not attr_name.startswith('__'):
-        if hasattr(PolicyEnforcement, attr_name):
-          attrs[attr_name] = mcs.get_wrapper(attr_name, attr_value)
+      # if non-private and callable
+      if not attr_name.startswith('_') and callable(attr_value):
+        # Get policy checking functions from PolicyEnforcement
+        hooks = (getattr(PolicyEnforcement, "pre_" + attr_name, None),
+                 getattr(PolicyEnforcement, "post_" + attr_name, None))
+        # if pre and/or post hook is defined set a wrapper
+        if any(hooks):
+          attrs[attr_name] = mcs.get_wrapper(attr_value, hooks)
 
     return super(PolicyEnforcementMetaClass, mcs).__new__(mcs, name, bases,
-      attrs)
+                                                          attrs)
 
   @classmethod
-  def get_wrapper (mcs, func_name, orig_func):
+  def get_wrapper (mcs, orig_func, hooks):
     """
     Return decorator function which do the policy enforcement check
 
-    :param func_name: function name
-    :type func_name: str
     :param orig_func: original function
     :type orig_func: func
+    :param hooks: tuple of pre and post checking functions
+    :type hooks: tuple
     :raise: PolicyEnforcementError
     :return: decorator function
     :rtype: func
     """
 
+    @wraps(orig_func)
     def wrapper (*args, **kwargs):
-      # existence of PEP function is checked before
-      pep_function = getattr(PolicyEnforcement, func_name)
-      log.debug("Invoke Policy checking function for %s" % func_name)
+      """
+      Wrapper function which call policy checking functions if they exist
+      """
       if len(args) > 0:
         if isinstance(args[0],
-            escape.orchest.virtualization_mgmt.AbstractVirtualizer):
+                      escape.orchest.virtualization_mgmt.AbstractVirtualizer):
           # Call Policy checking function before original
-          if pep_function(args, kwargs):
-            return orig_func(*args, **kwargs)
-            # Do nothing after the original function called
+          if hooks[0]:
+            log.debug("Invoke Policy checking function: [PRE] %s" % (
+              hooks[0].__name__.split('pre_', 1)[1]))
+            hooks[0](args, kwargs)
+          # Call original function
+          ret_value = orig_func(*args, **kwargs)
+          # Call Policy checking function after original
+          if hooks[1]:
+            log.debug("Invoke Policy checking function: [POST] %s" % (
+              hooks[1].__name__.split('post_', 1)[1]))
+            hooks[1](args, kwargs, ret_value)
+          return ret_value
         else:
           log.warning(
             "Binder class of policy checker function is not a subclass of "
@@ -109,10 +123,27 @@ class PolicyEnforcement(object):
   Contains the policy checking function
 
   Binding is based on function name (checking function have to exist in this
-  class and this name have to be identical to subordinate function's name)
+  class and its name have to stand for the "pre_" or "post_" prefix and the
+  name of the checked function)
 
-  Every policy checking function is classmethod and need to have two parameter
-  for nameless (args) and named(kwargs) params.
+  Every PRE policy checking function is classmethod and need to have two
+  parameter for nameless (args) and named(kwargs) params.
+
+  Format:
+
+  @classmethod
+  def pre_<original_name> (cls, args, kwargs):
+    ...
+
+  Every POST policy checking function is classmethod and need to have three
+  parameter for nameless (args), named(kwargs) params and return value.
+
+  Format:
+
+  @classmethod
+  def post_<original_name> (cls, args, kwargs, ret_value):
+    ...
+
   The first element of args is the supervised Virtualizer ('self' param in the
   original function)
   """
@@ -124,17 +155,17 @@ class PolicyEnforcement(object):
     super(PolicyEnforcement, self).__init__()
 
   @classmethod
-  def get_resource_info (cls, args, kwargs):
+  def pre_sanity_check (cls, args, kwargs):
     virtualizer = args[0]
+    nffg = args[1]
     # TODO - implement
-    log.debug("PolicyEnforcement: check get_resource_info [OK]")
-    return True
+    log.debug("PolicyEnforcement: sanity_check NF-FG(%s) <--> %s [OK]" % (
+      nffg.id, repr.repr(virtualizer)))
 
   @classmethod
-  def sanity_check (cls, args, kwargs):
+  def post_sanity_check (cls, args, kwargs, ret_value):
     virtualizer = args[0]
-    nffg = kwargs['nffg']
+    nffg = args[1]
     # TODO - implement
-    log.debug("PolicyEnforcement: check NF-FG(%s) <--> %s [OK]" % (
-      nffg.id, virtualizer))
-    return True
+    log.debug("PolicyEnforcement: sanity_check NF-FG(%s) <--> %s [OK]" % (
+      nffg.id, repr.repr(virtualizer)))

@@ -79,6 +79,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :rtype: NFFG
     """
     # TODO - implement - possibly don't store anything just convert??
+    log.debug("Return global resource info...")
     return NFFG()
 
 

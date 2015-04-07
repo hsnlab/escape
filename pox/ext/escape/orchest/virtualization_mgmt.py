@@ -42,8 +42,7 @@ class AbstractVirtualizer(object):
 
   def sanity_check (self, nffg):
     """
-    Place-holder for sanity check which implemented in
-    PolicyEnforcementMetaClass
+    Place-holder for sanity check which implemented in PolicyEnforcement
     """
     pass
 
@@ -63,13 +62,30 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
     """
     Hides object's mechanism and return with a resource object derived from NFFG
 
-    :return: resource info
+    :return: virtual resource info
     :rtype: NFFG
     """
     # dummy NFFG TODO - implement
     # deep copy???
-    return NFFG()
+    log.debug("Return virtual resource info...")
+    return self._generate_resource_info()
 
+  def sanity_check(self, nffg):
+    """
+    Placeholder method for policy checking.
+
+    Return the virtual resource info for the post checker function
+
+    :return: virtual resource info
+    :rtype: NFFG
+    """
+    return self._generate_resource_info()
+
+  def _generate_resource_info (self):
+    """
+    Private method to return with resouce info
+    """
+    return NFFG()
 
 DoV_ID = 'DoV'
 
@@ -147,7 +163,7 @@ class VirtualizerManager(object):
     if layer_id not in self._virtualizers:
       # Pass the global resource as the DomainVirtualizer
       self._virtualizers[layer_id] = self._generate_virtual_view(self.dov,
-        layer_id)
+                                                                 layer_id)
     return self._virtualizers[layer_id]
 
   def _generate_virtual_view (self, dov, layer_id):
