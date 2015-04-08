@@ -25,6 +25,7 @@ from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
 from escape.service import log as log
 from escape import CONFIG
 from escape.util.misc import call_as_coop_task
+from pox.lib.revent.revent import Event
 
 
 class DefaultServiceMappingStrategy(AbstractMappingStrategy):
@@ -59,10 +60,28 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     return graph
 
 
+class SGMappingFinishedEvent(Event):
+  """
+  Event for signaling the end of SG mapping
+  """
+
+  def __init__ (self, nffg):
+    """
+    Init
+
+    :param nffg: NF-FG need to be initiated
+    :type nffg: NFFG
+    """
+    super(SGMappingFinishedEvent, self).__init__()
+    self.nffg = nffg
+
+
 class ServiceGraphMapper(AbstractMapper):
   """
   Helper class for mapping Service Graph to NF-FG
   """
+  # Events raised by this class
+  _eventMixin_events = {SGMappingFinishedEvent}
 
   def __init__ (self, strategy=DefaultServiceMappingStrategy, threaded=True):
     """
@@ -112,7 +131,8 @@ class ServiceGraphMapper(AbstractMapper):
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread
       log.info(
-        "Schedule mapping algorithm: %s to run later" % self.strategy.__name__)
+        "Schedule mapping algorithm: %s in a worker thread" %
+        self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
       log.info("SG(%s) orchestration is finished by %s" % (
@@ -136,9 +156,24 @@ class ServiceGraphMapper(AbstractMapper):
     """
 
     def run ():
+      log.info("Schedule mapping algorithm: %s" % self.strategy.__name__)
       nffg = self.strategy.map(graph=graph, resource=resource)
+      # Must use call_as_coop_task because we want to call a function in a
+      # coop microtask environment from a separate thread
+      call_as_coop_task(self._mapping_finished, nffg=nffg)
 
+    log.debug("Initialize working thread...")
     self._mapping_thread = threading.Thread(target=run)
     self._mapping_thread.daemon = True
     self._mapping_thread.start()
 
+  def _mapping_finished (self, nffg):
+    """
+    Called from a separate thread when the mapping process is finished
+
+    :param nffg: geenrated NF-FG
+    :type nffg: NFFG
+    :return: None
+    """
+    log.debug("Inform layer API that SG mapping has been finished...")
+    self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)

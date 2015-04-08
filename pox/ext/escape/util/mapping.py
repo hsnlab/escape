@@ -20,6 +20,7 @@ should implement mapping preparations and invoke actual mapping algorithm
 :class:`AbstractMappingStrategy` is an abstract class for containing entirely
 the mapping algorithm as a class method
 """
+from pox.lib.revent.revent import EventMixin
 
 
 class AbstractMappingStrategy(object):
@@ -51,9 +52,12 @@ class AbstractMappingStrategy(object):
     raise NotImplementedError("Derived class must override this function!")
 
 
-class AbstractMapper(object):
+class AbstractMapper(EventMixin):
   """
   Abstract class for graph mapping function
+
+  Inherited from :class`EventMixin` to implement internal event-based
+  communication
 
   Contain common functions and initialization
   """

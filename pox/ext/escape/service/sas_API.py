@@ -32,8 +32,7 @@ from escape import CONFIG
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
-from escape.service.sas_orchestration import ServiceOrchestrator, \
-  VirtualResourceManager
+from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
@@ -152,10 +151,8 @@ class ServiceLayerAPI(AbstractAPI):
     self.__sid = hash(self)
     # Set element manager
     self.elementManager = ClickManager()
-    # Init virtual resource manager with self as communication interface
-    virtResManager = VirtualResourceManager(self)
     # Init central object of Service layer
-    self.service_orchestrator = ServiceOrchestrator(virtResManager)
+    self.service_orchestrator = ServiceOrchestrator(self)
     # Read input from file if it's given and initiate SG
     if self._sg_file:
       try:
@@ -219,6 +216,16 @@ class ServiceLayerAPI(AbstractAPI):
     # TODO - set up and initiate MiniEdit here
     pass
 
+  def _handle_SGMappingFinishedEvent (self, event):
+    """
+    Handle SGMappingFinishedEvent and invoke :class:`NFFG
+    <escape.util.nffg.NFFG>` instantiation
+    :param event: event object
+    :type event: SGMappingFinishedEvent
+    :return: None
+    """
+    self._instantiate_NFFG(event.nffg)
+
   # UNIFY U - Sl API functions starts here
 
   @schedule_as_coop_task
@@ -257,12 +264,16 @@ class ServiceLayerAPI(AbstractAPI):
 
   # UNIFY Sl - Or API functions starts here
 
-  def request_virtual_resource_info (self):
+  def _handle_MissingVirtualViewEvent (self, event):
     """
     Request virtual resource info from Orchestration layer (UNIFY Sl - Or API)
 
+    Invoked when a :class:`MissingVirtualViewEvent` raised
+
     Service layer is identified with the sid value automatically
 
+    :param event: event object
+    :type event: MissingVirtualViewEvent
     :return: None
     """
     log.getChild('API').debug(
@@ -272,8 +283,11 @@ class ServiceLayerAPI(AbstractAPI):
 
   def _handle_VirtResInfoEvent (self, event):
     """
-    Save requested virtual resource info as a Virtualizer
+    Save requested virtual resource info as an :class:`ESCAPEVirtualizer
+    <escape.orchest.virtualization_mgmt.ESCAPEVirtualizer>`
 
+    :param event: event object
+    :type event: VirtResInfoEvent
     :return: None
     """
     log.getChild('API').debug(

@@ -27,6 +27,7 @@ implementation dependent logic
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.service.sas_mapping import ServiceGraphMapper
 from escape.service import log as log
+from pox.lib.revent.revent import EventMixin, Event
 
 
 class ServiceOrchestrator(object):
@@ -34,19 +35,29 @@ class ServiceOrchestrator(object):
   Main class for the actual Service Graph processing
   """
 
-  def __init__ (self, virtResManager):
+  def __init__ (self, layer_API):
     """
     Initialize main Service Layer components
 
-    :param virtResManager: virtual resource manager
-    :type virtResManager: VirtualResourceManager
+    :param layer_API: layer API instance
+    :type layer_API: ServiceLayerAPI
     :return: None
     """
     super(ServiceOrchestrator, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    # Init SG Manager
     self.sgManager = SGManager()
-    self.virtResManager = virtResManager
+    # Init virtual resource manager
+    # Listeners must be weak references in order the layer API can garbage
+    # collected
+    self.virtResManager = VirtualResourceManager()
+    self.virtResManager.addListeners(layer_API, weak=True)
+    # Init Service Graph Mapper
+    # Listeners must be weak references in order the layer API can garbage
+    # collected
     self.sgMapper = ServiceGraphMapper()
+    self.sgMapper.addListeners(layer_API, weak=True)
+    # Init NFIB manager
     self.nfibManager = NFIBManager()
 
   def initiate_service_graph (self, sg):
@@ -118,7 +129,14 @@ class SGManager(object):
     return self._service_graphs.get(graph_id, None)
 
 
-class VirtualResourceManager(object):
+class MissingVirtualViewEvent(Event):
+  """
+  Event for signaling missing virtual resource view
+  """
+  pass
+
+
+class VirtualResourceManager(EventMixin):
   """
   Support Service Graph mapping, follow the used virtual resources according to
   the Service Graph(s) in effect
@@ -126,18 +144,16 @@ class VirtualResourceManager(object):
   Handles object derived from :class`AbstractVirtualizer` and requested from
   lower layer
   """
+  # Events raised by this class
+  _eventMixin_events = {MissingVirtualViewEvent}
 
-  def __init__ (self, layerAPI):
+  def __init__ (self):
     """
     Initialize virtual resource manager
 
-    :param layerAPI: layer API object which contain this manager
-    :type layerAPI: ServiceLayerAPI
     :return: None
     """
     super(VirtualResourceManager, self).__init__()
-    # service layer API for communication with other layers
-    self._layerAPI = layerAPI
     # Derived object from AbstractVirtualizer which represent the virtual
     # view of this layer
     self._virtual_view = None
@@ -157,7 +173,7 @@ class VirtualResourceManager(object):
     log.debug("Invoke %s to get virtual resource" % self.__class__.__name__)
     if not self._virtual_view:
       log.debug("Missing virtual view! Requesting virtual resource info...")
-      self._layerAPI.request_virtual_resource_info()
+      self.raiseEventNoErrors(MissingVirtualViewEvent)
       if self._virtual_view is not None:
         log.debug("Got requested virtual resource info")
     return self._virtual_view
