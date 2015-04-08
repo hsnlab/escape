@@ -1,4 +1,4 @@
-doc/*
+
 *.pem
 *.pyc
 *.pyo
@@ -18,7 +18,7 @@ pox/lib/pxpcap/pxpcap_c/build
 pox/lib/pxpcap/pxpcap_c/WpdPack
 pox/lib/pxpcap/pxpcap.so
 pypy/
-
+pox/doc/*
 ext/skeleton.py
 ext/doc/build/
 ext/doc/Makefile

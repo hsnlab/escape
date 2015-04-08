@@ -43,6 +43,23 @@ def schedule_as_coop_task (func):
   return decorator
 
 
+def call_as_coop_task (func, *args, **kwargs):
+  """
+  Schedule a coop microtask and run the given function with parameters in it
+
+  Use POX core logic
+
+  :param func: funtion need to run
+  :type func: func
+  :param args: nameless arguments
+  :type args: tuple
+  :param kwargs: named arguments
+  :type kwargs: dict
+  :return: None
+  """
+  core.callLater(func, *args, **kwargs)
+
+
 class SimpleStandaloneHelper(object):
   """
   Helper class for layer APIs to catch events and handle these in separate
@@ -78,7 +95,7 @@ class SimpleStandaloneHelper(object):
       handler_name = "_handle_" + event.__class__.__name__
       if hasattr(self, handler_name):
         self._container.addListener(event, getattr(self, handler_name),
-          weak=True)
+                                    weak=True)
       else:
         self._container.addListener(event, self._log_event, weak=True)
 

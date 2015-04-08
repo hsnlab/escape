@@ -123,26 +123,14 @@ class PolicyEnforcement(object):
   Contains the policy checking function
 
   Binding is based on function name (checking function have to exist in this
-  class and its name have to stand for the "pre_" or "post_" prefix and the
+  class and its name have to stand for the `pre_` or `post_` prefix and the
   name of the checked function)
 
   Every PRE policy checking function is classmethod and need to have two
   parameter for nameless (args) and named(kwargs) params.
 
-  Format:
-
-  @classmethod
-  def pre_<original_name> (cls, args, kwargs):
-    ...
-
   Every POST policy checking function is classmethod and need to have three
   parameter for nameless (args), named(kwargs) params and return value.
-
-  Format:
-
-  @classmethod
-  def post_<original_name> (cls, args, kwargs, ret_value):
-    ...
 
   The first element of args is the supervised Virtualizer ('self' param in the
   original function)

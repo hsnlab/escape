@@ -52,7 +52,7 @@ class ServiceOrchestrator(object):
     virtual_view = self.virtResManager.virtual_view
     if virtual_view is not None:
       if isinstance(virtual_view, AbstractVirtualizer):
-        # Run service mapping algorithm
+        # Run orchestration before service mapping algorithm
         nffg = self.sgMapper.orchestrate(sg, virtual_view)
         log.debug("SG initiation is finished by %s" % self.__class__.__name__)
         return nffg
@@ -118,7 +118,7 @@ class VirtualResourceManager(object):
     Initialize virtual resource manager
 
     :param layerAPI: layer API object which contain this manager
-    :type layerAPI: AbstractVirtualizer
+    :type layerAPI: ServiceLayerAPI
     :return: None
     """
     super(VirtualResourceManager, self).__init__()

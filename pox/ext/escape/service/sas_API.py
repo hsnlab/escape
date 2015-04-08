@@ -213,12 +213,23 @@ class ServiceLayerAPI(AbstractAPI):
     nffg = self.service_orchestrator.initiate_service_graph(sg)
     log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
+    # If mapping is not threaded and finished with OK
     if nffg is not None:
-      # Sending mapped SG / NF-FG to Orchestration layer as an Event
-      # Exceptions in event handlers are caught by default in a non-blocking way
-      self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
-      log.getChild('API').info(
-        "Generated NF-FG has been sent to Orchestration...\n")
+      self.instantiate_NFFG(nffg)
+
+  def instantiate_NFFG(self, nffg):
+    """
+    Send NFFG to Resource Orchestration Layer in an implementation-specific way
+
+    :param nffg: mapped NFFG
+    :type nffg: NFFG
+    :return: None
+    """
+    # Sending mapped SG / NF-FG to Orchestration layer as an Event
+    # Exceptions in event handlers are caught by default in a non-blocking way
+    self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
+    log.getChild('API').info(
+      "Generated NF-FG has been sent to Orchestration...\n")
 
   # UNIFY Sl - Or API functions starts here
 

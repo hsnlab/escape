@@ -11,9 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import threading
+
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
+
 from escape.service import log as log
 from escape import CONFIG
+from escape.util.misc import call_as_coop_task
 
 
 class DefaultServiceMappingStrategy(AbstractMappingStrategy):
@@ -53,14 +57,17 @@ class ServiceGraphMapper(AbstractMapper):
   Helper class for mapping Service Graph to NF-FG
   """
 
-  def __init__ (self, strategy=DefaultServiceMappingStrategy):
+  def __init__ (self, strategy=DefaultServiceMappingStrategy, threaded=True):
     """
     Init mapper class
 
     :param strategy: mapping strategy (default DefaultServiceMappingStrategy)
     :type strategy: AbstractMappingStrategy
+    :param threaded: run mapping algorithm in a separate Python thread
+    :type threaded: bool
     :return: None
     """
+    self._threaded = threaded
     if hasattr(CONFIG['SAS'], 'STRATEGY'):
       if issubclass(CONFIG['SAS']['STATEGY'], AbstractMappingStrategy):
         try:
@@ -69,11 +76,11 @@ class ServiceGraphMapper(AbstractMapper):
           log.warning(
             "Mapping strategy: %s is not found in module: %s, fall back to "
             "%s" % (CONFIG['SAS']['STATEGY'], self.__module__,
-                    strategy.__class__.__name__))
+                    strategy.__name__))
       else:
         log.warning(
           "SAS mapping strategy is not subclass of AbstractMappingStrategy, "
-          "fall back to %s" % strategy.__class__.__name__)
+          "fall back to %s" % strategy.__name__)
     super(ServiceGraphMapper, self).__init__(strategy)
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, strategy.__name__))
@@ -95,9 +102,37 @@ class ServiceGraphMapper(AbstractMapper):
     virt_resource = resource_view.get_resource_info()
     resource_view.sanity_check(input_graph)
     # Run actual mapping algorithm
-    nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
-    # Steps after mapping (optional)
-    log.info("SG(%s) orchestration is finished by %s" % (
-      input_graph.id, self.__class__.__name__))
-    return nffg
+    if self._threaded:
+      # Schedule a microtask which run mapping algorithm in a Python thread
+      log.info(
+        "Schedule mapping algorithm: %s to run later" %
+        self.strategy.__name__)
+      call_as_coop_task(self._start_mapping, graph=input_graph,
+                        resource=virt_resource)
+      log.info("SG(%s) orchestration is finished by %s" % (
+        input_graph.id, self.__class__.__name__))
+    else:
+      nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
+      # Steps after mapping (optional)
+      log.info("SG(%s) orchestration is finished by %s" % (
+        input_graph.id, self.__class__.__name__))
+      return nffg
+
+  def _start_mapping (self, graph, resource):
+    """
+    Run mapping algorithm in a thread
+
+    :param graph: Service Graph
+    :type graph: NFFG
+    :param resource: virtual resource
+    :type resource: NFFG
+    :return: None
+    """
+
+    def run ():
+      nffg = self.strategy.map(graph=graph, resource=resource)
+
+    self._mapping_thread = threading.Thread(target=run)
+    self._mapping_thread.daemon = True
+    self._mapping_thread.start()
 
