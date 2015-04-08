@@ -19,6 +19,7 @@ which map given SG on a single Bis-Bis
 
 :class:`ServiceGraphMapper` perform the supplementary tasks for SG mapping
 """
+import importlib
 
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
 from escape.service import log as log
@@ -93,20 +94,24 @@ class ServiceGraphMapper(AbstractMapper):
     :return: None
     """
     self._threaded = threaded
-    if hasattr(CONFIG['SAS'], 'STRATEGY'):
-      if issubclass(CONFIG['SAS']['STRATEGY'], AbstractMappingStrategy):
-        try:
-          strategy = getattr(self.__module__, CONFIG['SAS']['STRATEGY'])
-        except AttributeError:
+    if 'STRATEGY' in CONFIG['SAS']:
+      try:
+        strategy_cfg = getattr(importlib.import_module(self.__module__),
+                               CONFIG['SAS']['STRATEGY'])
+        if issubclass(strategy_cfg, AbstractMappingStrategy):
+          self.strategy = strategy_cfg
+        else:
           log.warning(
-            "Mapping strategy: %s is not found in module: %s, fall back to "
-            "%s" % (
-              CONFIG['SAS']['STRATEGY'], self.__module__, strategy.__name__))
-      else:
+            "SAS mapping strategy is not subclass of AbstractMappingStrategy, "
+            "fall back to %s" % strategy.__class__.__name__)
+          self.strategy = strategy
+      except AttributeError:
         log.warning(
-          "SAS mapping strategy is not subclass of AbstractMappingStrategy, "
-          "fall back to %s" % strategy.__name__)
-    super(ServiceGraphMapper, self).__init__(strategy)
+          "Mapping strategy: %s is not found in module: %s, fall back to "
+          "%s" % (
+            CONFIG['SAS']['STRATEGY'], self.__module__, strategy.__name__))
+        self.strategy = strategy
+    super(ServiceGraphMapper, self).__init__()
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, strategy.__name__))
 

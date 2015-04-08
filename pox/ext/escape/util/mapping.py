@@ -66,15 +66,11 @@ class AbstractMapper(EventMixin):
   Contain common functions and initialization
   """
 
-  def __init__ (self, strategy):
+  def __init__ (self):
     """
     Init
-
-    :param strategy: Class of mapping strategy
-    :type strategy: AbstractMappingStrategy
     """
     super(AbstractMapper, self).__init__()
-    self.strategy = strategy
 
   def orchestrate (self, input_graph, resource_view):
     """

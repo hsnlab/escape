@@ -25,6 +25,7 @@ thereby realizes the UNIFY's U - Sl API
 :class:`ServiceLayerAPI` represents the SAS layer and implement all related
 functionality
 """
+import importlib
 import inspect
 import repr
 
@@ -191,19 +192,20 @@ class ServiceLayerAPI(AbstractAPI):
     :param port: port number, default 8008
     :type port: int
     """
-    if hasattr(CONFIG['SMS'], 'REQUEST-handler'):
-      if issubclass(CONFIG['ROS']['REQUEST-handler'], AbstractRequestHandler):
-        try:
-          handler = getattr(__import__('escape.util.api'),
-                            CONFIG['ROS']['REQUEST-handler'])
-        except AttributeError:
-          log.warning(
-            "Request handler: %s is not found in module: escape.util.api, "
-            "fall back to "
-            "%s" % (CONFIG['SAS']['STATEGY'], handler.__class__.__name__))
-      else:
-        log.warning("REST handler is not subclass of AbstractRequestHandler, "
-                    "fall back to %s" % handler.__class__.__name__)
+    if 'REQUEST-handler' in CONFIG['SMS']:
+      try:
+        handler_cfg = getattr(importlib.import_module(self.__module__),
+                              CONFIG['SMS']['REQUEST-handler'])
+        if issubclass(handler, AbstractRequestHandler):
+          handler = handler_cfg
+        else:
+          log.warning("REST handler is not subclass of AbstractRequestHandler, "
+                      "fall back to %s" % handler.__name__)
+      except AttributeError:
+        log.warning(
+          "Request handler: %s is not found in module: escape.util.api, "
+          "fall back to %s" % (
+            CONFIG['SMS']['REQUEST-handler'], handler.__name__))
     # set bounded layer name here to avoid circular dependency problem
     handler.bounded_layer = self._core_name
     self.rest_api = RESTServer(handler, address, port)
