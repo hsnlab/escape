@@ -11,6 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Implements the platform and POX dependent logic for the Resource Orchestration
+Sublayer
+
+:class:`InstallNFFGEvent` can send mapped NF-FG to the lower layer
+
+:class:`VirtResInfoEvent` can send back virtual resource info requested from
+upper layer
+
+:class:`GetGlobalResInfoEvent` can request global resource info from lower layer
+
+:class:`ResourceOrchestrationAPI` represents the ROS layer and implement all
+related functionality
+"""
 import repr
 
 from escape.orchest.ros_orchestration import ResourceOrchestrator
@@ -24,7 +38,8 @@ from pox.lib.revent.revent import Event
 
 class InstallNFFGEvent(Event):
   """
-  Event for passing mapped NFFG to Adaptation layer
+  Event for passing mapped :class:`NFFG <escape.util.nffg.NFFG>` to  Controller
+  Adaptation Sublayer
   """
 
   def __init__ (self, mapped_nffg):
@@ -56,7 +71,7 @@ class VirtResInfoEvent(Event):
 
 class GetGlobalResInfoEvent(Event):
   """
-  Event for requesting Domain Virtualizer from Adaptation layer
+  Event for requesting :class:`DomainVirtualizer` from CAS
   """
 
   def __init__ (self):
@@ -71,6 +86,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   Entry point for Resource Orchestration Sublayer (ROS)
 
   Maintain the contact with other UNIFY layers
+
   Implement the Sl - Or reference point
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
@@ -82,12 +98,20 @@ class ResourceOrchestrationAPI(AbstractAPI):
   dependencies = ('adaptation',)
 
   def __init__ (self, standalone=False, **kwargs):
+    """
+    .. seealso::
+      :func:`AbstractAPI.__init__() <escape.util.api.AbstractAPI.__init__>`
+    """
     log.info("Starting Resource Orchestration Sublayer...")
     # Mandatory super() call
     super(ResourceOrchestrationAPI, self).__init__(standalone=standalone,
-      **kwargs)
+                                                   **kwargs)
 
   def initialize (self):
+    """
+    .. seealso::
+      :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
+    """
     log.debug("Initializing Resource Orchestration Sublayer...")
     virtualizerManager = VirtualizerManager(self)
     self.resource_orchestrator = ResourceOrchestrator(virtualizerManager)
@@ -96,6 +120,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.info("Resource Orchestration Sublayer has been initialized!")
 
   def shutdown (self, event):
+    """
+    .. seealso::
+      :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
+    """
     log.info("Resource OrchestrationSublayer is going down...")
 
   # UNIFY Sl- Or API functions starts here
@@ -103,7 +131,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   @schedule_as_coop_task
   def _handle_InstantiateNFFGEvent (self, event):
     """
-    Instantiate given NF-FG
+    Instantiate given NF-FG (UNIFY Sl - Or API)
 
     :param event: event object contains NF-FG
     :type event: InstantiateNFFGEvent
@@ -124,7 +152,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _handle_GetVirtResInfoEvent (self, event):
     """
-    Generate virtual resource info and send back to Service layer
+    Generate virtual resource info and send back to SAS
 
     :param event: event object contains service layer id
     :type event: GetVirtResInfoEvent
@@ -143,7 +171,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def request_domain_resource_info (self):
     """
-    Request global resource info from Adaptation layer
+    Request global resource info from CAS (UNIFY Or - CA API)
 
     :return: None
     """
@@ -153,7 +181,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _handle_GlobalResInfoEvent (self, event):
     """
-    Save requested global resource info as the DomainVirtualizer
+    Save requested global resource info as the :class:`DomainVirtualizer`
 
     :param event: event object contains resource info
     :type event: GlobalResInfoEvent

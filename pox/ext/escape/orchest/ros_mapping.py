@@ -11,6 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains classes which implement :class:`NFFG <escape.util.nffg.NFFG>`
+mapping functionality
+
+:class:`ESCAPEMappingStrategy` implements a default :class:`NFFG
+<escape.util.nffg.NFFG>` mapping algorithm of ESCAPEv2
+
+:class:`ResourceOrchestrationMapper` perform the supplementary tasks for
+:class:`NFFG <escape.util.nffg.NFFG>` mapping
+"""
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.orchest import log as log
 from escape import CONFIG
@@ -18,7 +28,8 @@ from escape import CONFIG
 
 class ESCAPEMappingStrategy(AbstractMappingStrategy):
   """
-  Implement a strategy to map initial NFFG into extNFFG
+  Implement a strategy to map initial :class:`NFFG <escape.util.nffg.NFFG>`
+  into extended :class:`NFFG <escape.util.nffg.NFFG>`
   """
 
   def __init__ (self):
@@ -30,7 +41,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
   @classmethod
   def map (cls, graph, resource):
     """
-    Default mapping algorithm of ESCAPE
+    Default mapping algorithm of ESCAPEv2
 
     :param graph: Network Function forwarding Graph
     :type graph: NFFG

@@ -11,6 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Implements the platform and POX dependent logic for the Service Adaptation
+Sublayer
+
+:class:`InstantiateNFFGEvent` can send NF-FG to the lower layer
+
+:class:`GetVirtResInfoEvent` can request virtual resource info from lower layer
+
+:class:`ServiceRequestHandler` implement the specific REST API functionality
+thereby realizes the UNIFY's U - Sl API
+
+:class:`ServiceLayerAPI` represents the SAS layer and implement all related
+functionality
+"""
 import inspect
 import repr
 
@@ -61,17 +75,16 @@ class GetVirtResInfoEvent(Event):
 
 class ServiceRequestHandler(AbstractRequestHandler):
   """
-  Request Handler for Service layer
+  Request Handler for Service Adaptation SubLayer
 
-  IMPORTANT!
-
-  This class is out of the context of the recoco's co-operative thread context!
-  While you don't need to worry much about synchronization between recoco
-  tasks, you do need to think about synchronization between recoco task and
-  normal threads.
-  Synchronisation is needed to take care manually: use relevant helper
-  function of core object: callLater/raiseLater or use schedule_as_coop_task
-  decorator defined in util.misc on the called function
+  .. warning::
+    This class is out of the context of the recoco's co-operative thread
+    context! While you don't need to worry much about synchronization between
+    recoco tasks, you do need to think about synchronization between recoco task
+    and normal threads. Synchronisation is needed to take care manually: use
+    relevant helper function of core object: `callLater`/`raiseLater` or use
+    `schedule_as_coop_task` decorator defined in util.misc on the called
+    function
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {'GET': ('echo',), 'POST': ('echo', 'sg'), 'PUT': ('echo',),
@@ -87,19 +100,16 @@ class ServiceRequestHandler(AbstractRequestHandler):
   def echo (self):
     """
     Test function for REST-API
-
-
     """
     self.log_full_message("ECHO: %s - %s", self.raw_requestline,
-      self._parse_json_body())
+                          self._parse_json_body())
     self._send_json_response({'echo': True})
 
   def sg (self):
     """
-    Main API function for Service graph initiation
+    Main API function for Service Graph initiation
+
     Bounded to POST HTTP verb
-
-
     """
     log.getChild("REST-API").debug("Call REST-API function: %s" % (
       inspect.currentframe().f_code.co_name,))
@@ -111,7 +121,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
 class ServiceLayerAPI(AbstractAPI):
   """
-  Entry point for Service Layer
+  Entry point for Service Adaptation Sublayer
 
   Maintain the contact with other UNIFY layers
 
@@ -125,11 +135,19 @@ class ServiceLayerAPI(AbstractAPI):
   dependencies = ('orchestration',)
 
   def __init__ (self, standalone=False, **kwargs):
+    """
+    .. seealso::
+      :func:`AbstractAPI.__init__() <escape.util.api.AbstractAPI.__init__>`
+    """
     log.info("Starting Service Layer...")
     # Mandatory super() call
     super(ServiceLayerAPI, self).__init__(standalone=standalone, **kwargs)
 
   def initialize (self):
+    """
+    .. seealso::
+      :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
+    """
     log.debug("Initializing Service Layer...")
     self.__sid = hash(self)
     # Set element manager
@@ -158,12 +176,16 @@ class ServiceLayerAPI(AbstractAPI):
     log.debug("Service Layer has been initialized!")
 
   def shutdown (self, event):
+    """
+    .. seealso::
+      :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
+    """
     log.info("Service Layer is going down...")
     if hasattr(self, 'rest_api') and self.rest_api:
       self.rest_api.stop()
 
   def _initiate_rest_api (self, handler=ServiceRequestHandler,
-                          address='localhost', port=8008):
+      address='localhost', port=8008):
     """
     Initialize and set up REST API in a different thread
 
@@ -176,7 +198,7 @@ class ServiceLayerAPI(AbstractAPI):
       if issubclass(CONFIG['ROS']['REQUEST-handler'], AbstractRequestHandler):
         try:
           handler = getattr(__import__('escape.util.api'),
-            CONFIG['ROS']['REQUEST-handler'])
+                            CONFIG['ROS']['REQUEST-handler'])
         except AttributeError:
           log.warning(
             "Request handler: %s is not found in module: escape.util.api, "
@@ -202,7 +224,7 @@ class ServiceLayerAPI(AbstractAPI):
   @schedule_as_coop_task
   def request_service (self, sg):
     """
-    Initiate service graph
+    Initiate a Service Graph (UNIFY U-Sl API)
 
     :param sg: service graph instance
     :type sg: NFFG
@@ -215,11 +237,13 @@ class ServiceLayerAPI(AbstractAPI):
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
     if nffg is not None:
-      self.instantiate_NFFG(nffg)
+      self._instantiate_NFFG(nffg)
 
-  def instantiate_NFFG(self, nffg):
+  def _instantiate_NFFG (self, nffg):
     """
     Send NFFG to Resource Orchestration Layer in an implementation-specific way
+
+    General function which is used from microtask and Python thread also
 
     :param nffg: mapped NFFG
     :type nffg: NFFG
@@ -235,7 +259,8 @@ class ServiceLayerAPI(AbstractAPI):
 
   def request_virtual_resource_info (self):
     """
-    Request virtual resource info from Orchestration layer
+    Request virtual resource info from Orchestration layer (UNIFY Sl - Or API)
+
     Service layer is identified with the sid value automatically
 
     :return: None

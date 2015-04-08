@@ -11,6 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Implements the platform and POX dependent logic for the Controller Adaptation
+Sublayer
+
+:class:`GlobalResInfoEvent` can send back global resource info requested from
+upper layer
+
+:class:`ControllerAdaptationAPI` represents the CAS layer and implement all
+related functionality
+"""
 import repr
 
 from escape.adapt import LAYER_NAME
@@ -42,6 +52,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   Entry point for Controller Adaptation Sublayer (CAS)
 
   Maintain the contact with other UNIFY layers
+
   Implement the Or - Ca reference point
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
@@ -52,12 +63,20 @@ class ControllerAdaptationAPI(AbstractAPI):
   # None
 
   def __init__ (self, standalone=False, **kwargs):
+    """
+    .. seealso::
+      :func:`AbstractAPI.__init__() <escape.util.api.AbstractAPI.__init__>`
+    """
     log.info("Starting Controller Adaptation Sublayer...")
     # Mandatory super() call
     super(ControllerAdaptationAPI, self).__init__(standalone=standalone,
-      **kwargs)
+                                                  **kwargs)
 
   def initialize (self):
+    """
+    .. seealso::
+      :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
+    """
     log.debug("Initializing Controller Adaptation Sublayer...")
     self.controller_adapter = ControllerAdapter()
     if self._mapped_nffg_file:
@@ -65,6 +84,10 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.info("Controller Adaptation Sublayer has been initialized!")
 
   def shutdown (self, event):
+    """
+    .. seealso::
+      :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
+    """
     log.info("Controller Adaptation Sublayer is going down...")
 
   # UNIFY Or - Ca API functions starts here
@@ -72,7 +95,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   @schedule_as_coop_task
   def _handle_InstallNFFGEvent (self, event):
     """
-    Install mapped NF-FG
+    Install mapped NF-FG (UNIFY Or - Ca API)
 
     :param event: event object contains mapped NF-FG
     :type event: InstallNFFGEvent
@@ -88,7 +111,7 @@ class ControllerAdaptationAPI(AbstractAPI):
 
   def _handle_GetGlobalResInfoEvent (self, event):
     """
-    Generate global resource info and send back to Orchestration layer
+    Generate global resource info and send back to ROS
 
     :param event: event object
     :type event: GetGlobalResInfoEvent
@@ -100,4 +123,4 @@ class ControllerAdaptationAPI(AbstractAPI):
     # Currently global view is a Virtualizer to keep ESCAPE fast
     log.getChild('API').debug("Sending back global resource info...\n")
     self.raiseEventNoErrors(GlobalResInfoEvent,
-      self.controller_adapter.domainResManager.dov)
+                            self.controller_adapter.domainResManager.dov)

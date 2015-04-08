@@ -12,9 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains miscellaneous helper functions such as invoking a function in POX's
-cooperative microtask environment or a helper class for mimic a minimal
-layer API as a dependency for other layer APIs to handles events
+Contains miscellaneous helper functions
+
+:func:`schedule_as_coop_task()` helps invoking a function in POX's cooperative
+microtask environment
+
+:func:`call_as_coop_task()` hides POC core functionality and schedule a
+function in
+the coop microtask environment directly
+
+:class:`SimpleStandaloneHelper` is a helper class for mimic a minimal layer
+API as a
+dependency for other layer APIs to handles events
 """
 from functools import wraps
 import weakref
@@ -47,9 +56,9 @@ def call_as_coop_task (func, *args, **kwargs):
   """
   Schedule a coop microtask and run the given function with parameters in it
 
-  Use POX core logic
+  Use POX core logic directly
 
-  :param func: funtion need to run
+  :param func: function need to run
   :type func: func
   :param args: nameless arguments
   :type args: tuple
@@ -86,6 +95,7 @@ class SimpleStandaloneHelper(object):
   def _register_listeners (self):
     """
     Register event listeners
+
     If a listener is explicitly defined in the class use this function
     otherwise use the common logger function
 

@@ -11,6 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains functionality related to policy enforcement
+
+:class:`PolicyEnforcementError` represent a violation during the policy
+checking process
+
+:class:`PolicyEnforcementMetaClass` contains the main general logic which
+handles the Virtualizers and enforce policies
+
+:class:`PolicyEnforcement` implements the actual enforcement logic
+"""
 from functools import wraps
 import repr
 
@@ -28,18 +39,24 @@ class PolicyEnforcementError(RuntimeError):
 class PolicyEnforcementMetaClass(type):
   """
   Meta class for handling policy enforcement in the context of classes inherited
-  from AbstractVirtualizer
+  from :class:`AbstractVirtualizer
+  <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
 
-  If the PolicyEnforcement class contains a function which name matches one in
-  the actual Virtualizer then PolicyEnforcement's function will be called first
-  Therefore the function names must be identical!
+  If the :class:`PolicyEnforcement` class contains a function which name
+  matches one in the actual Virtualizer then PolicyEnforcement's function will
+  be called first.
 
-  If policy checking fails a PolicyEnforcementError should be raised and handled
-  in a higher layer..
+  .. warning::
+    Therefore the function names must be identical!
 
-  To use policy checking set the following class attribute:
+  .. note::
 
-  __metaclass__ = PolicyEnforcementMetaClass
+    If policy checking fails a :class:`PolicyEnforcementError` should be
+    raised and handled in a higher layer..
+
+  To use policy checking set the following class attribute::
+
+    __metaclass__ = PolicyEnforcementMetaClass
   """
 
   def __new__ (mcs, name, bases, attrs):
@@ -72,7 +89,7 @@ class PolicyEnforcementMetaClass(type):
   @classmethod
   def get_wrapper (mcs, orig_func, hooks):
     """
-    Return decorator function which do the policy enforcement check
+    Return a decorator function which do the policy enforcement check
 
     :param orig_func: original function
     :type orig_func: func
@@ -126,14 +143,25 @@ class PolicyEnforcement(object):
   class and its name have to stand for the `pre_` or `post_` prefix and the
   name of the checked function)
 
-  Every PRE policy checking function is classmethod and need to have two
-  parameter for nameless (args) and named(kwargs) params.
+  .. warning::
+    Every PRE policy checking function is classmethod and need to have two
+    parameter for nameless (args) and named(kwargs) params:
 
-  Every POST policy checking function is classmethod and need to have three
-  parameter for nameless (args), named(kwargs) params and return value.
+  Example::
 
-  The first element of args is the supervised Virtualizer ('self' param in the
-  original function)
+    def pre_sanity_check (cls, args, kwargs):
+
+  .. warning::
+    Every POST policy checking function is classmethod and need to have three
+    parameter for nameless (args), named (kwargs) params and return value:
+
+  Example::
+
+    def post_sanity_check (cls, args, kwargs, ret_value):
+
+  .. note::
+    The first element of args is the supervised Virtualizer ('self' param in the
+    original function)
   """
 
   def __init__ (self):
@@ -144,6 +172,15 @@ class PolicyEnforcement(object):
 
   @classmethod
   def pre_sanity_check (cls, args, kwargs):
+    """
+    Implements the the sanity check before virtualizer's sanity check is called
+
+    :param args: original nameless arguments
+    :type args: tuple
+    :param kwargs: original named arguments
+    :type kwargs: dict
+    :return: None
+    """
     virtualizer = args[0]
     nffg = args[1]
     # TODO - implement
@@ -152,6 +189,16 @@ class PolicyEnforcement(object):
 
   @classmethod
   def post_sanity_check (cls, args, kwargs, ret_value):
+    """
+    Implements the the sanity check after virtualizer's sanity check is called
+
+    :param args: original nameless arguments
+    :type args: tuple
+    :param kwargs: original named arguments
+    :type kwargs: dict
+    :param ret_value: return value of Virtualizer's policy check function
+    :return: None
+    """
     virtualizer = args[0]
     nffg = args[1]
     # TODO - implement

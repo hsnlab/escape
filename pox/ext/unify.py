@@ -16,7 +16,8 @@
 Basic POX module for ESCAPE
 
 Initiate appropriate APIs
-Follow POX module conventions
+
+Follows POX module conventions
 """
 import pox.lib.util as poxutil
 from pox.core import core

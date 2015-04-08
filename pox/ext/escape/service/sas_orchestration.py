@@ -11,6 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains classes relevant to Service Adaptation Sublayer functionality
+
+:class:`ServiceOrchestrator` orchestrates SG mapping and centralize layer logic
+
+:class:`SGManager` stores and handles Service Graphs
+
+:class:`VirtualResourceManager` contains the functionality tided to the
+layer's virtual view and virtual resources
+
+:class:`NFIBManager` handles the Network Function Information Base and hides
+implementation dependent logic
+"""
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.service.sas_mapping import ServiceGraphMapper
 from escape.service import log as log
@@ -107,10 +120,11 @@ class SGManager(object):
 
 class VirtualResourceManager(object):
   """
-  Support Service Graph mapping, follows the used virtual resources according to
+  Support Service Graph mapping, follow the used virtual resources according to
   the Service Graph(s) in effect
 
-  Handles object derived from AbstractVirtualizer and requested from lower layer
+  Handles object derived from :class`AbstractVirtualizer` and requested from
+  lower layer
   """
 
   def __init__ (self, layerAPI):
@@ -132,7 +146,9 @@ class VirtualResourceManager(object):
   @property
   def virtual_view (self):
     """
-    Return resource info of actual layer as an NFFG instance
+    Return resource info of actual layer as an :class:`NFFG
+    <escape.util.nffg.NFFG>` instance
+
     If it isn't exist requires it from Orchestration layer
 
     :return: resource info as a Virtualizer

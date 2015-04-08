@@ -11,6 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains components relevant to virtualization of resources and views
+
+:class:`AbstractVirtualizer
+<escape.orchest.virtualization_mgmt.AbstractVirtualizer>` contains the  central
+logic of Virtualizers
+
+:class:`ESCAPEVirtualizer` implement the standard virtualization logic of the
+Resource Orchestration Sublayer
+
+:class:`VirtualizerManager` stores and handles the virtualizers
+"""
 from escape.util.nffg import NFFG
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
 from escape.orchest import log as log
@@ -32,7 +44,8 @@ class AbstractVirtualizer(object):
 
   def get_resource_info (self):
     """
-    Hides object's mechanism and return with a resource object derived from NFFG
+    Hides object's mechanism and return with a resource object derived from
+    :class:`NFFG <escape.util.nffg.NFFG>`
 
     :raise: NotImplementedError
     :return: resource info
@@ -42,14 +55,15 @@ class AbstractVirtualizer(object):
 
   def sanity_check (self, nffg):
     """
-    Place-holder for sanity check which implemented in PolicyEnforcement
+    Place-holder for sanity check which implemented in
+    :class:`PolicyEnforcement`
     """
     pass
 
 
 class ESCAPEVirtualizer(AbstractVirtualizer):
   """
-  Actual Virtualizer class for ESCAPE
+  Actual Virtualizer class for ESCAPEv2
   """
 
   def __init__ (self):
@@ -60,7 +74,8 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
 
   def get_resource_info (self):
     """
-    Hides object's mechanism and return with a resource object derived from NFFG
+    Hides object's mechanism and return with a resource object derived from
+    :class:`NFFG <escape.util.nffg.NFFG>`
 
     :return: virtual resource info
     :rtype: NFFG
@@ -70,7 +85,7 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
     log.debug("Return virtual resource info...")
     return self._generate_resource_info()
 
-  def sanity_check(self, nffg):
+  def sanity_check (self, nffg):
     """
     Placeholder method for policy checking.
 
@@ -87,12 +102,15 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
     """
     return NFFG()
 
+
 DoV_ID = 'DoV'
 
 
 class VirtualizerManager(object):
   """
-  Store, handle and organize Virtualizer instances
+  Store, handle and organize instances of derived classes of
+  :class:`AbstractVirtualizer
+  <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
   """
 
   def __init__ (self, layerAPI):
@@ -111,9 +129,11 @@ class VirtualizerManager(object):
   @property
   def dov (self):
     """
-    Getter method for Domain Virtualizer
+    Getter method for the :class:`DomainVirtualizer`
+
     Request DoV from Adaptation if it hasn't set yet
-    Usage: virtualizerManager.dov
+
+    Use: `virtualizerManager.dov`
 
     :return: Domain Virtualizer (DoV)
     :rtype: DomainVirtualizer
@@ -150,7 +170,8 @@ class VirtualizerManager(object):
 
   def get_virtual_view (self, layer_id):
     """
-    Return the virtual view as a derived class of AbstractVirtualizer
+    Return the virtual view as a derived class of :class:`AbstractVirtualizer
+    <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
 
     :param layer_id: layer ID
     :type layer_id: int
@@ -168,8 +189,8 @@ class VirtualizerManager(object):
 
   def _generate_virtual_view (self, dov, layer_id):
     """
-    Generate a missing Virtualizer for other layer using global view (DoV) and a
-    layer id
+    Generate a missing :class:`ESCAPEVirtualizer` for other layer using global
+    view (DoV) and a layer id
 
     :param dov: Domain Virtualizer derived from AbstractVirtualizer
     :type dov: DomainVirtualizer

@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Basic POX module for ESCAPE Resource Orchestration Sublayer (ROS)
 
 Initiate appropriate API class which implements Sl-Or reference point
-Follow POX module conventions
+
+Follows POX module conventions
 """
 from escape.orchest.ros_API import ResourceOrchestrationAPI
 from pox.core import core
@@ -26,7 +26,6 @@ import pox.lib.util as poxutil
 init_param = {}
 
 
-# noinspection PyUnusedLocal
 def _start_layer (event):
   """
   Initiate and run POX with ESCAPE components

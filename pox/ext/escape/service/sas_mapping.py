@@ -11,10 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains classes which implement SG mapping functionality
+
+:class:`DefaultServiceMappingStrategy` implements a default mapping algorithm
+which map given SG on a single Bis-Bis
+
+:class:`ServiceGraphMapper` perform the supplementary tasks for SG mapping
+"""
 import threading
 
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
-
 from escape.service import log as log
 from escape import CONFIG
 from escape.util.misc import call_as_coop_task
@@ -69,14 +76,14 @@ class ServiceGraphMapper(AbstractMapper):
     """
     self._threaded = threaded
     if hasattr(CONFIG['SAS'], 'STRATEGY'):
-      if issubclass(CONFIG['SAS']['STATEGY'], AbstractMappingStrategy):
+      if issubclass(CONFIG['SAS']['STRATEGY'], AbstractMappingStrategy):
         try:
-          strategy = getattr(self.__module__, CONFIG['SAS']['STATEGY'])
+          strategy = getattr(self.__module__, CONFIG['SAS']['STRATEGY'])
         except AttributeError:
           log.warning(
             "Mapping strategy: %s is not found in module: %s, fall back to "
-            "%s" % (CONFIG['SAS']['STATEGY'], self.__module__,
-                    strategy.__name__))
+            "%s" % (
+              CONFIG['SAS']['STRATEGY'], self.__module__, strategy.__name__))
       else:
         log.warning(
           "SAS mapping strategy is not subclass of AbstractMappingStrategy, "
@@ -105,8 +112,7 @@ class ServiceGraphMapper(AbstractMapper):
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread
       log.info(
-        "Schedule mapping algorithm: %s to run later" %
-        self.strategy.__name__)
+        "Schedule mapping algorithm: %s to run later" % self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
       log.info("SG(%s) orchestration is finished by %s" % (
@@ -120,7 +126,7 @@ class ServiceGraphMapper(AbstractMapper):
 
   def _start_mapping (self, graph, resource):
     """
-    Run mapping algorithm in a thread
+    Run mapping algorithm in a separate Python thread
 
     :param graph: Service Graph
     :type graph: NFFG

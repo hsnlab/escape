@@ -11,6 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains classes relevant to Resource Orchestration Sublayer functionality
+
+:class:`ResourceOrchestrator` orchestrates :class:`NFFG
+<escape.util.nffg.NFFG>` mapping and centralize layer logic
+
+:class:`NFFGManager` stores and handles Network Function Forwarding Graphs
+"""
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.orchest import log as log
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
@@ -18,7 +26,7 @@ from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 
 class ResourceOrchestrator(object):
   """
-  Main class for the handling of the Orchestration-level mapping functions
+  Main class for the handling of the ROS-level mapping functions
   """
 
   def __init__ (self, virtualizerManager):

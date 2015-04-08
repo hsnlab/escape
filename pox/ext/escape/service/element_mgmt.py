@@ -11,11 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains classes relevant to element management
+
+:class:`AbstractElementManager` is an abstract class for element managers
+
+:class:`ClickManager` represent the interface to Click elements
+"""
 
 
 class AbstractElementManager(object):
   """
   Abstract class for element management components (EM)
+
+  :warning::
+    Not implemented yet!
   """
 
   def __init__ (self):
@@ -28,6 +38,9 @@ class AbstractElementManager(object):
 class ClickManager(AbstractElementManager):
   """
   Manager class for specific VNF management based on Clicky
+
+  :warning::
+    Not implemented yet!
   """
 
   def __init__ (self):

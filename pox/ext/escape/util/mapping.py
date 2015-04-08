@@ -14,11 +14,11 @@
 """
 Contains abstract classes for NFFG mapping
 
-AbstractMapper is an abstract class for orchestration method which should
-implement mapping preparations and invoke actual mapping algorithm
+:class:`AbstractMapper` is an abstract class for orchestration method which
+should implement mapping preparations and invoke actual mapping algorithm
 
-AbstractMappingStrategy is an abstract class for containing entirely thy
-mapping algorithm as a class method
+:class:`AbstractMappingStrategy` is an abstract class for containing entirely
+the mapping algorithm as a class method
 """
 
 
@@ -26,7 +26,7 @@ class AbstractMappingStrategy(object):
   """
   Abstract class for the mapping strategies
 
-  Follow the Strategy design pattern
+  Follows the Strategy design pattern
   """
 
   def __init__ (self):
@@ -71,6 +71,7 @@ class AbstractMapper(object):
   def orchestrate (self, input_graph, resource_view):
     """
     Abstract function for wrapping optional steps connected to orchestration
+
     Implemented function call the mapping algorithm
 
     :param input_graph: graph representation which need to be mapped

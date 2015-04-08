@@ -15,11 +15,11 @@ we have implemented a similar prototyping system called ESCAPE, which can be
 used to develop and test various components of the service chaining
 architecture. Our framework incorporates
 `Click <http://www.read.cs.ucla.edu/click/>`_ for implementing Virtual Network
-Functions (VNF), `NETCONF <https://tools.ietf.org/html/rfc6241>`_ for managing
-Click-based VNFs and `POX <https://openflow.stanford.edu/display/ONL/POX+Wiki>`_
-for taking care of traffic steering. We also add our extensible Orchestrator
-module, which can accommodate mapping algorithms from abstract service
-descriptions to deployed and running service chains.
+Functions (VNF), NETCONF (:rfc:`6241`) for managing Click-based VNFs and
+`POX <https://openflow.stanford.edu/display/ONL/POX+Wiki>`_ for taking care of
+traffic steering. We also add our extensible Orchestrator module, which can
+accommodate mapping algorithms from abstract service descriptions to deployed
+and running service chains.
 
 .. seealso::
     The source code of previous ESCAPE version is available at our `github page

@@ -14,15 +14,15 @@
 """
 Contains abstract classes for concrete layer API modules
 
-AbstractAPI contains the register mechanism into the POX core for layer APIs,
-the event handling/registering logic and defines the general functions for
-initialization and finalization steps
+:class:`AbstractAPI` contains the register mechanism into the POX core for
+layer APIs, the event handling/registering logic and defines the general
+functions for initialization and finalization steps
 
-RESTServer is a general HTTP server which parse HTTP request and forward to
-explicitly given request handler
+:class:`RESTServer` is a general HTTP server which parse HTTP request and
+forward to explicitly given request handler
 
-AbstractRequestHandler is a base class for concrete request handling. It
-implements the general URL and request body parsing functions
+:class:`AbstractRequestHandler` is a base class for concrete request handling.
+It implements the general URL and request body parsing functions
 """
 import urlparse
 import json
@@ -55,24 +55,25 @@ class AbstractAPI(EventMixin):
     """
     Abstract class constructor
 
-    Handle core registration along with _all_dependencies_met()
+    Handle core registration along with :func:`_all_dependencies_met()`
 
-    Set given parameters (standalone parameter is mandatory) automatically as
-    self._<param_name> = <param_value>
+    Set given parameters (standalone parameter is mandatory) automatically as::
+
+      self._<param_name> = <param_value>
 
     Base constructor functions have to be called as the last step in derived
-    classes. Same situation with _all_dependencies_met() respectively.
-    Must not override these function, just use initialize() function for init
-    steps. Actual API classes must only call super() in their constructor
-    with the form:
-    super(<API Class name>, self).__init__(standalone=standalone, \*\*kwargs)
+    classes. Same situation with :func:`_all_dependencies_met()` respectively.
+    Must not override these function, just use :func:`initialize()` for
+    init steps. Actual API classes must only call :func:`super()` in their
+    constructor with the form::
 
-    IMPORTANT!
+      super(<API Class name>, self).__init__(standalone=standalone, **kwargs)
 
-    Do not use prefixes in the name of event handlers, because of automatic
-    dependency discovery considers that as a dependent component and this
-    situation cause a dead lock (component will be waiting to each other to
-    set up)
+    .. warning::
+      Do not use prefixes in the name of event handlers, because of automatic
+      dependency discovery considers that as a dependent component and this
+      situation cause a dead lock (component will be waiting to each other to
+      set up)
 
     :param standalone: started in standalone mode or not
     :type standalone: bool
@@ -97,8 +98,9 @@ class AbstractAPI(EventMixin):
 
   def _all_dependencies_met (self):
     """
-    Called when every component on which depends are initialized on
-    pox.core. Contain dependency relevant initialization.
+    Called when every component on which depends are initialized on POX core
+
+    Contain dependency relevant initialization.
 
     :return: None
     """
@@ -136,8 +138,10 @@ class AbstractAPI(EventMixin):
   def initialize (self):
     """
     Init function for child API classes to simplify dynamic initialization
-    Called when every component on which depends are initialized and
-    registered in pox.core.
+
+    Called when every component on which depends are initialized and registered
+    in POX core
+
     This function should be overwritten by child classes.
 
     :return: None
@@ -147,6 +151,7 @@ class AbstractAPI(EventMixin):
   def shutdown (self, event):
     """
     Finalization, deallocation, etc. of actual component
+
     Should be overwritten by child classes
 
     :param event: shutdown event raised by POX core
@@ -191,12 +196,13 @@ class RESTServer(object):
   """
   Base HTTP server for REST API
 
-  Initiate an HTTPServer and run it in different thread
+  Initiate an :class:`HTTPServer` and run it in different thread
   """
 
   def __init__ (self, RequestHandlerClass, address, port):
     """
-    Set up a HTTPServer in a different thread
+    Set up an :class:`BaseHTTPServer.HTTPServer` in a different
+    thread
 
     :param RequestHandlerClass: Class of a handler which handles HTTP request
     :type RequestHandlerClass: AbstractRequestHandler
@@ -241,17 +247,18 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   Minimalistic REST API for Layer APIs
 
   Handle /escape/* URLs.
+
   Method calling permissions represented in escape_intf dictionary
 
-  IMPORTANT!
-
-  This class is out of the context of the recoco's co-operative thread context!
-  While you don't need to worry much about synchronization between recoco
-  tasks, you do need to think about synchronization between recoco task and
-  normal threads.
-  Synchronisation is needed to take care manually: use relevant helper
-  function of core object: callLater/raiseLater or use schedule_as_coop_task
-  decorator defined in util.misc on the called function
+  .. warning::
+    This class is out of the context of the recoco's co-operative thread
+    context! While you don't need to worry much about synchronization between
+    recoco tasks, you do need to think about synchronization between recoco task
+    and normal threads. Synchronisation is needed to take care manually - use
+    relevant helper function of core object: :func:`callLater()`/
+    :func:`raiseLater()` or use :func:`schedule_as_coop_task()
+    <escape.util.misc.schedule_as_coop_task>` decorator defined in
+    :mod:`escape.util.misc` on the called function
   """
   # For HTTP Response messages
   server_version = "ESCAPE/" + __version__
@@ -289,8 +296,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def _process_url (self):
     """
-    Split HTTP path and call the carved function
-    if it is defined in this class and in request_perm
+    Split HTTP path and call the carved function if it is defined in this class
+    and in request_perm
 
     :return: None
     """
@@ -313,7 +320,11 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   def _parse_json_body (self):
     """
     Parse HTTP request body in JSON format
-    Parsed JSON object is Unicode
+
+    ::note::
+
+      Parsed JSON object is Unicode
+
     GET, DELETE messages don't have body - return empty dict by default
 
     :return: request body in JSON format
@@ -376,7 +387,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   def _proceed_API_call (self, function, *args, **kwargs):
     """
     Fail-safe method to call API function
+
     The cooperative micro-task context is handled by actual APIs
+
     Should call this with params, not directly the function of actual API
 
     :param function: function name

@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Basic POX module for ESCAPE Service (Graph Adaptation) sublayer
 
 Initiate appropriate API class which implements U-Sl reference point
-Follow POX module conventions
+
+Follows POX module conventions
 """
 from escape.service.sas_API import ServiceLayerAPI
 from pox.core import core
@@ -26,7 +26,6 @@ import pox.lib.util as poxutil
 init_param = {}
 
 
-# noinspection PyUnusedLocal
 def _start_layer (event):
   """
   Initiate and run POX with ESCAPE components

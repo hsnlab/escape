@@ -11,6 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contains Adapter classes which represent the connections between ESCAPEv2 and
+other different domains
+
+:class:`AbstractDomainAdapter` contains general logic for actual Adapters
+
+:class:`MininetDomainAdapter` implements Mininet related functionality
+
+:class:`POXDomainAdapter` implements POX related functionality
+
+:class:`OpenStackDomainAdapter` implements OpenStack related functionality
+"""
 from escape.adapt import log as log
 
 
@@ -18,7 +30,7 @@ class AbstractDomainAdapter(object):
   """
   Abstract class for different domain adapters
 
-  Follow the Adapter design pattern
+  Follows the Adapter design pattern
   """
 
   def __init__ (self):
@@ -31,6 +43,9 @@ class AbstractDomainAdapter(object):
 class MininetDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with Mininet
+
+  .. warning::
+    Not implemented yet!
   """
 
   def __init__ (self):
@@ -44,6 +59,9 @@ class MininetDomainAdapter(AbstractDomainAdapter):
 class POXDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with POX OpenFlow controller
+
+  .. warning::
+    Not implemented yet!
   """
 
   def __init__ (self):
@@ -57,6 +75,9 @@ class POXDomainAdapter(AbstractDomainAdapter):
 class OpenStackDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with OpenStack
+
+  .. warning::
+    Not implemented yet!
   """
 
   def __init__ (self):

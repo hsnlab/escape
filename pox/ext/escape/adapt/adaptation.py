@@ -11,6 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Contain classes relevant to the main adaptation function of the Controll
+Adaptation Sublayer
+
+:class:`ControllerAdapter` implements the centralized functionality of
+high-level adaptation and installation of :class:`NFFG <escape.util.nffg.NFFG>`
+
+:class:`DomainVirtualizer` implement the standard virtualization/generalization
+logic of the Resource Orchestration Sublayer
+
+:class:`DomainResourceManager` stores and handles the global Virtualizer
+"""
 import weakref
 
 from escape import CONFIG
@@ -24,7 +36,8 @@ from escape.util.nffg import NFFG
 
 class ControllerAdapter(object):
   """
-  Higher-level class for NFFG adaptation between multiple domains
+  Higher-level class for :class:`NFFG <escape.util.nffg.NFFG>` adaptation
+  between multiple domains
   """
 
   def __init__ (self):
@@ -55,7 +68,8 @@ class DomainVirtualizer(AbstractVirtualizer):
   """
   Specific Virtualizer class for global domain virtualization
 
-  Should implement the same interface as AbstractVirtualizer
+  Implement the same interface as :class:`AbstractVirtualizer
+  <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
   """
 
   def __init__ (self, domainResManager):
@@ -99,7 +113,7 @@ class DomainResourceManager(object):
   @property
   def dov (self):
     """
-    Getter for Domain Virtualizer
+    Getter for :class:`DomainVirtualizer`
 
     :return: Domain Virtualizer
     :rtype: ESCAPEVirtualizer
