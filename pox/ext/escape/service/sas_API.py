@@ -218,8 +218,9 @@ class ServiceLayerAPI(AbstractAPI):
 
   def _handle_SGMappingFinishedEvent (self, event):
     """
-    Handle SGMappingFinishedEvent and invoke :class:`NFFG
+    Handle SGMappingFinishedEvent and proceed with  :class:`NFFG
     <escape.util.nffg.NFFG>` instantiation
+
     :param event: event object
     :type event: SGMappingFinishedEvent
     :return: None
@@ -248,11 +249,12 @@ class ServiceLayerAPI(AbstractAPI):
 
   def _instantiate_NFFG (self, nffg):
     """
-    Send NFFG to Resource Orchestration Layer in an implementation-specific way
+    Send NFFG to Resource Orchestration Sublayer in an implementation-specific
+    way
 
     General function which is used from microtask and Python thread also
 
-    :param nffg: mapped NFFG
+    :param nffg: mapped Service Graph
     :type nffg: NFFG
     :return: None
     """

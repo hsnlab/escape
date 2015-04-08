@@ -19,7 +19,6 @@ which map given SG on a single Bis-Bis
 
 :class:`ServiceGraphMapper` perform the supplementary tasks for SG mapping
 """
-import threading
 
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
 from escape.service import log as log
@@ -144,29 +143,6 @@ class ServiceGraphMapper(AbstractMapper):
         input_graph.id, self.__class__.__name__))
       return nffg
 
-  def _start_mapping (self, graph, resource):
-    """
-    Run mapping algorithm in a separate Python thread
-
-    :param graph: Service Graph
-    :type graph: NFFG
-    :param resource: virtual resource
-    :type resource: NFFG
-    :return: None
-    """
-
-    def run ():
-      log.info("Schedule mapping algorithm: %s" % self.strategy.__name__)
-      nffg = self.strategy.map(graph=graph, resource=resource)
-      # Must use call_as_coop_task because we want to call a function in a
-      # coop microtask environment from a separate thread
-      call_as_coop_task(self._mapping_finished, nffg=nffg)
-
-    log.debug("Initialize working thread...")
-    self._mapping_thread = threading.Thread(target=run)
-    self._mapping_thread.daemon = True
-    self._mapping_thread.start()
-
   def _mapping_finished (self, nffg):
     """
     Called from a separate thread when the mapping process is finished
@@ -175,5 +151,5 @@ class ServiceGraphMapper(AbstractMapper):
     :type nffg: NFFG
     :return: None
     """
-    log.debug("Inform layer API that SG mapping has been finished...")
+    log.debug("Inform SAS layer API that SG mapping has been finished...")
     self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)

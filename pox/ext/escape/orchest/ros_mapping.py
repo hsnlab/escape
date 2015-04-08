@@ -21,9 +21,12 @@ mapping functionality
 :class:`ResourceOrchestrationMapper` perform the supplementary tasks for
 :class:`NFFG <escape.util.nffg.NFFG>` mapping
 """
+
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.orchest import log as log
 from escape import CONFIG
+from escape.util.misc import call_as_coop_task
+from pox.lib.revent.revent import Event
 
 
 class ESCAPEMappingStrategy(AbstractMappingStrategy):
@@ -59,12 +62,30 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     return graph
 
 
+class NFFGMappingFinishedEvent(Event):
+  """
+  Event for signaling the end of NF-FG mapping
+  """
+
+  def __init__ (self, nffg):
+    """
+    Init
+
+    :param nffg: NF-FG need to be installed
+    :type nffg: NFFG
+    """
+    super(NFFGMappingFinishedEvent, self).__init__()
+    self.nffg = nffg
+
+
 class ResourceOrchestrationMapper(AbstractMapper):
   """
   Helper class for mapping NF-FG on global virtual view
   """
+  # Events raised by this class
+  _eventMixin_events = {NFFGMappingFinishedEvent}
 
-  def __init__ (self, strategy=ESCAPEMappingStrategy):
+  def __init__ (self, strategy=ESCAPEMappingStrategy, threaded=True):
     """
     Init mapper
 
@@ -72,6 +93,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     :type strategy: AbstractMappingStrategy (default ESCAPEMappingStrategy)
     :return: None
     """
+    self._threaded = threaded
     if hasattr(CONFIG['ROS'], 'STRATEGY'):
       if issubclass(CONFIG['ROS']['STATEGY'], AbstractMappingStrategy):
         try:
@@ -105,8 +127,29 @@ class ResourceOrchestrationMapper(AbstractMapper):
     # Steps before mapping (optional)
     virt_resource = resource_view.get_resource_info()
     # Run actual mapping algorithm
-    mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
-    # Steps after mapping (optional)
-    log.info("NF-FG(%s) orchestration is finished by %s" % (
-      input_graph.id, self.__class__.__name__))
-    return mapped_nffg
+    if self._threaded:
+      # Schedule a microtask which run mapping algorithm in a Python thread
+      log.info(
+        "Schedule mapping algorithm: %s in a worker thread" %
+        self.strategy.__name__)
+      call_as_coop_task(self._start_mapping, graph=input_graph,
+                        resource=virt_resource)
+      log.info("NF-FG(%s) orchestration is finished by %s" % (
+        input_graph.id, self.__class__.__name__))
+    else:
+      mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
+      # Steps after mapping (optional)
+      log.info("NF-FG(%s) orchestration is finished by %s" % (
+        input_graph.id, self.__class__.__name__))
+      return mapped_nffg
+
+  def _mapping_finished (self, nffg):
+    """
+    Called from a separate thread when the mapping process is finished
+
+    :param nffg: mapped NF-FG
+    :type nffg: NFFG
+    :return: None
+    """
+    log.debug("Inform actual layer API that NFFG mapping has been finished...")
+    self.raiseEventNoErrors(NFFGMappingFinishedEvent, nffg)

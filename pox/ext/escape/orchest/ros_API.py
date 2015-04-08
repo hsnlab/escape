@@ -28,7 +28,6 @@ related functionality
 import repr
 
 from escape.orchest.ros_orchestration import ResourceOrchestrator
-from escape.orchest.virtualization_mgmt import VirtualizerManager
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest import LAYER_NAME
 from escape.util.api import AbstractAPI
@@ -73,12 +72,7 @@ class GetGlobalResInfoEvent(Event):
   """
   Event for requesting :class:`DomainVirtualizer` from CAS
   """
-
-  def __init__ (self):
-    """
-    Init
-    """
-    super(GetGlobalResInfoEvent, self).__init__()
+  pass
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -113,8 +107,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Resource Orchestration Sublayer...")
-    virtualizerManager = VirtualizerManager(self)
-    self.resource_orchestrator = ResourceOrchestrator(virtualizerManager)
+    self.resource_orchestrator = ResourceOrchestrator(self)
     if self._nffg_file:
       self._read_json_from_file(self.nffg_file)
     log.info("Resource Orchestration Sublayer has been initialized!")
@@ -125,6 +118,17 @@ class ResourceOrchestrationAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
     log.info("Resource OrchestrationSublayer is going down...")
+
+  def _handle_NFFGMappingFinishedEvent(self, event):
+    """
+    Handle NFFGMappingFinishedEvent and proceed with  :class:`NFFG
+    <escape.util.nffg.NFFG>` installation
+
+    :param event: event object
+    :type event: NFFGMappingFinishedEvent
+    :return: None
+    """
+    self._install_NFFG(event.nffg)
 
   # UNIFY Sl- Or API functions starts here
 
@@ -144,11 +148,25 @@ class ResourceOrchestrationAPI(AbstractAPI):
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(event.nffg)
     log.getChild('API').debug(
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
+    # If mapping is not threaded and finished with OK
     if mapped_nffg is not None:
-      # Sending NF-FG to Adaptation layer as an Event
-      # Exceptions in event handlers are caught by default in a non-blocking way
-      self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
-      log.getChild('API').info("Mapped NF-FG has been sent to Adaptation...\n")
+      self._install_NFFG(mapped_nffg)
+
+  def _install_NFFG (self, mapped_nffg):
+    """
+    Send mapped :class:`NFFG <escape.util.nffg.NFFG>` to Controller Adaptation
+    Sublayer in an implementation-specific way
+
+    General function which is used from microtask and Python thread also
+
+    :param mapped_nffg: mapped NF-FG
+    :type mapped_nffg: NFFG
+    :return: None
+    """
+    # Sending NF-FG to Adaptation layer as an Event
+    # Exceptions in event handlers are caught by default in a non-blocking way
+    self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
+    log.getChild('API').info("Mapped NF-FG has been sent to Adaptation...\n")
 
   def _handle_GetVirtResInfoEvent (self, event):
     """
@@ -169,10 +187,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   # UNIFY Or - Ca API functions starts here
 
-  def request_domain_resource_info (self):
+  def _handle_MissingGlobalViewEvent (self, event):
     """
     Request global resource info from CAS (UNIFY Or - CA API)
 
+    Invoked when a :class:`MissingGlobalViewEvent` raised
+
+    :param event: event object
+    :type event: MissingGlobalViewEvent
     :return: None
     """
     log.getChild('API').debug(

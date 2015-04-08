@@ -26,6 +26,7 @@ Resource Orchestration Sublayer
 from escape.util.nffg import NFFG
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
 from escape.orchest import log as log
+from pox.lib.revent.revent import EventMixin, Event
 
 
 class AbstractVirtualizer(object):
@@ -82,7 +83,7 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
     """
     # dummy NFFG TODO - implement
     # deep copy???
-    log.debug("Return virtual resource info...")
+    log.debug("Request virtual resource info...")
     return self._generate_resource_info()
 
   def sanity_check (self, nffg):
@@ -106,24 +107,30 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
 DoV_ID = 'DoV'
 
 
-class VirtualizerManager(object):
+class MissingGlobalViewEvent(Event):
+  """
+  Event for signaling missing global resource view
+  """
+  pass
+
+
+class VirtualizerManager(EventMixin):
   """
   Store, handle and organize instances of derived classes of
   :class:`AbstractVirtualizer
   <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
   """
+  # Events raised by this class
+  _eventMixin_events = {MissingGlobalViewEvent}
 
-  def __init__ (self, layerAPI):
+  def __init__ (self):
     """
-    Init
+    Initialize virtualizer manager
 
-    :param layerAPI: Layer API object which contains this manager
-    :type layerAPI: AbstractAPI
     :return: None
     """
     super(VirtualizerManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
-    self._layerAPI = layerAPI
     self._virtualizers = dict()
 
   @property
@@ -142,7 +149,7 @@ class VirtualizerManager(object):
     # If DoV is not set up, need to request from Adaptation layer
     if DoV_ID not in self._virtualizers:
       log.debug("Missing global view! Requesting global resource info...")
-      self._layerAPI.request_domain_resource_info()
+      self.raiseEventNoErrors(MissingGlobalViewEvent)
       if self._virtualizers[DoV_ID] is not None:
         log.debug("Got requested global resource info")
     # Return with resource info as a DomainVirtualizer

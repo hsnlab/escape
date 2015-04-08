@@ -20,7 +20,11 @@ should implement mapping preparations and invoke actual mapping algorithm
 :class:`AbstractMappingStrategy` is an abstract class for containing entirely
 the mapping algorithm as a class method
 """
+import threading
+
+from escape.util.misc import call_as_coop_task
 from pox.lib.revent.revent import EventMixin
+from pox import core
 
 
 class AbstractMappingStrategy(object):
@@ -85,5 +89,39 @@ class AbstractMapper(EventMixin):
     :raise: NotImplementedError
     :return: mapped graph
     :rtype: NFFG
+    """
+    raise NotImplementedError("Derived class must override this function!")
+
+  def _start_mapping (self, graph, resource):
+    """
+    Run mapping algorithm in a separate Python thread
+
+    :param graph: Network Function Forwarding Graph
+    :type graph: NFFG
+    :param resource: global resource
+    :type resource: NFFG
+    :return: None
+    """
+
+    def run ():
+      core.getLogger("worker").info(
+        "Schedule mapping algorithm: %s" % self.strategy.__name__)
+      nffg = self.strategy.map(graph=graph, resource=resource)
+      # Must use call_as_coop_task because we want to call a function in a
+      # coop microtask environment from a separate thread
+      call_as_coop_task(self._mapping_finished, nffg=nffg)
+
+    core.getLogger("worker").debug("Initialize working thread...")
+    self._mapping_thread = threading.Thread(target=run)
+    self._mapping_thread.daemon = True
+    self._mapping_thread.start()
+
+  def _mapping_finished (self, nffg):
+    """
+    Called from a separate thread when the mapping process is finished
+
+    :param nffg: geenrated NF-FG
+    :type nffg: NFFG
+    :return: None
     """
     raise NotImplementedError("Derived class must override this function!")

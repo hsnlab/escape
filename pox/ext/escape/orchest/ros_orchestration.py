@@ -21,7 +21,8 @@ Contains classes relevant to Resource Orchestration Sublayer functionality
 """
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.orchest import log as log
-from escape.orchest.virtualization_mgmt import AbstractVirtualizer
+from escape.orchest.virtualization_mgmt import AbstractVirtualizer, \
+  VirtualizerManager
 
 
 class ResourceOrchestrator(object):
@@ -29,19 +30,27 @@ class ResourceOrchestrator(object):
   Main class for the handling of the ROS-level mapping functions
   """
 
-  def __init__ (self, virtualizerManager):
+  def __init__ (self, layer_API):
     """
-    Init
+    Initialize main Resource Orchestration Layer components
 
-    :param virtualizerManager: Virtualizer manager object
-    :type virtualizerManager: VirtualizerManager
+    :param layer_API: layer API instance
+    :type layer_API: ResourceOrchestrationAPI
     :return: None
     """
     super(ResourceOrchestrator, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.nffgManager = NFFGManager()
-    self.virtualizerManager = virtualizerManager
+    # Init virtualizer manager
+    # Listeners must be weak references in order the layer API can garbage
+    # collected
+    self.virtualizerManager = VirtualizerManager()
+    self.virtualizerManager.addListeners(layer_API, weak=True)
+    # Init Resource Orchestration Mapper
+    # Listeners must be weak references in order the layer API can garbage
+    # collected
     self.nffgMapper = ResourceOrchestrationMapper()
+    self.nffgMapper.addListeners(layer_API, weak=True)
 
   def instantiate_nffg (self, nffg):
     """
