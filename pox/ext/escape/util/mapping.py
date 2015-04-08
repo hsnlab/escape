@@ -20,7 +20,12 @@ should implement mapping preparations and invoke actual mapping algorithm
 :class:`AbstractMappingStrategy` is an abstract class for containing entirely
 the mapping algorithm as a class method
 """
+import importlib
 import threading
+
+from escape import CONFIG
+from escape.service import LAYER_NAME as SAS
+from escape.orchest import LAYER_NAME as ROS
 
 from escape.util.misc import call_as_coop_task
 from pox.lib.revent.revent import EventMixin
@@ -65,11 +70,46 @@ class AbstractMapper(EventMixin):
 
   Contain common functions and initialization
   """
+  __defaults = {SAS: 'DefaultServiceMappingStrategy',
+                ROS: 'ESCAPEMappingStrategy'}
 
-  def __init__ (self):
+  def __init__ (self, layer_name, strategy=None, threaded=None):
     """
     Init
     """
+    # Set threaded
+    if threaded is not None:
+      self._threaded = threaded
+    elif 'THREADED' in CONFIG[layer_name]:
+      self._threaded = CONFIG[layer_name]['THREADED']
+    else:
+      self._threaded = False
+    # Set strategy
+    if strategy is not None:
+      if issubclass(strategy, AbstractMappingStrategy):
+        self.strategy = strategy
+      else:
+        raise AttributeError(
+          "Mapping strategy is not subclass of AbstractMappingStrategy!")
+    elif 'STRATEGY' in CONFIG[layer_name]:
+      if layer_name == SAS:
+        strategy_class = getattr(
+          importlib.import_module("escape.service.sas_mapping"),
+          CONFIG[layer_name]['STRATEGY'])
+      elif layer_name == ROS:
+        strategy_class = getattr(
+          importlib.import_module("escape.orchest.ros_mapping"),
+          CONFIG[layer_name]['STRATEGY'])
+      else:
+        raise AttributeError(
+          "Layer name: %s is not defined in CONFIG" % layer_name)
+      if issubclass(strategy_class, AbstractMappingStrategy):
+        self.strategy = strategy_class
+      else:
+        raise AttributeError(
+          "Mapping strategy is not subclass of AbstractMappingStrategy!")
+    else:
+      self.strategy = self.__defaults[layer_name]
     super(AbstractMapper, self).__init__()
 
   def orchestrate (self, input_graph, resource_view):

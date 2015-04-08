@@ -21,11 +21,9 @@ mapping functionality
 :class:`ResourceOrchestrationMapper` perform the supplementary tasks for
 :class:`NFFG <escape.util.nffg.NFFG>` mapping
 """
-import importlib
 
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
-from escape.orchest import log as log
-from escape import CONFIG
+from escape.orchest import log as log, LAYER_NAME
 from escape.util.misc import call_as_coop_task
 from pox.lib.revent.revent import Event
 
@@ -86,35 +84,15 @@ class ResourceOrchestrationMapper(AbstractMapper):
   # Events raised by this class
   _eventMixin_events = {NFFGMappingFinishedEvent}
 
-  def __init__ (self, strategy=ESCAPEMappingStrategy, threaded=True):
+  def __init__ (self):
     """
-    Init mapper
+    Init Resource Orchestrator mapper
 
-    :param strategy: mapping strategy
-    :type strategy: AbstractMappingStrategy (default ESCAPEMappingStrategy)
     :return: None
     """
-    self._threaded = threaded
-    if 'STRATEGY' in CONFIG['ROS']:
-      try:
-        strategy_cfg = getattr(importlib.import_module(self.__module__),
-                               CONFIG['ROS']['STRATEGY'])
-        if issubclass(strategy_cfg, AbstractMappingStrategy):
-          self.strategy = strategy_cfg
-        else:
-          log.warning(
-            "ROS mapping strategy is not subclass of AbstractMappingStrategy, "
-            "fall back to %s" % strategy.__class__.__name__)
-          self.strategy = strategy
-      except AttributeError:
-        log.warning(
-          "Mapping strategy: %s is not found in module: %s, fall back to "
-          "%s" % (CONFIG['ROS']['STRATEGY'], self.__module__,
-                  strategy.__class__.__name__))
-        self.strategy = strategy
-    super(ResourceOrchestrationMapper, self).__init__()
+    super(ResourceOrchestrationMapper, self).__init__(LAYER_NAME)
     log.debug("Init %s with strategy: %s" % (
-      self.__class__.__name__, strategy.__name__))
+      self.__class__.__name__, self.strategy.__name__))
 
   def orchestrate (self, input_graph, resource_view):
     """
@@ -136,7 +114,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
       # Schedule a microtask which run mapping algorithm in a Python thread
       log.info(
         "Schedule mapping algorithm: %s in a worker thread" %
-        self.strategy.__name__)
+          self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
       log.info("NF-FG(%s) orchestration is finished by %s" % (

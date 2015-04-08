@@ -192,10 +192,10 @@ class ServiceLayerAPI(AbstractAPI):
     :param port: port number, default 8008
     :type port: int
     """
-    if 'REQUEST-handler' in CONFIG['SMS']:
+    if 'REQUEST-handler' in CONFIG[LAYER_NAME]:
       try:
         handler_cfg = getattr(importlib.import_module(self.__module__),
-                              CONFIG['SMS']['REQUEST-handler'])
+                              CONFIG[LAYER_NAME]['REQUEST-handler'])
         if issubclass(handler, AbstractRequestHandler):
           handler = handler_cfg
         else:

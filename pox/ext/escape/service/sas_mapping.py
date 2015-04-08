@@ -19,11 +19,9 @@ which map given SG on a single Bis-Bis
 
 :class:`ServiceGraphMapper` perform the supplementary tasks for SG mapping
 """
-import importlib
 
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
-from escape.service import log as log
-from escape import CONFIG
+from escape.service import log as log, LAYER_NAME
 from escape.util.misc import call_as_coop_task
 from pox.lib.revent.revent import Event
 
@@ -83,37 +81,15 @@ class ServiceGraphMapper(AbstractMapper):
   # Events raised by this class
   _eventMixin_events = {SGMappingFinishedEvent}
 
-  def __init__ (self, strategy=DefaultServiceMappingStrategy, threaded=True):
+  def __init__ (self):
     """
-    Init mapper class
+    Init Service mapper
 
-    :param strategy: mapping strategy (default DefaultServiceMappingStrategy)
-    :type strategy: AbstractMappingStrategy
-    :param threaded: run mapping algorithm in a separate Python thread
-    :type threaded: bool
     :return: None
     """
-    self._threaded = threaded
-    if 'STRATEGY' in CONFIG['SAS']:
-      try:
-        strategy_cfg = getattr(importlib.import_module(self.__module__),
-                               CONFIG['SAS']['STRATEGY'])
-        if issubclass(strategy_cfg, AbstractMappingStrategy):
-          self.strategy = strategy_cfg
-        else:
-          log.warning(
-            "SAS mapping strategy is not subclass of AbstractMappingStrategy, "
-            "fall back to %s" % strategy.__class__.__name__)
-          self.strategy = strategy
-      except AttributeError:
-        log.warning(
-          "Mapping strategy: %s is not found in module: %s, fall back to "
-          "%s" % (
-            CONFIG['SAS']['STRATEGY'], self.__module__, strategy.__name__))
-        self.strategy = strategy
-    super(ServiceGraphMapper, self).__init__()
+    super(ServiceGraphMapper, self).__init__(LAYER_NAME)
     log.debug("Init %s with strategy: %s" % (
-      self.__class__.__name__, strategy.__name__))
+      self.__class__.__name__, self.strategy.__name__))
 
   def orchestrate (self, input_graph, resource_view):
     """

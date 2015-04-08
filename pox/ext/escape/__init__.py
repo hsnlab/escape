@@ -20,13 +20,14 @@ Unifying package for ESCAPEv2 functions
 RequestHandler and strategy classes, the initial Adapter classes, etc.
 """
 __version__ = '2.0.0'
-CONFIG = {'SMS': {  # Service Management Sublayer
-                    'REQUEST-handler': 'ServiceRequestHandler'},  # REST-API
-          'SAS': {  # Service Adaptation Sublayer
-                    'STRATEGY': 'DefaultServiceMappingStrategy'},
-          'ROS': {  # Resource Orchestration Sublayer
-                    'STRATEGY': 'ESCAPEMappingStrategy'},
-          'CAS': {  # Controller Adaptation Sublayer
-                    'POX': 'POXDomainAdapter',  # POX Adapter
-                    'MN': 'MininetDomainAdapter',  # Mininet Adapter
-                    'OS': 'OpenStackDomainAdapter'}}  # OpenStack Adapter
+CONFIG = {'service': {  # Service Adaptation Sublayer
+                        'STRATEGY': 'DefaultServiceMappingStrategy',
+                        'REQUEST-handler': 'ServiceRequestHandler',
+                        'THREADED': True},
+          'orchestration': {  # Resource Orchestration Sublayer
+                              'STRATEGY': 'ESCAPEMappingStrategy',
+                              'THREADED': True},
+          'adaptation': {  # Controller Adaptation Sublayer
+                           'POX': 'POXDomainAdapter',  # POX Adapter
+                           'MN': 'MininetDomainAdapter',  # Mininet Adapter
+                           'OS': 'OpenStackDomainAdapter'}}  # OpenStack Adapter

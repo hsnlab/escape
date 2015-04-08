@@ -23,13 +23,13 @@ logic of the Resource Orchestration Sublayer
 
 :class:`DomainResourceManager` stores and handles the global Virtualizer
 """
+import importlib
 import weakref
 
 from escape import CONFIG
+from escape.adapt import LAYER_NAME
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
-from escape.adapt.domain_adapters import POXDomainAdapter, \
-  MininetDomainAdapter, \
-  OpenStackDomainAdapter
+from escape.adapt.domain_adapters import AbstractDomainAdapter
 from escape.adapt import log as log
 from escape.util.nffg import NFFG
 
@@ -39,6 +39,8 @@ class ControllerAdapter(object):
   Higher-level class for :class:`NFFG <escape.util.nffg.NFFG>` adaptation
   between multiple domains
   """
+  __defaults = {'POX': 'POXDomainAdapter', 'MN': 'MininetDomainAdapter',
+                'OS': 'OpenStackDomainAdapter'}
 
   def __init__ (self):
     """
@@ -47,9 +49,19 @@ class ControllerAdapter(object):
     super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.domainResManager = DomainResourceManager()
-    self.poxAdapter = POXDomainAdapter() if CONFIG['CAS']['POX'] else None
-    self.mnAdapter = MininetDomainAdapter() if CONFIG['CAS']['MN'] else None
-    self.osAdapter = OpenStackDomainAdapter() if CONFIG['CAS']['OS'] else None
+    for adapter in self.__defaults.iterkeys():
+      if adapter in CONFIG[LAYER_NAME]:
+        adapter_class = getattr(
+          importlib.import_module("escape.adapt.domain_adapters"),
+          CONFIG[LAYER_NAME][adapter])
+        if issubclass(adapter_class, AbstractDomainAdapter):
+          setattr(self, adapter, adapter_class())
+        else:
+          raise AttributeError(
+            "Adapter class: %s is not subclass of AbstractDomainAdapter!" %
+            adapter_class.__name__)
+      else:
+        setattr(self, adapter, None)
 
   def install_nffg (self, mapped_nffg):
     """
