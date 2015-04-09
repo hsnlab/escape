@@ -405,7 +405,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       if hasattr(layer, function):
         getattr(layer, function)(*args, **kwargs)
       else:
-        # raise NotImplementedError()
+        # raise NotImplementedError
         self.log.warning(
           'Mistyped or not implemented API function call: %s ' % function)
     else:

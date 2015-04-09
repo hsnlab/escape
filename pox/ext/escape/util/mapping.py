@@ -50,6 +50,9 @@ class AbstractMappingStrategy(object):
     """
     Abstract function for mapping algorithm
 
+    .. warning::
+      Derived class have to override this function
+
     :param graph: Input graph which need to be mapped
     :type graph: NFFG
     :param resource: resource info
@@ -70,12 +73,36 @@ class AbstractMapper(EventMixin):
 
   Contain common functions and initialization
   """
-  __defaults = {SAS: 'DefaultServiceMappingStrategy',
-                ROS: 'ESCAPEMappingStrategy'}
+  _defaults = {SAS: 'DefaultServiceMappingStrategy',
+               ROS: 'ESCAPEMappingStrategy'}
 
   def __init__ (self, layer_name, strategy=None, threaded=None):
     """
-    Init
+    Initialize Mapper class
+
+    Set given strategy class and threaded value or check in `CONFIG`
+
+    If no valid value is found for arguments set the default params defined
+    in `_default`
+
+    .. warning::
+      Strategy classes must be a subclass of AbstractMappingStrategy
+
+    .. note::
+      SAS strategy is searched in :mod:`escape.service.sas_mapping`
+
+    .. note::
+      ROS strategy is searched in :mod:`escape.orchest.ros_mapping`
+
+    :param layer_name: name of the layer which initialize this class. This
+      value is used to search the layer configuration in `CONFIG`
+    :type layer_name: str
+    :param strategy: strategy class (optional)
+    :type strategy: AbstractMappingStrategy
+    :param threaded: run mapping algorithm in separate Python thread instead
+      of in the coop microtask environment (optional)
+    :type threaded: bool
+    :return: None
     """
     # Set threaded
     if threaded is not None:
@@ -109,7 +136,7 @@ class AbstractMapper(EventMixin):
         raise AttributeError(
           "Mapping strategy is not subclass of AbstractMappingStrategy!")
     else:
-      self.strategy = self.__defaults[layer_name]
+      self.strategy = self._defaults[layer_name]
     super(AbstractMapper, self).__init__()
 
   def orchestrate (self, input_graph, resource_view):
@@ -117,6 +144,9 @@ class AbstractMapper(EventMixin):
     Abstract function for wrapping optional steps connected to orchestration
 
     Implemented function call the mapping algorithm
+
+    .. warning::
+      Derived class have to override this function
 
     :param input_graph: graph representation which need to be mapped
     :type input_graph: NFFG
@@ -155,6 +185,9 @@ class AbstractMapper(EventMixin):
   def _mapping_finished (self, nffg):
     """
     Called from a separate thread when the mapping process is finished
+
+    .. warning::
+      Derived class have to override this function
 
     :param nffg: geenrated NF-FG
     :type nffg: NFFG

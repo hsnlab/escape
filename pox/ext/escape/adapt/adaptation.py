@@ -39,17 +39,29 @@ class ControllerAdapter(object):
   Higher-level class for :class:`NFFG <escape.util.nffg.NFFG>` adaptation
   between multiple domains
   """
-  __defaults = {'POX': 'POXDomainAdapter', 'MN': 'MininetDomainAdapter',
-                'OS': 'OpenStackDomainAdapter'}
+  # Default adapters
+  _defaults = {'POX': 'POXDomainAdapter', 'MN': 'MininetDomainAdapter',
+               'OS': 'OpenStackDomainAdapter'}
 
   def __init__ (self):
     """
-    Init
+    Initialize Controller adapter
+
+    For domain adapters the ControllerAdapter checks the CONFIG first
+    If there is no adapter defined explicity then initialize the defualt
+    Adapter class stored in `_defaults`
+
+    .. warning::
+      Adapter classes must be subclass of AbstractDomainAdapter
+
+    .. note::
+      Arbitrary domain adapters is searched in
+      :mod:`escape.adapt.domain_adapters`
     """
     super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.domainResManager = DomainResourceManager()
-    for adapter in self.__defaults.iterkeys():
+    for adapter in self._defaults.iterkeys():
       if adapter in CONFIG[LAYER_NAME]:
         adapter_class = getattr(
           importlib.import_module("escape.adapt.domain_adapters"),

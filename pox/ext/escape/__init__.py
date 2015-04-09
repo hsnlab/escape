@@ -23,10 +23,10 @@ __version__ = '2.0.0'
 CONFIG = {'service': {  # Service Adaptation Sublayer
                         'STRATEGY': 'DefaultServiceMappingStrategy',
                         'REQUEST-handler': 'ServiceRequestHandler',
-                        'THREADED': True},
+                        'THREADED': True},  # Run SAS mapping in thread
           'orchestration': {  # Resource Orchestration Sublayer
                               'STRATEGY': 'ESCAPEMappingStrategy',
-                              'THREADED': True},
+                              'THREADED': True},  # Run ROS mapping in thread
           'adaptation': {  # Controller Adaptation Sublayer
                            'POX': 'POXDomainAdapter',  # POX Adapter
                            'MN': 'MininetDomainAdapter',  # Mininet Adapter

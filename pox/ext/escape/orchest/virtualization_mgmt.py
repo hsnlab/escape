@@ -48,6 +48,9 @@ class AbstractVirtualizer(object):
     Hides object's mechanism and return with a resource object derived from
     :class:`NFFG <escape.util.nffg.NFFG>`
 
+    .. warning::
+      Derived class have to override this function
+
     :raise: NotImplementedError
     :return: resource info
     :rtype: NFFG
