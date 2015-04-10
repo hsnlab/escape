@@ -61,6 +61,10 @@ class AbstractVirtualizer(object):
     """
     Place-holder for sanity check which implemented in
     :class:`PolicyEnforcement`
+
+    :param nffg: NFFG instance
+    :type nffg: NFFG
+    :return: None
     """
     pass
 
@@ -193,24 +197,21 @@ class VirtualizerManager(EventMixin):
     # If this is the first request, need to generate the view
     if layer_id not in self._virtualizers:
       # Pass the global resource as the DomainVirtualizer
-      self._virtualizers[layer_id] = self._generate_virtual_view(self.dov,
-                                                                 layer_id)
+      self._virtualizers[layer_id] = self._generate_virtual_view(layer_id)
     return self._virtualizers[layer_id]
 
-  def _generate_virtual_view (self, dov, layer_id):
+  def _generate_virtual_view (self, layer_id):
     """
     Generate a missing :class:`ESCAPEVirtualizer` for other layer using global
-    view (DoV) and a layer id
+    view (DoV) and a given layer id
 
-    :param dov: Domain Virtualizer derived from AbstractVirtualizer
-    :type dov: DomainVirtualizer
     :param layer_id: layer ID
     :type layer_id: int
     :return: generated Virtualizer derived from AbstractVirtualizer
     :rtype: ESCAPEVirtualizer
     """
     # TODO - implement
-    resource_info = dov.get_resource_info()
+    resource_info = self.dov.get_resource_info()
     log.debug(
       "Generating virtual resource view for upper layer (layer ID: %s)" %
       layer_id)
