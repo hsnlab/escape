@@ -51,6 +51,8 @@ class ResourceOrchestrator(object):
     # collected
     self.nffgMapper = ResourceOrchestrationMapper()
     self.nffgMapper.addListeners(layer_API, weak=True)
+    # Init NFIB manager
+    self.nfibManager = NFIBManager()
 
   def instantiate_nffg (self, nffg):
     """
@@ -118,3 +120,27 @@ class NFFGManager(object):
     :rtype: NFFG
     """
     return self._nffgs.get(nffg_id, default=None)
+
+
+class NFIBManager(object):
+  """
+  Manage the handling of Network Function Information Base
+  """
+
+  def __init__ (self):
+    """
+    Init
+    """
+    super(NFIBManager, self).__init__()
+
+  def add(self, nf):
+    # TODO - implement
+    pass
+
+  def remove(self, nf_id):
+    # TODO - implement
+    pass
+
+  def getNF(self, nf_id):
+    # TODO - implement
+    pass

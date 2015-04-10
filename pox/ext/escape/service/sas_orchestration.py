@@ -57,8 +57,6 @@ class ServiceOrchestrator(object):
     # collected
     self.sgMapper = ServiceGraphMapper()
     self.sgMapper.addListeners(layer_API, weak=True)
-    # Init NFIB manager
-    self.nfibManager = NFIBManager()
 
   def initiate_service_graph (self, sg):
     """
@@ -197,15 +195,3 @@ class VirtualResourceManager(EventMixin):
     :return: None
     """
     del self._virtual_view
-
-
-class NFIBManager(object):
-  """
-  Manage the handling of Network Function Information Base
-  """
-
-  def __init__ (self):
-    """
-    Init
-    """
-    super(NFIBManager, self).__init__()
