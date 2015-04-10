@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contain classes relevant to the main adaptation function of the Controll
+Contain classes relevant to the main adaptation function of the Controlller
 Adaptation Sublayer
 
 :class:`ControllerAdapter` implements the centralized functionality of
@@ -48,7 +48,7 @@ class ControllerAdapter(object):
     Initialize Controller adapter
 
     For domain adapters the ControllerAdapter checks the CONFIG first
-    If there is no adapter defined explicity then initialize the defualt
+    If there is no adapter defined explicitly then initialize the default
     Adapter class stored in `_defaults`
 
     .. warning::
@@ -67,7 +67,11 @@ class ControllerAdapter(object):
           importlib.import_module("escape.adapt.domain_adapters"),
           CONFIG[LAYER_NAME][adapter])
         if issubclass(adapter_class, AbstractDomainAdapter):
+          da = adapter_class()
+          # Set initialized adapter
           setattr(self, adapter, adapter_class())
+          # Set up listeners
+          da.addListeners(self)
         else:
           raise AttributeError(
             "Adapter class: %s is not subclass of AbstractDomainAdapter!" %
@@ -79,6 +83,9 @@ class ControllerAdapter(object):
     """
     Start NF-FG installation
 
+    Process given :class:`NFFG <escape.util.nffg.NFFG>`, slice information
+    based on domains an invoke domain adapters to install domain specific parts
+
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: NFFG
     :return: None
@@ -86,6 +93,24 @@ class ControllerAdapter(object):
     log.debug("Invoke %s to install NF-FG" % self.__class__.__name__)
     # TODO - implement
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
+
+  def _handle_DomainChangedEvent (self, event):
+    """
+    Handle DomainChangedEvents, process changes and store relevant information
+    in DomainResourceManager
+    """
+    pass
+
+  def _slice_into_domains (self, nffg):
+    """
+    Slice given :class:`NFFG <escape.util.nffg.NFFG>` into separate parts
+
+    :param nffg: mapped NFFG object
+    :type nffg: NFFG
+    :return: sliced parts
+    :rtype: dict
+    """
+    pass
 
 
 class DomainVirtualizer(AbstractVirtualizer):
@@ -143,3 +168,14 @@ class DomainResourceManager(object):
     :rtype: ESCAPEVirtualizer
     """
     return self._dov
+
+  def update_resource_usage (self, data):
+    """
+    Update global resource database with resource usage relevant to installed
+    components, routes, VNFs, etc.
+
+    :param data: usage data
+    :type data: dict
+    :return: None
+    """
+    pass

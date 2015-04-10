@@ -47,6 +47,13 @@ class GlobalResInfoEvent(Event):
     self.resource_info = resource_info
 
 
+class InstallationFinishedEvent(Event):
+  """
+  Event class for signalling end of mapping process finished with success
+  """
+  pass
+
+
 class ControllerAdaptationAPI(AbstractAPI):
   """
   Entry point for Controller Adaptation Sublayer (CAS)
@@ -58,7 +65,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {GlobalResInfoEvent}
+  _eventMixin_events = {GlobalResInfoEvent, InstallationFinishedEvent}
   # Dependencies
   # None
 

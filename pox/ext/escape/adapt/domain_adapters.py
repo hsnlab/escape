@@ -24,20 +24,59 @@ other different domains
 :class:`OpenStackDomainAdapter` implements OpenStack related functionality
 """
 from escape.adapt import log as log
+from pox.lib.revent import Event, EventMixin
 
 
-class AbstractDomainAdapter(object):
+class DomainChangedEvent(Event):
+  """
+  Event class for signaling some kind of change(s) in specific domain
+  """
+
+  def __init__ (self, domain, cause, data=None):
+    """
+    Init event object
+
+    :param domain: domain name
+    :type domain: str
+    :param cause: type of the domain change
+    :type cause: str
+    :param data: data connected to the change (optional)
+    :type data: object
+    :return: None
+    """
+    super(DomainChangedEvent, self).__init__()
+
+
+class AbstractDomainAdapter(EventMixin):
   """
   Abstract class for different domain adapters
 
-  Follows the Adapter design pattern
+  Follows the Adapter design pattern (Adaptor base class)
   """
+  # Events raised by this class
+  _eventMixin_events = {DomainChangedEvent}
 
   def __init__ (self):
     """
     Init
     """
     super(AbstractDomainAdapter, self).__init__()
+
+  def install (self, nffg):
+    """
+    Intall domain specific part of a mapped NFFG
+
+    :param nffg: domain specific slice of mapped NFFG
+    :type nffg: NFFG
+    :return: None
+    """
+    raise NotImplementedError("Derived class have to override this function")
+
+  def notify_change (self):
+    """
+    Notify other components (ControllerAdapter) about changes in specific domain
+    """
+    raise NotImplementedError("Derived class have to override this function")
 
 
 class MininetDomainAdapter(AbstractDomainAdapter):
@@ -55,6 +94,15 @@ class MininetDomainAdapter(AbstractDomainAdapter):
     super(MininetDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
+  def install (self, nffg):
+    log.info("Install Mininet domain part...")
+    # TODO - implement
+    pass
+
+  def notify_change (self):
+    # TODO - implement
+    pass
+
 
 class POXDomainAdapter(AbstractDomainAdapter):
   """
@@ -71,6 +119,15 @@ class POXDomainAdapter(AbstractDomainAdapter):
     super(POXDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
+  def install (self, nffg):
+    log.info("Install POX domain part...")
+    # TODO - implement
+    pass
+
+  def notify_change (self):
+    # TODO - implement
+    pass
+
 
 class OpenStackDomainAdapter(AbstractDomainAdapter):
   """
@@ -86,3 +143,12 @@ class OpenStackDomainAdapter(AbstractDomainAdapter):
     """
     super(OpenStackDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+
+  def install (self, nffg):
+    log.info("Install OpenStack domain part...")
+    # TODO - implement
+    pass
+
+  def notify_change (self):
+    # TODO - implement
+    pass
