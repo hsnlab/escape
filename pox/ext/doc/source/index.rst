@@ -61,9 +61,9 @@ Main modules for layers/sublayers
 .. toctree::
     :maxdepth: 1
 
-    Service layer <sas>
-    Resource Orchestration sublayer <ros>
-    Controller Adaptation sublayer <cas>
+          Service layer <service>
+          Resource Orchestration sublayer <orchestration>
+          Controller Adaptation sublayer <adaptation>
 
 README
 ++++++
@@ -86,46 +86,46 @@ Minimal command with explicitly-defined components (components' order is irrelev
 
 .. code-block:: bash
 
-    $ ./pox.py sas ros cas
+    $ ./pox.py service orchestration adaptation
 
 Without the service layer:
 
 .. code-block:: bash
 
-    $ ./pox.py ros cas
+    $ ./pox.py orchestration adaptation
 
 Long version with debugging and explicitly-defined components (analogous with ./pox.py unify):
 
 .. code-block:: bash
 
-     $./pox.py --verbose log.level --DEBUG samples.pretty_log sas ros cas
+     $./pox.py --verbose log.level --DEBUG samples.pretty_log service orchestration adaptation
 
 Start layers with graph-represented input contained in a specific file:
 
 .. code-block:: bash
 
-    $ ./pox.py sas --sg_file=<path>
+    $ ./pox.py service --sg_file=<path>
     $ ./pox.py unify --sg_file=<path>
 
-    $ ./pox.py ros --nffg_file=<path>
-    $ ./pox.py cas --mapped_nffg_file=<path>
+    $ ./pox.py orchestration --nffg_file=<path>
+    $ ./pox.py adaptation --mapped_nffg_file=<path>
 
 Start ESCAPEv2 with built-in GUI:
 
 .. code-block:: bash
 
-    $ ./pox.py sas --gui ...
+    $ ./pox.py service --gui ...
     $ ./pox.py unify --gui
 
 Start layer in standalone mode (no dependency handling) for test/debug:
 
 .. code-block:: bash
 
-    $ ./pox.py sas --standalone
-    $ ./pox.py ros --standalone
-    $ ./pox.py cas --standalone
+    $ ./pox.py service --standalone
+    $ ./pox.py orchestration --standalone
+    $ ./pox.py adaptation --standalone
 
-    $ ./pox.py sas ros --standalone
+    $ ./pox.py service orchestration --standalone
 
 Indices and tables
 ==================

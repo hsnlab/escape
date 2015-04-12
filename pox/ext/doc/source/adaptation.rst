@@ -1,7 +1,7 @@
 The *cas.py* main module
 ========================
 
-.. automodule:: cas
+.. automodule:: adaptation
    :members:
    :private-members:
    :special-members:

@@ -1,7 +1,7 @@
-The *ros.py* main module
+The *sas.py* main module
 ========================
 
-.. automodule:: ros
+.. automodule:: service
    :members:
    :private-members:
    :special-members:

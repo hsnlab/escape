@@ -37,15 +37,15 @@ def _start_components (event):
   """
   # Launch ESCAPE components
   # Launch Service Layer (mostly SAS)
-  from sas import launch
+  from service import launch
 
   launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
   # Launch Resource Orchestration Sublayer (ROS)
-  from ros import launch
+  from orchestration import launch
 
   launch()
   # Launch Controller Adaptation Sublayer (CAS)
-  from cas import launch
+  from adaptation import launch
 
   launch()
 
