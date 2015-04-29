@@ -115,7 +115,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
       inspect.currentframe().f_code.co_name,))
     body = self._parse_json_body()
     log.getChild("REST-API").debug("Parsed input: %s" % body)
-    sg = NFFG.init_from_json(body)  # Convert text based SG to object instance
+    sg = NFFG(json=body)  # Initialize NFFG from JSON representation
     self._proceed_API_call('request_service', sg)
 
 

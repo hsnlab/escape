@@ -14,6 +14,7 @@
 """
 Contains features for NF-FG processing, parsing, creating, and handling
 """
+import os
 
 
 class NFFG(object):
@@ -21,27 +22,29 @@ class NFFG(object):
   Wrapper class which represent an NF-FG
   """
 
-  def __init__ (self):
+  def __init__ (self, json=None, file = None):
     """
     Init
     """
     super(NFFG, self).__init__()
     self.id = None
-    # TODO - implement
-    self.error = "NotImplemented"
+    if json:
+      self._init_from_json(json)
+    elif file and not file.startswith('/'):
+      file = os.path.abspath(file)
+      with open(file, 'r') as f:
+        self._init_from_json(json.load(f))
+    self.error = "NotImplementedYet"
 
-  @staticmethod
-  def init_from_json (json):
+  def _init_from_json (self, json_data):
     """
-    Create and initialize an NFFG object from JSON data
+    Initialize the NFFG object from JSON data
 
-    :param json: NF-FG represented in JSON format
-    :type json: str
-    :return: NFFG instance
-    :rtype: NFFG
+    :param json_data: NF-FG represented in JSON format
+    :type json_data: str
+    :return: None
     """
     # TODO - implement! This function has already used in layer APIs
-    return NFFG()
 
   def to_json (self):
     """
