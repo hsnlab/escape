@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2013 <Your Name Here>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Basic POX module for ESCAPE Service (Graph Adaptation) sublayer
+Basic POX module for ESCAPE Infrastructure Layer
 
-Initiate appropriate API class which implements U-Sl reference point
+Initiate appropriate API class which emulate Co-Rm reference point
 
 Follows POX module conventions
 """
-from escape.service.sas_API import ServiceLayerAPI
+from escape.infr.il_API import InfrastuctureLayerAPI
 from pox.core import core
 import pox.lib.util as poxutil
 
@@ -28,25 +28,21 @@ init_param = {}
 
 def _start_layer (event):
   """
-  Initiate and run Service module
+  Initiate and run Infrastructure module
 
   :param event: POX's going up event
   :type event: GoingUpEvent
   :return: None
   """
   # Instantiate the API class and register into pox.core only once
-  ServiceLayerAPI(**init_param)
+  InfrastuctureLayerAPI(**init_param)
 
 
 @poxutil.eval_args
-def launch (sg_file='', gui=False, standalone=False):
+def launch (standalone=False):
   """
   Launch function called by POX core when core is up
 
-  :param sg_file: Path of the input Service graph (optional)
-  :type sg_file: str
-  :param gui: Initiate built-in GUI (optional)
-  :type gui: bool
   :param standalone: Run layer without dependency checking (optional)
   :type standalone: bool
   :return: None

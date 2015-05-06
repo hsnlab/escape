@@ -28,7 +28,7 @@ init_param = {}
 
 def _start_layer (event):
   """
-  Initiate and run POX with ESCAPE components
+  Initiate and run Adaptation module
 
   :param event: POX's going up event
   :type event: GoingUpEvent

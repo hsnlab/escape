@@ -141,7 +141,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.info("Starting Service Layer...")
     # Mandatory super() call
-    super(ServiceLayerAPI, self).__init__(standalone=standalone, **kwargs)
+    super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
     """
@@ -158,7 +158,7 @@ class ServiceLayerAPI(AbstractAPI):
     if self._sg_file:
       try:
         graph_json = self._read_json_from_file(self._sg_file)
-        sg_graph = NFFG.init_from_json(graph_json)
+        sg_graph = NFFG(json=graph_json)
         self.request_service(sg_graph)
       except (ValueError, IOError, TypeError) as e:
         log.error(
@@ -183,7 +183,7 @@ class ServiceLayerAPI(AbstractAPI):
       self.rest_api.stop()
 
   def _initiate_rest_api (self, handler=ServiceRequestHandler,
-      address='localhost', port=8008):
+       address='localhost', port=8008):
     """
     Initialize and set up REST API in a different thread
 

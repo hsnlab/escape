@@ -48,10 +48,15 @@ def _start_components (event):
   from adaptation import launch
 
   launch()
+  # Launch Infrastructure Layer (IL) optionally
+  if init_param['full']:
+    from infrastructure import launch
+
+    launch()
 
 
 @poxutil.eval_args
-def launch (sg_file='', gui=False):
+def launch (sg_file='', gui=False, full=False):
   """
   Launch function called by POX core when core is up
 

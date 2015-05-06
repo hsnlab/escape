@@ -42,7 +42,7 @@ class SkeletonAPI(AbstractAPI):
 
 def _start_layer (event):
   """
-  Initiate and run POX with ESCAPE components
+  Initiate and run POX module
 
   :param event: POX's going up event
   :type event: GoingUpEvent

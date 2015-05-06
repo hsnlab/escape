@@ -98,8 +98,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.info("Starting Resource Orchestration Sublayer...")
     # Mandatory super() call
-    super(ResourceOrchestrationAPI, self).__init__(standalone=standalone,
-                                                   **kwargs)
+    super(ResourceOrchestrationAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
     """
@@ -117,9 +116,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     .. seealso::
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
-    log.info("Resource OrchestrationSublayer is going down...")
+    log.info("Resource Orchestration Sublayer is going down...")
 
-  def _handle_NFFGMappingFinishedEvent(self, event):
+  def _handle_NFFGMappingFinishedEvent (self, event):
     """
     Handle NFFGMappingFinishedEvent and proceed with  :class:`NFFG
     <escape.util.nffg.NFFG>` installation

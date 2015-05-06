@@ -22,7 +22,7 @@ class NFFG(object):
   Wrapper class which represent an NF-FG
   """
 
-  def __init__ (self, json=None, file = None):
+  def __init__ (self, json=None, file=None):
     """
     Init
     """

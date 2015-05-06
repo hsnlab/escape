@@ -76,8 +76,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.info("Starting Controller Adaptation Sublayer...")
     # Mandatory super() call
-    super(ControllerAdaptationAPI, self).__init__(standalone=standalone,
-                                                  **kwargs)
+    super(ControllerAdaptationAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
     """

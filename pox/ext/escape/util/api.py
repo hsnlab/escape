@@ -409,5 +409,5 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
         self.log.warning(
           'Mistyped or not implemented API function call: %s ' % function)
     else:
-      self.log.error('Error: No componenet has registered with the name: %s, '
+      self.log.error('Error: No component has registered with the name: %s, '
                      'ABORT function call!' % self.bounded_layer)
