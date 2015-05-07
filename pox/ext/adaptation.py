@@ -39,12 +39,14 @@ def _start_layer (event):
 
 
 @poxutil.eval_args
-def launch (mapped_nffg_file='', standalone=False):
+def launch (mapped_nffg_file='', with_infr=False, standalone=False):
   """
   Launch function called by POX core when core is up
 
   :param mapped_nffg_file: Path of the mapped NF-FG graph (optional)
   :type mapped_nffg_file: str
+  :param with_infr: Set Infrastructure as a dependency
+  :type with_infr: bool
   :param standalone: Run layer without dependency checking (optional)
   :type standalone: bool
   :return: None

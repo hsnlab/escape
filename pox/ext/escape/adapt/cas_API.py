@@ -29,6 +29,7 @@ from escape.adapt.adaptation import ControllerAdapter
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event
+from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 
 
 class GlobalResInfoEvent(Event):
@@ -75,6 +76,9 @@ class ControllerAdaptationAPI(AbstractAPI):
       :func:`AbstractAPI.__init__() <escape.util.api.AbstractAPI.__init__>`
     """
     log.info("Starting Controller Adaptation Sublayer...")
+    if kwargs['with_infr']:
+      log.debug("Set Infrastructure Layer as a dependency")
+      self.dependencies = self.dependencies + (INFR_LAYER_NAME,)
     # Mandatory super() call
     super(ControllerAdaptationAPI, self).__init__(standalone, **kwargs)
 

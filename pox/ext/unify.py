@@ -36,22 +36,18 @@ def _start_components (event):
   :return: None
   """
   # Launch ESCAPE components
-  # Launch Service Layer (mostly SAS)
   from service import launch
-
+  # Launch Service Layer (mostly SAS)
   launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
-  # Launch Resource Orchestration Sublayer (ROS)
   from orchestration import launch
-
+  # Launch Resource Orchestration Sublayer (ROS)
   launch()
-  # Launch Controller Adaptation Sublayer (CAS)
   from adaptation import launch
-
-  launch()
-  # Launch Infrastructure Layer (IL) optionally
+  # Launch Controller Adaptation Sublayer (CAS)
+  launch(with_infr=init_param['full'])
   if init_param['full']:
     from infrastructure import launch
-
+    # Launch Infrastructure Layer (IL) optionally
     launch()
 
 
