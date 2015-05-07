@@ -76,6 +76,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       :func:`AbstractAPI.__init__() <escape.util.api.AbstractAPI.__init__>`
     """
     log.info("Starting Controller Adaptation Sublayer...")
+    # Set Infrastructure as a dependency
     if kwargs['with_infr']:
       log.debug("Set Infrastructure Layer as a dependency")
       self.dependencies = self.dependencies + (INFR_LAYER_NAME,)

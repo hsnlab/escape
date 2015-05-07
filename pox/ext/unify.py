@@ -60,6 +60,8 @@ def launch (sg_file='', gui=False, full=False):
   :type sg_file: str
   :param gui: Signal for initiate GUI (optional)
   :type gui: bool
+  :param full: Initiate Infrastructure Layer also
+  :type full: bool
   :return: None
   """
   global init_param

@@ -68,7 +68,7 @@ Main modules for layers/sublayers
 README
 ++++++
 
-ESCAPEv2 starting commands
+ESCAPEv2 example commands
 
 Basic command:
 
@@ -82,17 +82,29 @@ Basic command for debugging:
 
     $ ./pox.py --verbose --no-openflow unify py
 
+Basic command to initiate a built-in emulated network for testing:
+
+.. code-block:: bash
+
+    $ ./pox.py unify --full
+
 Minimal command with explicitly-defined components (components' order is irrelevant):
 
 .. code-block:: bash
 
     $ ./pox.py service orchestration adaptation
 
-Without the service layer:
+Without service layer:
 
 .. code-block:: bash
 
     $ ./pox.py orchestration adaptation
+
+With infrastructure layer:
+
+.. code-block:: bash
+
+    $ ./pox.py service orchestration adaptation --with_infr infrastructure
 
 Long version with debugging and explicitly-defined components (analogous with ./pox.py unify):
 
@@ -104,11 +116,11 @@ Start layers with graph-represented input contained in a specific file:
 
 .. code-block:: bash
 
-    $ ./pox.py service --sg_file=<path>
+    $ ./pox.py service --sg_file=<path> ...
     $ ./pox.py unify --sg_file=<path>
 
-    $ ./pox.py orchestration --nffg_file=<path>
-    $ ./pox.py adaptation --mapped_nffg_file=<path>
+    $ ./pox.py orchestration --nffg_file=<path> ...
+    $ ./pox.py adaptation --mapped_nffg_file=<path> ...
 
 Start ESCAPEv2 with built-in GUI:
 
@@ -124,6 +136,7 @@ Start layer in standalone mode (no dependency handling) for test/debug:
     $ ./pox.py service --standalone
     $ ./pox.py orchestration --standalone
     $ ./pox.py adaptation --standalone
+    $ ./pox.py infrastructure --standalone
 
     $ ./pox.py service orchestration --standalone
 
