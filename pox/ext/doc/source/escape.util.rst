@@ -45,6 +45,17 @@ Package contents
    :undoc-members:
    :show-inheritance:
 
+*netconf.py* module
+-------------------
+
+.. automodule:: escape.util.netconf
+   :members:
+   :private-members:
+   :special-members:
+   :exclude-members: __dict__,__weakref__,__module__
+   :undoc-members:
+   :show-inheritance:
+
 *nffg.py* module
 ----------------
 

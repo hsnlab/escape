@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -191,6 +191,7 @@ class ServiceLayerAPI(AbstractAPI):
     :type address: str
     :param port: port number, default 8008
     :type port: int
+    :return: None
     """
     if 'REQUEST-handler' in CONFIG[LAYER_NAME]:
       try:

@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ class AbstractElementManager(object):
   """
   Abstract class for element management components (EM)
 
-  :warning::
+  .. warning::
     Not implemented yet!
   """
 
@@ -39,7 +39,7 @@ class ClickManager(AbstractElementManager):
   """
   Manager class for specific VNF management based on Clicky
 
-  :warning::
+  .. warning::
     Not implemented yet!
   """
 

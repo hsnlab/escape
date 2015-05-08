@@ -64,6 +64,7 @@ Main modules for layers/sublayers
           Service layer <service>
           Resource Orchestration sublayer <orchestration>
           Controller Adaptation sublayer <adaptation>
+          Infrastructure layer <infrastructure>
 
 README
 ++++++

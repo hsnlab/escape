@@ -20,6 +20,7 @@ Submodules
     escape.service
     escape.orchest
     escape.adapt
+    escape.infr
     escape.util
 
 
