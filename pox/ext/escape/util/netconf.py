@@ -23,12 +23,10 @@ Implement the supporting classes for communication over NETCONF
 :class:`AbstractNETCONFAdapter` contains the main function for communication
 over NETCONF such as managing SSH channel, handling configuration, assemble
 RPC request and parse RPC reply
-
-:class:`VNFStarterManager` is a wrapper class for vnf_starter NETCONF module
 """
-from pprint import pprint
 from lxml import etree
 from StringIO import StringIO
+
 from ncclient import manager
 from ncclient.operations import RPCError, OperationError
 from ncclient.transport import TransportError
@@ -252,6 +250,7 @@ class AbstractNETCONFAdapter(object):
       self.__rpc_reply_as_xml = self.__connection.dispatch(request_data).xml
       return self.__rpc_reply_as_xml
     except (RPCError, TransportError, OperationError):
+      # need to handle???
       raise
 
   def __remove_namespace (self, xml_element, namespace=None):
@@ -311,7 +310,7 @@ class AbstractNETCONFAdapter(object):
           node = sub_ele(parent, key)
           # Need to go deeper -> recursion
           parseChild(node, value)
-        else:
+        elif value is not None:
           node = sub_ele(parent, key)
           node.text = str(value)
 
@@ -397,43 +396,10 @@ class AbstractNETCONFAdapter(object):
       self.disconnect()
 
 
-class VNFStarterManager(AbstractNETCONFAdapter):
-  """
-  This class is devoted to provide netconf specific callback functions and
-  covering the background of how the netconf agent and the client work.
-
-  .. seealso::
-      vnf_starter.yang
-  """
-  # RPC namespace
-  RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'
-
-  def __init__ (self, **kwargs):
-    super(VNFStarterManager, self).__init__(**kwargs)
-
-  # RPC calls starts here
-
-  def initiateVNF (self):
-    pass
-
-  def connectVNF (self):
-    pass
-
-  def disconnectVNF (self):
-    pass
-
-  def startVNF (self):
-    pass
-
-  def stopVNF (self):
-    pass
-
-  def getVNFInfo (self):
-    pass
-
-
 if __name__ == "__main__":
   # TEST
+  from pprint import pprint
+  from collections import OrderedDict
   # print "Create VNFRemoteManager..."
   # vrm = VNFRemoteManager(server='192.168.12.128', port=830,
   # username='mininet', password='mininet', debug=True)
@@ -443,8 +409,11 @@ if __name__ == "__main__":
   print "-" * 60
   print "Connecting..."
   # vrm.connect()
-  with VNFStarterManager(server='192.168.12.128', port=830, username='mininet',
-                         password='mininet', debug=True) as vrm:
+  vrm = AbstractNETCONFAdapter(server='192.168.12.128', port=830,
+                               username='mininet', password='mininet',
+                               debug=True)
+  vrm.RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'
+  with vrm as vrm:
     print "Connected"
     print "-" * 60
     print "Get config"
@@ -452,11 +421,12 @@ if __name__ == "__main__":
     print "-" * 60
     print "Get /proc/meminfo..."
     # get /proc/meminfo
-    print vrm.get()
+    print vrm.get("/proc/meminfo")
     # call rpc getVNFInfo
     print "-" * 60
     print "Call getVNFInfo..."
     reply = vrm.call_RPC('getVNFInfo')
+    # reply = vrm.getVNFInfo()
     print "-" * 60
     print "Reply:"
     pprint(reply)
@@ -464,9 +434,15 @@ if __name__ == "__main__":
     print "Call initiateVNF..."
     try:
       reply = vrm.call_RPC("initiateVNF", vnf_type="headerDecompressor",
-                           options={"ip": "127.0.0.1"})
+                           options=OrderedDict(
+                             {"name": "ip", "value": "127.0.0.1"}))
+      # reply = vrm.initiateVNF(vnf_type="headerDecompressor",
+      # options=OrderedDict(
+      # {"name": "ip", "value": "127.0.0.1"}))
     except RPCError as e:
-      pprint(e.__dict__)
+      pprint(e.to_dict())
+      pprint(e.info.split('\n'))
+
     print "-" * 60
     print "Reply:"
     pprint(reply)
@@ -478,7 +454,12 @@ if __name__ == "__main__":
     # pprint(reply)
     # print "-" * 60
     print "Call stopVNF..."
-    reply = vrm.call_RPC("stopVNF", vnf_id='1')
+    try:
+      reply = vrm.call_RPC("stopVNF", vnf_id='1')
+      # reply = vrm.stopVNF(vnf_id='1')
+    except RPCError as e:
+      pprint(e.to_dict())
+      pprint(e.info.split('\n'))
     print "-" * 60
     print "Reply:"
     pprint(reply)
