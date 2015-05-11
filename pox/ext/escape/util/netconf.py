@@ -17,6 +17,14 @@ Requirements::
   sudo apt-get install python-setuptools python-paramiko python-lxml \
   python-libxml2 python-libxslt1 libxml2 libxslt1-dev
   sudo pip install ncclient
+
+Implement the supporting classes for communication over NETCONF
+
+:class:`AbstractNETCONFAdapter` contains the main function for communication
+over NETCONF such as managing SSH channel, handling configuration, assemble
+RPC request and parse RPC reply
+
+:class:`VNFStarterManager` is a wrapper class for vnf_starter NETCONF module
 """
 from pprint import pprint
 from lxml import etree
@@ -31,14 +39,16 @@ class AbstractNETCONFAdapter(object):
   """
   Abstract class for various Adapters rely on NETCONF protocol (RFC 4741)
 
-  Contains basic functions for managing connection and invoking RPC calls
+  Contains basic functions for managing connection and invoking RPC calls.
+  Configuration management can be handled by the external
+  :class:`ncclient.manager.Manager` class exposed by the manager property
 
   Follows the Adapter design pattern
   """
-  # NETCONF namespace
-  NETCONF_NAMESPACE = u'urn:ietf:params:xml:ns:netconf:base:1.0'
-  # RPC namespace. Must be set by derived classes
-  _RPC_NAMESPACE = None
+  # NETCONF namespace - u'urn:ietf:params:xml:ns:netconf:base:1.0'
+  NETCONF_NAMESPACE = manager.BASE_NS_1_0
+  # RPC namespace. Must be set by derived classes through RPC_NAMESPACE
+  RPC_NAMESPACE = None
 
   def __init__ (self, server, port, username, password, timeout=30,
        debug=False):
@@ -74,23 +84,6 @@ class AbstractNETCONFAdapter(object):
     self.__config = None
 
   @property
-  def RPC_NAMESPACE (self):
-    """
-    :return: Return specific RPC namespace
-    :rtype: str
-    """
-    return self._RPC_NAMESPACE
-
-  @RPC_NAMESPACE.setter
-  def RPC_NAMESPACE (self, namespace):
-    """
-    :param namespace: Set specific RPC namespace
-    :type namespace: str
-    :return: None
-    """
-    self._RPC_NAMESPACE = unicode(namespace)
-
-  @property
   def connected (self):
     """
     :return: Return connection state
@@ -98,11 +91,30 @@ class AbstractNETCONFAdapter(object):
     """
     return self.__connection is not None and self.__connection.connected
 
+  @property
+  def connection_data (self):
+    """
+    :return: Return connection data in (server, port, username) tuples
+    :rtype: tuple
+    """
+    return self.__server, self.__port, self.__username
+
+  @property
+  def manager (self):
+    """
+    :return: Return the connection manager (wrapper for NETCONF commands)
+    :rtype: :class:`ncclient.manager.Manager`
+    """
+    return self.__connection
+
   def connect (self):
     """
-    This function will connect to the netconf server. The variable
-    self.__connection is responsible for keeping the connection up.
+    This function will connect to the netconf server.
+
+    :return: Also returns the NETCONF connection manager
+    :rtype: :class:`ncclient.manager.Manager`
     """
+    # __connection is responsible for keeping the connection up.
     self.__connection = manager.connect(host=self.__server, port=self.__port,
                                         username=self.__username,
                                         password=self.__password,
@@ -112,6 +124,7 @@ class AbstractNETCONFAdapter(object):
       print "Connecting to %s:%s with %s/%s ---> %s" % (
         self.__server, self.__port, self.__username, self.__password,
         'OK' if self.connected else 'PROBLEM')
+    return self.__connection
 
   def disconnect (self):
     """
@@ -147,7 +160,7 @@ class AbstractNETCONFAdapter(object):
     else:
       raise RuntimeError("Not connected!")
 
-  def get (self, expr="/proc/meminfo"):
+  def get (self, expr="/"):
     """
     This process works as yangcli's GET function. A lot of information can be
     got from the running NETCONF agent. If an xpath-based expression is also
@@ -160,6 +173,86 @@ class AbstractNETCONFAdapter(object):
     :rtype: str
     """
     return self.__connection.get(filter=('xpath', expr)).data_xml
+
+  def _create_rpc_request (self, rpc_name, **params):
+    """
+    This function is devoted to create a raw RPC request message in XML format.
+    Any further additional rpc-input can be passed towards, if netconf agent
+    has this input list, called 'options'. Switches is used for connectVNF
+    rpc in order to set the switches where the vnf should be connected.
+
+    :param rpc_name: rpc name
+    :type rpc_name: str
+    :param options: additional RPC input in the specific <options> tag
+    :type options: dict
+    :param switches: set the switches where the vnf should be connected
+    :type switches: list
+    :param params: input params for the RPC using param's name as XML tag name
+    :type params: dict
+    :return: raw RPC message in XML format (lxml library)
+    :rtype: :class:`lxml.etree.ElementTree`
+    """
+    # create the desired xml element
+    xsd_fetch = new_ele(rpc_name)
+    # set the namespace of your rpc
+    xsd_fetch.set('xmlns', self.RPC_NAMESPACE)
+    # set input params
+    self.__parse_rpc_params(xsd_fetch, params)
+    # we need to remove the confusing netconf namespaces with our own function
+    rpc_request = self.__remove_namespace(xsd_fetch, self.NETCONF_NAMESPACE)
+    # show how the created rpc message looks like
+    if self.__debug:
+      print "Generated raw RPC message:\n", etree.tostring(rpc_request,
+                                                           pretty_print=True)
+    return rpc_request
+
+  def _parse_rpc_response (self, data=None):
+    """
+    Parse raw XML response and return params in dictionary. If data is given
+    it is parsed instead of the lasr response and the result will not be saved.
+
+    :param data: raw data (uses last reply by default)
+    :type data: :class:`lxml.etree.ElementTree`
+    :return: return parsed params
+    :rtype: dict
+    """
+    # in order to handle properly the rpc-reply as an xml element we need to
+    # create a new xml_element from it, since another BRAINFUCK arise around
+    # namespaces
+    # CREATE A PARSER THAT GIVES A SHIT FOR NAMESPACE
+    parser = etree.XMLParser(ns_clean=True)
+    if data:
+      buffer = StringIO(data)
+    else:
+      buffer = StringIO(self.__rpc_reply_as_xml)
+    # PARSE THE NEW RPC-REPLY XML
+    dom = etree.parse(buffer, parser)
+    # dom.getroot() = <rpc_reply .... > ... </rpc_reply>
+    mainContents = dom.getroot()
+    # alright, lets get all the important data with the following recursion
+    parsed = self.__getChildren(mainContents, self.RPC_NAMESPACE)
+    if not data:
+      self.__rpc_reply_formatted = parsed
+    return parsed
+
+  def _invoke_rpc (self, request_data):
+    """
+    This function is devoted to call an RPC, and parses the rpc-reply message
+    (if needed) and returns every important parts of it in as a dictionary.
+    Any further additional rpc-input can be passed towards, if netconf agent
+    has this input list, called 'options'. Switches is used for connectVNF
+    rpc in order to set the switches where the vnf should be connected.
+    """
+    # SENDING THE CREATED RPC XML to the server
+    # rpc_reply = without .xml the reply has GetReply type
+    # rpc_reply = with .xml we convert it to xml-string
+    try:
+      # we set our global variable's value to this xml-string therefore,
+      # last RPC will always be accessible
+      self.__rpc_reply_as_xml = self.__connection.dispatch(request_data).xml
+      return self.__rpc_reply_as_xml
+    except (RPCError, TransportError, OperationError):
+      raise
 
   def __remove_namespace (self, xml_element, namespace=None):
     """
@@ -179,51 +272,53 @@ class AbstractNETCONFAdapter(object):
           elem.tag = elem.tag[len(ns):]
     return xml_element
 
-  def _create_rpc_body (self, rpc_name, options=None, switches=None, **params):
+  def __parse_rpc_params (self, rpc_request, params):
     """
-    This function is devoted to create a raw RPC request message in XML format.
-    Any further additional rpc-input can be passed towards, if netconf agent
-    has this input list, called 'options'. Switches is used for connectVNF
-    rpc in order to set the switches where the vnf should be connected.
+    Parse given keyword arguments and generate RPC body in proper XML format.
+    The key value is used as the XML tag name. If the value is another
+    dictionary the XML structure follows the hierarchy. The param values can
+    be only simple types and dictionary for simplicity. Convertation example::
 
-    :param rpc_name: rpc name
-    :type rpc_name: str
-    :param options: additional RPC input in the specific <options> tag
-    :type options: dict
-    :param switches: set the switches where the vnf should be connected
-    :type switches: list
-    :param params: input params for the RPC using param's name as XML tag name
+      {
+        'vnf_type': 'headerDecompressor',
+        'options': {
+                    'name': 'ip',
+                    'value': 127.0.0.1
+                    }
+      }
+
+    is generated into::
+
+      <rpc-call-name>
+        <vnf_type>headerDecompressor</vnf_type>
+        <options>
+          <name>ip</name>
+          <value>127.0.0.1</value>
+        </options>
+      </rpc-call-name>
+
+    :param rpc_request: empty RPC request
+    :type rpc_request: :class:`lxml.etree.ElementTree`
+    :param params: RPC call argument given in a dictionary
     :type params: dict
-    :return: raw RPC message in XML format
-    :rtype: str
+    :return: parsed params in XML format (lxml library)
+    :rtype: :class:`lxml.etree.ElementTree`
     """
-    # create the desired xml element
-    xsd_fetch = new_ele(rpc_name)
-    # set the namespace of your rpc
-    xsd_fetch.set('xmlns', self.RPC_NAMESPACE)
-    # set input params if they were set
-    for k, v in params.iteritems():
-      if isinstance(v, list):
-        for element in v:
-          sub_ele(xsd_fetch, k).text = str(element)
-      else:
-        sub_ele(xsd_fetch, k).text = str(v)
-    # setting options if they were sent
-    if options is not None:
-      for k, v in options.iteritems():
-        option_list = sub_ele(xsd_fetch, "options")
-        sub_ele(option_list, "name").text = k
-        sub_ele(option_list, "value").text = v
-    # processing switches list
-    if switches is not None:
-      for switch in switches:
-        sub_ele(xsd_fetch, "switch_id").text = switch
-    # we need to remove the confusing netconf namespaces with our own function
-    rpc_request = self.__remove_namespace(xsd_fetch, self.NETCONF_NAMESPACE)
-    # show how the created rpc message looks like
-    if self.__debug:
-      print "Generated raw RPC message:\n", etree.tostring(rpc_request,
-                                                           pretty_print=True)
+
+    def parseChild (parent, part):
+      for key, value in part.iteritems():
+        if isinstance(value, dict):
+          node = sub_ele(parent, key)
+          # Need to go deeper -> recursion
+          parseChild(node, value)
+        else:
+          node = sub_ele(parent, key)
+          node.text = str(value)
+
+    if isinstance(params, dict):
+      parseChild(rpc_request, params)
+    else:
+      raise RuntimeError("params must be a dictionary!")
     return rpc_request
 
   def __getChildren (self, element, namespace=None):
@@ -268,53 +363,18 @@ class AbstractNETCONFAdapter(object):
         parsed[key] = val
     return parsed
 
-  def rpc (self, rpc_name, options=None, switches=None, autoparse=True,
-       **params):
+  def call_RPC (self, rpc_name, **params):
     """
-    This function is devoted to call an RPC, and parses the rpc-reply message
-    (if needed) and returns every important parts of it in as a dictionary.
-    Any further additional rpc-input can be passed towards, if netconf agent
-    has this input list, called 'options'. Switches is used for connectVNF
-    rpc in order to set the switches where the vnf should be connected.
+    Call an RPC given by rpc_name
 
-    :param rpc_name: RPC function name
+    :param rpc_name: RPC name
     :type rpc_name: str
-    :param options: additional RPC input
-    :type options: dict
-    :param switches: set the switches where the vnf should be connected
-    :type switches: list
-    :param autoparse: automatically parse the rpc-reply (default: True)
-    :type autoparse: bool
-    :param params: additional input params for the RPC
-    :type params: dict
+    :return: RPC reply
+    :rtype: dict
     """
-    request_data = self._create_rpc_body(rpc_name, options, switches, **params)
-    # SENDING THE CREATED RPC XML to the server
-    # rpc_reply = without .xml the reply has GetReply type
-    # rpc_reply = with .xml we convert it to xml-string
-    try:
-      # we set our global variable's value to this xml-string therefore,
-      # last RPC will always be accessible
-      self.__rpc_reply_as_xml = self.__connection.dispatch(request_data).xml
-    except (RPCError, TransportError, OperationError):
-      raise
-    # we have now the rpc-reply if autoparse is False, then we can gratefully
-    # break the process of this function and return the rpc-reply
-    if not autoparse:
-      return self.__rpc_reply_as_xml
-    # in order to handle properly the rpc-reply as an xml element we need to
-    # create a new xml_element from it, since another BRAINFUCK arise around
-    # namespaces
-    # CREATE A PARSER THAT GIVES A SHIT FOR NAMESPACE
-    parser = etree.XMLParser(ns_clean=True)
-    # PARSE THE NEW RPC-REPLY XML
-    dom = etree.parse(StringIO(self.__rpc_reply_as_xml), parser)
-    # dom.getroot() = <rpc_reply .... > ... </rpc_reply>
-    mainContents = dom.getroot()
-    # alright, lets get all the important data with the following recursion
-    parsed = self.__getChildren(mainContents, self.RPC_NAMESPACE)
-    self.__rpc_reply_formatted = parsed
-    return self.__rpc_reply_formatted
+    request_data = self._create_rpc_request(rpc_name, **params)
+    self._invoke_rpc(request_data)
+    return self._parse_rpc_response()
 
   def __enter__ (self):
     """
@@ -337,16 +397,39 @@ class AbstractNETCONFAdapter(object):
       self.disconnect()
 
 
-class VNFRemoteManager(AbstractNETCONFAdapter):
+class VNFStarterManager(AbstractNETCONFAdapter):
   """
   This class is devoted to provide netconf specific callback functions and
-  covering the background of how the netconf agent and the client work
+  covering the background of how the netconf agent and the client work.
+
+  .. seealso::
+      vnf_starter.yang
   """
   # RPC namespace
   RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'
 
   def __init__ (self, **kwargs):
-    super(VNFRemoteManager, self).__init__(**kwargs)
+    super(VNFStarterManager, self).__init__(**kwargs)
+
+  # RPC calls starts here
+
+  def initiateVNF (self):
+    pass
+
+  def connectVNF (self):
+    pass
+
+  def disconnectVNF (self):
+    pass
+
+  def startVNF (self):
+    pass
+
+  def stopVNF (self):
+    pass
+
+  def getVNFInfo (self):
+    pass
 
 
 if __name__ == "__main__":
@@ -360,8 +443,8 @@ if __name__ == "__main__":
   print "-" * 60
   print "Connecting..."
   # vrm.connect()
-  with VNFRemoteManager(server='192.168.12.128', port=830, username='mininet',
-                        password='mininet', debug=True) as vrm:
+  with VNFStarterManager(server='192.168.12.128', port=830, username='mininet',
+                         password='mininet', debug=True) as vrm:
     print "Connected"
     print "-" * 60
     print "Get config"
@@ -373,14 +456,17 @@ if __name__ == "__main__":
     # call rpc getVNFInfo
     print "-" * 60
     print "Call getVNFInfo..."
-    reply = vrm.rpc('getVNFInfo')
+    reply = vrm.call_RPC('getVNFInfo')
     print "-" * 60
     print "Reply:"
     pprint(reply)
     print "-" * 60
     print "Call initiateVNF..."
-    reply = vrm.rpc("initiateVNF", vnf_type="headerDecompressor",
-                    options={"ip": "127.0.0.1"})
+    try:
+      reply = vrm.call_RPC("initiateVNF", vnf_type="headerDecompressor",
+                           options={"ip": "127.0.0.1"})
+    except RPCError as e:
+      pprint(e.__dict__)
     print "-" * 60
     print "Reply:"
     pprint(reply)
@@ -392,7 +478,7 @@ if __name__ == "__main__":
     # pprint(reply)
     # print "-" * 60
     print "Call stopVNF..."
-    reply = vrm.rpc("stopVNF", vnf_id='1')
+    reply = vrm.call_RPC("stopVNF", vnf_id='1')
     print "-" * 60
     print "Reply:"
     pprint(reply)
