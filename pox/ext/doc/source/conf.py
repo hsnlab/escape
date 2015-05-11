@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.abspath('../../..'))  # pox dir to handle lib/...
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx',
-              'sphinx.ext.ifconfig', 'sphinx.ext.viewcode', ]
+              'sphinx.ext.ifconfig', ] #  'sphinx.ext.viewcode'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
