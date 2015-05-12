@@ -197,11 +197,13 @@ class ServiceLayerAPI(AbstractAPI):
       try:
         handler_cfg = getattr(importlib.import_module(self.__module__),
                               CONFIG[LAYER_NAME]['REQUEST-handler'])
-        if issubclass(handler, AbstractRequestHandler):
-          handler = handler_cfg
-        else:
-          log.warning("REST handler is not subclass of AbstractRequestHandler, "
-                      "fall back to %s" % handler.__name__)
+        assert issubclass(handler,
+                          AbstractRequestHandler), "REST handler is not " \
+                                                   "subclass of " \
+                                                   "AbstractRequestHandler " \
+                                                   "fall back to %s" % \
+                                                   handler.__name__
+        handler = handler_cfg
       except AttributeError:
         log.warning(
           "Request handler: %s is not found in module: escape.util.api, "

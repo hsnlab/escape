@@ -314,10 +314,8 @@ class AbstractNETCONFAdapter(object):
           node = sub_ele(parent, key)
           node.text = str(value)
 
-    if isinstance(params, dict):
-      parseChild(rpc_request, params)
-    else:
-      raise RuntimeError("params must be a dictionary!")
+    assert isinstance(params, dict), "params must be a dictionary!"
+    parseChild(rpc_request, params)
     return rpc_request
 
   def __getChildren (self, element, namespace=None):

@@ -85,11 +85,10 @@ class SimpleStandaloneHelper(object):
     :type cover_name: str
     """
     super(SimpleStandaloneHelper, self).__init__()
-    if isinstance(container, EventMixin):
-      self._container = weakref.proxy(container)
-      self._cover_name = cover_name
-    else:
-      raise TypeError("container is not subclass of EventMixin")
+    assert isinstance(container,
+                      EventMixin), "container is not subclass of EventMixin"
+    self._container = weakref.proxy(container)
+    self._cover_name = cover_name
     self._register_listeners()
 
   def _register_listeners (self):

@@ -31,7 +31,7 @@ import os.path
 import threading
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
-from escape import __version__
+from escape import __version__, CONFIG
 from escape.util.misc import SimpleStandaloneHelper
 from pox.lib.revent import EventMixin
 from pox.core import core
@@ -135,6 +135,11 @@ class AbstractAPI(EventMixin):
     # Everything is set up an "running" so register the component on pox.core
     # as a final step. Other dependent component can finish initialization now.
     core.core.register(self._core_name, self)
+    # Set "running" config for convenience purposes
+    try:
+      CONFIG[self._core_name]["LOADED"] = True
+    except KeyError:
+      CONFIG[self._core_name] = {"LOADED": True}
 
   def initialize (self):
     """

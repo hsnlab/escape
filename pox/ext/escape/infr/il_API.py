@@ -14,6 +14,7 @@
 """
 Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet
 """
+from escape import CONFIG
 from escape.infr import LAYER_NAME
 from escape.util.api import AbstractAPI
 from escape.infr import log as log  # Infrastructure layer logger
@@ -49,7 +50,7 @@ class InfrastructureLayerAPI(AbstractAPI):
       :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Infrastructure Layer...")
-
+    CONFIG[self._core_name] = {"LOADED": True}
     log.info("Infrastructure Layer has been initialized!")
 
   def shutdown (self, event):
@@ -62,3 +63,9 @@ class InfrastructureLayerAPI(AbstractAPI):
   ##############################################################################
   # UNIFY Co - Rm API functions starts here
   ##############################################################################
+
+  def install_route (self):
+    """
+    ???
+    """
+    pass

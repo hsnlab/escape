@@ -188,7 +188,7 @@ class OpenStackDomainAdapter(AbstractDomainAdapter):
     pass
 
 
-class DockerAdapter(AbstractDomainAdapter):
+class DockerDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication component in a Docker domain
 
@@ -201,7 +201,7 @@ class DockerAdapter(AbstractDomainAdapter):
     """
     Init
     """
-    super(DockerAdapter, self).__init__()
+    super(DockerDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
   def install (self, nffg):

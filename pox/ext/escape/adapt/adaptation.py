@@ -28,8 +28,10 @@ import weakref
 
 from escape import CONFIG
 from escape.adapt import LAYER_NAME
+from escape.infr import LAYER_NAME as infr_name
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
-from escape.adapt.domain_adapters import AbstractDomainAdapter
+from escape.adapt.domain_adapters import AbstractDomainAdapter, \
+  POXDomainAdapter, InternalDomainAdapter
 from escape.adapt import log as log
 from escape.util.nffg import NFFG
 
@@ -42,7 +44,7 @@ class ControllerAdapter(object):
   # Default adapters
   _adapters = {}
 
-  def __init__ (self):
+  def __init__ (self, lazy_load=False):
     """
     Initialize Controller adapter
 
@@ -60,20 +62,51 @@ class ControllerAdapter(object):
     super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.domainResManager = DomainResourceManager()
-    for adapter_name in CONFIG[LAYER_NAME]:
-      adapter_class = getattr(
-        importlib.import_module("escape.adapt.domain_adapters"),
-        CONFIG[LAYER_NAME][adapter_name])
-      if issubclass(adapter_class, AbstractDomainAdapter):
-        adapter = adapter_class()
-        # Set initialized adapter
-        self._adapters[adapter_name] = adapter
-        # Set up listeners
-        adapter.addListeners(self)
-      else:
-        raise AttributeError(
-          "Adapter class: %s is not subclass of AbstractDomainAdapter!" %
-          adapter_class.__name__)
+    self._lazy_load = lazy_load
+    if not lazy_load:
+      # Initiate adapters from CONFIG
+      for adapter_name in CONFIG[LAYER_NAME]:
+        self.__load_adapter(adapter_name)
+    else:
+      # Initiate default adapters. Other adapters will be created right after
+      # the first reference to them
+      self._adapters[POXDomainAdapter.name] = POXDomainAdapter()
+      try:
+        if CONFIG[infr_name]["LOADED"]:
+          self._adapters[InternalDomainAdapter.name] = InternalDomainAdapter()
+      except KeyError:
+        pass
+
+  def __getattr__ (self, item):
+    """
+    Expose adapters with it's names as an attribute of this class
+
+    :param item: name of the adapter defined in it's class
+    :type item: str
+    :return: given domain adapter
+    :rtype: AbstractDomainAdapter
+    """
+    if item in self._adapters:
+      return self._adapters[item]
+    elif self._lazy_load:
+      self.__load_adapter(item)
+    else:
+      raise AttributeError("No adapter is defined with the name: %s" % item)
+
+  def __load_adapter (self, name):
+    adapter_class = getattr(
+      importlib.import_module("escape.adapt.domain_adapters"),
+      CONFIG[LAYER_NAME][name])
+    assert issubclass(adapter_class,
+                      AbstractDomainAdapter), "Adapter class: %s is not " \
+                                              "subclass of " \
+                                              "AbstractDomainAdapter!" % \
+                                              adapter_class.__name__
+    adapter = adapter_class()
+    # Set initialized adapter
+    self._adapters[name] = adapter
+    # Set up listeners
+    adapter.addListeners(self)
 
   def install_nffg (self, mapped_nffg):
     """

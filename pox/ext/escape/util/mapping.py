@@ -26,7 +26,6 @@ import threading
 from escape import CONFIG
 from escape.service import LAYER_NAME as SAS
 from escape.orchest import LAYER_NAME as ROS
-
 from escape.util.misc import call_as_coop_task
 from pox.lib.revent.revent import EventMixin
 from pox import core
@@ -113,11 +112,11 @@ class AbstractMapper(EventMixin):
       self._threaded = False
     # Set strategy
     if strategy is not None:
-      if issubclass(strategy, AbstractMappingStrategy):
-        self.strategy = strategy
-      else:
-        raise AttributeError(
-          "Mapping strategy is not subclass of AbstractMappingStrategy!")
+      assert issubclass(strategy,
+                        AbstractMappingStrategy), "Mapping strategy is not " \
+                                                  "subclass of " \
+                                                  "AbstractMappingStrategy!"
+      self.strategy = strategy
     elif 'STRATEGY' in CONFIG[layer_name]:
       if layer_name == SAS:
         strategy_class = getattr(
@@ -130,11 +129,11 @@ class AbstractMapper(EventMixin):
       else:
         raise AttributeError(
           "Layer name: %s is not defined in CONFIG" % layer_name)
-      if issubclass(strategy_class, AbstractMappingStrategy):
-        self.strategy = strategy_class
-      else:
-        raise AttributeError(
-          "Mapping strategy is not subclass of AbstractMappingStrategy!")
+      assert issubclass(strategy_class,
+                        AbstractMappingStrategy), "Mapping strategy is not " \
+                                                  "subclass of " \
+                                                  "AbstractMappingStrategy!"
+      self.strategy = strategy_class
     else:
       self.strategy = self._defaults[layer_name]
     super(AbstractMapper, self).__init__()
