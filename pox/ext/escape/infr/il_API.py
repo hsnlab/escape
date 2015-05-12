@@ -17,16 +17,21 @@ Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet
 from escape.infr import LAYER_NAME
 from escape.util.api import AbstractAPI
 from escape.infr import log as log  # Infrastructure layer logger
+from pox.lib.revent import Event
 
 
-class InfrastuctureLayerAPI(AbstractAPI):
+class DeploymentFinishedEvent(Event):
+  pass
+
+
+class InfrastructureLayerAPI(AbstractAPI):
   """
 
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {}
+  _eventMixin_events = {DeploymentFinishedEvent}
   # Dependencies
   # None
 
@@ -36,7 +41,7 @@ class InfrastuctureLayerAPI(AbstractAPI):
       :func:`AbstractAPI.__init__() <escape.util.api.AbstractAPI.__init__>`
     """
     log.info("Starting Infrastructure Layer...")
-    super(InfrastuctureLayerAPI, self).__init__(standalone, **kwargs)
+    super(InfrastructureLayerAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
     """
@@ -54,4 +59,6 @@ class InfrastuctureLayerAPI(AbstractAPI):
     """
     log.info("Infrastructure Layer is going down...")
 
+  ##############################################################################
   # UNIFY Co - Rm API functions starts here
+  ##############################################################################

@@ -230,7 +230,9 @@ class ServiceLayerAPI(AbstractAPI):
     """
     self._instantiate_NFFG(event.nffg)
 
+  ##############################################################################
   # UNIFY U - Sl API functions starts here
+  ##############################################################################
 
   @schedule_as_coop_task
   def request_service (self, sg):

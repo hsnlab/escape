@@ -173,7 +173,7 @@ class VNFStarterManager(AbstractNETCONFAdapter):
 
   def __init__ (self, **kwargs):
     super(VNFStarterManager, self).__init__(**kwargs)
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init VNFStarterManager")
 
   # RPC calls starts here
 

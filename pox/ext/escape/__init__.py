@@ -28,6 +28,7 @@ CONFIG = {'service': {  # Service Adaptation Sublayer
                               'STRATEGY': 'ESCAPEMappingStrategy',
                               'THREADED': True},  # Run ROS mapping in thread
           'adaptation': {  # Controller Adaptation Sublayer
-                           'POX': 'POXDomainAdapter',  # POX Adapter
+                           'POX': 'POXDomainAdapter',  # Internal POX Adapter
+                           'IL': "InternalDomainAdapter", # Internal Adapter
                            'MN': 'MininetDomainAdapter',  # Mininet Adapter
                            'OS': 'OpenStackDomainAdapter'}}  # OpenStack Adapter

@@ -37,7 +37,7 @@ from pox.lib.revent.revent import Event
 
 class InstallNFFGEvent(Event):
   """
-  Event for passing mapped :class:`NFFG <escape.util.nffg.NFFG>` to  Controller
+  Event for passing mapped :class:`NFFG <escape.util.nffg.NFFG>` to Controller
   Adaptation Sublayer
   """
 
@@ -75,6 +75,13 @@ class GetGlobalResInfoEvent(Event):
   pass
 
 
+class InstantiationFinishedEvent(Event):
+  """
+  Event for signalling end of mapping process finished with success
+  """
+  pass
+
+
 class ResourceOrchestrationAPI(AbstractAPI):
   """
   Entry point for Resource Orchestration Sublayer (ROS)
@@ -87,7 +94,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   _core_name = LAYER_NAME
   # Events raised by this class
   _eventMixin_events = {InstallNFFGEvent, GetGlobalResInfoEvent,
-                        VirtResInfoEvent}
+                        VirtResInfoEvent, InstantiationFinishedEvent}
   # Dependencies
   dependencies = ('adaptation',)
 
@@ -129,7 +136,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     self._install_NFFG(event.nffg)
 
+  ##############################################################################
   # UNIFY Sl- Or API functions starts here
+  ##############################################################################
 
   @schedule_as_coop_task
   def _handle_InstantiateNFFGEvent (self, event):
@@ -184,7 +193,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.getChild('API').debug("Sending back virtual resource info...\n")
     self.raiseEventNoErrors(VirtResInfoEvent, view)
 
+  ##############################################################################
   # UNIFY Or - Ca API functions starts here
+  ##############################################################################
 
   def _handle_MissingGlobalViewEvent (self, event):
     """

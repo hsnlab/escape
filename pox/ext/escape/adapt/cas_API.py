@@ -50,9 +50,26 @@ class GlobalResInfoEvent(Event):
 
 class InstallationFinishedEvent(Event):
   """
-  Event class for signalling end of mapping process finished with success
+  Event for signalling end of mapping process finished with success
   """
   pass
+
+
+class DeployNFFGEvent(Event):
+  """
+  Event for passing mapped :class:`NFFG <escape.util.nffg.NFFG>` to
+  internally emulated network (Mininet) for testing
+  """
+
+  def __init__ (self, mapped_nffg):
+    """
+    Init
+
+    :param mapped_nffg: NF-FG graph need to be installed
+    :type mapped_nffg: NFFG
+    """
+    super(DeployNFFGEvent, self).__init__()
+    self.mapped_nffg = mapped_nffg
 
 
 class ControllerAdaptationAPI(AbstractAPI):
@@ -66,7 +83,8 @@ class ControllerAdaptationAPI(AbstractAPI):
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {GlobalResInfoEvent, InstallationFinishedEvent}
+  _eventMixin_events = {GlobalResInfoEvent, InstallationFinishedEvent,
+                        DeployNFFGEvent}
   # Dependencies
   # None
 
@@ -101,7 +119,9 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.info("Controller Adaptation Sublayer is going down...")
 
+  ##############################################################################
   # UNIFY Or - Ca API functions starts here
+  ##############################################################################
 
   @schedule_as_coop_task
   def _handle_InstallNFFGEvent (self, event):

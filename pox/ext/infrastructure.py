@@ -18,7 +18,7 @@ Initiate appropriate API class which emulate Co-Rm reference point
 
 Follows POX module conventions
 """
-from escape.infr.il_API import InfrastuctureLayerAPI
+from escape.infr.il_API import InfrastructureLayerAPI
 from pox.core import core
 import pox.lib.util as poxutil
 
@@ -35,7 +35,7 @@ def _start_layer (event):
   :return: None
   """
   # Instantiate the API class and register into pox.core only once
-  InfrastuctureLayerAPI(**init_param)
+  InfrastructureLayerAPI(**init_param)
 
 
 @poxutil.eval_args
