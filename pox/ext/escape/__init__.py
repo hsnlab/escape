@@ -23,12 +23,13 @@ __version__ = '2.0.0'
 CONFIG = {'service': {  # Service Adaptation Sublayer
                         'STRATEGY': 'DefaultServiceMappingStrategy',
                         'REQUEST-handler': 'ServiceRequestHandler',
-                        'THREADED': True},  # Run SAS mapping in thread
+                        'THREADED': True},
           'orchestration': {  # Resource Orchestration Sublayer
                               'STRATEGY': 'ESCAPEMappingStrategy',
-                              'THREADED': True},  # Run ROS mapping in thread
+                              'THREADED': True},
           'adaptation': {  # Controller Adaptation Sublayer
-                           'POX': 'POXDomainAdapter',  # Internal POX Adapter
-                           'IL': "InternalDomainAdapter", # Internal Adapter
-                           'MN': 'MininetDomainAdapter',  # Mininet Adapter
-                           'OS': 'OpenStackDomainAdapter'}}  # OpenStack Adapter
+                           'POX': 'POXDomainAdapter',
+                           'INTERNAL': "InternalDomainAdapter",
+                           'MININET': 'MininetDomainAdapter',
+                           'OPENSTACK': 'OpenStackDomainAdapter',
+                           'DOCKER': "DockerAdapter"}}

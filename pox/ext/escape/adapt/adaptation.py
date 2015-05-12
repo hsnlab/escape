@@ -40,8 +40,7 @@ class ControllerAdapter(object):
   between multiple domains
   """
   # Default adapters
-  _defaults = {'POX': 'POXDomainAdapter', 'MN': 'MininetDomainAdapter',
-               'OS': 'OpenStackDomainAdapter'}
+  _adapters = {}
 
   def __init__ (self):
     """
@@ -61,23 +60,20 @@ class ControllerAdapter(object):
     super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.domainResManager = DomainResourceManager()
-    for adapter in self._defaults.iterkeys():
-      if adapter in CONFIG[LAYER_NAME]:
-        adapter_class = getattr(
-          importlib.import_module("escape.adapt.domain_adapters"),
-          CONFIG[LAYER_NAME][adapter])
-        if issubclass(adapter_class, AbstractDomainAdapter):
-          da = adapter_class()
-          # Set initialized adapter
-          setattr(self, adapter, adapter_class())
-          # Set up listeners
-          da.addListeners(self)
-        else:
-          raise AttributeError(
-            "Adapter class: %s is not subclass of AbstractDomainAdapter!" %
-            adapter_class.__name__)
+    for adapter_name in CONFIG[LAYER_NAME]:
+      adapter_class = getattr(
+        importlib.import_module("escape.adapt.domain_adapters"),
+        CONFIG[LAYER_NAME][adapter_name])
+      if issubclass(adapter_class, AbstractDomainAdapter):
+        adapter = adapter_class()
+        # Set initialized adapter
+        self._adapters[adapter_name] = adapter
+        # Set up listeners
+        adapter.addListeners(self)
       else:
-        setattr(self, adapter, None)
+        raise AttributeError(
+          "Adapter class: %s is not subclass of AbstractDomainAdapter!" %
+          adapter_class.__name__)
 
   def install_nffg (self, mapped_nffg):
     """

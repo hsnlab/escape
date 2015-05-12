@@ -58,6 +58,8 @@ class AbstractDomainAdapter(EventMixin):
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
+  # Adapter name used in CONFIG and ControllerAdapter class
+  name = None
 
   def __init__ (self):
     """
@@ -77,43 +79,19 @@ class AbstractDomainAdapter(EventMixin):
 
   def notify_change (self):
     """
-    Notify other components (ControllerAdapter) about changes in specific domain
+    Notify other components (ControllerAdapter) about changes in actual domain
     """
     raise NotImplementedError("Derived class have to override this function")
 
 
-class MininetDomainAdapter(AbstractDomainAdapter):
-  """
-  Adapter class to handle communication with Mininet
-
-  .. warning::
-    Not implemented yet!
-  """
-
-  def __init__ (self):
-    """
-    Init
-    """
-    super(MininetDomainAdapter, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
-
-  def install (self, nffg):
-    log.info("Install Mininet domain part...")
-    # TODO - implement
-    pass
-
-  def notify_change (self):
-    # TODO - implement
-    pass
-
-
 class POXDomainAdapter(AbstractDomainAdapter):
   """
-  Adapter class to handle communication with POX OpenFlow controller
+  Adapter class to handle communication with internal POX OpenFlow controller
 
   .. warning::
     Not implemented yet!
   """
+  name = "POX"
 
   def __init__ (self):
     """
@@ -132,13 +110,66 @@ class POXDomainAdapter(AbstractDomainAdapter):
     pass
 
 
-class OpenStackDomainAdapter(AbstractDomainAdapter):
+class InternalDomainAdapter(AbstractDomainAdapter):
   """
-  Adapter class to handle communication with OpenStack
+  Adapter class to handle communication with internally emulated network
 
   .. warning::
     Not implemented yet!
   """
+  name = "INTERNAL"
+
+  def __init__ (self):
+    """
+    Init
+    """
+    super(InternalDomainAdapter, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
+
+  def install (self, nffg):
+    log.info("Install Internal domain part...")
+    # TODO - implement
+    pass
+
+  def notify_change (self):
+    # TODO - implement
+    pass
+
+
+class MininetDomainAdapter(AbstractDomainAdapter):
+  """
+  Adapter class to handle communication with external Mininet domain
+
+  .. warning::
+    Not implemented yet!
+  """
+  name = "MNININET"
+
+  def __init__ (self):
+    """
+    Init
+    """
+    super(MininetDomainAdapter, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
+
+  def install (self, nffg):
+    log.info("Install Mininet domain part...")
+    # TODO - implement
+    pass
+
+  def notify_change (self):
+    # TODO - implement
+    pass
+
+
+class OpenStackDomainAdapter(AbstractDomainAdapter):
+  """
+  Adapter class to handle communication with OpenStack domain
+
+  .. warning::
+    Not implemented yet!
+  """
+  name = "OPENSTACK"
 
   def __init__ (self):
     """
@@ -149,6 +180,32 @@ class OpenStackDomainAdapter(AbstractDomainAdapter):
 
   def install (self, nffg):
     log.info("Install OpenStack domain part...")
+    # TODO - implement
+    pass
+
+  def notify_change (self):
+    # TODO - implement
+    pass
+
+
+class DockerAdapter(AbstractDomainAdapter):
+  """
+  Adapter class to handle communication component in a Docker domain
+
+  .. warning::
+    Not implemented yet!
+  """
+  name = "DOCKER"
+
+  def __init__ (self):
+    """
+    Init
+    """
+    super(DockerAdapter, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
+
+  def install (self, nffg):
+    log.info("Install Docker domain part...")
     # TODO - implement
     pass
 
