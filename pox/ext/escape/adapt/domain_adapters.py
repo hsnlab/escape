@@ -27,6 +27,7 @@ other different domains
 """
 from escape.adapt import log as log
 from escape.util.netconf import AbstractNETCONFAdapter
+from pox.core import core
 from pox.lib.revent import Event, EventMixin
 
 
@@ -93,11 +94,17 @@ class POXDomainAdapter(AbstractDomainAdapter):
   """
   name = "POX"
 
-  def __init__ (self):
+  def __init__ (self, name=None, of_port=6633, of_address="0.0.0.0"):
     """
     Init
     """
     super(POXDomainAdapter, self).__init__()
+    # Launch OpenFlow connection handler if not started before with given name
+    from pox.openflow.of_01 import launch
+
+    launch(name=name, port=of_port, address=of_address)
+    # register OpenFlow event listeners
+    core.openflow.addListeners(self)
     log.debug("Init %s" % self.__class__.__name__)
 
   def install (self, nffg):
@@ -107,6 +114,12 @@ class POXDomainAdapter(AbstractDomainAdapter):
 
   def notify_change (self):
     # TODO - implement
+    pass
+
+  def _handle_ConnectionUp(self, event):
+    pass
+
+  def _handle_ConnectionDown(self, event):
     pass
 
 

@@ -205,7 +205,7 @@ class RESTServer(HTTPServer, ThreadingMixIn):
   Initiate an :class:`HTTPServer` and run it in different thread
   """
 
-  def __init__ (self, RequestHandlerClass, address, port):
+  def __init__ (self, RequestHandlerClass, address='127.0.0.1', port=8008):
     """
       Set up an :class:`BaseHTTPServer.HTTPServer` in a different
       thread

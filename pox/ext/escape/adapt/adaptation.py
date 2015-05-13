@@ -44,7 +44,7 @@ class ControllerAdapter(object):
   # Default adapters
   _adapters = {}
 
-  def __init__ (self, lazy_load=False):
+  def __init__ (self, lazy_load=True):
     """
     Initialize Controller adapter
 
