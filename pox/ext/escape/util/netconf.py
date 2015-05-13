@@ -16,6 +16,7 @@ Requirements::
 
   sudo apt-get install python-setuptools python-paramiko python-lxml \
   python-libxml2 python-libxslt1 libxml2 libxslt1-dev
+
   sudo pip install ncclient
 
 Implement the supporting classes for communication over NETCONF
@@ -228,7 +229,7 @@ class AbstractNETCONFAdapter(object):
     # dom.getroot() = <rpc_reply .... > ... </rpc_reply>
     mainContents = dom.getroot()
     # alright, lets get all the important data with the following recursion
-    parsed = self.__getChildren(mainContents, self.RPC_NAMESPACE)
+    parsed = self.__parse_xml_response(mainContents, self.RPC_NAMESPACE)
     if not data:
       self.__rpc_reply_formatted = parsed
     return parsed
@@ -240,6 +241,11 @@ class AbstractNETCONFAdapter(object):
     Any further additional rpc-input can be passed towards, if netconf agent
     has this input list, called 'options'. Switches is used for connectVNF
     rpc in order to set the switches where the vnf should be connected.
+
+    :param request_data: data for RPC request body
+    :type request_data: dict
+    :return: raw RPC response
+    :rtype: :class:`lxml.etree.ElementTree`
     """
     # SENDING THE CREATED RPC XML to the server
     # rpc_reply = without .xml the reply has GetReply type
@@ -259,10 +265,11 @@ class AbstractNETCONFAdapter(object):
     "definition not found error" if OWN modules and RPCs are being used
 
     :param xml_element: XML element
-    :type xml_element: str
+    :type xml_element: :class:`lxml.etree.ElementTree`
     :param namespace: namespace
-    :type namespace: str
+    :type namespace: :class:`lxml.etree.ElementTree`
     :return: cleaned XML elemenet
+    :rtype: :class:`lxml.etree.ElementTree`
     """
     if namespace is not None:
       ns = u'{%s}' % namespace
@@ -286,7 +293,7 @@ class AbstractNETCONFAdapter(object):
                     }
       }
 
-    is generated into::
+    will be generated into::
 
       <rpc-call-name>
         <vnf_type>headerDecompressor</vnf_type>
@@ -314,19 +321,20 @@ class AbstractNETCONFAdapter(object):
           node = sub_ele(parent, key)
           node.text = str(value)
 
-    assert isinstance(params, dict), "params must be a dictionary!"
+    assert isinstance(params, dict), "'params' must be a dictionary!"
     parseChild(rpc_request, params)
     return rpc_request
 
-  def __getChildren (self, element, namespace=None):
+  def __parse_xml_response (self, element, namespace=None):
     """
     This is an inner function, which is devoted to automatically analyze the
     rpc-reply message and iterate through all the xml elements until the last
     child is found, and then create a dictionary. Return a dict with the
-    parsed data.
+    parsed data. If the reply is OK the returned dict contains an `rcp-reply`
+    element with value `OK`.
 
     :param element: XML element
-    :type element: str
+    :type element: :class:`lxml.etree.ElementTree`
     :param namespace: namespace
     :type: str
     :return: parsed XML data
@@ -338,7 +346,7 @@ class AbstractNETCONFAdapter(object):
     for i in element.iterchildren():
       if i.getchildren():
         # still has children! Go one level deeper with recursion
-        val = self.__getChildren(i, namespace)
+        val = self.__parse_xml_response(i, namespace)
         key = i.tag.replace(namespace, "")
       else:
         # if <ok/> is the child, then it has only <rpc-reply> as ancestor
@@ -360,18 +368,31 @@ class AbstractNETCONFAdapter(object):
         parsed[key] = val
     return parsed
 
-  def call_RPC (self, rpc_name, **params):
+  def call_RPC (self, rpc_name, no_rpc_error=False, **params):
     """
-    Call an RPC given by rpc_name
+    Call an RPC given by rpc_name. If `no_rpc_error` is set returns with a
+    dict instead of raising :class:`RPCError`
 
     :param rpc_name: RPC name
     :type rpc_name: str
+    :param no_rpc_error: return with dict represent RPC error instead of
+    exception
+    :type no_rpc_error: bool
     :return: RPC reply
     :rtype: dict
     """
-    request_data = self._create_rpc_request(rpc_name, **params)
-    self._invoke_rpc(request_data)
-    return self._parse_rpc_response()
+    try:
+      request_data = self._create_rpc_request(rpc_name, **params)
+      self._invoke_rpc(request_data)
+      return self._parse_rpc_response()
+    except RPCError as e:
+      print "rpcerror"
+      if no_rpc_error:
+        result = {"rpc-reply": "Error"}
+        result.update(e.to_dict())
+        return result
+      else:
+        raise
 
   def __enter__ (self):
     """
