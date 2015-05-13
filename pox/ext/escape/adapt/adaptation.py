@@ -86,27 +86,38 @@ class ControllerAdapter(object):
     :return: given domain adapter
     :rtype: AbstractDomainAdapter
     """
-    if item in self._adapters:
-      return self._adapters[item]
-    elif self._lazy_load:
-      self.__load_adapter(item)
-    else:
-      raise AttributeError("No adapter is defined with the name: %s" % item)
+    try:
+      if not item.startswith('__'):
+        return self._adapters[item]
+    except KeyError:
+      if self._lazy_load:
+        return self.__load_adapter(item)
+      else:
+        raise AttributeError("No adapter is defined with the name: %s" % item)
 
   def __load_adapter (self, name):
-    adapter_class = getattr(
-      importlib.import_module("escape.adapt.domain_adapters"),
-      CONFIG[LAYER_NAME][name])
-    assert issubclass(adapter_class,
-                      AbstractDomainAdapter), "Adapter class: %s is not " \
-                                              "subclass of " \
-                                              "AbstractDomainAdapter!" % \
-                                              adapter_class.__name__
-    adapter = adapter_class()
-    # Set initialized adapter
-    self._adapters[name] = adapter
-    # Set up listeners
-    adapter.addListeners(self)
+    try:
+      adapter_class = getattr(
+        importlib.import_module("escape.adapt.domain_adapters"),
+        CONFIG[LAYER_NAME][name])
+      assert issubclass(adapter_class,
+                        AbstractDomainAdapter), "Adapter class: %s is not " \
+                                                "subclass of " \
+                                                "AbstractDomainAdapter!" % \
+                                                adapter_class.__name__
+      adapter = adapter_class()
+      # Set initialized adapter
+      self._adapters[name] = adapter
+      # Set up listeners
+      adapter.addListeners(self)
+      return adapter
+    except KeyError as e:
+      log.error(
+        "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
+    except AttributeError:
+      log.error(
+        "%s is not found. Skip adapter initialization!" % CONFIG[LAYER_NAME][
+          name])
 
   def install_nffg (self, mapped_nffg):
     """

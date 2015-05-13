@@ -32,4 +32,4 @@ CONFIG = {'service': {  # Service Adaptation Sublayer
                            'INTERNAL': "InternalDomainAdapter",
                            'MININET': 'MininetDomainAdapter',
                            'OPENSTACK': 'OpenStackDomainAdapter',
-                           'DOCKER': "DockerAdapter"}}
+                           'DOCKER': "DockerDomainAdapter"}}
