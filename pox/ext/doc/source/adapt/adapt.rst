@@ -1,10 +1,10 @@
-*escape* package
-================
+*escape.adapt* package
+======================
 
 Package contents
 ----------------
 
-.. automodule:: escape
+.. automodule:: escape.adapt
    :members:
    :private-members:
    :special-members:
@@ -18,10 +18,7 @@ Submodules
 .. toctree::
     :titlesonly:
 
-    service/service
-    orchest/orchest
-    adapt/adapt
-    infr/infr
-    util/util
-
+    adaptation
+    cas_API
+    domain_adapters
 

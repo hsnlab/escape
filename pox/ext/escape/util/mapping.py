@@ -13,12 +13,6 @@
 # limitations under the License.
 """
 Contains abstract classes for NFFG mapping
-
-:class:`AbstractMapper` is an abstract class for orchestration method which
-should implement mapping preparations and invoke actual mapping algorithm
-
-:class:`AbstractMappingStrategy` is an abstract class for containing entirely
-the mapping algorithm as a class method
 """
 import importlib
 import threading

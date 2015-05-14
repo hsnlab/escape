@@ -14,16 +14,6 @@
 """
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer
-
-:class:`InstallNFFGEvent` can send mapped NF-FG to the lower layer
-
-:class:`VirtResInfoEvent` can send back virtual resource info requested from
-upper layer
-
-:class:`GetGlobalResInfoEvent` can request global resource info from lower layer
-
-:class:`ResourceOrchestrationAPI` represents the ROS layer and implement all
-related functionality
 """
 import repr
 

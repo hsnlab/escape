@@ -13,11 +13,6 @@
 # limitations under the License.
 """
 Contains classes which implement SG mapping functionality
-
-:class:`DefaultServiceMappingStrategy` implements a default mapping algorithm
-which map given SG on a single Bis-Bis
-
-:class:`ServiceGraphMapper` perform the supplementary tasks for SG mapping
 """
 
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper

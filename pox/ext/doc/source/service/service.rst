@@ -1,10 +1,10 @@
-*escape* package
-================
+*escape.service* package
+========================
 
 Package contents
 ----------------
 
-.. automodule:: escape
+.. automodule:: escape.service
    :members:
    :private-members:
    :special-members:
@@ -18,10 +18,7 @@ Submodules
 .. toctree::
     :titlesonly:
 
-    service/service
-    orchest/orchest
-    adapt/adapt
-    infr/infr
-    util/util
-
-
+    element_mgmt
+    sas_mapping
+    sas_API
+    sas_orchestration

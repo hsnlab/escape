@@ -14,12 +14,6 @@
 """
 Contains classes which implement :class:`NFFG <escape.util.nffg.NFFG>`
 mapping functionality
-
-:class:`ESCAPEMappingStrategy` implements a default :class:`NFFG
-<escape.util.nffg.NFFG>` mapping algorithm of ESCAPEv2
-
-:class:`ResourceOrchestrationMapper` perform the supplementary tasks for
-:class:`NFFG <escape.util.nffg.NFFG>` mapping
 """
 
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy

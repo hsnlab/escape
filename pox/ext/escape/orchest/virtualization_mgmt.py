@@ -13,15 +13,6 @@
 # limitations under the License.
 """
 Contains components relevant to virtualization of resources and views
-
-:class:`AbstractVirtualizer
-<escape.orchest.virtualization_mgmt.AbstractVirtualizer>` contains the  central
-logic of Virtualizers
-
-:class:`ESCAPEVirtualizer` implement the standard virtualization logic of the
-Resource Orchestration Sublayer
-
-:class:`VirtualizerManager` stores and handles the virtualizers
 """
 from escape.util.nffg import NFFG
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass

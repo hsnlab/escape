@@ -13,17 +13,6 @@
 # limitations under the License.
 """
 Contains miscellaneous helper functions
-
-:func:`schedule_as_coop_task()` helps invoking a function in POX's cooperative
-microtask environment
-
-:func:`call_as_coop_task()` hides POC core functionality and schedule a
-function in
-the coop microtask environment directly
-
-:class:`SimpleStandaloneHelper` is a helper class for mimic a minimal layer
-API as a
-dependency for other layer APIs to handles events
 """
 from functools import wraps
 import weakref
@@ -119,3 +108,28 @@ class SimpleStandaloneHelper(object):
     core.getLogger("StandaloneHelper").getChild(self._cover_name).info(
       "Got event: %s from %s Layer" % (
         event.__class__.__name__, str(event.source._core_name).title()))
+
+
+def enum (*sequential, **named):
+  """
+  Helper function to define enumeration. E.g.:
+
+  .. code-block:: python
+
+    >>> Numbers = enum(ONE=1, TWO=2, THREE='three')
+    >>> Numbers = enum('ZERO', 'ONE', 'TWO')
+    >>> Numbers.ONE
+    1
+    >>> Numbers.reversed[2]
+    'TWO'
+
+  :param sequential: support automatic enumeration
+  :type sequential: list
+  :param named: support definition with unique keys
+  :type named: dict
+  :return: Enum object
+  :rtype: dict
+  """
+  enums = dict(zip(sequential, range(len(sequential))), **named)
+  enums['reversed'] = dict((value, key) for key, value in enums.iteritems())
+  return type('enum', (), enums)

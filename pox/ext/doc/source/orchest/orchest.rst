@@ -1,10 +1,10 @@
-*escape* package
-================
+*escape.orchest* package
+========================
 
 Package contents
 ----------------
 
-.. automodule:: escape
+.. automodule:: escape.orchest
    :members:
    :private-members:
    :special-members:
@@ -18,10 +18,8 @@ Submodules
 .. toctree::
     :titlesonly:
 
-    service/service
-    orchest/orchest
-    adapt/adapt
-    infr/infr
-    util/util
-
-
+    policy_enforcement
+    ros_orchestration
+    ros_API
+    ros_mapping
+    virtualization_mgmt

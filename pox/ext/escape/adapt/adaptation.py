@@ -12,16 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contain classes relevant to the main adaptation function of the Controlller
+Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
-
-:class:`ControllerAdapter` implements the centralized functionality of
-high-level adaptation and installation of :class:`NFFG <escape.util.nffg.NFFG>`
-
-:class:`DomainVirtualizer` implement the standard virtualization/generalization
-logic of the Resource Orchestration Sublayer
-
-:class:`DomainResourceManager` stores and handles the global Virtualizer
 """
 import importlib
 import weakref

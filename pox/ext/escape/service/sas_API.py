@@ -14,16 +14,6 @@
 """
 Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer
-
-:class:`InstantiateNFFGEvent` can send NF-FG to the lower layer
-
-:class:`GetVirtResInfoEvent` can request virtual resource info from lower layer
-
-:class:`ServiceRequestHandler` implement the specific REST API functionality
-thereby realizes the UNIFY's U - Sl API
-
-:class:`ServiceLayerAPI` represents the SAS layer and implement all related
-functionality
 """
 import importlib
 import inspect

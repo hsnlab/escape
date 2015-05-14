@@ -12,18 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Requirements::
-
-  sudo apt-get install python-setuptools python-paramiko python-lxml \
-  python-libxml2 python-libxslt1 libxml2 libxslt1-dev
-
-  sudo pip install ncclient
-
 Implement the supporting classes for communication over NETCONF
-
-:class:`AbstractNETCONFAdapter` contains the main function for communication
-over NETCONF such as managing SSH channel, handling configuration, assemble
-RPC request and parse RPC reply
 """
 from lxml import etree
 from StringIO import StringIO
@@ -375,8 +364,7 @@ class AbstractNETCONFAdapter(object):
 
     :param rpc_name: RPC name
     :type rpc_name: str
-    :param no_rpc_error: return with dict represent RPC error instead of
-    exception
+    :param no_rpc_error: return with dict (RPC error) instead of exception
     :type no_rpc_error: bool
     :return: RPC reply
     :rtype: dict

@@ -13,10 +13,6 @@
 # limitations under the License.
 """
 Contains classes relevant to element management
-
-:class:`AbstractElementManager` is an abstract class for element managers
-
-:class:`ClickManager` represent the interface to Click elements
 """
 
 

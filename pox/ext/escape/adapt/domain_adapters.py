@@ -14,18 +14,9 @@
 """
 Contains Adapter classes which represent the connections between ESCAPEv2 and
 other different domains
-
-:class:`AbstractDomainAdapter` contains general logic for actual Adapters
-
-:class:`MininetDomainAdapter` implements Mininet related functionality
-
-:class:`POXDomainAdapter` implements POX related functionality
-
-:class:`OpenStackDomainAdapter` implements OpenStack related functionality
-
-:class:`VNFStarterManager` is a wrapper class for vnf_starter NETCONF module
 """
 from escape.adapt import log as log
+from escape.util.misc import enum
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.core import core
 from pox.lib.revent import Event, EventMixin
@@ -33,22 +24,31 @@ from pox.lib.revent import Event, EventMixin
 
 class DomainChangedEvent(Event):
   """
-  Event class for signaling some kind of change(s) in specific domain
+  Event class for signaling all kind of change(s) in specific domain
+
+  This event's purpose is to hide the domain specific operations and give a
+  general and unified way to signal domain changes to ControllerAdapter in
+  order to handle all the changes in the same function/algorithm
   """
+
+  type = enum('DEVICE_UP', 'DEVICE_DOWN', 'LINK_UP', 'LINK_DOWN')
 
   def __init__ (self, domain, cause, data=None):
     """
     Init event object
 
-    :param domain: domain name
+    :param domain: domain name. Should be :any:`AbstractDomainAdapter.name`
     :type domain: str
-    :param cause: type of the domain change
+    :param cause: type of the domain change: :any:`DomainChangedEvent.type`
     :type cause: str
     :param data: data connected to the change (optional)
     :type data: object
     :return: None
     """
     super(DomainChangedEvent, self).__init__()
+    self.domain = domain
+    self.cause = cause
+    self.data = data
 
 
 class AbstractDomainAdapter(EventMixin):
@@ -78,19 +78,10 @@ class AbstractDomainAdapter(EventMixin):
     """
     raise NotImplementedError("Derived class have to override this function")
 
-  def notify_change (self):
-    """
-    Notify other components (ControllerAdapter) about changes in actual domain
-    """
-    raise NotImplementedError("Derived class have to override this function")
-
 
 class POXDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with internal POX OpenFlow controller
-
-  .. warning::
-    Not implemented yet!
   """
   name = "POX"
 
@@ -105,6 +96,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     launch(name=name, port=of_port, address=of_address)
     # register OpenFlow event listeners
     core.openflow.addListeners(self)
+    self._connections = []
     log.debug("Init %s" % self.__class__.__name__)
 
   def install (self, nffg):
@@ -112,15 +104,39 @@ class POXDomainAdapter(AbstractDomainAdapter):
     # TODO - implement
     pass
 
-  def notify_change (self):
-    # TODO - implement
-    pass
+  def filter_connections (self, event):
+    """
+    Handle which connection should be handled by this Adapter class.
 
-  def _handle_ConnectionUp(self, event):
-    pass
+    This adapter accept every OpenFlow connection by default.
 
-  def _handle_ConnectionDown(self, event):
-    pass
+    :param event: POX internal ConnectionUp event (event.dpid, event.connection)
+    :type event: :class:`pox.openflow.ConnectionUp`
+    :return: True os False obviously
+    :rtype: bool
+    """
+    return True
+
+  def _handle_ConnectionUp (self, event):
+    """
+    Handle incoming OpenFlow connections
+    """
+    if self.filter_connections(event):
+      self._connections.append(event.connection)
+    e = DomainChangedEvent(domain=self.name,
+                           cause=DomainChangedEvent.type.DEVICE_UP,
+                           data={"DPID": event.dpid})
+    self.raiseEventNoErrors(e)
+
+  def _handle_ConnectionDown (self, event):
+    """
+    Handle disconnected device
+    """
+    self._connections.remove(event.connection)
+    e = DomainChangedEvent(domain=self.name,
+                           cause=DomainChangedEvent.type.DEVICE_DOWN,
+                           data={"DPID": event.dpid})
+    self.raiseEventNoErrors(e)
 
 
 class InternalDomainAdapter(AbstractDomainAdapter):
@@ -141,10 +157,6 @@ class InternalDomainAdapter(AbstractDomainAdapter):
 
   def install (self, nffg):
     log.info("Install Internal domain part...")
-    # TODO - implement
-    pass
-
-  def notify_change (self):
     # TODO - implement
     pass
 
@@ -170,10 +182,6 @@ class MininetDomainAdapter(AbstractDomainAdapter):
     # TODO - implement
     pass
 
-  def notify_change (self):
-    # TODO - implement
-    pass
-
 
 class OpenStackDomainAdapter(AbstractDomainAdapter):
   """
@@ -193,10 +201,6 @@ class OpenStackDomainAdapter(AbstractDomainAdapter):
 
   def install (self, nffg):
     log.info("Install OpenStack domain part...")
-    # TODO - implement
-    pass
-
-  def notify_change (self):
     # TODO - implement
     pass
 
@@ -222,10 +226,6 @@ class DockerDomainAdapter(AbstractDomainAdapter):
     # TODO - implement
     pass
 
-  def notify_change (self):
-    # TODO - implement
-    pass
-
 
 class VNFStarterManager(AbstractNETCONFAdapter):
   """
@@ -233,7 +233,7 @@ class VNFStarterManager(AbstractNETCONFAdapter):
   module. Documentation is transferred from vnf_starter.yang
 
   .. seealso::
-      vnf_starter.yang
+      :file:`vnf_starter.yang`
 
   This class is devoted to start and stop CLICK-based VNFs that will be
   connected to a mininet switch.

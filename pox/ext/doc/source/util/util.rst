@@ -1,10 +1,10 @@
-*escape* package
-================
+*escape.util* package
+=====================
 
 Package contents
 ----------------
 
-.. automodule:: escape
+.. automodule:: escape.util
    :members:
    :private-members:
    :special-members:
@@ -18,10 +18,8 @@ Submodules
 .. toctree::
     :titlesonly:
 
-    service/service
-    orchest/orchest
-    adapt/adapt
-    infr/infr
-    util/util
-
-
+    api
+    mapping
+    misc
+    netconf
+    nffg

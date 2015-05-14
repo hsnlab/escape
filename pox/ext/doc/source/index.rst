@@ -45,15 +45,7 @@ Class structure
 .. toctree::
     :maxdepth: 1
 
-    ESCAPEv2 <escape>
-
-Top module
-++++++++++
-
-.. toctree::
-    :maxdepth: 1
-
-    UNIFY <unify>
+    ESCAPEv2 <top>
 
 Main modules for layers/sublayers
 +++++++++++++++++++++++++++++++++
@@ -61,10 +53,11 @@ Main modules for layers/sublayers
 .. toctree::
     :maxdepth: 1
 
-          Service layer <service>
-          Resource Orchestration sublayer <orchestration>
-          Controller Adaptation sublayer <adaptation>
-          Infrastructure layer <infrastructure>
+    UNIFY <unify>
+    Service layer <service>
+    Resource Orchestration sublayer <orchestration>
+    Controller Adaptation sublayer <adaptation>
+    Infrastructure layer <infrastructure>
 
 README
 ++++++

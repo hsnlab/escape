@@ -14,12 +14,6 @@
 """
 Implements the platform and POX dependent logic for the Controller Adaptation
 Sublayer
-
-:class:`GlobalResInfoEvent` can send back global resource info requested from
-upper layer
-
-:class:`ControllerAdaptationAPI` represents the CAS layer and implement all
-related functionality
 """
 import repr
 

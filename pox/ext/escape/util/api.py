@@ -13,16 +13,6 @@
 # limitations under the License.
 """
 Contains abstract classes for concrete layer API modules
-
-:class:`AbstractAPI` contains the register mechanism into the POX core for
-layer APIs, the event handling/registering logic and defines the general
-functions for initialization and finalization steps
-
-:class:`RESTServer` is a general HTTP server which parse HTTP request and
-forward to explicitly given request handler
-
-:class:`AbstractRequestHandler` is a base class for concrete request handling.
-It implements the general URL and request body parsing functions
 """
 from SocketServer import ThreadingMixIn
 import urlparse

@@ -1,10 +1,10 @@
-*escape* package
-================
+*escape.infr* package
+=====================
 
 Package contents
 ----------------
 
-.. automodule:: escape
+.. automodule:: escape.infr
    :members:
    :private-members:
    :special-members:
@@ -18,10 +18,5 @@ Submodules
 .. toctree::
     :titlesonly:
 
-    service/service
-    orchest/orchest
-    adapt/adapt
-    infr/infr
-    util/util
-
+    il_API
 
