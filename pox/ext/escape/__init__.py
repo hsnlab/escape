@@ -28,8 +28,8 @@ CONFIG = {'service': {  # Service Adaptation Sublayer
                               'STRATEGY': 'ESCAPEMappingStrategy',
                               'THREADED': True},
           'adaptation': {  # Controller Adaptation Sublayer
+                           'INTERNAL': "InternalDomainManager",
                            'POX': 'POXDomainAdapter',
-                           'INTERNAL': "InternalDomainAdapter",
                            'MININET': 'MininetDomainAdapter',
                            'OPENSTACK': 'OpenStackDomainAdapter',
                            'DOCKER': "DockerDomainAdapter"}}

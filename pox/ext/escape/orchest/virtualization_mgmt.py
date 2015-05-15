@@ -37,7 +37,7 @@ class AbstractVirtualizer(object):
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource object derived from
-    :class:`NFFG <escape.util.nffg.NFFG>`
+    :any:`NFFG`
 
     .. warning::
       Derived class have to override this function
@@ -74,7 +74,7 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource object derived from
-    :class:`NFFG <escape.util.nffg.NFFG>`
+    :any:`NFFG`
 
     :return: virtual resource info
     :rtype: NFFG

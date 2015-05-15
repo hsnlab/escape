@@ -44,26 +44,30 @@ class GlobalResInfoEvent(Event):
 
 class InstallationFinishedEvent(Event):
   """
-  Event for signalling end of mapping process finished with success
+  Event for signalling end of mapping process
   """
-  pass
+
+  def __init__ (self, success, error=None):
+    super(InstallationFinishedEvent, self).__init__()
+    self.success = success
+    self.error = error
 
 
 class DeployNFFGEvent(Event):
   """
-  Event for passing mapped :class:`NFFG <escape.util.nffg.NFFG>` to
-  internally emulated network (Mininet) for testing
+  Event for passing mapped :any:`NFFG>` to internally emulated network (
+  Mininet) for testing
   """
 
-  def __init__ (self, mapped_nffg):
+  def __init__ (self, nffg_part):
     """
     Init
 
-    :param mapped_nffg: NF-FG graph need to be installed
-    :type mapped_nffg: NFFG
+    :param nffg_part: NF-FG graph need to be installed
+    :type nffg_part: NFFG
     """
     super(DeployNFFGEvent, self).__init__()
-    self.mapped_nffg = mapped_nffg
+    self.mapped_nffg = nffg_part
 
 
 class ControllerAdaptationAPI(AbstractAPI):
@@ -101,7 +105,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Controller Adaptation Sublayer...")
-    self.controller_adapter = ControllerAdapter()
+    self.controller_adapter = ControllerAdapter(self, with_infr=self._with_infr)
     if self._mapped_nffg_file:
       self._read_json_from_file(self.mapped_nffg_file)
     log.info("Controller Adaptation Sublayer has been initialized!")
@@ -123,7 +127,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     Install mapped NF-FG (UNIFY Or - Ca API)
 
     :param event: event object contains mapped NF-FG
-    :type event: InstallNFFGEvent
+    :type event: :any:`InstallNFFGEvent`
     :return: None
     """
     log.getChild('API').info("Received mapped NF-FG from %s Layer" % str(
@@ -139,13 +143,40 @@ class ControllerAdaptationAPI(AbstractAPI):
     Generate global resource info and send back to ROS
 
     :param event: event object
-    :type event: GetGlobalResInfoEvent
+    :type event: :any:`GetGlobalResInfoEvent`
     :return: None
     """
     log.getChild('API').debug(
       "Received global resource info request from %s layer" % str(
         event.source._core_name).title())
     # Currently global view is a Virtualizer to keep ESCAPE fast
-    log.getChild('API').debug("Sending back global resource info...\n")
+    log.getChild('API').debug("Sending back global resource info...")
     self.raiseEventNoErrors(GlobalResInfoEvent,
                             self.controller_adapter.domainResManager.dov)
+
+  ##############################################################################
+  # UNIFY ( Ca - ) Co - Rm API functions starts here
+  ##############################################################################
+
+  def _handle_DeployEvent (self, event):
+    """
+    Receive processed NF-FG from domain adapter(s) and forward to Infrastructure
+
+    :param event: event object
+    :type event: :any:`DeployNFFGEvent`
+    :return:None
+    """
+    # Sending NF-FG to Infrastructure layer as an Event
+    # Exceptions in event handlers are caught by default in a non-blocking way
+    log.getChild('API').info(
+      "Processed NF-FG has been sent to Infrastructure...")
+    self.raiseEventNoErrors(DeployNFFGEvent, event.nffg_part)
+
+  def _handle_DeploymentFinishedEvent (self, event):
+    if event.success:
+      log.getChild('API').info(
+        "NF-FG installation has been finished successfully!")
+    else:
+      log.getChild('API').warning(
+        "NF-FG installation has been finished with error: " % event.error)
+    self.raiseEventNoErrors(InstallationFinishedEvent, event.success)

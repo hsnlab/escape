@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains classes which implement :class:`NFFG <escape.util.nffg.NFFG>`
+Contains classes which implement :any:`NFFG`
 mapping functionality
 """
 
@@ -24,8 +24,8 @@ from pox.lib.revent.revent import Event
 
 class ESCAPEMappingStrategy(AbstractMappingStrategy):
   """
-  Implement a strategy to map initial :class:`NFFG <escape.util.nffg.NFFG>`
-  into extended :class:`NFFG <escape.util.nffg.NFFG>`
+  Implement a strategy to map initial :any:`NFFG`
+  into extended :any:`NFFG`
   """
 
   def __init__ (self):

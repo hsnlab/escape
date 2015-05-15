@@ -51,6 +51,16 @@ class DomainChangedEvent(Event):
     self.data = data
 
 
+class DeployEvent(Event):
+  """
+  Event class for signaling NF-FG deployment to layer API
+  """
+
+  def __init__ (self, nffg_part):
+    super(DeployEvent, self).__init__()
+    self.nffg_part = nffg_part
+
+
 class AbstractDomainAdapter(EventMixin):
   """
   Abstract class for different domain adapters
@@ -58,7 +68,7 @@ class AbstractDomainAdapter(EventMixin):
   Follows the Adapter design pattern (Adaptor base class)
   """
   # Events raised by this class
-  _eventMixin_events = {DomainChangedEvent}
+  _eventMixin_events = {DomainChangedEvent, DeployEvent}
   # Adapter name used in CONFIG and ControllerAdapter class
   name = None
 
@@ -68,12 +78,12 @@ class AbstractDomainAdapter(EventMixin):
     """
     super(AbstractDomainAdapter, self).__init__()
 
-  def install (self, nffg):
+  def install (self, nffg_part):
     """
     Intall domain specific part of a mapped NFFG
 
-    :param nffg: domain specific slice of mapped NFFG
-    :type nffg: NFFG
+    :param nffg_part: domain specific slice of mapped NFFG
+    :type nffg_part: NFFG
     :return: None
     """
     raise NotImplementedError("Derived class have to override this function")
@@ -98,11 +108,6 @@ class POXDomainAdapter(AbstractDomainAdapter):
     core.openflow.addListeners(self)
     self._connections = []
     log.debug("Init %s" % self.__class__.__name__)
-
-  def install (self, nffg):
-    log.info("Install POX domain part...")
-    # TODO - implement
-    pass
 
   def filter_connections (self, event):
     """
@@ -138,8 +143,14 @@ class POXDomainAdapter(AbstractDomainAdapter):
                            data={"DPID": event.dpid})
     self.raiseEventNoErrors(e)
 
+  def install (self, nffg_part):
+    log.info("Install POX domain part...")
+    # TODO - implement
+    # dummy reply
+    self.raiseEventNoErrors(DeployEvent, nffg_part)
 
-class InternalDomainAdapter(AbstractDomainAdapter):
+
+class InternalDomainManager(AbstractDomainAdapter):
   """
   Adapter class to handle communication with internally emulated network
 
@@ -152,10 +163,10 @@ class InternalDomainAdapter(AbstractDomainAdapter):
     """
     Init
     """
-    super(InternalDomainAdapter, self).__init__()
+    super(InternalDomainManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
-  def install (self, nffg):
+  def install (self, nffg_part):
     log.info("Install Internal domain part...")
     # TODO - implement
     pass
@@ -177,7 +188,7 @@ class MininetDomainAdapter(AbstractDomainAdapter):
     super(MininetDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
-  def install (self, nffg):
+  def install (self, nffg_part):
     log.info("Install Mininet domain part...")
     # TODO - implement
     pass
@@ -199,7 +210,7 @@ class OpenStackDomainAdapter(AbstractDomainAdapter):
     super(OpenStackDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
-  def install (self, nffg):
+  def install (self, nffg_part):
     log.info("Install OpenStack domain part...")
     # TODO - implement
     pass
@@ -221,7 +232,7 @@ class DockerDomainAdapter(AbstractDomainAdapter):
     super(DockerDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
-  def install (self, nffg):
+  def install (self, nffg_part):
     log.info("Install Docker domain part...")
     # TODO - implement
     pass

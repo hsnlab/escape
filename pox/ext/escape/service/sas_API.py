@@ -259,7 +259,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
     log.getChild('API').info(
-      "Generated NF-FG has been sent to Orchestration...\n")
+      "Generated NF-FG has been sent to Orchestration...")
 
   # UNIFY Sl - Or API functions starts here
 
@@ -277,7 +277,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.getChild('API').debug(
       "Send virtual resource info request(with layer ID: %s) to Orchestration "
-      "layer...\n" % self.__sid)
+      "layer..." % self.__sid)
     self.raiseEventNoErrors(GetVirtResInfoEvent, self.__sid)
 
   def _handle_VirtResInfoEvent (self, event):
@@ -293,3 +293,11 @@ class ServiceLayerAPI(AbstractAPI):
       "Received virtual resource info from %s layer" % str(
         event.source._core_name).title())
     self.service_orchestrator.virtResManager.virtual_view = event.resource_info
+
+  def _handle_InstantiationFinishedEvent (self, event):
+    if event.success:
+      log.getChild('API').info(
+        "Service request has been finished successfully!")
+    else:
+      log.getChild('API').info(
+        "Service request has been finished with error: %s" % event.error)

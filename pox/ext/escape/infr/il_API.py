@@ -18,11 +18,19 @@ from escape import CONFIG
 from escape.infr import LAYER_NAME
 from escape.util.api import AbstractAPI
 from escape.infr import log as log  # Infrastructure layer logger
+from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent import Event
 
 
 class DeploymentFinishedEvent(Event):
-  pass
+  """
+  Event for signaling NF-FG deployment
+  """
+
+  def __init__ (self, success, error=None):
+    super(DeploymentFinishedEvent, self).__init__()
+    self.success = success
+    self.error = error
 
 
 class InfrastructureLayerAPI(AbstractAPI):
@@ -64,8 +72,28 @@ class InfrastructureLayerAPI(AbstractAPI):
   # UNIFY Co - Rm API functions starts here
   ##############################################################################
 
+  @schedule_as_coop_task
+  def _handle_DeployNFFGEvent (self, event):
+    """
+    Install mapped NFFG part into the emulated network
+
+    :param event:event object
+    :return: :any:`DeployNFFGEvent`
+    """
+    log.getChild('API').info("Received mapped NF-FG from %s Layer" % str(
+      event.source._core_name).title())
+    # TODO - implement deployment
+    log.getChild('API').info("NF-FG deployment has been finished successfully!")
+    self.raiseEventNoErrors(DeploymentFinishedEvent, True)
+
   def install_route (self):
-    """
-    ???
-    """
+    pass
+
+  def setup_network (self):
+    pass
+
+  def start_network (self):
+    pass
+
+  def stop_network (self):
     pass

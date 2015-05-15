@@ -30,7 +30,7 @@ class ResourceOrchestrator(object):
     Initialize main Resource Orchestration Layer components
 
     :param layer_API: layer API instance
-    :type layer_API: ResourceOrchestrationAPI
+    :type layer_API: :any:`ResourceOrchestrationAPI`
     :return: None
     """
     super(ResourceOrchestrator, self).__init__()

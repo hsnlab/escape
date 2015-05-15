@@ -2,7 +2,7 @@
 ======================
 
 :any:`ControllerAdapter` implements the centralized functionality of
-high-level adaptation and installation of :class:`NFFG <escape.util.nffg.NFFG>`
+high-level adaptation and installation of :any:`NFFG`
 
 :any:`DomainVirtualizer` implement the standard virtualization/generalization
 logic of the Resource Orchestration Sublayer
