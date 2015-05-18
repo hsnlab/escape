@@ -89,7 +89,7 @@ class InfrastructureLayerAPI(AbstractAPI):
   def install_route (self):
     pass
 
-  def setup_network (self):
+  def setup_network (self, network_data):
     pass
 
   def start_network (self):

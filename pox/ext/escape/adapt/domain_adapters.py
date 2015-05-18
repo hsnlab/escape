@@ -95,15 +95,20 @@ class POXDomainAdapter(AbstractDomainAdapter):
   """
   name = "POX"
 
-  def __init__ (self, name=None, of_port=6633, of_address="0.0.0.0"):
+  def __init__ (self, of_name=None, of_address="0.0.0.0", of_port=6633):
     """
     Init
     """
     super(POXDomainAdapter, self).__init__()
+    self.nexus = of_name
+    self.controller_address = (of_address, of_port)
     # Launch OpenFlow connection handler if not started before with given name
+    # launch() return the registered openflow module which is a coop Task
     from pox.openflow.of_01 import launch
 
-    launch(name=name, port=of_port, address=of_address)
+    of = launch(name=of_name, address=of_address, port=of_port)
+    # Start listening for OpenFlow connections
+    of.start()
     # register OpenFlow event listeners
     core.openflow.addListeners(self)
     self._connections = []
@@ -126,6 +131,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     """
     Handle incoming OpenFlow connections
     """
+    log.debug("Handle connection by %s" % self.__class__.__name__)
     if self.filter_connections(event):
       self._connections.append(event.connection)
     e = DomainChangedEvent(domain=self.name,
@@ -137,6 +143,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     """
     Handle disconnected device
     """
+    log.debug("Handle disconnection by %s" % self.__class__.__name__)
     self._connections.remove(event.connection)
     e = DomainChangedEvent(domain=self.name,
                            cause=DomainChangedEvent.type.DEVICE_DOWN,

@@ -36,7 +36,7 @@ class GlobalResInfoEvent(Event):
     Init
 
     :param resource_info: resource info
-    :type resource_info: ESCAPEVirtualizer
+    :type resource_info: :any:`ESCAPEVirtualizer`
     """
     super(GlobalResInfoEvent, self).__init__()
     self.resource_info = resource_info
@@ -55,19 +55,13 @@ class InstallationFinishedEvent(Event):
 
 class DeployNFFGEvent(Event):
   """
-  Event for passing mapped :any:`NFFG>` to internally emulated network (
-  Mininet) for testing
+  Event for passing mapped :any:`NFFG` to internally emulated network based on
+  Mininet for testing
   """
 
   def __init__ (self, nffg_part):
-    """
-    Init
-
-    :param nffg_part: NF-FG graph need to be installed
-    :type nffg_part: NFFG
-    """
     super(DeployNFFGEvent, self).__init__()
-    self.mapped_nffg = nffg_part
+    self.nffg_part = nffg_part
 
 
 class ControllerAdaptationAPI(AbstractAPI):
