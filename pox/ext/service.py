@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ init_param = {}
 
 def _start_layer (event):
   """
-  Initiate and run POX with ESCAPE components
+  Initiate and run Service module
 
   :param event: POX's going up event
   :type event: GoingUpEvent

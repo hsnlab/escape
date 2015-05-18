@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,6 @@
 """
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer
-
-:class:`InstallNFFGEvent` can send mapped NF-FG to the lower layer
-
-:class:`VirtResInfoEvent` can send back virtual resource info requested from
-upper layer
-
-:class:`GetGlobalResInfoEvent` can request global resource info from lower layer
-
-:class:`ResourceOrchestrationAPI` represents the ROS layer and implement all
-related functionality
 """
 import repr
 
@@ -37,7 +27,7 @@ from pox.lib.revent.revent import Event
 
 class InstallNFFGEvent(Event):
   """
-  Event for passing mapped :class:`NFFG <escape.util.nffg.NFFG>` to  Controller
+  Event for passing mapped :any:`NFFG` to Controller
   Adaptation Sublayer
   """
 
@@ -75,6 +65,17 @@ class GetGlobalResInfoEvent(Event):
   pass
 
 
+class InstantiationFinishedEvent(Event):
+  """
+  Event for signalling end of mapping process finished with success
+  """
+
+  def __init__ (self, success, error=None):
+    super(InstantiationFinishedEvent, self).__init__()
+    self.success = success
+    self.error = error
+
+
 class ResourceOrchestrationAPI(AbstractAPI):
   """
   Entry point for Resource Orchestration Sublayer (ROS)
@@ -87,7 +88,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   _core_name = LAYER_NAME
   # Events raised by this class
   _eventMixin_events = {InstallNFFGEvent, GetGlobalResInfoEvent,
-                        VirtResInfoEvent}
+                        VirtResInfoEvent, InstantiationFinishedEvent}
   # Dependencies
   dependencies = ('adaptation',)
 
@@ -98,8 +99,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.info("Starting Resource Orchestration Sublayer...")
     # Mandatory super() call
-    super(ResourceOrchestrationAPI, self).__init__(standalone=standalone,
-                                                   **kwargs)
+    super(ResourceOrchestrationAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
     """
@@ -117,9 +117,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     .. seealso::
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
-    log.info("Resource OrchestrationSublayer is going down...")
+    log.info("Resource Orchestration Sublayer is going down...")
 
-  def _handle_NFFGMappingFinishedEvent(self, event):
+  def _handle_NFFGMappingFinishedEvent (self, event):
     """
     Handle NFFGMappingFinishedEvent and proceed with  :class:`NFFG
     <escape.util.nffg.NFFG>` installation
@@ -130,7 +130,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     self._install_NFFG(event.nffg)
 
+  ##############################################################################
   # UNIFY Sl- Or API functions starts here
+  ##############################################################################
 
   @schedule_as_coop_task
   def _handle_InstantiateNFFGEvent (self, event):
@@ -154,7 +156,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _install_NFFG (self, mapped_nffg):
     """
-    Send mapped :class:`NFFG <escape.util.nffg.NFFG>` to Controller Adaptation
+    Send mapped :any:`NFFG` to Controller Adaptation
     Sublayer in an implementation-specific way
 
     General function which is used from microtask and Python thread also
@@ -166,7 +168,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Sending NF-FG to Adaptation layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
-    log.getChild('API').info("Mapped NF-FG has been sent to Adaptation...\n")
+    log.getChild('API').info("Mapped NF-FG has been sent to Adaptation...")
 
   def _handle_GetVirtResInfoEvent (self, event):
     """
@@ -182,10 +184,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Currently view is a Virtualizer to keep ESCAPE fast
     view = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid)
-    log.getChild('API').debug("Sending back virtual resource info...\n")
+    log.getChild('API').debug("Sending back virtual resource info...")
     self.raiseEventNoErrors(VirtResInfoEvent, view)
 
+  ##############################################################################
   # UNIFY Or - Ca API functions starts here
+  ##############################################################################
 
   def _handle_MissingGlobalViewEvent (self, event):
     """
@@ -198,7 +202,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Send global resource info request to Adaptation layer...\n")
+      "Send global resource info request to Adaptation layer...")
     self.raiseEventNoErrors(GetGlobalResInfoEvent)
 
   def _handle_GlobalResInfoEvent (self, event):
@@ -214,3 +218,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
         event.source._core_name).title())
     self.resource_orchestrator.virtualizerManager.dov = event.resource_info
     pass
+
+  def _handle_InstallationFinishedEvent (self, event):
+    if event.success:
+      log.getChild('API').info(
+        "NF-FG instantiation has been finished successfully!")
+    else:
+      log.getChild('API').info(
+        "NF-FG instantiation has been finished with error: %s" % event.error)
+    self.raiseEventNoErrors(InstantiationFinishedEvent, event.success)

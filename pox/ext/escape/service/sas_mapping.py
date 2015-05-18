@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,6 @@
 # limitations under the License.
 """
 Contains classes which implement SG mapping functionality
-
-:class:`DefaultServiceMappingStrategy` implements a default mapping algorithm
-which map given SG on a single Bis-Bis
-
-:class:`ServiceGraphMapper` perform the supplementary tasks for SG mapping
 """
 
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper

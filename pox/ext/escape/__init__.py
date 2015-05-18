@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ __version__ = '2.0.0'
 CONFIG = {'service': {  # Service Adaptation Sublayer
                         'STRATEGY': 'DefaultServiceMappingStrategy',
                         'REQUEST-handler': 'ServiceRequestHandler',
-                        'THREADED': True},  # Run SAS mapping in thread
+                        'THREADED': True},
           'orchestration': {  # Resource Orchestration Sublayer
                               'STRATEGY': 'ESCAPEMappingStrategy',
-                              'THREADED': True},  # Run ROS mapping in thread
+                              'THREADED': True},
           'adaptation': {  # Controller Adaptation Sublayer
-                           'POX': 'POXDomainAdapter',  # POX Adapter
-                           'MN': 'MininetDomainAdapter',  # Mininet Adapter
-                           'OS': 'OpenStackDomainAdapter'}}  # OpenStack Adapter
+                           'INTERNAL': "InternalDomainManager",
+                           'POX': 'POXDomainAdapter',
+                           'MININET': 'MininetDomainAdapter',
+                           'OPENSTACK': 'OpenStackDomainAdapter',
+                           'DOCKER': "DockerDomainAdapter"}}

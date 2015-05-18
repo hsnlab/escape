@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,6 @@
 # limitations under the License.
 """
 Contains classes relevant to Resource Orchestration Sublayer functionality
-
-:class:`ResourceOrchestrator` orchestrates :class:`NFFG
-<escape.util.nffg.NFFG>` mapping and centralize layer logic
-
-:class:`NFFGManager` stores and handles Network Function Forwarding Graphs
 """
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.orchest import log as log
@@ -35,7 +30,7 @@ class ResourceOrchestrator(object):
     Initialize main Resource Orchestration Layer components
 
     :param layer_API: layer API instance
-    :type layer_API: ResourceOrchestrationAPI
+    :type layer_API: :any:`ResourceOrchestrationAPI`
     :return: None
     """
     super(ResourceOrchestrator, self).__init__()

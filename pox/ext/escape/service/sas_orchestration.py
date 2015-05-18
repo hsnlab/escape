@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,16 +13,6 @@
 # limitations under the License.
 """
 Contains classes relevant to Service Adaptation Sublayer functionality
-
-:class:`ServiceOrchestrator` orchestrates SG mapping and centralize layer logic
-
-:class:`SGManager` stores and handles Service Graphs
-
-:class:`VirtualResourceManager` contains the functionality tided to the
-layer's virtual view and virtual resources
-
-:class:`NFIBManager` handles the Network Function Information Base and hides
-implementation dependent logic
 """
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.service.sas_mapping import ServiceGraphMapper

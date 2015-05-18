@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ init_param = {}
 
 def _start_layer (event):
   """
-  Initiate and run POX with ESCAPE components
+  Initiate and run Adaptation module
 
   :param event: POX's going up event
   :type event: GoingUpEvent
@@ -39,12 +39,14 @@ def _start_layer (event):
 
 
 @poxutil.eval_args
-def launch (mapped_nffg_file='', standalone=False):
+def launch (mapped_nffg_file='', with_infr=False, standalone=False):
   """
   Launch function called by POX core when core is up
 
   :param mapped_nffg_file: Path of the mapped NF-FG graph (optional)
   :type mapped_nffg_file: str
+  :param with_infr: Set Infrastructure as a dependency
+  :type with_infr: bool
   :param standalone: Run layer without dependency checking (optional)
   :type standalone: bool
   :return: None

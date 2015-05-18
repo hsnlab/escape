@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,22 +36,23 @@ def _start_components (event):
   :return: None
   """
   # Launch ESCAPE components
-  # Launch Service Layer (mostly SAS)
   from service import launch
-
+  # Launch Service Layer (mostly SAS)
   launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
-  # Launch Resource Orchestration Sublayer (ROS)
   from orchestration import launch
-
+  # Launch Resource Orchestration Sublayer (ROS)
   launch()
-  # Launch Controller Adaptation Sublayer (CAS)
   from adaptation import launch
-
-  launch()
+  # Launch Controller Adaptation Sublayer (CAS)
+  launch(with_infr=init_param['full'])
+  if init_param['full']:
+    from infrastructure import launch
+    # Launch Infrastructure Layer (IL) optionally
+    launch()
 
 
 @poxutil.eval_args
-def launch (sg_file='', gui=False):
+def launch (sg_file='', gui=False, full=False):
   """
   Launch function called by POX core when core is up
 
@@ -59,6 +60,8 @@ def launch (sg_file='', gui=False):
   :type sg_file: str
   :param gui: Signal for initiate GUI (optional)
   :type gui: bool
+  :param full: Initiate Infrastructure Layer also
+  :type full: bool
   :return: None
   """
   global init_param

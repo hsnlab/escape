@@ -1,5 +1,5 @@
-The *escape* package
-====================
+*escape* package
+================
 
 Package contents
 ----------------
@@ -16,10 +16,12 @@ Submodules
 ----------
 
 .. toctree::
+    :titlesonly:
 
-    escape.service
-    escape.orchest
-    escape.adapt
-    escape.util
+    service/service
+    orchest/orchest
+    adapt/adapt
+    infr/infr
+    util/util
 
 

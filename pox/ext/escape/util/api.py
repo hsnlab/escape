@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,24 +13,15 @@
 # limitations under the License.
 """
 Contains abstract classes for concrete layer API modules
-
-:class:`AbstractAPI` contains the register mechanism into the POX core for
-layer APIs, the event handling/registering logic and defines the general
-functions for initialization and finalization steps
-
-:class:`RESTServer` is a general HTTP server which parse HTTP request and
-forward to explicitly given request handler
-
-:class:`AbstractRequestHandler` is a base class for concrete request handling.
-It implements the general URL and request body parsing functions
 """
+from SocketServer import ThreadingMixIn
 import urlparse
 import json
 import os.path
 import threading
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
-from escape import __version__
+from escape import __version__, CONFIG
 from escape.util.misc import SimpleStandaloneHelper
 from pox.lib.revent import EventMixin
 from pox.core import core
@@ -134,6 +125,11 @@ class AbstractAPI(EventMixin):
     # Everything is set up an "running" so register the component on pox.core
     # as a final step. Other dependent component can finish initialization now.
     core.core.register(self._core_name, self)
+    # Set "running" config for convenience purposes
+    try:
+      CONFIG[self._core_name]["LOADED"] = True
+    except KeyError:
+      CONFIG[self._core_name] = {"LOADED": True}
 
   def initialize (self):
     """
@@ -192,26 +188,27 @@ class AbstractAPI(EventMixin):
       [(f, type(getattr(self, f))) for f in dir(self) if not f.startswith('_')])
 
 
-class RESTServer(object):
+class RESTServer(HTTPServer, ThreadingMixIn):
   """
   Base HTTP server for REST API
 
   Initiate an :class:`HTTPServer` and run it in different thread
   """
 
-  def __init__ (self, RequestHandlerClass, address, port):
+  def __init__ (self, RequestHandlerClass, address='127.0.0.1', port=8008):
     """
-    Set up an :class:`BaseHTTPServer.HTTPServer` in a different
-    thread
+      Set up an :class:`BaseHTTPServer.HTTPServer` in a different
+      thread
 
-    :param RequestHandlerClass: Class of a handler which handles HTTP request
-    :type RequestHandlerClass: AbstractRequestHandler
-    :param address: Used IP address
-    :type address: str
-    :param port: Used port number
-    :type port: int
-    """
-    self._server = HTTPServer((address, port), RequestHandlerClass)
+      :param RequestHandlerClass: Class of a handler which handles HTTP request
+      :type RequestHandlerClass: AbstractRequestHandler
+      :param address: Used IP address
+      :type address: str
+      :param port: Used port number
+      :type port: int
+      """
+    HTTPServer.__init__(self, (address, port), RequestHandlerClass)
+    # self._server = Server((address, port), RequestHandlerClass)
     self._thread = threading.Thread(target=self.run)
     self._thread.daemon = True
     self.started = False
@@ -228,18 +225,40 @@ class RESTServer(object):
     Stop RESTServer thread
     """
     if self.started:
-      self._server.shutdown()
+      self.shutdown()
 
   def run (self):
     """
     Handle one request at a time until shutdown.
     """
-    self._server.RequestHandlerClass.log.debug(
-      "Init REST-API on %s:%d!" % self._server.server_address)
+    self.RequestHandlerClass.log.debug(
+      "Init REST-API on %s:%d!" % self.server_address)
     # Start API loop
-    self._server.serve_forever()
-    self._server.RequestHandlerClass.log.debug(
-      "REST-API on %s:%d is shutting down..." % self._server.server_address)
+    self.serve_forever()
+    self.RequestHandlerClass.log.debug(
+      "REST-API on %s:%d is shutting down..." % self.server_address)
+
+
+class RESTError(Exception):
+  """
+  Exception class for REST errors
+  """
+
+  def __init__ (self, msg=None, code=0):
+    super(RESTError, self).__init__()
+    self._msg = msg
+    self._code = code
+
+  @property
+  def msg (self):
+    return self._msg
+
+  @property
+  def code (self):
+    return int(self._code)
+
+  def __str__ (self):
+    return self._msg
 
 
 class AbstractRequestHandler(BaseHTTPRequestHandler):
@@ -304,18 +323,29 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     self.log.debug("Got HTTP request: %s" % str(self.raw_requestline).rstrip())
     http_method = self.command.upper()
     real_path = urlparse.urlparse(self.path).path
-    if real_path.startswith('/%s/' % self.static_prefix):
-      func_name = real_path.split('/')[2]
-      if http_method in self.request_perm:
-        if func_name in self.request_perm[http_method]:
-          if hasattr(self, func_name):
-            getattr(self, func_name)()
+    try:
+      if real_path.startswith('/%s/' % self.static_prefix):
+        func_name = real_path.split('/')[2]
+        if http_method in self.request_perm:
+          if func_name in self.request_perm[http_method]:
+            if hasattr(self, func_name):
+              getattr(self, func_name)()
+              self.send_acknowledge()
+          else:
+            self.send_error(406)
         else:
-          self.send_error(405)
+          self.send_error(501)
       else:
-        self.send_error(501)
-    else:
-      self.send_error(404)
+        self.send_error(404)
+    except RESTError as e:
+      # Handle all the errors
+      if e.code:
+        self.send_error(e.code, e.msg)
+      else:
+        self.send_error(500, e.msg)
+    finally:
+      self.wfile.flush()
+      self.wfile.close()
 
   def _parse_json_body (self):
     """
@@ -335,17 +365,34 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       splitted_type = self.headers['Content-Type'].split('charset=')
       if len(splitted_type) > 1:
         charset = splitted_type[1]
-      content_len = int(self.headers.getheader('Content-Length', 0))
+      content_len = int(self.headers['Content-Length'])
       raw_data = self.rfile.read(content_len)
       return json.loads(raw_data, encoding=charset)
-    except KeyError:
-      # Content-Length header is not defined or charset is not defined in
-      # Content-Type header. Return empty dictionary.
-      pass
+    except KeyError as e:
+      # Content-Length header is not defined
+      # or charset is not defined in Content-Type header.
+      if e.args[0] == 'Content-Length':
+        # 411: ('Length Required', 'Client must specify Content-Length.'),
+        raise RESTError(code=411)
+      else:
+        raise RESTError(code=412,
+                        msg="Missing header from request: %s" % e.args[0])
     except ValueError as e:
       # Failed to parse request body to JSON
       self.log_error("Request parsing failed: %s", e)
-    return {}
+      raise RESTError(code=415, msg="Request parsing failed: %s" % e)
+
+  def send_REST_headers (self):
+    self.send_header('Allow', ','.join([str(x) for x in self.request_perm]))
+
+  def send_acknowledge (self, msg='{"result": "Accepted"}'):
+    msg.encode("UTF-8")
+    self.send_response(202)
+    self.send_header('Content-Type', 'text/json; charset=UTF-8')
+    self.send_header('Content-Length', len(msg))
+    self.send_REST_headers()
+    self.end_headers()
+    self.wfile.write(msg)
 
   def _send_json_response (self, data, encoding='utf-8'):
     """
@@ -363,6 +410,41 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     self.send_header('Content-Length', len(response_body))
     self.end_headers()
     self.wfile.write(response_body)
+    self.wfile.flush()
+
+  error_content_type = "text/json"
+
+  def send_error (self, code, message=None):
+    """
+    Override original function to send back allowed HTTP verbs and set format
+    to JSON
+    """
+
+    def _quote_html (html):
+      return html.replace("&", "&amp;").replace("<", "&lt;").replace(">",
+                                                                     "&gt;")
+
+    try:
+      short, long = self.responses[code]
+    except KeyError:
+      short, long = '???', '???'
+    if message is None:
+      message = short
+    explain = long
+    self.log_error("code %d, message %s", code, message)
+    # using _quote_html to prevent Cross Site Scripting attacks (see bug
+    # #1100201)
+    content = (
+      self.error_message_format % {'code': code,
+                                   'message': _quote_html(message),
+                                   'explain': explain})
+    self.send_response(code, message)
+    self.send_header("Content-Type", self.error_content_type)
+    self.send_header('Connection', 'close')
+    self.send_REST_headers()
+    self.end_headers()
+    if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
+      self.wfile.write(content)
 
   def log_error (self, mformat, *args):
     """
@@ -403,11 +485,13 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     if core.core.hasComponent(self.bounded_layer):
       layer = core.components[self.bounded_layer]
       if hasattr(layer, function):
-        getattr(layer, function)(*args, **kwargs)
+        return getattr(layer, function)(*args, **kwargs)
       else:
         # raise NotImplementedError
         self.log.warning(
           'Mistyped or not implemented API function call: %s ' % function)
+        raise RESTError(
+          msg='Mistyped or not implemented API function call: %s ' % function)
     else:
-      self.log.error('Error: No componenet has registered with the name: %s, '
+      self.log.error('Error: No component has registered with the name: %s, '
                      'ABORT function call!' % self.bounded_layer)

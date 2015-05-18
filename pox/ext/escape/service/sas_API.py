@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,6 @@
 """
 Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer
-
-:class:`InstantiateNFFGEvent` can send NF-FG to the lower layer
-
-:class:`GetVirtResInfoEvent` can request virtual resource info from lower layer
-
-:class:`ServiceRequestHandler` implement the specific REST API functionality
-thereby realizes the UNIFY's U - Sl API
-
-:class:`ServiceLayerAPI` represents the SAS layer and implement all related
-functionality
 """
 import importlib
 import inspect
@@ -115,7 +105,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
       inspect.currentframe().f_code.co_name,))
     body = self._parse_json_body()
     log.getChild("REST-API").debug("Parsed input: %s" % body)
-    sg = NFFG.init_from_json(body)  # Convert text based SG to object instance
+    sg = NFFG(json=body)  # Initialize NFFG from JSON representation
     self._proceed_API_call('request_service', sg)
 
 
@@ -141,7 +131,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.info("Starting Service Layer...")
     # Mandatory super() call
-    super(ServiceLayerAPI, self).__init__(standalone=standalone, **kwargs)
+    super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
     """
@@ -158,7 +148,7 @@ class ServiceLayerAPI(AbstractAPI):
     if self._sg_file:
       try:
         graph_json = self._read_json_from_file(self._sg_file)
-        sg_graph = NFFG.init_from_json(graph_json)
+        sg_graph = NFFG(json=graph_json)
         self.request_service(sg_graph)
       except (ValueError, IOError, TypeError) as e:
         log.error(
@@ -183,7 +173,7 @@ class ServiceLayerAPI(AbstractAPI):
       self.rest_api.stop()
 
   def _initiate_rest_api (self, handler=ServiceRequestHandler,
-      address='localhost', port=8008):
+       address='localhost', port=8008):
     """
     Initialize and set up REST API in a different thread
 
@@ -191,16 +181,19 @@ class ServiceLayerAPI(AbstractAPI):
     :type address: str
     :param port: port number, default 8008
     :type port: int
+    :return: None
     """
     if 'REQUEST-handler' in CONFIG[LAYER_NAME]:
       try:
         handler_cfg = getattr(importlib.import_module(self.__module__),
                               CONFIG[LAYER_NAME]['REQUEST-handler'])
-        if issubclass(handler, AbstractRequestHandler):
-          handler = handler_cfg
-        else:
-          log.warning("REST handler is not subclass of AbstractRequestHandler, "
-                      "fall back to %s" % handler.__name__)
+        assert issubclass(handler,
+                          AbstractRequestHandler), "REST handler is not " \
+                                                   "subclass of " \
+                                                   "AbstractRequestHandler " \
+                                                   "fall back to %s" % \
+                                                   handler.__name__
+        handler = handler_cfg
       except AttributeError:
         log.warning(
           "Request handler: %s is not found in module: escape.util.api, "
@@ -229,7 +222,9 @@ class ServiceLayerAPI(AbstractAPI):
     """
     self._instantiate_NFFG(event.nffg)
 
+  ##############################################################################
   # UNIFY U - Sl API functions starts here
+  ##############################################################################
 
   @schedule_as_coop_task
   def request_service (self, sg):
@@ -264,7 +259,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
     log.getChild('API').info(
-      "Generated NF-FG has been sent to Orchestration...\n")
+      "Generated NF-FG has been sent to Orchestration...")
 
   # UNIFY Sl - Or API functions starts here
 
@@ -282,7 +277,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.getChild('API').debug(
       "Send virtual resource info request(with layer ID: %s) to Orchestration "
-      "layer...\n" % self.__sid)
+      "layer..." % self.__sid)
     self.raiseEventNoErrors(GetVirtResInfoEvent, self.__sid)
 
   def _handle_VirtResInfoEvent (self, event):
@@ -298,3 +293,11 @@ class ServiceLayerAPI(AbstractAPI):
       "Received virtual resource info from %s layer" % str(
         event.source._core_name).title())
     self.service_orchestrator.virtResManager.virtual_view = event.resource_info
+
+  def _handle_InstantiationFinishedEvent (self, event):
+    if event.success:
+      log.getChild('API').info(
+        "Service request has been finished successfully!")
+    else:
+      log.getChild('API').info(
+        "Service request has been finished with error: %s" % event.error)

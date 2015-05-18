@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains classes which implement :class:`NFFG <escape.util.nffg.NFFG>`
+Contains classes which implement :any:`NFFG`
 mapping functionality
-
-:class:`ESCAPEMappingStrategy` implements a default :class:`NFFG
-<escape.util.nffg.NFFG>` mapping algorithm of ESCAPEv2
-
-:class:`ResourceOrchestrationMapper` perform the supplementary tasks for
-:class:`NFFG <escape.util.nffg.NFFG>` mapping
 """
 
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
@@ -30,8 +24,8 @@ from pox.lib.revent.revent import Event
 
 class ESCAPEMappingStrategy(AbstractMappingStrategy):
   """
-  Implement a strategy to map initial :class:`NFFG <escape.util.nffg.NFFG>`
-  into extended :class:`NFFG <escape.util.nffg.NFFG>`
+  Implement a strategy to map initial :any:`NFFG`
+  into extended :any:`NFFG`
   """
 
   def __init__ (self):

@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,14 +13,6 @@
 # limitations under the License.
 """
 Contains functionality related to policy enforcement
-
-:class:`PolicyEnforcementError` represent a violation during the policy
-checking process
-
-:class:`PolicyEnforcementMetaClass` contains the main general logic which
-handles the Virtualizers and enforce policies
-
-:class:`PolicyEnforcement` implements the actual enforcement logic
 """
 from functools import wraps
 import repr

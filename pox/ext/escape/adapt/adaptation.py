@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,38 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contain classes relevant to the main adaptation function of the Controlller
+Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
-
-:class:`ControllerAdapter` implements the centralized functionality of
-high-level adaptation and installation of :class:`NFFG <escape.util.nffg.NFFG>`
-
-:class:`DomainVirtualizer` implement the standard virtualization/generalization
-logic of the Resource Orchestration Sublayer
-
-:class:`DomainResourceManager` stores and handles the global Virtualizer
 """
 import importlib
 import weakref
 
 from escape import CONFIG
 from escape.adapt import LAYER_NAME
+from escape.infr import LAYER_NAME as infr_name
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
-from escape.adapt.domain_adapters import AbstractDomainAdapter
+from escape.adapt.domain_adapters import AbstractDomainAdapter, \
+  POXDomainAdapter, InternalDomainManager
 from escape.adapt import log as log
 from escape.util.nffg import NFFG
 
 
 class ControllerAdapter(object):
   """
-  Higher-level class for :class:`NFFG <escape.util.nffg.NFFG>` adaptation
+  Higher-level class for :any:`NFFG` adaptation
   between multiple domains
   """
   # Default adapters
-  _defaults = {'POX': 'POXDomainAdapter', 'MN': 'MininetDomainAdapter',
-               'OS': 'OpenStackDomainAdapter'}
+  _adapters = {}
 
-  def __init__ (self):
+  def __init__ (self, layer_API, lazy_load=True, with_infr=False):
     """
     Initialize Controller adapter
 
@@ -57,41 +50,95 @@ class ControllerAdapter(object):
     .. note::
       Arbitrary domain adapters is searched in
       :mod:`escape.adapt.domain_adapters`
+
+    :param layer_API: layer API instance
+    :type layer_API: :any:`ControllerAdaptationAPI`
+    :param lazy_load: load adapters only at first reference (default: True)
+    :type lazy_load: bool
+    :param with_infr: using emulated infrastructure (default: False)
+    :type with_infr: bool
     """
     super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self.domainResManager = DomainResourceManager()
-    for adapter in self._defaults.iterkeys():
-      if adapter in CONFIG[LAYER_NAME]:
-        adapter_class = getattr(
-          importlib.import_module("escape.adapt.domain_adapters"),
-          CONFIG[LAYER_NAME][adapter])
-        if issubclass(adapter_class, AbstractDomainAdapter):
-          da = adapter_class()
-          # Set initialized adapter
-          setattr(self, adapter, adapter_class())
-          # Set up listeners
-          da.addListeners(self)
-        else:
-          raise AttributeError(
-            "Adapter class: %s is not subclass of AbstractDomainAdapter!" %
-            adapter_class.__name__)
+    self._layer_API = layer_API
+    self._lazy_load = lazy_load
+    self._with_infr = with_infr
+    if not lazy_load:
+      # Initiate adapters from CONFIG
+      for adapter_name in CONFIG[LAYER_NAME]:
+        self.__load_adapter(adapter_name)
+    else:
+      # Initiate default adapters. Other adapters will be created right after
+      # the first reference to them
+      self.__load_adapter(POXDomainAdapter.name)
+      try:
+        if CONFIG[infr_name]["LOADED"]:
+          self.__load_adapter(InternalDomainManager.name)
+      except KeyError:
+        pass
+
+  def __getattr__ (self, item):
+    """
+    Expose adapters with it's names as an attribute of this class
+
+    :param item: name of the adapter defined in it's class
+    :type item: str
+    :return: given domain adapter
+    :rtype: AbstractDomainAdapter
+    """
+    try:
+      if not item.startswith('__'):
+        return self._adapters[item]
+    except KeyError:
+      if self._lazy_load:
+        return self.__load_adapter(item)
       else:
-        setattr(self, adapter, None)
+        raise AttributeError("No adapter is defined with the name: %s" % item)
+
+  def __load_adapter (self, name):
+    try:
+      adapter_class = getattr(
+        importlib.import_module("escape.adapt.domain_adapters"),
+        CONFIG[LAYER_NAME][name])
+      assert issubclass(adapter_class,
+                        AbstractDomainAdapter), "Adapter class: %s is not " \
+                                                "subclass of " \
+                                                "AbstractDomainAdapter!" % \
+                                                adapter_class.__name__
+      adapter = adapter_class()
+      # Set initialized adapter
+      self._adapters[name] = adapter
+      # Set up listeners for e.g. DomainChangedEvents
+      adapter.addListeners(self)
+      # Set up listeners for DeployNFFGEvent
+      adapter.addListeners(self._layer_API)
+      return adapter
+    except KeyError as e:
+      log.error(
+        "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
+    except AttributeError:
+      log.error(
+        "%s is not found. Skip adapter initialization!" % CONFIG[LAYER_NAME][
+          name])
 
   def install_nffg (self, mapped_nffg):
     """
     Start NF-FG installation
 
-    Process given :class:`NFFG <escape.util.nffg.NFFG>`, slice information
-    based on domains an invoke domain adapters to install domain specific parts
+    Process given :any:`NFFG`, slice information based on domains an invoke
+    domain adapters to install domain specific parts
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: NFFG
-    :return: None
+    :return: None or internal domain NFFG part
     """
     log.debug("Invoke %s to install NF-FG" % self.__class__.__name__)
     # TODO - implement
+    # TODO - no NFFG split just very dummy cycle
+    for name, adapter in self._adapters.iteritems():
+      log.debug("Delegate mapped NFFG to %s domain adapter..." % name)
+      adapter.install(mapped_nffg)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
 
   def _handle_DomainChangedEvent (self, event):
@@ -103,7 +150,7 @@ class ControllerAdapter(object):
 
   def _slice_into_domains (self, nffg):
     """
-    Slice given :class:`NFFG <escape.util.nffg.NFFG>` into separate parts
+    Slice given :any:`NFFG` into separate parts
 
     :param nffg: mapped NFFG object
     :type nffg: NFFG

@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +13,6 @@
 # limitations under the License.
 """
 Contains components relevant to virtualization of resources and views
-
-:class:`AbstractVirtualizer
-<escape.orchest.virtualization_mgmt.AbstractVirtualizer>` contains the  central
-logic of Virtualizers
-
-:class:`ESCAPEVirtualizer` implement the standard virtualization logic of the
-Resource Orchestration Sublayer
-
-:class:`VirtualizerManager` stores and handles the virtualizers
 """
 from escape.util.nffg import NFFG
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
@@ -46,7 +37,7 @@ class AbstractVirtualizer(object):
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource object derived from
-    :class:`NFFG <escape.util.nffg.NFFG>`
+    :any:`NFFG`
 
     .. warning::
       Derived class have to override this function
@@ -83,7 +74,7 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource object derived from
-    :class:`NFFG <escape.util.nffg.NFFG>`
+    :any:`NFFG`
 
     :return: virtual resource info
     :rtype: NFFG
