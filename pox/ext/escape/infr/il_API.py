@@ -60,6 +60,7 @@ class InfrastructureLayerAPI(AbstractAPI):
     log.debug("Initializing Infrastructure Layer...")
     CONFIG[self._core_name] = {"LOADED": True}
     log.info("Infrastructure Layer has been initialized!")
+    self.setup_network()
 
   def shutdown (self, event):
     """
@@ -89,7 +90,7 @@ class InfrastructureLayerAPI(AbstractAPI):
   def install_route (self):
     pass
 
-  def setup_network (self, network_data):
+  def setup_network (self, network_data=None):
     pass
 
   def start_network (self):

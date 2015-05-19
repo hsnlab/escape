@@ -51,13 +51,9 @@ Main modules for layers/sublayers
 +++++++++++++++++++++++++++++++++
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     UNIFY <unify>
-    Service layer <service>
-    Resource Orchestration sublayer <orchestration>
-    Controller Adaptation sublayer <adaptation>
-    Infrastructure layer <infrastructure>
 
 README
 ++++++
