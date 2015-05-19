@@ -16,8 +16,9 @@ Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet
 """
 from escape import CONFIG
 from escape.infr import LAYER_NAME
-from escape.util.api import AbstractAPI
+from escape.infr.topology import NetworkWrapper
 from escape.infr import log as log  # Infrastructure layer logger
+from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent import Event
 
@@ -35,7 +36,11 @@ class DeploymentFinishedEvent(Event):
 
 class InfrastructureLayerAPI(AbstractAPI):
   """
+  Entry point for Infrastructure Layer (IL)
 
+  Maintain the contact with other UNIFY layers
+
+  Implement a specific part of the Co - Rm reference point
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
@@ -59,8 +64,13 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     log.debug("Initializing Infrastructure Layer...")
     CONFIG[self._core_name] = {"LOADED": True}
-    log.info("Infrastructure Layer has been initialized!")
-    self.setup_network()
+    self.topology = NetworkWrapper()
+    self.topology.test_network()
+    self.topology.initialize(wait_for_controller=True)
+    from pox.core import core
+
+    core.addListenerByName("ComponentRegistered", self._wait_for_controller)
+    log.debug("Waiting for controller...")
 
   def shutdown (self, event):
     """
@@ -68,6 +78,23 @@ class InfrastructureLayerAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
     log.info("Infrastructure Layer is going down...")
+    if self.topology:
+      self.topology.stop_network()
+
+  def _wait_for_controller (self, event):
+    """
+    Wait for controller (internal POX modul with the name: of_01)
+
+    :param event: registered component event
+    :type event: :class:`ComponentRegistered`
+    :return: None
+    """
+    if event.name == "of_01":
+      try:
+        self.topology.start_network()
+      except SystemExit:
+        log.error("Mininet emulation requires root privileges!")
+        import sys
 
   ##############################################################################
   # UNIFY Co - Rm API functions starts here
@@ -88,13 +115,4 @@ class InfrastructureLayerAPI(AbstractAPI):
     self.raiseEventNoErrors(DeploymentFinishedEvent, True)
 
   def install_route (self):
-    pass
-
-  def setup_network (self, network_data=None):
-    pass
-
-  def start_network (self):
-    pass
-
-  def stop_network (self):
     pass

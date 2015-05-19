@@ -122,6 +122,9 @@ class AbstractAPI(EventMixin):
     # Subscribe for GoingDownEvent to finalize API classes
     # shutdown() function will be called if POX's core going down
     core.addListenerByName('GoingDownEvent', self.shutdown)
+    # Subscribe core event to advanced functions
+    # Listeners' name must follow POX naming conventions
+    core.addListeners(self)
     # Everything is set up an "running" so register the component on pox.core
     # as a final step. Other dependent component can finish initialization now.
     core.core.register(self._core_name, self)
