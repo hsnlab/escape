@@ -34,6 +34,37 @@ class AbstractTopology(Topo):
     # TODO - extend and implement
 
 
+class InternalPOXController(RemoteController):
+  """
+  Controller class for emulated Mininet network for making connection with
+  internal controller initiated by POXDomainAdapter
+  """
+
+  def __init__ (self, name="InternalPOXController", ip='127.0.0.1', port=6633,
+       **kwargs):
+    """
+    Init
+
+    :param name: name of the controller (default: InternalPOXController)
+    :type name: str
+    :param ip: IP address (default: 127.0.0.1)
+    :type ip: str
+    :param port: port number (default 6633)
+    :type port: int
+    """
+    super(InternalPOXController, self).__init__(name, ip, port, **kwargs)
+
+  def checkListening (self):
+    """
+    Check the controller port is open
+    """
+    listening = self.cmd("echo A | telnet -e A %s %d" % (self.ip, self.port))
+    if 'Connected' not in listening:
+      log.debug(
+        "Unable to contact the internal controller at %s:%d. Waiting..." % (
+          self.ip, self.port))
+
+
 class NetworkWrapper(object):
   """
   Wrapper class for Mininet topology
@@ -89,8 +120,8 @@ class NetworkWrapper(object):
 
     Option keywords: netopts
 
-    :param topo: topology
-    :type topo: :any:`NFFG`
+    :param topology: topology
+    :type topology: :any:`NFFG`
     :return: None
     """
     # TODO - implement
@@ -155,7 +186,7 @@ class NetworkWrapper(object):
     h1 = net.addHost('h1')
     h2 = net.addHost('h2')
     s1 = net.addSwitch('s1')
-    c0 = net.addController('c0', RemoteController)
+    c0 = net.addController('c0', InternalPOXController)
     net.addLink(h1, s1)
     net.addLink(h2, s1)
     self._net = net

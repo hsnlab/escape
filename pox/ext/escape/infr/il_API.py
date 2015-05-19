@@ -64,13 +64,14 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     log.debug("Initializing Infrastructure Layer...")
     CONFIG[self._core_name] = {"LOADED": True}
+    self._need_clean = False
+    
     self.topology = NetworkWrapper()
     self.topology.test_network()
     self.topology.initialize(wait_for_controller=True)
     from pox.core import core
 
     core.addListenerByName("ComponentRegistered", self._wait_for_controller)
-    log.debug("Waiting for controller...")
 
   def shutdown (self, event):
     """
@@ -80,6 +81,10 @@ class InfrastructureLayerAPI(AbstractAPI):
     log.info("Infrastructure Layer is going down...")
     if self.topology:
       self.topology.stop_network()
+    if self._need_clean:
+      from mininet import clean
+
+      clean.cleanup()
 
   def _wait_for_controller (self, event):
     """
