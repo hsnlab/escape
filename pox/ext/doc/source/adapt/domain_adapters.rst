@@ -2,17 +2,27 @@
 ===========================
 
 :any:`DomainChangedEvent` signals changes for :any:`ControllerAdapter` in
-an unified way
+an unified way.
 
-:any:`AbstractDomainAdapter` contains general logic for actual Adapters
+:any:`AbstractDomainAdapter` contains general logic for actual Adapters.
+
+:any:`POXDomainAdapter` implements POX related functionality.
 
 :any:`MininetDomainAdapter` implements Mininet related functionality
+transparently.
 
-:any:`POXDomainAdapter` implements POX related functionality
+:any:`InternalDomainManager` represent the top class for interacting with
+emulated infrastructure.
 
-:any:`OpenStackDomainAdapter` implements OpenStack related functionality
+:any:`VNFStarterAPI` defines the interface for VNF management.
 
-:any:`VNFStarterManager` is a wrapper class for vnf_starter NETCONF module
+:any:`DirectMininetManager` implements  VNF management directly.
+
+:any:`VNFStarterManager` is a wrapper class for vnf_starter NETCONF module.
+
+:any:`OpenStackDomainAdapter` implements OpenStack related functionality.
+
+:any:`DockerDomainAdapter` implements Docker related functionality.
 
 Module contents
 ---------------

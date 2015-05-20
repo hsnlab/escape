@@ -23,7 +23,7 @@ from escape.adapt import LAYER_NAME
 from escape.infr import LAYER_NAME as infr_name
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt.domain_adapters import AbstractDomainAdapter, \
-  POXDomainAdapter, InternalDomainManager
+  InternalDomainManager, POXDomainAdapter, MininetDomainAdapter
 from escape.adapt import log as log
 from escape.util.nffg import NFFG
 
@@ -58,25 +58,30 @@ class ControllerAdapter(object):
     :param with_infr: using emulated infrastructure (default: False)
     :type with_infr: bool
     """
-    super(ControllerAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    super(ControllerAdapter, self).__init__()
     self.domainResManager = DomainResourceManager()
-    self._layer_API = layer_API
+    self._layer_API = weakref.proxy(layer_API)
     self._lazy_load = lazy_load
     self._with_infr = with_infr
     if not lazy_load:
       # Initiate adapters from CONFIG
       for adapter_name in CONFIG[LAYER_NAME]:
         self.__load_adapter(adapter_name)
-    else:
-      # Initiate default adapters. Other adapters will be created right after
-      # the first reference to them
-      self.__load_adapter(POXDomainAdapter.name)
+    elif with_infr:
+      # Initiate default internal adapter if needed.
       try:
         if CONFIG[infr_name]["LOADED"]:
-          self.__load_adapter(InternalDomainManager.name)
+          controller = self.__load_adapter(POXDomainAdapter.name)
+          network = self.__load_adapter(MininetDomainAdapter.name)
+          self.internal_manager = InternalDomainManager(controller, network)
       except KeyError:
         pass
+    else:
+      # Other adapters will be created right after the first reference to them
+      # No default adapter
+      pass
+      # self.__load_adapter(POXDomainAdapter.name)
 
   def __getattr__ (self, item):
     """
@@ -92,11 +97,22 @@ class ControllerAdapter(object):
         return self._adapters[item]
     except KeyError:
       if self._lazy_load:
-        return self.__load_adapter(item)
+        self._adapters[item] = self.__load_adapter(item)
+        return self._adapters[item]
       else:
         raise AttributeError("No adapter is defined with the name: %s" % item)
 
-  def __load_adapter (self, name):
+  def __load_adapter (self, name, **kwargs):
+    """
+    Load given adapter.
+
+    :param name: adapter's name
+    :type name: str
+    :param kwargs: adapter's initial parameters
+    :type kwargs: dict
+    :return: initiated adapter
+    :rtype: :any:`AbstractDomainAdapter`
+    """
     try:
       adapter_class = getattr(
         importlib.import_module("escape.adapt.domain_adapters"),
@@ -106,9 +122,7 @@ class ControllerAdapter(object):
                                                 "subclass of " \
                                                 "AbstractDomainAdapter!" % \
                                                 adapter_class.__name__
-      adapter = adapter_class()
-      # Set initialized adapter
-      self._adapters[name] = adapter
+      adapter = adapter_class(**kwargs)
       # Set up listeners for e.g. DomainChangedEvents
       adapter.addListeners(self)
       # Set up listeners for DeployNFFGEvent

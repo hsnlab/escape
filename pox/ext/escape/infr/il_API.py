@@ -65,7 +65,6 @@ class InfrastructureLayerAPI(AbstractAPI):
     log.debug("Initializing Infrastructure Layer...")
     CONFIG[self._core_name] = {"LOADED": True}
     self._need_clean = False
-    
     self.topology = NetworkWrapper()
     self.topology.test_network()
     self.topology.initialize(wait_for_controller=True)
@@ -97,9 +96,11 @@ class InfrastructureLayerAPI(AbstractAPI):
     if event.name == "of_01":
       try:
         self.topology.start_network()
-      except SystemExit:
+      except SystemExit as e:
         log.error("Mininet emulation requires root privileges!")
         import sys
+
+        sys.exit(e)
 
   ##############################################################################
   # UNIFY Co - Rm API functions starts here

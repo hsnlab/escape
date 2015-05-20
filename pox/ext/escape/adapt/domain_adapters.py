@@ -16,6 +16,7 @@ Contains Adapter classes which represent the connections between ESCAPEv2 and
 other different domains
 """
 from escape.adapt import log as log
+from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.misc import enum
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.core import core
@@ -92,6 +93,8 @@ class AbstractDomainAdapter(EventMixin):
 class POXDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with internal POX OpenFlow controller
+
+  Can be used to define a controller (based on POX) for other external domains
   """
   name = "POX"
 
@@ -99,6 +102,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     """
     Init
     """
+    log.debug("Init %s" % self.__class__.__name__)
     super(POXDomainAdapter, self).__init__()
     self.nexus = of_name
     self.controller_address = (of_address, of_port)
@@ -112,7 +116,6 @@ class POXDomainAdapter(AbstractDomainAdapter):
     # register OpenFlow event listeners
     core.openflow.addListeners(self)
     self._connections = []
-    log.debug("Init %s" % self.__class__.__name__)
 
   def filter_connections (self, event):
     """
@@ -150,31 +153,18 @@ class POXDomainAdapter(AbstractDomainAdapter):
                            data={"DPID": event.dpid})
     self.raiseEventNoErrors(e)
 
-  def install (self, nffg_part):
+  def install (self, routes):
+    """
+    Install routes related to the managed domain. Translates the generic
+    format of the routes into OpenFlow flow rules.
+
+    Routes are computed by the ControllerAdapter's main adaptation algorithm
+
+    :param routes: list of routes
+    :type routes: :any:`NFFG`
+    :return: None
+    """
     log.info("Install POX domain part...")
-    # TODO - implement
-    # dummy reply
-    self.raiseEventNoErrors(DeployEvent, nffg_part)
-
-
-class InternalDomainManager(AbstractDomainAdapter):
-  """
-  Adapter class to handle communication with internally emulated network
-
-  .. warning::
-    Not implemented yet!
-  """
-  name = "INTERNAL"
-
-  def __init__ (self):
-    """
-    Init
-    """
-    super(InternalDomainManager, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
-
-  def install (self, nffg_part):
-    log.info("Install Internal domain part...")
     # TODO - implement
     pass
 
@@ -183,75 +173,191 @@ class MininetDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with external Mininet domain
 
-  .. warning::
-    Not implemented yet!
+  Can use NETCONF protocol to communicate with the emulated network and
+  capable of accessing ot the network directly
   """
-  name = "MNININET"
+  name = "MININET"
 
-  def __init__ (self):
+  def __init__ (self, netconf=False):
     """
     Init
+
+    :param netconf: control VNFs through NETCONF or directly
+    :type netconf: bool
     """
-    super(MininetDomainAdapter, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    super(MininetDomainAdapter, self).__init__()
+    self.manager = VNFStarterManager() if netconf else DirectMininetManager()
 
   def install (self, nffg_part):
     log.info("Install Mininet domain part...")
     # TODO - implement
-    pass
+    self.raiseEventNoErrors(DeployEvent, nffg_part)
 
 
-class OpenStackDomainAdapter(AbstractDomainAdapter):
+class InternalDomainManager(AbstractDomainAdapter):
   """
-  Adapter class to handle communication with OpenStack domain
+  Adapter class to handle communication with internally emulated network
 
-  .. warning::
-    Not implemented yet!
+  .. note::
+    Uses :class:`MininetDomainAdapter` for managing the emulated network and
+    :class:`POXDomainAdapter` for controlling the network
   """
-  name = "OPENSTACK"
+  name = "INTERNAL"
 
-  def __init__ (self):
+  def __init__ (self, controller, network):
     """
     Init
     """
-    super(OpenStackDomainAdapter, self).__init__()
+    super(InternalDomainManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    self._controller = controller
+    self._network = network
 
   def install (self, nffg_part):
-    log.info("Install OpenStack domain part...")
+    """
+    Install an :any:`NFFG` related to the internal domain
+
+    Split given :any:`NFFG` to a set of NFs need to be initiated and a set of
+    routes/connections between the NFs
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
+    log.info("Install Internal domain part...")
     # TODO - implement
     pass
 
 
-class DockerDomainAdapter(AbstractDomainAdapter):
+class VNFStarterAPI(object):
   """
-  Adapter class to handle communication component in a Docker domain
-
-  .. warning::
-    Not implemented yet!
-  """
-  name = "DOCKER"
-
-  def __init__ (self):
-    """
-    Init
-    """
-    super(DockerDomainAdapter, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
-
-  def install (self, nffg_part):
-    log.info("Install Docker domain part...")
-    # TODO - implement
-    pass
-
-
-class VNFStarterManager(AbstractNETCONFAdapter):
-  """
-  This class is devoted to provide NETCONF specific functions for vnf_starter
-  module. Documentation is transferred from vnf_starter.yang
+  Define interface for managing VNFs.
 
   .. seealso::
       :file:`vnf_starter.yang`
+  """
+
+  def __init__ (self):
+    super(VNFStarterAPI, self).__init__()
+
+  def initiateVNF (self, vnf_type=None, vnf_description=None, options=None):
+    """
+    Initiate a VNF.
+
+    :param vnf_type: pre-defined VNF type (see in vnf_starter/available_vnfs)
+    :type vnf_type: str
+    :param vnf_description: Click description if there are no pre-defined type
+    :type vnf_description: str
+    :param options: unlimited list of additional options as name-value pairs
+    :type options: collections.OrderedDict
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def connectVNF (self, vnf_id, vnf_port, switch_id):
+    """
+    Connect a VNF to a switch.
+
+    :param vnf_id: VNF ID (mandatory)
+    :type vnf_id: str
+    :param vnf_port: VNF port (mandatory)
+    :type vnf_port: str
+    :param switch_id: switch ID (mandatory)
+    :type switch_id: str
+    :return: Returns the connected port(s) with the corresponding switch(es).
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def disconnectVNF (self, vnf_id, vnf_port):
+    """
+    Disconnect VNF from a switch.
+
+    :param vnf_id: VNF ID (mandatory)
+    :type vnf_id: str
+    :param vnf_port: VNF port (mandatory)
+    :type vnf_port: str
+    :return: reply data
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def startVNF (self, vnf_id):
+    """
+    Start VNF.
+
+    :param vnf_id: VNF ID (mandatory)
+    :type vnf_id: str
+    :return: reply data
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def stopVNF (self, vnf_id):
+    """
+    Stop VNF.
+
+    :param vnf_id: VNF ID (mandatory)
+    :type vnf_id: str
+    :return: reply data
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def getVNFInfo (self, vnf_id=None):
+    """
+    Request info  from VNF(s).
+
+    :param vnf_id: VNF ID
+    :type vnf_id: str
+    :return: reply data
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+
+class DirectMininetManager(VNFStarterAPI):
+  """
+  Implement VNF managing API using direct access to the
+  :class:`mininet.net.Mininet` object
+  """
+
+  def __init__ (self, mininet=None):
+    super(DirectMininetManager, self).__init__()
+    if not mininet:
+      from pox import core
+
+      if core.core.hasComponent(InfrastructureLayerAPI._core_name):
+        mininet = core.core.components[
+          InfrastructureLayerAPI._core_name].topology
+        if mininet is None:
+          log.error("Unable to get emulated network reference!")
+    self.mininet = mininet
+
+  def stopVNF (self, vnf_id):
+    # TODO - implement
+    pass
+
+  def getVNFInfo (self, vnf_id=None):
+    # TODO - implement
+    pass
+
+  def disconnectVNF (self, vnf_id, vnf_port):
+    # TODO - implement
+    pass
+
+  def startVNF (self, vnf_id):
+    # TODO - implement
+    pass
+
+  def connectVNF (self, vnf_id, vnf_port, switch_id):
+    # TODO - implement
+    pass
+
+  def initiateVNF (self, vnf_type=None, vnf_description=None, options=None):
+    # TODO - implement
+    pass
+
+
+class VNFStarterManager(VNFStarterAPI, AbstractNETCONFAdapter):
+  """
+  This class is devoted to provide NETCONF specific functions for vnf_starter
+  module. Documentation is transferred from vnf_starter.yang
 
   This class is devoted to start and stop CLICK-based VNFs that will be
   connected to a mininet switch.
@@ -371,7 +477,7 @@ class VNFStarterManager(AbstractNETCONFAdapter):
     this NETCONF Agent. If an input of vnf_id is set, only that VNF's data
     will be sent back. Most of the data this RPC replies is used for DEBUG,
     however 'status' is useful for indicating to upper layers whether a VNF
-    is UP_AND_RUNNING"
+    is UP_AND_RUNNING
 
     :param vnf_id: VNF ID
     :type vnf_id: str
@@ -381,3 +487,47 @@ class VNFStarterManager(AbstractNETCONFAdapter):
     params = {"vnf_id": vnf_id}
     log.debug("Call getVNFInfo...")
     return self.call_RPC('getVNFInfo', **params)
+
+
+class OpenStackDomainAdapter(AbstractDomainAdapter):
+  """
+  Adapter class to handle communication with OpenStack domain
+
+  .. warning::
+    Not implemented yet!
+  """
+  name = "OPENSTACK"
+
+  def __init__ (self):
+    """
+    Init
+    """
+    super(OpenStackDomainAdapter, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
+
+  def install (self, nffg_part):
+    log.info("Install OpenStack domain part...")
+    # TODO - implement
+    pass
+
+
+class DockerDomainAdapter(AbstractDomainAdapter):
+  """
+  Adapter class to handle communication component in a Docker domain
+
+  .. warning::
+    Not implemented yet!
+  """
+  name = "DOCKER"
+
+  def __init__ (self):
+    """
+    Init
+    """
+    super(DockerDomainAdapter, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
+
+  def install (self, nffg_part):
+    log.info("Install Docker domain part...")
+    # TODO - implement
+    pass
