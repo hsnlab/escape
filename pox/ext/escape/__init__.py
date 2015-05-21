@@ -31,5 +31,10 @@ CONFIG = {'service': {  # Service Adaptation Sublayer
                            'INTERNAL': "InternalDomainManager",
                            'POX': 'POXDomainAdapter',
                            'MININET': 'MininetDomainAdapter',
+                           "VNFStarter": {"name": "VNFStarterAdapter",
+                                          "agent": {"server": "192.168.12.128",
+                                                    "port": 830,
+                                                    "username": "mininet",
+                                                    "password": "mininet"}},
                            'OPENSTACK': 'OpenStackDomainAdapter',
                            'DOCKER': "DockerDomainAdapter"}}

@@ -54,7 +54,9 @@ class DomainChangedEvent(Event):
 
 class DeployEvent(Event):
   """
-  Event class for signaling NF-FG deployment to layer API
+  Event class for signaling NF-FG deployment to infrastructure layer API
+
+  Used by DirectMininetAdapter for internal NF-FG deployment
   """
 
   def __init__ (self, nffg_part):
@@ -62,14 +64,37 @@ class DeployEvent(Event):
     self.nffg_part = nffg_part
 
 
+class AbstractDomainManager(EventMixin):
+  """
+  Abstract class for different domain managers
+
+  Domain managers is top level classes to handle and manage domains
+  transparently
+  """
+
+  def install_nffg (self, nffg_part):
+    """
+    Install an :any:`NFFG` related to the specific domain
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+
 class AbstractDomainAdapter(EventMixin):
   """
   Abstract class for different domain adapters
 
+  Domain adapters can handle domains as a whole or well-separated parts of a
+  domain e.g. control part of an SDN network, infrastructure containers or
+  other entities through a specific protocol (NETCONF, ReST)
+
   Follows the Adapter design pattern (Adaptor base class)
   """
   # Events raised by this class
-  _eventMixin_events = {DomainChangedEvent, DeployEvent}
+  _eventMixin_events = {DomainChangedEvent}
   # Adapter name used in CONFIG and ControllerAdapter class
   name = None
 
@@ -78,156 +103,6 @@ class AbstractDomainAdapter(EventMixin):
     Init
     """
     super(AbstractDomainAdapter, self).__init__()
-
-  def install (self, nffg_part):
-    """
-    Intall domain specific part of a mapped NFFG
-
-    :param nffg_part: domain specific slice of mapped NFFG
-    :type nffg_part: NFFG
-    :return: None
-    """
-    raise NotImplementedError("Derived class have to override this function")
-
-
-class POXDomainAdapter(AbstractDomainAdapter):
-  """
-  Adapter class to handle communication with internal POX OpenFlow controller
-
-  Can be used to define a controller (based on POX) for other external domains
-  """
-  name = "POX"
-
-  def __init__ (self, of_name=None, of_address="0.0.0.0", of_port=6633):
-    """
-    Init
-    """
-    log.debug("Init %s" % self.__class__.__name__)
-    super(POXDomainAdapter, self).__init__()
-    self.nexus = of_name
-    self.controller_address = (of_address, of_port)
-    # Launch OpenFlow connection handler if not started before with given name
-    # launch() return the registered openflow module which is a coop Task
-    from pox.openflow.of_01 import launch
-
-    of = launch(name=of_name, address=of_address, port=of_port)
-    # Start listening for OpenFlow connections
-    of.start()
-    # register OpenFlow event listeners
-    core.openflow.addListeners(self)
-    self._connections = []
-
-  def filter_connections (self, event):
-    """
-    Handle which connection should be handled by this Adapter class.
-
-    This adapter accept every OpenFlow connection by default.
-
-    :param event: POX internal ConnectionUp event (event.dpid, event.connection)
-    :type event: :class:`pox.openflow.ConnectionUp`
-    :return: True os False obviously
-    :rtype: bool
-    """
-    return True
-
-  def _handle_ConnectionUp (self, event):
-    """
-    Handle incoming OpenFlow connections
-    """
-    log.debug("Handle connection by %s" % self.__class__.__name__)
-    if self.filter_connections(event):
-      self._connections.append(event.connection)
-    e = DomainChangedEvent(domain=self.name,
-                           cause=DomainChangedEvent.type.DEVICE_UP,
-                           data={"DPID": event.dpid})
-    self.raiseEventNoErrors(e)
-
-  def _handle_ConnectionDown (self, event):
-    """
-    Handle disconnected device
-    """
-    log.debug("Handle disconnection by %s" % self.__class__.__name__)
-    self._connections.remove(event.connection)
-    e = DomainChangedEvent(domain=self.name,
-                           cause=DomainChangedEvent.type.DEVICE_DOWN,
-                           data={"DPID": event.dpid})
-    self.raiseEventNoErrors(e)
-
-  def install (self, routes):
-    """
-    Install routes related to the managed domain. Translates the generic
-    format of the routes into OpenFlow flow rules.
-
-    Routes are computed by the ControllerAdapter's main adaptation algorithm
-
-    :param routes: list of routes
-    :type routes: :any:`NFFG`
-    :return: None
-    """
-    log.info("Install POX domain part...")
-    # TODO - implement
-    pass
-
-
-class MininetDomainAdapter(AbstractDomainAdapter):
-  """
-  Adapter class to handle communication with external Mininet domain
-
-  Can use NETCONF protocol to communicate with the emulated network and
-  capable of accessing ot the network directly
-  """
-  name = "MININET"
-
-  def __init__ (self, netconf=False):
-    """
-    Init
-
-    :param netconf: control VNFs through NETCONF or directly
-    :type netconf: bool
-    """
-    log.debug("Init %s" % self.__class__.__name__)
-    super(MininetDomainAdapter, self).__init__()
-    self.manager = VNFStarterManager() if netconf else DirectMininetManager()
-
-  def install (self, nffg_part):
-    log.info("Install Mininet domain part...")
-    # TODO - implement
-    self.raiseEventNoErrors(DeployEvent, nffg_part)
-
-
-class InternalDomainManager(AbstractDomainAdapter):
-  """
-  Adapter class to handle communication with internally emulated network
-
-  .. note::
-    Uses :class:`MininetDomainAdapter` for managing the emulated network and
-    :class:`POXDomainAdapter` for controlling the network
-  """
-  name = "INTERNAL"
-
-  def __init__ (self, controller, network):
-    """
-    Init
-    """
-    super(InternalDomainManager, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
-    self._controller = controller
-    self._network = network
-
-  def install (self, nffg_part):
-    """
-    Install an :any:`NFFG` related to the internal domain
-
-    Split given :any:`NFFG` to a set of NFs need to be initiated and a set of
-    routes/connections between the NFs
-
-    :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
-    :return: None
-    """
-    log.info("Install Internal domain part...")
-    # TODO - implement
-    pass
 
 
 class VNFStarterAPI(object):
@@ -311,14 +186,102 @@ class VNFStarterAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class DirectMininetManager(VNFStarterAPI):
+class POXDomainAdapter(AbstractDomainAdapter):
   """
+  Adapter class to handle communication with internal POX OpenFlow controller
+
+  Can be used to define a controller (based on POX) for other external domains
+  """
+  name = "POX"
+
+  def __init__ (self, of_name=None, of_address="0.0.0.0", of_port=6633):
+    """
+    Init
+    """
+    log.debug("Init %s" % self.__class__.__name__)
+    super(POXDomainAdapter, self).__init__()
+    self.nexus = of_name
+    self.controller_address = (of_address, of_port)
+    # Launch OpenFlow connection handler if not started before with given name
+    # launch() return the registered openflow module which is a coop Task
+    from pox.openflow.of_01 import launch
+
+    of = launch(name=of_name, address=of_address, port=of_port)
+    # Start listening for OpenFlow connections
+    of.start()
+    # register OpenFlow event listeners
+    core.openflow.addListeners(self)
+    self._connections = []
+
+  def filter_connections (self, event):
+    """
+    Handle which connection should be handled by this Adapter class.
+
+    This adapter accept every OpenFlow connection by default.
+
+    :param event: POX internal ConnectionUp event (event.dpid, event.connection)
+    :type event: :class:`pox.openflow.ConnectionUp`
+    :return: True os False obviously
+    :rtype: bool
+    """
+    return True
+
+  def _handle_ConnectionUp (self, event):
+    """
+    Handle incoming OpenFlow connections
+    """
+    log.debug("Handle connection by %s" % self.__class__.__name__)
+    if self.filter_connections(event):
+      self._connections.append(event.connection)
+    e = DomainChangedEvent(domain=self.name,
+                           cause=DomainChangedEvent.type.DEVICE_UP,
+                           data={"DPID": event.dpid})
+    self.raiseEventNoErrors(e)
+
+  def _handle_ConnectionDown (self, event):
+    """
+    Handle disconnected device
+    """
+    log.debug("Handle disconnection by %s" % self.__class__.__name__)
+    self._connections.remove(event.connection)
+    e = DomainChangedEvent(domain=self.name,
+                           cause=DomainChangedEvent.type.DEVICE_DOWN,
+                           data={"DPID": event.dpid})
+    self.raiseEventNoErrors(e)
+
+  def install_routes (self, routes):
+    """
+    Install routes related to the managed domain. Translates the generic
+    format of the routes into OpenFlow flow rules.
+
+    Routes are computed by the ControllerAdapter's main adaptation algorithm
+
+    :param routes: list of routes
+    :type routes: :any:`NFFG`
+    :return: None
+    """
+    log.info("Install POX domain part...")
+    # TODO - implement
+    pass
+
+
+class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
+  """
+  Adapter class to handle communication with Mininet domain
+
   Implement VNF managing API using direct access to the
   :class:`mininet.net.Mininet` object
   """
+  # Events raised by this class
+  _eventMixin_events = {DomainChangedEvent, DeployEvent}
+  name = "MININET"
 
   def __init__ (self, mininet=None):
-    super(DirectMininetManager, self).__init__()
+    """
+    Init
+    """
+    log.debug("Init %s" % self.__class__.__name__)
+    super(MininetDomainAdapter, self).__init__()
     if not mininet:
       from pox import core
 
@@ -328,6 +291,11 @@ class DirectMininetManager(VNFStarterAPI):
         if mininet is None:
           log.error("Unable to get emulated network reference!")
     self.mininet = mininet
+
+  def initiate_VNFs (self, nffg_part):
+    log.info("Install Mininet domain part...")
+    # TODO - implement
+    self.raiseEventNoErrors(DeployEvent, nffg_part)
 
   def stopVNF (self, vnf_id):
     # TODO - implement
@@ -354,7 +322,8 @@ class DirectMininetManager(VNFStarterAPI):
     pass
 
 
-class VNFStarterManager(VNFStarterAPI, AbstractNETCONFAdapter):
+class VNFStarterAdapter(AbstractDomainAdapter, VNFStarterAPI,
+                        AbstractNETCONFAdapter):
   """
   This class is devoted to provide NETCONF specific functions for vnf_starter
   module. Documentation is transferred from vnf_starter.yang
@@ -364,9 +333,11 @@ class VNFStarterManager(VNFStarterAPI, AbstractNETCONFAdapter):
   """
   # RPC namespace
   RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'
+  # Adapter name used in CONFIG and ControllerAdapter class
+  name = "VNFStarter"
 
   def __init__ (self, **kwargs):
-    super(VNFStarterManager, self).__init__(**kwargs)
+    super(VNFStarterAdapter, self).__init__(**kwargs)
     log.debug("Init VNFStarterManager")
 
   # RPC calls starts here
@@ -489,7 +460,44 @@ class VNFStarterManager(VNFStarterAPI, AbstractNETCONFAdapter):
     return self.call_RPC('getVNFInfo', **params)
 
 
-class OpenStackDomainAdapter(AbstractDomainAdapter):
+class InternalDomainManager(AbstractDomainManager):
+  """
+  Manager class to handle communication with internally emulated network
+
+  .. note::
+    Uses :class:`MininetDomainAdapter` for managing the emulated network and
+    :class:`POXDomainAdapter` for controlling the network
+  """
+  name = "INTERNAL"
+
+  def __init__ (self, controller, network):
+    """
+    Init
+    """
+    super(InternalDomainManager, self).__init__()
+    log.debug("Init %s" % self.__class__.__name__)
+    self._controller = controller
+    self._network = network
+
+  def install_nffg (self, nffg_part):
+    """
+    Install an :any:`NFFG` related to the internal domain
+
+    Split given :any:`NFFG` to a set of NFs need to be initiated and a set of
+    routes/connections between the NFs
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
+    log.info("Install Internal domain part...")
+    # TODO - implement
+    self._controller.install_routes(routes=())
+    # TODO ...
+    self._network.initiate_VNFs(nffg_part=())
+
+
+class OpenStackDomainManager(AbstractDomainAdapter):
   """
   Adapter class to handle communication with OpenStack domain
 
@@ -502,16 +510,16 @@ class OpenStackDomainAdapter(AbstractDomainAdapter):
     """
     Init
     """
-    super(OpenStackDomainAdapter, self).__init__()
+    super(OpenStackDomainManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
-  def install (self, nffg_part):
+  def install_nffg (self, nffg_part):
     log.info("Install OpenStack domain part...")
     # TODO - implement
     pass
 
 
-class DockerDomainAdapter(AbstractDomainAdapter):
+class DockerDomainManager(AbstractDomainAdapter):
   """
   Adapter class to handle communication component in a Docker domain
 
@@ -524,10 +532,10 @@ class DockerDomainAdapter(AbstractDomainAdapter):
     """
     Init
     """
-    super(DockerDomainAdapter, self).__init__()
+    super(DockerDomainManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
 
-  def install (self, nffg_part):
+  def install_nffg (self, nffg_part):
     log.info("Install Docker domain part...")
     # TODO - implement
     pass
