@@ -86,9 +86,9 @@ class ControllerAdapter(object):
         pass
     else:
       # Other adapters will be created right after the first reference to them
-      # No default adapter
+      # POX seems to be the only reasonable choice as a default adapter
       pass
-      # self.__load_adapter(POXDomainAdapter.name)
+      self.__load_adapter("POX")
 
   def __getattr__ (self, item):
     """
@@ -147,7 +147,7 @@ class ControllerAdapter(object):
     Init default adapters
     """
     # very dummy initialization TODO - improve
-    for name in ('POX', 'OPENSTACK', 'DOCKER'):
+    for name in ('POX', 'OPENSTACK'):
       self._domains[name] = self.__load_adapter(name)
 
   def install_nffg (self, mapped_nffg):

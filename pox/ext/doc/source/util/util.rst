@@ -18,6 +18,7 @@ Submodules
 .. toctree::
     :titlesonly:
 
+    adapter
     api
     mapping
     misc
