@@ -18,9 +18,11 @@ other different domains
 from escape.adapt import log as log
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.adapter import AbstractDomainAdapter, AbstractDomainManager, \
-  DomainChangedEvent, DeployEvent, VNFStarterAPI
+  DomainChangedEvent, DeployEvent, VNFStarterAPI, OpenStackAPI, \
+  AbstractRESTAdapter
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.core import core
+
 
 class POXDomainAdapter(AbstractDomainAdapter):
   """
@@ -48,6 +50,8 @@ class POXDomainAdapter(AbstractDomainAdapter):
     # register OpenFlow event listeners
     core.openflow.addListeners(self)
     self._connections = []
+    log.debug("Start polling POX domain...")
+    self.start_polling()
 
   def filter_connections (self, event):
     """
@@ -296,6 +300,11 @@ class VNFStarterAdapter(AbstractDomainAdapter, VNFStarterAPI,
     params = {"vnf_id": vnf_id}
     log.debug("Call getVNFInfo...")
     return self.call_RPC('getVNFInfo', **params)
+
+
+class OpenStackRESTAdapter(AbstractDomainAdapter, OpenStackAPI,
+                           AbstractRESTAdapter):
+  pass
 
 
 class InternalDomainManager(AbstractDomainManager):

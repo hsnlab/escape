@@ -20,6 +20,7 @@ from requests import Session
 from escape import __version__
 from escape.util.misc import enum
 from escape.util.nffg import NFFG
+from pox.lib.recoco import Timer
 from pox.lib.revent import EventMixin, Event
 
 
@@ -88,16 +89,16 @@ class AbstractDomainManager(EventMixin):
 
 class AbstractDomainAdapter(EventMixin):
   """
-  Abstract class for different domain adapters
+  Abstract class for different domain adapters.
 
   Domain adapters can handle domains as a whole or well-separated parts of a
   domain e.g. control part of an SDN network, infrastructure containers or
-  other entities through a specific protocol (NETCONF, HTTP/REST)
+  other entities through a specific protocol (NETCONF, HTTP/REST).
 
-  Follows the Adapter design pattern (Adaptor base class)
+  Follows the Adapter design pattern (Adaptor base class).
 
   Follows the MixIn design patteran approach to support general adapter
-  functionality for manager classes mostly
+  functionality for manager classes mostly.
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
@@ -109,13 +110,33 @@ class AbstractDomainAdapter(EventMixin):
     Init
     """
     super(AbstractDomainAdapter, self).__init__()
-    """
-    Request info  from VNF(s).
+    self._timer = None
 
-    :param vnf_id: VNF ID
-    :type vnf_id: str
-    :return: reply data
+  def start_polling (self, wait=1):
     """
+    Initialize and start a Timer co-op task for polling.
+
+    :param wait: polling period (default: 1)
+    :type wait: int
+    """
+    if self._timer:
+      # Already timing
+      return
+    self._timer = Timer(wait, self.poll, recurring=True, started=True,
+                        selfStoppable=True)
+
+  def stop_polling (self):
+    """
+    Stop timer.
+    """
+    self._timer.cancel()
+
+  def poll (self):
+    """
+    Template fuction to poll domain state. Called by a Timer co-op multitask.
+    If the function return with False the timer will be cancelled.
+    """
+    pass
 
 
 class VNFStarterAPI(object):
