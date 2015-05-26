@@ -13,7 +13,13 @@
 """
 Implement the supporting classes for doamin adapters
 """
+import json
+
+from requests import Session
+
+from escape import __version__
 from escape.util.misc import enum
+from escape.util.nffg import NFFG
 from pox.lib.revent import EventMixin, Event
 
 
@@ -86,7 +92,7 @@ class AbstractDomainAdapter(EventMixin):
 
   Domain adapters can handle domains as a whole or well-separated parts of a
   domain e.g. control part of an SDN network, infrastructure containers or
-  other entities through a specific protocol (NETCONF, ReST)
+  other entities through a specific protocol (NETCONF, HTTP/REST)
 
   Follows the Adapter design pattern (Adaptor base class)
 
@@ -119,7 +125,7 @@ class VNFStarterAPI(object):
   .. seealso::
       :file:`vnf_starter.yang`
 
-  Follows the MixIn design pattern approach to support VNFStarter functionality
+  Follows the MixIn design pattern approach to support VNFStarter functionality.
   """
 
   def __init__ (self):
@@ -189,8 +195,81 @@ class VNFStarterAPI(object):
 
 
 class OpenStackAPI(object):
+  """
+  Define interface for managing OpenStack domain.
+
+  .. note::
+    Based on separated REST API which need to be discussed!
+
+  Follows the MixIn design pattern approach to support OpenStack functionality.
+  """
   pass
 
 
-class AbstractRESTAdapter(object):
-  pass
+class AbstractRESTAdapter(Session):
+  """
+  Abstract class for various adapters rely on a RESTful API.
+
+  Contains basic functions for managing connections.
+
+  Inhereted from :any:`requests.Session`. Provided features: coockie
+  persistence, connection-pooling and configuration.
+
+  Implements Context Manager Python protocol::
+    >>> with AbstractRESTAdapter as a:
+    >>>   a.<method>()
+
+  .. seealso::
+    http://docs.python-requests.org/en/latest/api/#requests.Session
+
+  Follows Adapter design pattern.
+  """
+  # Set custom header
+  custom_headers = {'user-agent': "ESCAPE/" + __version__}
+
+  def __init__ (self, base_url, auth=None):
+    super(AbstractRESTAdapter, self).__init__()
+    self.headers.update(self.custom_headers)
+    self.base_url = base_url
+    self.auth = auth
+    self._raw_response = None
+
+  def _send_request (self, method, url=None, body=None, **kwargs):
+    """
+    Prepare the request and send it. If valid URL is given that value will be
+    used else it will be append to the end of the ``base_url``. If ``url`` is
+    not given only the ``base_url`` will be used.
+
+    :param method: HTTP method
+    :type method: str
+    :param url: valid URL or relevent part follows ``self.base_url``
+    :type url: str
+    :param body: request body
+    :type body: :any:`NFFG` or dict or bytes or str
+    :param kwargs: additional params. See :any:`requests.Session.request`
+    :return: response text as JSON
+    :rtype: str
+    :raise HTTPError: if responde code is between 400 and 600
+    :raise ConnectionError: connection error
+    :raise Timeout: many error occured when request timed out
+    """
+    # Setup parameters
+    if body:
+      # if given body is an NFFG
+      if isinstance(body, NFFG):
+        kwargs['json'] = body.to_json()
+      elif isinstance(body, (dict, bytes)):
+        kwargs['data'] = body
+      else:
+        # try to convert to JSON as a last resort
+        kwargs['json'] = json.dumps(body)
+    if url:
+      if not url.startswith('http'):
+        kwargs['url'] = self.base_url + url
+      else:
+        kwargs['url'] = url
+    else:
+      kwargs['url'] = self.base_url
+    self._raw_response = self.request(method=method, **kwargs)
+    self._raw_response.raise_for_status()
+    return self._raw_response.json()

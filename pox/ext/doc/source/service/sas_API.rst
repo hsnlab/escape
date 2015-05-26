@@ -5,7 +5,7 @@
 
 :any:`GetVirtResInfoEvent` can request virtual resource info from lower layer
 
-:any:`ServiceRequestHandler` implement the specific REST API functionality
+:any:`ServiceRequestHandler` implement the specific RESTful API functionality
 thereby realizes the UNIFY's U - Sl API
 
 :any:`ServiceLayerAPI` represents the SAS layer and implement all related

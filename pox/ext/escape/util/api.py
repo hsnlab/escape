@@ -193,7 +193,7 @@ class AbstractAPI(EventMixin):
 
 class RESTServer(HTTPServer, ThreadingMixIn):
   """
-  Base HTTP server for REST API
+  Base HTTP server for RESTful API
 
   Initiate an :class:`HTTPServer` and run it in different thread
   """
@@ -266,7 +266,7 @@ class RESTError(Exception):
 
 class AbstractRequestHandler(BaseHTTPRequestHandler):
   """
-  Minimalistic REST API for Layer APIs
+  Minimalistic RESTful API for Layer APIs
 
   Handle /escape/* URLs.
 

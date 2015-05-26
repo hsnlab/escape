@@ -39,6 +39,16 @@ and running service chains.
 ESCAPEv2 structure
 ------------------
 
+Dependencies:
++++++++++++++
+
+.. code-block:: bash
+
+  $ sudo apt-get install libxml2 libxslt1-dev python-setuptools python-pip \
+  python-paramiko python-lxml python-libxml2 python-libxslt1
+
+  sudo pip install ncclient requests
+
 Class structure
 +++++++++++++++
 
