@@ -19,7 +19,7 @@ import importlib
 import weakref
 
 from escape import CONFIG
-from escape.adapt import LAYER_NAME
+from escape.adapt import ADAPTATION_LAYER_NAME
 from escape.infr import LAYER_NAME as infr_name
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt.domain_adapters import AbstractDomainAdapter
@@ -35,7 +35,7 @@ class ControllerAdapter(object):
   # Default adapters
   _domains = {}
 
-  def __init__ (self, layer_API, lazy_load=True, with_infr=False, remote=False):
+  def __init__ (self, layer_API, lazy_load=True, with_infr=False, remote=True):
     """
     Initialize Controller adapter
 
@@ -59,9 +59,9 @@ class ControllerAdapter(object):
     :param remote: use NETCONF RPCs or direct access (default: False)
     :type remote: bool
     """
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init ControllerAdapter")
     super(ControllerAdapter, self).__init__()
-    self.domainResManager = DomainResourceManager()
+    # Set a weak reference to avoid circular dependencies
     self._layer_API = weakref.proxy(layer_API)
     self._lazy_load = lazy_load
     self._with_infr = with_infr
@@ -72,23 +72,29 @@ class ControllerAdapter(object):
       # Initiate default internal adapter if needed.
       try:
         if CONFIG[infr_name]["LOADED"]:
+          # Set adapters for InternalDomainManager
+          # Set OpensFlow route handler
           controller = self.__load_adapter("POX")
-          if remote:
-            params = CONFIG[LAYER_NAME]["VNFStarter"]
-            network = self.__load_adapter(params.name, **params.agent)
-          else:
-            network = self.__load_adapter("MININET")
-            # set internal domain manager
-          self.internal_manager = self.__load_adapter("INTERNAL",
-                                                      controller=controller,
-                                                      network=network)
-      except KeyError:
-        pass
+          # Set emulated network initiator/handler/manager
+          network = self.__load_adapter("MININET")
+          # Set NETCONF handling capability if needed
+          remote = self.__load_adapter('VNFStarter', **
+          CONFIG[ADAPTATION_LAYER_NAME]['VNFStarter'][
+            'agent']) if remote else None
+          # Set internal domain manager
+          self._domains['INTERNAL'] = self.__load_adapter("INTERNAL",
+                                                          controller=controller,
+                                                          network=network,
+                                                          remote=remote)
+      except KeyError as e:
+        log.error(
+          "Got KeyError during initialization of InternalDomainManager: %s", e)
     else:
       # Other adapters will be created right after the first reference to them
       # POX seems to be the only reasonable choice as a default adapter
-      pass
       self.__load_adapter("POX")
+    # Set virtualizer-related components
+    self.domainResManager = DomainResourceManager()
 
   def __getattr__ (self, item):
     """
@@ -124,7 +130,7 @@ class ControllerAdapter(object):
       if from_config:
         adapter_class = getattr(
           importlib.import_module("escape.adapt.domain_adapters"),
-          CONFIG[LAYER_NAME][name])
+          CONFIG[ADAPTATION_LAYER_NAME][name]['class'])
       else:
         adapter_class = getattr(
           importlib.import_module("escape.adapt.domain_adapters"), name)
@@ -138,16 +144,16 @@ class ControllerAdapter(object):
       log.error(
         "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
     except AttributeError:
-      log.error(
-        "%s is not found. Skip adapter initialization!" % CONFIG[LAYER_NAME][
-          name])
+      log.error("%s is not found. Skip adapter initialization!" %
+                CONFIG[ADAPTATION_LAYER_NAME][name]['class'])
 
   def __init_defaults (self):
     """
     Init default adapters
     """
-    # very dummy initialization TODO - improve
-    for name in ('POX', 'OPENSTACK'):
+    # very dummy initialization
+    # TODO - improve
+    for name in ('POX', 'INTERNAL'):
       self._domains[name] = self.__load_adapter(name)
 
   def install_nffg (self, mapped_nffg):
@@ -209,7 +215,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: None
     """
     super(DomainVirtualizer, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init DomainVirtualizer")
     # Garbage-collector safe
     self.domainResManager = weakref.proxy(domainResManager)
 
@@ -235,7 +241,7 @@ class DomainResourceManager(object):
     Init
     """
     super(DomainResourceManager, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init DomainResourceManager")
     self._dov = DomainVirtualizer(self)
 
   @property

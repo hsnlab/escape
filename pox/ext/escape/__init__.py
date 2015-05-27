@@ -28,13 +28,14 @@ CONFIG = {'service': {  # Service Adaptation Sublayer
                               'STRATEGY': 'ESCAPEMappingStrategy',
                               'THREADED': True},
           'adaptation': {  # Controller Adaptation Sublayer
-                           'INTERNAL': "InternalDomainManager",
-                           'POX': 'POXDomainAdapter',
-                           'MININET': 'MininetDomainAdapter',
-                           "VNFStarter": {"name": "VNFStarterAdapter",
+                           'INTERNAL': {'class': "InternalDomainManager"},
+                           'POX': {'class': "POXDomainAdapter"},
+                           'MININET': {'class': "MininetDomainAdapter"},
+                           "VNFStarter": {"class": "VNFStarterAdapter",
                                           "agent": {"server": "192.168.12.128",
                                                     "port": 830,
                                                     "username": "mininet",
                                                     "password": "mininet"}},
-                           'OPENSTACK': 'OpenStackDomainAdapter',
-                           'DOCKER': "DockerDomainAdapter"}}
+                           'OPENSTACK': {'class': "OpenStackDomainAdapter"},
+                           'DOCKER': {'class': "DockerDomainAdapter"}},
+          'infrastructure': {}}

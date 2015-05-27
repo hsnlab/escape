@@ -61,7 +61,7 @@ class InternalPOXController(RemoteController):
     listening = self.cmd("echo A | telnet -e A %s %d" % (self.ip, self.port))
     if 'Connected' not in listening:
       log.debug(
-        "Unable to contact the internal controller at %s:%d. Waiting..." % (
+        "Unable to contact with internal controller at %s:%d. Waiting..." % (
           self.ip, self.port))
 
 
@@ -180,7 +180,7 @@ class NetworkWrapper(object):
     """
     For testing
     """
-    log.debug("Init simple switch topo")
+    log.debug("Init simple switch topo for testing purposes")
     # self._net = Mininet(topo=SingleSwitchTopo(2), controller=RemoteController)
     net = Mininet()
     h1 = net.addHost('h1')

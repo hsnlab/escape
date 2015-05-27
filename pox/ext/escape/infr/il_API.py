@@ -71,6 +71,7 @@ class InfrastructureLayerAPI(AbstractAPI):
     from pox.core import core
 
     core.addListenerByName("ComponentRegistered", self._wait_for_controller)
+    log.info("Infrastructure Layer has been initialized!")
 
   def shutdown (self, event):
     """

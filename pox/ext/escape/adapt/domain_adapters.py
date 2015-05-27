@@ -32,7 +32,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
   """
   name = "POX"
 
-  def __init__ (self, of_name=None, of_address="0.0.0.0", of_port=6633):
+  def __init__ (self, of_name=None, of_address="127.0.0.1", of_port=6633):
     """
     Init
     """
@@ -100,7 +100,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     :type routes: :any:`NFFG`
     :return: None
     """
-    log.info("Install POX domain part...")
+    log.info("Install POX domain part: routes...")
     # TODO - implement
     pass
 
@@ -119,9 +119,14 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
   def __init__ (self, mininet=None):
     """
     Init
+
+    :param mininet: set pre-defined network (optional)
+    :type mininet: :any`mininet.net.Mininet`
     """
     log.debug("Init %s" % self.__class__.__name__)
-    super(MininetDomainAdapter, self).__init__()
+    # super(MininetDomainAdapter, self).__init__()
+    # Call base constructors directly to avoid super() and MRO traps
+    AbstractDomainAdapter.__init__(self)
     if not mininet:
       from pox import core
 
@@ -133,7 +138,7 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
     self.mininet = mininet
 
   def initiate_VNFs (self, nffg_part):
-    log.info("Install Mininet domain part...")
+    log.info("Install Mininet domain part: initiate VNFs...")
     # TODO - implement
     self.raiseEventNoErrors(DeployEvent, nffg_part)
 
@@ -162,8 +167,8 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
     pass
 
 
-class VNFStarterAdapter(AbstractDomainAdapter, VNFStarterAPI,
-                        AbstractNETCONFAdapter):
+class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
+                        VNFStarterAPI):
   """
   This class is devoted to provide NETCONF specific functions for vnf_starter
   module. Documentation is transferred from vnf_starter.yang
@@ -179,8 +184,11 @@ class VNFStarterAdapter(AbstractDomainAdapter, VNFStarterAPI,
   name = "VNFStarter"
 
   def __init__ (self, **kwargs):
-    super(VNFStarterAdapter, self).__init__(**kwargs)
-    log.debug("Init VNFStarterManager")
+    # super(VNFStarterAdapter, self).__init__(**kwargs)
+    # Call base constructors directly to avoid super() and MRO traps
+    AbstractNETCONFAdapter.__init__(self, **kwargs)
+    AbstractDomainAdapter.__init__(self)
+    log.debug("Init VNFStarterAdapter")
 
   # RPC calls starts here
 
@@ -302,10 +310,21 @@ class VNFStarterAdapter(AbstractDomainAdapter, VNFStarterAPI,
     return self.call_RPC('getVNFInfo', **params)
 
 
-class OpenStackRESTAdapter(AbstractDomainAdapter, OpenStackAPI,
-                           AbstractRESTAdapter):
-  pass
+class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
+                           OpenStackAPI):
+  # TODO -implement
+  def __init__ (self, url):
+    """
+    Init
 
+    :param url: OpenStack RESTful API URL
+    :type url: str
+    """
+    log.debug("Init %s" % self.__class__.__name__)
+    # super(OpenStackRESTAdapter, self).__init__(base_url=url)
+    # Call base constructors directly to avoid super() and MRO traps
+    AbstractRESTAdapter.__init__(self, base_url=url)
+    AbstractDomainAdapter.__init__(self)
 
 class InternalDomainManager(AbstractDomainManager):
   """
@@ -317,14 +336,19 @@ class InternalDomainManager(AbstractDomainManager):
   """
   name = "INTERNAL"
 
-  def __init__ (self, controller, network):
+  def __init__ (self, controller=None, network=None, remote=None):
     """
     Init
     """
-    super(InternalDomainManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
-    self._controller = controller
-    self._network = network
+    super(InternalDomainManager, self).__init__()
+    # Initiate POX as default route handler with default params
+    self._controller = controller if controller else POXDomainAdapter()
+    # Initiate Mininet asa default network initiator with default params
+    self._network = network if network else MininetDomainAdapter()
+    # Set remote VNF handler if needed/set or skip initiation steps in lack
+    # of reasonable default agent params
+    self._remote = remote if remote else None
 
   def install_nffg (self, nffg_part):
     """
@@ -339,9 +363,9 @@ class InternalDomainManager(AbstractDomainManager):
     """
     log.info("Install Internal domain part...")
     # TODO - implement
-    self._controller.install_routes(routes=())
-    # TODO ...
     self._network.initiate_VNFs(nffg_part=())
+    # TODO ...
+    self._controller.install_routes(routes=())
 
 
 class OpenStackDomainManager(AbstractDomainAdapter):
@@ -353,12 +377,17 @@ class OpenStackDomainManager(AbstractDomainAdapter):
   """
   name = "OPENSTACK"
 
-  def __init__ (self):
+  def __init__ (self, url):
     """
     Init
+
+    :param url: OpenStack RESTful API URL
+    :type url: str
     """
-    super(OpenStackDomainManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    super(OpenStackDomainManager, self).__init__()
+    # TODO
+    self._adapter = OpenStackRESTAdapter(url)
 
   def install_nffg (self, nffg_part):
     log.info("Install OpenStack domain part...")
@@ -379,8 +408,8 @@ class DockerDomainManager(AbstractDomainAdapter):
     """
     Init
     """
-    super(DockerDomainManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
+    super(DockerDomainManager, self).__init__()
 
   def install_nffg (self, nffg_part):
     log.info("Install Docker domain part...")

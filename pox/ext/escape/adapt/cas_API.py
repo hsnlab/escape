@@ -17,7 +17,7 @@ Sublayer
 """
 import repr
 
-from escape.adapt import LAYER_NAME
+from escape.adapt import ADAPTATION_LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
 from escape.adapt.adaptation import ControllerAdapter
 from escape.util.api import AbstractAPI
@@ -73,7 +73,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   Implement the Or - Ca reference point
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
-  _core_name = LAYER_NAME
+  _core_name = ADAPTATION_LAYER_NAME
   # Events raised by this class
   _eventMixin_events = {GlobalResInfoEvent, InstallationFinishedEvent,
                         DeployNFFGEvent}

@@ -16,5 +16,5 @@ Sublayer for classes related to UNIFY's Controller Adaptation Sublayer (CAS)
 """
 from pox.core import core
 
-LAYER_NAME = "adaptation"
-log = core.getLogger(LAYER_NAME)
+ADAPTATION_LAYER_NAME = "adaptation"
+log = core.getLogger(ADAPTATION_LAYER_NAME)

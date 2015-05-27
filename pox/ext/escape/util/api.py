@@ -102,7 +102,7 @@ class AbstractAPI(EventMixin):
     # between the components, so basically the layers will always wait to each
     # other to be registered on core. To avoid this situation the naming
     # convention of event handlers on which the dependency checking based is
-    # not followed (aka leave _handle_<component name>_<event name>) and
+    # not followed (a.k.a. leave _handle_<component name>_<event name>) and
     # the event listeners is set up manually. For automatic core registration
     # the components have to contain dependencies explicitly.
     for dep in self.dependencies:
@@ -122,7 +122,7 @@ class AbstractAPI(EventMixin):
     # Subscribe for GoingDownEvent to finalize API classes
     # shutdown() function will be called if POX's core going down
     core.addListenerByName('GoingDownEvent', self.shutdown)
-    # Subscribe core event to advanced functions
+    # Subscribe core event for advanced functions
     # Listeners' name must follow POX naming conventions
     core.addListeners(self)
     # Everything is set up an "running" so register the component on pox.core
@@ -131,7 +131,7 @@ class AbstractAPI(EventMixin):
     # Set "running" config for convenience purposes
     try:
       CONFIG[self._core_name]["LOADED"] = True
-    except KeyError:
+    except KeyError as e:
       CONFIG[self._core_name] = {"LOADED": True}
 
   def initialize (self):
