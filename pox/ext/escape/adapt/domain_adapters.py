@@ -21,7 +21,8 @@ from escape.util.adapter import AbstractDomainAdapter, AbstractDomainManager, \
   DomainChangedEvent, DeployEvent, VNFStarterAPI, OpenStackAPI, \
   AbstractRESTAdapter
 from escape.util.netconf import AbstractNETCONFAdapter
-from pox.core import core
+from escape.util.pox_extension import ExtendedOFConnectionArbiter, \
+  OpenFlowBridge
 
 
 class POXDomainAdapter(AbstractDomainAdapter):
@@ -32,25 +33,40 @@ class POXDomainAdapter(AbstractDomainAdapter):
   """
   name = "POX"
 
-  def __init__ (self, of_name=None, of_address="127.0.0.1", of_port=6633):
+  def __init__ (self, name=None, address="127.0.0.1", port=6653):
     """
-    Init
+    Initialize attributes, register specific connection Arbiter if needed and
+    set up listening of OpenFlow events.
+
+    :param name: name used to register component ito ``pox.core``
+    :type name: str
+    :param address: socket address (default: 127.0.0.1)
+    :type address: str
+    :param port: socket port (default: 6653)
+    :type port: int
     """
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init %s with ID: %s" % (self.__class__.__name__, name))
     super(POXDomainAdapter, self).__init__()
-    self.nexus = of_name
-    self.controller_address = (of_address, of_port)
+    # Set an OpenFlow nexus as a source of OpenFlow events
+    self.openflow = OpenFlowBridge()
+    self.controller_address = (address, port)
+    # Initiate our specific connection Arbiter
+    arbiter = ExtendedOFConnectionArbiter.activate()
+    # Register our OpenFlow event source
+    arbiter.add_connection_listener(self.controller_address, self.openflow)
     # Launch OpenFlow connection handler if not started before with given name
     # launch() return the registered openflow module which is a coop Task
     from pox.openflow.of_01 import launch
 
-    of = launch(name=of_name, address=of_address, port=of_port)
+    of = launch(name=name, address=address, port=port)
     # Start listening for OpenFlow connections
     of.start()
+    self.task_name = name if name else "of_01"
+    of.name = self.task_name
     # register OpenFlow event listeners
-    core.openflow.addListeners(self)
-    self._connections = []
-    log.debug("Start polling POX domain...")
+    self.openflow.addListeners(self)
+    log.debug("Start polling %s domain..." % self.task_name
+              )
     self.start_polling()
 
   def filter_connections (self, event):
@@ -70,24 +86,22 @@ class POXDomainAdapter(AbstractDomainAdapter):
     """
     Handle incoming OpenFlow connections
     """
-    log.debug("Handle connection by %s" % self.__class__.__name__)
+    log.debug("Handle connection by %s" % self.task_name)
     if self.filter_connections(event):
-      self._connections.append(event.connection)
-    e = DomainChangedEvent(domain=self.name,
-                           cause=DomainChangedEvent.type.DEVICE_UP,
-                           data={"DPID": event.dpid})
-    self.raiseEventNoErrors(e)
+      event = DomainChangedEvent(domain=self.name,
+                                 cause=DomainChangedEvent.type.DEVICE_UP,
+                                 data={"DPID": event.dpid})
+      self.raiseEventNoErrors(event)
 
   def _handle_ConnectionDown (self, event):
     """
     Handle disconnected device
     """
-    log.debug("Handle disconnection by %s" % self.__class__.__name__)
-    self._connections.remove(event.connection)
-    e = DomainChangedEvent(domain=self.name,
-                           cause=DomainChangedEvent.type.DEVICE_DOWN,
-                           data={"DPID": event.dpid})
-    self.raiseEventNoErrors(e)
+    log.debug("Handle disconnection by %s" % self.task_name)
+    event = DomainChangedEvent(domain=self.name,
+                               cause=DomainChangedEvent.type.DEVICE_DOWN,
+                               data={"DPID": event.dpid})
+    self.raiseEventNoErrors(event)
 
   def install_routes (self, routes):
     """
@@ -326,6 +340,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
     AbstractRESTAdapter.__init__(self, base_url=url)
     AbstractDomainAdapter.__init__(self)
 
+
 class InternalDomainManager(AbstractDomainManager):
   """
   Manager class to handle communication with internally emulated network
@@ -349,6 +364,10 @@ class InternalDomainManager(AbstractDomainManager):
     # Set remote VNF handler if needed/set or skip initiation steps in lack
     # of reasonable default agent params
     self._remote = remote if remote else None
+
+  @property
+  def controller_name(self):
+    return self._controller.task_name
 
   def install_nffg (self, nffg_part):
     """

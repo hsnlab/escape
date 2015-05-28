@@ -18,9 +18,11 @@ from escape import CONFIG
 from escape.infr import LAYER_NAME
 from escape.infr.topology import NetworkWrapper
 from escape.infr import log as log  # Infrastructure layer logger
+from escape.adapt import LAYER_NAME as ADAPT_LAYER_NAME
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent import Event
+from pox.openflow.of_01 import OpenFlow_01_Task
 
 
 class DeploymentFinishedEvent(Event):
@@ -68,9 +70,6 @@ class InfrastructureLayerAPI(AbstractAPI):
     self.topology = NetworkWrapper()
     self.topology.test_network()
     self.topology.initialize(wait_for_controller=True)
-    from pox.core import core
-
-    core.addListenerByName("ComponentRegistered", self._wait_for_controller)
     log.info("Infrastructure Layer has been initialized!")
 
   def shutdown (self, event):
@@ -86,16 +85,19 @@ class InfrastructureLayerAPI(AbstractAPI):
 
       clean.cleanup()
 
-  def _wait_for_controller (self, event):
+  def _handle_ComponentRegistered (self, event):
     """
-    Wait for controller (internal POX modul with the name: of_01)
+    Wait for controller (internal POX modul)
 
     :param event: registered component event
     :type event: :class:`ComponentRegistered`
     :return: None
     """
-    if event.name == "of_01":
+    if event.name == CONFIG[ADAPT_LAYER_NAME]['INTERNAL'][
+      'listener-id'] and isinstance(event.component, OpenFlow_01_Task):
       try:
+        log.debug(
+          "Internal domain controller is up! Initiate network emulation...")
         self.topology.start_network()
       except SystemExit as e:
         log.error("Mininet emulation requires root privileges!")

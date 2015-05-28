@@ -19,8 +19,8 @@ import importlib
 import weakref
 
 from escape import CONFIG
-from escape.adapt import ADAPTATION_LAYER_NAME
-from escape.infr import LAYER_NAME as infr_name
+from escape.adapt import LAYER_NAME
+from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt.domain_adapters import AbstractDomainAdapter
 from escape.adapt import log as log
@@ -70,29 +70,11 @@ class ControllerAdapter(object):
       self.__init_defaults()
     elif with_infr:
       # Initiate default internal adapter if needed.
-      try:
-        if CONFIG[infr_name]["LOADED"]:
-          # Set adapters for InternalDomainManager
-          # Set OpensFlow route handler
-          controller = self.__load_adapter("POX")
-          # Set emulated network initiator/handler/manager
-          network = self.__load_adapter("MININET")
-          # Set NETCONF handling capability if needed
-          remote = self.__load_adapter('VNFStarter', **
-          CONFIG[ADAPTATION_LAYER_NAME]['VNFStarter'][
-            'agent']) if remote else None
-          # Set internal domain manager
-          self._domains['INTERNAL'] = self.__load_adapter("INTERNAL",
-                                                          controller=controller,
-                                                          network=network,
-                                                          remote=remote)
-      except KeyError as e:
-        log.error(
-          "Got KeyError during initialization of InternalDomainManager: %s", e)
+      self.init_internal(remote)
     else:
       # Other adapters will be created right after the first reference to them
       # POX seems to be the only reasonable choice as a default adapter
-      self.__load_adapter("POX")
+      self._domains['POX'] = self.__load_adapter("POX")
     # Set virtualizer-related components
     self.domainResManager = DomainResourceManager()
 
@@ -115,12 +97,12 @@ class ControllerAdapter(object):
       else:
         raise AttributeError("No adapter is defined with the name: %s" % item)
 
-  def __load_adapter (self, name, from_config=True, **kwargs):
+  def __load_adapter (self, adapter_name, from_config=True, **kwargs):
     """
     Load given adapter.
 
-    :param name: adapter's name
-    :type name: str
+    :param adapter_name: adapter's name
+    :type adapter_name: str
     :param kwargs: adapter's initial parameters
     :type kwargs: dict
     :return: initiated adapter
@@ -130,10 +112,10 @@ class ControllerAdapter(object):
       if from_config:
         adapter_class = getattr(
           importlib.import_module("escape.adapt.domain_adapters"),
-          CONFIG[ADAPTATION_LAYER_NAME][name]['class'])
+          CONFIG[LAYER_NAME][adapter_name]['class'])
       else:
         adapter_class = getattr(
-          importlib.import_module("escape.adapt.domain_adapters"), name)
+          importlib.import_module("escape.adapt.domain_adapters"), adapter_name)
       adapter = adapter_class(**kwargs)
       # Set up listeners for e.g. DomainChangedEvents
       adapter.addListeners(self)
@@ -145,7 +127,7 @@ class ControllerAdapter(object):
         "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
     except AttributeError:
       log.error("%s is not found. Skip adapter initialization!" %
-                CONFIG[ADAPTATION_LAYER_NAME][name]['class'])
+                CONFIG[LAYER_NAME][adapter_name]['class'])
 
   def __init_defaults (self):
     """
@@ -155,6 +137,39 @@ class ControllerAdapter(object):
     # TODO - improve
     for name in ('POX', 'INTERNAL'):
       self._domains[name] = self.__load_adapter(name)
+
+  def init_internal (self, remote):
+    """
+    Init internal domain.
+
+    :param remote: use NETCONF RPCs or direct access (default: False)
+    :type remote: bool
+    :return: None
+    """
+    try:
+      if CONFIG[INFR_LAYER_NAME]["LOADED"]:
+        # Set adapters for InternalDomainManager
+        # Set OpenFlow route handler
+        controller = self.__load_adapter("POX",
+                                         name=CONFIG[LAYER_NAME]['INTERNAL'][
+                                           'listener-id'])
+        # Set emulated network initiator/handler/manager
+        network = self.__load_adapter("MININET")
+        # Set NETCONF handling capability if needed
+        remote = self.__load_adapter('VNFStarter',
+                                     **CONFIG[LAYER_NAME]['VNFStarter'][
+                                       'agent']) if remote else None
+        # Set internal domain manager
+        self._domains['INTERNAL'] = self.__load_adapter("INTERNAL",
+                                                        controller=controller,
+                                                        network=network,
+                                                        remote=remote)
+      else:
+        log.error("%s layer is not loaded! Abort InternalDomainManager "
+                  "initialization!" % INFR_LAYER_NAME)
+    except KeyError as e:
+      log.error(
+        "Got KeyError during initialization of InternalDomainManager: %s", e)
 
   def install_nffg (self, mapped_nffg):
     """

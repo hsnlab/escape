@@ -28,7 +28,8 @@ CONFIG = {'service': {  # Service Adaptation Sublayer
                               'STRATEGY': 'ESCAPEMappingStrategy',
                               'THREADED': True},
           'adaptation': {  # Controller Adaptation Sublayer
-                           'INTERNAL': {'class': "InternalDomainManager"},
+                           'INTERNAL': {'class': "InternalDomainManager",
+                                        'listener-id': "InternalOFController"},
                            'POX': {'class': "POXDomainAdapter"},
                            'MININET': {'class': "MininetDomainAdapter"},
                            "VNFStarter": {"class": "VNFStarterAdapter",

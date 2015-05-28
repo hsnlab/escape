@@ -17,7 +17,7 @@ Sublayer
 """
 import repr
 
-from escape.adapt import ADAPTATION_LAYER_NAME
+from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
 from escape.adapt.adaptation import ControllerAdapter
 from escape.util.api import AbstractAPI
@@ -73,7 +73,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   Implement the Or - Ca reference point
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
-  _core_name = ADAPTATION_LAYER_NAME
+  _core_name = LAYER_NAME
   # Events raised by this class
   _eventMixin_events = {GlobalResInfoEvent, InstallationFinishedEvent,
                         DeployNFFGEvent}
@@ -158,7 +158,7 @@ class ControllerAdaptationAPI(AbstractAPI):
 
     :param event: event object
     :type event: :any:`DeployNFFGEvent`
-    :return:None
+    :return: None
     """
     # Sending NF-FG to Infrastructure layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
@@ -167,6 +167,13 @@ class ControllerAdaptationAPI(AbstractAPI):
     self.raiseEventNoErrors(DeployNFFGEvent, event.nffg_part)
 
   def _handle_DeploymentFinishedEvent (self, event):
+    """
+    Receive successfull NF-FG deployment event and propagate upwards
+
+    :param event: event object
+    :type event: :any:`DeploymentFinishedEvent`
+    :return: None
+    """
     if event.success:
       log.getChild('API').info(
         "NF-FG installation has been finished successfully!")

@@ -34,13 +34,13 @@ class AbstractTopology(Topo):
     # TODO - extend and implement
 
 
-class InternalPOXController(RemoteController):
+class InternalControllerProxy(RemoteController):
   """
-  Controller class for emulated Mininet network for making connection with
-  internal controller initiated by POXDomainAdapter
+  Controller class for emulated Mininet network. Making connection with
+  internal controller initiated by POXDomainAdapter.
   """
 
-  def __init__ (self, name="InternalPOXController", ip='127.0.0.1', port=6633,
+  def __init__ (self, name="InternalPOXController", ip='127.0.0.1', port=6653,
        **kwargs):
     """
     Init
@@ -52,7 +52,7 @@ class InternalPOXController(RemoteController):
     :param port: port number (default 6633)
     :type port: int
     """
-    super(InternalPOXController, self).__init__(name, ip, port, **kwargs)
+    super(InternalControllerProxy, self).__init__(name, ip, port, **kwargs)
 
   def checkListening (self):
     """
@@ -164,7 +164,7 @@ class NetworkWrapper(object):
     log.debug("Starting Mininet network...")
     if self._net:
       self._net.start()
-      log.debug("Mininet network has been started")
+      log.debug("Mininet network has been started!")
     else:
       log.error("Missing topology! Skipping emulation and running dry...")
 
@@ -186,7 +186,7 @@ class NetworkWrapper(object):
     h1 = net.addHost('h1')
     h2 = net.addHost('h2')
     s1 = net.addSwitch('s1')
-    c0 = net.addController('c0', InternalPOXController)
+    c0 = net.addController('c0', InternalControllerProxy)
     net.addLink(h1, s1)
     net.addLink(h2, s1)
     self._net = net
