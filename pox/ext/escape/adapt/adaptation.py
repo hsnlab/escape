@@ -187,7 +187,7 @@ class ControllerAdapter(object):
     # TODO - no NFFG split just very dummy cycle
     if self._with_infr:
       log.debug("Delegate mapped NFFG to Internal domain manager...")
-      self.internal_manager.install_nffg(mapped_nffg)
+      self.INTERNAL.install_nffg(mapped_nffg)
     else:
       for name, adapter in self._domains.iteritems():
         log.debug("Delegate mapped NFFG to %s domain adapter..." % name)
