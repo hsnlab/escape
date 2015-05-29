@@ -21,13 +21,22 @@ import getopt, sys
 # Types of infrastructure nodes
 BISBIS = 0
 
-class Flowrule(object):
+class Flowclass(object):
   """
-  Class for storing flowrules or flowclasses
+  Class for storing flowclasses (flowrule without action)
   """
 
-  def __init__ (self, match, action=None):
+  def __init__ (self, match):
     self.match = match
+
+
+class Flowrule(Flowclass):
+  """
+  Class for storing flowrules
+  """
+
+  def __init__ (self, match, action):
+    super(Flowrule, self).__init__(match)
     self.action = action
 
 
@@ -40,6 +49,28 @@ class Port(object):
     self.id = id
     self.props = props
     self.flowrules = flowrules
+
+
+class ResOfNode(object):
+  """
+  Class for storing resource information for nodes
+  """
+
+  def __init__ (self, cpu, mem, sto, net):
+    self.cpu = cpu
+    self.mem = mem
+    self.sto = sto
+    self.net = net
+
+
+class ResOfEdge(object):
+  """
+  Class for storing resource information for edges
+  """
+
+  def __init__ (self, delay, bandwidth):
+    self.delay = delay
+    self.bandwidth = bandwidth
 
 
 class Node(object):
@@ -63,7 +94,7 @@ class NodeNF(Node):
     self.name = name
     self.functional_type = functional_type
     self.spec['deployment_type'] = deployment_type
-    self.spec['resources'] = resources
+    self.spec['resources'] = resources # ResOfNode
     self.ports = ports
     self.monitoring = monitoring
 
@@ -90,7 +121,7 @@ class NodeInfra(Node):
     self.name = name
     self.domain = domain
     self.type = infra_type
-    self.resources = resources
+    self.resources = resources # ResOfNode
     self.ports = ports
 
 
@@ -99,9 +130,11 @@ class Edge(object):
   Class for different types of edges in the NF-FG
   """
 
-  def __init__ (self, id):
+  def __init__ (self, id, src, dst):
     super(Edge, self).__init__()
     self.id = id
+    self.src = src # (Node, Port) or (node_id, port_id)?
+    self.dst = dst # (Node, Port) or (node_id, port_id)?
 
 
 class EdgeLink(Edge):
@@ -110,11 +143,8 @@ class EdgeLink(Edge):
   """
 
   def __init__ (self, id, src, dst, resources):
-    super(Edge, self).__init__()
-    self.id = id
-    self.src = src # (node_id, port_id)
-    self.dst = dst # (node_id, port_id)
-    self.resources = resources
+    super(Edge, self).__init__(id, src, dst)
+    self.resources = resources # ResOfEdge
 
 
 class EdgeSGLink(Edge):
@@ -123,10 +153,7 @@ class EdgeSGLink(Edge):
   """
 
   def __init__ (self, id, src, dst, flowclass):
-    super(Edge, self).__init__()
-    self.id = id
-    self.src = src # (node_id, port_id)
-    self.dst = dst # (node_id, port_id)
+    super(Edge, self).__init__(id, src, dst)
     self.flowclass = flowclass # flowrule without action
 
 
@@ -136,8 +163,5 @@ class EdgeReq(Edge):
   """
 
   def __init__ (self, id, src, dst, reqs):
-    super(Edge, self).__init__()
-    self.id = id
-    self.src = src # (node_id, port_id)
-    self.dst = dst # (node_id, port_id)
-    self.reqs = reqs
+    super(Edge, self).__init__(id, src, dst)
+    self.reqs = reqs # ResOfEdge
