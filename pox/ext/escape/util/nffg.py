@@ -22,7 +22,7 @@ import json
 from pprint import pprint
 import getopt, sys
 import networkx as nx
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 class AbstractNFFG(object):
   """
@@ -177,6 +177,48 @@ class NFFG(AbstractNFFG, nx.MultiGraph):
     self.id = None
     # TODO - implement
     self.error = "NotImplemented"
+
+  def add_nf(self, node_nf):
+    """
+    Add a single NF node to the NF-FG
+    """
+    pass
+
+  def add_sap(self, node_sap):
+    """
+    Add a single SAP node to the NF-FG
+    """
+    pass
+
+  def add_infra(self, node_infra):
+    """
+    Add a single infrastructure node to the NF-FG
+    """
+    pass
+
+  def add_link(self, edge_link):
+    """
+    Add a static or dynamic infrastructure link to the NF-FG
+    """
+    pass
+
+  def add_sglink(self, edge_sglink):
+    """
+    Add an SG link to the NF-FG
+    """
+    pass
+
+  def add_req(self, edge_req):
+    """
+    Add a requirement link to the NF-FG
+    """
+    pass
+
+  def del_node(self, id):
+    """
+    Delete a single node from the NF-FG
+    """
+    pass
 
 
 def main (argv = None):
