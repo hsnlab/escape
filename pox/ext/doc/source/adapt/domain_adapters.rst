@@ -1,18 +1,21 @@
 *domain_adapters.py* module
 ===========================
 
-:any:`DomainChangedEvent` signals changes for :any:`ControllerAdapter` in
-an unified way
-
-:any:`AbstractDomainAdapter` contains general logic for actual Adapters
+:any:`POXDomainAdapter` implements POX related functionality.
 
 :any:`MininetDomainAdapter` implements Mininet related functionality
+transparently.
 
-:any:`POXDomainAdapter` implements POX related functionality
+:any:`VNFStarterAdapter` is a wrapper class for vnf_starter NETCONF module.
 
-:any:`OpenStackDomainAdapter` implements OpenStack related functionality
+:any:`OpenStackRESTAdapter` is a wrapper class for OpenStack-related functions.
 
-:any:`VNFStarterManager` is a wrapper class for vnf_starter NETCONF module
+:any:`InternalDomainManager` represent the top class for interacting with
+emulated infrastructure.
+
+:any:`OpenStackDomainManager` implements OpenStack related functionality.
+
+:any:`DockerDomainManager` implements Docker related functionality.
 
 Module contents
 ---------------

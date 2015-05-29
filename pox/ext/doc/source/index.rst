@@ -39,6 +39,16 @@ and running service chains.
 ESCAPEv2 structure
 ------------------
 
+Dependencies:
++++++++++++++
+
+.. code-block:: bash
+
+  $ sudo apt-get install libxml2 libxslt1-dev python-setuptools python-pip \
+  python-paramiko python-lxml python-libxml2 python-libxslt1
+
+  sudo pip install ncclient requests
+
 Class structure
 +++++++++++++++
 
@@ -51,13 +61,9 @@ Main modules for layers/sublayers
 +++++++++++++++++++++++++++++++++
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 3
 
     UNIFY <unify>
-    Service layer <service>
-    Resource Orchestration sublayer <orchestration>
-    Controller Adaptation sublayer <adaptation>
-    Infrastructure layer <infrastructure>
 
 README
 ++++++
@@ -80,7 +86,8 @@ Basic command to initiate a built-in emulated network for testing:
 
 .. code-block:: bash
 
-    $ ./pox.py unify --full
+    # Infrastructure layer requires root privileges due to use of Mininet!
+    $ sudo ./pox.py unify --full
 
 Minimal command with explicitly-defined components (components' order is irrelevant):
 
@@ -98,7 +105,7 @@ With infrastructure layer:
 
 .. code-block:: bash
 
-    $ ./pox.py service orchestration adaptation --with_infr infrastructure
+    $ sudo ./pox.py service orchestration adaptation --with_infr infrastructure
 
 Long version with debugging and explicitly-defined components (analogous with ./pox.py unify):
 
@@ -130,7 +137,7 @@ Start layer in standalone mode (no dependency handling) for test/debug:
     $ ./pox.py service --standalone
     $ ./pox.py orchestration --standalone
     $ ./pox.py adaptation --standalone
-    $ ./pox.py infrastructure --standalone
+    $ sudo ./pox.py infrastructure --standalone
 
     $ ./pox.py service orchestration --standalone
 

@@ -108,7 +108,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
       # Schedule a microtask which run mapping algorithm in a Python thread
       log.info(
         "Schedule mapping algorithm: %s in a worker thread" %
-          self.strategy.__name__)
+        self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
       log.info("NF-FG(%s) orchestration is finished by %s" % (

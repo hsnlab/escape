@@ -20,10 +20,9 @@ import weakref
 
 from escape import CONFIG
 from escape.adapt import LAYER_NAME
-from escape.infr import LAYER_NAME as infr_name
+from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
-from escape.adapt.domain_adapters import AbstractDomainAdapter, \
-  POXDomainAdapter, InternalDomainManager
+from escape.adapt.domain_adapters import AbstractDomainAdapter
 from escape.adapt import log as log
 from escape.util.nffg import NFFG
 
@@ -34,9 +33,9 @@ class ControllerAdapter(object):
   between multiple domains
   """
   # Default adapters
-  _adapters = {}
+  _domains = {}
 
-  def __init__ (self, layer_API, lazy_load=True, with_infr=False):
+  def __init__ (self, layer_API, lazy_load=True, with_infr=False, remote=True):
     """
     Initialize Controller adapter
 
@@ -57,58 +56,67 @@ class ControllerAdapter(object):
     :type lazy_load: bool
     :param with_infr: using emulated infrastructure (default: False)
     :type with_infr: bool
+    :param remote: use NETCONF RPCs or direct access (default: False)
+    :type remote: bool
     """
+    log.debug("Init ControllerAdapter")
     super(ControllerAdapter, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
-    self.domainResManager = DomainResourceManager()
-    self._layer_API = layer_API
+    # Set a weak reference to avoid circular dependencies
+    self._layer_API = weakref.proxy(layer_API)
     self._lazy_load = lazy_load
     self._with_infr = with_infr
     if not lazy_load:
       # Initiate adapters from CONFIG
-      for adapter_name in CONFIG[LAYER_NAME]:
-        self.__load_adapter(adapter_name)
+      self.__init_defaults()
+    elif with_infr:
+      # Initiate default internal adapter if needed.
+      self.init_internal(remote)
     else:
-      # Initiate default adapters. Other adapters will be created right after
-      # the first reference to them
-      self.__load_adapter(POXDomainAdapter.name)
-      try:
-        if CONFIG[infr_name]["LOADED"]:
-          self.__load_adapter(InternalDomainManager.name)
-      except KeyError:
-        pass
+      # Other adapters will be created right after the first reference to them
+      # POX seems to be the only reasonable choice as a default adapter
+      self._domains['POX'] = self.__load_adapter("POX")
+    # Set virtualizer-related components
+    self.domainResManager = DomainResourceManager()
 
   def __getattr__ (self, item):
     """
-    Expose adapters with it's names as an attribute of this class
+    Expose doamin managers with it's names as an attribute of this class
 
-    :param item: name of the adapter defined in it's class
+    :param item: name of the manager defined in it's class
     :type item: str
-    :return: given domain adapter
+    :return: given domain manager
     :rtype: AbstractDomainAdapter
     """
     try:
       if not item.startswith('__'):
-        return self._adapters[item]
+        return self._domains[item]
     except KeyError:
       if self._lazy_load:
-        return self.__load_adapter(item)
+        self._domains[item] = self.__load_adapter(item)
+        return self._domains[item]
       else:
         raise AttributeError("No adapter is defined with the name: %s" % item)
 
-  def __load_adapter (self, name):
+  def __load_adapter (self, adapter_name, from_config=True, **kwargs):
+    """
+    Load given adapter.
+
+    :param adapter_name: adapter's name
+    :type adapter_name: str
+    :param kwargs: adapter's initial parameters
+    :type kwargs: dict
+    :return: initiated adapter
+    :rtype: :any:`AbstractDomainAdapter`
+    """
     try:
-      adapter_class = getattr(
-        importlib.import_module("escape.adapt.domain_adapters"),
-        CONFIG[LAYER_NAME][name])
-      assert issubclass(adapter_class,
-                        AbstractDomainAdapter), "Adapter class: %s is not " \
-                                                "subclass of " \
-                                                "AbstractDomainAdapter!" % \
-                                                adapter_class.__name__
-      adapter = adapter_class()
-      # Set initialized adapter
-      self._adapters[name] = adapter
+      if from_config:
+        adapter_class = getattr(
+          importlib.import_module("escape.adapt.domain_adapters"),
+          CONFIG[LAYER_NAME][adapter_name]['class'])
+      else:
+        adapter_class = getattr(
+          importlib.import_module("escape.adapt.domain_adapters"), adapter_name)
+      adapter = adapter_class(**kwargs)
       # Set up listeners for e.g. DomainChangedEvents
       adapter.addListeners(self)
       # Set up listeners for DeployNFFGEvent
@@ -118,9 +126,50 @@ class ControllerAdapter(object):
       log.error(
         "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
     except AttributeError:
+      log.error("%s is not found. Skip adapter initialization!" %
+                CONFIG[LAYER_NAME][adapter_name]['class'])
+
+  def __init_defaults (self):
+    """
+    Init default adapters
+    """
+    # very dummy initialization
+    # TODO - improve
+    for name in ('POX', 'INTERNAL'):
+      self._domains[name] = self.__load_adapter(name)
+
+  def init_internal (self, remote):
+    """
+    Init internal domain.
+
+    :param remote: use NETCONF RPCs or direct access (default: False)
+    :type remote: bool
+    :return: None
+    """
+    try:
+      if CONFIG[INFR_LAYER_NAME]["LOADED"]:
+        # Set adapters for InternalDomainManager
+        # Set OpenFlow route handler
+        controller = self.__load_adapter("POX",
+                                         name=CONFIG[LAYER_NAME]['INTERNAL'][
+                                           'listener-id'])
+        # Set emulated network initiator/handler/manager
+        network = self.__load_adapter("MININET")
+        # Set NETCONF handling capability if needed
+        remote = self.__load_adapter('VNFStarter',
+                                     **CONFIG[LAYER_NAME]['VNFStarter'][
+                                       'agent']) if remote else None
+        # Set internal domain manager
+        self._domains['INTERNAL'] = self.__load_adapter("INTERNAL",
+                                                        controller=controller,
+                                                        network=network,
+                                                        remote=remote)
+      else:
+        log.error("%s layer is not loaded! Abort InternalDomainManager "
+                  "initialization!" % INFR_LAYER_NAME)
+    except KeyError as e:
       log.error(
-        "%s is not found. Skip adapter initialization!" % CONFIG[LAYER_NAME][
-          name])
+        "Got KeyError during initialization of InternalDomainManager: %s", e)
 
   def install_nffg (self, mapped_nffg):
     """
@@ -136,9 +185,13 @@ class ControllerAdapter(object):
     log.debug("Invoke %s to install NF-FG" % self.__class__.__name__)
     # TODO - implement
     # TODO - no NFFG split just very dummy cycle
-    for name, adapter in self._adapters.iteritems():
-      log.debug("Delegate mapped NFFG to %s domain adapter..." % name)
-      adapter.install(mapped_nffg)
+    if self._with_infr:
+      log.debug("Delegate mapped NFFG to Internal domain manager...")
+      self.INTERNAL.install_nffg(mapped_nffg)
+    else:
+      for name, adapter in self._domains.iteritems():
+        log.debug("Delegate mapped NFFG to %s domain adapter..." % name)
+        adapter.install_routes(mapped_nffg)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
 
   def _handle_DomainChangedEvent (self, event):
@@ -177,7 +230,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: None
     """
     super(DomainVirtualizer, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init DomainVirtualizer")
     # Garbage-collector safe
     self.domainResManager = weakref.proxy(domainResManager)
 
@@ -203,7 +256,7 @@ class DomainResourceManager(object):
     Init
     """
     super(DomainResourceManager, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init DomainResourceManager")
     self._dov = DomainVirtualizer(self)
 
   @property

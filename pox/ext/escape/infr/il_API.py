@@ -16,10 +16,13 @@ Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet
 """
 from escape import CONFIG
 from escape.infr import LAYER_NAME
-from escape.util.api import AbstractAPI
+from escape.infr.topology import NetworkWrapper
 from escape.infr import log as log  # Infrastructure layer logger
+from escape.adapt import LAYER_NAME as ADAPT_LAYER_NAME
+from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent import Event
+from pox.openflow.of_01 import OpenFlow_01_Task
 
 
 class DeploymentFinishedEvent(Event):
@@ -35,7 +38,11 @@ class DeploymentFinishedEvent(Event):
 
 class InfrastructureLayerAPI(AbstractAPI):
   """
+  Entry point for Infrastructure Layer (IL)
 
+  Maintain the contact with other UNIFY layers
+
+  Implement a specific part of the Co - Rm reference point
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
@@ -59,6 +66,10 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     log.debug("Initializing Infrastructure Layer...")
     CONFIG[self._core_name] = {"LOADED": True}
+    self._need_clean = False
+    self.topology = NetworkWrapper()
+    self.topology.test_network()
+    self.topology.initialize(wait_for_controller=True)
     log.info("Infrastructure Layer has been initialized!")
 
   def shutdown (self, event):
@@ -67,6 +78,32 @@ class InfrastructureLayerAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
     log.info("Infrastructure Layer is going down...")
+    if self.topology:
+      self.topology.stop_network()
+    if self._need_clean:
+      from mininet import clean
+
+      clean.cleanup()
+
+  def _handle_ComponentRegistered (self, event):
+    """
+    Wait for controller (internal POX modul)
+
+    :param event: registered component event
+    :type event: :class:`ComponentRegistered`
+    :return: None
+    """
+    if event.name == CONFIG[ADAPT_LAYER_NAME]['INTERNAL'][
+      'listener-id'] and isinstance(event.component, OpenFlow_01_Task):
+      try:
+        log.debug(
+          "Internal domain controller is up! Initiate network emulation...")
+        self.topology.start_network()
+      except SystemExit as e:
+        log.error("Mininet emulation requires root privileges!")
+        import sys
+
+        sys.exit(e)
 
   ##############################################################################
   # UNIFY Co - Rm API functions starts here
@@ -87,13 +124,4 @@ class InfrastructureLayerAPI(AbstractAPI):
     self.raiseEventNoErrors(DeploymentFinishedEvent, True)
 
   def install_route (self):
-    pass
-
-  def setup_network (self):
-    pass
-
-  def start_network (self):
-    pass
-
-  def stop_network (self):
     pass

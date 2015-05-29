@@ -281,7 +281,11 @@ texinfo_documents = [(master_doc, 'ESCAPEv2', u'ESCAPEv2 Documentation', author,
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'python': ('https://docs.python.org/2.7/', None)}
+intersphinx_mapping = {'python': ('https://docs.python.org/2.7/', None),
+                       'ncclient': (
+                         'http://ncclient.readthedocs.org/en/latest/', None),
+                       'requests': (
+                         'http://docs.python-requests.org/en/latest/', None)}
 
 # Autodoc config
 autodoc_member_order = 'bysource'

@@ -1,9 +1,6 @@
 *escape.service* package
 ========================
 
-Package contents
-----------------
-
 .. automodule:: escape.service
    :members:
    :private-members:

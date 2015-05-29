@@ -36,7 +36,7 @@ class GlobalResInfoEvent(Event):
     Init
 
     :param resource_info: resource info
-    :type resource_info: ESCAPEVirtualizer
+    :type resource_info: :any:`ESCAPEVirtualizer`
     """
     super(GlobalResInfoEvent, self).__init__()
     self.resource_info = resource_info
@@ -55,19 +55,13 @@ class InstallationFinishedEvent(Event):
 
 class DeployNFFGEvent(Event):
   """
-  Event for passing mapped :any:`NFFG>` to internally emulated network (
-  Mininet) for testing
+  Event for passing mapped :any:`NFFG` to internally emulated network based on
+  Mininet for testing
   """
 
   def __init__ (self, nffg_part):
-    """
-    Init
-
-    :param nffg_part: NF-FG graph need to be installed
-    :type nffg_part: NFFG
-    """
     super(DeployNFFGEvent, self).__init__()
-    self.mapped_nffg = nffg_part
+    self.nffg_part = nffg_part
 
 
 class ControllerAdaptationAPI(AbstractAPI):
@@ -164,7 +158,7 @@ class ControllerAdaptationAPI(AbstractAPI):
 
     :param event: event object
     :type event: :any:`DeployNFFGEvent`
-    :return:None
+    :return: None
     """
     # Sending NF-FG to Infrastructure layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
@@ -173,6 +167,13 @@ class ControllerAdaptationAPI(AbstractAPI):
     self.raiseEventNoErrors(DeployNFFGEvent, event.nffg_part)
 
   def _handle_DeploymentFinishedEvent (self, event):
+    """
+    Receive successfull NF-FG deployment event and propagate upwards
+
+    :param event: event object
+    :type event: :any:`DeploymentFinishedEvent`
+    :return: None
+    """
     if event.success:
       log.getChild('API').info(
         "NF-FG installation has been finished successfully!")

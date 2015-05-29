@@ -1,9 +1,6 @@
 *escape.orchest* package
 ========================
 
-Package contents
-----------------
-
 .. automodule:: escape.orchest
    :members:
    :private-members:

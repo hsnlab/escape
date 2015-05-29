@@ -101,8 +101,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     Bounded to POST HTTP verb
     """
-    log.getChild("REST-API").debug("Call REST-API function: %s" % (
-      inspect.currentframe().f_code.co_name,))
+    log.getChild("REST-API").debug(
+      "Call REST-API function: %s" % (inspect.currentframe().f_code.co_name,))
     body = self._parse_json_body()
     log.getChild("REST-API").debug("Parsed input: %s" % body)
     sg = NFFG(json=body)  # Initialize NFFG from JSON representation

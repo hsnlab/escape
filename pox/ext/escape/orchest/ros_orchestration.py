@@ -128,14 +128,14 @@ class NFIBManager(object):
     """
     super(NFIBManager, self).__init__()
 
-  def add(self, nf):
+  def add (self, nf):
     # TODO - implement
     pass
 
-  def remove(self, nf_id):
+  def remove (self, nf_id):
     # TODO - implement
     pass
 
-  def getNF(self, nf_id):
+  def getNF (self, nf_id):
     # TODO - implement
     pass

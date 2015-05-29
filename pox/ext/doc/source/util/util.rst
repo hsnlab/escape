@@ -1,9 +1,6 @@
 *escape.util* package
 =====================
 
-Package contents
-----------------
-
 .. automodule:: escape.util
    :members:
    :private-members:
@@ -18,6 +15,7 @@ Submodules
 .. toctree::
     :titlesonly:
 
+    adapter
     api
     mapping
     misc

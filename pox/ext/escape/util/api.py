@@ -102,7 +102,7 @@ class AbstractAPI(EventMixin):
     # between the components, so basically the layers will always wait to each
     # other to be registered on core. To avoid this situation the naming
     # convention of event handlers on which the dependency checking based is
-    # not followed (aka leave _handle_<component name>_<event name>) and
+    # not followed (a.k.a. leave _handle_<component name>_<event name>) and
     # the event listeners is set up manually. For automatic core registration
     # the components have to contain dependencies explicitly.
     for dep in self.dependencies:
@@ -122,13 +122,16 @@ class AbstractAPI(EventMixin):
     # Subscribe for GoingDownEvent to finalize API classes
     # shutdown() function will be called if POX's core going down
     core.addListenerByName('GoingDownEvent', self.shutdown)
+    # Subscribe core event for advanced functions
+    # Listeners' name must follow POX naming conventions
+    core.addListeners(self)
     # Everything is set up an "running" so register the component on pox.core
     # as a final step. Other dependent component can finish initialization now.
     core.core.register(self._core_name, self)
     # Set "running" config for convenience purposes
     try:
       CONFIG[self._core_name]["LOADED"] = True
-    except KeyError:
+    except KeyError as e:
       CONFIG[self._core_name] = {"LOADED": True}
 
   def initialize (self):
@@ -190,7 +193,7 @@ class AbstractAPI(EventMixin):
 
 class RESTServer(HTTPServer, ThreadingMixIn):
   """
-  Base HTTP server for REST API
+  Base HTTP server for RESTful API
 
   Initiate an :class:`HTTPServer` and run it in different thread
   """
@@ -263,7 +266,7 @@ class RESTError(Exception):
 
 class AbstractRequestHandler(BaseHTTPRequestHandler):
   """
-  Minimalistic REST API for Layer APIs
+  Minimalistic RESTful API for Layer APIs
 
   Handle /escape/* URLs.
 
@@ -434,10 +437,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     self.log_error("code %d, message %s", code, message)
     # using _quote_html to prevent Cross Site Scripting attacks (see bug
     # #1100201)
-    content = (
-      self.error_message_format % {'code': code,
-                                   'message': _quote_html(message),
-                                   'explain': explain})
+    content = (self.error_message_format % {'code': code,
+                                            'message': _quote_html(message),
+                                            'explain': explain})
     self.send_response(code, message)
     self.send_header("Content-Type", self.error_content_type)
     self.send_header('Connection', 'close')

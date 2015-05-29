@@ -114,7 +114,7 @@ class Interactive (object):
     core.quit()
 
 
-def launch (disable = False, completion = None, __INSTANCE__ = None):
+def launch (disable = False, completion = True, __INSTANCE__ = None):
   if not core.hasComponent("Interactive"):
     Interactive()
 

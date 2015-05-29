@@ -25,7 +25,7 @@ from ncclient.xml_ import new_ele, sub_ele
 
 class AbstractNETCONFAdapter(object):
   """
-  Abstract class for various Adapters rely on NETCONF protocol (RFC 4741)
+  Abstract class for various Adapters rely on NETCONF protocol (:rfc:`4741`)
 
   Contains basic functions for managing connection and invoking RPC calls.
   Configuration management can be handled by the external
@@ -373,11 +373,10 @@ class AbstractNETCONFAdapter(object):
       request_data = self._create_rpc_request(rpc_name, **params)
       self._invoke_rpc(request_data)
       return self._parse_rpc_response()
-    except RPCError as e:
-      print "rpcerror"
+    except RPCError as error:
       if no_rpc_error:
         result = {"rpc-reply": "Error"}
-        result.update(e.to_dict())
+        result.update(error.to_dict())
         return result
       else:
         raise
