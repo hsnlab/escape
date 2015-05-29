@@ -387,7 +387,7 @@ class InternalDomainManager(AbstractDomainManager):
     self._controller.install_routes(routes=())
 
 
-class OpenStackDomainManager(AbstractDomainAdapter):
+class OpenStackDomainManager(AbstractDomainManager):
   """
   Adapter class to handle communication with OpenStack domain
 
@@ -414,7 +414,7 @@ class OpenStackDomainManager(AbstractDomainAdapter):
     pass
 
 
-class DockerDomainManager(AbstractDomainAdapter):
+class DockerDomainManager(AbstractDomainManager):
   """
   Adapter class to handle communication component in a Docker domain
 
