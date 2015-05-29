@@ -1,9 +1,6 @@
 *escape* package
 ================
 
-Package contents
-----------------
-
 .. automodule:: escape
    :members:
    :private-members:

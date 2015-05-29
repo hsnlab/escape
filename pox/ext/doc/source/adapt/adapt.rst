@@ -1,9 +1,6 @@
 *escape.adapt* package
 ======================
 
-Package contents
-----------------
-
 .. automodule:: escape.adapt
    :members:
    :private-members:

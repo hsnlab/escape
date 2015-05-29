@@ -1,9 +1,6 @@
 *escape.infr* package
 =====================
 
-Package contents
-----------------
-
 .. automodule:: escape.infr
    :members:
    :private-members:

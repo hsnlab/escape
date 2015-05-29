@@ -1,9 +1,6 @@
 *escape.util* package
 =====================
 
-Package contents
-----------------
-
 .. automodule:: escape.util
    :members:
    :private-members:
