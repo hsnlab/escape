@@ -145,6 +145,12 @@ class AbstractNFFG(object):
 
     return nffg
 
+  def load_from_file (self, filename):
+    with open(filename) as json_file:    
+      nffg = json.load(json_file)
+
+    return nffg
+
   def to_json (self):
     """
     Return a JSON string represent this instance
