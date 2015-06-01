@@ -373,10 +373,10 @@ class AbstractNETCONFAdapter(object):
       request_data = self._create_rpc_request(rpc_name, **params)
       self._invoke_rpc(request_data)
       return self._parse_rpc_response()
-    except RPCError as error:
+    except RPCError as e:
       if no_rpc_error:
         result = {"rpc-reply": "Error"}
-        result.update(error.to_dict())
+        result.update(e.to_dict())
         return result
       else:
         raise

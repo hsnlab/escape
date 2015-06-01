@@ -89,6 +89,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
   def echo (self):
     """
     Test function for REST-API
+
+    :return: None
     """
     params = self._parse_json_body()
     self.log_full_message("ECHO: %s - %s", self.raw_requestline, params)
@@ -110,6 +112,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
   def version (self):
     """
     Return with version
+
+    :return: None
     """
     log.getChild("REST-API").debug("Call REST-API function: version")
     self._send_json_response({"name": __project__, "version": __version__})
@@ -117,6 +121,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
   def operations (self):
     """
     Return with allowed operations
+
+    :return: None
     """
     log.getChild("REST-API").debug("Call REST-API function: operations")
     self._send_json_response(self.request_perm)

@@ -16,13 +16,17 @@ Abstract class and implementation for basic operations with a single
 NF-FG, such as building, parsing, processing NF-FG, helper functions,
 etc.
 """
+import getopt
 import os
-
 import json
-from pprint import pprint
-import getopt, sys
-import networkx as nx
 from abc import ABCMeta, abstractmethod
+from pprint import pprint
+import sys
+
+import networkx as nx
+
+from escape.util.nffg_elements import *
+
 
 class AbstractNFFG(object):
   """
@@ -35,7 +39,7 @@ class AbstractNFFG(object):
   __metaclass__ = ABCMeta
 
   def __init__ (self, id, name=None, version='1.0', json=None, file=None):
-  # def __init__ (self, id, name=None, version='1.0'):
+    # def __init__ (self, id, name=None, version='1.0'):
     """
     Init
     """
@@ -54,30 +58,30 @@ class AbstractNFFG(object):
       file = os.path.abspath(file)
       with open(file, 'r') as f:
         self._init_from_json(json.load(f))
-    #####
+        #####
 
   @abstractmethod
-  def add_nf(self, node_nf):
+  def add_nf (self, node_nf):
     """
     Add a single NF node to the NF-FG
     """
     return
 
   @abstractmethod
-  def add_sap(self, node_sap):
+  def add_sap (self, node_sap):
     """
     Add a single SAP node to the NF-FG
     """
     return
 
   @abstractmethod
-  def add_infra(self, node_infra):
+  def add_infra (self, node_infra):
     """
     Add a single infrastructure node to the NF-FG
     """
     return
 
-  def add_edge(self, src, dst, params=None):
+  def add_edge (self, src, dst, params=None):
     """
     Add an edge to the NF-FG
 
@@ -105,28 +109,28 @@ class AbstractNFFG(object):
       self.add_link(e)
 
   @abstractmethod
-  def add_link(self, edge_link):
+  def add_link (self, edge_link):
     """
     Add a static or dynamic infrastructure link to the NF-FG
     """
     return
 
   @abstractmethod
-  def add_sglink(self, edge_sglink):
+  def add_sglink (self, edge_sglink):
     """
     Add an SG link to the NF-FG
     """
     return
 
   @abstractmethod
-  def add_req(self, edge_req):
+  def add_req (self, edge_req):
     """
     Add a requirement link to the NF-FG
     """
     return
 
   @abstractmethod
-  def del_node(self, id):
+  def del_node (self, id):
     """
     Delete a single node from the NF-FG
     """
@@ -143,14 +147,9 @@ class AbstractNFFG(object):
     # TODO - implement! This function has already used in layer APIs
     pass
 
-  def load_from_file (self, filename):
-    with open(filename) as json_file:    
-      nffg = json.load(json_file)
-
-    return nffg
-
-  def load_from_file (self, filename):
-    with open(filename) as json_file:    
+  @staticmethod
+  def load_from_file (filename):
+    with open(filename) as json_file:
       nffg = json.load(json_file)
 
     return nffg
@@ -162,6 +161,30 @@ class AbstractNFFG(object):
     :return: JSON formatted string
     :rtype: str
     """
+
+  def __copy__ (self):
+    """
+    Magic class for creating a shallow copy of actual class using the
+    copy.copy() function of Python standard library. This means that,
+    while the instance itself is a new instance, all of its data is referenced.
+
+    :return: shallow copy of this instace
+    :rtype: :class::`NFFG`
+    """
+    pass
+
+  def __deepcopy__ (self, memo={}):
+    """
+    Magic class for creating a deep copy of actual class using the
+    copy.deepcopy() function of Python standard library. The object and its
+    data are both copied.
+
+    :param memo: is a cache of previously copied objects
+    :type memo: dict
+    :return: shallow copy of this instace
+    :rtype: :class::`NFFG`
+    """
+    pass
 
 
 class NFFG(AbstractNFFG, nx.MultiGraph):
@@ -183,51 +206,51 @@ class NFFG(AbstractNFFG, nx.MultiGraph):
     # TODO - implement
     self.error = "NotImplemented"
 
-  def add_nf(self, node_nf):
+  def add_nf (self, node_nf):
     """
     Add a single NF node to the NF-FG
     """
     pass
 
-  def add_sap(self, node_sap):
+  def add_sap (self, node_sap):
     """
     Add a single SAP node to the NF-FG
     """
     pass
 
-  def add_infra(self, node_infra):
+  def add_infra (self, node_infra):
     """
     Add a single infrastructure node to the NF-FG
     """
     pass
 
-  def add_link(self, edge_link):
+  def add_link (self, edge_link):
     """
     Add a static or dynamic infrastructure link to the NF-FG
     """
     pass
 
-  def add_sglink(self, edge_sglink):
+  def add_sglink (self, edge_sglink):
     """
     Add an SG link to the NF-FG
     """
     pass
 
-  def add_req(self, edge_req):
+  def add_req (self, edge_req):
     """
     Add a requirement link to the NF-FG
     """
     pass
 
-  def del_node(self, id):
+  def del_node (self, id):
     """
     Delete a single node from the NF-FG
     """
     pass
 
 
-def main (argv = None):
-  if argv == None:
+def main (argv=None):
+  if argv is None:
     argv = sys.argv
   # parse command line options
   try:
@@ -241,9 +264,9 @@ def main (argv = None):
     if o in ('-i', '--input'):
       filename = a
 
-  nffg = NFFG()
-  res = nffg.load_from_file(filename)
+  res = NFFG.load_from_file(filename)
   pprint(res)
 
+
 if __name__ == "__main__":
-    main()
+  main()

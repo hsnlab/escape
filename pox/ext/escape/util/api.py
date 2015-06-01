@@ -319,18 +319,38 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   # Unsupported HTTP verbs
 
   def do_OPTIONS (self):
+    """
+    Handleing unsupported HTTP verbs
+
+    :return: None
+    """
     self.send_error(501)
     self.wfile.close()
 
   def do_HEAD (self):
+    """
+    Handleing unsupported HTTP verbs
+
+    :return: None
+    """
     # self.send_error(501)
     self.wfile.close()
 
   def do_TRACE (self):
+    """
+    Handleing unsupported HTTP verbs
+
+    :return: None
+    """
     self.send_error(501)
     self.wfile.close()
 
   def do_CONNECT (self):
+    """
+    Handleing unsupported HTTP verbs
+
+    :return: None
+    """
     self.send_error(501)
     self.wfile.close()
 
@@ -417,6 +437,11 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       raise RESTError(code=415, msg="Request parsing failed: %s" % e)
 
   def send_REST_headers (self):
+    """
+    Set the allowed REST verbs as an HTTP header (Allow)
+
+    :return: None
+    """
     try:
       if self.func_name:
         self.send_header('Allow', ','.join(
@@ -426,6 +451,13 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       pass
 
   def send_acknowledge (self, msg='{"result": "Accepted"}'):
+    """
+    Send back acknowlede message
+
+    :param msg: response body
+    :param msg: dict
+    :return: None
+    """
     msg.encode("UTF-8")
     self.send_response(202)
     self.send_header('Content-Type', 'text/json; charset=UTF-8')
