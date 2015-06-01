@@ -34,7 +34,8 @@ class AbstractNFFG(object):
 
   __metaclass__ = ABCMeta
 
-  def __init__ (self, id, name=None, version='1.0'):
+  def __init__ (self, id, name=None, version='1.0', json=None, file=None):
+  # def __init__ (self, id, name=None, version='1.0'):
     """
     Init
     """
@@ -46,12 +47,14 @@ class AbstractNFFG(object):
     # # from Janos's code
     # # merging should be reconsidered
     # # additional input params: json=None, file=None
-    # if json:
-    #   self._init_from_json(json)
-    # elif file and not file.startswith('/'):
-    #   file = os.path.abspath(file)
-    #   with open(file, 'r') as f:
-    #     self._init_from_json(json.load(f))
+    #### temporarily reverted:
+    if json:
+      self._init_from_json(json)
+    elif file and not file.startswith('/'):
+      file = os.path.abspath(file)
+      with open(file, 'r') as f:
+        self._init_from_json(json.load(f))
+    #####
 
   @abstractmethod
   def add_nf(self, node_nf):
@@ -138,6 +141,7 @@ class AbstractNFFG(object):
     :return: None
     """
     # TODO - implement! This function has already used in layer APIs
+    pass
 
   def load_from_file (self, filename):
     with open(filename) as json_file:    
@@ -169,11 +173,12 @@ class NFFG(AbstractNFFG, nx.MultiGraph):
   expose NetworkX API.
   """
 
-  def __init__ (self):
+  def __init__ (self, id=None, name=None, version='1.0', json=None, file=None):
     """
     Init
     """
-    super(NFFG, self).__init__()
+    # TODO: json, file params should be removed
+    super(NFFG, self).__init__(id, name, version, json, file)
     self.id = None
     # TODO - implement
     self.error = "NotImplemented"
