@@ -316,6 +316,24 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     """
     self._process_url()
 
+  # Unsupported HTTP verbs
+
+  def do_OPTIONS (self):
+    self.send_error(501)
+    self.wfile.close()
+
+  def do_HEAD (self):
+    # self.send_error(501)
+    self.wfile.close()
+
+  def do_TRACE (self):
+    self.send_error(501)
+    self.wfile.close()
+
+  def do_CONNECT (self):
+    self.send_error(501)
+    self.wfile.close()
+
   def _process_url (self):
     """
     Split HTTP path and call the carved function if it is defined in this class
@@ -328,12 +346,14 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     real_path = urlparse.urlparse(self.path).path
     try:
       if real_path.startswith('/%s/' % self.static_prefix):
-        func_name = real_path.split('/')[2]
+        self.func_name = real_path.split('/')[2]
         if http_method in self.request_perm:
-          if func_name in self.request_perm[http_method]:
-            if hasattr(self, func_name):
-              getattr(self, func_name)()
-              self.send_acknowledge()
+          if self.func_name in self.request_perm[http_method]:
+            if hasattr(self, self.func_name):
+              # Response is assembled, and sent back by handler functions
+              getattr(self, self.func_name)()
+            else:
+              self.send_error(500, "Missing handler for actual request")
           else:
             self.send_error(406)
         else:
@@ -347,6 +367,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       else:
         self.send_error(500, e.msg)
     finally:
+      self.func_name = None
       self.wfile.flush()
       self.wfile.close()
 
@@ -354,23 +375,33 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     """
     Parse HTTP request body in JSON format
 
-    ::note::
+    .. note::
+
+      Call only once by HTTP request
+
+    .. note::
 
       Parsed JSON object is Unicode
 
     GET, DELETE messages don't have body - return empty dict by default
 
     :return: request body in JSON format
-    :rtype: str
+    :rtype: dict
     """
     charset = 'utf-8'
+    # json.loads returns an empty dict if it's called with an empty string
+    # but this check we can avoid to respond with unnecessary missing
+    # content-* error
+    if self.command.upper() in ('GET', 'DELETE'):
+      return {}
     try:
       splitted_type = self.headers['Content-Type'].split('charset=')
       if len(splitted_type) > 1:
         charset = splitted_type[1]
       content_len = int(self.headers['Content-Length'])
-      raw_data = self.rfile.read(content_len)
-      return json.loads(raw_data, encoding=charset)
+      raw_data = self.rfile.read(size=content_len)
+      # Avoid missing param exception by hand over an empty json data
+      return json.loads(raw_data if content_len else "{}", encoding=charset)
     except KeyError as e:
       # Content-Length header is not defined
       # or charset is not defined in Content-Type header.
@@ -386,7 +417,13 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       raise RESTError(code=415, msg="Request parsing failed: %s" % e)
 
   def send_REST_headers (self):
-    self.send_header('Allow', ','.join([str(x) for x in self.request_perm]))
+    try:
+      if self.func_name:
+        self.send_header('Allow', ','.join(
+          [str(verbs) for verbs, f in self.request_perm.iteritems() if
+           self.func_name in f]))
+    except KeyError:
+      pass
 
   def send_acknowledge (self, msg='{"result": "Accepted"}'):
     msg.encode("UTF-8")
@@ -411,9 +448,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     self.send_response(200)
     self.send_header('Content-Type', 'text/json; charset=' + encoding)
     self.send_header('Content-Length', len(response_body))
+    self.send_REST_headers()
     self.end_headers()
     self.wfile.write(response_body)
-    self.wfile.flush()
+    # self.wfile.flush()
 
   error_content_type = "text/json"
 
@@ -422,11 +460,6 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     Override original function to send back allowed HTTP verbs and set format
     to JSON
     """
-
-    def _quote_html (html):
-      return html.replace("&", "&amp;").replace("<", "&lt;").replace(">",
-                                                                     "&gt;")
-
     try:
       short, long = self.responses[code]
     except KeyError:
@@ -437,16 +470,15 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     self.log_error("code %d, message %s", code, message)
     # using _quote_html to prevent Cross Site Scripting attacks (see bug
     # #1100201)
-    content = (self.error_message_format % {'code': code,
-                                            'message': _quote_html(message),
-                                            'explain': explain})
+    content = {"title": "Error response", 'Error code': code,
+               'Message': message, 'Explanation': explain}
     self.send_response(code, message)
     self.send_header("Content-Type", self.error_content_type)
     self.send_header('Connection', 'close')
-    self.send_REST_headers()
+    # self.send_REST_headers()
     self.end_headers()
     if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
-      self.wfile.write(content)
+      self.wfile.write(json.dumps(content))
 
   def log_error (self, mformat, *args):
     """

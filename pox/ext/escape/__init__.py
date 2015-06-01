@@ -14,12 +14,20 @@
 """
 Unifying package for ESCAPEv2 functions
 
-`__version__` contains the actual version
-
 `CONFIG` contains the ESCAPEv2 dependent configuration such as the concrete
 RequestHandler and strategy classes, the initial Adapter classes, etc.
 """
-__version__ = '2.0.0'
+__project__ = "ESCAPEv2"
+__authors__ = "Janos Czentye, Balazs Sonkoly, Levente Csikor"
+__copyright__ = "Copyright 2015, under Apache License Version 2.0"
+__credits__ = "Janos Czentye, Balazs Sonkoly, Levente Csikor, Attila Csoma, " \
+              "Felician Nemeth, Andras Gulyas, Wouter Tavernier, and Sahel " \
+              "Sahhaf"
+__license__ = "Apache License, Version 2.0"
+__version__ = "2.0.0"
+__maintainer__ = "Janos Czentye"
+__email__ = "czentye@tmit.bme.hu"
+__status__ = "Prototype"
 CONFIG = {'service': {  # Service Adaptation Sublayer
                         'STRATEGY': 'DefaultServiceMappingStrategy',
                         'REQUEST-handler': 'ServiceRequestHandler',

@@ -16,10 +16,9 @@ Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer
 """
 import importlib
-import inspect
 import repr
 
-from escape import CONFIG
+from escape import CONFIG, __project__, __version__
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
@@ -77,8 +76,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
     function
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('echo',), 'POST': ('echo', 'sg'), 'PUT': ('echo',),
-                  'DELETE': ('echo',)}
+  request_perm = {'GET': ('echo', 'version', 'operations'),
+                  'POST': ('echo', 'sg'), 'PUT': ('echo',), 'DELETE': ('echo',)}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'service'
@@ -91,9 +90,9 @@ class ServiceRequestHandler(AbstractRequestHandler):
     """
     Test function for REST-API
     """
-    self.log_full_message("ECHO: %s - %s", self.raw_requestline,
-                          self._parse_json_body())
-    self._send_json_response({'echo': True})
+    params = self._parse_json_body()
+    self.log_full_message("ECHO: %s - %s", self.raw_requestline, params)
+    self._send_json_response(params, rpc="echo")
 
   def sg (self):
     """
@@ -101,12 +100,26 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     Bounded to POST HTTP verb
     """
-    log.getChild("REST-API").debug(
-      "Call REST-API function: %s" % (inspect.currentframe().f_code.co_name,))
+    log.getChild("REST-API").debug("Call REST-API function: sg")
     body = self._parse_json_body()
     log.getChild("REST-API").debug("Parsed input: %s" % body)
     sg = NFFG(json=body)  # Initialize NFFG from JSON representation
     self._proceed_API_call('request_service', sg)
+    self.send_acknowledge()
+
+  def version (self):
+    """
+    Return with version
+    """
+    log.getChild("REST-API").debug("Call REST-API function: version")
+    self._send_json_response({"name": __project__, "version": __version__})
+
+  def operations (self):
+    """
+    Return with allowed operations
+    """
+    log.getChild("REST-API").debug("Call REST-API function: operations")
+    self._send_json_response(self.request_perm)
 
 
 class ServiceLayerAPI(AbstractAPI):

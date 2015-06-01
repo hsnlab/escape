@@ -48,17 +48,17 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'index'
 
+from escape import __version__, __project__, __copyright__, __maintainer__
 # General information about the project.
-project = u'ESCAPEv2'
-copyright = u'2015, János Czentye'
-author = u'János Czentye'
+project = __project__
+copyright = __copyright__
+author = __maintainer__
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-from escape import __version__
 
 version = __version__
 # The full version, including alpha/beta/rc tags.

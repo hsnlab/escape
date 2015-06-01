@@ -47,7 +47,7 @@ Dependencies:
   $ sudo apt-get install libxml2 libxslt1-dev python-setuptools python-pip \
   python-paramiko python-lxml python-libxml2 python-libxslt1
 
-  sudo pip install ncclient requests
+  sudo pip install networkx ncclient requests
 
 Class structure
 +++++++++++++++
@@ -107,11 +107,11 @@ With infrastructure layer:
 
     $ sudo ./pox.py service orchestration adaptation --with_infr infrastructure
 
-Long version with debugging and explicitly-defined components (analogous with ./pox.py unify):
+Long version with debugging and explicitly-defined components (analogous with ./pox.py unify --full):
 
 .. code-block:: bash
 
-     $./pox.py --verbose log.level --DEBUG samples.pretty_log service orchestration adaptation
+     $./pox.py --verbose log.level --DEBUG samples.pretty_log service orchestration adaptation--with_infr infrastructure
 
 Start layers with graph-represented input contained in a specific file:
 
@@ -140,6 +140,25 @@ Start layer in standalone mode (no dependency handling) for test/debug:
     $ sudo ./pox.py infrastructure --standalone
 
     $ ./pox.py service orchestration --standalone
+
+REST API
+++++++++
+
+*Content Negotiation:* The Service layer's RESTful API accepts and returns data only in JSON format.
+
+*Operations:*   Every operation need to be called under the **escape/** path. E.g. *http://localhost/escape/version*
+
++-------------------+---------------+-------------------+-----------------------------------------------------------------------------------+
+| Path              | Params        | HTTP verbs        | Description                                                                       |
++===================+===============+===================+===================================================================================+
+| */version*        | ``None``      | GET               | Returns with the current version of ESCAPEv2                                      |
++-------------------+---------------+-------------------+-----------------------------------------------------------------------------------+
+| */echo*           | ``ANY``       | ALL               | Returns with the given parameters                                                 |
++-------------------+---------------+-------------------+-----------------------------------------------------------------------------------+
+| */operations*     | ``None``      | GET               | Returns with the implemented operations as a list                                 |
++-------------------+---------------+-------------------+-----------------------------------------------------------------------------------+
+| */sg*             | ``NFFG``      | POST              | Initiate given NFFG. Returns the given NFFG initiation is accepted or not         |
++-------------------+---------------+-------------------+-----------------------------------------------------------------------------------+
 
 Indices and tables
 ==================
