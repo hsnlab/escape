@@ -22,9 +22,182 @@ from escape import CONFIG
 from escape.adapt import LAYER_NAME
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
-from escape.adapt.domain_adapters import AbstractDomainAdapter
 from escape.adapt import log as log
 from escape.util.nffg import NFFG
+
+
+class DomainConfigurator(object):
+  """
+  Initialize, configure and store Domain Manager objects
+
+  Use global config to create managers and adapters
+
+  Follows Componenet Configurator design pattern
+  """
+
+  def __init__ (self, ca, lazy_load=True, remote=True):
+    """
+    For domain adapters the configurator checks the CONFIG first.
+
+    .. warning::
+      Adapter classes must be subclass of AbstractDomainAdapter
+
+    .. note::
+      Arbitrary domain adapters is searched in
+      :mod:`escape.adapt.domain_adapters`
+
+    :param ca: ControllerAdapter instance
+    :type ca: :any:`ControllerAdapter`
+    :param lazy_load: load adapters only at first reference (default: True)
+    :type lazy_load: bool
+    :param remote: use NETCONF RPCs or direct access (default: True)
+    :type remote: bool
+    """
+    log.debug("Init Domain configurator")
+    super(DomainConfigurator, self).__init__()
+    self.__repository = {}
+    self._lazy_load = lazy_load
+    self._ca = ca
+    if not lazy_load:
+      # Initiate adapters from CONFIG
+      self.load_default_mgrs()
+
+  def get (self, domain_name):
+    """
+    Get Domain maganger with given name.
+
+    :param domain_name: name of domain manager
+    :type domain_name: str
+    :return: None
+    """
+    try:
+      return self.__repository[domain_name]
+    except KeyError:
+      if self._lazy_load:
+        return self.start(domain_name)
+      else:
+        raise AttributeError(
+          "No adapter is defined with the name: %s" % domain_name)
+
+  def start (self, domain_name):
+    """
+    Initialize and start a Domain manager.
+
+    :param domain_name: name of domain manager
+    :type domain_name: str
+    :return: None
+    """
+    if domain_name not in self.__repository:
+      mgr = self.__load_component(domain_name)
+      mgr.start()
+      return mgr
+    else:
+      log.warning(
+        "Domain Component has been already started! Skip reinitialization...")
+      return self.__repository[domain_name]
+
+  def stop (self, domain_name):
+    """
+    Stop and derefer a Domain manager.
+
+    :param domain_name: name of domain manager
+    :type domain_name: str
+    :return: None
+    """
+    if domain_name in self.__repository:
+      self.__repository[domain_name].finit()
+      del self.__repository[domain_name]
+
+  @property
+  def components (self):
+    """
+    Return the dict of initiated Domain managers.
+
+    :return: managers
+    :rtype: dict
+    """
+    return self.__repository
+
+  def __iter__ (self):
+    """
+    Return with an iterator rely on initiated managers
+    """
+    return iter(self.__repository)
+
+  def __load_component (self, component_name, from_config=True, **kwargs):
+    """
+    Load given component from config.
+
+    :param component_name: adapter's name
+    :type component_name: str
+    :param kwargs: adapter's initial parameters
+    :type kwargs: dict
+    :return: initiated adapter
+    :rtype: :any:`AbstractDomainAdapter`
+    """
+    try:
+      if from_config:
+        component_class = getattr(
+          importlib.import_module("escape.adapt.domain_adapters"),
+          CONFIG[LAYER_NAME][component_name]['class'])
+      else:
+        component_class = getattr(
+          importlib.import_module("escape.adapt.domain_adapters"),
+          component_name)
+      component = component_class(**kwargs)
+      # Set up listeners for e.g. DomainChangedEvents
+      component.addListeners(self._ca)
+      # Set up listeners for DeployNFFGEvent
+      component.addListeners(self._ca._layer_API)
+      return component
+    except KeyError as e:
+      log.error(
+        "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
+    except AttributeError:
+      log.error("%s is not found. Skip adapter initialization!" %
+                CONFIG[LAYER_NAME][component_name]['class'])
+
+  def load_default_mgrs (self):
+    """
+    Init default adapters.
+    """
+    # very dummy initialization
+    # TODO - improve
+    for name in ('POX',):
+      self.__repository[name] = self.__load_component(name)
+
+  def load_internal_mgr (self, remote=True):
+    """
+    Init Domain Manager for internal domain.
+
+    :param remote: use NETCONF RPCs or direct access (default: True)
+    :type remote: bool
+    :return: None
+    """
+    try:
+      if CONFIG[INFR_LAYER_NAME]["LOADED"]:
+        # Set adapters for InternalDomainManager
+        # Set OpenFlow route handler
+        controller = self.__load_component("POX",
+                                           name=CONFIG[LAYER_NAME]['INTERNAL'][
+                                             'listener-id'])
+        # Set emulated network initiator/handler/manager
+        network = self.__load_component("MININET")
+        # Set NETCONF handling capability if needed
+        remote = self.__load_component('VNFStarter',
+                                       **CONFIG[LAYER_NAME]['VNFStarter'][
+                                         'agent']) if remote else None
+        # Set internal domain manager
+        self.__repository['INTERNAL'] = self.__load_component("INTERNAL",
+                                                              controller=controller,
+                                                              network=network,
+                                                              remote=remote)
+      else:
+        log.error("%s layer is not loaded! Abort InternalDomainManager "
+                  "initialization!" % INFR_LAYER_NAME)
+    except KeyError as e:
+      log.error(
+        "Got KeyError during initialization of InternalDomainManager: %s", e)
 
 
 class ControllerAdapter(object):
@@ -32,10 +205,8 @@ class ControllerAdapter(object):
   Higher-level class for :any:`NFFG` adaptation
   between multiple domains
   """
-  # Default adapters
-  _domains = {}
 
-  def __init__ (self, layer_API, lazy_load=True, with_infr=False, remote=True):
+  def __init__ (self, layer_API, with_infr=False):
     """
     Initialize Controller adapter
 
@@ -52,124 +223,20 @@ class ControllerAdapter(object):
 
     :param layer_API: layer API instance
     :type layer_API: :any:`ControllerAdaptationAPI`
-    :param lazy_load: load adapters only at first reference (default: True)
-    :type lazy_load: bool
     :param with_infr: using emulated infrastructure (default: False)
     :type with_infr: bool
-    :param remote: use NETCONF RPCs or direct access (default: False)
-    :type remote: bool
     """
     log.debug("Init ControllerAdapter")
     super(ControllerAdapter, self).__init__()
     # Set a weak reference to avoid circular dependencies
     self._layer_API = weakref.proxy(layer_API)
-    self._lazy_load = lazy_load
     self._with_infr = with_infr
-    if not lazy_load:
-      # Initiate adapters from CONFIG
-      self.__init_defaults()
-    elif with_infr:
-      # Initiate default internal adapter if needed.
-      self.init_internal(remote)
-    else:
-      # Other adapters will be created right after the first reference to them
-      # POX seems to be the only reasonable choice as a default adapter
-      self._domains['POX'] = self.__load_adapter("POX")
+    self.domains = DomainConfigurator(self)
+    if with_infr:
+      # Init internal domain manager
+      self.domains.load_internal_mgr()
     # Set virtualizer-related components
     self.domainResManager = DomainResourceManager()
-
-  def __getattr__ (self, item):
-    """
-    Expose doamin managers with it's names as an attribute of this class
-
-    :param item: name of the manager defined in it's class
-    :type item: str
-    :return: given domain manager
-    :rtype: AbstractDomainAdapter
-    """
-    try:
-      if not item.startswith('__'):
-        return self._domains[item]
-    except KeyError:
-      if self._lazy_load:
-        self._domains[item] = self.__load_adapter(item)
-        return self._domains[item]
-      else:
-        raise AttributeError("No adapter is defined with the name: %s" % item)
-
-  def __load_adapter (self, adapter_name, from_config=True, **kwargs):
-    """
-    Load given adapter.
-
-    :param adapter_name: adapter's name
-    :type adapter_name: str
-    :param kwargs: adapter's initial parameters
-    :type kwargs: dict
-    :return: initiated adapter
-    :rtype: :any:`AbstractDomainAdapter`
-    """
-    try:
-      if from_config:
-        adapter_class = getattr(
-          importlib.import_module("escape.adapt.domain_adapters"),
-          CONFIG[LAYER_NAME][adapter_name]['class'])
-      else:
-        adapter_class = getattr(
-          importlib.import_module("escape.adapt.domain_adapters"), adapter_name)
-      adapter = adapter_class(**kwargs)
-      # Set up listeners for e.g. DomainChangedEvents
-      adapter.addListeners(self)
-      # Set up listeners for DeployNFFGEvent
-      adapter.addListeners(self._layer_API)
-      return adapter
-    except KeyError as e:
-      log.error(
-        "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
-    except AttributeError:
-      log.error("%s is not found. Skip adapter initialization!" %
-                CONFIG[LAYER_NAME][adapter_name]['class'])
-
-  def __init_defaults (self):
-    """
-    Init default adapters
-    """
-    # very dummy initialization
-    # TODO - improve
-    for name in ('POX', 'INTERNAL'):
-      self._domains[name] = self.__load_adapter(name)
-
-  def init_internal (self, remote):
-    """
-    Init internal domain.
-
-    :param remote: use NETCONF RPCs or direct access (default: False)
-    :type remote: bool
-    :return: None
-    """
-    try:
-      if CONFIG[INFR_LAYER_NAME]["LOADED"]:
-        # Set adapters for InternalDomainManager
-        # Set OpenFlow route handler
-        controller = self.__load_adapter("POX",
-                                         name=CONFIG[LAYER_NAME]['INTERNAL'][
-                                           'listener-id'])
-        # Set emulated network initiator/handler/manager
-        network = self.__load_adapter("MININET")
-        # Set NETCONF handling capability if needed
-        remote = self.__load_adapter('VNFStarter',
-                                     **CONFIG[LAYER_NAME]['VNFStarter'][
-                                       'agent']) if remote else None
-        # Set internal domain manager
-        self._domains['INTERNAL'] = self.__load_adapter("INTERNAL",
-                                                        controller=controller,
-                                                        network=network,
-                                                        remote=remote)
-      else:
-        log.error("%s layer is not loaded! Abort InternalDomainManager "
-                  "initialization!" % INFR_LAYER_NAME)
-    except KeyError as e:
-      log.error(
-        "Got KeyError during initialization of InternalDomainManager: %s", e)
 
   def install_nffg (self, mapped_nffg):
     """
@@ -187,9 +254,9 @@ class ControllerAdapter(object):
     # TODO - no NFFG split just very dummy cycle
     if self._with_infr:
       log.debug("Delegate mapped NFFG to Internal domain manager...")
-      self.INTERNAL.install_nffg(mapped_nffg)
+      self.domains.get('INTERNAL').install_nffg(mapped_nffg)
     else:
-      for name, adapter in self._domains.iteritems():
+      for name, adapter in self.domains:
         log.debug("Delegate mapped NFFG to %s domain adapter..." % name)
         adapter.install_routes(mapped_nffg)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)

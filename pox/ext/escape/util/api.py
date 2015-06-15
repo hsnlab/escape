@@ -33,7 +33,7 @@ class AbstractAPI(EventMixin):
 
   Contain common functions
 
-  Follows Facade design pattern
+  Follows Facade design pattern -> simplified enty/exit point ot the layers
   """
   # Default value for logger. Should be overwritten by child classes
   _core_name = "AbstractAPI"

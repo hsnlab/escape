@@ -74,8 +74,48 @@ class AbstractDomainManager(EventMixin):
 
   Follows the MixIn design pattern approach to support general manager
   functionality for topmost ControllerAdapter class
+
+  Follows the Component Configurator design pattern as base component class
   """
 
+  # Abstract functions for component control
+  def init (self):
+    """
+    Abstract function for component initialization
+    """
+    pass
+
+  def run (self):
+    """
+    Abstract function for starting component
+    """
+    pass
+
+  def finit (self):
+    """
+    Abstract function for starting component
+    """
+    pass
+
+  def suspend (self):
+    """
+    Abstract class for suspending a running component
+    """
+    pass
+
+  def resume (self):
+    """
+    Abstract function for resuming a suspended component
+    """
+    pass
+
+  def info (self):
+    """
+    Abstract function for requesting information about the component
+    """
+    return self.__class__.__name__
+
+  # ESCAPE specific functions
   def install_nffg (self, nffg_part):
     """
     Install an :any:`NFFG` related to the specific domain
