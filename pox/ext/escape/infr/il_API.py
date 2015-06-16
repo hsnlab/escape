@@ -20,7 +20,7 @@ from escape.infr.topology import NetworkWrapper
 from escape.infr import log as log  # Infrastructure layer logger
 from escape.adapt import LAYER_NAME as ADAPT_LAYER_NAME
 from escape.util.api import AbstractAPI
-from escape.util.misc import schedule_as_coop_task
+from escape.util.misc import schedule_as_coop_task, quit_with_error
 from pox.lib.revent import Event
 from pox.openflow.of_01 import OpenFlow_01_Task
 
@@ -100,10 +100,8 @@ class InfrastructureLayerAPI(AbstractAPI):
           "Internal domain controller is up! Initiate network emulation...")
         self.topology.start_network()
       except SystemExit as e:
-        log.error("Mininet emulation requires root privileges!")
-        import sys
-
-        sys.exit(e)
+        quit_with_error(msg="Mininet emulation requires root privileges!",
+                        logger=self._core_name)
 
   ##############################################################################
   # UNIFY Co - Rm API functions starts here

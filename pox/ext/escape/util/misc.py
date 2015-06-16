@@ -133,3 +133,22 @@ def enum (*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)
   enums['reversed'] = dict((value, key) for key, value in enums.iteritems())
   return type('enum', (), enums)
+
+
+def quit_with_error (msg=None, logger="core"):
+  """
+  Helper function for quitting in case of an error
+
+  :param msg: error message (optional)
+  :type msg: str
+  :param logger: logger name (default: core)
+  :type logger: str
+  :return: None
+  """
+  from pox.core import core
+  import sys
+
+  if msg:
+    core.getLogger(logger).fatal(str(msg))
+  core.quit()
+  sys.exit(1)

@@ -17,6 +17,7 @@ Unifying package for ESCAPEv2 functions
 `CONFIG` contains the ESCAPEv2 dependent configuration such as the concrete
 RequestHandler and strategy classes, the initial Adapter classes, etc.
 """
+
 __project__ = "ESCAPEv2"
 __authors__ = "Janos Czentye, Balazs Sonkoly, Levente Csikor"
 __copyright__ = "Copyright 2015, under Apache License Version 2.0"
@@ -28,6 +29,9 @@ __version__ = "2.0.0"
 __maintainer__ = "Janos Czentye"
 __email__ = "czentye@tmit.bme.hu"
 __status__ = "Prototype"
+
+# Configuration object which contains static and running configuration for
+# Layer APIs, DomainManagers, Adapters and other components
 CONFIG = {'service': {  # Service Adaptation Sublayer
                         'STRATEGY': 'DefaultServiceMappingStrategy',
                         'REQUEST-handler': 'ServiceRequestHandler',
@@ -48,3 +52,38 @@ CONFIG = {'service': {  # Service Adaptation Sublayer
                            'OPENSTACK': {'class': "OpenStackDomainAdapter"},
                            'DOCKER': {'class': "DockerDomainAdapter"}},
           'infrastructure': {}}
+
+
+def load_config (config="escape.config"):
+  """
+  Load static configuration from file if it exist or leave the default intact
+
+  :param config: config file name relative to pox.py (optional)
+  :type config: str
+  :return: None
+  """
+  from pox.core import log
+
+  try:
+    import json
+
+    f = open(config, 'r')
+    cfg = json.load(f)
+    # Minimal syntax checking
+    changed = []
+    if len(cfg) > 0:
+      for layer in CONFIG:
+        if layer in cfg.keys() and len(cfg[layer]) > 0:
+          CONFIG[layer].update(cfg[layer])
+          changed.append(layer)
+    if changed:
+      log.info("Part(s) of running configuration has been loaded: %s", changed)
+      return
+  except IOError:
+    log.debug("Configuration file not found!")
+  except ValueError as e:
+    log.error("An error occured when load configuration: %s" % e.message)
+  log.info("Using default configuration...")
+
+
+load_config()

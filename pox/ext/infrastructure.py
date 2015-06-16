@@ -19,10 +19,9 @@ Initiate appropriate API class which emulate Co-Rm reference point
 Follows POX module conventions
 """
 import os
-import sys
 
 from escape.infr.il_API import InfrastructureLayerAPI
-from escape.infr import log as adaptation_log
+from escape.util.misc import quit_with_error
 from pox.core import core
 import pox.lib.util as poxutil
 
@@ -55,7 +54,6 @@ def launch (standalone=False):
   global init_param
   init_param.update(locals())
   if os.geteuid() != 0:
-    adaptation_log.error("Mininet emulation requires root privileges!")
-    core.core.quit()
-    sys.exit(1)
+    quit_with_error(msg="Mininet emulation requires root privileges!",
+                    logger=InfrastructureLayerAPI._core_name)
   core.addListenerByName("UpEvent", _start_layer)
