@@ -52,7 +52,7 @@ def _start_components (event):
 
 
 @poxutil.eval_args
-def launch (sg_file='', gui=False, full=False):
+def launch (sg_file='', gui=False, full=False, debug=True):
   """
   Launch function called by POX core when core is up
 
@@ -70,7 +70,7 @@ def launch (sg_file='', gui=False, full=False):
   # Run POX with DEBUG logging level
   from pox.log.level import launch
 
-  launch(DEBUG=True)
+  launch(DEBUG=debug)
 
   # Import colourful logging
   from pox.samples.pretty_log import launch
