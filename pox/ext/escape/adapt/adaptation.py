@@ -158,7 +158,7 @@ class DomainConfigurator(object):
     """
     # very dummy initialization
     # TODO - improve
-    for name in ('POX',):
+    for name in CONFIG.get_default_mgrs():
       self.__repository[name] = self.__load_component(name)
 
   def load_internal_mgr (self, remote=True):

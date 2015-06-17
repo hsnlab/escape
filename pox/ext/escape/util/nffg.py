@@ -169,7 +169,7 @@ class AbstractNFFG(object):
     while the instance itself is a new instance, all of its data is referenced.
 
     :return: shallow copy of this instace
-    :rtype: :class::`NFFG`
+    :rtype: :class:`NFFG`
     """
     pass
 
@@ -182,7 +182,7 @@ class AbstractNFFG(object):
     :param memo: is a cache of previously copied objects
     :type memo: dict
     :return: shallow copy of this instace
-    :rtype: :class::`NFFG`
+    :rtype: :class:`NFFG`
     """
     pass
 

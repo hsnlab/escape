@@ -338,3 +338,15 @@ class ESCAPEConfig(object):
         self.__configuration[ADAPT][component]['class'], None)
     except KeyError:
       return None
+
+  def get_default_mgrs (self):
+    """
+    Return the default DomainManagers for initialization on start.
+
+    :return: list of :any:`AbstractDomainManager`
+    :rtype: list
+    """
+    try:
+      return self.__configuration[ADAPT]['DEFAULTS']
+    except KeyError:
+      return ()

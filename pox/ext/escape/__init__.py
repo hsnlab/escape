@@ -41,6 +41,7 @@ cfg = {'service': {  # Service Adaptation Sublayer
                                         'class': 'ESCAPEMappingStrategy',
                                         'THREADED': True}},
        'adaptation': {  # Controller Adaptation Sublayer
+                        'DEFAULTS': ('OPENSTACK',),
                         'INTERNAL': {'module': 'escape.adapt.domain_adapters',
                                      'class': "InternalDomainManager",
                                      'listener-id': "InternalOFController"},
@@ -59,7 +60,7 @@ cfg = {'service': {  # Service Adaptation Sublayer
                         'DOCKER': {'module': 'escape.adapt.domain_adapters',
                                    'class': "DockerDomainAdapter"}},
        'infrastructure': {}}
-from escape.util.misc import ESCAPEConfig
 
-# Definge global configuration and try to load additions from file
+from escape.util.misc import ESCAPEConfig
+# Define global configuration and try to load additions from file
 CONFIG = ESCAPEConfig(cfg).load_config()

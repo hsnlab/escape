@@ -10,7 +10,9 @@ function in the coop microtask environment directly
 :any:`SimpleStandaloneHelper` is a helper class for mimic a minimal layer
 API as a dependency for other layer APIs to handles events
 
-:any:`enum` is a helper function to generate Pythonic enumeration
+:any:`enum()` is a helper function to generate Pythonic enumeration
+
+:any:`ESCAPEConfig` is a wrapper class for config
 
 Module contents
 ---------------
