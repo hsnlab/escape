@@ -26,17 +26,22 @@ parser = argparse.ArgumentParser(
 parser.add_argument("-v", "--version", action="version", version="2.0.0")
 escape = parser.add_argument_group("ESCAPE arguments")
 escape.add_argument("-d", "--debug", action="store_true", default=False,
-                    help="run the ESCAPE in debug mode and with an "
-                         "interactive console")
+                    help="run the ESCAPE in debug mode")
 escape.add_argument("-f", "--full", action="store_true", default=False,
                     help="run the infrastructure layer also")
+escape.add_argument("-i", "--interactive", action="store_true", default=False,
+                    help="run an interactive shell for observing internal "
+                         "states")
 args = parser.parse_args()
 cmd = "pox/pox.py unify"
 if args.full:
   cmd = "sudo %s --full" % cmd
 if args.debug:
-  cmd = "%s py --completion" % cmd
+  # Nothing to do
+  pass
 else:
   cmd = "%s --debug=False" % cmd
+if args.interactive:
+  cmd = "%s py --completion" % cmd
 print "Starting ESCAPEv2..."
 os.system(cmd)

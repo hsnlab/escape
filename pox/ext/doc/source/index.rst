@@ -70,7 +70,7 @@ README
 
 ESCAPEv2 example commands
 
-**The simpliest use-case**
+**The simpliest use-case:**
 
 .. code-block:: bash
 
@@ -81,20 +81,21 @@ Usage:
 .. code-block:: bash
 
     $ ./escape.py -h
-    usage: escape.py [-h] [-v] [-d] [-f]
+    usage: escape.py [-h] [-v] [-d] [-f] [-i]
 
     ESCAPE: Extensible Service ChAin Prototyping Environment using Mininet, Click,
     NETCONF and POX
 
     optional arguments:
-      -h, --help     show this help message and exit
-      -v, --version  show program's version number and exit
+      -h, --help         show this help message and exit
+      -v, --version      show program's version number and exit
 
     ESCAPE arguments:
-      -d, --debug    run the ESCAPE in debug mode and with an interactive console
-      -f, --full     run the infrastructure layer also
+      -d, --debug        run the ESCAPE in debug mode
+      -f, --full         run the infrastructure layer also
+      -i, --interactive  run an interactive shell for observing internal states
 
-**More advanced commands**
+**More advanced commands:**
 
 Basic command:
 
