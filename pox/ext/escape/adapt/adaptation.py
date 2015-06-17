@@ -15,7 +15,6 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
 """
-import importlib
 import weakref
 
 from escape import CONFIG
@@ -136,26 +135,22 @@ class DomainConfigurator(object):
     :rtype: :any:`AbstractDomainAdapter`
     """
     try:
-      if from_config:
-        component_class = getattr(
-          importlib.import_module("escape.adapt.domain_adapters"),
-          CONFIG[LAYER_NAME][component_name]['class'])
+      component_class = CONFIG.get_domain_component(component_name)
+      if component_class is not None:
+        component = component_class(**kwargs)
+        # Set up listeners for e.g. DomainChangedEvents
+        component.addListeners(self._ca)
+        # Set up listeners for DeployNFFGEvent
+        component.addListeners(self._ca._layer_API)
+        return component
       else:
-        component_class = getattr(
-          importlib.import_module("escape.adapt.domain_adapters"),
-          component_name)
-      component = component_class(**kwargs)
-      # Set up listeners for e.g. DomainChangedEvents
-      component.addListeners(self._ca)
-      # Set up listeners for DeployNFFGEvent
-      component.addListeners(self._ca._layer_API)
-      return component
-    except KeyError as e:
-      log.error(
-        "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
+        log.error(
+          "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
+        return None
     except AttributeError:
-      log.error("%s is not found. Skip adapter initialization!" %
-                CONFIG[LAYER_NAME][component_name]['class'])
+      log.error(
+        "%s is not found. Skip adapter initialization!" % component_name)
+      return None
 
   def load_default_mgrs (self):
     """
@@ -175,7 +170,7 @@ class DomainConfigurator(object):
     :return: None
     """
     try:
-      if CONFIG[INFR_LAYER_NAME]["LOADED"]:
+      if CONFIG.is_loaded(INFR_LAYER_NAME):
         # Set adapters for InternalDomainManager
         # Set OpenFlow route handler
         controller = self.__load_component("POX",

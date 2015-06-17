@@ -129,10 +129,7 @@ class AbstractAPI(EventMixin):
     # as a final step. Other dependent component can finish initialization now.
     core.core.register(self._core_name, self)
     # Set "running" config for convenience purposes
-    try:
-      CONFIG[self._core_name]["LOADED"] = True
-    except KeyError as e:
-      CONFIG[self._core_name] = {"LOADED": True}
+    CONFIG.set_loaded(self._core_name)
 
   def initialize (self):
     """

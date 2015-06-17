@@ -30,60 +30,36 @@ __maintainer__ = "Janos Czentye"
 __email__ = "czentye@tmit.bme.hu"
 __status__ = "Prototype"
 
-# Configuration object which contains static and running configuration for
-# Layer APIs, DomainManagers, Adapters and other components
-CONFIG = {'service': {  # Service Adaptation Sublayer
-                        'STRATEGY': 'DefaultServiceMappingStrategy',
-                        'REQUEST-handler': 'ServiceRequestHandler',
-                        'THREADED': True},
-          'orchestration': {  # Resource Orchestration Sublayer
-                              'STRATEGY': 'ESCAPEMappingStrategy',
-                              'THREADED': True},
-          'adaptation': {  # Controller Adaptation Sublayer
-                           'INTERNAL': {'class': "InternalDomainManager",
-                                        'listener-id': "InternalOFController"},
-                           'POX': {'class': "POXDomainAdapter"},
-                           'MININET': {'class': "MininetDomainAdapter"},
-                           "VNFStarter": {"class": "VNFStarterAdapter",
-                                          "agent": {"server": "192.168.12.128",
-                                                    "port": 830,
-                                                    "username": "mininet",
-                                                    "password": "mininet"}},
-                           'OPENSTACK': {'class': "OpenStackDomainAdapter"},
-                           'DOCKER': {'class': "DockerDomainAdapter"}},
-          'infrastructure': {}}
+# Default configuration object which contains static and running
+# configuration for Layer APIs, DomainManagers, Adapters and other components
+cfg = {'service': {  # Service Adaptation Sublayer
+                     'STRATEGY': {'module': 'escape.service.sas_mapping',
+                                  'class': 'DefaultServiceMappingStrategy',
+                                  'THREADED': True}},
+       'orchestration': {  # Resource Orchestration Sublayer
+                           'STRATEGY': {'module': 'escape.orchest.ros_mapping',
+                                        'class': 'ESCAPEMappingStrategy',
+                                        'THREADED': True}},
+       'adaptation': {  # Controller Adaptation Sublayer
+                        'INTERNAL': {'module': 'escape.adapt.domain_adapters',
+                                     'class': "InternalDomainManager",
+                                     'listener-id': "InternalOFController"},
+                        'POX': {'module': 'escape.adapt.domain_adapters',
+                                'class': "POXDomainAdapter"},
+                        'MININET': {'module': 'escape.adapt.domain_adapters',
+                                    'class': "MininetDomainAdapter"},
+                        "VNFStarter": {'module': 'escape.adapt.domain_adapters',
+                                       "class": "VNFStarterAdapter",
+                                       "agent": {"server": "192.168.12.128",
+                                                 "port": 830,
+                                                 "username": "mininet",
+                                                 "password": "mininet"}},
+                        'OPENSTACK': {'module': 'escape.adapt.domain_adapters',
+                                      'class': "OpenStackDomainAdapter"},
+                        'DOCKER': {'module': 'escape.adapt.domain_adapters',
+                                   'class': "DockerDomainAdapter"}},
+       'infrastructure': {}}
+from escape.util.misc import ESCAPEConfig
 
-
-def load_config (config="escape.config"):
-  """
-  Load static configuration from file if it exist or leave the default intact
-
-  :param config: config file name relative to pox.py (optional)
-  :type config: str
-  :return: None
-  """
-  from pox.core import log
-
-  try:
-    import json
-
-    f = open(config, 'r')
-    cfg = json.load(f)
-    # Minimal syntax checking
-    changed = []
-    if len(cfg) > 0:
-      for layer in CONFIG:
-        if layer in cfg.keys() and len(cfg[layer]) > 0:
-          CONFIG[layer].update(cfg[layer])
-          changed.append(layer)
-    if changed:
-      log.info("Part(s) of running configuration has been loaded: %s", changed)
-      return
-  except IOError:
-    log.debug("Configuration file not found!")
-  except ValueError as e:
-    log.error("An error occured when load configuration: %s" % e.message)
-  log.info("Using default configuration...")
-
-
-load_config()
+# Definge global configuration and try to load additions from file
+CONFIG = ESCAPEConfig(cfg).load_config()

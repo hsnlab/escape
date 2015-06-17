@@ -65,7 +65,7 @@ class InfrastructureLayerAPI(AbstractAPI):
       :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Infrastructure Layer...")
-    CONFIG[self._core_name] = {"LOADED": True}
+    CONFIG.set_loaded(self._core_name)
     self._need_clean = False
     self.topology = NetworkWrapper()
     self.topology.test_network()

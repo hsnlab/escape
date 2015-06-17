@@ -14,7 +14,6 @@
 """
 Contains abstract classes for NFFG mapping
 """
-import importlib
 import threading
 
 from escape import CONFIG
@@ -98,12 +97,8 @@ class AbstractMapper(EventMixin):
     :return: None
     """
     # Set threaded
-    if threaded is not None:
-      self._threaded = threaded
-    elif 'THREADED' in CONFIG[layer_name]:
-      self._threaded = CONFIG[layer_name]['THREADED']
-    else:
-      self._threaded = False
+    self._threaded = threaded if threaded is not None else CONFIG.get_threaded(
+      layer_name)
     # Set strategy
     if strategy is not None:
       assert issubclass(strategy,
@@ -111,25 +106,10 @@ class AbstractMapper(EventMixin):
                                                   "subclass of " \
                                                   "AbstractMappingStrategy!"
       self.strategy = strategy
-    elif 'STRATEGY' in CONFIG[layer_name]:
-      if layer_name == SAS:
-        strategy_class = getattr(
-          importlib.import_module("escape.service.sas_mapping"),
-          CONFIG[layer_name]['STRATEGY'])
-      elif layer_name == ROS:
-        strategy_class = getattr(
-          importlib.import_module("escape.orchest.ros_mapping"),
-          CONFIG[layer_name]['STRATEGY'])
-      else:
-        raise AttributeError(
-          "Layer name: %s is not defined in CONFIG" % layer_name)
-      assert issubclass(strategy_class,
-                        AbstractMappingStrategy), "Mapping strategy is not " \
-                                                  "subclass of " \
-                                                  "AbstractMappingStrategy!"
-      self.strategy = strategy_class
     else:
-      self.strategy = self._defaults[layer_name]
+      self.strategy = CONFIG.get_strategy(layer_name)
+      if self.strategy is None:
+        self.strategy = self._defaults[layer_name]
     super(AbstractMapper, self).__init__()
 
   def orchestrate (self, input_graph, resource_view):

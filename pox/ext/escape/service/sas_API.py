@@ -15,10 +15,9 @@
 Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer
 """
-import importlib
 import repr
 
-from escape import CONFIG, __project__, __version__
+from escape import __project__, __version__
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
@@ -202,22 +201,6 @@ class ServiceLayerAPI(AbstractAPI):
     :type port: int
     :return: None
     """
-    if 'REQUEST-handler' in CONFIG[LAYER_NAME]:
-      try:
-        handler_cfg = getattr(importlib.import_module(self.__module__),
-                              CONFIG[LAYER_NAME]['REQUEST-handler'])
-        assert issubclass(handler,
-                          AbstractRequestHandler), "REST handler is not " \
-                                                   "subclass of " \
-                                                   "AbstractRequestHandler " \
-                                                   "fall back to %s" % \
-                                                   handler.__name__
-        handler = handler_cfg
-      except AttributeError:
-        log.warning(
-          "Request handler: %s is not found in module: escape.util.api, "
-          "fall back to %s" % (
-            CONFIG['SMS']['REQUEST-handler'], handler.__name__))
     # set bounded layer name here to avoid circular dependency problem
     handler.bounded_layer = self._core_name
     self.rest_api = RESTServer(handler, address, port)
