@@ -14,12 +14,13 @@
 """
 Wrapper module for handling emulated test topology based on Mininet
 """
-from escape.infr import log
-from escape.util.nffg import NFFG
 from mininet.net import VERSION as MNVERSION
 from mininet.net import Mininet
 from mininet.node import RemoteController
 from mininet.topo import Topo
+
+from escape.infr import log
+from escape.util.nffg import NFFG
 
 
 class AbstractTopology(Topo):

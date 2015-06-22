@@ -145,7 +145,7 @@ class DomainConfigurator(object):
         return component
       else:
         log.error(
-          "Configuration of '%s' is missing. Skip initialization!" % e.args[0])
+          "Configuration of '%s' is missing. Skip initialization!" % component_name)
         return None
     except AttributeError:
       log.error(

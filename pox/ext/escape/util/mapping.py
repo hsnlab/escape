@@ -162,7 +162,7 @@ class AbstractMapper(EventMixin):
     .. warning::
       Derived class have to override this function
 
-    :param nffg: geenrated NF-FG
+    :param nffg: generated NF-FG
     :type nffg: NFFG
     :return: None
     """

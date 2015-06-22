@@ -366,7 +366,7 @@ class InternalDomainManager(AbstractDomainManager):
     self._remote = remote if remote else None
 
   @property
-  def controller_name(self):
+  def controller_name (self):
     return self._controller.task_name
 
   def install_nffg (self, nffg_part):
