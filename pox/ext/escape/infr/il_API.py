@@ -16,7 +16,7 @@ Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet
 """
 from escape import CONFIG
 from escape.infr import LAYER_NAME
-from escape.infr.topology import NetworkWrapper
+from escape.infr.topology import ESCAPENetworkBridge
 from escape.infr import log as log  # Infrastructure layer logger
 from escape.adapt import LAYER_NAME as ADAPT_LAYER_NAME
 from escape.util.api import AbstractAPI
@@ -62,14 +62,16 @@ class InfrastructureLayerAPI(AbstractAPI):
   def initialize (self):
     """
     .. seealso::
-      :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
+      :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Infrastructure Layer...")
     CONFIG.set_loaded(self._core_name)
     self._need_clean = False
-    self.topology = NetworkWrapper()
+    # FIXME - change to dynamic initialization
+    self.topology = ESCAPENetworkBridge()
     self.topology.test_network()
-    self.topology.initialize(wait_for_controller=True)
+    self.topology.start_network()
+    # self.topology.initialize(wait_for_controller=True)
     log.info("Infrastructure Layer has been initialized!")
 
   def shutdown (self, event):
@@ -87,7 +89,7 @@ class InfrastructureLayerAPI(AbstractAPI):
 
   def _handle_ComponentRegistered (self, event):
     """
-    Wait for controller (internal POX modul)
+    Wait for controller (internal POX module)
 
     :param event: registered component event
     :type event: :class:`ComponentRegistered`

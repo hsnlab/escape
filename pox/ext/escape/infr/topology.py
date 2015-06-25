@@ -25,9 +25,13 @@ from escape.util.nffg import NFFG
 
 class AbstractTopology(Topo):
   """
-  Abstract class for representing emulated topology
+  Abstract class for representing emulated topology.
 
-  Can be used to define reusable topology similar to Mininet's high-level API
+  Have the functions to build a ESCAPE-specific topology.
+
+  Can be used to define reusable topology similar to Mininet's high-level API.
+  Reusable, convenient and pre-defined way to define a topology, but less
+  flexible and powerful.
   """
 
   def __init__ (self, hopts=None, sopts=None, lopts=None, eopts=None):
@@ -66,31 +70,34 @@ class InternalControllerProxy(RemoteController):
           self.ip, self.port))
 
 
-class NetworkWrapper(object):
+class ESCAPENetworkBridge(object):
   """
-  Wrapper class for Mininet topology
+  Internal class for representing the emulated topology.
 
   Represents a container class for network elements such as switches, nodes,
-  execution evironments, links etc.
+  execution environments, links etc. Contains network management functions
+  similar to Mininet's mid-level API extended with ESCAPEv2 related capabilities
 
-  Contains network management functions similar to Mininet's mid-level API
-  extendend with ESCAPEv2 related capabilities
+  Separate the interface using internally from original Mininet object to
+  implement loose coupling and avoid changes caused by Mininet API changes
+  e.g. 2.1.0 -> 2.2.0
+
+  Follows Bridge design pattern.
   """
 
-  def __init__ (self, topology=None):
+  def __init__ (self, network=None):
     """
-    Initialize NetworkWrapper. Set up emulated network from _topology_ if it
-    is given.
-
-    :param topology: network representation
-    :type topology: :any:`NFFG` or :any:`dict` or :any:`AbstractTopology`
+    Initialize Mininet implementation with proper attributes.
     """
     log.debug(
       "Init %s based on Mininet v%s" % (self.__class__.__name__, MNVERSION))
-    super(NetworkWrapper, self).__init__()
-    self._net = None
-    if topology:
-      self.initialize(topology)
+    if network:
+      self.__mininet = network
+    else:
+      log.warning(
+        "Network implementation object is missing! Using bare Mininet "
+        "object...")
+      self.__mininet = Mininet(controller=InternalControllerProxy)
 
   @property
   def network (self):
@@ -100,71 +107,15 @@ class NetworkWrapper(object):
     :return: network representation
     :rtype: :class:`mininet.net.Mininet`
     """
-    return self._net
-
-  def __init_from_NFFG (self, nffg):
-    """
-    Initialize topology from :any:`NFFG`
-
-    :param nffg: topology
-    :type nffg: :any:`NFFG`
-    :return: None
-    """
-    # TODO -implement
-    pass
-
-  def __init_from_dict (self, topology):
-    """
-    Initialize topology from a dictionary.
-
-    Keywords for network elements: controllers, ee, saps, switches, links
-
-    Option keywords: netopts
-
-    :param topology: topology
-    :type topology: :any:`NFFG`
-    :return: None
-    """
-    # TODO - implement
-    pass
-
-  def __init_from_AbstractTopology (self, topology):
-    """
-    Build topology from pre-defined Topology class
-
-    :param topology: topology
-    :type topology: :any:`AbstractTopology`
-    :return: None
-    """
-    # TODO - implement
-    pass
-
-  def initialize (self, topology=None, wait_for_controller=True):
-    """
-    Initialize network
-
-    :param topology: topology representation
-    :type topology: :any:`NFFG` or :any:`dict` or :any:`AbstractTopology`
-    :param wait_for_controller: wait for POXDomainAdapter (default: True)
-    :return: None
-    """
-    if isinstance(topology, NFFG):
-      self.__init_from_NFFG(topology)
-    elif isinstance(topology, dict):
-      self.__init_from_dict(topology)
-    elif isinstance(topology, AbstractTopology):
-      self.__init_from_AbstractTopology(topology)
-    # start network
-    if not wait_for_controller:
-      self.start_network()
+    return self.__mininet
 
   def start_network (self):
     """
     Start network
     """
     log.debug("Starting Mininet network...")
-    if self._net:
-      self._net.start()
+    if self.__mininet:
+      self.__mininet.start()
       log.debug("Mininet network has been started!")
     else:
       log.error("Missing topology! Skipping emulation and running dry...")
@@ -174,8 +125,8 @@ class NetworkWrapper(object):
     Stop network
     """
     log.debug("Shutting down Mininet network...")
-    if self._net:
-      self._net.stop()
+    if self.__mininet:
+      self.__mininet.stop()
 
   def test_network (self):
     """
@@ -190,4 +141,110 @@ class NetworkWrapper(object):
     c0 = net.addController('c0', InternalControllerProxy)
     net.addLink(h1, s1)
     net.addLink(h2, s1)
-    self._net = net
+    self.__mininet = net
+
+
+class NetworkBuilder(object):
+  """
+  Builder class for topology.
+
+  Update the network object based on the parameters if it's given or create
+  an empty instance.
+
+  Always return with an ESCAPENetworkBridge instance which offer a generic
+  interface for created :any:`Mininet` object and hide implementation's nature.
+
+  Follows Builder design pattern.
+  """
+
+  def __init__ (self, net=None):
+    """
+    Initialize NetworkBuilder.
+    """
+    if net:
+      if isinstance(net, Mininet):
+        self.topo = net
+      else:
+        raise RuntimeError(
+          "Network object's type must be a derived class of Mininet!")
+    else:
+      self.topo = Mininet()
+
+  def __init_from_NFFG (self, net, nffg):
+    """
+    Initialize topology from :any:`NFFG`
+
+    :param nffg: topology
+    :type nffg: :any:`NFFG`
+    :return: None
+    """
+    # TODO -implement
+    raise NotImplementedError()
+
+  def __init_from_dict (self, dict):
+    """
+    Initialize topology from a dictionary.
+
+    Keywords for network elements: controllers, ee, saps, switches, links
+
+    Option keywords: netopts
+
+    :param dict: topology
+    :type dict: :any:`NFFG`
+    :return: None
+    """
+    # TODO - implement
+    raise NotImplementedError()
+
+  def __init_from_AbstractTopology (self, topo):
+    """
+    Build topology from pre-defined Topology class
+
+    :param topo: topology
+    :type topo: :any:`AbstractTopology`
+    :return: None
+    """
+    # TODO - implement
+    raise NotImplementedError()
+
+  def __init_from_CONFIG (self):
+    """
+    Build a pre-defined topology stored in CONFIG.
+
+    :return: None
+    """
+    raise NotImplementedError()
+
+  def __init_from_file (self, path):
+    """
+    Build a pre-defined topology stored in a file.
+
+    :param path: file path
+    :type path: str
+    :return: None
+    """
+    raise NotImplementedError()
+
+  def build (self, topology=None):
+    """
+    Initialize network
+
+    :param topology: topology representation
+    :type topology: :any:`NFFG` or :any:`dict` or :any:`AbstractTopology`
+    :return: None
+    """
+    # TODO - initial settings
+    if isinstance(topology, NFFG):
+      self.__init_from_NFFG(nffg=topology)
+    elif isinstance(topology, dict):
+      self.__init_from_dict(dict=topology)
+    elif isinstance(topology, AbstractTopology):
+      self.__init_from_AbstractTopology(topo=topology)
+    elif isinstance(topology, str):
+      self.__init_from_file(path=topology)
+    elif topology is None:
+      log.debug("Topology description is missing. Try to load from CONFIG...")
+      self.__init_from_CONFIG()
+    else:
+      raise RuntimeError("Unsupported topology format: %s" % type(topology))
+      # TODO - return with Interface object

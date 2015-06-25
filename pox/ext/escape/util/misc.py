@@ -63,6 +63,50 @@ def call_as_coop_task (func, *args, **kwargs):
   core.callLater(func, *args, **kwargs)
 
 
+def enum (*sequential, **named):
+  """
+  Helper function to define enumeration. E.g.:
+
+  .. code-block:: python
+
+    >>> Numbers = enum(ONE=1, TWO=2, THREE='three')
+    >>> Numbers = enum('ZERO', 'ONE', 'TWO')
+    >>> Numbers.ONE
+    1
+    >>> Numbers.reversed[2]
+    'TWO'
+
+  :param sequential: support automatic enumeration
+  :type sequential: list
+  :param named: support definition with unique keys
+  :type named: dict
+  :return: Enum object
+  :rtype: dict
+  """
+  enums = dict(zip(sequential, range(len(sequential))), **named)
+  enums['reversed'] = dict((value, key) for key, value in enums.iteritems())
+  return type('enum', (), enums)
+
+
+def quit_with_error (msg=None, logger="core"):
+  """
+  Helper function for quitting in case of an error
+
+  :param msg: error message (optional)
+  :type msg: str
+  :param logger: logger name (default: core)
+  :type logger: str
+  :return: None
+  """
+  from pox.core import core
+  import sys
+
+  if msg:
+    core.getLogger(logger).fatal(str(msg))
+  core.quit()
+  sys.exit(1)
+
+
 class SimpleStandaloneHelper(object):
   """
   Helper class for layer APIs to catch events and handle these in separate
@@ -115,48 +159,18 @@ class SimpleStandaloneHelper(object):
         event.__class__.__name__, str(event.source._core_name).title()))
 
 
-def enum (*sequential, **named):
+class Singleton(type):
   """
-  Helper function to define enumeration. E.g.:
+  Metaclass for classes need to be created only once.
 
-  .. code-block:: python
-
-    >>> Numbers = enum(ONE=1, TWO=2, THREE='three')
-    >>> Numbers = enum('ZERO', 'ONE', 'TWO')
-    >>> Numbers.ONE
-    1
-    >>> Numbers.reversed[2]
-    'TWO'
-
-  :param sequential: support automatic enumeration
-  :type sequential: list
-  :param named: support definition with unique keys
-  :type named: dict
-  :return: Enum object
-  :rtype: dict
+  Realize Singleton design pattern in a pythonic way.
   """
-  enums = dict(zip(sequential, range(len(sequential))), **named)
-  enums['reversed'] = dict((value, key) for key, value in enums.iteritems())
-  return type('enum', (), enums)
+  _instances = {}
 
-
-def quit_with_error (msg=None, logger="core"):
-  """
-  Helper function for quitting in case of an error
-
-  :param msg: error message (optional)
-  :type msg: str
-  :param logger: logger name (default: core)
-  :type logger: str
-  :return: None
-  """
-  from pox.core import core
-  import sys
-
-  if msg:
-    core.getLogger(logger).fatal(str(msg))
-  core.quit()
-  sys.exit(1)
+  def __call__ (cls, *args, **kwargs):
+    if cls not in cls._instances:
+      cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+    return cls._instances[cls]
 
 
 class ESCAPEConfig(object):
@@ -168,7 +182,9 @@ class ESCAPEConfig(object):
 
   Should be instantiated once!
   """
-
+  # Singleton
+  __metaclass__ = Singleton
+  # Defined layers
   LAYERS = (SERVICE, ORCHEST, ADAPT, INFR)
 
   def __init__ (self, default=None):
