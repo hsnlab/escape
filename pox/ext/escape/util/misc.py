@@ -245,7 +245,7 @@ class ESCAPEConfig(object):
     except IOError:
       log.debug("Additional configuration file not found:")
     except ValueError as e:
-      log.error("An error occured when load configuration: %s" % e.message)
+      log.error("An error occurred when load configuration: %s" % e.message)
     log.info("Using default configuration...")
     return self
 
@@ -366,3 +366,19 @@ class ESCAPEConfig(object):
       return self.__configuration[ADAPT]['DEFAULTS']
     except KeyError:
       return ()
+
+  def get_fallback_topology (self, topo_name):
+    """
+    Return the fallback topology class.
+
+    :param topo_name: name of the topo in CONFIG
+    :type topo_name: str
+    :return: fallback topo class
+    :rtype: :any::`AbstractTopology`
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[INFR][topo_name]['module']),
+        self.__configuration[INFR][topo_name]['class'], None)
+    except KeyError:
+      return None

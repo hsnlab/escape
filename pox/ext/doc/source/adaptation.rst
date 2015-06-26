@@ -1,5 +1,5 @@
-The *cas.py* main module
-========================
+The *adaptation.py* main module
+===============================
 
 .. automodule:: adaptation
    :members:

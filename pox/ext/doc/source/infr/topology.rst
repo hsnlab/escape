@@ -1,9 +1,6 @@
 *topology.py* module
 ====================
 
-:any:`NetworkWrapper` contains the management functionality related to the
-emulated network
-
 :any:`InternalControllerProxy` represents the connection between the internal
 controller and the emulated network
 

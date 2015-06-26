@@ -59,7 +59,10 @@ cfg = {'service': {  # Service Adaptation Sublayer
                                       'class': "OpenStackDomainAdapter"},
                         'DOCKER': {'module': 'escape.adapt.domain_adapters',
                                    'class': "DockerDomainAdapter"}},
-       'infrastructure': {}}
+       'infrastructure': {  # Infrastructure Layer
+                            'NETWORK-OPTS': None,  # Additional opts for Mininet
+                            'FALLBACK-TOPO': {'module': "escape.infr.topology",
+                                              'class': "BackupTopology"}}}
 
 from escape.util.misc import ESCAPEConfig
 # Define global configuration and try to load additions from file

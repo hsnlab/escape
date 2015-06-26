@@ -318,7 +318,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def do_OPTIONS (self):
     """
-    Handleing unsupported HTTP verbs
+    Handling unsupported HTTP verbs
 
     :return: None
     """
@@ -327,7 +327,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def do_HEAD (self):
     """
-    Handleing unsupported HTTP verbs
+    Handling unsupported HTTP verbs
 
     :return: None
     """
@@ -336,7 +336,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def do_TRACE (self):
     """
-    Handleing unsupported HTTP verbs
+    Handling unsupported HTTP verbs
 
     :return: None
     """
@@ -345,7 +345,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def do_CONNECT (self):
     """
-    Handleing unsupported HTTP verbs
+    Handling unsupported HTTP verbs
 
     :return: None
     """

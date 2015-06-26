@@ -1,5 +1,5 @@
-The *ros.py* main module
-========================
+The *orchestration.py* main module
+==================================
 
 .. automodule:: orchestration
    :members:

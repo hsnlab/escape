@@ -16,9 +16,9 @@ Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet
 """
 from escape import CONFIG
 from escape.infr import LAYER_NAME
-from escape.infr.topology import ESCAPENetworkBridge
 from escape.infr import log as log  # Infrastructure layer logger
 from escape.adapt import LAYER_NAME as ADAPT_LAYER_NAME
+from escape.infr.topology import ESCAPENetworkBuilder
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task, quit_with_error
 from pox.lib.revent import Event
@@ -68,8 +68,9 @@ class InfrastructureLayerAPI(AbstractAPI):
     CONFIG.set_loaded(self._core_name)
     self._need_clean = False
     # FIXME - change to dynamic initialization
-    self.topology = ESCAPENetworkBridge()
-    self.topology.test_network()
+    # self.topology = ESCAPENetworkBridge()
+    # self.topology.test_network()
+    self.topology = ESCAPENetworkBuilder().build()
     self.topology.start_network()
     # self.topology.initialize(wait_for_controller=True)
     log.info("Infrastructure Layer has been initialized!")

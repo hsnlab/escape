@@ -1,5 +1,5 @@
-The *unify* top module
-======================
+The *unify.py* top module
+=========================
 
 .. automodule:: unify
    :members:

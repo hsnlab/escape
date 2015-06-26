@@ -14,6 +14,7 @@
 """
 Wrapper module for handling emulated test topology based on Mininet
 """
+
 from mininet.net import VERSION as MNVERSION
 from mininet.net import Mininet
 from mininet.node import RemoteController
@@ -21,6 +22,7 @@ from mininet.topo import Topo
 
 from escape.infr import log
 from escape.util.nffg import NFFG
+from escape import CONFIG
 
 
 class AbstractTopology(Topo):
@@ -33,10 +35,34 @@ class AbstractTopology(Topo):
   Reusable, convenient and pre-defined way to define a topology, but less
   flexible and powerful.
   """
+  # Default host options
+  default_host_opts = None
+  # Default switch options
+  default_switch_opts = None
+  # Default link options
+  default_link_opts = None
+  # Default EE options
+  default_EE_opts = None
 
   def __init__ (self, hopts=None, sopts=None, lopts=None, eopts=None):
     super(AbstractTopology, self).__init__(hopts, sopts, lopts, eopts)
-    # TODO - extend and implement
+
+
+class BackupTopology(AbstractTopology):
+  """
+  Topology class for testing purposes and serve as a fallback topology
+  """
+
+  def __init__ (self):
+    """
+    Init and build test topology
+    """
+    super(BackupTopology, self).__init__()
+    h1 = self.addHost('H1')
+    h2 = self.addHost('H2')
+    s1 = self.addSwitch('S1')
+    self.addLink(s1, h1)
+    self.addLink(s1, h2)
 
 
 class InternalControllerProxy(RemoteController):
@@ -89,14 +115,13 @@ class ESCAPENetworkBridge(object):
     """
     Initialize Mininet implementation with proper attributes.
     """
-    log.debug(
-      "Init %s based on Mininet v%s" % (self.__class__.__name__, MNVERSION))
-    if network:
+    log.debug("Init emulated topology based on Mininet v%s" % MNVERSION)
+    if network is not None:
       self.__mininet = network
     else:
       log.warning(
-        "Network implementation object is missing! Using bare Mininet "
-        "object...")
+        "Network implementation object is missing! Use Builder instead of "
+        "direct initialization. Creating bare Mininet object anyway...")
       self.__mininet = Mininet(controller=InternalControllerProxy)
 
   @property
@@ -144,7 +169,14 @@ class ESCAPENetworkBridge(object):
     self.__mininet = net
 
 
-class NetworkBuilder(object):
+class TopologyBuilderException(Exception):
+  """
+  Exception class for topology errors.
+  """
+  pass
+
+
+class ESCAPENetworkBuilder(object):
   """
   Builder class for topology.
 
@@ -152,23 +184,47 @@ class NetworkBuilder(object):
   an empty instance.
 
   Always return with an ESCAPENetworkBridge instance which offer a generic
-  interface for created :any:`Mininet` object and hide implementation's nature.
+  interface for created :any::`Mininet` object and hide implementation's nature.
 
   Follows Builder design pattern.
   """
+  # Default initial options for Mininet
+  default_opts = {"controller": InternalControllerProxy,  # Use own Controller
+                  'build': False,  # Not build during init
+                  'inNamespace': False,  # Not start element in namespace
+                  'autoSetMacs': True,  # Set simple MACs
+                  'autoStaticArp': True,  # Set static ARP enties
+                  'listenPort': None}
+  # Name of the fallback topology class in CONFIG
+  topology_config_name = "FALLBACK-TOPO"
 
-  def __init__ (self, net=None):
+  def __init__ (self, net=None, opts=None, run_dry=True):
     """
     Initialize NetworkBuilder.
+
+    If the topology definition is not found, an exception will be raised or
+    an empty :any::`Mininet` topology will be created if ``run_dry`` is set.
+
+    :param net: update given Mininet object instead of creating a new one
+    :type net: :any::`Mininet`
+    :param opts: update default options with the given opts
+    :type opts: dict
+    :param run_dry: do not raise an Exception and return with bare Mininet obj.
+    :type run_dry: bool
     """
-    if net:
+    self.opts = dict(self.default_opts)
+    if opts is not None:
+      self.opts.update(opts)
+    self.run_dry = run_dry
+    if net is not None:
       if isinstance(net, Mininet):
-        self.topo = net
+        # Initial settings - Create new Mininet object if necessary
+        self.mn = net
       else:
         raise RuntimeError(
           "Network object's type must be a derived class of Mininet!")
     else:
-      self.topo = Mininet()
+      self.mn = Mininet(**self.opts)
 
   def __init_from_NFFG (self, net, nffg):
     """
@@ -196,16 +252,16 @@ class NetworkBuilder(object):
     # TODO - implement
     raise NotImplementedError()
 
-  def __init_from_AbstractTopology (self, topo):
+  def __init_from_AbstractTopology (self, topo_class):
     """
-    Build topology from pre-defined Topology class
+    Build topology from pre-defined Topology class.
 
     :param topo: topology
     :type topo: :any:`AbstractTopology`
     :return: None
     """
-    # TODO - implement
-    raise NotImplementedError()
+    self.mn.topo = topo_class()
+    self.mn.build()
 
   def __init_from_CONFIG (self):
     """
@@ -213,17 +269,37 @@ class NetworkBuilder(object):
 
     :return: None
     """
-    raise NotImplementedError()
+    topo_class = CONFIG.get_fallback_topology(self.topology_config_name)
+    if topo_class is None:
+      log.warning("Fallback topology is missing from CONFIG!")
+      raise TopologyBuilderException("Missing fallback topo!")
+    elif issubclass(topo_class, AbstractTopology):
+      self.__init_from_AbstractTopology(topo_class)
+    else:
+      raise TopologyBuilderException("Unsupported topology class!")
 
-  def __init_from_file (self, path):
+  def __init_from_file (self, path="escape.topo"):
     """
-    Build a pre-defined topology stored in a file.
+    Build a pre-defined topology stored in a file in JSON format.
 
     :param path: file path
     :type path: str
     :return: None
     """
-    raise NotImplementedError()
+    try:
+      with open(path, 'r') as f:
+        import json
+
+        topo = json.load(f)
+        self.__init_from_dict(topo)
+        return
+    except IOError:
+      log.debug("Additional topology file not found: %s" % path)
+      raise TopologyBuilderException("Missing topology file!")
+    except ValueError as e:
+      log.error(
+        "An error occurred when load topology from file: %s" % e.message)
+      raise TopologyBuilderException("File parsing error!")
 
   def build (self, topology=None):
     """
@@ -233,18 +309,24 @@ class NetworkBuilder(object):
     :type topology: :any:`NFFG` or :any:`dict` or :any:`AbstractTopology`
     :return: None
     """
-    # TODO - initial settings
-    if isinstance(topology, NFFG):
-      self.__init_from_NFFG(nffg=topology)
-    elif isinstance(topology, dict):
-      self.__init_from_dict(dict=topology)
-    elif isinstance(topology, AbstractTopology):
-      self.__init_from_AbstractTopology(topo=topology)
-    elif isinstance(topology, str):
-      self.__init_from_file(path=topology)
-    elif topology is None:
-      log.debug("Topology description is missing. Try to load from CONFIG...")
-      self.__init_from_CONFIG()
-    else:
-      raise RuntimeError("Unsupported topology format: %s" % type(topology))
-      # TODO - return with Interface object
+    # Load topology
+    try:
+      if topology is None:
+        log.warning(
+          "Topology description is missing. Try to load from CONFIG...")
+        self.__init_from_CONFIG()
+      elif isinstance(topology, NFFG):
+        self.__init_from_NFFG(nffg=topology)
+      elif isinstance(topology, dict):
+        self.__init_from_dict(dict=topology)
+      elif isinstance(topology, AbstractTopology):
+        self.__init_from_AbstractTopology(topo=topology)
+      elif isinstance(topology, str):
+        self.__init_from_file(path=topology)
+      else:
+        raise RuntimeError("Unsupported topology format: %s" % type(topology))
+    except TopologyBuilderException:
+      if not self.run_dry:
+        raise
+    # Return with Interface object
+    return ESCAPENetworkBridge(network=self.mn)

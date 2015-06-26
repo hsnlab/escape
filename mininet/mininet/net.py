@@ -104,7 +104,7 @@ from term import cleanUpScreens, makeTerms
 from clickgui import makeClickys
 
 # Mininet version: should be consistent with README and LICENSE
-VERSION = "2.1.0"
+VERSION = "2.1.0" + "mod-ESCAPE"
 
 class Mininet( object ):
     "Network emulation with hosts spawned in network namespaces."
@@ -980,7 +980,7 @@ class MininetWithControlNet( Mininet ):
         self.configureSwitchedControlNetwork()
 
     # We still need to figure out the right way to pass
-    # in the control network location.        
+    # in the control network location.
 
     def configureRoutedControlNetwork( self, ip='192.168.123.1',
                                        PrefixLen=16 ):
@@ -1028,7 +1028,7 @@ class MininetWithControlNet( Mininet ):
 
         ctlNetctl = self.addController( 'ctlNetctl', port=6634)
 #        ctlNetctl = self.RemoteController( 'ctlNetctl', port=6634)
-        
+
         s0 = self.addSwitch('s0')
         MySwitch=s0
 #        self.attachNodesToSwitchedControlNetwork(  nodes=self.switches , cip=ip, prefixLen=PrefixLen)

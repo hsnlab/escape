@@ -1,5 +1,5 @@
-The *sas.py* main module
-========================
+The *service.py* main module
+============================
 
 .. automodule:: service
    :members:
