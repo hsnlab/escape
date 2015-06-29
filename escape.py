@@ -20,6 +20,7 @@ Top starter script of ESCAPEv2 for convenient purposes
 import argparse
 import os
 
+# Implement parser options
 parser = argparse.ArgumentParser(
   description="ESCAPE: Extensible Service ChAin Prototyping Environment using "
               "Mininet, Click, NETCONF and POX")
@@ -33,6 +34,8 @@ escape.add_argument("-i", "--interactive", action="store_true", default=False,
                     help="run an interactive shell for observing internal "
                          "states")
 args = parser.parse_args()
+
+# Construct POX init command according to argument
 cmd = "pox/pox.py unify"
 if args.full:
   cmd = "sudo %s --full" % cmd
@@ -43,5 +46,7 @@ else:
   cmd = "%s --debug=False" % cmd
 if args.interactive:
   cmd = "%s py --completion" % cmd
+
+# Starting ESCAPEv2 (as a POX module)
 print "Starting ESCAPEv2..."
 os.system(cmd)
