@@ -66,7 +66,6 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     log.debug("Initializing Infrastructure Layer...")
     CONFIG.set_loaded(self._core_name)
-    self._need_clean = False
     # FIXME - change to dynamic initialization
     # self.topology = ESCAPENetworkBridge()
     # self.topology.test_network()
@@ -83,10 +82,6 @@ class InfrastructureLayerAPI(AbstractAPI):
     log.info("Infrastructure Layer is going down...")
     if self.topology:
       self.topology.stop_network()
-    if self._need_clean:
-      from mininet import clean
-
-      clean.cleanup()
 
   def _handle_ComponentRegistered (self, event):
     """

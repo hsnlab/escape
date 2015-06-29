@@ -62,7 +62,8 @@ cfg = {'service': {  # Service Adaptation Sublayer
        'infrastructure': {  # Infrastructure Layer
                             'NETWORK-OPTS': None,  # Additional opts for Mininet
                             'FALLBACK-TOPO': {'module': "escape.infr.topology",
-                                              'class': "BackupTopology"}}}
+                                              'class': "BackupTopology"},
+                            'SHUTDOWN-CLEAN': True}}
 
 from escape.util.misc import ESCAPEConfig
 # Define global configuration and try to load additions from file

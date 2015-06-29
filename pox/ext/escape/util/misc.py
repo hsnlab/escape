@@ -382,3 +382,15 @@ class ESCAPEConfig(object):
         self.__configuration[INFR][topo_name]['class'], None)
     except KeyError:
       return None
+
+  def get_clean_after_shutdown (self):
+    """
+    Return with the value if a cleaning process need to be done or not.
+
+    :return: cleanup (default: False)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[INFR]['SHUTDOWN-CLEAN']
+    except KeyError:
+      return False

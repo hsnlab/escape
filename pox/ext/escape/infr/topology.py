@@ -14,10 +14,11 @@
 """
 Wrapper module for handling emulated test topology based on Mininet
 """
-
+from mininet import clean
 from mininet.net import VERSION as MNVERSION
 from mininet.net import Mininet
 from mininet.node import RemoteController
+
 from mininet.topo import Topo
 
 from escape.infr import log
@@ -120,9 +121,13 @@ class ESCAPENetworkBridge(object):
       self.__mininet = network
     else:
       log.warning(
-        "Network implementation object is missing! Use Builder instead of "
-        "direct initialization. Creating bare Mininet object anyway...")
+        "Network implementation object is missing! Use Builder class instead "
+        "of direct initialization. Creating bare Mininet object anyway...")
       self.__mininet = Mininet(controller=InternalControllerProxy)
+    # Need to clean after shutdown
+    self._need_clean = None
+    # There is no such flag in the Mininet class so using this
+    self.started = False
 
   @property
   def network (self):
@@ -139,34 +144,41 @@ class ESCAPENetworkBridge(object):
     Start network
     """
     log.debug("Starting Mininet network...")
-    if self.__mininet:
+    if self.__mininet is not None:
       self.__mininet.start()
       log.debug("Mininet network has been started!")
+      self.started = True
     else:
-      log.error("Missing topology! Skipping emulation and running dry...")
+      log.error("Missing topology! Skipping emulation...")
 
   def stop_network (self):
     """
     Stop network
     """
     log.debug("Shutting down Mininet network...")
-    if self.__mininet:
-      self.__mininet.stop()
+    if self.__mininet is not None:
+      if self.started:
+        self.__mininet.stop()
+        log.debug("Mininet network has been stopped!")
+        self.started = False
+      else:
+        log.warning("Mininet network is not started yet! Skipping stop task...")
+    if self._need_clean:
+      self.cleanup()
 
-  def test_network (self):
+  def cleanup (self):
     """
-    For testing
+    Clean up junk which might be left over from old runs.
+
+    ..seealso::
+      :func:`mininet.clean.cleanup() <mininet.clean.cleanup>`
     """
-    log.debug("Init simple switch topo for testing purposes")
-    # self._net = Mininet(topo=SingleSwitchTopo(2), controller=RemoteController)
-    net = Mininet()
-    h1 = net.addHost('h1')
-    h2 = net.addHost('h2')
-    s1 = net.addSwitch('s1')
-    c0 = net.addController('c0', InternalControllerProxy)
-    net.addLink(h1, s1)
-    net.addLink(h2, s1)
-    self.__mininet = net
+    if self.started:
+      log.warning(
+        "Mininet network is not stopped yet! Skipping cleanup task...")
+    else:
+      log.info("Cleanup after Mininet emulation...")
+      clean.cleanup()
 
 
 class TopologyBuilderException(Exception):
@@ -328,5 +340,8 @@ class ESCAPENetworkBuilder(object):
     except TopologyBuilderException:
       if not self.run_dry:
         raise
-    # Return with Interface object
-    return ESCAPENetworkBridge(network=self.mn)
+    # Create the Interface object
+    network = ESCAPENetworkBridge(network=self.mn)
+    # Additional settings
+    network._need_clean = CONFIG.get_clean_after_shutdown()
+    return network
