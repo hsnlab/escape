@@ -179,7 +179,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Init GUI
     if self._gui:
       self._initiate_gui()
-    log.debug("Service Layer has been initialized!")
+    log.info("Service Layer has been initialized!")
 
   def shutdown (self, event):
     """
