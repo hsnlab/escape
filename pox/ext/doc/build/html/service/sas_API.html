@@ -1,0 +1,424 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sas_API.py module &mdash; ESCAPEv2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="ESCAPEv2 documentation" href="../index.html" />
+    <link rel="up" title="escape.service package" href="service.html" />
+    <link rel="next" title="sas_orchestration.py module" href="sas_orchestration.html" />
+    <link rel="prev" title="sas_mapping.py module" href="sas_mapping.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sas_orchestration.html" title="sas_orchestration.py module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sas_mapping.html" title="sas_mapping.py module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ESCAPEv2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../top.html" >The <em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../escape.html" ><em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-3"><a href="service.html" accesskey="U"><em>escape.service</em> package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sas-api-py-module">
+<h1><em>sas_API.py</em> module<a class="headerlink" href="#sas-api-py-module" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="#escape.service.sas_API.InstantiateNFFGEvent" title="escape.service.sas_API.InstantiateNFFGEvent"><code class="xref any py py-class docutils literal"><span class="pre">InstantiateNFFGEvent</span></code></a> can send NF-FG to the lower layer</p>
+<p><a class="reference internal" href="#escape.service.sas_API.GetVirtResInfoEvent" title="escape.service.sas_API.GetVirtResInfoEvent"><code class="xref any py py-class docutils literal"><span class="pre">GetVirtResInfoEvent</span></code></a> can request virtual resource info from lower layer</p>
+<p><a class="reference internal" href="#escape.service.sas_API.ServiceRequestHandler" title="escape.service.sas_API.ServiceRequestHandler"><code class="xref any py py-class docutils literal"><span class="pre">ServiceRequestHandler</span></code></a> implement the specific RESTful API functionality
+thereby realizes the UNIFY&#8217;s U - Sl API</p>
+<p><a class="reference internal" href="#escape.service.sas_API.ServiceLayerAPI" title="escape.service.sas_API.ServiceLayerAPI"><code class="xref any py py-class docutils literal"><span class="pre">ServiceLayerAPI</span></code></a> represents the SAS layer and implement all related
+functionality</p>
+<div class="section" id="module-escape.service.sas_API">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-escape.service.sas_API" title="Permalink to this headline">¶</a></h2>
+<p>Implements the platform and POX dependent logic for the Service Adaptation
+Sublayer</p>
+<dl class="class">
+<dt id="escape.service.sas_API.InstantiateNFFGEvent">
+<em class="property">class </em><code class="descclassname">escape.service.sas_API.</code><code class="descname">InstantiateNFFGEvent</code><span class="sig-paren">(</span><em>nffg</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.InstantiateNFFGEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pox.lib.revent.revent.Event</span></code></p>
+<p>Event for passing NFFG (mapped SG) to Orchestration layer</p>
+<dl class="method">
+<dt id="escape.service.sas_API.InstantiateNFFGEvent.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>nffg</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.InstantiateNFFGEvent.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Init</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>nffg</strong> (<a class="reference internal" href="../util/nffg.html#escape.util.nffg.NFFG" title="escape.util.nffg.NFFG"><em>NFFG</em></a>) &#8211; NF-FG need to be initiated</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="escape.service.sas_API.GetVirtResInfoEvent">
+<em class="property">class </em><code class="descclassname">escape.service.sas_API.</code><code class="descname">GetVirtResInfoEvent</code><span class="sig-paren">(</span><em>sid</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.GetVirtResInfoEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pox.lib.revent.revent.Event</span></code></p>
+<p>Event for requesting virtual resource info from Orchestration layer</p>
+<dl class="method">
+<dt id="escape.service.sas_API.GetVirtResInfoEvent.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>sid</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.GetVirtResInfoEvent.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Init</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sid</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Service layer ID</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="escape.service.sas_API.ServiceRequestHandler">
+<em class="property">class </em><code class="descclassname">escape.service.sas_API.</code><code class="descname">ServiceRequestHandler</code><span class="sig-paren">(</span><em>request</em>, <em>client_address</em>, <em>server</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceRequestHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../util/api.html#escape.util.api.AbstractRequestHandler" title="escape.util.api.AbstractRequestHandler"><code class="xref py py-class docutils literal"><span class="pre">escape.util.api.AbstractRequestHandler</span></code></a></p>
+<p>Request Handler for Service Adaptation SubLayer</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This class is out of the context of the recoco&#8217;s co-operative thread
+context! While you don&#8217;t need to worry much about synchronization between
+recoco tasks, you do need to think about synchronization between recoco task
+and normal threads. Synchronisation is needed to take care manually: use
+relevant helper function of core object: <cite>callLater</cite>/<cite>raiseLater</cite> or use
+<cite>schedule_as_coop_task</cite> decorator defined in util.misc on the called
+function</p>
+</div>
+<dl class="attribute">
+<dt id="escape.service.sas_API.ServiceRequestHandler.request_perm">
+<code class="descname">request_perm</code><em class="property"> = {'PUT': ('echo',), 'POST': ('echo', 'sg'), 'DELETE': ('echo',), 'GET': ('echo', 'version', 'operations')}</em><a class="headerlink" href="#escape.service.sas_API.ServiceRequestHandler.request_perm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.service.sas_API.ServiceRequestHandler.bounded_layer">
+<code class="descname">bounded_layer</code><em class="property"> = 'service'</em><a class="headerlink" href="#escape.service.sas_API.ServiceRequestHandler.bounded_layer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.service.sas_API.ServiceRequestHandler.log">
+<code class="descname">log</code><em class="property"> = &lt;logging.Logger object&gt;</em><a class="headerlink" href="#escape.service.sas_API.ServiceRequestHandler.log" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceRequestHandler.echo">
+<code class="descname">echo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceRequestHandler.echo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test function for REST-API</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceRequestHandler.sg">
+<code class="descname">sg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceRequestHandler.sg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main API function for Service Graph initiation</p>
+<p>Bounded to POST HTTP verb</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceRequestHandler.version">
+<code class="descname">version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceRequestHandler.version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return with version</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceRequestHandler.operations">
+<code class="descname">operations</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceRequestHandler.operations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return with allowed operations</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="escape.service.sas_API.ServiceLayerAPI">
+<em class="property">class </em><code class="descclassname">escape.service.sas_API.</code><code class="descname">ServiceLayerAPI</code><span class="sig-paren">(</span><em>standalone=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../util/api.html#escape.util.api.AbstractAPI" title="escape.util.api.AbstractAPI"><code class="xref py py-class docutils literal"><span class="pre">escape.util.api.AbstractAPI</span></code></a></p>
+<p>Entry point for Service Adaptation Sublayer</p>
+<p>Maintain the contact with other UNIFY layers</p>
+<p>Implement the U - Sl reference point</p>
+<dl class="attribute">
+<dt id="escape.service.sas_API.ServiceLayerAPI._core_name">
+<code class="descname">_core_name</code><em class="property"> = 'service'</em><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI._core_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.service.sas_API.ServiceLayerAPI.dependencies">
+<code class="descname">dependencies</code><em class="property"> = ('orchestration',)</em><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI.dependencies" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>standalone=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="../util/api.html#escape.util.api.AbstractAPI.__init__" title="escape.util.api.AbstractAPI.__init__"><code class="xref py py-func docutils literal"><span class="pre">AbstractAPI.__init__()</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI.initialize">
+<code class="descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="../util/api.html#escape.util.api.AbstractAPI.initialize" title="escape.util.api.AbstractAPI.initialize"><code class="xref py py-func docutils literal"><span class="pre">AbstractAPI.initialze()</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI.shutdown">
+<code class="descname">shutdown</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="../util/api.html#escape.util.api.AbstractAPI.shutdown" title="escape.util.api.AbstractAPI.shutdown"><code class="xref py py-func docutils literal"><span class="pre">AbstractAPI.shutdown()</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI._initiate_rest_api">
+<code class="descname">_initiate_rest_api</code><span class="sig-paren">(</span><em>handler=&lt;class escape.service.sas_API.ServiceRequestHandler&gt;</em>, <em>address='localhost'</em>, <em>port=8008</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI._initiate_rest_api" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize and set up REST API in a different thread</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>address</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; server address, default localhost</li>
+<li><strong>port</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; port number, default 8008</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI._initiate_gui">
+<code class="descname">_initiate_gui</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI._initiate_gui" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initiate and set up GUI</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI._handle_SGMappingFinishedEvent">
+<code class="descname">_handle_SGMappingFinishedEvent</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI._handle_SGMappingFinishedEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle SGMappingFinishedEvent and proceed with  <a class="reference internal" href="../util/nffg.html#escape.util.nffg.NFFG" title="escape.util.nffg.NFFG"><code class="xref py py-class docutils literal"><span class="pre">NFFG</span></code></a> instantiation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<a class="reference internal" href="sas_mapping.html#escape.service.sas_mapping.SGMappingFinishedEvent" title="escape.service.sas_mapping.SGMappingFinishedEvent"><em>SGMappingFinishedEvent</em></a>) &#8211; event object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI.request_service">
+<code class="descname">request_service</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI.request_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initiate a Service Graph (UNIFY U-Sl API)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sg</strong> (<a class="reference internal" href="../util/nffg.html#escape.util.nffg.NFFG" title="escape.util.nffg.NFFG"><em>NFFG</em></a>) &#8211; service graph instance</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI._instantiate_NFFG">
+<code class="descname">_instantiate_NFFG</code><span class="sig-paren">(</span><em>nffg</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI._instantiate_NFFG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send NFFG to Resource Orchestration Sublayer in an implementation-specific
+way</p>
+<p>General function which is used from microtask and Python thread also</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>nffg</strong> (<a class="reference internal" href="../util/nffg.html#escape.util.nffg.NFFG" title="escape.util.nffg.NFFG"><em>NFFG</em></a>) &#8211; mapped Service Graph</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI._handle_MissingVirtualViewEvent">
+<code class="descname">_handle_MissingVirtualViewEvent</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI._handle_MissingVirtualViewEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request virtual resource info from Orchestration layer (UNIFY Sl - Or API)</p>
+<p>Invoked when a <code class="xref py py-class docutils literal"><span class="pre">MissingVirtualViewEvent</span></code> raised</p>
+<p>Service layer is identified with the sid value automatically</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<a class="reference internal" href="sas_orchestration.html#escape.service.sas_orchestration.MissingVirtualViewEvent" title="escape.service.sas_orchestration.MissingVirtualViewEvent"><em>MissingVirtualViewEvent</em></a>) &#8211; event object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI._handle_VirtResInfoEvent">
+<code class="descname">_handle_VirtResInfoEvent</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI._handle_VirtResInfoEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save requested virtual resource info as an <a class="reference internal" href="../orchest/virtualization_mgmt.html#escape.orchest.virtualization_mgmt.ESCAPEVirtualizer" title="escape.orchest.virtualization_mgmt.ESCAPEVirtualizer"><code class="xref py py-class docutils literal"><span class="pre">ESCAPEVirtualizer</span></code></a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<a class="reference internal" href="../orchest/ros_API.html#escape.orchest.ros_API.VirtResInfoEvent" title="escape.orchest.ros_API.VirtResInfoEvent"><em>VirtResInfoEvent</em></a>) &#8211; event object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.service.sas_API.ServiceLayerAPI._handle_InstantiationFinishedEvent">
+<code class="descname">_handle_InstantiationFinishedEvent</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.service.sas_API.ServiceLayerAPI._handle_InstantiationFinishedEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><em>sas_API.py</em> module</a><ul>
+<li><a class="reference internal" href="#module-escape.service.sas_API">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sas_mapping.html"
+                        title="previous chapter"><em>sas_mapping.py</em> module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sas_orchestration.html"
+                        title="next chapter"><em>sas_orchestration.py</em> module</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sas_orchestration.html" title="sas_orchestration.py module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="sas_mapping.html" title="sas_mapping.py module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ESCAPEv2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../top.html" >The <em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../escape.html" ><em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-3"><a href="service.html" ><em>escape.service</em> package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright Copyright 2015, under Apache License Version 2.0.
+      Last updated on Jun 26, 2015.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

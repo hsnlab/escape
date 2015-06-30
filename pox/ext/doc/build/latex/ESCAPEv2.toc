@@ -1,0 +1,72 @@
+\select@language {english}
+\contentsline {chapter}{\numberline {1}Overview}{3}{chapter.1}
+\contentsline {chapter}{\numberline {2}ESCAPEv2 structure}{5}{chapter.2}
+\contentsline {section}{\numberline {2.1}Dependencies:}{5}{section.2.1}
+\contentsline {section}{\numberline {2.2}Class structure}{5}{section.2.2}
+\contentsline {subsection}{\numberline {2.2.1}The \emph {escape} package}{5}{subsection.2.2.1}
+\contentsline {subsubsection}{\emph {escape} package}{5}{subsubsection*.3}
+\contentsline {paragraph}{Submodules}{5}{paragraph*.4}
+\contentsline {subparagraph}{\emph {escape.service} package}{5}{subparagraph*.5}
+\contentsline {subparagraph}{Submodules}{5}{subparagraph*.6}
+\contentsline {subparagraph}{\emph {element\_mgmt.py} module}{5}{subparagraph*.7}
+\contentsline {subparagraph}{Module contents}{5}{subparagraph*.8}
+\contentsline {subparagraph}{\emph {sas\_mapping.py} module}{6}{subparagraph*.13}
+\contentsline {subparagraph}{Module contents}{6}{subparagraph*.14}
+\contentsline {subparagraph}{\emph {sas\_API.py} module}{7}{subparagraph*.25}
+\contentsline {subparagraph}{Module contents}{7}{subparagraph*.26}
+\contentsline {subparagraph}{\emph {sas\_orchestration.py} module}{9}{subparagraph*.53}
+\contentsline {subparagraph}{Module contents}{10}{subparagraph*.54}
+\contentsline {subparagraph}{\emph {escape.orchest} package}{11}{subparagraph*.67}
+\contentsline {subparagraph}{Submodules}{11}{subparagraph*.68}
+\contentsline {subparagraph}{\emph {policy\_enforcement.py} module}{11}{subparagraph*.69}
+\contentsline {subparagraph}{Module contents}{11}{subparagraph*.70}
+\contentsline {subparagraph}{\emph {ros\_orchestration.py} module}{13}{subparagraph*.79}
+\contentsline {subparagraph}{Module contents}{13}{subparagraph*.80}
+\contentsline {subparagraph}{\emph {ros\_API.py} module}{14}{subparagraph*.93}
+\contentsline {subparagraph}{Module contents}{14}{subparagraph*.94}
+\contentsline {subparagraph}{\emph {ros\_mapping.py} module}{16}{subparagraph*.115}
+\contentsline {subparagraph}{Module contents}{16}{subparagraph*.116}
+\contentsline {subparagraph}{\emph {virtualization\_mgmt.py} module}{17}{subparagraph*.127}
+\contentsline {subparagraph}{Module contents}{17}{subparagraph*.128}
+\contentsline {subparagraph}{\emph {escape.adapt} package}{18}{subparagraph*.146}
+\contentsline {subparagraph}{Submodules}{18}{subparagraph*.147}
+\contentsline {subparagraph}{\emph {adaptation.py} module}{18}{subparagraph*.148}
+\contentsline {subparagraph}{Module contents}{19}{subparagraph*.149}
+\contentsline {subparagraph}{\emph {cas\_API.py} module}{21}{subparagraph*.172}
+\contentsline {subparagraph}{Module contents}{21}{subparagraph*.173}
+\contentsline {subparagraph}{\emph {domain\_adapters.py} module}{22}{subparagraph*.189}
+\contentsline {subparagraph}{Module contents}{23}{subparagraph*.190}
+\contentsline {subparagraph}{\emph {escape.infr} package}{27}{subparagraph*.234}
+\contentsline {subparagraph}{Submodules}{27}{subparagraph*.235}
+\contentsline {subparagraph}{\emph {il\_API.py} module}{27}{subparagraph*.236}
+\contentsline {subparagraph}{Module contents}{27}{subparagraph*.237}
+\contentsline {subparagraph}{\emph {topology.py} module}{28}{subparagraph*.249}
+\contentsline {subparagraph}{Module contents}{28}{subparagraph*.250}
+\contentsline {subparagraph}{\emph {escape.util} package}{30}{subparagraph*.279}
+\contentsline {subparagraph}{Submodules}{30}{subparagraph*.280}
+\contentsline {subparagraph}{\emph {adapter.py} module}{30}{subparagraph*.281}
+\contentsline {subparagraph}{Module contents}{31}{subparagraph*.282}
+\contentsline {subparagraph}{\emph {api.py} module}{34}{subparagraph*.316}
+\contentsline {subparagraph}{Module contents}{34}{subparagraph*.317}
+\contentsline {subparagraph}{\emph {mapping.py} module}{38}{subparagraph*.362}
+\contentsline {subparagraph}{Module contents}{38}{subparagraph*.363}
+\contentsline {subparagraph}{\emph {misc.py} module}{40}{subparagraph*.373}
+\contentsline {subparagraph}{Module contents}{40}{subparagraph*.374}
+\contentsline {subparagraph}{\emph {netconf.py} module}{43}{subparagraph*.404}
+\contentsline {subparagraph}{Module contents}{44}{subparagraph*.405}
+\contentsline {subparagraph}{\emph {nffg.py} module}{47}{subparagraph*.426}
+\contentsline {subparagraph}{Module contents}{47}{subparagraph*.427}
+\contentsline {subparagraph}{\emph {pox\_extension.py} module}{49}{subparagraph*.464}
+\contentsline {subparagraph}{Module contents}{49}{subparagraph*.465}
+\contentsline {section}{\numberline {2.3}Main modules for layers/sublayers}{50}{section.2.3}
+\contentsline {subsection}{\numberline {2.3.1}The \emph {unify.py} top module}{50}{subsection.2.3.1}
+\contentsline {subsubsection}{Submodules}{51}{subsubsection*.476}
+\contentsline {paragraph}{The \emph {service.py} main module}{51}{paragraph*.477}
+\contentsline {paragraph}{The \emph {orchestration.py} main module}{51}{paragraph*.480}
+\contentsline {paragraph}{The \emph {adaptation.py} main module}{51}{paragraph*.483}
+\contentsline {paragraph}{The \emph {infrastructure.py} main module}{52}{paragraph*.486}
+\contentsline {section}{\numberline {2.4}README}{52}{section.2.4}
+\contentsline {section}{\numberline {2.5}REST API}{54}{section.2.5}
+\contentsline {chapter}{\numberline {3}Indices and tables}{55}{chapter.3}
+\contentsline {chapter}{Python Module Index}{57}{section*.489}
+\contentsline {chapter}{Index}{59}{section*.490}

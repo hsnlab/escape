@@ -1,0 +1,421 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>topology.py module &mdash; ESCAPEv2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="ESCAPEv2 documentation" href="../index.html" />
+    <link rel="up" title="escape.infr package" href="infr.html" />
+    <link rel="next" title="escape.util package" href="../util/util.html" />
+    <link rel="prev" title="il_API.py module" href="il_API.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../util/util.html" title="escape.util package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="il_API.html" title="il_API.py module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ESCAPEv2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../top.html" >The <em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../escape.html" ><em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-3"><a href="infr.html" accesskey="U"><em>escape.infr</em> package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="topology-py-module">
+<h1><em>topology.py</em> module<a class="headerlink" href="#topology-py-module" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="#escape.infr.topology.InternalControllerProxy" title="escape.infr.topology.InternalControllerProxy"><code class="xref any py py-class docutils literal"><span class="pre">InternalControllerProxy</span></code></a> represents the connection between the internal
+controller and the emulated network</p>
+<p><a class="reference internal" href="#escape.infr.topology.AbstractTopology" title="escape.infr.topology.AbstractTopology"><code class="xref any py py-class docutils literal"><span class="pre">AbstractTopology</span></code></a> represents the emulated topology for the high-level API</p>
+<div class="section" id="module-escape.infr.topology">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-escape.infr.topology" title="Permalink to this headline">¶</a></h2>
+<p>Wrapper module for handling emulated test topology based on Mininet</p>
+<dl class="class">
+<dt id="escape.infr.topology.AbstractTopology">
+<em class="property">class </em><code class="descclassname">escape.infr.topology.</code><code class="descname">AbstractTopology</code><span class="sig-paren">(</span><em>hopts=None</em>, <em>sopts=None</em>, <em>lopts=None</em>, <em>eopts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.AbstractTopology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">mininet.topo.Topo</span></code></p>
+<p>Abstract class for representing emulated topology.</p>
+<p>Have the functions to build a ESCAPE-specific topology.</p>
+<p>Can be used to define reusable topology similar to Mininet&#8217;s high-level API.
+Reusable, convenient and pre-defined way to define a topology, but less
+flexible and powerful.</p>
+<dl class="attribute">
+<dt id="escape.infr.topology.AbstractTopology.default_host_opts">
+<code class="descname">default_host_opts</code><em class="property"> = None</em><a class="headerlink" href="#escape.infr.topology.AbstractTopology.default_host_opts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.infr.topology.AbstractTopology.default_switch_opts">
+<code class="descname">default_switch_opts</code><em class="property"> = None</em><a class="headerlink" href="#escape.infr.topology.AbstractTopology.default_switch_opts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.infr.topology.AbstractTopology.default_link_opts">
+<code class="descname">default_link_opts</code><em class="property"> = None</em><a class="headerlink" href="#escape.infr.topology.AbstractTopology.default_link_opts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.infr.topology.AbstractTopology.default_EE_opts">
+<code class="descname">default_EE_opts</code><em class="property"> = None</em><a class="headerlink" href="#escape.infr.topology.AbstractTopology.default_EE_opts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.AbstractTopology.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>hopts=None</em>, <em>sopts=None</em>, <em>lopts=None</em>, <em>eopts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.AbstractTopology.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="escape.infr.topology.BackupTopology">
+<em class="property">class </em><code class="descclassname">escape.infr.topology.</code><code class="descname">BackupTopology</code><a class="headerlink" href="#escape.infr.topology.BackupTopology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#escape.infr.topology.AbstractTopology" title="escape.infr.topology.AbstractTopology"><code class="xref py py-class docutils literal"><span class="pre">escape.infr.topology.AbstractTopology</span></code></a></p>
+<p>Topology class for testing purposes and serve as a fallback topology</p>
+<dl class="method">
+<dt id="escape.infr.topology.BackupTopology.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.BackupTopology.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Init and build test topology</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="escape.infr.topology.InternalControllerProxy">
+<em class="property">class </em><code class="descclassname">escape.infr.topology.</code><code class="descname">InternalControllerProxy</code><span class="sig-paren">(</span><em>name='InternalPOXController'</em>, <em>ip='127.0.0.1'</em>, <em>port=6653</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.InternalControllerProxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">mininet.node.RemoteController</span></code></p>
+<p>Controller class for emulated Mininet network. Making connection with
+internal controller initiated by POXDomainAdapter.</p>
+<dl class="method">
+<dt id="escape.infr.topology.InternalControllerProxy.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>name='InternalPOXController'</em>, <em>ip='127.0.0.1'</em>, <em>port=6653</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.InternalControllerProxy.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Init</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of the controller (default: InternalPOXController)</li>
+<li><strong>ip</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; IP address (default: 127.0.0.1)</li>
+<li><strong>port</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; port number (default 6633)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.InternalControllerProxy.checkListening">
+<code class="descname">checkListening</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.InternalControllerProxy.checkListening" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the controller port is open</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="escape.infr.topology.ESCAPENetworkBridge">
+<em class="property">class </em><code class="descclassname">escape.infr.topology.</code><code class="descname">ESCAPENetworkBridge</code><span class="sig-paren">(</span><em>network=None</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBridge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Internal class for representing the emulated topology.</p>
+<p>Represents a container class for network elements such as switches, nodes,
+execution environments, links etc. Contains network management functions
+similar to Mininet&#8217;s mid-level API extended with ESCAPEv2 related capabilities</p>
+<p>Separate the interface using internally from original Mininet object to
+implement loose coupling and avoid changes caused by Mininet API changes
+e.g. 2.1.0 -&gt; 2.2.0</p>
+<p>Follows Bridge design pattern.</p>
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBridge.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>network=None</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBridge.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize Mininet implementation with proper attributes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="escape.infr.topology.ESCAPENetworkBridge.network">
+<code class="descname">network</code><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBridge.network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal network representation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">network representation</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">mininet.net.Mininet</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBridge.start_network">
+<code class="descname">start_network</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBridge.start_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start network</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBridge.stop_network">
+<code class="descname">stop_network</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBridge.stop_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop network</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBridge.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBridge.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up junk which might be left over from old runs.</p>
+<dl class="docutils">
+<dt>..seealso::</dt>
+<dd><code class="xref py py-func docutils literal"><span class="pre">mininet.clean.cleanup()</span></code></dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="escape.infr.topology.TopologyBuilderException">
+<em class="property">exception </em><code class="descclassname">escape.infr.topology.</code><code class="descname">TopologyBuilderException</code><a class="headerlink" href="#escape.infr.topology.TopologyBuilderException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/exceptions.html#exceptions.Exception" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></a></p>
+<p>Exception class for topology errors.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder">
+<em class="property">class </em><code class="descclassname">escape.infr.topology.</code><code class="descname">ESCAPENetworkBuilder</code><span class="sig-paren">(</span><em>net=None</em>, <em>opts=None</em>, <em>run_dry=True</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Builder class for topology.</p>
+<p>Update the network object based on the parameters if it&#8217;s given or create
+an empty instance.</p>
+<p>Always return with an ESCAPENetworkBridge instance which offer a generic
+interface for created :any::<cite>Mininet</cite> object and hide implementation&#8217;s nature.</p>
+<p>Follows Builder design pattern.</p>
+<dl class="attribute">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder.default_opts">
+<code class="descname">default_opts</code><em class="property"> = {'listenPort': None, 'autoSetMacs': True, 'inNamespace': False, 'autoStaticArp': True, 'controller': &lt;class 'escape.infr.topology.InternalControllerProxy'&gt;, 'build': False}</em><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder.default_opts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder.topology_config_name">
+<code class="descname">topology_config_name</code><em class="property"> = 'FALLBACK-TOPO'</em><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder.topology_config_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>net=None</em>, <em>opts=None</em>, <em>run_dry=True</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize NetworkBuilder.</p>
+<p>If the topology definition is not found, an exception will be raised or
+an empty :any::<cite>Mininet</cite> topology will be created if <code class="docutils literal"><span class="pre">run_dry</span></code> is set.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>net</strong> (:any::<cite>Mininet</cite>) &#8211; update given Mininet object instead of creating a new one</li>
+<li><strong>opts</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; update default options with the given opts</li>
+<li><strong>run_dry</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; do not raise an Exception and return with bare Mininet obj.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_AbstractTopology">
+<code class="descname">_ESCAPENetworkBuilder__init_from_AbstractTopology</code><span class="sig-paren">(</span><em>topo_class</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_AbstractTopology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build topology from pre-defined Topology class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>topo</strong> (<a class="reference internal" href="#escape.infr.topology.AbstractTopology" title="escape.infr.topology.AbstractTopology"><code class="xref any py py-class docutils literal"><span class="pre">AbstractTopology</span></code></a>) &#8211; topology</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_CONFIG">
+<code class="descname">_ESCAPENetworkBuilder__init_from_CONFIG</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_CONFIG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a pre-defined topology stored in CONFIG.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_NFFG">
+<code class="descname">_ESCAPENetworkBuilder__init_from_NFFG</code><span class="sig-paren">(</span><em>net</em>, <em>nffg</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_NFFG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize topology from <a class="reference internal" href="../util/nffg.html#escape.util.nffg.NFFG" title="escape.util.nffg.NFFG"><code class="xref any py py-class docutils literal"><span class="pre">NFFG</span></code></a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>nffg</strong> (<a class="reference internal" href="../util/nffg.html#escape.util.nffg.NFFG" title="escape.util.nffg.NFFG"><code class="xref any py py-class docutils literal"><span class="pre">NFFG</span></code></a>) &#8211; topology</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_dict">
+<code class="descname">_ESCAPENetworkBuilder__init_from_dict</code><span class="sig-paren">(</span><em>dict</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize topology from a dictionary.</p>
+<p>Keywords for network elements: controllers, ee, saps, switches, links</p>
+<p>Option keywords: netopts</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dict</strong> (<a class="reference internal" href="../util/nffg.html#escape.util.nffg.NFFG" title="escape.util.nffg.NFFG"><code class="xref any py py-class docutils literal"><span class="pre">NFFG</span></code></a>) &#8211; topology</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_file">
+<code class="descname">_ESCAPENetworkBuilder__init_from_file</code><span class="sig-paren">(</span><em>path='escape.topo'</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder._ESCAPENetworkBuilder__init_from_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a pre-defined topology stored in a file in JSON format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; file path</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.infr.topology.ESCAPENetworkBuilder.build">
+<code class="descname">build</code><span class="sig-paren">(</span><em>topology=None</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.infr.topology.ESCAPENetworkBuilder.build" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize network</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>topology</strong> (<a class="reference internal" href="../util/nffg.html#escape.util.nffg.NFFG" title="escape.util.nffg.NFFG"><code class="xref any py py-class docutils literal"><span class="pre">NFFG</span></code></a> or <a class="reference external" href="https://docs.python.org/2.7/reference/expressions.html#dict" title="(in Python v2.7)"><code class="docutils literal"><span class="pre">Dictionary</span> <span class="pre">displays</span></code></a> or <a class="reference internal" href="#escape.infr.topology.AbstractTopology" title="escape.infr.topology.AbstractTopology"><code class="xref any py py-class docutils literal"><span class="pre">AbstractTopology</span></code></a>) &#8211; topology representation</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><em>topology.py</em> module</a><ul>
+<li><a class="reference internal" href="#module-escape.infr.topology">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="il_API.html"
+                        title="previous chapter"><em>il_API.py</em> module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../util/util.html"
+                        title="next chapter"><em>escape.util</em> package</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../util/util.html" title="escape.util package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="il_API.html" title="il_API.py module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ESCAPEv2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../top.html" >The <em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../escape.html" ><em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-3"><a href="infr.html" ><em>escape.infr</em> package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright Copyright 2015, under Apache License Version 2.0.
+      Last updated on Jun 29, 2015.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

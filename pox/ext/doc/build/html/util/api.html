@@ -1,0 +1,622 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>api.py module &mdash; ESCAPEv2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="top" title="ESCAPEv2 documentation" href="../index.html" />
+    <link rel="up" title="escape.util package" href="util.html" />
+    <link rel="next" title="mapping.py module" href="mapping.html" />
+    <link rel="prev" title="adapter.py module" href="adapter.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mapping.html" title="mapping.py module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="adapter.html" title="adapter.py module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ESCAPEv2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../top.html" >The <em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../escape.html" ><em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-3"><a href="util.html" accesskey="U"><em>escape.util</em> package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="api-py-module">
+<h1><em>api.py</em> module<a class="headerlink" href="#api-py-module" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="#escape.util.api.AbstractAPI" title="escape.util.api.AbstractAPI"><code class="xref any py py-class docutils literal"><span class="pre">AbstractAPI</span></code></a> contains the register mechanism into the POX core for
+layer APIs, the event handling/registering logic and defines the general
+functions for initialization and finalization steps</p>
+<p><a class="reference internal" href="#escape.util.api.RESTServer" title="escape.util.api.RESTServer"><code class="xref any py py-class docutils literal"><span class="pre">RESTServer</span></code></a> is a general HTTP server which parse HTTP request and
+forward to explicitly given request handler</p>
+<p><a class="reference internal" href="#escape.util.api.AbstractRequestHandler" title="escape.util.api.AbstractRequestHandler"><code class="xref any py py-class docutils literal"><span class="pre">AbstractRequestHandler</span></code></a> is a base class for concrete request handling.
+It implements the general URL and request body parsing functions</p>
+<div class="section" id="module-escape.util.api">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-escape.util.api" title="Permalink to this headline">¶</a></h2>
+<p>Contains abstract classes for concrete layer API modules</p>
+<dl class="class">
+<dt id="escape.util.api.AbstractAPI">
+<em class="property">class </em><code class="descclassname">escape.util.api.</code><code class="descname">AbstractAPI</code><span class="sig-paren">(</span><em>standalone=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractAPI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pox.lib.revent.revent.EventMixin</span></code></p>
+<p>Abstract class for UNIFY&#8217;s API</p>
+<p>Contain common functions</p>
+<p>Follows Facade design pattern -&gt; simplified enty/exit point ot the layers</p>
+<dl class="attribute">
+<dt id="escape.util.api.AbstractAPI._core_name">
+<code class="descname">_core_name</code><em class="property"> = 'AbstractAPI'</em><a class="headerlink" href="#escape.util.api.AbstractAPI._core_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.util.api.AbstractAPI.dependencies">
+<code class="descname">dependencies</code><em class="property"> = ()</em><a class="headerlink" href="#escape.util.api.AbstractAPI.dependencies" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractAPI.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>standalone=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractAPI.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract class constructor</p>
+<p>Handle core registration along with <a class="reference internal" href="#escape.util.api.AbstractAPI._all_dependencies_met" title="escape.util.api.AbstractAPI._all_dependencies_met"><code class="xref py py-func docutils literal"><span class="pre">_all_dependencies_met()</span></code></a></p>
+<p>Set given parameters (standalone parameter is mandatory) automatically as:</p>
+<div class="highlight-python"><div class="highlight"><pre>self._&lt;param_name&gt; = &lt;param_value&gt;
+</pre></div>
+</div>
+<p>Base constructor functions have to be called as the last step in derived
+classes. Same situation with <a class="reference internal" href="#escape.util.api.AbstractAPI._all_dependencies_met" title="escape.util.api.AbstractAPI._all_dependencies_met"><code class="xref py py-func docutils literal"><span class="pre">_all_dependencies_met()</span></code></a> respectively.
+Must not override these function, just use <a class="reference internal" href="#escape.util.api.AbstractAPI.initialize" title="escape.util.api.AbstractAPI.initialize"><code class="xref py py-func docutils literal"><span class="pre">initialize()</span></code></a> for
+init steps. Actual API classes must only call <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#super" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">super()</span></code></a> in their
+constructor with the form:</p>
+<div class="highlight-python"><div class="highlight"><pre>super(&lt;API Class name&gt;, self).__init__(standalone=standalone, **kwargs)
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Do not use prefixes in the name of event handlers, because of automatic
+dependency discovery considers that as a dependent component and this
+situation cause a dead lock (component will be waiting to each other to
+set up)</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>standalone</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; started in standalone mode or not</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractAPI._all_dependencies_met">
+<code class="descname">_all_dependencies_met</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractAPI._all_dependencies_met" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when every component on which depends are initialized on POX core</p>
+<p>Contain dependency relevant initialization.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractAPI.initialize">
+<code class="descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractAPI.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Init function for child API classes to simplify dynamic initialization</p>
+<p>Called when every component on which depends are initialized and registered
+in POX core</p>
+<p>This function should be overwritten by child classes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractAPI.shutdown">
+<code class="descname">shutdown</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractAPI.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finalization, deallocation, etc. of actual component</p>
+<p>Should be overwritten by child classes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<em>GoingDownEvent</em>) &#8211; shutdown event raised by POX core</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="escape.util.api.AbstractAPI._read_json_from_file">
+<em class="property">static </em><code class="descname">_read_json_from_file</code><span class="sig-paren">(</span><em>graph_file</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractAPI._read_json_from_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the given file and return a string formatted as JSON</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>graph_file</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; file path</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">JSON data</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)">str</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractAPI.__str__">
+<code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractAPI.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print class type and non-private attributes with their types for debugging</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">specific string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)">str</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="escape.util.api.RESTServer">
+<em class="property">class </em><code class="descclassname">escape.util.api.</code><code class="descname">RESTServer</code><span class="sig-paren">(</span><em>RequestHandlerClass</em>, <em>address='127.0.0.1'</em>, <em>port=8008</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.RESTServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/basehttpserver.html#BaseHTTPServer.HTTPServer" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">BaseHTTPServer.HTTPServer</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">SocketServer.ThreadingMixIn</span></code></p>
+<p>Base HTTP server for RESTful API</p>
+<p>Initiate an <code class="xref py py-class docutils literal"><span class="pre">HTTPServer</span></code> and run it in different thread</p>
+<dl class="method">
+<dt id="escape.util.api.RESTServer.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>RequestHandlerClass</em>, <em>address='127.0.0.1'</em>, <em>port=8008</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.RESTServer.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up an <a class="reference external" href="https://docs.python.org/2.7/library/basehttpserver.html#BaseHTTPServer.HTTPServer" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">BaseHTTPServer.HTTPServer</span></code></a> in a different
+thread</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>RequestHandlerClass</strong> (<a class="reference internal" href="#escape.util.api.AbstractRequestHandler" title="escape.util.api.AbstractRequestHandler"><em>AbstractRequestHandler</em></a>) &#8211; Class of a handler which handles HTTP request</li>
+<li><strong>address</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Used IP address</li>
+<li><strong>port</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Used port number</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.RESTServer.start">
+<code class="descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.RESTServer.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start RESTServer thread</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.RESTServer.stop">
+<code class="descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.RESTServer.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop RESTServer thread</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.RESTServer.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.RESTServer.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle one request at a time until shutdown.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="escape.util.api.RESTError">
+<em class="property">exception </em><code class="descclassname">escape.util.api.</code><code class="descname">RESTError</code><span class="sig-paren">(</span><em>msg=None</em>, <em>code=0</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.RESTError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/exceptions.html#exceptions.Exception" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></a></p>
+<p>Exception class for REST errors</p>
+<dl class="method">
+<dt id="escape.util.api.RESTError.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>msg=None</em>, <em>code=0</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.RESTError.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.util.api.RESTError.msg">
+<code class="descname">msg</code><a class="headerlink" href="#escape.util.api.RESTError.msg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.util.api.RESTError.code">
+<code class="descname">code</code><a class="headerlink" href="#escape.util.api.RESTError.code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.RESTError.__str__">
+<code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.RESTError.__str__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="escape.util.api.AbstractRequestHandler">
+<em class="property">class </em><code class="descclassname">escape.util.api.</code><code class="descname">AbstractRequestHandler</code><span class="sig-paren">(</span><em>request</em>, <em>client_address</em>, <em>server</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">BaseHTTPServer.BaseHTTPRequestHandler</span></code></a></p>
+<p>Minimalistic RESTful API for Layer APIs</p>
+<p>Handle /escape/* URLs.</p>
+<p>Method calling permissions represented in escape_intf dictionary</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This class is out of the context of the recoco&#8217;s co-operative thread
+context! While you don&#8217;t need to worry much about synchronization between
+recoco tasks, you do need to think about synchronization between recoco task
+and normal threads. Synchronisation is needed to take care manually - use
+relevant helper function of core object: <code class="xref py py-func docutils literal"><span class="pre">callLater()</span></code>/
+<code class="xref py py-func docutils literal"><span class="pre">raiseLater()</span></code> or use <a class="reference internal" href="misc.html#escape.util.misc.schedule_as_coop_task" title="escape.util.misc.schedule_as_coop_task"><code class="xref py py-func docutils literal"><span class="pre">schedule_as_coop_task()</span></code></a> decorator defined in
+<a class="reference internal" href="misc.html#module-escape.util.misc" title="escape.util.misc"><code class="xref py py-mod docutils literal"><span class="pre">escape.util.misc</span></code></a> on the called function</p>
+</div>
+<dl class="attribute">
+<dt id="escape.util.api.AbstractRequestHandler.server_version">
+<code class="descname">server_version</code><em class="property"> = 'ESCAPE/2.0.0'</em><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.server_version" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.util.api.AbstractRequestHandler.static_prefix">
+<code class="descname">static_prefix</code><em class="property"> = 'escape'</em><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.static_prefix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.util.api.AbstractRequestHandler.request_perm">
+<code class="descname">request_perm</code><em class="property"> = {'PUT': (), 'POST': (), 'DELETE': (), 'GET': ()}</em><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.request_perm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.util.api.AbstractRequestHandler.bounded_layer">
+<code class="descname">bounded_layer</code><em class="property"> = None</em><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.bounded_layer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="escape.util.api.AbstractRequestHandler.log">
+<code class="descname">log</code><em class="property"> = &lt;logging.Logger object&gt;</em><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.log" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.do_GET">
+<code class="descname">do_GET</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.do_GET" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get information about an entity. R for CRUD convention.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.do_POST">
+<code class="descname">do_POST</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.do_POST" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an entity. C for CRUD convention.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.do_PUT">
+<code class="descname">do_PUT</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.do_PUT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update an entity. U for CRUD convention.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.do_DELETE">
+<code class="descname">do_DELETE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.do_DELETE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete an entity. D for CRUD convention.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.do_OPTIONS">
+<code class="descname">do_OPTIONS</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.do_OPTIONS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handling unsupported HTTP verbs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.do_HEAD">
+<code class="descname">do_HEAD</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.do_HEAD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handling unsupported HTTP verbs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.do_TRACE">
+<code class="descname">do_TRACE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.do_TRACE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handling unsupported HTTP verbs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.do_CONNECT">
+<code class="descname">do_CONNECT</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.do_CONNECT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handling unsupported HTTP verbs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler._process_url">
+<code class="descname">_process_url</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler._process_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split HTTP path and call the carved function if it is defined in this class
+and in request_perm</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler._parse_json_body">
+<code class="descname">_parse_json_body</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler._parse_json_body" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse HTTP request body in JSON format</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Call only once by HTTP request</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Parsed JSON object is Unicode</p>
+</div>
+<p>GET, DELETE messages don&#8217;t have body - return empty dict by default</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">request body in JSON format</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)">dict</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.send_REST_headers">
+<code class="descname">send_REST_headers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.send_REST_headers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the allowed REST verbs as an HTTP header (Allow)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.send_acknowledge">
+<code class="descname">send_acknowledge</code><span class="sig-paren">(</span><em>msg='{&quot;result&quot;: &quot;Accepted&quot;}'</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.send_acknowledge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send back acknowlede message</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>msg</strong> &#8211; response body</li>
+<li><strong>msg</strong> &#8211; dict</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler._send_json_response">
+<code class="descname">_send_json_response</code><span class="sig-paren">(</span><em>data</em>, <em>encoding='utf-8'</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler._send_json_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send requested data in JSON format</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; data in JSON format</li>
+<li><strong>encoding</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Set data encoding (optional)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="escape.util.api.AbstractRequestHandler.error_content_type">
+<code class="descname">error_content_type</code><em class="property"> = 'text/json'</em><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.error_content_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.send_error">
+<code class="descname">send_error</code><span class="sig-paren">(</span><em>code</em>, <em>message=None</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.send_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override original function to send back allowed HTTP verbs and set format
+to JSON</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.log_error">
+<code class="descname">log_error</code><span class="sig-paren">(</span><em>mformat</em>, <em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.log_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overwritten to use POX logging mechanism</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.log_message">
+<code class="descname">log_message</code><span class="sig-paren">(</span><em>mformat</em>, <em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.log_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Disable logging of incoming messages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler.log_full_message">
+<code class="descname">log_full_message</code><span class="sig-paren">(</span><em>mformat</em>, <em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler.log_full_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overwritten to use POX logging mechanism</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="escape.util.api.AbstractRequestHandler._proceed_API_call">
+<code class="descname">_proceed_API_call</code><span class="sig-paren">(</span><em>function</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#escape.util.api.AbstractRequestHandler._proceed_API_call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fail-safe method to call API function</p>
+<p>The cooperative micro-task context is handled by actual APIs</p>
+<p>Should call this with params, not directly the function of actual API</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>function</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; function name</li>
+<li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; Optional params</li>
+<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; Optional named params</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><em>api.py</em> module</a><ul>
+<li><a class="reference internal" href="#module-escape.util.api">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="adapter.html"
+                        title="previous chapter"><em>adapter.py</em> module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mapping.html"
+                        title="next chapter"><em>mapping.py</em> module</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mapping.html" title="mapping.py module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="adapter.html" title="adapter.py module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ESCAPEv2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../top.html" >The <em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../escape.html" ><em>escape</em> package</a> &raquo;</li>
+          <li class="nav-item nav-item-3"><a href="util.html" ><em>escape.util</em> package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright Copyright 2015, under Apache License Version 2.0.
+      Last updated on Jun 29, 2015.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>
