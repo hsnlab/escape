@@ -96,7 +96,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   def initialize (self):
     """
     .. seealso::
-      :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
+      :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Controller Adaptation Sublayer...")
     self.controller_adapter = ControllerAdapter(self, with_infr=self._with_infr)
@@ -168,7 +168,7 @@ class ControllerAdaptationAPI(AbstractAPI):
 
   def _handle_DeploymentFinishedEvent (self, event):
     """
-    Receive successfull NF-FG deployment event and propagate upwards
+    Receive successful NF-FG deployment event and propagate upwards
 
     :param event: event object
     :type event: :any:`DeploymentFinishedEvent`

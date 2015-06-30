@@ -34,7 +34,7 @@ class AbstractAPI(EventMixin):
 
   Contain common functions
 
-  Follows Facade design pattern -> simplified enty/exit point ot the layers
+  Follows Facade design pattern -> simplified entry/exit point ot the layers
   """
   # Default value for logger. Should be overwritten by child classes
   _core_name = "AbstractAPI"
@@ -450,7 +450,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def send_acknowledge (self, msg='{"result": "Accepted"}'):
     """
-    Send back acknowlede message
+    Send back acknowledge message
 
     :param msg: response body
     :param msg: dict

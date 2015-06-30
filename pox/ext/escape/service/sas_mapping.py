@@ -123,7 +123,7 @@ class ServiceGraphMapper(AbstractMapper):
     """
     Called from a separate thread when the mapping process is finished
 
-    :param nffg: geenrated NF-FG
+    :param nffg: generated NF-FG
     :type nffg: NFFG
     :return: None
     """

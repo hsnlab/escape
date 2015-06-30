@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Implement the supporting classes for doamin adapters
+Implement the supporting classes for domain adapters
 """
 import json
 
@@ -137,7 +137,7 @@ class AbstractDomainAdapter(EventMixin):
 
   Follows the Adapter design pattern (Adaptor base class).
 
-  Follows the MixIn design patteran approach to support general adapter
+  Follows the MixIn design pattern approach to support general adapter
   functionality for manager classes mostly.
   """
   # Events raised by this class
@@ -173,7 +173,7 @@ class AbstractDomainAdapter(EventMixin):
 
   def poll (self):
     """
-    Template fuction to poll domain state. Called by a Timer co-op multitask.
+    Template function to poll domain state. Called by a Timer co-op multitask.
     If the function return with False the timer will be cancelled.
     """
     pass
@@ -273,7 +273,7 @@ class AbstractRESTAdapter(Session):
 
   Contains basic functions for managing connections.
 
-  Inhereted from :any:`requests.Session`. Provided features: coockie
+  Inherited from :any:`requests.Session`. Provided features: cookie
   persistence, connection-pooling and configuration.
 
   Implements Context Manager Python protocol::
@@ -303,16 +303,16 @@ class AbstractRESTAdapter(Session):
 
     :param method: HTTP method
     :type method: str
-    :param url: valid URL or relevent part follows ``self.base_url``
+    :param url: valid URL or relevant part follows ``self.base_url``
     :type url: str
     :param body: request body
     :type body: :any:`NFFG` or dict or bytes or str
     :param kwargs: additional params. See :any:`requests.Session.request`
     :return: response text as JSON
     :rtype: str
-    :raise HTTPError: if responde code is between 400 and 600
+    :raise HTTPError: if response code is between 400 and 600
     :raise ConnectionError: connection error
-    :raise Timeout: many error occured when request timed out
+    :raise Timeout: many error occurred when request timed out
     """
     # Setup parameters
     if body:

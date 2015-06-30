@@ -168,7 +168,7 @@ class AbstractNFFG(object):
     copy.copy() function of Python standard library. This means that,
     while the instance itself is a new instance, all of its data is referenced.
 
-    :return: shallow copy of this instace
+    :return: shallow copy of this instance
     :rtype: :class:`NFFG`
     """
     pass
@@ -181,7 +181,7 @@ class AbstractNFFG(object):
 
     :param memo: is a cache of previously copied objects
     :type memo: dict
-    :return: shallow copy of this instace
+    :return: shallow copy of this instance
     :rtype: :class:`NFFG`
     """
     pass

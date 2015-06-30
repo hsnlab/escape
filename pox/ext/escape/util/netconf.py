@@ -132,7 +132,7 @@ class AbstractNETCONFAdapter(object):
     Other configurations are netconf specific (:rfc:`6241`) - running,
     candidate, startup
 
-    :param source: NETCONF specific configuration source (defalut: running)
+    :param source: NETCONF specific configuration source (default: running)
     :type source: str
     :param to_file: save config to file
     :type to_file: bool
@@ -197,7 +197,7 @@ class AbstractNETCONFAdapter(object):
   def _parse_rpc_response (self, data=None):
     """
     Parse raw XML response and return params in dictionary. If data is given
-    it is parsed instead of the lasr response and the result will not be saved.
+    it is parsed instead of the last response and the result will not be saved.
 
     :param data: raw data (uses last reply by default)
     :type data: :class:`lxml.etree.ElementTree`
@@ -257,7 +257,7 @@ class AbstractNETCONFAdapter(object):
     :type xml_element: :class:`lxml.etree.ElementTree`
     :param namespace: namespace
     :type namespace: :class:`lxml.etree.ElementTree`
-    :return: cleaned XML elemenet
+    :return: cleaned XML element
     :rtype: :class:`lxml.etree.ElementTree`
     """
     if namespace is not None:
@@ -272,7 +272,7 @@ class AbstractNETCONFAdapter(object):
     Parse given keyword arguments and generate RPC body in proper XML format.
     The key value is used as the XML tag name. If the value is another
     dictionary the XML structure follows the hierarchy. The param values can
-    be only simple types and dictionary for simplicity. Convertation example::
+    be only simple types and dictionary for simplicity. Conversation example::
 
       {
         'vnf_type': 'headerDecompressor',

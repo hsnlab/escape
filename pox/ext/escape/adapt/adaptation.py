@@ -31,10 +31,10 @@ class DomainConfigurator(object):
 
   Use global config to create managers and adapters
 
-  Follows Componenet Configurator design pattern
+  Follows Component Configurator design pattern
   """
 
-  def __init__ (self, ca, lazy_load=True, remote=True):
+  def __init__ (self, ca, lazy_load=True):
     """
     For domain adapters the configurator checks the CONFIG first.
 
@@ -49,8 +49,6 @@ class DomainConfigurator(object):
     :type ca: :any:`ControllerAdapter`
     :param lazy_load: load adapters only at first reference (default: True)
     :type lazy_load: bool
-    :param remote: use NETCONF RPCs or direct access (default: True)
-    :type remote: bool
     """
     log.debug("Init Domain configurator")
     super(DomainConfigurator, self).__init__()
@@ -63,7 +61,7 @@ class DomainConfigurator(object):
 
   def get (self, domain_name):
     """
-    Get Domain maganger with given name.
+    Get Domain manager with given name.
 
     :param domain_name: name of domain manager
     :type domain_name: str
@@ -123,7 +121,7 @@ class DomainConfigurator(object):
     """
     return iter(self.__repository)
 
-  def __load_component (self, component_name, from_config=True, **kwargs):
+  def __load_component (self, component_name, **kwargs):
     """
     Load given component from config.
 
@@ -145,7 +143,8 @@ class DomainConfigurator(object):
         return component
       else:
         log.error(
-          "Configuration of '%s' is missing. Skip initialization!" % component_name)
+          "Configuration of '%s' is missing. Skip initialization!" %
+          component_name)
         return None
     except AttributeError:
       log.error(

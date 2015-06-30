@@ -97,7 +97,7 @@ class InfrastructureLayerAPI(AbstractAPI):
         log.debug(
           "Internal domain controller is up! Initiate network emulation...")
         self.topology.start_network()
-      except SystemExit as e:
+      except SystemExit:
         quit_with_error(msg="Mininet emulation requires root privileges!",
                         logger=self._core_name)
 

@@ -205,7 +205,7 @@ class ESCAPENetworkBuilder(object):
                   'build': False,  # Not build during init
                   'inNamespace': False,  # Not start element in namespace
                   'autoSetMacs': True,  # Set simple MACs
-                  'autoStaticArp': True,  # Set static ARP enties
+                  'autoStaticArp': True,  # Set static ARP entries
                   'listenPort': None}
   # Name of the fallback topology class in CONFIG
   topology_config_name = "FALLBACK-TOPO"
@@ -268,8 +268,8 @@ class ESCAPENetworkBuilder(object):
     """
     Build topology from pre-defined Topology class.
 
-    :param topo: topology
-    :type topo: :any:`AbstractTopology`
+    :param topo_class: topology
+    :type topo_class: :any:`AbstractTopology`
     :return: None
     """
     self.mn.topo = topo_class()

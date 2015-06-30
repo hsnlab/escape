@@ -175,8 +175,8 @@ class Singleton(type):
 
 class ESCAPEConfig(object):
   """
-  Wrapper class for configuration to hide specialies with respect to storing,
-  loading, parging and getting special data.
+  Wrapper class for configuration to hide specialties with respect to storing,
+  loading, parsing and getting special data.
 
   Contains functions for config handling and manipulation.
 
@@ -216,7 +216,7 @@ class ESCAPEConfig(object):
       The CONFIG is updated per data under the Layer entries. This means that
       the
       minimal amount of data have to given is the hole sequence or collection
-      unter the appropriate key. E.g. the hole data under the 'STRATEGY' key in
+      under the appropriate key. E.g. the hole data under the 'STRATEGY' key in
       'orchestration' layer.
 
     :param config: config file name relative to pox.py (optional)

@@ -104,12 +104,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def initialize (self):
     """
     .. seealso::
-      :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
+      :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Resource Orchestration Sublayer...")
     self.resource_orchestrator = ResourceOrchestrator(self)
     if self._nffg_file:
-      self._read_json_from_file(self.nffg_file)
+      self._read_json_from_file(self._nffg_file)
     log.info("Resource Orchestration Sublayer has been initialized!")
 
   def shutdown (self, event):

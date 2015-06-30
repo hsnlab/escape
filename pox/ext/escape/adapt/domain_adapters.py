@@ -190,7 +190,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
   This class is devoted to start and stop CLICK-based VNFs that will be
   connected to a mininet switch.
 
-  Follows the MixIn design patteran approach to support NETCONF functionality
+  Follows the MixIn design pattern approach to support NETCONF functionality
   """
   # RPC namespace
   RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'

@@ -97,7 +97,7 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
 
   def _generate_resource_info (self):
     """
-    Private method to return with resouce info
+    Private method to return with resource info
     """
     return NFFG()
 

@@ -235,7 +235,7 @@ latex_documents = [(master_doc, 'ESCAPEv2.tex', u'ESCAPEv2 Documentation',
 # the title page.
 # latex_logo = None
 
-# For "manual" documents, if this is true, then toplevel headings are parts,
+# For "manual" documents, if this is true, then top-level headings are parts,
 # not chapters.
 # latex_use_parts = False
 
@@ -256,7 +256,7 @@ latex_documents = [(master_doc, 'ESCAPEv2.tex', u'ESCAPEv2 Documentation',
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, 'escapev2', u'ESCAPEv2 Documentation', [author], 1)]
+man_pages = [(master_doc, 'ESCAPEv2', u'ESCAPEv2 Documentation', [author], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False

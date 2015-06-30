@@ -154,7 +154,7 @@ class ServiceLayerAPI(AbstractAPI):
   def initialize (self):
     """
     .. seealso::
-      :func:`AbstractAPI.initialze() <escape.util.api.AbstractAPI.initialize>`
+      :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Service Layer...")
     self.__sid = hash(self)

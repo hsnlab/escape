@@ -70,7 +70,7 @@ README
 
 ESCAPEv2 example commands
 
-**The simpliest use-case:**
+**The simplest use-case:**
 
 .. code-block:: bash
 
