@@ -1,0 +1,91 @@
+ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet, Click,
+NETCONF and POX
+
+Mininet is a great prototyping tool which takes existing SDN-related software
+components (e.g. Open vSwitch, OpenFlow controllers, network namespaces, cgroups,
+etc.) and combines them into a framework, which can automatically set up and
+configure customized OpenFlow testbeds scaling up to hundreds of nodes. Standing
+on the shoulders of Mininet, we have implemented a similar prototyping system
+called ESCAPE, which can be used to develop and test various components of the
+service chaining architecture. Our framework incorporates Click for implementing
+Virtual Network Functions (VNF), NETCONF for managing Click-based VNFs and POX
+for taking care of traffic steering. We also add our extensible Orchestrator
+module, which can accommodate mapping algorithms from abstract service
+descriptions to deployed and running service chains.
+
+The simplest use-case:
+    $ ./escape.py
+
+Usage:
+    $ ./escape.py -h
+    usage: escape.py [-h] [-v] [-d] [-f] [-i]
+
+    ESCAPE: Extensible Service ChAin Prototyping Environment using Mininet, Click,
+    NETCONF and POX
+
+    optional arguments:
+      -h, --help         show this help message and exit
+      -v, --version      show program's version number and exit
+
+    ESCAPE arguments:
+      -d, --debug        run the ESCAPE in debug mode
+      -f, --full         run the infrastructure layer also
+      -i, --interactive  run an interactive shell for observing internal states
+
+More advanced commands:
+Basic command:
+    $ ./pox.py unify
+
+Basic command for debugging:
+    $ ./pox.py --verbose --no-openflow unify py
+
+Basic command to initiate a built-in emulated network for testing:
+    # Infrastructure layer requires root privileges due to use of Mininet!
+    $ sudo ./pox.py unify --full
+
+Minimal command with explicitly-defined components
+(components' order is irrelevant):
+    $ ./pox.py service orchestration adaptation
+
+Without service layer:
+    $ ./pox.py orchestration adaptation
+
+With infrastructure layer:
+    $ sudo ./pox.py service orchestration adaptation --with_infr infrastructure
+
+Long version with debugging and explicitly-defined components
+(analogous with ./pox.py unify --full):
+    $./pox.py --verbose log.level --DEBUG samples.pretty_log service \
+    orchestration adaptation--with_infr infrastructure
+
+Start layers with graph-represented input contained in a specific file:
+    $ ./pox.py service --sg_file=<path> ...
+    $ ./pox.py unify --sg_file=<path>
+
+    $ ./pox.py orchestration --nffg_file=<path> ...
+    $ ./pox.py adaptation --mapped_nffg_file=<path> ...
+
+Start ESCAPEv2 with built-in GUI:
+    $ ./pox.py service --gui ...
+    $ ./pox.py unify --gui
+
+Start layer in standalone mode (no dependency handling) for test/debug:
+    $ ./pox.py service --standalone
+    $ ./pox.py orchestration --standalone
+    $ ./pox.py adaptation --standalone
+    $ sudo ./pox.py infrastructure --standalone
+
+    $ ./pox.py service orchestration --standalone
+
+REST API
+
+Content Negotiation: The Service layer's RESTful API accepts and returns data
+                     only in JSON format.
+Operations: Every operation need to be called under the **escape/** path.
+            E.g. *http://localhost/escape/version*
+
+Path          Params   HTTP    Description
+/version      None     GET     Returns with the current version of ESCAPEv2
+/echo         ANY      ALL     Returns with the given parameters
+/operations   None     GET     Returns with the implemented operations as a list
+/sg           NFFG     POST    Initiate given NFFG
