@@ -17,5 +17,5 @@ Submodules
 
     adaptation
     cas_API
-    domain_adapters
+    domain_mgrs
 

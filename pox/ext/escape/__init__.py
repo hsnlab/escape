@@ -41,24 +41,28 @@ cfg = {'service': {  # Service Adaptation Sublayer
                                         'class': 'ESCAPEMappingStrategy',
                                         'THREADED': True}},
        'adaptation': {  # Controller Adaptation Sublayer
+                        # Default managers need to start at init
                         'DEFAULTS': ('OPENSTACK',),
-                        'INTERNAL': {'module': 'escape.adapt.domain_adapters',
-                                     'class': "InternalDomainManager",
-                                     'listener-id': "InternalOFController"},
-                        'POX': {'module': 'escape.adapt.domain_adapters',
+                        # Specific Domain Adapters for Domain Managers
+                        'POX': {'module': 'escape.adapt.domain_mgrs',
                                 'class': "POXDomainAdapter"},
-                        'MININET': {'module': 'escape.adapt.domain_adapters',
+                        'MININET': {'module': 'escape.adapt.domain_mgrs',
                                     'class': "MininetDomainAdapter"},
-                        "VNFStarter": {'module': 'escape.adapt.domain_adapters',
+                        "VNFStarter": {'module': 'escape.adapt.domain_mgrs',
                                        "class": "VNFStarterAdapter",
                                        "agent": {"server": "192.168.12.128",
                                                  "port": 830,
                                                  "username": "mininet",
                                                  "password": "mininet"}},
-                        'OPENSTACK': {'module': 'escape.adapt.domain_adapters',
-                                      'class': "OpenStackDomainAdapter"},
-                        'DOCKER': {'module': 'escape.adapt.domain_adapters',
-                                   'class': "DockerDomainAdapter"}},
+                        # Domain Managers
+                        'INTERNAL': {'module': 'escape.adapt.domain_mgrs',
+                                     'class': "InternalDomainManager",
+                                     'listener-id': "InternalOFController"},
+                        'OPENSTACK': {'module': 'escape.adapt.domain_mgrs',
+                                      'class': "OpenStackDomainManager",
+                                      'url': "http://localhost:8080"},
+                        'DOCKER': {'module': 'escape.adapt.domain_mgrs',
+                                   'class': "DockerDomainManager"}},
        'infrastructure': {  # Infrastructure Layer
                             'NETWORK-OPTS': None,  # Additional opts for Mininet
                             'FALLBACK-TOPO': {'module': "escape.infr.topology",

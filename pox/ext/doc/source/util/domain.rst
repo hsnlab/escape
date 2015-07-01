@@ -1,10 +1,10 @@
-*adapter.py* module
-===================
+*domain.py* module
+==================
 
 :any:`DomainChangedEvent` signals changes for :any:`ControllerAdapter` in
 an unified way.
 
-:any:`AbstractDomainManager` contains general logic for top domain managers
+:any:`AbstractDomainManager` contains general logic for top domain managers.
 
 :any:`AbstractDomainAdapter` contains general logic for actual Adapters.
 
@@ -19,12 +19,12 @@ Requirements::
   sudo pip install requests
 
 :any:`AbstractRESTAdapter` contains the general functions for communication
-through an HTTP/RESTful API
+through an HTTP/RESTful API.
 
 Module contents
 ---------------
 
-.. automodule:: escape.util.adapter
+.. automodule:: escape.util.domain
    :members:
    :private-members:
    :special-members:

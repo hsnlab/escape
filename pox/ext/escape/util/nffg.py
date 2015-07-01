@@ -17,8 +17,8 @@ NF-FG, such as building, parsing, processing NF-FG, helper functions,
 etc.
 """
 import getopt
-import os
 import json
+import os
 from abc import ABCMeta, abstractmethod
 from pprint import pprint
 import sys
@@ -59,6 +59,8 @@ class AbstractNFFG(object):
       with open(file, 'r') as f:
         self._init_from_json(json.load(f))
         #####
+
+  # NFFG specific functions
 
   @abstractmethod
   def add_nf (self, node_nf):
@@ -136,6 +138,8 @@ class AbstractNFFG(object):
     """
     return
 
+  # General functions for create/parse/dump/convert NFFG
+
   def _init_from_json (self, json_data):
     """
     Initialize the NFFG object from JSON data
@@ -151,16 +155,47 @@ class AbstractNFFG(object):
   def load_from_file (filename):
     with open(filename) as json_file:
       nffg = json.load(json_file)
+      return nffg
 
-    return nffg
-
-  def to_json (self):
+  def dump_to_json (self):
     """
     Return a JSON string represent this instance
 
     :return: JSON formatted string
     :rtype: str
     """
+    pass
+
+  @staticmethod
+  def parse (data):
+    """
+    General function for parsing data as a new :any::`NFFG` object and return
+    with its reference..
+    """
+    pass
+
+  @staticmethod
+  def dump (nffg):
+    """
+    General function for dumping :any::`NFFG` according to its format to
+    plain text.
+
+    :return: plain text representation
+    :rtype: str
+    """
+    pass
+
+  def get_format (self):
+    """
+    Return with the current format in which the NFFG is stored. It is useful
+    when try to avoid direct format detection. E.g. after a dump() call.
+
+    :return: format e.g. XML, JSON, ...
+    :rtype: str
+    """
+    raise NotImplementedError("Format is not set!")
+
+  # Convenient functions
 
   def __copy__ (self):
     """
@@ -264,7 +299,7 @@ def main (argv=None):
     if o in ('-i', '--input'):
       filename = a
 
-  res = NFFG.load_from_file(filename)
+  res = NFFG.load_from_json(filename)
   pprint(res)
 
 

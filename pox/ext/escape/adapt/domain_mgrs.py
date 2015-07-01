@@ -15,11 +15,11 @@
 Contains Adapter classes which represent the connections between ESCAPEv2 and
 other different domains
 """
+from requests.exceptions import ConnectionError, HTTPError, Timeout
+
 from escape.adapt import log as log
 from escape.infr.il_API import InfrastructureLayerAPI
-from escape.util.adapter import AbstractDomainAdapter, AbstractDomainManager, \
-  DomainChangedEvent, DeployEvent, VNFStarterAPI, OpenStackAPI, \
-  AbstractRESTAdapter
+from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
 from escape.util.pox_extension import ExtendedOFConnectionArbiter, \
   OpenFlowBridge
@@ -27,9 +27,9 @@ from escape.util.pox_extension import ExtendedOFConnectionArbiter, \
 
 class POXDomainAdapter(AbstractDomainAdapter):
   """
-  Adapter class to handle communication with internal POX OpenFlow controller
+  Adapter class to handle communication with internal POX OpenFlow controller.
 
-  Can be used to define a controller (based on POX) for other external domains
+  Can be used to define a controller (based on POX) for other external domains.
   """
   name = "POX"
 
@@ -65,8 +65,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     of.name = self.task_name
     # register OpenFlow event listeners
     self.openflow.addListeners(self)
-    log.debug("Start polling %s domain..." % self.task_name
-              )
+    log.debug("Start polling %s domain..." % self.task_name)
     self.start_polling()
 
   def filter_connections (self, event):
@@ -185,7 +184,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
                         VNFStarterAPI):
   """
   This class is devoted to provide NETCONF specific functions for vnf_starter
-  module. Documentation is transferred from vnf_starter.yang
+  module. Documentation is transferred from `vnf_starter.yang`.
 
   This class is devoted to start and stop CLICK-based VNFs that will be
   connected to a mininet switch.
@@ -326,7 +325,13 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
 
 class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
                            OpenStackAPI):
-  # TODO -implement
+  """
+  This class is devoted to provide REST specific functions for OpenStack domain.
+  """
+  # HTTP methods
+  GET = "GET"
+  POST = "POST"
+
   def __init__ (self, url):
     """
     Init
@@ -339,6 +344,53 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
     # Call base constructors directly to avoid super() and MRO traps
     AbstractRESTAdapter.__init__(self, base_url=url)
     AbstractDomainAdapter.__init__(self)
+
+  @property
+  def URL (self):
+    return self._base_url
+
+  def get_config (self):
+    """
+    .. seealso::
+      :func:`OpenStackAPI.get_config()
+      <escape.util.domain.OpenStackAPI.get_config>`
+    """
+    try:
+      data = self.send_request(self.POST, 'get-config')
+    except ConnectionError:
+      log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
+      return None
+    except Timeout:
+      log.warning("OpenStack agent (%s) not responding!" % self._base_url)
+      return None
+    except HTTPError as e:
+      log.warning(
+        "OpenStack agent responded with an error during 'get-config': %s" %
+        e.message)
+      return None
+    return NFFG.parse(data)
+
+  def edit_config (self, view=None, text=None):
+    """
+    .. seealso::
+      :func:`OpenStackAPI.edit_config()
+      <escape.util.domain.OpenStackAPI.edit_config>`
+    """
+    if view:
+      body = NFFG.dump(view)
+    else:
+      body = text
+    try:
+      self.send_request(self.POST, 'edit-config', body)
+    except ConnectionError:
+      log.warning("OpenStack agent (%s) is not reachable: %s" % self._base_url)
+      return None
+    except HTTPError as e:
+      log.warning(
+        "OpenStack agent responded with an error during 'get-config': %s" %
+        e.message)
+      return None
+    return self._response.status_code
 
 
 class InternalDomainManager(AbstractDomainManager):
@@ -389,14 +441,11 @@ class InternalDomainManager(AbstractDomainManager):
 
 class OpenStackDomainManager(AbstractDomainManager):
   """
-  Adapter class to handle communication with OpenStack domain
-
-  .. warning::
-    Not implemented yet!
+  Adapter class to handle communication with OpenStack domain.
   """
   name = "OPENSTACK"
 
-  def __init__ (self, url):
+  def __init__ (self, url="http://localhost:8080"):
     """
     Init
 
@@ -407,6 +456,72 @@ class OpenStackDomainManager(AbstractDomainManager):
     super(OpenStackDomainManager, self).__init__()
     # TODO
     self._adapter = OpenStackRESTAdapter(url)
+    self.detected = None
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    self.stop_polling()
+    del self._adapter
+
+  def init (self, **kwargs):
+    """
+    Initialize OpenStack domain manager with URL.
+
+    :return: None
+    """
+    if 'url' not in kwargs:
+      raise RuntimeError(
+        "URL parameter is missing from configuration of OpenStack Domain "
+        "Manager!")
+    else:
+      self._adapter._base_url = kwargs['url']
+      log.debug("OpenStack base URL is set to %s" % kwargs['url'])
+    log.debug("Start polling %s domain..." % self.name)
+    self.start_polling()
+
+  def poll (self):
+    """
+    """
+    # print "OpenStack ping"
+    try:
+      if not self.detected:
+        # Trying to request config
+        resource_nffg = self._adapter.send_request("POST", 'get-config')
+        # If no exception -> success
+        log.info("%s agent detected!" % self.name)
+        self.detected = True
+        log.info("Updating resource information from %s domain..." % self.name)
+        # TODO - implement actual updating
+        self.restart_polling()
+      else:
+        # Just ping the agent if it's alive. If exception is raised -> problem
+        self._adapter.send_request(method="GET", url="get-config",
+                                   timeout=self.CON_TIMEOUT)
+    except ConnectionError:
+      if self.detected is None:
+        # detected = None -> First try
+        log.warning("%s agent is not detected! Keep trying..." % self.name)
+        self.detected = False
+      else:
+        # No success but not for the first try -> keep trying silently
+        pass
+    except Timeout:
+      if self.detected is None:
+        # detected = None -> First try
+        log.warning("%s agent not responding!" % self.name)
+        self.detected = False
+      else:
+        # No success but not for the first try -> keep trying silently
+        pass
+    except HTTPError:
+      if self._adapter._response.status_code == 404:
+        return
+      else:
+        raise
 
   def install_nffg (self, nffg_part):
     log.info("Install OpenStack domain part...")

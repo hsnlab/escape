@@ -286,6 +286,7 @@ class ESCAPENetworkBuilder(object):
       log.warning("Fallback topology is missing from CONFIG!")
       raise TopologyBuilderException("Missing fallback topo!")
     elif issubclass(topo_class, AbstractTopology):
+      log.debug("Fallback topology is parsed from CONFIG!")
       self.__init_from_AbstractTopology(topo_class)
     else:
       raise TopologyBuilderException("Unsupported topology class!")

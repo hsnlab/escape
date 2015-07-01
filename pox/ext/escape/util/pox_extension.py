@@ -14,6 +14,7 @@
 """
 Override and extend internal POX components to achieve ESCAPE-desired behaviour
 """
+import nffglib
 from pox.core import core
 from pox.openflow import OpenFlowConnectionArbiter, OpenFlowNexus, ConnectionIn
 
@@ -21,9 +22,9 @@ from pox.openflow import OpenFlowConnectionArbiter, OpenFlowNexus, ConnectionIn
 class OpenFlowBridge(OpenFlowNexus):
   """
   Own class for listening OpenFlow event originated by one of the contained
-  :class:`Connection` and sending OpenFlow messages according to DPID
+  :class:`Connection` and sending OpenFlow messages according to DPID.
 
-  Purpose of the class mostly fits the Bride design pattern
+  Purpose of the class mostly fits the Bride design pattern.
   """
   pass
 
@@ -32,7 +33,7 @@ class ExtendedOFConnectionArbiter(OpenFlowConnectionArbiter):
   """
   Extended connection arbiter class for dispatching incoming OpenFlow
   :class:`Connection` between registered OF event originators (
-  :class:`OpenFlowNexus`) according to the connection's listening address
+  :class:`OpenFlowNexus`) according to the connection's listening address.
   """
   # core name to register the class as a OpenFlowConnectionArbiter
   _core_name = "OpenFlowConnectionArbiter"
@@ -60,7 +61,7 @@ class ExtendedOFConnectionArbiter(OpenFlowConnectionArbiter):
   def add_connection_listener (self, address, nexus):
     """
     Helper function to register connection listeners a.k.a.
-    :class:`OpenFlowNexus`
+    :class:`OpenFlowNexus`.
 
     :param address: listened socket name in form of (address, port)
     :type address: tuple
@@ -113,3 +114,96 @@ class ExtendedOFConnectionArbiter(OpenFlowConnectionArbiter):
         event.nexus = self._fallback
     self.raiseEventNoErrors(event)
     return event.nexus
+
+
+class ESCAPEInteractiveHelper(object):
+  """
+  Extended Interactive class which add ESCAPE specific debug functions to
+  POX's py module.
+  """
+
+  def __repr__ (self):
+    """
+    return with defined helper functions.
+    """
+    return "\n".join([f for f in dir(self) if not f.startswith('_')])
+
+  @staticmethod
+  def init ():
+    """
+    Register an ESCPAEInteractiveHelper into POX's core.
+    """
+    core.components['helper'] = ESCAPEInteractiveHelper()
+
+  def get_config (self):
+    ret = core.adaptation.controller_adapter.domains.components[
+      'OPENSTACK']._adapter.get_config()
+    print "Return: ", ret
+    print core.adaptation.controller_adapter.domains.components[
+      'OPENSTACK']._adapter._response.text
+
+  def edit_config (self):
+    config = """<?xml version="1.0" ?>
+    <virtualizer>
+      <id>UUID-ETH-001</id>
+      <name>ETH OpenStack-OpenDaylight domain</name>
+      <nodes>
+        <node>
+          <id>UUID-01</id>
+          <name>single Bis-Bis node representing the whole domain</name>
+          <type>BisBis</type>
+          <ports>
+            <port>
+              <id>0</id>
+              <name>OVS-north external port</name>
+              <port_type>port-abstract</port_type>
+              <capability/>
+            </port>
+            <port>
+              <id>1</id>
+              <name>OVS-south external port</name>
+              <port_type>port-abstract</port_type>
+              <capability/>
+            </port>
+          </ports>
+          <resources>
+            <cpu>10 VCPU</cpu>
+            <mem>32 GB</mem>
+            <storage>5 TB</storage>
+          </resources>
+          <capabilities>
+            <supported_NFs>
+              <node>
+                <id>nf_a</id>
+                <name>tcp header compressor</name>
+                <type>0</type>
+                <ports>
+                  <port>
+                    <id>0</id>
+                    <name>in</name>
+                    <port_type>port-abstract</port_type>
+                    <capability>...</capability>
+                  </port>
+                  <port>
+                    <id>1</id>
+                    <name>out</name>
+                    <port_type>port-abstract</port_type>
+                    <capability>...</capability>
+                  </port>
+                </ports>
+              </node>
+            </supported_NFs>
+          </capabilities>
+        </node>
+      </nodes>
+    </virtualizer>"""
+    virtualizer = nffglib.Virtualizer.parse(text=config)
+    ret = core.adaptation.controller_adapter.domains.components[
+      'OPENSTACK']._adapter.edit_config(text=virtualizer.xml())
+    print "Return: ", ret
+    print core.adaptation.controller_adapter.domains.components[
+      'OPENSTACK']._adapter._response.text
+
+
+# Pre-register our helper class
+ESCAPEInteractiveHelper.init()

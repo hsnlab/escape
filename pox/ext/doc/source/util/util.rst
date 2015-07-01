@@ -15,7 +15,7 @@ Submodules
 .. toctree::
     :titlesonly:
 
-    adapter
+    domain
     api
     mapping
     misc

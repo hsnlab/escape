@@ -14,6 +14,7 @@
 """
 Contains miscellaneous helper functions
 """
+import copy
 from functools import wraps
 import importlib
 import weakref
@@ -354,6 +355,22 @@ class ESCAPEConfig(object):
         self.__configuration[ADAPT][component]['class'], None)
     except KeyError:
       return None
+
+  def get_mgr_initial_params (self, component):
+    """
+    Return with the initial parameters of the given component defined in CONFIG.
+    The param's name must be identical with the attribute name of the
+    component constructor.
+
+    :param component: component name
+    :type component: str
+    :return: initial params
+    :rtype: dict
+    """
+    params = copy.deepcopy(self.__configuration[ADAPT][component])
+    del params['module']
+    del params['class']
+    return params
 
   def get_default_mgrs (self):
     """

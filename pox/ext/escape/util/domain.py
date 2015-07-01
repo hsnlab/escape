@@ -13,7 +13,7 @@
 """
 Implement the supporting classes for domain adapters
 """
-import json
+import urlparse
 
 from requests import Session
 
@@ -67,58 +67,122 @@ class DeployEvent(Event):
 
 class AbstractDomainManager(EventMixin):
   """
-  Abstract class for different domain managers
-
-  Domain managers is top level classes to handle and manage domains
-  transparently
+  Abstract class for different domain managers.
+  DomainManagers is top level classes to handle and manage domains
+  transparently.
 
   Follows the MixIn design pattern approach to support general manager
-  functionality for topmost ControllerAdapter class
+  functionality for topmost ControllerAdapter class.
 
-  Follows the Component Configurator design pattern as base component class
+  Follows the Component Configurator design pattern as base component class.
   """
 
   # Abstract functions for component control
-  def init (self):
+  def __init__ (self):
     """
-    Abstract function for component initialization
+    Init
     """
-    pass
+    super(AbstractDomainManager, self).__init__()
+    # Timer for polling function
+    self._timer = None
+    # Connection timeout (sec)
+    self.CON_TIMEOUT = 3
+    # Polling interval
+    self.POLL_INTERVAL = 1
+
+  def init (self, **kwargs):
+    """
+    Abstract function for component initialization.
+    """
+    super(AbstractDomainManager, self).__init__()
 
   def run (self):
     """
-    Abstract function for starting component
+    Abstract function for starting component.
     """
     pass
 
   def finit (self):
     """
-    Abstract function for starting component
+    Abstract function for starting component.
     """
     pass
 
   def suspend (self):
     """
-    Abstract class for suspending a running component
+    Abstract class for suspending a running component.
+
+    .. note::
+      Not used currently!
     """
     pass
 
   def resume (self):
     """
-    Abstract function for resuming a suspended component
+    Abstract function for resuming a suspended component.
+
+    .. note::
+      Not used currently!
     """
     pass
 
   def info (self):
     """
-    Abstract function for requesting information about the component
+    Abstract function for requesting information about the component.
+
+    .. note::
+      Not used currently!
     """
     return self.__class__.__name__
 
+  # Common functions for polling
+
+  def start_polling (self, wait=1):
+    """
+    Initialize and start a Timer co-op task for polling.
+
+    :param wait: polling period (default: 1)
+    :type wait: int
+    """
+    if self._timer:
+      # Already timing
+      return
+    self.POLL_INTERVAL = wait
+    self._timer = Timer(self.POLL_INTERVAL, self.poll, recurring=True,
+                        started=True, selfStoppable=True)
+
+  def restart_polling (self, wait=3):
+    """
+    ReInitialize and start a Timer co-op task for polling.
+
+    :param wait: polling period (default: 3)
+    :type wait: int
+    """
+    self._timer.cancel()
+    self.POLL_INTERVAL = wait
+    self._timer = Timer(self.POLL_INTERVAL, self.poll, recurring=True,
+                        started=True, selfStoppable=True)
+
+  def stop_polling (self):
+    """
+    Stop timer.
+    """
+    if self._timer:
+      self._timer.cancel()
+    self._timer = None
+
+  def poll (self):
+    """
+    Template function to poll domain state. Called by a Timer co-op multitask.
+    If the function return with False the timer will be cancelled.
+    """
+    pass
+
   # ESCAPE specific functions
+
   def install_nffg (self, nffg_part):
     """
-    Install an :any:`NFFG` related to the specific domain
+    Install an :any:`NFFG` related to the specific domain.
 
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
@@ -260,42 +324,64 @@ class OpenStackAPI(object):
   Define interface for managing OpenStack domain.
 
   .. note::
-    Based on separated REST API which need to be discussed!
+    Fitted to the API of ETH REST-like server which rely on virtualizer.yang!
 
   Follows the MixIn design pattern approach to support OpenStack functionality.
   """
-  pass
+
+  def get_config (self):
+    """
+    Queries the infrastructure view with a netconf-like "get-config" command.
+
+    :return: infrastructure view
+    :rtype: :any::`NFFG`
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def edit_config (self, view):
+    """
+    Send the requested configuration with a netconf-like "edit-config" command.
+
+    :param view: whole domain view
+    :type view: :any::`NFFG`
+    :return: status code
+    :rtype: str
+    """
+    raise NotImplementedError("Not implemented yet!")
 
 
 class AbstractRESTAdapter(Session):
   """
   Abstract class for various adapters rely on a RESTful API.
+  Contains basic functions for managing HTTP connections.
 
-  Contains basic functions for managing connections.
-
-  Inherited from :any:`requests.Session`. Provided features: cookie
-  persistence, connection-pooling and configuration.
-
-  Implements Context Manager Python protocol::
-    >>> with AbstractRESTAdapter as a:
-    >>>   a.<method>()
-
-  .. seealso::
-    http://docs.python-requests.org/en/latest/api/#requests.Session
+  Based on :any::`Session` class.
 
   Follows Adapter design pattern.
   """
   # Set custom header
-  custom_headers = {'user-agent': "ESCAPE/" + __version__}
+  custom_headers = {'User-Agent': "ESCAPE/" + __version__}
 
   def __init__ (self, base_url, auth=None):
     super(AbstractRESTAdapter, self).__init__()
-    self.headers.update(self.custom_headers)
-    self.base_url = base_url
+    # self.headers.update(self.custom_headers)
+    self._base_url = base_url
     self.auth = auth
-    self._raw_response = None
+    # Store the last request
+    self._response = None
+    self.__disable_requests_logging()
 
-  def _send_request (self, method, url=None, body=None, **kwargs):
+  def __disable_requests_logging (self):
+    """
+    Disable annoying and detailed logging of `requests` package.
+
+    :return: None
+    """
+    import logging
+
+    logging.getLogger("requests").setLevel(logging.ERROR)
+
+  def send_request (self, method, url=None, body=None, **kwargs):
     """
     Prepare the request and send it. If valid URL is given that value will be
     used else it will be append to the end of the ``base_url``. If ``url`` is
@@ -307,30 +393,29 @@ class AbstractRESTAdapter(Session):
     :type url: str
     :param body: request body
     :type body: :any:`NFFG` or dict or bytes or str
-    :param kwargs: additional params. See :any:`requests.Session.request`
-    :return: response text as JSON
+    :return: raw response data
     :rtype: str
-    :raise HTTPError: if response code is between 400 and 600
-    :raise ConnectionError: connection error
-    :raise Timeout: many error occurred when request timed out
     """
-    # Setup parameters
-    if body:
-      # if given body is an NFFG
+    # Setup parameters - headers
+    if 'headers' not in kwargs:
+      kwargs['headers'] = dict()
+    kwargs['headers'].update(self.custom_headers)
+    # Setup parameters - body
+    if body is not None:
       if isinstance(body, NFFG):
-        kwargs['json'] = body.to_json()
-      elif isinstance(body, (dict, bytes)):
-        kwargs['data'] = body
-      else:
-        # try to convert to JSON as a last resort
-        kwargs['json'] = json.dumps(body)
-    if url:
+        # if given body is an NFFG
+        format = body.get_format()
+        body = NFFG.dump(body)
+        kwargs['headers']['Content-Type'] = "application/" + format.lower()
+    # Setup parameters - URL
+    if url is not None:
       if not url.startswith('http'):
-        kwargs['url'] = self.base_url + url
-      else:
-        kwargs['url'] = url
+        url = urlparse.urljoin(self._base_url, url)
     else:
-      kwargs['url'] = self.base_url
-    self._raw_response = self.request(method=method, **kwargs)
-    self._raw_response.raise_for_status()
-    return self._raw_response.json()
+      url = self._base_url
+    # Make request
+    self._response = self.request(method=method, url=url, data=body, **kwargs)
+    # Raise an exception in case of bad request (4xx <= status code <= 5xx)
+    self._response.raise_for_status()
+    # Return with body content
+    return self._response.text

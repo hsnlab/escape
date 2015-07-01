@@ -1,5 +1,5 @@
-*domain_adapters.py* module
-===========================
+*domain_mgrs.py* module
+=======================
 
 :any:`POXDomainAdapter` implements POX related functionality.
 
@@ -20,7 +20,7 @@ emulated infrastructure.
 Module contents
 ---------------
 
-.. automodule:: escape.adapt.domain_adapters
+.. automodule:: escape.adapt.domain_mgrs
    :members:
    :private-members:
    :special-members:
