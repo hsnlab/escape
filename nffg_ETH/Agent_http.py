@@ -28,24 +28,29 @@ CONFIG_FILE = 'infra_domain.xml'
 class VirtualizationService(RequestHandler):
     # HTTP GET method on http://hostip:8080/rpc_name will trigger this function with rpc=rpc_name
     def get(self, rpc=None):
-        if rpc is None or rpc == '':
-            self.set_header('Content-Type', 'text/plain')
-            self.write('usage:\n')
-            self.write('get http://hostip:8080 - this help message\n')
-            self.write('post http://hostip:8080/get-config - query infrastructure nf-fg\n')
-            self.write('post http://hostip:8080/edit-config - send nf-fg request in the post body')
+
+        if rpc == 'ping':
+            self.write('OK')
         else:
-            self.send_error(404)
+            self.write('usage:\n')
+            self.write('get http://hostip:8888/virtualizer - this help message\n')
+            self.write('get http://hostip:8888/virtualizer/ping - test webserver aliveness\n')
+            self.write('post http://hostip:8888/virtualizer/ping - test webserver aliveness\n')
+            self.write('post http://hostip:8888/virtualizer/get-config - query nf-fg\n')
+            self.write('post http://hostip:8888/virtualizer/edit-config - send nf-fg request in the post body')
 
     # HTTP POST method on http://hostip:8080/rpc_name will trigger this function with rpc=rpc_name
     def post(self, rpc=None):
 
-        if rpc == 'get-config':
+        if rpc == 'ping':
+            self.write('OK')
+
+        elif rpc == 'get-config':
             xml_config = get_config()
             self.write(xml_config)
             return
 
-        if rpc == 'edit-config':
+        elif rpc == 'edit-config':
 
             # parse body if it contains a Nf-fg:
             nffg = None
@@ -62,10 +67,12 @@ class VirtualizationService(RequestHandler):
                 return
             LOG.debug('Edit-config received: %s', nffg.xml())
             edit_config(nffg)
-            self.set_status(202)
+            self.write('config updated')
             return
 
-        self.send_error(404)
+        else:
+            self.set_status(404)
+            self.write_error(404)
 
 
 def get_config():
