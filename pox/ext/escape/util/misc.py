@@ -15,6 +15,7 @@
 Contains miscellaneous helper functions
 """
 import copy
+from distutils.util import strtobool
 from functools import wraps
 import importlib
 import weakref
@@ -341,7 +342,7 @@ class ESCAPEConfig(object):
     except KeyError:
       return False
 
-  def get_domain_component (self, component):
+  def get_component (self, component):
     """
     Return with the class of the adaptation component.
 
@@ -356,7 +357,7 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
-  def get_mgr_initial_params (self, component):
+  def get_component_params (self, component):
     """
     Return with the initial parameters of the given component defined in CONFIG.
     The param's name must be identical with the attribute name of the
@@ -408,6 +409,6 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[INFR]['SHUTDOWN-CLEAN']
+      return strtobool(str(self.__configuration[INFR]['SHUTDOWN-CLEAN']))
     except KeyError:
       return False

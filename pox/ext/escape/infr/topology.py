@@ -139,6 +139,14 @@ class ESCAPENetworkBridge(object):
     """
     return self.__mininet
 
+  def get_topology(self):
+    """
+    Return with the topology.
+
+    :return:
+    """
+    return True
+
   def start_network (self):
     """
     Start network

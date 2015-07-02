@@ -18,16 +18,14 @@ Adaptation Sublayer
 import weakref
 
 from escape import CONFIG
-from escape.adapt import LAYER_NAME
-from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
 from escape.util.nffg import NFFG
 
 
-class DomainConfigurator(object):
+class ComponentConfigurator(object):
   """
-  Initialize, configure and store Domain Manager objects.
+  Initialize, configure and store DomainManager objects.
   Use global config to create managers and adapters.
 
   Follows Component Configurator design pattern.
@@ -50,7 +48,7 @@ class DomainConfigurator(object):
     :type lazy_load: bool
     """
     log.debug("Init Domain configurator")
-    super(DomainConfigurator, self).__init__()
+    super(ComponentConfigurator, self).__init__()
     self.__repository = dict()
     self._lazy_load = lazy_load
     self._ca = ca
@@ -92,10 +90,11 @@ class DomainConfigurator(object):
     # If not started
     if not self.is_started(domain_name):
       # Load from CONFIG
-      mgr = self.__load_component(domain_name)
+      mgr = self.load_component(domain_name)
       if mgr is not None:
-        # Call init
-        mgr.init(**CONFIG.get_mgr_initial_params(domain_name))
+        # Call init - give self for the DomainManager to initiate the
+        # necessary DomainAdapters itself
+        mgr.init(self)
         # Autostart if needed
         if autostart:
           mgr.run()
@@ -155,7 +154,7 @@ class DomainConfigurator(object):
 
   # Configuration related functions
 
-  def __load_component (self, component_name, **kwargs):
+  def load_component (self, component_name):
     """
     Load given component (DomainAdapter/DomainManager) from config.
     Initiate the given component class, pass the additional attributes,
@@ -163,19 +162,23 @@ class DomainConfigurator(object):
 
     :param component_name: component's name
     :type component_name: str
-    :param kwargs: component's initial parameters
-    :type kwargs: dict
     :return: initiated component
     :rtype: :any:`AbstractDomainAdapter` or :any:`AbstractDomainManager`
     """
     try:
-      component_class = CONFIG.get_domain_component(component_name)
+      # Get component class
+      component_class = CONFIG.get_component(component_name)
+      # If it's found
       if component_class is not None:
-        component = component_class(**kwargs)
+        # Get optional parameters of this component
+        params = CONFIG.get_component_params(component_name)
+        # Initialize component
+        component = component_class(**params)
         # Set up listeners for e.g. DomainChangedEvents
         component.addListeners(self._ca)
         # Set up listeners for DeployNFFGEvent
         component.addListeners(self._ca._layer_API)
+        # Return the newly created object
         return component
       else:
         log.error(
@@ -184,7 +187,7 @@ class DomainConfigurator(object):
         raise RuntimeError("Missing component configuration!")
     except AttributeError:
       log.error(
-        "%s is not found. Skip adapter initialization!" % component_name)
+        "%s is not found. Skip component initialization!" % component_name)
       raise
 
   def load_default_mgrs (self):
@@ -193,43 +196,17 @@ class DomainConfigurator(object):
 
     :return: None
     """
-    # very dummy initialization TODO - improve
+    # very dummy initialization
     for mgr in CONFIG.get_default_mgrs():
       self.start_mgr(mgr)
 
-  def load_internal_mgr (self, remote=True):
+  def load_internal_mgr (self):
     """
     Initiate the DomainManager for the internal domain.
 
-    :param remote: use NETCONF RPCs or direct access (default: True)
-    :type remote: bool
     :return: None
     """
-    # FIXME - rearrange responsibility of adapter <--> manager polling, etc.
-    try:
-      if CONFIG.is_loaded(INFR_LAYER_NAME):
-        # Set adapters for InternalDomainManager
-        # Set OpenFlow route handler
-        controller = self.__load_component("POX",
-                                           name=CONFIG[LAYER_NAME]['INTERNAL'][
-                                             'listener-id'])
-        # Set emulated network initiator/handler/manager
-        network = self.__load_component("MININET")
-        # Set NETCONF handling capability if needed
-        remote = self.__load_component('VNFStarter',
-                                       **CONFIG[LAYER_NAME]['VNFStarter'][
-                                         'agent']) if remote else None
-        # Set internal domain manager
-        self.__repository['INTERNAL'] = self.__load_component("INTERNAL",
-                                                              controller=controller,
-                                                              network=network,
-                                                              remote=remote)
-      else:
-        log.error("%s layer is not loaded! Abort InternalDomainManager "
-                  "initialization!" % INFR_LAYER_NAME)
-    except KeyError as e:
-      log.error(
-        "Got KeyError during initialization of InternalDomainManager: %s", e)
+    self.start_mgr("INTERNAL")
 
 
 class ControllerAdapter(object):
@@ -253,7 +230,7 @@ class ControllerAdapter(object):
     # Set a weak reference to avoid circular dependencies
     self._layer_API = weakref.proxy(layer_API)
     self._with_infr = with_infr
-    self.domains = DomainConfigurator(self)
+    self.domains = ComponentConfigurator(self)
     if with_infr:
       # Init internal domain manager if Infrastructure Layer is started
       self.domains.load_internal_mgr()

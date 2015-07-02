@@ -20,7 +20,7 @@ emulated infrastructure.
 Module contents
 ---------------
 
-.. automodule:: escape.adapt.domain_mgrs
+.. automodule:: escape.adapt.components
    :members:
    :private-members:
    :special-members:

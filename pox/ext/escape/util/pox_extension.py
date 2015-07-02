@@ -135,14 +135,29 @@ class ESCAPEInteractiveHelper(object):
     """
     core.components['helper'] = ESCAPEInteractiveHelper()
 
-  def get_config (self):
+  def ping (self):
+    """
+    Call the ping() function of the OpenStackRESTAdapter.
+    """
     ret = core.adaptation.controller_adapter.domains.components[
-      'OPENSTACK']._adapter.get_config()
+      'OPENSTACK'].rest_adapter.ping()
+    print "Return: ", ret
+
+  def get_config (self):
+    """
+    Call the get_config() function of the OpenStackRESTAdapter.
+    """
+    ret = core.adaptation.controller_adapter.domains.components[
+      'OPENSTACK'].rest_adapter.get_config()
     print "Return: ", ret
     print core.adaptation.controller_adapter.domains.components[
-      'OPENSTACK']._adapter._response.text
+      'OPENSTACK'].rest_adapter._response.text
 
   def edit_config (self):
+    """
+    Call the edit_config() function of OpenStackRESTAdapter with the default
+    config.
+    """
     config = """<?xml version="1.0" ?>
     <virtualizer>
       <id>UUID-ETH-001</id>
@@ -199,10 +214,10 @@ class ESCAPEInteractiveHelper(object):
     </virtualizer>"""
     virtualizer = nffglib.Virtualizer.parse(text=config)
     ret = core.adaptation.controller_adapter.domains.components[
-      'OPENSTACK']._adapter.edit_config(text=virtualizer.xml())
+      'OPENSTACK'].rest_adapter.edit_config(virtualizer.xml())
     print "Return: ", ret
     print core.adaptation.controller_adapter.domains.components[
-      'OPENSTACK']._adapter._response.text
+      'OPENSTACK'].rest_adapter._response.text
 
 
 # Pre-register our helper class

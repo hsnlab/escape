@@ -76,8 +76,9 @@ class AbstractDomainManager(EventMixin):
 
   Follows the Component Configurator design pattern as base component class.
   """
+  # Polling interval
+  POLL_INTERVAL = 3
 
-  # Abstract functions for component control
   def __init__ (self):
     """
     Init
@@ -85,20 +86,25 @@ class AbstractDomainManager(EventMixin):
     super(AbstractDomainManager, self).__init__()
     # Timer for polling function
     self._timer = None
-    # Connection timeout (sec)
-    self.CON_TIMEOUT = 3
-    # Polling interval
-    self.POLL_INTERVAL = 1
 
-  def init (self, **kwargs):
+  # Abstract functions for component control
+
+  def init (self, configurator, **kwargs):
     """
     Abstract function for component initialization.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`DomainConfigurator`
+
+    :return: None
     """
     super(AbstractDomainManager, self).__init__()
 
   def run (self):
     """
     Abstract function for starting component.
+
+    :return: None
     """
     pass
 
@@ -114,6 +120,8 @@ class AbstractDomainManager(EventMixin):
 
     .. note::
       Not used currently!
+
+    :return: None
     """
     pass
 
@@ -123,6 +131,8 @@ class AbstractDomainManager(EventMixin):
 
     .. note::
       Not used currently!
+
+    :return: None
     """
     pass
 
@@ -132,6 +142,8 @@ class AbstractDomainManager(EventMixin):
 
     .. note::
       Not used currently!
+
+    :return: None
     """
     return self.__class__.__name__
 
@@ -147,21 +159,19 @@ class AbstractDomainManager(EventMixin):
     if self._timer:
       # Already timing
       return
-    self.POLL_INTERVAL = wait
-    self._timer = Timer(self.POLL_INTERVAL, self.poll, recurring=True,
-                        started=True, selfStoppable=True)
+    self._timer = Timer(wait, self.poll, recurring=True, started=True,
+                        selfStoppable=True)
 
-  def restart_polling (self, wait=3):
+  def restart_polling (self, wait=POLL_INTERVAL):
     """
-    ReInitialize and start a Timer co-op task for polling.
+    Reinitialize and start a Timer co-op task for polling.
 
     :param wait: polling period (default: 3)
     :type wait: int
     """
     self._timer.cancel()
-    self.POLL_INTERVAL = wait
-    self._timer = Timer(self.POLL_INTERVAL, self.poll, recurring=True,
-                        started=True, selfStoppable=True)
+    self._timer = Timer(wait, self.poll, recurring=True, started=True,
+                        selfStoppable=True)
 
   def stop_polling (self):
     """
@@ -176,6 +186,19 @@ class AbstractDomainManager(EventMixin):
     Template function to poll domain state. Called by a Timer co-op multitask.
     If the function return with False the timer will be cancelled.
     """
+    pass
+
+  def update_resource_info (self, raw_data):
+    """
+    Update the resource information if this domain with the requested
+    configuration. The config attribute is the raw date from request. This
+    function's responsibility to parse/convert/save the data effectively.
+
+    :param raw_data: polled raw data
+    :type raw_data: str
+    :return: None
+    """
+    # TODO - implement actual updating
     pass
 
   # ESCAPE specific functions
@@ -338,13 +361,22 @@ class OpenStackAPI(object):
     """
     raise NotImplementedError("Not implemented yet!")
 
-  def edit_config (self, view):
+  def edit_config (self, config):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 
-    :param view: whole domain view
-    :type view: :any::`NFFG`
+    :param config: whole domain view
+    :type config: :any::`NFFG`
     :return: status code
+    :rtype: str
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def ping (self):
+    """
+    Call the ping RPC.
+
+    :return: response text (should be: 'OK')
     :rtype: str
     """
     raise NotImplementedError("Not implemented yet!")
@@ -361,6 +393,8 @@ class AbstractRESTAdapter(Session):
   """
   # Set custom header
   custom_headers = {'User-Agent': "ESCAPE/" + __version__}
+  # Connection timeout (sec)
+  CONNECTION_TIMEOUT = 3
 
   def __init__ (self, base_url, auth=None):
     super(AbstractRESTAdapter, self).__init__()
@@ -400,11 +434,14 @@ class AbstractRESTAdapter(Session):
     if 'headers' not in kwargs:
       kwargs['headers'] = dict()
     kwargs['headers'].update(self.custom_headers)
+    # Setup connection timeout even if it is not defined explicitly
+    if 'timeout' not in kwargs:
+      kwargs['timeout'] = self.CONNECTION_TIMEOUT
     # Setup parameters - body
     if body is not None:
       if isinstance(body, NFFG):
         # if given body is an NFFG
-        format = body.get_format()
+        format = body.FORMAT
         body = NFFG.dump(body)
         kwargs['headers']['Content-Type'] = "application/" + format.lower()
     # Setup parameters - URL

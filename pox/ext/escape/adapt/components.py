@@ -65,8 +65,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     of.name = self.task_name
     # register OpenFlow event listeners
     self.openflow.addListeners(self)
-    log.debug("Start polling %s domain..." % self.task_name)
-    self.start_polling()
+    log.debug("Start listening %s domain..." % self.name)
 
   def filter_connections (self, event):
     """
@@ -137,7 +136,6 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
     :type mininet: :any`mininet.net.Mininet`
     """
     log.debug("Init %s" % self.__class__.__name__)
-    # super(MininetDomainAdapter, self).__init__()
     # Call base constructors directly to avoid super() and MRO traps
     AbstractDomainAdapter.__init__(self)
     if not mininet:
@@ -149,6 +147,11 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
         if mininet is None:
           log.error("Unable to get emulated network reference!")
     self.mininet = mininet
+
+  def check_topology (self):
+    """
+    """
+    return self.mininet.get_topology()
 
   def initiate_VNFs (self, nffg_part):
     log.info("Install Mininet domain part: initiate VNFs...")
@@ -197,7 +200,6 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
   name = "VNFStarter"
 
   def __init__ (self, **kwargs):
-    # super(VNFStarterAdapter, self).__init__(**kwargs)
     # Call base constructors directly to avoid super() and MRO traps
     AbstractNETCONFAdapter.__init__(self, **kwargs)
     AbstractDomainAdapter.__init__(self)
@@ -340,14 +342,28 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
     :type url: str
     """
     log.debug("Init %s" % self.__class__.__name__)
-    # super(OpenStackRESTAdapter, self).__init__(base_url=url)
-    # Call base constructors directly to avoid super() and MRO traps
     AbstractRESTAdapter.__init__(self, base_url=url)
+    log.debug("OpenStack base URL is set to %s" % url)
     AbstractDomainAdapter.__init__(self)
 
   @property
   def URL (self):
     return self._base_url
+
+  def ping (self):
+    """
+    .. seealso::
+      :func:`OpenStackAPI.ping() <escape.util.domain.OpenStackAPI.ping>`
+    """
+    try:
+      return self.send_request(self.GET, 'ping')
+    except ConnectionError:
+      log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
+    except Timeout:
+      log.warning("OpenStack agent (%s) not responding!" % self._base_url)
+    except HTTPError as e:
+      log.warning(
+        "OpenStack agent responded with an error during 'ping': %s" % e.message)
 
   def get_config (self):
     """
@@ -370,18 +386,18 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
       return None
     return NFFG.parse(data)
 
-  def edit_config (self, view=None, text=None):
+  def edit_config (self, config):
     """
     .. seealso::
       :func:`OpenStackAPI.edit_config()
       <escape.util.domain.OpenStackAPI.edit_config>`
     """
-    if view:
-      body = NFFG.dump(view)
-    else:
-      body = text
+    if isinstance(config, NFFG):
+      config = NFFG.dump(config)
+    elif not isinstance(config, (str, unicode)):
+      raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
-      self.send_request(self.POST, 'edit-config', body)
+      self.send_request(self.POST, 'edit-config', config)
     except ConnectionError:
       log.warning("OpenStack agent (%s) is not reachable: %s" % self._base_url)
       return None
@@ -399,27 +415,71 @@ class InternalDomainManager(AbstractDomainManager):
 
   .. note::
     Uses :class:`MininetDomainAdapter` for managing the emulated network and
-    :class:`POXDomainAdapter` for controlling the network
+    :class:`POXDomainAdapter` for controlling the network.
   """
   name = "INTERNAL"
 
-  def __init__ (self, controller=None, network=None, remote=None):
+  def __init__ (self, poll, **kwargs):
     """
     Init
     """
     log.debug("Init %s" % self.__class__.__name__)
     super(InternalDomainManager, self).__init__()
-    # Initiate POX as default route handler with default params
-    self._controller = controller if controller else POXDomainAdapter()
-    # Initiate Mininet asa default network initiator with default params
-    self._network = network if network else MininetDomainAdapter()
-    # Set remote VNF handler if needed/set or skip initiation steps in lack
-    # of reasonable default agent params
-    self._remote = remote if remote else None
+    if 'poll' in kwargs:
+      self._poll = kwargs['poll']
+    else:
+      self._poll = True
+    self.controller = None
+    self.network = None
+    self.remote = None
+    self._detected = None
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    self.stop_polling()
+    del self.controller
+    del self.network
+    del self.remote
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize Internal domain manager.
+
+    :return: None
+    """
+    self.controller = configurator.load_component("POX")
+    self.network = configurator.load_component("MININET")
+    self.remote = configurator.load_component("VNFStarter")
+    # Skip to start polling is it's set
+    if not self._poll:
+      return
+    log.debug("Start polling %s domain..." % self.name)
+    self.start_polling(self.POLL_INTERVAL)
 
   @property
   def controller_name (self):
-    return self._controller.task_name
+    return self.controller.task_name
+
+  def poll (self):
+    """
+    Poll the defined Internal domain based on Mininet.
+
+    :return:
+    """
+    # FIXME - very dummy extend!!!
+    if not self._detected:
+      raw_data = self.network.check_topology()
+      if raw_data:
+        log.info("%s domain confirmed!" % self.name)
+        self._detected = True
+        log.info("Updating resource information from %s domain..." % self.name)
+        self.update_resource_info(raw_data)
+      else:
+        pass
 
   def install_nffg (self, nffg_part):
     """
@@ -434,9 +494,22 @@ class InternalDomainManager(AbstractDomainManager):
     """
     log.info("Install Internal domain part...")
     # TODO - implement
-    self._network.initiate_VNFs(nffg_part=())
+    self.network.initiate_VNFs(nffg_part=())
     # TODO ...
-    self._controller.install_routes(routes=())
+    self.controller.install_routes(routes=())
+
+  def update_resource_info (self, raw_data):
+    """
+    Update the resource information if this domain with the requested
+    configuration. The config attribute is the raw date from request. This
+    function's responsibility to parse/convert/save the data effectively.
+
+    :param raw_data: polled raw data
+    :type raw_data: str
+    :return: None
+    """
+    # TODO - implement actual updating
+    pass
 
 
 class OpenStackDomainManager(AbstractDomainManager):
@@ -445,18 +518,18 @@ class OpenStackDomainManager(AbstractDomainManager):
   """
   name = "OPENSTACK"
 
-  def __init__ (self, url="http://localhost:8080"):
+  def __init__ (self, **kwargs):
     """
     Init
-
-    :param url: OpenStack RESTful API URL
-    :type url: str
     """
     log.debug("Init %s" % self.__class__.__name__)
     super(OpenStackDomainManager, self).__init__()
-    # TODO
-    self._adapter = OpenStackRESTAdapter(url)
-    self.detected = None
+    if 'poll' in kwargs:
+      self._poll = kwargs['poll']
+    else:
+      self._poll = True
+    self.rest_adapter = None
+    self._detected = None
 
   def finit (self):
     """
@@ -465,63 +538,84 @@ class OpenStackDomainManager(AbstractDomainManager):
     :return: None
     """
     self.stop_polling()
-    del self._adapter
+    del self.rest_adapter
 
-  def init (self, **kwargs):
+  def init (self, configurator, **kwargs):
     """
-    Initialize OpenStack domain manager with URL.
+    Initialize OpenStack domain manager.
 
     :return: None
     """
-    if 'url' not in kwargs:
-      raise RuntimeError(
-        "URL parameter is missing from configuration of OpenStack Domain "
-        "Manager!")
-    else:
-      self._adapter._base_url = kwargs['url']
-      log.debug("OpenStack base URL is set to %s" % kwargs['url'])
+    self.rest_adapter = configurator.load_component("OpenStack-REST")
+    # Skip to start polling is it's set
+    if not self._poll:
+      return
     log.debug("Start polling %s domain..." % self.name)
     self.start_polling()
 
   def poll (self):
     """
+    Poll the defined OpenStack domain agent. Handle different connection
+    errors and go to slow/rapid poll. When an agent is (re)detected update
+    the current resource information.
     """
-    # print "OpenStack ping"
     try:
-      if not self.detected:
+      if not self._detected:
         # Trying to request config
-        resource_nffg = self._adapter.send_request("POST", 'get-config')
+        raw_data = self.rest_adapter.send_request(self.rest_adapter.POST,
+                                                  'get-config')
         # If no exception -> success
         log.info("%s agent detected!" % self.name)
-        self.detected = True
+        self._detected = True
         log.info("Updating resource information from %s domain..." % self.name)
-        # TODO - implement actual updating
+        self.update_resource_info(raw_data)
         self.restart_polling()
       else:
         # Just ping the agent if it's alive. If exception is raised -> problem
-        self._adapter.send_request(method="GET", url="get-config",
-                                   timeout=self.CON_TIMEOUT)
+        self.rest_adapter.send_request(self.rest_adapter.GET, 'ping')
     except ConnectionError:
-      if self.detected is None:
+      if self._detected is None:
         # detected = None -> First try
         log.warning("%s agent is not detected! Keep trying..." % self.name)
-        self.detected = False
+        self._detected = False
+      elif self._detected:
+        # Detected before -> lost connection = big Problem
+        log.warning(
+          "Lost connection with %s agent! Go slow poll..." % self.name)
+        self._detected = False
+        self.restart_polling()
       else:
         # No success but not for the first try -> keep trying silently
         pass
     except Timeout:
-      if self.detected is None:
+      if self._detected is None:
         # detected = None -> First try
         log.warning("%s agent not responding!" % self.name)
-        self.detected = False
+        self._detected = False
+      elif self._detected:
+        # Detected before -> not responding = big Problem
+        log.warning(
+          "Detected %s agent not responding! Go slow poll..." % self.name)
+        self._detected = False
+        self.restart_polling()
       else:
         # No success but not for the first try -> keep trying silently
         pass
     except HTTPError:
-      if self._adapter._response.status_code == 404:
-        return
-      else:
-        raise
+      raise
+
+  def update_resource_info (self, raw_data):
+    """
+    Update the resource information if this domain with the requested
+    configuration. The config attribute is the raw date from request. This
+    function's responsibility to parse/convert/save the data effectively.
+
+    :param raw_data: polled raw data
+    :type raw_data: str
+    :return: None
+    """
+    # TODO - implement actual updating
+    pass
 
   def install_nffg (self, nffg_part):
     log.info("Install OpenStack domain part...")

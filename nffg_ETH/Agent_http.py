@@ -30,6 +30,7 @@ class VirtualizationService(RequestHandler):
     def get(self, rpc=None):
 
         if rpc == 'ping':
+            LOG.debug('ping received')
             self.write('OK')
         else:
             self.write('usage:\n')
@@ -43,9 +44,11 @@ class VirtualizationService(RequestHandler):
     def post(self, rpc=None):
 
         if rpc == 'ping':
+            LOG.debug('ping received')
             self.write('OK')
 
         elif rpc == 'get-config':
+            LOG.debug('get-config received')
             xml_config = get_config()
             self.write(xml_config)
             return
@@ -114,4 +117,7 @@ def start():
 
 
 if __name__ == '__main__':
-    start()
+    try:
+        start()
+    except KeyboardInterrupt:
+        pass

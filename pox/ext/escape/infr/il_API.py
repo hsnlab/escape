@@ -91,8 +91,8 @@ class InfrastructureLayerAPI(AbstractAPI):
     :type event: :class:`ComponentRegistered`
     :return: None
     """
-    if event.name == CONFIG[ADAPT_LAYER_NAME]['INTERNAL'][
-      'listener-id'] and isinstance(event.component, OpenFlow_01_Task):
+    if event.name == CONFIG[ADAPT_LAYER_NAME]['POX']['name'] and isinstance(
+         event.component, OpenFlow_01_Task):
       try:
         log.debug(
           "Internal domain controller is up! Initiate network emulation...")
