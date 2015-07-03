@@ -3,6 +3,9 @@
 
 Contains classes which implement :any:`NFFG` mapping functionality.
 
+.. figure::  ../_static/ros_mapping.png
+   :align:  center
+
 :any:`ESCAPEMappingStrategy` implements a default :any:`NFFG` mapping algorithm
 of ESCAPEv2.
 

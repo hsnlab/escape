@@ -3,6 +3,9 @@
 
 Contains abstract classes for NFFG mapping.
 
+.. figure::  ../_static/mapping.png
+   :align:  center
+
 :any:`AbstractMapper` is an abstract class for orchestration method which
 should implement mapping preparations and invoke actual mapping algorithm.
 

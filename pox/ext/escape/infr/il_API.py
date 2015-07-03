@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet
+Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet.
 """
 from escape import CONFIG
 from escape.infr import LAYER_NAME

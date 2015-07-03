@@ -3,6 +3,9 @@
 
 Contains classes which implement SG mapping functionality.
 
+.. figure::  ../_static/sas_mapping.png
+   :align:  center
+
 :any:`DefaultServiceMappingStrategy` implements a default mapping algorithm
 which map given SG on a single Bis-Bis.
 

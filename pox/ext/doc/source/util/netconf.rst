@@ -10,6 +10,9 @@ Requirements::
 
   sudo pip install ncclient
 
+.. figure::  ../_static/netconf.png
+   :align:  center
+
 :any:`AbstractNETCONFAdapter` contains the main function for communication
 over NETCONF such as managing SSH channel, handling configuration, assemble
 RPC request and parse RPC reply.

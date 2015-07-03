@@ -4,6 +4,9 @@
 Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer.
 
+.. figure::  ../_static/sas_API.png
+   :align:  center
+
 :any:`InstantiateNFFGEvent` can send NF-FG to the lower layer.
 
 :any:`GetVirtResInfoEvent` can request virtual resource info from lower layer.

@@ -1,6 +1,11 @@
 *topology.py* module
 ====================
 
+Wrapper module for handling emulated test topology based on Mininet.
+
+.. figure::  ../_static/topology.png
+   :align:  center
+
 :any:`AbstractTopology` can represent an emulated topology for the high-level
 API.
 

@@ -3,6 +3,9 @@
 
 Override and extend internal POX components to achieve ESCAPE-desired behaviour.
 
+.. figure::  ../_static/pox_extension.png
+   :align:  center
+
 :any:`OpenFlowBridge` is a special version of OpenFlow event originator class.
 
 :any:`ExtendedOFConnectionArbiter` dispatches incoming OpenFlow connections to

@@ -3,6 +3,9 @@
 
 Contains miscellaneous helper functions.
 
+.. figure::  ../_static/misc.png
+   :align:  center
+
 :any:`schedule_as_coop_task()` helps invoking a function in POX's cooperative
 microtask environment.
 

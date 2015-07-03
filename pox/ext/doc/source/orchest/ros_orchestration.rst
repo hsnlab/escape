@@ -3,6 +3,9 @@
 
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 
+.. figure::  ../_static/ros_orchestration.png
+   :align:  center
+
 :any:`ResourceOrchestrator` orchestrates :any:`NFFG` mapping and centralize
 layer logic.
 

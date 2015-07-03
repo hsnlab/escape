@@ -55,9 +55,9 @@ master_doc = 'index'
 
 # from escape import __version__, __project__, __copyright__, __maintainer__
 __project__ = "ESCAPEv2"
-__copyright__ = "Copyright 2015, under Apache License Version 2.0"
-__version__ = "2.0.0"
 __maintainer__ = "Janos Czentye"
+__version__ = "2.0.0"
+__copyright__ = __maintainer__ + " 2015, under Apache License Version 2.0"
 # General information about the project.
 project = __project__
 copyright = __copyright__
@@ -186,10 +186,10 @@ html_last_updated_fmt = '%b %d, %Y'
 html_show_sourcelink = False
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
-# html_show_sphinx = True
+html_show_sphinx = True
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
-# html_show_copyright = True
+html_show_copyright = True
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the

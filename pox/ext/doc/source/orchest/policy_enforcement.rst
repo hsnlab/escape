@@ -3,6 +3,9 @@
 
 Contains functionality related to policy enforcement.
 
+.. figure::  ../_static/policy_enforcement.png
+   :align:  center
+
 :any:`PolicyEnforcementError` represents a violation during the policy
 checking process.
 

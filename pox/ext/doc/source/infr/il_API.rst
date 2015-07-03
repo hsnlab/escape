@@ -1,6 +1,11 @@
 *il_API.py* module
 ==================
 
+Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet.
+
+.. figure::  ../_static/il_API.png
+   :align:  center
+
 :any:`DeploymentFinishedEvent` can send status info about NFFG deployment.
 
 :any:`InfrastructureLayerAPI` represents the IL layer and implement all

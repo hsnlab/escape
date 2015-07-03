@@ -3,6 +3,9 @@
 
 Contains classes relevant to element management.
 
+.. figure::  ../_static/element_mgmt.png
+   :align:  center
+
 :any:`AbstractElementManager` is an abstract class for element managers.
 
 :any:`ClickManager` represent the interface to Click elements.

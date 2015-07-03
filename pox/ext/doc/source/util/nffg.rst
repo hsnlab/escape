@@ -4,6 +4,9 @@
 Abstract class and implementation for basic operations with a single NF-FG,
 such as building, parsing, processing NF-FG, helper functions, etc.
 
+.. figure::  ../_static/nffg.png
+   :align:  center
+
 :any:`NFFG` represents the internal format of NF-FG, SG and RG.
 
 Module contents

@@ -4,6 +4,9 @@
 Implements the platform and POX dependent logic for the Controller Adaptation
 Sublayer.
 
+.. figure::  ../_static/cas_API.png
+   :align:  center
+
 :any:`GlobalResInfoEvent` can send back global resource info requested from
 upper layer.
 

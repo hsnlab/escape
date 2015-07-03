@@ -4,6 +4,9 @@
 Contains component classes which represent the connections between ESCAPEv2 and
 other different domains and manage the interactions.
 
+.. figure::  ../_static/components.png
+   :align:  center
+
 :any:`POXDomainAdapter` implements POX related functionality.
 
 :any:`MininetDomainAdapter` implements Mininet related functionality

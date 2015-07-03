@@ -3,6 +3,9 @@
 
 Contains components relevant to virtualization of resources and views.
 
+.. figure::  ../_static/virtualization_mgmt.png
+   :align:  center
+
 :any:`AbstractVirtualizer` contains the  central logic of Virtualizers.
 
 :any:`ESCAPEVirtualizer` implement the standard virtualization logic of the

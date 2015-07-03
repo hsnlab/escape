@@ -3,6 +3,9 @@
 
 Implement the supporting classes for domain adapters.
 
+.. figure::  ../_static/domain.png
+   :align:  center
+
 :any:`DomainChangedEvent` signals changes for :any:`ControllerAdapter` in
 an unified way.
 

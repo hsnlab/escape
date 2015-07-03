@@ -3,6 +3,9 @@
 
 Contains abstract classes for concrete layer API modules.
 
+.. figure::  ../_static/api.png
+   :align:  center
+
 :any:`AbstractAPI` contains the register mechanism into the POX core for
 layer APIs, the event handling/registering logic and defines the general
 functions for initialization and finalization steps.

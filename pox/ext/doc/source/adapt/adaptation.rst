@@ -4,6 +4,9 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer.
 
+.. figure::  ../_static/adaptation.png
+   :align:  center
+
 :any:`ComponentConfigurator` creates, initializes, stores and manages different
 adaptation components, i.e. derived classes of :any:`AbstractDomainManager` and
 :any:`AbstractDomainAdapter`.

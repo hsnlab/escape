@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Wrapper module for handling emulated test topology based on Mininet
+Wrapper module for handling emulated test topology based on Mininet.
 """
 from mininet import clean
 from mininet.net import VERSION as MNVERSION

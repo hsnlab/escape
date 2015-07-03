@@ -3,6 +3,9 @@
 
 Contains classes relevant to Service Adaptation Sublayer functionality.
 
+.. figure::  ../_static/sas_orchestration.png
+   :align:  center
+
 :any:`ServiceOrchestrator` orchestrates SG mapping and centralize layer logic.
 
 :any:`SGManager` stores and handles Service Graphs.
