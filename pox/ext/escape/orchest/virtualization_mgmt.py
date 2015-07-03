@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains components relevant to virtualization of resources and views
+Contains components relevant to virtualization of resources and views.
 """
 from escape.util.nffg import NFFG
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
@@ -22,39 +22,39 @@ from pox.lib.revent.revent import EventMixin, Event
 
 class AbstractVirtualizer(object):
   """
-  Abstract class for actual Virtualizers
+  Abstract class for actual Virtualizers.
 
-  Follows the Proxy design pattern
+  Follows the Proxy design pattern.
   """
   __metaclass__ = PolicyEnforcementMetaClass
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(AbstractVirtualizer, self).__init__()
 
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource object derived from
-    :any:`NFFG`
+    :any:`NFFG`.
 
     .. warning::
       Derived class have to override this function
 
     :raise: NotImplementedError
     :return: resource info
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     raise NotImplementedError("Derived class have to override this function")
 
   def sanity_check (self, nffg):
     """
     Place-holder for sanity check which implemented in
-    :class:`PolicyEnforcement`
+    :class:`PolicyEnforcement`.
 
     :param nffg: NFFG instance
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     :return: None
     """
     pass
@@ -62,22 +62,22 @@ class AbstractVirtualizer(object):
 
 class ESCAPEVirtualizer(AbstractVirtualizer):
   """
-  Actual Virtualizer class for ESCAPEv2
+  Actual Virtualizer class for ESCAPEv2.
   """
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(ESCAPEVirtualizer, self).__init__()
 
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource object derived from
-    :any:`NFFG`
+    :any:`NFFG`.
 
     :return: virtual resource info
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     # dummy NFFG TODO - implement
     # deep copy???
@@ -88,16 +88,16 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
     """
     Placeholder method for policy checking.
 
-    Return the virtual resource info for the post checker function
+    Return the virtual resource info for the post checker function.
 
     :return: virtual resource info
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     return self._generate_resource_info()
 
   def _generate_resource_info (self):
     """
-    Private method to return with resource info
+    Private method to return with resource info.
     """
     return NFFG()
 
@@ -107,7 +107,7 @@ DoV_ID = 'DoV'
 
 class MissingGlobalViewEvent(Event):
   """
-  Event for signaling missing global resource view
+  Event for signaling missing global resource view.
   """
   pass
 
@@ -116,14 +116,14 @@ class VirtualizerManager(EventMixin):
   """
   Store, handle and organize instances of derived classes of
   :class:`AbstractVirtualizer
-  <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
+  <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`.
   """
   # Events raised by this class
   _eventMixin_events = {MissingGlobalViewEvent}
 
   def __init__ (self):
     """
-    Initialize virtualizer manager
+    Initialize virtualizer manager.
 
     :return: None
     """
@@ -134,14 +134,14 @@ class VirtualizerManager(EventMixin):
   @property
   def dov (self):
     """
-    Getter method for the :class:`DomainVirtualizer`
+    Getter method for the :class:`DomainVirtualizer`.
 
-    Request DoV from Adaptation if it hasn't set yet
+    Request DoV from Adaptation if it hasn't set yet.
 
-    Use: `virtualizerManager.dov`
+    Use: `virtualizerManager.dov`.
 
     :return: Domain Virtualizer (DoV)
-    :rtype: DomainVirtualizer
+    :rtype: :any:`DomainVirtualizer`
     """
     log.debug("Invoke %s to get global resource" % self.__class__.__name__)
     # If DoV is not set up, need to request from Adaptation layer
@@ -156,10 +156,10 @@ class VirtualizerManager(EventMixin):
   @dov.setter
   def dov (self, dov):
     """
-    DoV setter
+    DoV setter.
 
     :param dov: Domain Virtualizer (DoV)
-    :type dov: DomainVirtualizer
+    :type dov: :any:`DomainVirtualizer`
     :return: None
     """
     self._virtualizers[DoV_ID] = dov
@@ -167,7 +167,7 @@ class VirtualizerManager(EventMixin):
   @dov.deleter
   def dov (self):
     """
-    DoV deleter
+    DoV deleter.
 
     :return: None
     """
@@ -176,12 +176,12 @@ class VirtualizerManager(EventMixin):
   def get_virtual_view (self, layer_id):
     """
     Return the virtual view as a derived class of :class:`AbstractVirtualizer
-    <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
+    <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`.
 
     :param layer_id: layer ID
     :type layer_id: int
     :return: virtual view
-    :rtype: ESCAPEVirtualizer
+    :rtype: :any:`ESCAPEVirtualizer`
     """
     log.debug("Invoke %s to get virtual resource view (for layer ID: %s)" % (
       self.__class__.__name__, layer_id))
@@ -194,12 +194,12 @@ class VirtualizerManager(EventMixin):
   def _generate_virtual_view (self, layer_id):
     """
     Generate a missing :class:`ESCAPEVirtualizer` for other layer using global
-    view (DoV) and a given layer id
+    view (DoV) and a given layer id.
 
     :param layer_id: layer ID
     :type layer_id: int
     :return: generated Virtualizer derived from AbstractVirtualizer
-    :rtype: ESCAPEVirtualizer
+    :rtype: :any:`ESCAPEVirtualizer`
     """
     # TODO - implement
     resource_info = self.dov.get_resource_info()

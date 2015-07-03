@@ -1,15 +1,16 @@
 *sas_orchestration.py* module
 =============================
 
-:any:`ServiceOrchestrator` orchestrates SG mapping and centralize layer logic
+Contains classes relevant to Service Adaptation Sublayer functionality.
 
-:any:`SGManager` stores and handles Service Graphs
+:any:`ServiceOrchestrator` orchestrates SG mapping and centralize layer logic.
+
+:any:`SGManager` stores and handles Service Graphs.
+
+:any:`MissingVirtualViewEvent` can signal missing virtual info.
 
 :any:`VirtualResourceManager` contains the functionality tided to the
-layer's virtual view and virtual resources
-
-:any:`NFIBManager` handles the Network Function Information Base and hides
-implementation dependent logic
+layer's virtual view and virtual resources.
 
 Module contents
 ---------------

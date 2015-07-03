@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains abstract classes for NFFG mapping
+Contains abstract classes for NFFG mapping.
 """
 import threading
 
@@ -26,9 +26,9 @@ from pox import core
 
 class AbstractMappingStrategy(object):
   """
-  Abstract class for the mapping strategies
+  Abstract class for the mapping strategies.
 
-  Follows the Strategy design pattern
+  Follows the Strategy design pattern.
   """
 
   def __init__ (self):
@@ -40,7 +40,7 @@ class AbstractMappingStrategy(object):
   @classmethod
   def map (cls, graph, resource):
     """
-    Abstract function for mapping algorithm
+    Abstract function for mapping algorithm.
 
     .. warning::
       Derived class have to override this function
@@ -58,24 +58,24 @@ class AbstractMappingStrategy(object):
 
 class AbstractMapper(EventMixin):
   """
-  Abstract class for graph mapping function
+  Abstract class for graph mapping function.
 
   Inherited from :class`EventMixin` to implement internal event-based
-  communication
+  communication.
 
-  Contain common functions and initialization
+  Contain common functions and initialization.
   """
   _defaults = {SAS: 'DefaultServiceMappingStrategy',
                ROS: 'ESCAPEMappingStrategy'}
 
   def __init__ (self, layer_name, strategy=None, threaded=None):
     """
-    Initialize Mapper class
+    Initialize Mapper class.
 
-    Set given strategy class and threaded value or check in `CONFIG`
+    Set given strategy class and threaded value or check in `CONFIG`.
 
     If no valid value is found for arguments set the default params defined
-    in `_default`
+    in `_default`.
 
     .. warning::
       Strategy classes must be a subclass of AbstractMappingStrategy
@@ -90,7 +90,7 @@ class AbstractMapper(EventMixin):
       value is used to search the layer configuration in `CONFIG`
     :type layer_name: str
     :param strategy: strategy class (optional)
-    :type strategy: AbstractMappingStrategy
+    :type strategy: :any:`AbstractMappingStrategy`
     :param threaded: run mapping algorithm in separate Python thread instead
       of in the coop microtask environment (optional)
     :type threaded: bool
@@ -114,31 +114,31 @@ class AbstractMapper(EventMixin):
 
   def orchestrate (self, input_graph, resource_view):
     """
-    Abstract function for wrapping optional steps connected to orchestration
+    Abstract function for wrapping optional steps connected to orchestration.
 
-    Implemented function call the mapping algorithm
+    Implemented function call the mapping algorithm.
 
     .. warning::
       Derived class have to override this function
 
     :param input_graph: graph representation which need to be mapped
-    :type input_graph: NFFG
+    :type input_graph: :any:`NFFG`
     :param resource_view: resource information
-    :type resource_view: AbstractVirtualizer
+    :type resource_view: :any:`AbstractVirtualizer`
     :raise: NotImplementedError
     :return: mapped graph
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     raise NotImplementedError("Derived class must override this function!")
 
   def _start_mapping (self, graph, resource):
     """
-    Run mapping algorithm in a separate Python thread
+    Run mapping algorithm in a separate Python thread.
 
     :param graph: Network Function Forwarding Graph
-    :type graph: NFFG
+    :type graph: :any:`NFFG`
     :param resource: global resource
-    :type resource: NFFG
+    :type resource: :any:`NFFG`
     :return: None
     """
 
@@ -157,13 +157,13 @@ class AbstractMapper(EventMixin):
 
   def _mapping_finished (self, nffg):
     """
-    Called from a separate thread when the mapping process is finished
+    Called from a separate thread when the mapping process is finished.
 
     .. warning::
       Derived class have to override this function
 
     :param nffg: generated NF-FG
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     :return: None
     """
     raise NotImplementedError("Derived class must override this function!")

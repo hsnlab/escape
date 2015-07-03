@@ -1,10 +1,20 @@
 *topology.py* module
 ====================
 
-:any:`InternalControllerProxy` represents the connection between the internal
-controller and the emulated network
+:any:`AbstractTopology` can represent an emulated topology for the high-level
+API.
 
-:any:`AbstractTopology` represents the emulated topology for the high-level API
+:any:`BackupTopology` represents the fallback topology.
+
+:any:`InternalControllerProxy` represents the connection between the internal
+controller and the emulated network.
+
+:any:`ESCAPENetworkBridge` represents the emulated topology in high level.
+
+:any:`TopologyBuilderException` can signal various error related to the topology
+emulation.
+
+:any:`ESCAPENetworkBuilder` can construct a:any:`ESCAPENetworkBridge` object.
 
 Module contents
 ---------------

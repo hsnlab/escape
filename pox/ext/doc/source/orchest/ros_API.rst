@@ -1,15 +1,18 @@
 *ros_API.py* module
 ===================
 
-:any:`InstallNFFGEvent` can send mapped NF-FG to the lower layer
+Implements the platform and POX dependent logic for the Resource Orchestration
+Sublayer.
+
+:any:`InstallNFFGEvent` can send mapped NF-FG to the lower layer.
 
 :any:`VirtResInfoEvent` can send back virtual resource info requested from
-upper layer
+upper layer.
 
-:any:`GetGlobalResInfoEvent` can request global resource info from lower layer
+:any:`GetGlobalResInfoEvent` can request global resource info from lower layer.
 
 :any:`ResourceOrchestrationAPI` represents the ROS layer and implement all
-related functionality
+related functionality.
 
 Module contents
 ---------------

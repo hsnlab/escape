@@ -13,7 +13,7 @@
 # limitations under the License.
 """
 Implements the platform and POX dependent logic for the Controller Adaptation
-Sublayer
+Sublayer.
 """
 import repr
 
@@ -28,12 +28,12 @@ from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 
 class GlobalResInfoEvent(Event):
   """
-  Event for sending back requested global resource info
+  Event for sending back requested global resource info.
   """
 
   def __init__ (self, resource_info):
     """
-    Init
+    Init.
 
     :param resource_info: resource info
     :type resource_info: :any:`ESCAPEVirtualizer`
@@ -44,7 +44,7 @@ class GlobalResInfoEvent(Event):
 
 class InstallationFinishedEvent(Event):
   """
-  Event for signalling end of mapping process
+  Event for signalling end of mapping process.
   """
 
   def __init__ (self, success, error=None):
@@ -56,7 +56,7 @@ class InstallationFinishedEvent(Event):
 class DeployNFFGEvent(Event):
   """
   Event for passing mapped :any:`NFFG` to internally emulated network based on
-  Mininet for testing
+  Mininet for testing.
   """
 
   def __init__ (self, nffg_part):
@@ -66,11 +66,11 @@ class DeployNFFGEvent(Event):
 
 class ControllerAdaptationAPI(AbstractAPI):
   """
-  Entry point for Controller Adaptation Sublayer (CAS)
+  Entry point for Controller Adaptation Sublayer (CAS).
 
-  Maintain the contact with other UNIFY layers
+  Maintain the contact with other UNIFY layers.
 
-  Implement the Or - Ca reference point
+  Implement the Or - Ca reference point.
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
@@ -118,7 +118,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   @schedule_as_coop_task
   def _handle_InstallNFFGEvent (self, event):
     """
-    Install mapped NF-FG (UNIFY Or - Ca API)
+    Install mapped NF-FG (UNIFY Or - Ca API).
 
     :param event: event object contains mapped NF-FG
     :type event: :any:`InstallNFFGEvent`
@@ -134,7 +134,7 @@ class ControllerAdaptationAPI(AbstractAPI):
 
   def _handle_GetGlobalResInfoEvent (self, event):
     """
-    Generate global resource info and send back to ROS
+    Generate global resource info and send back to ROS.
 
     :param event: event object
     :type event: :any:`GetGlobalResInfoEvent`

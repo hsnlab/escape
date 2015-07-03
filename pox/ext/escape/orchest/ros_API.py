@@ -13,7 +13,7 @@
 # limitations under the License.
 """
 Implements the platform and POX dependent logic for the Resource Orchestration
-Sublayer
+Sublayer.
 """
 import repr
 
@@ -28,7 +28,7 @@ from pox.lib.revent.revent import Event
 class InstallNFFGEvent(Event):
   """
   Event for passing mapped :any:`NFFG` to Controller
-  Adaptation Sublayer
+  Adaptation Sublayer.
   """
 
   def __init__ (self, mapped_nffg):
@@ -44,7 +44,7 @@ class InstallNFFGEvent(Event):
 
 class VirtResInfoEvent(Event):
   """
-  Event for sending back requested virtual resource info
+  Event for sending back requested virtual resource info.
   """
 
   def __init__ (self, resource_info):
@@ -60,14 +60,14 @@ class VirtResInfoEvent(Event):
 
 class GetGlobalResInfoEvent(Event):
   """
-  Event for requesting :class:`DomainVirtualizer` from CAS
+  Event for requesting :class:`DomainVirtualizer` from CAS.
   """
   pass
 
 
 class InstantiationFinishedEvent(Event):
   """
-  Event for signalling end of mapping process finished with success
+  Event for signalling end of mapping process finished with success.
   """
 
   def __init__ (self, success, error=None):
@@ -78,11 +78,11 @@ class InstantiationFinishedEvent(Event):
 
 class ResourceOrchestrationAPI(AbstractAPI):
   """
-  Entry point for Resource Orchestration Sublayer (ROS)
+  Entry point for Resource Orchestration Sublayer (ROS).
 
-  Maintain the contact with other UNIFY layers
+  Maintain the contact with other UNIFY layers.
 
-  Implement the Sl - Or reference point
+  Implement the Sl - Or reference point.
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
@@ -122,10 +122,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
     Handle NFFGMappingFinishedEvent and proceed with  :class:`NFFG
-    <escape.util.nffg.NFFG>` installation
+    <escape.util.nffg.NFFG>` installation.
 
     :param event: event object
-    :type event: NFFGMappingFinishedEvent
+    :type event: :any:`NFFGMappingFinishedEvent`
     :return: None
     """
     self._install_NFFG(event.nffg)
@@ -137,10 +137,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
   @schedule_as_coop_task
   def _handle_InstantiateNFFGEvent (self, event):
     """
-    Instantiate given NF-FG (UNIFY Sl - Or API)
+    Instantiate given NF-FG (UNIFY Sl - Or API).
 
     :param event: event object contains NF-FG
-    :type event: InstantiateNFFGEvent
+    :type event: :any:`InstantiateNFFGEvent`
     :return: None
     """
     log.getChild('API').info(
@@ -156,13 +156,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _install_NFFG (self, mapped_nffg):
     """
-    Send mapped :any:`NFFG` to Controller Adaptation
-    Sublayer in an implementation-specific way
+    Send mapped :any:`NFFG` to Controller Adaptation Sublayer in an
+    implementation-specific way.
 
-    General function which is used from microtask and Python thread also
+    General function which is used from microtask and Python thread also.
 
     :param mapped_nffg: mapped NF-FG
-    :type mapped_nffg: NFFG
+    :type mapped_nffg: :any:`NFFG`
     :return: None
     """
     # Sending NF-FG to Adaptation layer as an Event
@@ -172,10 +172,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _handle_GetVirtResInfoEvent (self, event):
     """
-    Generate virtual resource info and send back to SAS
+    Generate virtual resource info and send back to SAS.
 
     :param event: event object contains service layer id
-    :type event: GetVirtResInfoEvent
+    :type event: :any:`GetVirtResInfoEvent`
     :return: None
     """
     log.getChild('API').debug(
@@ -193,12 +193,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _handle_MissingGlobalViewEvent (self, event):
     """
-    Request global resource info from CAS (UNIFY Or - CA API)
+    Request global resource info from CAS (UNIFY Or - CA API).
 
-    Invoked when a :class:`MissingGlobalViewEvent` raised
+    Invoked when a :class:`MissingGlobalViewEvent` raised.
 
     :param event: event object
-    :type event: MissingGlobalViewEvent
+    :type event: :any:`MissingGlobalViewEvent`
     :return: None
     """
     log.getChild('API').debug(
@@ -207,10 +207,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _handle_GlobalResInfoEvent (self, event):
     """
-    Save requested global resource info as the :class:`DomainVirtualizer`
+    Save requested global resource info as the :class:`DomainVirtualizer`.
 
     :param event: event object contains resource info
-    :type event: GlobalResInfoEvent
+    :type event: :any:`GlobalResInfoEvent`
     :return: None
     """
     log.getChild('API').debug(
@@ -220,6 +220,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
     pass
 
   def _handle_InstallationFinishedEvent (self, event):
+    """
+    Get information from NFFG installation process.
+
+    :param event: event object info
+    :type event: :any:`InstallationFinishedEvent`
+    :return: None
+    """
     if event.success:
       log.getChild('API').info(
         "NF-FG instantiation has been finished successfully!")

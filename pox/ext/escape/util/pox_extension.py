@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Override and extend internal POX components to achieve ESCAPE-desired behaviour
+Override and extend internal POX components to achieve ESCAPE-desired behaviour.
 """
 import nffglib
 from pox.core import core
@@ -40,7 +40,7 @@ class ExtendedOFConnectionArbiter(OpenFlowConnectionArbiter):
 
   def __init__ (self, default=False):
     """
-    Init
+    Init.
 
     :param default: inherited param
     :type default: :class:`OpenFlowNexus`

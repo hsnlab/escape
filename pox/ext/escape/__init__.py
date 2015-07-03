@@ -60,7 +60,7 @@ cfg = {'service': {  # Service Adaptation Sublayer
                         # Domain Managers
                         'INTERNAL': {'module': 'escape.adapt.components',
                                      'class': "InternalDomainManager",
-                                     'poll': False},
+                                     'poll': True},
                         'OPENSTACK': {'module': 'escape.adapt.components',
                                       'class': "OpenStackDomainManager",
                                       'poll': True},

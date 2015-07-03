@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains classes which implement SG mapping functionality
+Contains classes which implement SG mapping functionality.
 """
 
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
@@ -23,26 +23,26 @@ from pox.lib.revent.revent import Event
 
 class DefaultServiceMappingStrategy(AbstractMappingStrategy):
   """
-  Mapping class which maps given Service Graph into a single BiS-BiS
+  Mapping class which maps given Service Graph into a single BiS-BiS.
   """
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(DefaultServiceMappingStrategy, self).__init__()
 
   @classmethod
   def map (cls, graph, resource):
     """
-    Default mapping algorithm which maps given Service Graph on one BiS-BiS
+    Default mapping algorithm which maps given Service Graph on one BiS-BiS.
 
     :param graph: Service Graph
-    :type graph: NFFG
+    :type graph: :any:`NFFG`
     :param resource: virtual resource
-    :type resource: NFFG
+    :type resource: :any:`NFFG`
     :return: Network Function Forwarding Graph
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     log.debug(
       "Invoke mapping algorithm: %s on SG(%s)" % (cls.__name__, graph.id))
@@ -55,15 +55,15 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
 
 class SGMappingFinishedEvent(Event):
   """
-  Event for signaling the end of SG mapping
+  Event for signaling the end of SG mapping.
   """
 
   def __init__ (self, nffg):
     """
-    Init
+    Init.
 
     :param nffg: NF-FG need to be initiated
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     """
     super(SGMappingFinishedEvent, self).__init__()
     self.nffg = nffg
@@ -71,14 +71,14 @@ class SGMappingFinishedEvent(Event):
 
 class ServiceGraphMapper(AbstractMapper):
   """
-  Helper class for mapping Service Graph to NF-FG
+  Helper class for mapping Service Graph to NF-FG.
   """
   # Events raised by this class
   _eventMixin_events = {SGMappingFinishedEvent}
 
   def __init__ (self):
     """
-    Init Service mapper
+    Init Service mapper.
 
     :return: None
     """
@@ -88,14 +88,14 @@ class ServiceGraphMapper(AbstractMapper):
 
   def orchestrate (self, input_graph, resource_view):
     """
-    Orchestrate mapping of given service graph on given virtual resource
+    Orchestrate mapping of given service graph on given virtual resource.
 
     :param input_graph: Service Graph
-    :type input_graph: NFFG
+    :type input_graph: :any:`NFFG`
     :param resource_view: virtual resource view
-    :param resource_view: ESCAPEVirtualizer
+    :param resource_view: :any:`ESCAPEVirtualizer`
     :return: Network Function Forwarding Graph
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     log.debug("Request %s to launch orchestration on SG(%s)..." % (
       self.__class__.__name__, input_graph.id))
@@ -121,10 +121,10 @@ class ServiceGraphMapper(AbstractMapper):
 
   def _mapping_finished (self, nffg):
     """
-    Called from a separate thread when the mapping process is finished
+    Called from a separate thread when the mapping process is finished.
 
     :param nffg: generated NF-FG
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     :return: None
     """
     log.debug("Inform SAS layer API that SG mapping has been finished...")

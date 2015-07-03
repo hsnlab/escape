@@ -18,6 +18,7 @@ Adaptation Sublayer
 import weakref
 
 from escape import CONFIG
+from escape.adapt.components import InternalDomainManager
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
 from escape.util.nffg import NFFG
@@ -148,7 +149,7 @@ class ComponentConfigurator(object):
 
   def __iter__ (self):
     """
-    Return with an iterator rely on initiated DomainManagers
+    Return with an iterator rely on initiated DomainManagers.
     """
     return iter(self.__repository)
 
@@ -206,7 +207,7 @@ class ComponentConfigurator(object):
 
     :return: None
     """
-    self.start_mgr("INTERNAL")
+    self.start_mgr(InternalDomainManager.name)
 
 
 class ControllerAdapter(object):
@@ -266,12 +267,18 @@ class ControllerAdapter(object):
     """
     Handle DomainChangedEvents, process changes and store relevant information
     in DomainResourceManager.
+
+    .. warning::
+      Not implemented yet!
     """
     pass
 
   def _slice_into_domains (self, nffg):
     """
-    Slice given :any:`NFFG` into separate parts
+    Slice given :any:`NFFG` into separate parts.
+
+    .. warning::
+      Not implemented yet!
 
     :param nffg: mapped NFFG object
     :type nffg: NFFG
@@ -283,7 +290,7 @@ class ControllerAdapter(object):
 
 class DomainVirtualizer(AbstractVirtualizer):
   """
-  Specific Virtualizer class for global domain virtualization
+  Specific Virtualizer class for global domain virtualization.
 
   Implement the same interface as :class:`AbstractVirtualizer
   <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
@@ -291,7 +298,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   def __init__ (self, domainResManager):
     """
-    Init
+    Init.
 
     :param domainResManager: domain resource manager
     :type domainResManager: DomainResourceManager
@@ -304,7 +311,10 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   def get_resource_info (self):
     """
-    Return the global resource info represented this class
+    Return the global resource info represented this class.
+
+    .. warning::
+      Not implemented yet!
 
     :return: global resource info
     :rtype: NFFG
@@ -316,7 +326,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
 class DomainResourceManager(object):
   """
-  Handle and store global resources
+  Handle and store global resources.
   """
 
   def __init__ (self):
@@ -330,7 +340,7 @@ class DomainResourceManager(object):
   @property
   def dov (self):
     """
-    Getter for :class:`DomainVirtualizer`
+    Getter for :class:`DomainVirtualizer`.
 
     :return: Domain Virtualizer
     :rtype: ESCAPEVirtualizer
@@ -341,6 +351,9 @@ class DomainResourceManager(object):
     """
     Update global resource database with resource usage relevant to installed
     components, routes, VNFs, etc.
+
+    .. warning::
+      Not implemented yet!
 
     :param data: usage data
     :type data: dict

@@ -1,13 +1,15 @@
 *policy_enforcement.py* module
 ==============================
 
-:any:`PolicyEnforcementError` represent a violation during the policy
-checking process
+Contains functionality related to policy enforcement.
+
+:any:`PolicyEnforcementError` represents a violation during the policy
+checking process.
 
 :any:`PolicyEnforcementMetaClass` contains the main general logic which
-handles the Virtualizers and enforce policies
+handles the Virtualizers and enforce policies.
 
-:any:`PolicyEnforcement` implements the actual enforcement logic
+:any:`PolicyEnforcement` implements the actual enforcement logic.
 
 Module contents
 ---------------

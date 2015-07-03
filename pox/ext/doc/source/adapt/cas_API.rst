@@ -1,11 +1,19 @@
 *cas_API.py* module
 ===================
 
+Implements the platform and POX dependent logic for the Controller Adaptation
+Sublayer.
+
 :any:`GlobalResInfoEvent` can send back global resource info requested from
-upper layer
+upper layer.
+
+:any:`InstallationFinishedEvent` can send back status about the NFFG
+installation.
+
+:any:`DeployNFFGEvent` can send NFFG to Infrastructure layer for deploying.
 
 :any:`ControllerAdaptationAPI` represents the CAS layer and implement all
-related functionality
+related functionality.
 
 Module contents
 ---------------

@@ -1,11 +1,13 @@
 *mapping.py* module
 ===================
 
+Contains abstract classes for NFFG mapping.
+
 :any:`AbstractMapper` is an abstract class for orchestration method which
-should implement mapping preparations and invoke actual mapping algorithm
+should implement mapping preparations and invoke actual mapping algorithm.
 
 :any:`AbstractMappingStrategy` is an abstract class for containing entirely
-the mapping algorithm as a class method
+the mapping algorithm as a class method.
 
 Module contents
 ---------------

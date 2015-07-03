@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains classes relevant to Resource Orchestration Sublayer functionality
+Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.orchest import log as log
@@ -22,12 +22,12 @@ from escape.orchest.virtualization_mgmt import AbstractVirtualizer, \
 
 class ResourceOrchestrator(object):
   """
-  Main class for the handling of the ROS-level mapping functions
+  Main class for the handling of the ROS-level mapping functions.
   """
 
   def __init__ (self, layer_API):
     """
-    Initialize main Resource Orchestration Layer components
+    Initialize main Resource Orchestration Layer components.
 
     :param layer_API: layer API instance
     :type layer_API: :any:`ResourceOrchestrationAPI`
@@ -51,12 +51,12 @@ class ResourceOrchestrator(object):
 
   def instantiate_nffg (self, nffg):
     """
-    Main API function for NF-FG instantiation
+    Main API function for NF-FG instantiation.
 
     :param nffg: NFFG instance
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     :return: mapped NFFG instance
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     log.debug("Invoke %s to instantiate NF-FG" % self.__class__.__name__)
     # Store newly created NF-FG
@@ -79,12 +79,12 @@ class ResourceOrchestrator(object):
 
 class NFFGManager(object):
   """
-  Store, handle and organize Network Function Forwarding Graphs
+  Store, handle and organize Network Function Forwarding Graphs.
   """
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(NFFGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
@@ -92,10 +92,10 @@ class NFFGManager(object):
 
   def save (self, nffg):
     """
-    Save NF-FG in a dict
+    Save NF-FG in a dict.
 
     :param nffg: Network Function Forwarding Graph
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     :return: generated ID of given NF-FG
     :rtype: int
     """
@@ -107,24 +107,24 @@ class NFFGManager(object):
 
   def get (self, nffg_id):
     """
-    Return NF-FG with given id
+    Return NF-FG with given id.
 
     :param nffg_id: ID of NF-FG
     :type nffg_id: int
     :return: NF-Fg instance
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     return self._nffgs.get(nffg_id, default=None)
 
 
 class NFIBManager(object):
   """
-  Manage the handling of Network Function Information Base
+  Manage the handling of Network Function Information Base.
   """
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(NFIBManager, self).__init__()
 

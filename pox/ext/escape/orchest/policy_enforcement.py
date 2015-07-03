@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains functionality related to policy enforcement
+Contains functionality related to policy enforcement.
 """
 from functools import wraps
 import repr
@@ -23,7 +23,7 @@ import escape.orchest.virtualization_mgmt
 
 class PolicyEnforcementError(RuntimeError):
   """
-  Exception class to signal policy enforcement error
+  Exception class to signal policy enforcement error.
   """
   pass
 
@@ -32,7 +32,7 @@ class PolicyEnforcementMetaClass(type):
   """
   Meta class for handling policy enforcement in the context of classes inherited
   from :class:`AbstractVirtualizer
-  <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
+  <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`.
 
   If the :class:`PolicyEnforcement` class contains a function which name
   matches one in the actual Virtualizer then PolicyEnforcement's function will
@@ -81,7 +81,7 @@ class PolicyEnforcementMetaClass(type):
   @classmethod
   def get_wrapper (mcs, orig_func, hooks):
     """
-    Return a decorator function which do the policy enforcement check
+    Return a decorator function which do the policy enforcement check.
 
     :param orig_func: original function
     :type orig_func: func
@@ -95,7 +95,7 @@ class PolicyEnforcementMetaClass(type):
     @wraps(orig_func)
     def wrapper (*args, **kwargs):
       """
-      Wrapper function which call policy checking functions if they exist
+      Wrapper function which call policy checking functions if they exist.
       """
       if len(args) > 0:
         if isinstance(args[0],
@@ -127,13 +127,13 @@ class PolicyEnforcementMetaClass(type):
 
 class PolicyEnforcement(object):
   """
-  Proxy class for policy checking
+  Proxy class for policy checking.
 
-  Contains the policy checking function
+  Contains the policy checking function.
 
   Binding is based on function name (checking function have to exist in this
   class and its name have to stand for the `pre_` or `post_` prefix and the
-  name of the checked function)
+  name of the checked function).
 
   .. warning::
     Every PRE policy checking function is classmethod and need to have two
@@ -165,7 +165,7 @@ class PolicyEnforcement(object):
   @classmethod
   def pre_sanity_check (cls, args, kwargs):
     """
-    Implements the the sanity check before virtualizer's sanity check is called
+    Implements the the sanity check before virtualizer's sanity check is called.
 
     :param args: original nameless arguments
     :type args: tuple
@@ -182,7 +182,7 @@ class PolicyEnforcement(object):
   @classmethod
   def post_sanity_check (cls, args, kwargs, ret_value):
     """
-    Implements the the sanity check after virtualizer's sanity check is called
+    Implements the the sanity check after virtualizer's sanity check is called.
 
     :param args: original nameless arguments
     :type args: tuple

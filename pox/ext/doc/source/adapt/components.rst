@@ -1,5 +1,8 @@
-*domain_mgrs.py* module
-=======================
+*components.py* module
+======================
+
+Contains component classes which represent the connections between ESCAPEv2 and
+other different domains and manage the interactions.
 
 :any:`POXDomainAdapter` implements POX related functionality.
 
@@ -8,7 +11,8 @@ transparently.
 
 :any:`VNFStarterAdapter` is a wrapper class for vnf_starter NETCONF module.
 
-:any:`OpenStackRESTAdapter` is a wrapper class for OpenStack-related functions.
+:any:`OpenStackRESTAdapter` is a wrapper class for OpenStack-RESTlike API
+functions.
 
 :any:`InternalDomainManager` represent the top class for interacting with
 emulated infrastructure.

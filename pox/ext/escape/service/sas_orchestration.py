@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains classes relevant to Service Adaptation Sublayer functionality
+Contains classes relevant to Service Adaptation Sublayer functionality.
 """
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.service.sas_mapping import ServiceGraphMapper
@@ -22,15 +22,15 @@ from pox.lib.revent.revent import EventMixin, Event
 
 class ServiceOrchestrator(object):
   """
-  Main class for the actual Service Graph processing
+  Main class for the actual Service Graph processing.
   """
 
   def __init__ (self, layer_API):
     """
-    Initialize main Service Layer components
+    Initialize main Service Layer components.
 
     :param layer_API: layer API instance
-    :type layer_API: ServiceLayerAPI
+    :type layer_API: :any:`ServiceLayerAPI`
     :return: None
     """
     super(ServiceOrchestrator, self).__init__()
@@ -50,12 +50,12 @@ class ServiceOrchestrator(object):
 
   def initiate_service_graph (self, sg):
     """
-    Main function for initiating Service Graphs
+    Main function for initiating Service Graphs.
 
     :param sg: service graph stored in NFFG instance
-    :type sg: NFFG
+    :type sg: :any:`NFFG`
     :return: NF-FG description
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     log.debug("Invoke %s to initiate SG" % self.__class__.__name__)
     # Store newly created SG
@@ -77,14 +77,14 @@ class ServiceOrchestrator(object):
 
 class SGManager(object):
   """
-  Store, handle and organize Service Graphs
+  Store, handle and organize Service Graphs.
 
-  Currently it just stores SGs in one central place
+  Currently it just stores SGs in one central place.
   """
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(SGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
@@ -92,10 +92,10 @@ class SGManager(object):
 
   def save (self, sg):
     """
-    Save SG in a dict
+    Save SG in a dict.
 
     :param sg: Service Graph
-    :type sg: NFFG
+    :type sg: :any:`NFFG`
     :return: computed id of given Service Graph
     :rtype: int
     """
@@ -107,12 +107,12 @@ class SGManager(object):
 
   def get (self, graph_id):
     """
-    Return service graph with given id
+    Return service graph with given id.
 
     :param graph_id: graph ID
     :type graph_id: int
     :return: stored Service Graph
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     return self._service_graphs.get(graph_id, None)
 
@@ -127,17 +127,17 @@ class MissingVirtualViewEvent(Event):
 class VirtualResourceManager(EventMixin):
   """
   Support Service Graph mapping, follow the used virtual resources according to
-  the Service Graph(s) in effect
+  the Service Graph(s) in effect.
 
   Handles object derived from :class`AbstractVirtualizer` and requested from
-  lower layer
+  lower layer.
   """
   # Events raised by this class
   _eventMixin_events = {MissingVirtualViewEvent}
 
   def __init__ (self):
     """
-    Initialize virtual resource manager
+    Initialize virtual resource manager.
 
     :return: None
     """
@@ -151,12 +151,12 @@ class VirtualResourceManager(EventMixin):
   def virtual_view (self):
     """
     Return resource info of actual layer as an :class:`NFFG
-    <escape.util.nffg.NFFG>` instance
+    <escape.util.nffg.NFFG>` instance.
 
-    If it isn't exist requires it from Orchestration layer
+    If it isn't exist requires it from Orchestration layer.
 
     :return: resource info as a Virtualizer
-    :rtype: AbstractVirtualizer
+    :rtype: :any:`AbstractVirtualizer`
     """
     log.debug("Invoke %s to get virtual resource" % self.__class__.__name__)
     if not self._virtual_view:
@@ -169,10 +169,10 @@ class VirtualResourceManager(EventMixin):
   @virtual_view.setter
   def virtual_view (self, view):
     """
-    Virtual view setter
+    Virtual view setter.
 
     :param view: virtual view
-    :type view: AbstractVirtualizer
+    :type view: :any:`AbstractVirtualizer`
     :return: None
     """
     self._virtual_view = view
@@ -180,7 +180,7 @@ class VirtualResourceManager(EventMixin):
   @virtual_view.deleter
   def virtual_view (self):
     """
-    Virtual view deleter
+    Virtual view deleter.
 
     :return: None
     """

@@ -45,25 +45,25 @@ class AbstractNFFG(object):
 
   def add_nf (self, node_nf):
     """
-    Add a single NF node to the NF-FG
+    Add a single NF node to the NF-FG.
     """
     raise NotImplementedError("Not implemented yet!")
 
   def add_sap (self, node_sap):
     """
-    Add a single SAP node to the NF-FG
+    Add a single SAP node to the NF-FG.
     """
     raise NotImplementedError("Not implemented yet!")
 
   def add_infra (self, node_infra):
     """
-    Add a single infrastructure node to the NF-FG
+    Add a single infrastructure node to the NF-FG.
     """
     raise NotImplementedError("Not implemented yet!")
 
   def add_edge (self, src, dst, params=None):
     """
-    Add an edge to the NF-FG
+    Add an edge to the NF-FG.
 
     :param src: source (node, port) of the edge
     :type src: (Node, Port) inherited Node classes: NodeNF, NodeSAP, NodeInfra
@@ -77,19 +77,19 @@ class AbstractNFFG(object):
 
   def add_link (self, edge_link):
     """
-    Add a static or dynamic infrastructure link to the NF-FG
+    Add a static or dynamic infrastructure link to the NF-FG.
     """
     raise NotImplementedError("Not implemented yet!")
 
   def add_sglink (self, edge_sglink):
     """
-    Add an SG link to the NF-FG
+    Add an SG link to the NF-FG.
     """
     raise NotImplementedError("Not implemented yet!")
 
   def add_req (self, edge_req):
     """
-    Add a requirement link to the NF-FG
+    Add a requirement link to the NF-FG.
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -153,43 +153,43 @@ class NFFG(AbstractNFFG):
 
   def add_nf (self, node_nf):
     """
-    Add a single NF node to the NF-FG
+    Add a single NF node to the NF-FG.
     """
     pass
 
   def add_sap (self, node_sap):
     """
-    Add a single SAP node to the NF-FG
+    Add a single SAP node to the NF-FG.
     """
     pass
 
   def add_infra (self, node_infra):
     """
-    Add a single infrastructure node to the NF-FG
+    Add a single infrastructure node to the NF-FG.
     """
     pass
 
   def add_link (self, edge_link):
     """
-    Add a static or dynamic infrastructure link to the NF-FG
+    Add a static or dynamic infrastructure link to the NF-FG.
     """
     pass
 
   def add_sglink (self, edge_sglink):
     """
-    Add an SG link to the NF-FG
+    Add an SG link to the NF-FG.
     """
     pass
 
   def add_req (self, edge_req):
     """
-    Add a requirement link to the NF-FG
+    Add a requirement link to the NF-FG.
     """
     pass
 
   def del_node (self, id):
     """
-    Delete a single node from the NF-FG
+    Delete a single node from the NF-FG.
     """
     pass
 
@@ -232,7 +232,7 @@ class NFFG(AbstractNFFG):
 
   def init_from_json (self, json_data):
     """
-    Parse, create and initialize the NFFG object from JSON data
+    Parse, create and initialize the NFFG object from JSON data.
 
     :param json_data: NF-FG represented in JSON format
     :type json_data: str
@@ -242,7 +242,7 @@ class NFFG(AbstractNFFG):
 
   def init_from_xml (self, xml_data):
     """
-    Parse, create and initialize the NFFG object from XML data
+    Parse, create and initialize the NFFG object from XML data.
 
     :param xml_data: NF-FG represented in XML format
     :type xml_data: str
@@ -261,7 +261,7 @@ class NFFG(AbstractNFFG):
 
   def dump_to_json (self):
     """
-    Return a JSON string represent this instance
+    Return a JSON string represent this instance.
 
     :return: JSON formatted string
     :rtype: str

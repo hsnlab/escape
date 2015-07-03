@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains abstract classes for concrete layer API modules
+Contains abstract classes for concrete layer API modules.
 """
 from SocketServer import ThreadingMixIn
 import urlparse
@@ -30,11 +30,11 @@ from pox.core import core
 
 class AbstractAPI(EventMixin):
   """
-  Abstract class for UNIFY's API
+  Abstract class for UNIFY's API.
 
-  Contain common functions
+  Contain common functions.
 
-  Follows Facade design pattern -> simplified entry/exit point ot the layers
+  Follows Facade design pattern -> simplified entry/exit point ot the layers.
   """
   # Default value for logger. Should be overwritten by child classes
   _core_name = "AbstractAPI"
@@ -45,9 +45,9 @@ class AbstractAPI(EventMixin):
 
   def __init__ (self, standalone=False, **kwargs):
     """
-    Abstract class constructor
+    Abstract class constructor.
 
-    Handle core registration along with :func:`_all_dependencies_met()`
+    Handle core registration along with :func:`_all_dependencies_met()`.
 
     Set given parameters (standalone parameter is mandatory) automatically as::
 
@@ -90,7 +90,7 @@ class AbstractAPI(EventMixin):
 
   def _all_dependencies_met (self):
     """
-    Called when every component on which depends are initialized on POX core
+    Called when every component on which depends are initialized on POX core.
 
     Contain dependency relevant initialization.
 
@@ -134,10 +134,10 @@ class AbstractAPI(EventMixin):
 
   def initialize (self):
     """
-    Init function for child API classes to simplify dynamic initialization
+    Init function for child API classes to simplify dynamic initialization.
 
     Called when every component on which depends are initialized and registered
-    in POX core
+    in POX core.
 
     This function should be overwritten by child classes.
 
@@ -147,9 +147,9 @@ class AbstractAPI(EventMixin):
 
   def shutdown (self, event):
     """
-    Finalization, deallocation, etc. of actual component
+    Finalization, deallocation, etc. of actual component.
 
-    Should be overwritten by child classes
+    Should be overwritten by child classes.
 
     :param event: shutdown event raised by POX core
     :type event: GoingDownEvent
@@ -160,7 +160,7 @@ class AbstractAPI(EventMixin):
   @staticmethod
   def _read_json_from_file (graph_file):
     """
-    Read the given file and return a string formatted as JSON
+    Read the given file and return a string formatted as JSON.
 
     :param graph_file: file path
     :type graph_file: str
@@ -175,7 +175,7 @@ class AbstractAPI(EventMixin):
 
   def __str__ (self):
     """
-    Print class type and non-private attributes with their types for debugging
+    Print class type and non-private attributes with their types for debugging.
 
     :return: specific string
     :rtype: str
@@ -191,15 +191,15 @@ class AbstractAPI(EventMixin):
 
 class RESTServer(HTTPServer, ThreadingMixIn):
   """
-  Base HTTP server for RESTful API
+  Base HTTP server for RESTful API.
 
-  Initiate an :class:`HTTPServer` and run it in different thread
+  Initiate an :class:`HTTPServer` and run it in different thread.
   """
 
   def __init__ (self, RequestHandlerClass, address='127.0.0.1', port=8008):
     """
       Set up an :class:`BaseHTTPServer.HTTPServer` in a different
-      thread
+      thread.
 
       :param RequestHandlerClass: Class of a handler which handles HTTP request
       :type RequestHandlerClass: AbstractRequestHandler
@@ -216,14 +216,14 @@ class RESTServer(HTTPServer, ThreadingMixIn):
 
   def start (self):
     """
-    Start RESTServer thread
+    Start RESTServer thread.
     """
     self.started = True
     self._thread.start()
 
   def stop (self):
     """
-    Stop RESTServer thread
+    Stop RESTServer thread.
     """
     if self.started:
       self.shutdown()
@@ -242,7 +242,7 @@ class RESTServer(HTTPServer, ThreadingMixIn):
 
 class RESTError(Exception):
   """
-  Exception class for REST errors
+  Exception class for REST errors.
   """
 
   def __init__ (self, msg=None, code=0):
@@ -264,11 +264,11 @@ class RESTError(Exception):
 
 class AbstractRequestHandler(BaseHTTPRequestHandler):
   """
-  Minimalistic RESTful API for Layer APIs
+  Minimalistic RESTful API for Layer APIs.
 
   Handle /escape/* URLs.
 
-  Method calling permissions represented in escape_intf dictionary
+  Method calling permissions represented in escape_intf dictionary.
 
   .. warning::
     This class is out of the context of the recoco's co-operative thread
@@ -318,7 +318,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def do_OPTIONS (self):
     """
-    Handling unsupported HTTP verbs
+    Handling unsupported HTTP verbs.
 
     :return: None
     """
@@ -327,7 +327,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def do_HEAD (self):
     """
-    Handling unsupported HTTP verbs
+    Handling unsupported HTTP verbs.
 
     :return: None
     """
@@ -336,7 +336,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def do_TRACE (self):
     """
-    Handling unsupported HTTP verbs
+    Handling unsupported HTTP verbs.
 
     :return: None
     """
@@ -345,7 +345,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def do_CONNECT (self):
     """
-    Handling unsupported HTTP verbs
+    Handling unsupported HTTP verbs.
 
     :return: None
     """
@@ -355,7 +355,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   def _process_url (self):
     """
     Split HTTP path and call the carved function if it is defined in this class
-    and in request_perm
+    and in request_perm.
 
     :return: None
     """
@@ -391,17 +391,17 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def _parse_json_body (self):
     """
-    Parse HTTP request body in JSON format
+    Parse HTTP request body in JSON format.
 
     .. note::
 
-      Call only once by HTTP request
+      Call only once by HTTP request.
 
     .. note::
 
-      Parsed JSON object is Unicode
+      Parsed JSON object is Unicode.
 
-    GET, DELETE messages don't have body - return empty dict by default
+    GET, DELETE messages don't have body - return empty dict by default.
 
     :return: request body in JSON format
     :rtype: dict
@@ -436,7 +436,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def send_REST_headers (self):
     """
-    Set the allowed REST verbs as an HTTP header (Allow)
+    Set the allowed REST verbs as an HTTP header (Allow).
 
     :return: None
     """
@@ -450,7 +450,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def send_acknowledge (self, msg='{"result": "Accepted"}'):
     """
-    Send back acknowledge message
+    Send back acknowledge message.
 
     :param msg: response body
     :param msg: dict
@@ -466,7 +466,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def _send_json_response (self, data, encoding='utf-8'):
     """
-    Send requested data in JSON format
+    Send requested data in JSON format.
 
     :param data: data in JSON format
     :type data: dict
@@ -488,7 +488,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   def send_error (self, code, message=None):
     """
     Override original function to send back allowed HTTP verbs and set format
-    to JSON
+    to JSON.
     """
     try:
       short, long = self.responses[code]
@@ -512,31 +512,31 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def log_error (self, mformat, *args):
     """
-    Overwritten to use POX logging mechanism
+    Overwritten to use POX logging mechanism.
     """
     self.log.warning("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
 
   def log_message (self, mformat, *args):
     """
-    Disable logging of incoming messages
+    Disable logging of incoming messages.
     """
     pass
 
   def log_full_message (self, mformat, *args):
     """
-    Overwritten to use POX logging mechanism
+    Overwritten to use POX logging mechanism.
     """
     self.log.debug("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
 
   def _proceed_API_call (self, function, *args, **kwargs):
     """
-    Fail-safe method to call API function
+    Fail-safe method to call API function.
 
-    The cooperative micro-task context is handled by actual APIs
+    The cooperative micro-task context is handled by actual APIs.
 
-    Should call this with params, not directly the function of actual API
+    Should call this with params, not directly the function of actual API.
 
     :param function: function name
     :type function: str

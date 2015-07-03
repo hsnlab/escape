@@ -1,8 +1,10 @@
 *il_API.py* module
 ==================
 
+:any:`DeploymentFinishedEvent` can send status info about NFFG deployment.
+
 :any:`InfrastructureLayerAPI` represents the IL layer and implement all
-related functionality
+related functionality.
 
 Module contents
 ---------------

@@ -82,7 +82,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
 
   def _handle_ConnectionUp (self, event):
     """
-    Handle incoming OpenFlow connections
+    Handle incoming OpenFlow connections.
     """
     log.debug("Handle connection by %s" % self.task_name)
     if self.filter_connections(event):
@@ -93,7 +93,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
 
   def _handle_ConnectionDown (self, event):
     """
-    Handle disconnected device
+    Handle disconnected device.
     """
     log.debug("Handle disconnection by %s" % self.task_name)
     event = DomainChangedEvent(domain=self.name,
@@ -106,7 +106,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     Install routes related to the managed domain. Translates the generic
     format of the routes into OpenFlow flow rules.
 
-    Routes are computed by the ControllerAdapter's main adaptation algorithm
+    Routes are computed by the ControllerAdapter's main adaptation algorithm.
 
     :param routes: list of routes
     :type routes: :any:`NFFG`
@@ -119,10 +119,10 @@ class POXDomainAdapter(AbstractDomainAdapter):
 
 class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
   """
-  Adapter class to handle communication with Mininet domain
+  Adapter class to handle communication with Mininet domain.
 
   Implement VNF managing API using direct access to the
-  :class:`mininet.net.Mininet` object
+  :class:`mininet.net.Mininet` object.
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent, DeployEvent}
@@ -130,7 +130,7 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
 
   def __init__ (self, mininet=None):
     """
-    Init
+    Init.
 
     :param mininet: set pre-defined network (optional)
     :type mininet: :any`mininet.net.Mininet`
@@ -150,6 +150,7 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
 
   def check_topology (self):
     """
+    Checker function for domain polling.
     """
     return self.mininet.get_topology()
 
@@ -192,7 +193,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
   This class is devoted to start and stop CLICK-based VNFs that will be
   connected to a mininet switch.
 
-  Follows the MixIn design pattern approach to support NETCONF functionality
+  Follows the MixIn design pattern approach to support NETCONF functionality.
   """
   # RPC namespace
   RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'
@@ -313,7 +314,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     this NETCONF Agent. If an input of vnf_id is set, only that VNF's data
     will be sent back. Most of the data this RPC replies is used for DEBUG,
     however 'status' is useful for indicating to upper layers whether a VNF
-    is UP_AND_RUNNING
+    is UP_AND_RUNNING.
 
     :param vnf_id: VNF ID
     :type vnf_id: str
@@ -336,7 +337,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
 
   def __init__ (self, url):
     """
-    Init
+    Init.
 
     :param url: OpenStack RESTful API URL
     :type url: str
@@ -411,7 +412,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
 
 class InternalDomainManager(AbstractDomainManager):
   """
-  Manager class to handle communication with internally emulated network
+  Manager class to handle communication with internally emulated network.
 
   .. note::
     Uses :class:`MininetDomainAdapter` for managing the emulated network and
@@ -483,10 +484,10 @@ class InternalDomainManager(AbstractDomainManager):
 
   def install_nffg (self, nffg_part):
     """
-    Install an :any:`NFFG` related to the internal domain
+    Install an :any:`NFFG` related to the internal domain.
 
     Split given :any:`NFFG` to a set of NFs need to be initiated and a set of
-    routes/connections between the NFs
+    routes/connections between the NFs.
 
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
@@ -625,7 +626,7 @@ class OpenStackDomainManager(AbstractDomainManager):
 
 class DockerDomainManager(AbstractDomainManager):
   """
-  Adapter class to handle communication component in a Docker domain
+  Adapter class to handle communication component in a Docker domain.
 
   .. warning::
     Not implemented yet!

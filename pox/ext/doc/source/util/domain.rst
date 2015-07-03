@@ -1,8 +1,12 @@
 *domain.py* module
 ==================
 
+Implement the supporting classes for domain adapters.
+
 :any:`DomainChangedEvent` signals changes for :any:`ControllerAdapter` in
 an unified way.
+
+:any:`DeployEvent` can send NFFG to Infrastructure layer for deploying.
 
 :any:`AbstractDomainManager` contains general logic for top domain managers.
 
@@ -14,12 +18,13 @@ VNFStarter YANG description.
 :any:`OpenStackAPI` defines the interface for communication with OpenStack
 domain.
 
+:any:`AbstractRESTAdapter` contains the general functions for communication
+through an HTTP/RESTful API.
+
 Requirements::
 
   sudo pip install requests
 
-:any:`AbstractRESTAdapter` contains the general functions for communication
-through an HTTP/RESTful API.
 
 Module contents
 ---------------

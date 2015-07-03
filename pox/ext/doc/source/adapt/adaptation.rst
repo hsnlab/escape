@@ -1,13 +1,20 @@
 *adaptation.py* module
 ======================
 
-:any:`ControllerAdapter` implements the centralized functionality of
-high-level adaptation and installation of :any:`NFFG`
+Contains classes relevant to the main adaptation function of the Controller
+Adaptation Sublayer.
 
-:any:`DomainVirtualizer` implement the standard virtualization/generalization
-logic of the Resource Orchestration Sublayer
+:any:`ComponentConfigurator` creates, initializes, stores and manages different
+adaptation components, i.e. derived classes of :any:`AbstractDomainManager` and
+:any:`AbstractDomainAdapter`.
 
-:any:`DomainResourceManager` stores and handles the global Virtualizer
+:any:`ControllerAdapter` implements the centralized functionality of high-level
+adaptation and installation of :any:`NFFG`.
+
+:any:`DomainVirtualizer` implements the standard virtualization/generalization
+logic of the Resource Orchestration Sublayer.
+
+:any:`DomainResourceManager` stores and manages the global Virtualizer.
 
 Module contents
 ---------------

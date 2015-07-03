@@ -51,7 +51,7 @@ class AbstractTopology(Topo):
 
 class BackupTopology(AbstractTopology):
   """
-  Topology class for testing purposes and serve as a fallback topology
+  Topology class for testing purposes and serve as a fallback topology.
   """
 
   def __init__ (self):
@@ -75,7 +75,7 @@ class InternalControllerProxy(RemoteController):
   def __init__ (self, name="InternalPOXController", ip='127.0.0.1', port=6653,
        **kwargs):
     """
-    Init
+    Init.
 
     :param name: name of the controller (default: InternalPOXController)
     :type name: str
@@ -88,7 +88,7 @@ class InternalControllerProxy(RemoteController):
 
   def checkListening (self):
     """
-    Check the controller port is open
+    Check the controller port is open.
     """
     listening = self.cmd("echo A | telnet -e A %s %d" % (self.ip, self.port))
     if 'Connected' not in listening:
@@ -132,7 +132,7 @@ class ESCAPENetworkBridge(object):
   @property
   def network (self):
     """
-    Internal network representation
+    Internal network representation.
 
     :return: network representation
     :rtype: :class:`mininet.net.Mininet`
@@ -149,7 +149,7 @@ class ESCAPENetworkBridge(object):
 
   def start_network (self):
     """
-    Start network
+    Start network.
     """
     log.debug("Starting Mininet network...")
     if self.__mininet is not None:
@@ -161,7 +161,7 @@ class ESCAPENetworkBridge(object):
 
   def stop_network (self):
     """
-    Stop network
+    Stop network.
     """
     log.debug("Shutting down Mininet network...")
     if self.__mininet is not None:
@@ -248,7 +248,7 @@ class ESCAPENetworkBuilder(object):
 
   def __init_from_NFFG (self, net, nffg):
     """
-    Initialize topology from :any:`NFFG`
+    Initialize topology from :any:`NFFG`.
 
     :param nffg: topology
     :type nffg: :any:`NFFG`
@@ -324,7 +324,7 @@ class ESCAPENetworkBuilder(object):
 
   def build (self, topology=None):
     """
-    Initialize network
+    Initialize network.
 
     :param topology: topology representation
     :type topology: :any:`NFFG` or :any:`dict` or :any:`AbstractTopology`

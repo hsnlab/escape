@@ -1,15 +1,18 @@
 *sas_API.py* module
 ===================
 
-:any:`InstantiateNFFGEvent` can send NF-FG to the lower layer
+Implements the platform and POX dependent logic for the Service Adaptation
+Sublayer.
 
-:any:`GetVirtResInfoEvent` can request virtual resource info from lower layer
+:any:`InstantiateNFFGEvent` can send NF-FG to the lower layer.
+
+:any:`GetVirtResInfoEvent` can request virtual resource info from lower layer.
 
 :any:`ServiceRequestHandler` implement the specific RESTful API functionality
-thereby realizes the UNIFY's U - Sl API
+thereby realizes the UNIFY's U - Sl API.
 
 :any:`ServiceLayerAPI` represents the SAS layer and implement all related
-functionality
+functionality.
 
 Module contents
 ---------------

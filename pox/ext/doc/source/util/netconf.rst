@@ -1,5 +1,8 @@
 *netconf.py* module
 ===================
+
+Implement the supporting classes for communication over NETCONF.
+
 Requirements::
 
   sudo apt-get install python-setuptools python-paramiko python-lxml \
@@ -9,7 +12,7 @@ Requirements::
 
 :any:`AbstractNETCONFAdapter` contains the main function for communication
 over NETCONF such as managing SSH channel, handling configuration, assemble
-RPC request and parse RPC reply
+RPC request and parse RPC reply.
 
 Module contents
 ---------------

@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains classes which implement :any:`NFFG`
-mapping functionality
+Contains classes which implement :any:`NFFG` mapping functionality.
 """
 
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
@@ -24,8 +23,7 @@ from pox.lib.revent.revent import Event
 
 class ESCAPEMappingStrategy(AbstractMappingStrategy):
   """
-  Implement a strategy to map initial :any:`NFFG`
-  into extended :any:`NFFG`
+  Implement a strategy to map initial :any:`NFFG` into extended :any:`NFFG`.
   """
 
   def __init__ (self):
@@ -37,14 +35,14 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
   @classmethod
   def map (cls, graph, resource):
     """
-    Default mapping algorithm of ESCAPEv2
+    Default mapping algorithm of ESCAPEv2.
 
     :param graph: Network Function forwarding Graph
-    :type graph: NFFG
+    :type graph: :any:`NFFG`
     :param resource: global virtual resource info
-    :type resource: NFFG
+    :type resource: :any:`NFFG`
     :return: mapped Network Function Forwarding Graph
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     log.debug(
       "Invoke mapping algorithm: %s on NF-FG(%s)" % (cls.__name__, graph.id))
@@ -57,15 +55,15 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
 
 class NFFGMappingFinishedEvent(Event):
   """
-  Event for signaling the end of NF-FG mapping
+  Event for signaling the end of NF-FG mapping.
   """
 
   def __init__ (self, nffg):
     """
-    Init
+    Init.
 
     :param nffg: NF-FG need to be installed
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     """
     super(NFFGMappingFinishedEvent, self).__init__()
     self.nffg = nffg
@@ -73,14 +71,14 @@ class NFFGMappingFinishedEvent(Event):
 
 class ResourceOrchestrationMapper(AbstractMapper):
   """
-  Helper class for mapping NF-FG on global virtual view
+  Helper class for mapping NF-FG on global virtual view.
   """
   # Events raised by this class
   _eventMixin_events = {NFFGMappingFinishedEvent}
 
   def __init__ (self):
     """
-    Init Resource Orchestrator mapper
+    Init Resource Orchestrator mapper.
 
     :return: None
     """
@@ -90,14 +88,14 @@ class ResourceOrchestrationMapper(AbstractMapper):
 
   def orchestrate (self, input_graph, resource_view):
     """
-    Orchestrate mapping of given NF-FG on given global resource
+    Orchestrate mapping of given NF-FG on given global resource.
 
     :param input_graph: Network Function Forwarding Graph
-    :type input_graph: NFFG
+    :type input_graph: :any:`NFFG`
     :param resource_view: global resource view
-    :type resource_view: DomainVirtualizer
+    :type resource_view: :any:`DomainVirtualizer`
     :return: mapped Network Function Forwarding Graph
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     log.debug("Request %s to launch orchestration on NF-FG(%s)..." % (
       self.__class__.__name__, input_graph.id))
@@ -122,10 +120,10 @@ class ResourceOrchestrationMapper(AbstractMapper):
 
   def _mapping_finished (self, nffg):
     """
-    Called from a separate thread when the mapping process is finished
+    Called from a separate thread when the mapping process is finished.
 
     :param nffg: mapped NF-FG
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     :return: None
     """
     log.debug("Inform actual layer API that NFFG mapping has been finished...")

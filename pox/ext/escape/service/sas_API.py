@@ -13,7 +13,7 @@
 # limitations under the License.
 """
 Implements the platform and POX dependent logic for the Service Adaptation
-Sublayer
+Sublayer.
 """
 import repr
 
@@ -30,15 +30,15 @@ from pox.lib.revent.revent import Event
 
 class InstantiateNFFGEvent(Event):
   """
-  Event for passing NFFG (mapped SG) to Orchestration layer
+  Event for passing NFFG (mapped SG) to Orchestration layer.
   """
 
   def __init__ (self, nffg):
     """
-    Init
+    Init.
 
     :param nffg: NF-FG need to be initiated
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     """
     super(InstantiateNFFGEvent, self).__init__()
     self.nffg = nffg
@@ -46,12 +46,12 @@ class InstantiateNFFGEvent(Event):
 
 class GetVirtResInfoEvent(Event):
   """
-  Event for requesting virtual resource info from Orchestration layer
+  Event for requesting virtual resource info from Orchestration layer.
   """
 
   def __init__ (self, sid):
     """
-    Init
+    Init.
 
     :param sid: Service layer ID
     :type sid: int
@@ -63,7 +63,7 @@ class GetVirtResInfoEvent(Event):
 
 class ServiceRequestHandler(AbstractRequestHandler):
   """
-  Request Handler for Service Adaptation SubLayer
+  Request Handler for Service Adaptation SubLayer.
 
   .. warning::
     This class is out of the context of the recoco's co-operative thread
@@ -87,7 +87,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
   def echo (self):
     """
-    Test function for REST-API
+    Test function for REST-API.
 
     :return: None
     """
@@ -129,11 +129,11 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
 class ServiceLayerAPI(AbstractAPI):
   """
-  Entry point for Service Adaptation Sublayer
+  Entry point for Service Adaptation Sublayer.
 
-  Maintain the contact with other UNIFY layers
+  Maintain the contact with other UNIFY layers.
 
-  Implement the U - Sl reference point
+  Implement the U - Sl reference point.
   """
   # Define specific name for core object as pox.core.<_core_name>
   _core_name = LAYER_NAME
@@ -193,7 +193,7 @@ class ServiceLayerAPI(AbstractAPI):
   def _initiate_rest_api (self, handler=ServiceRequestHandler,
        address='localhost', port=8008):
     """
-    Initialize and set up REST API in a different thread
+    Initialize and set up REST API in a different thread.
 
     :param address: server address, default localhost
     :type address: str
@@ -208,7 +208,7 @@ class ServiceLayerAPI(AbstractAPI):
 
   def _initiate_gui (self):
     """
-    Initiate and set up GUI
+    Initiate and set up GUI.
     """
     # TODO - set up and initiate MiniEdit here
     pass
@@ -216,10 +216,10 @@ class ServiceLayerAPI(AbstractAPI):
   def _handle_SGMappingFinishedEvent (self, event):
     """
     Handle SGMappingFinishedEvent and proceed with  :class:`NFFG
-    <escape.util.nffg.NFFG>` instantiation
+    <escape.util.nffg.NFFG>` instantiation.
 
     :param event: event object
-    :type event: SGMappingFinishedEvent
+    :type event: :any:`SGMappingFinishedEvent`
     :return: None
     """
     self._instantiate_NFFG(event.nffg)
@@ -231,10 +231,10 @@ class ServiceLayerAPI(AbstractAPI):
   @schedule_as_coop_task
   def request_service (self, sg):
     """
-    Initiate a Service Graph (UNIFY U-Sl API)
+    Initiate a Service Graph (UNIFY U-Sl API).
 
     :param sg: service graph instance
-    :type sg: NFFG
+    :type sg: :any:`NFFG`
     :return: None
     """
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
@@ -249,12 +249,12 @@ class ServiceLayerAPI(AbstractAPI):
   def _instantiate_NFFG (self, nffg):
     """
     Send NFFG to Resource Orchestration Sublayer in an implementation-specific
-    way
+    way.
 
-    General function which is used from microtask and Python thread also
+    General function which is used from microtask and Python thread also.
 
     :param nffg: mapped Service Graph
-    :type nffg: NFFG
+    :type nffg: :any:`NFFG`
     :return: None
     """
     # Sending mapped SG / NF-FG to Orchestration layer as an Event
@@ -267,14 +267,14 @@ class ServiceLayerAPI(AbstractAPI):
 
   def _handle_MissingVirtualViewEvent (self, event):
     """
-    Request virtual resource info from Orchestration layer (UNIFY Sl - Or API)
+    Request virtual resource info from Orchestration layer (UNIFY Sl - Or API).
 
-    Invoked when a :class:`MissingVirtualViewEvent` raised
+    Invoked when a :class:`MissingVirtualViewEvent` raised.
 
-    Service layer is identified with the sid value automatically
+    Service layer is identified with the sid value automatically.
 
     :param event: event object
-    :type event: MissingVirtualViewEvent
+    :type event: :any:`MissingVirtualViewEvent`
     :return: None
     """
     log.getChild('API').debug(
@@ -285,10 +285,10 @@ class ServiceLayerAPI(AbstractAPI):
   def _handle_VirtResInfoEvent (self, event):
     """
     Save requested virtual resource info as an :class:`ESCAPEVirtualizer
-    <escape.orchest.virtualization_mgmt.ESCAPEVirtualizer>`
+    <escape.orchest.virtualization_mgmt.ESCAPEVirtualizer>`.
 
     :param event: event object
-    :type event: VirtResInfoEvent
+    :type event: :any:`VirtResInfoEvent`
     :return: None
     """
     log.getChild('API').debug(

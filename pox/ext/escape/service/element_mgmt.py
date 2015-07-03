@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains classes relevant to element management
+Contains classes relevant to element management.
 """
 
 
 class AbstractElementManager(object):
   """
-  Abstract class for element management components (EM)
+  Abstract class for element management components (EM).
 
   .. warning::
     Not implemented yet!
@@ -33,7 +33,7 @@ class AbstractElementManager(object):
 
 class ClickManager(AbstractElementManager):
   """
-  Manager class for specific VNF management based on Clicky
+  Manager class for specific VNF management based on Clicky.
 
   .. warning::
     Not implemented yet!
@@ -41,6 +41,6 @@ class ClickManager(AbstractElementManager):
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(ClickManager, self).__init__()

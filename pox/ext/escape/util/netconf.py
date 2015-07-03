@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Implement the supporting classes for communication over NETCONF
+Implement the supporting classes for communication over NETCONF.
 """
 from lxml import etree
 from StringIO import StringIO
@@ -25,13 +25,13 @@ from ncclient.xml_ import new_ele, sub_ele
 
 class AbstractNETCONFAdapter(object):
   """
-  Abstract class for various Adapters rely on NETCONF protocol (:rfc:`4741`)
+  Abstract class for various Adapters rely on NETCONF protocol (:rfc:`4741`).
 
   Contains basic functions for managing connection and invoking RPC calls.
   Configuration management can be handled by the external
-  :class:`ncclient.manager.Manager` class exposed by the manager property
+  :class:`ncclient.manager.Manager` class exposed by the manager property.
 
-  Follows the Adapter design pattern
+  Follows the Adapter design pattern.
   """
   # NETCONF namespace - u'urn:ietf:params:xml:ns:netconf:base:1.0'
   NETCONF_NAMESPACE = manager.BASE_NS_1_0
@@ -41,7 +41,7 @@ class AbstractNETCONFAdapter(object):
   def __init__ (self, server, port, username, password, timeout=30,
        debug=False):
     """
-    Initialize connection parameters
+    Initialize connection parameters.
 
     :param server: server address
     :type server: str
@@ -130,7 +130,7 @@ class AbstractNETCONFAdapter(object):
     This function will download the configuration of the NETCONF agent in an
     XML format. If source is None then the running config will be downloaded.
     Other configurations are netconf specific (:rfc:`6241`) - running,
-    candidate, startup
+    candidate, startup.
 
     :param source: NETCONF specific configuration source (default: running)
     :type source: str
@@ -153,7 +153,7 @@ class AbstractNETCONFAdapter(object):
     This process works as yangcli's GET function. A lot of information can be
     got from the running NETCONF agent. If an xpath-based expression is also
     set, the results can be filtered. The results are not printed out in a
-    file, it's only printed to stdout
+    file, it's only printed to stdout.
 
     :param expr: xpath-based expression
     :type expr: str
@@ -251,7 +251,7 @@ class AbstractNETCONFAdapter(object):
   def __remove_namespace (self, xml_element, namespace=None):
     """
     Own function to remove the ncclient's namespace prefix, because it causes
-    "definition not found error" if OWN modules and RPCs are being used
+    "definition not found error" if OWN modules and RPCs are being used.
 
     :param xml_element: XML element
     :type xml_element: :class:`lxml.etree.ElementTree`
@@ -360,7 +360,7 @@ class AbstractNETCONFAdapter(object):
   def call_RPC (self, rpc_name, no_rpc_error=False, **params):
     """
     Call an RPC given by rpc_name. If `no_rpc_error` is set returns with a
-    dict instead of raising :class:`RPCError`
+    dict instead of raising :class:`RPCError`.
 
     :param rpc_name: RPC name
     :type rpc_name: str

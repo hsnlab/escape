@@ -1,12 +1,16 @@
 *virtualization_mgmt.py* module
 ===============================
 
-:any:`AbstractVirtualizer` contains the  central logic of Virtualizers
+Contains components relevant to virtualization of resources and views.
+
+:any:`AbstractVirtualizer` contains the  central logic of Virtualizers.
 
 :any:`ESCAPEVirtualizer` implement the standard virtualization logic of the
-Resource Orchestration Sublayer
+Resource Orchestration Sublayer.
 
-:any:`VirtualizerManager` stores and handles the virtualizers
+:any:`MissingGlobalViewEvent` can signal missing global view.
+
+:any:`VirtualizerManager` stores and handles the virtualizers.
 
 Module contents
 ---------------

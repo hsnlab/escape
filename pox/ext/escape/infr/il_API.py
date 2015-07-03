@@ -38,11 +38,11 @@ class DeploymentFinishedEvent(Event):
 
 class InfrastructureLayerAPI(AbstractAPI):
   """
-  Entry point for Infrastructure Layer (IL)
+  Entry point for Infrastructure Layer (IL).
 
-  Maintain the contact with other UNIFY layers
+  Maintain the contact with other UNIFY layers.
 
-  Implement a specific part of the Co - Rm reference point
+  Implement a specific part of the Co - Rm reference point.
   """
   # Define specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
@@ -108,7 +108,7 @@ class InfrastructureLayerAPI(AbstractAPI):
   @schedule_as_coop_task
   def _handle_DeployNFFGEvent (self, event):
     """
-    Install mapped NFFG part into the emulated network
+    Install mapped NFFG part into the emulated network.
 
     :param event:event object
     :return: :any:`DeployNFFGEvent`

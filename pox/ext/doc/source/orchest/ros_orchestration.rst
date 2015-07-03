@@ -1,10 +1,15 @@
 *ros_orchestration.py* module
 =============================
 
-:any:`ResourceOrchestrator` orchestrates :any:`NFFG` mapping and centralize
-layer logic
+Contains classes relevant to Resource Orchestration Sublayer functionality.
 
-:any:`NFFGManager` stores and handles Network Function Forwarding Graphs
+:any:`ResourceOrchestrator` orchestrates :any:`NFFG` mapping and centralize
+layer logic.
+
+:any:`NFFGManager` stores and handles Network Function Forwarding Graphs.
+
+:any:`NFIBManager` handles the Network Function Information Base and hides
+implementation dependent logic.
 
 Module contents
 ---------------

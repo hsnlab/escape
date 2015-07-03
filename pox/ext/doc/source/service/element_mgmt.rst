@@ -1,9 +1,11 @@
 *element_mgmt.py* module
 ========================
 
-:any:`AbstractElementManager` is an abstract class for element managers
+Contains classes relevant to element management.
 
-:any:`ClickManager` represent the interface to Click elements
+:any:`AbstractElementManager` is an abstract class for element managers.
+
+:any:`ClickManager` represent the interface to Click elements.
 
 Module contents
 ---------------

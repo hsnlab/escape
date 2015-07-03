@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Implement the supporting classes for domain adapters
+Implement the supporting classes for domain adapters.
 """
 import urlparse
 
@@ -26,11 +26,11 @@ from pox.lib.revent import EventMixin, Event
 
 class DomainChangedEvent(Event):
   """
-  Event class for signaling all kind of change(s) in specific domain
+  Event class for signaling all kind of change(s) in specific domain.
 
   This event's purpose is to hide the domain specific operations and give a
   general and unified way to signal domain changes to ControllerAdapter in
-  order to handle all the changes in the same function/algorithm
+  order to handle all the changes in the same function/algorithm.
   """
 
   type = enum('DEVICE_UP', 'DEVICE_DOWN', 'LINK_UP', 'LINK_DOWN')
@@ -55,9 +55,9 @@ class DomainChangedEvent(Event):
 
 class DeployEvent(Event):
   """
-  Event class for signaling NF-FG deployment to infrastructure layer API
+  Event class for signaling NF-FG deployment to infrastructure layer API.
 
-  Used by DirectMininetAdapter for internal NF-FG deployment
+  Used by DirectMininetAdapter for internal NF-FG deployment.
   """
 
   def __init__ (self, nffg_part):
@@ -81,7 +81,7 @@ class AbstractDomainManager(EventMixin):
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(AbstractDomainManager, self).__init__()
     # Timer for polling function
@@ -94,7 +94,7 @@ class AbstractDomainManager(EventMixin):
     Abstract function for component initialization.
 
     :param configurator: component configurator for configuring adapters
-    :type configurator: :any:`DomainConfigurator`
+    :type configurator: :any:`ComponentConfigurator`
 
     :return: None
     """
@@ -234,7 +234,7 @@ class AbstractDomainAdapter(EventMixin):
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(AbstractDomainAdapter, self).__init__()
     self._timer = None

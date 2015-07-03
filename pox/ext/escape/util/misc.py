@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains miscellaneous helper functions
+Contains miscellaneous helper functions.
 """
 import copy
 from distutils.util import strtobool
@@ -32,7 +32,7 @@ def schedule_as_coop_task (func):
   """
   Decorator functions for running functions in an asynchronous way as a
   microtask in recoco's cooperative multitasking context (in which POX was
-  written)
+  written).
 
   :param func: decorated function
   :type func: func
@@ -50,9 +50,9 @@ def schedule_as_coop_task (func):
 
 def call_as_coop_task (func, *args, **kwargs):
   """
-  Schedule a coop microtask and run the given function with parameters in it
+  Schedule a coop microtask and run the given function with parameters in it.
 
-  Use POX core logic directly
+  Use POX core logic directly.
 
   :param func: function need to run
   :type func: func
@@ -92,7 +92,7 @@ def enum (*sequential, **named):
 
 def quit_with_error (msg=None, logger="core"):
   """
-  Helper function for quitting in case of an error
+  Helper function for quitting in case of an error.
 
   :param msg: error message (optional)
   :type msg: str
@@ -112,12 +112,12 @@ def quit_with_error (msg=None, logger="core"):
 class SimpleStandaloneHelper(object):
   """
   Helper class for layer APIs to catch events and handle these in separate
-  handler functions
+  handler functions.
   """
 
   def __init__ (self, container, cover_name):
     """
-    Init
+    Init.
 
     :param container: Container class reference
     :type: EventMixin
@@ -133,7 +133,7 @@ class SimpleStandaloneHelper(object):
 
   def _register_listeners (self):
     """
-    Register event listeners
+    Register event listeners.
 
     If a listener is explicitly defined in the class use this function
     otherwise use the common logger function
@@ -150,7 +150,7 @@ class SimpleStandaloneHelper(object):
 
   def _log_event (self, event):
     """
-    Log given event
+    Log given event.
 
     :param event: Event object which need to be logged
     :type event: Event
@@ -191,7 +191,7 @@ class ESCAPEConfig(object):
 
   def __init__ (self, default=None):
     """
-    Init configuration from given data or an empty dict
+    Init configuration from given data or an empty dict.
 
     :param default: default configuration
     :type default: dict
@@ -201,7 +201,7 @@ class ESCAPEConfig(object):
 
   def add_cfg (self, cfg):
     """
-    Override configuration
+    Override configuration.
 
     :param cfg: new configuration
     :type cfg: dict
@@ -216,10 +216,9 @@ class ESCAPEConfig(object):
 
     .. note::
       The CONFIG is updated per data under the Layer entries. This means that
-      the
-      minimal amount of data have to given is the hole sequence or collection
-      under the appropriate key. E.g. the hole data under the 'STRATEGY' key in
-      'orchestration' layer.
+      the minimal amount of data have to given is the hole sequence or
+      collection under the appropriate key. E.g. the hole data under the
+      'STRATEGY' key in 'orchestration' layer.
 
     :param config: config file name relative to pox.py (optional)
     :type config: str
@@ -360,8 +359,8 @@ class ESCAPEConfig(object):
   def get_component_params (self, component):
     """
     Return with the initial parameters of the given component defined in CONFIG.
-    The param's name must be identical with the attribute name of the
-    component constructor.
+    The param's name must be identical with the attribute name of the component
+    constructor.
 
     :param component: component name
     :type component: str

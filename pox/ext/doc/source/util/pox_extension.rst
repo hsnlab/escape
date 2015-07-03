@@ -1,10 +1,14 @@
 *pox_extension.py* module
 =========================
 
-:any:`OpenFlowBridge` is a special version of OpenFlow event originator class
+Override and extend internal POX components to achieve ESCAPE-desired behaviour.
+
+:any:`OpenFlowBridge` is a special version of OpenFlow event originator class.
 
 :any:`ExtendedOFConnectionArbiter` dispatches incoming OpenFlow connections to
-fit ESCAPEv2
+fit ESCAPEv2.
+
+:any:`ESCAPEInteractiveHelper` contains helper function for debugging.
 
 Module contents
 ---------------

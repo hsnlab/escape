@@ -1,11 +1,15 @@
 *ros_mapping.py* module
 =======================
 
+Contains classes which implement :any:`NFFG` mapping functionality.
+
 :any:`ESCAPEMappingStrategy` implements a default :any:`NFFG` mapping algorithm
-of ESCAPEv2
+of ESCAPEv2.
+
+:any:`NFFGMappingFinishedEvent` can signal the state of NFFG mapping.
 
 :any:`ResourceOrchestrationMapper` perform the supplementary tasks for
-:any:`NFFG` mapping
+:any:`NFFG` mapping.
 
 Module contents
 ---------------
