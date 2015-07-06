@@ -219,6 +219,16 @@ class ESCAPEInteractiveHelper(object):
     print core.adaptation.controller_adapter.domains.components[
       'OPENSTACK'].rest_adapter._response.text
 
+  def config (self):
+    """
+    Dump running config (CONFIG)
+
+    :return: None
+    """
+    import escape
+
+    escape.CONFIG.dump()
+
 
 # Pre-register our helper class
 ESCAPEInteractiveHelper.init()

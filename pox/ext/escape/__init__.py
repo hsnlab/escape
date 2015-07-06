@@ -32,45 +32,45 @@ __status__ = "Prototype"
 
 # Default configuration object which contains static and running
 # configuration for Layer APIs, DomainManagers, Adapters and other components
-cfg = {'service': {  # Service Adaptation Sublayer
-                     'STRATEGY': {'module': 'escape.service.sas_mapping',
-                                  'class': 'DefaultServiceMappingStrategy',
-                                  'THREADED': True}},
-       'orchestration': {  # Resource Orchestration Sublayer
-                           'STRATEGY': {'module': 'escape.orchest.ros_mapping',
-                                        'class': 'ESCAPEMappingStrategy',
-                                        'THREADED': True}},
-       'adaptation': {  # Controller Adaptation Sublayer
+cfg = {"service": {  # Service Adaptation Sublayer
+                     "STRATEGY": {"module": "escape.service.sas_mapping",
+                                  "class": "DefaultServiceMappingStrategy",
+                                  "THREADED": True}},
+       "orchestration": {  # Resource Orchestration Sublayer
+                           "STRATEGY": {"module": "escape.orchest.ros_mapping",
+                                        "class": "ESCAPEMappingStrategy",
+                                        "THREADED": True}},
+       "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        'DEFAULTS': ('OPENSTACK',),
+                        "DEFAULTS": ("OPENSTACK",),
                         # Specific Domain Adapters for DomainManagers
-                        'POX': {'module': 'escape.adapt.components',
-                                'class': "POXDomainAdapter",
-                                'name': "InternalOFController"},
-                        'MININET': {'module': 'escape.adapt.components',
-                                    'class': "MininetDomainAdapter"},
-                        "VNFStarter": {'module': 'escape.adapt.components',
+                        "POX": {"module": "escape.adapt.components",
+                                "class": "POXDomainAdapter",
+                                "name": "InternalOFController"},
+                        "MININET": {"module": "escape.adapt.components",
+                                    "class": "MininetDomainAdapter"},
+                        "VNFStarter": {"module": "escape.adapt.components",
                                        "class": "VNFStarterAdapter",
                                        "username": "mininet",
                                        "password": "mininet",
                                        "server": "192.168.12.128", "port": 830},
-                        "OpenStack-REST": {'module': 'escape.adapt.components',
+                        "OpenStack-REST": {"module": "escape.adapt.components",
                                            "class": "OpenStackRESTAdapter",
-                                           'url': "http://localhost:8080"},
+                                           "url": "http://localhost:8080"},
                         # Domain Managers
-                        'INTERNAL': {'module': 'escape.adapt.components',
-                                     'class': "InternalDomainManager",
-                                     'poll': True},
-                        'OPENSTACK': {'module': 'escape.adapt.components',
-                                      'class': "OpenStackDomainManager",
-                                      'poll': True},
-                        'DOCKER': {'module': 'escape.adapt.components',
-                                   'class': "DockerDomainManager"}},
-       'infrastructure': {  # Infrastructure Layer
-                            'NETWORK-OPTS': None,  # Additional opts for Mininet
-                            'FALLBACK-TOPO': {'module': "escape.infr.topology",
-                                              'class': "BackupTopology"},
-                            'SHUTDOWN-CLEAN': True}}
+                        "INTERNAL": {"module": "escape.adapt.components",
+                                     "class": "InternalDomainManager",
+                                     "poll": True},
+                        "OPENSTACK": {"module": "escape.adapt.components",
+                                      "class": "OpenStackDomainManager",
+                                      "poll": True},
+                        "DOCKER": {"module": "escape.adapt.components",
+                                   "class": "DockerDomainManager"}},
+       "infrastructure": {  # Infrastructure Layer
+                            "NETWORK-OPTS": None,  # Additional opts for Mininet
+                            "FALLBACK-TOPO": {"module": "escape.infr.topology",
+                                              "class": "BackupTopology"},
+                            "SHUTDOWN-CLEAN": True}}
 
 from escape.util.misc import ESCAPEConfig
 # Define global configuration and try to load additions from file

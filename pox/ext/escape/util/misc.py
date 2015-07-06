@@ -228,27 +228,79 @@ class ESCAPEConfig(object):
     from pox.core import log
 
     try:
+      # Load file
       with open(config, 'r') as f:
         import json
 
         cfg = json.load(f)
-        # Minimal syntax checking
-        changed = []
-        if len(cfg) > 0:
-          for layer in self.__configuration:
-            if layer in cfg.keys() and len(cfg[layer]) > 0:
-              self.__configuration[layer].update(cfg[layer])
-              changed.append(layer)
-        if changed:
-          log.info("Part(s) of running configuration has been loaded: %s",
-                   changed)
-          return self
-    except IOError:
-      log.debug("Additional configuration file not found:")
+      # Iterate over layer config
+      changed = False
+      for layer in cfg:
+        if layer in self.__configuration:
+          if self.__parse_part(self.__configuration[layer], cfg[layer]):
+            changed = True
+        else:
+          log.warning(
+            "Unidentified layer name in loaded configuration: %s" % layer)
+      if changed:
+        log.info("Part(s) of running configuration has been updated!")
+        return self
+    except IOError as e:
+      log.debug("Additional configuration file not found: %s" % e.message)
     except ValueError as e:
       log.error("An error occurred when load configuration: %s" % e.message)
     log.info("Using default configuration...")
     return self
+
+  def __parse_part (self, inner_part, loaded_part):
+    """
+    Inner function to parse and check a part of configuration and update the
+    stored one according the detected changes.
+    Uses recursion.
+
+    :param inner_part: part of inner representation of config (CONFIG)
+    :type inner_part: dict
+    :param loaded_part: part of loaded configuration (escape.config)
+    :type loaded_part: dict
+    :return: original config is changed or not.
+    :rtype: bool
+    """
+    changed = False
+    # If parsed part is not None or empty dict/tuple/list
+    if loaded_part:
+      # Iterating over the structure
+      for key, value in loaded_part.iteritems():
+        # If the loaded value is a dict
+        if isinstance(value, dict):
+          # If we need to check deeper
+          if key in inner_part:
+            # Recursion
+            changed = self.__parse_part(inner_part[key], value)
+          # If no entry in CONFIG just copying
+          else:
+            inner_part[key] = value
+            # Config updated
+            changed = True
+        # If the loaded value is a str/tuple/list
+        else:
+          # If there is a default value for this key
+          if key in inner_part:
+            # If it is not the same
+            if isinstance(value, (tuple, list)):
+              if not set(inner_part[key]) & set(value):
+                # Config overrided
+                inner_part[key] = value
+                changed = True
+            else:
+              if inner_part[key] != value:
+                # Config overrided
+                inner_part[key] = value
+                changed = True
+          else:
+            # Config updated
+            inner_part[key] = value
+            changed = True
+    return changed
 
   def dump (self):
     """
@@ -259,7 +311,7 @@ class ESCAPEConfig(object):
     """
     import json
 
-    return json.dumps(self.__configuration)
+    print json.dumps(self.__configuration, indent=4)
 
   def is_loaded (self, layer):
     """
