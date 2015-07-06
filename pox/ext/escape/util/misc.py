@@ -18,9 +18,11 @@ import copy
 from distutils.util import strtobool
 from functools import wraps
 import importlib
+import json
+import os
 import weakref
 
-from pox.core import core
+from pox.core import core, log
 from pox.lib.revent.revent import EventMixin
 from escape.service import LAYER_NAME as SERVICE
 from escape.orchest import LAYER_NAME as ORCHEST
@@ -210,7 +212,7 @@ class ESCAPEConfig(object):
     if isinstance(cfg, dict) and cfg:
       self.__configuration = cfg
 
-  def load_config (self, config="escape.config"):
+  def load_config (self, config=None):
     """
     Load static configuration from file if it exist or leave the default intact.
 
@@ -225,13 +227,23 @@ class ESCAPEConfig(object):
     :return: self
     :rtype: :class:`ESCAPEConfig`
     """
-    from pox.core import log
-
+    if config:
+      # Config is set
+      pass
+    elif core.hasComponent("CONFIG") and isinstance(core.CONFIG, str):
+      # Config is set through pox.core
+      config = core.CONFIG
+      del core.components['CONFIG']
+      log.info(
+        "Load explicitly given config file: %s" % os.path.basename(config))
+    else:
+      # Detect default config
+      config = os.path.abspath(
+        os.path.dirname(__file__) + "../../../../escape.config")
+      log.debug("Load default config file: %s" % os.path.basename(config))
     try:
       # Load file
-      with open(config, 'r') as f:
-        import json
-
+      with open(os.path.abspath(config), 'r') as f:
         cfg = json.load(f)
       # Iterate over layer config
       changed = False
@@ -246,10 +258,12 @@ class ESCAPEConfig(object):
         log.info("Part(s) of running configuration has been updated!")
         return self
     except IOError as e:
-      log.debug("Additional configuration file not found: %s" % e.message)
+      log.debug("Additional configuration file not found: %s" % config)
     except ValueError as e:
-      log.error("An error occurred when load configuration: %s" % e.message)
-    log.info("Using default configuration...")
+      log.error("An error occurred when load configuration: %s" % e)
+    finally:
+      core.register("CONFIG", self)
+    log.info("No change during config update! Using default configuration...")
     return self
 
   def __parse_part (self, inner_part, loaded_part):

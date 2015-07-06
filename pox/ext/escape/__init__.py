@@ -72,6 +72,30 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                               "class": "BackupTopology"},
                             "SHUTDOWN-CLEAN": True}}
 
+
+def add_dependencies ():
+  """
+  Add dependency directories to PYTHONPATH.
+  Dependencies are directories besides the escape.py initial script except pox.
+
+  :return: None
+  """
+  import os
+  import sys
+  from pox.core import core
+
+  # Project root dir relative to unify.py top module which is/must be under
+  # pox/ext
+  root = os.path.abspath(os.path.dirname(__file__) + "../../../..")
+  for item in os.listdir(root):
+    abs_item = os.path.join(root, item)
+    if not item.startswith('.') and item != "pox" and os.path.isdir(abs_item):
+      sys.path.insert(0, abs_item)
+      core.getLogger().debug("Add dependency: %s" % abs_item)
+
+# Detect and add dependency directories
+add_dependencies()
+
 from escape.util.misc import ESCAPEConfig
 # Define global configuration and try to load additions from file
 CONFIG = ESCAPEConfig(cfg).load_config()
