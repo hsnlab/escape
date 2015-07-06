@@ -103,7 +103,7 @@ Basic command:
 
     $ ./pox.py unify
 
-Basic command for debugging:
+One of a basic commands for debugging:
 
 .. code-block:: bash
 
@@ -157,7 +157,7 @@ Start ESCAPEv2 with built-in GUI:
     $ ./pox.py service --gui ...
     $ ./pox.py unify --gui
 
-Start layer in standalone mode (no dependency handling) for test/debug:
+Start layer in standalone mode (no dependency check and handling) for test/debug:
 
 .. code-block:: bash
 
@@ -186,6 +186,78 @@ REST API
 +-------------------+----------------+-------------------+-----------------------------------------------------------------------------------+
 | */sg*             | ``NFFG``       | POST              | Initiate given NFFG. Returns the given NFFG initiation is accepted or not.        |
 +-------------------+----------------+-------------------+-----------------------------------------------------------------------------------+
+
+Configuration
++++++++++++++
+
+ESCAPEv2 has a default configuration under the `escape` package (in the
+`__init__.py` file as `cfg`). This configuration is used as the running config
+also. This config also contains the necessary information for component
+instantiation and initialization.
+
+To override some of the parameters you can change it in the `cfg` directly (not
+preferred) or you can define it in the additional config file: `escape.config`.
+The ESCAPEv2 checks this file at every start, and update/override the internal
+config if it"s necessary.
+
+Development
++++++++++++
+
+Suggested IDE: Pycharm Community Edition `Pycharm Community Edition <https://www.jetbrains.com/pycharm/>`_
+
+Coding conventions:
+
+* Sizes:
+    * Tab size: 2
+    * Indent: 2
+    * Continuation indent: 5
+    * Right margin (columns): 80
+* Use spaces instead of tab characters
+* Use one space before method declaration parentheses
+* Use spaces around operators
+* Not use spaces in named parameters and keywords argument
+* Use double blank lines around classes and top-level functions
+
+Debugging
++++++++++
+
+You can use PyCharm for debugging. In this case you have to specify a new Python
+interpreter using the *python_root_debugger.sh* script to be able to run ESCAPE
+with root privileges.
+
+You can use POX's *py* stock component also which open an interactive Python
+shell. With that you can observe the internal state of the running ESCAPE
+instance, experiment or even call different functions.
+
+POX uses a topmost object called *core* which serves a rendezvous point between
+POX's components (e.g. our components representing the UNIFY layers). Through
+that object we can reach every registered object easily.
+E.g. to shut down the REST API of the Service layer manually we can use the
+following function call:
+
+.. code-block:: python
+
+  $ Ready.
+  $ POX>
+  $ POX> core.service.rest_api.stop()
+
+One instance of the *ESCAPEInteractiveHelper* is registered by default under the
+name: *helper*. An example to dump the running configuration of ESCAPEv2:
+
+.. code-block:: python
+
+  $ POX> core.helper.config()
+    {
+        "infrastructure": {
+            "NETWORK-OPTS": null,
+            "FALLBACK-TOPO": {
+                "class": "BackupTopology",
+                "module": "escape.infr.topology"
+    ...
+
+More help and description about the useful helper functions and the *core*
+object is in the comments/documentation and on the POX's `wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`_
+site.
 
 Indices and tables
 ==================
