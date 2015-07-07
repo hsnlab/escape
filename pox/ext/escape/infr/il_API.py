@@ -65,7 +65,7 @@ class InfrastructureLayerAPI(AbstractAPI):
       :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Infrastructure Layer...")
-    CONFIG.set_loaded(self._core_name)
+    CONFIG.set_layer_loaded(self._core_name)
     # FIXME - change to dynamic initialization
     # self.topology = ESCAPENetworkBridge()
     # self.topology.test_network()

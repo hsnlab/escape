@@ -76,8 +76,9 @@ def launch (sg_file='', config=None, gui=False, full=False, debug=True):
   from pox.samples.pretty_log import launch
 
   launch()
-  # Ugly but works: if config is set, save it in the core
+  # Save additional config file name into POX's core as an attribute to avoid to
+  # confuse with POX's modules
   if config:
-    core.register("CONFIG", config)
+    setattr(core, "config_file_name", config)
   # Register _start_components() to be called when POX is up
   core.addListenerByName("GoingUpEvent", _start_components)

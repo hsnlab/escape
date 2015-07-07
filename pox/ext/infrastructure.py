@@ -26,6 +26,7 @@ from pox.core import core
 import pox.lib.util as poxutil
 
 
+
 # Initial parameters
 init_param = {}
 
@@ -56,4 +57,5 @@ def launch (standalone=False):
   if os.geteuid() != 0:
     quit_with_error(msg="Mininet emulation requires root privileges!",
                     logger=InfrastructureLayerAPI._core_name)
+  # Load additional params into CONFIG if necessary
   core.addListenerByName("UpEvent", _start_layer)

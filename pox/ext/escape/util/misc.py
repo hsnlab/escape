@@ -202,6 +202,7 @@ class ESCAPEConfig(object):
     """
     self.__configuration = default if default else dict.fromkeys(self.LAYERS,
                                                                  {})
+    self.loaded = False
 
   def add_cfg (self, cfg):
     """
@@ -230,12 +231,12 @@ class ESCAPEConfig(object):
     :rtype: :class:`ESCAPEConfig`
     """
     if config:
-      # Config is set
-      pass
-    elif core.hasComponent("CONFIG") and isinstance(core.CONFIG, str):
-      # Config is set through pox.core
-      config = core.CONFIG
-      del core.components['CONFIG']
+      # Config is set directly
+      log.info(
+        "Load explicitly given config file: %s" % os.path.basename(config))
+    elif hasattr(core, "config_file_name"):
+      # Config is set through POX's core object by a topmost module (unify)
+      config = getattr(core, "config_file_name")
       log.info(
         "Load explicitly given config file: %s" % os.path.basename(config))
     else:
@@ -265,6 +266,9 @@ class ESCAPEConfig(object):
     except ValueError as e:
       log.error("An error occurred when load configuration: %s" % e)
     finally:
+      # Register config into pox.core to be reachable for other future
+      # components -not used currently
+      self.loaded = True
       core.register("CONFIG", self)
     log.info("No change during config update! Using default configuration...")
     return self
@@ -330,7 +334,7 @@ class ESCAPEConfig(object):
 
     print json.dumps(self.__configuration, indent=4)
 
-  def is_loaded (self, layer):
+  def is_layer_loaded (self, layer):
     """
     Return the value given UNIFY's layer is loaded or not.
 
@@ -341,7 +345,7 @@ class ESCAPEConfig(object):
     """
     return self.__configuration[layer].get('LOADED', False)
 
-  def set_loaded (self, layer):
+  def set_layer_loaded (self, layer):
     """
     Set the given layer LOADED value.
 
@@ -349,6 +353,8 @@ class ESCAPEConfig(object):
     :type layer: str
     :return: None
     """
+    if not self.loaded:
+      self.load_config()
     self.__configuration[layer]['LOADED'] = True
 
   def __getitem__ (self, item):

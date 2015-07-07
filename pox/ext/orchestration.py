@@ -51,4 +51,5 @@ def launch (nffg_file='', standalone=False):
   """
   global init_param
   init_param.update(locals())
+  # Load additional params into CONFIG if necessary
   core.addListenerByName("UpEvent", _start_layer)

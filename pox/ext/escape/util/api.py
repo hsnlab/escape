@@ -130,7 +130,7 @@ class AbstractAPI(EventMixin):
     # as a final step. Other dependent component can finish initialization now.
     core.core.register(self._core_name, self)
     # Set "running" config for convenience purposes
-    CONFIG.set_loaded(self._core_name)
+    CONFIG.set_layer_loaded(self._core_name)
 
   def initialize (self):
     """
