@@ -72,7 +72,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
     and normal threads. Synchronisation is needed to take care manually: use
     relevant helper function of core object: `callLater`/`raiseLater` or use
     `schedule_as_coop_task` decorator defined in util.misc on the called
-    function
+    function.
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {'GET': ('echo', 'version', 'operations'),
@@ -80,7 +80,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'service'
-  # Logger. Must define
+  # Logger. Must define.
   log = log.getChild("REST-API")
 
   # REST API call --> UNIFY U-Sl call
@@ -211,7 +211,7 @@ class ServiceLayerAPI(AbstractAPI):
     Initiate and set up GUI.
     """
     # TODO - set up and initiate MiniEdit here
-    pass
+    log.info("GUI has been initiated!")
 
   def _handle_SGMappingFinishedEvent (self, event):
     """
@@ -263,7 +263,9 @@ class ServiceLayerAPI(AbstractAPI):
     log.getChild('API').info(
       "Generated NF-FG has been sent to Orchestration...")
 
+  ##############################################################################
   # UNIFY Sl - Or API functions starts here
+  ##############################################################################
 
   def _handle_MissingVirtualViewEvent (self, event):
     """

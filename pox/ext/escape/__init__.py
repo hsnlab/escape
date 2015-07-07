@@ -42,7 +42,11 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                         "THREADED": True}},
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        "DEFAULTS": ("OPENSTACK",),
+                        "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
+                        "AGENT": {"module": "escape.adapt.cas_API",
+                                  "class": "AgentRequestHandler",
+                                  "address": "0.0.0.0", "port": 8888,
+                                  "prefix": "virtualizer"},
                         # Specific Domain Adapters for DomainManagers
                         "POX": {"module": "escape.adapt.components",
                                 "class": "POXDomainAdapter",
@@ -63,7 +67,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                      "poll": True},
                         "OPENSTACK": {"module": "escape.adapt.components",
                                       "class": "OpenStackDomainManager",
-                                      "poll": True},
+                                      "poll": False},
                         "DOCKER": {"module": "escape.adapt.components",
                                    "class": "DockerDomainManager"}},
        "infrastructure": {  # Infrastructure Layer

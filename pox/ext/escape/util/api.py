@@ -287,6 +287,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   request_perm = {'GET': (), 'POST': (), 'PUT': (), 'DELETE': ()}
   # Name of the layer API to which the server bounded
   bounded_layer = None
+  # Name mapper to avoid Python naming constraint (dict: rpc-name: mapped name)
+  rpc_mapper = None
   # Logger. Should be overrided in child classes
   log = core.getLogger("REST-API")
 
@@ -365,6 +367,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     try:
       if real_path.startswith('/%s/' % self.static_prefix):
         self.func_name = real_path.split('/')[2]
+        if self.rpc_mapper:
+          self.func_name = self.rpc_mapper[self.func_name]
         if http_method in self.request_perm:
           if self.func_name in self.request_perm[http_method]:
             if hasattr(self, self.func_name):

@@ -44,7 +44,7 @@ def _start_components (event):
   launch()
   from adaptation import launch
   # Launch Controller Adaptation Sublayer (CAS)
-  launch(with_infr=init_param['full'])
+  launch(with_infr=init_param['full'], agent=init_param['agent'])
   if init_param['full']:
     from infrastructure import launch
     # Launch Infrastructure Layer (IL) optionally
@@ -52,7 +52,8 @@ def _start_components (event):
 
 
 @poxutil.eval_args
-def launch (sg_file='', config=None, gui=False, full=False, debug=True):
+def launch (sg_file='', config=None, gui=False, agent=False, full=False,
+     debug=True):
   """
   Launch function called by POX core when core is up.
 

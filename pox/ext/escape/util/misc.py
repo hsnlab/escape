@@ -385,6 +385,10 @@ class ESCAPEConfig(object):
     """
     raise RuntimeError("Explicit layer config deletion is not supported!")
 
+  ##############################################################################
+  # Helper functions
+  ##############################################################################
+
   def get_strategy (self, layer):
     """
     Return with the Strategy class of the given layer.
@@ -486,3 +490,44 @@ class ESCAPEConfig(object):
       return strtobool(str(self.__configuration[INFR]['SHUTDOWN-CLEAN']))
     except KeyError:
       return False
+
+  def get_agent_class (self):
+    """
+    Return with the request handler class of Agent REST API.
+
+    :return: agent class
+    :rtype: :any:`AbstractRequestHandler`
+    """
+    try:
+      return getattr(
+        importlib.import_module(self.__configuration[ADAPT]["AGENT"]['module']),
+        self.__configuration[ADAPT]["AGENT"]['class'], None)
+    except KeyError:
+      return None
+
+  def get_agent_prefix (self):
+    """
+    Return the REST API prefix for agent request handler.
+
+    :return: prefix
+    :rtype: str
+    """
+    try:
+      return getattr(
+        importlib.import_module(self.__configuration[ADAPT]["AGENT"]['module']),
+        self.__configuration[ADAPT]["AGENT"]['class'], None)
+    except KeyError:
+      return None
+
+  def get_agent_address (self):
+    """
+    Return the REST API (address, port) for agent REST server.
+
+    :return: address and port
+    :rtype: tuple
+    """
+    try:
+      return (self.__configuration[ADAPT]["AGENT"]['address'],
+              self.__configuration[ADAPT]["AGENT"]['port'])
+    except KeyError:
+      return None
