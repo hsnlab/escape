@@ -87,13 +87,16 @@ Usage:
     NETCONF and POX
 
     optional arguments:
-      -h, --help         show this help message and exit
-      -v, --version      show program's version number and exit
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
 
     ESCAPE arguments:
-      -d, --debug        run the ESCAPE in debug mode
-      -f, --full         run the infrastructure layer also
-      -i, --interactive  run an interactive shell for observing internal states
+      -c path, --config path
+                            override default config filename
+      -d, --debug           run the ESCAPE in debug mode
+      -f, --full            run the infrastructure layer also
+      -i, --interactive     run an interactive shell for observing internal states
+
 
 **More advanced commands:**
 
@@ -198,7 +201,8 @@ instantiation and initialization.
 To override some of the parameters you can change it in the `cfg` directly (not
 preferred) or you can define it in the additional config file: `escape.config`.
 The ESCAPEv2 checks this file at every start, and update/override the internal
-config if it"s necessary.
+config if it"s necessary. The config file can be changed during start with the
+`--config` initial parameter.
 
 Development
 +++++++++++
