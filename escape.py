@@ -38,7 +38,7 @@ escape.add_argument("-i", "--interactive", action="store_true", default=False,
                          "states")
 args = parser.parse_args()
 # Construct POX init command according to argument
-cmd = "pox/pox.py unify"
+cmd = "./pox/pox.py unify"
 if args.full:
   cmd = "sudo %s --full" % cmd
 if args.config:

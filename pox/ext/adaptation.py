@@ -28,7 +28,7 @@ init_param = {}
 
 def _start_layer (event):
   """
-  Initiate and run Adaptation module
+  Initiate and run Adaptation module.
 
   :param event: POX's going up event
   :type event: GoingUpEvent
@@ -41,7 +41,7 @@ def _start_layer (event):
 @poxutil.eval_args
 def launch (mapped_nffg_file='', with_infr=False, standalone=False):
   """
-  Launch function called by POX core when core is up
+  Launch function called by POX core when core is up.
 
   :param mapped_nffg_file: Path of the mapped NF-FG graph (optional)
   :type mapped_nffg_file: str

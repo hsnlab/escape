@@ -41,6 +41,12 @@ Basic command:
 Basic command for debugging:
     $ ./pox.py --verbose --no-openflow unify py
 
+For forcing to log on DEBUG level the --verbose flag of the pox.py script can be
+used. Or the log.level POX module can be used which would be the preferred way.
+E.g.:
+    $ ./pox.py --verbose <modules>
+    $ ./pox.py log.level --DEBUG <modules>
+
 Basic command to initiate a built-in emulated network for testing:
     # Infrastructure layer requires root privileges due to use of Mininet!
     $ sudo ./pox.py unify --full
@@ -57,7 +63,7 @@ With infrastructure layer:
 
 Long version with debugging and explicitly-defined components
 (analogous with ./pox.py unify --full):
-    $./pox.py --verbose log.level --DEBUG samples.pretty_log service \
+    $ sudo ./pox.py --verbose log.level --DEBUG samples.pretty_log service \
     orchestration adaptation--with_infr infrastructure
 
 Start layers with graph-represented input contained in a specific file:

@@ -28,7 +28,7 @@ init_param = {}
 
 def _start_layer (event):
   """
-  Initiate and run Orchestration module
+  Initiate and run Orchestration module.
 
   :param event: POX's going up event
   :type event: GoingUpEvent
@@ -41,7 +41,7 @@ def _start_layer (event):
 @poxutil.eval_args
 def launch (nffg_file='', standalone=False):
   """
-  Launch function called by POX core when core is up
+  Launch function called by POX core when core is up.
 
   :param nffg_file: Path of the NF-FG graph (optional)
   :type nffg_file: str

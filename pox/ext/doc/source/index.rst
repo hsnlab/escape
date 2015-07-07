@@ -110,7 +110,16 @@ One of a basic commands for debugging:
 
 .. code-block:: bash
 
-    $ ./pox.py --verbose --no-openflow unify py
+    $ ./pox.py --verbose unify py
+
+For forcing to log on DEBUG level the ``--verbose`` flag of the ``pox.py``
+script can be used. Or the log.level POX module can be used which would be the
+preferred way. E.g.:
+
+.. code-block:: bash
+
+    $ ./pox.py --verbose <modules>
+    $ ./pox.py log.level --DEBUG <modules>
 
 Basic command to initiate a built-in emulated network for testing:
 
@@ -119,7 +128,8 @@ Basic command to initiate a built-in emulated network for testing:
     # Infrastructure layer requires root privileges due to use of Mininet!
     $ sudo ./pox.py unify --full
 
-Minimal command with explicitly-defined components (components' order is irrelevant):
+Minimal command with explicitly-defined components (components' order is
+irrelevant):
 
 .. code-block:: bash
 
@@ -137,11 +147,13 @@ With infrastructure layer:
 
     $ sudo ./pox.py service orchestration adaptation --with_infr infrastructure
 
-Long version with debugging and explicitly-defined components (analogous with ./pox.py unify --full):
+Long version with debugging and explicitly-defined components (analogous with
+``./pox.py unify --full``):
 
 .. code-block:: bash
 
-     $./pox.py --verbose log.level --DEBUG samples.pretty_log service orchestration adaptation--with_infr infrastructure
+     $ sudo ./pox.py --verbose log.level --DEBUG samples.pretty_log service \
+     orchestration adaptation --with_infr infrastructure
 
 Start layers with graph-represented input contained in a specific file:
 

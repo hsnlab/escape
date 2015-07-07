@@ -188,8 +188,10 @@ class ESCAPEConfig(object):
   """
   # Singleton
   __metaclass__ = Singleton
-  # Defined layers
+  # Predefined layer names
   LAYERS = (SERVICE, ORCHEST, ADAPT, INFR)
+  # Default additional config name
+  DEFAULT_CFG = "additional-config-file"
 
   def __init__ (self, default=None):
     """
@@ -239,7 +241,8 @@ class ESCAPEConfig(object):
     else:
       # Detect default config
       config = os.path.abspath(
-        os.path.dirname(__file__) + "../../../../escape.config")
+        os.path.dirname(__file__) + "../../../../" + self.__configuration[
+          self.DEFAULT_CFG])
       log.debug("Load default config file: %s" % os.path.basename(config))
     try:
       # Load file

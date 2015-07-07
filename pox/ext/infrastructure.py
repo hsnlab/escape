@@ -32,7 +32,7 @@ init_param = {}
 
 def _start_layer (event):
   """
-  Initiate and run Infrastructure module
+  Initiate and run Infrastructure module.
 
   :param event: POX's going up event
   :type event: GoingUpEvent
@@ -45,7 +45,7 @@ def _start_layer (event):
 @poxutil.eval_args
 def launch (standalone=False):
   """
-  Launch function called by POX core when core is up
+  Launch function called by POX core when core is up.
 
   :param standalone: Run layer without dependency checking (optional)
   :type standalone: bool

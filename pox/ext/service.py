@@ -28,7 +28,7 @@ init_param = {}
 
 def _start_layer (event):
   """
-  Initiate and run Service module
+  Initiate and run Service module.
 
   :param event: POX's going up event
   :type event: GoingUpEvent
@@ -41,7 +41,7 @@ def _start_layer (event):
 @poxutil.eval_args
 def launch (sg_file='', gui=False, standalone=False):
   """
-  Launch function called by POX core when core is up
+  Launch function called by POX core when core is up.
 
   :param sg_file: Path of the input Service graph (optional)
   :type sg_file: str

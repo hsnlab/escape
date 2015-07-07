@@ -70,7 +70,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class": "BackupTopology"},
-                            "SHUTDOWN-CLEAN": True}}
+                            "SHUTDOWN-CLEAN": True},
+       "additional-config-file": "escape.config"}
 
 
 def add_dependencies ():
