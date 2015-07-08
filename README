@@ -99,7 +99,6 @@ Path          Params   HTTP    Description
 /sg           NFFG     POST    Initiate given NFFG
 
 Configuration
-+++++++++++++
 
 ESCAPEv2 has a default configuration under the escape package (in the
 __init__.py file as "cfg"). This configuration is used as the running config
@@ -113,7 +112,6 @@ config if it"s necessary. The config file can be changed during start with the
 --config initial parameter.
 
 Development
-+++++++++++
 
 Suggested IDE: Pycharm Community Edition Pycharm Community Edition
 
@@ -131,7 +129,6 @@ Coding conventions:
 * Use double blank lines around classes and top-level functions
 
 Debugging
-+++++++++
 
 You can use PyCharm for debugging. In this case you have to specify a new Python
 interpreter using the python_root_debugger.sh script to be able to run ESCAPE
