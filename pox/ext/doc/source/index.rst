@@ -130,6 +130,7 @@ Usage:
       -d, --debug           run the ESCAPE in debug mode
       -f, --full            run the infrastructure layer also
       -i, --interactive     run an interactive shell for observing internal states
+      -a, --agent           run in agent role (without service layer)
 
 
 **More advanced commands:**
