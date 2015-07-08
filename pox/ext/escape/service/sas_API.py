@@ -17,7 +17,7 @@ Sublayer.
 """
 import repr
 
-from escape import __project__, __version__
+from escape import __project__, __version__, CONFIG
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
@@ -175,7 +175,7 @@ class ServiceLayerAPI(AbstractAPI):
         log.info("Graph representation is loaded successfully!")
     else:
       # Init REST-API if no input file is given
-      self._initiate_rest_api(address='')
+      self._initiate_rest_api()
     # Init GUI
     if self._gui:
       self._initiate_gui()
@@ -190,20 +190,17 @@ class ServiceLayerAPI(AbstractAPI):
     if hasattr(self, 'rest_api') and self.rest_api:
       self.rest_api.stop()
 
-  def _initiate_rest_api (self, handler=ServiceRequestHandler,
-       address='localhost', port=8008):
+  def _initiate_rest_api (self):
     """
     Initialize and set up REST API in a different thread.
 
-    :param address: server address, default localhost
-    :type address: str
-    :param port: port number, default 8008
-    :type port: int
     :return: None
     """
     # set bounded layer name here to avoid circular dependency problem
+    handler = CONFIG.get_sas_api_class()
     handler.bounded_layer = self._core_name
-    self.rest_api = RESTServer(handler, address, port)
+    handler.prefix = CONFIG.get_sas_api_prefix()
+    self.rest_api = RESTServer(handler, *CONFIG.get_sas_api_address())
     self.rest_api.start()
 
   def _initiate_gui (self):

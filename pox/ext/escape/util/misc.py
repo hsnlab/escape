@@ -529,3 +529,42 @@ class ESCAPEConfig(object):
               self.__configuration[ORCHEST]["AGENT"]['port'])
     except KeyError:
       return None
+
+  def get_sas_api_class (self):
+    """
+    Return with the request handler class of Service Layer REST API.
+
+    :return: REST API class
+    :rtype: :any:`AbstractRequestHandler`
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[SERVICE]["REST-API"]['module']),
+        self.__configuration[SERVICE]["REST-API"]['class'], None)
+    except KeyError:
+      return None
+
+  def get_sas_api_prefix (self):
+    """
+    Return the REST API prefix for Service Layer request handler.
+
+    :return: prefix
+    :rtype: str
+    """
+    try:
+      return self.__configuration[SERVICE]["REST-API"]['prefix']
+    except KeyError:
+      return None
+
+  def get_sas_api_address (self):
+    """
+    Return the REST API (address, port) for Service Layer REST server.
+
+    :return: address and port
+    :rtype: tuple
+    """
+    try:
+      return (self.__configuration[SERVICE]["REST-API"]['address'],
+              self.__configuration[SERVICE]["REST-API"]['port'])
+    except KeyError:
+      return None

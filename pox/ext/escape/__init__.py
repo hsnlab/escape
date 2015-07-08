@@ -35,7 +35,11 @@ __status__ = "Prototype"
 cfg = {"service": {  # Service Adaptation Sublayer
                      "STRATEGY": {"module": "escape.service.sas_mapping",
                                   "class": "DefaultServiceMappingStrategy",
-                                  "THREADED": True}},
+                                  "THREADED": True},
+                     "REST-API": {"module": "escape.service.sas_API",
+                                  "class": "ServiceRequestHandler",
+                                  "address": "0.0.0.0", "port": 8008,
+                                  "prefix": "escape"}},
        "orchestration": {  # Resource Orchestration Sublayer
                            "STRATEGY": {"module": "escape.orchest.ros_mapping",
                                         "class": "ESCAPEMappingStrategy",
