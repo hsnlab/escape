@@ -48,7 +48,7 @@ class ComponentConfigurator(object):
     :param lazy_load: load adapters only at first reference (default: True)
     :type lazy_load: bool
     """
-    log.debug("Init Domain configurator")
+    log.debug("Init DomainConfigurator")
     super(ComponentConfigurator, self).__init__()
     self.__repository = dict()
     self._lazy_load = lazy_load

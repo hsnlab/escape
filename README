@@ -13,6 +13,45 @@ for taking care of traffic steering. We also add our extensible Orchestrator
 module, which can accommodate mapping algorithms from abstract service
 descriptions to deployed and running service chains.
 
+Dependencies:
+
+    $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev \
+      python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko
+
+    $ sudo pip install requests jinja2 ncclient lxml
+
+To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
+host (more precisely the Open vSwitch implementation and the mnexec utility
+script is required globally).
+
+If one version of Mininet has already been installed, there should be nothing to
+do. ESCAPEv2 uses the specifically-modified Mininet files in the project folder
+which use the general scripts mentioned above.
+
+Otherwise these assets have to be install manually. Mininet has an install
+script for this purpose (see the help with the -h flag):
+
+    $ sudo mininet/util/install.sh -a
+
+But the script mostly NOT works correctly, especially on newer
+distributions because the sudo apt-get install openvswitch-switch command
+not install the newer version of OVS due some major changes in OVS architecture!
+Check the install was correct with the following command:
+
+    $ sudo mn --test pingall
+
+If the command complains about the Open vSwitch not installed then you have to
+install it from source. See more on http://openvswitch.org/download/ . On the
+newest distributions (e.g. Ubuntu 15.04) more steps and explicit patching is
+required. For that the only way is sadly to use google and search for it based
+on your distro. But a good choice to start here (this not worked for me):
+https://github.com/mininet/mininet/wiki/Installing-new-version-of-Open-vSwitch
+
+If you use virtual machines, you should consider to use one of pre-build Mininet
+VM image: https://github.com/mininet/mininet/wiki/Mininet-VM-Images
+
+Usage:
+
 The simplest use-case:
     $ ./escape.py
 
