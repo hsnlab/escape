@@ -39,14 +39,14 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "orchestration": {  # Resource Orchestration Sublayer
                            "STRATEGY": {"module": "escape.orchest.ros_mapping",
                                         "class": "ESCAPEMappingStrategy",
-                                        "THREADED": True}},
+                                        "THREADED": True},
+                           "AGENT": {"module": "escape.orchest.ros_API",
+                                     "class": "ROSAgentRequestHandler",
+                                     "address": "0.0.0.0", "port": 8888,
+                                     "prefix": "escape"}},
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
-                        "AGENT": {"module": "escape.adapt.cas_API",
-                                  "class": "AgentRequestHandler",
-                                  "address": "0.0.0.0", "port": 8888,
-                                  "prefix": "virtualizer"},
+                        "DEFAULTS": ("OPENSTACK",),  # OpenStack Agent REST API
                         # Specific Domain Adapters for DomainManagers
                         "POX": {"module": "escape.adapt.components",
                                 "class": "POXDomainAdapter",

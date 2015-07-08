@@ -36,18 +36,23 @@ def _start_components (event):
   :return: None
   """
   # Launch ESCAPE components
-  from service import launch
-  # Launch Service Layer (mostly SAS)
-  launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
-  from orchestration import launch
+  if not init_param['agent']:
+    # Launch Service Layer (mostly SAS)
+    from service import launch
+
+    launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
   # Launch Resource Orchestration Sublayer (ROS)
-  launch()
-  from adaptation import launch
+  from orchestration import launch
+
+  launch(agent=init_param['agent'])
   # Launch Controller Adaptation Sublayer (CAS)
-  launch(with_infr=init_param['full'], agent=init_param['agent'])
+  from adaptation import launch
+
+  launch(with_infr=init_param['full'])
   if init_param['full']:
-    from infrastructure import launch
     # Launch Infrastructure Layer (IL) optionally
+    from infrastructure import launch
+
     launch()
 
 
@@ -63,6 +68,8 @@ def launch (sg_file='', config=None, gui=False, agent=False, full=False,
   :type config: str
   :param gui: Signal for initiate GUI (optional)
   :type gui: bool
+  :param agent: Do not start the service layer (optional)
+  :type agent: bool
   :param full: Initiate Infrastructure Layer also
   :type full: bool
   :return: None

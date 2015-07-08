@@ -55,7 +55,6 @@ Usage:
 The simplest use-case:
     $ ./escape.py
 
-Usage:
     $ ./escape.py -h
     usage: escape.py [-h] [-v] [-d] [-f] [-i]
 

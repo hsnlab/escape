@@ -253,7 +253,7 @@ config if it"s necessary. The config file can be changed during start with the
 Development
 +++++++++++
 
-Suggested IDE: Pycharm Community Edition `Pycharm Community Edition <https://www.jetbrains.com/pycharm/>`_
+Suggested IDE: `Pycharm Community Edition <https://www.jetbrains.com/pycharm/>`_
 
 Coding conventions:
 
@@ -285,7 +285,7 @@ that object we can reach every registered object easily.
 E.g. to shut down the REST API of the Service layer manually we can use the
 following function call:
 
-.. code-block:: python
+.. code-block:: bash
 
   $ Ready.
   $ POX>
@@ -294,7 +294,7 @@ following function call:
 One instance of the *ESCAPEInteractiveHelper* is registered by default under the
 name: *helper*. An example to dump the running configuration of ESCAPEv2:
 
-.. code-block:: python
+.. code-block:: bash
 
   $ POX> core.helper.config()
     {
@@ -306,7 +306,8 @@ name: *helper*. An example to dump the running configuration of ESCAPEv2:
     ...
 
 More help and description about the useful helper functions and the *core*
-object is in the comments/documentation and on the POX's `wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`_
+object is in the comments/documentation and on the POX's
+`wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`_
 site.
 
 Indices and tables

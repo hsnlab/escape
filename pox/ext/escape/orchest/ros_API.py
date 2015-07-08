@@ -17,10 +17,11 @@ Sublayer.
 """
 import repr
 
+from escape import CONFIG
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest import LAYER_NAME
-from escape.util.api import AbstractAPI
+from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event
 
@@ -76,6 +77,71 @@ class InstantiationFinishedEvent(Event):
     self.error = error
 
 
+class ROSAgentRequestHandler(AbstractRequestHandler):
+  """
+  Request Handler for agent behaviour in Resource Orchestration SubLayer.
+
+  .. warning::
+    This class is out of the context of the recoco's co-operative thread
+    context! While you don't need to worry much about synchronization between
+    recoco tasks, you do need to think about synchronization between recoco task
+    and normal threads. Synchronisation is needed to take care manually: use
+    relevant helper function of core object: `callLater`/`raiseLater` or use
+    `schedule_as_coop_task` decorator defined in util.misc on the called
+    function.
+  """
+  # Bind HTTP verbs to UNIFY's API functions
+  request_perm = {'GET': ('ping',),
+                  'POST': ('ping', 'get_config', 'edit_config')}
+  # Statically defined layer component to which this handler is bounded
+  # Need to be set by container class
+  bounded_layer = 'orchestration'
+  # Set special prefix to imitate OpenStack agent API
+  static_prefix = "escape"
+  # Logger. Must define.
+  log = log.getChild("REST-API")
+  # Name mapper to avoid Python naming constraint
+  rpc_mapper = {'get-config': "get_config", 'edit-config': "edit_config"}
+
+  def __init__ (self, request, client_address, server):
+    """
+    Init.
+    """
+    AbstractRequestHandler.__init__(self, request, client_address, server)
+
+  def ping (self):
+    """
+    For testing REST API aliveness and reachability.
+    """
+    response_body = "OK"
+    self.send_response(200)
+    self.send_header('Content-Type', 'text/plain')
+    self.send_header('Content-Length', len(response_body))
+    self.send_REST_headers()
+    self.end_headers()
+    self.wfile.write(response_body)
+
+  def get_config (self):
+    """
+    Response configuration.
+    """
+    # TODO - implement
+    log.getChild("REST-API").debug("Call REST-API function: get-config")
+    self._proceed_API_call('request_config')
+    self.send_acknowledge()
+
+  def edit_config (self):
+    """
+    Receive configuration and initiate orchestration.
+    """
+    # TODO - implement
+    log.getChild("REST-API").debug("Call REST-API function: edit-config")
+    # TODO - parsing body
+    parsed_cfg = None
+    self._proceed_API_call('set_config', parsed_cfg)
+    self.send_acknowledge()
+
+
 class ResourceOrchestrationAPI(AbstractAPI):
   """
   Entry point for Resource Orchestration Sublayer (ROS).
@@ -110,6 +176,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.resource_orchestrator = ResourceOrchestrator(self)
     if self._nffg_file:
       self._read_json_from_file(self._nffg_file)
+    if self._agent:
+      self._initiate_agent_api()
     log.info("Resource Orchestration Sublayer has been initialized!")
 
   def shutdown (self, event):
@@ -118,6 +186,21 @@ class ResourceOrchestrationAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
     log.info("Resource Orchestration Sublayer is going down...")
+    if hasattr(self, 'agent_api') and self.agent_api:
+      self.agent_api.stop()
+
+  def _initiate_agent_api (self):
+    """
+    Initialize and se tup REST API in a different thread.
+
+    :return: None
+    """
+    # set bounded layer name here to avoid circular dependency problem
+    handler = CONFIG.get_ros_agent_class()
+    handler.bounded_layer = self._core_name
+    handler.prefix = CONFIG.get_ros_agent_prefix()
+    self.agent_api = RESTServer(handler, *CONFIG.get_ros_agent_address())
+    self.agent_api.start()
 
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
@@ -129,6 +212,16 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     self._install_NFFG(event.nffg)
+
+  ##############################################################################
+  # Agent API functions starts here
+  ##############################################################################
+
+  def request_config (self):
+    pass
+
+  def set_config (self, config):
+    pass
 
   ##############################################################################
   # UNIFY Sl- Or API functions starts here

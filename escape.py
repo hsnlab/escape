@@ -36,6 +36,8 @@ escape.add_argument("-f", "--full", action="store_true", default=False,
 escape.add_argument("-i", "--interactive", action="store_true", default=False,
                     help="run an interactive shell for observing internal "
                          "states")
+escape.add_argument("-a", "--agent", action="store_true", default=False,
+                    help="run in agent role (without service layer)")
 args = parser.parse_args()
 # Construct POX init command according to argument
 cmd = "./pox/pox.py unify"
@@ -43,6 +45,8 @@ if args.full:
   cmd = "sudo %s --full" % cmd
 if args.config:
   cmd = "%s --config=%s" % (cmd, os.path.abspath(args.config))
+if args.agent:
+  cmd = "%s --agent" % cmd
 if args.debug:
   # Nothing to do
   pass

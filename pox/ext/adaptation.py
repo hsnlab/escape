@@ -39,8 +39,7 @@ def _start_layer (event):
 
 
 @poxutil.eval_args
-def launch (mapped_nffg_file='', with_infr=False, agent=False,
-     standalone=False):
+def launch (mapped_nffg_file='', with_infr=False, standalone=False):
   """
   Launch function called by POX core when core is up.
 
@@ -48,8 +47,6 @@ def launch (mapped_nffg_file='', with_infr=False, agent=False,
   :type mapped_nffg_file: str
   :param with_infr: Set Infrastructure as a dependency
   :type with_infr: bool
-  :param agent: start a REST API and act like an agent
-  :type agent: bool
   :param standalone: Run layer without dependency checking (optional)
   :type standalone: bool
   :return: None

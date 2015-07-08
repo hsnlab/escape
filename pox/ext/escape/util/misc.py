@@ -491,7 +491,7 @@ class ESCAPEConfig(object):
     except KeyError:
       return False
 
-  def get_agent_class (self):
+  def get_ros_agent_class (self):
     """
     Return with the request handler class of Agent REST API.
 
@@ -499,13 +499,13 @@ class ESCAPEConfig(object):
     :rtype: :any:`AbstractRequestHandler`
     """
     try:
-      return getattr(
-        importlib.import_module(self.__configuration[ADAPT]["AGENT"]['module']),
-        self.__configuration[ADAPT]["AGENT"]['class'], None)
+      return getattr(importlib.import_module(
+        self.__configuration[ORCHEST]["AGENT"]['module']),
+        self.__configuration[ORCHEST]["AGENT"]['class'], None)
     except KeyError:
       return None
 
-  def get_agent_prefix (self):
+  def get_ros_agent_prefix (self):
     """
     Return the REST API prefix for agent request handler.
 
@@ -513,13 +513,11 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     try:
-      return getattr(
-        importlib.import_module(self.__configuration[ADAPT]["AGENT"]['module']),
-        self.__configuration[ADAPT]["AGENT"]['class'], None)
+      return self.__configuration[ORCHEST]["AGENT"]['prefix']
     except KeyError:
       return None
 
-  def get_agent_address (self):
+  def get_ros_agent_address (self):
     """
     Return the REST API (address, port) for agent REST server.
 
@@ -527,7 +525,7 @@ class ESCAPEConfig(object):
     :rtype: tuple
     """
     try:
-      return (self.__configuration[ADAPT]["AGENT"]['address'],
-              self.__configuration[ADAPT]["AGENT"]['port'])
+      return (self.__configuration[ORCHEST]["AGENT"]['address'],
+              self.__configuration[ORCHEST]["AGENT"]['port'])
     except KeyError:
       return None
