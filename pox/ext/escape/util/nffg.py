@@ -20,7 +20,7 @@ import getopt
 from pprint import pprint
 import sys
 
-from nffglib import Virtualizer
+from nffglib import *
 
 
 class AbstractNFFG(object):
@@ -37,9 +37,8 @@ class AbstractNFFG(object):
     Init
     """
     super(AbstractNFFG, self).__init__()
-    self.id = id
-    self.version = version
-    self.format = None
+    self._id = id
+    self._version = version
 
   # NFFG specific functions
 
@@ -134,20 +133,12 @@ class NFFG(AbstractNFFG):
   .. warning::
     Not fully implemented yet!
   """
-  # Used format
-  FORMAT = "XML"
 
-  def __init__ (self, id=42, name=None, virtualizer=None):
+  def __init__ (self, id=None, name=None, virtualizer=None):
     """
     Init
     """
     super(NFFG, self).__init__(id)
-    self.id = id
-    self.name = name
-    if virtualizer is not None:
-      self.virtualizer = virtualizer
-    else:
-      self.virtualizer = Virtualizer()
 
   # NFFG specific functions
 
@@ -201,34 +192,13 @@ class NFFG(AbstractNFFG):
   @staticmethod
   def parse (data, format=None):
     """
-    Parse the NF-FG representation from given data. If the format is given,
-    the data will be parsed according to the format.
-    Currently the only supported format is a file, where the given data param
-    is the file path.
-
-    :param data: NF-FG representation
-    :type data: ``format`` (default: XML as str)
-    :param format: optional format e.g. file
-    :type format: str
-    :return: NFFG object
-    :rtype: :any::`NFFG`
     """
-    if format is None:
-      virt = Virtualizer.parse(text=data)
-    elif format.upper() == "FILE":
-      virt = Virtualizer.parse(file=data)
-    else:
-      raise RuntimeError("Not supported format!")
-    return NFFG(virtualizer=virt)
+    pass
 
   def dump (self):
     """
-    Return the NF-FG representation as an XML text.
-
-    :return: NF-FG representation as XML
-    :rtype: str
     """
-    return self.virtualizer.xml()
+    pass
 
   def init_from_json (self, json_data):
     """
@@ -295,6 +265,188 @@ class NFFG(AbstractNFFG):
     raise NotImplementedError("Not implemented yet!")
 
 
+class NFFGtoXMLBuilder(AbstractNFFG):
+  """
+  Builder class for construct an NFFG in XML format rely on ETH's nffglib.py.
+  """
+  # Do not modified
+  __UUID_NUM = 0
+  # Default infrastructure node type
+  DEFAULT_INFRA_TYPE = "BisBis"
+
+  def __init__ (self):
+    super(NFFGtoXMLBuilder, self).__init__(None, "1.0")
+    # Init main container: virtualizer
+    self.__virtualizer = Virtualizer()
+    self.__virtualizer.g_idName = IdNameGroup(self.__virtualizer)
+    NFFGtoXMLBuilder.__UUID_NUM += 1
+    # Add <id> tag
+    self.__virtualizer.g_idName.l_id = "UUID-ESCAPE-BME-%i" % \
+                                       NFFGtoXMLBuilder.__UUID_NUM
+    # Add <name> tag
+    self.__virtualizer.g_idName.l_name = "ESCAPE-BME orchestrator version v2.0"
+    # Add <nodes> tag
+    self.__virtualizer.c_nodes = Nodes(self.__virtualizer)
+    # Add <links> tag
+    self.__virtualizer.g_links = LinksGroup(self.__virtualizer)
+    self.__virtualizer.g_links.c_links = Links(self.__virtualizer.g_links)
+
+  ##############################################################################
+  # Builder design pattern related functions
+  ##############################################################################
+
+  def dump (self):
+    """
+    Return the constructed NFFG in XML format.
+
+    :return: NFFG in XML format
+    :rtype: str
+    """
+    return self.__virtualizer.xml()
+
+  def __str__ (self):
+    """
+    Dump the constructed NFFG as a pretty string.
+
+    :return: NFFG in XML format
+    :rtype: str
+    """
+    return self.dump()
+
+  @staticmethod
+  def parse (data, format):
+    pass
+
+  ##############################################################################
+  # Simplifier function to access XML tags easily
+  ##############################################################################
+
+  @property
+  def id (self):
+    """
+    Return the id of the NFFG.
+
+    :return: id
+    :rtype: str
+    """
+    return self.__virtualizer.g_idName.l_id
+
+  @id.setter
+  def id (self, id):
+    """
+    Set the id of NFFG.
+
+    :param id: new id
+    :type id: int or str
+    :return: None
+    """
+    self.__virtualizer.g_idName.l_id = str(id)
+
+  @property
+  def name (self):
+    """
+    Return the name of NFFG.
+
+    :return: name
+    :rtype: str
+    """
+    return self.__virtualizer.g_idName.l_name
+
+  @name.setter
+  def name (self, name):
+    """
+    Set the name of NFFG.
+
+    :param name: new name
+    :type name: str
+    :return: None
+    """
+    self.__virtualizer.g_idName.l_name = str(name)
+
+  @property
+  def nodes (self):
+    """
+    Return the list of nodes.
+
+    :return: nodes
+    :rtype: list(InfraNodeGroup)
+    """
+    return self.__virtualizer.c_nodes.list_node
+
+  @property
+  def links (self):
+    """
+    Return the list of links.
+
+    :return: links
+    :rtype: list(Links)
+    """
+    return self.__virtualizer.g_links.c_links.list_link
+
+  ##############################################################################
+  # General functions to add NFFG elements easily
+  ##############################################################################
+
+  def add_infra (self, id=None, name=None, type=None):
+    """
+    Add an infrastructure node ot NFFG (as a BiS-BiS).
+
+    :param id:
+    :param name:
+    :param type:
+    :return: None
+    """
+    # Set mandatory attributes
+    type = self.DEFAULT_INFRA_TYPE if type is None else str(type)
+    id = str(len(self.nodes) + 1) if id is None else str(id)
+    name = type + str(id) if name is None else str(name)
+    # Create Infrastructure wrapper
+    infra = InfraNodeGroup(self.__virtualizer)
+    # Add id, name, type
+    infra.g_node = NodeGroup(infra)
+    infra.g_node.g_idNameType = IdNameTypeGroup(infra.g_node)
+    infra.g_node.g_idNameType.g_idName = IdNameGroup(infra.g_node.g_idNameType)
+    infra.g_node.g_idNameType.g_idName.l_id = id
+    infra.g_node.g_idNameType.g_idName.l_name = name
+    infra.g_node.g_idNameType.l_type = type
+    # Add necessary flow table group
+    infra.g_flowtable = FlowTableGroup(infra)
+    # Add infra to nodes
+    self.nodes.append(infra)
+
+  def add_port (self, type, parent, id=None, name=None):
+    """
+    Add a port into a Node.
+
+    :param type:
+    :param parent:
+    :param id:
+    :param name:
+    :return: None
+    """
+
+  def del_node (self, id):
+    pass
+
+  def add_req (self, edge_req):
+    pass
+
+  def add_nf (self, node_nf):
+    pass
+
+  def add_sap (self, node_sap):
+    pass
+
+  def add_edge (self, src, dst, params=None):
+    pass
+
+  def add_link (self, edge_link):
+    pass
+
+  def add_sglink (self, edge_sglink):
+    pass
+
+
 def main (argv=None):
   if argv is None:
     argv = sys.argv
@@ -315,4 +467,9 @@ def main (argv=None):
 
 
 if __name__ == "__main__":
-  main()
+  # main()
+  builder = NFFGtoXMLBuilder()
+  builder.id = 42
+  builder.name = "testname"
+  builder.add_infra()
+  print builder
