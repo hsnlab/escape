@@ -34,7 +34,7 @@ and running service chains.
     * `Download the paper <http://dl.acm.org/authorize?N71297>`_
     * `Accompanying poster <http://sb.tmit.bme.hu/mediawiki/images/b/ba/Sigcomm2014_poster.png>`_
 
-    For further information contact csoma@tmit.bme.hu, sonkoly@tmit.bme.hu
+    For further information contact sonkoly@tmit.bme.hu
 
 ESCAPEv2 structure
 ------------------
