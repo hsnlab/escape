@@ -313,6 +313,7 @@ class NFFGtoXMLBuilder(AbstractNFFG):
   __UUID_NUM = 0
   # Default infrastructure node type
   DEFAULT_INFRA_TYPE = "BisBis"
+  DEFAULT_NODE_TYPE = "0"
   # Port types
   PORT_TYPE = enum(ABSTRACT="port-abstract", SAP="port-sap")
 
@@ -330,8 +331,8 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     # Add <nodes> tag
     self.__virtualizer.c_nodes = Nodes(self.__virtualizer)
     # Add <links> tag
-    self.__virtualizer.g_links = LinksGroup(self.__virtualizer)
-    self.__virtualizer.g_links.c_links = Links(self.__virtualizer.g_links)
+    # self.__virtualizer.g_links = LinksGroup(self.__virtualizer)
+    # self.__virtualizer.g_links.c_links = Links(self.__virtualizer.g_links)
 
   ##############################################################################
   # Builder design pattern related functions
@@ -440,95 +441,42 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     :return: links
     :rtype: list(Links)
     """
-    return self.__virtualizer.g_links.c_links.list_link
+    return self.__virtualizer.g_links.c_links.list_link if \
+      self.__virtualizer.g_links else None
 
   ##############################################################################
   # Extended function for bridging over the differences between NFFG repr
   ##############################################################################
 
-  def add_port (self, parent, type, id=None, name=None):
+  def add_node (self, parent, id=None, name=None, type=None):
     """
-    Add a port into a Node.
+    Add a node(NodeGroup) to the its parent.
 
-    :param parent: parent node
-    :type parent: e.g. Virtualizer, InfraNodeGroup
-    :param type: type of the port as ``PORT_TYPE``
-    :type type: one of ``PORT_TYPE`` enum
-    :param id: port ID (optional)
-    :type id: str
-    :param name: port name (optional)
-    :type name: str (optional)
-    :return: port object
-    :rtype: PortGroup
-    """
-    # Add ports container if it's not exist
-    if parent.g_node.c_ports is None:
-      parent.g_node.c_ports = Ports(parent.g_node)
-    # Define mandatory attributes
-    id = str(len(parent.g_node.c_ports.list_port)) if id is None else str(id)
-    name = "port" + str(id) if name is None else str(name)
-    # Create port
-    port = PortGroup(parent.g_node.c_ports)
-    # Add id, name, type
-    port.g_idName = IdNameGroup(port)
-    port.g_idName.l_id = id
-    port.g_idName.l_name = name
-    port.g_portType = PortTypeGroup(port)
-    if type == self.PORT_TYPE.ABSTRACT:
-      _type = PortAbstractCase(port.g_portType)
-      _type.l_portType = type
-    elif type == self.PORT_TYPE.SAP:
-      _type = PortSapCase(port.g_portType)
-      _type.l_portType = type
-      # TODO handle vx-lan choice in sap-type
-    else:
-      raise RuntimeError("Not supported Port type: %s" % type)
-    port.g_portType = _type
-    # Add port to ports
-    parent.g_node.c_ports.list_port.append(port)
-    return port
-
-  def __add_connection (self, parent, src, dst, id=None, name=None):
-    """
-    Add a connection a.k.a a <link> to a Node.
-
-    :param parent: parent node
-    :type parent: e.g. Virtualizer, InfraNodeGroup
-    :param src: source port
-    :type src: PortGroup
-    :param dst: destination port
-    :type dst: PortGroup
-    :param id: link ID (optional)
+    :param parent: container of the new node
+    :type parent: InfraNodeGroup or NodeGroup or NFInstances or SupportedNFs
+    :param id: ID of node
     :type id: str or int
-    :param name: link name (optional)
+    :param name: name (optional)
     :type name: str
-    :return: link object
-    :rtype:
+    :param type: node type (default: 0)
+    :type type: str
+    :return: node object
+    :rtype: NodeGroup
     """
-    if not isinstance(src, PortGroup) or not isinstance(dst, PortGroup):
-      raise RuntimeError("scr and dst must be a port object (PortGroup)!")
-    # Add links container if it's not exist
-    if parent.g_links is None:
-      parent.g_links = LinksGroup(parent)
-      parent.g_links.c_links = Links(parent.g_links)
     # Define mandatory attributes
-    id = str(len(parent.g_links.c_links.list_link)) if id is None else str(id)
-    name = str("link" + str(id)) if name is None else str(name)
-    # Create link
-    link = Link(parent.g_links.c_links)
-    # Add id, name src, dst
-    link.g_idName = IdNameGroup(link)
-    link.g_idName.l_id = id
-    link.g_idName.l_name = name
-    # Add link to links
-    parent.g_links.c_links.list_link.append(link)
-    return link
+    type = self.DEFAULT_NODE_TYPE if type is None else str(type)
+    id = str(len(self.nodes)) if id is None else str(id)
+    name = str("node" + str(id)) if name is None else str(name)
+    # Add id, name, type
+    node = NodeGroup(parent)
+    node.g_idNameType = IdNameTypeGroup(node)
+    node.g_idNameType.g_idName = IdNameGroup(node.g_idNameType)
+    node.g_idNameType.g_idName.l_id = id
+    node.g_idNameType.g_idName.l_name = name
+    node.g_idNameType.l_type = type
+    return node
 
-  ##############################################################################
-  # General functions to add NFFG elements easily
-  ##############################################################################
-
-  def add_infra (self, id=None, name=None, type=None):
+  def add_infrastructure_node (self, id=None, name=None, type=None):
     """
     Add an infrastructure node to NFFG (as a BiS-BiS).
 
@@ -543,22 +491,317 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     """
     # Define mandatory attributes
     type = self.DEFAULT_INFRA_TYPE if type is None else str(type)
-    id = str(len(self.nodes)) if id is None else str(id)
+    id = "UUID-%02d" % len(self.nodes) if id is None else str(id)
     name = str(type + str(id)) if name is None else str(name)
     # Create Infrastructure wrapper
     infra = InfraNodeGroup(self.__virtualizer)
-    # Add id, name, type
-    infra.g_node = NodeGroup(infra)
-    infra.g_node.g_idNameType = IdNameTypeGroup(infra.g_node)
-    infra.g_node.g_idNameType.g_idName = IdNameGroup(infra.g_node.g_idNameType)
-    infra.g_node.g_idNameType.g_idName.l_id = id
-    infra.g_node.g_idNameType.g_idName.l_name = name
-    infra.g_node.g_idNameType.l_type = type
+    # Add id, name, type as a NodeGroup
+    infra.g_node = self.add_node(infra, id=id, name=name,
+                                 type=self.DEFAULT_INFRA_TYPE)
     # Add necessary flow table group for InfraNodeGroup
     infra.g_flowtable = FlowTableGroup(infra)
     # Add infra to nodes
     self.nodes.append(infra)
     return infra
+
+  def add_node_port (self, parent, type=PORT_TYPE.ABSTRACT, id=None, name=None,
+       param=None):
+    """
+    Add a port into a Node.
+
+    :param parent: parent node
+    :type parent: e.g. Virtualizer, InfraNodeGroup
+    :param type: type of the port as ``PORT_TYPE``
+    :type type: one of ``PORT_TYPE`` enum
+    :param id: port ID (optional)
+    :type id: str
+    :param name: port name (optional)
+    :type name: str (optional)
+    :param param: additional parameters: abstract: capability; sap: vxlan type
+    :type param: str
+    :return: port object
+    :rtype: PortGroup
+    """
+    if isinstance(parent, InfraNodeGroup):
+      parent = parent.g_node
+    # Add ports container if it's not exist
+    if parent.c_ports is None:
+      parent.c_ports = Ports(parent)
+    # Define mandatory attributes
+    id = str(len(parent.c_ports.list_port)) if id is None else str(id)
+    name = "port" + str(id) if name is None else str(name)
+    # Create port
+    port = PortGroup(parent.c_ports)
+    # Add id, name, type
+    port.g_idName = IdNameGroup(port)
+    port.g_idName.l_id = id
+    port.g_idName.l_name = name
+    port.g_portType = PortTypeGroup(port)
+    if type == self.PORT_TYPE.ABSTRACT:
+      _type = PortAbstractCase(port.g_portType)
+      _type.l_portType = type
+      _type.l_capability = str(param)
+    elif type == self.PORT_TYPE.SAP:
+      _type = PortSapCase(port.g_portType)
+      _type.l_portType = type
+      _type.l_sapType = PortSapVxlanCase(_type)
+      _type.l_sapType.g_portSapVxlan = PortSapVxlanGroup(_type.l_sapType)
+      _type.l_sapType.g_portSapVxlan.l_vxlan = str(param)
+
+      # TODO handle vx-lan choice in sap-type
+    else:
+      raise RuntimeError("Not supported Port type: %s" % type)
+    port.g_portType = _type
+    # Add port to ports
+    parent.c_ports.list_port.append(port)
+    return port
+
+  def add_node_resource (self, parent, cpu=None, mem=None, storage=None):
+    """
+    Add software resources to a Node.
+
+    :param parent: parent node
+    :type parent: InfraNodeGroup or SupportedNFs
+    :param cpu: In virtual CPU (vCPU) units
+    :type cpu: str
+    :param mem: Memory with units, e.g., 1Gbyte
+    :type mem: str
+    :param storage: Storage with units, e.g., 10Gbyte
+    :type storage: str
+    :return: resource object
+    :rtype: NodeResources
+    """
+    # If InfraNodeGroup set parent reference correctly
+    if isinstance(parent, InfraNodeGroup):
+      parent = parent.g_node
+    # Create resources
+    if parent.c_resources is None:
+      parent.c_resources = NodeResources(parent)
+      parent.c_resources.g_softwareResource = SoftwareResourceGroup(
+        parent.c_resources)
+    # Add cpu, mem, storage
+    if cpu:
+      parent.c_resources.g_softwareResource.l_cpu = cpu
+    if mem:
+      parent.c_resources.g_softwareResource.l_mem = mem
+    if storage:
+      parent.c_resources.g_softwareResource.l_storage = storage
+    return parent.c_resources
+
+  def add_link_resource (self, parent, delay=None, bandwidth=None):
+    """
+    Add link resources to a connection.
+
+    :param parent: container of the connection
+    :type parent: Flowentry or Link
+    :param delay: delay value with unit; e.g. 5ms (optional)
+    :type delay: str
+    :param bandwidth: bandwidth value with unit; e.g. 10Mbps (optional)
+    :type bandwidth: str
+    :return: connection resource
+    :rtype: LinkResource
+    """
+    if delay is not None or bandwidth is not None:
+      parent.c_resources = LinkResource(parent)
+      parent.c_resources.g_linkResource = LinkResourceGroup(parent.c_resources)
+      parent.c_resources.g_linkResource.l_delay = delay
+      parent.c_resources.g_linkResource.l_bandwidth = bandwidth
+    return parent.c_resources
+
+  def add_nf_instance (self, parent, id=None, name=None, type=None):
+    """
+    Add an NF instance to an Infrastructure Node.
+
+    :param parent: container of the new node
+    :type parent: InfraNodeGroup
+    :param id: ID of node
+    :type id: str or int
+    :param name: name (optional)
+    :type name: str
+    :param type: node type (default: 0)
+    :type type: str
+    :return: NF instance object
+    :rtype: NodeGroup
+    """
+    # Create NF container
+    if parent.c_NFInstances is None:
+      parent.c_NFInstances = NFInstances(parent)
+    # Create NF instance
+    nf_instance = self.add_node(parent.c_NFInstances, id, name, type)
+    # Add NF instance to container
+    parent.c_NFInstances.list_node.append(nf_instance)
+    return nf_instance
+
+  def add_supported_nf (self, parent, id=None, name=None, type=None):
+    """
+    Add a supported NF to an Infrastructure Node.
+
+    :param parent: container of the new node
+    :type parent: InfraNodeGroup
+    :param id: ID of node
+    :type id: str or int
+    :param name: name (optional)
+    :type name: str
+    :param type: node type (default: 0)
+    :type type: str
+    :return: supported NF object
+    :rtype: NodeGroup
+    """
+    # Create capabilities container
+    if parent.c_capabilities is None:
+      parent.c_capabilities = Capabilities(parent)
+      parent.c_capabilities.g_capabilities = CapabilitesGroup(
+        parent.c_capabilities)
+      parent.c_capabilities.g_capabilities.c_supportedNFs = SupportedNFs(
+        parent.c_capabilities.g_capabilities)
+    # Create supported NF
+    supported_nf = self.add_node(
+      parent.c_capabilities.g_capabilities.c_supportedNFs, id, name, type)
+    # Add supported NF to container
+    parent.c_capabilities.g_capabilities.c_supportedNFs.list_node.append(
+      supported_nf)
+    return supported_nf
+
+  def add_flow_entry (self, parent, in_port, out_port, match=None, action=None,
+       delay=None, bandwidth=None):
+    """
+    Add a flowentry to an Infrastructure Node.
+
+    :param parent: container of the flowtable
+    :type parent: InfraNodeGroup
+    :param in_port: related in port object
+    :type in_port: PortGroup
+    :param match: matching rule
+    :type match: str
+    :param in_port: related out port object
+    :type in_port: PortGroup
+    :param action: forwarding actions
+    :type action: list or tuple or str
+    :param delay: delay value with unit; e.g. 5ms (optional)
+    :type delay: str
+    :param bandwidth: bandwidth value with unit; e.g. 10Mbps (optional)
+    :type bandwidth: str
+    :return: flowentry
+    :rtype: FlowEntry
+    """
+    # Create flowtables container
+    if parent.g_flowtable.c_flowtable is None:
+      parent.g_flowtable.c_flowtable = FlowTable(parent.g_flowtable)
+    # Create flowentry
+    flowentry = FlowEntry(parent.g_flowtable.c_flowtable)
+    # Add port
+    # port.parent.parent,parent -> PortGroup.Ports.NodeGroup.InfraNodeGroup
+    if isinstance(in_port.parent.parent.parent, InfraNodeGroup):
+      _in_port = "../../ports/port[id=%s]" % in_port.g_idName.l_id
+    # port.parent.parent,parent -> PortGroup.Ports.NodeGroup.NFInstances
+    elif isinstance(in_port.parent.parent.parent, NFInstances):
+      _in_port = "../../NF_instances/node[id=%s]ports/port[id=%s]" % (
+        in_port.parent.parent.g_idNameType.g_idName.l_id, in_port.g_idName.l_id)
+    else:
+      raise RuntimeError("Not supported in_port ancestor!")
+    flowentry.l_port = _in_port
+    # Add match
+    if match is not None:
+      flowentry.l_match = str(match)
+    # Add action
+    # port.parent.parent,parent -> PortGroup.Ports.NodeGroup.InfraNodeGroup
+    if isinstance(out_port.parent.parent.parent, InfraNodeGroup):
+      _out_port = "output:../../ports/port[id=%s]" % out_port.g_idName.l_id
+    # port.parent.parent,parent -> PortGroup.Ports.NodeGroup.NFInstances
+    elif isinstance(out_port.parent.parent.parent, NFInstances):
+      _out_port = "output:../../NF_instances/node[id=%s]ports/port[id=%s]" % (
+        out_port.parent.parent.g_idNameType.g_idName.l_id,
+        out_port.g_idName.l_id)
+    else:
+      raise RuntimeError("Not supported out_port ancestor!")
+    if action is not None:
+      tmp_sequence = list()
+      tmp_sequence.append(_out_port)
+      if isinstance(action, str):
+        tmp_sequence.append(action)
+      else:
+        tmp_sequence.extend(action)
+      _out_port = ";".join(tmp_sequence)
+    flowentry.l_action = _out_port
+    # Add resource
+    self.add_link_resource(flowentry, delay=delay, bandwidth=bandwidth)
+    # Add flowentry to flowtable
+    parent.g_flowtable.c_flowtable.list_flowentry.append(flowentry)
+    return flowentry
+
+  def __add_connection (self, parent, src, dst, id=None, name=None, delay=None,
+       bandwidth=None):
+    """
+    Add a connection a.k.a a <link> to a Node.
+
+    :param parent: parent node
+    :type parent: e.g. Virtualizer, InfraNodeGroup
+    :param src: relative path to the source port
+    :type src: str
+    :param dst: relative path to the destination port
+    :type dst: str
+    :param id: link ID (optional)
+    :type id: str or int
+    :param name: link name (optional)
+    :type name: str
+    :param delay: delay value with unit; e.g. 5ms (optional)
+    :type delay: str
+    :param bandwidth: bandwidth value with unit; e.g. 10Mbps (optional)
+    :type bandwidth: str
+    :return: link object
+    :rtype: LinksGroup
+    """
+    # Add links container if it's not exist
+    if parent.g_links is None:
+      parent.g_links = LinksGroup(parent)
+      parent.g_links.c_links = Links(parent.g_links)
+    # Define mandatory attributes
+    id = str(len(parent.g_links.c_links.list_link)) if id is None else str(id)
+    name = str("link" + str(id)) if name is None else str(name)
+    # Create link
+    link = Link(parent.g_links.c_links)
+    # Add id, name
+    link.g_idName = IdNameGroup(link)
+    link.g_idName.l_id = id
+    link.g_idName.l_name = name
+    # Add src, dst
+    link.l_src = src
+    link.l_dst = dst
+    # Add resource
+    self.add_link_resource(link, delay=delay, bandwidth=bandwidth)
+    # Add link to links
+    parent.g_links.c_links.list_link.append(link)
+    return link
+
+  def add_inter_infra_link (self, src, dst, **kwargs):
+    """
+    Add link between Infrastructure nodes.
+
+    :param src: source port
+    :type src: PortGroup
+    :param dst: destination port
+    :type dst: PortGroup
+    :return: link object
+    :rtype: LinksGroup
+    """
+    if not isinstance(src, PortGroup) or not isinstance(dst, PortGroup):
+      raise RuntimeError("scr and dst must be a port object (PortGroup)!")
+    # src.parent.parent -> PortGroup.Ports.NodeGroup
+    src = "../../nodes/node[id=%s]/ports/port[id=%s]" % (
+      src.parent.parent.g_idNameType.g_idName.l_id, src.g_idName.l_id)
+    dst = "../../nodes/node[id=%s]/ports/port[id=%s]" % (
+      dst.parent.parent.g_idNameType.g_idName.l_id, dst.g_idName.l_id)
+    return self.__add_connection(self.__virtualizer, src, dst, **kwargs)
+
+  ##############################################################################
+  # General functions to add NFFG elements easily
+  ##############################################################################
+
+  def add_infra (self, id=None, name=None, type=None):
+    return self.add_infrastructure_node(id, name, type)
+
+  def add_nf (self, node_nf):
+    pass
 
   def add_edge (self, src, dst, params=None):
     """
@@ -569,14 +812,12 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     :param params:
     :return:
     """
+    pass
 
   def del_node (self, id):
     pass
 
   def add_req (self, edge_req):
-    pass
-
-  def add_nf (self, node_nf):
     pass
 
   def add_sap (self, node_sap):
@@ -610,9 +851,37 @@ def main (argv=None):
 
 if __name__ == "__main__":
   # main()
+  # builder = NFFGtoXMLBuilder()
+  # infra = builder.add_infra()
+  # port = builder.add_node_port(infra, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
+  # res = builder.add_node_resource(infra, "10 VCPU", "32 GB", "5 TB")
+  # link = builder.add_inter_infra_link(port, port, delay="5ms",
+  #                                     bandwidth="10Gbps")
+  # nf_inst = builder.add_nf_instance(infra)
+  # nf_port = builder.add_node_port(nf_inst, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
+  # sup_nf = builder.add_supported_nf(infra)
+  # builder.add_node_port(sup_nf, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
+  # builder.add_flow_entry(infra, port, nf_port,
+  #                        action="mod_dl_src=12:34:56:78:90:12", delay="5ms",
+  #                        bandwidth="10Gbps")
 
+  # Generate same output as Agent_http.py
   builder = NFFGtoXMLBuilder()
-  infra = builder.add_infra()
-  port = builder.add_port(infra, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
-  # builder.add_connection(infra, port, port)
+  builder.id = "UUID-ETH-001"
+  builder.name = "ETH OpenStack-OpenDaylight domain"
+  infra = builder.add_infra(
+    name="single Bis-Bis node representing the whole domain")
+  iport0 = builder.add_node_port(infra, name="OVS-north external port")
+  iport1 = builder.add_node_port(infra, name="OVS-south external port")
+  builder.add_node_resource(infra, cpu="10 VCPU", mem="32 GB", storage="5 TB")
+  nf1 = builder.add_nf_instance(infra, id="NF1", name="example NF")
+  nf1port0 = builder.add_node_port(nf1, name="Example NF input port")
+  nf1port1 = builder.add_node_port(nf1, name="Example NF output port")
+  sup_nf = builder.add_supported_nf(infra, id="nf_a",
+                                    name="tcp header compressor")
+  builder.add_node_port(sup_nf, name="in", param="...")
+  builder.add_node_port(sup_nf, name="out", param="...")
+  builder.add_flow_entry(infra, in_port=iport0, out_port=nf1port0)
+  builder.add_flow_entry(infra, in_port=nf1port1, out_port=iport1,
+                         action="mod_dl_src=12:34:56:78:90:12")
   print builder
