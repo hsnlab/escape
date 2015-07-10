@@ -57,7 +57,7 @@ class AbstractNFFG(object):
   interfaces with the high level data manipulation functions.
   """
 
-  def __init__ (self, id, version='1.0'):
+  def __init__ (self, id=None, version='1.0'):
     # def __init__ (self, id, name=None, version='1.0'):
     """
     Init
@@ -158,11 +158,19 @@ class NFFG(AbstractNFFG):
     Not fully implemented yet!
   """
 
-  def __init__ (self, id=None, name=None, virtualizer=None):
+  def __init__ (self, id=None):
     """
     Init
     """
     super(NFFG, self).__init__(id)
+
+  @property
+  def id (self):
+    return self._id
+
+  @id.setter
+  def id (self, id):
+    self._id = id
 
   # NFFG specific functions
 
@@ -214,10 +222,11 @@ class NFFG(AbstractNFFG):
   # General functions for create/parse/dump/convert NFFG
 
   @staticmethod
-  def parse (data, format=None):
+  def parse (data, format="JSON"):
     """
     """
-    pass
+    if format.upper() == "JSON":
+      return NFFG().init_from_json(data)
 
   def dump (self):
     """
@@ -232,7 +241,9 @@ class NFFG(AbstractNFFG):
     :type json_data: str
     :return: None
     """
-    raise NotImplementedError("Not implemented yet!")
+    # TODO - improve
+    self.data = json_data
+    return self
 
   def init_from_xml (self, xml_data):
     """

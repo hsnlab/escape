@@ -71,7 +71,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                      "poll": True},
                         "OPENSTACK": {"module": "escape.adapt.components",
                                       "class": "OpenStackDomainManager",
-                                      "poll": False},
+                                      "poll": True},
                         "DOCKER": {"module": "escape.adapt.components",
                                    "class": "DockerDomainManager"}},
        "infrastructure": {  # Infrastructure Layer

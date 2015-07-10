@@ -151,7 +151,7 @@ class ComponentConfigurator(object):
     """
     Return with an iterator rely on initiated DomainManagers.
     """
-    return iter(self.__repository)
+    return self.__repository.iteritems()
 
   # Configuration related functions
 
@@ -254,13 +254,9 @@ class ControllerAdapter(object):
     log.debug("Invoke %s to install NF-FG" % self.__class__.__name__)
     # TODO - implement
     # TODO - no NFFG split just very dummy cycle
-    if self._with_infr:
-      log.debug("Delegate mapped NFFG to Internal domain manager...")
-      self.domains.get_mgr('INTERNAL').install_nffg(mapped_nffg)
-    else:
-      for name, mgr in self.domains:
-        log.debug("Delegate mapped NFFG to %s domain adapter..." % name)
-        mgr.install_routes(mapped_nffg)
+    for name, mgr in self.domains:
+      log.debug("Delegate mapped NFFG to %s domain manager..." % name)
+      mgr.install_nffg(mapped_nffg)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
 
   def _handle_DomainChangedEvent (self, event):
