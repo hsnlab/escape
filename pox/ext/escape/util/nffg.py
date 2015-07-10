@@ -19,8 +19,34 @@ etc.
 import getopt
 from pprint import pprint
 import sys
+# from escape.util.misc import enum
 
 from nffglib import *
+
+
+def enum (*sequential, **named):
+  """
+  Helper function to define enumeration. E.g.:
+
+  .. code-block:: python
+
+    >>> Numbers = enum(ONE=1, TWO=2, THREE='three')
+    >>> Numbers = enum('ZERO', 'ONE', 'TWO')
+    >>> Numbers.ONE
+    1
+    >>> Numbers.reversed[2]
+    'TWO'
+
+  :param sequential: support automatic enumeration
+  :type sequential: list
+  :param named: support definition with unique keys
+  :type named: dict
+  :return: Enum object
+  :rtype: dict
+  """
+  enums = dict(zip(sequential, range(len(sequential))), **named)
+  enums['reversed'] = dict((value, key) for key, value in enums.iteritems())
+  return type('enum', (), enums)
 
 
 class AbstractNFFG(object):
@@ -94,24 +120,22 @@ class AbstractNFFG(object):
 
   def del_node (self, id):
     """
-    Delete a single node from the NF-FG
+    Delete a single node from the NF-FG.
     """
     raise NotImplementedError("Not implemented yet!")
 
   # General functions for create/parse/dump/convert NFFG
 
   @staticmethod
-  def parse (data, format):
+  def parse (data):
     """
     General function for parsing data as a new :any::`NFFG` object and return
-    with its reference..
+    with its reference.
 
     :param data: raw data
-    :type data: ``format``
-    :param format: ``data`` format
-    :type format: str
-    :return: parsed and initiated NFFG object
-    :rtype: :any::`AbstractNFFG`
+    :type data: str
+    :return: parsed NFFG as an XML object
+    :rtype: Virtualizer
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -268,20 +292,27 @@ class NFFG(AbstractNFFG):
 class NFFGtoXMLBuilder(AbstractNFFG):
   """
   Builder class for construct an NFFG in XML format rely on ETH's nffglib.py.
+
+  .. warning::
+
+    Only tailored to the current nffglib.py (2015.06.26) and OpenStack domain.
+    Should not use for general purposes, major part could be unimplemented!
   """
   # Do not modified
   __UUID_NUM = 0
   # Default infrastructure node type
   DEFAULT_INFRA_TYPE = "BisBis"
+  # Port types
+  PORT_TYPE = enum(ABSTRACT="port-abstract", SAP="port-sap")
 
   def __init__ (self):
     super(NFFGtoXMLBuilder, self).__init__(None, "1.0")
     # Init main container: virtualizer
     self.__virtualizer = Virtualizer()
     self.__virtualizer.g_idName = IdNameGroup(self.__virtualizer)
-    NFFGtoXMLBuilder.__UUID_NUM += 1
     # Add <id> tag
-    self.__virtualizer.g_idName.l_id = "UUID-ESCAPE-BME-%i" % \
+    NFFGtoXMLBuilder.__UUID_NUM += 1
+    self.__virtualizer.g_idName.l_id = "UUID-ESCAPE-BME-%03d" % \
                                        NFFGtoXMLBuilder.__UUID_NUM
     # Add <name> tag
     self.__virtualizer.g_idName.l_name = "ESCAPE-BME orchestrator version v2.0"
@@ -313,9 +344,26 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     """
     return self.dump()
 
+  def build (self):
+    """
+    Return the constructed XML object.
+
+    :return: NFFG
+    :rtype: Virtualizer
+    """
+    return self.__virtualizer
+
   @staticmethod
-  def parse (data, format):
-    pass
+  def parse (data):
+    """
+    Return the parsed XML.
+
+    :param data: raw text
+    :type data: str
+    :return: parsed XML structure
+    :rtype: Virtualizer
+    """
+    return Virtualizer().parse(text=data)
 
   ##############################################################################
   # Simplifier function to access XML tags easily
@@ -384,22 +432,108 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     return self.__virtualizer.g_links.c_links.list_link
 
   ##############################################################################
+  # Extended function for bridging over the differences between NFFG repr
+  ##############################################################################
+
+  def add_port (self, parent, type, id=None, name=None):
+    """
+    Add a port into a Node.
+
+    :param parent: parent node
+    :type parent: e.g. Virtualizer, InfraNodeGroup
+    :param type: type of the port as ``PORT_TYPE``
+    :type type: one of ``PORT_TYPE`` enum
+    :param id: port ID (optional)
+    :type id: str
+    :param name: port name (optional)
+    :type name: str (optional)
+    :return: port object
+    :rtype: PortGroup
+    """
+    # Add ports container if it's not exist
+    if parent.g_node.c_ports is None:
+      parent.g_node.c_ports = Ports(parent.g_node)
+    # Define mandatory attributes
+    id = str(len(parent.g_node.c_ports.list_port)) if id is None else str(id)
+    name = "port" + str(id) if name is None else str(name)
+    # Create port
+    port = PortGroup(parent.g_node.c_ports)
+    # Add id, name, type
+    port.g_idName = IdNameGroup(port)
+    port.g_idName.l_id = id
+    port.g_idName.l_name = name
+    port.g_portType = PortTypeGroup(port)
+    if type == self.PORT_TYPE.ABSTRACT:
+      _type = PortAbstractCase(port.g_portType)
+      _type.l_portType = type
+    elif type == self.PORT_TYPE.SAP:
+      _type = PortSapCase(port.g_portType)
+      _type.l_portType = type
+      # TODO handle vx-lan choice in sap-type
+    else:
+      raise RuntimeError("Not supported Port type: %s" % type)
+    port.g_portType = _type
+    # Add port to ports
+    parent.g_node.c_ports.list_port.append(port)
+    return port
+
+  def __add_connection (self, parent, src, dst, id=None, name=None):
+    """
+    Add a connection a.k.a a <link> to a Node.
+
+    :param parent: parent node
+    :type parent: e.g. Virtualizer, InfraNodeGroup
+    :param src: source port
+    :type src: PortGroup
+    :param dst: destination port
+    :type dst: PortGroup
+    :param id: link ID (optional)
+    :type id: str or int
+    :param name: link name (optional)
+    :type name: str
+    :return: link object
+    :rtype:
+    """
+    if not isinstance(src, PortGroup) or not isinstance(dst, PortGroup):
+      raise RuntimeError("scr and dst must be a port object (PortGroup)!")
+    # Add links container if it's not exist
+    if parent.g_links is None:
+      parent.g_links = LinksGroup(parent)
+      parent.g_links.c_links = Links(parent.g_links)
+    # Define mandatory attributes
+    id = str(len(parent.g_links.c_links.list_link)) if id is None else str(id)
+    name = str("link" + str(id)) if name is None else str(name)
+    # Create link
+    link = Link(parent.g_links.c_links)
+    # Add id, name src, dst
+    link.g_idName = IdNameGroup(link)
+    link.g_idName.l_id = id
+    link.g_idName.l_name = name
+    # Add link to links
+    parent.g_links.c_links.list_link.append(link)
+    return link
+
+  ##############################################################################
   # General functions to add NFFG elements easily
   ##############################################################################
 
   def add_infra (self, id=None, name=None, type=None):
     """
-    Add an infrastructure node ot NFFG (as a BiS-BiS).
+    Add an infrastructure node to NFFG (as a BiS-BiS).
 
-    :param id:
-    :param name:
-    :param type:
-    :return: None
+    :param id: ID of infrastructure node
+    :type id: str or int
+    :param name: name (optional)
+    :type name: str
+    :param type: node type (default: BisBis)
+    :type type: str
+    :return: infrastructure node object
+    :rtype: InfraNodeGroup
     """
-    # Set mandatory attributes
+    # Define mandatory attributes
     type = self.DEFAULT_INFRA_TYPE if type is None else str(type)
-    id = str(len(self.nodes) + 1) if id is None else str(id)
-    name = type + str(id) if name is None else str(name)
+    id = str(len(self.nodes)) if id is None else str(id)
+    name = str(type + str(id)) if name is None else str(name)
     # Create Infrastructure wrapper
     infra = InfraNodeGroup(self.__virtualizer)
     # Add id, name, type
@@ -409,20 +543,20 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     infra.g_node.g_idNameType.g_idName.l_id = id
     infra.g_node.g_idNameType.g_idName.l_name = name
     infra.g_node.g_idNameType.l_type = type
-    # Add necessary flow table group
+    # Add necessary flow table group for InfraNodeGroup
     infra.g_flowtable = FlowTableGroup(infra)
     # Add infra to nodes
     self.nodes.append(infra)
+    return infra
 
-  def add_port (self, type, parent, id=None, name=None):
+  def add_edge (self, src, dst, params=None):
     """
-    Add a port into a Node.
+    Add an edge link to the NFFG: a link between infrastructure node ports.
 
-    :param type:
-    :param parent:
-    :param id:
-    :param name:
-    :return: None
+    :param src:
+    :param dst:
+    :param params:
+    :return:
     """
 
   def del_node (self, id):
@@ -435,9 +569,6 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     pass
 
   def add_sap (self, node_sap):
-    pass
-
-  def add_edge (self, src, dst, params=None):
     pass
 
   def add_link (self, edge_link):
@@ -468,8 +599,9 @@ def main (argv=None):
 
 if __name__ == "__main__":
   # main()
+
   builder = NFFGtoXMLBuilder()
-  builder.id = 42
-  builder.name = "testname"
-  builder.add_infra()
+  infra = builder.add_infra()
+  port = builder.add_port(infra, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
+  # builder.add_connection(infra, port, port)
   print builder
