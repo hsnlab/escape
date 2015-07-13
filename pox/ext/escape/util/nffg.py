@@ -318,6 +318,11 @@ class NFFGtoXMLBuilder(AbstractNFFG):
   PORT_TYPE = enum(ABSTRACT="port-abstract", SAP="port-sap")
 
   def __init__ (self):
+    """
+    Init. Create an empty virtualizer container and the necessary sub-objects.
+
+    :return: None
+    """
     super(NFFGtoXMLBuilder, self).__init__(None, "1.0")
     # Init main container: virtualizer
     self.__virtualizer = Virtualizer()
@@ -340,7 +345,7 @@ class NFFGtoXMLBuilder(AbstractNFFG):
 
   def dump (self):
     """
-    Return the constructed NFFG in XML format.
+    Return the constructed NFFG as a string in XML format.
 
     :return: NFFG in XML format
     :rtype: str
@@ -358,7 +363,7 @@ class NFFGtoXMLBuilder(AbstractNFFG):
 
   def build (self):
     """
-    Return the constructed XML object.
+    Return the constructed XML object a.k.a. the Virtualizer.
 
     :return: NFFG
     :rtype: Virtualizer
@@ -368,11 +373,11 @@ class NFFGtoXMLBuilder(AbstractNFFG):
   @staticmethod
   def parse (data):
     """
-    Return the parsed XML.
+    Parse the given XML-formatted string and return the constructed Virtualizer.
 
-    :param data: raw text
+    :param data: raw text formatted in XML
     :type data: str
-    :return: parsed XML structure
+    :return: parsed XML object-structure
     :rtype: Virtualizer
     """
     return Virtualizer().parse(text=data)
@@ -436,13 +441,16 @@ class NFFGtoXMLBuilder(AbstractNFFG):
   @property
   def links (self):
     """
-    Return the list of links.
+    Return the list of links. If links is not exist, create the empty container
+    on the fly.
 
     :return: links
     :rtype: list(Links)
     """
-    return self.__virtualizer.g_links.c_links.list_link if \
-      self.__virtualizer.g_links else None
+    if self.__virtualizer.g_links is None:
+      self.__virtualizer.g_links = LinksGroup(self.__virtualizer)
+      self.__virtualizer.g_links.c_links = Links(self.__virtualizer.g_links)
+    return self.__virtualizer.g_links.c_links.list_link
 
   ##############################################################################
   # Extended function for bridging over the differences between NFFG repr
@@ -450,7 +458,9 @@ class NFFGtoXMLBuilder(AbstractNFFG):
 
   def add_node (self, parent, id=None, name=None, type=None):
     """
-    Add a node(NodeGroup) to the its parent.
+    Add an empty node(NodeGroup) to its parent. If the parameters are not
+    given,
+    they are generated from default names and the actual container's size.
 
     :param parent: container of the new node
     :type parent: InfraNodeGroup or NodeGroup or NFInstances or SupportedNFs
@@ -478,7 +488,8 @@ class NFFGtoXMLBuilder(AbstractNFFG):
 
   def add_infrastructure_node (self, id=None, name=None, type=None):
     """
-    Add an infrastructure node to NFFG (as a BiS-BiS).
+    Add an infrastructure node to NFFG (as a BiS-BiS), which is a special
+    node directly under the ``Virtualizer`` main container object.
 
     :param id: ID of infrastructure node
     :type id: str or int
@@ -507,21 +518,27 @@ class NFFGtoXMLBuilder(AbstractNFFG):
   def add_node_port (self, parent, type=PORT_TYPE.ABSTRACT, id=None, name=None,
        param=None):
     """
-    Add a port into a Node.
+    Add a port to a Node. The parent node could be the nodes which can has
+    ports i.e. a special infrastructure node, initiated and supported NF
+    objects. If the type is a SAP type, the param attribute is read as the
+    sap-type. If the param attribute starts with "vxlan:" then the sap-type
+    will be set to "vxlan" and the vxlan tag will be set to the number after
+    the colon.
 
     :param parent: parent node
-    :type parent: e.g. Virtualizer, InfraNodeGroup
+    :type parent: InfraNodeGroup or NodeGroup
     :param type: type of the port as ``PORT_TYPE``
-    :type type: one of ``PORT_TYPE`` enum
+    :type type: one of ``PORT_TYPE`` enum, currently: port-{abstract,sap}
     :param id: port ID (optional)
     :type id: str
     :param name: port name (optional)
     :type name: str (optional)
-    :param param: additional parameters: abstract: capability; sap: vxlan type
+    :param param: additional parameters: abstract: capability; sap: sap type
     :type param: str
     :return: port object
     :rtype: PortGroup
     """
+    # Set the correct NodeGroup as the parent in case of Infrastructure None
     if isinstance(parent, InfraNodeGroup):
       parent = parent.g_node
     # Add ports container if it's not exist
@@ -538,17 +555,24 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     port.g_idName.l_name = name
     port.g_portType = PortTypeGroup(port)
     if type == self.PORT_TYPE.ABSTRACT:
+      # Add capabilities sub-object as the additional param
       _type = PortAbstractCase(port.g_portType)
       _type.l_portType = type
       _type.l_capability = str(param)
     elif type == self.PORT_TYPE.SAP:
-      _type = PortSapCase(port.g_portType)
+      # Add sap-type and vx-lan sub-objects as the additional param
+      _type = PortSapVxlanCase(port.g_portType)
       _type.l_portType = type
-      _type.l_sapType = PortSapVxlanCase(_type)
-      _type.l_sapType.g_portSapVxlan = PortSapVxlanGroup(_type.l_sapType)
-      _type.l_sapType.g_portSapVxlan.l_vxlan = str(param)
-
-      # TODO handle vx-lan choice in sap-type
+      if param.startswith("vxlan:"):
+        _type.l_sapType = "vx-lan"
+        _type.g_portSapVxlan = PortSapVxlanGroup(_type)
+        _type.g_portSapVxlan.l_vxlan = param.lstrip("vxlan:")
+      else:
+        _type.l_sapType = str(param)
+        # if vxlan is not None:
+        #   _type.g_portSapVxlan = PortSapVxlanGroup(_type)
+        #   _type.g_portSapVxlan.l_vxlan = str(vxlan)
+        #   # TODO handle vx-lan choice in sap-type
     else:
       raise RuntimeError("Not supported Port type: %s" % type)
     port.g_portType = _type
@@ -858,7 +882,8 @@ if __name__ == "__main__":
   # link = builder.add_inter_infra_link(port, port, delay="5ms",
   #                                     bandwidth="10Gbps")
   # nf_inst = builder.add_nf_instance(infra)
-  # nf_port = builder.add_node_port(nf_inst, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
+  # nf_port = builder.add_node_port(nf_inst,
+  # NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
   # sup_nf = builder.add_supported_nf(infra)
   # builder.add_node_port(sup_nf, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
   # builder.add_flow_entry(infra, port, nf_port,
@@ -880,7 +905,8 @@ if __name__ == "__main__":
   sup_nf = builder.add_supported_nf(infra, id="nf_a",
                                     name="tcp header compressor")
   builder.add_node_port(sup_nf, name="in", param="...")
-  builder.add_node_port(sup_nf, name="out", param="...")
+  builder.add_node_port(sup_nf, type=NFFGtoXMLBuilder.PORT_TYPE.SAP, name="out",
+                        param="svsrvgr:1025")
   builder.add_flow_entry(infra, in_port=iport0, out_port=nf1port0)
   builder.add_flow_entry(infra, in_port=nf1port1, out_port=iport1,
                          action="mod_dl_src=12:34:56:78:90:12")
