@@ -58,7 +58,6 @@ class AbstractNFFG(object):
   """
 
   def __init__ (self, id=None, version='1.0'):
-    # def __init__ (self, id, name=None, version='1.0'):
     """
     Init
     """
@@ -459,8 +458,8 @@ class NFFGtoXMLBuilder(AbstractNFFG):
   def add_node (self, parent, id=None, name=None, type=None):
     """
     Add an empty node(NodeGroup) to its parent. If the parameters are not
-    given,
-    they are generated from default names and the actual container's size.
+    given, they are generated from default names and the actual container's
+    size.
 
     :param parent: container of the new node
     :type parent: InfraNodeGroup or NodeGroup or NFInstances or SupportedNFs
@@ -533,7 +532,7 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     :type id: str
     :param name: port name (optional)
     :type name: str (optional)
-    :param param: additional parameters: abstract: capability; sap: sap type
+    :param param: additional parameters: abstract: capability; sap: sap-type
     :type param: str
     :return: port object
     :rtype: PortGroup
@@ -582,10 +581,10 @@ class NFFGtoXMLBuilder(AbstractNFFG):
 
   def add_node_resource (self, parent, cpu=None, mem=None, storage=None):
     """
-    Add software resources to a Node.
+    Add software resources to a Node or an infrastructure Node.
 
     :param parent: parent node
-    :type parent: InfraNodeGroup or SupportedNFs
+    :type parent: InfraNodeGroup or NodeGroup
     :param cpu: In virtual CPU (vCPU) units
     :type cpu: str
     :param mem: Memory with units, e.g., 1Gbyte
@@ -605,11 +604,11 @@ class NFFGtoXMLBuilder(AbstractNFFG):
         parent.c_resources)
     # Add cpu, mem, storage
     if cpu:
-      parent.c_resources.g_softwareResource.l_cpu = cpu
+      parent.c_resources.g_softwareResource.l_cpu = str(cpu)
     if mem:
-      parent.c_resources.g_softwareResource.l_mem = mem
+      parent.c_resources.g_softwareResource.l_mem = str(mem)
     if storage:
-      parent.c_resources.g_softwareResource.l_storage = storage
+      parent.c_resources.g_softwareResource.l_storage = str(storage)
     return parent.c_resources
 
   def add_link_resource (self, parent, delay=None, bandwidth=None):
@@ -756,10 +755,10 @@ class NFFGtoXMLBuilder(AbstractNFFG):
   def __add_connection (self, parent, src, dst, id=None, name=None, delay=None,
        bandwidth=None):
     """
-    Add a connection a.k.a a <link> to a Node.
+    Add a connection a.k.a a <link> to the Virtualizer or to a Node.
 
     :param parent: parent node
-    :type parent: e.g. Virtualizer, InfraNodeGroup
+    :type parent: Virtualizer or NodeGroup
     :param src: relative path to the source port
     :type src: str
     :param dst: relative path to the destination port
@@ -799,7 +798,7 @@ class NFFGtoXMLBuilder(AbstractNFFG):
 
   def add_inter_infra_link (self, src, dst, **kwargs):
     """
-    Add link between Infrastructure nodes.
+    Add link between Infrastructure nodes a.k.a define link in Virtualizer.
 
     :param src: source port
     :type src: PortGroup
@@ -810,6 +809,7 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     """
     if not isinstance(src, PortGroup) or not isinstance(dst, PortGroup):
       raise RuntimeError("scr and dst must be a port object (PortGroup)!")
+    # Construct source and destination path
     # src.parent.parent -> PortGroup.Ports.NodeGroup
     src = "../../nodes/node[id=%s]/ports/port[id=%s]" % (
       src.parent.parent.g_idNameType.g_idName.l_id, src.g_idName.l_id)
@@ -822,9 +822,15 @@ class NFFGtoXMLBuilder(AbstractNFFG):
   ##############################################################################
 
   def add_infra (self, id=None, name=None, type=None):
+    """
+    Add an Infrastructure Node.
+    """
     return self.add_infrastructure_node(id, name, type)
 
   def add_nf (self, node_nf):
+    """
+    Add a Network Function Node.
+    """
     pass
 
   def add_edge (self, src, dst, params=None):
@@ -882,9 +888,9 @@ if __name__ == "__main__":
   # link = builder.add_inter_infra_link(port, port, delay="5ms",
   #                                     bandwidth="10Gbps")
   # nf_inst = builder.add_nf_instance(infra)
-  # nf_port = builder.add_node_port(nf_inst,
-  # NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
+  # nf_port = builder.add_node_port(nf_inst, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
   # sup_nf = builder.add_supported_nf(infra)
+  # res_sup = builder.add_node_resource(sup_nf, 10, 10, 10)
   # builder.add_node_port(sup_nf, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
   # builder.add_flow_entry(infra, port, nf_port,
   #                        action="mod_dl_src=12:34:56:78:90:12", delay="5ms",
@@ -905,8 +911,7 @@ if __name__ == "__main__":
   sup_nf = builder.add_supported_nf(infra, id="nf_a",
                                     name="tcp header compressor")
   builder.add_node_port(sup_nf, name="in", param="...")
-  builder.add_node_port(sup_nf, type=NFFGtoXMLBuilder.PORT_TYPE.SAP, name="out",
-                        param="svsrvgr:1025")
+  builder.add_node_port(sup_nf, name="out", param="...")
   builder.add_flow_entry(infra, in_port=iport0, out_port=nf1port0)
   builder.add_flow_entry(infra, in_port=nf1port1, out_port=iport1,
                          action="mod_dl_src=12:34:56:78:90:12")
