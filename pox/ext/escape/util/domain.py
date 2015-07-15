@@ -407,13 +407,14 @@ class AbstractRESTAdapter(Session):
 
   def __disable_requests_logging (self):
     """
-    Disable annoying and detailed logging of `requests` package.
+    Disable annoying and detailed logging of `requests` and `urllib3` packages.
 
     :return: None
     """
     import logging
 
-    logging.getLogger("requests").setLevel(logging.ERROR)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
   def send_request (self, method, url=None, body=None, **kwargs):
     """

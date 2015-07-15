@@ -65,16 +65,75 @@ Dependencies:
 
     $ sudo pip install requests jinja2 ncclient lxml
 
+Installation
+++++++++++++
+
+**The preferred way:**
+
+1. Download one of pre-build Mininet image which has already had the necessary
+tools (Mininet scripts and Open vSwitch).
+
+  https://github.com/mininet/mininet/wiki/Mininet-VM-Images
+
+  The images is in an open virtual format (``.ovf``) which can import most of
+  the virtualization manager.
+
+  Username/password: **mininet/mininet**
+
+  Our implementation is rely on Mininet 2.1.0, but ESCAPEv2 has been tested on
+  the newest image too and no problem has occurred yet!
+
+2. Create the .ssh folder in the home directory and copy your private RSA key
+which is given on the fp7-unify.eu GitLab site from your host into the VM
+with the name ``id_rsa``.
+
+  .. code-block:: bash
+
+    $ cd
+    $ mkdir .ssh
+    $ mv <your rsa key> ~/.ss/id_rsa
+
+3. Clone the shared escape repository.
+
+  .. code-block:: bash
+
+    $ git clone git@gitlab.fp7-unify.eu:Balazs.Sonkoly/escape-shared.git escape
+
+4. Install the necessary dependencies with the ``install_dep.sh`` script.
+
+  .. code-block:: bash
+
+    $ cd escape
+    escape$ ./install_dep.sh
+
+5. Run ESCAPEv2 with command fit your needs.
+
+  .. code-block:: bash
+
+    escape$ ./escape.py --debug
+
+
+**The hard way:**
+
+Obviously you can install ESCAPEv2 on your host or on a empty VM. For that you
+need to install the requirements manually.
+
+To install the Python dependencies and other system packages you can use the
+dependency installation script described above.
+
 To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
 host (more precisely the **Open vSwitch** implementation and the **mnexec**
 utility script is required globally).
 
 If one version of Mininet has already been installed, there should be nothing to
 do. ESCAPEv2 uses the specifically-modified Mininet files in the project folder
-which use the general scripts mentioned above.
+(Mininet v2.1.0mod-ESCAPE) which use the globally installed Mininet utility
+scripts mentioned above (mnexec).
 
-Otherwise these assets have to be install manually. Mininet has an install
-script for this purpose (see the help with the ``-h`` flag):
+Otherwise these assets have to be install manually which could be done from our
+Mininet folder (escape/mininet) or from the official git repository
+(https://github.com/mininet/mininet/ ). Mininet has an install script for
+installation (see the help with the ``-h`` flag):
 
 .. code-block:: bash
 
@@ -96,8 +155,8 @@ required. For that the only way is sadly to use google and search for it based
 on your distro. But a good choice to start here (this not worked for me):
 https://github.com/mininet/mininet/wiki/Installing-new-version-of-Open-vSwitch
 
-If you use virtual machines, you should consider to use one of pre-build Mininet
-VM image: https://github.com/mininet/mininet/wiki/Mininet-VM-Images
+If you use virtual machines, you should really consider to use the pre-build
+Mininet VM images.
 
 README
 ++++++
