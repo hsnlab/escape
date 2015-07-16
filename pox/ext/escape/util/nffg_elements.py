@@ -297,8 +297,8 @@ class NodeInfra(Node):
   # Default domain type
   DEFAULT_DOMAIN = "virtual"
 
-  def __init__ (self, ID=None, name=None, res=None, domain=DEFAULT_DOMAIN,
-       type=DEFAULT_TYPE):
+  def __init__ (self, ID=None, name=None, domain=DEFAULT_DOMAIN,
+       type=DEFAULT_TYPE, res=None):
     super(NodeInfra, self).__init__(ID=ID, name=name)
     self.domain = domain
     self.type = type  # mandatory
@@ -328,46 +328,72 @@ class NodeInfra(Node):
 
 class Link(Base):
   """
-  Base class for different types of edges in the NF-FG
+  Base class for different types of edges in the NF-FG.
   """
 
-  def __init__ (self, src, dst):
+  def __init__ (self, src_node, src_port, dst_node, dst_port, ID=None):
     """
     Init.
 
-    :param src: source port
-    :type src: Port
-    :param dst: destination port
-    :type dst: Port
+    :param src_node: source port
+    :type src_node: str
+    :param src_port: source port
+    :type src_port: str
+    :param dst_node: destination port
+    :type dst_node: str
+    :param dst_port: destination port
+    :type dst_port: str
     :return: None
     """
-    super(Link, self).__init__()
-    self.id = id
-    self.src = src  # mandatory
-    self.dst = dst  # mandatory
+    super(Link, self).__init__(ID=ID)
+    self.src_node = src_node  # mandatory
+    self.src_port = src_port  # mandatory
+    self.dst_node = dst_node  # mandatory
+    self.dst_port = dst_port  # mandatory
 
   def persist (self):
-    return {} # TODO
+    return {"src_node": str(self.src_node), "src_port": str(self.src_port),
+            "dst_node": str(self.dst_node), "dst_port": str(self.dst_port)}
 
 
 class EdgeLink(Link):
   """
-  Class for static and dynamic links in the NF-FG
+  Class for static and dynamic links in the NF-FG.
+
+  Represent a static and dynamic link.
   """
 
-  def __init__ (self, id, src, dst, resources):
-    super(Link, self).__init__(id, src, dst)
-    self.resources = resources  # ResOfEdge
+  def __init__ (self, src_node, src_port, dst_node, dst_port, type="static",
+       ID=None, res=None):
+    super(Link, self).__init__(src_node, src_port, dst_node, dst_port, ID)
+    self.type = type
+    self.resources = res if res is not None else LinkResource()
+
+  def persist (self):
+    link = super(EdgeLink, self).persist()
+    res = self.resources.persist()
+    if res:
+      link.update(res)
+    return link
 
 
 class EdgeSGLink(Link):
   """
-  Class for links of SG
+  Class for links of SG.
+
+  Represent an edge between SG elements.
   """
 
-  def __init__ (self, id, src, dst, flowclass):
-    super(Link, self).__init__(id, src, dst)
+  def __init__ (self, src_node, src_port, dst_node, dst_port, ID=None,
+       flowclass=None):
+    super(Link, self).__init__(src_node, src_port, dst_node, dst_port, ID)
     self.flowclass = flowclass  # flowrule without action
+
+  def persist (self):
+    link = super(EdgeSGLink, self).persist()
+    if self.flowclass is not None:
+      link["flowclass"] = str(self.flowclass)
+    return link
 
 
 class EdgeReq(Link):
@@ -375,9 +401,17 @@ class EdgeReq(Link):
   Class for requirements between arbitrary NF modes
   """
 
-  def __init__ (self, id, src, dst, reqs):
-    super(Link, self).__init__(id, src, dst)
-    self.reqs = reqs  # ResOfEdge
+  def __init__ (self, src_node, src_port, dst_node, dst_port, ID=None,
+       reqs=None):
+    super(Link, self).__init__(src_node, src_port, dst_node, dst_port, ID)
+    self.reqs = reqs if reqs is not None else LinkResource()
+
+  def persist (self):
+    link = super(EdgeReq, self).persist()
+    req = self.reqs.persist()
+    if req:
+      link["reqs"] = req
+    return link
 
 
 if __name__ == "__main__":
