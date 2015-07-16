@@ -55,11 +55,13 @@ class Node(Base):
     self.name = name  # optional
     self.ports = []  # list
 
-  def add_port (self, type=None, ID=None):
+  def add_port (self, *properties, **kwargs):
     """
     Add a port with the given params to the NF.
     """
-    self.ports.append(Port(ID=ID, type=type))
+    port = Port(*properties, **kwargs)
+    self.ports.append(port)
+    return port
 
   def del_port (self, id):
     """
@@ -74,8 +76,10 @@ class Node(Base):
     """
     Common function to persist the class structure into a plain text format.
     """
-    node = {"id": str(self.id),
-            "ports": [port.persist() for port in self.ports]}
+    node = {"id": str(self.id)}
+    ports = [port.persist() for port in self.ports]
+    if ports:
+      node["ports"] = ports
     if self.name is not None:
       node["name"] = str(self.name)
     return node
@@ -166,7 +170,7 @@ class Port(Base):
   Class for storing a port of an NF.
   """
 
-  def __init__ (self, ID=None, type="port"):
+  def __init__ (self, *property, **kwargs):
     """
     Init.
 
@@ -174,12 +178,16 @@ class Port(Base):
     :type type: str
     :return: None
     """
+    ID = kwargs["ID"] if "ID" in kwargs else None
     super(Port, self).__init__(ID)
-    self.property = [str(type), ]  # leaf-list - formerly known as type
+    self.property = property
 
   def persist (self):
-    return {"id": str(self.id),
-            "property": [property for property in self.property]}
+    port = {"id": str(self.id)}
+    property = [property for property in self.property]
+    if property:
+      port["property"] = property
+    return port
 
 
 class Flowrule(Base):
@@ -202,7 +210,12 @@ class Flowrule(Base):
     self.action = action
 
   def persist (self):
-    return {"match": str(self.match), "action": str(self.action)}
+    flowrule = {}
+    if self.match is not None:
+      flowrule["match"] = str(self.match)
+      if self.action is not None:
+        flowrule["action"] = str(self.action)
+    return flowrule
 
 
 class InfraPort(Port):
@@ -210,15 +223,17 @@ class InfraPort(Port):
   Class for storing a port of Infra Node and handles flowrules.
   """
 
-  def __init__ (self, ID=None, type="port"):
-    super(InfraPort, self).__init__(ID=ID, type=type)
+  def __init__ (self, *property, **kwargs):
+    super(InfraPort, self).__init__(*property, **kwargs)
     self.flowrules = []
 
   def add_flowrule (self, match=None, action=None):
     """
     Add a flowrule with the given params to the port of Infra Node..
     """
-    self.flowrules.append(Flowrule(match=match, action=action))
+    flowrule = Flowrule(match=match, action=action)
+    self.flowrules.append(flowrule)
+    return flowrule
 
   def del_flowrule (self, id):
     """
@@ -231,7 +246,9 @@ class InfraPort(Port):
 
   def persist (self):
     port = super(InfraPort, self).persist()
-    port["flowrules"] = [f.persist() for f in self.flowrules]
+    flowrules = [f.persist() for f in self.flowrules]
+    if flowrules:
+      port["flowrules"] = flowrules
     return port
 
 
@@ -258,9 +275,9 @@ class NodeNF(Node):
     :return: None
     """
     super(NodeNF, self).__init__(ID=ID, name=name)
-    self.functional_type = str(func_type)  # mandatory
+    self.functional_type = func_type  # mandatory
     # container: specification
-    self.deployment_type = str(dep_type)
+    self.deployment_type = dep_type
     self.resources = res if res is not None else NodeResource()
     # container
 
@@ -295,7 +312,7 @@ class NodeInfra(Node):
   # Default Infrastructure Node type
   DEFAULT_TYPE = 0
   # Default domain type
-  DEFAULT_DOMAIN = "virtual"
+  DEFAULT_DOMAIN = None
 
   def __init__ (self, ID=None, name=None, domain=DEFAULT_DOMAIN,
        type=DEFAULT_TYPE, res=None):
@@ -304,11 +321,13 @@ class NodeInfra(Node):
     self.type = type  # mandatory
     self.resources = res if res is not None else NodeResource()
 
-  def add_port (self, type=None, ID=None):
+  def add_port (self, *properties, **kwargs):
     """
     Add a port with the given params to the NF.
     """
-    self.ports.append(InfraPort(ID=ID, type=type))
+    port = InfraPort(*properties, **kwargs)
+    self.ports.append(port)
+    return port
 
   def persist (self):
     node = super(NodeInfra, self).persist()
@@ -365,7 +384,7 @@ class EdgeLink(Link):
 
   def __init__ (self, src_node, src_port, dst_node, dst_port, type="static",
        ID=None, res=None):
-    super(Link, self).__init__(src_node, src_port, dst_node, dst_port, ID)
+    super(EdgeLink, self).__init__(src_node, src_port, dst_node, dst_port, ID)
     self.type = type
     self.resources = res if res is not None else LinkResource()
 
@@ -386,7 +405,7 @@ class EdgeSGLink(Link):
 
   def __init__ (self, src_node, src_port, dst_node, dst_port, ID=None,
        flowclass=None):
-    super(Link, self).__init__(src_node, src_port, dst_node, dst_port, ID)
+    super(EdgeSGLink, self).__init__(src_node, src_port, dst_node, dst_port, ID)
     self.flowclass = flowclass  # flowrule without action
 
   def persist (self):
@@ -403,7 +422,7 @@ class EdgeReq(Link):
 
   def __init__ (self, src_node, src_port, dst_node, dst_port, ID=None,
        reqs=None):
-    super(Link, self).__init__(src_node, src_port, dst_node, dst_port, ID)
+    super(EdgeReq, self).__init__(src_node, src_port, dst_node, dst_port, ID)
     self.reqs = reqs if reqs is not None else LinkResource()
 
   def persist (self):
@@ -415,11 +434,54 @@ class EdgeReq(Link):
 
 
 if __name__ == "__main__":
-  nf = NodeNF("nf1", "NF_21", "compressor", "virtual")
+  # NF
+  nf = NodeNF()
+  nf.id = "nf1"
+  nf.name = "NetworkFunction1"
+  nf.functional_type = "functype1"
+  nf.deployment_type = "virtual"
   nf.resources.cpu = "10VCPU"
-  nf.resources.mem = "100MB"
-  nf.add_port("abstract")
-  nf.add_port("virtual", "port11")
+  nf.resources.mem = "1GB"
+  nf.resources.storage = "10GB"
+  nf.resources.networking = "2Mbps"
+  # nf.add_port("port_nf1", "port1", "virtual", "vlan:1025")
+  nf.add_port("port1", "virtual", "vlan:1025", ID="port_nf1")
+  # SAP
+  sap = NodeSAP()
+  sap.id = "sap1"
+  sap.name = "sap1"
+  sap.add_port("port_sap")
+  # Infra
+  infra = NodeInfra()
+  infra.id = "infra1"
+  infra.name = "BisBis1"
+  infra.domain = "virtual"
+  infra.resources.cpu = "20VCPU"
+  infra.resources.mem = "2GB"
+  infra.resources.storage = "20GB"
+  infra.resources.networking = "4Mbps"
+  port_infra = infra.add_port(ID="port_infra")
+  port_infra.add_flowrule("match123", "action456")
+  # Edge link
+  edge_link = EdgeLink("node1", "port1", "node2", "port2")
+  edge_link.id = "link1"
+  edge_link.resources.bandwidth = "100Mbps"
+  edge_link.resources.delay = "5ms"
+  # Edge SG next hop
+  edge_sg = EdgeSGLink("node1", "port1", "node2", "port2")
+  edge_sg.id = "link1"
+  edge_sg.flowclass = "flowclass1"
+  # Edge requirement
+  edge_req = EdgeReq("node1", "port1", "node2", "port2")
+  edge_req.id = "link1"
+  edge_req.reqs.bandwidth = "100Mbps"
+  edge_req.reqs.delay = "5ms"
+  # Generate
   import json
 
-  print json.dumps(nf.persist(), indent=2)
+  print json.dumps(nf.persist(), indent=1)
+  print json.dumps(sap.persist(), indent=1)
+  print json.dumps(infra.persist(), indent=1)
+  print json.dumps(edge_link.persist(), indent=1)
+  print json.dumps(edge_sg.persist(), indent=1)
+  print json.dumps(edge_req.persist(), indent=1)
