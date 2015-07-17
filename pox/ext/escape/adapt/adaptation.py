@@ -21,7 +21,7 @@ from escape import CONFIG
 from escape.adapt.components import InternalDomainManager
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
-from escape.util.nffg import NFFG
+from escape.util.nffg_elements import NFFG
 
 
 class ComponentConfigurator(object):

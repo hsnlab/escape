@@ -24,7 +24,7 @@ from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task
-from escape.util.nffg import NFFG
+from escape.util.nffg_elements import NFFG
 from pox.lib.revent.revent import Event
 
 

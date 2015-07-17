@@ -153,7 +153,8 @@ class NFFGtoXMLBuilder(AbstractNFFG):
   DEFAULT_INFRA_TYPE = "BisBis"
   DEFAULT_NODE_TYPE = "0"
   # Port types
-  PORT_TYPE = enum(ABSTRACT="port-abstract", SAP="port-sap")
+  PORT_ABSTRACT = "port-abstract"
+  PORT_SAP = "port-sap"
 
   def __init__ (self):
     """
@@ -353,7 +354,7 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     self.nodes.append(infra)
     return infra
 
-  def add_node_port (self, parent, type=PORT_TYPE.ABSTRACT, id=None, name=None,
+  def add_node_port (self, parent, type=PORT_ABSTRACT, id=None, name=None,
        param=None):
     """
     Add a port to a Node. The parent node could be the nodes which can has
@@ -365,8 +366,8 @@ class NFFGtoXMLBuilder(AbstractNFFG):
 
     :param parent: parent node
     :type parent: InfraNodeGroup or NodeGroup
-    :param type: type of the port as ``PORT_TYPE``
-    :type type: one of ``PORT_TYPE`` enum, currently: port-{abstract,sap}
+    :param type: type of the port
+    :type type: str
     :param id: port ID (optional)
     :type id: str
     :param name: port name (optional)
@@ -392,12 +393,12 @@ class NFFGtoXMLBuilder(AbstractNFFG):
     port.g_idName.l_id = id
     port.g_idName.l_name = name
     port.g_portType = PortTypeGroup(port)
-    if type == self.PORT_TYPE.ABSTRACT:
+    if type == self.PORT_ABSTRACT:
       # Add capabilities sub-object as the additional param
       _type = PortAbstractCase(port.g_portType)
       _type.l_portType = type
       _type.l_capability = str(param)
-    elif type == self.PORT_TYPE.SAP:
+    elif type == self.PORT_SAP:
       # Add sap-type and vx-lan sub-objects as the additional param
       _type = PortSapVxlanCase(port.g_portType)
       _type.l_portType = type
@@ -754,16 +755,16 @@ class NFFGBuilder(AbstractNFFG):
 if __name__ == "__main__":
   # builder = NFFGtoXMLBuilder()
   # infra = builder.add_infra()
-  # port = builder.add_node_port(infra, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
+  # port = builder.add_node_port(infra, NFFGtoXMLBuilder.PORT_ABSTRACT)
   # res = builder.add_node_resource(infra, "10 VCPU", "32 GB", "5 TB")
   # link = builder.add_inter_infra_link(port, port, delay="5ms",
   #                                     bandwidth="10Gbps")
   # nf_inst = builder.add_nf_instance(infra)
   # nf_port = builder.add_node_port(nf_inst,
-  # NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
+  # NFFGtoXMLBuilder.PORT_ABSTRACT)
   # sup_nf = builder.add_supported_nf(infra)
   # res_sup = builder.add_node_resource(sup_nf, 10, 10, 10)
-  # builder.add_node_port(sup_nf, NFFGtoXMLBuilder.PORT_TYPE.ABSTRACT)
+  # builder.add_node_port(sup_nf, NFFGtoXMLBuilder.PORT_ABSTRACT)
   # builder.add_flow_entry(infra, port, nf_port,
   #                        action="mod_dl_src=12:34:56:78:90:12", delay="5ms",
   #                        bandwidth="10Gbps")

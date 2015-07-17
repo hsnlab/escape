@@ -19,7 +19,7 @@ from requests import Session
 
 from escape import __version__
 from escape.util.misc import enum
-from escape.util.nffg import NFFG
+from escape.util.nffg_elements import NFFG
 from pox.lib.recoco import Timer
 from pox.lib.revent import EventMixin, Event
 

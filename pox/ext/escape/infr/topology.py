@@ -22,7 +22,7 @@ from mininet.node import RemoteController
 from mininet.topo import Topo
 
 from escape.infr import log
-from escape.util.nffg import NFFG
+from escape.util.nffg_elements import NFFG
 from escape import CONFIG
 
 

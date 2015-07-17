@@ -14,7 +14,7 @@
 """
 Contains components relevant to virtualization of resources and views.
 """
-from escape.util.nffg import NFFG
+from escape.util.nffg_elements import NFFG
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
 from escape.orchest import log as log
 from pox.lib.revent.revent import EventMixin, Event
