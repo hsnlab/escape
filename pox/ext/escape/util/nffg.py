@@ -16,34 +16,7 @@ Abstract class and implementation for basic operations with a single
 NF-FG, such as building, parsing, processing NF-FG, helper functions,
 etc.
 """
-# from escape.util.misc import enum
-
 from nffglib import *
-
-
-def enum (*sequential, **named):
-  """
-  Helper function to define enumeration. E.g.:
-
-  .. code-block:: python
-
-    >>> Numbers = enum(ONE=1, TWO=2, THREE='three')
-    >>> Numbers = enum('ZERO', 'ONE', 'TWO')
-    >>> Numbers.ONE
-    1
-    >>> Numbers.reversed[2]
-    'TWO'
-
-  :param sequential: support automatic enumeration
-  :type sequential: list
-  :param named: support definition with unique keys
-  :type named: dict
-  :return: Enum object
-  :rtype: dict
-  """
-  enums = dict(zip(sequential, range(len(sequential))), **named)
-  enums['reversed'] = dict((value, key) for key, value in enums.iteritems())
-  return type('enum', (), enums)
 
 
 class AbstractNFFG(object):
@@ -138,7 +111,44 @@ class AbstractNFFG(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class NFFGtoXMLBuilder(AbstractNFFG):
+class NFFG(AbstractNFFG):
+  """
+  Internal NFFG representation based on networkx.
+  """
+
+  def add_link (self, edge_link):
+    pass
+
+  def add_edge (self, src, dst, params=None):
+    pass
+
+  def add_nf (self, node_nf):
+    pass
+
+  def add_sglink (self, edge_sglink):
+    pass
+
+  def add_req (self, edge_req):
+    pass
+
+  def add_infra (self, node_infra):
+    pass
+
+  def add_sap (self, node_sap):
+    pass
+
+  def del_node (self, id):
+    pass
+
+  def dump (self):
+    pass
+
+  @staticmethod
+  def parse (data):
+    pass
+
+
+class XMLBasedNFFGBuilder(AbstractNFFG):
   """
   Builder class for construct an NFFG in XML format rely on ETH's nffglib.py.
 
@@ -162,14 +172,14 @@ class NFFGtoXMLBuilder(AbstractNFFG):
 
     :return: None
     """
-    super(NFFGtoXMLBuilder, self).__init__()
+    super(XMLBasedNFFGBuilder, self).__init__()
     # Init main container: virtualizer
     self.__virtualizer = Virtualizer()
     self.__virtualizer.g_idName = IdNameGroup(self.__virtualizer)
     # Add <id> tag
-    NFFGtoXMLBuilder.__UUID_NUM += 1
+    XMLBasedNFFGBuilder.__UUID_NUM += 1
     self.__virtualizer.g_idName.l_id = "UUID-ESCAPE-BME-%03d" % \
-                                       NFFGtoXMLBuilder.__UUID_NUM
+                                       XMLBasedNFFGBuilder.__UUID_NUM
     # Add <name> tag
     self.__virtualizer.g_idName.l_name = "ESCAPE-BME orchestrator version v2.0"
     # Add <nodes> tag
@@ -721,6 +731,15 @@ class NFFGBuilder(AbstractNFFG):
 
   @staticmethod
   def parse (data):
+    """
+    Parse the given JSON-formatted string and return the constructed
+    :any:`NFFG` object.
+
+    :param data: raw text formatted in JSON
+    :type data: str
+    :return: newly created NFFG object
+    :rtype: :any:`NFFG`
+    """
     pass
 
   ##############################################################################
@@ -770,7 +789,7 @@ if __name__ == "__main__":
   #                        bandwidth="10Gbps")
 
   # Generate same output as Agent_http.py
-  builder = NFFGtoXMLBuilder()
+  builder = XMLBasedNFFGBuilder()
   builder.id = "UUID-ETH-001"
   builder.name = "ETH OpenStack-OpenDaylight domain"
   infra = builder.add_infra(

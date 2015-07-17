@@ -6,7 +6,7 @@ Element classes for NFFG.
 .. figure::  ../_static/nffg_elements.png
    :align:  center
 
-:any:`NFFG` represents the main container class.
+:any:`NFFGContainer` represents the main container class.
 
 :any:`Base` represents the common functions for elements.
 

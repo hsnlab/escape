@@ -593,15 +593,11 @@ class EdgeReq(Link):
 # --------========== MAIN CONTAINER STARTS HERE =========-------------
 ################################################################################
 
-class NFFG(Base):
+class NFFGContainer(Base):
   """
   Container for a single NF-FG.
 
   Network Function Forwarding Graph (NF-FG) data model.
-
-  .. warning::
-
-    Not fully implemented yet!
   """
   # Default version
   VERSION = "1.0"
@@ -626,48 +622,38 @@ class NFFG(Base):
     :type version: str
     :return: None
     """
-    super(NFFG, self).__init__(ID=ID)
+    super(NFFGContainer, self).__init__(ID=ID)
     self.id = str(ID) if ID is not None else str(id(self))  # mandatory
     self.name = name
     self.version = str(version) if version is not None else self.VERSION
-    self.nfs = []
-    self.saps = []
-    self.infras = []
-    self.links = []
-    self.sg_nexts = []
-    self.reqs = []
+    self.node_nfs = []
+    self.node_saps = []
+    self.node_infras = []
+    self.edge_links = []
+    self.edge_sg_nexthops = []
+    self.edge_reqs = []
 
   def persist (self):
     nffg = {"parameters": {"id": self.id, "version": self.version}}
     if self.name is not None:
       nffg["parameters"]["name"] = str(self.name)
-    if self.nfs:
-      nffg["node_nfs"] = self.nfs
-    if self.saps:
-      nffg["node_saps"] = self.saps
-    if self.infras:
-      nffg["node_infras"] = self.infras
-    if self.links:
-      nffg["edge_links"] = self.links
-    if self.sg_nexts:
-      nffg["edge_sg_nexthops"] = self.sg_nexts
-    if self.reqs:
-      nffg["edge_reqs"] = self.reqs
+    if self.node_nfs:
+      nffg["node_nfs"] = [nf.persist() for nf in self.node_nfs]
+    if self.node_saps:
+      nffg["node_saps"] = [sap.persist() for sap in self.node_saps]
+    if self.node_infras:
+      nffg["node_infras"] = [infra.persist() for infra in self.node_infras]
+    if self.edge_links:
+      nffg["edge_links"] = [link.persist() for link in self.edge_links]
+    if self.edge_sg_nexthops:
+      nffg["edge_sg_nexthops"] = [sg.persist() for sg in self.edge_sg_nexthops]
+    if self.edge_reqs:
+      nffg["edge_reqs"] = [req.persist() for req in self.edge_reqs]
     return nffg
 
   def dump (self):
     # Generate
     return json.dumps(self.persist(), indent=1)
-
-  def init_from_json (self, json_data):
-    """
-    Parse the NFFG object from JSON data.
-
-    :param json_data: NF-FG represented in JSON format
-    :type json_data: str
-    :return: None
-    """
-    return json.loads(json_data)
 
 
 if __name__ == "__main__":
@@ -712,13 +698,19 @@ if __name__ == "__main__":
   edge_req.reqs.bandwidth = "100Mbps"
   edge_req.reqs.delay = "5ms"
   # Generate
-  print json.dumps(nf.persist(), indent=1, sort_keys=True)
-  print json.dumps(sap.persist(), indent=1, sort_keys=True)
-  print json.dumps(infra.persist(), indent=1, sort_keys=True)
-  print json.dumps(edge_link.persist(), indent=1, sort_keys=True)
-  print json.dumps(edge_sg.persist(), indent=1, sort_keys=True)
-  print json.dumps(edge_req.persist(), indent=1, sort_keys=True)
+  # print json.dumps(nf.persist(), indent=1, sort_keys=True)
+  # print json.dumps(sap.persist(), indent=1, sort_keys=True)
+  # print json.dumps(infra.persist(), indent=1, sort_keys=True)
+  # print json.dumps(edge_link.persist(), indent=1, sort_keys=True)
+  # print json.dumps(edge_sg.persist(), indent=1, sort_keys=True)
+  # print json.dumps(edge_req.persist(), indent=1, sort_keys=True)
 
-  nffg = NFFG()
+  nffg = NFFGContainer()
   nffg.name = "NFFG1"
+  nffg.node_infras.append(infra)
+  nffg.node_nfs.append(nf)
+  nffg.node_saps.append(sap)
+  nffg.edge_links.append(edge_link)
+  nffg.edge_sg_nexthops.append(edge_sg)
+  nffg.edge_reqs.append(edge_req)
   print nffg.dump()
