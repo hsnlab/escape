@@ -133,12 +133,13 @@ class Node(Element):
 
     :param id: port id
     :type id: int or str
-    :return: None
+    :return: the actual Port is found and removed or not
+    :rtype: bool
     """
     for p in self.ports:
       if p.id == id:
-        self.ports.remove(p)
-        return
+        return self.ports.remove(p)
+      return True
 
   def persist (self):
     node = {"id": str(self.id)}
@@ -397,12 +398,13 @@ class InfraPort(Port):
     :type match: str
     :param action: forwarding action
     :type action: str
-    :return: None
+    :return: the actual FlowRule is found and removed or not
+    :rtype: bool
     """
     for f in self.flowrules:
       if f.match == match and f.action == action:
         self.flowrules.remove(f)
-        return
+        return True
 
   def persist (self):
     port = super(InfraPort, self).persist()
@@ -683,8 +685,208 @@ class NFFGContainer(Element):
       nffg["edge_reqs"] = [req.persist() for req in self.edge_reqs]
     return nffg
 
+  def add_nf (self, **kwargs):
+    """
+    Create and store a NF Node with the given parameters.
+
+    :return: the created NF
+    :rtype: :any:`NodeNF`
+    """
+    nf = NodeNF(**kwargs)
+    for node in self.node_nfs:
+      if node.id == nf.id:
+        raise RuntimeError(
+          "NodeNF with id: %s already exist in the container!" % node.id)
+    self.node_nfs.append(nf)
+    return nf
+
+  def del_nf (self, id):
+    """
+    Remove the NF Node with the given id.
+
+    :param id: NF id
+    :param id: str
+    :return: the actual Node is found and removed or not
+    :rtype: bool
+    """
+    for node in self.node_nfs:
+      if node.id == id:
+        self.node_nfs.remove(node)
+        return True
+
+  def add_sap (self, **kwargs):
+    """
+    Create and store a SAP Node with the given parameters.
+
+    :return: the created SAP
+    :rtype: :any:`NodeSAP`
+    """
+    sap = NodeSAP(**kwargs)
+    for node in self.node_saps:
+      if node.id == sap.id:
+        raise RuntimeError(
+          "NodeNF with id: %s already exist in the container!" % node.id)
+    self.node_saps.append(sap)
+    return sap
+
+  def del_sap (self, id):
+    """
+    Remove the SAP Node with the given id.
+
+    :param id: SAP id
+    :param id: str
+    :return: the actual Node is found and removed or not
+    :rtype: bool
+    """
+    for node in self.node_saps:
+      if node.id == id:
+        self.node_saps.remove(node)
+        return True
+
+  def add_infra (self, **kwargs):
+    """
+    Create and store an Infrastructure Node with the given parameters.
+
+    :return: the created Infra
+    :rtype: :any:`NodeInfra`
+    """
+    infra = NodeInfra(**kwargs)
+    for node in self.node_infras:
+      if node.id == infra.id:
+        raise RuntimeError(
+          "NodeNF with id: %s already exist in the container!" % node.id)
+    self.node_infras.append(infra)
+    return infra
+
+  def del_infra (self, id):
+    """
+    Remove Infrastructure Node with the given id.
+
+    :param id: Infra id
+    :param id: str
+    :return: the actual Node is found and removed or not
+    :rtype: bool
+    """
+    for node in self.node_infras:
+      if node.id == id:
+        self.node_infras.remove(node)
+        return True
+
+  def add_link (self, src, dst, **kwargs):
+    """
+    Create and store a Link Edge with the given src and dst nodes.
+
+    :param src: source node
+    :type src: :any:`Node`
+    :param dst:  destination node
+    :type dst: :any:`Node`
+    :return: the created edge
+    :rtype: :any:`EdgeLink`
+    """
+    link = EdgeLink(src=src, dst=dst, **kwargs)
+    for edge in self.edge_links:
+      if edge.src.id == src.id and edge.dst.id == dst.id:
+        raise RuntimeError(
+          "EdgeLink with src(%s) and dst(%s) endpoints already exist in the "
+          "container!" % (src.id, dst.id))
+    self.edge_links.append(link)
+    return link
+
+  def del_link (self, src, dst):
+    """
+    Remove Link Edge with given src and dst nodes.
+
+    :param src: source node
+    :type src: :any:`Node`
+    :param dst:  destination node
+    :type dst: :any:`Node`
+    :return: the actual Edge is found and removed or not
+    :rtype: bool
+    """
+    for edge in self.edge_links:
+      if edge.src.id == src.id and edge.dst.id == dst.id:
+        self.edge_links.remove(edge)
+        return True
+
+  def add_sg_hop (self, src, dst, **kwargs):
+    """
+    Create and store an SG next hop Edge with the given src and dst nodes.
+
+    :param src: source node
+    :type src: :any:`Node`
+    :param dst:  destination node
+    :type dst: :any:`Node`
+    :return: the created edge
+    :rtype: :any:`EdgeSGLink`
+    """
+    hop = EdgeSGLink(src=src, dst=dst, **kwargs)
+    for edge in self.edge_sg_nexthops:
+      if edge.src.id == src.id and edge.dst.id == dst.id:
+        raise RuntimeError(
+          "EdgeSGLink with src(%s) and dst(%s) endpoints already exist in the "
+          "container!" % (src.id, dst.id))
+    self.edge_sg_nexthops.append(hop)
+    return hop
+
+  def del_sg_hop (self, src, dst):
+    """
+    Remove SG next hop Edge with given src and dst nodes.
+
+    :param src: source node
+    :type src: :any:`Node`
+    :param dst:  destination node
+    :type dst: :any:`Node`
+    :return: the actual Edge is found and removed or not
+    :rtype: bool
+    """
+    for edge in self.edge_sg_nexthops:
+      if edge.src.id == src.id and edge.dst.id == dst.id:
+        self.edge_sg_nexthops.remove(edge)
+        return True
+
+  def add_req (self, src, dst, **kwargs):
+    """
+    Create and store a Requirement Edge with the given src and dst nodes.
+
+    :param src: source node
+    :type src: :any:`Node`
+    :param dst:  destination node
+    :type dst: :any:`Node`
+    :return: the created edge
+    :rtype: :any:`EdgeReq`
+    """
+    req = EdgeReq(src=src, dst=dst, **kwargs)
+    for edge in self.edge_reqs:
+      if edge.src.id == src.id and edge.dst.id == dst.id:
+        raise RuntimeError(
+          "EdgeReq with src(%s) and dst(%s) endpoints already exist in the "
+          "container!" % (src.id, dst.id))
+    self.edge_sg_nexthops.append(req)
+    return req
+
+  def del_req (self, src, dst):
+    """
+    Remove Requirement Edge with given src and dst nodes.
+
+    :param src: source node
+    :type src: :any:`Node`
+    :param dst:  destination node
+    :type dst: :any:`Node`
+    :return: the actual Edge is found and removed or not
+    :rtype: bool
+    """
+    for edge in self.edge_reqs:
+      if edge.src.id == src.id and edge.dst.id == dst.id:
+        self.edge_sg_nexthops.remove(edge)
+        return True
+
   def dump (self):
-    # Generate
+    """
+    Dump the container in plain text based on JSON structure.
+
+    :return: NF-FG representation as plain text
+    :rtype: str
+    """
     return json.dumps(self.persist(), indent=1)
 
   @staticmethod

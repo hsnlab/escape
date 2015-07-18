@@ -116,6 +116,13 @@ class NFFG(AbstractNFFG):
   Internal NFFG representation based on networkx.
   """
 
+  def __init__ (self):
+    """
+    Init.
+
+    """
+    pass
+
   def add_link (self, edge_link):
     pass
 
@@ -145,6 +152,67 @@ class NFFG(AbstractNFFG):
 
   @staticmethod
   def parse (data):
+    pass
+
+
+class NFFGBuilder(AbstractNFFG):
+  """
+  Builder class for construct an NFFG in internal networkx format.
+
+  .. warning::
+
+    Partially implemented!
+  """
+
+  def __init__ (self, id=None, version='1.0'):
+    super(NFFGBuilder, self).__init__(id, version)
+
+  ##############################################################################
+  # Builder design pattern related functions
+  ##############################################################################
+
+  def dump (self):
+    pass
+
+  @staticmethod
+  def parse (data):
+    """
+    Parse the given JSON-formatted string and return the constructed
+    :any:`NFFG` object.
+
+    :param data: raw text formatted in JSON
+    :type data: str
+    :return: newly created NFFG object
+    :rtype: :any:`NFFG`
+    """
+    pass
+
+  ##############################################################################
+  # General functions to add NFFG elements easily
+  ##############################################################################
+
+  def add_sap (self, node_sap):
+    pass
+
+  def add_sglink (self, edge_sglink):
+    pass
+
+  def add_edge (self, src, dst, params=None):
+    pass
+
+  def del_node (self, id):
+    pass
+
+  def add_nf (self, node_nf):
+    pass
+
+  def add_infra (self, node_infra):
+    pass
+
+  def add_link (self, edge_link):
+    pass
+
+  def add_req (self, edge_req):
     pass
 
 
@@ -707,67 +775,6 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     pass
 
   def add_sglink (self, edge_sglink):
-    pass
-
-
-class NFFGBuilder(AbstractNFFG):
-  """
-  Builder class for construct an NFFG in internal networkx format.
-
-  .. warning::
-
-    Partially implemented!
-  """
-
-  def __init__ (self, id=None, version='1.0'):
-    super(NFFGBuilder, self).__init__(id, version)
-
-  ##############################################################################
-  # Builder design pattern related functions
-  ##############################################################################
-
-  def dump (self):
-    pass
-
-  @staticmethod
-  def parse (data):
-    """
-    Parse the given JSON-formatted string and return the constructed
-    :any:`NFFG` object.
-
-    :param data: raw text formatted in JSON
-    :type data: str
-    :return: newly created NFFG object
-    :rtype: :any:`NFFG`
-    """
-    pass
-
-  ##############################################################################
-  # General functions to add NFFG elements easily
-  ##############################################################################
-
-  def add_sap (self, node_sap):
-    pass
-
-  def add_sglink (self, edge_sglink):
-    pass
-
-  def add_edge (self, src, dst, params=None):
-    pass
-
-  def del_node (self, id):
-    pass
-
-  def add_nf (self, node_nf):
-    pass
-
-  def add_infra (self, node_infra):
-    pass
-
-  def add_link (self, edge_link):
-    pass
-
-  def add_req (self, edge_req):
     pass
 
 
