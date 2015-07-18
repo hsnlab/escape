@@ -15,15 +15,18 @@
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
-from escape.orchest import log as log
+from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer, \
   VirtualizerManager
+from escape.util.mapping import AbstractOrchestrator
 
 
-class ResourceOrchestrator(object):
+class ResourceOrchestrator(AbstractOrchestrator):
   """
   Main class for the handling of the ROS-level mapping functions.
   """
+  # Default Mapper class as a fallback mapper
+  DEFAULT_MAPPER = ResourceOrchestrationMapper
 
   def __init__ (self, layer_API):
     """
@@ -33,7 +36,7 @@ class ResourceOrchestrator(object):
     :type layer_API: :any:`ResourceOrchestrationAPI`
     :return: None
     """
-    super(ResourceOrchestrator, self).__init__()
+    super(ResourceOrchestrator, self).__init__(LAYER_NAME)
     log.debug("Init %s" % self.__class__.__name__)
     self.nffgManager = NFFGManager()
     # Init virtualizer manager
@@ -41,11 +44,11 @@ class ResourceOrchestrator(object):
     # collected
     self.virtualizerManager = VirtualizerManager()
     self.virtualizerManager.addListeners(layer_API, weak=True)
-    # Init Resource Orchestration Mapper
+    # Init RO Mapper listeners
     # Listeners must be weak references in order the layer API can garbage
     # collected
-    self.nffgMapper = ResourceOrchestrationMapper()
-    self.nffgMapper.addListeners(layer_API, weak=True)
+    # self.mapper is set by the AbstractOrchestrator's constructor
+    self.mapper.addListeners(layer_API, weak=True)
     # Init NFIB manager
     self.nfibManager = NFIBManager()
 
@@ -66,7 +69,7 @@ class ResourceOrchestrator(object):
     if global_view is not None:
       if isinstance(global_view, AbstractVirtualizer):
         # Run Nf-FG mapping orchestration
-        mapped_nffg = self.nffgMapper.orchestrate(nffg, global_view)
+        mapped_nffg = self.mapper.orchestrate(nffg, global_view)
         log.debug(
           "NF-FG instantiation is finished by %s" % self.__class__.__name__)
         return mapped_nffg

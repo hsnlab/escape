@@ -75,6 +75,8 @@ class ServiceGraphMapper(AbstractMapper):
   """
   # Events raised by this class
   _eventMixin_events = {SGMappingFinishedEvent}
+  # Default Strategy class as a fallback strategy
+  DEFAULT_STRATEGY = DefaultServiceMappingStrategy
 
   def __init__ (self):
     """

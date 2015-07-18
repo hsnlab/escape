@@ -28,11 +28,13 @@ __license__ = "Apache License, Version 2.0"
 __version__ = "2.0.0"
 __maintainer__ = "Janos Czentye"
 __email__ = "czentye@tmit.bme.hu"
-__status__ = "Prototype"
+__status__ = "prototype"
 
 # Default configuration object which contains static and running
 # configuration for Layer APIs, DomainManagers, Adapters and other components
 cfg = {"service": {  # Service Adaptation Sublayer
+                     "MAPPER": {"module": "escape.service.sas_mapping",
+                                "class": "ServiceGraphMapper"},
                      "STRATEGY": {"module": "escape.service.sas_mapping",
                                   "class": "DefaultServiceMappingStrategy",
                                   "THREADED": True},
@@ -41,6 +43,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                   "address": "0.0.0.0", "port": 8008,
                                   "prefix": "escape"}},
        "orchestration": {  # Resource Orchestration Sublayer
+                           "MAPPER": {"module": "escape.orchest.ros_mapping",
+                                      "class": "ResourceOrchestrationMapper"},
                            "STRATEGY": {"module": "escape.orchest.ros_mapping",
                                         "class": "ESCAPEMappingStrategy",
                                         "THREADED": True},
@@ -101,6 +105,7 @@ def add_dependencies ():
     if not item.startswith('.') and item != "pox" and os.path.isdir(abs_item):
       sys.path.insert(0, abs_item)
       core.getLogger().debug("Add dependency: %s" % abs_item)
+
 
 # Detect and add dependency directories
 add_dependencies()

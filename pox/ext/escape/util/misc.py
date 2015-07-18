@@ -405,6 +405,22 @@ class ESCAPEConfig(object):
     except (KeyError, AttributeError):
       return None
 
+  def get_mapper (self, layer):
+    """
+    Return with th Mapper class of the given layer.
+
+    :param layer: layer name
+    :type layer: str
+    :return: Mapper class
+    :rtype: :any:`AbstractMapper`
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[layer]['MAPPER']['module']),
+        self.__configuration[layer]['MAPPER']['class'], None)
+    except (KeyError, AttributeError):
+      return None
+
   def get_threaded (self, layer):
     """
     Return with the value if the mapping strategy is needed to run in

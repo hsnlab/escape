@@ -75,6 +75,8 @@ class ResourceOrchestrationMapper(AbstractMapper):
   """
   # Events raised by this class
   _eventMixin_events = {NFFGMappingFinishedEvent}
+  # Default Mapper class as a fallback mapper
+  DEFAULT_STRATEGY = ESCAPEMappingStrategy
 
   def __init__ (self):
     """
