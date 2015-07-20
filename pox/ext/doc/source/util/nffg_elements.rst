@@ -8,7 +8,9 @@ Element classes for NFFG.
 
 :any:`NFFGContainer` represents the main container class.
 
-:any:`Base` represents the common functions for elements.
+:any:`Persistable` ensures the basic parse/dump functionality.
+
+:any:`Element` represents the common functions for elements.
 
 :any:`Node` represents the common functions for Node elements.
 
