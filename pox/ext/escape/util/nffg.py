@@ -16,6 +16,8 @@ Abstract class and implementation for basic operations with a single
 NF-FG, such as building, parsing, processing NF-FG, helper functions,
 etc.
 """
+import networkx
+
 from nffglib import *
 
 
@@ -87,8 +89,8 @@ class AbstractNFFG(object):
 
   # General functions for create/parse/dump/convert NFFG
 
-  @staticmethod
-  def parse (data):
+  @classmethod
+  def parse (cls, data):
     """
     General function for parsing data as a new :any::`NFFG` object and return
     with its reference.
@@ -116,12 +118,13 @@ class NFFG(AbstractNFFG):
   Internal NFFG representation based on networkx.
   """
 
-  def __init__ (self):
+  def __init__ (self, ID=None):
     """
     Init.
-
     """
-    pass
+    super(NFFG, self).__init__()
+    self.network = networkx.MultiDiGraph()
+    self.id = str(ID) if ID is not None else str(id(self))
 
   def add_link (self, edge_link):
     pass
@@ -150,9 +153,10 @@ class NFFG(AbstractNFFG):
   def dump (self):
     pass
 
-  @staticmethod
-  def parse (data):
-    pass
+  @classmethod
+  def parse (cls, data):
+    # TODO implement
+    return cls()
 
 
 class NFFGBuilder(AbstractNFFG):
@@ -174,8 +178,8 @@ class NFFGBuilder(AbstractNFFG):
   def dump (self):
     pass
 
-  @staticmethod
-  def parse (data):
+  @classmethod
+  def parse (cls, data):
     """
     Parse the given JSON-formatted string and return the constructed
     :any:`NFFG` object.
@@ -287,8 +291,8 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     """
     return self.__virtualizer
 
-  @staticmethod
-  def parse (data):
+  @classmethod
+  def parse (cls, data):
     """
     Parse the given XML-formatted string and return the constructed Virtualizer.
 

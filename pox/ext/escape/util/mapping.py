@@ -101,7 +101,7 @@ class AbstractMapper(EventMixin):
       if strategy is None and self.DEFAULT_STRATEGY is not None:
         # Use the default Strategy if it's set
         strategy = self.DEFAULT_STRATEGY
-      else:
+      if strategy is None:
         raise RuntimeError("Strategy class is not found!")
     self.strategy = strategy
     assert issubclass(strategy,
@@ -197,10 +197,9 @@ class AbstractOrchestrator(object):
       if mapper is None and self.DEFAULT_MAPPER is not None:
         # Use de default Mapper if it's set
         self.mapper = self.DEFAULT_MAPPER
-      else:
+      if mapper is None:
         raise RuntimeError("Mapper class is not found!")
-    assert issubclass(mapper,
-                      AbstractMapper), "Mapper is not subclass of " \
-                                       "AbstractMapper!"
+    assert issubclass(mapper, AbstractMapper), "Mapper is not subclass of " \
+                                               "AbstractMapper!"
     self.mapper = mapper(strategy=strategy)
     super(AbstractOrchestrator, self).__init__()

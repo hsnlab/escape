@@ -102,7 +102,6 @@ class SGManager(object):
     :return: computed id of given Service Graph
     :rtype: int
     """
-    sg.id = len(self._service_graphs)
     self._service_graphs[sg.id] = sg
     log.debug(
       "SG is saved by %s with id: %s" % (self.__class__.__name__, sg.id))
