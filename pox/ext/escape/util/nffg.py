@@ -801,8 +801,8 @@ if __name__ == "__main__":
   builder.name = "ETH OpenStack-OpenDaylight domain"
   infra = builder.add_infra(
     name="single Bis-Bis node representing the whole domain")
-  iport0 = builder.add_node_port(infra, name="OVS-north external port")
-  iport1 = builder.add_node_port(infra, name="OVS-south external port")
+  infra_port0 = builder.add_node_port(infra, name="OVS-north external port")
+  infra_port1 = builder.add_node_port(infra, name="OVS-south external port")
   builder.add_node_resource(infra, cpu="10 VCPU", mem="32 GB", storage="5 TB")
   nf1 = builder.add_nf_instance(infra, id="NF1", name="example NF")
   nf1port0 = builder.add_node_port(nf1, name="Example NF input port")
@@ -811,7 +811,7 @@ if __name__ == "__main__":
                                     name="tcp header compressor")
   builder.add_node_port(sup_nf, name="in", param="...")
   builder.add_node_port(sup_nf, name="out", param="...")
-  builder.add_flow_entry(infra, in_port=iport0, out_port=nf1port0)
-  builder.add_flow_entry(infra, in_port=nf1port1, out_port=iport1,
+  builder.add_flow_entry(infra, in_port=infra_port0, out_port=nf1port0)
+  builder.add_flow_entry(infra, in_port=nf1port1, out_port=infra_port1,
                          action="mod_dl_src=12:34:56:78:90:12")
   print builder

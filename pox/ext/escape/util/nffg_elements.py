@@ -16,13 +16,12 @@ Classes for handling the elements of the NF-FG data structure
 """
 import json
 import collections
+import weakref
 
 
 ################################################################################
 # ---------- BASE classes of NFFG elements -------------------
 ################################################################################
-import weakref
-
 
 class Persistable(object):
   """
@@ -33,20 +32,42 @@ class Persistable(object):
     """
     Common function to persist the actual element into a plain text format.
 
-    :return: object structure fir to JSON
+    :return: generated object structure fit to JSON
     :rtype: object
     """
     raise NotImplementedError("All NF-FG entity must be persistable!")
 
+  def load (self, data):
+    """
+    Common function to fill self with data from JSON data.
+
+    :param data: object structure in JSON
+    :return: self
+    """
+    raise NotImplementedError("All NF-FG entity must support load function!")
+
+  @classmethod
+  def parse (cls, data, *args, **kwargs):
+    """
+    Common function to parse the given JSON object structure as the actual NF-FG
+    entity type and return a newly created object.
+
+    :param data: raw JSON object structure
+    :type data: object
+    :return: parsed data as the entity type
+    :rtype: :any:`Persistable`
+    """
+    return cls().load(data, *args, **kwargs)
+
 
 class Element(Persistable):
   """
-  Main base class for NFFG elements with unique id.
+  Main base class for NF-FG elements with unique id.
 
   Contains the common functionality.
   """
 
-  def __init__ (self, ID=None, type=None):
+  def __init__ (self, ID=None, type="ELEMENT"):
     """
     Init.
 
@@ -60,7 +81,12 @@ class Element(Persistable):
     self.type = type
 
   def persist (self):
+    # Need to override
     super(Element, self).persist()
+
+  def load (self, data):
+    # Need to override
+    super(Element, self).load(data)
 
   def __getitem__ (self, item):
     if hasattr(self, item):
@@ -136,9 +162,9 @@ class Node(Element):
     :return: the actual Port is found and removed or not
     :rtype: bool
     """
-    for p in self.ports:
-      if p.id == id:
-        return self.ports.remove(p)
+    for port in self.ports:
+      if port.id == id:
+        return self.ports.remove(port)
       return True
 
   def persist (self):
@@ -149,6 +175,13 @@ class Node(Element):
     if self.name is not None:
       node["name"] = str(self.name)
     return node
+
+  def load (self, data):
+    self.id = data['id']
+    self.name = data.get('name')  # optional
+    for port in data.get('ports', ()):
+      self.add_port(ID=port['id'], properties=port.get('property'))
+    return self
 
 
 class Link(Element):
@@ -165,7 +198,7 @@ class Link(Element):
   # Requirement --> virtual link to define constraints between SG elements
   REQUIREMENT = "REQUIREMENT"
 
-  def __init__ (self, src, dst, type, ID=None):
+  def __init__ (self, src=None, dst=None, type=None, ID=None):
     """
     Init.
 
@@ -180,9 +213,6 @@ class Link(Element):
     :return: None
     """
     super(Link, self).__init__(ID=ID, type=type)
-    if not isinstance(src, Port) or not isinstance(dst, Port):
-      raise RuntimeError(
-        "Link source and destination must be derived from Port!")
     # Reference to src Port object
     self.src = src  # mandatory
     # Reference to dst Port object
@@ -191,6 +221,16 @@ class Link(Element):
   def persist (self):
     return {"src_node": str(self.src.node.id), "src_port": str(self.src.id),
             "dst_node": str(self.dst.node.id), "dst_port": str(self.dst.id)}
+
+  def load (self, data, container=None):
+    if container is None:
+      raise RuntimeError(
+        "Container reference is not given for edge endpoint lookup!")
+    self.src = container.get_port(data['src_node'], data['src_port'])
+    self.dst = container.get_port(data['dst_node'], data['dst_port'])
+    if self.src is None or self.dst is None:
+      raise RuntimeError("Edge not found with params: %s !" % data)
+    return self
 
 
 ################################################################################
@@ -240,6 +280,14 @@ class NodeResource(Persistable):
       res["networking"] = str(self.networking)
     return res
 
+  def load (self, data):
+    self.storage = data.get('storage')
+    self.networking = data.get('networking')
+    if 'compute' in data:
+      self.cpu = data['compute'].get('cpu')
+      self.mem = data['compute'].get('mem')
+    return self
+
 
 class LinkResource(Persistable):
   """
@@ -269,6 +317,10 @@ class LinkResource(Persistable):
       res["bandwidth"] = str(self.bandwidth)
     return res
 
+  def load (self, data):
+    self.delay = data.get('delay')
+    self.bandwidth = data.get('bandwidth')
+
 
 class Flowrule(Persistable):
   """
@@ -292,11 +344,18 @@ class Flowrule(Persistable):
   def persist (self):
     return {"match": str(self.match), "action": str(self.action)}
 
+  def load (self, data):
+    self.match = data.get('match', "*")
+    self.action = data.get('action', "")
+    return self
+
 
 class Port(Element):
   """
   Class for storing a port of an NF.
   """
+  # Port type
+  TYPE = "PORT"
 
   def __init__ (self, node, properties=None, ID=None):
     """
@@ -310,15 +369,15 @@ class Port(Element):
     :type properties: str or iterable(str)
     :return: None
     """
-    super(Port, self).__init__(ID=ID)
+    super(Port, self).__init__(ID=ID, type=self.TYPE)
     if not isinstance(node, Node):
       raise RuntimeError("Port's container node must be derived from Node!")
-    # weakre to avoid circular reference
+    # weakref to avoid circular reference
     self.node = weakref.proxy(node)
-    if isinstance(properties, str):
-      self.properties = [properties, ]
+    if isinstance(properties, (str, unicode)):
+      self.properties = [str(properties), ]
     elif isinstance(properties, collections.Iterable):
-      self.properties = [p for p in properties]
+      self.properties = [str(p) for p in properties]
     elif properties is None:
       self.properties = []
     else:
@@ -354,6 +413,11 @@ class Port(Element):
       port["property"] = property
     return port
 
+  def load (self, data):
+    self.id = data['id']
+    for property in data.get('property', ()):
+      self.properties.append(property)
+
 
 class InfraPort(Port):
   """
@@ -372,7 +436,7 @@ class InfraPort(Port):
     :type properties: str or iterable(str)
     :return: None
     """
-    super(InfraPort, self).__init__(node, ID, properties)
+    super(InfraPort, self).__init__(node=node, ID=ID, properties=properties)
     self.flowrules = []
 
   def add_flowrule (self, match, action):
@@ -412,6 +476,12 @@ class InfraPort(Port):
     if flowrules:
       port["flowrules"] = flowrules
     return port
+
+  def load (self, data):
+    super(InfraPort, self).load(data)
+    for flowrule in data('flowrules', ()):
+      self.add_flowrule(match=flowrule.get('match'),
+                        action=flowrule.get('action'))
 
 
 ################################################################################
@@ -456,6 +526,15 @@ class NodeNF(Node):
     if specification:
       node["specification"] = specification
     return node
+
+  def load (self, data):
+    super(NodeNF, self).load(data)
+    self.functional_type = data['functional_type']
+    if 'specification' in data:
+      self.deployment_type = data['specification'].get('deployment_type')
+      if 'resources' in data['specification']:
+        self.resources.load(data['specification']['resources'])
+    return self
 
 
 class NodeSAP(Node):
@@ -519,6 +598,19 @@ class NodeInfra(Node):
       node["resources"] = res
     return node
 
+  def load (self, data):
+    self.id = data['id']
+    self.name = data.get('name')  # optional
+    for port in data.get('ports', ()):
+      infra_port = self.add_port(ID=port['id'], properties=port.get('property'))
+      for flowrule in port.get('flowrules', ()):
+        infra_port.flowrules.append(Flowrule.parse(flowrule))
+    self.domain = data.get('domain', self.DEFAULT_INFRA_DOMAIN)  # optional
+    self.infra_type = data['type']
+    if 'resources' in data:
+      self.resources.load(data['resources'])
+    return self
+
 
 ################################################################################
 # ---------- SG REQUIREMENTS / SG NEXT_HOPS / INFRASTRUCTURE LINKS -----------
@@ -532,7 +624,7 @@ class EdgeLink(Link):
   Represent a static or dynamic link.
   """
 
-  def __init__ (self, src, dst, type=Link.STATIC, ID=None, res=None):
+  def __init__ (self, src=None, dst=None, type=Link.STATIC, ID=None, res=None):
     """
     Init.
 
@@ -558,6 +650,11 @@ class EdgeLink(Link):
       link.update(res)
     return link
 
+  def load (self, data, container=None):
+    super(EdgeLink, self).load(data=data, container=container)
+    self.resources.load(data)
+    return self
+
 
 class EdgeSGLink(Link):
   """
@@ -566,7 +663,7 @@ class EdgeSGLink(Link):
   Represent an edge between SG elements.
   """
 
-  def __init__ (self, src, dst, ID=None, flowclass=None):
+  def __init__ (self, src=None, dst=None, ID=None, flowclass=None):
     """
     Init.
 
@@ -589,6 +686,11 @@ class EdgeSGLink(Link):
       link["flowclass"] = str(self.flowclass)
     return link
 
+  def load (self, data, container=None):
+    super(EdgeSGLink, self).load(data=data, container=container)
+    self.flowclass = data.get('flowclass')
+    return self
+
 
 class EdgeReq(Link):
   """
@@ -597,7 +699,7 @@ class EdgeReq(Link):
   Class for requirements between arbitrary NF modes.
   """
 
-  def __init__ (self, src, dst, ID=None, reqs=None):
+  def __init__ (self, src=None, dst=None, ID=None, reqs=None):
     """
     Init.
 
@@ -622,6 +724,12 @@ class EdgeReq(Link):
       link["reqs"] = req
     return link
 
+  def load (self, data, container=None):
+    super(EdgeReq, self).load(data=data, container=container)
+    if 'reqs' in data:
+      self.reqs.load(data['reqs'])
+    return self
+
 
 ################################################################################
 # --------========== MAIN CONTAINER STARTS HERE =========-------------
@@ -643,6 +751,8 @@ class NFFGContainer(Element):
   ORGANIZATION = "BME-TMIT"
   # Description
   DESCRIPTION = "Network Function Forwarding Graph (NF-FG) data model"
+  # Container type
+  TYPE = "NFFG"
 
   def __init__ (self, ID=None, name=None, version=None):
     """
@@ -656,7 +766,7 @@ class NFFGContainer(Element):
     :type version: str
     :return: None
     """
-    super(NFFGContainer, self).__init__(ID=ID)
+    super(NFFGContainer, self).__init__(ID=ID, type=self.TYPE)
     self.id = str(ID) if ID is not None else str(id(self))  # mandatory
     self.name = name
     self.version = str(version) if version is not None else self.VERSION
@@ -667,23 +777,51 @@ class NFFGContainer(Element):
     self.edge_sg_nexthops = []
     self.edge_reqs = []
 
-  def persist (self):
-    nffg = {"parameters": {"id": self.id, "version": self.version}}
-    if self.name is not None:
-      nffg["parameters"]["name"] = str(self.name)
-    if self.node_nfs:
-      nffg["node_nfs"] = [nf.persist() for nf in self.node_nfs]
-    if self.node_saps:
-      nffg["node_saps"] = [sap.persist() for sap in self.node_saps]
-    if self.node_infras:
-      nffg["node_infras"] = [infra.persist() for infra in self.node_infras]
-    if self.edge_links:
-      nffg["edge_links"] = [link.persist() for link in self.edge_links]
-    if self.edge_sg_nexthops:
-      nffg["edge_sg_nexthops"] = [sg.persist() for sg in self.edge_sg_nexthops]
-    if self.edge_reqs:
-      nffg["edge_reqs"] = [req.persist() for req in self.edge_reqs]
-    return nffg
+  @property
+  def nodes (self):
+    """
+    Return all the node in the Container as a list.
+
+    :return: nodes
+    :rtype: list
+    """
+    # shallow copy
+    nodes = self.node_nfs[:]
+    nodes.extend(self.node_saps)
+    nodes.extend(self.node_infras)
+    return nodes
+
+  @property
+  def edges (self):
+    """
+    Return all the edges in the Container as a list.
+
+    :return: edges
+    :rtype: list
+    """
+    # shallow copy
+    edges = self.edge_links[:]
+    edges.extend(self.edge_reqs)
+    edges.extend(self.edge_sg_nexthops)
+    return edges
+
+  def get_port (self, node_id, port_id):
+    """
+    Return the Port reference according to the given Node and Port IDs.
+
+    :param node_id: node id
+    :type node_id: str
+    :param port_id: port id
+    :type port_id: str
+    :return: port object
+    :rtype: :any:`Port`
+    """
+    for node in self.nodes:
+      if node.id == node_id:
+        for port in node.ports:
+          if port.id == port_id:
+            return port
+    return None
 
   def add_nf (self, **kwargs):
     """
@@ -880,6 +1018,70 @@ class NFFGContainer(Element):
         self.edge_sg_nexthops.remove(edge)
         return True
 
+  def persist (self):
+    nffg = {"parameters": {"id": self.id, "version": self.version}}
+    if self.name is not None:
+      nffg["parameters"]["name"] = str(self.name)
+    if self.node_nfs:
+      nffg["node_nfs"] = [nf.persist() for nf in self.node_nfs]
+    if self.node_saps:
+      nffg["node_saps"] = [sap.persist() for sap in self.node_saps]
+    if self.node_infras:
+      nffg["node_infras"] = [infra.persist() for infra in self.node_infras]
+    if self.edge_links:
+      nffg["edge_links"] = [link.persist() for link in self.edge_links]
+    if self.edge_sg_nexthops:
+      nffg["edge_sg_nexthops"] = [sg.persist() for sg in self.edge_sg_nexthops]
+    if self.edge_reqs:
+      nffg["edge_reqs"] = [req.persist() for req in self.edge_reqs]
+    return nffg
+
+  def load (self, raw_data):
+    """
+    Read the given JSON object structure and try to convert to an NF-FG
+    representation as a :any:`NFFGContainer`
+
+    :param raw_data: raw date in JSON
+    :type raw_data: str
+    :return: the constructed NF-FG representation
+    :rtype: :any:`NFFGContainer`
+    """
+    # Converter function to avoid unicode
+    def unicode_to_str (input):
+      if isinstance(input, dict):
+        return {unicode_to_str(key): unicode_to_str(value) for key, value in
+                input.iteritems()}
+      elif isinstance(input, list):
+        return [unicode_to_str(element) for element in input]
+      elif isinstance(input, unicode):
+        return input.encode('utf-8')
+      else:
+        return input
+
+    # Load from plain text
+    data = json.loads(raw_data, object_hook=unicode_to_str)
+    # Create container
+    container = NFFGContainer()
+    # Fill container fields
+    container.id = data['parameters']['id']  # mandatory
+    container.name = data['parameters'].get('name')  # can be None
+    container.version = data['parameters']['version']  # mandatory
+    # Fill Container lists
+    for n in data.get('node_nfs', ()):
+      container.node_nfs.append(NodeNF.parse(data=n))
+    for n in data.get('node_saps', ()):
+      container.node_saps.append(NodeSAP.parse(data=n))
+    for n in data.get('node_infras', ()):
+      container.node_infras.append(NodeInfra.parse(data=n))
+    for e in data.get('edge_links', ()):
+      container.edge_links.append(EdgeLink.parse(data=e, container=container))
+    for e in data.get('edge_sg_nexthops', ()):
+      container.edge_sg_nexthops.append(
+        EdgeSGLink().parse(data=e, container=container))
+    for e in data.get('edge_reqs', ()):
+      container.edge_reqs.append(EdgeReq.parse(data=e, container=container))
+    return container
+
   def dump (self):
     """
     Dump the container in plain text based on JSON structure.
@@ -887,79 +1089,68 @@ class NFFGContainer(Element):
     :return: NF-FG representation as plain text
     :rtype: str
     """
-    return json.dumps(self.persist(), indent=1)
-
-  @staticmethod
-  def parse ():
-    """
-    Read the given JSON object structure and try to convert to an NF-FG
-    representation as a :any:`NFFGContainer`
-
-    :return: the constructed NF-FG representation
-    :rtype: :any:`NFFGContainer`
-    """
-    # TODO
-    pass
+    return json.dumps(self.persist(), indent=2, sort_keys=True)
 
 
-if __name__ == "__main__":
-  # # NF
-  # nf = NodeNF()
-  # nf.id = "nf1"
-  # nf.name = "NetworkFunction1"
-  # nf.functional_type = "functype1"
-  # nf.deployment_type = "virtual"
-  # nf.resources.cpu = "10VCPU"
-  # nf.resources.mem = "1GB"
-  # nf.resources.storage = "10GB"
-  # nf.resources.networking = "2Mbps"
-  # # nf.add_port("port_nf1", "port1", "virtual", "vlan:1025")
-  # p1 = nf.add_port(("port1", "virtual", "vlan:1025"), ID="port_nf1")
-  # # SAP
-  # sap = NodeSAP()
-  # sap.id = "sap1"
-  # sap.name = "sap1"
-  # p2 = sap.add_port(ID="port_sap")
-  # # Infra
-  # infra = NodeInfra()
-  # infra.id = "infra1"
-  # infra.name = "BisBis1"
-  # infra.domain = "virtual"
-  # infra.resources.cpu = "20VCPU"
-  # infra.resources.mem = "2GB"
-  # infra.resources.storage = "20GB"
-  # infra.resources.networking = "4Mbps"
-  # p3 = port_infra = infra.add_port(ID="port_infra")
-  # port_infra.add_flowrule("match123", "action456")
-  # # Edge link
-  # edge_link = EdgeLink(p2, p3, ID="link3")
-  # edge_link.resources.bandwidth = "100Mbps"
-  # edge_link.resources.delay = "5ms"
-  # # Edge SG next hop
-  # edge_sg = EdgeSGLink(p1, p2, ID="link1")
-  # edge_sg.flowclass = "flowclass1"
-  # # Edge requirement
-  # edge_req = EdgeReq(p2, p3)
-  # edge_req.id = "link2"
-  # edge_req.reqs.bandwidth = "100Mbps"
-  # edge_req.reqs.delay = "5ms"
-  # # Generate
-  # # print json.dumps(nf.persist(), indent=1, sort_keys=True)
-  # # print json.dumps(sap.persist(), indent=1, sort_keys=True)
-  # # print json.dumps(infra.persist(), indent=1, sort_keys=True)
-  # # print json.dumps(edge_link.persist(), indent=1, sort_keys=True)
-  # # print json.dumps(edge_sg.persist(), indent=1, sort_keys=True)
-  # # print json.dumps(edge_req.persist(), indent=1, sort_keys=True)
-  #
-  # nffg = NFFGContainer()
-  # nffg.name = "NFFG1"
-  # nffg.node_infras.append(infra)
-  # nffg.node_nfs.append(nf)
-  # nffg.node_saps.append(sap)
-  # nffg.edge_links.append(edge_link)
-  # nffg.edge_sg_nexthops.append(edge_sg)
-  # nffg.edge_reqs.append(edge_req)
-  # print nffg.dump()
+def test_parse_load ():
+  # NF
+  nf = NodeNF()
+  nf.id = "nf1"
+  nf.name = "NetworkFunction1"
+  nf.functional_type = "functype1"
+  nf.deployment_type = "virtual"
+  nf.resources.cpu = "10VCPU"
+  nf.resources.mem = "1GB"
+  nf.resources.storage = "10GB"
+  nf.resources.networking = "2Mbps"
+  # nf.add_port("port_nf1", "port1", "virtual", "vlan:1025")
+  p1 = nf.add_port(("port1", "virtual", "vlan:1025"), ID="port_nf1")
+  # SAP
+  sap = NodeSAP()
+  sap.id = "sap1"
+  sap.name = "sap1"
+  p2 = sap.add_port(ID="port_sap")
+  # Infra
+  infra = NodeInfra()
+  infra.id = "infra1"
+  infra.name = "BisBis1"
+  infra.domain = "virtual"
+  infra.resources.cpu = "20VCPU"
+  infra.resources.mem = "2GB"
+  infra.resources.storage = "20GB"
+  infra.resources.networking = "4Mbps"
+  p3 = port_infra = infra.add_port(ID="port_infra")
+  port_infra.add_flowrule("match123", "action456")
+  # Edge link
+  edge_link = EdgeLink(p2, p3, ID="link3")
+  edge_link.resources.bandwidth = "100Mbps"
+  edge_link.resources.delay = "5ms"
+  # Edge SG next hop
+  edge_sg = EdgeSGLink(p1, p2, ID="link1")
+  edge_sg.flowclass = "flowclass1"
+  # Edge requirement
+  edge_req = EdgeReq(p2, p3)
+  edge_req.id = "link2"
+  edge_req.reqs.bandwidth = "100Mbps"
+  edge_req.reqs.delay = "5ms"
+  # Generate
+  nffg = NFFGContainer()
+  nffg.name = "NFFG1"
+  nffg.node_infras.append(infra)
+  nffg.node_nfs.append(nf)
+  nffg.node_saps.append(sap)
+  nffg.edge_links.append(edge_link)
+  nffg.edge_sg_nexthops.append(edge_sg)
+  nffg.edge_reqs.append(edge_req)
+  data = nffg.dump()
+  print "\nGenerated NFFG:"
+  print data
+  nffg2 = NFFGContainer.parse(data)
+  print "\nParsed NFFG:"
+  print nffg2.dump()
+
+
+def test_networkx_mod ():
   nf = NodeNF()
   print nf["id"]
   nf["id"] = "nf1"
@@ -967,3 +1158,7 @@ if __name__ == "__main__":
   del nf["id"]
   print "Expect a KeyError..."
   print nf["id"]
+
+
+if __name__ == "__main__":
+  test_parse_load()

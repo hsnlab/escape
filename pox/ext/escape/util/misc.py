@@ -73,11 +73,11 @@ def enum (*sequential, **named):
 
   .. code-block:: python
 
-    >>> Numbers = enum(ONE=1, TWO=2, THREE='three')
-    >>> Numbers = enum('ZERO', 'ONE', 'TWO')
-    >>> Numbers.ONE
+    Numbers = enum(ONE=1, TWO=2, THREE='three')
+    Numbers = enum('ZERO', 'ONE', 'TWO')
+    Numbers.ONE
     1
-    >>> Numbers.reversed[2]
+    Numbers.reversed[2]
     'TWO'
 
   :param sequential: support automatic enumeration

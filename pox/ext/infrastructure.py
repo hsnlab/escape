@@ -25,8 +25,6 @@ from escape.util.misc import quit_with_error
 from pox.core import core
 import pox.lib.util as poxutil
 
-
-
 # Initial parameters
 init_param = {}
 

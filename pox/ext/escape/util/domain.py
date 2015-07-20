@@ -19,7 +19,7 @@ from requests import Session
 
 from escape import __version__
 from escape.util.misc import enum
-from escape.util.nffg_elements import NFFG
+from escape.util.nffg import NFFG
 from pox.lib.recoco import Timer
 from pox.lib.revent import EventMixin, Event
 
@@ -442,9 +442,8 @@ class AbstractRESTAdapter(Session):
     if body is not None:
       if isinstance(body, NFFG):
         # if given body is an NFFG
-        format = body.FORMAT
         body = NFFG.dump(body)
-        kwargs['headers']['Content-Type'] = "application/" + format.lower()
+        kwargs['headers']['Content-Type'] = "application/json"
     # Setup parameters - URL
     if url is not None:
       if not url.startswith('http'):
