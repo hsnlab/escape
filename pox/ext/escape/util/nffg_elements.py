@@ -555,8 +555,8 @@ class NodeInfra(Node):
   # Default domain type
   DEFAULT_INFRA_DOMAIN = None
 
-  def __init__ (self, ID=None, name=None, domain=DEFAULT_INFRA_DOMAIN,
-       infra_type=DEFAULT_INFRA_TYPE, res=None):
+  def __init__ (self, ID=None, name=None, domain=None, infra_type=None,
+       res=None):
     """
     Init.
 
@@ -569,8 +569,9 @@ class NodeInfra(Node):
     :return: None
     """
     super(NodeInfra, self).__init__(ID=ID, type=Node.INFRA, name=name)
-    self.domain = domain
-    self.infra_type = infra_type  # mandatory
+    self.domain = domain if domain is not None else self.DEFAULT_INFRA_DOMAIN
+    self.infra_type = infra_type if infra_type is not None else \
+      self.DEFAULT_INFRA_TYPE
     self.resources = res if res is not None else NodeResource()
 
   def add_port (self, properties=None, ID=None):
@@ -624,7 +625,7 @@ class EdgeLink(Link):
   Represent a static or dynamic link.
   """
 
-  def __init__ (self, src=None, dst=None, type=Link.STATIC, ID=None, res=None):
+  def __init__ (self, src=None, dst=None, type=None, ID=None, res=None):
     """
     Init.
 
@@ -640,6 +641,7 @@ class EdgeLink(Link):
     :type res: :any:`LinkResource`
     :return: None
     """
+    type = type if type is not None else Link.STATIC
     super(EdgeLink, self).__init__(src=src, dst=dst, type=type, ID=ID)
     self.resources = res if res is not None else LinkResource()
 
@@ -735,9 +737,9 @@ class EdgeReq(Link):
 # --------========== MAIN CONTAINER STARTS HERE =========-------------
 ################################################################################
 
-class NFFGContainer(Element):
+class NFFGModel(Element):
   """
-  Container for a single NF-FG.
+  Wrapper class for a single NF-FG.
 
   Network Function Forwarding Graph (NF-FG) data model.
   """
@@ -766,8 +768,7 @@ class NFFGContainer(Element):
     :type version: str
     :return: None
     """
-    super(NFFGContainer, self).__init__(ID=ID, type=self.TYPE)
-    self.id = str(ID) if ID is not None else str(id(self))  # mandatory
+    super(NFFGModel, self).__init__(ID=ID, type=self.TYPE)
     self.name = name
     self.version = str(version) if version is not None else self.VERSION
     self.node_nfs = []
@@ -1039,12 +1040,12 @@ class NFFGContainer(Element):
   def load (self, raw_data):
     """
     Read the given JSON object structure and try to convert to an NF-FG
-    representation as a :any:`NFFGContainer`
+    representation as an :any:`NFFGModel`.
 
     :param raw_data: raw date in JSON
     :type raw_data: str
     :return: the constructed NF-FG representation
-    :rtype: :any:`NFFGContainer`
+    :rtype: :any:`NFFGModel`
     """
     # Converter function to avoid unicode
     def unicode_to_str (input):
@@ -1058,28 +1059,31 @@ class NFFGContainer(Element):
       else:
         return input
 
-    # Load from plain text
-    data = json.loads(raw_data, object_hook=unicode_to_str)
-    # Create container
-    container = NFFGContainer()
-    # Fill container fields
-    container.id = data['parameters']['id']  # mandatory
-    container.name = data['parameters'].get('name')  # can be None
-    container.version = data['parameters']['version']  # mandatory
-    # Fill Container lists
-    for n in data.get('node_nfs', ()):
-      container.node_nfs.append(NodeNF.parse(data=n))
-    for n in data.get('node_saps', ()):
-      container.node_saps.append(NodeSAP.parse(data=n))
-    for n in data.get('node_infras', ()):
-      container.node_infras.append(NodeInfra.parse(data=n))
-    for e in data.get('edge_links', ()):
-      container.edge_links.append(EdgeLink.parse(data=e, container=container))
-    for e in data.get('edge_sg_nexthops', ()):
-      container.edge_sg_nexthops.append(
-        EdgeSGLink().parse(data=e, container=container))
-    for e in data.get('edge_reqs', ()):
-      container.edge_reqs.append(EdgeReq.parse(data=e, container=container))
+    try:
+      # Load from plain text
+      data = json.loads(raw_data, object_hook=unicode_to_str)
+      # Create container
+      container = NFFGModel()
+      # Fill container fields
+      container.id = data['parameters']['id']  # mandatory
+      container.name = data['parameters'].get('name')  # can be None
+      container.version = data['parameters']['version']  # mandatory
+      # Fill Container lists
+      for n in data.get('node_nfs', ()):
+        container.node_nfs.append(NodeNF.parse(data=n))
+      for n in data.get('node_saps', ()):
+        container.node_saps.append(NodeSAP.parse(data=n))
+      for n in data.get('node_infras', ()):
+        container.node_infras.append(NodeInfra.parse(data=n))
+      for e in data.get('edge_links', ()):
+        container.edge_links.append(EdgeLink.parse(data=e, container=container))
+      for e in data.get('edge_sg_nexthops', ()):
+        container.edge_sg_nexthops.append(
+          EdgeSGLink().parse(data=e, container=container))
+      for e in data.get('edge_reqs', ()):
+        container.edge_reqs.append(EdgeReq.parse(data=e, container=container))
+    except KeyError as e:
+      raise RuntimeError("Not a valid NFFGModel format!", e)
     return container
 
   def dump (self):
@@ -1134,7 +1138,7 @@ def test_parse_load ():
   edge_req.reqs.bandwidth = "100Mbps"
   edge_req.reqs.delay = "5ms"
   # Generate
-  nffg = NFFGContainer()
+  nffg = NFFGModel()
   nffg.name = "NFFG1"
   nffg.node_infras.append(infra)
   nffg.node_nfs.append(nf)
@@ -1145,7 +1149,7 @@ def test_parse_load ():
   data = nffg.dump()
   print "\nGenerated NFFG:"
   print data
-  nffg2 = NFFGContainer.parse(data)
+  nffg2 = NFFGModel.parse(data)
   print "\nParsed NFFG:"
   print nffg2.dump()
 

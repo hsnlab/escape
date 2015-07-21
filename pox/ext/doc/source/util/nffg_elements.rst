@@ -6,7 +6,7 @@ Element classes for NFFG.
 .. figure::  ../_static/nffg_elements.png
    :align:  center
 
-:any:`NFFGContainer` represents the main container class.
+:any:`NFFGModel` represents the main container class.
 
 :any:`Persistable` ensures the basic parse/dump functionality.
 

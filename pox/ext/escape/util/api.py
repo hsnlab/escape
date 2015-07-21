@@ -19,7 +19,6 @@ import urlparse
 import json
 import os.path
 import threading
-
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 from escape import __version__, CONFIG
@@ -393,7 +392,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       self.wfile.flush()
       self.wfile.close()
 
-  def _parse_json_body (self):
+  def _get_body (self):
     """
     Parse HTTP request body in JSON format.
 
@@ -421,9 +420,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       if len(splitted_type) > 1:
         charset = splitted_type[1]
       content_len = int(self.headers['Content-Length'])
-      raw_data = self.rfile.read(size=content_len)
+      raw_data = self.rfile.read(size=content_len).encode(charset)
       # Avoid missing param exception by hand over an empty json data
-      return json.loads(raw_data if content_len else "{}", encoding=charset)
+      return raw_data if content_len else "{}"
     except KeyError as e:
       # Content-Length header is not defined
       # or charset is not defined in Content-Type header.
