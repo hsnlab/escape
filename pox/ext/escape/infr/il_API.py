@@ -75,12 +75,18 @@ class InfrastructureLayerAPI(AbstractAPI):
 
     # test the builder
     builder = ESCAPENetworkBuilder()
-    agt4, sw4 = builder.create_ee('nc4', ee_type='netconf')
-    agt5, sw5 = builder.create_ee('nc5', ee_type='netconf')
-    sw1 = builder.create_switch('s1')
+    agt1, sw1 = builder.create_ee('nc1', ee_type='netconf')
+    agt2, sw2 = builder.create_ee('nc2', ee_type='netconf')
+    sw3 = builder.create_switch('s3')
+    sw4 = builder.create_switch('s4')
+    sap1 = builder.create_sap('sap1')
+    sap2 = builder.create_sap('sap2')
     builder.create_controller()
-    builder.create_link(sw1, sw4)
-    builder.create_link(sw1, sw5)
+    builder.create_link(sw3, sw1)
+    builder.create_link(sw4, sw2)
+    builder.create_link(sw3, sw4)
+    builder.create_link(sap1, sw3)
+    builder.create_link(sap2, sw4)
     self.topology = builder.get_network()
     self.topology.start_network()
 
