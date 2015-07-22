@@ -16,8 +16,8 @@ Wrapper module for handling emulated test topology based on Mininet.
 """
 from mininet import clean
 from mininet.net import VERSION as MNVERSION
-from mininet.net import Mininet
-from mininet.node import RemoteController
+from mininet.net import Mininet, MininetWithControlNet
+from mininet.node import RemoteController, RemoteSwitch
 
 from mininet.topo import Topo
 
@@ -244,7 +244,8 @@ class ESCAPENetworkBuilder(object):
         raise RuntimeError(
           "Network object's type must be a derived class of Mininet!")
     else:
-      self.mn = Mininet(**self.opts)
+      # self.mn = Mininet(**self.opts)
+      self.mn = MininetWithControlNet(**self.opts)
 
   def __init_from_NFFG (self, net, nffg):
     """
@@ -322,6 +323,16 @@ class ESCAPENetworkBuilder(object):
         "An error occurred when load topology from file: %s" % e.message)
       raise TopologyBuilderException("File parsing error!")
 
+  def get_network (self):
+    """
+    Return the brudge to the built network.
+    """
+    # Create the Interface object
+    network = ESCAPENetworkBridge(network=self.mn)
+    # Additional settings
+    network._need_clean = CONFIG.get_clean_after_shutdown()
+    return network
+
   def build (self, topology=None):
     """
     Initialize network.
@@ -354,3 +365,107 @@ class ESCAPENetworkBuilder(object):
     # Additional settings
     network._need_clean = CONFIG.get_clean_after_shutdown()
     return network
+
+  # def build_test (self):
+  #   """
+  #   Build a test infrastructure.
+  #   """
+
+  def create_ee (self, name, **params):
+    """
+    Create and add a new EE to mininet network.
+
+    The type of EE can be local NETCONF-based, remote NETCONF-based or static.
+    """
+    ee_type = params['ee_type']
+    if ee_type == 'netconf':
+      # create local NETCONF-based EE
+      sw = self.mn.addSwitch(name)
+      agt = self.mn.addAgent('agt_' + name)
+      agt.setSwitch(sw)
+      return agt, sw
+    elif ee_type == 'remote':
+      # create remote NETCONF-based EE
+      # NOT tested yet
+      p = copy.deepcopy(params)
+      p['cls'] = None
+      p['inNamespace'] = False
+      p['dpid'] = p['remote_dpid']
+      p['username'] = p['netconf_username']
+      p['passwd'] = p['netconf_passwd']
+      p['conf_ip'] = p['remote_conf_ip']
+      p['agentPort'] = p['remote_netconf_port']
+      sw = self.mn.addRemoteSwitch(name, **p)
+      agt = self.mn.addAgent('agt_' + name, **p)
+      agt.setSwitch(sw)
+      return agt, sw
+    else:
+      pass
+      # # TODO: make it backward compatible
+      # # create static EE
+      # h = self.net.addEE(**params)
+      # if 'cores' in ee:
+      #   h.setCPUs(**ee['cores'])
+      # if 'frac' in ee:
+      #   h.setCPUFrac(**ee['frac'])
+      # if 'vlanif' in ee:
+      #   for vif in ee['vlaninf']:
+      #     # TODO: In miniedit it was after self.net.build()
+      #     h.cmdPrint('vconfig add '+name+'-eth0 '+vif[1])
+      #     h.cmdPrint('ifconfig '+name+'-eth0.'+vif[1]+' '+vif[0])
+
+  def create_switch (self, name, **params):
+    """
+    Create and add a new OF switch intance to mininet network.
+    """
+    sw = self.mn.addSwitch(name, **params)
+    if 'openflowver' in params:
+      sw.setOpenFlowVersion(params['openflowver'])
+    if 'ip' in params:
+      sw.setSwitchIP(params['ip'])
+    return sw
+
+  def create_controller (self, name='c0', **params):
+    """
+    Create and add a new OF controller to mininet network.
+
+    default controller: InternalControllerProxy
+    """
+    return self.mn.addController(name, **params)
+
+  def create_sap (self, name, **params):
+    """
+    Create and add a new SAP to mininet network.
+    """
+    return self.mn.addHost(name, **params)
+
+  def create_link (self, node1, node2, port1=None, port2=None, **params):
+    """
+    Create a link between node1 and node2.
+    """
+    def is_remote(node):
+      return isinstance(node, RemoteSwitch)
+    
+    def is_local(node):
+      return not is_remote(node)
+
+    remote = filter(is_remote, [node1, node2])
+    local = filter(is_local, [node1, node2])
+    if not remote:
+      self.mn.addLink(node1, node2, port1, port2, **params)
+    else:
+      sw = local[0]
+      r = remote[0]
+      intfName = r.params['local_intf_name']
+      r_mac = None # unknown, r.params['remote_mac']
+      r_port = r.params['remote_port']
+      # self._debug('\tadd hw interface (%s) to node (%s)' % (intfName, sw.name))
+      
+      # This hack avoids calling __init__ which always makeIntfPair()
+      link = Link.__new__(Link)
+      i1 = Intf(intfName, node=sw, link=link)
+      i2 = Intf(intfName, node=r, mac=r_mac, port=r_port, link=link)
+      i2.mac = r_mac # mn runs 'ifconfig', which resets mac to None
+      #
+      link.intf1, link.intf2 = i1, i2
+

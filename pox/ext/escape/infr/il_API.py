@@ -69,8 +69,21 @@ class InfrastructureLayerAPI(AbstractAPI):
     # FIXME - change to dynamic initialization
     # self.topology = ESCAPENetworkBridge()
     # self.topology.test_network()
-    self.topology = ESCAPENetworkBuilder().build()
+
+    # self.topology = ESCAPENetworkBuilder().build()
+    # self.topology.start_network()
+
+    # test the builder
+    builder = ESCAPENetworkBuilder()
+    agt4, sw4 = builder.create_ee('nc4', ee_type='netconf')
+    agt5, sw5 = builder.create_ee('nc5', ee_type='netconf')
+    sw1 = builder.create_switch('s1')
+    builder.create_controller()
+    builder.create_link(sw1, sw4)
+    builder.create_link(sw1, sw5)
+    self.topology = builder.get_network()
     self.topology.start_network()
+
     # self.topology.initialize(wait_for_controller=True)
     log.info("Infrastructure Layer has been initialized!")
 
