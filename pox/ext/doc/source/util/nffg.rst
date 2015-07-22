@@ -9,6 +9,8 @@ such as building, parsing, processing NF-FG, helper functions, etc.
 
 :any:`AbstractNFFG` represents the common function for an NFFG representation.
 
+:any:`NFFG` is the internal representation of an NFFG.
+
 Module contents
 ---------------
 

@@ -21,5 +21,6 @@ Submodules
     misc
     netconf
     nffg
+    nffg_conv
     nffg_elements
     pox_extension

@@ -1,7 +1,7 @@
 *nffg_elements.py* module
 =========================
 
-Element classes for NFFG.
+Element classes for NFFG based on ``nffg.yang``.
 
 .. figure::  ../_static/nffg_elements.png
    :align:  center
@@ -17,8 +17,6 @@ Element classes for NFFG.
 :any:`Link` represents the common functions for Edge elements.
 
 :any:`NodeResource` represents the resource attributes of a Node.
-
-:any:`LinkResource` represents the resource attributes of an Edge.
 
 :any:`Flowrule` represents the attributes of a flowrule.
 
