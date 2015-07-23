@@ -262,7 +262,7 @@ class NFFG(AbstractNFFG):
       pass
 
   def add_nf (self, id=None, name=None, func_type=None, dep_type=None, cpu=None,
-       mem=None, storage=None, networking=None):
+       mem=None, storage=None, delay=None, bandwidth=None):
     """
     Add a Network Function to the structure.
 
@@ -285,9 +285,9 @@ class NFFG(AbstractNFFG):
     :return: newly created node
     :rtype: :any:`NodeNF`
     """
-    res = NodeResource(cpu=cpu, mem=mem, storage=storage,
-                       networking=networking) if any(
-      (cpu, mem, storage, networking)) else None
+    res = NodeResource(cpu=cpu, mem=mem, storage=storage, delay=delay,
+                       bandwidth=bandwidth) if any(
+      (cpu, mem, storage, delay, bandwidth)) else None
     nf = NodeNF(id=id, name=name, func_type=func_type, dep_type=dep_type,
                 res=res)
     self.add_node(nf)
@@ -309,7 +309,7 @@ class NFFG(AbstractNFFG):
     return sap
 
   def add_infra (self, id=None, name=None, domain=None, infra_type=None,
-       cpu=None, mem=None, storage=None, networking=None):
+       cpu=None, mem=None, storage=None, delay=None, bandwidth=None):
     """
     Add an Infrastructure Node to the structure.
 
@@ -332,9 +332,9 @@ class NFFG(AbstractNFFG):
     :return: newly created node
     :rtype: :any:`NodeInfra`
     """
-    res = NodeResource(cpu=cpu, mem=mem, storage=storage,
-                       networking=networking) if any(
-      (cpu, mem, storage, networking)) else None
+    res = NodeResource(cpu=cpu, mem=mem, storage=storage, bandwidth=bandwidth,
+                       delay=delay) if any(
+      (cpu, mem, storage, delay, bandwidth)) else None
     infra = NodeInfra(id=id, name=name, domain=domain, infra_type=infra_type,
                       res=res)
     self.add_node(infra)
