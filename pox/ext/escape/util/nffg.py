@@ -137,7 +137,6 @@ class NFFG(AbstractNFFG):
     :return: None
     """
     super(NFFG, self).__init__()
-    gen = __builtins__.id
     self.id = str(id) if id is not None else str(generate(self))
     self.name = name if name is not None else "NFFG-" + str(self.id)
     self.version = version
@@ -205,30 +204,39 @@ class NFFG(AbstractNFFG):
       self.network.remove_node(node)
       return True
     except NetworkXError:
+      # There was no node in the graph
       pass
 
   def add_edge (self, src, dst, link):
     """
     Add an Edge to the structure.
 
-    :param src: source Node
-    :type src: :any:`Node`
-    :param dst: destination Node
-    :type dst: :any:`Node`
+    :param src: source node id or Node object or a Port object
+    :type src: str or :any:`Node` or :any`Port`
+    :param dst: destination node id or Node object or a Port object
+    :type dst: str or :any:`Node` or :any`Port`
     :param link: edge data object
     :type link: :any:`Link`
     :return: None
     """
-    self.network.add_edge(src.id, dst.id, key=link.id)
-    self.network[src.id][dst.id][link.id] = link
+    if isinstance(src, Node):
+      src = src.id
+    elif isinstance(src, Port):
+      src = src.node.id
+    if isinstance(dst, Node):
+      dst = dst.id
+    elif isinstance(dst, Port):
+      dst = dst.node.id
+    self.network.add_edge(src, dst, key=link.id)
+    self.network[src][dst][link.id] = link
 
   def del_edge (self, src, dst, id=None):
     """
     Remove the edge(s) between two nodes.
 
-    :param src: source node id or node object or a port object
+    :param src: source node id or Node object or a Port object
     :type src: str or :any:`Node` or :any`Port`
-    :param dst: destination node id or node object or a port object
+    :param dst: destination node id or Node object or a Port object
     :type dst: str or :any:`Node` or :any`Port`
     :param id: unique id of the edge (otherwise remove all)
     :type id: str or int
@@ -250,6 +258,7 @@ class NFFG(AbstractNFFG):
         self.network[src][dst].clear()
       return True
     except NetworkXError:
+      # There was no node in the graph
       pass
 
   def add_nf (self, id=None, name=None, func_type=None, dep_type=None, cpu=None,
