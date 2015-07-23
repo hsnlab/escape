@@ -102,7 +102,8 @@ def add_dependencies ():
   root = os.path.abspath(os.path.dirname(__file__) + "../../../..")
   for item in os.listdir(root):
     abs_item = os.path.join(root, item)
-    if not item.startswith('.') and item != "pox" and os.path.isdir(abs_item):
+    if not item.startswith('.') and item not in (
+         "pox", "OpenYuma", "Unify_ncagent") and os.path.isdir(abs_item):
       sys.path.insert(0, abs_item)
       core.getLogger().debug("Add dependency: %s" % abs_item)
 
