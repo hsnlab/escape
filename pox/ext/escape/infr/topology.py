@@ -325,7 +325,7 @@ class ESCAPENetworkBuilder(object):
 
   def get_network (self):
     """
-    Return the brudge to the built network.
+    Return the bridge to the built network.
     """
     # Create the Interface object
     network = ESCAPENetworkBridge(network=self.mn)
@@ -360,16 +360,12 @@ class ESCAPENetworkBuilder(object):
     except TopologyBuilderException:
       if not self.run_dry:
         raise
-    # Create the Interface object
-    network = ESCAPENetworkBridge(network=self.mn)
-    # Additional settings
-    network._need_clean = CONFIG.get_clean_after_shutdown()
-    return network
-
-  # def build_test (self):
-  #   """
-  #   Build a test infrastructure.
-  #   """
+    # SB: replace this part to get_network function
+    # # Create the Interface object
+    # network = ESCAPENetworkBridge(network=self.mn)
+    # # Additional settings
+    # network._need_clean = CONFIG.get_clean_after_shutdown()
+    # return network
 
   def create_ee (self, name, **params):
     """
