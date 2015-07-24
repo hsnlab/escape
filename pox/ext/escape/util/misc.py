@@ -479,19 +479,28 @@ class ESCAPEConfig(object):
     except KeyError:
       return ()
 
-  def get_fallback_topology (self, topo_name):
+  def get_mininet_topology (self):
+    """
+    Return the Mininet topology class.
+
+    :return:  topo class
+    """
+    try:
+      return self.__configuration[INFR]["TOPO"]
+    except KeyError:
+      return None
+
+  def get_fallback_topology (self):
     """
     Return the fallback topology class.
 
-    :param topo_name: name of the topo in CONFIG
-    :type topo_name: str
     :return: fallback topo class
     :rtype: :any::`AbstractTopology`
     """
     try:
       return getattr(importlib.import_module(
-        self.__configuration[INFR][topo_name]['module']),
-        self.__configuration[INFR][topo_name]['class'], None)
+        self.__configuration[INFR]["FALLBACK-TOPO"]['module']),
+        self.__configuration[INFR]["FALLBACK-TOPO"]['class'], None)
     except KeyError:
       return None
 

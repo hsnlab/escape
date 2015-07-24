@@ -14,13 +14,12 @@
 """
 Wrapper module for handling emulated test topology based on Mininet.
 """
+
 from mininet import clean
 from mininet.net import VERSION as MNVERSION
 from mininet.net import Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
-
 from mininet.topo import Topo
-
 from escape.infr import log
 from escape.util.nffg import NFFG
 from escape import CONFIG
@@ -47,23 +46,37 @@ class AbstractTopology(Topo):
 
   def __init__ (self, hopts=None, sopts=None, lopts=None, eopts=None):
     super(AbstractTopology, self).__init__(hopts, sopts, lopts, eopts)
+    self.construct()
+
+  def construct (self):
+    raise NotImplementedError("Not implemented yet!")
 
 
-class BackupTopology(AbstractTopology):
+class FallbackStaticTopology(AbstractTopology):
   """
   Topology class for testing purposes and serve as a fallback topology.
+
+  Use the static way for topology compilation.
   """
 
-  def __init__ (self):
-    """
-    Init and build test topology
-    """
-    super(BackupTopology, self).__init__()
+  def construct (self):
     h1 = self.addHost('H1')
     h2 = self.addHost('H2')
     s1 = self.addSwitch('S1')
     self.addLink(s1, h1)
     self.addLink(s1, h2)
+
+
+class FallbackDynamicTopology(AbstractTopology):
+  """
+  Topology class for testing purposes and serve as a fallback topology.
+
+  Use the dynamic way for topology compilation.
+  """
+
+  def construct (self):
+    # TODO - implement
+    pass
 
 
 class InternalControllerProxy(RemoteController):
@@ -115,6 +128,11 @@ class ESCAPENetworkBridge(object):
   def __init__ (self, network=None):
     """
     Initialize Mininet implementation with proper attributes.
+    Use network as the hided Mininet topology if it's given.
+
+    :param network: use this specific Mininet object for init (default: None)
+    :type network: :class:`mininet.net.MininetWithControlNet`
+    :return: None
     """
     log.debug("Init emulated topology based on Mininet v%s" % MNVERSION)
     if network is not None:
@@ -135,11 +153,11 @@ class ESCAPENetworkBridge(object):
     Internal network representation.
 
     :return: network representation
-    :rtype: :class:`mininet.net.Mininet`
+    :rtype: :class:`mininet.net.MininetWithControlNet`
     """
     return self.__mininet
 
-  def get_topology(self):
+  def get_topology (self):
     """
     Return with the topology.
 
@@ -215,10 +233,8 @@ class ESCAPENetworkBuilder(object):
                   'autoSetMacs': True,  # Set simple MACs
                   'autoStaticArp': True,  # Set static ARP entries
                   'listenPort': None}
-  # Name of the fallback topology class in CONFIG
-  topology_config_name = "FALLBACK-TOPO"
 
-  def __init__ (self, net=None, opts=None, run_dry=True):
+  def __init__ (self, net=None, opts=None, fallback=True, run_dry=True):
     """
     Initialize NetworkBuilder.
 
@@ -229,12 +245,16 @@ class ESCAPENetworkBuilder(object):
     :type net: :any::`Mininet`
     :param opts: update default options with the given opts
     :type opts: dict
+    :param fallback: search for fallback topology (default: True)
+    :type fallback: bool
     :param run_dry: do not raise an Exception and return with bare Mininet obj.
     :type run_dry: bool
+    :return: None
     """
     self.opts = dict(self.default_opts)
     if opts is not None:
       self.opts.update(opts)
+      self.fallback = fallback
     self.run_dry = run_dry
     if net is not None:
       if isinstance(net, Mininet):
@@ -247,7 +267,7 @@ class ESCAPENetworkBuilder(object):
       # self.mn = Mininet(**self.opts)
       self.mn = MininetWithControlNet(**self.opts)
 
-  def __init_from_NFFG (self, net, nffg):
+  def __init_from_NFFG (self, nffg):
     """
     Initialize topology from :any:`NFFG`.
 
@@ -256,21 +276,6 @@ class ESCAPENetworkBuilder(object):
     :return: None
     """
     # TODO -implement
-    raise NotImplementedError()
-
-  def __init_from_dict (self, dict):
-    """
-    Initialize topology from a dictionary.
-
-    Keywords for network elements: controllers, ee, saps, switches, links
-
-    Option keywords: netopts
-
-    :param dict: topology
-    :type dict: :any:`NFFG`
-    :return: None
-    """
-    # TODO - implement
     raise NotImplementedError()
 
   def __init_from_AbstractTopology (self, topo_class):
@@ -284,48 +289,38 @@ class ESCAPENetworkBuilder(object):
     self.mn.topo = topo_class()
     self.mn.build()
 
-  def __init_from_CONFIG (self):
+  def __init_from_CONFIG (self, path=None):
     """
-    Build a pre-defined topology stored in CONFIG.
+    Build a pre-defined topology from an NFFG stored in a file.
+    The file path is searched in CONFIG with tha name ``TOPO``.
 
-    :return: None
-    """
-    topo_class = CONFIG.get_fallback_topology(self.topology_config_name)
-    if topo_class is None:
-      log.warning("Fallback topology is missing from CONFIG!")
-      raise TopologyBuilderException("Missing fallback topo!")
-    elif issubclass(topo_class, AbstractTopology):
-      log.debug("Fallback topology is parsed from CONFIG!")
-      self.__init_from_AbstractTopology(topo_class)
-    else:
-      raise TopologyBuilderException("Unsupported topology class!")
-
-  def __init_from_file (self, path="escape.topo"):
-    """
-    Build a pre-defined topology stored in a file in JSON format.
-
-    :param path: file path
+    :param path: additional file path
     :type path: str
     :return: None
     """
-    try:
-      with open(path, 'r') as f:
-        import json
-
-        topo = json.load(f)
-        self.__init_from_dict(topo)
-        return
-    except IOError:
-      log.debug("Additional topology file not found: %s" % path)
-      raise TopologyBuilderException("Missing topology file!")
-    except ValueError as e:
-      log.error(
-        "An error occurred when load topology from file: %s" % e.message)
-      raise TopologyBuilderException("File parsing error!")
+    if path is None:
+      path = CONFIG.get_mininet_topology()
+    if path is None:
+      log.warning("Topology is missing from CONFIG!")
+      raise TopologyBuilderException("Missing Topology!")
+    else:
+      try:
+        with open(path, 'r') as f:
+          self.__init_from_NFFG(NFFG.parse(f.read()))
+      except IOError:
+        log.debug("Additional topology file not found: %s" % path)
+        raise TopologyBuilderException("Missing topology file!")
+      except ValueError as e:
+        log.error(
+          "An error occurred when load topology from file: %s" % e.message)
+        raise TopologyBuilderException("File parsing error!")
 
   def get_network (self):
     """
     Return the bridge to the built network.
+
+    :return: object representing the emulated network
+    :rtype: :any:`ESCAPENetworkBridge`
     """
     # Create the Interface object
     network = ESCAPENetworkBridge(network=self.mn)
@@ -337,35 +332,46 @@ class ESCAPENetworkBuilder(object):
     """
     Initialize network.
 
-    :param topology: topology representation
+    1. If the additional ``topology`` is given then using that for init.
+    2. If TOPO is not given, search topology description in CONFIG with the \
+    name 'TOPO'.
+    3. If TOPO not found or an Exception was raised, search for the fallback \
+    topo with the name ``FALLBACK-TOPO``.
+    4. If FALLBACK-TOPO not found raise an exception or run a bare Mininet \
+    object if the run_dry attribute is set
+
+
+    :param topology: optional topology representation
     :type topology: :any:`NFFG` or :any:`dict` or :any:`AbstractTopology`
-    :return: None
+    :return: object representing the emulated network
+    :rtype: :any:`ESCAPENetworkBridge`
     """
     # Load topology
     try:
       if topology is None:
-        log.warning(
-          "Topology description is missing. Try to load from CONFIG...")
+        log.info("Load Topology description from CONFIG...")
         self.__init_from_CONFIG()
       elif isinstance(topology, NFFG):
         self.__init_from_NFFG(nffg=topology)
-      elif isinstance(topology, dict):
-        self.__init_from_dict(dict=topology)
       elif isinstance(topology, AbstractTopology):
         self.__init_from_AbstractTopology(topo=topology)
-      elif isinstance(topology, str):
-        self.__init_from_file(path=topology)
       else:
         raise RuntimeError("Unsupported topology format: %s" % type(topology))
+      return self.get_network()
     except TopologyBuilderException:
-      if not self.run_dry:
+      fallback = CONFIG.get_fallback_topology()
+      if fallback and self.fallback:
+        log.info("Load topo from fallback topology description...")
+        self.__init_from_AbstractTopology(fallback)
+      elif not self.run_dry:
         raise
-    # SB: replace this part to get_network function
-    # # Create the Interface object
-    # network = ESCAPENetworkBridge(network=self.mn)
-    # # Additional settings
-    # network._need_clean = CONFIG.get_clean_after_shutdown()
-    # return network
+        # SB: replace this part to get_network function
+        # # Create the Interface object
+        # network = ESCAPENetworkBridge(network=self.mn)
+        # # Additional settings
+        # network._need_clean = CONFIG.get_clean_after_shutdown()
+        # return network
+      return self.get_network()
 
   def create_ee (self, name, **params):
     """
@@ -439,10 +445,11 @@ class ESCAPENetworkBuilder(object):
     """
     Create a link between node1 and node2.
     """
-    def is_remote(node):
+
+    def is_remote (node):
       return isinstance(node, RemoteSwitch)
-    
-    def is_local(node):
+
+    def is_local (node):
       return not is_remote(node)
 
     remote = filter(is_remote, [node1, node2])
@@ -453,15 +460,15 @@ class ESCAPENetworkBuilder(object):
       sw = local[0]
       r = remote[0]
       intfName = r.params['local_intf_name']
-      r_mac = None # unknown, r.params['remote_mac']
+      r_mac = None  # unknown, r.params['remote_mac']
       r_port = r.params['remote_port']
-      # self._debug('\tadd hw interface (%s) to node (%s)' % (intfName, sw.name))
-      
+      # self._debug('\tadd hw interface (%s) to node (%s)' % (intfName,
+      # sw.name))
+
       # This hack avoids calling __init__ which always makeIntfPair()
       link = Link.__new__(Link)
       i1 = Intf(intfName, node=sw, link=link)
       i2 = Intf(intfName, node=r, mac=r_mac, port=r_port, link=link)
-      i2.mac = r_mac # mn runs 'ifconfig', which resets mac to None
+      i2.mac = r_mac  # mn runs 'ifconfig', which resets mac to None
       #
       link.intf1, link.intf2 = i1, i2
-

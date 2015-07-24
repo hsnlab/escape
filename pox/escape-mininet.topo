@@ -1,0 +1,7 @@
+{
+  "parameters": {
+    "id": "MN-TOPO",
+    "name": "NFFG-INTERNAL-MININET",
+    "version": "1.0"
+  }
+}

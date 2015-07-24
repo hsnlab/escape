@@ -80,8 +80,11 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                    "class": "DockerDomainManager"}},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
+                            "TOPO": "/home/czentye/escape/src/escape_v2/pox/"
+                                    "escape-mininet.topo",
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
-                                              "class": "BackupTopology"},
+                                              "class":
+                                                "FallbackStaticTopology"},
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}
 
