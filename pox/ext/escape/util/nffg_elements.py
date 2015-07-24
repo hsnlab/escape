@@ -400,6 +400,7 @@ class Port(Element):
       raise RuntimeError("Port's container node must be derived from Node!")
     # weakref to avoid circular reference
     self.node = weakref.proxy(node)
+    # Set properties list according to given param type
     if isinstance(properties, (str, unicode)):
       self.properties = [str(properties), ]
     elif isinstance(properties, collections.Iterable):
@@ -416,11 +417,11 @@ class Port(Element):
 
     :param property: property
     :type property: str
-    :return: list of properties
-    :rtype: list
+    :return: the Port object to allow function chaining
+    :rtype: :any:`Port`
     """
     self.properties.append(property)
-    return self.properties
+    return self
 
   def del_property (self, property):
     """
@@ -430,7 +431,7 @@ class Port(Element):
     :type property: str
     :return: None
     """
-    self.properties.remove(property)
+    return self.properties.remove(property)
 
   def persist (self):
     port = {"id": str(self.id)}
@@ -582,7 +583,7 @@ class NodeInfra(Node):
   DEFAULT_INFRA_DOMAIN = None
 
   def __init__ (self, id=None, name=None, domain=None, infra_type=None,
-       res=None):
+       supported=None, res=None):
     """
     Init.
 
@@ -590,6 +591,8 @@ class NodeInfra(Node):
     :type domain: str
     :param infra_type: type of the Infrastructure Node
     :type infra_type: int or str
+    :param supported: list of supported functional types
+    :type supported: list
     :param res: optional Infra resources
     :type res: :any:`NodeResource`
     :return: None
@@ -598,6 +601,14 @@ class NodeInfra(Node):
     self.domain = domain if domain is not None else self.DEFAULT_INFRA_DOMAIN
     self.infra_type = infra_type if infra_type is not None else \
       self.DEFAULT_INFRA_TYPE
+    # Set supported types according to given param type
+    if isinstance(supported, (str, unicode)):
+      self.supported = [str(supported), ]
+    elif isinstance(supported, collections.Iterable):
+      self.supported = [str(sup) for sup in supported]
+    elif supported is None:
+      self.supported = []
+      # Set resource container
     self.resources = res if res is not None else NodeResource()
 
   def add_port (self, id=None, properties=None):
@@ -615,11 +626,36 @@ class NodeInfra(Node):
     self.ports.append(port)
     return port
 
+  def add_supported_type (self, functional_type):
+    """
+    Add a supported functional type to the Infrastructure Node.
+
+    :param functional_type: the functional type
+    :type functional_type: str
+    :return: the Node object to allow function chaining
+    :rtype: :any:`NodeInfra`
+    """
+    self.supported.append(functional_type)
+    return self
+
+  def del_supported_type (self, functional_type):
+    """
+    Remove the functional type from the Infrastructure Node.
+
+    :param functional_type: the functional type
+    :type functional_type: str
+    :return: None
+    """
+    return self.supported.remove(functional_type)
+
   def persist (self):
     node = super(NodeInfra, self).persist()
     if self.domain is not None:
       node["domain"] = str(self.domain)
     node["type"] = str(self.infra_type)
+    supported = [sup for sup in self.supported]
+    if supported:
+      node['supported'] = supported
     res = self.resources.persist()
     if res:
       node["resources"] = res
@@ -634,6 +670,8 @@ class NodeInfra(Node):
         infra_port.flowrules.append(Flowrule.parse(flowrule))
     self.domain = data.get('domain', self.DEFAULT_INFRA_DOMAIN)  # optional
     self.infra_type = data['type']
+    if 'supported' in data:
+      self.supported = data['supported']
     if 'resources' in data:
       self.resources.load(data['resources'])
     return self
@@ -1160,6 +1198,7 @@ def test_parse_load ():
   infra.resources.mem = "2"
   infra.resources.storage = "20"
   infra.resources.bandwidth = "4"
+  infra.add_supported_type("functype1")
   # infra.resources.delay = "4"
   p3 = port_infra = infra.add_port(id="port_infra")
   port_infra.add_flowrule("match123", "action456")
