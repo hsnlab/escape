@@ -413,25 +413,32 @@ class Port(Element):
 
   def add_property (self, property):
     """
-    Add a property to the port.
+    Add a property or list of properties to the port.
 
     :param property: property
-    :type property: str
+    :type property: str or list or tuple
     :return: the Port object to allow function chaining
     :rtype: :any:`Port`
     """
-    self.properties.append(property)
+    if isinstance(property, collections.Iterable):
+      self.properties.extend(property)
+    else:
+      self.properties.append(property)
     return self
 
-  def del_property (self, property):
+  def del_property (self, property=None):
     """
-    Remove the property from the Port.
+    Remove the property from the Port. If no property is given remove all the
+    properties from the Port.
 
     :param property: property
     :type property: str
     :return: None
     """
-    return self.properties.remove(property)
+    if property is None:
+      self.properties[:] = []
+    else:
+      self.properties.remove(property)
 
   def persist (self):
     port = {"id": str(self.id)}
@@ -628,25 +635,32 @@ class NodeInfra(Node):
 
   def add_supported_type (self, functional_type):
     """
-    Add a supported functional type to the Infrastructure Node.
+    Add a supported functional type or list of types to the Infrastructure Node.
 
     :param functional_type: the functional type
-    :type functional_type: str
+    :type functional_type: str or list or tuple
     :return: the Node object to allow function chaining
     :rtype: :any:`NodeInfra`
     """
-    self.supported.append(functional_type)
+    if isinstance(functional_type, collections.Iterable):
+      self.supported.extend(functional_type)
+    else:
+      self.supported.append(functional_type)
     return self
 
-  def del_supported_type (self, functional_type):
+  def del_supported_type (self, functional_type=None):
     """
-    Remove the functional type from the Infrastructure Node.
+    Remove the given functional type from the Infrastructure Node. If no type
+    is given then all supported type will be removed.
 
     :param functional_type: the functional type
     :type functional_type: str
     :return: None
     """
-    return self.supported.remove(functional_type)
+    if functional_type is None:
+      self.supported[:] = []
+    else:
+      self.supported.remove(functional_type)
 
   def persist (self):
     node = super(NodeInfra, self).persist()
