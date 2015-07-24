@@ -485,6 +485,18 @@ class NFFG(AbstractNFFG):
             self.network.neighbors_iter(infra_id) if
             self.network.node[id].type == Node.INFRA}
 
+  def running_nfs (self, infra_id):
+    """
+    Return an iterator for the NodeNFs which are mapped to the given Infra node.
+    
+    :params infra_id: infra node identifier
+    :type infra_id: :any: `NodeInfra`
+    :return: iterator for the currently running NodeNFs
+    """
+    return {self.network.node[id] for id in
+            self.network.neighbors_iter(infra_id) if
+            self.network.node[id].type == Node.NF}
+
 
 def test_NFFG ():
   # Add nodes
