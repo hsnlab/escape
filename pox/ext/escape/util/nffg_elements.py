@@ -346,7 +346,16 @@ class NodeResource(Persistable):
     else:
       raise KeyError(
         "%s object has no key: %s" % (self.__class__.__name__, key))
-
+  
+  def __repr__(self):
+    represent = "Resources of %s :\n"%(self.__class__.__name__)
+    for attr in ['cpu', 'mem', 'storage', 'bandwidth', 'delay']:
+      represent += attr + ": "
+      if self[attr] != None:
+        represent += str(self[attr]) + "\n"
+      else:
+        represent += "None \n"
+    return represent
 
 class Flowrule(Persistable):
   """
