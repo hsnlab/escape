@@ -14,7 +14,7 @@ transparently.
 
 :any:`VNFStarterAdapter` is a wrapper class for vnf_starter NETCONF module.
 
-:any:`OpenStackRESTAdapter` is a wrapper class for OpenStack-RESTlike API
+:any:`OpenStackRESTAdapter` is a wrapper class for OpenStack-REST-like API
 functions.
 
 :any:`InternalDomainManager` represent the top class for interacting with

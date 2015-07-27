@@ -73,11 +73,11 @@ def enum (*sequential, **named):
 
   .. code-block:: python
 
-    >>> Numbers = enum(ONE=1, TWO=2, THREE='three')
-    >>> Numbers = enum('ZERO', 'ONE', 'TWO')
-    >>> Numbers.ONE
+    Numbers = enum(ONE=1, TWO=2, THREE='three')
+    Numbers = enum('ZERO', 'ONE', 'TWO')
+    Numbers.ONE
     1
-    >>> Numbers.reversed[2]
+    Numbers.reversed[2]
     'TWO'
 
   :param sequential: support automatic enumeration
@@ -405,6 +405,22 @@ class ESCAPEConfig(object):
     except (KeyError, AttributeError):
       return None
 
+  def get_mapper (self, layer):
+    """
+    Return with th Mapper class of the given layer.
+
+    :param layer: layer name
+    :type layer: str
+    :return: Mapper class
+    :rtype: :any:`AbstractMapper`
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[layer]['MAPPER']['module']),
+        self.__configuration[layer]['MAPPER']['class'], None)
+    except (KeyError, AttributeError):
+      return None
+
   def get_threaded (self, layer):
     """
     Return with the value if the mapping strategy is needed to run in
@@ -463,19 +479,28 @@ class ESCAPEConfig(object):
     except KeyError:
       return ()
 
-  def get_fallback_topology (self, topo_name):
+  def get_mininet_topology (self):
+    """
+    Return the Mininet topology class.
+
+    :return:  topo class
+    """
+    try:
+      return self.__configuration[INFR]["TOPO"]
+    except KeyError:
+      return None
+
+  def get_fallback_topology (self):
     """
     Return the fallback topology class.
 
-    :param topo_name: name of the topo in CONFIG
-    :type topo_name: str
     :return: fallback topo class
     :rtype: :any::`AbstractTopology`
     """
     try:
       return getattr(importlib.import_module(
-        self.__configuration[INFR][topo_name]['module']),
-        self.__configuration[INFR][topo_name]['class'], None)
+        self.__configuration[INFR]["FALLBACK-TOPO"]['module']),
+        self.__configuration[INFR]["FALLBACK-TOPO"]['class'], None)
     except KeyError:
       return None
 

@@ -15,6 +15,7 @@
 Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer.
 """
+import json
 import repr
 
 from escape import __project__, __version__, CONFIG
@@ -91,7 +92,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    params = self._parse_json_body()
+    params = json.loads(self._get_body())
     self.log_full_message("ECHO: %s - %s", self.raw_requestline, params)
     self._send_json_response(params, rpc="echo")
 
@@ -102,7 +103,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
     Bounded to POST HTTP verb
     """
     log.getChild("REST-API").debug("Call REST-API function: sg")
-    body = self._parse_json_body()
+    body = self._get_body()
     log.getChild("REST-API").debug("Parsed input: %s" % body)
     sg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     self._proceed_API_call('request_service', sg)

@@ -442,9 +442,8 @@ class AbstractRESTAdapter(Session):
     if body is not None:
       if isinstance(body, NFFG):
         # if given body is an NFFG
-        format = body.FORMAT
         body = NFFG.dump(body)
-        kwargs['headers']['Content-Type'] = "application/" + format.lower()
+        kwargs['headers']['Content-Type'] = "application/json"
     # Setup parameters - URL
     if url is not None:
       if not url.startswith('http'):

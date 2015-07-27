@@ -75,14 +75,16 @@ class ServiceGraphMapper(AbstractMapper):
   """
   # Events raised by this class
   _eventMixin_events = {SGMappingFinishedEvent}
+  # Default Strategy class as a fallback strategy
+  DEFAULT_STRATEGY = DefaultServiceMappingStrategy
 
-  def __init__ (self):
+  def __init__ (self, strategy=None):
     """
     Init Service mapper.
 
     :return: None
     """
-    super(ServiceGraphMapper, self).__init__(LAYER_NAME)
+    super(ServiceGraphMapper, self).__init__(LAYER_NAME, strategy)
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, self.strategy.__name__))
 

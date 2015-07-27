@@ -9,7 +9,7 @@ Wrapper module for handling emulated test topology based on Mininet.
 :any:`AbstractTopology` can represent an emulated topology for the high-level
 API.
 
-:any:`BackupTopology` represents the fallback topology.
+:any:`FallbackStaticTopology` represents the static fallback topology.
 
 :any:`InternalControllerProxy` represents the connection between the internal
 controller and the emulated network.

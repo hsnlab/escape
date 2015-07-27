@@ -17,8 +17,6 @@ Contains abstract classes for NFFG mapping.
 import threading
 
 from escape import CONFIG
-from escape.service import LAYER_NAME as SAS
-from escape.orchest import LAYER_NAME as ROS
 from escape.util.misc import call_as_coop_task
 from pox.lib.revent.revent import EventMixin
 from pox import core
@@ -63,10 +61,13 @@ class AbstractMapper(EventMixin):
   Inherited from :class`EventMixin` to implement internal event-based
   communication.
 
+  If the Strategy class is not set as ``DEFAULT_STRATEGY`` the it try to search
+  in the CONFIG with the name STRATEGY under the given Layer name.
+
   Contain common functions and initialization.
   """
-  _defaults = {SAS: 'DefaultServiceMappingStrategy',
-               ROS: 'ESCAPEMappingStrategy'}
+  # Default Strategy class as a fallback strategy
+  DEFAULT_STRATEGY = None
 
   def __init__ (self, layer_name, strategy=None, threaded=None):
     """
@@ -79,12 +80,6 @@ class AbstractMapper(EventMixin):
 
     .. warning::
       Strategy classes must be a subclass of AbstractMappingStrategy
-
-    .. note::
-      SAS strategy is searched in :mod:`escape.service.sas_mapping`
-
-    .. note::
-      ROS strategy is searched in :mod:`escape.orchest.ros_mapping`
 
     :param layer_name: name of the layer which initialize this class. This
       value is used to search the layer configuration in `CONFIG`
@@ -100,16 +95,19 @@ class AbstractMapper(EventMixin):
     self._threaded = threaded if threaded is not None else CONFIG.get_threaded(
       layer_name)
     # Set strategy
-    if strategy is not None:
-      assert issubclass(strategy,
-                        AbstractMappingStrategy), "Mapping strategy is not " \
-                                                  "subclass of " \
-                                                  "AbstractMappingStrategy!"
-      self.strategy = strategy
-    else:
-      self.strategy = CONFIG.get_strategy(layer_name)
-      if self.strategy is None:
-        self.strategy = self._defaults[layer_name]
+    if strategy is None:
+      # Use the Strategy in CONFIG
+      strategy = CONFIG.get_strategy(layer_name)
+      if strategy is None and self.DEFAULT_STRATEGY is not None:
+        # Use the default Strategy if it's set
+        strategy = self.DEFAULT_STRATEGY
+      if strategy is None:
+        raise RuntimeError("Strategy class is not found!")
+    self.strategy = strategy
+    assert issubclass(strategy,
+                      AbstractMappingStrategy), "Mapping strategy is not " \
+                                                "subclass of " \
+                                                "AbstractMappingStrategy!"
     super(AbstractMapper, self).__init__()
 
   def orchestrate (self, input_graph, resource_view):
@@ -167,3 +165,41 @@ class AbstractMapper(EventMixin):
     :return: None
     """
     raise NotImplementedError("Derived class must override this function!")
+
+
+class AbstractOrchestrator(object):
+  """
+  Abstract class for common and generic Orchestrator functions.
+
+  If the mapper class is not set as ``DEFAULT_MAPPER`` the it try to search in
+  the CONFIG with the name MAPPER under the given Layer name.
+  """
+  # Default Mapper class as a fallback mapper
+  DEFAULT_MAPPER = None
+
+  def __init__ (self, layer_name, mapper=None, strategy=None):
+    """
+    Init.
+
+    :param layer_name: name of the layer which initialize this class. This
+      value is used to search the layer configuration in `CONFIG`
+    :type layer_name: str
+    :param mapper: additional mapper class (optional)
+    :type mapper: :any:`AbstractMapper`
+    :param strategy: override strategy class for the used Mapper (optional)
+    :type strategy: :any:`AbstractMappingStrategy`
+    :return: None
+    """
+    # Set Mapper
+    if mapper is None:
+      # Use the Mapper in CONFIG
+      mapper = CONFIG.get_mapper(layer_name)
+      if mapper is None and self.DEFAULT_MAPPER is not None:
+        # Use de default Mapper if it's set
+        self.mapper = self.DEFAULT_MAPPER
+      if mapper is None:
+        raise RuntimeError("Mapper class is not found!")
+    assert issubclass(mapper, AbstractMapper), "Mapper is not subclass of " \
+                                               "AbstractMapper!"
+    self.mapper = mapper(strategy=strategy)
+    super(AbstractOrchestrator, self).__init__()

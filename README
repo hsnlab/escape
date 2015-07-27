@@ -16,9 +16,11 @@ descriptions to deployed and running service chains.
 Dependencies:
 
     $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev \
-      python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko
+      python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko \
+      libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev make gcc \
+      automake openssh-client openssh-server ssh
 
-    $ sudo pip install requests jinja2 ncclient lxml
+    $ sudo pip install requests jinja2 ncclient lxml networkx
 
 Installation:
 
@@ -47,7 +49,8 @@ The preferred way:
 
     $ git clone git@gitlab.fp7-unify.eu:Balazs.Sonkoly/escape-shared.git escape
 
-  4. Install the necessary dependencies with the "install_dep.sh" script.
+  4. Install the necessary dependencies with the "install_dep.sh" script (system
+    and Python packages, OpenYuma with VNFStarter module):
 
     $ cd escape
     escape$ ./install_dep.sh

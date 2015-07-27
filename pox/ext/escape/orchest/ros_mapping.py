@@ -75,14 +75,16 @@ class ResourceOrchestrationMapper(AbstractMapper):
   """
   # Events raised by this class
   _eventMixin_events = {NFFGMappingFinishedEvent}
+  # Default Mapper class as a fallback mapper
+  DEFAULT_STRATEGY = ESCAPEMappingStrategy
 
-  def __init__ (self):
+  def __init__ (self, strategy=None):
     """
     Init Resource Orchestrator mapper.
 
     :return: None
     """
-    super(ResourceOrchestrationMapper, self).__init__(LAYER_NAME)
+    super(ResourceOrchestrationMapper, self).__init__(LAYER_NAME, strategy)
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, self.strategy.__name__))
 

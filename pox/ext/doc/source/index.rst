@@ -61,9 +61,11 @@ Dependencies:
 .. code-block:: bash
 
     $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev \
-      python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko
+      python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko \
+      libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev make gcc \
+      automake openssh-client openssh-server ssh
 
-    $ sudo pip install requests jinja2 ncclient lxml
+    $ sudo pip install requests jinja2 ncclient lxml networkx
 
 Installation
 ++++++++++++
@@ -75,17 +77,17 @@ tools (Mininet scripts and Open vSwitch).
 
   https://github.com/mininet/mininet/wiki/Mininet-VM-Images
 
-  The images is in an open virtual format (``.ovf``) which can import most of
-  the virtualization manager.
+  The images are in an open virtual format (``.ovf``) which can be imported by
+  most of the virtualization managers.
 
   Username/password: **mininet/mininet**
 
-  Our implementation is rely on Mininet 2.1.0, but ESCAPEv2 has been tested on
+  Our implementation relies on Mininet 2.1.0, but ESCAPEv2 has been tested on
   the newest image too and no problem has occurred yet!
 
 2. Create the .ssh folder in the home directory and copy your private RSA key
-which is given on the fp7-unify.eu GitLab site from your host into the VM
-with the name ``id_rsa``.
+which you gave on the fp7-unify.eu GitLab site into the VM with the name
+``id_rsa``.
 
   .. code-block:: bash
 
@@ -99,14 +101,15 @@ with the name ``id_rsa``.
 
     $ git clone git@gitlab.fp7-unify.eu:Balazs.Sonkoly/escape-shared.git escape
 
-4. Install the necessary dependencies with the ``install_dep.sh`` script.
+4. Install the necessary dependencies with the ``install_dep.sh`` script (system
+and Python packages, OpenYuma with VNFStarter module):
 
   .. code-block:: bash
 
     $ cd escape
     escape$ ./install_dep.sh
 
-5. Run ESCAPEv2 with command fit your needs.
+5. Run ESCAPEv2 with one of the commands listed below.
 
   .. code-block:: bash
 
@@ -115,11 +118,11 @@ with the name ``id_rsa``.
 
 **The hard way:**
 
-Obviously you can install ESCAPEv2 on your host or on a empty VM. For that you
-need to install the requirements manually.
+Obviously you can install ESCAPEv2 on your host or on an empty VM too. For that
+you need to install the requirements manually.
 
 To install the Python dependencies and other system packages you can use the
-dependency installation script described above.
+dependency installation script mentioned above.
 
 To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
 host (more precisely the **Open vSwitch** implementation and the **mnexec**
@@ -128,12 +131,12 @@ utility script is required globally).
 If one version of Mininet has already been installed, there should be nothing to
 do. ESCAPEv2 uses the specifically-modified Mininet files in the project folder
 (Mininet v2.1.0mod-ESCAPE) which use the globally installed Mininet utility
-scripts mentioned above (mnexec).
+scripts (mnexec).
 
 Otherwise these assets have to be install manually which could be done from our
-Mininet folder (escape/mininet) or from the official git repository
-(https://github.com/mininet/mininet/ ). Mininet has an install script for
-installation (see the help with the ``-h`` flag):
+Mininet folder (escape/mininet) or from the official Mininet git repository
+(https://github.com/mininet/mininet/ ). Mininet has an install script for the
+installations (see the help with the ``-h`` flag):
 
 .. code-block:: bash
 
@@ -141,29 +144,29 @@ installation (see the help with the ``-h`` flag):
 
 But the script mostly **NOT** works correctly, especially on newer
 distributions because the ``sudo apt-get install openvswitch-switch`` command
-not install the newer version of OVS due some major changes in OVS architecture!
-Check the install was correct with the following command:
+not install the newest version of OVS due some major changes in OVS
+architecture! Check with the following command the install was correct:
 
 .. code-block:: bash
 
     $ sudo mn --test pingall
 
 If the command complains about the Open vSwitch not installed then you have to
-install it from source. See more on http://openvswitch.org/download/ . On the
+install it from source. See more on http://openvswitch.org/download/` . On the
 newest distributions (e.g. Ubuntu 15.04) more steps and explicit patching is
 required. For that the only way is sadly to use google and search for it based
 on your distro. But a good choice to start here (this not worked for me):
 https://github.com/mininet/mininet/wiki/Installing-new-version-of-Open-vSwitch
 
 If you use virtual machines, you should really consider to use the pre-build
-Mininet VM images.
+Mininet VM image.
 
 README
 ++++++
 
 ESCAPEv2 example commands
 
-**The simpliest use-case:**
+**The simplest use-case:**
 
 .. code-block:: bash
 
