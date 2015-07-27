@@ -366,6 +366,37 @@ class NFFG(AbstractNFFG):
     self.add_edge(src_port.node, dst_port.node, link)
     return link
 
+  def add_undirected_link(self, port1, port2, p1p2id=None, p2p1id=None, 
+                          dynamic=False, delay=None, bandwidth=None):
+    """
+    Add two Links to the structure, in both directions.
+
+    :param port1: source port
+    :type port1: :any:`Port`
+    :param port2: destination port
+    :type port2: :any:`Port`
+    :param p1p2id: optional link id from port1 to port2
+    :type p1p2id: str or int
+    :param p2p1id: optional link id from port2 to port1
+    :type p2p1id: str or int
+    :param type: link type of both directed links
+    :type type: str
+    :param delay: delay resource of both links
+    :type delay: str or int
+    :param bandwidth: bandwidth resource of both links
+    :type bandwidth: str or int
+    :return: newly created edge tuple in (p1->p2, p2->p1)
+    :rtype: :any:(`EdgeLink`, `EdgeLink`)
+    """
+    type = Link.DYNAMIC if dynamic else Link.STATIC
+    linkp1p2 = EdgeLink(src=port1, dst=port2, type=type, id=p1p2id, delay=delay,
+                        bandwidth=bandwidth)
+    linkp2p1 = EdgeLink(src=port2, dst=port1, type=type, id=p2p1id, delay=delay,
+                        bandwidth=bandwidth)
+    self.add_edge(port1.node, port2.node, linkp1p2)
+    self.add_edge(port2.node, port1.node, linkp2p1)
+    return (linkp1p2, linkp2p1)
+
   def add_sglink (self, src_port, dst_port, id=None, flowclass=None):
     """
     Add a SD next hop edge to the structure.
@@ -493,9 +524,9 @@ class NFFG(AbstractNFFG):
     :type infra_id: :any: `NodeInfra`
     :return: iterator for the currently running NodeNFs
     """
-    return (self.network.node[id] for id in
+    return {self.network.node[id] for id in
             self.network.neighbors_iter(infra_id) if
-            self.network.node[id].type == Node.NF)
+            self.network.node[id].type == Node.NF}
 
 
 def test_NFFG ():
