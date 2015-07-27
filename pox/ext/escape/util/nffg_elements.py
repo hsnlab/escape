@@ -353,6 +353,10 @@ class NodeResource(Persistable):
              self.__class__.__name__, self.cpu, self.mem, self.storage,
              self.bandwidth, self.delay)
 
+  def __str__ (self):
+    return "cpu: %s mem: %s storage: %s bandwidth: %s delay: %s" % (
+      self.cpu, self.mem, self.storage, self.bandwidth, self.delay)
+
 
 class Flowrule(Persistable):
   """

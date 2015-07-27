@@ -15,6 +15,7 @@
 Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
+import copy
 from pprint import pprint
 
 import networkx
@@ -137,10 +138,10 @@ class NFFG(AbstractNFFG):
     :return: None
     """
     super(NFFG, self).__init__()
+    self.network = networkx.MultiDiGraph()
     self.id = str(id) if id is not None else str(generate(self))
     self.name = name if name is not None else "NFFG-" + str(self.id)
     self.version = version
-    self.network = networkx.MultiDiGraph()
 
   @property
   def nfs (self):
@@ -366,8 +367,8 @@ class NFFG(AbstractNFFG):
     self.add_edge(src_port.node, dst_port.node, link)
     return link
 
-  def add_undirected_link(self, port1, port2, p1p2id=None, p2p1id=None, 
-                          dynamic=False, delay=None, bandwidth=None):
+  def add_undirected_link (self, port1, port2, p1p2id=None, p2p1id=None,
+       dynamic=False, delay=None, bandwidth=None):
     """
     Add two Links to the structure, in both directions.
 
@@ -395,7 +396,7 @@ class NFFG(AbstractNFFG):
                         bandwidth=bandwidth)
     self.add_edge(port1.node, port2.node, linkp1p2)
     self.add_edge(port2.node, port1.node, linkp2p1)
-    return (linkp1p2, linkp2p1)
+    return linkp1p2, linkp2p1
 
   def add_sglink (self, src_port, dst_port, id=None, flowclass=None):
     """
@@ -474,6 +475,11 @@ class NFFG(AbstractNFFG):
     """
     Read the given JSON object structure and try to convert to an NF-FG
     representation as an :any:`NFFG`
+
+    :param raw_data: raw NF-FG description as a string
+    :type raw_data: str
+    :return: the parsed NF-FG representation
+    :rtype: :any:`NFFG`
     """
     # Parse text
     model = NFFGModel.parse(raw_data)
@@ -528,6 +534,17 @@ class NFFG(AbstractNFFG):
             self.network.neighbors_iter(infra_id) if
             self.network.node[id].type == Node.NF}
 
+  def copy (self):
+    """
+    Return the deep copy of the NFFG object.
+
+    :return: deep copy
+    :rtype: :any:`NFFG`
+    """
+    copy = NFFG(id=self.id, name=self.name, version=self.version)
+    copy.network = self.network.copy()
+    return copy
+
 
 def test_NFFG ():
   # Add nodes
@@ -571,9 +588,16 @@ def test_NFFG ():
   print "\nSG next hops:"
   for hop in nffg.sg_hops:
     print hop
+
   # Parse NFFG
   print "\nParsed NFFG:"
   print NFFG.parse(nffg_dump).dump()
+
+  # Copy test
+
+  print "Copied NFFG:"
+  # pprint(nffg.copy().network.__dict__)
+  pprint(copy.deepcopy(nffg).network.__dict__)
 
 
 if __name__ == "__main__":
