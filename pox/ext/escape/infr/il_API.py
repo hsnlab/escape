@@ -68,26 +68,8 @@ class InfrastructureLayerAPI(AbstractAPI):
     CONFIG.set_layer_loaded(self._core_name)
     # FIXME - change to dynamic initialization
     self.topology = ESCAPENetworkBuilder().build()
-    self.topology.start_network()
-
-    # # test the builder
-    # builder = ESCAPENetworkBuilder()
-    # agt1, sw1 = builder.create_ee('nc1', ee_type='netconf')
-    # agt2, sw2 = builder.create_ee('nc2', ee_type='netconf')
-    # sw3 = builder.create_switch('s3')
-    # sw4 = builder.create_switch('s4')
-    # sap1 = builder.create_sap('sap1')
-    # sap2 = builder.create_sap('sap2')
-    # builder.create_controller()
-    # builder.create_link(sw3, sw1)
-    # builder.create_link(sw4, sw2)
-    # builder.create_link(sw3, sw4)
-    # builder.create_link(sap1, sw3)
-    # builder.create_link(sap2, sw4)
-    # self.topology = builder.get_network()
+    # Not wait for the controller: comment out if use waiting
     # self.topology.start_network()
-
-    self.topology.initialize(wait_for_controller=True)
     log.info("Infrastructure Layer has been initialized!")
 
   def shutdown (self, event):

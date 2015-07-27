@@ -14,10 +14,9 @@
 """
 Wrapper module for handling emulated test topology based on Mininet.
 """
-
 from mininet import clean
-from mininet.net import VERSION as MNVERSION
-from mininet.net import Mininet, MininetWithControlNet
+from mininet.net import VERSION as MNVERSION, Mininet
+from mininet.net import MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
 from escape.infr import log
@@ -43,12 +42,25 @@ class AbstractTopology(Topo):
   default_link_opts = None
   # Default EE options
   default_EE_opts = None
+  # Type of the Topology class - NEED to be set
+  # The construction and build of the network is different for the STATIC and
+  # DYNAMIC way
+  TYPE = None
 
   def __init__ (self, hopts=None, sopts=None, lopts=None, eopts=None):
     super(AbstractTopology, self).__init__(hopts, sopts, lopts, eopts)
-    self.construct()
 
-  def construct (self):
+  def construct (self, builder=None):
+    """
+    Base class for construct the topology.
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  @staticmethod
+  def get_topo_desc ():
+    """
+    Return the NFFG object represents the specific, constructed topology
+    """
     raise NotImplementedError("Not implemented yet!")
 
 
@@ -58,13 +70,20 @@ class FallbackStaticTopology(AbstractTopology):
 
   Use the static way for topology compilation.
   """
+  TYPE = "STATIC"
 
-  def construct (self):
+  def construct (self, builder=None):
     h1 = self.addHost('H1')
     h2 = self.addHost('H2')
     s1 = self.addSwitch('S1')
     self.addLink(s1, h1)
     self.addLink(s1, h2)
+    return self
+
+  @staticmethod
+  def get_topo_desc ():
+    # TODO - extend to return the correct topology
+    return NFFG(id="INTERNAL-TOPO", name="STATIC-MN")
 
 
 class FallbackDynamicTopology(AbstractTopology):
@@ -73,10 +92,33 @@ class FallbackDynamicTopology(AbstractTopology):
 
   Use the dynamic way for topology compilation.
   """
+  TYPE = "DYNAMIC"
 
-  def construct (self):
-    # TODO - implement
-    pass
+  def construct (self, builder=None):
+    """
+    Set a topology with NETCONF capability for mostly testing.
+    """
+    # builder = ESCAPENetworkBuilder()
+    agt1, sw1 = builder.create_ee('nc1', ee_type='netconf')
+    agt2, sw2 = builder.create_ee('nc2', ee_type='netconf')
+    sw3 = builder.create_switch('s3')
+    sw4 = builder.create_switch('s4')
+    sap1 = builder.create_sap('sap1')
+    sap2 = builder.create_sap('sap2')
+    builder.create_controller()
+    builder.create_link(sw3, sw1)
+    builder.create_link(sw4, sw2)
+    builder.create_link(sw3, sw4)
+    builder.create_link(sap1, sw3)
+    builder.create_link(sap2, sw4)
+    # self.topology = builder.get_network()
+    # self.topology.start_network()
+    # return builder.mn
+
+  @staticmethod
+  def get_topo_desc ():
+    # TODO - extend to return the correct topology
+    return NFFG(id="INTERNAL-TOPO", name="DYNAMIC-MN")
 
 
 class InternalControllerProxy(RemoteController):
@@ -136,14 +178,13 @@ class ESCAPENetworkBridge(object):
     :type topo_desc: :any:`NFFG`
     :return: None
     """
-    log.debug("Init emulated topology based on Mininet v%s" % MNVERSION)
     if network is not None:
       self.__mininet = network
     else:
       log.warning(
         "Network implementation object is missing! Use Builder class instead "
         "of direct initialization. Creating bare Mininet object anyway...")
-      self.__mininet = Mininet(controller=InternalControllerProxy)
+      self.__mininet = Mininet()
     # Topology description which is emulated by the Mininet
     self.topo_desc = topo_desc
     # Need to clean after shutdown
@@ -175,9 +216,13 @@ class ESCAPENetworkBridge(object):
     """
     log.debug("Starting Mininet network...")
     if self.__mininet is not None:
-      self.__mininet.start()
-      log.debug("Mininet network has been started!")
-      self.started = True
+      if not self.started:
+        self.__mininet.start()
+        log.debug("Mininet network has been started!")
+        self.started = True
+      else:
+        log.warning(
+          "Mininet network has already started! Skipping start task...")
     else:
       log.error("Missing topology! Skipping emulation...")
 
@@ -303,8 +348,15 @@ class ESCAPENetworkBuilder(object):
     :type topo_class: :any:`AbstractTopology`
     :return: None
     """
-    self.mn.topo = topo_class()
-    self.mn.build()
+    if topo_class.TYPE == "STATIC":
+      self.mn.topo = topo_class().construct()
+      self.mn.build()
+    elif topo_class.TYPE == "DYNAMIC":
+      # self.mn = topo_class().construct()
+      topo_class().construct(builder=self)
+    else:
+      raise RuntimeError("TYPE field of the Topology class need to be set!")
+    self.topo_desc = topo_class.get_topo_desc()
 
   def __init_from_CONFIG (self, path=None, format=DEFAULT_NFFG_FORMAT):
     """
@@ -375,6 +427,7 @@ class ESCAPENetworkBuilder(object):
     :return: object representing the emulated network
     :rtype: :any:`ESCAPENetworkBridge`
     """
+    log.debug("Init emulated topology based on Mininet v%s" % MNVERSION)
     # Load topology
     try:
       if topo is None:
@@ -396,6 +449,7 @@ class ESCAPENetworkBuilder(object):
         if fallback:
           log.info("Load topo from fallback topology description...")
           self.__init_from_AbstractTopology(fallback)
+          return self.get_network()
       # fallback topo is not found or set
       if self.run_dry:
         # Return with the bare Mininet object
