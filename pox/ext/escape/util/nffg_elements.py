@@ -346,16 +346,13 @@ class NodeResource(Persistable):
     else:
       raise KeyError(
         "%s object has no key: %s" % (self.__class__.__name__, key))
-  
-  def __repr__(self):
-    represent = "Resources of %s :\n"%(self.__class__.__name__)
-    for attr in ['cpu', 'mem', 'storage', 'bandwidth', 'delay']:
-      represent += attr + ": "
-      if self[attr] != None:
-        represent += str(self[attr]) + "\n"
-      else:
-        represent += "None \n"
-    return represent
+
+  def __repr__ (self):
+    return "Resources of %s:\ncpu: %s\nmem: %s\nstorage: %s\nbandwidth: " \
+           "%s\ndelay: %s" % (
+             self.__class__.__name__, self.cpu, self.mem, self.storage,
+             self.bandwidth, self.delay)
+
 
 class Flowrule(Persistable):
   """
@@ -651,10 +648,12 @@ class NodeInfra(Node):
     :return: the Node object to allow function chaining
     :rtype: :any:`NodeInfra`
     """
-    if isinstance(functional_type, collections.Iterable):
+    if isinstance(functional_type, str):
+      self.supported.append(functional_type)
+    elif isinstance(functional_type, collections.Iterable):
       self.supported.extend(functional_type)
     else:
-      self.supported.append(functional_type)
+      raise RuntimeError("Not supported parameter type!")
     return self
 
   def del_supported_type (self, functional_type=None):
@@ -1221,7 +1220,8 @@ def test_parse_load ():
   infra.resources.mem = "2"
   infra.resources.storage = "20"
   infra.resources.bandwidth = "4"
-  infra.add_supported_type("functype1")
+  # infra.add_supported_type("functype1")
+  infra.add_supported_type(("functype1", "functype2", "functype3"))
   # infra.resources.delay = "4"
   p3 = port_infra = infra.add_port(id="port_infra")
   port_infra.add_flowrule("match123", "action456")
