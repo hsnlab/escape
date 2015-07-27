@@ -486,7 +486,9 @@ class ESCAPEConfig(object):
     :return:  topo class
     """
     try:
-      return self.__configuration[INFR]["TOPO"]
+      # Project root dir relative to this module which is/must be under pox/ext
+      return os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..",
+                                          self.__configuration[INFR]["TOPO"]))
     except KeyError:
       return None
 

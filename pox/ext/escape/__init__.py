@@ -14,10 +14,12 @@
 """
 Unifying package for ESCAPEv2 functions
 
-`CONFIG` contains the ESCAPEv2 dependent configuration such as the concrete
+'cfg' defines the default configuration settings such as the concrete
 RequestHandler and strategy classes, the initial Adapter classes, etc.
-"""
 
+`CONFIG` contains the ESCAPEv2 dependent configuration as an
+:any:`ESCAPEConfig`.
+"""
 __project__ = "ESCAPEv2"
 __authors__ = "Janos Czentye, Balazs Sonkoly, Levente Csikor"
 __copyright__ = "Copyright 2015, under Apache License Version 2.0"
@@ -80,13 +82,12 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                    "class": "DockerDomainManager"}},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
-                            "TOPO": "/home/czentye/escape/src/escape_v2/pox/"
-                                    "escape-mininet.topo",
+                            "TOPO": "escape-mininet.topo",  # relative to ext/
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
                                                 "FallbackStaticTopology"},
                             "SHUTDOWN-CLEAN": True},
-       "additional-config-file": "escape.config"}
+       "additional-config-file": "escape.config"}  # relative to ext/
 
 
 def add_dependencies ():

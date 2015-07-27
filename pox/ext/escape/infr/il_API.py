@@ -87,7 +87,7 @@ class InfrastructureLayerAPI(AbstractAPI):
     # self.topology = builder.get_network()
     # self.topology.start_network()
 
-    # self.topology.initialize(wait_for_controller=True)
+    self.topology.initialize(wait_for_controller=True)
     log.info("Infrastructure Layer has been initialized!")
 
   def shutdown (self, event):
