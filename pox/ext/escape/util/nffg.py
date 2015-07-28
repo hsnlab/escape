@@ -526,9 +526,23 @@ class NFFG(AbstractNFFG):
 
     :return: None
     """
-    for src, dst, link in self.network.edges_iter(data=True):
+    for u, v, link in self.network.edges_iter(data=True):
       if link.type == Link.STATIC:
-        self.add_link(dst, src, delay=link.delay, bandwidth=link.bandwidth)
+        self.add_link(link.dst, link.src, delay=link.delay,
+                      bandwidth=link.bandwidth)
+
+  def merge_duplicated_links (self):
+    """
+    Detect duplicated STATIC links which both are connected to the same
+    Port/Node and have switched source/destination direction to fit for the
+    simplified NFFG dumping.
+
+    Only leaves one of the links, but that's not defined which one.
+
+    :return: None
+    """
+    # TODO - implement
+    pass
 
   def infra_neighbors (self, infra_id):
     """
@@ -593,8 +607,6 @@ def test_NFFG ():
   nffg.add_sglink(sap1.ports[1], sap0.ports[1], id="hop_back")
   # Add req
   nffg.add_req(sap0.ports[1], sap1.ports[1], id="req", delay=10, bandwidth=100)
-  # for i in nffg.infra_neighbors(infra.id):
-  #   print i
   # Dump NetworkX structure
   print "\nNetworkX:"
   pprint(nffg.network.__dict__)
@@ -623,27 +635,37 @@ def test_NFFG ():
 
 def generate_mn_topo ():
   # Create NFFG
-  nffg = NFFG(id="INTERNAL", name="internal-mininet-topology")
+  nffg = NFFG(id="INTERNAL", name="Internal-Mininet-Topology")
   # Add environments
-  nffg.add_infra(id="EE1", name="ee-infra-1", domain="INTERNAL",
-                 infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0, delay=0,
-                 bandwidth=0)
-  nffg.add_infra(id="EE2", name="ee-infra-2", domain="INTERNAL",
-                 infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0, delay=0,
-                 bandwidth=0)
+  # TODO - define supported types
+  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain="INTERNAL",
+                       infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0,
+                       delay=0, bandwidth=0)
+  ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain="INTERNAL",
+                       infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0,
+                       delay=0, bandwidth=0)
   # Add OVS switches
-  nffg.add_infra(id="SW3", name="switch-3", domain="INTERNAL",
-                 infra_type=NodeInfra.TYPE_SDN_SWITCH, cpu=0, mem=0, storage=0,
-                 delay=0, bandwidth=0)
-  nffg.add_infra(id="sw4", name="switch-4", domain="INTERNAL",
-                 infra_type=NodeInfra.TYPE_SDN_SWITCH, cpu=0, mem=0, storage=0,
-                 delay=0, bandwidth=0)
+  sw3 = nffg.add_infra(id="SW3", name="switch-3", domain="INTERNAL",
+                       infra_type=NodeInfra.TYPE_SDN_SWITCH, cpu=0, mem=0,
+                       storage=0, delay=0, bandwidth=0)
+  sw4 = nffg.add_infra(id="SW4", name="switch-4", domain="INTERNAL",
+                       infra_type=NodeInfra.TYPE_SDN_SWITCH, cpu=0, mem=0,
+                       storage=0, delay=0, bandwidth=0)
   # Add SAPs
-  nffg.add_sap(id="SAP1", name="SAP1")
-  nffg.add_sap(id="SAP2", name="SAP2")
+  sap1 = nffg.add_sap(id="SAP1", name="SAP1")
+  sap2 = nffg.add_sap(id="SAP2", name="SAP2")
   # Add links
-  # nffg.add
-  print nffg.dump()
+  nffg.add_link(ee1.add_port(1), sw3.add_port(1))
+  nffg.add_link(ee2.add_port(1), sw4.add_port(1))
+  nffg.add_link(sw3.add_port(2), sw4.add_port(2))
+  nffg.add_link(sw3.add_port(3), sap1.add_port(1))
+  nffg.add_link(sw4.add_port(3), sap2.add_port(1))
+  # nffg.duplicate_static_links()
+  pprint(nffg.network.__dict__)
+  txt = nffg.dump()
+  print txt
+  # parsed = NFFG.parse(txt)
+  # print parsed.dump()
 
 
 if __name__ == "__main__":

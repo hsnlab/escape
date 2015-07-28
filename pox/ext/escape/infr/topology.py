@@ -338,7 +338,8 @@ class ESCAPENetworkBuilder(object):
     # TODO -implement
     # If not set then cache the given NFFG as the topology description
     self.topo_desc = nffg
-    raise NotImplementedError()
+    raise NotImplementedError(
+      "TODO - NFFG --> Mininet conversion is work in progress...")
 
   def __init_from_AbstractTopology (self, topo_class):
     """
@@ -348,6 +349,7 @@ class ESCAPENetworkBuilder(object):
     :type topo_class: :any:`AbstractTopology`
     :return: None
     """
+    log.info("Load topology from class: %s" % topo_class.__name__)
     if topo_class.TYPE == "STATIC":
       self.mn.topo = topo_class().construct()
       self.mn.build()
@@ -377,6 +379,7 @@ class ESCAPENetworkBuilder(object):
     else:
       try:
         with open(path, 'r') as f:
+          log.info("Load topology from file: %s" % path)
           if format == self.DEFAULT_NFFG_FORMAT:
             self.__init_from_NFFG(NFFG.parse(f.read()))
           else:
