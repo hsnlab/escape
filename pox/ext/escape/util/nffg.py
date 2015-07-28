@@ -288,7 +288,7 @@ class NFFG(AbstractNFFG):
     """
     res = NodeResource(cpu=cpu, mem=mem, storage=storage, delay=delay,
                        bandwidth=bandwidth) if any(
-      (cpu, mem, storage, delay, bandwidth)) else None
+      i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
     nf = NodeNF(id=id, name=name, func_type=func_type, dep_type=dep_type,
                 res=res)
     self.add_node(nf)
@@ -335,7 +335,7 @@ class NFFG(AbstractNFFG):
     """
     res = NodeResource(cpu=cpu, mem=mem, storage=storage, bandwidth=bandwidth,
                        delay=delay) if any(
-      (cpu, mem, storage, delay, bandwidth)) else None
+      i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
     infra = NodeInfra(id=id, name=name, domain=domain, infra_type=infra_type,
                       res=res)
     self.add_node(infra)
