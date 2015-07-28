@@ -595,7 +595,10 @@ class NodeInfra(Node):
   Class for infrastructure nodes in the NF-FG.
   """
   # Default Infrastructure Node type
-  DEFAULT_INFRA_TYPE = 0
+  TYPE_DEFAULT_INFRA = 0
+  # Defined Infra types
+  TYPE_EE = "EE"
+  TYPE_SDN_SWITCH = "SDN-SWITCH"
   # Default domain type
   DEFAULT_INFRA_DOMAIN = None
 
@@ -617,7 +620,7 @@ class NodeInfra(Node):
     super(NodeInfra, self).__init__(id=id, type=Node.INFRA, name=name)
     self.domain = domain if domain is not None else self.DEFAULT_INFRA_DOMAIN
     self.infra_type = infra_type if infra_type is not None else \
-      self.DEFAULT_INFRA_TYPE
+      self.TYPE_DEFAULT_INFRA
     # Set supported types according to given param type
     if isinstance(supported, (str, unicode)):
       self.supported = [str(supported), ]

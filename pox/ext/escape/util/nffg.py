@@ -281,8 +281,10 @@ class NFFG(AbstractNFFG):
     :type mem: str or int
     :param storage: storage resource
     :type storage: str or int
-    :param networking: networking resource
-    :type networking: str or int
+    :param delay: delay property of the Node
+    :type delay: float
+    :param bandwidth: bandwidth property of the Node
+    :type bandwidth: float
     :return: newly created node
     :rtype: :any:`NodeNF`
     """
@@ -328,8 +330,10 @@ class NFFG(AbstractNFFG):
     :type mem: str or int
     :param storage: storage resource
     :type storage: str or int
-    :param networking: networking resource
-    :type networking: str or int
+    :param delay: delay property of the Node
+    :type delay: float
+    :param bandwidth: bandwidth property of the Node
+    :type bandwidth: float
     :return: newly created node
     :rtype: :any:`NodeInfra`
     """
@@ -352,10 +356,10 @@ class NFFG(AbstractNFFG):
     :type dst_port: :any:`Port`
     :param id: optional link id
     :type id: str or int
-    :param type: link type
-    :type type: str
     :param delay: delay resource
     :type delay: str or int
+    :param dynamic: set the link dynamic (default: False)
+    :type dynamic: bool
     :param bandwidth: bandwidth resource
     :type bandwidth: str or int
     :return: newly created edge
@@ -380,22 +384,26 @@ class NFFG(AbstractNFFG):
     :type p1p2id: str or int
     :param p2p1id: optional link id from port2 to port1
     :type p2p1id: str or int
-    :param type: link type of both directed links
-    :type type: str
     :param delay: delay resource of both links
     :type delay: str or int
+    :param dynamic: set the link dynamic (default: False)
+    :type dynamic: bool
     :param bandwidth: bandwidth resource of both links
     :type bandwidth: str or int
     :return: newly created edge tuple in (p1->p2, p2->p1)
     :rtype: :any:(`EdgeLink`, `EdgeLink`)
     """
-    type = Link.DYNAMIC if dynamic else Link.STATIC
-    linkp1p2 = EdgeLink(src=port1, dst=port2, type=type, id=p1p2id, delay=delay,
-                        bandwidth=bandwidth)
-    linkp2p1 = EdgeLink(src=port2, dst=port1, type=type, id=p2p1id, delay=delay,
-                        bandwidth=bandwidth)
-    self.add_edge(port1.node, port2.node, linkp1p2)
-    self.add_edge(port2.node, port1.node, linkp2p1)
+    # type = Link.DYNAMIC if dynamic else Link.STATIC
+    # linkp1p2 = EdgeLink(src=port1, dst=port2, type=type, id=p1p2id,
+    #                     delay=delay, bandwidth=bandwidth)
+    # linkp2p1 = EdgeLink(src=port2, dst=port1, type=type, id=p2p1id,
+    #                     delay=delay, bandwidth=bandwidth)
+    # self.add_edge(port1.node, port2.node, linkp1p2)
+    # self.add_edge(port2.node, port1.node, linkp2p1)
+    linkp1p2 = self.add_link(port1, port2, id=p1p2id, dynamic=dynamic,
+                             delay=delay, bandwidth=bandwidth)
+    linkp2p1 = self.add_link(port2, port1, id=p2p1id, dynamic=dynamic,
+                             delay=delay, bandwidth=bandwidth)
     return linkp1p2, linkp2p1
 
   def add_sglink (self, src_port, dst_port, id=None, flowclass=None):
@@ -509,6 +517,19 @@ class NFFG(AbstractNFFG):
   # Helper functions
   ##############################################################################
 
+  def duplicate_static_links (self):
+    """
+    Extend the NFFG model with backward links for STATIC links to fit for the
+    orchestration algorithm.
+
+    STATIC links: infra-infra, infra-sap
+
+    :return: None
+    """
+    for src, dst, link in self.network.edges_iter(data=True):
+      if link.type == Link.STATIC:
+        self.add_link(dst, src, delay=link.delay, bandwidth=link.bandwidth)
+
   def infra_neighbors (self, infra_id):
     """
     Return an iterator for the Infra nodes which are neighbours of the given
@@ -525,7 +546,7 @@ class NFFG(AbstractNFFG):
   def running_nfs (self, infra_id):
     """
     Return an iterator for the NodeNFs which are mapped to the given Infra node.
-    
+
     :params infra_id: infra node identifier
     :type infra_id: :any: `NodeInfra`
     :return: iterator for the currently running NodeNFs
@@ -600,5 +621,31 @@ def test_NFFG ():
   pprint(copy.deepcopy(nffg).network.__dict__)
 
 
+def generate_mn_topo ():
+  # Create NFFG
+  nffg = NFFG(id="INTERNAL", name="internal-mininet-topology")
+  # Add environments
+  nffg.add_infra(id="EE1", name="ee-infra-1", domain="INTERNAL",
+                 infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0, delay=0,
+                 bandwidth=0)
+  nffg.add_infra(id="EE2", name="ee-infra-2", domain="INTERNAL",
+                 infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0, delay=0,
+                 bandwidth=0)
+  # Add OVS switches
+  nffg.add_infra(id="SW3", name="switch-3", domain="INTERNAL",
+                 infra_type=NodeInfra.TYPE_SDN_SWITCH, cpu=0, mem=0, storage=0,
+                 delay=0, bandwidth=0)
+  nffg.add_infra(id="sw4", name="switch-4", domain="INTERNAL",
+                 infra_type=NodeInfra.TYPE_SDN_SWITCH, cpu=0, mem=0, storage=0,
+                 delay=0, bandwidth=0)
+  # Add SAPs
+  nffg.add_sap(id="SAP1", name="SAP1")
+  nffg.add_sap(id="SAP2", name="SAP2")
+  # Add links
+  # nffg.add
+  print nffg.dump()
+
+
 if __name__ == "__main__":
-  test_NFFG()
+  # test_NFFG()
+  generate_mn_topo()
