@@ -8,30 +8,35 @@
     {
       "dst_node": "SW3",
       "dst_port": "1",
+      "id": "link1",
       "src_node": "EE1",
       "src_port": "1"
     },
     {
       "dst_node": "SAP2",
       "dst_port": "1",
+      "id": "link5",
       "src_node": "SW4",
       "src_port": "3"
     },
     {
       "dst_node": "SW4",
       "dst_port": "2",
+      "id": "link3",
       "src_node": "SW3",
       "src_port": "2"
     },
     {
       "dst_node": "SAP1",
       "dst_port": "1",
+      "id": "link4",
       "src_node": "SW3",
       "src_port": "3"
     },
     {
       "dst_node": "SW4",
       "dst_port": "1",
+      "id": "link2",
       "src_node": "EE2",
       "src_port": "1"
     }

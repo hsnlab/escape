@@ -637,7 +637,7 @@ def generate_mn_topo ():
   # Create NFFG
   nffg = NFFG(id="INTERNAL", name="Internal-Mininet-Topology")
   # Add environments
-  # TODO - define supported types
+  # TODO - define supported types (that's only need to the orchestration)
   ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain="INTERNAL",
                        infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0,
                        delay=0, bandwidth=0)
@@ -653,11 +653,11 @@ def generate_mn_topo ():
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")
   # Add links
-  nffg.add_link(ee1.add_port(1), sw3.add_port(1))
-  nffg.add_link(ee2.add_port(1), sw4.add_port(1))
-  nffg.add_link(sw3.add_port(2), sw4.add_port(2))
-  nffg.add_link(sw3.add_port(3), sap1.add_port(1))
-  nffg.add_link(sw4.add_port(3), sap2.add_port(1))
+  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1")
+  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="link2")
+  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3")
+  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4")
+  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5")
   # nffg.duplicate_static_links()
   pprint(nffg.network.__dict__)
   txt = nffg.dump()
