@@ -646,11 +646,9 @@ def generate_mn_topo ():
                        delay=0, bandwidth=0)
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain="INTERNAL",
-                       infra_type=NodeInfra.TYPE_SDN_SWITCH, cpu=0, mem=0,
-                       storage=0, delay=0, bandwidth=0)
+                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
   sw4 = nffg.add_infra(id="SW4", name="switch-4", domain="INTERNAL",
-                       infra_type=NodeInfra.TYPE_SDN_SWITCH, cpu=0, mem=0,
-                       storage=0, delay=0, bandwidth=0)
+                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
   # Add SAPs
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")

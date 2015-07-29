@@ -70,13 +70,6 @@
           "id": "3"
         }
       ],
-      "resources": {
-        "bandwidth": 0,
-        "cpu": 0,
-        "delay": 0,
-        "mem": 0,
-        "storage": 0
-      },
       "type": "SDN-SWITCH"
     },
     {
@@ -94,13 +87,6 @@
           "id": "3"
         }
       ],
-      "resources": {
-        "bandwidth": 0,
-        "cpu": 0,
-        "delay": 0,
-        "mem": 0,
-        "storage": 0
-      },
       "type": "SDN-SWITCH"
     },
     {
