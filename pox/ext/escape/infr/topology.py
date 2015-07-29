@@ -101,8 +101,9 @@ class FallbackDynamicTopology(AbstractTopology):
 
     :return: None
     """
-    agt1, sw1 = builder.create_NETCONF_EE('nc1', type='local')
-    agt2, sw2 = builder.create_NETCONF_EE('nc2', type='local')
+    builder.create_Controller("ESCAPE")
+    agt1, sw1 = builder.create_NETCONF_EE('nc1')
+    agt2, sw2 = builder.create_NETCONF_EE('nc2')
     sw3 = builder.create_Switch('s3')
     sw4 = builder.create_Switch('s4')
     sap1 = builder.create_SAP('sap1')
@@ -495,7 +496,7 @@ class ESCAPENetworkBuilder(object):
         ee.cmdPrint('ifconfig ' + name + '-eth0.' + vif[1] + ' ' + vif[0])
     return ee
 
-  def create_NETCONF_EE (self, name, type="", **params):
+  def create_NETCONF_EE (self, name, type="LOCAL", **params):
     """
     Create and add a new EE to Mininet network.
 
