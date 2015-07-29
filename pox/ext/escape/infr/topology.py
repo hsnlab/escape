@@ -15,6 +15,7 @@
 Wrapper module for handling emulated test topology based on Mininet.
 """
 from mininet import clean
+from mininet.link import Link, Intf
 from mininet.net import VERSION as MNVERSION, Mininet
 from mininet.net import MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
@@ -97,23 +98,20 @@ class FallbackDynamicTopology(AbstractTopology):
   def construct (self, builder=None):
     """
     Set a topology with NETCONF capability for mostly testing.
+
+    :return: None
     """
-    # builder = ESCAPENetworkBuilder()
-    agt1, sw1 = builder.create_ee('nc1', ee_type='netconf')
-    agt2, sw2 = builder.create_ee('nc2', ee_type='netconf')
-    sw3 = builder.create_switch('s3')
-    sw4 = builder.create_switch('s4')
-    sap1 = builder.create_sap('sap1')
-    sap2 = builder.create_sap('sap2')
-    builder.create_controller()
-    builder.create_link(sw3, sw1)
-    builder.create_link(sw4, sw2)
-    builder.create_link(sw3, sw4)
-    builder.create_link(sap1, sw3)
-    builder.create_link(sap2, sw4)
-    # self.topology = builder.get_network()
-    # self.topology.start_network()
-    # return builder.mn
+    agt1, sw1 = builder.create_NETCONF_EE('nc1', type='local')
+    agt2, sw2 = builder.create_NETCONF_EE('nc2', type='local')
+    sw3 = builder.create_Switch('s3')
+    sw4 = builder.create_Switch('s4')
+    sap1 = builder.create_SAP('sap1')
+    sap2 = builder.create_SAP('sap2')
+    builder.create_Link(sw3, sw1)
+    builder.create_Link(sw4, sw2)
+    builder.create_Link(sw3, sw4)
+    builder.create_Link(sap1, sw3)
+    builder.create_Link(sap2, sw4)
 
   @staticmethod
   def get_topo_desc ():
@@ -462,102 +460,189 @@ class ESCAPENetworkBuilder(object):
         # Re-raise the exception
         raise
 
-  def create_ee (self, name, **params):
+  def create_static_EE (self, name, cls=None, **params):
     """
-    Create and add a new EE to mininet network.
+    Create and add a new EE to Mininet in the static way.
 
-    The type of EE can be local NETCONF-based, remote NETCONF-based or static.
+    This function is for only backward compatibility.
+
+    .. warning::
+      Not tested yet!
+
+    :param name: name of the Execution Environment
+    :type name: str
+    :param cls: custom EE class/constructor (optional)
+    :type cls: :class:`mininet.node.EE`
+    :param cores: Specify (real) cores that our cgroup can run on (optional)
+    :type cores: list
+    :param frac: Set overall CPU fraction for this EE (optional)
+    :type frac: list
+    :param vlanif: set vlan interfaces (optional)
+    :type vlanif: list
+    :return: newly created EE object
+    :rtype: :class:`mininet.node.EE`
     """
-    ee_type = params['ee_type']
-    if ee_type == 'netconf':
-      # create local NETCONF-based EE
+    # create static EE
+    log.debug("Create static EE with name: %s" % name)
+    ee = self.mn.addEE(name=name, cls=cls, **params)
+    if 'cores' in params:
+      ee.setCPUs(**params['cores'])
+    if 'frac' in params:
+      ee.setCPUFrac(**params['frac'])
+    if 'vlanif' in params:
+      for vif in params['vlaninf']:
+        ee.cmdPrint('vconfig add ' + name + '-eth0 ' + vif[1])
+        ee.cmdPrint('ifconfig ' + name + '-eth0.' + vif[1] + ' ' + vif[0])
+    return ee
+
+  def create_NETCONF_EE (self, name, type="", **params):
+    """
+    Create and add a new EE to Mininet network.
+
+    The type of EE can be {local|remote} NETCONF-based.
+
+    :param name: name of the EE: switch: name, agent: agt_+'name'
+    :type name: str
+    :param type: type of EE {local|remote}
+    :type type: str
+    :param opts: additional options for the switch in EE
+    :type opts: str
+    :param dpid: remote switch DPID (remote only)
+    :param username: NETCONF username (remote only)
+    :param passwd: NETCONF password (remote only)
+    :param ip: control Interface for the agent (optional)
+    :param agentPort: port to listen on for NETCONF connections, (else set \
+    automatically)
+    :param minPort: first VNF control port which can be used (else set \
+    automatically)
+    :param cPort: number of VNF control ports (and VNFs) which can be used ( \
+    default: 10)
+    :return: tuple of newly created :class:`mininet.node.Agent` and \
+    :class:`mininet.node.Switch` object
+    :rtype: tuple
+    """
+    type = type.upper()
+    if type == 'LOCAL':
+      # create local NETCONF-based
+      log.debug("Create local NETCONF EE with name: %s" % name)
       sw = self.mn.addSwitch(name)
-      agt = self.mn.addAgent('agt_' + name)
-      agt.setSwitch(sw)
-      return agt, sw
-    elif ee_type == 'remote':
-      # create remote NETCONF-based EE
-      # NOT tested yet
-      p = copy.deepcopy(params)
-      p['cls'] = None
-      p['inNamespace'] = False
-      p['dpid'] = p['remote_dpid']
-      p['username'] = p['netconf_username']
-      p['passwd'] = p['netconf_passwd']
-      p['conf_ip'] = p['remote_conf_ip']
-      p['agentPort'] = p['remote_netconf_port']
-      sw = self.mn.addRemoteSwitch(name, **p)
-      agt = self.mn.addAgent('agt_' + name, **p)
-      agt.setSwitch(sw)
-      return agt, sw
-    else:
-      pass
-      # # TODO: make it backward compatible
-      # # create static EE
-      # h = self.net.addEE(**params)
-      # if 'cores' in ee:
-      #   h.setCPUs(**ee['cores'])
-      # if 'frac' in ee:
-      #   h.setCPUFrac(**ee['frac'])
-      # if 'vlanif' in ee:
-      #   for vif in ee['vlaninf']:
-      #     # TODO: In miniedit it was after self.net.build()
-      #     h.cmdPrint('vconfig add '+name+'-eth0 '+vif[1])
-      #     h.cmdPrint('ifconfig '+name+'-eth0.'+vif[1]+' '+vif[0])
+    elif type == 'REMOTE':
+      # create remote NETCONF-based
+      log.debug("Create remote NETCONF EE with name: %s" % name)
+      params["inNamespace"] = False
 
-  def create_switch (self, name, **params):
+      sw = self.mn.addRemoteSwitch(name, cls=None, **params)
+    else:
+      raise RuntimeError("Unsupported NETCONF-based EE type: %s!" % type)
+    agt = self.mn.addAgent('agt_' + name, cls=None, **params)
+    agt.setSwitch(sw)
+    return agt, sw
+
+  def create_Switch (self, name, cls=None, **params):
     """
-    Create and add a new OF switch intance to mininet network.
+    Create and add a new OF switch instance to Mininet network.
+
+    Additional parameters are keyword arguments depend on and forwarded to
+    the initiated Switch class type.
+
+    :param name: name of switch
+    :type name: str
+    :param cls: custom switch class/constructor (optional)
+    :type cls: :class:`mininet.node.Switch`
+    :param dpid: DPID for switch (default: derived from name)
+    :type dpid: str
+    :param opts: additional switch options
+    :type opts: str
+    :param listenPort: custom listening port (optional)
+    :type listenPort: int
+    :param inNamespace: override the switch spawn in namespace (optional)
+    :type inNamespace: bool
+    :param of_ver: override OpenFlow version (optional)
+    :type of_ver: int
+    :param ip: set IP address for the switch (optional)
+    :type ip:
+    :return: newly created Switch object
+    :rtype: :class:`mininet.node.Switch`
     """
-    sw = self.mn.addSwitch(name, **params)
-    if 'openflowver' in params:
-      sw.setOpenFlowVersion(params['openflowver'])
+    log.debug("Create Switch with name: %s" % name)
+    sw = self.mn.addSwitch(name=name, cls=cls, **params)
+    if 'of_ver' in params:
+      sw.setOpenFlowVersion(params['of_ver'])
     if 'ip' in params:
       sw.setSwitchIP(params['ip'])
     return sw
 
-  def create_controller (self, name='c0', **params):
+  def create_Controller (self, name, controller=None, **params):
     """
-    Create and add a new OF controller to mininet network.
+    Create and add a new OF controller to Mininet network.
 
-    default controller: InternalControllerProxy
+    Additional parameters are keyword arguments depend on and forwarded to
+    the initiated Controller class type.
+
+    .. warning::
+      Should not call this function and use the default InternalControllerProxy!
+
+    :param name: name of controller
+    :type name: str
+    :param controller: custom controller class/constructor (optional)
+    :type controller: :class:`mininet.node.Controller`
+    :param inNamespace: override the controller spawn in namespace (optional)
+    :type inNamespace: bool
+    :return: newly created Controller object
+    :rtype: :class:`mininet.node.Controller`
     """
-    return self.mn.addController(name, **params)
+    log.debug("Create Controller with name: %s" % name)
+    return self.mn.addController(name=name, controller=controller, **params)
 
-  def create_sap (self, name, **params):
+  def create_SAP (self, name, cls=None, **params):
     """
-    Create and add a new SAP to mininet network.
+    Create and add a new SAP to Mininet network.
+
+    Additional parameters are keyword arguments depend on and forwarded to
+    the initiated Host class type.
+
+    :param name: name of SAP
+    :type name: str
+    :param cls: custom hosts class/constructor (optional)
+    :type cls: :class:`mininet.node.Host`
+    :return: newly created Host object as the SAP
+    :rtype: :class:`mininet.node.Host`
     """
-    return self.mn.addHost(name, **params)
+    log.debug("Create SAP with name: %s" % name)
+    return self.mn.addHost(name=name, cls=cls, **params)
 
-  def create_link (self, node1, node2, port1=None, port2=None, **params):
+  def create_Link (self, src, dst, src_port=None, dst_port=None, **params):
     """
-    Create a link between node1 and node2.
+    Create an undirected connection between src and dst.
+
+    Source and destination ports can be given optionally:
+
+    :param src: source Node
+    :param dst: destination Node
+    :param src_port: source Port (optional)
+    :param dst_port: destination Port (optional)
+    :param params: additional link parameters
+    :return:
     """
-
-    def is_remote (node):
-      return isinstance(node, RemoteSwitch)
-
-    def is_local (node):
-      return not is_remote(node)
-
-    remote = filter(is_remote, [node1, node2])
-    local = filter(is_local, [node1, node2])
+    log.debug("Create Link %s%s <--> %s%s" % (
+      src, ":%s" % src_port if src_port is not None else "", dst,
+      ":%s" % dst_port if dst_port is not None else ""))
+    remote = filter(lambda n: isinstance(n, RemoteSwitch), [src, dst])
+    local = filter(lambda n: not isinstance(n, RemoteSwitch), [src, dst])
     if not remote:
-      self.mn.addLink(node1, node2, port1, port2, **params)
+      self.mn.addLink(src, dst, src_port, dst_port, **params)
     else:
-      sw = local[0]
-      r = remote[0]
+      raise RuntimeError("Remote Link creation is not supported yet!")
+      sw = local[0]  # one of the local Node
+      r = remote[0]  # other Node which is the remote
       intfName = r.params['local_intf_name']
       r_mac = None  # unknown, r.params['remote_mac']
       r_port = r.params['remote_port']
       # self._debug('\tadd hw interface (%s) to node (%s)' % (intfName,
       # sw.name))
-
       # This hack avoids calling __init__ which always makeIntfPair()
       link = Link.__new__(Link)
       i1 = Intf(intfName, node=sw, link=link)
       i2 = Intf(intfName, node=r, mac=r_mac, port=r_port, link=link)
       i2.mac = r_mac  # mn runs 'ifconfig', which resets mac to None
-      #
       link.intf1, link.intf2 = i1, i2
