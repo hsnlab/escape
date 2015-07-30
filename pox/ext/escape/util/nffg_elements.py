@@ -214,7 +214,7 @@ class Node(Element):
     return self
 
   def __repr__ (self):
-    return "| ID: %s, Type: %s --> %s |" % (
+    return "<|ID: %s, Type: %s --> %s|>" % (
       self.id, self.type, super(Element, self).__repr__())
 
 
@@ -275,7 +275,7 @@ class Link(Element):
     return self
 
   def __repr__ (self):
-    return "| ID: %s, Type: %s, src: %s, dst: %s --> %s |" % (
+    return "<|ID: %s, Type: %s, src: %s, dst: %s --> %s|>" % (
       self.id, self.type, self.src.id, self.dst.id,
       super(Element, self).__repr__())
 
@@ -390,9 +390,9 @@ class Flowrule(Persistable):
     self.action = data.get('action', "")
     return self
 
-  def __repr__(self):
-    return "Flowrule object:\nmatch: %s \naction: %s"%(self.match, self.action)
-    
+  def __repr__ (self):
+    return "Flowrule object:\nmatch: %s \naction: %s" % (
+      self.match, self.action)
 
 
 class Port(Element):
@@ -727,8 +727,8 @@ class EdgeLink(Link):
   Represent a static or dynamic link.
   """
 
-  def __init__ (self, src=None, dst=None, type=None, id=None, delay=None,
-       bandwidth=None):
+  def __init__ (self, src=None, dst=None, type=None, id=None, backward=False,
+       delay=None, bandwidth=None):
     """
     Init.
 
@@ -740,6 +740,8 @@ class EdgeLink(Link):
     :type type: str
     :param id: optional link id
     :type id: str or int
+    :param backward: the link is a backward link compared to an another Link
+    :type backward: bool
     :param delay: delay resource
     :type delay: float
     :param bandwidth: bandwidth resource
@@ -748,6 +750,9 @@ class EdgeLink(Link):
     """
     type = type if type is not None else Link.STATIC
     super(EdgeLink, self).__init__(src=src, dst=dst, type=type, id=id)
+    # Signal if the link is a backward link compared to an another existing
+    # Link with the same src and dst Node
+    self.backward = backward  # always False by default
     self.delay = delay  # optional
     self.bandwidth = bandwidth  # optional
 
@@ -764,6 +769,11 @@ class EdgeLink(Link):
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
     return self
+
+  def __repr__ (self):
+    return "<|ID: %s, Type: %s, Back: %s, src: %s, dst: %s --> %s|>" % (
+      self.id, self.type, self.backward, self.src.id, self.dst.id,
+      super(Element, self).__repr__())
 
 
 class EdgeSGLink(Link):

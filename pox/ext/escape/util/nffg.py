@@ -345,8 +345,8 @@ class NFFG(AbstractNFFG):
     self.add_node(infra)
     return infra
 
-  def add_link (self, src_port, dst_port, id=None, dynamic=False, delay=None,
-       bandwidth=None):
+  def add_link (self, src_port, dst_port, id=None, dynamic=False,
+       backward=False, delay=None, bandwidth=None):
     """
     Add a Link to the structure.
 
@@ -366,8 +366,8 @@ class NFFG(AbstractNFFG):
     :rtype: :any:`EdgeLink`
     """
     type = Link.DYNAMIC if dynamic else Link.STATIC
-    link = EdgeLink(src=src_port, dst=dst_port, type=type, id=id, delay=delay,
-                    bandwidth=bandwidth)
+    link = EdgeLink(src=src_port, dst=dst_port, type=type, id=id,
+                    backward=backward, delay=delay, bandwidth=bandwidth)
     self.add_edge(src_port.node, dst_port.node, link)
     return link
 
@@ -393,17 +393,10 @@ class NFFG(AbstractNFFG):
     :return: newly created edge tuple in (p1->p2, p2->p1)
     :rtype: :any:(`EdgeLink`, `EdgeLink`)
     """
-    # type = Link.DYNAMIC if dynamic else Link.STATIC
-    # linkp1p2 = EdgeLink(src=port1, dst=port2, type=type, id=p1p2id,
-    #                     delay=delay, bandwidth=bandwidth)
-    # linkp2p1 = EdgeLink(src=port2, dst=port1, type=type, id=p2p1id,
-    #                     delay=delay, bandwidth=bandwidth)
-    # self.add_edge(port1.node, port2.node, linkp1p2)
-    # self.add_edge(port2.node, port1.node, linkp2p1)
     linkp1p2 = self.add_link(port1, port2, id=p1p2id, dynamic=dynamic,
-                             delay=delay, bandwidth=bandwidth)
+                             backward=False, delay=delay, bandwidth=bandwidth)
     linkp2p1 = self.add_link(port2, port1, id=p2p1id, dynamic=dynamic,
-                             delay=delay, bandwidth=bandwidth)
+                             backward=True, delay=delay, bandwidth=bandwidth)
     return linkp1p2, linkp2p1
 
   def add_sglink (self, src_port, dst_port, id=None, flowclass=None):
@@ -526,10 +519,15 @@ class NFFG(AbstractNFFG):
 
     :return: None
     """
-    for u, v, link in self.network.edges_iter(data=True):
-      if link.type == Link.STATIC:
-        self.add_link(link.dst, link.src, delay=link.delay,
-                      bandwidth=link.bandwidth)
+    # Create backward links
+    backwards = [
+      EdgeLink(src=link.dst, dst=link.src, id=link.id + "-back", backward=True,
+               delay=link.delay, bandwidth=link.bandwidth) for u, v, link in
+      self.network.edges_iter(data=True) if link.type == Link.STATIC]
+    # Add backward links to the NetworkX structure in a separate step to
+    # avoid the link reduplication caused by the iterator based for loop
+    for link in backwards:
+      self.add_edge(src=link.src, dst=link.dst, link=link)
 
   def merge_duplicated_links (self):
     """
@@ -541,8 +539,13 @@ class NFFG(AbstractNFFG):
 
     :return: None
     """
-    # TODO - implement
-    pass
+    # Collect backward links
+    backwards = [(src, dst, key) for src, dst, key, link in
+                 self.network.edges_iter(keys=True, data=True) if
+                 link.type == Link.STATIC and link.backward is True]
+    # Delete backwards links
+    for link in backwards:
+      self.network.remove_edge(*link)
 
   def infra_neighbors (self, infra_id):
     """
@@ -658,8 +661,9 @@ def generate_mn_topo ():
   nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3")
   nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4")
   nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5")
-  # nffg.duplicate_static_links()
+  nffg.duplicate_static_links()
   pprint(nffg.network.__dict__)
+  nffg.merge_duplicated_links()
   txt = nffg.dump()
   print txt
   # parsed = NFFG.parse(txt)
