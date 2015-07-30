@@ -257,12 +257,17 @@ class Link(Element):
 
   def persist (self):
     return {"src_node": str(self.src.node.id), "src_port": str(self.src.id),
-            "dst_node": str(self.dst.node.id), "dst_port": str(self.dst.id)}
+            "dst_node": str(self.dst.node.id), "dst_port": str(self.dst.id),
+            "id": self.id}
 
   def load (self, data, container=None):
     if container is None:
       raise RuntimeError(
         "Container reference is not given for edge endpoint lookup!")
+    for link in container.links:
+      if link.id == data['id']:
+        raise RuntimeError("ID conflict during EdgeLink loading...")
+    self.id = data['id']
     self.src = container.get_port(data['src_node'], data['src_port'])
     self.dst = container.get_port(data['dst_node'], data['dst_port'])
     if self.src is None or self.dst is None:

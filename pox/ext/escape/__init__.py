@@ -56,7 +56,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                      "prefix": "escape"}},
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        "DEFAULTS": ("OPENSTACK",),  # OpenStack Agent REST API
+                        # "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
+                        "DEFAULTS": (),  # OpenStack Agent REST API
                         # Specific Domain Adapters for DomainManagers
                         "POX": {"module": "escape.adapt.components",
                                 "class": "POXDomainAdapter",
@@ -85,7 +86,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                             "TOPO": "escape-mininet.topo",  # relative to ext/
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
-                                                "FallbackStaticTopology"},
+                                                "FallbackDynamicTopology"},
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}  # relative to ext/
 
