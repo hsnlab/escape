@@ -670,6 +670,56 @@ def generate_mn_topo ():
   # print parsed.dump()
 
 
+def generate_dynamic_fallback_nffg ():
+  nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
+  nc1 = nffg.add_infra(id="nc1", name="NC1", domain="INTERNAL",
+                       infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  nc2 = nffg.add_infra(id="nc2", name="NC2", domain="INTERNAL",
+                       infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  s3 = nffg.add_infra(id="s3", name="S3", domain="INTERNAL",
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+  s4 = nffg.add_infra(id="s4", name="S4", domain="INTERNAL",
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+  sap1 = nffg.add_sap(id="sap1", name="SAP1")
+  sap2 = nffg.add_sap(id="sap2", name="SAP2")
+  nffg.add_link(nc1.add_port(1), s3.add_port(1), id="l1")
+  nffg.add_link(nc2.add_port(1), s4.add_port(1), id="l2")
+  nffg.add_link(s3.add_port(2), s4.add_port(2), id="l3")
+  nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4")
+  nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5")
+  nffg.duplicate_static_links()
+  pprint(nffg.network.__dict__)
+  nffg.merge_duplicated_links()
+  print nffg.dump()
+
+
+def generate_static_fallback_topo ():
+  nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
+  s1 = nffg.add_infra(id="s1", name="S1", domain="INTERNAL",
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+  s2 = nffg.add_infra(id="s2", name="S2", domain="INTERNAL",
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+  s3 = nffg.add_infra(id="s3", name="S3", domain="INTERNAL",
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+  s4 = nffg.add_infra(id="s4", name="S4", domain="INTERNAL",
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+  sap1 = nffg.add_sap(id="sap1", name="SAP1")
+  sap2 = nffg.add_sap(id="sap2", name="SAP2")
+  nffg.add_link(s1.add_port(1), s3.add_port(1), id="l1")
+  nffg.add_link(s2.add_port(1), s4.add_port(1), id="l2")
+  nffg.add_link(s3.add_port(2), s4.add_port(2), id="l3")
+  nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4")
+  nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5")
+  nffg.duplicate_static_links()
+  pprint(nffg.network.__dict__)
+  nffg.merge_duplicated_links()
+  print nffg.dump()
+
+
 if __name__ == "__main__":
   # test_NFFG()
-  generate_mn_topo()
+  # generate_mn_topo()
+  # generate_dynamic_fallback_nffg()
+  generate_static_fallback_topo()

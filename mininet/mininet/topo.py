@@ -127,7 +127,7 @@ class Topo(object):
            name: Exection Environment name
            opts: EE options
            returns: EE name"""
-        if not opts and self.vopts:
+        if not opts and self.eopts:
             opts = self.hopts
         return self.addNode(name, isEE=True, **opts)
 

@@ -86,7 +86,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                             "TOPO": "escape-mininet.topo",  # relative to ext/
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
-                                                "FallbackDynamicTopology"},
+                                                # "FallbackDynamicTopology"},
+                                                "FallbackStaticTopology"},
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}  # relative to ext/
 
