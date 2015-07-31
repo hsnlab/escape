@@ -264,9 +264,6 @@ class Link(Element):
     if container is None:
       raise RuntimeError(
         "Container reference is not given for edge endpoint lookup!")
-    for link in container.links:
-      if link.id == data['id']:
-        raise RuntimeError("ID conflict during EdgeLink loading...")
     self.id = data['id']
     self.src = container.get_port(data['src_node'], data['src_port'])
     self.dst = container.get_port(data['dst_node'], data['dst_port'])
@@ -765,6 +762,12 @@ class EdgeLink(Link):
     return link
 
   def load (self, data, container=None):
+    if container is None:
+      raise RuntimeError(
+        "Container reference is not given for edge endpoint lookup!")
+    for link in container.edge_links:
+      if link.id == data['id']:
+        raise RuntimeError("ID conflict during EdgeLink loading...")
     super(EdgeLink, self).load(data=data, container=container)
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
@@ -807,6 +810,12 @@ class EdgeSGLink(Link):
     return link
 
   def load (self, data, container=None):
+    if container is None:
+      raise RuntimeError(
+        "Container reference is not given for edge endpoint lookup!")
+    for link in container.edge_sg_nexthops:
+      if link.id == data['id']:
+        raise RuntimeError("ID conflict during EdgeLink loading...")
     super(EdgeSGLink, self).load(data=data, container=container)
     self.flowclass = data.get('flowclass')
     return self
@@ -849,6 +858,12 @@ class EdgeReq(Link):
     return link
 
   def load (self, data, container=None):
+    if container is None:
+      raise RuntimeError(
+        "Container reference is not given for edge endpoint lookup!")
+    for link in container.edge_reqs:
+      if link.id == data['id']:
+        raise RuntimeError("ID conflict during EdgeLink loading...")
     super(EdgeReq, self).load(data=data, container=container)
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
