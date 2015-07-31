@@ -603,8 +603,9 @@ class NodeInfra(Node):
   # Default Infrastructure Node type
   TYPE_DEFAULT_INFRA = 0
   # Defined Infra types
-  TYPE_EE = "EE"
-  TYPE_SDN_SWITCH = "SDN-SWITCH"
+  TYPE_EE = "EE"  # default Execution Environment with NETCONF
+  TYPE_STATIC_EE = "STATIC"  # Static EE probably will never use
+  TYPE_SDN_SWITCH = "SDN-SWITCH"  # Common OVS switch - can't run NF
   # Default domain type
   DEFAULT_INFRA_DOMAIN = None
 
@@ -1293,6 +1294,7 @@ def test_parse_load ():
   nffg2 = NFFGModel.parse(data)
   print "\nParsed NFFG:"
   print nffg2.dump()
+  return nffg
 
 
 def test_networkx_mod ():

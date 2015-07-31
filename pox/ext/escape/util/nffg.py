@@ -668,6 +668,7 @@ def generate_mn_topo ():
   print txt
   # parsed = NFFG.parse(txt)
   # print parsed.dump()
+  return nffg
 
 
 def generate_dynamic_fallback_nffg ():
@@ -693,6 +694,7 @@ def generate_dynamic_fallback_nffg ():
   pprint(nffg.network.__dict__)
   nffg.merge_duplicated_links()
   print nffg.dump()
+  return nffg
 
 
 def generate_static_fallback_topo ():
@@ -716,10 +718,11 @@ def generate_static_fallback_topo ():
   pprint(nffg.network.__dict__)
   nffg.merge_duplicated_links()
   print nffg.dump()
+  return nffg
 
 
 if __name__ == "__main__":
   # test_NFFG()
-  # generate_mn_topo()
+  generate_mn_topo()
   # generate_dynamic_fallback_nffg()
-  generate_static_fallback_topo()
+  # generate_static_fallback_topo()

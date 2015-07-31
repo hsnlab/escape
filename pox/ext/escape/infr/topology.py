@@ -16,13 +16,13 @@ Wrapper module for handling emulated test topology based on Mininet.
 """
 from mininet import clean
 from mininet.link import Link, Intf
-from mininet.net import VERSION as MNVERSION, Mininet
-from mininet.net import MininetWithControlNet
+from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
+from escape import CONFIG
 from escape.infr import log
 from escape.util.nffg import NFFG
-from escape import CONFIG
+from escape.util.nffg_elements import NodeInfra
 
 
 class AbstractTopology(Topo):
@@ -96,6 +96,7 @@ class FallbackStaticTopology(AbstractTopology):
   def construct (self, builder=None):
     # nc1 = self.addEE(name='NC1', {})
     # nc2 = self.addEE(name='NC2', {})
+    log.info("Start static topology creation...")
     log.debug("Create Switch with name: S1")
     s1 = self.addSwitch('S1')
     log.debug("Create Switch with name: S2")
@@ -118,6 +119,7 @@ class FallbackStaticTopology(AbstractTopology):
     self.addLink(sap1, s3)
     log.debug("Create Link SAP2 <--> S4")
     self.addLink(sap2, s4)
+    log.info("Static topology creation has been finished!")
     return self
 
   @staticmethod
@@ -183,6 +185,7 @@ class FallbackDynamicTopology(AbstractTopology):
 
     :return: None
     """
+    log.info("Start dynamic topology creation...")
     builder.create_Controller("ESCAPE")
     agt1, sw1 = builder.create_NETCONF_EE(name='NC1')
     agt2, sw2 = builder.create_NETCONF_EE(name='NC2')
@@ -195,6 +198,7 @@ class FallbackDynamicTopology(AbstractTopology):
     builder.create_Link(sw3, sw4)
     builder.create_Link(sap1, sw3)
     builder.create_Link(sap2, sw4)
+    log.info("Dynamic topology creation has been finished!")
 
   @staticmethod
   def get_topo_desc ():
@@ -291,7 +295,7 @@ class ESCAPENetworkBridge(object):
       log.warning(
         "Network implementation object is missing! Use Builder class instead "
         "of direct initialization. Creating bare Mininet object anyway...")
-      self.__mininet = Mininet()
+      self.__mininet = MininetWithControlNet()
     # Topology description which is emulated by the Mininet
     self.topo_desc = topo_desc
     # Need to clean after shutdown
@@ -308,14 +312,6 @@ class ESCAPENetworkBridge(object):
     :rtype: :class:`mininet.net.MininetWithControlNet`
     """
     return self.__mininet
-
-  def get_topology (self):
-    """
-    Return with the topology.
-
-    :return:
-    """
-    return True
 
   def start_network (self):
     """
@@ -391,6 +387,9 @@ class ESCAPENetworkBuilder(object):
                   'listenPort': None}
   # Default internal storing format for NFFG parsing/reading from file
   DEFAULT_NFFG_FORMAT = "NFFG"
+  # Constants
+  TYPE_EE_LOCAL = "LOCAL"
+  TYPE_EE_REMOTE = "REMOTE"
 
   def __init__ (self, net=None, opts=None, fallback=True, run_dry=True):
     """
@@ -442,11 +441,52 @@ class ESCAPENetworkBuilder(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    # TODO -implement
+    log.info("Start topology creation from NFFG...")
+    created_nodes = {}  # created nodes as 'NFFG-id': <node>
     # If not set then cache the given NFFG as the topology description
     self.topo_desc = nffg
-    raise NotImplementedError(
-      "TODO - NFFG --> Mininet conversion is work in progress...")
+    # Create a Controller which will be the default internal POX controller
+    self.create_Controller("ESCAPE")
+    # Convert INFRAs
+    for infra in nffg.infras:
+      # Create EE
+      if infra.infra_type == NodeInfra.TYPE_EE:
+        if infra.domain == "INTERNAL":
+          ee_type = self.TYPE_EE_LOCAL
+        else:
+          ee_type = self.TYPE_EE_REMOTE
+          # FIXME - add resource info if can - cpu,mem,delay,bandwidth???
+        agt, sw = self.create_NETCONF_EE(name=infra.id, type=ee_type)
+        created_nodes[infra.id] = sw
+      # Create Switch
+      elif infra.infra_type == NodeInfra.TYPE_SDN_SWITCH:
+        switch = self.create_Switch(name=infra.id)
+        created_nodes[infra.id] = switch
+      elif infra.infra_type == NodeInfra.TYPE_STATIC_EE:
+        static_ee = self.create_static_EE(name=infra.id)
+        created_nodes[infra.id] = static_ee
+      else:
+        raise RuntimeError("Building of %s is not supported by %s!" % (
+          infra.infra_type, self.__class__.__name__))
+    # Create SAPs
+    for sap in nffg.saps:
+      # Create SAP
+      sap_host = self.create_SAP(name=sap.id)
+      created_nodes[sap.id] = sap_host
+    # Convert VNFs
+    # TODO - implement --> currently the default Mininet topology does not
+    # TODO contain NFs but it could be possible
+    # Convert connections
+    for edge in nffg.links:
+      # Create Links
+      src = created_nodes[edge.src.node.id]
+      dst = created_nodes[edge.dst.node.id]
+      if src is None or dst is None:
+        raise RuntimeError(
+          "Created topology node is missing! Something really went wrong!")
+      # FIXME - check how port come in the picture
+      link = self.create_Link(src=src, dst=dst)
+    log.info("Topology creation from NFFG has been finished!")
 
   def __init_from_AbstractTopology (self, topo_class):
     """
@@ -604,7 +644,7 @@ class ESCAPENetworkBuilder(object):
         ee.cmdPrint('ifconfig ' + name + '-eth0.' + vif[1] + ' ' + vif[0])
     return ee
 
-  def create_NETCONF_EE (self, name, type="LOCAL", **params):
+  def create_NETCONF_EE (self, name, type=TYPE_EE_LOCAL, **params):
     """
     Create and add a new EE to Mininet network.
 
@@ -631,11 +671,11 @@ class ESCAPENetworkBuilder(object):
     :rtype: tuple
     """
     type = type.upper()
-    if type == 'LOCAL':
+    if type == self.TYPE_EE_LOCAL:
       # create local NETCONF-based
       log.debug("Create local NETCONF EE with name: %s" % name)
       sw = self.mn.addSwitch(name)
-    elif type == 'REMOTE':
+    elif type == self.TYPE_EE_REMOTE:
       # create remote NETCONF-based
       log.debug("Create remote NETCONF EE with name: %s" % name)
       params["inNamespace"] = False

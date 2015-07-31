@@ -188,14 +188,12 @@ class AbstractDomainManager(EventMixin):
     """
     pass
 
-  def update_resource_info (self, raw_data):
+  def update_resource_info (self):
     """
     Update the resource information if this domain with the requested
     configuration. The config attribute is the raw date from request. This
     function's responsibility to parse/convert/save the data effectively.
 
-    :param raw_data: polled raw data
-    :type raw_data: str
     :return: None
     """
     # TODO - implement actual updating

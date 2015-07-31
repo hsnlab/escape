@@ -133,7 +133,7 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
     Init.
 
     :param mininet: set pre-defined network (optional)
-    :type mininet: :any`mininet.net.Mininet`
+    :type mininet: :class:`ESCAPENetworkBridge`
     """
     log.debug("Init %s" % self.__class__.__name__)
     # Call base constructors directly to avoid super() and MRO traps
@@ -146,13 +146,22 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
           InfrastructureLayerAPI._core_name].topology
         if mininet is None:
           log.error("Unable to get emulated network reference!")
-    self.mininet = mininet
+    self.mininet = mininet  # wrapper class for emulated Mininet network
 
-  def check_topology (self):
+  def check_topology_is_up (self):
     """
     Checker function for domain polling.
     """
-    return self.mininet.get_topology()
+    return self.mininet.started
+
+  def get_topology_description (self):
+    """
+    Return with the topology description as an :any:`NFFG`.
+
+    :return: the emulated topology description
+    :rtype: :any:`NFFG`
+    """
+    return self.mininet.topo_desc if self.mininet.started else None
 
   def initiate_VNFs (self, nffg_part):
     log.info("Install Mininet domain part: initiate VNFs...")
@@ -457,9 +466,16 @@ class InternalDomainManager(AbstractDomainManager):
     self.remote = configurator.load_component("VNFStarter")
     # Skip to start polling is it's set
     if not self._poll:
-      return
-    log.debug("Start polling %s domain..." % self.name)
-    self.start_polling(self.POLL_INTERVAL)
+      if self.network.check_topology_is_up():
+        log.info("%s domain confirmed!" % self.name)
+        self._detected = True
+        log.info("Updating resource information from %s domain..." % self.name)
+        self.update_resource_info()
+      else:
+        pass
+    else:
+      log.debug("Start polling %s domain..." % self.name)
+      self.start_polling(self.POLL_INTERVAL)
 
   @property
   def controller_name (self):
@@ -473,12 +489,12 @@ class InternalDomainManager(AbstractDomainManager):
     """
     # FIXME - very dummy extend!!!
     if not self._detected:
-      raw_data = self.network.check_topology()
+      raw_data = self.network.get_topology_description()
       if raw_data:
         log.info("%s domain confirmed!" % self.name)
         self._detected = True
         log.info("Updating resource information from %s domain..." % self.name)
-        self.update_resource_info(raw_data)
+        self.update_resource_info()
       else:
         pass
 
@@ -499,7 +515,7 @@ class InternalDomainManager(AbstractDomainManager):
     # TODO ...
     self.controller.install_routes(routes=())
 
-  def update_resource_info (self, raw_data):
+  def update_resource_info (self):
     """
     Update the resource information if this domain with the requested
     configuration. The config attribute is the raw date from request. This
@@ -509,8 +525,9 @@ class InternalDomainManager(AbstractDomainManager):
     :type raw_data: str
     :return: None
     """
+    topo_nffg = self.network.get_topology_description()
+    log.debug("Process received NFFG(name: %s)..." % topo_nffg.name)
     # TODO - implement actual updating
-    pass
 
 
 class OpenStackDomainManager(AbstractDomainManager):
