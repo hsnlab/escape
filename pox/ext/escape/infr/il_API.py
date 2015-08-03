@@ -20,7 +20,7 @@ from escape.infr import log as log  # Infrastructure layer logger
 from escape.adapt import LAYER_NAME as ADAPT_LAYER_NAME
 from escape.infr.topology import ESCAPENetworkBuilder
 from escape.util.api import AbstractAPI
-from escape.util.misc import schedule_as_coop_task, quit_with_error
+from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent import Event
 from pox.openflow.of_01 import OpenFlow_01_Task
 
@@ -65,11 +65,10 @@ class InfrastructureLayerAPI(AbstractAPI):
       :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Infrastructure Layer...")
+    # Set layer's LOADED value manually here to avoid issues
     CONFIG.set_layer_loaded(self._core_name)
-    # FIXME - change to dynamic initialization
+    # Build the emulated topology with the NetworkBuilder
     self.topology = ESCAPENetworkBuilder().build()
-    # Not wait for the controller: comment out if use waiting
-    # self.topology.start_network()
     log.info("Infrastructure Layer has been initialized!")
 
   def shutdown (self, event):
@@ -89,15 +88,16 @@ class InfrastructureLayerAPI(AbstractAPI):
     :type event: :class:`ComponentRegistered`
     :return: None
     """
+    # Check if our POX controller is up
     if event.name == CONFIG[ADAPT_LAYER_NAME]['POX']['name'] and isinstance(
          event.component, OpenFlow_01_Task):
-      try:
-        log.debug(
-          "Internal domain controller is up! Initiate network emulation...")
+      if self.topology is not None:
+        log.info(
+          "Internal domain controller is up! Initiate network emulation "
+          "now...")
         self.topology.start_network()
-      except SystemExit:
-        quit_with_error(msg="Mininet emulation requires root privileges!",
-                        logger=self._core_name)
+      else:
+        log.error("Mininet topology is missing! Skip network starting...")
 
   ##############################################################################
   # UNIFY Co - Rm API functions starts here

@@ -20,9 +20,10 @@ from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
 from escape import CONFIG
-from escape.infr import log
+from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
+from escape.util.misc import quit_with_error
 
 
 class AbstractTopology(Topo):
@@ -278,7 +279,7 @@ class ESCAPENetworkBridge(object):
   Follows Bridge design pattern.
   """
 
-  def __init__ (self, network=None, topo_desc=None):
+  def __init__ (self, network, topo_desc=None):
     """
     Initialize Mininet implementation with proper attributes.
     Use network as the hided Mininet topology if it's given.
@@ -320,9 +321,13 @@ class ESCAPENetworkBridge(object):
     log.debug("Starting Mininet network...")
     if self.__mininet is not None:
       if not self.started:
-        self.__mininet.start()
-        log.debug("Mininet network has been started!")
+        try:
+          self.__mininet.start()
+        except SystemExit:
+          quit_with_error(msg="Mininet emulation requires root privileges!",
+                          logger=LAYER_NAME)
         self.started = True
+        log.debug("Mininet network has been started!")
       else:
         log.warning(
           "Mininet network has already started! Skipping start task...")
@@ -337,8 +342,8 @@ class ESCAPENetworkBridge(object):
     if self.__mininet is not None:
       if self.started:
         self.__mininet.stop()
-        log.debug("Mininet network has been stopped!")
         self.started = False
+        log.debug("Mininet network has been stopped!")
       else:
         log.warning("Mininet network is not started yet! Skipping stop task...")
     if self._need_clean:
@@ -435,13 +440,13 @@ class ESCAPENetworkBuilder(object):
 
   def __init_from_NFFG (self, nffg):
     """
-    Initialize topology from :any:`NFFG`.
+    Initialize topology from an :any:`NFFG` representation.
 
     :param nffg: topology object structure
     :type nffg: :any:`NFFG`
     :return: None
     """
-    log.info("Start topology creation from NFFG...")
+    log.info("Start topology creation from NFFG(name: %s)..." % nffg.name)
     created_nodes = {}  # created nodes as 'NFFG-id': <node>
     # If not set then cache the given NFFG as the topology description
     self.topo_desc = nffg
@@ -541,7 +546,7 @@ class ESCAPENetworkBuilder(object):
 
   def get_network (self):
     """
-    Return the bridge to the built network.
+    Return the bridge to the constructed network.
 
     :return: object representing the emulated network
     :rtype: :any:`ESCAPENetworkBridge`
@@ -558,56 +563,6 @@ class ESCAPENetworkBuilder(object):
   ##############################################################################
   # Builder functions
   ##############################################################################
-
-  def build (self, topo=None):
-    """
-    Initialize network.
-
-    1. If the additional ``topology`` is given then using that for init.
-    2. If TOPO is not given, search topology description in CONFIG with the \
-    name 'TOPO'.
-    3. If TOPO not found or an Exception was raised, search for the fallback \
-    topo with the name ``FALLBACK-TOPO``.
-    4. If FALLBACK-TOPO not found raise an exception or run a bare Mininet \
-    object if the run_dry attribute is set
-
-
-    :param topo: optional topology representation
-    :type topo: :any:`NFFG` or :any:`AbstractTopology` or ``None``
-    :return: object representing the emulated network
-    :rtype: :any:`ESCAPENetworkBridge`
-    """
-    log.debug("Init emulated topology based on Mininet v%s" % MNVERSION)
-    # Load topology
-    try:
-      if topo is None:
-        log.info("Load Topology description from CONFIG...")
-        self.__init_from_CONFIG()
-      elif isinstance(topo, NFFG):
-        log.info("Load Topology description from given NFFG...")
-        self.__init_from_NFFG(nffg=topo)
-      elif isinstance(topo, AbstractTopology):
-        log.info("Load Topology description based on Topology class...")
-        self.__init_from_AbstractTopology(topo=topo)
-      else:
-        raise RuntimeError("Unsupported topology format: %s" % type(topo))
-      return self.get_network()
-    except TopologyBuilderException:
-      if self.fallback:
-        # Search for fallback topology
-        fallback = CONFIG.get_fallback_topology()
-        if fallback:
-          log.info("Load topo from fallback topology description...")
-          self.__init_from_AbstractTopology(fallback)
-          return self.get_network()
-      # fallback topo is not found or set
-      if self.run_dry:
-        # Return with the bare Mininet object
-        log.warning("Topology description is not found! Running dry...")
-        return self.get_network()
-      else:
-        # Re-raise the exception
-        raise
 
   def create_static_EE (self, name, cls=None, **params):
     """
@@ -795,3 +750,53 @@ class ESCAPENetworkBuilder(object):
       i2 = Intf(intfName, node=r, mac=r_mac, port=r_port, link=link)
       i2.mac = r_mac  # mn runs 'ifconfig', which resets mac to None
       link.intf1, link.intf2 = i1, i2
+
+  def build (self, topo=None):
+    """
+    Initialize network.
+
+    1. If the additional ``topology`` is given then using that for init.
+    2. If TOPO is not given, search topology description in CONFIG with the \
+    name 'TOPO'.
+    3. If TOPO not found or an Exception was raised, search for the fallback \
+    topo with the name ``FALLBACK-TOPO``.
+    4. If FALLBACK-TOPO not found raise an exception or run a bare Mininet \
+    object if the run_dry attribute is set
+
+
+    :param topo: optional topology representation
+    :type topo: :any:`NFFG` or :any:`AbstractTopology` or ``None``
+    :return: object representing the emulated network
+    :rtype: :any:`ESCAPENetworkBridge`
+    """
+    log.debug("Init emulated topology based on Mininet v%s" % MNVERSION)
+    # Load topology
+    try:
+      if topo is None:
+        log.info("Load Topology description from CONFIG...")
+        self.__init_from_CONFIG()
+      elif isinstance(topo, NFFG):
+        log.info("Load Topology description from given NFFG...")
+        self.__init_from_NFFG(nffg=topo)
+      elif isinstance(topo, AbstractTopology):
+        log.info("Load Topology description based on Topology class...")
+        self.__init_from_AbstractTopology(topo=topo)
+      else:
+        raise RuntimeError("Unsupported topology format: %s" % type(topo))
+      return self.get_network()
+    except TopologyBuilderException:
+      if self.fallback:
+        # Search for fallback topology
+        fallback = CONFIG.get_fallback_topology()
+        if fallback:
+          log.info("Load topo from fallback topology description...")
+          self.__init_from_AbstractTopology(fallback)
+          return self.get_network()
+      # fallback topo is not found or set
+      if self.run_dry:
+        # Return with the bare Mininet object
+        log.warning("Topology description is not found! Running dry...")
+        return self.get_network()
+      else:
+        # Re-raise the exception
+        raise

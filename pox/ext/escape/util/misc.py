@@ -19,6 +19,7 @@ from distutils.util import strtobool
 from functools import wraps
 import importlib
 import json
+import logging
 import os
 import weakref
 
@@ -92,21 +93,25 @@ def enum (*sequential, **named):
   return type('enum', (), enums)
 
 
-def quit_with_error (msg=None, logger="core"):
+def quit_with_error (msg, logger=None):
   """
   Helper function for quitting in case of an error.
 
-  :param msg: error message (optional)
+  :param msg: error message
   :type msg: str
-  :param logger: logger name (default: core)
-  :type logger: str
+  :param logger: logger name or logger object (default: core)
+  :type logger: str or :any:`logging.Logger`
   :return: None
   """
   from pox.core import core
   import sys
 
-  if msg:
-    core.getLogger(logger).fatal(str(msg))
+  if isinstance(logger, logging.Logger):
+    logger.fatal(msg)
+  elif isinstance(logger, str):
+    core.getLogger(logger).fatal(msg)
+  else:
+    core.getLogger("core").fatal(msg)
   core.quit()
   sys.exit(1)
 

@@ -18,9 +18,9 @@ Adaptation Sublayer
 import weakref
 
 from escape import CONFIG
-from escape.adapt.components import InternalDomainManager
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
+from escape.adapt.components import InternalDomainManager
 from escape.util.nffg import NFFG
 
 

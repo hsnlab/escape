@@ -13,7 +13,7 @@
 # limitations under the License.
 """
 Contains Adapter classes which represent the connections between ESCAPEv2 and
-other different domains
+other different domains.
 """
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
@@ -148,7 +148,7 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
           log.error("Unable to get emulated network reference!")
     self.mininet = mininet  # wrapper class for emulated Mininet network
 
-  def check_topology_is_up (self):
+  def check_domain_is_up (self):
     """
     Checker function for domain polling.
     """
@@ -429,7 +429,7 @@ class InternalDomainManager(AbstractDomainManager):
   """
   name = "INTERNAL"
 
-  def __init__ (self, poll, **kwargs):
+  def __init__ (self, **kwargs):
     """
     Init
     """
@@ -438,11 +438,12 @@ class InternalDomainManager(AbstractDomainManager):
     if 'poll' in kwargs:
       self._poll = kwargs['poll']
     else:
-      self._poll = True
-    self.controller = None
-    self.network = None
-    self.remote = None
+      self._poll = False
+    self.controller = None  # DomainAdapter for POX - POXDomainAdapter
+    self.network = None  # DomainAdapter for Mininet - MininetDomainAdapter
+    self.remote = None  # NETCONF communication - VNFStarterAdapter
     self._detected = None
+    self.topology = None  # Description of the domain topology as an NFFG
 
   def finit (self):
     """
@@ -466,13 +467,9 @@ class InternalDomainManager(AbstractDomainManager):
     self.remote = configurator.load_component("VNFStarter")
     # Skip to start polling is it's set
     if not self._poll:
-      if self.network.check_topology_is_up():
-        log.info("%s domain confirmed!" % self.name)
-        self._detected = True
-        log.info("Updating resource information from %s domain..." % self.name)
-        self.update_resource_info()
-      else:
-        pass
+      # Try to request/parse/update Mininet topology
+      if not self._detect_topology():
+        log.warning("%s domain not confirmed during init!" % self.name)
     else:
       log.debug("Start polling %s domain..." % self.name)
       self.start_polling(self.POLL_INTERVAL)
@@ -481,22 +478,50 @@ class InternalDomainManager(AbstractDomainManager):
   def controller_name (self):
     return self.controller.task_name
 
+  def _detect_topology (self):
+    """
+    Check the undetected topology is up or not.
+
+    :return: detected or not
+    :rtype: bool
+    """
+    if self.network.check_domain_is_up():
+      log.info("%s domain confirmed!" % self.name)
+      self._detected = True
+      log.info("Updating resource information from %s domain..." % self.name)
+      topo_nffg = self.network.get_topology_description()
+      if topo_nffg:
+        log.debug("Set received NFFG(name: %s)..." % topo_nffg.name)
+        self.topology = topo_nffg
+        # TODO updating DOV
+      else:
+        log.warning(
+          "Resource info is missing! Infrastructure layer is inconsistent "
+          "state!")
+    return self._detected
+
   def poll (self):
     """
     Poll the defined Internal domain based on Mininet.
 
     :return:
     """
-    # FIXME - very dummy extend!!!
     if not self._detected:
-      raw_data = self.network.get_topology_description()
-      if raw_data:
-        log.info("%s domain confirmed!" % self.name)
-        self._detected = True
-        log.info("Updating resource information from %s domain..." % self.name)
-        self.update_resource_info()
-      else:
-        pass
+      self._detect_topology()
+    else:
+      self.update_resource_info()
+
+  def update_resource_info (self):
+    """
+    Update the resource information of this domain with the requested
+    configuration.
+
+    :return: None
+    """
+    topo_nffg = self.network.get_topology_description()
+    # TODO - implement actual updating
+    # update local topology
+    # update DoV
 
   def install_nffg (self, nffg_part):
     """
@@ -515,20 +540,6 @@ class InternalDomainManager(AbstractDomainManager):
     # TODO ...
     self.controller.install_routes(routes=())
 
-  def update_resource_info (self):
-    """
-    Update the resource information if this domain with the requested
-    configuration. The config attribute is the raw date from request. This
-    function's responsibility to parse/convert/save the data effectively.
-
-    :param raw_data: polled raw data
-    :type raw_data: str
-    :return: None
-    """
-    topo_nffg = self.network.get_topology_description()
-    log.debug("Process received NFFG(name: %s)..." % topo_nffg.name)
-    # TODO - implement actual updating
-
 
 class OpenStackDomainManager(AbstractDomainManager):
   """
@@ -545,7 +556,7 @@ class OpenStackDomainManager(AbstractDomainManager):
     if 'poll' in kwargs:
       self._poll = kwargs['poll']
     else:
-      self._poll = True
+      self._poll = False
     self.rest_adapter = None
     self._detected = None
 

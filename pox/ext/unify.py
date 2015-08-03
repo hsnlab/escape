@@ -36,24 +36,24 @@ def _start_components (event):
   :return: None
   """
   # Launch ESCAPE components
-  if not init_param['agent']:
-    # Launch Service Layer (mostly SAS)
-    from service import launch
-
-    launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
-  # Launch Resource Orchestration Sublayer (ROS)
-  from orchestration import launch
-
-  launch(agent=init_param['agent'])
-  # Launch Controller Adaptation Sublayer (CAS)
-  from adaptation import launch
-
-  launch(with_infr=init_param['full'])
   if init_param['full']:
     # Launch Infrastructure Layer (IL) optionally
     from infrastructure import launch
 
     launch()
+  # Launch Controller Adaptation Sublayer (CAS)
+  from adaptation import launch
+
+  launch(with_infr=init_param['full'])
+  # Launch Resource Orchestration Sublayer (ROS)
+  from orchestration import launch
+
+  launch(agent=init_param['agent'])
+  if not init_param['agent']:
+    # Launch Service Layer (mostly SAS)
+    from service import launch
+
+    launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
 
 
 @poxutil.eval_args
