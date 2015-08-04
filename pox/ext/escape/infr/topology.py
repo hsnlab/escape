@@ -14,7 +14,7 @@
 """
 Wrapper module for handling emulated test topology based on Mininet.
 """
-from mininet import clean
+
 from mininet.link import Link, Intf
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
@@ -23,7 +23,7 @@ from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
-from escape.util.misc import quit_with_error
+from escape.util.misc import quit_with_error, cleanup_after_ESCAPE
 
 
 class AbstractTopology(Topo):
@@ -361,7 +361,7 @@ class ESCAPENetworkBridge(object):
         "Mininet network is not stopped yet! Skipping cleanup task...")
     else:
       log.info("Cleanup after Mininet emulation...")
-      clean.cleanup()
+      cleanup_after_ESCAPE()
 
 
 class TopologyBuilderException(Exception):
