@@ -38,7 +38,7 @@ class AbstractNETCONFAdapter(object):
   # RPC namespace. Must be set by derived classes through RPC_NAMESPACE
   RPC_NAMESPACE = None
 
-  def __init__ (self, server, port, username, password, timeout=30,
+  def __init__ (self, server, port, username, password, timeout=10,
        debug=False):
     """
     Initialize connection parameters.
@@ -58,7 +58,7 @@ class AbstractNETCONFAdapter(object):
     :return: None
     """
     super(AbstractNETCONFAdapter, self).__init__()
-    self.__server = server
+    self.__server = server if server.upper() != "LOCALHOST" else "127.0.0.1"
     self.__port = int(port)
     self.__username = username
     self.__password = password
@@ -208,6 +208,8 @@ class AbstractNETCONFAdapter(object):
     # create a new xml_element from it, since another BRAINFUCK arise around
     # namespaces
     # CREATE A PARSER THAT GIVES A SHIT FOR NAMESPACE
+    if self.__debug:
+      print "Received raw RPC reply:\n", self.__rpc_reply_as_xml
     parser = etree.XMLParser(ns_clean=True)
     if data:
       buffer = StringIO(data)
@@ -336,7 +338,7 @@ class AbstractNETCONFAdapter(object):
       if i.getchildren():
         # still has children! Go one level deeper with recursion
         val = self.__parse_xml_response(i, namespace)
-        key = i.tag.replace(ns, "")
+        key = str(i.tag.replace(ns, ""))
       else:
         # if <ok/> is the child, then it has only <rpc-reply> as ancestor
         # so we do not need to iterate through <ok/> element's ancestors

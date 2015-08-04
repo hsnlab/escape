@@ -15,6 +15,7 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
 """
+from pprint import pprint
 import weakref
 
 from escape import CONFIG
@@ -239,17 +240,22 @@ class ControllerAdapter(object):
     self.domains.load_default_mgrs()
     # Set virtualizer-related components
     self.domainResManager = DomainResourceManager()
-
     # print "create test - VNFStarterAdapter"
-    # starter = VNFStarterAdapter(server='192.168.12.128', port=830,
+    # starter = VNFStarterAdapter(server='localhost', port=830,
     #                             username='mininet', password='mininet',
     #                             debug=True)
-    # # starter.connect()
-    # # print starter.get("/proc/meminfo")
-    # # starter.disconnect()
     # with starter as s:
-    #   print s.getVNFInfo()
-    #   # print s.initiateVNF("headerCompressor")
+    #   reply = s.getVNFInfo()
+    #   pprint(reply)
+    #   reply = s.initiateVNF(vnf_type=s.VNF_HEADER_COMP)
+    #   pprint(reply)
+    #   vnf_id = reply['access_info']['vnf_id']
+    #   reply = s.connectVNF(vnf_id=vnf_id, vnf_port=1, switch_id="EE1")
+    #   pprint(reply)
+    #   reply = s.startVNF(vnf_id=vnf_id)
+    #   pprint(reply)
+    #   reply = s.getVNFInfo()
+    #   pprint(reply)
 
   def install_nffg (self, mapped_nffg):
     """

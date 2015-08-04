@@ -94,13 +94,12 @@ def cleanup_after_ESCAPE ():
   # Remove remained veth pairs used in EE
   veths = Popen(['/bin/sh', '-c', r"ip link show | egrep -o '(uny_\w+)'"],
                 stdout=PIPE).communicate()[0].split('\n')
-  print veths
   # only need to del one end of the veth pair
   for veth in veths[::2]:
     if veth != '':
       run_silent("sudo", "ip", "link", "del", veth)
   # Call Mininet's own cleanup stuff
-  cleanup()
+  # cleanup()
 
 
 def enum (*sequential, **named):

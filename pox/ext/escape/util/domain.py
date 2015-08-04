@@ -273,13 +273,39 @@ class VNFStarterAPI(object):
 
   Follows the MixIn design pattern approach to support VNFStarter functionality.
   """
+  # Pre-defined VNF types
+  VNF_HEADER_COMP = "headerCompressor"
+  VNF_HEADER_DECOMP = "headerDecompressor"
+  VNF_FORWARDER = "simpleForwarder"
+
+
+  class VNFStatus(object):
+    """
+    Helper class for define VNF status code constants.
+
+    From YANG: Enum for indicating statuses.
+    """
+    FAILED = -1
+    INITIALIZING = 0
+    UP_AND_RUNNING = 1
+
+
+  class ConnectedStatus(object):
+    """
+    Helper class for define VNF connection code constants.
+
+    From YANG: Connection status.
+    """
+    DISCONNECTED = 0
+    CONNECTED = 1
+
 
   def __init__ (self):
     super(VNFStarterAPI, self).__init__()
 
-  def initiateVNF (self, vnf_type=None, vnf_description=None, options=None):
+  def initiateVNF (self, vnf_type, vnf_description=None, options=None):
     """
-    Initiate a VNF.
+    Initiate/define a VNF.
 
     :param vnf_type: pre-defined VNF type (see in vnf_starter/available_vnfs)
     :type vnf_type: str
@@ -287,6 +313,8 @@ class VNFStarterAPI(object):
     :type vnf_description: str
     :param options: unlimited list of additional options as name-value pairs
     :type options: collections.OrderedDict
+    :return: parsed RPC response
+    :rtype: dict
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -301,6 +329,7 @@ class VNFStarterAPI(object):
     :param switch_id: switch ID (mandatory)
     :type switch_id: str
     :return: Returns the connected port(s) with the corresponding switch(es).
+    :rtype: dict
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -313,6 +342,7 @@ class VNFStarterAPI(object):
     :param vnf_port: VNF port (mandatory)
     :type vnf_port: str
     :return: reply data
+    :rtype: dict
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -323,6 +353,7 @@ class VNFStarterAPI(object):
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
     :return: reply data
+    :rtype: dict
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -333,10 +364,19 @@ class VNFStarterAPI(object):
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
     :return: reply data
+    :rtype: dict
     """
     raise NotImplementedError("Not implemented yet!")
 
   def getVNFInfo (self, vnf_id=None):
+    """
+    Request info from available VNF instances.
+
+    :param vnf_id: particular VNF id (default: list info about all VNF)
+    :type vnf_id: str
+    :return: parsed RPC reply
+    :rtype: dict
+    """
     raise NotImplementedError("Not implemented yet!")
 
 

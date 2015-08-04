@@ -232,13 +232,20 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
 
   # RPC calls starts here
 
-  def initiateVNF (self, vnf_type=None, vnf_description=None, options=None):
+  def initiateVNF (self, vnf_type, vnf_description=None, options=None):
     """
     This RCP will start a VNF.
 
     0. initiate new VNF (initiate datastructure, generate unique ID)
     1. set its arguments (control port, control ip, and VNF type/command)
     2. returns the connection data, which from the vnf_id is the most important
+
+    .. raw:: json
+
+      Reply: {"access_info": {"vnf_id": <mandatory>,
+                              "control_ip": <optional>,
+                              "control_port": <optional>},
+              "other": <optional>}
 
     :param vnf_type: pre-defined VNF type (see in vnf_starter/available_vnfs)
     :type vnf_type: str
@@ -247,12 +254,12 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     :param options: unlimited list of additional options as name-value pairs
     :type options: collections.OrderedDict
     :return: RPC reply data
+    :rtype: dict
     :raises: RPCError, OperationError, TransportError
     """
-    params = locals()
-    del params['self']
     log.debug("Call initiateVNF...")
-    return self.call_RPC("initiateVNF", **params)
+    return self.call_RPC("initiateVNF", vnf_type=vnf_type,
+                         vnf_description=vnf_description, options=options)
 
   def connectVNF (self, vnf_id, vnf_port, switch_id):
     """
@@ -262,22 +269,26 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     0. create virtualEthernet pair(s)
     1. connect either end of it (them) to the given switch(es)
 
+    .. raw:: json
+
+      Reply: {"port": <mandatory>,  # Currently just got RPC OK
+              "other": <optional>}
+
     This RPC is also used for reconnecting a VNF. In this case, however,
     if the input fields are not correctly set an error occurs
 
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
     :param vnf_port: VNF port (mandatory)
-    :type vnf_port: str
+    :type vnf_port: str or int
     :param switch_id: switch ID (mandatory)
     :type switch_id: str
     :return: Returns the connected port(s) with the corresponding switch(es).
     :raises: RPCError, OperationError, TransportError
     """
-    params = locals()
-    del params['self']
     log.debug("Call connectVNF...")
-    return self.call_RPC("connectVNF", **params)
+    return self.call_RPC("connectVNF", vnf_id=vnf_id, vnf_port=vnf_port,
+                         switch_id=switch_id)
 
   def disconnectVNF (self, vnf_id, vnf_port):
     """
@@ -287,6 +298,10 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     1. ip link set uny_1 down
     2. (if more ports) repeat 1. and 2. with the corresponding data
 
+    .. raw:: json
+
+      Reply: {"other": <optional>}  # Currently just got RPC OK
+
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
     :param vnf_port: VNF port (mandatory)
@@ -294,28 +309,32 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    params = locals()
-    del params['self']
     log.debug("Call disconnectVNF...")
-    return self.call_RPC("disconnectVNF", **params)
+    return self.call_RPC("disconnectVNF", vnf_id=vnf_id, vnf_port=vnf_port)
 
   def startVNF (self, vnf_id):
     """
     This RPC will actually start the VNF/CLICK instance.
+
+    .. raw:: json
+
+      Reply: {"other": <optional>}  # Currently just got RPC OK
 
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    params = locals()
-    del params['self']
     log.debug("Call startVNF...")
-    return self.call_RPC("startVNF", **params)
+    return self.call_RPC("startVNF", vnf_id=vnf_id)
 
   def stopVNF (self, vnf_id):
     """
     This RPC will gracefully shut down the VNF/CLICK instance.
+
+    .. raw:: json
+
+      Reply: {"other": <optional>}  # Currently just got RPC OK
 
     0. if disconnect() was not called before, we call it
     1. delete virtual ethernet pairs
@@ -327,10 +346,8 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    params = locals()
-    del params['self']
     log.debug("Call stopVNF...")
-    return self.call_RPC("stopVNF", **params)
+    return self.call_RPC("stopVNF", vnf_id=vnf_id)
 
   def getVNFInfo (self, vnf_id=None):
     """
@@ -340,14 +357,30 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     however 'status' is useful for indicating to upper layers whether a VNF
     is UP_AND_RUNNING.
 
-    :param vnf_id: VNF ID
+    .. raw:: json
+
+      Reply: {"initiated_vnfs": {"vnf_id": <initiated_vnfs key>,
+                                "pid": <VNF PID>,
+                                "control_ip": <cntr IP>,
+                                "control_port": <cntr port>,
+                                "command": <VNF init command>
+                                "link": ["vnf_port": <port of VNF end>,
+                                         "vnf_dev": <VNF end intf>,
+                                         "vnf_dev_mac": <VNF end MAC address>,
+                                         "sw_dev": <switch/EE end intf>,
+                                         "sw_id": <switch/EE end id>,
+                                         "sw_port": <switch/EE end port>,
+                                         "connected": <conn status>
+                                          ],
+                                "other": <optional>}}
+
+    :param vnf_id: VNF ID  (default: list info about all VNF)
     :type vnf_id: str
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    params = {"vnf_id": vnf_id}
     log.debug("Call getVNFInfo...")
-    return self.call_RPC('getVNFInfo', **params)
+    return self.call_RPC('getVNFInfo', vnf_id=vnf_id)
 
 
 class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
@@ -654,8 +687,6 @@ class OpenStackDomainManager(AbstractDomainManager):
     configuration. The config attribute is the raw date from request. This
     function's responsibility to parse/convert/save the data effectively.
 
-    :param raw_data: polled raw data
-    :type raw_data: str
     :return: None
     """
     # TODO - implement actual updating
