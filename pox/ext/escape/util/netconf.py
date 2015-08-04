@@ -331,12 +331,12 @@ class AbstractNETCONFAdapter(object):
     """
     parsed = {}  # parsed xml subtree as a dict
     if namespace is not None:
-      namespace = "{%s}" % namespace
+      ns = "{%s}" % namespace
     for i in element.iterchildren():
       if i.getchildren():
         # still has children! Go one level deeper with recursion
         val = self.__parse_xml_response(i, namespace)
-        key = i.tag.replace(namespace, "")
+        key = i.tag.replace(ns, "")
       else:
         # if <ok/> is the child, then it has only <rpc-reply> as ancestor
         # so we do not need to iterate through <ok/> element's ancestors
@@ -344,9 +344,8 @@ class AbstractNETCONFAdapter(object):
           key = "rpc-reply"
           val = "ok"
         else:
-          key = i.tag.replace(namespace, "")
-          val = element.findtext(
-            "%s%s" % (namespace, i.tag.replace(namespace, "")))
+          key = str(i.tag.replace(ns, ""))
+          val = element.findtext("%s%s" % (ns, i.tag.replace(ns, "")))
       if key in parsed:
         if isinstance(parsed[key], list):
           parsed[key].append(val)
@@ -425,11 +424,11 @@ if __name__ == "__main__":
     print "Get config"
     print vrm.get_config()
     print "-" * 60
-    print "Get /proc/meminfo..."
-    # get /proc/meminfo
-    print vrm.get("/proc/meminfo")
-    # call rpc getVNFInfo
-    print "-" * 60
+    # print "Get /proc/meminfo..."
+    # # get /proc/meminfo
+    # print vrm.get("/proc/meminfo")
+    # # call rpc getVNFInfo
+    # print "-" * 60
     print "Call getVNFInfo..."
     reply = vrm.call_RPC('getVNFInfo')
     # reply = vrm.getVNFInfo()
@@ -446,6 +445,7 @@ if __name__ == "__main__":
       # options=OrderedDict(
       # {"name": "ip", "value": "127.0.0.1"}))
     except RPCError as e:
+      print "RPCError:"
       pprint(e.to_dict())
       pprint(e.info.split('\n'))
 
@@ -464,6 +464,7 @@ if __name__ == "__main__":
       reply = vrm.call_RPC("stopVNF", vnf_id='1')
       # reply = vrm.stopVNF(vnf_id='1')
     except RPCError as e:
+      print "RPCError:"
       pprint(e.to_dict())
       pprint(e.info.split('\n'))
     print "-" * 60

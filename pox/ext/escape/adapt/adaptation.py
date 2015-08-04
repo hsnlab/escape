@@ -20,7 +20,7 @@ import weakref
 from escape import CONFIG
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
-from escape.adapt.components import InternalDomainManager
+from escape.adapt.components import InternalDomainManager, VNFStarterAdapter
 from escape.util.nffg import NFFG
 
 
@@ -239,6 +239,17 @@ class ControllerAdapter(object):
     self.domains.load_default_mgrs()
     # Set virtualizer-related components
     self.domainResManager = DomainResourceManager()
+
+    # print "create test - VNFStarterAdapter"
+    # starter = VNFStarterAdapter(server='192.168.12.128', port=830,
+    #                             username='mininet', password='mininet',
+    #                             debug=True)
+    # # starter.connect()
+    # # print starter.get("/proc/meminfo")
+    # # starter.disconnect()
+    # with starter as s:
+    #   print s.getVNFInfo()
+    #   # print s.initiateVNF("headerCompressor")
 
   def install_nffg (self, mapped_nffg):
     """

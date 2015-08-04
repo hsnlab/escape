@@ -210,6 +210,21 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
   name = "VNFStarter"
 
   def __init__ (self, **kwargs):
+    """
+    Init.
+
+    :param server: server address
+    :type server: str
+    :param port: port number
+    :type port: int
+    :param username: username
+    :type username: str
+    :param password: password
+    :type password: str
+    :param timeout: connection timeout (default=30)
+    :type timeout: int
+    :return:
+    """
     # Call base constructors directly to avoid super() and MRO traps
     AbstractNETCONFAdapter.__init__(self, **kwargs)
     AbstractDomainAdapter.__init__(self)
@@ -633,7 +648,7 @@ class OpenStackDomainManager(AbstractDomainManager):
     except HTTPError:
       raise
 
-  def update_resource_info (self, raw_data):
+  def update_resource_info (self):
     """
     Update the resource information if this domain with the requested
     configuration. The config attribute is the raw date from request. This
