@@ -14,6 +14,8 @@
 """
 Wrapper module for handling emulated test topology based on Mininet.
 """
+import threading
+import time
 
 from mininet.link import Link, Intf
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
@@ -361,7 +363,8 @@ class ESCAPENetworkBridge(object):
         "Mininet network is not stopped yet! Skipping cleanup task...")
     else:
       log.info("Cleanup after Mininet emulation...")
-      cleanup_after_ESCAPE()
+      threading.Thread(target=cleanup_after_ESCAPE()).start()
+      time.sleep(2)
 
 
 class TopologyBuilderException(Exception):

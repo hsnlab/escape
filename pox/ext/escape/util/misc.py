@@ -99,7 +99,7 @@ def cleanup_after_ESCAPE ():
     if veth != '':
       run_silent("sudo", "ip", "link", "del", veth)
   # Call Mininet's own cleanup stuff
-  # cleanup()
+  cleanup()
 
 
 def enum (*sequential, **named):

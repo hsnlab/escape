@@ -240,22 +240,22 @@ class ControllerAdapter(object):
     self.domains.load_default_mgrs()
     # Set virtualizer-related components
     self.domainResManager = DomainResourceManager()
-    # print "create test - VNFStarterAdapter"
-    # starter = VNFStarterAdapter(server='localhost', port=830,
-    #                             username='mininet', password='mininet',
-    #                             debug=True)
-    # with starter as s:
-    #   reply = s.getVNFInfo()
-    #   pprint(reply)
-    #   reply = s.initiateVNF(vnf_type=s.VNF_HEADER_COMP)
-    #   pprint(reply)
-    #   vnf_id = reply['access_info']['vnf_id']
-    #   reply = s.connectVNF(vnf_id=vnf_id, vnf_port=1, switch_id="EE1")
-    #   pprint(reply)
-    #   reply = s.startVNF(vnf_id=vnf_id)
-    #   pprint(reply)
-    #   reply = s.getVNFInfo()
-    #   pprint(reply)
+    print "create test - VNFStarterAdapter"
+    starter = VNFStarterAdapter(server='localhost', port=830,
+                                username='mininet', password='mininet',
+                                debug=True)
+    with starter as s:
+      reply = s.getVNFInfo()
+      pprint(reply)
+      reply = s.initiateVNF(vnf_type=s.VNF_HEADER_COMP)
+      pprint(reply)
+      vnf_id = reply['access_info']['vnf_id']
+      reply = s.connectVNF(vnf_id=vnf_id, vnf_port=1, switch_id="EE1")
+      pprint(reply)
+      reply = s.startVNF(vnf_id=vnf_id)
+      pprint(reply)
+      reply = s.getVNFInfo()
+      pprint(reply)
 
   def install_nffg (self, mapped_nffg):
     """
