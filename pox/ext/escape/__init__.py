@@ -59,9 +59,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         # "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
                         "DEFAULTS": (),  # OpenStack Agent REST API
                         # Specific Domain Adapters for DomainManagers
-                        "POX": {"module": "escape.adapt.components",
-                                "class": "POXDomainAdapter",
-                                "name": "InternalOFController"},
+                        "INTERNAL-POX": {"module": "escape.adapt.components",
+                                         "class": "POXDomainAdapter"},
                         "MININET": {"module": "escape.adapt.components",
                                     "class": "MininetDomainAdapter"},
                         "VNFStarter": {"module": "escape.adapt.components",
@@ -87,7 +86,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
                                                 "FallbackDynamicTopology"},
-                                                # "FallbackStaticTopology"},
+                            # "FallbackStaticTopology"},
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}  # relative to ext/
 

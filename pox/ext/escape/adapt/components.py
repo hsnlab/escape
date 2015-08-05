@@ -31,7 +31,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
 
   Can be used to define a controller (based on POX) for other external domains.
   """
-  name = "POX"
+  name = "INTERNAL-POX"
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653):
     """
@@ -45,7 +45,8 @@ class POXDomainAdapter(AbstractDomainAdapter):
     :param port: socket port (default: 6653)
     :type port: int
     """
-    log.debug("Init %s with ID: %s" % (self.__class__.__name__, name))
+    name = name if name is not None else self.name
+    log.debug("Init %s with name: %s" % (self.__class__.__name__, name))
     super(POXDomainAdapter, self).__init__()
     # Set an OpenFlow nexus as a source of OpenFlow events
     self.openflow = OpenFlowBridge()
@@ -65,7 +66,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     of.name = self.task_name
     # register OpenFlow event listeners
     self.openflow.addListeners(self)
-    log.debug("Start listening %s domain..." % self.name)
+    log.debug("%s adapter: listening connections..." % self.name)
 
   def filter_connections (self, event):
     """
@@ -485,9 +486,9 @@ class InternalDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    self.controller = configurator.load_component("POX")
-    self.network = configurator.load_component("MININET")
-    self.remote = configurator.load_component("VNFStarter")
+    self.controller = configurator.load_component(POXDomainAdapter.name)
+    self.network = configurator.load_component(MininetDomainAdapter.name)
+    self.remote = configurator.load_component(VNFStarterAdapter.name)
     # Skip to start polling is it's set
     if not self._poll:
       # Try to request/parse/update Mininet topology

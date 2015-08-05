@@ -14,10 +14,9 @@
 """
 Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet.
 """
-from escape import CONFIG
+from escape import CONFIG, ESCAPEConfig
 from escape.infr import LAYER_NAME
 from escape.infr import log as log  # Infrastructure layer logger
-from escape.adapt import LAYER_NAME as ADAPT_LAYER_NAME
 from escape.infr.topology import ESCAPENetworkBuilder
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
@@ -89,12 +88,12 @@ class InfrastructureLayerAPI(AbstractAPI):
     :return: None
     """
     # Check if our POX controller is up
-    if event.name == CONFIG[ADAPT_LAYER_NAME]['POX']['name'] and isinstance(
-         event.component, OpenFlow_01_Task):
+    # ESCAPEConfig follows Singleton design pattern
+    if event.name == ESCAPEConfig().get_component(
+         "INTERNAL-POX").name and isinstance(event.component, OpenFlow_01_Task):
       if self.topology is not None:
-        log.info(
-          "Internal domain controller is up! Initiate network emulation "
-          "now...")
+        log.info("Internal domain controller is up! Initiate network emulation "
+                 "now...")
         self.topology.start_network()
       else:
         log.error("Mininet topology is missing! Skip network starting...")
