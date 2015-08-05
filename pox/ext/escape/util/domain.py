@@ -32,8 +32,9 @@ class DomainChangedEvent(Event):
   general and unified way to signal domain changes to ControllerAdapter in
   order to handle all the changes in the same function/algorithm.
   """
-
-  type = enum('DEVICE_UP', 'DEVICE_DOWN', 'LINK_UP', 'LINK_DOWN')
+  # Causes of possible changes
+  TYPE = enum('NETWORK_UP', 'NETWORK_DOWN', 'NODE_UP', 'NODE_DOWN',
+              'CONNECTION_UP', 'CONNECTION_DOWN')
 
   def __init__ (self, domain, cause, data=None):
     """
@@ -44,7 +45,7 @@ class DomainChangedEvent(Event):
     :param cause: type of the domain change: :any:`DomainChangedEvent.type`
     :type cause: str
     :param data: data connected to the change (optional)
-    :type data: object
+    :type data: :any:`NFFG` or str
     :return: None
     """
     super(DomainChangedEvent, self).__init__()

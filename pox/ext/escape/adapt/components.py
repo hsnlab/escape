@@ -87,7 +87,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     log.debug("Handle connection by %s" % self.task_name)
     if self.filter_connections(event):
       event = DomainChangedEvent(domain=self.name,
-                                 cause=DomainChangedEvent.type.DEVICE_UP,
+                                 cause=DomainChangedEvent.TYPE.NODE_UP,
                                  data={"DPID": event.dpid})
       self.raiseEventNoErrors(event)
 
@@ -97,7 +97,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     """
     log.debug("Handle disconnection by %s" % self.task_name)
     event = DomainChangedEvent(domain=self.name,
-                               cause=DomainChangedEvent.type.DEVICE_DOWN,
+                               cause=DomainChangedEvent.TYPE.NODE_DOWN,
                                data={"DPID": event.dpid})
     self.raiseEventNoErrors(event)
 
@@ -125,34 +125,34 @@ class MininetDomainAdapter(AbstractDomainAdapter):
   :class:`mininet.net.Mininet` object.
   """
   # Events raised by this class
-  _eventMixin_events = {DomainChangedEvent, DeployEvent}
+  _eventMixin_events = {DomainChangedEvent}
   name = "MININET"
 
-  def __init__ (self, mininet=None):
+  def __init__ (self, net=None):
     """
     Init.
 
-    :param mininet: set pre-defined network (optional)
-    :type mininet: :class:`ESCAPENetworkBridge`
+    :param net: set pre-defined network (optional)
+    :type net: :class:`ESCAPENetworkBridge`
     """
     log.debug("Init %s" % self.__class__.__name__)
     # Call base constructors directly to avoid super() and MRO traps
     AbstractDomainAdapter.__init__(self)
-    if not mininet:
+    if not net:
       from pox import core
 
       if core.core.hasComponent(InfrastructureLayerAPI._core_name):
-        mininet = core.core.components[
-          InfrastructureLayerAPI._core_name].topology
-        if mininet is None:
+        net = core.core.components[InfrastructureLayerAPI._core_name].topology
+        if net is None:
           log.error("Unable to get emulated network reference!")
-    self.mininet = mininet  # wrapper class for emulated Mininet network
+    self.IL_topo_ref = net  # reference to MN --> ESCAPENetworkBridge
 
   def check_domain_is_up (self):
     """
     Checker function for domain polling.
     """
-    return self.mininet.started
+    # Direct access to IL's Mininet wrapper <-- Internal Domain
+    return self.IL_topo_ref.started
 
   def get_topology_description (self):
     """
@@ -161,7 +161,8 @@ class MininetDomainAdapter(AbstractDomainAdapter):
     :return: the emulated topology description
     :rtype: :any:`NFFG`
     """
-    return self.mininet.topo_desc if self.mininet.started else None
+    # Direct access to IL's Mininet wrapper <-- Internal Domain
+    return self.IL_topo_ref.topo_desc if self.IL_topo_ref.started else None
 
 
 class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
@@ -446,6 +447,9 @@ class InternalDomainManager(AbstractDomainManager):
     Uses :class:`MininetDomainAdapter` for managing the emulated network and
     :class:`POXDomainAdapter` for controlling the network.
   """
+  # Events raised by this class
+  _eventMixin_events = {DomainChangedEvent}
+  # Domain name
   name = "INTERNAL"
 
   def __init__ (self, **kwargs):
@@ -512,8 +516,9 @@ class InternalDomainManager(AbstractDomainManager):
       if topo_nffg:
         log.debug("Set received NFFG(name: %s)..." % topo_nffg.name)
         self.topology = topo_nffg
-        # TODO updating DOV
-
+        self.raiseEventNoErrors(DomainChangedEvent, domain=self.name,
+                                cause=DomainChangedEvent.TYPE.NETWORK_UP,
+                                data=topo_nffg)
       else:
         log.warning(
           "Resource info is missing! Infrastructure layer is inconsistent "

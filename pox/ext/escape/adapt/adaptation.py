@@ -15,13 +15,13 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
 """
-from pprint import pprint
 import weakref
 
 from escape import CONFIG
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
-from escape.adapt.components import InternalDomainManager, VNFStarterAdapter
+from escape.adapt.components import InternalDomainManager
+from escape.util.domain import DomainChangedEvent
 from escape.util.nffg import NFFG
 
 
@@ -232,14 +232,14 @@ class ControllerAdapter(object):
     # Set a weak reference to avoid circular dependencies
     self._layer_API = weakref.proxy(layer_API)
     self._with_infr = with_infr
+    # Set virtualizer-related components
+    self.domainResManager = DomainResourceManager()
     self.domains = ComponentConfigurator(self)
     if with_infr:
       # Init internal domain manager if Infrastructure Layer is started
       self.domains.load_internal_mgr()
     # Init default domain managers
     self.domains.load_default_mgrs()
-    # Set virtualizer-related components
-    self.domainResManager = DomainResourceManager()
     # print "create test - VNFStarterAdapter"
     # starter = VNFStarterAdapter(server='localhost', port=830,
     #                             username='mininet', password='mininet',
@@ -280,11 +280,11 @@ class ControllerAdapter(object):
     """
     Handle DomainChangedEvents, process changes and store relevant information
     in DomainResourceManager.
-
-    .. warning::
-      Not implemented yet!
     """
-    pass
+    log.info("Received DomainChange event from domain: %s, cause: %s" % (
+      event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
+    if event.data is not None and isinstance(event.data, NFFG):
+      self.domainResManager.update_domain_resource(event.domain, event.data)
 
   def _slice_into_domains (self, nffg):
     """
@@ -321,6 +321,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     log.debug("Init DomainVirtualizer")
     # Garbage-collector safe
     self.domainResManager = weakref.proxy(domainResManager)
+    self.__global_view = None
 
   def get_resource_info (self):
     """
@@ -332,9 +333,10 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: global resource info
     :rtype: NFFG
     """
-    # TODO - implement - possibly don't store anything just convert??
-    log.debug("Request global resource info...")
-    return NFFG()
+    return self.__global_view
+
+  def set_nffg (self, nffg):
+    self.__global_view = nffg
 
 
 class DomainResourceManager(object):
@@ -349,6 +351,7 @@ class DomainResourceManager(object):
     super(DomainResourceManager, self).__init__()
     log.debug("Init DomainResourceManager")
     self._dov = DomainVirtualizer(self)
+    self._tracked_domains = set()
 
   @property
   def dov (self):
@@ -360,7 +363,7 @@ class DomainResourceManager(object):
     """
     return self._dov
 
-  def update_resource_usage (self, data):
+  def update_domain_resource (self, domain, nffg):
     """
     Update global resource database with resource usage relevant to installed
     components, routes, VNFs, etc.
@@ -368,8 +371,19 @@ class DomainResourceManager(object):
     .. warning::
       Not implemented yet!
 
-    :param data: usage data
-    :type data: dict
+    :param domain: domain name
+    :type domain: str
+    :param nffg: domain resource
+    :type nffg: :any:`NFFG`
     :return: None
     """
-    pass
+    if domain not in self._tracked_domains:
+      log.info("Add %s domain to Global Resource View (DoV)..." % domain)
+      self._dov.set_nffg(nffg)
+      self._tracked_domains.add(domain)
+    else:
+      log.info("Updating Global Resource View...")
+      # FIXME - only support INTERNAL domain ---> extend & improve !!!
+      if domain == 'INTERNAL':
+        self._dov.set_nffg(nffg)
+

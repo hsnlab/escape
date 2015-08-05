@@ -102,6 +102,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     log.debug("Request %s to launch orchestration on NF-FG(%s)..." % (
       self.__class__.__name__, input_graph.id))
     # Steps before mapping (optional)
+    log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
     # Run actual mapping algorithm
     if self._threaded:

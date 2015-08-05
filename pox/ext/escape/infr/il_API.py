@@ -113,9 +113,7 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     log.getChild('API').info("Received mapped NF-FG from %s Layer" % str(
       event.source._core_name).title())
-    # TODO - implement deployment
+    # TODO - implement static deployment
+    # TODO - probably will not be supported in the future
     log.getChild('API').info("NF-FG deployment has been finished successfully!")
     self.raiseEventNoErrors(DeploymentFinishedEvent, True)
-
-  def install_route (self):
-    pass

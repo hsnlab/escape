@@ -164,6 +164,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     # Exceptions in event handlers are caught by default in a non-blocking way
     log.getChild('API').info(
       "Processed NF-FG has been sent to Infrastructure...")
+    # XXX - probably will not be supported in the future
     self.raiseEventNoErrors(DeployNFFGEvent, event.nffg_part)
 
   def _handle_DeploymentFinishedEvent (self, event):
