@@ -99,7 +99,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Controller Adaptation Sublayer...")
-    self.controller_adapter = ControllerAdapter(self, with_infr=self._with_infr)
+    self.ca = ControllerAdapter(self, with_infr=self._with_infr)
     if self._mapped_nffg_file:
       self._read_json_from_file(self.mapped_nffg_file)
     log.info("Controller Adaptation Sublayer has been initialized!")
@@ -128,7 +128,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       event.source._core_name).title())
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, repr.repr(event.mapped_nffg)))
-    self.controller_adapter.install_nffg(event.mapped_nffg)
+    self.ca.install_nffg(event.mapped_nffg)
     log.getChild('API').debug(
       "Invoked install_nffg on %s is finished" % self.__class__.__name__)
 
@@ -150,7 +150,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     # Currently global view is a Virtualizer to keep ESCAPE fast
     log.getChild('API').debug("Sending back global resource info...")
     self.raiseEventNoErrors(GlobalResInfoEvent,
-                            self.controller_adapter.domainResManager.dov)
+                            self.ca.domainResManager.dov)
 
   def _handle_DeployEvent (self, event):
     """

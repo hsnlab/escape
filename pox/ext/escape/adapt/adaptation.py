@@ -336,7 +336,16 @@ class DomainVirtualizer(AbstractVirtualizer):
     return self.__global_view
 
   def set_nffg (self, nffg):
-    self.__global_view = nffg
+    """
+    Set the copy of given NFFG as the global view of DoV.
+
+    :param nffg: NFFG instance intended to use as the global view
+    :type nffg: :any:`NFFG`
+    :return: None
+    """
+    self.__global_view = nffg.copy()
+    self.__global_view.id = "dov-" + self.__global_view.generate_id()
+    self.__global_view.name = "GLOBAL-RES-INFO"
 
 
 class DomainResourceManager(object):
@@ -365,11 +374,7 @@ class DomainResourceManager(object):
 
   def update_domain_resource (self, domain, nffg):
     """
-    Update global resource database with resource usage relevant to installed
-    components, routes, VNFs, etc.
-
-    .. warning::
-      Not implemented yet!
+    Update global resource database.
 
     :param domain: domain name
     :type domain: str
@@ -386,4 +391,3 @@ class DomainResourceManager(object):
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
         self._dov.set_nffg(nffg)
-

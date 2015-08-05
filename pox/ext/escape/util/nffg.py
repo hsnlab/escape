@@ -583,6 +583,16 @@ class NFFG(AbstractNFFG):
     copy.network = self.network.copy()
     return copy
 
+  def generate_id (self):
+    """
+    Generate a unique id from object memory address.
+
+    :return: generated id
+    :rtype: str
+    """
+    self.id = str(generate(self))
+    return self.id
+
 
 def test_NFFG ():
   # Add nodes

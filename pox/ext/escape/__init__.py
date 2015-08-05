@@ -67,7 +67,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                        "class": "VNFStarterAdapter",
                                        "username": "mininet",
                                        "password": "mininet",
-                                       "server": "192.168.12.128", "port": 830},
+                                       "server": "127.0.0.1", "port": 830},
                         "OpenStack-REST": {"module": "escape.adapt.components",
                                            "class": "OpenStackRESTAdapter",
                                            "url": "http://localhost:8080"},
