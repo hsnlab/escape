@@ -16,13 +16,14 @@ Classes for handling the elements of the NF-FG data structure
 """
 import json
 import collections
-import weakref
 from __builtin__ import id as generate
 
 
 ################################################################################
 # ---------- BASE classes of NFFG elements -------------------
 ################################################################################
+import weakref
+
 
 class Persistable(object):
   """
@@ -179,7 +180,7 @@ class Node(Element):
     :return: newly created and stored Port object
     :rtype: :any:`Port`
     """
-    port = Port(self, properties=properties, id=id)
+    port = Port(node=self, properties=properties, id=id)
     self.ports.append(port)
     return port
 
@@ -415,7 +416,7 @@ class Port(Element):
     if not isinstance(node, Node):
       raise RuntimeError("Port's container node must be derived from Node!")
     # weakref to avoid circular reference
-    self.node = weakref.proxy(node)
+    self.__node = weakref.ref(node)
     # Set properties list according to given param type
     if isinstance(properties, (str, unicode)):
       self.properties = [str(properties), ]
@@ -426,6 +427,10 @@ class Port(Element):
     else:
       raise RuntimeError(
         "Port's properties attribute must be iterable or a string!")
+
+  @property
+  def node(self):
+    return self.__node()
 
   def add_property (self, property):
     """
