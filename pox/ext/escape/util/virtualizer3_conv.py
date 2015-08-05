@@ -118,7 +118,7 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :return: id
     :rtype: str
     """
-    return self.__virtualizer.id
+    return self.__virtualizer.id.data
 
   @id.setter
   def id(self, id):
@@ -129,7 +129,7 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :type id: int or str
     :return: None
     """
-    self.__virtualizer.id = str(id)
+    self.__virtualizer.id.data = str(id)
 
   @property
   def name(self):
@@ -139,7 +139,7 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :return: name
     :rtype: str
     """
-    return self.__virtualizer.name
+    return self.__virtualizer.name.data
 
   @name.setter
   def name(self, name):
@@ -150,7 +150,7 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :type name: str
     :return: None
     """
-    self.__virtualizer.name = str(name)
+    self.__virtualizer.name.data = str(name)
 
   @property
   def nodes(self):
