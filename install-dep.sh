@@ -57,7 +57,7 @@ autoreconf -i
 make -j$CPU
 sudo make install
 cd "$DIR"
-#rm -rf click
+rm -rf click
 
 # install clickhelper.py to be availble from netconfd
 sudo ln -s "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
