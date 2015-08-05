@@ -21,7 +21,7 @@ import importlib
 import json
 import logging
 import os
-from subprocess import check_call, STDOUT, Popen, PIPE
+from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
 import weakref
 
 from mininet.clean import cleanup
@@ -70,36 +70,44 @@ def call_as_coop_task (func, *args, **kwargs):
   core.callLater(func, *args, **kwargs)
 
 
-def run_silent (*cmd):
+def run_silent (cmd):
   """
   Run the given shell command silent.
 
-  :param cmd: command as a list
-  :type cmd: list
+  :param cmd: command
+  :type cmd: str
   :return: return code of the subprocess call
   :rtype: int
   """
-  DEVNULL = open(os.devnull, 'wb')
-  return check_call(cmd, stdout=DEVNULL, stderr=STDOUT, close_fds=True)
+  try:
+    return check_call(cmd.split(' '), stdout=open(os.devnull, 'wb'),
+                      stderr=STDOUT, close_fds=True)
+  except CalledProcessError:
+    return None
 
 
 def cleanup_after_ESCAPE ():
   """
-  Do cleanup steps.
+  Do cleanup.
 
   :return: None
   """
-  # Kill remained clickhelper.py/click
-  run_silent("sudo", "pkill", "click")
-  # Remove remained veth pairs used in EE
-  veths = Popen(['/bin/sh', '-c', r"ip link show | egrep -o '(uny_\w+)'"],
-                stdout=PIPE).communicate()[0].split('\n')
-  # only need to del one end of the veth pair
-  for veth in veths[::2]:
-    if veth != '':
-      run_silent("sudo", "ip", "link", "del", veth)
-  # Call Mininet's own cleanup stuff
-  cleanup()
+
+  def remove_junks ():
+    # Kill remained clickhelper.py/click
+    run_silent("sudo pkill click")
+    # Remove remained veth pairs used in EE
+    veths = Popen(['/bin/sh', '-c', r"ip link show | egrep -o '(uny_\w+)'"],
+                  stdout=PIPE).communicate()[0].split('\n')
+    # only need to del one end of the veth pair
+    for veth in veths[::2]:
+      if veth != '':
+        run_silent("sudo ip link del %s" % veth)
+    # Call Mininet's own cleanup stuff
+    cleanup()
+
+  # Schedule a cleanup as a coop task
+  call_as_coop_task(remove_junks)
 
 
 def enum (*sequential, **named):
