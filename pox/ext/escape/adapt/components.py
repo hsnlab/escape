@@ -117,7 +117,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     pass
 
 
-class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
+class MininetDomainAdapter(AbstractDomainAdapter):
   """
   Adapter class to handle communication with Mininet domain.
 
@@ -162,35 +162,6 @@ class MininetDomainAdapter(AbstractDomainAdapter, VNFStarterAPI):
     :rtype: :any:`NFFG`
     """
     return self.mininet.topo_desc if self.mininet.started else None
-
-  def initiate_VNFs (self, nffg_part):
-    log.info("Install Mininet domain part: initiate VNFs...")
-    # TODO - implement
-    self.raiseEventNoErrors(DeployEvent, nffg_part)
-
-  def stopVNF (self, vnf_id):
-    # TODO - implement
-    pass
-
-  def getVNFInfo (self, vnf_id=None):
-    # TODO - implement
-    pass
-
-  def disconnectVNF (self, vnf_id, vnf_port):
-    # TODO - implement
-    pass
-
-  def startVNF (self, vnf_id):
-    # TODO - implement
-    pass
-
-  def connectVNF (self, vnf_id, vnf_port, switch_id):
-    # TODO - implement
-    pass
-
-  def initiateVNF (self, vnf_type=None, vnf_description=None, options=None):
-    # TODO - implement
-    pass
 
 
 class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
@@ -542,6 +513,7 @@ class InternalDomainManager(AbstractDomainManager):
         log.debug("Set received NFFG(name: %s)..." % topo_nffg.name)
         self.topology = topo_nffg
         # TODO updating DOV
+
       else:
         log.warning(
           "Resource info is missing! Infrastructure layer is inconsistent "
