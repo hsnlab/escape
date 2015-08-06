@@ -24,7 +24,6 @@ import os
 from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
 import weakref
 
-from mininet.clean import cleanup
 from pox.core import core, log
 from pox.lib.revent.revent import EventMixin
 from escape.service import LAYER_NAME as SERVICE
@@ -74,6 +73,8 @@ def run_silent (cmd):
   """
   Run the given shell command silent.
 
+  It's advisable to give the command with a raw string literal e.g.: r'ps aux'.
+
   :param cmd: command
   :type cmd: str
   :return: return code of the subprocess call
@@ -86,28 +87,18 @@ def run_silent (cmd):
     return None
 
 
-def cleanup_after_ESCAPE ():
+def run_cmd (cmd):
   """
-  Do cleanup.
+  Run a shell command and return the output.
 
-  :return: None
+  It's advisable to give the command with a raw string literal e.g.: r'ps aux'.
+
+  :param cmd: command
+  :type cmd: str
+  :return: output of the command
+  :rtype: str
   """
-
-  def remove_junks ():
-    # Kill remained clickhelper.py/click
-    run_silent("sudo pkill click")
-    # Remove remained veth pairs used in EE
-    veths = Popen(['/bin/sh', '-c', r"ip link show | egrep -o '(uny_\w+)'"],
-                  stdout=PIPE).communicate()[0].split('\n')
-    # only need to del one end of the veth pair
-    for veth in veths[::2]:
-      if veth != '':
-        run_silent("sudo ip link del %s" % veth)
-    # Call Mininet's own cleanup stuff
-    cleanup()
-
-  # Schedule a cleanup as a coop task
-  call_as_coop_task(remove_junks)
+  return Popen(['/bin/sh', '-c', cmd], stdout=PIPE).communicate()[0]
 
 
 def enum (*sequential, **named):

@@ -15,6 +15,7 @@
 Wrapper module for handling emulated test topology based on Mininet.
 """
 
+from mininet.clean import cleanup
 from mininet.link import Link, Intf
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
@@ -23,7 +24,8 @@ from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
-from escape.util.misc import quit_with_error, cleanup_after_ESCAPE
+from escape.util.misc import quit_with_error, run_silent, call_as_coop_task, \
+  run_cmd
 
 
 class AbstractTopology(Topo):
@@ -356,12 +358,28 @@ class ESCAPENetworkBridge(object):
     ..seealso::
       :func:`mininet.clean.cleanup() <mininet.clean.cleanup>`
     """
+
+    def remove_junks ():
+      # Kill remained clickhelper.py/click
+      log.debug("Cleanup any remained click processes...")
+      run_silent(r"sudo pkill click")
+      log.debug("Cleanup any remained veth pairs...")
+      veths = run_cmd(r"ip link show | egrep -o '(uny_\w+)'").split('\n')
+      # only need to del one end of the veth pair
+      for veth in veths[::2]:
+        if veth != '':
+          run_silent(r"sudo ip link del %s" % veth)
+      log.debug("Cleanup any Mininet-specific junk...")
+      # Call Mininet's own cleanup stuff
+      cleanup()
+
     if self.started:
       log.warning(
         "Mininet network is not stopped yet! Skipping cleanup task...")
     else:
-      log.info("Initiate cleanup task after Mininet emulation...")
-      cleanup_after_ESCAPE()
+      log.info("Schedule cleanup task after Mininet emulation...")
+      # Schedule a cleanup as a coop task to aviod threading issues
+      call_as_coop_task(remove_junks)
 
 
 class TopologyBuilderException(Exception):

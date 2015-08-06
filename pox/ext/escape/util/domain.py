@@ -42,7 +42,7 @@ class DomainChangedEvent(Event):
 
     :param domain: domain name. Should be :any:`AbstractDomainAdapter.name`
     :type domain: str
-    :param cause: type of the domain change: :any:`DomainChangedEvent.type`
+    :param cause: type of the domain change: :any:`DomainChangedEvent.TYPE`
     :type cause: str
     :param data: data connected to the change (optional)
     :type data: :any:`NFFG` or str

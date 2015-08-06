@@ -28,7 +28,6 @@ Requirements::
 
   sudo pip install requests
 
-
 Module contents
 ---------------
 
