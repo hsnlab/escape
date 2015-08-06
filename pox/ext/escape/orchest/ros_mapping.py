@@ -45,10 +45,10 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :rtype: :any:`NFFG`
     """
     log.debug(
-      "Invoke mapping algorithm: %s on NF-FG(%s)" % (cls.__name__, graph.id))
+      "Invoke mapping algorithm: %s on NF-FG(%s)" % (cls.__name__, graph.name))
     # TODO - implement algorithm here
     log.debug("Mapping algorithm: %s is finished on NF-FG(%s)" % (
-      cls.__name__, graph.id))
+      cls.__name__, graph.name))
     # for testing return with graph
     return graph
 
@@ -100,9 +100,9 @@ class ResourceOrchestrationMapper(AbstractMapper):
     :rtype: :any:`NFFG`
     """
     log.debug("Request %s to launch orchestration on NF-FG(%s)..." % (
-      self.__class__.__name__, input_graph.id))
+      self.__class__.__name__, input_graph.name))
     # Steps before mapping (optional)
-    log.debug("Request global resource info...")
+    # log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
     # Run actual mapping algorithm
     if self._threaded:
@@ -113,12 +113,13 @@ class ResourceOrchestrationMapper(AbstractMapper):
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
       log.info("NF-FG(%s) orchestration is finished by %s" % (
-        input_graph.id, self.__class__.__name__))
+        input_graph.name, self.__class__.__name__))
     else:
       mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
       # Steps after mapping (optional)
       log.info("NF-FG(%s) orchestration is finished by %s" % (
-        input_graph.id, self.__class__.__name__))
+        input_graph.name, self.__class__.__name__))
+      mapped_nffg.name += "-ros-mapped"
       return mapped_nffg
 
   def _mapping_finished (self, nffg):
@@ -130,4 +131,5 @@ class ResourceOrchestrationMapper(AbstractMapper):
     :return: None
     """
     log.debug("Inform actual layer API that NFFG mapping has been finished...")
+    nffg.name += "-ros-mapped"
     self.raiseEventNoErrors(NFFGMappingFinishedEvent, nffg)

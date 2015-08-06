@@ -8,8 +8,8 @@ Contains components relevant to virtualization of resources and views.
 
 :any:`AbstractVirtualizer` contains the  central logic of Virtualizers.
 
-:any:`ESCAPEVirtualizer` implement the standard virtualization logic of the
-Resource Orchestration Sublayer.
+:any:`DefaultESCAPEVirtualizer` implement the default, no-filter virtualization
+logic of the Resource Orchestration Sublayer.
 
 :any:`MissingGlobalViewEvent` can signal missing global view.
 

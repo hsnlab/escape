@@ -361,9 +361,9 @@ class ESCAPENetworkBridge(object):
 
     def remove_junks ():
       # Kill remained clickhelper.py/click
-      log.debug("Cleanup any remained click processes...")
+      log.debug("Cleanup still-running click process...")
       run_silent(r"sudo pkill click")
-      log.debug("Cleanup any remained veth pairs...")
+      log.debug("Cleanup any remained veth pair...")
       veths = run_cmd(r"ip link show | egrep -o '(uny_\w+)'").split('\n')
       # only need to del one end of the veth pair
       for veth in veths[::2]:

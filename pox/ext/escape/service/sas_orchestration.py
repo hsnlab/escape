@@ -21,6 +21,13 @@ from pox.lib.revent.revent import EventMixin, Event
 from escape.util.mapping import AbstractOrchestrator
 
 
+class MissingVirtualViewEvent(Event):
+  """
+  Event for signaling missing virtual resource view
+  """
+  pass
+
+
 class ServiceOrchestrator(AbstractOrchestrator):
   """
   Main class for the actual Service Graph processing.
@@ -117,13 +124,6 @@ class SGManager(object):
     :rtype: :any:`NFFG`
     """
     return self._service_graphs.get(graph_id, None)
-
-
-class MissingVirtualViewEvent(Event):
-  """
-  Event for signaling missing virtual resource view
-  """
-  pass
 
 
 class VirtualResourceManager(EventMixin):

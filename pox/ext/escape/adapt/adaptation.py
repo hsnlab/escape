@@ -268,7 +268,8 @@ class ControllerAdapter(object):
     :type mapped_nffg: NFFG
     :return: None or internal domain NFFG part
     """
-    log.debug("Invoke %s to install NF-FG" % self.__class__.__name__)
+    log.debug("Invoke %s to install NF-FG(%s)" % (
+      self.__class__.__name__, mapped_nffg.name))
     # TODO - implement
     # TODO - no NFFG split just very dummy cycle
     for name, mgr in self.domains:
@@ -301,12 +302,18 @@ class ControllerAdapter(object):
     pass
 
 
+# Common reference name for the DomainVirtualizer
+DoV = "DoV"
+
+
 class DomainVirtualizer(AbstractVirtualizer):
   """
   Specific Virtualizer class for global domain virtualization.
 
   Implement the same interface as :class:`AbstractVirtualizer
   <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
+
+  Use :any:`NFFG` format to store the global infrastructure info.
   """
 
   def __init__ (self, domainResManager):
@@ -321,21 +328,23 @@ class DomainVirtualizer(AbstractVirtualizer):
     log.debug("Init DomainVirtualizer")
     # Garbage-collector safe
     self.domainResManager = weakref.proxy(domainResManager)
-    self.__global_view = None
+    self.__global_view = None  # as an NFFG
+
+  @property
+  def name (self):
+    return self.__global_view.name if self.__global_view.name is not None \
+      else DoV + "-uninitialized"
 
   def get_resource_info (self):
     """
     Return the global resource info represented this class.
 
-    .. warning::
-      Not implemented yet!
-
     :return: global resource info
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     return self.__global_view
 
-  def set_nffg (self, nffg):
+  def set_global_view (self, nffg):
     """
     Set the copy of given NFFG as the global view of DoV.
 
@@ -345,49 +354,64 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     self.__global_view = nffg.copy()
     self.__global_view.id = "dov-" + self.__global_view.generate_id()
-    self.__global_view.name = "GLOBAL-RES-INFO"
+    self.__global_view.name = "DoV"
+
+  def update_domain_view (self, domain, nffg):
+    """
+    """
+    pass
+
+  def add_domain_view (self, nffg):
+    """
+    """
+    pass
+
+  def update_global_view (self, nffg):
+    pass
 
 
 class DomainResourceManager(object):
   """
-  Handle and store global resources.
+  Handle and store the global resources view.
   """
 
   def __init__ (self):
     """
-    Init
+    Init.
     """
     super(DomainResourceManager, self).__init__()
     log.debug("Init DomainResourceManager")
-    self._dov = DomainVirtualizer(self)
-    self._tracked_domains = set()
+    self.__dov = DomainVirtualizer(self)  # Domain Virtualizer
+    self._tracked_domains = set()  # Cache for detected and stored domains
 
-  @property
-  def dov (self):
+  def get_global_view (self):
     """
     Getter for :class:`DomainVirtualizer`.
 
-    :return: Domain Virtualizer
-    :rtype: ESCAPEVirtualizer
+    :return: global infrastructure view as the Domain Virtualizer
+    :rtype: :any:`DomainVirtualizer`
     """
-    return self._dov
+    return self.__dov
 
   def update_domain_resource (self, domain, nffg):
     """
-    Update global resource database.
+    Update the global view database with the specific domain info.
 
     :param domain: domain name
     :type domain: str
-    :param nffg: domain resource
+    :param nffg: infrastructure info collected from the domain
     :type nffg: :any:`NFFG`
     :return: None
     """
     if domain not in self._tracked_domains:
       log.info("Add %s domain to Global Resource View (DoV)..." % domain)
-      self._dov.set_nffg(nffg)
+      if self._tracked_domains:
+        self.__dov.add_domain_view(nffg)
+      else:
+        self.__dov.set_global_view(nffg)
       self._tracked_domains.add(domain)
     else:
-      log.info("Updating Global Resource View...")
+      log.info("Updating Global Resource View from %s domain..." % domain)
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
-        self._dov.set_nffg(nffg)
+        self.__dov.update_global_view(nffg)

@@ -45,18 +45,18 @@ class InstallNFFGEvent(Event):
 
 class VirtResInfoEvent(Event):
   """
-  Event for sending back requested virtual resource info.
+  Event for sending back requested Virtual view an a specific Virtualizer.
   """
 
-  def __init__ (self, resource_info):
+  def __init__ (self, virtualizer):
     """
     Init
 
-    :param resource_info: virtual resource info
-    :type resource_info: ESCAPEVirtualizer
+    :param virtualizer: virtual resource info
+    :type virtualizer: :any:`DefaultESCAPEVirtualizer`
     """
     super(VirtResInfoEvent, self).__init__()
-    self.resource_info = resource_info
+    self.virtualizer = virtualizer
 
 
 class GetGlobalResInfoEvent(Event):
@@ -239,7 +239,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.getChild('API').info(
       "Received NF-FG from %s layer" % str(event.source._core_name).title())
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
-      self.__class__.__name__, repr.repr(event.nffg)))
+      self.__class__.__name__, event.nffg.name))
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(event.nffg)
     log.getChild('API').debug(
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
@@ -272,13 +272,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Received virtual resource info request from %s layer" % str(
+      "Received Virtual resource info request from %s layer" % str(
         event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
-    view = self.resource_orchestrator.virtualizerManager.get_virtual_view(
+    v = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid)
-    log.getChild('API').debug("Sending back virtual resource info...")
-    self.raiseEventNoErrors(VirtResInfoEvent, view)
+    log.getChild('API').debug("Sending back Virtual resource info...")
+    self.raiseEventNoErrors(VirtResInfoEvent, v)
 
   ##############################################################################
   # UNIFY Or - Ca API functions starts here
@@ -286,7 +286,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _handle_MissingGlobalViewEvent (self, event):
     """
-    Request global resource info from CAS (UNIFY Or - CA API).
+    Request Global infrastructure View from CAS (UNIFY Or - CA API).
 
     Invoked when a :class:`MissingGlobalViewEvent` raised.
 
@@ -300,17 +300,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _handle_GlobalResInfoEvent (self, event):
     """
-    Save requested global resource info as the :class:`DomainVirtualizer`.
+    Save requested Global Infrastructure View as the :class:`DomainVirtualizer`.
 
     :param event: event object contains resource info
     :type event: :any:`GlobalResInfoEvent`
     :return: None
     """
-    log.getChild('API').debug(
-      "Received global resource info from %s layer" % str(
-        event.source._core_name).title())
-    self.resource_orchestrator.virtualizerManager.dov = event.resource_info
-    pass
+    log.getChild('API').debug("Received Global View from %s Layer" % str(
+      event.source._core_name).title())
+    self.resource_orchestrator.virtualizerManager.dov = event.dov
 
   def _handle_InstallationFinishedEvent (self, event):
     """

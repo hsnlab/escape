@@ -394,7 +394,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
   def _get_body (self):
     """
-    Parse HTTP request body in JSON format.
+    Parse HTTP request body as a plain text.
 
     .. note::
 
@@ -406,8 +406,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
 
     GET, DELETE messages don't have body - return empty dict by default.
 
-    :return: request body in JSON format
-    :rtype: dict
+    :return: request body in str format
+    :rtype: str
     """
     charset = 'utf-8'
     # json.loads returns an empty dict if it's called with an empty string

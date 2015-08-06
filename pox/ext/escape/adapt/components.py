@@ -66,7 +66,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     of.name = self.task_name
     # register OpenFlow event listeners
     self.openflow.addListeners(self)
-    log.debug("%s adapter: listening connections..." % self.name)
+    log.debug("%s adapter: Start listening connections..." % self.name)
 
   def filter_connections (self, event):
     """
@@ -562,7 +562,7 @@ class InternalDomainManager(AbstractDomainManager):
     """
     log.info("Install Internal domain part...")
     # TODO - implement
-    self.network.initiate_VNFs(nffg_part=())
+    # self.network.initiate_VNFs(nffg_part=())
     # TODO ...
     self.controller.install_routes(routes=())
 

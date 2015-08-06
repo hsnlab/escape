@@ -28,18 +28,18 @@ from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 
 class GlobalResInfoEvent(Event):
   """
-  Event for sending back requested global resource info.
+  Event for sending back requested Global Resource View.
   """
 
-  def __init__ (self, resource_info):
+  def __init__ (self, dov):
     """
     Init.
 
-    :param resource_info: resource info
-    :type resource_info: :any:`ESCAPEVirtualizer`
+    :param dov: Domain Virtualizer which handles the Global Infrastructure View.
+    :type dov: :any:`DomainVirtualizer`
     """
     super(GlobalResInfoEvent, self).__init__()
-    self.resource_info = resource_info
+    self.dov = dov
 
 
 class InstallationFinishedEvent(Event):
@@ -99,7 +99,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Controller Adaptation Sublayer...")
-    self.ca = ControllerAdapter(self, with_infr=self._with_infr)
+    self.controller_adapter = ControllerAdapter(self, with_infr=self._with_infr)
     if self._mapped_nffg_file:
       self._read_json_from_file(self.mapped_nffg_file)
     log.info("Controller Adaptation Sublayer has been initialized!")
@@ -127,8 +127,8 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.getChild('API').info("Received mapped NF-FG from %s Layer" % str(
       event.source._core_name).title())
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
-      self.__class__.__name__, repr.repr(event.mapped_nffg)))
-    self.ca.install_nffg(event.mapped_nffg)
+      self.__class__.__name__, event.mapped_nffg.name))
+    self.controller_adapter.install_nffg(event.mapped_nffg)
     log.getChild('API').debug(
       "Invoked install_nffg on %s is finished" % self.__class__.__name__)
 
@@ -147,10 +147,11 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.getChild('API').debug(
       "Received global resource info request from %s layer" % str(
         event.source._core_name).title())
-    # Currently global view is a Virtualizer to keep ESCAPE fast
-    log.getChild('API').debug("Sending back global resource info...")
-    self.raiseEventNoErrors(GlobalResInfoEvent,
-                            self.ca.domainResManager.dov)
+    # Currently global view is a reference to the DoV to keep ESCAPE fast
+    dov = self.controller_adapter.domainResManager.get_global_view()
+    log.getChild('API').debug(
+      "Sending back global resource info (%s)..." % dov.name)
+    self.raiseEventNoErrors(GlobalResInfoEvent, dov)
 
   def _handle_DeployEvent (self, event):
     """

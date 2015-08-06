@@ -82,7 +82,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                    "class": "DockerDomainManager"}},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
-                            "TOPO": "escape-mininet.topo",  # relative to ext/
+                            "TOPO": "escape-mn-topo.nffg",  # relative to ext/
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
                                                 "FallbackDynamicTopology"},

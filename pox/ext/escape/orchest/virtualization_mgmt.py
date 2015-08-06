@@ -14,10 +14,21 @@
 """
 Contains components relevant to virtualization of resources and views.
 """
-from escape.util.nffg import NFFG
+if 'DoV' not in globals():
+  try:
+    from escape.adapt.adaptation import DoV
+  except ImportError:
+    DoV = "DoV"
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
 from escape.orchest import log as log
 from pox.lib.revent.revent import EventMixin, Event
+
+
+class MissingGlobalViewEvent(Event):
+  """
+  Event for signaling missing global resource view.
+  """
+  pass
 
 
 class AbstractVirtualizer(object):
@@ -60,29 +71,36 @@ class AbstractVirtualizer(object):
     pass
 
 
-class ESCAPEVirtualizer(AbstractVirtualizer):
+class DefaultESCAPEVirtualizer(AbstractVirtualizer):
   """
   Actual Virtualizer class for ESCAPEv2.
+
+  No filtering, just offer the whole global resource view.
   """
 
-  def __init__ (self):
+  def __init__ (self, global_view):
     """
     Init.
+
+    :param global_view: virtualizer instance represents the global view
+    :type global_view: :any:`virtualizer`
     """
-    super(ESCAPEVirtualizer, self).__init__()
+    super(DefaultESCAPEVirtualizer, self).__init__()
+    # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
+    self.global_view = global_view
 
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource object derived from
     :any:`NFFG`.
 
-    :return: virtual resource info
+    :return: Virtual resource info as an NFFG
     :rtype: :any:`NFFG`
     """
-    # dummy NFFG TODO - implement
-    # deep copy???
-    log.debug("Request virtual resource info...")
-    return self._generate_resource_info()
+    # log.debug("Request virtual resource info...")
+    # Currently we NOT filter the global view just propagate to other layers
+    # and entities intact
+    return self.global_view.get_resource_info()
 
   def sanity_check (self, nffg):
     """
@@ -93,23 +111,7 @@ class ESCAPEVirtualizer(AbstractVirtualizer):
     :return: virtual resource info
     :rtype: :any:`NFFG`
     """
-    return self._generate_resource_info()
-
-  def _generate_resource_info (self):
-    """
-    Private method to return with resource info.
-    """
-    return NFFG()
-
-
-DoV_ID = 'DoV'
-
-
-class MissingGlobalViewEvent(Event):
-  """
-  Event for signaling missing global resource view.
-  """
-  pass
+    return self.global_view.get_resource_info()
 
 
 class VirtualizerManager(EventMixin):
@@ -145,13 +147,13 @@ class VirtualizerManager(EventMixin):
     """
     log.debug("Invoke %s to get global resource" % self.__class__.__name__)
     # If DoV is not set up, need to request from Adaptation layer
-    if DoV_ID not in self._virtualizers:
+    if DoV not in self._virtualizers:
       log.debug("Missing global view! Requesting global resource info...")
       self.raiseEventNoErrors(MissingGlobalViewEvent)
-      if self._virtualizers[DoV_ID] is not None:
+      if self._virtualizers[DoV] is not None:
         log.debug("Got requested global resource info")
     # Return with resource info as a DomainVirtualizer
-    return self._virtualizers.get(DoV_ID, None)
+    return self._virtualizers.get(DoV, None)
 
   @dov.setter
   def dov (self, dov):
@@ -162,7 +164,7 @@ class VirtualizerManager(EventMixin):
     :type dov: :any:`DomainVirtualizer`
     :return: None
     """
-    self._virtualizers[DoV_ID] = dov
+    self._virtualizers[DoV] = dov
 
   @dov.deleter
   def dov (self):
@@ -171,39 +173,39 @@ class VirtualizerManager(EventMixin):
 
     :return: None
     """
-    del self._virtualizers[DoV_ID]
+    del self._virtualizers[DoV]
 
-  def get_virtual_view (self, layer_id):
+  def get_virtual_view (self, virtualizer_id):
     """
-    Return the virtual view as a derived class of :class:`AbstractVirtualizer
+    Return the Virtual View as a derived class of :class:`AbstractVirtualizer
     <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`.
 
-    :param layer_id: layer ID
-    :type layer_id: int
+    :param virtualizer_id: unique id of the requested Virtual view
+    :type virtualizer_id: int or str
     :return: virtual view
-    :rtype: :any:`ESCAPEVirtualizer`
+    :rtype: :any:`DefaultESCAPEVirtualizer`
     """
     log.debug("Invoke %s to get virtual resource view (for layer ID: %s)" % (
-      self.__class__.__name__, layer_id))
+      self.__class__.__name__, virtualizer_id))
     # If this is the first request, need to generate the view
-    if layer_id not in self._virtualizers:
+    if virtualizer_id not in self._virtualizers:
       # Pass the global resource as the DomainVirtualizer
-      self._virtualizers[layer_id] = self._generate_virtual_view(layer_id)
-    return self._virtualizers[layer_id]
+      self._virtualizers[virtualizer_id] = self._generate_virtual_view(
+        virtualizer_id)
+    # Return Virtualizer
+    return self._virtualizers[virtualizer_id]
 
   def _generate_virtual_view (self, layer_id):
     """
-    Generate a missing :class:`ESCAPEVirtualizer` for other layer using global
-    view (DoV) and a given layer id.
+    Generate a missing :class:`DefaultESCAPEVirtualizer` for other layer
+    using global view (DoV) and a given layer id.
 
     :param layer_id: layer ID
     :type layer_id: int
     :return: generated Virtualizer derived from AbstractVirtualizer
-    :rtype: :any:`ESCAPEVirtualizer`
+    :rtype: :any:`DefaultESCAPEVirtualizer`
     """
-    # TODO - implement
-    resource_info = self.dov.get_resource_info()
     log.debug(
-      "Generating virtual resource view for upper layer (layer ID: %s)" %
-      layer_id)
-    return ESCAPEVirtualizer()
+      "Generating Virtualizer for upper layer (layer ID: %s)" % layer_id)
+    # Requesting a reference to DoV and create a simple Virtualizer
+    return DefaultESCAPEVirtualizer(self.dov)

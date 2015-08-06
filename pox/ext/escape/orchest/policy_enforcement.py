@@ -116,7 +116,7 @@ class PolicyEnforcementMetaClass(type):
         else:
           log.warning(
             "Binder class of policy checker function is not a subclass of "
-            "ESCAPEVirtualizer!")
+            "AbstractVirtualizer!")
       else:
         log.warning("Something went wrong during binding Policy checker!")
       log.error("Abort policy enforcement checking!")

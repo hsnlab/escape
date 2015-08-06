@@ -104,7 +104,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
     """
     log.getChild("REST-API").debug("Call REST-API function: sg")
     body = self._get_body()
-    log.getChild("REST-API").debug("Parsed input: %s" % body)
+    log.getChild("REST-API").debug("Parsed input:\n%s" % body)
     sg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     self._proceed_API_call('request_service', sg)
     self.send_acknowledge()
@@ -284,8 +284,8 @@ class ServiceLayerAPI(AbstractAPI):
 
   def _handle_VirtResInfoEvent (self, event):
     """
-    Save requested virtual resource info as an :class:`ESCAPEVirtualizer
-    <escape.orchest.virtualization_mgmt.ESCAPEVirtualizer>`.
+    Save requested virtual resource info as an :class:`DefaultESCAPEVirtualizer
+    <escape.orchest.virtualization_mgmt.DefaultESCAPEVirtualizer>`.
 
     :param event: event object
     :type event: :any:`VirtResInfoEvent`
@@ -294,7 +294,7 @@ class ServiceLayerAPI(AbstractAPI):
     log.getChild('API').debug(
       "Received virtual resource info from %s layer" % str(
         event.source._core_name).title())
-    self.service_orchestrator.virtResManager.virtual_view = event.resource_info
+    self.service_orchestrator.virtResManager.virtual_view = event.virtualizer
 
   def _handle_InstantiationFinishedEvent (self, event):
     if event.success:
