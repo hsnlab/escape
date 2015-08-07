@@ -124,6 +124,16 @@ class NFFG(AbstractNFFG):
   """
   Internal NFFG representation based on networkx.
   """
+  # Some pre-define constant to avoid NFFGModel related class imports
+  DOMAIN_INTERNAL = NodeInfra.DOMAIN_INTERNAL
+  DOMAIN_VIRTUAL = NodeInfra.DOMAIN_VIRTUAL
+  DOMAIN_OS = NodeInfra.DOMAIN_OS
+  DOMAIN_UN = NodeInfra.DOMAIN_UN
+  DOMAIN_DOCKER = NodeInfra.DOMAIN_DOCKER
+  TYPE_INFRA_SW = NodeInfra.TYPE_SDN_SWITCH
+  TYPE_INFRA_EE = NodeInfra.TYPE_EE
+  TYPE_INFRA_STATIC_EE = NodeInfra.TYPE_STATIC_EE
+  TYPE_INFRA_BISBIS = NodeInfra.TYPE_BISBIS
 
   def __init__ (self, id=None, name=None, version="1.0"):
     """
@@ -651,16 +661,16 @@ def generate_mn_topo ():
   nffg = NFFG(id="INTERNAL", name="Internal-Mininet-Topology")
   # Add environments
   # TODO - define supported types (that's only need to the orchestration)
-  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain="INTERNAL",
+  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0,
                        delay=0, bandwidth=0)
-  ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain="INTERNAL",
+  ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0,
                        delay=0, bandwidth=0)
   # Add OVS switches
-  sw3 = nffg.add_infra(id="SW3", name="switch-3", domain="INTERNAL",
+  sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NodeInfra.TYPE_SDN_SWITCH)
-  sw4 = nffg.add_infra(id="SW4", name="switch-4", domain="INTERNAL",
+  sw4 = nffg.add_infra(id="SW4", name="switch-4", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NodeInfra.TYPE_SDN_SWITCH)
   # Add SAPs
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
@@ -683,15 +693,15 @@ def generate_mn_topo ():
 
 def generate_dynamic_fallback_nffg ():
   nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
-  nc1 = nffg.add_infra(id="nc1", name="NC1", domain="INTERNAL",
+  nc1 = nffg.add_infra(id="nc1", name="NC1", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
-  nc2 = nffg.add_infra(id="nc2", name="NC2", domain="INTERNAL",
+  nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
-  s3 = nffg.add_infra(id="s3", name="S3", domain="INTERNAL",
+  s3 = nffg.add_infra(id="s3", name="S3", domain=NFFG.DOMAIN_INTERNAL,
                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
-  s4 = nffg.add_infra(id="s4", name="S4", domain="INTERNAL",
+  s4 = nffg.add_infra(id="s4", name="S4", domain=NFFG.DOMAIN_INTERNAL,
                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
   sap2 = nffg.add_sap(id="sap2", name="SAP2")
@@ -709,13 +719,13 @@ def generate_dynamic_fallback_nffg ():
 
 def generate_static_fallback_topo ():
   nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
-  s1 = nffg.add_infra(id="s1", name="S1", domain="INTERNAL",
+  s1 = nffg.add_infra(id="s1", name="S1", domain=NFFG.DOMAIN_INTERNAL,
                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
-  s2 = nffg.add_infra(id="s2", name="S2", domain="INTERNAL",
+  s2 = nffg.add_infra(id="s2", name="S2", domain=NFFG.DOMAIN_INTERNAL,
                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
-  s3 = nffg.add_infra(id="s3", name="S3", domain="INTERNAL",
+  s3 = nffg.add_infra(id="s3", name="S3", domain=NFFG.DOMAIN_INTERNAL,
                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
-  s4 = nffg.add_infra(id="s4", name="S4", domain="INTERNAL",
+  s4 = nffg.add_infra(id="s4", name="S4", domain=NFFG.DOMAIN_INTERNAL,
                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
   sap2 = nffg.add_sap(id="sap2", name="SAP2")

@@ -429,7 +429,7 @@ class Port(Element):
         "Port's properties attribute must be iterable or a string!")
 
   @property
-  def node(self):
+  def node (self):
     return self.__node()
 
   def add_property (self, property):
@@ -605,14 +605,17 @@ class NodeInfra(Node):
   """
   Class for infrastructure nodes in the NF-FG.
   """
-  # Default Infrastructure Node type
-  TYPE_DEFAULT_INFRA = 0
   # Defined Infra types
+  TYPE_BISBIS = "BisBis"
   TYPE_EE = "EE"  # default Execution Environment with NETCONF
   TYPE_STATIC_EE = "STATIC"  # Static EE probably will never use
   TYPE_SDN_SWITCH = "SDN-SWITCH"  # Common OVS switch - can't run NF
-  # Default domain type
-  DEFAULT_INFRA_DOMAIN = None
+  # Defined domain type
+  DOMAIN_VIRTUAL = "VIRTUAL"
+  DOMAIN_INTERNAL = "INTERNAL"
+  DOMAIN_OS = "OPENSTACK"
+  DOMAIN_UN = "UNIFIED_NODE"
+  DOMAIN_DOCKER = "DOCKER"
 
   def __init__ (self, id=None, name=None, domain=None, infra_type=None,
        supported=None, res=None):
@@ -630,9 +633,9 @@ class NodeInfra(Node):
     :return: None
     """
     super(NodeInfra, self).__init__(id=id, type=Node.INFRA, name=name)
-    self.domain = domain if domain is not None else self.DEFAULT_INFRA_DOMAIN
+    self.domain = domain if domain is not None else self.DOMAIN_VIRTUAL
     self.infra_type = infra_type if infra_type is not None else \
-      self.TYPE_DEFAULT_INFRA
+      self.TYPE_BISBIS
     # Set supported types according to given param type
     if isinstance(supported, (str, unicode)):
       self.supported = [str(supported), ]
@@ -709,7 +712,7 @@ class NodeInfra(Node):
       infra_port = self.add_port(id=port['id'], properties=port.get('property'))
       for flowrule in port.get('flowrules', ()):
         infra_port.flowrules.append(Flowrule.parse(flowrule))
-    self.domain = data.get('domain', self.DEFAULT_INFRA_DOMAIN)  # optional
+    self.domain = data.get('domain', self.DOMAIN_VIRTUAL)  # optional
     self.infra_type = data['type']
     if 'supported' in data:
       self.supported = data['supported']
