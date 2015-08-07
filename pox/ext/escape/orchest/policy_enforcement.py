@@ -176,8 +176,8 @@ class PolicyEnforcement(object):
     virtualizer = args[0]
     nffg = args[1]
     # TODO - implement
-    log.debug("PolicyEnforcement: sanity_check NF-FG(%s) <--> %s [OK]" % (
-      nffg.id, repr.repr(virtualizer)))
+    log.debug("PolicyEnforcement: sanity_check NFFG(%s) <--> %s [OK]" % (
+      nffg, repr.repr(virtualizer)))
 
   @classmethod
   def post_sanity_check (cls, args, kwargs, ret_value):
@@ -194,5 +194,5 @@ class PolicyEnforcement(object):
     virtualizer = args[0]
     nffg = args[1]
     # TODO - implement
-    log.debug("PolicyEnforcement: sanity_check NF-FG(%s) <--> %s [OK]" % (
-      nffg.id, repr.repr(virtualizer)))
+    log.debug("PolicyEnforcement: sanity_check NFFG(%s) <--> %s [OK]" % (
+      nffg, repr.repr(virtualizer)))

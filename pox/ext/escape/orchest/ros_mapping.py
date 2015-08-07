@@ -45,10 +45,12 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :rtype: :any:`NFFG`
     """
     log.debug(
-      "Invoke mapping algorithm: %s on NF-FG(%s)" % (cls.__name__, graph.name))
+      "Invoke mapping algorithm: %s on NF-FG: %s" % (cls.__name__, graph))
     # TODO - implement algorithm here
-    log.debug("Mapping algorithm: %s is finished on NF-FG(%s)" % (
-      cls.__name__, graph.name))
+    graph = graph.copy()
+    graph.name += "-ros-mapped"
+    log.debug(
+      "Mapping algorithm: %s is finished on NF-FG: %s" % (cls.__name__, graph))
     # for testing return with graph
     return graph
 
@@ -99,8 +101,8 @@ class ResourceOrchestrationMapper(AbstractMapper):
     :return: mapped Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
-    log.debug("Request %s to launch orchestration on NF-FG(%s)..." % (
-      self.__class__.__name__, input_graph.name))
+    log.debug("Request %s to launch orchestration on NF-FG: %s..." % (
+      self.__class__.__name__, input_graph))
     # Steps before mapping (optional)
     # log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
@@ -112,14 +114,13 @@ class ResourceOrchestrationMapper(AbstractMapper):
         self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
-      log.info("NF-FG(%s) orchestration is finished by %s" % (
-        input_graph.name, self.__class__.__name__))
+      log.info("NF-FG: %s orchestration is finished by %s" % (
+        input_graph, self.__class__.__name__))
     else:
       mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
       # Steps after mapping (optional)
-      log.info("NF-FG(%s) orchestration is finished by %s" % (
-        input_graph.name, self.__class__.__name__))
-      mapped_nffg.name += "-ros-mapped"
+      log.info("NF-FG: %s orchestration is finished by %s" % (
+        input_graph, self.__class__.__name__))
       return mapped_nffg
 
   def _mapping_finished (self, nffg):
@@ -131,5 +132,4 @@ class ResourceOrchestrationMapper(AbstractMapper):
     :return: None
     """
     log.debug("Inform actual layer API that NFFG mapping has been finished...")
-    nffg.name += "-ros-mapped"
     self.raiseEventNoErrors(NFFGMappingFinishedEvent, nffg)

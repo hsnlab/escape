@@ -14,6 +14,8 @@
 """
 Contains components relevant to virtualization of resources and views.
 """
+from escape.util.nffg import NFFG
+
 if 'DoV' not in globals():
   try:
     from escape.adapt.adaptation import DoV
@@ -39,11 +41,21 @@ class AbstractVirtualizer(object):
   """
   __metaclass__ = PolicyEnforcementMetaClass
 
-  def __init__ (self):
+  def __init__ (self, id):
     """
     Init.
+
+    :param id: id of the assigned entity
+    :type: id: str
     """
     super(AbstractVirtualizer, self).__init__()
+    self.id = id
+
+  def __str__ (self):
+    return "Virtualizer(assigned=%s)" % self.id
+
+  def __repr__ (self):
+    return super(AbstractVirtualizer, self).__repr__()
 
   def get_resource_info (self):
     """
@@ -71,21 +83,24 @@ class AbstractVirtualizer(object):
     pass
 
 
-class DefaultESCAPEVirtualizer(AbstractVirtualizer):
+class GlobalViewVirtualizer(AbstractVirtualizer):
   """
-  Actual Virtualizer class for ESCAPEv2.
+  Virtualizer class for experimenting and testing.
 
   No filtering, just offer the whole global resource view.
   """
 
-  def __init__ (self, global_view):
+  def __init__ (self, global_view, id):
     """
     Init.
 
     :param global_view: virtualizer instance represents the global view
-    :type global_view: :any:`virtualizer`
+    :type global_view: :any:`DomainVirtualizer`
+    :param id: id of the assigned entity
+    :type: id: str
     """
-    super(DefaultESCAPEVirtualizer, self).__init__()
+    log.debug("Initiate unfiltered/global Virtual View")
+    super(GlobalViewVirtualizer, self).__init__(id=id)
     # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
     self.global_view = global_view
 
@@ -102,16 +117,67 @@ class DefaultESCAPEVirtualizer(AbstractVirtualizer):
     # and entities intact
     return self.global_view.get_resource_info()
 
-  def sanity_check (self, nffg):
+
+class OneBisBisVirtualizer(AbstractVirtualizer):
+  """
+  Actual Virtualizer class for ESCAPEv2.
+
+  Default virtualizer class which offer the trivial one BisBis view.
+  """
+
+  def __init__ (self, global_view, id):
     """
-    Placeholder method for policy checking.
+    Init.
 
-    Return the virtual resource info for the post checker function.
+    :param global_view: virtualizer instance represents the global view
+    :type global_view: :any:`DomainVirtualizer`
+    :param id: id of the assigned entity
+    :type: id: str
+    """
+    log.debug("Initiate default 1-BisBis Virtual View")
+    super(OneBisBisVirtualizer, self).__init__(id=id)
+    # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
+    self.global_view = global_view
+    self.__resource_cache = None
 
-    :return: virtual resource info
+  def get_resource_info (self):
+    """
+    Hides object's mechanism and return with a resource object derived from
+    :any:`NFFG`.
+
+    :return: Virtual resource info as an NFFG
     :rtype: :any:`NFFG`
     """
-    return self.global_view.get_resource_info()
+    # log.debug("Request virtual resource info...")
+    # Currently we NOT filter the global view just propagate to other layers
+    # and entities intact
+    if self.__resource_cache is None:
+      self.__resource_cache = self._generate_one_bisbis()
+    return self.__resource_cache
+
+  def _generate_one_bisbis (self):
+    """
+    Generate trivial virtual topology a.k.a 1 BisBis.
+
+    :return: 1 Bisbis topo
+    :rtype: :any:`NFFG`
+    """
+    oneBisBis = NFFG(id="1BisBis", name="One-BisBis-view")
+    bb = oneBisBis.add_infra(id="BisBis", name="BisBis",
+                             domain=NFFG.DOMAIN_VIRTUAL,
+                             infra_type=NFFG.TYPE_INFRA_BISBIS)
+    # FIXME - very basic heuristic for virtual resource definition
+    bb.resources.cpu = min({infra.resources.cpu for infra in
+                            self.global_view.get_resource_info().infras})
+    bb.resources.mem = min({infra.resources.cpu for infra in
+                            self.global_view.get_resource_info().infras})
+    bb.resources.storage = min({infra.resources.cpu for infra in
+                                self.global_view.get_resource_info().infras})
+    bb.resources.delay = min({infra.resources.cpu for infra in
+                              self.global_view.get_resource_info().infras})
+    bb.resources.bandwidth = min({infra.resources.cpu for infra in
+                                  self.global_view.get_resource_info().infras})
+    return oneBisBis
 
 
 class VirtualizerManager(EventMixin):
@@ -145,13 +211,14 @@ class VirtualizerManager(EventMixin):
     :return: Domain Virtualizer (DoV)
     :rtype: :any:`DomainVirtualizer`
     """
-    log.debug("Invoke %s to get global resource" % self.__class__.__name__)
+    log.debug("Invoke %s to get Global Resource View" % self.__class__.__name__)
     # If DoV is not set up, need to request from Adaptation layer
     if DoV not in self._virtualizers:
-      log.debug("Missing global view! Requesting global resource info...")
+      log.debug("Missing Global Resource View! Requesting the View now...")
       self.raiseEventNoErrors(MissingGlobalViewEvent)
       if self._virtualizers[DoV] is not None:
-        log.debug("Got requested global resource info")
+        log.debug(
+          "Got requested Global Resource View: %s" % self._virtualizers[DoV])
     # Return with resource info as a DomainVirtualizer
     return self._virtualizers.get(DoV, None)
 
@@ -183,9 +250,9 @@ class VirtualizerManager(EventMixin):
     :param virtualizer_id: unique id of the requested Virtual view
     :type virtualizer_id: int or str
     :return: virtual view
-    :rtype: :any:`DefaultESCAPEVirtualizer`
+    :rtype: :any:`AbstractVirtualizer`
     """
-    log.debug("Invoke %s to get virtual resource view (for layer ID: %s)" % (
+    log.debug("Invoke %s to get Virtual View (for layer ID: %s)" % (
       self.__class__.__name__, virtualizer_id))
     # If this is the first request, need to generate the view
     if virtualizer_id not in self._virtualizers:
@@ -195,17 +262,17 @@ class VirtualizerManager(EventMixin):
     # Return Virtualizer
     return self._virtualizers[virtualizer_id]
 
-  def _generate_virtual_view (self, layer_id):
+  def _generate_virtual_view (self, id):
     """
-    Generate a missing :class:`DefaultESCAPEVirtualizer` for other layer
+    Generate a missing :class:`OneBisBisVirtualizer` for other layer
     using global view (DoV) and a given layer id.
 
-    :param layer_id: layer ID
-    :type layer_id: int
+    :param id: layer ID
+    :type id: int
     :return: generated Virtualizer derived from AbstractVirtualizer
-    :rtype: :any:`DefaultESCAPEVirtualizer`
+    :rtype: :any:`OneBisBisVirtualizer`
     """
-    log.debug(
-      "Generating Virtualizer for upper layer (layer ID: %s)" % layer_id)
-    # Requesting a reference to DoV and create a simple Virtualizer
-    return DefaultESCAPEVirtualizer(self.dov)
+    log.debug("Generating Virtualizer for upper layer (layer ID: %s)" % id)
+    # Requesting a reference to DoV and create the trivial 1 Bis-Bis virtual
+    # view
+    return OneBisBisVirtualizer(self.dov, id)

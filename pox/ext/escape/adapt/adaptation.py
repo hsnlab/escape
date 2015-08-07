@@ -324,16 +324,22 @@ class DomainVirtualizer(AbstractVirtualizer):
     :type domainResManager: DomainResourceManager
     :return: None
     """
-    super(DomainVirtualizer, self).__init__()
+    super(DomainVirtualizer, self).__init__(id=None)
     log.debug("Init DomainVirtualizer")
     # Garbage-collector safe
     self.domainResManager = weakref.proxy(domainResManager)
-    self.__global_view = None  # as an NFFG
+    self.__global_nffg = None  # as an NFFG
 
   @property
   def name (self):
-    return self.__global_view.name if self.__global_view.name is not None \
+    return self.__global_nffg.name if self.__global_nffg.name is not None \
       else DoV + "-uninitialized"
+
+  def __str__ (self):
+    return "DoV(name=%s)" % self.name
+
+  def __repr__ (self):
+    return super(DomainVirtualizer, self).__repr__()
 
   def get_resource_info (self):
     """
@@ -342,7 +348,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: global resource info
     :rtype: :any:`NFFG`
     """
-    return self.__global_view
+    return self.__global_nffg
 
   def set_global_view (self, nffg):
     """
@@ -352,9 +358,9 @@ class DomainVirtualizer(AbstractVirtualizer):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    self.__global_view = nffg.copy()
-    self.__global_view.id = "dov-" + self.__global_view.generate_id()
-    self.__global_view.name = "DoV"
+    self.__global_nffg = nffg.copy()
+    self.__global_nffg.id = "dov-" + self.__global_nffg.generate_id()
+    self.__global_nffg.name = "DoV"
 
   def update_domain_view (self, domain, nffg):
     """

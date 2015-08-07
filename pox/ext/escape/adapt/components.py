@@ -515,7 +515,7 @@ class InternalDomainManager(AbstractDomainManager):
       log.info("Updating resource information from %s domain..." % self.name)
       topo_nffg = self.network.get_topology_description()
       if topo_nffg:
-        log.debug("Set received NFFG(name: %s)..." % topo_nffg.name)
+        log.debug("Set received NF-FG: %s..." % topo_nffg)
         self.topology = topo_nffg
         self.raiseEventNoErrors(DomainChangedEvent, domain=self.name,
                                 cause=DomainChangedEvent.TYPE.NETWORK_UP,
@@ -560,7 +560,7 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    log.info("Install Internal domain part...")
+    log.info("Install %s domain part..." % self.name)
     # TODO - implement
     # self.network.initiate_VNFs(nffg_part=())
     # TODO ...

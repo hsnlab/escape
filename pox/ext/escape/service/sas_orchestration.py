@@ -67,7 +67,8 @@ class ServiceOrchestrator(AbstractOrchestrator):
     :return: NF-FG description
     :rtype: :any:`NFFG`
     """
-    log.debug("Invoke %s to initiate SG" % self.__class__.__name__)
+    log.debug(
+      "Invoke %s to initiate SG(id=%s)" % (self.__class__.__name__, sg.id))
     # Store newly created SG
     self.sgManager.save(sg)
     # Get virtual resource info as a Virtualizer
@@ -109,9 +110,10 @@ class SGManager(object):
     :return: computed id of given Service Graph
     :rtype: int
     """
-    self._service_graphs[sg.id] = sg
-    log.debug(
-      "SG is saved by %s with id: %s" % (self.__class__.__name__, sg.id))
+    sg_id = self._generate_id(sg)
+    self._service_graphs[sg_id] = sg
+    log.debug("SG: %s is saved by %s with id: %s" % (
+      sg, self.__class__.__name__, sg_id))
     return sg.id
 
   def get (self, graph_id):
@@ -124,6 +126,25 @@ class SGManager(object):
     :rtype: :any:`NFFG`
     """
     return self._service_graphs.get(graph_id, None)
+
+  def _generate_id (self, sg):
+    """
+    Try to generate a unique id for SG.
+
+    :param sg: SG
+    :type sg: :nay:`NFFG`
+    """
+    tmp = sg.id if sg.id is not None else id(sg)
+    if tmp in self._service_graphs:
+      tmp = len(self._service_graphs)
+      if tmp in self._service_graphs:
+        for i in xrange(100):
+          tmp += i
+          if tmp not in self._service_graphs:
+            return tmp
+        else:
+          raise RuntimeError("Can't be able to generate a unique id!")
+    return tmp
 
 
 class VirtualResourceManager(EventMixin):
@@ -160,12 +181,12 @@ class VirtualResourceManager(EventMixin):
     :return: resource info as a Virtualizer
     :rtype: :any:`AbstractVirtualizer`
     """
-    log.debug("Invoke %s to get virtual resource" % self.__class__.__name__)
+    log.debug("Invoke %s to get the Virtual View" % self.__class__.__name__)
     if not self._virtual_view:
-      log.debug("Missing virtual view! Requesting virtual resource info...")
+      log.debug("Missing Virtual View! Requesting Virtual View now...")
       self.raiseEventNoErrors(MissingVirtualViewEvent)
       if self._virtual_view is not None:
-        log.debug("Got requested virtual resource info")
+        log.debug("Got requested Virtual View: %s" % self._virtual_view)
     return self._virtual_view
 
   @virtual_view.setter

@@ -15,7 +15,6 @@
 Implements the platform and POX dependent logic for the Controller Adaptation
 Sublayer.
 """
-import repr
 
 from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
@@ -47,9 +46,10 @@ class InstallationFinishedEvent(Event):
   Event for signalling end of mapping process.
   """
 
-  def __init__ (self, success, error=None):
+  def __init__ (self, id, result, error=None):
     super(InstallationFinishedEvent, self).__init__()
-    self.success = success
+    self.id = id
+    self.result = result
     self.error = error
 
 
@@ -124,13 +124,20 @@ class ControllerAdaptationAPI(AbstractAPI):
     :type event: :any:`InstallNFFGEvent`
     :return: None
     """
-    log.getChild('API').info("Received mapped NF-FG from %s Layer" % str(
-      event.source._core_name).title())
+    log.getChild('API').info("Received mapped NF-FG: %s from %s Layer" % (
+      event.mapped_nffg, str(event.source._core_name).title()))
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, event.mapped_nffg.name))
-    self.controller_adapter.install_nffg(event.mapped_nffg)
+    try:
+      self.controller_adapter.install_nffg(event.mapped_nffg)
+    except Exception as e:
+      log.error("Something went wrong during NFFG installation!")
+      log.error(e)
+      self.raiseEventNoErrors(InstallationFinishedEvent, result=False, error=e)
     log.getChild('API').debug(
       "Invoked install_nffg on %s is finished" % self.__class__.__name__)
+    self.raiseEventNoErrors(InstallationFinishedEvent, id=event.mapped_nffg.id,
+                            result=True)
 
   ##############################################################################
   # UNIFY ( Ca - ) Co - Rm API functions starts here
@@ -145,12 +152,11 @@ class ControllerAdaptationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Received global resource info request from %s layer" % str(
+      "Received Global Resource View request from %s layer" % str(
         event.source._core_name).title())
     # Currently global view is a reference to the DoV to keep ESCAPE fast
     dov = self.controller_adapter.domainResManager.get_global_view()
-    log.getChild('API').debug(
-      "Sending back global resource info (%s)..." % dov.name)
+    log.getChild('API').debug("Sending back Global Resource View: %s..." % dov)
     self.raiseEventNoErrors(GlobalResInfoEvent, dov)
 
   def _handle_DeployEvent (self, event):

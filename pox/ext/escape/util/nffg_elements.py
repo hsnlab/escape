@@ -1297,10 +1297,10 @@ def test_parse_load ():
   nffg.edge_sg_nexthops.append(edge_sg)
   nffg.edge_reqs.append(edge_req)
   data = nffg.dump()
-  print "\nGenerated NFFG:"
+  print "\nGenerated NF-FG:"
   print data
   nffg2 = NFFGModel.parse(data)
-  print "\nParsed NFFG:"
+  print "\nParsed NF-FG:"
   print nffg2.dump()
   return nffg
 

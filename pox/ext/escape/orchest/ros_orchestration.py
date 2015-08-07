@@ -102,11 +102,30 @@ class NFFGManager(object):
     :return: generated ID of given NF-FG
     :rtype: int
     """
-    nffg.id = len(self._nffgs)
-    self._nffgs[nffg.id] = nffg
-    log.debug(
-      "NF-FG is saved by %s with id: %s" % (self.__class__.__name__, nffg.id))
+    nffg_id = self._generate_id(nffg)
+    self._nffgs[nffg_id] = nffg
+    log.debug("NF-FG: %s is saved by %s with id: %s" % (
+      nffg, self.__class__.__name__, nffg_id))
     return nffg.id
+
+  def _generate_id (self, nffg):
+    """
+    Try to generate a unique id for NFFG.
+
+    :param nffg: NFFG
+    :type nffg: :nay:`NFFG`
+    """
+    tmp = nffg.id if nffg.id is not None else id(nffg)
+    if tmp in self._nffgs:
+      tmp = len(self._nffgs)
+      if tmp in self._nffgs:
+        for i in xrange(100):
+          tmp += i
+          if tmp not in self._nffgs:
+            return tmp
+        else:
+          raise RuntimeError("Can't be able to generate a unique id!")
+    return tmp
 
   def get (self, nffg_id):
     """

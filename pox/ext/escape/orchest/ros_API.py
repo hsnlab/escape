@@ -15,7 +15,6 @@
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
-import repr
 
 from escape import CONFIG
 from escape.orchest.ros_orchestration import ResourceOrchestrator
@@ -53,7 +52,7 @@ class VirtResInfoEvent(Event):
     Init
 
     :param virtualizer: virtual resource info
-    :type virtualizer: :any:`DefaultESCAPEVirtualizer`
+    :type virtualizer: :any:`AbstractVirtualizer`
     """
     super(VirtResInfoEvent, self).__init__()
     self.virtualizer = virtualizer
@@ -71,9 +70,10 @@ class InstantiationFinishedEvent(Event):
   Event for signalling end of mapping process finished with success.
   """
 
-  def __init__ (self, success, error=None):
+  def __init__ (self, id, result, error=None):
     super(InstantiationFinishedEvent, self).__init__()
-    self.success = success
+    self.id = id
+    self.result = result
     self.error = error
 
 
@@ -236,8 +236,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`InstantiateNFFGEvent`
     :return: None
     """
-    log.getChild('API').info(
-      "Received NF-FG from %s layer" % str(event.source._core_name).title())
+    log.getChild('API').info("Received NF-FG: %s from %s layer" % (
+      event.nffg, str(event.source._core_name).title()))
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, event.nffg.name))
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(event.nffg)
@@ -261,7 +261,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Sending NF-FG to Adaptation layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
-    log.getChild('API').info("Mapped NF-FG has been sent to Adaptation...")
+    log.getChild('API').info(
+      "Mapped NF-FG: %s has been sent to Adaptation..." % mapped_nffg)
 
   def _handle_GetVirtResInfoEvent (self, event):
     """
@@ -272,12 +273,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Received Virtual resource info request from %s layer" % str(
+      "Received Virtual View request from %s layer" % str(
         event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
     v = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid)
-    log.getChild('API').debug("Sending back Virtual resource info...")
+    log.getChild('API').debug("Sending back Virtual View: %s..." % v)
     self.raiseEventNoErrors(VirtResInfoEvent, v)
 
   ##############################################################################
@@ -295,7 +296,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Send global resource info request to Adaptation layer...")
+      "Send Global Resource View request to Adaptation layer...")
     self.raiseEventNoErrors(GetGlobalResInfoEvent)
 
   def _handle_GlobalResInfoEvent (self, event):
@@ -306,8 +307,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`GlobalResInfoEvent`
     :return: None
     """
-    log.getChild('API').debug("Received Global View from %s Layer" % str(
-      event.source._core_name).title())
+    log.getChild('API').debug(
+      "Received Global Resource View from %s Layer" % str(
+        event.source._core_name).title())
     self.resource_orchestrator.virtualizerManager.dov = event.dov
 
   def _handle_InstallationFinishedEvent (self, event):
@@ -318,10 +320,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`InstallationFinishedEvent`
     :return: None
     """
-    if event.success:
+    if event.result:
       log.getChild('API').info(
         "NF-FG instantiation has been finished successfully!")
     else:
       log.getChild('API').info(
         "NF-FG instantiation has been finished with error: %s" % event.error)
-    self.raiseEventNoErrors(InstantiationFinishedEvent, event.success)
+    self.raiseEventNoErrors(InstantiationFinishedEvent, id=event.id,
+                            result=event.result)

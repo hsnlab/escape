@@ -188,6 +188,65 @@ class AbstractAPI(EventMixin):
       [(f, type(getattr(self, f))) for f in dir(self) if not f.startswith('_')])
 
 
+class RequestCache(object):
+  """
+  Store HTTP request states.
+  """
+  # State constants
+  UNKNOWN = "UNKNOWN"
+  INITIATED = "INITIATED"
+  IN_PROGRESS = "IN_PROGRESS"
+  SUCCESS = "SUCCESS"
+  ERROR = "ERROR"
+
+  def __init__ (self):
+    super(RequestCache, self).__init__()
+    self.cache = dict()
+
+  def add_request (self, id):
+    """
+    Add a request to the cache.
+
+    :param id: request id
+    :type id: str or int
+    """
+    self.cache[id] = self.INITIATED
+
+  def set_in_progress (self, id):
+    """
+    Set the result of the request given by the ``id``.
+
+    :param id: request id
+    :type id: str or int
+    """
+    try:
+      self.cache[id] = self.IN_PROGRESS
+    except:
+      pass
+
+  def set_result (self, id, result):
+    """
+    Set the result of the request given by the ``id``.
+
+    :param id: request id
+    :type id: str or int
+    :param result: the result
+    :type result: bool
+    """
+    try:
+      self.cache[id] = self.SUCCESS if result else self.ERROR
+    except:
+      pass
+
+  def get_result (self, id):
+    """
+    """
+    try:
+      return self.cache[id]
+    except:
+      return self.UNKNOWN
+
+
 class RESTServer(HTTPServer, ThreadingMixIn):
   """
   Base HTTP server for RESTful API.
@@ -212,6 +271,7 @@ class RESTServer(HTTPServer, ThreadingMixIn):
     self._thread = threading.Thread(target=self.run)
     self._thread.daemon = True
     self.started = False
+    self.request_cache = RequestCache()
 
   def start (self):
     """

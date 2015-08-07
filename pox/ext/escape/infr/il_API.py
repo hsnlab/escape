@@ -110,9 +110,10 @@ class InfrastructureLayerAPI(AbstractAPI):
     :param event:event object
     :return: :any:`DeployNFFGEvent`
     """
-    log.getChild('API').info("Received mapped NF-FG from %s Layer" % str(
-      event.source._core_name).title())
+    log.getChild('API').info("Received mapped NF-FG: %s from %s Layer" % (
+      event.nffg_part, str(event.source._core_name).title()))
     # TODO - implement static deployment
     # TODO - probably will not be supported in the future
-    log.getChild('API').info("NF-FG deployment has been finished successfully!")
+    log.getChild('API').info(
+      "NF-FG: %s deployment has been finished successfully!" % event.nffg_part)
     self.raiseEventNoErrors(DeploymentFinishedEvent, True)

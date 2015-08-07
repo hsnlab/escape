@@ -183,6 +183,13 @@ class NFFG(AbstractNFFG):
     return (link for s, d, link in self.network.edges_iter(data=True) if
             link.type == Link.REQUIREMENT)
 
+  def __str__ (self):
+    return "NFFG(id=%s name=%s, version=%s)" % (
+      self.id, self.name, self.version)
+
+  def __repr__ (self):
+    return super(NFFG, self).__repr__()
+
   ##############################################################################
   # Builder design pattern related functions
   ##############################################################################
@@ -646,12 +653,12 @@ def test_NFFG ():
     print hop
 
   # Parse NFFG
-  print "\nParsed NFFG:"
+  print "\nParsed NF-FG:"
   print NFFG.parse(nffg_dump).dump()
 
   # Copy test
 
-  print "Copied NFFG:"
+  print "Copied NF-FG:"
   # pprint(nffg.copy().network.__dict__)
   pprint(copy.deepcopy(nffg).network.__dict__)
 

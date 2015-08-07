@@ -16,7 +16,6 @@ Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer.
 """
 import json
-import repr
 
 from escape import __project__, __version__, CONFIG
 from escape.service import LAYER_NAME
@@ -77,7 +76,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {'GET': ('echo', 'version', 'operations'),
-                  'POST': ('echo', 'sg'), 'PUT': ('echo',), 'DELETE': ('echo',)}
+                  'POST': ('echo', 'result', 'sg'), 'PUT': ('echo',),
+                  'DELETE': ('echo',)}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'service'
@@ -95,19 +95,6 @@ class ServiceRequestHandler(AbstractRequestHandler):
     params = json.loads(self._get_body())
     self.log_full_message("ECHO: %s - %s", self.raw_requestline, params)
     self._send_json_response(params, rpc="echo")
-
-  def sg (self):
-    """
-    Main API function for Service Graph initiation
-
-    Bounded to POST HTTP verb
-    """
-    log.getChild("REST-API").debug("Call REST-API function: sg")
-    body = self._get_body()
-    log.getChild("REST-API").debug("Parsed input:\n%s" % body)
-    sg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    self._proceed_API_call('request_service', sg)
-    self.send_acknowledge()
 
   def version (self):
     """
@@ -127,6 +114,32 @@ class ServiceRequestHandler(AbstractRequestHandler):
     log.getChild("REST-API").debug("Call REST-API function: operations")
     self._send_json_response(self.request_perm)
 
+  def result (self):
+    """
+    Return the result of a request given by the id.
+    """
+    params = json.loads(self._get_body())
+    try:
+      id = params["id"]
+    except:
+      id = None
+    res = self._proceed_API_call('get_result', id)
+    self._send_json_response({'id': id, 'result': res})
+
+  def sg (self):
+    """
+    Main API function for Service Graph initiation
+
+    Bounded to POST HTTP verb
+    """
+    log.getChild("REST-API").debug("Called REST-API function: sg")
+    body = self._get_body()
+    log.getChild("REST-API").debug("Request body:\n%s" % body)
+    sg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    log.getChild("REST-API").debug("Parsed service request: %s" % sg)
+    self._proceed_API_call('request_service', sg)
+    self.send_acknowledge()
+
 
 class ServiceLayerAPI(AbstractAPI):
   """
@@ -138,6 +151,8 @@ class ServiceLayerAPI(AbstractAPI):
   """
   # Define specific name for core object as pox.core.<_core_name>
   _core_name = LAYER_NAME
+  # Layer id constant
+  LAYER_ID = "ESCAPE-" + LAYER_NAME
   # Events raised by this class
   _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent}
   # Dependencies
@@ -158,7 +173,7 @@ class ServiceLayerAPI(AbstractAPI):
       :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Service Layer...")
-    self.__sid = hash(self)
+    self.__sid = self.LAYER_ID
     # Set element manager
     self.elementManager = ClickManager()
     # Init central object of Service layer
@@ -235,14 +250,27 @@ class ServiceLayerAPI(AbstractAPI):
     :type sg: :any:`NFFG`
     :return: None
     """
+    self.rest_api.request_cache.add_request(id=sg.id)
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
-      self.__class__.__name__, repr.repr(sg)))
+      self.__class__.__name__, sg))
+    self.rest_api.request_cache.set_in_progress(id=sg.id)
     nffg = self.service_orchestrator.initiate_service_graph(sg)
     log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
     if nffg is not None:
       self._instantiate_NFFG(nffg)
+
+  def get_result (self, id):
+    """
+    Return the state of a request given by ``id``.
+
+    :param id: request id
+    :type id: str or int
+    :return: state
+    :rtype: str
+    """
+    return self.rest_api.request_cache.get_result(id=id)
 
   def _instantiate_NFFG (self, nffg):
     """
@@ -259,7 +287,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
     log.getChild('API').info(
-      "Generated NF-FG has been sent to Orchestration...")
+      "Generated NF-FG: %s has been sent to Orchestration..." % nffg)
 
   ##############################################################################
   # UNIFY Sl - Or API functions starts here
@@ -278,28 +306,31 @@ class ServiceLayerAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Send virtual resource info request(with layer ID: %s) to Orchestration "
+      "Send Virtual View request(with layer ID: %s) to Orchestration "
       "layer..." % self.__sid)
     self.raiseEventNoErrors(GetVirtResInfoEvent, self.__sid)
 
   def _handle_VirtResInfoEvent (self, event):
     """
-    Save requested virtual resource info as an :class:`DefaultESCAPEVirtualizer
-    <escape.orchest.virtualization_mgmt.DefaultESCAPEVirtualizer>`.
+    Save requested virtual resource info as an :class:`AbstractVirtualizer
+    <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`.
 
     :param event: event object
     :type event: :any:`VirtResInfoEvent`
     :return: None
     """
-    log.getChild('API').debug(
-      "Received virtual resource info from %s layer" % str(
-        event.source._core_name).title())
+    log.getChild('API').debug("Received Virtual View: %s from %s layer" % (
+      event.virtualizer, str(event.source._core_name).title()))
     self.service_orchestrator.virtResManager.virtual_view = event.virtualizer
 
   def _handle_InstantiationFinishedEvent (self, event):
-    if event.success:
+    """
+    """
+    self.rest_api.request_cache.set_result(id=event.id, result=event.result)
+    if event.result:
       log.getChild('API').info(
-        "Service request has been finished successfully!")
+        "Service request(id=%s) has been finished successfully!" % event.id)
     else:
       log.getChild('API').info(
-        "Service request has been finished with error: %s" % event.error)
+        "Service request(id=%s) has been finished with error: %s" % (
+          event.id, event.error))

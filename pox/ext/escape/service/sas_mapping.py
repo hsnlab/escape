@@ -44,12 +44,13 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     :return: Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
-    log.debug(
-      "Invoke mapping algorithm: %s request: SG(%s) resource: NFFG(%s)" % (
-        cls.__name__, graph.name, resource.name))
+    log.debug("Invoke mapping algorithm: %s request: %s resource: %s" % (
+      cls.__name__, graph, resource))
     # TODO implement
-    log.debug("Mapping algorithm: %s is finished on SG(%s)" % (
-      cls.__name__, graph.name))
+    graph = graph.copy()
+    graph.name += "-sas-mapped"
+    log.debug(
+      "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
     # for testing return with graph
     return graph
 
@@ -96,12 +97,12 @@ class ServiceGraphMapper(AbstractMapper):
     :param input_graph: Service Graph
     :type input_graph: :any:`NFFG`
     :param resource_view: virtual resource view
-    :param resource_view: :any:`DefaultESCAPEVirtualizer`
+    :param resource_view: :any:`AbstractVirtualizer`
     :return: Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
-    log.debug("Request %s to launch orchestration on SG(%s)..." % (
-      self.__class__.__name__, input_graph.name))
+    log.debug("Request %s to launch orchestration on SG: %s..." % (
+      self.__class__.__name__, input_graph))
     # Steps before mapping (optional)
     # log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
@@ -114,14 +115,13 @@ class ServiceGraphMapper(AbstractMapper):
         self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
-      log.info("SG(%s) orchestration is finished by %s" % (
-        input_graph.name, self.__class__.__name__))
+      log.info("SG: %s orchestration is finished by %s" % (
+        input_graph, self.__class__.__name__))
     else:
       nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
       # Steps after mapping (optional)
-      log.info("SG(%s) orchestration is finished by %s" % (
-        input_graph.name, self.__class__.__name__))
-      nffg.name += "-sas-mapped"
+      log.info("SG: %s orchestration is finished by %s" % (
+        input_graph, self.__class__.__name__))
       return nffg
 
   def _mapping_finished (self, nffg):
@@ -133,5 +133,4 @@ class ServiceGraphMapper(AbstractMapper):
     :return: None
     """
     log.debug("Inform SAS layer API that SG mapping has been finished...")
-    nffg.name += "-sas-mapped"
     self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
