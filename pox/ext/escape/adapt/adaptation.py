@@ -150,9 +150,20 @@ class ComponentConfigurator(object):
 
   def __iter__ (self):
     """
-    Return with an iterator rely on initiated DomainManagers.
+    Return with an iterator over the (domain_name, DomainManager) items.
     """
     return self.__repository.iteritems()
+
+  def __getitem__ (self, item):
+    """
+    Return with the DomainManager given by name: ``item``.
+
+    :param item: component name
+    :type item: str
+    :return: component
+    :rtype: :any:`AbstractDomainManager`
+    """
+    return self.get_mgr(item)
 
   # Configuration related functions
 
@@ -270,11 +281,10 @@ class ControllerAdapter(object):
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
-    # TODO - implement
-    # TODO - no NFFG split just very dummy cycle
-    for name, mgr in self.domains:
-      log.debug("Delegate mapped NFFG to %s domain manager..." % name)
-      mgr.install_nffg(mapped_nffg)
+    for domain, part in self._slice_into_domains(mapped_nffg):
+      log.debug(
+        "Delegate splitted part: %s to %s domain manager..." % (part, domain))
+      self.domains[domain].install_nffg(part)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
 
   def _handle_DomainChangedEvent (self, event):
@@ -296,10 +306,11 @@ class ControllerAdapter(object):
 
     :param nffg: mapped NFFG object
     :type nffg: NFFG
-    :return: sliced parts
-    :rtype: dict
+    :return: sliced parts as a list of (domain_name, nffg_part) tuples
+    :rtype: list
     """
-    pass
+    # TODO - implement slicing, replace dummy 'all in' solution
+    return ((domain, nffg) for domain in self.domains.components)
 
 
 # Common reference name for the DomainVirtualizer

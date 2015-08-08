@@ -440,6 +440,13 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
     return self._response.status_code
 
 
+class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
+                             UnifiedNodeAPI):
+  """
+  """
+  pass
+
+
 class InternalDomainManager(AbstractDomainManager):
   """
   Manager class to handle communication with internally emulated network.
@@ -563,13 +570,16 @@ class InternalDomainManager(AbstractDomainManager):
     log.info("Install %s domain part..." % self.name)
     # TODO - implement
     # self.network.initiate_VNFs(nffg_part=())
-    # TODO ...
+    # TODO ... VNF initiation etc.
     self.controller.install_routes(routes=())
 
 
 class OpenStackDomainManager(AbstractDomainManager):
   """
-  Adapter class to handle communication with OpenStack domain.
+  Manager class to handle communication with OpenStack domain.
+
+  .. note::
+    Uses :class:`OpenStackRESTAdapter` for communicate with the remote domain.
   """
   name = "OPENSTACK"
 
@@ -672,7 +682,29 @@ class OpenStackDomainManager(AbstractDomainManager):
 
   def install_nffg (self, nffg_part):
     log.info("Install OpenStack domain part...")
-    # TODO - implement
+    # TODO - implement just convert NFFG to appropriate format ans send out
+    pass
+
+
+class UnifiedNodeDomainManager(AbstractDomainManager):
+  """
+  Manager class to handle communication with Unified Node (UN) domain.
+
+  .. note::
+    Uses :class:`UnifiedNodeRESTAdapter` for communicate with the remote domain.
+  """
+  name = "UN"
+
+  def __init__ (self, **kwargs):
+    """
+    Init
+    """
+    log.debug("Init UnifiedNodeDomainManager")
+    super(UnifiedNodeDomainManager, self).__init__()
+
+  def install_nffg (self, nffg_part):
+    log.info("Install UnifiedNode domain part...")
+    # TODO - implement just convert NFFG to appropriate format ans send out
     pass
 
 
@@ -685,11 +717,11 @@ class DockerDomainManager(AbstractDomainManager):
   """
   name = "DOCKER"
 
-  def __init__ (self):
+  def __init__ (self, **kwargs):
     """
     Init
     """
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init DockerDomainManager")
     super(DockerDomainManager, self).__init__()
 
   def install_nffg (self, nffg_part):

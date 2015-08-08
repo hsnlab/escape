@@ -421,6 +421,12 @@ class OpenStackAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
+class UnifiedNodeAPI(object):
+  """
+  """
+  pass
+
+
 class AbstractRESTAdapter(Session):
   """
   Abstract class for various adapters rely on a RESTful API.

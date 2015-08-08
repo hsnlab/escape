@@ -132,8 +132,8 @@ class ControllerAdaptationAPI(AbstractAPI):
       self.controller_adapter.install_nffg(event.mapped_nffg)
     except Exception as e:
       log.error("Something went wrong during NFFG installation!")
-      log.error(e)
       self.raiseEventNoErrors(InstallationFinishedEvent, result=False, error=e)
+      raise
     log.getChild('API').debug(
       "Invoked install_nffg on %s is finished" % self.__class__.__name__)
     self.raiseEventNoErrors(InstallationFinishedEvent, id=event.mapped_nffg.id,
