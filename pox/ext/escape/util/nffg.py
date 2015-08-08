@@ -706,21 +706,26 @@ def generate_dynamic_fallback_nffg ():
   nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
+  nc1.add_supported_type(['A','B'])
+  nc2.add_supported_type(['A','C'])
   s3 = nffg.add_infra(id="s3", name="S3", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH,
+                      delay=0.2, bandwidth=10000)
   s4 = nffg.add_infra(id="s4", name="S4", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH,
+                      delay=0.2, bandwidth=10000)
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
   sap2 = nffg.add_sap(id="sap2", name="SAP2")
-  nffg.add_link(nc1.add_port(1), s3.add_port(1), id="l1")
-  nffg.add_link(nc2.add_port(1), s4.add_port(1), id="l2")
-  nffg.add_link(s3.add_port(2), s4.add_port(2), id="l3")
-  nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4")
-  nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5")
+  linkres = {'delay': 1.5, 'bandwidth': 2000}
+  nffg.add_link(nc1.add_port(1), s3.add_port(1), id="l1", **linkres)
+  nffg.add_link(nc2.add_port(1), s4.add_port(1), id="l2", **linkres)
+  nffg.add_link(s3.add_port(2), s4.add_port(2), id="l3", **linkres)
+  nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4", **linkres)
+  nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5", **linkres)
   nffg.duplicate_static_links()
-  pprint(nffg.network.__dict__)
-  nffg.merge_duplicated_links()
-  print nffg.dump()
+  # pprint(nffg.network.__dict__)
+  # nffg.merge_duplicated_links()
+  # print nffg.dump()
   return nffg
 
 
