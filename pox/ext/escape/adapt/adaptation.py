@@ -49,7 +49,7 @@ class ComponentConfigurator(object):
     :param lazy_load: load adapters only at first reference (default: True)
     :type lazy_load: bool
     """
-    log.debug("Init DomainConfigurator")
+    log.debug("Init DomainConfigurator - lazy load: %s" % lazy_load)
     super(ComponentConfigurator, self).__init__()
     self.__repository = dict()
     self._lazy_load = lazy_load
@@ -227,7 +227,7 @@ class ControllerAdapter(object):
     :param with_infr: using emulated infrastructure (default: False)
     :type with_infr: bool
     """
-    log.debug("Init ControllerAdapter")
+    log.debug("Init ControllerAdapter - with IL: %s" % with_infr)
     super(ControllerAdapter, self).__init__()
     # Set a weak reference to avoid circular dependencies
     self._layer_API = weakref.proxy(layer_API)
@@ -316,19 +316,23 @@ class DomainVirtualizer(AbstractVirtualizer):
   Use :any:`NFFG` format to store the global infrastructure info.
   """
 
-  def __init__ (self, domainResManager):
+  def __init__ (self, domainResManager, global_res=None):
     """
     Init.
 
     :param domainResManager: domain resource manager
     :type domainResManager: DomainResourceManager
+    :param global_res: initial global resource (optional)
+    :type global_res: :any:`NFFG`
     :return: None
     """
     super(DomainVirtualizer, self).__init__(id=None)
-    log.debug("Init DomainVirtualizer")
+    log.debug("Init DomainVirtualizer with name: %s - initial resource: %s" % (
+      DoV, global_res))
     # Garbage-collector safe
     self.domainResManager = weakref.proxy(domainResManager)
-    self.__global_nffg = None  # as an NFFG
+    self.__global_nffg = self.set_global_view(
+      global_res) if global_res is not None else None
 
   @property
   def name (self):

@@ -163,20 +163,20 @@ class OneBisBisVirtualizer(AbstractVirtualizer):
     :rtype: :any:`NFFG`
     """
     oneBisBis = NFFG(id="1BisBis", name="One-BisBis-view")
-    bb = oneBisBis.add_infra(id="BisBis", name="BisBis",
+    bb = oneBisBis.add_infra(id="bb", name="1BsBs",
                              domain=NFFG.DOMAIN_VIRTUAL,
                              infra_type=NFFG.TYPE_INFRA_BISBIS)
     # FIXME - very basic heuristic for virtual resource definition
-    bb.resources.cpu = min({infra.resources.cpu for infra in
-                            self.global_view.get_resource_info().infras})
-    bb.resources.mem = min({infra.resources.cpu for infra in
-                            self.global_view.get_resource_info().infras})
-    bb.resources.storage = min({infra.resources.cpu for infra in
-                                self.global_view.get_resource_info().infras})
-    bb.resources.delay = min({infra.resources.cpu for infra in
-                              self.global_view.get_resource_info().infras})
-    bb.resources.bandwidth = min({infra.resources.cpu for infra in
-                                  self.global_view.get_resource_info().infras})
+    bb.resources.cpu = min((infra.resources.cpu for infra in
+                            self.global_view.get_resource_info().infras))
+    bb.resources.mem = min((infra.resources.cpu for infra in
+                            self.global_view.get_resource_info().infras))
+    bb.resources.storage = min((infra.resources.cpu for infra in
+                                self.global_view.get_resource_info().infras))
+    bb.resources.delay = min((infra.resources.cpu for infra in
+                              self.global_view.get_resource_info().infras))
+    bb.resources.bandwidth = min((infra.resources.cpu for infra in
+                                  self.global_view.get_resource_info().infras))
     return oneBisBis
 
 

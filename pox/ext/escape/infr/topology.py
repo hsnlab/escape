@@ -78,14 +78,14 @@ class FallbackStaticTopology(AbstractTopology):
 
     +----------+           +----------+
     |          |           |          |
-    |    S1    |           |    S2    |
+    |    SW1   |           |    SW2   |
     |          |           |          |
     +----------+           +----------+
           |1                     |1
          1|                     1|
     +----------+           +----------+
     |          |2         2|          |
-    |    S3    +-----------+    S4    |
+    |    SW3   +-----------+    SW4   |
     |          |           |          |
     +----------+           +----------+
           |3                    |3
@@ -100,54 +100,53 @@ class FallbackStaticTopology(AbstractTopology):
     # nc1 = self.addEE(name='NC1', {})
     # nc2 = self.addEE(name='NC2', {})
     log.info("Start static topology creation...")
-    log.debug("Create Switch with name: S1")
-    s1 = self.addSwitch('S1')
-    log.debug("Create Switch with name: S2")
-    s2 = self.addSwitch('S2')
-    log.debug("Create Switch with name: S3")
-    s3 = self.addSwitch('S3')
-    log.debug("Create Switch with name: S4")
-    s4 = self.addSwitch('S4')
+    log.debug("Create Switch with name: SW1")
+    sw1 = self.addSwitch('SW1')
+    log.debug("Create Switch with name: SW2")
+    sw2 = self.addSwitch('SW2')
+    log.debug("Create Switch with name: SW3")
+    sw3 = self.addSwitch('SW3')
+    log.debug("Create Switch with name: SW4")
+    sw4 = self.addSwitch('SW4')
     log.debug("Create SAP with name: SAP1")
     sap1 = self.addHost('SAP1')
     log.debug("Create SAP with name: SAP2")
     sap2 = self.addHost('SAP2')
-    log.debug("Create Link S3 <--> S1")
-    self.addLink(s3, s1)
-    log.debug("Create Link S4 <--> S2")
-    self.addLink(s4, s2)
-    log.debug("Create Link S3 <--> S4")
-    self.addLink(s3, s4)
-    log.debug("Create Link SAP1 <--> S3")
-    self.addLink(sap1, s3)
-    log.debug("Create Link SAP2 <--> S4")
-    self.addLink(sap2, s4)
+    log.debug("Create Link SW3 <--> SW1")
+    self.addLink(sw3, sw1)
+    log.debug("Create Link SW4 <--> SW2")
+    self.addLink(sw4, sw2)
+    log.debug("Create Link SW3 <--> SW4")
+    self.addLink(sw3, sw4)
+    log.debug("Create Link SAP1 <--> SW3")
+    self.addLink(sap1, sw3)
+    log.debug("Create Link SAP2 <--> SW4")
+    self.addLink(sap2, sw4)
     log.info("Static topology creation has been finished!")
     return self
 
   @staticmethod
   def get_topo_desc ():
-    from escape.util.nffg_elements import NodeInfra
     # Create NFFG
     nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
     # Add switches
-    s1 = nffg.add_infra(id="s1", name="S1", domain="INTERNAL",
-                        infra_type=NodeInfra.TYPE_SDN_SWITCH)
-    s2 = nffg.add_infra(id="s2", name="S2", domain="INTERNAL",
-                        infra_type=NodeInfra.TYPE_SDN_SWITCH)
-    s3 = nffg.add_infra(id="s3", name="S3", domain="INTERNAL",
-                        infra_type=NodeInfra.TYPE_SDN_SWITCH)
-    s4 = nffg.add_infra(id="s4", name="S4", domain="INTERNAL",
-                        infra_type=NodeInfra.TYPE_SDN_SWITCH)
+    sw1 = nffg.add_infra(id="sw1", name="SW1", domain=NFFG.DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+    sw2 = nffg.add_infra(id="sw2", name="SW2", domain=NFFG.DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+    sw3 = nffg.add_infra(id="sw3", name="SW3", domain=NFFG.DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+    sw4 = nffg.add_infra(id="sw4", name="SW4", domain=NFFG.DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
     # Add SAPs
     sap1 = nffg.add_sap(id="sap1", name="SAP1")
     sap2 = nffg.add_sap(id="sap2", name="SAP2")
     # Add links
-    nffg.add_link(s1.add_port(1), s3.add_port(1), id="l1")
-    nffg.add_link(s2.add_port(1), s4.add_port(1), id="l2")
-    nffg.add_link(s3.add_port(2), s4.add_port(2), id="l3")
-    nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4")
-    nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5")
+    nffg.add_link(sw1.add_port(1), sw3.add_port(1), id="l1")
+    nffg.add_link(sw2.add_port(1), sw4.add_port(1), id="l2")
+    nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="l3")
+    nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="l4")
+    nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="l5")
     # Duplicate one-way static links to become undirected in order to fit to
     # the orchestration algorithm
     nffg.duplicate_static_links()
@@ -190,14 +189,14 @@ class FallbackDynamicTopology(AbstractTopology):
     """
     log.info("Start dynamic topology creation...")
     builder.create_Controller("ESCAPE")
-    agt1, sw1 = builder.create_NETCONF_EE(name='NC1')
-    agt2, sw2 = builder.create_NETCONF_EE(name='NC2')
-    sw3 = builder.create_Switch(name='S3')
-    sw4 = builder.create_Switch(name='S4')
+    agt1, nc_sw1 = builder.create_NETCONF_EE(name='NC1')
+    agt2, nc_sw2 = builder.create_NETCONF_EE(name='NC2')
+    sw3 = builder.create_Switch(name='SW3')
+    sw4 = builder.create_Switch(name='SW4')
     sap1 = builder.create_SAP(name='SAP1')
     sap2 = builder.create_SAP(name='SAP2')
-    builder.create_Link(sw3, sw1)
-    builder.create_Link(sw4, sw2)
+    builder.create_Link(sw3, nc_sw1)
+    builder.create_Link(sw4, nc_sw2)
     builder.create_Link(sw3, sw4)
     builder.create_Link(sap1, sw3)
     builder.create_Link(sap2, sw4)
@@ -205,30 +204,29 @@ class FallbackDynamicTopology(AbstractTopology):
 
   @staticmethod
   def get_topo_desc ():
-    from escape.util.nffg_elements import NodeInfra
     # Create NFFG
     nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
     # Add NETCONF capable containers a.k.a. Execution Environments
-    nc1 = nffg.add_infra(id="nc1", name="NC1", domain="INTERNAL",
-                         infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
+    nc1 = nffg.add_infra(id="nc1", name="NC1", domain=NFFG.DOMAIN_INTERNAL,
+                         infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                          delay=0.9, bandwidth=5000)
-    nc2 = nffg.add_infra(id="nc2", name="NC2", domain="INTERNAL",
-                         infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
+    nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
+                         infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                          delay=0.9, bandwidth=5000)
     # Add inter-EE switches
-    s3 = nffg.add_infra(id="s3", name="S3", domain="INTERNAL",
-                        infra_type=NodeInfra.TYPE_SDN_SWITCH)
-    s4 = nffg.add_infra(id="s4", name="S4", domain="INTERNAL",
-                        infra_type=NodeInfra.TYPE_SDN_SWITCH)
+    sw3 = nffg.add_infra(id="sw3", name="SW3", domain=NFFG.DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+    sw4 = nffg.add_infra(id="sw4", name="SW4", domain=NFFG.DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
     # Add SAPs
     sap1 = nffg.add_sap(id="sap1", name="SAP1")
     sap2 = nffg.add_sap(id="sap2", name="SAP2")
     # Add links
-    nffg.add_link(nc1.add_port(1), s3.add_port(1), id="l1")
-    nffg.add_link(nc2.add_port(1), s4.add_port(1), id="l2")
-    nffg.add_link(s3.add_port(2), s4.add_port(2), id="l3")
-    nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4")
-    nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5")
+    nffg.add_link(nc1.add_port(1), sw3.add_port(1), id="l1")
+    nffg.add_link(nc2.add_port(1), sw4.add_port(1), id="l2")
+    nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="l3")
+    nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="l4")
+    nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="l5")
     # Duplicate one-way static links to become undirected in order to fit to
     # the orchestration algorithm
     nffg.duplicate_static_links()

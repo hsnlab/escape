@@ -136,7 +136,7 @@ class MininetDomainAdapter(AbstractDomainAdapter):
     :param net: set pre-defined network (optional)
     :type net: :class:`ESCAPENetworkBridge`
     """
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init MininetDomainAdapter")
     # Call base constructors directly to avoid super() and MRO traps
     AbstractDomainAdapter.__init__(self)
     if not net:
@@ -457,7 +457,7 @@ class InternalDomainManager(AbstractDomainManager):
     """
     Init
     """
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init InternalDomainManager - params: %s" % kwargs)
     super(InternalDomainManager, self).__init__()
     if 'poll' in kwargs:
       self._poll = kwargs['poll']

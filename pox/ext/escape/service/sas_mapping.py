@@ -44,7 +44,7 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     :return: Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
-    log.debug("Invoke mapping algorithm: %s request: %s resource: %s" % (
+    log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
     # TODO implement
     graph = graph.copy()
@@ -101,8 +101,8 @@ class ServiceGraphMapper(AbstractMapper):
     :return: Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
-    log.debug("Request %s to launch orchestration on SG: %s..." % (
-      self.__class__.__name__, input_graph))
+    log.debug("Request %s to launch orchestration on SG: %s with View: %s" % (
+      self.__class__.__name__, input_graph, resource_view))
     # Steps before mapping (optional)
     # log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
