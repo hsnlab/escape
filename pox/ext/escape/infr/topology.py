@@ -16,7 +16,6 @@ Wrapper module for handling emulated test topology based on Mininet.
 """
 
 from mininet.clean import cleanup
-from mininet.link import Link, Intf
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
@@ -131,13 +130,13 @@ class FallbackStaticTopology(AbstractTopology):
     nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
     # Add switches
     sw1 = nffg.add_infra(id="sw1", name="SW1", domain=NFFG.DOMAIN_INTERNAL,
-                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                         infra_type=NFFG.TYPE_INFRA_SDN_SW)
     sw2 = nffg.add_infra(id="sw2", name="SW2", domain=NFFG.DOMAIN_INTERNAL,
-                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                         infra_type=NFFG.TYPE_INFRA_SDN_SW)
     sw3 = nffg.add_infra(id="sw3", name="SW3", domain=NFFG.DOMAIN_INTERNAL,
-                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                         infra_type=NFFG.TYPE_INFRA_SDN_SW)
     sw4 = nffg.add_infra(id="sw4", name="SW4", domain=NFFG.DOMAIN_INTERNAL,
-                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                         infra_type=NFFG.TYPE_INFRA_SDN_SW)
     # Add SAPs
     sap1 = nffg.add_sap(id="sap1", name="SAP1")
     sap2 = nffg.add_sap(id="sap2", name="SAP2")
@@ -215,9 +214,9 @@ class FallbackDynamicTopology(AbstractTopology):
                          delay=0.9, bandwidth=5000)
     # Add inter-EE switches
     sw3 = nffg.add_infra(id="sw3", name="SW3", domain=NFFG.DOMAIN_INTERNAL,
-                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                         infra_type=NFFG.TYPE_INFRA_SDN_SW)
     sw4 = nffg.add_infra(id="sw4", name="SW4", domain=NFFG.DOMAIN_INTERNAL,
-                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                         infra_type=NFFG.TYPE_INFRA_SDN_SW)
     # Add SAPs
     sap1 = nffg.add_sap(id="sap1", name="SAP1")
     sap2 = nffg.add_sap(id="sap2", name="SAP2")
@@ -476,7 +475,7 @@ class ESCAPENetworkBuilder(object):
           ee_type = self.TYPE_EE_LOCAL
         else:
           ee_type = self.TYPE_EE_REMOTE
-          # FIXME - add resource info if can - cpu,mem,delay,bandwidth???
+          # FIXME - set resource info in MN EE if can - cpu,mem,delay,bandwidth?
         agt, sw = self.create_NETCONF_EE(name=infra.id, type=ee_type)
         created_nodes[infra.id] = sw
       # Create Switch
@@ -752,20 +751,20 @@ class ESCAPENetworkBuilder(object):
     if not remote:
       self.mn.addLink(src, dst, src_port, dst_port, **params)
     else:
+      # sw = local[0]  # one of the local Node
+      # r = remote[0]  # other Node which is the remote
+      # intfName = r.params['local_intf_name']
+      # r_mac = None  # unknown, r.params['remote_mac']
+      # r_port = r.params['remote_port']
+      # # self._debug('\tadd hw interface (%s) to node (%s)' % (intfName,
+      # # sw.name))
+      # # This hack avoids calling __init__ which always makeIntfPair()
+      # link = Link.__new__(Link)
+      # i1 = Intf(intfName, node=sw, link=link)
+      # i2 = Intf(intfName, node=r, mac=r_mac, port=r_port, link=link)
+      # i2.mac = r_mac  # mn runs 'ifconfig', which resets mac to None
+      # link.intf1, link.intf2 = i1, i2
       raise RuntimeError("Remote Link creation is not supported yet!")
-      sw = local[0]  # one of the local Node
-      r = remote[0]  # other Node which is the remote
-      intfName = r.params['local_intf_name']
-      r_mac = None  # unknown, r.params['remote_mac']
-      r_port = r.params['remote_port']
-      # self._debug('\tadd hw interface (%s) to node (%s)' % (intfName,
-      # sw.name))
-      # This hack avoids calling __init__ which always makeIntfPair()
-      link = Link.__new__(Link)
-      i1 = Intf(intfName, node=sw, link=link)
-      i2 = Intf(intfName, node=r, mac=r_mac, port=r_port, link=link)
-      i2.mac = r_mac  # mn runs 'ifconfig', which resets mac to None
-      link.intf1, link.intf2 = i1, i2
 
   def build (self, topo=None):
     """

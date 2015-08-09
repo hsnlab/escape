@@ -287,8 +287,11 @@ class VNFStarterAPI(object):
     From YANG: Enum for indicating statuses.
     """
     FAILED = -1
+    s_FAILED = "FAILED"
     INITIALIZING = 0
+    s_INITIALIZING = "INITIALIZING"
     UP_AND_RUNNING = 1
+    s_UP_AND_RUNNING = "UP_AND_RUNNING"
 
 
   class ConnectedStatus(object):
@@ -298,7 +301,9 @@ class VNFStarterAPI(object):
     From YANG: Connection status.
     """
     DISCONNECTED = 0
+    s_DISCONNECTED = "DISCONNECTED"
     CONNECTED = 1
+    s_CONNECTED = "CONNECTED"
 
 
   def __init__ (self):
@@ -440,15 +445,21 @@ class AbstractRESTAdapter(Session):
   custom_headers = {'User-Agent': "ESCAPE/" + __version__}
   # Connection timeout (sec)
   CONNECTION_TIMEOUT = 3
+  # HTTP methods
+  GET = "GET"
+  POST = "POST"
 
   def __init__ (self, base_url, auth=None):
     super(AbstractRESTAdapter, self).__init__()
-    # self.headers.update(self.custom_headers)
     self._base_url = base_url
     self.auth = auth
     # Store the last request
     self._response = None
     self.__disable_requests_logging()
+
+  @property
+  def URL (self):
+    return self._base_url
 
   def __disable_requests_logging (self):
     """

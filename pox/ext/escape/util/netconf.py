@@ -416,7 +416,8 @@ if __name__ == "__main__":
   print "-" * 60
   print "Connecting..."
   # vrm.connect()
-  vrm = AbstractNETCONFAdapter(server='192.168.12.128', port=830,
+  # vrm = AbstractNETCONFAdapter(server='192.168.12.128', port=830,
+  vrm = AbstractNETCONFAdapter(server='127.0.0.1', port=830,
                                username='mininet', password='mininet',
                                debug=True)
   vrm.RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'

@@ -252,9 +252,11 @@ class ControllerAdapter(object):
     # Init default domain managers
     self.domains.load_default_mgrs()
     # print "create test - VNFStarterAdapter"
+    # from escape.adapt.components import VNFStarterAdapter
     # starter = VNFStarterAdapter(server='localhost', port=830,
     #                             username='mininet', password='mininet',
     #                             debug=True)
+    # from pprint import pprint
     # with starter as s:
     #   reply = s.getVNFInfo()
     #   pprint(reply)
@@ -299,7 +301,7 @@ class ControllerAdapter(object):
 
   def _slice_into_domains (self, nffg):
     """
-    Slice given :any:`NFFG` into separate parts.
+    Slice given :any:`NFFG` into separate parts based on original domains.
 
     .. warning::
       Not implemented yet!

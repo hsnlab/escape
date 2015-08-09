@@ -15,6 +15,7 @@
 Contains Adapter classes which represent the connections between ESCAPEv2 and
 other different domains.
 """
+from ncclient.operations.rpc import RPCError
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from escape.adapt import log as log
@@ -46,7 +47,8 @@ class POXDomainAdapter(AbstractDomainAdapter):
     :type port: int
     """
     name = name if name is not None else self.name
-    log.debug("Init %s with name: %s" % (self.__class__.__name__, name))
+    log.debug("Init POXDomainAdapter with name: %s address %s:%s" % (
+      name, address, port))
     super(POXDomainAdapter, self).__init__()
     # Set an OpenFlow nexus as a source of OpenFlow events
     self.openflow = OpenFlowBridge()
@@ -136,7 +138,7 @@ class MininetDomainAdapter(AbstractDomainAdapter):
     :param net: set pre-defined network (optional)
     :type net: :class:`ESCAPENetworkBridge`
     """
-    log.debug("Init MininetDomainAdapter")
+    log.debug("Init MininetDomainAdapter - initial network: %s" % net)
     # Call base constructors directly to avoid super() and MRO traps
     AbstractDomainAdapter.__init__(self)
     if not net:
@@ -201,9 +203,11 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     # Call base constructors directly to avoid super() and MRO traps
     AbstractNETCONFAdapter.__init__(self, **kwargs)
     AbstractDomainAdapter.__init__(self)
-    log.debug("Init VNFStarterAdapter")
+    log.debug("Init VNFStarterAdapter - params: %s" % kwargs)
 
+  ##############################################################################
   # RPC calls starts here
+  ##############################################################################
 
   def initiateVNF (self, vnf_type, vnf_description=None, options=None):
     """
@@ -355,15 +359,60 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     log.debug("Call getVNFInfo...")
     return self.call_RPC('getVNFInfo', vnf_id=vnf_id)
 
+  ##############################################################################
+  # High-level helper functions
+  ##############################################################################
+
+  def deployNF (self, nf_type, nf_ports, infra_id, nf_desc=None, nf_opt=None):
+    """
+    Initiate and start the given NF using the general RPC calls.
+
+    :param nf_type: pre-defined NF type (see in vnf_starter/available_vnfs)
+    :type nf_type: str
+    :param nf_ports: NF port number or list of ports (mandatory)
+    :type nf_ports: str or int or tuple
+    :param infra_id: id of the base node (mandatory)
+    :type infra_id: str
+    :param nf_desc: Click description if there are no pre-defined type
+    :type nf_desc: str
+    :param nf_opt: unlimited list of additional options as name-value pairs
+    :type nf_opt: collections.OrderedDict
+    :return: initiated NF description parsed from RPC reply
+    :rtype: dict
+    """
+    with self as adapter:
+      try:
+        # Initiate VNF
+        reply = adapter.initiateVNF(vnf_type=nf_type, vnf_description=nf_desc,
+                                    options=nf_opt)
+        # Get created VNF's id
+        vnf_id = reply['access_info']['vnf_id']
+        # Connect VNF to the given Container
+        if isinstance(nf_ports, (tuple, list)):
+          for port in nf_ports:
+            adapter.connectVNF(vnf_id=vnf_id, vnf_port=port, switch_id=infra_id)
+        else:
+          adapter.connectVNF(vnf_id=vnf_id, vnf_port=nf_ports,
+                             switch_id=infra_id)
+        # Start Click-based VNF
+        adapter.startVNF(vnf_id=vnf_id)
+        # Return with whole VNF description
+        return adapter.getVNFInfo(vnf_id=vnf_id)
+      except RPCError as e:
+        log.error("Got Error during initiate VNF through NETCONF:")
+        from pprint import pprint
+        pprint(e.to_dict())
+      except KeyError as e:
+        log.warning(
+          "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
+          "VNF initiation." % e.args[0])
+
 
 class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
                            OpenStackAPI):
   """
   This class is devoted to provide REST specific functions for OpenStack domain.
   """
-  # HTTP methods
-  GET = "GET"
-  POST = "POST"
 
   def __init__ (self, url):
     """
@@ -372,14 +421,10 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
     :param url: OpenStack RESTful API URL
     :type url: str
     """
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init OpenStackRESTAdapter with URL: %s" % url)
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("OpenStack base URL is set to %s" % url)
     AbstractDomainAdapter.__init__(self)
-
-  @property
-  def URL (self):
-    return self._base_url
 
   def ping (self):
     """
@@ -443,8 +488,20 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
 class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
                              UnifiedNodeAPI):
   """
+  This class is devoted to provide REST specific functions for UN domain.
   """
-  pass
+
+  def __init__ (self, url):
+    """
+    Init.
+
+    :param url: Unified Node RESTful API URL
+    :type url: str
+    """
+    log.debug("Init OpenStackRESTAdapter with URL: %s" % url)
+    AbstractRESTAdapter.__init__(self, base_url=url)
+    log.debug("Unified Node base URL is set to %s" % url)
+    AbstractDomainAdapter.__init__(self)
 
 
 class InternalDomainManager(AbstractDomainManager):
@@ -581,13 +638,14 @@ class OpenStackDomainManager(AbstractDomainManager):
   .. note::
     Uses :class:`OpenStackRESTAdapter` for communicate with the remote domain.
   """
+  # Domain name
   name = "OPENSTACK"
 
   def __init__ (self, **kwargs):
     """
     Init
     """
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init OpenStackDomainManager - params: %s" % kwargs)
     super(OpenStackDomainManager, self).__init__()
     if 'poll' in kwargs:
       self._poll = kwargs['poll']
@@ -693,13 +751,16 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
   .. note::
     Uses :class:`UnifiedNodeRESTAdapter` for communicate with the remote domain.
   """
+  # Events raised by this class
+  _eventMixin_events = {DomainChangedEvent}
+  # Domain name
   name = "UN"
 
   def __init__ (self, **kwargs):
     """
     Init
     """
-    log.debug("Init UnifiedNodeDomainManager")
+    log.debug("Init UnifiedNodeDomainManager - params: %s" % kwargs)
     super(UnifiedNodeDomainManager, self).__init__()
 
   def install_nffg (self, nffg_part):
@@ -715,13 +776,14 @@ class DockerDomainManager(AbstractDomainManager):
   .. warning::
     Not implemented yet!
   """
+  # Domain name
   name = "DOCKER"
 
   def __init__ (self, **kwargs):
     """
     Init
     """
-    log.debug("Init DockerDomainManager")
+    log.debug("Init DockerDomainManager - params %s" % kwargs)
     super(DockerDomainManager, self).__init__()
 
   def install_nffg (self, nffg_part):
