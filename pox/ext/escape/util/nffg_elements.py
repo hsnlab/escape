@@ -62,7 +62,7 @@ class Persistable(object):
     return cls().load(data, *args, **kwargs)
 
 
-class Element(Persistable):
+class Element(Persistable, dict):
   """
   Main base class for NF-FG elements with unique id.
 
@@ -104,6 +104,32 @@ class Element(Persistable):
     else:
       raise KeyError(
         "%s object has no key: %s" % (self.__class__.__name__, key))
+
+  def __contains__ (self, item):
+    return hasattr(self, item)
+
+  def __delitem__ (self, key):
+    if hasattr(self, key):
+      return delattr(self, key)
+    else:
+      raise KeyError(
+        "%s object has no key: %s" % (self.__class__.__name__, key))
+
+  def __len__ (self):
+    raise RuntimeError(
+      "%s not support the whole dict protocol!" % self.__class__.__name__)
+
+  def __iter__ (self):
+    raise RuntimeError(
+      "%s not support the whole dict protocol!" % self.__class__.__name__)
+
+  def __reversed__ (self):
+    raise RuntimeError(
+      "%s not support the whole dict protocol!" % self.__class__.__name__)
+
+  def __missing__ (self, key):
+    raise RuntimeError(
+      "%s not support the whole dict protocol!" % self.__class__.__name__)
 
 
 class PortContainer(object):
@@ -1310,6 +1336,10 @@ def test_networkx_mod ():
   print nf["id"]
   nf["id"] = "nf1"
   print nf["id"]
+  print "Instance check"
+  print isinstance(nf, tuple)
+  print isinstance(nf, NodeNF)
+  print isinstance(nf, dict)
 
 
 if __name__ == "__main__":
