@@ -25,12 +25,15 @@ from the EdgeReqs, all SG links must be in one of the subchains.
 TODO: map best-effort links.
 """
 
-import networkx as nx
-from nffg import NFFG, generate_dynamic_fallback_nffg
-from Alg1_Core import CoreAlgorithm
 from pprint import pformat
-import UnifyExceptionTypes as uet
 import traceback
+
+import networkx as nx
+
+from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg
+from Alg1_Core import CoreAlgorithm
+import UnifyExceptionTypes as uet
+
 
 # object for the algorithm instance
 alg = None
@@ -115,8 +118,9 @@ def MAP(request, network):
     for req in edgereqlist:
         mappedNFFG.add_req(req.src.node.add_port(), req.dst.node.add_port(), 
                            id=req.id, delay=req.delay, bandwidth=req.bandwidth)
-    
-    print mappedNFFG.dump()
+
+    from pprint import pprint
+    pprint(mappedNFFG.network.__dict__)
 
     # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
     # data is the paths (with link ID-s) where the request links are mapped.

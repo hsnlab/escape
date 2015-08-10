@@ -15,42 +15,41 @@
 
 
 from exceptions import Exception
-import logging
 
-loglevel = 'DEBUG'
-loghandler = logging.StreamHandler()
-logformat = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
-loghandler.setFormatter(logformat)
 
 class UnifyException(Exception):
-    """
-    Base class for all exceptions raised during the mapping process.
-    """
-    def __init__(self, msg0):
-        """Messages shall be constructed when raising the exception
-        according to the actual circumstances."""
-        self.msg = msg0
+  """
+  Base class for all exceptions raised during the mapping process.
+  """
+
+  def __init__ (self, msg0):
+    """Messages shall be constructed when raising the exception
+    according to the actual circumstances."""
+    self.msg = msg0
 
 
-class InternalAlgorithmException (UnifyException):
-    """
-    Raised when the algorthm fails due to implementation error 
-    or conceptual error.
-    """
-    pass
+class InternalAlgorithmException(UnifyException):
+  """
+  Raised when the algorthm fails due to implementation error
+  or conceptual error.
+  """
+  pass
 
-class BadInputException (UnifyException):
-    """
-    Raised when the algorithm receives bad formatted, or unexpected input.
-    Parameters shall be strings.
-    """
-    def __init__(self, expected, given):
-        self.msg = "The algorithm expected an input: %s, "\
-            "but the given input is: %s"%(expected, given)
 
-class MappingException (UnifyException):
-    """
-    Raised when a mapping could not be found for the request given from the
-    upper layer. Not enough resources, no path found.
-    """
-    pass
+class BadInputException(UnifyException):
+  """
+  Raised when the algorithm receives bad formatted, or unexpected input.
+  Parameters shall be strings.
+  """
+
+  def __init__ (self, expected, given):
+    self.msg = "The algorithm expected an input: %s, " \
+               "but the given input is: %s" % (expected, given)
+
+
+class MappingException(UnifyException):
+  """
+  Raised when a mapping could not be found for the request given from the
+  upper layer. Not enough resources, no path found.
+  """
+  pass
