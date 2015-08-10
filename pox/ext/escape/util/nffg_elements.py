@@ -62,7 +62,7 @@ class Persistable(object):
     return cls().load(data, *args, **kwargs)
 
 
-class Element(Persistable, dict):
+class Element(Persistable):
   """
   Main base class for NF-FG elements with unique id.
 
@@ -108,28 +108,11 @@ class Element(Persistable, dict):
   def __contains__ (self, item):
     return hasattr(self, item)
 
-  def __delitem__ (self, key):
-    if hasattr(self, key):
-      return delattr(self, key)
+  def get (self, item, default=None):
+    if hasattr(self, item):
+      return getattr(self, item)
     else:
-      raise KeyError(
-        "%s object has no key: %s" % (self.__class__.__name__, key))
-
-  def __len__ (self):
-    raise RuntimeError(
-      "%s not support the whole dict protocol!" % self.__class__.__name__)
-
-  def __iter__ (self):
-    raise RuntimeError(
-      "%s not support the whole dict protocol!" % self.__class__.__name__)
-
-  def __reversed__ (self):
-    raise RuntimeError(
-      "%s not support the whole dict protocol!" % self.__class__.__name__)
-
-  def __missing__ (self, key):
-    raise RuntimeError(
-      "%s not support the whole dict protocol!" % self.__class__.__name__)
+      return default
 
 
 class PortContainer(object):
