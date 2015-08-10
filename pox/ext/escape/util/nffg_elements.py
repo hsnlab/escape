@@ -615,7 +615,7 @@ class NodeInfra(Node):
   Class for infrastructure nodes in the NF-FG.
   """
   # Defined Infra types
-  TYPE_BISBIS = "BisBis"
+  TYPE_BISBIS = "BiSBiS"
   TYPE_EE = "EE"  # default Execution Environment with NETCONF
   TYPE_STATIC_EE = "STATIC"  # Static EE probably will never use
   TYPE_SDN_SWITCH = "SDN-SWITCH"  # Common OVS switch - can't run NF

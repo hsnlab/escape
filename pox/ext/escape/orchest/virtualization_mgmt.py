@@ -14,6 +14,8 @@
 """
 Contains components relevant to virtualization of resources and views.
 """
+import sys
+
 from escape.util.nffg import NFFG
 
 if 'DoV' not in globals():
@@ -162,22 +164,21 @@ class OneBisBisVirtualizer(AbstractVirtualizer):
     :return: 1 Bisbis topo
     :rtype: :any:`NFFG`
     """
-    oneBisBis = NFFG(id="1BisBis", name="One-BisBis-view")
-    bb = oneBisBis.add_infra(id="bb", name="1BsBs",
-                             domain=NFFG.DOMAIN_VIRTUAL,
-                             infra_type=NFFG.TYPE_INFRA_BISBIS)
-    # FIXME - very basic heuristic for virtual resource definition
-    bb.resources.cpu = min((infra.resources.cpu for infra in
-                            self.global_view.get_resource_info().infras))
-    bb.resources.mem = min((infra.resources.cpu for infra in
-                            self.global_view.get_resource_info().infras))
-    bb.resources.storage = min((infra.resources.cpu for infra in
-                                self.global_view.get_resource_info().infras))
-    bb.resources.delay = min((infra.resources.cpu for infra in
-                              self.global_view.get_resource_info().infras))
-    bb.resources.bandwidth = min((infra.resources.cpu for infra in
-                                  self.global_view.get_resource_info().infras))
-    return oneBisBis
+    nffg = NFFG(id="1BiSBiS", name="One-BiSBiS-View")
+    bb = nffg.add_infra(id="1bisbis", name="One-BiSBiS",
+                        domain=NFFG.DOMAIN_VIRTUAL,
+                        infra_type=NFFG.TYPE_INFRA_BISBIS)
+    bb.resources.cpu = sys.maxint
+    bb.resources.mem = sys.maxint
+    bb.resources.storage = sys.maxint
+    bb.resources.delay = sys.maxint
+    bb.resources.bandwidth = sys.maxint
+    sap1 = nffg.add_sap(id="sap1", name="SAP1")
+    sap2 = nffg.add_sap(id="sap2", name="SAP2")
+    nffg.add_link(sap1.add_port(1), bb.add_port(1), id='link1')
+    nffg.add_link(sap2.add_port(1), bb.add_port(2), id='link2')
+    nffg.duplicate_static_links()
+    return nffg
 
 
 class VirtualizerManager(EventMixin):

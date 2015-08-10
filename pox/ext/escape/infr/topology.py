@@ -212,20 +212,25 @@ class FallbackDynamicTopology(AbstractTopology):
     nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
                          infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                          delay=0.9, bandwidth=5000)
+    nc1.add_supported_type(['A', 'B'])
+    nc2.add_supported_type(['A', 'C'])
     # Add inter-EE switches
     sw3 = nffg.add_infra(id="sw3", name="SW3", domain=NFFG.DOMAIN_INTERNAL,
-                         infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                         infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                         bandwidth=10000)
     sw4 = nffg.add_infra(id="sw4", name="SW4", domain=NFFG.DOMAIN_INTERNAL,
-                         infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                         infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                         bandwidth=10000)
     # Add SAPs
     sap1 = nffg.add_sap(id="sap1", name="SAP1")
     sap2 = nffg.add_sap(id="sap2", name="SAP2")
     # Add links
-    nffg.add_link(nc1.add_port(1), sw3.add_port(1), id="l1")
-    nffg.add_link(nc2.add_port(1), sw4.add_port(1), id="l2")
-    nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="l3")
-    nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="l4")
-    nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="l5")
+    linkres = {'delay': 1.5, 'bandwidth': 2000}
+    nffg.add_link(nc1.add_port(1), sw3.add_port(1), id="l1", **linkres)
+    nffg.add_link(nc2.add_port(1), sw4.add_port(1), id="l2", **linkres)
+    nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="l3", **linkres)
+    nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="l4", **linkres)
+    nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="l5", **linkres)
     # Duplicate one-way static links to become undirected in order to fit to
     # the orchestration algorithm
     nffg.duplicate_static_links()

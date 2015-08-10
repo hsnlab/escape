@@ -17,6 +17,7 @@ as building, parsing, processing NF-FG, helper functions, etc.
 """
 import copy
 from pprint import pprint
+import sys
 
 import networkx
 from networkx.exception import NetworkXError
@@ -706,14 +707,14 @@ def generate_dynamic_fallback_nffg ():
   nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
-  nc1.add_supported_type(['A','B'])
-  nc2.add_supported_type(['A','C'])
+  nc1.add_supported_type(['A', 'B'])
+  nc2.add_supported_type(['A', 'C'])
   s3 = nffg.add_infra(id="s3", name="S3", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH,
-                      delay=0.2, bandwidth=10000)
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH, delay=0.2,
+                      bandwidth=10000)
   s4 = nffg.add_infra(id="s4", name="S4", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH,
-                      delay=0.2, bandwidth=10000)
+                      infra_type=NodeInfra.TYPE_SDN_SWITCH, delay=0.2,
+                      bandwidth=10000)
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
   sap2 = nffg.add_sap(id="sap2", name="SAP2")
   linkres = {'delay': 1.5, 'bandwidth': 2000}
@@ -753,8 +754,39 @@ def generate_static_fallback_topo ():
   return nffg
 
 
+def generate_one_bisbis ():
+  nffg = NFFG(id="1BiSBiS", name="One-BiSBiS-View")
+  bb = nffg.add_infra(id="1bisbis", name="One-BiSBiS",
+                           domain=NFFG.DOMAIN_VIRTUAL,
+                           infra_type=NFFG.TYPE_INFRA_BISBIS)
+  # FIXME - very basic heuristic for virtual resource definition
+  # bb.resources.cpu = min((infra.resources.cpu for infra in
+  #                         self.global_view.get_resource_info().infras))
+  # bb.resources.mem = min((infra.resources.cpu for infra in
+  #                         self.global_view.get_resource_info().infras))
+  # bb.resources.storage = min((infra.resources.cpu for infra in
+  #                             self.global_view.get_resource_info().infras))
+  # bb.resources.delay = min((infra.resources.cpu for infra in
+  #                           self.global_view.get_resource_info().infras))
+  # bb.resources.bandwidth = min((infra.resources.cpu for infra in
+  #                               self.global_view.get_resource_info().infras))
+  bb.resources.cpu = sys.maxint
+  bb.resources.mem = sys.maxint
+  bb.resources.storage = sys.maxint
+  bb.resources.delay = sys.maxint
+  bb.resources.bandwidth = sys.maxint
+  sap1 = nffg.add_sap(id="sap1", name="SAP1")
+  sap2 = nffg.add_sap(id="sap2", name="SAP2")
+  nffg.add_link(sap1.add_port(1), bb.add_port(1), id='link1')
+  nffg.add_link(sap2.add_port(1), bb.add_port(2), id='link2')
+  nffg.duplicate_static_links()
+  print nffg.dump()
+  return nffg
+
+
 if __name__ == "__main__":
   # test_NFFG()
-  generate_mn_topo()
+  # generate_mn_topo()
   # generate_dynamic_fallback_nffg()
   # generate_static_fallback_topo()
+  generate_one_bisbis()
