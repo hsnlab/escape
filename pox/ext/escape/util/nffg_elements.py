@@ -109,9 +109,9 @@ class Element(Persistable):
     return hasattr(self, item)
 
   def get (self, item, default=None):
-    if hasattr(self, item):
-      return getattr(self, item)
-    else:
+    try:
+      return self[item]
+    except KeyError:
       return default
 
 
@@ -1319,12 +1319,11 @@ def test_networkx_mod ():
   print nf["id"]
   nf["id"] = "nf1"
   print nf["id"]
-  print "Instance check"
-  print isinstance(nf, tuple)
-  print isinstance(nf, NodeNF)
-  print isinstance(nf, dict)
+  print "get check"
+  print "id: %s" % nf.get("id")
+  print "lorem: %s" % nf.get("lorem", "ipsum")
 
 
 if __name__ == "__main__":
-  test_parse_load()
-  # test_networkx_mod()
+  # test_parse_load()
+  test_networkx_mod()
