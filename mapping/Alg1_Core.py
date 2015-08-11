@@ -25,7 +25,13 @@ import networkx as nx
 import GraphPreprocessor
 import UnifyExceptionTypes as uet
 import Alg1_Helper as helper
-from escape.util.nffg import NFFG
+
+try:
+  from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg
+except ImportError:
+  import os
+
+  sys.path.append(os.path.abspath(os.path.dirname(__file__) + "../pox/ext/"))
 
 
 class CoreAlgorithm(object):
@@ -42,7 +48,7 @@ class CoreAlgorithm(object):
     self.original_chains = chains0
     self._preproc(net0, req0, chains0)
 
-    # must be sorted in alphapbetic order of keys: cpu, mem, storage
+    # must be sorted in alphabetic order of keys: cpu, mem, storage
     self.resource_priorities = [0.3333, 0.3333, 0.3333]
 
     # which should count more in the objective function
@@ -86,23 +92,23 @@ class CoreAlgorithm(object):
       # if first element is a NodeInfra, then traffic also needs
       # to be steered out from the previously mapped VNF.
       if self.net.node[i].availres['bandwidth'] < bw_req:
-        self.log.debug("Host %s has only %f Mbps capacity," \
-                       " but %f is required." % (
-                       i, self.net.node[i].availres['bandwidth'], bw_req))
-        return (-1, None)
+        self.log.debug(
+          "Host %s has only %f Mbps capacity but %f is required." % (
+            i, self.net.node[i].availres['bandwidth'], bw_req))
+        return -1, None
       else:
         util_of_host = float(self.net.node[i].resources['bandwidth'] - (
-        self.net.node[i].availres['bandwidth'] - bw_req)) / \
+          self.net.node[i].availres['bandwidth'] - bw_req)) / \
                        self.net.node[i].resources['bandwidth']
-        return (0, util_of_host)
+        return 0, util_of_host
     else:
-      return (1, 0)
+      return 1, 0
 
   def _calculateAvgLinkUtil (self, path_to_map, linkids, bw_req, vnf_id=None):
-    '''Checks if the path can satisfy the bandwidth requirement.
+    """Checks if the path can satisfy the bandwidth requirement.
     Returns the average link utilization on the path if
-    that path is feasable with bw_req, -1 otherwise.
-    If vnf_id is None, then the path`s end is already mapped.'''
+    that path is feasible with bw_req, -1 otherwise.
+    If vnf_id is None, then the path`s end is already mapped."""
     sum_w = 0
     internal_bw_req = 0
     sap_count_on_path = 0
@@ -118,13 +124,13 @@ class CoreAlgorithm(object):
     if len(path_to_map) > 1:
       for i, j, k in zip(path_to_map[:-1], path_to_map[1:], linkids):
         if self.net[i][j][k].availbandwidth < bw_req:
-          self.log.debug("Link %s, %s has only %f Mbps capacity," \
-                         " but %f is required." % (
-                         i, j, self.net[i][j][k].availbandwidth, bw_req))
+          self.log.debug(
+            "Link %s, %s has only %f Mbps capacity, but %f is required." % (
+              i, j, self.net[i][j][k].availbandwidth, bw_req))
           return -1
         else:
           sum_w += float(self.net[i][j][k].bandwidth - (
-          self.net[i][j][k].availbandwidth - bw_req)) / self.net[i][j][
+            self.net[i][j][k].availbandwidth - bw_req)) / self.net[i][j][
                      k].bandwidth
         # either only steers the traffic through a host or at the
         # beginning of the path, steers out from the VNF
@@ -148,20 +154,20 @@ class CoreAlgorithm(object):
 
     elif len(path_to_map) == 0:
       self.log.warn(
-        "Tried to calculate average link utilization" + " on 0 length path!")
+        "Tried to calculate average link utilization on 0 length path!")
       return -1
 
     else:
-      # required when trying to colocate two ends of a link.
+      # required when trying to collocate two ends of a link.
       act_bw = self.net.node[path_to_map[0]].availres['bandwidth']
       max_bw = self.net.node[path_to_map[0]].resources['bandwidth']
-      # sum of the two bw reqs are subtracted from guaranteed bw beteen
+      # sum of the two bw reqs are subtracted from guaranteed bw between
       # all (static and dynamic) ports of the host (BiS-BiS)
       sum_w = float(max_bw - (act_bw - bw_req - internal_bw_req)) / max_bw
       if act_bw < bw_req + internal_bw_req:
-        self.log.info( \
+        self.log.info(
           "Node %s don`t have %f Mbps capacity for mapping a link." % (
-          path_to_map[0], bw_req))
+            path_to_map[0], bw_req))
         return -1
         # path has only one element, so sum_w is already average.
 
@@ -169,12 +175,12 @@ class CoreAlgorithm(object):
     return sum_w
 
   def _sumLatencyOnPath (self, path_to_map, linkids):
-    '''Summerizes all latency (link, and forwarding) on the path.
+    """Summarizes all latency (link, and forwarding) on the path.
     prev_vnf_id is the already mapped and vnf_id is the to-be-placed
     VNF in the greedy process.
     Latency requirement satisfaction should be checked outside of this
     function, should be done by the helper functions of MappingManager.
-    '''
+    """
     sum_lat = 0
     try:
 
@@ -202,8 +208,7 @@ class CoreAlgorithm(object):
         return -1
 
     except KeyError as e:
-      raise uet.BadInputException(" node/edge data: " + str(e),
-                                  " data not found.")
+      raise uet.BadInputException(" node/edge data: %s data not found." % e)
     return sum_lat
 
   def _preferenceValueOfUtilization (self, x, attr):
@@ -216,8 +221,8 @@ class CoreAlgorithm(object):
 
   def _objectiveFunction (self, cid, node_id, prev_vnf_id, vnf_id, reqlinkid,
        path_to_map, linkids):
-    '''Calculates a function to determine which node is better to map to,
-    returns -1, if not feasable'''
+    """Calculates a function to determine which node is better to map to,
+    returns -1, if not feasible"""
     requested = self.req.node[vnf_id].resources
     available = self.net.node[node_id].availres
     maxres = self.net.node[node_id].resources
@@ -225,9 +230,8 @@ class CoreAlgorithm(object):
     sum_res = 0
 
     if len(path_to_map) == 0:
-      raise uet.InternalAlgorithmException("No path given to host %s for" \
-                                           "preference value calculation!" %
-                                           node_id)
+      raise uet.InternalAlgorithmException(
+        "No path given to host %s for preference value calculation!" % node_id)
 
     if available['mem'] >= requested['mem'] and available['cpu'] >= requested[
       'cpu'] and available['storage'] >= requested['storage']:
@@ -244,12 +248,12 @@ class CoreAlgorithm(object):
         return -1, sys.float_info.max
 
       '''Here we know that node_id have enough resource and the path
-      leading there satisfies the bandwidth req of the potentionally
+      leading there satisfies the bandwidth req of the potentially
       mapped edge of req graph. And the latency requirements as well'''
       max_rescomponent_value = 0
       for attr, res_w in zip(['cpu', 'mem', 'storage'],
                              self.resource_priorities):
-        sum_res += res_w * self._preferenceValueOfUtilization( \
+        sum_res += res_w * self._preferenceValueOfUtilization(
           float(maxres[attr] - (available[attr] - requested[attr])) / maxres[
             attr], attr)
         max_rescomponent_value += self.pref_params[attr]['e'] * res_w
@@ -261,9 +265,9 @@ class CoreAlgorithm(object):
                        self.pref_params['bandwidth']['e']
       scaled_lat_comp = 10 * float(sum_latency) / local_latreq
 
-      self.log.debug("avglinkutil pref value: %f, sum res: %f, sumlat:%f" % (
-      self.bw_factor * scaled_bw_comp, self.res_factor * scaled_res_comp, \
-      self.lat_factor * scaled_lat_comp))
+      self.log.debug("avglinkutil pref value: %f, sum res: %f, sumlat: %f" % (
+        self.bw_factor * scaled_bw_comp, self.res_factor * scaled_res_comp,
+        self.lat_factor * scaled_lat_comp))
 
       return self.bw_factor * scaled_bw_comp + self.res_factor * \
              scaled_res_comp + self.lat_factor * scaled_lat_comp, sum_latency
@@ -271,24 +275,23 @@ class CoreAlgorithm(object):
       return -1, sys.float_info.max
 
   def _updateGraphResources (self, bw_req, path, linkids, vnf=None, node=None):
-    '''Substracts the required resources by the (vnf, node) mapping
+    """Subtracts the required resources by the (vnf, node) mapping
     and path with bw_req from the available resources of the
     substrate network. vnf and node variables should be given, if those are
     just mapped now. (not when we want to map only a path between two already
     mapped VNFs)
     NOTE1: the ending of `path` is `node`.
-    NOTE2: feasability is already checked by _objectiveFunction()'''
+    NOTE2: feasibility is already checked by _objectiveFunction()"""
     if vnf is not None and node is not None:
       if self.net.node[node].type != 'INFRA':
         raise uet.InternalAlgorithmException(
-          "updateGraphResources " + "should only be called on Infra nodes!")
+          "updateGraphResources should only be called on Infra nodes!")
       newres = helper.subtractNodeRes(self.net.node[node].availres,
                                       self.req.node[vnf].resources)
-      if newres == None:
+      if newres is None:
         raise uet.InternalAlgorithmException(
-          "During network resource " + "update, Infra node %s`s resources "
-                                       "shouldn`t got below zero!" %
-          self.net.node[node].id)
+          "During network resource update, Infra node %s`s resources "
+          "shouldn`t got below zero!" % self.net.node[node].id)
       else:
         self.net.node[node].availres = newres
 
@@ -323,8 +326,8 @@ class CoreAlgorithm(object):
     self.log.debug("Available network resources are updated.")
 
   def _mapOneVNF (self, cid, subgraph, start, prev_vnf_id, vnf_id, reqlinkid):
-    '''Starting from the node (start), where the previous vnf of the chain
-    was mapped, maps vnf_id to an appropriate node.'''
+    """Starting from the node (start), where the previous vnf of the chain
+    was mapped, maps vnf_id to an appropriate node."""
     best_node = (-1, sys.float_info.max, -1)
 
     '''Edge data must be used from the substrate network!
@@ -348,21 +351,21 @@ class CoreAlgorithm(object):
                                                       reqlinkid,
                                                       paths[map_target],
                                                       linkids[map_target])
-            if value > -1 and value < best_node[1]:
+            if -1 < value < best_node[1]:
               best_node = (map_target, value, used_lat)
               self.log.debug("Calculated value: %f for VNF %s and path: %s" % (
-              value, vnf_id, paths[map_target]))
+                value, vnf_id, paths[map_target]))
 
     if best_node[0] > -1:
       self.log.debug(
         "Mapped VNF %s to node %s in network." % (vnf_id, best_node[0]))
       self.manager.vnf_mapping.append((vnf_id, best_node[0]))
       self.log.debug("Request Link %s, %s, %s mapped to path: %s" % (
-      prev_vnf_id, vnf_id, reqlinkid, paths[best_node[0]]))
+        prev_vnf_id, vnf_id, reqlinkid, paths[best_node[0]]))
       self.manager.link_mapping.add_edge(prev_vnf_id, vnf_id, key=reqlinkid,
                                          mapped_to=paths[best_node[0]],
                                          path_link_ids=linkids[best_node[0]])
-      self._updateGraphResources( \
+      self._updateGraphResources(
         self.req[prev_vnf_id][vnf_id][reqlinkid]['bandwidth'],
         paths[best_node[0]], linkids[best_node[0]], vnf_id, best_node[0])
       self.manager.updateChainLatencyInfo(cid, best_node[2], best_node[0])
@@ -381,9 +384,9 @@ class CoreAlgorithm(object):
     n2 = self.manager.getIdOfChainEnd_fromNetwork(vnf2)
     if n1 <= 0 or n2 <= 0:
       self.log.error("Not both end of request link are mapped: %s, %s, %s" % (
-      vnf1, vnf2, reqlinkid))
-      raise uet.InternalAlgorithmException("Not both end of request link" \
-                                           " are mapped: %s, %s" % (vnf1, vnf2))
+        vnf1, vnf2, reqlinkid))
+      raise uet.InternalAlgorithmException(
+        "Not both end of request link are mapped: %s, %s" % (vnf1, vnf2))
     bw_req = self.req[vnf1][vnf2][reqlinkid].bandwidth
 
     try:
@@ -391,25 +394,24 @@ class CoreAlgorithm(object):
       path = path[n2]
       linkids = linkids[n2]
     except (nx.NetworkXNoPath, KeyError) as e:
-      raise uet.MappingException("No path found between substrate nodes: " \
-                                 "%s and %s for mapping a request link " \
-                                 "between %s and %s" % (n1, n2, vnf1, vnf2))
+      raise uet.MappingException(
+        "No path found between substrate nodes: %s and %s for mapping a "
+        "request link between %s and %s" % (n1, n2, vnf1, vnf2))
 
     if self._calculateAvgLinkUtil(path, linkids, bw_req) == -1:
-      self.log.error("Last link of chain or best-effort link %s, %s " \
-                     "couldn`t be mapped!" % (vnf1, vnf2))
-      raise uet.MappingException("Last link of chain or best-effort link" \
-                                 " %s, %s, %s couldn`t be mapped due to link "
-                                 "capacity" % (
-                                 vnf1, vnf2, reqlinkid))
+      self.log.error(
+        "Last link of chain or best-effort link %s, %s couldn`t be mapped!" % (
+          vnf1, vnf2))
+      raise uet.MappingException(
+        "Last link of chain or best-effort link %s, %s, %s couldn`t be mapped "
+        "due to link capacity" % (vnf1, vnf2, reqlinkid))
     elif self.manager.getLocalAllowedLatency(cid, vnf1, vnf2,
                                              reqlinkid) < \
          self._sumLatencyOnPath(
-      path, linkids):
-      raise uet.MappingException("Last link %s, %s, %s of chain " \
-                                 "couldn`t be mapped due to latency "
-                                 "requirement." % (
-                                 vnf1, vnf2, reqlinkid))
+         path, linkids):
+      raise uet.MappingException(
+        "Last link %s, %s, %s of chain couldn`t be mapped due to latency "
+        "requirement." % (vnf1, vnf2, reqlinkid))
     self.log.debug(
       "Last link of chain or best-effort link %s, %s " % (vnf1, vnf2))
     self.log.debug(" was mapped to path: %s" % path)
@@ -424,7 +426,6 @@ class CoreAlgorithm(object):
     under-construction NFFG. Adds the link to/from this SAP.
     """
     sapname_and_id = "%s-%s" % (bis_id, netportid)
-    sap = None
     if sapname_and_id not in nffg.network:
       sap = nffg.add_sap(name=sapname_and_id, id=sapname_and_id)
     else:
@@ -468,12 +469,12 @@ class CoreAlgorithm(object):
       action_str = "output="
       if flowdst is None or flowsrc is None:
         raise uet.InternalAlgorithmException(
-          "No InfraPort found for " + "a dynamic link of collocated VNFs")
+          "No InfraPort found for a dynamic link of collocated VNFs")
       match_str += flowsrc.id
-      if reqlink.flowclass != None:
+      if reqlink.flowclass is not None:
         match_str += ";flowclass=%s" % reqlink.flowclass
       self.log.debug("Collocated flowrule %s => %s added to Port %s of %s" % (
-      match_str, action_str, flowsrc.id, path[0]))
+        match_str, action_str, flowsrc.id, path[0]))
       flowsrc.add_flowrule(match_str, action_str)
     else:
       # set the flowrules for the transit Infra nodes
@@ -482,7 +483,7 @@ class CoreAlgorithm(object):
         match_str = "in_port="
         action_str = "output="
         match_str += self.net[i][j][lidij].dst.id
-        if reqlink.flowclass != None:
+        if reqlink.flowclass is not None:
           match_str += ";flowclass=%s" % reqlink.flowclass
         action_str += self.net[j][k][lidjk].src.id
         # Transit SAPs would mess it up pretty much, but it is not allowed.
@@ -496,25 +497,24 @@ class CoreAlgorithm(object):
           # NOTE: If i and k are SAPs but j isn`t, then in j`s port TAG and 
           # UNTAG action will be present at the same time.
           action_str += ";UNTAG"
-        self.log.debug("Transit flowrule %s => %s added to Port %s" \
-                       " of %s" % (
-                       match_str, action_str, self.net[i][j][lidij].dst.id, j))
+        self.log.debug("Transit flowrule %s => %s added to Port %s of %s" % (
+          match_str, action_str, self.net[i][j][lidij].dst.id, j))
         nffg.network[i][j][lidij].dst.add_flowrule(match_str, action_str)
 
       # set flowrule for the first element if that is not a SAP
       if nffg.network.node[path[0]].type != 'SAP':
         match_str = "in_port="
         action_str = "output="
-        if flowsrc == None:
+        if flowsrc is None:
           raise uet.InternalAlgorithmException(
-            "No InfraPort " + "found for a dynamic link which starts a path")
+            "No InfraPort found for a dynamic link which starts a path")
         match_str += flowsrc.id
-        if reqlink.flowclass != None:
+        if reqlink.flowclass is not None:
           match_str += ";flowclass=%s" % reqlink.flowclass
         action_str += nffg.network[path[0]][path[1]][linkids[0]].src.id
         action_str += ";" + tag
-        self.log.debug("Starting flowrule %s => %s added to Port %s" \
-                       " of %s" % (match_str, action_str, flowsrc.id, path[0]))
+        self.log.debug("Starting flowrule %s => %s added to Port %s of %s" % (
+          match_str, action_str, flowsrc.id, path[0]))
         flowsrc.add_flowrule(match_str, action_str)
 
       # set flowrule for the last element if that is not a SAP
@@ -522,22 +522,20 @@ class CoreAlgorithm(object):
         match_str = "in_port="
         action_str = "output="
         match_str += self.net[path[-2]][path[-1]][linkids[-1]].dst.id
-        if reqlink.flowclass != None:
+        if reqlink.flowclass is not None:
           match_str += ";flowclass=%s" % reqlink.flowclass
         match_str += ";" + tag
-        if flowdst == None:
+        if flowdst is None:
           raise uet.InternalAlgorithmException(
-            "No InfraPort " + "found for a dynamic link which finishes a path")
+            "No InfraPort found for a dynamic link which finishes a path")
         action_str += flowdst.id + ";UNTAG"
-        self.log.debug("Finishing flowrule %s => %s added to Port %s" \
-                       " of %s" % (match_str, action_str,
-                                   self.net[path[-2]][path[-1]][
-                                     linkids[-1]].dst.id, path[-1]))
+        self.log.debug("Finishing flowrule %s => %s added to Port %s of %s" % (
+          match_str, action_str,
+          self.net[path[-2]][path[-1]][linkids[-1]].dst.id, path[-1]))
         nffg.network[path[-2]][path[-1]][linkids[-1]].dst.add_flowrule(
           match_str, action_str)
 
   def _retrieveOrAddVNF (self, nffg, vnfid):
-    nodenf = None
     if vnfid not in nffg.network:
       nodenf = copy.deepcopy(self.req.node[vnfid])
       nffg.add_node(nodenf)
@@ -564,7 +562,7 @@ class CoreAlgorithm(object):
           if len(path) > 1:
             # add a SAP with the name of the id of this BiS-BiS
             # concatenated the outbound port identifier.
-            self._addSAPandLinkToFromIt( \
+            self._addSAPandLinkToFromIt(
               self.net[path[0]][path[1]][linkids[0]].src.id, bis_id, nffg,
               nodenf, d.src.id, d.flowclass)
           elif len(path) == 1:
@@ -574,8 +572,8 @@ class CoreAlgorithm(object):
                             flowclass=d.flowclass)
           else:
             raise uet.InternalAlgorithmException(
-              "No mapping given" + "for a link, after the algorithm has "
-                                   "finished running!")
+              "No mapping given for a link, after the algorithm has finished "
+              "running!")
         # current vnf is already added to nffg
         for i, j, k, d in self.req.in_edges_iter([vnf], data=True, keys=True):
           # j is always vnf, link is i-->vnf directed
@@ -583,7 +581,7 @@ class CoreAlgorithm(object):
           linkids = self.manager.link_mapping[i][vnf][k]['path_link_ids']
           # collocation is handled by the out_edges_iter()
           if len(path) > 1:
-            self._addSAPandLinkToFromIt( \
+            self._addSAPandLinkToFromIt(
               self.net[path[-2]][path[-1]][linkids[-1]].dst.id, bis_id, nffg,
               nodenf, d.dst.id, d.flowclass, toSAP=False)
             # TODO: construct EdgeReqs too, decide how E2E requirements
@@ -596,7 +594,7 @@ class CoreAlgorithm(object):
 
   def constructOutputNFFG (self):
     # use the unchanged input from the lower layer (deepcopied in the
-    # constuctor, modify it now)
+    # constructor, modify it now)
     nffg = self.net0
     for vnf, host in self.manager.vnf_mapping:
       # duplicate the object, so the original one is not modified.
@@ -609,7 +607,7 @@ class CoreAlgorithm(object):
           # use the (copies of the) ports between the SGLinks to
           # connect the VNF to the Infra node.
           self.log.debug("Port %s added to Infra %s from NF %s" % (
-          out_infra_port.id, host, vnf))
+            out_infra_port.id, host, vnf))
           nffg.add_undirected_link(out_infra_port, mappednodenf.ports[d.src.id],
                                    dynamic=True)
           helperlink = self.manager.link_mapping[i][j][k]
@@ -622,7 +620,7 @@ class CoreAlgorithm(object):
           # j is always vnf
           in_infra_port = nffg.network.node[host].add_port()
           self.log.debug("Port %s added to Infra %s to NF %s" % (
-          in_infra_port.id, host, vnf))
+            in_infra_port.id, host, vnf))
           nffg.add_undirected_link(in_infra_port, mappednodenf.ports[d.dst.id],
                                    dynamic=True)
           helperlink = self.manager.link_mapping[i][vnf][k]
@@ -700,10 +698,10 @@ class CoreAlgorithm(object):
     return self.constructOutputNFFG()
 
   def reset (self):
-    '''Resets the CoreAlgorithm instance to its initial (after prerocessor)
+    """Resets the CoreAlgorithm instance to its initial (after preprocessor)
     state. Links weights are also calculated by the preprocessor, so those
     are reset too. self.original_chains is the input chain with maxhop
-    added as extra key to chains.'''
+    added as extra key to chains."""
     self._preproc(copy.deepcopy(self.net0), copy.deepcopy(self.req0),
                   self.original_chains)
 

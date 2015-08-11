@@ -30,7 +30,7 @@ class UnifyException(Exception):
 
 class InternalAlgorithmException(UnifyException):
   """
-  Raised when the algorthm fails due to implementation error
+  Raised when the algorithm fails due to implementation error
   or conceptual error.
   """
   pass
@@ -43,8 +43,8 @@ class BadInputException(UnifyException):
   """
 
   def __init__ (self, expected, given):
-    self.msg = "The algorithm expected an input: %s, " \
-               "but the given input is: %s" % (expected, given)
+    self.msg = "The algorithm expected an input: %s, but the given input is: " \
+               "%s" % (expected, given)
 
 
 class MappingException(UnifyException):

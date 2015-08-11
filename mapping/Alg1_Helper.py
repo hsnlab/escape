@@ -20,9 +20,6 @@ import logging
 import networkx as nx
 
 import UnifyExceptionTypes as uet
-
-
-
 # these are needed for the modified NetworkX functions.
 from heapq import heappush, heappop
 from itertools import count
@@ -39,12 +36,12 @@ def subtractNodeRes (current, substrahend, link_count=1):
   """
   Subtracts the subtrahend nffg_elements.NodeResource object from the current.
   Note: only delay component is not subtracted, for now we neglect the load`s
-  inluence on the delay. Link count identifies how many times the bandwidth
+  influence on the delay. Link count identifies how many times the bandwidth
   should be subtracted. Returns None if any of the components are smaller
   than the appropriate component of the substrahend.
   """
   attrlist = ['cpu', 'mem', 'storage', 'bandwidth']  # delay excepted!
-  if reduce(lambda a, b: a or b, (current[attr] == None for attr in attrlist)):
+  if reduce(lambda a, b: a or b, (current[attr] is None for attr in attrlist)):
     raise uet.BadInputException(
       "Node resource components should always " + "be given",
       "One of %s`s components is None" % str(current))
@@ -70,7 +67,7 @@ def shortestPathsInLatency (G):
   Modified source code taken from NetworkX library.
   """
   # dictionary-of-dictionaries representation for dist and pred
-  # use some defaultdict magick here
+  # use some default dict magic here
   # for dist the default is the floating point inf value
   dist = defaultdict(lambda: defaultdict(lambda: float('inf')))
   for u in G:
@@ -94,19 +91,19 @@ def shortestPathsInLatency (G):
               dist[u][v] = dist[u][w] + G.node[w].resources['delay'] + dist[w][
                 v]
   except KeyError as e:
-    raise uet.BadInputException("Node attribure missing " + str(e),
-                                "{'delay': VALUE}")
+    raise uet.BadInputException(
+      "Node attribute missing %s {'delay': VALUE}" % e)
 
   return dict(dist)
 
 
 def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
-  '''Taken and modified from NetworkX source code,
+  """Taken and modified from NetworkX source code,
   the function originally 'was single_source_dijkstra',
   now it returns the key edge data too.
-  '''
+  """
   if source == target:
-    return ({source: [source]}, {source: []})
+    return {source: [source]}, {source: []}
   push = heappush
   pop = heappop
   dist = {}  # dictionary of final distances
@@ -145,16 +142,16 @@ def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
         push(fringe, (vw_dist, next(c), w))
         paths[w] = paths[v] + [w]
         edgekeys[w] = edgekeys[v] + [ekey]
-  return (paths, edgekeys)
+  return paths, edgekeys
 
 
 class MappingManager(object):
-  '''Administrates the mapping of links and VNFs
+  """Administrates the mapping of links and VNFs
   TODO: Connect subchain and chain requirements, controls dynamic objective
-  function parameterization based on where the mapping process is in an
+  function parametrization based on where the mapping process is in an
   (E2E) chain.
   TODO: Could handle backtrack functionality, if other possible mappings
-  are also given (to some different structure)'''
+  are also given (to some different structure)"""
 
   def __init__ (self, net, req, chains):
     self.log = log.getChild(self.__class__.__name__)
@@ -175,9 +172,8 @@ class MappingManager(object):
           if not sapfound:
             self.log.error("No SAP found in network with name: %s" % sapname)
             raise uet.MappingException(
-              "No SAP found in network " + "with name: %s. SAPs are mapped "
-                                           "exclusively by their names." %
-              sapname)
+              "No SAP found in network with name: %s. SAPs are mapped "
+              "exclusively by their names." % sapname)
     except AttributeError as e:
       raise uet.BadInputException("Node data with name %s" % str(e),
                                   "Node data not found")
@@ -198,7 +194,7 @@ class MappingManager(object):
 
   def getIdOfChainEnd_fromNetwork (self, _id):
     """
-    SAPs are mapped by their name, NOT by thier ID in the network/request
+    SAPs are mapped by their name, NOT by their ID in the network/request
     graphs. If the chain is between VNFs, those must be already mapped.
     Input is an ID from the request graph. Return -1 if the node is not
     mapped.
@@ -211,13 +207,13 @@ class MappingManager(object):
     return ret
 
   def addChain_SubChainDependency (self, subcid, chainids, subc, link_ids):
-    '''Adds a link between a subchain id and all the chain ids that are
+    """Adds a link between a subchain id and all the chain ids that are
     contained subcid. Maybe_sap is the first element of the subchain,
     if it is a SAP add its network pair to last_used_host attribute.
     (at this stage, only SAPs are inside the vnf_mapping list)
     'subchain' is a list of (vnf1,vnf2,linkid) tuples where the subchain
     goes.
-    '''
+    """
     # TODO: not E2E chains are also in self.chains, but we don`t find
     # subchains for them, so their latency is not checked, the not E2E
     # chain nodes in this graph always stay the same so far.
@@ -228,7 +224,7 @@ class MappingManager(object):
     for cid in chainids:
       if cid not in {c['id'] for c in self.chains}:
         raise uet.InternalAlgorithmException(
-          "Invalid chain identifier" + "given to MappingManager!")
+          "Invalid chain identifier given to MappingManager!")
       else:
         self.chain_subchain.add_edge(cid, subcid)
 
@@ -248,8 +244,7 @@ class MappingManager(object):
     if vnf1 is not None and vnf2 is not None and linkid is not None:
       if self.req.network[vnf1][vnf2][linkid].type != 'SG':
         raise uet.InternalAlgorithmException(
-          "getLocalAllowedLatency " + "function should only be called on SG "
-                                      "links!")
+          "getLocalAllowedLatency  function should only be called on SG links!")
       if hasattr(self.req.network[vnf1][vnf2][linkid], 'delay'):
         link_maxlat = self.req.network[vnf1][vnf2][linkid].delay
     try:
@@ -257,9 +252,9 @@ class MappingManager(object):
       chain_maxlat = sys.float_info.max
       for c in self.chain_subchain.neighbors_iter(subchain_id):
         if c > self.max_input_chainid:
-          raise uet.InternalAlgorithmException("Subchain-subchain" \
-                                               "connection is not allowed in " \
-                                               "chain-subchain bipartie graph!")
+          raise uet.InternalAlgorithmException(
+            "Subchain-subchain connection is not allowed in chain-subchain "
+            "bipartie graph!")
         elif self.chain_subchain.node[c]['avail_latency'] < chain_maxlat:
           chain_maxlat = self.chain_subchain.node[c]['avail_latency']
 
@@ -267,7 +262,7 @@ class MappingManager(object):
 
     except KeyError as e:
       raise uet.InternalAlgorithmException(
-        "Bad construction of chain-" % "subchain bipartie graph!")
+        "Bad construction of chain-subchain bipartie graph!")
 
   def isVNFMappingDistanceGood (self, vnf1, vnf2, n1, n2):
     """
@@ -279,9 +274,8 @@ class MappingManager(object):
                                                        keys=True):
       if self.req.network[i][j][linkid].type != 'SG':
         self.log.warn(
-          "There is a not SG link left in the Service " + "Graph, but now it "
-                                                          "didn`t cause a "
-                                                          "problem.")
+          "There is a not SG link left in the Service Graph, but now it "
+          "didn`t cause a problem.")
         continue
       if j == vnf2:
         # i,j are always vnf1,vnf2
@@ -302,23 +296,23 @@ class MappingManager(object):
       return True
 
   def updateChainLatencyInfo (self, subchain_id, used_lat, last_used_host):
-    '''Updates how much latency does the mapping process has left which
+    """Updates how much latency does the mapping process has left which
     applies for this subchain.
-    '''
+    """
     for c in self.chain_subchain.neighbors_iter(subchain_id):
-      # feasability already checked by the core algorithm
+      # feasibility already checked by the core algorithm
       self.chain_subchain.node[c]['avail_latency'] -= used_lat
     self.chain_subchain.node[subchain_id]['last_used_host'] = last_used_host
 
   def addShortestRoutesInLatency (self, sp):
-    '''Shortest paths are between physical nodes. These are needed to
+    """Shortest paths are between physical nodes. These are needed to
     estimate the importance of laltency in the objective function.
-    '''
+    """
     self.shortest_paths_lengths = sp
 
   def setMaxInputChainId (self, maxcid):
-    '''Sets the maximal chain ID given bt the user. Every chain with lower
+    """Sets the maximal chain ID given bt the user. Every chain with lower
     ID-s are given by the user, higher ID-s are subchains generated by
     the preprocessor.
-    '''
+    """
     self.max_input_chainid = maxcid
