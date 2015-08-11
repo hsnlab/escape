@@ -12,7 +12,7 @@ libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev make \
 gcc automake openssh-client openssh-server ssh libgtk2.0-dev
 
 echo "Install Python-specific dependencies..."
-sudo pip install requests jinja2 ncclient lxml networkx
+sudo pip install requests jinja2 ncclient lxml networkx py2neo
 
 echo "Install OpenYuma for NETCONF capability..."
 cd "$DIR/OpenYuma"
