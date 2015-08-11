@@ -13,7 +13,7 @@ an unified way.
 
 :any:`AbstractDomainManager` contains general logic for top domain managers.
 
-:any:`AbstractDomainAdapter` contains general logic for actual Adapters.
+:any:`AbstractESCAPEAdapter` contains general logic for actual Adapters.
 
 :any:`VNFStarterAPI` defines the interface for VNF management based on
 VNFStarter YANG description.

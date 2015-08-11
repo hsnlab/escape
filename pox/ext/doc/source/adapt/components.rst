@@ -7,9 +7,9 @@ other different domains and manage the interactions.
 .. figure::  ../_static/components.png
    :align:  center
 
-:any:`POXDomainAdapter` implements POX related functionality.
+:any:`InternalPOXAdapter` implements POX related functionality.
 
-:any:`MininetDomainAdapter` implements Mininet related functionality
+:any:`InternalMininetAdapter` implements Mininet related functionality
 transparently.
 
 :any:`VNFStarterAdapter` is a wrapper class for vnf_starter NETCONF module.

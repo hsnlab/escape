@@ -9,7 +9,7 @@ Adaptation Sublayer.
 
 :any:`ComponentConfigurator` creates, initializes, stores and manages different
 adaptation components, i.e. derived classes of :any:`AbstractDomainManager` and
-:any:`AbstractDomainAdapter`.
+:any:`AbstractESCAPEAdapter`.
 
 :any:`ControllerAdapter` implements the centralized functionality of high-level
 adaptation and installation of :any:`NFFG`.

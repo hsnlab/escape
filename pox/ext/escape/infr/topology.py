@@ -240,7 +240,7 @@ class FallbackDynamicTopology(AbstractTopology):
 class InternalControllerProxy(RemoteController):
   """
   Controller class for emulated Mininet network. Making connection with
-  internal controller initiated by POXDomainAdapter.
+  internal controller initiated by InternalPOXAdapter.
   """
 
   def __init__ (self, name="InternalPOXController", ip='127.0.0.1', port=6653,
@@ -382,6 +382,20 @@ class ESCAPENetworkBridge(object):
       log.info("Schedule cleanup task after Mininet emulation...")
       # Schedule a cleanup as a coop task to aviod threading issues
       call_as_coop_task(remove_junks)
+
+  def get_agent_to_switch (self, switch_name):
+    """
+    Return the agent to which the given switch is tided..
+
+    :param switch_name: name of the switch
+    :type switch_name: str
+    :return: the agent
+    :rtype: :class:`mininet.node.NetconfAgent`
+    """
+    for switch in self.__mininet.switches:
+      if switch.name == switch_name:
+        return switch.agent
+    return None
 
 
 class TopologyBuilderException(Exception):

@@ -60,9 +60,9 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         "DEFAULTS": (),  # OpenStack Agent REST API
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.components",
-                                         "class": "POXDomainAdapter"},
+                                         "class": "InternalPOXAdapter"},
                         "MININET": {"module": "escape.adapt.components",
-                                    "class": "MininetDomainAdapter"},
+                                    "class": "InternalMininetAdapter"},
                         "VNFStarter": {"module": "escape.adapt.components",
                                        "class": "VNFStarterAdapter",
                                        "username": "mininet",

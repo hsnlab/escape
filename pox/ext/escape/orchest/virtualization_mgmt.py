@@ -171,7 +171,7 @@ class OneBisBisVirtualizer(AbstractVirtualizer):
     bb.resources.cpu = sys.maxint
     bb.resources.mem = sys.maxint
     bb.resources.storage = sys.maxint
-    bb.resources.delay = sys.maxint
+    bb.resources.delay = 0
     bb.resources.bandwidth = sys.maxint
     sap1 = nffg.add_sap(id="sap1", name="SAP1")
     sap2 = nffg.add_sap(id="sap2", name="SAP2")

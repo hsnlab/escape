@@ -40,7 +40,7 @@ class DomainChangedEvent(Event):
     """
     Init event object
 
-    :param domain: domain name. Should be :any:`AbstractDomainAdapter.name`
+    :param domain: domain name. Should be :any:`AbstractESCAPEAdapter.name`
     :type domain: str
     :param cause: type of the domain change: :any:`DomainChangedEvent.TYPE`
     :type cause: str
@@ -213,7 +213,7 @@ class AbstractDomainManager(EventMixin):
     raise NotImplementedError("Not implemented yet!")
 
 
-class AbstractDomainAdapter(EventMixin):
+class AbstractESCAPEAdapter(EventMixin):
   """
   Abstract class for different domain adapters.
 
@@ -235,7 +235,7 @@ class AbstractDomainAdapter(EventMixin):
     """
     Init.
     """
-    super(AbstractDomainAdapter, self).__init__()
+    super(AbstractESCAPEAdapter, self).__init__()
     self._timer = None
 
   def start_polling (self, wait=1):

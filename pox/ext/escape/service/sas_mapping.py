@@ -14,6 +14,9 @@
 """
 Contains classes which implement SG mapping functionality.
 """
+import Alg1_Helper
+from MappingAlgorithms import MAP
+import MappingAlgorithms
 
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
 from escape.service import log as log, LAYER_NAME
@@ -46,13 +49,15 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     """
     log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
-    # TODO implement
-    graph = graph.copy()
+    graph = MappingAlgorithms._constructExampleRequest()
+    resource = MappingAlgorithms._constructExampleNetwork()
+    mapped_nffg = MAP(request=graph, network=resource)
     graph.name += "-sas-mapped"
     log.debug(
       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
     # for testing return with graph
-    return graph
+    print mapped_nffg.dump()
+    return mapped_nffg
 
 
 class SGMappingFinishedEvent(Event):

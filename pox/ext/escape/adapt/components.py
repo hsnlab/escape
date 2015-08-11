@@ -26,7 +26,7 @@ from escape.util.pox_extension import ExtendedOFConnectionArbiter, \
   OpenFlowBridge
 
 
-class POXDomainAdapter(AbstractDomainAdapter):
+class InternalPOXAdapter(AbstractESCAPEAdapter):
   """
   Adapter class to handle communication with internal POX OpenFlow controller.
 
@@ -47,9 +47,9 @@ class POXDomainAdapter(AbstractDomainAdapter):
     :type port: int
     """
     name = name if name is not None else self.name
-    log.debug("Init POXDomainAdapter with name: %s address %s:%s" % (
+    log.debug("Init InternalPOXAdapter with name: %s address %s:%s" % (
       name, address, port))
-    super(POXDomainAdapter, self).__init__()
+    super(InternalPOXAdapter, self).__init__()
     # Set an OpenFlow nexus as a source of OpenFlow events
     self.openflow = OpenFlowBridge()
     self.controller_address = (address, port)
@@ -120,7 +120,7 @@ class POXDomainAdapter(AbstractDomainAdapter):
     pass
 
 
-class MininetDomainAdapter(AbstractDomainAdapter):
+class InternalMininetAdapter(AbstractESCAPEAdapter):
   """
   Adapter class to handle communication with Mininet domain.
 
@@ -138,17 +138,18 @@ class MininetDomainAdapter(AbstractDomainAdapter):
     :param net: set pre-defined network (optional)
     :type net: :class:`ESCAPENetworkBridge`
     """
-    log.debug("Init MininetDomainAdapter - initial network: %s" % net)
+    log.debug("Init InternalMininetAdapter - initial network: %s" % net)
     # Call base constructors directly to avoid super() and MRO traps
-    AbstractDomainAdapter.__init__(self)
+    AbstractESCAPEAdapter.__init__(self)
     if not net:
       from pox import core
 
       if core.core.hasComponent(InfrastructureLayerAPI._core_name):
-        net = core.core.components[InfrastructureLayerAPI._core_name].topology
-        if net is None:
+        # reference to MN --> ESCAPENetworkBridge
+        self.IL_topo_ref = core.core.components[
+          InfrastructureLayerAPI._core_name].topology
+        if self.IL_topo_ref is None:
           log.error("Unable to get emulated network reference!")
-    self.IL_topo_ref = net  # reference to MN --> ESCAPENetworkBridge
 
   def check_domain_is_up (self):
     """
@@ -167,8 +168,23 @@ class MininetDomainAdapter(AbstractDomainAdapter):
     # Direct access to IL's Mininet wrapper <-- Internal Domain
     return self.IL_topo_ref.topo_desc if self.IL_topo_ref.started else None
 
+  def get_agent_connection_params (self, ee_name):
+    """
+    Return the connection parameters for the agent of the switch given by the
+    ``switch_name``.
 
-class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
+    :param ee_name: name of the container Node
+    :type ee_name: str
+    :return: connection params
+    :rtype: dict
+    """
+    agent = self.IL_topo_ref.get_agent_to_switch(ee_name)
+    return {"server": "127.0.0.1", "port": agent.agentPort,
+            "username": agent.username,
+            "password": agent.passwd} if agent is not None else {}
+
+
+class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
                         VNFStarterAPI):
   """
   This class is devoted to provide NETCONF specific functions for vnf_starter
@@ -202,7 +218,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
     """
     # Call base constructors directly to avoid super() and MRO traps
     AbstractNETCONFAdapter.__init__(self, **kwargs)
-    AbstractDomainAdapter.__init__(self)
+    AbstractESCAPEAdapter.__init__(self)
     log.debug("Init VNFStarterAdapter - params: %s" % kwargs)
 
   ##############################################################################
@@ -408,7 +424,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractDomainAdapter,
           "VNF initiation." % e.args[0])
 
 
-class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
+class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                            OpenStackAPI):
   """
   This class is devoted to provide REST specific functions for OpenStack domain.
@@ -424,7 +440,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
     log.debug("Init OpenStackRESTAdapter with URL: %s" % url)
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("OpenStack base URL is set to %s" % url)
-    AbstractDomainAdapter.__init__(self)
+    AbstractESCAPEAdapter.__init__(self)
 
   def ping (self):
     """
@@ -485,7 +501,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
     return self._response.status_code
 
 
-class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
+class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                              UnifiedNodeAPI):
   """
   This class is devoted to provide REST specific functions for UN domain.
@@ -501,7 +517,7 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractDomainAdapter,
     log.debug("Init OpenStackRESTAdapter with URL: %s" % url)
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("Unified Node base URL is set to %s" % url)
-    AbstractDomainAdapter.__init__(self)
+    AbstractESCAPEAdapter.__init__(self)
 
 
 class InternalDomainManager(AbstractDomainManager):
@@ -509,8 +525,8 @@ class InternalDomainManager(AbstractDomainManager):
   Manager class to handle communication with internally emulated network.
 
   .. note::
-    Uses :class:`MininetDomainAdapter` for managing the emulated network and
-    :class:`POXDomainAdapter` for controlling the network.
+    Uses :class:`InternalMininetAdapter` for managing the emulated network and
+    :class:`InternalPOXAdapter` for controlling the network.
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
@@ -527,11 +543,11 @@ class InternalDomainManager(AbstractDomainManager):
       self._poll = kwargs['poll']
     else:
       self._poll = False
-    self.controller = None  # DomainAdapter for POX - POXDomainAdapter
-    self.network = None  # DomainAdapter for Mininet - MininetDomainAdapter
-    self.remote = None  # NETCONF communication - VNFStarterAdapter
+    self.adapterPOX = None  # DomainAdapter for POX - InternalPOXAdapter
+    self.adapterMN = None  # DomainAdapter for Mininet - InternalMininetAdapter
+    self.adapterVNF = None  # NETCONF communication - VNFStarterAdapter
     self._detected = None
-    self.topology = None  # Description of the domain topology as an NFFG
+    self.internal_topo = None  # Description of the domain topology as an NFFG
 
   def finit (self):
     """
@@ -540,9 +556,9 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     self.stop_polling()
-    del self.controller
-    del self.network
-    del self.remote
+    del self.adapterPOX
+    del self.adapterMN
+    del self.adapterVNF
 
   def init (self, configurator, **kwargs):
     """
@@ -550,9 +566,12 @@ class InternalDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    self.controller = configurator.load_component(POXDomainAdapter.name)
-    self.network = configurator.load_component(MininetDomainAdapter.name)
-    self.remote = configurator.load_component(VNFStarterAdapter.name)
+    # Init adapter to internal controller: POX
+    self.adapterPOX = configurator.load_component(InternalPOXAdapter.name)
+    # Init adapter to internal topo emulation: Mininet
+    self.adapterMN = configurator.load_component(InternalMininetAdapter.name)
+    # No need to init default NETCONF adapter
+    self.adapterVNF = None
     # Skip to start polling is it's set
     if not self._poll:
       # Try to request/parse/update Mininet topology
@@ -564,7 +583,7 @@ class InternalDomainManager(AbstractDomainManager):
 
   @property
   def controller_name (self):
-    return self.controller.task_name
+    return self.adapterPOX.task_name
 
   def _detect_topology (self):
     """
@@ -573,14 +592,14 @@ class InternalDomainManager(AbstractDomainManager):
     :return: detected or not
     :rtype: bool
     """
-    if self.network.check_domain_is_up():
+    if self.adapterMN.check_domain_is_up():
       log.info("%s domain confirmed!" % self.name)
       self._detected = True
       log.info("Updating resource information from %s domain..." % self.name)
-      topo_nffg = self.network.get_topology_description()
+      topo_nffg = self.adapterMN.get_topology_description()
       if topo_nffg:
         log.debug("Set received NF-FG: %s..." % topo_nffg)
-        self.topology = topo_nffg
+        self.internal_topo = topo_nffg
         self.raiseEventNoErrors(DomainChangedEvent, domain=self.name,
                                 cause=DomainChangedEvent.TYPE.NETWORK_UP,
                                 data=topo_nffg)
@@ -608,7 +627,7 @@ class InternalDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    topo_nffg = self.network.get_topology_description()
+    topo_nffg = self.adapterMN.get_topology_description()
     # TODO - implement actual updating
     # update local topology
     # update DoV
@@ -625,10 +644,58 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     log.info("Install %s domain part..." % self.name)
-    # TODO - implement
-    # self.network.initiate_VNFs(nffg_part=())
+    self._deploy_nfs(nffg_part=nffg_part)
     # TODO ... VNF initiation etc.
-    self.controller.install_routes(routes=())
+    # self.controller.install_routes(routes=())
+
+  def _deploy_nfs (self, nffg_part):
+    """
+    Install the NFs mapped in the given NFFG.
+
+    If an NF is already defined in the topology and it's state is up and
+    running then the actual NF's initiation will be skipped!
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
+    # Iter through the container INFRAs in the given mapped NFFG part
+    for ee in (infra for infra in nffg_part.infras if infra.infra_type in (
+         NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE)):
+      # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
+      if ee.id not in (n.id for n in self.internal_topo.infras):
+        log.error(
+          "Infrastructure Node: %s is not found in the %s domain! Skip NF "
+          "initiation on this Node..." % (ee, self.name))
+        continue
+      # Iter over the NFs connected the actual INFRA
+      for nf in nffg_part.running_nfs(ee.id):
+        # if nf.id in self.internal_topo
+        # Extract the initiation params
+        params = {'nf_type': nf.functional_type,
+                  'nf_ports': [link.src.id for u, v, link in
+                               nffg_part.network.out_edges_iter((nf.id,),
+                                                                data=True)],
+                  'infra_id': ee.id}
+        # Check if every param is not None or empty
+        if not all(params.values()):
+          log.error(
+            "Missing arguments for initiation of NF: %s. Extracted params: "
+            "%s" % (nf.name, params))
+        # Create connection Adapter to EE agent
+        connection_params = self.adapterMN.get_agent_connection_params(ee.id)
+        if connection_params is None:
+          log.error(
+            "Missing connection params for communication with the agent of "
+            "Node: %s" % ee.id)
+        # Save last used adapter --> and last RPC result
+        self.adapterVNF = VNFStarterAdapter(**connection_params)
+        vnf = self.adapterVNF.deployNF(**params)
+        # Check if NETCONF communication was OK
+        if vnf is None:
+          log.error(
+            "Initiated NF: %s is not verified. Initiation was unsuccessfull!"
+            % nf.id)
 
 
 class OpenStackDomainManager(AbstractDomainManager):
