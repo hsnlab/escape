@@ -560,7 +560,7 @@ class NFFG(AbstractNFFG):
     # Collect backward links
     backwards = [(src, dst, key) for src, dst, key, link in
                  self.network.edges_iter(keys=True, data=True) if
-                 link.type == Link.STATIC and link.backward is True]
+                 link.backward is True]
     # Delete backwards links
     for link in backwards:
       self.network.remove_edge(*link)
@@ -670,16 +670,16 @@ def generate_mn_topo ():
   # Add environments
   # TODO - define supported types (that's only need to the orchestration)
   ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=0, mem=0, storage=0,
                        delay=0, bandwidth=0)
   ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NodeInfra.TYPE_EE, cpu=0, mem=0, storage=0,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=0, mem=0, storage=0,
                        delay=0, bandwidth=0)
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
   sw4 = nffg.add_infra(id="SW4", name="switch-4", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NodeInfra.TYPE_SDN_SWITCH)
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
   # Add SAPs
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")
@@ -702,18 +702,18 @@ def generate_mn_topo ():
 def generate_dynamic_fallback_nffg ():
   nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
   nc1 = nffg.add_infra(id="nc1", name="NC1", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NodeInfra.TYPE_EE, cpu=5, mem=5, storage=5,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   nc1.add_supported_type(['A', 'B'])
   nc2.add_supported_type(['A', 'C'])
   s3 = nffg.add_infra(id="s3", name="S3", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH, delay=0.2,
+                      infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                       bandwidth=10000)
   s4 = nffg.add_infra(id="s4", name="S4", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH, delay=0.2,
+                      infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                       bandwidth=10000)
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
   sap2 = nffg.add_sap(id="sap2", name="SAP2")
@@ -733,13 +733,13 @@ def generate_dynamic_fallback_nffg ():
 def generate_static_fallback_topo ():
   nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
   s1 = nffg.add_infra(id="s1", name="S1", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+                      infra_type=NFFG.TYPE_INFRA_SDN_SW)
   s2 = nffg.add_infra(id="s2", name="S2", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+                      infra_type=NFFG.TYPE_INFRA_SDN_SW)
   s3 = nffg.add_infra(id="s3", name="S3", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+                      infra_type=NFFG.TYPE_INFRA_SDN_SW)
   s4 = nffg.add_infra(id="s4", name="S4", domain=NFFG.DOMAIN_INTERNAL,
-                      infra_type=NodeInfra.TYPE_SDN_SWITCH)
+                      infra_type=NFFG.TYPE_INFRA_SDN_SW)
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
   sap2 = nffg.add_sap(id="sap2", name="SAP2")
   nffg.add_link(s1.add_port(1), s3.add_port(1), id="l1")
@@ -757,8 +757,8 @@ def generate_static_fallback_topo ():
 def generate_one_bisbis ():
   nffg = NFFG(id="1BiSBiS", name="One-BiSBiS-View")
   bb = nffg.add_infra(id="1bisbis", name="One-BiSBiS",
-                           domain=NFFG.DOMAIN_VIRTUAL,
-                           infra_type=NFFG.TYPE_INFRA_BISBIS)
+                      domain=NFFG.DOMAIN_VIRTUAL,
+                      infra_type=NFFG.TYPE_INFRA_BISBIS)
   # FIXME - very basic heuristic for virtual resource definition
   # bb.resources.cpu = min((infra.resources.cpu for infra in
   #                         self.global_view.get_resource_info().infras))
