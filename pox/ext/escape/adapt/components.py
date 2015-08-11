@@ -250,7 +250,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :rtype: dict
     :raises: RPCError, OperationError, TransportError
     """
-    log.debug("Call initiateVNF...")
+    log.debug("Call initiateVNF - VNF type: %s" % vnf_type)
     return self.call_RPC("initiateVNF", vnf_type=vnf_type,
                          vnf_description=vnf_description, options=options)
 
@@ -279,7 +279,8 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: Returns the connected port(s) with the corresponding switch(es).
     :raises: RPCError, OperationError, TransportError
     """
-    log.debug("Call connectVNF...")
+    log.debug("Call connectVNF - VNF: %s port: %s --> node: %s" % (
+      vnf_id, vnf_port, switch_id))
     return self.call_RPC("connectVNF", vnf_id=vnf_id, vnf_port=vnf_port,
                          switch_id=switch_id)
 
@@ -302,7 +303,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    log.debug("Call disconnectVNF...")
+    log.debug("Call disconnectVNF - VNF: %s port: %s" % (vnf_id, vnf_port))
     return self.call_RPC("disconnectVNF", vnf_id=vnf_id, vnf_port=vnf_port)
 
   def startVNF (self, vnf_id):
@@ -318,7 +319,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    log.debug("Call startVNF...")
+    log.debug("Call startVNF - VNF: %s" % vnf_id)
     return self.call_RPC("startVNF", vnf_id=vnf_id)
 
   def stopVNF (self, vnf_id):
@@ -372,7 +373,8 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    log.debug("Call getVNFInfo...")
+    log.debug(
+      "Call getVNFInfo - VNF: %s" % vnf_id if vnf_id is not None else "all")
     return self.call_RPC('getVNFInfo', vnf_id=vnf_id)
 
   ##############################################################################
@@ -659,44 +661,62 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    nffg_part.dump()
+    print nffg_part.dump()
     # Iter through the container INFRAs in the given mapped NFFG part
-    for ee in (infra for infra in nffg_part.infras if infra.infra_type in (
-         NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE)):
+    # for ee in (infra for infra in nffg_part.infras if infra.infra_type in (
+    #      NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE)):
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
+        log.debug(
+          "Infrastructure Node: %s is not Container type! Continue to next "
+          "Node..." % infra.short_name)
+        continue
+      else:
+        log.debug("Check NFs mapped on Node: %s" % infra.short_name)
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
-      if ee.id not in (n.id for n in self.internal_topo.infras):
+      if infra.id not in (n.id for n in self.internal_topo.infras):
         log.error(
           "Infrastructure Node: %s is not found in the %s domain! Skip NF "
-          "initiation on this Node..." % (ee, self.name))
+          "initiation on this Node..." % (infra.short_name, self.name))
         continue
       # Iter over the NFs connected the actual INFRA
-      for nf in nffg_part.running_nfs(ee.id):
-        # if nf.id in self.internal_topo
+      for nf in nffg_part.running_nfs(infra.id):
+        # NF with id is already deployed --> continue
+        if nf.id in self.internal_topo.nfs:
+          log.debug(
+            "NF: %s has already been initiated. Continue to next NF..." %
+            nf.short_name)
+          continue
         # Extract the initiation params
         params = {'nf_type': nf.functional_type,
                   'nf_ports': [link.src.id for u, v, link in
                                nffg_part.network.out_edges_iter((nf.id,),
                                                                 data=True)],
-                  'infra_id': ee.id}
+                  'infra_id': infra.id}
         # Check if every param is not None or empty
         if not all(params.values()):
           log.error(
             "Missing arguments for initiation of NF: %s. Extracted params: "
-            "%s" % (nf.name, params))
+            "%s" % (nf.short_name, params))
         # Create connection Adapter to EE agent
-        connection_params = self.adapterMN.get_agent_connection_params(ee.id)
+        connection_params = self.adapterMN.get_agent_connection_params(infra.id)
         if connection_params is None:
           log.error(
             "Missing connection params for communication with the agent of "
-            "Node: %s" % ee.id)
+            "Node: %s" % infra.short_name)
         # Save last used adapter --> and last RPC result
+        log.debug("Initiating NF: %s with params: %s" % (nf.short_name, params))
         self.adapterVNF = VNFStarterAdapter(**connection_params)
         vnf = self.adapterVNF.deployNF(**params)
         # Check if NETCONF communication was OK
         if vnf is None:
           log.error(
-            "Initiated NF: %s is not verified. Initiation was unsuccessfull!"
-            % nf.id)
+            "Initiated NF: %s is not verified. Initiation was unsuccessful!"
+            % nf.short_name)
+        else:
+          log.info("NF: %s initiation has been verified on Node: %s" % (
+            nf.short_name, infra.short_name))
 
 
 class OpenStackDomainManager(AbstractDomainManager):

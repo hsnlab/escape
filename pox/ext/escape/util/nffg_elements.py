@@ -177,6 +177,10 @@ class Node(Element):
     self.name = name  # optional
     self.ports = PortContainer()  # list of Ports
 
+  @property
+  def short_name (self):
+    return self.name if self.name else "id: %s" % self.id
+
   def add_port (self, id=None, properties=None):
     """
     Add a port with the given params to the Node.
