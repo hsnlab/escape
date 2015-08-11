@@ -33,11 +33,12 @@ import networkx as nx
 try:
   from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg
 except ImportError:
-  import sys
-  import os
+  import sys, os, inspect
 
-  sys.path.insert(0, os.path.join(
-    os.path.abspath(os.path.dirname(__file__) + "/.."), "pox/ext/escape/util/"))
+  sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
+    os.path.abspath(
+      os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
+                                  "pox/ext/escape/util/"))
   from nffg import NFFG, generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
