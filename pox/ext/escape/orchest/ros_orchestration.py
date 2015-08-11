@@ -25,8 +25,8 @@ from py2neo import Graph, Relationship
 from collections import deque
 import os
 import networkx
-from util.nffg import NFFG
-from util.nffg_elements import *
+from escape.util.nffg import NFFG
+from escape.util.nffg_elements import *
 
 class ResourceOrchestrator(AbstractOrchestrator):
 
