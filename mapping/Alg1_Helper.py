@@ -24,13 +24,10 @@ import UnifyExceptionTypes as uet
 from heapq import heappush, heappop
 from itertools import count
 
-loglevel = 'DEBUG'
-loghandler = logging.StreamHandler()
-logformat = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
-loghandler.setFormatter(logformat)
-
 log = logging.getLogger("mapping")
-
+if not log.level:
+  logging.basicConfig(level=logging.DEBUG,
+                      format='%(levelname)s:%(name)s:%(message)s')
 
 def subtractNodeRes (current, substrahend, link_count=1):
   """

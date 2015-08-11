@@ -35,9 +35,11 @@ try:
 except ImportError:
   import sys
   import os
-
-  sys.path.insert(0, os.path.join(
-    os.path.abspath(os.path.dirname(__file__) + "/.."), "pox/ext/escape/util/"))
+  import inspect
+  sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
+          os.path.abspath(
+            os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
+                                  "pox/ext/escape/util/"))
   from nffg import NFFG, generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
@@ -132,9 +134,7 @@ def MAP (request, network):
     mappedNFFG.add_req(srcnode.add_port(), dstnode.add_port(), id=req.id,
                        delay=req.delay, bandwidth=req.bandwidth)
 
-  from pprint import pprint
-  pprint(mappedNFFG.network.__dict__)
-
+  # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
   print "\nThe VNF mappings are (vnf_id, node_id):\n", pformat(
@@ -271,13 +271,13 @@ def _example_request_for_fallback ():
   # port number on SAP2 doesn`t count
   nffg.add_req(sap1.ports[0], sap2.ports[1], bandwidth=1000, delay=24)
   nffg.add_req(nf0.ports[1], nf1.ports[0], bandwidth=200)
-  nffg.add_req(nf1.ports[1], nf2.ports[0], delay=3)
+  nffg.add_req(nf0.ports[1], nf1.ports[0], delay=3)
 
   # set placement criteria. Should be used to enforce the placement decision of
   # the upper orchestration layer. Placement criteria can contain multiple
   # InfraNode id-s, if the BiS-BiS is decomposed to multiple InfraNodes in this
   # layer.
-  setattr(nf1, 'placement_criteria', ['nc2'])
+  # setattr(nf1, 'placement_criteria', ['nc2'])
 
   return nffg
 

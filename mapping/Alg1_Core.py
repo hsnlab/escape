@@ -467,7 +467,6 @@ class CoreAlgorithm(object):
     tag = "TAG=%s-%s-%s" % (v1, v2, reqlid)
     if len(path) == 1:
       # collocation happened, none of helperlink`s port refs should be None
-      # TAG the traffic and UNTAG it in the destination port
       match_str = "in_port="
       action_str = "output="
       if flowdst is None or flowsrc is None:
@@ -476,6 +475,7 @@ class CoreAlgorithm(object):
       match_str += flowsrc.id
       if reqlink.flowclass is not None:
         match_str += ";flowclass=%s" % reqlink.flowclass
+      action_str += flowdst.id
       self.log.debug("Collocated flowrule %s => %s added to Port %s of %s" % (
         match_str, action_str, flowsrc.id, path[0]))
       flowsrc.add_flowrule(match_str, action_str)
