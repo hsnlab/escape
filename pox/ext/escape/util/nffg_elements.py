@@ -22,7 +22,6 @@ from __builtin__ import id as generate
 ################################################################################
 # ---------- BASE classes of NFFG elements -------------------
 ################################################################################
-import weakref
 
 
 class Persistable(object):
@@ -204,6 +203,7 @@ class Node(Element):
     """
     for port in self.ports:
       if port.id == id:
+        del port.node
         return self.ports.remove(port)
       return True
 
@@ -425,7 +425,9 @@ class Port(Element):
     if not isinstance(node, Node):
       raise RuntimeError("Port's container node must be derived from Node!")
     # weakref to avoid circular reference
-    self.__node = weakref.ref(node)
+    # weakref causes some really annoying issue --> changed to normal ref
+    # self.__node = weakref.ref(node)
+    self.__node = node
     # Set properties list according to given param type
     if isinstance(properties, (str, unicode)):
       self.properties = [str(properties), ]
@@ -439,7 +441,12 @@ class Port(Element):
 
   @property
   def node (self):
-    return self.__node()
+    # return self.__node()
+    return self.__node
+
+  @node.deleter
+  def node (self):
+    del self.__node
 
   def add_property (self, property):
     """
@@ -1325,5 +1332,5 @@ def test_networkx_mod ():
 
 
 if __name__ == "__main__":
-  # test_parse_load()
-  test_networkx_mod()
+  test_parse_load()
+  # test_networkx_mod()
