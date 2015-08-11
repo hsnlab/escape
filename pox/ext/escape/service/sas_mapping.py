@@ -55,8 +55,6 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     graph.name += "-sas-mapped"
     log.debug(
       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
-    # for testing return with graph
-    print mapped_nffg.dump()
     return mapped_nffg
 
 

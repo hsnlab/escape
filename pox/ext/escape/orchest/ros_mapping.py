@@ -47,7 +47,6 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
     # TODO - implement algorithm here
-    graph = graph.copy()
     graph.name += "-ros-mapped"
     log.debug(
       "Mapping algorithm: %s is finished on NF-FG: %s" % (cls.__name__, graph))

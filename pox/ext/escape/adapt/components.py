@@ -659,6 +659,7 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
+    nffg_part.dump()
     # Iter through the container INFRAs in the given mapped NFFG part
     for ee in (infra for infra in nffg_part.infras if infra.infra_type in (
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE)):
