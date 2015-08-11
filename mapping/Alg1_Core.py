@@ -448,9 +448,10 @@ class CoreAlgorithm(object):
                      there is one>>;TAG=<<Neighboring VNF ids and linkid>>
       action: output=<<outbound port id>>;TAG=<<Neighboring VNF ids and
       linkid>>/UNTAG
-    TODO: Incoming traffic from SAP is not instructed to TAG (because its port
-    is not Infra port, so we can`t store flowrule in it) BUT the first Infra
-    node already uses the match field for the TAG.
+    WARNING: If multiple SGHops starting from a SAP are mapped to paths whose 
+    first infrastructure link is common, starting from the same SAP, the first
+    Infra node can only identify which packet belongs to which SGHop based on 
+    the FLOWCLASS field, which is considered optional.
     """
     helperlink = self.manager.link_mapping[v1][v2][reqlid]
     path = helperlink['mapped_to']
@@ -471,13 +472,9 @@ class CoreAlgorithm(object):
       match_str += flowsrc.id
       if reqlink.flowclass != None:
         match_str += ";flowclass=%s" % reqlink.flowclass
-      action_str += flowdst.id + ";" + tag
       self.log.debug("Collocated flowrule %s => %s added to Port %s of %s" % (
       match_str, action_str, flowsrc.id, path[0]))
       flowsrc.add_flowrule(match_str, action_str)
-      self.log.debug("Collocated flowrule %s => UNTAG added to Port %s" \
-                     " of %s" % (tag, flowdst.id, path[0]))
-      flowdst.add_flowrule(tag, "UNTAG")
     else:
       # set the flowrules for the transit Infra nodes
       for i, j, k, lidij, lidjk in zip(path[:-2], path[1:-1], path[2:],
@@ -487,8 +484,18 @@ class CoreAlgorithm(object):
         match_str += self.net[i][j][lidij].dst.id
         if reqlink.flowclass != None:
           match_str += ";flowclass=%s" % reqlink.flowclass
-        match_str += ";" + tag
         action_str += self.net[j][k][lidjk].src.id
+        # Transit SAPs would mess it up pretty much, but it is not allowed.
+        if self.net.node[i].type == 'SAP':
+          action_str += ";" + tag
+        else:
+          match_str += ";" + tag
+        if self.net.node[k].type == 'SAP':
+          # remove TAG in the last port where flowrules are stored 
+          # if the next node is a SAP
+          # NOTE: If i and k are SAPs but j isn`t, then in j`s port TAG and 
+          # UNTAG action will be present at the same time.
+          action_str += ";UNTAG"
         self.log.debug("Transit flowrule %s => %s added to Port %s" \
                        " of %s" % (
                        match_str, action_str, self.net[i][j][lidij].dst.id, j))
