@@ -364,7 +364,7 @@ class ESCAPENetworkBridge(object):
     def remove_junks ():
       # Kill remained clickhelper.py/click
       log.debug("Cleanup still-running click process...")
-      run_silent(r"sudo pkill click")
+      run_silent(r"sudo pkill click netconfd")
       log.debug("Cleanup any remained veth pair...")
       veths = run_cmd(r"ip link show | egrep -o '(uny_\w+)'").split('\n')
       # only need to del one end of the veth pair
@@ -481,7 +481,8 @@ class ESCAPENetworkBuilder(object):
     :return: None
     """
     log.info("Start topology creation from NFFG(name: %s)..." % nffg.name)
-    created_nodes = {}  # created nodes as 'NFFG-id': <node>
+    created_mn_nodes = {}  # created nodes as 'NFFG-id': <node>
+    created_mn_links = {}  # created links as 'NFFG-id': <link>
     # If not set then cache the given NFFG as the topology description
     self.topo_desc = nffg
     # Create a Controller which will be the default internal POX controller
@@ -496,14 +497,14 @@ class ESCAPENetworkBuilder(object):
           ee_type = self.TYPE_EE_REMOTE
           # FIXME - set resource info in MN EE if can - cpu,mem,delay,bandwidth?
         agt, sw = self.create_NETCONF_EE(name=infra.id, type=ee_type)
-        created_nodes[infra.id] = sw
+        created_mn_nodes[infra.id] = sw
       # Create Switch
       elif infra.infra_type == NodeInfra.TYPE_SDN_SWITCH:
         switch = self.create_Switch(name=infra.id)
-        created_nodes[infra.id] = switch
+        created_mn_nodes[infra.id] = switch
       elif infra.infra_type == NodeInfra.TYPE_STATIC_EE:
         static_ee = self.create_static_EE(name=infra.id)
-        created_nodes[infra.id] = static_ee
+        created_mn_nodes[infra.id] = static_ee
       else:
         raise RuntimeError("Building of %s is not supported by %s!" % (
           infra.infra_type, self.__class__.__name__))
@@ -511,20 +512,33 @@ class ESCAPENetworkBuilder(object):
     for sap in nffg.saps:
       # Create SAP
       sap_host = self.create_SAP(name=sap.id)
-      created_nodes[sap.id] = sap_host
+      created_mn_nodes[sap.id] = sap_host
     # Convert VNFs
     # TODO - implement --> currently the default Mininet topology does not
     # TODO contain NFs but it could be possible
     # Convert connections
-    for edge in nffg.links:
+    for edge in [l for l in nffg.links]:
       # Create Links
-      src = created_nodes[edge.src.node.id]
-      dst = created_nodes[edge.dst.node.id]
-      if src is None or dst is None:
+      mn_src_node = created_mn_nodes.get(edge.src.node.id)
+      mn_dst_node = created_mn_nodes.get(edge.dst.node.id)
+      if mn_src_node is None or mn_dst_node is None:
         raise RuntimeError(
           "Created topology node is missing! Something really went wrong!")
-      # FIXME - check how port come in the picture
-      link = self.create_Link(src=src, dst=dst)
+      src_port = int(edge.src.id) if int(edge.src.id) < 65535 else None
+      if src_port is None:
+        log.warning(
+          "Source port id of Link: %s is generated dynamically! Using "
+          "automatic port assignment based on internal Mininet "
+          "implementation!" % edge)
+      dst_port = int(edge.dst.id) if int(edge.dst.id) < 65535 else None
+      if dst_port is None:
+        log.warning(
+          "Destination port id of Link: %s is generated dynamically! Using "
+          "automatic port assignment based on internal Mininet "
+          "implementation!" % edge)
+      link = self.create_Link(src=mn_src_node, src_port=src_port,
+                              dst=mn_dst_node, dst_port=dst_port)
+      created_mn_links[edge.id] = link
     log.info("Topology creation from NFFG has been finished!")
 
   def __init_from_AbstractTopology (self, topo_class):
