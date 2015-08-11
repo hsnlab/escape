@@ -84,8 +84,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
                             "TOPO": "escape-mn-topo.nffg",  # relative to ext/
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
-                                              "class":
-                                                # "FallbackStaticTopology"},
+                                              "class":  #
+                                              # "FallbackStaticTopology"},
                                                 "FallbackDynamicTopology"},
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}  # relative to ext/
@@ -105,12 +105,15 @@ def add_dependencies ():
   # Project root dir relative to unify.py top module which is/must be under
   # pox/ext
   root = os.path.abspath(os.path.dirname(__file__) + "../../../..")
-  for item in os.listdir(root):
-    abs_item = os.path.join(root, item)
-    if not item.startswith('.') and item not in (
-         "pox", "OpenYuma", "Unify_ncagent") and os.path.isdir(abs_item):
-      sys.path.insert(0, abs_item)
-      core.getLogger().debug("Add dependency: %s" % abs_item)
+  for sub_folder in os.listdir(root):
+    abs_sub_folder = os.path.join(root, sub_folder)
+    if not sub_folder.startswith('.') and sub_folder not in (
+         "pox", "OpenYuma", "Unify_ncagent") and os.path.isdir(abs_sub_folder):
+      if abs_sub_folder not in sys.path:
+        sys.path.insert(0, abs_sub_folder)
+        core.getLogger().debug("Add dependency: %s" % abs_sub_folder)
+      else:
+        core.getLogger().debug("Dependency: %s already added." % abs_sub_folder)
 
 
 # Detect and add dependency directories
