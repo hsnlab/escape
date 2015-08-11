@@ -36,7 +36,9 @@ except ImportError:
   import sys
   import os
 
-  sys.path.append(os.path.abspath(os.path.dirname(__file__) + "../pox/ext/"))
+  sys.path.insert(0, os.path.join(
+    os.path.abspath(os.path.dirname(__file__) + "/.."), "pox/ext/escape/util/"))
+  from nffg import NFFG, generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
 # object for the algorithm instance
