@@ -42,7 +42,7 @@ class GraphPreprocessorClass(object):
     if a VNF is rechained, it means that VNF will already have a place,
     when we will be mapping (sub)chains with higher latency requirements.'''
     self.rechained = {}
-
+    
     # If it has an edge i,j, this req. link is already included by a
     # subchain.
     self.link_rechained = nx.MultiDiGraph()

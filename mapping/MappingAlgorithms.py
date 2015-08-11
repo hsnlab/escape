@@ -116,7 +116,15 @@ def MAP(request, network):
     # port adding is necessary, because SAPs can be with different ID in the 
     # two NFFGs and add_edge() uses the ID of the port`s parent.
     for req in edgereqlist:
-        mappedNFFG.add_req(req.src.node.add_port(), req.dst.node.add_port(), 
+        srcnode = src.node
+        dstnode = dst.node
+        if req.src.node.type == 'SAP':
+            srcnode = mappedNFFG.network.node[\
+                alg.manager.getIdOfChainEnd_fromNetwork(req.src.node.id)]
+        if req.dst.node.type == 'SAP':
+            dstnode = mappedNFFG.network.node[\
+                alg.manager.getIdOfChainEnd_fromNetwork(req.dst.node.id)]
+        mappedNFFG.add_req(srcnode.add_port(), dstnode.add_port(), 
                            id=req.id, delay=req.delay, bandwidth=req.bandwidth)
 
     from pprint import pprint
