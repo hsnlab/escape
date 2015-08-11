@@ -25,7 +25,6 @@ from the EdgeReqs, all SG links must be in one of the subchains.
 TODO: map best-effort links.
 """
 
-from pprint import pformat
 import traceback
 
 import networkx as nx

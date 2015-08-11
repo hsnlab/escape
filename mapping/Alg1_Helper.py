@@ -20,6 +20,7 @@ import logging
 import networkx as nx
 
 import UnifyExceptionTypes as uet
+
 # these are needed for the modified NetworkX functions.
 from heapq import heappush, heappop
 from itertools import count
@@ -28,6 +29,7 @@ log = logging.getLogger("mapping")
 if not log.level:
   logging.basicConfig(level=logging.DEBUG,
                       format='%(levelname)s:%(name)s:%(message)s')
+
 
 def subtractNodeRes (current, substrahend, link_count=1):
   """

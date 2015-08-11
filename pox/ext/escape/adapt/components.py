@@ -669,8 +669,8 @@ class InternalDomainManager(AbstractDomainManager):
       if infra.infra_type not in (
            NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
         log.debug(
-          "Infrastructure Node: %s is not Container type! Continue to next "
-          "Node..." % infra.short_name)
+          "Infrastructure Node: %s (tpye: %s) is not Container type! Continue "
+          "to next Node..." % (infra.short_name, infra.infra_type))
         continue
       else:
         log.debug("Check NFs mapped on Node: %s" % infra.short_name)

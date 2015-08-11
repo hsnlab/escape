@@ -36,7 +36,8 @@ __status__ = "prototype"
 # configuration for Layer APIs, DomainManagers, Adapters and other components
 cfg = {"service": {  # Service Adaptation Sublayer
                      "MAPPER": {"module": "escape.service.sas_mapping",
-                                "class": "ServiceGraphMapper"},
+                                "class": "ServiceGraphMapper",
+                                "mapping-enabled": False},
                      "STRATEGY": {"module": "escape.service.sas_mapping",
                                   "class": "DefaultServiceMappingStrategy",
                                   "THREADED": True},
@@ -46,7 +47,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                   "prefix": "escape"}},
        "orchestration": {  # Resource Orchestration Sublayer
                            "MAPPER": {"module": "escape.orchest.ros_mapping",
-                                      "class": "ResourceOrchestrationMapper"},
+                                      "class": "ResourceOrchestrationMapper",
+                                      "mapping-enabled": False},
                            "STRATEGY": {"module": "escape.orchest.ros_mapping",
                                         "class": "ESCAPEMappingStrategy",
                                         "THREADED": True},

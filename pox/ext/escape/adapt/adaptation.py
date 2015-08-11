@@ -281,16 +281,18 @@ class ControllerAdapter(object):
     :type mapped_nffg: NFFG
     :return: None or internal domain NFFG part
     """
-    import escape.util.nffg
-
-    nffg = escape.util.nffg.generate_mn_topo()
-    nf1 = nffg.add_nf(id='nf1', name="NF1", func_type="headerCompressor")
-    nf2 = nffg.add_nf(id='nf2', name="NF2", func_type="headerDecompressor")
-    nffg.add_undirected_link(nf1.add_port(1),
-                             nffg.network.node['EE1'].add_port(), dynamic=True)
-    nffg.add_undirected_link(nf2.add_port(1),
-                             nffg.network.node['EE2'].add_port(), dynamic=True)
-    mapped_nffg = nffg
+    # # TEST - VNF initiation start
+    # import escape.util.nffg
+    #
+    # nffg = escape.util.nffg.generate_mn_topo()
+    # nf1 = nffg.add_nf(id='nf1', name="NF1", func_type="headerCompressor")
+    # nf2 = nffg.add_nf(id='nf2', name="NF2", func_type="headerDecompressor")
+    # nffg.add_undirected_link(nf1.add_port(1),
+    #                          nffg.network.node['EE1'].add_port(), dynamic=True)
+    # nffg.add_undirected_link(nf2.add_port(1),
+    #                          nffg.network.node['EE2'].add_port(), dynamic=True)
+    # mapped_nffg = nffg
+    # # TEST - VNF initiation end
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
     for domain, part in self._slice_into_domains(mapped_nffg):
