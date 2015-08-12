@@ -90,6 +90,10 @@ class Element(Persistable):
     # Need to override
     super(Element, self).load(data)
 
+  def copy (self):
+    from copy import deepcopy
+    return deepcopy(self)
+
   def __getitem__ (self, item):
     if hasattr(self, item):
       return getattr(self, item)
@@ -148,6 +152,12 @@ class PortContainer(object):
   def remove (self, item):
     return self.container.remove(item)
 
+  def __str__ (self):
+    return str(self.container)
+
+  def __repr__ (self):
+    return str(self)
+
 
 class Node(Element):
   """
@@ -174,7 +184,7 @@ class Node(Element):
     :return: None
     """
     super(Node, self).__init__(id=id, type=type)
-    self.name = name  # optional
+    self.name = name if name is not None else str(id)  # optional
     self.ports = PortContainer()  # list of Ports
 
   @property
