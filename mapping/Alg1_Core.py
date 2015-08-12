@@ -473,10 +473,10 @@ class CoreAlgorithm(object):
       if flowdst is None or flowsrc is None:
         raise uet.InternalAlgorithmException(
           "No InfraPort found for a dynamic link of collocated VNFs")
-      match_str += flowsrc.id
+      match_str += str(flowsrc.id)
       if reqlink.flowclass is not None:
         match_str += ";flowclass=%s" % reqlink.flowclass
-      action_str += flowdst.id
+      action_str += str(flowdst.id)
       self.log.debug("Collocated flowrule %s => %s added to Port %s of %s" % (
         match_str, action_str, flowsrc.id, path[0]))
       flowsrc.add_flowrule(match_str, action_str)
@@ -486,10 +486,10 @@ class CoreAlgorithm(object):
                                        linkids[:-1], linkids[1:]):
         match_str = "in_port="
         action_str = "output="
-        match_str += self.net[i][j][lidij].dst.id
+        match_str += str(self.net[i][j][lidij].dst.id)
         if reqlink.flowclass is not None:
           match_str += ";flowclass=%s" % reqlink.flowclass
-        action_str += self.net[j][k][lidjk].src.id
+        action_str += str(self.net[j][k][lidjk].src.id)
         # Transit SAPs would mess it up pretty much, but it is not allowed.
         if self.net.node[i].type == 'SAP':
           action_str += ";" + tag
@@ -512,10 +512,10 @@ class CoreAlgorithm(object):
         if flowsrc is None:
           raise uet.InternalAlgorithmException(
             "No InfraPort found for a dynamic link which starts a path")
-        match_str += flowsrc.id
+        match_str += str(flowsrc.id)
         if reqlink.flowclass is not None:
           match_str += ";flowclass=%s" % reqlink.flowclass
-        action_str += nffg.network[path[0]][path[1]][linkids[0]].src.id
+        action_str += str(nffg.network[path[0]][path[1]][linkids[0]].src.id)
         action_str += ";" + tag
         self.log.debug("Starting flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str, flowsrc.id, path[0]))
@@ -525,14 +525,14 @@ class CoreAlgorithm(object):
       if nffg.network.node[path[-1]].type != 'SAP':
         match_str = "in_port="
         action_str = "output="
-        match_str += self.net[path[-2]][path[-1]][linkids[-1]].dst.id
+        match_str += str(self.net[path[-2]][path[-1]][linkids[-1]].dst.id)
         if reqlink.flowclass is not None:
           match_str += ";flowclass=%s" % reqlink.flowclass
         match_str += ";" + tag
         if flowdst is None:
           raise uet.InternalAlgorithmException(
             "No InfraPort found for a dynamic link which finishes a path")
-        action_str += flowdst.id + ";UNTAG"
+        action_str += str(flowdst.id) + ";UNTAG"
         self.log.debug("Finishing flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str,
           self.net[path[-2]][path[-1]][linkids[-1]].dst.id, path[-1]))
