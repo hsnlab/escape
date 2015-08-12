@@ -720,12 +720,6 @@ def generate_mn_topo ():
   nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4", **link_res)
   nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5", **link_res)
   nffg.duplicate_static_links()
-  pprint(nffg.network.__dict__)
-  nffg.merge_duplicated_links()
-  txt = nffg.dump()
-  print txt
-  # parsed = NFFG.parse(txt)
-  # print parsed.dump()
   return nffg
 
 
@@ -754,9 +748,6 @@ def generate_dynamic_fallback_nffg ():
   nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4", **linkres)
   nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5", **linkres)
   nffg.duplicate_static_links()
-  # pprint(nffg.network.__dict__)
-  # nffg.merge_duplicated_links()
-  # print nffg.dump()
   return nffg
 
 
@@ -778,9 +769,6 @@ def generate_static_fallback_topo ():
   nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4")
   nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5")
   nffg.duplicate_static_links()
-  pprint(nffg.network.__dict__)
-  nffg.merge_duplicated_links()
-  print nffg.dump()
   return nffg
 
 
