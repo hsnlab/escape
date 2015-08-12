@@ -14,6 +14,7 @@
 """
 Contains classes which implement :any:`NFFG` mapping functionality.
 """
+from escape import CONFIG
 
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.orchest import log as log, LAYER_NAME
@@ -47,7 +48,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
     # TODO - implement algorithm here
-    graph.name += "-ros-mapped"
+    mapped_nffg = MAP(request=graph, network=resource)
+    mapped_nffg.name += "-ros-mapped"
     log.debug(
       "Mapping algorithm: %s is finished on NF-FG: %s" % (cls.__name__, graph))
     # for testing return with graph
@@ -105,6 +107,13 @@ class ResourceOrchestrationMapper(AbstractMapper):
     # Steps before mapping (optional)
     # log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
+    # Check if the mapping algorithm is enabled
+    if not CONFIG.get_mapping_enabled(LAYER_NAME):
+      log.warning(
+        "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
+        "return resource info..." % LAYER_NAME)
+      virt_resource.id = input_graph.id
+      return virt_resource
     # Run actual mapping algorithm
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread

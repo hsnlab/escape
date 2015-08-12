@@ -58,15 +58,15 @@ class AbstractNETCONFAdapter(object):
     :return: None
     """
     super(AbstractNETCONFAdapter, self).__init__()
-    self.__server = server if server.upper() != "LOCALHOST" else "127.0.0.1"
-    self.__port = int(port)
-    self.__username = username
-    self.__password = password
-    self.__timeout = int(timeout)
-    self.__debug = debug
+    self.server = server if server.upper() != "LOCALHOST" else "127.0.0.1"
+    self.port = int(port)
+    self.username = username
+    self.password = password
+    self.timeout = int(timeout)
+    self.debug = debug
     # variables for the last RPC reply
-    self.__rpc_reply_formatted = dict()
-    self.__rpc_reply_as_xml = ""
+    self._rpc_reply_formatted = dict()
+    self._rpc_reply_as_xml = ""
     # Server side and connection parameters
     self.__connection = None
     self.__config = None
@@ -85,7 +85,7 @@ class AbstractNETCONFAdapter(object):
     :return: Return connection data in (server, port, username) tuples
     :rtype: tuple
     """
-    return self.__server, self.__port, self.__username
+    return self.server, self.port, self.username
 
   @property
   def manager (self):
@@ -103,14 +103,14 @@ class AbstractNETCONFAdapter(object):
     :rtype: :class:`ncclient.manager.Manager`
     """
     # __connection is responsible for keeping the connection up.
-    self.__connection = manager.connect(host=self.__server, port=self.__port,
-                                        username=self.__username,
-                                        password=self.__password,
+    self.__connection = manager.connect(host=self.server, port=self.port,
+                                        username=self.username,
+                                        password=self.password,
                                         hostkey_verify=False,
-                                        timeout=self.__timeout)
-    if self.__debug:
+                                        timeout=self.timeout)
+    if self.debug:
       print "Connecting to %s:%s with %s/%s ---> %s" % (
-        self.__server, self.__port, self.__username, self.__password,
+        self.server, self.port, self.username, self.password,
         'OK' if self.connected else 'PROBLEM')
     return self.__connection
 
@@ -122,7 +122,7 @@ class AbstractNETCONFAdapter(object):
     """
     if self.connected:
       self.__connection.close_session()
-    if self.__debug:
+    if self.debug:
       print "Connection closed!"
 
   def get_config (self, source="running", to_file=False):
@@ -189,7 +189,7 @@ class AbstractNETCONFAdapter(object):
     # we need to remove the confusing netconf namespaces with our own function
     rpc_request = self.__remove_namespace(xsd_fetch, self.NETCONF_NAMESPACE)
     # show how the created rpc message looks like
-    if self.__debug:
+    if self.debug:
       print "Generated raw RPC message:\n", etree.tostring(rpc_request,
                                                            pretty_print=True)
     return rpc_request
@@ -208,13 +208,13 @@ class AbstractNETCONFAdapter(object):
     # create a new xml_element from it, since another BRAINFUCK arise around
     # namespaces
     # CREATE A PARSER THAT GIVES A SHIT FOR NAMESPACE
-    if self.__debug:
-      print "Received raw RPC reply:\n", self.__rpc_reply_as_xml
+    if self.debug:
+      print "Received raw RPC reply:\n", self._rpc_reply_as_xml
     parser = etree.XMLParser(ns_clean=True)
     if data:
       buffer = StringIO(data)
     else:
-      buffer = StringIO(self.__rpc_reply_as_xml)
+      buffer = StringIO(self._rpc_reply_as_xml)
     # PARSE THE NEW RPC-REPLY XML
     dom = etree.parse(buffer, parser)
     # dom.getroot() = <rpc_reply .... > ... </rpc_reply>
@@ -222,7 +222,7 @@ class AbstractNETCONFAdapter(object):
     # alright, lets get all the important data with the following recursion
     parsed = self.__parse_xml_response(mainContents, self.RPC_NAMESPACE)
     if not data:
-      self.__rpc_reply_formatted = parsed
+      self._rpc_reply_formatted = parsed
     return parsed
 
   def _invoke_rpc (self, request_data):
@@ -244,8 +244,8 @@ class AbstractNETCONFAdapter(object):
     try:
       # we set our global variable's value to this xml-string therefore,
       # last RPC will always be accessible
-      self.__rpc_reply_as_xml = self.__connection.dispatch(request_data).xml
-      return self.__rpc_reply_as_xml
+      self._rpc_reply_as_xml = self.__connection.dispatch(request_data).xml
+      return self._rpc_reply_as_xml
     except (RPCError, TransportError, OperationError):
       # need to handle???
       raise

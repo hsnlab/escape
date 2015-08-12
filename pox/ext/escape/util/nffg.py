@@ -280,11 +280,13 @@ class NFFG(AbstractNFFG):
       # There was no node in the graph
       pass
 
-  def add_nf (self, id=None, name=None, func_type=None, dep_type=None, cpu=None,
-       mem=None, storage=None, delay=None, bandwidth=None):
+  def add_nf (self, nf=None, id=None, name=None, func_type=None, dep_type=None,
+       cpu=None, mem=None, storage=None, delay=None, bandwidth=None):
     """
     Add a Network Function to the structure.
 
+    :param nf: add this explicit NF object instead of create one
+    :type nf: :any:`NodeNF`
     :param id: optional id
     :type id: str or int
     :param name: optional name
@@ -306,18 +308,21 @@ class NFFG(AbstractNFFG):
     :return: newly created node
     :rtype: :any:`NodeNF`
     """
-    res = NodeResource(cpu=cpu, mem=mem, storage=storage, delay=delay,
-                       bandwidth=bandwidth) if any(
-      i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
-    nf = NodeNF(id=id, name=name, func_type=func_type, dep_type=dep_type,
-                res=res)
+    if nf is None:
+      res = NodeResource(cpu=cpu, mem=mem, storage=storage, delay=delay,
+                         bandwidth=bandwidth) if any(
+        i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
+      nf = NodeNF(id=id, name=name, func_type=func_type, dep_type=dep_type,
+                  res=res)
     self.add_node(nf)
     return nf
 
-  def add_sap (self, id=None, name=None):
+  def add_sap (self, sap=None, id=None, name=None):
     """
     Add a Service Access Point to the structure.
 
+    :param sap: add this explicit SAP object instead of create one
+    :type sap: :any:`NodeSAP`
     :param id: optional id
     :type id: str or int
     :param name: optional name
@@ -325,15 +330,19 @@ class NFFG(AbstractNFFG):
     :return: newly created node
     :rtype: :any:`NodeSAP`
     """
-    sap = NodeSAP(id=id, name=name)
+    if sap is None:
+      sap = NodeSAP(id=id, name=name)
     self.add_node(sap)
     return sap
 
-  def add_infra (self, id=None, name=None, domain=None, infra_type=None,
-       cpu=None, mem=None, storage=None, delay=None, bandwidth=None):
+  def add_infra (self, infra=None, id=None, name=None, domain=None,
+       infra_type=None, cpu=None, mem=None, storage=None, delay=None,
+       bandwidth=None):
     """
     Add an Infrastructure Node to the structure.
 
+    :param infra: add this explicit Infra object instead of create one
+    :type infra: :any:`NodeInfra`
     :param id: optional id
     :type id: str or int
     :param name: optional name
@@ -355,19 +364,22 @@ class NFFG(AbstractNFFG):
     :return: newly created node
     :rtype: :any:`NodeInfra`
     """
-    res = NodeResource(cpu=cpu, mem=mem, storage=storage, bandwidth=bandwidth,
-                       delay=delay) if any(
-      i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
-    infra = NodeInfra(id=id, name=name, domain=domain, infra_type=infra_type,
-                      res=res)
+    if infra is None:
+      res = NodeResource(cpu=cpu, mem=mem, storage=storage, bandwidth=bandwidth,
+                         delay=delay) if any(
+        i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
+      infra = NodeInfra(id=id, name=name, domain=domain, infra_type=infra_type,
+                        res=res)
     self.add_node(infra)
     return infra
 
-  def add_link (self, src_port, dst_port, id=None, dynamic=False,
+  def add_link (self, src_port, dst_port, link=None, id=None, dynamic=False,
        backward=False, delay=None, bandwidth=None):
     """
     Add a Link to the structure.
 
+    :param link: add this explicit Link object instead of create one
+    :type link: :any:`EdgeLink`
     :param src_port: source Node
     :type src_port: :any:`Port`
     :param dst_port: destination port
@@ -383,9 +395,10 @@ class NFFG(AbstractNFFG):
     :return: newly created edge
     :rtype: :any:`EdgeLink`
     """
-    type = Link.DYNAMIC if dynamic else Link.STATIC
-    link = EdgeLink(src=src_port, dst=dst_port, type=type, id=id,
-                    backward=backward, delay=delay, bandwidth=bandwidth)
+    if link is None:
+      type = Link.DYNAMIC if dynamic else Link.STATIC
+      link = EdgeLink(src=src_port, dst=dst_port, type=type, id=id,
+                      backward=backward, delay=delay, bandwidth=bandwidth)
     self.add_edge(src_port.node, dst_port.node, link)
     return link
 
@@ -411,16 +424,18 @@ class NFFG(AbstractNFFG):
     :return: newly created edge tuple in (p1->p2, p2->p1)
     :rtype: :any:(`EdgeLink`, `EdgeLink`)
     """
-    linkp1p2 = self.add_link(port1, port2, id=p1p2id, dynamic=dynamic,
+    p1p2Link = self.add_link(port1, port2, id=p1p2id, dynamic=dynamic,
                              backward=False, delay=delay, bandwidth=bandwidth)
-    linkp2p1 = self.add_link(port2, port1, id=p2p1id, dynamic=dynamic,
+    p2p1Link = self.add_link(port2, port1, id=p2p1id, dynamic=dynamic,
                              backward=True, delay=delay, bandwidth=bandwidth)
-    return linkp1p2, linkp2p1
+    return p1p2Link, p2p1Link
 
-  def add_sglink (self, src_port, dst_port, id=None, flowclass=None):
+  def add_sglink (self, src_port, dst_port, hop=None, id=None, flowclass=None):
     """
     Add a SD next hop edge to the structure.
 
+    :param hop: add this explicit SG Link object instead of create one
+    :type hop: :any:`EdgeSGLink`
     :param src_port: source Node
     :type src_port: :any:`Port`
     :param dst_port: destination port
@@ -432,14 +447,18 @@ class NFFG(AbstractNFFG):
     :return: newly created edge
     :rtype: :any:`EdgeSGLink`
     """
-    hop = EdgeSGLink(src=src_port, dst=dst_port, id=id, flowclass=flowclass)
+    if hop is None:
+      hop = EdgeSGLink(src=src_port, dst=dst_port, id=id, flowclass=flowclass)
     self.add_edge(src_port.node, dst_port.node, hop)
     return hop
 
-  def add_req (self, src_port, dst_port, id=None, delay=None, bandwidth=None):
+  def add_req (self, src_port, dst_port, req=None, id=None, delay=None,
+       bandwidth=None):
     """
     Add a requirement edge to the structure.
 
+    :param req: add this explicit Requirement Link object instead of create one
+    :type req: :any:`EdgeReq`
     :param src_port: source Node
     :type src_port: :any:`Port`
     :param dst_port: destination port
@@ -453,8 +472,9 @@ class NFFG(AbstractNFFG):
     :return: newly created edge
     :rtype: :any:`EdgeReq`
     """
-    req = EdgeReq(src=src_port, dst=dst_port, id=id, delay=delay,
-                  bandwidth=bandwidth)
+    if req is None:
+      req = EdgeReq(src=src_port, dst=dst_port, id=id, delay=delay,
+                    bandwidth=bandwidth)
     self.add_edge(src_port.node, dst_port.node, req)
     return req
 
@@ -559,7 +579,8 @@ class NFFG(AbstractNFFG):
     """
     # Collect backward links
     backwards = [(src, dst, key) for src, dst, key, link in
-                 self.network.edges_iter(keys=True, data=True) if
+                 self.network.edges_iter(keys=True, data=True) if (
+                 link.type == Link.STATIC or link.type == Link.DYNAMIC) and
                  link.backward is True]
     # Delete backwards links
     for link in backwards:
@@ -668,34 +689,33 @@ def generate_mn_topo ():
   # Create NFFG
   nffg = NFFG(id="INTERNAL", name="Internal-Mininet-Topology")
   # Add environments
-  # TODO - define supported types (that's only need to the orchestration)
   ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NFFG.TYPE_INFRA_EE, cpu=0, mem=0, storage=0,
-                       delay=0, bandwidth=0)
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
   ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NFFG.TYPE_INFRA_EE, cpu=0, mem=0, storage=0,
-                       delay=0, bandwidth=0)
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  # Add supported types
+  ee1.add_supported_type(('headerCompressor', 'headerDecompressor'))
+  ee2.add_supported_type(('headerCompressor', 'headerDecompressor'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
   sw4 = nffg.add_infra(id="SW4", name="switch-4", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
   # Add SAPs
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")
   # Add links
-  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1")
-  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="link2")
-  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3")
-  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4")
-  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5")
+  link_res = {'delay': 1.5, 'bandwidth': 2000}
+  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1", **link_res)
+  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="link2", **link_res)
+  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3", **link_res)
+  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4", **link_res)
+  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5", **link_res)
   nffg.duplicate_static_links()
-  pprint(nffg.network.__dict__)
-  nffg.merge_duplicated_links()
-  txt = nffg.dump()
-  print txt
-  # parsed = NFFG.parse(txt)
-  # print parsed.dump()
   return nffg
 
 
@@ -724,9 +744,6 @@ def generate_dynamic_fallback_nffg ():
   nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4", **linkres)
   nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5", **linkres)
   nffg.duplicate_static_links()
-  # pprint(nffg.network.__dict__)
-  # nffg.merge_duplicated_links()
-  # print nffg.dump()
   return nffg
 
 
@@ -748,9 +765,6 @@ def generate_static_fallback_topo ():
   nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4")
   nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5")
   nffg.duplicate_static_links()
-  pprint(nffg.network.__dict__)
-  nffg.merge_duplicated_links()
-  print nffg.dump()
   return nffg
 
 
@@ -773,20 +787,40 @@ def generate_one_bisbis ():
   bb.resources.cpu = sys.maxint
   bb.resources.mem = sys.maxint
   bb.resources.storage = sys.maxint
-  bb.resources.delay = sys.maxint
+  bb.resources.delay = 0
   bb.resources.bandwidth = sys.maxint
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
   sap2 = nffg.add_sap(id="sap2", name="SAP2")
   nffg.add_link(sap1.add_port(1), bb.add_port(1), id='link1')
   nffg.add_link(sap2.add_port(1), bb.add_port(2), id='link2')
   nffg.duplicate_static_links()
-  print nffg.dump()
   return nffg
+
+
+def generate_mn_test_req ():
+  test = NFFG(id="SG-decomp", name="SG-name")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+                     cpu=2, mem=2, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=2, mem=2, storage=0)
+  test.add_sglink(sap1.add_port(0), comp.add_port(0))
+  test.add_sglink(comp.add_port(1), decomp.add_port(0))
+  test.add_sglink(decomp.add_port(1), sap2.add_port(0))
+
+  test.add_req(sap1.ports[0], sap2.ports[0], bandwidth=1000, delay=24)
+  return test
 
 
 if __name__ == "__main__":
   # test_NFFG()
-  # generate_mn_topo()
-  # generate_dynamic_fallback_nffg()
-  # generate_static_fallback_topo()
-  generate_one_bisbis()
+  # nffg = generate_mn_topo()
+  nffg = generate_mn_test_req()
+  # nffg = generate_dynamic_fallback_nffg()
+  # nffg = generate_static_fallback_topo()
+  # nffg = generate_one_bisbis()
+
+  pprint(nffg.network.__dict__)
+  nffg.merge_duplicated_links()
+  print nffg.dump()

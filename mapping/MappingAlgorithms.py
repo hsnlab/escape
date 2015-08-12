@@ -25,7 +25,6 @@ from the EdgeReqs, all SG links must be in one of the subchains.
 TODO: map best-effort links.
 """
 
-from pprint import pformat
 import traceback
 
 import networkx as nx
@@ -136,10 +135,10 @@ def MAP (request, network):
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
-  print "\nThe VNF mappings are (vnf_id, node_id):\n", pformat(
-    alg.manager.vnf_mapping)
-  print "\n The link mappings are:\n", pformat(
-    alg.manager.link_mapping.edges(data=True, keys=True))
+  # print "\nThe VNF mappings are (vnf_id, node_id):\n", pformat(
+  #   alg.manager.vnf_mapping)
+  # print "\n The link mappings are:\n", pformat(
+  #   alg.manager.link_mapping.edges(data=True, keys=True))
 
   # n0_nffg = alg.returnMappedNFFGofOneBiSBiS("node0")
   # n1_nffg = alg.returnMappedNFFGofOneBiSBiS("node1")
@@ -287,9 +286,12 @@ if __name__ == '__main__':
     # net = _constructExampleNetwork()
 
     req = _example_request_for_fallback()
+    # print req.dump()
     # this is the dynamic fallback topology taken from nffg.py
     net = generate_dynamic_fallback_nffg()
-    MAP(req, net)
+    # print net.dump()
+    mapped = MAP(req, net)
+    print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
     print traceback.format_exc()

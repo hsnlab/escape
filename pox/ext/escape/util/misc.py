@@ -427,6 +427,20 @@ class ESCAPEConfig(object):
   # Helper functions
   ##############################################################################
 
+  def get_mapping_enabled (self, layer):
+    """
+    Return the mapping process is enabled for the ``layer`` or not.
+
+    :param layer: layer name
+    :type layer: str
+    :return: enabled value (default: True)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[layer]['MAPPER']['mapping-enabled']
+    except KeyError:
+      return True
+
   def get_strategy (self, layer):
     """
     Return with the Strategy class of the given layer.

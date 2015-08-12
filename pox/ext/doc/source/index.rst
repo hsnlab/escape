@@ -113,7 +113,7 @@ and Python packages, OpenYuma with VNFStarter module):
 
   .. code-block:: bash
 
-    escape$ ./escape.py --debug
+    escape$ ./escape.py --debug --full
 
 
 **The hard way:**

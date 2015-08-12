@@ -14,10 +14,10 @@
 """
 Contains classes which implement SG mapping functionality.
 """
-import Alg1_Helper
 from MappingAlgorithms import MAP
 import MappingAlgorithms
 
+from escape import CONFIG
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
 from escape.service import log as log, LAYER_NAME
 from escape.util.misc import call_as_coop_task
@@ -49,10 +49,8 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     """
     log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
-    graph = MappingAlgorithms._constructExampleRequest()
-    resource = MappingAlgorithms._constructExampleNetwork()
     mapped_nffg = MAP(request=graph, network=resource)
-    graph.name += "-sas-mapped"
+    mapped_nffg.name += "-sas-mapped"
     log.debug(
       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
     return mapped_nffg
@@ -110,6 +108,12 @@ class ServiceGraphMapper(AbstractMapper):
     # log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
     # resource_view.sanity_check(input_graph)
+    # Check if the mapping algorithm is enabled
+    if not CONFIG.get_mapping_enabled(LAYER_NAME):
+      log.warning(
+        "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
+        "forward request info..." % LAYER_NAME)
+      return input_graph
     # Run actual mapping algorithm
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread

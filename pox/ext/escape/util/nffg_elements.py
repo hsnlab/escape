@@ -22,7 +22,6 @@ from __builtin__ import id as generate
 ################################################################################
 # ---------- BASE classes of NFFG elements -------------------
 ################################################################################
-import weakref
 
 
 class Persistable(object):
@@ -80,7 +79,7 @@ class Element(Persistable):
     :return: None
     """
     super(Element, self).__init__()
-    self.id = str(id) if id is not None else str(generate(self))
+    self.id = id if id is not None else generate(self)
     self.type = type
 
   def persist (self):
@@ -90,6 +89,10 @@ class Element(Persistable):
   def load (self, data):
     # Need to override
     super(Element, self).load(data)
+
+  def copy (self):
+    from copy import deepcopy
+    return deepcopy(self)
 
   def __getitem__ (self, item):
     if hasattr(self, item):
@@ -130,7 +133,7 @@ class PortContainer(object):
 
   def __getitem__ (self, id):
     for port in self.container:
-      if port.id == str(id):
+      if port.id == id:
         return port
     raise KeyError("Port with id: %s is not defined!" % id)
 
@@ -148,6 +151,12 @@ class PortContainer(object):
 
   def remove (self, item):
     return self.container.remove(item)
+
+  def __str__ (self):
+    return str(self.container)
+
+  def __repr__ (self):
+    return str(self)
 
 
 class Node(Element):
@@ -175,8 +184,12 @@ class Node(Element):
     :return: None
     """
     super(Node, self).__init__(id=id, type=type)
-    self.name = name  # optional
+    self.name = name if name is not None else str(id)  # optional
     self.ports = PortContainer()  # list of Ports
+
+  @property
+  def short_name (self):
+    return self.name if self.name else "id: %s" % self.id
 
   def add_port (self, id=None, properties=None):
     """
@@ -204,16 +217,17 @@ class Node(Element):
     """
     for port in self.ports:
       if port.id == id:
+        del port.node
         return self.ports.remove(port)
       return True
 
   def persist (self):
-    node = {"id": str(self.id)}
+    node = {"id": self.id}
     ports = [port.persist() for port in self.ports]
     if ports:
       node["ports"] = ports
     if self.name is not None:
-      node["name"] = str(self.name)
+      node["name"] = self.name
     return node
 
   def load (self, data):
@@ -266,8 +280,8 @@ class Link(Element):
     self.dst = dst  # mandatory
 
   def persist (self):
-    return {"src_node": str(self.src.node.id), "src_port": str(self.src.id),
-            "dst_node": str(self.dst.node.id), "dst_port": str(self.dst.id),
+    return {"src_node": self.src.node.id, "src_port": self.src.id,
+            "dst_node": self.dst.node.id, "dst_port": self.dst.id,
             "id": self.id}
 
   def load (self, data, container=None):
@@ -390,7 +404,7 @@ class Flowrule(Persistable):
     self.action = action  # mandatory
 
   def persist (self):
-    return {"match": str(self.match), "action": str(self.action)}
+    return {"match": self.match, "action": self.action}
 
   def load (self, data):
     self.match = data.get('match', "*")
@@ -425,12 +439,14 @@ class Port(Element):
     if not isinstance(node, Node):
       raise RuntimeError("Port's container node must be derived from Node!")
     # weakref to avoid circular reference
-    self.__node = weakref.ref(node)
+    # weakref causes some really annoying issue --> changed to normal ref
+    # self.__node = weakref.ref(node)
+    self.__node = node
     # Set properties list according to given param type
     if isinstance(properties, (str, unicode)):
       self.properties = [str(properties), ]
     elif isinstance(properties, collections.Iterable):
-      self.properties = [str(p) for p in properties]
+      self.properties = [p for p in properties]
     elif properties is None:
       self.properties = []
     else:
@@ -439,7 +455,12 @@ class Port(Element):
 
   @property
   def node (self):
-    return self.__node()
+    # return self.__node()
+    return self.__node
+
+  @node.deleter
+  def node (self):
+    del self.__node
 
   def add_property (self, property):
     """
@@ -471,14 +492,14 @@ class Port(Element):
       self.properties.remove(property)
 
   def persist (self):
-    port = {"id": str(self.id)}
+    port = {"id": self.id}
     property = [property for property in self.properties]
     if property:
       port["property"] = property
     return port
 
   def load (self, data):
-    self.id = str(data['id'])
+    self.id = data['id']
     for property in data.get('property', ()):
       self.properties.append(property)
 
@@ -580,10 +601,10 @@ class NodeNF(Node):
   def persist (self):
     node = super(NodeNF, self).persist()
     if self.functional_type is not None:
-      node["functional_type"] = str(self.functional_type)
+      node["functional_type"] = self.functional_type
     specification = {}
     if self.deployment_type is not None:
-      specification["deployment_type"] = str(self.deployment_type)
+      specification["deployment_type"] = self.deployment_type
     res = self.resources.persist()
     if res:
       specification["resources"] = res
@@ -649,7 +670,7 @@ class NodeInfra(Node):
     if isinstance(supported, (str, unicode)):
       self.supported = [str(supported), ]
     elif isinstance(supported, collections.Iterable):
-      self.supported = [str(sup) for sup in supported]
+      self.supported = [sup for sup in supported]
     elif supported is None:
       self.supported = []
       # Set resource container
@@ -704,8 +725,8 @@ class NodeInfra(Node):
   def persist (self):
     node = super(NodeInfra, self).persist()
     if self.domain is not None:
-      node["domain"] = str(self.domain)
-    node["type"] = str(self.infra_type)
+      node["domain"] = self.domain
+    node["type"] = self.infra_type
     supported = [sup for sup in self.supported]
     if supported:
       node['supported'] = supported
@@ -715,7 +736,7 @@ class NodeInfra(Node):
     return node
 
   def load (self, data):
-    self.id = str(data['id'])
+    self.id = data['id']
     self.name = data.get('name')  # optional
     for port in data.get('ports', ()):
       infra_port = self.add_port(id=port['id'], properties=port.get('property'))
@@ -824,7 +845,7 @@ class EdgeSGLink(Link):
   def persist (self):
     link = super(EdgeSGLink, self).persist()
     if self.flowclass is not None:
-      link["flowclass"] = str(self.flowclass)
+      link["flowclass"] = self.flowclass
     return link
 
   def load (self, data, container=None):
@@ -925,7 +946,7 @@ class NFFGModel(Element):
     """
     super(NFFGModel, self).__init__(id=id, type=self.TYPE)
     self.name = name
-    self.version = str(version) if version is not None else self.VERSION
+    self.version = version if version is not None else self.VERSION
     self.node_nfs = []
     self.node_saps = []
     self.node_infras = []
@@ -1177,7 +1198,7 @@ class NFFGModel(Element):
   def persist (self):
     nffg = {"parameters": {"id": self.id, "version": self.version}}
     if self.name is not None:
-      nffg["parameters"]["name"] = str(self.name)
+      nffg["parameters"]["name"] = self.name
     if self.node_nfs:
       nffg["node_nfs"] = [nf.persist() for nf in self.node_nfs]
     if self.node_saps:
@@ -1325,5 +1346,5 @@ def test_networkx_mod ():
 
 
 if __name__ == "__main__":
-  # test_parse_load()
-  test_networkx_mod()
+  test_parse_load()
+  # test_networkx_mod()
