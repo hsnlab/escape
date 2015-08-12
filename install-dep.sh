@@ -26,6 +26,13 @@ cat <<EOF | sudo tee -a /etc/ssh/sshd_config
 Port 830
 Port 831
 Port 832
+Port 833
+Port 834
+Port 835
+Port 836
+Port 837
+Port 838
+Port 839
 Subsystem netconf /usr/sbin/netconf-subsystem
 # --- END ESCAPEv2 ----
 EOF
@@ -61,5 +68,11 @@ rm -rf click
 
 # install clickhelper.py to be availble from netconfd
 sudo ln -s "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
+
+echo "Install neo4j graph database..."
+sudo wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -
+sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' > /etc/apt/sources.list.d/neo4j.list"
+sudo apt-get -y install neo4j
+# TODO: disable authentication in /etc/neo4j/neo4j-server.properties
 
 echo "Done."
