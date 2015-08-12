@@ -19,6 +19,7 @@ from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer, \
   VirtualizerManager
 from escape.util.mapping import AbstractOrchestrator
+from escape.orchest.nfib_mgmt import NFIBManager
 
 
 class ResourceOrchestrator(AbstractOrchestrator):
@@ -51,6 +52,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     self.mapper.addListeners(layer_API, weak=True)
     # Init NFIB manager
     self.nfibManager = NFIBManager()
+    self.nfibManager.initialize()
 
   def instantiate_nffg (self, nffg):
     """
@@ -137,27 +139,3 @@ class NFFGManager(object):
     :rtype: :any:`NFFG`
     """
     return self._nffgs.get(nffg_id, default=None)
-
-
-class NFIBManager(object):
-  """
-  Manage the handling of Network Function Information Base.
-  """
-
-  def __init__ (self):
-    """
-    Init.
-    """
-    super(NFIBManager, self).__init__()
-
-  def add (self, nf):
-    # TODO - implement
-    pass
-
-  def remove (self, nf_id):
-    # TODO - implement
-    pass
-
-  def getNF (self, nf_id):
-    # TODO - implement
-    pass

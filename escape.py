@@ -21,6 +21,7 @@ import argparse
 import os
 
 # Implement parser options
+
 parser = argparse.ArgumentParser(
   description="ESCAPE: Extensible Service ChAin Prototyping Environment using "
               "Mininet, Click, NETCONF and POX")
@@ -54,6 +55,8 @@ else:
   cmd = "%s --debug=False" % cmd
 if args.interactive:
   cmd = "%s py --completion" % cmd
+
+cmd = "%s  log.level --httpstream=WARNING --py2neo=WARNING " % cmd
 # Starting ESCAPEv2 (as a POX module)
 print "Starting ESCAPEv2..."
 if args.debug:

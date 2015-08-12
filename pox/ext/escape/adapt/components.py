@@ -413,7 +413,6 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: initiated NF description parsed from RPC reply
     :rtype: dict
     """
-    from pprint import pprint
     with self as adapter:
       try:
         # Initiate VNF
