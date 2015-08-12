@@ -52,6 +52,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     self.mapper.addListeners(layer_API, weak=True)
     # Init NFIB manager
     self.nfibManager = NFIBManager()
+    self.nfibManager.initialize()
 
   def instantiate_nffg (self, nffg):
     """
