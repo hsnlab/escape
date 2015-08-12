@@ -738,7 +738,6 @@ def generate_dynamic_fallback_nffg ():
   nffg.add_link(s3.add_port(3), sap1.add_port(1), id="l4", **linkres)
   nffg.add_link(s4.add_port(3), sap2.add_port(1), id="l5", **linkres)
   nffg.duplicate_static_links()
-  nffg.merge_duplicated_links()
   return nffg
 
 
