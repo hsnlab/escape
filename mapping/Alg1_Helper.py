@@ -20,7 +20,6 @@ import logging
 import networkx as nx
 
 import UnifyExceptionTypes as uet
-
 # these are needed for the modified NetworkX functions.
 from heapq import heappush, heappop
 from itertools import count

@@ -555,7 +555,8 @@ class NFFG(AbstractNFFG):
 
     STATIC links: infra-infra, infra-sap
 
-    :return: None
+    :return: NF-FG with the duplicated links for function chaining
+    :rtype: :any:`NFFG`
     """
     # Create backward links
     backwards = [
@@ -566,6 +567,7 @@ class NFFG(AbstractNFFG):
     # avoid the link reduplication caused by the iterator based for loop
     for link in backwards:
       self.add_edge(src=link.src, dst=link.dst, link=link)
+    return self
 
   def merge_duplicated_links (self):
     """
@@ -575,16 +577,18 @@ class NFFG(AbstractNFFG):
 
     Only leaves one of the links, but that's not defined which one.
 
-    :return: None
+    :return: NF-FG with the filtered links for function chaining
+    :rtype: :any:`NFFG`
     """
     # Collect backward links
     backwards = [(src, dst, key) for src, dst, key, link in
                  self.network.edges_iter(keys=True, data=True) if (
-                 link.type == Link.STATIC or link.type == Link.DYNAMIC) and
+                   link.type == Link.STATIC or link.type == Link.DYNAMIC) and
                  link.backward is True]
     # Delete backwards links
     for link in backwards:
       self.network.remove_edge(*link)
+    return self
 
   def infra_neighbors (self, infra_id):
     """
@@ -815,12 +819,12 @@ def generate_mn_test_req ():
 
 if __name__ == "__main__":
   # test_NFFG()
-  # nffg = generate_mn_topo()
-  nffg = generate_mn_test_req()
+  nffg = generate_mn_topo()
+  # nffg = generate_mn_test_req()
   # nffg = generate_dynamic_fallback_nffg()
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
 
   pprint(nffg.network.__dict__)
-  nffg.merge_duplicated_links()
+  # nffg.merge_duplicated_links()
   print nffg.dump()

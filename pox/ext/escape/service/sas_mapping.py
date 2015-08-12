@@ -14,9 +14,11 @@
 """
 Contains classes which implement SG mapping functionality.
 """
-from MappingAlgorithms import MAP
-import MappingAlgorithms
+import sys
 
+from MappingAlgorithms import MAP
+from UnifyExceptionTypes import MappingException, BadInputException, \
+  InternalAlgorithmException
 from escape import CONFIG
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
 from escape.service import log as log, LAYER_NAME
@@ -49,8 +51,29 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     """
     log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
-    mapped_nffg = MAP(request=graph, network=resource)
-    mapped_nffg.name += "-sas-mapped"
+    try:
+      mapped_nffg = MAP(request=graph, network=resource)
+      # Set mapped NFFG id for original SG request tracking
+      mapped_nffg.id = graph.id
+      mapped_nffg.name = graph.name + "-sas-mapped"
+    except MappingException as e:
+      log.error("Got exception during the mapping process! Cause: %s" % e)
+      log.warning("Mapping algorithm on %s aborted!" % graph)
+      return
+    except BadInputException as e:
+      log.error("Mapping algorithm refuse given input! Cause: %s" % e)
+      log.warning("Mapping algorithm on %s aborted!" % graph)
+      return
+    except InternalAlgorithmException as e:
+      log.critical(
+        "Mapping algorithm fails due to implementation error or conceptual "
+        "error! Cause: %s" % e)
+      log.warning("Mapping algorithm on %s aborted!" % graph)
+      return
+    except:
+      log.error("Got unexpected error during mapping process! Cause: %s" %
+                sys.exc_info()[0])
+      return
     log.debug(
       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
     return mapped_nffg

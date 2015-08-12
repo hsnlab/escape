@@ -48,7 +48,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "orchestration": {  # Resource Orchestration Sublayer
                            "MAPPER": {"module": "escape.orchest.ros_mapping",
                                       "class": "ResourceOrchestrationMapper",
-                                      "mapping-enabled": False},
+                                      "mapping-enabled": True},
                            "STRATEGY": {"module": "escape.orchest.ros_mapping",
                                         "class": "ESCAPEMappingStrategy",
                                         "THREADED": True},

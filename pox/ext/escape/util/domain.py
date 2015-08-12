@@ -189,7 +189,7 @@ class AbstractDomainManager(EventMixin):
     """
     pass
 
-  def update_resource_info (self):
+  def update_resource_info (self, raw_data):
     """
     Update the resource information if this domain with the requested
     configuration. The config attribute is the raw date from request. This

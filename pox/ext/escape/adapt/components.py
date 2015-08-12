@@ -413,6 +413,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: initiated NF description parsed from RPC reply
     :rtype: dict
     """
+    from pprint import pprint
     with self as adapter:
       try:
         # Initiate VNF
@@ -423,12 +424,13 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         # Connect VNF to the given Container
         if isinstance(nf_ports, (tuple, list)):
           for port in nf_ports:
-            adapter.connectVNF(vnf_id=vnf_id, vnf_port=port, switch_id=infra_id)
+            reply = adapter.connectVNF(vnf_id=vnf_id, vnf_port=port,
+                                       switch_id=infra_id)
         else:
-          adapter.connectVNF(vnf_id=vnf_id, vnf_port=nf_ports,
-                             switch_id=infra_id)
+          reply = adapter.connectVNF(vnf_id=vnf_id, vnf_port=nf_ports,
+                                     switch_id=infra_id)
         # Start Click-based VNF
-        adapter.startVNF(vnf_id=vnf_id)
+        reply = adapter.startVNF(vnf_id=vnf_id)
         # Return with whole VNF description
         return adapter.getVNFInfo(vnf_id=vnf_id)
       except RPCError as e:
@@ -744,6 +746,8 @@ class InternalDomainManager(AbstractDomainManager):
         # Add Link between actual NF and INFRA
         for nf_id, infra_id, link in nffg_part.network.out_edges_iter((nf.id,),
                                                                       data=True):
+          # Get Link's src ref to new NF's port
+          nf_port = deployed_nf.ports[link.src.id]
 
           def get_sw_port (vnf):
             """
@@ -751,13 +755,11 @@ class InternalDomainManager(AbstractDomainManager):
             """
             if isinstance(vnf['initiated_vnfs']['link'], list):
               for _link in vnf['initiated_vnfs']['link']:
-                if _link['vnf_port'] == mn_link.src:
+                if _link['vnf_port'] == nf_port:
                   return int(_link['sw_port'])
             else:
               return int(vnf['initiated_vnfs']['link']['sw_port'])
 
-          # Get Link's src ref to new NF's port
-          nf_port = deployed_nf.ports[link.src.id]
           # Get OVS-generated physical port number
           infra_port_num = get_sw_port(vnf)
           if infra_port_num is None:
@@ -868,7 +870,7 @@ class OpenStackDomainManager(AbstractDomainManager):
     except HTTPError:
       raise
 
-  def update_resource_info (self):
+  def update_resource_info (self, raw_data):
     """
     Update the resource information if this domain with the requested
     configuration. The config attribute is the raw date from request. This

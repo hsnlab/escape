@@ -283,17 +283,18 @@ class ESCAPENetworkBridge(object):
   Follows Bridge design pattern.
   """
 
-  def __init__ (self, network, topo_desc=None):
+  def __init__ (self, network=None, topo_desc=None):
     """
     Initialize Mininet implementation with proper attributes.
     Use network as the hided Mininet topology if it's given.
 
-    :param network: use this specific Mininet object for init (default: None)
-    :type network: :class:`mininet.net.MininetWithControlNet`
     :param topo_desc: static topology description e.g. the related NFFG
     :type topo_desc: :any:`NFFG`
+    :param network: use this specific Mininet object for init (default: None)
+    :type network: :class:`mininet.net.MininetWithControlNet`
     :return: None
     """
+    log.debug("Init ESCAPENetworkBridge with topo description: %s" % topo_desc)
     if network is not None:
       self.__mininet = network
     else:
@@ -303,6 +304,11 @@ class ESCAPENetworkBridge(object):
       self.__mininet = MininetWithControlNet()
     # Topology description which is emulated by the Mininet
     self.topo_desc = topo_desc
+    # Duplicate static links for ensure undirected neighbour relationship
+    if self.topo_desc is not None:
+      log.debug(
+        "Duplicate STATIC links to ensure undirected relationship for mapping")
+      self.topo_desc.duplicate_static_links()
     # Need to clean after shutdown
     self._need_clean = None
     # There is no such flag in the Mininet class so using this
@@ -363,8 +369,10 @@ class ESCAPENetworkBridge(object):
 
     def remove_junks ():
       # Kill remained clickhelper.py/click
-      log.debug("Cleanup still-running click process...")
-      run_silent(r"sudo pkill click netconfd")
+      log.debug("Cleanup still-running VNF-related process...")
+      run_silent(r"sudo pkill -9 -f netconfd")
+      run_silent(r"sudo pkill -9 -f clickhelper")
+      run_silent(r"sudo pkill -9 -f click")
       log.debug("Cleanup any remained veth pair...")
       veths = run_cmd(r"ip link show | egrep -o '(uny_\w+)'").split('\n')
       # only need to del one end of the veth pair
@@ -374,6 +382,8 @@ class ESCAPENetworkBridge(object):
       log.debug("Cleanup any Mininet-specific junk...")
       # Call Mininet's own cleanup stuff
       cleanup()
+      log.debug("Cleanup remained tmp files...")
+      run_silent(r"rm  /tmp/*-startup-cfg.xml")
 
     if self.started:
       log.warning(
@@ -828,7 +838,7 @@ class ESCAPENetworkBuilder(object):
         self.__init_from_NFFG(nffg=topo)
       elif isinstance(topo, AbstractTopology):
         log.info("Load Topology description based on Topology class...")
-        self.__init_from_AbstractTopology(topo=topo)
+        self.__init_from_AbstractTopology(topo_class=topo)
       else:
         raise RuntimeError("Unsupported topology format: %s" % type(topo))
       return self.get_network()

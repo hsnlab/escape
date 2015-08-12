@@ -417,8 +417,8 @@ class CoreAlgorithm(object):
         "Last link %s, %s, %s of chain couldn`t be mapped due to latency "
         "requirement." % (vnf1, vnf2, reqlinkid))
     self.log.debug(
-      "Last link of chain or best-effort link %s, %s " % (vnf1, vnf2))
-    self.log.debug(" was mapped to path: %s" % path)
+      "Last link of chain or best-effort link %s, %s was mapped to path: %s" % (
+        vnf1, vnf2, path))
     self._updateGraphResources(bw_req, path, linkids)
     self.manager.link_mapping.add_edge(vnf1, vnf2, key=reqlinkid,
                                        mapped_to=path, path_link_ids=linkids)
