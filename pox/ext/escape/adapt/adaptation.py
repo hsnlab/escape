@@ -264,6 +264,7 @@ class ControllerAdapter(object):
     #   pprint(reply)
     #   vnf_id = reply['access_info']['vnf_id']
     #   reply = s.connectVNF(vnf_id=vnf_id, vnf_port=1, switch_id="EE1")
+    #   reply = s.connectVNF(vnf_id=vnf_id, vnf_port=2, switch_id="EE1")
     #   pprint(reply)
     #   reply = s.startVNF(vnf_id=vnf_id)
     #   pprint(reply)
@@ -285,15 +286,19 @@ class ControllerAdapter(object):
     import escape.util.nffg
 
     nffg = escape.util.nffg.generate_mn_topo()
-    nf1 = nffg.add_nf(id='nf1', name="NF1", func_type="headerCompressor")
-    nf2 = nffg.add_nf(id='nf2', name="NF2", func_type="headerDecompressor")
+    nf1 = nffg.add_nf(id='nf1', name="NF1", func_type="headerCompressor",
+                      cpu=10, mem=20, storage=30)
+    nf2 = nffg.add_nf(id='nf2', name="NF2", func_type="headerDecompressor",
+                      mem=30, storage=40, delay=50)
     nffg.add_undirected_link(nf1.add_port(1),
-                             nffg.network.node['EE1'].add_port(), dynamic=True)
+                             nffg.network.node['EE1'].add_port(), dynamic=True,
+                             delay=60, bandwidth=70)
     nffg.add_undirected_link(nf2.add_port(1),
-                             nffg.network.node['EE2'].add_port(), dynamic=True)
+                             nffg.network.node['EE2'].add_port(), dynamic=True,
+                             delay=80, bandwidth=90)
     mapped_nffg = nffg
     # TEST - VNF initiation end
-    print "Test mapped NFFG:\n", mapped_nffg.dump()
+    # print "Test mapped NFFG:\n", mapped_nffg.dump()
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
     for domain, part in self._slice_into_domains(mapped_nffg):

@@ -424,11 +424,11 @@ class NFFG(AbstractNFFG):
     :return: newly created edge tuple in (p1->p2, p2->p1)
     :rtype: :any:(`EdgeLink`, `EdgeLink`)
     """
-    linkp1p2 = self.add_link(port1, port2, id=p1p2id, dynamic=dynamic,
+    p1p2Link = self.add_link(port1, port2, id=p1p2id, dynamic=dynamic,
                              backward=False, delay=delay, bandwidth=bandwidth)
-    linkp2p1 = self.add_link(port2, port1, id=p2p1id, dynamic=dynamic,
+    p2p1Link = self.add_link(port2, port1, id=p2p1id, dynamic=dynamic,
                              backward=True, delay=delay, bandwidth=bandwidth)
-    return linkp1p2, linkp2p1
+    return p1p2Link, p2p1Link
 
   def add_sglink (self, src_port, dst_port, hop=None, id=None, flowclass=None):
     """
@@ -688,27 +688,32 @@ def generate_mn_topo ():
   # Create NFFG
   nffg = NFFG(id="INTERNAL", name="Internal-Mininet-Topology")
   # Add environments
-  # TODO - define supported types (that's only need to the orchestration)
   ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NFFG.TYPE_INFRA_EE, cpu=0, mem=0, storage=0,
-                       delay=0, bandwidth=0)
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
   ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NFFG.TYPE_INFRA_EE, cpu=0, mem=0, storage=0,
-                       delay=0, bandwidth=0)
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  # Add supported types
+  ee1.add_supported_type(('headerCompressor', 'headerDecompressor'))
+  ee2.add_supported_type(('headerCompressor', 'headerDecompressor'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
   sw4 = nffg.add_infra(id="SW4", name="switch-4", domain=NFFG.DOMAIN_INTERNAL,
-                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
   # Add SAPs
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")
   # Add links
-  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1")
-  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="link2")
-  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3")
-  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4")
-  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5")
+  link_res = {'delay': 1.5, 'bandwidth': 2000}
+  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1", **link_res)
+  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="link2", **link_res)
+  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3", **link_res)
+  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4", **link_res)
+  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5", **link_res)
   nffg.duplicate_static_links()
   return nffg
 
@@ -781,7 +786,7 @@ def generate_one_bisbis ():
   bb.resources.cpu = sys.maxint
   bb.resources.mem = sys.maxint
   bb.resources.storage = sys.maxint
-  bb.resources.delay = sys.maxint
+  bb.resources.delay = 0
   bb.resources.bandwidth = sys.maxint
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
   sap2 = nffg.add_sap(id="sap2", name="SAP2")

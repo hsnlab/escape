@@ -30,7 +30,7 @@ import traceback
 import networkx as nx
 
 try:
-  from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg, generate_mn_test_req
+  from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg
 except ImportError:
   import sys, os, inspect
 
@@ -38,7 +38,7 @@ except ImportError:
     os.path.abspath(
       os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
                                   "pox/ext/escape/util/"))
-  from nffg import NFFG, generate_dynamic_fallback_nffg, generate_mn_test_req
+  from nffg import NFFG, generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
 # object for the algorithm instance
@@ -285,11 +285,11 @@ if __name__ == '__main__':
     # req = _constructExampleRequest()
     # net = _constructExampleNetwork()
 
-    # req = _example_request_for_fallback()
+    req = _example_request_for_fallback()
+    # print req.dump()
     # this is the dynamic fallback topology taken from nffg.py
     net = generate_dynamic_fallback_nffg()
-    
-    req = generate_mn_test_req()
+    # print net.dump()
     mapped = MAP(req, net)
     print mapped.dump()
   except uet.UnifyException as ue:

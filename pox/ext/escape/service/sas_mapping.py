@@ -49,10 +49,8 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     """
     log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
-    graph = MappingAlgorithms._constructExampleRequest()
-    resource = MappingAlgorithms._constructExampleNetwork()
     mapped_nffg = MAP(request=graph, network=resource)
-    graph.name += "-sas-mapped"
+    mapped_nffg.name += "-sas-mapped"
     log.debug(
       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
     return mapped_nffg
@@ -114,8 +112,8 @@ class ServiceGraphMapper(AbstractMapper):
     if not CONFIG.get_mapping_enabled(LAYER_NAME):
       log.warning(
         "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
-        "return resource info..." % LAYER_NAME)
-      return virt_resource
+        "forward request info..." % LAYER_NAME)
+      return input_graph
     # Run actual mapping algorithm
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread

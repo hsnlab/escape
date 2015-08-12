@@ -221,6 +221,21 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     AbstractESCAPEAdapter.__init__(self)
     log.debug("Init VNFStarterAdapter - params: %s" % kwargs)
 
+  def update_connection_params (self, **kwargs):
+    """
+    Update connection params.
+
+    :return: only updated params
+    :rtype: dict
+    """
+    for param in ('server', 'port', 'username', 'password'):
+      if param in kwargs:
+        if kwargs[param] == getattr(self, param):
+          del kwargs[param]
+        else:
+          setattr(self, param, kwargs[param])
+    return kwargs
+
   ##############################################################################
   # RPC calls starts here
   ##############################################################################
@@ -572,8 +587,8 @@ class InternalDomainManager(AbstractDomainManager):
     self.adapterPOX = configurator.load_component(InternalPOXAdapter.name)
     # Init adapter to internal topo emulation: Mininet
     self.adapterMN = configurator.load_component(InternalMininetAdapter.name)
-    # No need to init default NETCONF adapter
-    self.adapterVNF = None
+    # Init default NETCONF adapter
+    self.adapterVNF = configurator.load_component(VNFStarterAdapter.name)
     # Skip to start polling is it's set
     if not self._poll:
       # Try to request/parse/update Mininet topology
@@ -664,11 +679,12 @@ class InternalDomainManager(AbstractDomainManager):
     # Iter through the container INFRAs in the given mapped NFFG part
     # for ee in (infra for infra in nffg_part.infras if infra.infra_type in (
     #      NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE)):
+    mn_topo = self.adapterMN.get_topology_description()
     for infra in nffg_part.infras:
       if infra.infra_type not in (
            NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
         log.debug(
-          "Infrastructure Node: %s (tpye: %s) is not Container type! Continue "
+          "Infrastructure Node: %s (type: %s) is not Container type! Continue "
           "to next Node..." % (infra.short_name, infra.infra_type))
         continue
       else:
@@ -706,17 +722,54 @@ class InternalDomainManager(AbstractDomainManager):
             "Node: %s" % infra.short_name)
         # Save last used adapter --> and last RPC result
         log.debug("Initiating NF: %s with params: %s" % (nf.short_name, params))
-        self.adapterVNF = VNFStarterAdapter(**connection_params)
+        updated = self.adapterVNF.update_connection_params(**connection_params)
+        if updated:
+          log.debug("Update connection params in %s: %s" % (
+            self.adapterVNF.__class__.__name__, updated))
         vnf = self.adapterVNF.deployNF(**params)
         # Check if NETCONF communication was OK
-        if vnf is None:
+        if vnf is not None and vnf['initiated_vnfs']['pid'] and \
+                  vnf['initiated_vnfs'][
+                    'status'] == VNFStarterAPI.VNFStatus.s_UP_AND_RUNNING:
+          log.info("NF: %s initiation has been verified on Node: %s" % (
+            nf.short_name, infra.short_name))
+        else:
           log.error(
             "Initiated NF: %s is not verified. Initiation was unsuccessful!"
             % nf.short_name)
-        else:
-          log.info("NF: %s initiation has been verified on Node: %s" % (
-            nf.short_name, infra.short_name))
-          # TODO add initiated NF to topo description
+        # Add initiated NF to topo description
+        log.info("Update Infrastructure layer topology description...")
+        deployed_nf = nf.copy()
+        mn_topo.add_nf(nf=deployed_nf)
+        # Add Link between actual NF and INFRA
+        for nf_id, infra_id, link in nffg_part.network.out_edges_iter((nf.id,),
+                                                                      data=True):
+
+          def get_sw_port (vnf):
+            """
+            Return the switch port parsed from result of getVNFInfo
+            """
+            if isinstance(vnf['initiated_vnfs']['link'], list):
+              for _link in vnf['initiated_vnfs']['link']:
+                if _link['vnf_port'] == mn_link.src:
+                  return int(_link['sw_port'])
+            else:
+              return int(vnf['initiated_vnfs']['link']['sw_port'])
+
+          # Get Link's src ref to new NF's port
+          nf_port = deployed_nf.ports[link.src.id]
+          # Get OVS-generated physical port number
+          infra_port_num = get_sw_port(vnf)
+          if infra_port_num is None:
+            log.warning(
+              "Can't get Container port from RPC result! Set generated port "
+              "number...")
+          # Create INFRA side Port
+          infra_port = infra.add_port(id=infra_port_num)
+          # Add Links to mn topo
+          l1, l2 = mn_topo.add_undirected_link(port1=nf_port, port2=infra_port,
+                                               dynamic=True, delay=link.delay,
+                                               bandwidth=link.bandwidth)
 
 
 class OpenStackDomainManager(AbstractDomainManager):
