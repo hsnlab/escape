@@ -579,7 +579,8 @@ class NFFG(AbstractNFFG):
     """
     # Collect backward links
     backwards = [(src, dst, key) for src, dst, key, link in
-                 self.network.edges_iter(keys=True, data=True) if
+                 self.network.edges_iter(keys=True, data=True) if (
+                 link.type == Link.STATIC or link.type == Link.DYNAMIC) and
                  link.backward is True]
     # Delete backwards links
     for link in backwards:
@@ -795,24 +796,27 @@ def generate_one_bisbis ():
   nffg.duplicate_static_links()
   return nffg
 
+
 def generate_mn_test_req ():
   test = NFFG(id="SG-decomp", name="SG-name")
   sap1 = test.add_sap(name="SAP1", id="sap1")
   sap2 = test.add_sap(name="SAP2", id="sap2")
-  comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor", 
+  comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
                      cpu=2, mem=2, storage=0)
-  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR", func_type="headerDecompressor", 
-                       cpu=2, mem=2, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=2, mem=2, storage=0)
   test.add_sglink(sap1.add_port(0), comp.add_port(0))
   test.add_sglink(comp.add_port(1), decomp.add_port(0))
   test.add_sglink(decomp.add_port(1), sap2.add_port(0))
-  
+
   test.add_req(sap1.ports[0], sap2.ports[0], bandwidth=1000, delay=24)
   return test
 
+
 if __name__ == "__main__":
-  test_NFFG()
-  nffg = generate_mn_topo()
+  # test_NFFG()
+  # nffg = generate_mn_topo()
+  nffg = generate_mn_test_req()
   # nffg = generate_dynamic_fallback_nffg()
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
