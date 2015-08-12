@@ -6,6 +6,8 @@
   },
   "edge_links": [
     {
+      "bandwidth": 2000,
+      "delay": 1.5,
       "dst_node": "SW3",
       "dst_port": 1,
       "id": "link1",
@@ -13,6 +15,8 @@
       "src_port": 1
     },
     {
+      "bandwidth": 2000,
+      "delay": 1.5,
       "dst_node": "SAP2",
       "dst_port": 1,
       "id": "link5",
@@ -20,6 +24,8 @@
       "src_port": 3
     },
     {
+      "bandwidth": 2000,
+      "delay": 1.5,
       "dst_node": "SW4",
       "dst_port": 2,
       "id": "link3",
@@ -27,6 +33,8 @@
       "src_port": 2
     },
     {
+      "bandwidth": 2000,
+      "delay": 1.5,
       "dst_node": "SAP1",
       "dst_port": 1,
       "id": "link4",
@@ -34,6 +42,8 @@
       "src_port": 3
     },
     {
+      "bandwidth": 2000,
+      "delay": 1.5,
       "dst_node": "SW4",
       "dst_port": 1,
       "id": "link2",
@@ -52,12 +62,16 @@
         }
       ],
       "resources": {
-        "bandwidth": 0,
-        "cpu": 0,
-        "delay": 0,
-        "mem": 0,
-        "storage": 0
+        "bandwidth": 5000,
+        "cpu": 5,
+        "delay": 0.9,
+        "mem": 5,
+        "storage": 5
       },
+      "supported": [
+        "headerCompressor",
+        "headerDecompressor"
+      ],
       "type": "EE"
     },
     {
@@ -75,6 +89,10 @@
           "id": 3
         }
       ],
+      "resources": {
+        "bandwidth": 10000,
+        "delay": 0.2
+      },
       "type": "SDN-SWITCH"
     },
     {
@@ -92,6 +110,10 @@
           "id": 3
         }
       ],
+      "resources": {
+        "bandwidth": 10000,
+        "delay": 0.2
+      },
       "type": "SDN-SWITCH"
     },
     {
@@ -104,12 +126,16 @@
         }
       ],
       "resources": {
-        "bandwidth": 0,
-        "cpu": 0,
-        "delay": 0,
-        "mem": 0,
-        "storage": 0
+        "bandwidth": 5000,
+        "cpu": 5,
+        "delay": 0.9,
+        "mem": 5,
+        "storage": 5
       },
+      "supported": [
+        "headerCompressor",
+        "headerDecompressor"
+      ],
       "type": "EE"
     }
   ],
