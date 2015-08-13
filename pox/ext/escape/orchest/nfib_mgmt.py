@@ -18,6 +18,7 @@ from collections import deque
 import os
 
 import py2neo
+
 from py2neo import Graph, Relationship
 import networkx
 
@@ -28,6 +29,8 @@ from escape.util.nffg import NFFG
 class NFIBManager(object):
   """
   Manage the handling of Network Function Information Base.
+
+  Use neo4j implementation for storing and querying NFs and NF decompositions.
   """
 
   def __init__ (self):
@@ -35,8 +38,21 @@ class NFIBManager(object):
     Init.
     """
     super(NFIBManager, self).__init__()
-    log.debug("Init %s" % self.__class__.__name__)
+    log.debug("Init %s based on neo4j" % self.__class__.__name__)
+    self.__suppress_neo4j_logging()
     self.graph_db = Graph()
+
+  def __suppress_neo4j_logging (self, level=None):
+    """
+    Suppress annoying and detailed logging of `py2neo` and `httpstream`
+    packages.
+
+    :return: None
+    """
+    import logging
+    level = level if level is not None else logging.WARNING
+    logging.getLogger("py2neo").setLevel(level)
+    logging.getLogger("httpstream").setLevel(level)
 
   def addNode (self, node):
     """
@@ -45,7 +61,7 @@ class NFIBManager(object):
     :param node: node to be added to the DB
     :type node: dict
     :return: success of addition
-    :rtupe: Boolean
+    :rtype: Boolean
     """
     node_db = list(
       self.graph_db.find(node['label'], 'node_id', node['node_id']))
@@ -140,6 +156,7 @@ class NFIBManager(object):
     # To be updated
     self.addNode(nf)
 
+  @staticmethod
   def clickCompile (nf):
     """
     Compile source of the click-based NF
@@ -266,7 +283,7 @@ class NFIBManager(object):
 
   def addDecomp (self, nf_id, decomp_id, decomp):
     """
-    Add new decompostion for a high-level NF.
+    Add new decomposition for a high-level NF.
 
     :param nf_id: the id of the NF for which a decomposition is added
     :type nf_id: string
@@ -287,7 +304,7 @@ class NFIBManager(object):
       if len(node) > 0:
         log.debug("SAPs exist in the DB")
         return False
-    if self.addNode({'label': 'graph', 'node_id': decomp_id}) == False:
+    if not self.addNode({'label': 'graph', 'node_id': decomp_id}):
       log.debug("decomposition %s exists in the DB" % decomp_id)
       return False
 
@@ -311,6 +328,11 @@ class NFIBManager(object):
                 decomp.node[n]['properties']['type'] == 'NA':
         self.addNode(decomp.node[n]['properties'])
         dst_label = 'NF'
+      else:
+        # FIXME - czentye --> add default to dst_label variable always be
+        # defined for addRelationship
+        self.addNode({'label': 'NF', 'type': 'NA'})
+        dst_label = 'NA'
 
       self.addRelationship(
         {'src_label': 'graph', 'dst_label': dst_label, 'src_id': decomp_id,
@@ -460,11 +482,13 @@ class NFIBManager(object):
                 node0 = sap
               if sap.id == edge[1]:
                 node1 = sap
+            # FIXME - czentye --> There is a chance node0, node1 variables
+            # not defined yet until here and add_port will be raise an exception
             nffg_temp.add_sglink(node0.add_port(
               graph.edge[edge[0]][edge[1]]['properties']['src_port']),
-                                 node1.add_port(
-                                   graph.edge[edge[0]][edge[1]]['properties'][
-                                     'dst_port']), id='hop' + str(counter))
+              node1.add_port(
+                graph.edge[edge[0]][edge[1]]['properties']['dst_port']),
+              id='hop' + str(counter))
 
           for n in nffg_init.nfs:
             nffg_temp.add_node(n)
@@ -558,8 +582,7 @@ class NFIBManager(object):
 
     # create node properties
     for n in G1.nodes():
-      properties = {}
-      properties['node_id'] = n
+      properties = {'node_id': n}
 
       if 'SAP' in n:
         properties['label'] = 'SAP'
@@ -573,16 +596,10 @@ class NFIBManager(object):
       G1.node[n]['properties'] = properties
 
     # create edge properties
-    properties = {}
-    properties['BW'] = 100
-    properties['src_port'] = 1
-    properties['dst_port'] = 1
+    properties = {'BW': 100, 'src_port': 1, 'dst_port': 1}
     G1.edge['SAP1']['simpleForwarder']['properties'] = properties
 
-    properties1 = {}
-    properties1['BW'] = 100
-    properties1['src_port'] = 2
-    properties1['dst_port'] = 2
+    properties1 = {'BW': 100, 'src_port': 2, 'dst_port': 2}
     G1.edge['simpleForwarder']['SAP2']['properties'] = properties1
 
     # generate a decomposition for a high-level compressor NF (in form of
@@ -592,8 +609,7 @@ class NFIBManager(object):
 
     # create node properties
     for n in G2.nodes():
-      properties = {}
-      properties['node_id'] = n
+      properties = {'node_id': n}
       if 'SAP' in n:
         properties['label'] = 'SAP'
         properties['type'] = 'NA'
@@ -606,16 +622,10 @@ class NFIBManager(object):
       G2.node[n]['properties'] = properties
 
     # create edge properties 
-    properties3 = {}
-    properties3['BW'] = 200
-    properties3['src_port'] = 1
-    properties3['dst_port'] = 1
+    properties3 = {'BW': 200, 'src_port': 1, 'dst_port': 1}
     G2.edge['SAP3']['headerCompressor']['properties'] = properties3
 
-    properties4 = {}
-    properties4['BW'] = 200
-    properties4['src_port'] = 2
-    properties4['dst_port'] = 2
+    properties4 = {'BW': 200, 'src_port': 2, 'dst_port': 2}
     G2.edge['headerCompressor']['SAP4']['properties'] = properties4
 
     # generate a decomposition for a high-level decompressor NF (in form of
@@ -625,8 +635,7 @@ class NFIBManager(object):
 
     # create node properties
     for n in G3.nodes():
-      properties = {}
-      properties['node_id'] = n
+      properties = {'node_id': n}
       if 'SAP' in n:
         properties['label'] = 'SAP'
         properties['type'] = 'NA'
@@ -639,16 +648,10 @@ class NFIBManager(object):
       G3.node[n]['properties'] = properties
 
     # create edge properties
-    properties5 = {}
-    properties5['BW'] = 300
-    properties5['src_port'] = 1
-    properties5['dst_port'] = 1
+    properties5 = {'BW': 300, 'src_port': 1, 'dst_port': 1}
     G3.edge['SAP5']['headerDecompressor']['properties'] = properties5
 
-    properties6 = {}
-    properties6['BW'] = 300
-    properties6['src_port'] = 2
-    properties6['dst_port'] = 2
+    properties6 = {'BW': 300, 'src_port': 2, 'dst_port': 2}
     G3.edge['headerDecompressor']['SAP6']['properties'] = properties6
 
     # required elementary NFs should be added first to the DB
