@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Fail on error
+set -e
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo "Installing ESCAPEv2 dependencies..."
@@ -8,11 +11,11 @@ sudo apt-get update
 # Install dependencies
 sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev \
 python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko python-dev \
-libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev make \
-gcc automake openssh-client openssh-server ssh libgtk2.0-dev
+libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev \
+gcc make automake openssh-client openssh-server ssh
 
 echo "Install Python-specific dependencies..."
-sudo pip install requests jinja2 ncclient lxml networkx py2neo
+sudo pip install requests jinja2 ncclient lxml networkx py2neo networkx_viewer numpy
 
 echo "Install OpenYuma for NETCONF capability..."
 cd "$DIR/OpenYuma"
@@ -20,9 +23,14 @@ cd "$DIR/OpenYuma"
 make -i
 sudo make install
 
+if grep -Fxq "# --- ESCAPEv2 ---" "/etc/ssh/sshd_config"
+then
+    echo "Remove previous ESCAPEv2-related sshd config..."
+    sudo sed -in '/.*ESCAPEv2.*/,/.*ESCAPEv2 END.*/d' "/etc/ssh/sshd_config"
+fi
 echo "Set sshd configuration..."
 cat <<EOF | sudo tee -a /etc/ssh/sshd_config
-# ----- ESCAPEv2 -----
+# --- ESCAPEv2 ---
 Port 830
 Port 831
 Port 832
@@ -34,7 +42,7 @@ Port 837
 Port 838
 Port 839
 Subsystem netconf /usr/sbin/netconf-subsystem
-# --- END ESCAPEv2 ----
+# --- ESCAPEv2 END ---
 EOF
 
 echo "Restart sshd..."
