@@ -15,7 +15,7 @@
 Classes for handling the elements of the NF-FG data structure
 """
 import json
-import collections
+from collections import Iterable, OrderedDict
 from __builtin__ import id as generate
 
 
@@ -38,7 +38,7 @@ class Persistable(object):
     """
     raise NotImplementedError("All NF-FG entity must be persistable!")
 
-  def load (self, data):
+  def load (self, data, *args, **kwargs):
     """
     Common function to fill self with data from JSON data.
 
@@ -84,11 +84,11 @@ class Element(Persistable):
 
   def persist (self):
     # Need to override
-    super(Element, self).persist()
+    return super(Element, self).persist()
 
-  def load (self, data):
+  def load (self, data, *args, **kwargs):
     # Need to override
-    super(Element, self).load(data)
+    return super(Element, self).load(data)
 
   def copy (self):
     from copy import deepcopy
@@ -222,15 +222,16 @@ class Node(Element):
       return True
 
   def persist (self):
-    node = {"id": self.id}
+    node = OrderedDict(id=self.id)
+    node['id'] = self.id
+    if self.name is not None:
+      node["name"] = self.name
     ports = [port.persist() for port in self.ports]
     if ports:
       node["ports"] = ports
-    if self.name is not None:
-      node["name"] = self.name
     return node
 
-  def load (self, data):
+  def load (self, data, *args, **kwargs):
     self.id = data['id']
     self.name = data.get('name')  # optional
     for port in data.get('ports', ()):
@@ -280,11 +281,14 @@ class Link(Element):
     self.dst = dst  # mandatory
 
   def persist (self):
-    return {"src_node": self.src.node.id, "src_port": self.src.id,
-            "dst_node": self.dst.node.id, "dst_port": self.dst.id,
-            "id": self.id}
+    link = OrderedDict(id=self.id)
+    link['src_node'] = self.src.node.id
+    link['src_port'] = self.src.id
+    link['dst_node'] = self.dst.node.id
+    link['dst_port'] = self.dst.id
+    return link
 
-  def load (self, data, container=None):
+  def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
         "Container reference is not given for edge endpoint lookup!")
@@ -338,7 +342,7 @@ class NodeResource(Persistable):
     self.bandwidth = bandwidth
 
   def persist (self):
-    res = {}
+    res = OrderedDict()
     if self.cpu is not None:
       res["cpu"] = self.cpu
     if self.mem is not None:
@@ -351,12 +355,12 @@ class NodeResource(Persistable):
       res["bandwidth"] = self.bandwidth
     return res
 
-  def load (self, data):
+  def load (self, data, *args, **kwargs):
+    self.cpu = data.get('cpu')
+    self.mem = data.get('mem')
     self.storage = data.get('storage')
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
-    self.cpu = data.get('cpu')
-    self.mem = data.get('mem')
     return self
 
   def __getitem__ (self, item):
@@ -404,9 +408,11 @@ class Flowrule(Persistable):
     self.action = action  # mandatory
 
   def persist (self):
-    return {"match": self.match, "action": self.action}
+    flowrule = OrderedDict(match=self.match)
+    flowrule['action'] = self.action
+    return flowrule
 
-  def load (self, data):
+  def load (self, data, *args, **kwargs):
     self.match = data.get('match', "*")
     self.action = data.get('action', "")
     return self
@@ -445,7 +451,7 @@ class Port(Element):
     # Set properties list according to given param type
     if isinstance(properties, (str, unicode)):
       self.properties = [str(properties), ]
-    elif isinstance(properties, collections.Iterable):
+    elif isinstance(properties, Iterable):
       self.properties = [p for p in properties]
     elif properties is None:
       self.properties = []
@@ -471,7 +477,7 @@ class Port(Element):
     :return: the Port object to allow function chaining
     :rtype: :any:`Port`
     """
-    if isinstance(property, collections.Iterable):
+    if isinstance(property, Iterable):
       self.properties.extend(property)
     else:
       self.properties.append(property)
@@ -492,13 +498,13 @@ class Port(Element):
       self.properties.remove(property)
 
   def persist (self):
-    port = {"id": self.id}
+    port = OrderedDict(id=self.id)
     property = [property for property in self.properties]
     if property:
       port["property"] = property
     return port
 
-  def load (self, data):
+  def load (self, data, *args, **kwargs):
     self.id = data['id']
     for property in data.get('property', ()):
       self.properties.append(property)
@@ -562,7 +568,7 @@ class InfraPort(Port):
       port["flowrules"] = flowrules
     return port
 
-  def load (self, data):
+  def load (self, data, *args, **kwargs):
     super(InfraPort, self).load(data)
     for flowrule in data('flowrules', ()):
       self.add_flowrule(match=flowrule.get('match'),
@@ -602,7 +608,7 @@ class NodeNF(Node):
     node = super(NodeNF, self).persist()
     if self.functional_type is not None:
       node["functional_type"] = self.functional_type
-    specification = {}
+    specification = OrderedDict()
     if self.deployment_type is not None:
       specification["deployment_type"] = self.deployment_type
     res = self.resources.persist()
@@ -612,7 +618,7 @@ class NodeNF(Node):
       node["specification"] = specification
     return node
 
-  def load (self, data):
+  def load (self, data, *args, **kwargs):
     super(NodeNF, self).load(data)
     self.functional_type = data.get('functional_type')
     if 'specification' in data:
@@ -669,7 +675,7 @@ class NodeInfra(Node):
     # Set supported types according to given param type
     if isinstance(supported, (str, unicode)):
       self.supported = [str(supported), ]
-    elif isinstance(supported, collections.Iterable):
+    elif isinstance(supported, Iterable):
       self.supported = [sup for sup in supported]
     elif supported is None:
       self.supported = []
@@ -702,7 +708,7 @@ class NodeInfra(Node):
     """
     if isinstance(functional_type, str):
       self.supported.append(functional_type)
-    elif isinstance(functional_type, collections.Iterable):
+    elif isinstance(functional_type, Iterable):
       self.supported.extend(functional_type)
     else:
       raise RuntimeError("Not supported parameter type!")
@@ -735,7 +741,7 @@ class NodeInfra(Node):
       node["resources"] = res
     return node
 
-  def load (self, data):
+  def load (self, data, *args, **kwargs):
     self.id = data['id']
     self.name = data.get('name')  # optional
     for port in data.get('ports', ()):
@@ -800,7 +806,7 @@ class EdgeLink(Link):
       link["bandwidth"] = self.bandwidth
     return link
 
-  def load (self, data, container=None):
+  def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
         "Container reference is not given for edge endpoint lookup!")
@@ -848,7 +854,7 @@ class EdgeSGLink(Link):
       link["flowclass"] = self.flowclass
     return link
 
-  def load (self, data, container=None):
+  def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
         "Container reference is not given for edge endpoint lookup!")
@@ -896,7 +902,7 @@ class EdgeReq(Link):
       link["bandwidth"] = self.bandwidth
     return link
 
-  def load (self, data, container=None):
+  def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
         "Container reference is not given for edge endpoint lookup!")
@@ -1196,9 +1202,10 @@ class NFFGModel(Element):
         return True
 
   def persist (self):
-    nffg = {"parameters": {"id": self.id, "version": self.version}}
+    nffg = OrderedDict(parameters=OrderedDict(id=self.id))
     if self.name is not None:
       nffg["parameters"]["name"] = self.name
+    nffg["parameters"]["version"] = self.version
     if self.node_nfs:
       nffg["node_nfs"] = [nf.persist() for nf in self.node_nfs]
     if self.node_saps:
@@ -1213,7 +1220,7 @@ class NFFGModel(Element):
       nffg["edge_reqs"] = [req.persist() for req in self.edge_reqs]
     return nffg
 
-  def load (self, raw_data):
+  def load (self, raw_data, *args, **kwargs):
     """
     Read the given JSON object structure and try to convert to an NF-FG
     representation as an :any:`NFFGModel`.
@@ -1226,8 +1233,9 @@ class NFFGModel(Element):
     # Converter function to avoid unicode
     def unicode_to_str (input):
       if isinstance(input, dict):
-        return {unicode_to_str(key): unicode_to_str(value) for key, value in
-                input.iteritems()}
+        return OrderedDict(
+          [(unicode_to_str(key), unicode_to_str(value)) for key, value in
+           input.iteritems()])
       elif isinstance(input, list):
         return [unicode_to_str(element) for element in input]
       elif isinstance(input, unicode):
@@ -1269,7 +1277,7 @@ class NFFGModel(Element):
     :return: NF-FG representation as plain text
     :rtype: str
     """
-    return json.dumps(self.persist(), indent=2, sort_keys=True)
+    return json.dumps(self.persist(), indent=2, sort_keys=False)
 
 
 def test_parse_load ():
