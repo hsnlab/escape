@@ -126,15 +126,26 @@ class NFFG(AbstractNFFG):
   Internal NFFG representation based on networkx.
   """
   # Some pre-define constant to avoid NFFGModel related class imports
+  # Infra domains
   DOMAIN_INTERNAL = NodeInfra.DOMAIN_INTERNAL
   DOMAIN_VIRTUAL = NodeInfra.DOMAIN_VIRTUAL
   DOMAIN_OS = NodeInfra.DOMAIN_OS
   DOMAIN_UN = NodeInfra.DOMAIN_UN
   DOMAIN_DOCKER = NodeInfra.DOMAIN_DOCKER
+  # Infra types
   TYPE_INFRA_SDN_SW = NodeInfra.TYPE_SDN_SWITCH
   TYPE_INFRA_EE = NodeInfra.TYPE_EE
   TYPE_INFRA_STATIC_EE = NodeInfra.TYPE_STATIC_EE
   TYPE_INFRA_BISBIS = NodeInfra.TYPE_BISBIS
+  # Node types
+  TYPE_INFRA = Node.INFRA
+  TYPE_NF = Node.NF
+  TYPE_SAP = Node.SAP
+  # Link types
+  TYPE_LINK_STATIC = Link.STATIC
+  TYPE_LINK_DYNAMIC = Link.DYNAMIC
+  TYPE_LINK_SG = Link.SG
+  TYPE_LINK_REQUIREMENT = Link.REQUIREMENT
 
   def __init__ (self, id=None, name=None, version="1.0"):
     """
@@ -224,7 +235,7 @@ class NFFG(AbstractNFFG):
       return True
     except NetworkXError:
       # There was no node in the graph
-      pass
+      return False
 
   def add_edge (self, src, dst, link):
     """
@@ -278,7 +289,7 @@ class NFFG(AbstractNFFG):
       return True
     except NetworkXError:
       # There was no node in the graph
-      pass
+      return False
 
   def add_nf (self, nf=None, id=None, name=None, func_type=None, dep_type=None,
        cpu=None, mem=None, storage=None, delay=None, bandwidth=None):
@@ -614,6 +625,28 @@ class NFFG(AbstractNFFG):
     return {self.network.node[id] for id in
             self.network.neighbors_iter(infra_id) if
             self.network.node[id].type == Node.NF}
+
+  def clear_links (self, link_type):
+    """
+    Remove every specific Link from the NFFG defined by given ``type``.
+
+    :param link_type: link type defined in :any:`NFFG`
+    :return: None
+    """
+    return self.network.remove_edges_from(
+      [(u, v, link.id) for u, v, link in self.network.edges_iter(data=True) if
+       link.type == link_type])
+
+  def clear_nodes (self, node_type):
+    """
+    Remove every specific Node from the NFFG defined by given ``type``.
+
+    :param node_type: node type defined in :any:`NFFG`
+    :return: None
+    """
+    return self.network.remove_nodes_from(
+      [id for id, node in self.network.nodes_iter(data=True) if
+       node.type == node_type])
 
   def copy (self):
     """

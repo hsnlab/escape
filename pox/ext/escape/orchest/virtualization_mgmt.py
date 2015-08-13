@@ -101,7 +101,7 @@ class GlobalViewVirtualizer(AbstractVirtualizer):
     :param id: id of the assigned entity
     :type: id: str
     """
-    log.debug("Initiate unfiltered/global Virtual View")
+    log.debug("Initiate unfiltered/global <Virtual View>")
     super(GlobalViewVirtualizer, self).__init__(id=id)
     # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
     self.global_view = global_view
@@ -136,7 +136,7 @@ class OneBisBisVirtualizer(AbstractVirtualizer):
     :param id: id of the assigned entity
     :type: id: str
     """
-    log.debug("Initiate default 1-BisBis Virtual View")
+    log.debug("Initiate default 1-BisBis <Virtual View>")
     super(OneBisBisVirtualizer, self).__init__(id=id)
     # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
     self.global_view = global_view
@@ -212,14 +212,15 @@ class VirtualizerManager(EventMixin):
     :return: Domain Virtualizer (DoV)
     :rtype: :any:`DomainVirtualizer`
     """
-    log.debug("Invoke %s to get Global Resource View" % self.__class__.__name__)
+    log.debug(
+      "Invoke %s to get <Global Resource View>" % self.__class__.__name__)
     # If DoV is not set up, need to request from Adaptation layer
     if DoV not in self._virtualizers:
-      log.debug("Missing Global Resource View! Requesting the View now...")
+      log.debug("Missing <Global Resource View>! Requesting the View now...")
       self.raiseEventNoErrors(MissingGlobalViewEvent)
       if self._virtualizers[DoV] is not None:
         log.debug(
-          "Got requested Global Resource View: %s" % self._virtualizers[DoV])
+          "Got requested <Global Resource View>: %s" % self._virtualizers[DoV])
     # Return with resource info as a DomainVirtualizer
     return self._virtualizers.get(DoV, None)
 
@@ -253,7 +254,7 @@ class VirtualizerManager(EventMixin):
     :return: virtual view
     :rtype: :any:`AbstractVirtualizer`
     """
-    log.debug("Invoke %s to get Virtual View (for layer ID: %s)" % (
+    log.debug("Invoke %s to get <Virtual View> (for layer ID: %s)" % (
       self.__class__.__name__, virtualizer_id))
     # If this is the first request, need to generate the view
     if virtualizer_id not in self._virtualizers:

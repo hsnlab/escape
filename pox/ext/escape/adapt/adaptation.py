@@ -282,22 +282,24 @@ class ControllerAdapter(object):
     :type mapped_nffg: NFFG
     :return: None or internal domain NFFG part
     """
-    # TEST - VNF initiation start
-    import escape.util.nffg
-
-    nffg = escape.util.nffg.generate_mn_topo()
-    nf1 = nffg.add_nf(id='nf1', name="NF1", func_type="headerCompressor",
-                      cpu=10, mem=20, storage=30)
-    nf2 = nffg.add_nf(id='nf2', name="NF2", func_type="headerDecompressor",
-                      mem=30, storage=40, delay=50)
-    nffg.add_undirected_link(nf1.add_port(1),
-                             nffg.network.node['EE1'].add_port(), dynamic=True,
-                             delay=60, bandwidth=70)
-    nffg.add_undirected_link(nf2.add_port(1),
-                             nffg.network.node['EE2'].add_port(), dynamic=True,
-                             delay=80, bandwidth=90)
-    mapped_nffg = nffg
-    # TEST - VNF initiation end
+    # # TEST - VNF initiation start
+    # import escape.util.nffg
+    #
+    # nffg = escape.util.nffg.generate_mn_topo()
+    # nf1 = nffg.add_nf(id='nf1', name="NF1", func_type="headerCompressor",
+    #                   cpu=10, mem=20, storage=30)
+    # nf2 = nffg.add_nf(id='nf2', name="NF2", func_type="headerDecompressor",
+    #                   mem=30, storage=40, delay=50)
+    # nffg.add_undirected_link(nf1.add_port(1),
+    #                          nffg.network.node['EE1'].add_port(),
+    # dynamic=True,
+    #                          delay=60, bandwidth=70)
+    # nffg.add_undirected_link(nf2.add_port(1),
+    #                          nffg.network.node['EE2'].add_port(),
+    # dynamic=True,
+    #                          delay=80, bandwidth=90)
+    # mapped_nffg = nffg
+    # # TEST - VNF initiation end
     # print "Test mapped NFFG:\n", mapped_nffg.dump()
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
@@ -445,14 +447,14 @@ class DomainResourceManager(object):
     :return: None
     """
     if domain not in self._tracked_domains:
-      log.info("Add %s domain to Global Resource View (DoV)..." % domain)
+      log.info("Add %s domain to <Global Resource View> (DoV)..." % domain)
       if self._tracked_domains:
         self.__dov.add_domain_view(nffg)
       else:
         self.__dov.set_global_view(nffg)
       self._tracked_domains.add(domain)
     else:
-      log.info("Updating Global Resource View from %s domain..." % domain)
+      log.info("Updating <Global Resource View> from %s domain..." % domain)
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
         self.__dov.update_global_view(nffg)

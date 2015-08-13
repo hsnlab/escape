@@ -189,7 +189,7 @@ class AbstractDomainManager(EventMixin):
     """
     pass
 
-  def update_resource_info (self, raw_data):
+  def update_resource_info (self, raw_data=None):
     """
     Update the resource information if this domain with the requested
     configuration. The config attribute is the raw date from request. This
@@ -455,22 +455,22 @@ class AbstractRESTAdapter(Session):
     self.auth = auth
     # Store the last request
     self._response = None
-    self.__disable_requests_logging()
+    self.__suppress_requests_logging()
 
   @property
   def URL (self):
     return self._base_url
 
-  def __disable_requests_logging (self):
+  def __suppress_requests_logging (self, level=None):
     """
-    Disable annoying and detailed logging of `requests` and `urllib3` packages.
+    Suppress annoying and detailed logging of `requests` and `urllib3` packages.
 
     :return: None
     """
     import logging
-
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    level = level if level is not None else logging.WARNING
+    logging.getLogger("requests").setLevel(level)
+    logging.getLogger("urllib3").setLevel(level)
 
   def send_request (self, method, url=None, body=None, **kwargs):
     """

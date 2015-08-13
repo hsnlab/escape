@@ -115,7 +115,7 @@ class NFFGManager(object):
     Try to generate a unique id for NFFG.
 
     :param nffg: NFFG
-    :type nffg: :nay:`NFFG`
+    :type nffg: :any:`NFFG`
     """
     tmp = nffg.id if nffg.id is not None else id(nffg)
     if tmp in self._nffgs:

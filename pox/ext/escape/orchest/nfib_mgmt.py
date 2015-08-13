@@ -563,6 +563,7 @@ class NFIBManager(object):
     """
     Initialize NFIB with test data.
     """
+    log.info("Initializing NF database with NFs and decompositions...")
     # start clean - all the existing info is removed from the DB
     self.removeGraphDB()
 
@@ -573,7 +574,7 @@ class NFIBManager(object):
     self.addNode({'label': 'NF', 'node_id': 'decompressor', 'type': 'NA'})
 
     log.debug(
-      "%s : high-level  NFs were added to the DB" % self.__class__.__name__)
+      "%s: high-level NFs were added to the DB" % self.__class__.__name__)
 
     # generate a  decomposition for a high-level forwarder NF (in form of
     # networkx)
@@ -668,4 +669,4 @@ class NFIBManager(object):
     self.addDecomp('decompressor', 'G3', G3)
 
     log.debug(
-      "%s : NF decompositions were added to the DB" % self.__class__.__name__)
+      "%s: NF decompositions were added to the DB" % self.__class__.__name__)

@@ -152,11 +152,12 @@ class ControllerAdaptationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Received Global Resource View request from %s layer" % str(
+      "Received <Global Resource View> request from %s layer" % str(
         event.source._core_name).title())
     # Currently global view is a reference to the DoV to keep ESCAPE fast
     dov = self.controller_adapter.domainResManager.get_global_view()
-    log.getChild('API').debug("Sending back Global Resource View: %s..." % dov)
+    log.getChild('API').debug(
+      "Sending back <Global Resource View>: %s..." % dov)
     self.raiseEventNoErrors(GlobalResInfoEvent, dov)
 
   def _handle_DeployEvent (self, event):

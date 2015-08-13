@@ -147,10 +147,14 @@ class PortContainer(object):
     return item in self.container
 
   def append (self, item):
-    return self.container.append(item)
+    self.container.append(item)
+    return item
 
   def remove (self, item):
     return self.container.remove(item)
+
+  def clear (self):
+    del self.container[:]
 
   def __str__ (self):
     return str(self.container)

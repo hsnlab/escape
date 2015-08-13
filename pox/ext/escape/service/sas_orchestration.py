@@ -181,12 +181,12 @@ class VirtualResourceManager(EventMixin):
     :return: resource info as a Virtualizer
     :rtype: :any:`AbstractVirtualizer`
     """
-    log.debug("Invoke %s to get the Virtual View" % self.__class__.__name__)
+    log.debug("Invoke %s to get the <Virtual View>" % self.__class__.__name__)
     if not self._virtual_view:
-      log.debug("Missing Virtual View! Requesting Virtual View now...")
+      log.debug("Missing <Virtual View>! Requesting <Virtual View> now...")
       self.raiseEventNoErrors(MissingVirtualViewEvent)
       if self._virtual_view is not None:
-        log.debug("Got requested Virtual View: %s" % self._virtual_view)
+        log.debug("Got requested <Virtual View>: %s" % self._virtual_view)
     return self._virtual_view
 
   @virtual_view.setter

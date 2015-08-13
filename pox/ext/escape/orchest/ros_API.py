@@ -273,12 +273,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Received Virtual View request from %s layer" % str(
+      "Received <Virtual View> request from %s layer" % str(
         event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
     v = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid)
-    log.getChild('API').debug("Sending back Virtual View: %s..." % v)
+    log.getChild('API').debug("Sending back <Virtual View>: %s..." % v)
     self.raiseEventNoErrors(VirtResInfoEvent, v)
 
   ##############################################################################
@@ -296,7 +296,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Send Global Resource View request to Adaptation layer...")
+      "Send <Global Resource View> request to Adaptation layer...")
     self.raiseEventNoErrors(GetGlobalResInfoEvent)
 
   def _handle_GlobalResInfoEvent (self, event):
@@ -308,7 +308,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Received Global Resource View from %s Layer" % str(
+      "Received <Global Resource View> from %s Layer" % str(
         event.source._core_name).title())
     self.resource_orchestrator.virtualizerManager.dov = event.dov
 

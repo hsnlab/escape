@@ -369,7 +369,7 @@ class ESCAPENetworkBridge(object):
 
     def remove_junks ():
       # Kill remained clickhelper.py/click
-      log.debug("Cleanup still-running VNF-related process...")
+      log.debug("Cleanup still running VNF-related processes...")
       run_silent(r"sudo pkill -9 -f netconfd")
       run_silent(r"sudo pkill -9 -f clickhelper")
       run_silent(r"sudo pkill -9 -f click")

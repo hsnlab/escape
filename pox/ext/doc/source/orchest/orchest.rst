@@ -15,6 +15,7 @@ Submodules
 .. toctree::
     :titlesonly:
 
+    nfib_mgmt
     policy_enforcement
     ros_orchestration
     ros_API

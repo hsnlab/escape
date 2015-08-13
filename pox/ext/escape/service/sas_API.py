@@ -306,7 +306,7 @@ class ServiceLayerAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Send Virtual View request(with layer ID: %s) to Orchestration "
+      "Send <Virtual View> request(with layer ID: %s) to Orchestration "
       "layer..." % self.__sid)
     self.raiseEventNoErrors(GetVirtResInfoEvent, self.__sid)
 
@@ -319,7 +319,7 @@ class ServiceLayerAPI(AbstractAPI):
     :type event: :any:`VirtResInfoEvent`
     :return: None
     """
-    log.getChild('API').debug("Received Virtual View: %s from %s layer" % (
+    log.getChild('API').debug("Received <Virtual View>: %s from %s layer" % (
       event.virtualizer, str(event.source._core_name).title()))
     self.service_orchestrator.virtResManager.virtual_view = event.virtualizer
 
