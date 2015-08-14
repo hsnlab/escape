@@ -14,11 +14,24 @@
 """
 Contains helper classes for conversion between different NF-FG representations.
 """
-from escape.util.nffg import AbstractNFFG
-from nffglib import *
+
+import nffglib as virt
+
+try:
+  # Import for ESCAPEv2
+  from escape.util.nffg import AbstractNFFG
+except ImportError:
+  import sys, os, inspect
+
+  sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
+    os.path.abspath(
+      os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
+                                  "pox/ext/escape/util/"))
+  # Import for standalone running
+  from nffg import AbstractNFFG
 
 
-class XMLBasedNFFGBuilder(AbstractNFFG):
+class VirtualizerBasedNFFGBuilder(AbstractNFFG):
   """
   Builder class for construct an NFFG in XML format rely on ETH's nffglib.py.
 
@@ -42,18 +55,18 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
 
     :return: None
     """
-    super(XMLBasedNFFGBuilder, self).__init__()
+    super(VirtualizerBasedNFFGBuilder, self).__init__()
     # Init main container: virtualizer
-    self.__virtualizer = Virtualizer()
-    self.__virtualizer.g_idName = IdNameGroup(self.__virtualizer)
+    self.__virtualizer = virt.Virtualizer()
+    self.__virtualizer.g_idName = virt.IdNameGroup(self.__virtualizer)
     # Add <id> tag
-    XMLBasedNFFGBuilder.__UUID_NUM += 1
+    VirtualizerBasedNFFGBuilder.__UUID_NUM += 1
     self.__virtualizer.g_idName.l_id = "UUID-ESCAPE-BME-%03d" % \
-                                       XMLBasedNFFGBuilder.__UUID_NUM
+                                       VirtualizerBasedNFFGBuilder.__UUID_NUM
     # Add <name> tag
     self.__virtualizer.g_idName.l_name = "ESCAPE-BME orchestrator version v2.0"
     # Add <nodes> tag
-    self.__virtualizer.c_nodes = Nodes(self.__virtualizer)
+    self.__virtualizer.c_nodes = virt.Nodes(self.__virtualizer)
     # Add <links> tag
     # self.__virtualizer.g_links = LinksGroup(self.__virtualizer)
     # self.__virtualizer.g_links.c_links = Links(self.__virtualizer.g_links)
@@ -99,7 +112,7 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :return: parsed XML object-structure
     :rtype: Virtualizer
     """
-    return Virtualizer().parse(text=data)
+    return virt.Virtualizer().parse(text=data)
 
   ##############################################################################
   # Simplifier function to access XML tags easily
@@ -167,13 +180,17 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :rtype: list(Links)
     """
     if self.__virtualizer.g_links is None:
-      self.__virtualizer.g_links = LinksGroup(self.__virtualizer)
-      self.__virtualizer.g_links.c_links = Links(self.__virtualizer.g_links)
+      self.__virtualizer.g_links = virt.LinksGroup(self.__virtualizer)
+      self.__virtualizer.g_links.c_links = virt.Links(
+        self.__virtualizer.g_links)
     return self.__virtualizer.g_links.c_links.list_link
 
   ##############################################################################
   # Extended function for bridging over the differences between NFFG repr
   ##############################################################################
+
+  def add_edge (self, src, dst, link):
+    pass
 
   def add_node (self, parent, id=None, name=None, type=None):
     """
@@ -197,9 +214,9 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     id = str(len(self.nodes)) if id is None else str(id)
     name = str("node" + str(id)) if name is None else str(name)
     # Add id, name, type
-    node = NodeGroup(parent)
-    node.g_idNameType = IdNameTypeGroup(node)
-    node.g_idNameType.g_idName = IdNameGroup(node.g_idNameType)
+    node = virt.NodeGroup(parent)
+    node.g_idNameType = virt.IdNameTypeGroup(node)
+    node.g_idNameType.g_idName = virt.IdNameGroup(node.g_idNameType)
     node.g_idNameType.g_idName.l_id = id
     node.g_idNameType.g_idName.l_name = name
     node.g_idNameType.l_type = type
@@ -224,12 +241,12 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     id = "UUID-%02d" % len(self.nodes) if id is None else str(id)
     name = str(type + str(id)) if name is None else str(name)
     # Create Infrastructure wrapper
-    infra = InfraNodeGroup(self.__virtualizer)
+    infra = virt.InfraNodeGroup(self.__virtualizer)
     # Add id, name, type as a NodeGroup
     infra.g_node = self.add_node(infra, id=id, name=name,
                                  type=self.DEFAULT_INFRA_TYPE)
     # Add necessary flow table group for InfraNodeGroup
-    infra.g_flowtable = FlowTableGroup(infra)
+    infra.g_flowtable = virt.FlowTableGroup(infra)
     # Add infra to nodes
     self.nodes.append(infra)
     return infra
@@ -258,33 +275,33 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :rtype: PortGroup
     """
     # Set the correct NodeGroup as the parent in case of Infrastructure None
-    if isinstance(parent, InfraNodeGroup):
+    if isinstance(parent, virt.InfraNodeGroup):
       parent = parent.g_node
     # Add ports container if it's not exist
     if parent.c_ports is None:
-      parent.c_ports = Ports(parent)
+      parent.c_ports = virt.Ports(parent)
     # Define mandatory attributes
     id = str(len(parent.c_ports.list_port)) if id is None else str(id)
     name = "port" + str(id) if name is None else str(name)
     # Create port
-    port = PortGroup(parent.c_ports)
+    port = virt.PortGroup(parent.c_ports)
     # Add id, name, type
-    port.g_idName = IdNameGroup(port)
+    port.g_idName = virt.IdNameGroup(port)
     port.g_idName.l_id = id
     port.g_idName.l_name = name
-    port.g_portType = PortTypeGroup(port)
+    port.g_portType = virt.PortTypeGroup(port)
     if type == self.PORT_ABSTRACT:
       # Add capabilities sub-object as the additional param
-      _type = PortAbstractCase(port.g_portType)
+      _type = virt.PortAbstractCase(port.g_portType)
       _type.l_portType = type
       _type.l_capability = str(param)
     elif type == self.PORT_SAP:
       # Add sap-type and vx-lan sub-objects as the additional param
-      _type = PortSapVxlanCase(port.g_portType)
+      _type = virt.PortSapVxlanCase(port.g_portType)
       _type.l_portType = type
       if param.startswith("vxlan:"):
         _type.l_sapType = "vx-lan"
-        _type.g_portSapVxlan = PortSapVxlanGroup(_type)
+        _type.g_portSapVxlan = virt.PortSapVxlanGroup(_type)
         _type.g_portSapVxlan.l_vxlan = param.lstrip("vxlan:")
       else:
         _type.l_sapType = str(param)
@@ -311,12 +328,12 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :rtype: NodeResources
     """
     # If InfraNodeGroup set parent reference correctly
-    if isinstance(parent, InfraNodeGroup):
+    if isinstance(parent, virt.InfraNodeGroup):
       parent = parent.g_node
     # Create resources
     if parent.c_resources is None:
-      parent.c_resources = NodeResources(parent)
-      parent.c_resources.g_softwareResource = SoftwareResourceGroup(
+      parent.c_resources = virt.NodeResources(parent)
+      parent.c_resources.g_softwareResource = virt.SoftwareResourceGroup(
         parent.c_resources)
     # Add cpu, mem, storage
     if cpu:
@@ -341,8 +358,9 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :rtype: LinkResource
     """
     if delay is not None or bandwidth is not None:
-      parent.c_resources = LinkResource(parent)
-      parent.c_resources.g_linkResource = LinkResourceGroup(parent.c_resources)
+      parent.c_resources = virt.LinkResource(parent)
+      parent.c_resources.g_linkResource = virt.LinkResourceGroup(
+        parent.c_resources)
       parent.c_resources.g_linkResource.l_delay = delay
       parent.c_resources.g_linkResource.l_bandwidth = bandwidth
     return parent.c_resources
@@ -364,7 +382,7 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     """
     # Create NF container
     if parent.c_NFInstances is None:
-      parent.c_NFInstances = NFInstances(parent)
+      parent.c_NFInstances = virt.NFInstances(parent)
     # Create NF instance
     nf_instance = self.add_node(parent.c_NFInstances, id, name, type)
     # Add NF instance to container
@@ -388,10 +406,10 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     """
     # Create capabilities container
     if parent.c_capabilities is None:
-      parent.c_capabilities = Capabilities(parent)
-      parent.c_capabilities.g_capabilities = CapabilitesGroup(
+      parent.c_capabilities = virt.Capabilities(parent)
+      parent.c_capabilities.g_capabilities = virt.CapabilitesGroup(
         parent.c_capabilities)
-      parent.c_capabilities.g_capabilities.c_supportedNFs = SupportedNFs(
+      parent.c_capabilities.g_capabilities.c_supportedNFs = virt.SupportedNFs(
         parent.c_capabilities.g_capabilities)
     # Create supported NF
     supported_nf = self.add_node(
@@ -425,15 +443,15 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     """
     # Create flowtables container
     if parent.g_flowtable.c_flowtable is None:
-      parent.g_flowtable.c_flowtable = FlowTable(parent.g_flowtable)
+      parent.g_flowtable.c_flowtable = virt.FlowTable(parent.g_flowtable)
     # Create flowentry
-    flowentry = FlowEntry(parent.g_flowtable.c_flowtable)
+    flowentry = virt.FlowEntry(parent.g_flowtable.c_flowtable)
     # Add port
     # port.parent.parent,parent -> PortGroup.Ports.NodeGroup.InfraNodeGroup
-    if isinstance(in_port.parent.parent.parent, InfraNodeGroup):
+    if isinstance(in_port.parent.parent.parent, virt.InfraNodeGroup):
       _in_port = "../../ports/port[id=%s]" % in_port.g_idName.l_id
     # port.parent.parent,parent -> PortGroup.Ports.NodeGroup.NFInstances
-    elif isinstance(in_port.parent.parent.parent, NFInstances):
+    elif isinstance(in_port.parent.parent.parent, virt.NFInstances):
       _in_port = "../../NF_instances/node[id=%s]ports/port[id=%s]" % (
         in_port.parent.parent.g_idNameType.g_idName.l_id, in_port.g_idName.l_id)
     else:
@@ -444,10 +462,10 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
       flowentry.l_match = str(match)
     # Add action
     # port.parent.parent,parent -> PortGroup.Ports.NodeGroup.InfraNodeGroup
-    if isinstance(out_port.parent.parent.parent, InfraNodeGroup):
+    if isinstance(out_port.parent.parent.parent, virt.InfraNodeGroup):
       _out_port = "output:../../ports/port[id=%s]" % out_port.g_idName.l_id
     # port.parent.parent,parent -> PortGroup.Ports.NodeGroup.NFInstances
-    elif isinstance(out_port.parent.parent.parent, NFInstances):
+    elif isinstance(out_port.parent.parent.parent, virt.NFInstances):
       _out_port = "output:../../NF_instances/node[id=%s]ports/port[id=%s]" % (
         out_port.parent.parent.g_idNameType.g_idName.l_id,
         out_port.g_idName.l_id)
@@ -492,15 +510,15 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     """
     # Add links container if it's not exist
     if parent.g_links is None:
-      parent.g_links = LinksGroup(parent)
-      parent.g_links.c_links = Links(parent.g_links)
+      parent.g_links = virt.LinksGroup(parent)
+      parent.g_links.c_links = virt.Links(parent.g_links)
     # Define mandatory attributes
     id = str(len(parent.g_links.c_links.list_link)) if id is None else str(id)
     name = str("link" + str(id)) if name is None else str(name)
     # Create link
-    link = Link(parent.g_links.c_links)
+    link = virt.Link(parent.g_links.c_links)
     # Add id, name
-    link.g_idName = IdNameGroup(link)
+    link.g_idName = virt.IdNameGroup(link)
     link.g_idName.l_id = id
     link.g_idName.l_name = name
     # Add src, dst
@@ -523,7 +541,8 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     :return: link object
     :rtype: LinksGroup
     """
-    if not isinstance(src, PortGroup) or not isinstance(dst, PortGroup):
+    if not isinstance(src, virt.PortGroup) or not isinstance(dst,
+                                                             virt.PortGroup):
       raise RuntimeError("scr and dst must be a port object (PortGroup)!")
     # Construct source and destination path
     # src.parent.parent -> PortGroup.Ports.NodeGroup
@@ -586,7 +605,7 @@ def test_builder ():
   #                        bandwidth="10Gbps")
 
   # Generate same output as Agent_http.py
-  builder = XMLBasedNFFGBuilder()
+  builder = VirtualizerBasedNFFGBuilder()
   builder.id = "UUID-ETH-001"
   builder.name = "ETH OpenStack-OpenDaylight domain"
   infra = builder.add_infra(
