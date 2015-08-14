@@ -795,8 +795,8 @@ class Virtualizer3BasedNFFGBuilder(AbstractNFFG):
     """
     # Define mandatory attributes
     type = self.DEFAULT_INFRA_TYPE if type is None else str(type)
-    id = "UUID-%02d" % len(
-      self.__virtualizer.nodes.node.getKeys()) if id is None else str(id)
+    v = self.__virtualizer
+    id = "UUID-%02d" % len(self.__virtualizer.nodes.node._data.keys()) if id is None else str(id)
     name = str(type + str(id)) if name is None else str(name)
 
     infranode = virt3.Infra_node(id=id, name=name, type=type)
@@ -828,7 +828,7 @@ class Virtualizer3BasedNFFGBuilder(AbstractNFFG):
     :rtype: PortGroup
     """
     # Define mandatory attributes
-    id = str(len(parent.ports.port.getKeys())) if id is None else str(id)
+    id = str(len(parent.ports.port._data.keys())) if id is None else str(id)
     name = "port" + str(id) if name is None else str(name)
 
     # Create port
@@ -1133,5 +1133,5 @@ def test_virtualizer3_based_builder ():
 
 
 if __name__ == "__main__":
-  test_xml_based_builder()
-  # test_virtualizer3_based_builder()
+  # test_xml_based_builder()
+  test_virtualizer3_based_builder()

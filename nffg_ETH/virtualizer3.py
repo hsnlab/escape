@@ -84,10 +84,14 @@ class Yang(object):
             return dst
         i = 1
         ret = list()
-        while s[i] == d[i]:
-            i+=1
+        while (i < len(s)) and (i < len(d)):
+            if s[i] != d[i]:
+                break
+            i += 1
         for j in range(i, len(s)):
             ret.insert(0,"..")
+        if len(ret) == 0:
+            ret.insert(0, ".")
         for j in range(i, len(d)):
             ret.append(d[j])
         return '/'.join(ret)
