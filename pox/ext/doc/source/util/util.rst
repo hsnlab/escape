@@ -15,12 +15,13 @@ Submodules
 .. toctree::
     :titlesonly:
 
-    domain
     api
+    config
+    conversion
+    domain
     mapping
     misc
     netconf
     nffg
-    nffg_conv
     nffg_elements
     pox_extension

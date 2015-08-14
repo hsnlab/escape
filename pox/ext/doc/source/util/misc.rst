@@ -21,8 +21,6 @@ API as a dependency for other layer APIs to handles events.
 
 :any:`Singleton` is a metaclass to implements singleton object.
 
-:any:`ESCAPEConfig` is a wrapper class for CONFIG.
-
 Module contents
 ---------------
 

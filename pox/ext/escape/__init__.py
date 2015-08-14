@@ -130,6 +130,6 @@ def add_dependencies ():
 # Detect and add dependency directories
 add_dependencies()
 
-from escape.util.misc import ESCAPEConfig
+from escape.util.config import ESCAPEConfig
 # Define global configuration and try to load additions from file
 CONFIG = ESCAPEConfig(cfg).load_config()

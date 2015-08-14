@@ -1,15 +1,15 @@
-*nffg_conv.py* module
-=====================
+*conversion.py* module
+======================
 
 Contains helper classes for conversion between different NF-FG representations.
 
-:any:`Virtualizer3BasedNFFGBuilder` represents the common function for an NFFG
-representation.
+:any:`Virtualizer3BasedNFFGBuilder` contains the common function for an NFFG
+representation based on virtualizer3.py.
 
 Module contents
 ---------------
 
-.. automodule:: escape.util.nffg_conv
+.. automodule:: escape.util.conversion
    :members:
    :private-members:
    :special-members:
