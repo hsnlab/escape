@@ -59,7 +59,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
                         # "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
-                        "DEFAULTS": (),  # OpenStack Agent REST API
+                        "DEFAULTS": ("OPENSTACK",),
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.components",
                                          "class": "InternalPOXAdapter"},
@@ -70,24 +70,33 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                        "username": "mininet",
                                        "password": "mininet",
                                        "server": "127.0.0.1", "port": 830},
+                        "ESCAPE-REST": {"module": "escape.adapt.components",
+                                        "class": "RemoteESCAPEv2RESTAdapter",
+                                        "url": "http://localhost:8888/escape"},
                         "OpenStack-REST": {"module": "escape.adapt.components",
                                            "class": "OpenStackRESTAdapter",
                                            "url": "http://localhost:8080"},
-                        # Domain Managers
+                        "UN-REST": {"module": "escape.adapt.components",
+                                    "class": "UnifiedNodeRESTAdapter",
+                                    "url": "http://localhost:8080"},
+                        # Specific Domain Managers
                         "INTERNAL": {"module": "escape.adapt.components",
                                      "class": "InternalDomainManager",
                                      "poll": False},
+                        "REMOTE-ESCAPE": {"module": "escape.adapt.components",
+                                          "class": "RemoteESCAPEDomainManager",
+                                          "poll": False},
                         "OPENSTACK": {"module": "escape.adapt.components",
                                       "class": "OpenStackDomainManager",
-                                      "poll": True},
+                                      "poll": False},
                         "DOCKER": {"module": "escape.adapt.components",
-                                   "class": "DockerDomainManager"}},
+                                   "class": "DockerDomainManager",
+                                   "poll": False}},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
                             "TOPO": "escape-mn-topo.nffg",  # relative to ext/
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
-                                              "class":  #
-                                              # "FallbackStaticTopology"},
+                                              "class":
                                                 "FallbackDynamicTopology"},
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}  # relative to ext/

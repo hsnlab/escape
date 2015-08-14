@@ -430,6 +430,7 @@ if __name__ == "__main__":
     # print "Get /proc/meminfo..."
     # # get /proc/meminfo
     # print vrm.get("/proc/meminfo")
+    # print vrm.get(expr="vnf_starter/agent_name")
     # # call rpc getVNFInfo
     # print "-" * 60
     print "Call getVNFInfo..."

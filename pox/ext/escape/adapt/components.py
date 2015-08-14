@@ -18,7 +18,6 @@ other different domains.
 from ncclient.operations.rpc import RPCError
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
-from escape.adapt import log as log
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
@@ -69,6 +68,26 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     # register OpenFlow event listeners
     self.openflow.addListeners(self)
     log.debug("%s adapter: Start listening connections..." % self.name)
+
+  def check_domain_reachable (self):
+    """
+    Checker function for domain polling.
+
+    :return: the domain is detected or not
+    :rtype: bool
+    """
+    from pox.core import core
+    return core.hasComponent(self.name)
+
+  def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG`.
+
+    :return: the emulated topology description
+    :rtype: :any:`NFFG`
+    """
+    raise RuntimeError("InternalPoxController not supported this function: "
+                       "get_topology_resource() !")
 
   def filter_connections (self, event):
     """
@@ -151,14 +170,17 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
         if self.IL_topo_ref is None:
           log.error("Unable to get emulated network reference!")
 
-  def check_domain_is_up (self):
+  def check_domain_reachable (self):
     """
     Checker function for domain polling.
+
+    :return: the domain is detected or not
+    :rtype: bool
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
     return self.IL_topo_ref.started
 
-  def get_topology_description (self):
+  def get_topology_resource (self):
     """
     Return with the topology description as an :any:`NFFG`.
 
@@ -195,11 +217,13 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
 
   Follows the MixIn design pattern approach to support NETCONF functionality.
   """
-  # RPC namespace
+
   RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'
-  # Adapter name used in CONFIG and ControllerAdapter class
+
   name = "VNFStarter"
 
+  # RPC namespace
+  # Adapter name used in CONFIG and ControllerAdapter class
   def __init__ (self, **kwargs):
     """
     Init.
@@ -220,6 +244,28 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     AbstractNETCONFAdapter.__init__(self, **kwargs)
     AbstractESCAPEAdapter.__init__(self)
     log.debug("Init VNFStarterAdapter - params: %s" % kwargs)
+
+  def check_domain_reachable (self):
+    """
+    Checker function for domain polling.
+
+    :return: the domain is detected or not
+    :rtype: bool
+    """
+    try:
+      return self.get(expr="vnf_starter/agent_name") is not None
+    except:
+      return False
+
+  def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG`.
+
+    :return: the emulated topology description
+    :rtype: :any:`NFFG`
+    """
+    raise RuntimeError("VNFStarterAdapter not supported this function: "
+                       "get_topology_resource() !")
 
   def update_connection_params (self, **kwargs):
     """
@@ -441,11 +487,88 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
           "VNF initiation." % e.args[0])
 
 
+class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
+                                RemoteESCAPEv2API):
+  """
+  This class is devoted to provide REST specific functions for remote ESCAPEv2
+  domain.
+  """
+  name = "ESCAPE-REST"
+
+  def __init__ (self, url):
+    """
+    Init.
+
+    :param url: remote ESCAPEv2 RESTful API URL
+    :type url: str
+    """
+    log.debug("Init RemoteESCAPEv2RESTAdapter with URL: %s" % url)
+    AbstractRESTAdapter.__init__(self, base_url=url)
+    log.debug("RemoteESCAPEv2 base URL is set to %s" % url)
+    AbstractESCAPEAdapter.__init__(self)
+
+  def ping (self):
+    try:
+      return self.send_request(self.GET, 'ping')
+    except ConnectionError:
+      log.warning(
+        "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
+    except Timeout:
+      log.warning("Remote ESCAPEv2 agent (%s) not responding!" % self._base_url)
+    except HTTPError as e:
+      log.warning(
+        "Remote ESCAPEv2 agent responded with an error during 'ping': %s" %
+        e.message)
+
+  def topology_resource (self):
+    try:
+      data = self.send_request(self.POST, 'topology-resource')
+    except ConnectionError:
+      log.warning(
+        "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
+      return None
+    except Timeout:
+      log.warning("Remote ESCAPEv2 agent (%s) not responding!" % self._base_url)
+      return None
+    except HTTPError as e:
+      log.warning("Remote ESCAPEv2 agent responded with an error during "
+                  "'topology-resource': %s" % e.message)
+      return None
+    return NFFG.parse(data)
+
+  def install_nffg (self, config):
+    if isinstance(config, NFFG):
+      config = NFFG.dump(config)
+    elif not isinstance(config, (str, unicode)):
+      raise RuntimeError("Not supported config format for 'install-nffg'!")
+    try:
+      self.send_request(self.POST, 'install-nffg', config)
+    except ConnectionError:
+      log.warning(
+        "Remote ESCAPEv2 agent (%s) is not reachable: %s" % self._base_url)
+      return None
+    except HTTPError as e:
+      log.warning(
+        "Remote ESCAPEv2 responded with an error during 'install-nffg': %s" %
+        e.message)
+      return None
+    return self._response.status_code
+
+  def check_domain_reachable (self):
+    return self.ping()
+
+  def get_topology_resource (self):
+    return self.topology_resource()
+
+
 class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                            OpenStackAPI):
   """
-  This class is devoted to provide REST specific functions for OpenStack domain.
+  This class is devoted to provide REST specific functions for OpenStack
+  domain.
   """
+  # Adapter name used in CONFIG and ControllerAdapter class
+  name = "OpenStack-REST"
 
   def __init__ (self, url):
     """
@@ -460,10 +583,6 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     AbstractESCAPEAdapter.__init__(self)
 
   def ping (self):
-    """
-    .. seealso::
-      :func:`OpenStackAPI.ping() <escape.util.domain.OpenStackAPI.ping>`
-    """
     try:
       return self.send_request(self.GET, 'ping')
     except ConnectionError:
@@ -475,11 +594,6 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         "OpenStack agent responded with an error during 'ping': %s" % e.message)
 
   def get_config (self):
-    """
-    .. seealso::
-      :func:`OpenStackAPI.get_config()
-      <escape.util.domain.OpenStackAPI.get_config>`
-    """
     try:
       data = self.send_request(self.POST, 'get-config')
     except ConnectionError:
@@ -496,11 +610,6 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return NFFG.parse(data)
 
   def edit_config (self, config):
-    """
-    .. seealso::
-      :func:`OpenStackAPI.edit_config()
-      <escape.util.domain.OpenStackAPI.edit_config>`
-    """
     if isinstance(config, NFFG):
       config = NFFG.dump(config)
     elif not isinstance(config, (str, unicode)):
@@ -517,12 +626,20 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return None
     return self._response.status_code
 
+  def check_domain_reachable (self):
+    return self.ping()
+
+  def get_topology_resource (self):
+    return self.get_config()
+
 
 class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                              UnifiedNodeAPI):
   """
   This class is devoted to provide REST specific functions for UN domain.
   """
+  # Adapter name used in CONFIG and ControllerAdapter class
+  name = "UN-REST"
 
   def __init__ (self, url):
     """
@@ -531,10 +648,62 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param url: Unified Node RESTful API URL
     :type url: str
     """
-    log.debug("Init OpenStackRESTAdapter with URL: %s" % url)
+    log.debug("Init UnifiedNodeRESTAdapter with URL: %s" % url)
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("Unified Node base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self)
+
+  def ping (self):
+    try:
+      return self.send_request(self.GET, 'ping')
+    except ConnectionError:
+      log.warning("Unified Node agent (%s) is not reachable!" % self._base_url)
+    except Timeout:
+      log.warning("Unified Node agent (%s) not responding!" % self._base_url)
+    except HTTPError as e:
+      log.warning(
+        "Unified Node agent responded with an error during 'ping': %s" %
+        e.message)
+
+  def get_config (self):
+    try:
+      data = self.send_request(self.POST, 'get-config')
+    except ConnectionError:
+      log.warning("Unified Node agent (%s) is not reachable!" % self._base_url)
+      return None
+    except Timeout:
+      log.warning("Unified Node agent (%s) not responding!" % self._base_url)
+      return None
+    except HTTPError as e:
+      log.warning(
+        "Unified Node agent responded with an error during 'get-config': %s"
+        % e.message)
+      return None
+    return NFFG.parse(data)
+
+  def edit_config (self, config):
+    if isinstance(config, NFFG):
+      config = NFFG.dump(config)
+    elif not isinstance(config, (str, unicode)):
+      raise RuntimeError("Not supported config format for 'edit-config'!")
+    try:
+      self.send_request(self.POST, 'edit-config', config)
+    except ConnectionError:
+      log.warning(
+        "Unified Node agent (%s) is not reachable: %s" % self._base_url)
+      return None
+    except HTTPError as e:
+      log.warning(
+        "Unified Node agent responded with an error during 'get-config': %s"
+        % e.message)
+      return None
+    return self._response.status_code
+
+  def check_domain_reachable (self):
+    return self.ping()
+
+  def get_topology_resource (self):
+    return self.get_config()
 
 
 class InternalDomainManager(AbstractDomainManager):
@@ -545,8 +714,6 @@ class InternalDomainManager(AbstractDomainManager):
     Uses :class:`InternalMininetAdapter` for managing the emulated network and
     :class:`InternalPOXAdapter` for controlling the network.
   """
-  # Events raised by this class
-  _eventMixin_events = {DomainChangedEvent}
   # Domain name
   name = "INTERNAL"
 
@@ -555,27 +722,9 @@ class InternalDomainManager(AbstractDomainManager):
     Init
     """
     log.debug("Init InternalDomainManager - params: %s" % kwargs)
-    super(InternalDomainManager, self).__init__()
-    if 'poll' in kwargs:
-      self._poll = kwargs['poll']
-    else:
-      self._poll = False
-    self.adapterPOX = None  # DomainAdapter for POX - InternalPOXAdapter
-    self.adapterMN = None  # DomainAdapter for Mininet - InternalMininetAdapter
-    self.adapterVNF = None  # NETCONF communication - VNFStarterAdapter
-    self._detected = None
-    self.internal_topo = None  # Description of the domain topology as an NFFG
-
-  def finit (self):
-    """
-    Stop polling and release dependent components.
-
-    :return: None
-    """
-    self.stop_polling()
-    del self.adapterPOX
-    del self.adapterMN
-    del self.adapterVNF
+    super(InternalDomainManager, self).__init__(**kwargs)
+    self.controlAdapter = None  # DomainAdapter for POX - InternalPOXAdapter
+    self.remoteAdapter = None  # NETCONF communication - VNFStarterAdapter
 
   def init (self, configurator, **kwargs):
     """
@@ -583,78 +732,32 @@ class InternalDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    # Init adapter to internal controller: POX
-    self.adapterPOX = configurator.load_component(InternalPOXAdapter.name)
-    # Init adapter to internal topo emulation: Mininet
-    self.adapterMN = configurator.load_component(InternalMininetAdapter.name)
+    # Init adapter for internal topo emulation: Mininet
+    self.topoAdapter = configurator.load_component(InternalMininetAdapter.name)
+    # Init adapter for internal controller: POX
+    self.controlAdapter = configurator.load_component(InternalPOXAdapter.name)
     # Init default NETCONF adapter
-    self.adapterVNF = configurator.load_component(VNFStarterAdapter.name)
-    # Skip to start polling is it's set
-    if not self._poll:
-      # Try to request/parse/update Mininet topology
-      if not self._detect_topology():
-        log.warning("%s domain not confirmed during init!" % self.name)
-    else:
-      log.debug("Start polling %s domain..." % self.name)
-      self.start_polling(self.POLL_INTERVAL)
+    self.remoteAdapter = configurator.load_component(VNFStarterAdapter.name)
+    super(InternalDomainManager, self).init(configurator, **kwargs)
 
-  @property
-  def controller_name (self):
-    return self.adapterPOX.task_name
-
-  def _detect_topology (self):
+  def finit (self):
     """
-    Check the undetected topology is up or not.
-
-    :return: detected or not
-    :rtype: bool
-    """
-    if self.adapterMN.check_domain_is_up():
-      log.info("%s domain confirmed!" % self.name)
-      self._detected = True
-      log.info("Updating resource information from %s domain..." % self.name)
-      topo_nffg = self.adapterMN.get_topology_description()
-      if topo_nffg:
-        log.debug("Set received NF-FG: %s..." % topo_nffg)
-        self.internal_topo = topo_nffg
-        self.raiseEventNoErrors(DomainChangedEvent, domain=self.name,
-                                cause=DomainChangedEvent.TYPE.NETWORK_UP,
-                                data=topo_nffg)
-      else:
-        log.warning(
-          "Resource info is missing! Infrastructure layer is inconsistent "
-          "state!")
-    return self._detected
-
-  def poll (self):
-    """
-    Poll the defined Internal domain based on Mininet.
-
-    :return:
-    """
-    if not self._detected:
-      self._detect_topology()
-    else:
-      self.update_resource_info()
-
-  def update_resource_info (self, raw_data=None):
-    """
-    Update the resource information of this domain with the requested
-    configuration.
+    Stop polling and release dependent components.
 
     :return: None
     """
-    topo_nffg = self.adapterMN.get_topology_description()
-    # TODO - implement actual updating
-    # update local topology
-    # update DoV
+
+    super(InternalDomainManager, self).finit()
+    del self.controlAdapter
+    del self.remoteAdapter
+
+  @property
+  def controller_name (self):
+    return self.controlAdapter.task_name
 
   def install_nffg (self, nffg_part):
     """
     Install an :any:`NFFG` related to the internal domain.
-
-    Split given :any:`NFFG` to a set of NFs need to be initiated and a set of
-    routes/connections between the NFs.
 
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
@@ -663,7 +766,6 @@ class InternalDomainManager(AbstractDomainManager):
     log.info("Install %s domain part..." % self.name)
     self._deploy_nfs(nffg_part=nffg_part)
     # TODO ... VNF initiation etc.
-    # self.controller.install_routes(routes=())
 
   def _deploy_nfs (self, nffg_part):
     """
@@ -681,7 +783,7 @@ class InternalDomainManager(AbstractDomainManager):
     nffg_part.clear_links(NFFG.TYPE_LINK_SG)
     nffg_part.clear_links(NFFG.TYPE_LINK_REQUIREMENT)
     # Get physical topology description from Mininet
-    mn_topo = self.adapterMN.get_topology_description()
+    mn_topo = self.topoAdapter.get_topology_resource()
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
       if infra.infra_type not in (
@@ -718,19 +820,21 @@ class InternalDomainManager(AbstractDomainManager):
             "Missing arguments for initiation of NF: %s. Extracted params: "
             "%s" % (nf.short_name, params))
         # Create connection Adapter to EE agent
-        connection_params = self.adapterMN.get_agent_connection_params(infra.id)
+        connection_params = self.topoAdapter.get_agent_connection_params(
+          infra.id)
         if connection_params is None:
           log.error(
             "Missing connection params for communication with the agent of "
             "Node: %s" % infra.short_name)
         # Save last used adapter --> and last RPC result
         log.debug("Initiating NF: %s with params: %s" % (nf.short_name, params))
-        updated = self.adapterVNF.update_connection_params(**connection_params)
+        updated = self.remoteAdapter.update_connection_params(
+          **connection_params)
         if updated:
           log.debug("Update connection params in %s: %s" % (
-            self.adapterVNF.__class__.__name__, updated))
+            self.remoteAdapter.__class__.__name__, updated))
         try:
-          vnf = self.adapterVNF.deployNF(**params)
+          vnf = self.remoteAdapter.deployNF(**params)
         except RPCError:
           log.error(
             "Got RPC communication error during NF: %s initiation! Skip "
@@ -789,6 +893,55 @@ class InternalDomainManager(AbstractDomainManager):
     log.info("Initiation of NFs in NFFG part: %s is finished!" % nffg_part)
 
 
+class RemoteESCAPEDomainManager(AbstractDomainManager):
+  """
+  Manager class to handle communication with other ESCAPEv2 processes started
+  in agent-mode through
+  a REST-API which is provided by the Resource Orchestration Sublayer.
+
+  .. note::
+    Uses :class:`RemoteESCAPEv2RESTAdapter` for communicate with the remote
+    domain.
+  """
+  # Domain name
+  name = "REMOTE-ESCAPE"
+
+  def __init__ (self, **kwargs):
+    """
+    Init
+    """
+    log.debug("Init RemoteESCAPEDomainManager - params: %s" % kwargs)
+    super(RemoteESCAPEDomainManager, self).__init__(**kwargs)
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize Internal domain manager.
+
+    :return: None
+    """
+    # Init adapter for remote ESCAPEv2 domain
+    self.topoAdapter = configurator.load_component(
+      RemoteESCAPEv2RESTAdapter.name)
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(RemoteESCAPEDomainManager, self).finit()
+
+  def install_nffg (self, nffg_part):
+    """
+    Install an :any:`NFFG` related to the internal domain.
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
+    self.topoAdapter.install_nffg(nffg_part)
+
+
 class OpenStackDomainManager(AbstractDomainManager):
   """
   Manager class to handle communication with OpenStack domain.
@@ -801,25 +954,10 @@ class OpenStackDomainManager(AbstractDomainManager):
 
   def __init__ (self, **kwargs):
     """
-    Init
+    Init.
     """
     log.debug("Init OpenStackDomainManager - params: %s" % kwargs)
-    super(OpenStackDomainManager, self).__init__()
-    if 'poll' in kwargs:
-      self._poll = kwargs['poll']
-    else:
-      self._poll = False
-    self.rest_adapter = None
-    self._detected = None
-
-  def finit (self):
-    """
-    Stop polling and release dependent components.
-
-    :return: None
-    """
-    self.stop_polling()
-    del self.rest_adapter
+    super(OpenStackDomainManager, self).__init__(**kwargs)
 
   def init (self, configurator, **kwargs):
     """
@@ -827,79 +965,70 @@ class OpenStackDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    self.rest_adapter = configurator.load_component("OpenStack-REST")
-    # Skip to start polling is it's set
-    if not self._poll:
-      return
-    log.debug("Start polling %s domain..." % self.name)
-    self.start_polling()
+    self.topoAdapter = configurator.load_component(OpenStackRESTAdapter.name)
+    super(OpenStackDomainManager, self).init(configurator, **kwargs)
 
-  def poll (self):
+  def finit (self):
     """
-    Poll the defined OpenStack domain agent. Handle different connection
-    errors and go to slow/rapid poll. When an agent is (re)detected update
-    the current resource information.
-    """
-    try:
-      if not self._detected:
-        # Trying to request config
-        raw_data = self.rest_adapter.send_request(self.rest_adapter.POST,
-                                                  'get-config')
-        # If no exception -> success
-        log.info("%s agent detected!" % self.name)
-        self._detected = True
-        log.info("Updating resource information from %s domain..." % self.name)
-        self.update_resource_info(raw_data)
-        self.restart_polling()
-      else:
-        # Just ping the agent if it's alive. If exception is raised -> problem
-        self.rest_adapter.send_request(self.rest_adapter.GET, 'ping')
-    except ConnectionError:
-      if self._detected is None:
-        # detected = None -> First try
-        log.warning("%s agent is not detected! Keep trying..." % self.name)
-        self._detected = False
-      elif self._detected:
-        # Detected before -> lost connection = big Problem
-        log.warning(
-          "Lost connection with %s agent! Go slow poll..." % self.name)
-        self._detected = False
-        self.restart_polling()
-      else:
-        # No success but not for the first try -> keep trying silently
-        pass
-    except Timeout:
-      if self._detected is None:
-        # detected = None -> First try
-        log.warning("%s agent not responding!" % self.name)
-        self._detected = False
-      elif self._detected:
-        # Detected before -> not responding = big Problem
-        log.warning(
-          "Detected %s agent not responding! Go slow poll..." % self.name)
-        self._detected = False
-        self.restart_polling()
-      else:
-        # No success but not for the first try -> keep trying silently
-        pass
-    except HTTPError:
-      raise
-
-  def update_resource_info (self, raw_data=None):
-    """
-    Update the resource information if this domain with the requested
-    configuration. The config attribute is the raw date from request. This
-    function's responsibility to parse/convert/save the data effectively.
+    Stop polling and release dependent components.
 
     :return: None
     """
-    # TODO - implement actual updating
-    pass
+    super(OpenStackDomainManager, self).finit()
+
+  # def poll (self):
+  #   try:
+  #     if not self._detected:
+  #       # Trying to request config
+  #       raw_data = self.rest_adapter.send_request(self.rest_adapter.POST,
+  #                                                 'get-config')
+  #       # If no exception -> success
+  #       log.info("%s agent detected!" % self.name)
+  #       self._detected = True
+  #       log.info("Updating resource information from %s domain..." %
+  # self.name)
+  #       self.update_resource_info(raw_data)
+  #       self.restart_polling()
+  #     else:
+  #       # Just ping the agent if it's alive. If exception is raised -> problem
+  #       self.rest_adapter.send_request(self.rest_adapter.GET, 'ping')
+  #   except ConnectionError:
+  #     if self._detected is None:
+  #       # detected = None -> First try
+  #       log.warning("%s agent is not detected! Keep trying..." % self.name)
+  #       self._detected = False
+  #     elif self._detected:
+  #       # Detected before -> lost connection = big Problem
+  #       log.warning(
+  #         "Lost connection with %s agent! Go slow poll..." % self.name)
+  #       self._detected = False
+  #       self.restart_polling()
+  #     else:
+  #       # No success but not for the first try -> keep trying silently
+  #       pass
+  #   except Timeout:
+  #     if self._detected is None:
+  #       # detected = None -> First try
+  #       log.warning("%s agent not responding!" % self.name)
+  #       self._detected = False
+  #     elif self._detected:
+  #       # Detected before -> not responding = big Problem
+  #       log.warning(
+  #         "Detected %s agent not responding! Go slow poll..." % self.name)
+  #       self._detected = False
+  #       self.restart_polling()
+  #     else:
+  #       # No success but not for the first try -> keep trying silently
+  #       pass
+  #   except HTTPError:
+  #     raise
 
   def install_nffg (self, nffg_part):
-    log.info("Install OpenStack domain part...")
-    # TODO - implement just convert NFFG to appropriate format ans send out
-    pass
+    log.info("Install %s domain part..." % self.name)
+    # TODO - implement just convert NFFG to appropriate format and send out
+    # FIXME - convert to appropriate format
+    config = nffg_part.dump()
+    self.topoAdapter.edit_config(config)
 
 
 class UnifiedNodeDomainManager(AbstractDomainManager):
@@ -909,22 +1038,39 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
   .. note::
     Uses :class:`UnifiedNodeRESTAdapter` for communicate with the remote domain.
   """
-  # Events raised by this class
-  _eventMixin_events = {DomainChangedEvent}
   # Domain name
   name = "UN"
 
   def __init__ (self, **kwargs):
     """
-    Init
+    Init.
     """
     log.debug("Init UnifiedNodeDomainManager - params: %s" % kwargs)
-    super(UnifiedNodeDomainManager, self).__init__()
+    super(UnifiedNodeDomainManager, self).__init__(**kwargs)
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize OpenStack domain manager.
+
+    :return: None
+    """
+    self.topoAdapter = configurator.load_component(UnifiedNodeRESTAdapter.name)
+    super(UnifiedNodeDomainManager, self).init(configurator, **kwargs)
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(UnifiedNodeDomainManager, self).finit()
 
   def install_nffg (self, nffg_part):
-    log.info("Install UnifiedNode domain part...")
-    # TODO - implement just convert NFFG to appropriate format ans send out
-    pass
+    log.info("Install %s domain part..." % self.name)
+    # TODO - implement just convert NFFG to appropriate format and send out
+    # FIXME - convert to appropriate format
+    config = nffg_part.dump()
+    self.topoAdapter.edit_config(config)
 
 
 class DockerDomainManager(AbstractDomainManager):

@@ -859,5 +859,5 @@ if __name__ == "__main__":
   # nffg = generate_one_bisbis()
 
   pprint(nffg.network.__dict__)
-  # nffg.merge_duplicated_links()
+  nffg.merge_duplicated_links()
   print nffg.dump()

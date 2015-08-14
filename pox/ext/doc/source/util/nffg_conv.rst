@@ -3,7 +3,7 @@
 
 Contains helper classes for conversion between different NF-FG representations.
 
-:any:`XMLBasedNFFGBuilder` represents the common function for an NFFG
+:any:`Virtualizer3BasedNFFGBuilder` represents the common function for an NFFG
 representation.
 
 Module contents

@@ -246,6 +246,7 @@ class ControllerAdapter(object):
     # Set virtualizer-related components
     self.domainResManager = DomainResourceManager()
     self.domains = ComponentConfigurator(self)
+    log.info("Initializing Domain Managers...")
     if with_infr:
       # Init internal domain manager if Infrastructure Layer is started
       self.domains.load_internal_mgr()

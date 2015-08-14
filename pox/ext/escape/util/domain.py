@@ -18,6 +18,7 @@ import urlparse
 from requests import Session
 
 from escape import __version__
+from escape.adapt import log
 from escape.util.misc import enum
 from escape.util.nffg import NFFG
 from pox.lib.recoco import Timer
@@ -77,18 +78,32 @@ class AbstractDomainManager(EventMixin):
 
   Follows the Component Configurator design pattern as base component class.
   """
+  # Events raised by this class
+  _eventMixin_events = {DomainChangedEvent}
+  # Domain name
+  name = "UNDEFINED"
   # Polling interval
   POLL_INTERVAL = 3
 
-  def __init__ (self):
+  def __init__ (self, **kwargs):
     """
     Init.
     """
     super(AbstractDomainManager, self).__init__()
     # Timer for polling function
     self._timer = None
+    self._detected = None  # Actual domain is detected or not
+    self.internal_topo = None  # Description of the domain topology as an NFFG
+    self.topoAdapter = None  # Special adapter which can handle the topology
+    # description, request it, and install mapped NFs from internal NFFG
+    if 'poll' in kwargs:
+      self._poll = kwargs['poll']
+    else:
+      self._poll = False
 
+  ##############################################################################
   # Abstract functions for component control
+  ##############################################################################
 
   def init (self, configurator, **kwargs):
     """
@@ -99,7 +114,14 @@ class AbstractDomainManager(EventMixin):
 
     :return: None
     """
-    super(AbstractDomainManager, self).__init__()
+    # Skip to start polling is it's set
+    if not self._poll:
+      # Try to request/parse/update Mininet topology
+      if not self._detect_topology():
+        log.warning("%s domain not confirmed during init!" % self.name)
+    else:
+      log.debug("Start polling %s domain..." % self.name)
+      self.start_polling(self.POLL_INTERVAL)
 
   def run (self):
     """
@@ -113,7 +135,8 @@ class AbstractDomainManager(EventMixin):
     """
     Abstract function for starting component.
     """
-    pass
+    self.stop_polling()
+    del self.topoAdapter
 
   def suspend (self):
     """
@@ -148,7 +171,9 @@ class AbstractDomainManager(EventMixin):
     """
     return self.__class__.__name__
 
+  ##############################################################################
   # Common functions for polling
+  ##############################################################################
 
   def start_polling (self, wait=1):
     """
@@ -184,23 +209,70 @@ class AbstractDomainManager(EventMixin):
 
   def poll (self):
     """
-    Template function to poll domain state. Called by a Timer co-op multitask.
-    If the function return with False the timer will be cancelled.
+    Poll the defined domain agent. Handle different connection errors and go
+    to slow/rapid poll. When an agent is (re)detected update the current
+    resource information.
     """
-    pass
+    if not self._detected:
+      if self._detect_topology():
+        # detected
+        self.restart_polling()
+        return
+    else:
+      if self.topoAdapter.check_domain_reachable():
+        return
+    # Not returned before --> got error
+    if self._detected is None:
+      # detected = None -> First try
+      log.warning("%s agent is not detected! Keep trying..." % self.name)
+      self._detected = False
+    elif self._detected:
+      # Detected before -> lost connection = big Problem
+      log.warning("Lost connection with %s agent! Go slow poll..." % self.name)
+      self._detected = False
+      self.restart_polling()
+    else:
+      # No success but not for the first try -> keep trying silently
+      pass
+
+  ##############################################################################
+  # ESCAPE specific functions
+  ##############################################################################
+
+  def _detect_topology (self):
+    """
+    Check the undetected topology is up or not.
+
+    :return: detected or not
+    :rtype: bool
+    """
+    if self.topoAdapter.check_domain_reachable():
+      log.info("%s domain confirmed!" % self.name)
+      self._detected = True
+      log.info("Updating resource information from %s domain..." % self.name)
+      topo_nffg = self.topoAdapter.get_topology_resource()
+      if topo_nffg:
+        log.debug("Set received NF-FG: %s..." % topo_nffg)
+        # FIXME - it should be use update_resource_info
+        self.internal_topo = topo_nffg
+        self.raiseEventNoErrors(DomainChangedEvent, domain=self.name,
+                                cause=DomainChangedEvent.TYPE.NETWORK_UP,
+                                data=topo_nffg)
+      else:
+        log.warning("Resource info is missing!")
+    return self._detected
 
   def update_resource_info (self, raw_data=None):
     """
-    Update the resource information if this domain with the requested
-    configuration. The config attribute is the raw date from request. This
-    function's responsibility to parse/convert/save the data effectively.
+    Update the resource information of this domain with the requested
+    configuration.
 
     :return: None
     """
+    topo_nffg = self.topoAdapter.get_topology_resource()
     # TODO - implement actual updating
-    pass
-
-  # ESCAPE specific functions
+    # update local topology
+    # update DoV
 
   def install_nffg (self, nffg_part):
     """
@@ -263,6 +335,24 @@ class AbstractESCAPEAdapter(EventMixin):
     If the function return with False the timer will be cancelled.
     """
     pass
+
+  def check_domain_reachable (self):
+    """
+    Checker function for domain polling.
+
+    :return: the domain is detected or not
+    :rtype: bool
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG`.
+
+    :return: the emulated topology description
+    :rtype: :any:`NFFG`
+    """
+    raise NotImplementedError("Not implemented yet!")
 
 
 class VNFStarterAPI(object):
@@ -391,7 +481,7 @@ class OpenStackAPI(object):
   Define interface for managing OpenStack domain.
 
   .. note::
-    Fitted to the API of ETH REST-like server which rely on virtualizer.yang!
+    Fitted to the API of ETH REST-like server which rely on virtualizer3!
 
   Follows the MixIn design pattern approach to support OpenStack functionality.
   """
@@ -426,10 +516,62 @@ class OpenStackAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class UnifiedNodeAPI(object):
+class UnifiedNodeAPI(OpenStackAPI):
   """
+  Define interface for managing Unified Node domain.
+
+  .. note::
+    Fitted to the API of ETH REST-like server which rely on virtualizer3!
+
+  Follows the MixIn design pattern approach to support UN functionality.
   """
-  pass
+
+  def ping (self):
+    raise NotImplementedError("Not implemented yet!")
+
+  def get_config (self):
+    raise NotImplementedError("Not implemented yet!")
+
+  def edit_config (self, config):
+    raise NotImplementedError("Not implemented yet!")
+
+
+class RemoteESCAPEv2API(object):
+  """
+  Define interface for managing remote ESCAPEv2 domain.
+
+  Follows the MixIn design pattern approach to support remote ESCAPEv2
+  functionality.
+  """
+
+  def topology_resource (self):
+    """
+    Queries the infrastructure view with a netconf-like "get-config" command.
+
+    :return: infrastructure view
+    :rtype: :any::`NFFG`
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def install_nffg (self, config):
+    """
+    Send the requested configuration with a netconf-like "edit-config" command.
+
+    :param config: whole domain view
+    :type config: :any::`NFFG`
+    :return: status code
+    :rtype: str
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def ping (self):
+    """
+    Call the ping RPC.
+
+    :return: response text (should be: 'OK')
+    :rtype: str
+    """
+    raise NotImplementedError("Not implemented yet!")
 
 
 class AbstractRESTAdapter(Session):

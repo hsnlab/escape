@@ -132,7 +132,7 @@ class SGManager(object):
     Try to generate a unique id for SG.
 
     :param sg: SG
-    :type sg: :nay:`NFFG`
+    :type sg: :any:`NFFG`
     """
     tmp = sg.id if sg.id is not None else id(sg)
     if tmp in self._service_graphs:
