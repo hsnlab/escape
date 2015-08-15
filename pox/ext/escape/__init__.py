@@ -59,7 +59,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
                         # "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
-                        "DEFAULTS": ("OPENSTACK",),
+                        "DEFAULTS": (),
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.components",
                                          "class": "InternalPOXAdapter"},
@@ -89,8 +89,11 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         "OPENSTACK": {"module": "escape.adapt.components",
                                       "class": "OpenStackDomainManager",
                                       "poll": False},
+                        "UN": {"module": "escape.adapt.components",
+                               "class": "OpenStackDomainManager",
+                               "poll": False},
                         "DOCKER": {"module": "escape.adapt.components",
-                                   "class": "DockerDomainManager",
+                                   "class": "UnifiedNodeDomainManager",
                                    "poll": False}},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet

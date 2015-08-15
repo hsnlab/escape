@@ -546,7 +546,10 @@ class NFFG(AbstractNFFG):
       nffg.add_node(nf)
     # Load Links
     for link in model.edge_links:
-      nffg.add_edge(link.src.node, link.dst.node, link)
+      if link.src.node.type == NFFG.TYPE_NF or link.dst.node.type == \
+           NFFG.TYPE_NF:
+        link.type = str(NFFG.TYPE_LINK_DYNAMIC)
+        nffg.add_edge(link.src.node, link.dst.node, link)
     # Load SG next hops
     for hop in model.edge_sg_nexthops:
       nffg.add_edge(hop.src.node, hop.dst.node, hop)
@@ -570,10 +573,10 @@ class NFFG(AbstractNFFG):
     :rtype: :any:`NFFG`
     """
     # Create backward links
-    backwards = [
-      EdgeLink(src=link.dst, dst=link.src, id=link.id + "-back", backward=True,
-               delay=link.delay, bandwidth=link.bandwidth) for u, v, link in
-      self.network.edges_iter(data=True) if link.type == Link.STATIC]
+    backwards = [EdgeLink(src=link.dst, dst=link.src, id=str(link.id) + "-back",
+                          backward=True, delay=link.delay,
+                          bandwidth=link.bandwidth) for u, v, link in
+                 self.network.edges_iter(data=True) if link.type == Link.STATIC]
     # Add backward links to the NetworkX structure in a separate step to
     # avoid the link reduplication caused by the iterator based for loop
     for link in backwards:
@@ -601,18 +604,17 @@ class NFFG(AbstractNFFG):
       self.network.remove_edge(*link)
     return self
 
-  def infra_neighbors (self, infra_id):
+  def infra_neighbors (self, node_id):
     """
     Return an iterator for the Infra nodes which are neighbours of the given
     node.
 
-    :param infra_id: infra node
-    :type infra_id: :any:`NodeInfra`
+    :param node_id: infra node
+    :type node_id: :any:`NodeInfra`
     :return: iterator for the list of Infra nodes
     """
-    return {self.network.node[id] for id in
-            self.network.neighbors_iter(infra_id) if
-            self.network.node[id].type == Node.INFRA}
+    return {self.network.node[id] for id in self.network.neighbors_iter(node_id)
+            if self.network.node[id].type == Node.INFRA}
 
   def running_nfs (self, infra_id):
     """
@@ -850,14 +852,41 @@ def generate_mn_test_req ():
   return test
 
 
+def gen ():
+  nffg = NFFG(id="SG-decomp", name="SG-name")
+  sap1 = nffg.add_sap(name="SAP1", id="sap1")
+  sap2 = nffg.add_sap(name="SAP2", id="sap2")
+  nc1 = nffg.add_infra(id="nc1", name="NC1", domain=NFFG.DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  comp = nffg.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+                     cpu=2, mem=2, storage=0)
+  decomp = nffg.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=2, mem=2, storage=0)
+  linkres = {'delay': 1.5, 'bandwidth': 2000}
+  nffg.add_link(sap1.add_port(1), nc1.add_port(1), id="l1", **linkres)
+  nffg.add_link(nc1.add_port(2), nc2.add_port(2), id="l2", **linkres)
+  nffg.add_link(nc2.add_port(1), sap2.add_port(1), id="l3", **linkres)
+  nffg.duplicate_static_links()
+  nffg.add_undirected_link(nc1.add_port(), comp.add_port(1), dynamic=True)
+  nffg.add_undirected_link(nc1.add_port(), comp.add_port(2), dynamic=True)
+  nffg.add_undirected_link(nc2.add_port(), decomp.add_port(1), dynamic=True)
+  nffg.add_undirected_link(nc2.add_port(), decomp.add_port(2), dynamic=True)
+  return nffg
+
+
 if __name__ == "__main__":
   # test_NFFG()
-  nffg = generate_mn_topo()
+  # nffg = generate_mn_topo()
   # nffg = generate_mn_test_req()
   # nffg = generate_dynamic_fallback_nffg()
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
+  nffg = gen()
 
   pprint(nffg.network.__dict__)
-  nffg.merge_duplicated_links()
+  # nffg.merge_duplicated_links()
   print nffg.dump()

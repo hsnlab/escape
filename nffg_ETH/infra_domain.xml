@@ -1,53 +1,55 @@
+<?xml version="1.0" ?>
 <virtualizer>
-    <id>UUID-ETH-001</id>
-    <name>ETH OpenStack-OpenDaylight domain</name>
-    <nodes>
-        <node>
-            <id>UUID-01</id>
-            <name>single Bis-Bis node representing the whole domain</name>
-            <type>BisBis</type>
-            <ports>
-                <port>
-                    <id>0</id>
-                    <name>OVS-north external port</name>
-                    <port_type>port-abstract</port_type>
-                    <capability/>
-                </port>
-                <port>
-                    <id>1</id>
-                    <name>OVS-south external port</name>
-                    <port_type>port-abstract</port_type>
-                    <capability/>
-                </port>
-            </ports>
-            <resources>
-                <cpu>10 VCPU</cpu>
-                <mem>32 GB</mem>
-                <storage>5 TB</storage>
-            </resources>
-            <capabilities>
-                <supported_NFs>
-                    <node>
-                        <id>nf_a</id>
-                        <name>tcp header compressor</name>
-                        <type>0</type>
-                        <ports>
-                            <port>
-                                <id>0</id>
-                                <name>in</name>
-                                <port_type>port-abstract</port_type>
-                                <capability>...</capability>
-                            </port>
-                            <port>
-                                <id>1</id>
-                                <name>out</name>
-                                <port_type>port-abstract</port_type>
-                                <capability>...</capability>
-                            </port>
-                        </ports>
-                    </node>
-                </supported_NFs>
-            </capabilities>
-        </node>
-    </nodes>
+	<name>ETH OpenStack-OpenDaylight domain</name>
+	<nodes>
+		<node>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<name>image0</name>
+						<ports>
+							<port>
+								<name>input port</name>
+								<port_type>port-abstract</port_type>
+								<id>0</id>
+							</port>
+						</ports>
+						<type>0</type>
+						<id>NF0</id>
+					</node>
+					<node>
+						<name>image1</name>
+						<ports>
+							<port>
+								<name>input port</name>
+								<port_type>port-abstract</port_type>
+								<id>0</id>
+							</port>
+						</ports>
+						<type>1</type>
+						<id>NF1</id>
+						<resources>
+							<mem>1024</mem>
+						</resources>
+					</node>
+				</supported_NFs>
+			</capabilities>
+			<ports>
+				<port>
+					<name>OVS-north external port</name>
+					<port_type>port-sap</port_type>
+					<id>0</id>
+				</port>
+			</ports>
+			<type>BisBis</type>
+			<id>UUID-01</id>
+			<resources>
+				<mem>32 GB</mem>
+				<storage>5 TB</storage>
+				<cpu>10 VCPU</cpu>
+			</resources>
+			<name>single Bis-Bis node representing the whole domain</name>
+		</node>
+	</nodes>
+	<id>UUID-ETH-001</id>
 </virtualizer>

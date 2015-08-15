@@ -397,7 +397,7 @@ class Flowrule(Persistable):
   Class for storing a flowrule.
   """
 
-  def __init__ (self, match="*", action=""):
+  def __init__ (self, match="", action=""):
     """
     Init.
 
@@ -417,7 +417,7 @@ class Flowrule(Persistable):
     return flowrule
 
   def load (self, data, *args, **kwargs):
-    self.match = data.get('match', "*")
+    self.match = data.get('match', "")
     self.action = data.get('action', "")
     return self
 
@@ -481,10 +481,10 @@ class Port(Element):
     :return: the Port object to allow function chaining
     :rtype: :any:`Port`
     """
-    if isinstance(property, Iterable):
-      self.properties.extend(property)
-    else:
+    if isinstance(property, str):
       self.properties.append(property)
+    elif isinstance(property, Iterable):
+      self.properties.extend(property)
     return self
 
   def del_property (self, property=None):

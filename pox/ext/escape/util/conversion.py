@@ -14,21 +14,24 @@
 """
 Contains helper classes for conversion between different NF-FG representations.
 """
+import xml.etree.ElementTree as ET
+import sys
+
 import nffglib as virt
 import virtualizer3 as virt3
 
 try:
   # Import for ESCAPEv2
-  from escape.util.nffg import AbstractNFFG
+  from escape.util.nffg import AbstractNFFG, NFFG
 except ImportError:
-  import sys, os, inspect
+  import os, inspect
 
   sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
     os.path.abspath(
       os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
                                   "pox/ext/escape/util/"))
   # Import for standalone running
-  from nffg import AbstractNFFG
+  from nffg import AbstractNFFG, NFFG
 
 
 class XMLBasedNFFGBuilder(AbstractNFFG):
@@ -677,7 +680,11 @@ class Virtualizer3BasedNFFGBuilder(AbstractNFFG):
     :return: parsed XML object-structure
     :rtype: Virtualizer
     """
-    return virt3.Virtualizer().parse(filename=data)
+    try:
+      tree = ET.ElementTree(ET.fromstring(data))
+      return virt3.Virtualizer().parse(root=tree.getroot())
+    except ET.ParseError as e:
+      raise RuntimeError('ParseError: %s' % e.message)
 
   ##############################################################################
   # Simplifier function to access XML tags easily
@@ -795,8 +802,8 @@ class Virtualizer3BasedNFFGBuilder(AbstractNFFG):
     """
     # Define mandatory attributes
     type = self.DEFAULT_INFRA_TYPE if type is None else str(type)
-    v = self.__virtualizer
-    id = "UUID-%02d" % len(self.__virtualizer.nodes.node._data.keys()) if id is None else str(id)
+    id = "UUID-%02d" % len(
+      self.__virtualizer.nodes.node.getKeys()) if id is None else str(id)
     name = str(type + str(id)) if name is None else str(name)
 
     infranode = virt3.Infra_node(id=id, name=name, type=type)
@@ -828,7 +835,7 @@ class Virtualizer3BasedNFFGBuilder(AbstractNFFG):
     :rtype: PortGroup
     """
     # Define mandatory attributes
-    id = str(len(parent.ports.port._data.keys())) if id is None else str(id)
+    id = str(len(parent.ports.port.getKeys())) if id is None else str(id)
     name = "port" + str(id) if name is None else str(name)
 
     # Create port
@@ -947,8 +954,8 @@ class Virtualizer3BasedNFFGBuilder(AbstractNFFG):
     :return: flowentry
     :rtype: FlowEntry
     """
-    _in_port = parent.getRelPath(in_port)
-    _out_port = parent.getRelPath(out_port)
+    _in_port = in_port.getPath()
+    _out_port = out_port.getPath()
 
     flowentry = virt3.Flowentry(parent=parent, port=_in_port, match=str(match),
                                 action=action, out=_out_port)
@@ -1129,9 +1136,780 @@ def test_virtualizer3_based_builder ():
   builder.add_flow_entry(infra, in_port=infra_port0, out_port=nf1port0)
   builder.add_flow_entry(infra, in_port=nf1port1, out_port=infra_port1,
                          action="mod_dl_src=12:34:56:78:90:12")
-  print builder
+  return builder.dump()
+
+
+def test_topo_un ():
+  topo = """
+<virtualizer>
+    <name>Single node</name>
+    <nodes>
+        <node>
+            <NF_instances>
+                <node>
+                    <name>First NF</name>
+                    <ports>
+                        <port>
+                            <name>NF input port</name>
+                            <port_type>port-abstract</port_type>
+                            <id>1</id>
+                        </port>
+                        <port>
+                            <name>NF output port</name>
+                            <port_type>port-abstract</port_type>
+                            <id>2</id>
+                        </port>
+                    </ports>
+                    <type>example</type>
+                    <id>NF1</id>
+                </node>
+                <node>
+                    <name>Second NF</name>
+                    <ports>
+                        <port>
+                            <name>NF input port</name>
+                            <port_type>port-abstract</port_type>
+                            <id>1</id>
+                        </port>
+                        <port>
+                            <name>NF output port</name>
+                            <port_type>port-abstract</port_type>
+                            <id>2</id>
+                        </port>
+                    </ports>
+                    <type>dpi</type>
+                    <id>NF2</id>
+                </node>
+            </NF_instances>
+            <flowtable>
+                <flowentry>
+                    <port>../../../ports/port[id=1]</port>
+                    <priority>100</priority>
+                    <id>1</id>
+                    <match>
+                        <ip_proto>6</ip_proto>
+                        <tcp_dst>80</tcp_dst>
+                    </match>
+                    <out>../../../NF_instances/node[id=NF2]/ports/port[
+                    id=1]</out>
+                </flowentry>
+                <flowentry>
+                    <port>../../../NF_instances/node[id=NF2]/ports/port[id=2]
+                    </port>
+                    <action>
+                        <vlan>
+                            <push>21</push>
+                        </vlan>
+                    </action>
+                    <id>2</id>
+                    <out>../../../ports/port[id=1]</out>
+                </flowentry>
+            </flowtable>
+            <capabilities>
+                <supported_NFs>
+                    <node>
+                        <name>DPI based on libpcre</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>dpi</type>
+                        <id>NF1</id>
+                    </node>
+                    <node>
+                        <name>iptables based firewall</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>firewall</type>
+                        <id>NF2</id>
+                    </node>
+                    <node>
+                        <name>NAT based on iptables</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>nat</type>
+                        <id>NF3</id>
+                    </node>
+                    <node>
+                        <name>ntop monitor</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>monitor</type>
+                        <id>NF4</id>
+                    </node>
+                    <node>
+                        <name>example VNF with several implementations</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>example</type>
+                        <id>NF5</id>
+                    </node>
+                </supported_NFs>
+            </capabilities>
+            <ports>
+                <port>
+                    <name>OVS-north external port</name>
+                    <port_type>port-sap</port_type>
+                    <id>1</id>
+                </port>
+            </ports>
+            <type>BisBis</type>
+            <id>UUID11</id>
+            <resources>
+                <mem>32 GB</mem>
+                <storage>5 TB</storage>
+                <cpu>10 VCPU</cpu>
+            </resources>
+            <name>Universal Node</name>
+        </node>
+    </nodes>
+    <id>UUID001</id>
+</virtualizer>
+  """
+  return topo
+
+
+def test_topo_os ():
+  topo = """
+<virtualizer>
+	<name>ETH OpenStack-OpenDaylight domain</name>
+	<nodes>
+		<node>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<name>image0</name>
+						<ports>
+							<port>
+								<name>input port</name>
+								<port_type>port-abstract</port_type>
+								<id>0</id>
+							</port>
+						</ports>
+						<type>0</type>
+						<id>NF0</id>
+					</node>
+					<node>
+						<name>image1</name>
+						<ports>
+							<port>
+								<name>input port</name>
+								<port_type>port-abstract</port_type>
+								<id>0</id>
+							</port>
+						</ports>
+						<type>1</type>
+						<id>NF1</id>
+						<resources>
+							<mem>1024</mem>
+						</resources>
+					</node>
+				</supported_NFs>
+			</capabilities>
+			<ports>
+				<port>
+					<name>OVS-north external port</name>
+					<port_type>port-sap</port_type>
+					<id>0</id>
+				</port>
+			</ports>
+			<type>BisBis</type>
+			<id>UUID-01</id>
+			<resources>
+				<mem>32 GB</mem>
+				<storage>5 TB</storage>
+				<cpu>10 VCPU</cpu>
+			</resources>
+			<name>single Bis-Bis node representing the whole domain</name>
+		</node>
+	</nodes>
+	<id>UUID-ETH-001</id>
+</virtualizer>
+"""
+  return topo
+
+
+def test_nffg_mapped ():
+  nffg = """
+{
+  "parameters": {
+    "id": "SG-decomp",
+    "name": "SG-name",
+    "version": "1.0"
+  },
+  "node_nfs": [
+    {
+      "id": "comp",
+      "name": "COMPRESSOR",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        }
+      ],
+      "functional_type": "headerCompressor",
+      "specification": {
+        "resources": {
+          "cpu": 2,
+          "mem": 2,
+          "storage": 0
+        }
+      }
+    },
+    {
+      "id": "decomp",
+      "name": "DECOMPRESSOR",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        }
+      ],
+      "functional_type": "headerDecompressor",
+      "specification": {
+        "resources": {
+          "cpu": 2,
+          "mem": 2,
+          "storage": 0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "sap2",
+      "name": "SAP2",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    {
+      "id": "sap1",
+      "name": "SAP1",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "nc1",
+      "name": "NC1",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 139974785558288
+        },
+        {
+          "id": 139974785558736
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "resources": {
+        "cpu": 5,
+        "mem": 5,
+        "storage": 5,
+        "delay": 0.9,
+        "bandwidth": 5000
+      }
+    },
+    {
+      "id": "nc2",
+      "name": "NC2",
+      "ports": [
+        {
+          "id": 2
+        },
+        {
+          "id": 1
+        },
+        {
+          "id": 139974785558992
+        },
+        {
+          "id": 139974785559248
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "resources": {
+        "cpu": 5,
+        "mem": 5,
+        "storage": 5,
+        "delay": 0.9,
+        "bandwidth": 5000
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": 139974785558416,
+      "src_node": "nc1",
+      "src_port": 139974785558288,
+      "dst_node": "comp",
+      "dst_port": 1
+    },
+    {
+      "id": 139974785558864,
+      "src_node": "nc1",
+      "src_port": 139974785558736,
+      "dst_node": "comp",
+      "dst_port": 2
+    },
+    {
+      "id": "l2",
+      "src_node": "nc1",
+      "src_port": 2,
+      "dst_node": "nc2",
+      "dst_port": 2,
+      "delay": 1.5,
+      "bandwidth": 2000
+    },
+    {
+      "id": "l1-back",
+      "src_node": "nc1",
+      "src_port": 1,
+      "dst_node": "sap1",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 2000
+    },
+    {
+      "id": "l2-back",
+      "src_node": "nc2",
+      "src_port": 2,
+      "dst_node": "nc1",
+      "dst_port": 2,
+      "delay": 1.5,
+      "bandwidth": 2000
+    },
+    {
+      "id": 139974785559120,
+      "src_node": "nc2",
+      "src_port": 139974785558992,
+      "dst_node": "decomp",
+      "dst_port": 1
+    },
+    {
+      "id": 139974785559376,
+      "src_node": "nc2",
+      "src_port": 139974785559248,
+      "dst_node": "decomp",
+      "dst_port": 2
+    },
+    {
+      "id": "l3",
+      "src_node": "nc2",
+      "src_port": 1,
+      "dst_node": "sap2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 2000
+    },
+    {
+      "id": "l3-back",
+      "src_node": "sap2",
+      "src_port": 1,
+      "dst_node": "nc2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 2000
+    },
+    {
+      "id": 139974785558672,
+      "src_node": "comp",
+      "src_port": 1,
+      "dst_node": "nc1",
+      "dst_port": 139974785558288
+    },
+    {
+      "id": 139974785558928,
+      "src_node": "comp",
+      "src_port": 2,
+      "dst_node": "nc1",
+      "dst_port": 139974785558736
+    },
+    {
+      "id": "l1",
+      "src_node": "sap1",
+      "src_port": 1,
+      "dst_node": "nc1",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 2000
+    },
+    {
+      "id": 139974785559184,
+      "src_node": "decomp",
+      "src_port": 1,
+      "dst_node": "nc2",
+      "dst_port": 139974785558992
+    },
+    {
+      "id": 139974785559440,
+      "src_node": "decomp",
+      "src_port": 2,
+      "dst_node": "nc2",
+      "dst_port": 139974785559248
+    }
+  ]
+}
+"""
+  return NFFG.parse(nffg)
+
+
+class NFFGConverter(object):
+  """
+  Covert different representation of NFFG in both ways.
+  """
+
+  def __init__ (self, domain):
+    self.domain = domain
+
+  def parse_from_Virtualizer3 (self, xml_data):
+    """
+    Convert Virtualizer3-based XML str --> NFFGModel based NFFG object
+
+    :param xml_data: XML plain data formatted with Virtualizer
+    :type: xml_data: str
+    :return: created NF-FG
+    :rtype: :any:`NFFG`
+    """
+    try:
+      tree = ET.ElementTree(ET.fromstring(xml_data))
+      virtualizer = virt3.Virtualizer().parse(root=tree.getroot())
+    except ET.ParseError as e:
+      raise RuntimeError('ParseError: %s' % e.message)
+    # Get NFFG init params
+    nffg_id = virtualizer.id.getValue() if virtualizer.id.isInitialized() \
+      else "NFFG-%s" % self.domain
+    nffg_name = virtualizer.name.getValue() if \
+      virtualizer.name.isInitialized() else nffg_id
+    # Create NFFG
+    nffg = NFFG(id=nffg_id, name=nffg_name)
+    # Iterate over virtualizer/nodes --> node = Infra
+    for inode in virtualizer.nodes:
+      # Node params
+      _id = inode.id.getValue()
+      _name = inode.name.getValue() if inode.name.isInitialized() else _id
+      _domain = self.domain
+      _type = inode.type.getValue()
+      # Node-resources params
+      if inode.resources.isInitialized():
+        _cpu = inode.resources.cpu.getAsText().split(' ')[0]
+        _mem = inode.resources.mem.getAsText().split(' ')[0]
+        _storage = inode.resources.storage.getAsText().split(' ')[0]
+      else:
+        _cpu = sys.maxint
+        _mem = sys.maxint
+        _storage = sys.maxint
+      # Add Infra Node
+      infra = nffg.add_infra(id=_id, name=_name, domain=_domain,
+                             infra_type=_type, cpu=_cpu, mem=_mem,
+                             storage=_storage, delay=0, bandwidth=sys.maxint)
+      # Add supported types
+      for sup_nf in inode.capabilities.supported_NFs:
+        # FIXME - check id,type or what should be collect?
+        infra.add_supported_type(sup_nf.type.getValue())
+      # Add ports
+      for port in inode.ports:
+        # If it is a port connected to a SAP
+        if port.port_type.getValue() == "port-sap":
+          s_id = "SAP%s" % len([s for s in nffg.saps])
+          try:
+            sap_port_id = int(port.id.getValue())
+          except:
+            sap_port_id = port.id.getValue()
+          s_name = port.name.getValue() if port.name.isInitialized() else s_id
+          # Create SAP and Add port to SAP
+          # SAP default port: sap-type port number
+          sap_port = nffg.add_sap(id=s_id, name=s_name).add_port(id=sap_port_id)
+          sap_port.add_property("name:%s" % port.name.getValue())
+          sap_port.add_property("port_type:%s" % port.port_type.getValue())
+          # Add properties
+          if port.sap.isInitialized():
+            sap_port.add_property("sap:%s" % port.sap)
+          # Create Infra port
+          try:
+            infra_port_id = int(port.id.getValue())
+          except:
+            infra_port_id = port.id.getValue()
+          infra_port = infra.add_port(id=infra_port_id)
+          infra_port.add_property("name:%s" % port.name.getValue())
+          infra_port.add_property("port_type:%s" % port.port_type.getValue())
+          # Add infra por capabilities
+          if port.capability.isInitialized():
+            infra_port.add_property(
+              "capability:%s" % port.capability.getValue())
+          # Add connection between infra - SAP
+          nffg.add_undirected_link(port1=sap_port, port2=infra_port, delay=0,
+                                   bandwidth=sys.maxint)
+        elif port.port_type.getValue() == "port-abstract":
+          # Add default port
+          try:
+            infra_port_id = int(port.id.getValue())
+          except:
+            infra_port_id = port.id.getValue()
+          infra_port = infra.add_port(id=infra_port_id)
+          infra_port.add_property("name:%s" % port.name.getValue())
+          infra_port.add_property("port_type:%s" % port.port_type.getValue())
+          if port.capability.isInitialized():
+            infra_port.add_property(
+              "capability:%s" % port.capability.getValue())
+            # FIXME - check if two infra is connected
+        else:
+          raise RuntimeError(
+            "Unsupported port type: %s" % port.port_type.getValue())
+      for nf_inst in inode.NF_instances:
+        # NF params
+        nf_id = nf_inst.id.getAsText()
+        nf_name = nf_inst.name.getAsText() if nf_inst.name.isInitialized() \
+          else nf_id
+        nf_ftype = nf_inst.type.getAsText() if nf_inst.type.isInitialized() \
+          else None
+        nf_dtype = None
+        nf_cpu = nf_inst.resources.cpu.getAsText()
+        nf_mem = nf_inst.resources.mem.getAsText()
+        nf_storage = nf_inst.resources.storage.getAsText()
+        # Create NodeNF
+        nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
+                         dep_type=nf_dtype, cpu=nf_cpu, mem=nf_mem,
+                         storage=nf_storage, delay=0, bandwidth=sys.maxint)
+        # Create NF ports
+        for port in nf_inst.ports:
+          nf_port = nf.add_port(id=port.id.getAsText())
+          if port.capability.isInitialized():
+            nf_port.add_property("capability:%s" % port.capability.getAsText())
+          if port.name.isInitialized():
+            nf_port.add_property("name:%s" % port.name.getAsText())
+          if port.port_type.isInitialized():
+            nf_port.add_property("port_type:%s" % port.port_type.getAsText())
+          if port.sap.isInitialized():
+            nf_port.add_property("sap:%s" % port.sap.getAsText())
+          # Add connection between Infra - NF
+          next_port = max(max({p.id for p in infra.ports}),
+                          len(infra.ports)) + 1
+          nffg.add_undirected_link(port1=nf_port,
+                                   port2=infra.add_port(id=next_port),
+                                   dynamic=True, delay=0, bandwidth=sys.maxint)
+          # FIXME - add flowrule parsing
+    return nffg, virtualizer
+
+  def dump_to_Virtualizer3 (self, nffg, virtualizer=None):
+    """
+    Convert NFFGModel based NFFG object --> Virtualizer
+
+    :param nffg: nffg object
+    :type: nffg: :any:`NFFG`
+    :param virtualizer: use as the base Virtualizer object (optional)
+    :type virtualizer: :any:`Virtualizer`
+    :return: created Virtualizer object
+    :rtype: :any:`Virtualizer`
+    """
+    # Clear unnecessary links
+    nffg.clear_links(NFFG.TYPE_LINK_REQUIREMENT)
+    nffg.clear_links(NFFG.TYPE_LINK_SG)
+    # nffg.clear_links(NFFG.TYPE_LINK_DYNAMIC)
+    # If virtualizer is not given create the infras,ports,SAPs first then
+    # insert the initiated NFs and flowrules, supported NFs skipped!
+    if virtualizer is None:
+      # Create Virtualizer with basic params -virtualizer/{id,name}
+      virtualizer = virt3.Virtualizer(id=str(nffg.id), name=str(nffg.name))
+      # Add bare Infra node entities
+      for infra in nffg.infras:
+        # Create infra node with basic params - nodes/node/{id,name,type}
+        infra_node = virt3.Infra_node(id=str(infra.id), name=str(infra.name),
+                                      type=str(infra.infra_type))
+        # Add resources nodes/node/resources
+        cpu = str(infra.resources.cpu) if infra.resources.cpu else None
+        mem = str(infra.resources.mem) if infra.resources.mem else None
+        storage = str(
+          infra.resources.storage) if infra.resources.storage else None
+        resources = virt3.NodeResources(cpu=cpu, mem=mem, storage=storage,
+                                        parent=infra_node)
+        infra_node.resources = resources
+        # Add Infra node - nodes/node
+        virtualizer.nodes.add(infra_node)
+      # Add SAPS as special ports to infras
+      for sap in nffg.saps:
+        # Get SAP -> Infra node edges
+        sap_infra_links = [(u, v, l) for u, v, l in
+                           nffg.network.out_edges_iter((sap.id,), data=True) if
+                           l.dst.node.type == NFFG.TYPE_INFRA]
+        print sap_infra_links
+        # Iterate over out edges
+        for u, v, link in sap_infra_links:
+          # FIXME - SAP port not added to SDN-SW infra
+          # Create the sap-port - ports/port/{}
+          print link
+          capability = None
+          sap = None
+          name = None
+          # Iter over SAP's actual port properties
+          for property in link.dst.properties:
+            if str(property).startswith("capability"):
+              capability = property.split(':')[1]
+            elif str(property).startswith("name"):
+              name = property.split(':')[1]
+            elif str(property).startswith("sap"):
+              sap = property.split(':')[1]
+          sap_port = virt3.Port(id=str(link.dst.id), name=name,
+                                port_type="port-sap", capability=capability,
+                                sap=sap)
+          # Add sap-port to the Infra node
+          virtualizer.nodes[v].ports.add(sap_port)
+      # Add Nfs to the Infra node
+      for infra in nffg.infras:
+        # for nf in nffg.running_nfs(infra.id):
+        for nf_link in {link for u, v, link in
+                        nffg.network.out_edges_iter((infra.id,), data=True) if
+                        link.dst.node.type == NFFG.TYPE_NF}:
+          nf = nf_link.dst.node
+          try:
+            nf_inst = virtualizer.nodes[infra.id].NF_instances[nf.id]
+          except KeyError:
+            # Create resource to NF - NF_instances/node/resources
+            cpu = str(nf.resources.cpu) if nf.resources.cpu else None
+            mem = str(nf.resources.mem) if nf.resources.mem else None
+            storage = str(
+              nf.resources.storage) if nf.resources.storage else None
+            res = virt3.NodeResources(cpu=cpu, mem=mem, storage=storage)
+            # Create NF with resources - NF_instances/node
+            nf_inst = virt3.Node(id=str(nf.id),
+                                 name=str(nf.name) if nf.name else None,
+                                 type=str(
+                                   nf.functional_type) if nf.functional_type
+                                 else None, resources=res)
+            # Add NF to the Infra node
+            virtualizer.nodes[infra.id].NF_instances.add(nf_inst)
+          # Get port name
+          port_name = "port" + str(nf_link.dst.id)
+          for property in nf_link.dst.properties:
+            if property.startswith('name'):
+              port_name = property.split(':')[1]
+              break
+          # Create Port object
+          nf_port = virt3.Port(id=str(nf_link.dst.id), name=str(port_name),
+                               port_type="port-abstract")
+          # Add port to NF
+          nf_inst.ports.add(nf_port)
+          # TODO - add static links???
+          # Add flowrules
+          if self.domain == "UN":
+            self._get_UN_flowrule()
+          elif self.domain == "OPENSTACK":
+            self._get_OPENSTACK_flowrule()
+          else:
+            raise RuntimeError("Not supported domain for flowrules!")
+      # Add flowrules
+      cntr = 0
+      for infra in nffg.infras:
+        for port in infra.ports:
+          for flowrule in port.flowrules:
+            id = str(cntr)
+            cntr += 1
+            priority = str('100')
+            try:
+              port = virtualizer.nodes[infra.id].ports[port.id]
+            except KeyError:
+              # In port is a dynamically generated port
+              port_id = [link.dst.id for u, v, link in
+                         nffg.network.out_edges_iter((infra.id,), data=True) if
+                         link.src.id == port.id][0]
+              port = virtualizer.nodes[infra.id].ports[port_id]
+
+            tmp = str(flowrule.match).split('=|;')
+            for t in tmp:
+              print t
+              # match =
+              # action =
+              # out =
+              # Got flowrule in port
+    return virtualizer, nffg
+
+  def _get_UN_flowrule (self):
+    pass
+
+  def _get_OPENSTACK_flowrule (self):
+    pass
 
 
 if __name__ == "__main__":
   # test_xml_based_builder()
-  test_virtualizer3_based_builder()
+  # txt = test_virtualizer3_based_builder()
+  # txt = test_topo_un()
+  # txt = test_topo_os()
+  # print txt
+  # print Virtualizer3BasedNFFGBuilder.parse(txt)
+  c = NFFGConverter(domain=NFFG.DOMAIN_OS)
+  # nffg, vv = c.parse_from_Virtualizer3(xml_data=txt)
+  from nffg import gen
+
+  nffg = gen()
+  print nffg.dump()
+  # v = c.dump_to_Virtualizer3(nffg, virtualizer=vv)
+  v, nffg = c.dump_to_Virtualizer3(nffg)
+  print v
+  # print nffg.dump()

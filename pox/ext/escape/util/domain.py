@@ -249,12 +249,12 @@ class AbstractDomainManager(EventMixin):
     if self.topoAdapter.check_domain_reachable():
       log.info("%s domain confirmed!" % self.name)
       self._detected = True
-      log.info("Updating resource information from %s domain..." % self.name)
+      log.info("Requesting resource information from %s domain..." % self.name)
       topo_nffg = self.topoAdapter.get_topology_resource()
+      print topo_nffg.dump()
       if topo_nffg:
-        log.debug("Set received NF-FG: %s..." % topo_nffg)
-        # FIXME - it should be use update_resource_info
-        self.internal_topo = topo_nffg
+        log.debug("Save received NF-FG: %s..." % topo_nffg)
+        self.update_resource_info(topo_nffg)
         self.raiseEventNoErrors(DomainChangedEvent, domain=self.name,
                                 cause=DomainChangedEvent.TYPE.NETWORK_UP,
                                 data=topo_nffg)
@@ -262,16 +262,20 @@ class AbstractDomainManager(EventMixin):
         log.warning("Resource info is missing!")
     return self._detected
 
-  def update_resource_info (self, raw_data=None):
+  def update_resource_info (self, data=None):
     """
     Update the resource information of this domain with the requested
     configuration.
 
     :return: None
     """
-    topo_nffg = self.topoAdapter.get_topology_resource()
+    # Cache requested topo info
+    if not self.internal_topo:
+      self.internal_topo = data
+    else:
+      # FIXME - maybe just merge especially if we got a diff
+      self.internal_topo = data
     # TODO - implement actual updating
-    # update local topology
     # update DoV
 
   def install_nffg (self, nffg_part):

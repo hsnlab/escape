@@ -19,6 +19,7 @@ from ncclient.operations.rpc import RPCError
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from escape.infr.il_API import InfrastructureLayerAPI
+from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
 from escape.util.pox_extension import ExtendedOFConnectionArbiter, \
@@ -607,7 +608,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         "OpenStack agent responded with an error during 'get-config': %s" %
         e.message)
       return None
-    return NFFG.parse(data)
+    return NFFGConverter(NFFG.DOMAIN_OS).parse_from_Virtualizer3(data)
 
   def edit_config (self, config):
     if isinstance(config, NFFG):
@@ -764,6 +765,7 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     log.info("Install %s domain part..." % self.name)
+    # print nffg_part.dump()
     self._deploy_nfs(nffg_part=nffg_part)
     # TODO ... VNF initiation etc.
 
