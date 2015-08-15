@@ -1,0 +1,154 @@
+{
+  "parameters": {
+    "id": "SDN", 
+    "name": "SDN-Topology", 
+    "version": "1.0"
+  }, 
+  "node_saps": [
+    {
+      "id": "SAP34", 
+      "name": "SAP34", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "SAP14", 
+      "name": "SAP14", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "SAP24", 
+      "name": "SAP24", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ], 
+  "node_infras": [
+    {
+      "id": "MT2", 
+      "name": "MikroTik-SW-2", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }
+      ], 
+      "domain": "SDN", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "delay": 0.2, 
+        "bandwidth": 4000
+      }
+    }, 
+    {
+      "id": "MT1", 
+      "name": "MikroTik-SW-1", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }
+      ], 
+      "domain": "SDN", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "delay": 0.2, 
+        "bandwidth": 4000
+      }
+    }
+  ], 
+  "edge_links": [
+    {
+      "id": "link4", 
+      "src_node": "MT2", 
+      "src_port": 3, 
+      "dst_node": "SAP34", 
+      "dst_port": 1, 
+      "delay": 1.5, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": "link3", 
+      "src_node": "MT2", 
+      "src_port": 2, 
+      "dst_node": "SAP24", 
+      "dst_port": 1, 
+      "delay": 1.5, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": "link1", 
+      "src_node": "MT1", 
+      "src_port": 1, 
+      "dst_node": "MT2", 
+      "dst_port": 1, 
+      "delay": 0.1, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": "link2", 
+      "src_node": "MT1", 
+      "src_port": 2, 
+      "dst_node": "SAP14", 
+      "dst_port": 1, 
+      "delay": 1.5, 
+      "bandwidth": 1000
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 17331920, 
+      "src_node": "SAP34", 
+      "src_port": 1, 
+      "dst_node": "SAP14", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 17331792, 
+      "src_node": "SAP14", 
+      "src_port": 1, 
+      "dst_node": "SAP34", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 17331728, 
+      "src_node": "SAP14", 
+      "src_port": 1, 
+      "dst_node": "SAP24", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 17331856, 
+      "src_node": "SAP24", 
+      "src_port": 1, 
+      "dst_node": "SAP14", 
+      "dst_port": 1
+    }
+  ]
+}
