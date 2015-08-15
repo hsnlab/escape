@@ -24,7 +24,14 @@ from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
 from escape.util.pox_extension import ExtendedOFConnectionArbiter, \
   OpenFlowBridge
+from escape import CONFIG
 
+
+class TopologyLoadException(Exception):
+  """
+  Exception class for topology errors.
+  """
+  pass
 
 class InternalPOXAdapter(AbstractESCAPEAdapter):
   """
@@ -34,7 +41,25 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
   """
   name = "INTERNAL-POX"
 
-  def __init__ (self, name=None, address="127.0.0.1", port=6653):
+  # Static mapping of infra IDs and DPIDs
+  infra_to_dpid = {
+    'MT1': 0x14c5e0c376e24,
+    'MT2': 0x14c5e0c376fc6,
+    'SW1': 0x1,
+    'SW2': 0x2,
+    'SW3': 0x3,
+    'SW4': 0x4,
+    }
+  dpid_to_infra = {
+    0x14c5e0c376e24 : 'MT1',
+    0x14c5e0c376fc6 : 'MT2',
+    0x1 : 'SW1',
+    0x2 : 'SW2',
+    0x3 : 'SW3',
+    0x4 : 'SW4'
+    }
+
+  def __init__ (self, name=None, address="127.0.0.1", port=6633):
     """
     Initialize attributes, register specific connection Arbiter if needed and
     set up listening of OpenFlow events.
@@ -43,7 +68,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     :type name: str
     :param address: socket address (default: 127.0.0.1)
     :type address: str
-    :param port: socket port (default: 6653)
+    :param port: socket port (default: 6633)
     :type port: int
     """
     name = name if name is not None else self.name
@@ -69,6 +94,39 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     # register OpenFlow event listeners
     self.openflow.addListeners(self)
     log.debug("%s adapter: Start listening connections..." % self.name)
+    # Currently static initialization from a config file
+    # TODO: discover SDN topology and create the NFFG
+    self.topo = None   # SDN domain topology stored in NFFG
+    self.__init_from_CONFIG()
+
+  def __init_from_CONFIG (self, path=None):
+    """
+    Load a pre-defined topology from an NFFG stored in a file.
+    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
+
+    :param path: additional file path
+    :type path: str
+    :param format: NF-FG storing format (default: internal NFFG representation)
+    :type format: str
+    :return: None
+    """
+    if path is None:
+      path = CONFIG.get_sdn_topology()
+    if path is None:
+      log.warning("SDN topology is missing from CONFIG!")
+      raise TopologyLoadException("Missing Topology!")
+    else:
+      try:
+        with open(path, 'r') as f:
+          log.info("Load SDN topology from file: %s" % path)
+          self.topo = NFFG.parse(f.read())
+      except IOError:
+        log.debug("SDN topology file not found: %s" % path)
+        raise TopologyLoadException("Missing topology file!")
+      except ValueError as e:
+        log.error(
+          "An error occurred when load topology from file: %s" % e.message)
+        raise TopologyLoadException("File parsing error!")
 
   def check_domain_reachable (self):
     """
@@ -87,8 +145,10 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     :return: the emulated topology description
     :rtype: :any:`NFFG`
     """
-    raise RuntimeError("InternalPoxController not supported this function: "
-                       "get_topology_resource() !")
+    # raise RuntimeError("InternalPoxController not supported this function: "
+    #                    "get_topology_resource() !")
+    # return static topology
+    return self.topo
 
   def filter_connections (self, event):
     """
@@ -138,6 +198,24 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     log.info("Install POX domain part: routes...")
     # TODO - implement
     pass
+
+  def install_flowrule (self, id, match, action):
+    """
+    Install a flowrule in an OpenFlow switch.
+
+    :param id: ID of the infra element stored in the NFFG
+    :type id: str
+    :param match: match part of the rule (keys: in_port, vlan_id)
+    :type match: dict
+    :param action: action part of the rule (keys: out, vlan_push, vlan_pop)
+    :type action: dict
+    :return: None
+    """
+    log.info("Install POX domain part: flow entry to INFRA %s..." % id)
+    print id
+    print infra_to_dpid[id]
+    print match
+    print action
 
 
 class InternalMininetAdapter(AbstractESCAPEAdapter):
@@ -764,10 +842,12 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
+    print nffg_part.dump()
     log.info("Install %s domain part..." % self.name)
     # print nffg_part.dump()
     self._deploy_nfs(nffg_part=nffg_part)
     # TODO ... VNF initiation etc.
+    self._deploy_flowrules(nffg_part=nffg_part)
 
   def _deploy_nfs (self, nffg_part):
     """
@@ -893,6 +973,18 @@ class InternalDomainManager(AbstractDomainManager):
         log.debug("%s topology description is updated with NF: %s" % (
           self.name, deployed_nf.name))
     log.info("Initiation of NFs in NFFG part: %s is finished!" % nffg_part)
+
+  def _deploy_flowrules(self, nffg_part):
+    """
+    Install the flowrules given in the NFFG.
+
+    If a flowrule is already defined it will be updated.
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
+    pass
 
 
 class RemoteESCAPEDomainManager(AbstractDomainManager):
@@ -1096,3 +1188,125 @@ class DockerDomainManager(AbstractDomainManager):
     log.info("Install Docker domain part...")
     # TODO - implement
     pass
+
+
+class SDNDomainManager(AbstractDomainManager):
+  """
+  Manager class to handle communication with POX-controlled SDN domain.
+
+  .. note::
+    Uses :class:`InternalPOXAdapter` for controlling the network.
+  """
+  # Domain name
+  name = "SDN"
+
+  def __init__ (self, **kwargs):
+    """
+    Init
+    """
+    log.debug("Init SDNDomainManager - params: %s" % kwargs)
+    super(SDNDomainManager, self).__init__(**kwargs)
+    self.controlAdapter = None  # DomainAdapter for POX - InternalPOXAdapter
+    self.topo = None  # SDN domain topology stored in NFFG
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize SDN domain manager.
+
+    :return: None
+    """
+    # Init adapter for internal controller: POX
+    self.controlAdapter = configurator.load_component(InternalPOXAdapter.name)
+    # Use the same adapter for checking resources
+    self.topoAdapter = self.controlAdapter
+    super(SDNDomainManager, self).init(configurator, **kwargs)
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(SDNDomainManager, self).finit()
+    del self.controlAdapter
+
+  @property
+  def controller_name (self):
+    return self.controlAdapter.task_name
+
+  def install_nffg (self, nffg_part):
+    """
+    Install an :any:`NFFG` related to the SDN domain.
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
+    log.info("Install %s domain part..." % self.name)
+    self._deploy_flowrules(nffg_part=nffg_part)
+
+  def _deploy_flowrules(self, nffg_part):
+    """
+    Install the flowrules given in the NFFG.
+
+    If a flowrule is already defined it will be updated.
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
+    # Remove unnecessary SG and Requirement links to avoid mess up port
+    # definition of NFs
+    nffg_part.clear_links(NFFG.TYPE_LINK_SG)
+    nffg_part.clear_links(NFFG.TYPE_LINK_REQUIREMENT)
+    # Get physical topology description from POX adapter
+    topo = self.controlAdapter.get_topology_resource()
+    import re  # regular expressions
+    # Iter through the container INFRAs in the given mapped NFFG part
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        log.debug(
+          "Infrastructure Node: %s (type: %s) is not Switch or Container type! "
+          "Continue to next Node..." % (infra.short_name, infra.infra_type))
+        continue
+      # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
+      if infra.id not in (n.id for n in topo.infras):
+        log.error(
+          "Infrastructure Node: %s is not found in the %s domain! Skip "
+          "flowrule install on this Node..." % (infra.short_name, self.name))
+        continue
+      for flowrule in nffg_part.flowrules:
+        match = {}
+        action = {}
+        if re.search(r';', flowrule['match']):
+          # multiple elements in match field
+          in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
+        else:
+          # single element in match field
+          in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
+        match['in_port'] = in_port
+        # Check match fileds - currently only vlan_id
+        # TODO: add further match fields
+        if re.search(r'TAG', flowrule['match']):
+          tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
+          match['vlan_id'] = tag
+
+        if re.search(r';', flowrule['action']):
+          # multiple elements in action field
+          out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
+        else:
+          # single element in action field
+          out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
+        action['out'] = out
+
+        if re.search(r'TAG', flowrule['action']):
+          if re.search(r'UNTAG', flowrule['action']):
+            action['vlan_pop'] = True
+          else:
+            push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
+            action['vlan_push'] = push_tag
+
+        self.controlAdapter.install_flowrule(infra.id, 
+                                             match=match, action=action)

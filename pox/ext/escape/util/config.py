@@ -356,6 +356,20 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
+  def get_sdn_topology (self):
+    """
+    Return the path of the SDN topology config file.
+
+    :return:  topo class
+    """
+    try:
+      # Project root dir relative to this module which is/must be under pox/ext
+      return os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../../..",
+                     self.__configuration[INFR]["SDN-TOPO"]))
+    except KeyError:
+      return None
+
   def get_clean_after_shutdown (self):
     """
     Return with the value if a cleaning process need to be done or not.

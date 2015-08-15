@@ -656,6 +656,7 @@ class NodeInfra(Node):
   DOMAIN_OS = "OPENSTACK"
   DOMAIN_UN = "UNIFIED_NODE"
   DOMAIN_DOCKER = "DOCKER"
+  DOMAIN_SDN = "SDN"
 
   def __init__ (self, id=None, name=None, domain=None, infra_type=None,
        supported=None, res=None):

@@ -84,7 +84,7 @@ class ExtendedOFConnectionArbiter(OpenFlowConnectionArbiter):
     if core.hasComponent(cls._core_name):
       # If the registered arbiter is our extended one skip registration
       if isinstance(core.components[cls._core_name], cls):
-        return
+        return core.components[cls._core_name]
       del core.components[cls._core_name]
     return core.core.registerNew(cls)
 
