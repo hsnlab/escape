@@ -112,6 +112,43 @@ def MAP (request, network):
         c['bandwidth'] = 0
     chainlist.extend(chains_of_one_req)
 
+  # temorary workaround: If resource parameter is not given (None) set it the 
+  # average of the appropriate given parameters (Thus those links will not be 
+  # overly prioratized)
+  for respar in ('cpu', 'mem', 'storage', 'delay', 'bandwidth'):
+    avgs = 0.0
+    cnt = 0
+    for n,d in network.network.nodes_iter(data=True):
+      if d.type == 'INFRA':
+        # WARN: also sets some cpu, mem, storage values to switches, 
+        # but if they have no 'supported_types' it wont cause a problem.
+        # None replacing should be done for delay and bw parameters
+        if d.resources[respar] != None:
+          cnt += 1
+          avgs += d.resources[respar]
+    if cnt > 0:
+      avgs = float(avgs) / cnt
+    for n,d in network.network.nodes_iter(data=True):
+      if d.type == 'INFRA':
+        if d.resources[respar] == None:
+          d.resources[respar] = avgs
+  # do the same with link data
+  for par in ('bandwidth', 'delay'):
+    avgs = 0.0
+    cnt = 0
+    for i,j,d in network.network.edges_iter(data=True):
+      if d.type == 'STATIC':
+        if getattr(d, par, None) != None:
+          cnt += 1
+          avgs += getattr(d, par)
+    if cnt > 0:
+      avgs = float(avgs) / cnt
+    for i,j,d in network.network.edges_iter(data=True):
+      if d.type == 'STATIC':
+        if getattr(d, par, None) == None:
+          setattr(d, par, avgs)
+
+
   # create the class of the algorithm
   alg = CoreAlgorithm(network, request, chainlist)
   mappedNFFG = alg.start()
@@ -209,8 +246,11 @@ def _constructExampleNetwork ():
   uniformnoderes = {'cpu': 5, 'mem': 5, 'storage': 5, 'delay': 0.9,
                     'bandwidth': 5500}
   infra0 = nffg.add_infra(id="node0", name="INFRA0", **uniformnoderes)
+  uniformnoderes['cpu'] = None
   infra1 = nffg.add_infra(id="node1", name="INFRA1", **uniformnoderes)
+  uniformnoderes['mem'] = None
   infra2 = nffg.add_infra(id="node2", name="INFRA2", **uniformnoderes)
+  uniformnoderes['storage'] = None
   switch = nffg.add_infra(id="sw0", name="FastSwitcher", delay=0.01,
                           bandwidth=10000)
   infra0.add_supported_type('A')
@@ -225,11 +265,13 @@ def _constructExampleNetwork ():
   nffg.add_undirected_link(sap0.add_port(0), infra0.add_port(0), **unilinkres)
   nffg.add_undirected_link(sap1.add_port(0), infra1.add_port(0), **unilinkres)
   nffg.add_undirected_link(infra1.add_port(1), infra0.add_port(2), **unilinkres)
+  unilinkres['bandwidth'] = None
   nffg.add_undirected_link(infra0.add_port(1), infra2.add_port(0), **unilinkres)
   nffg.add_undirected_link(infra1.add_port(2), infra2.add_port(1), **unilinkres)
   unilinkres['delay'] = 0.2
   unilinkres['bandwidth'] = 5000
   nffg.add_undirected_link(switch.add_port(0), infra0.add_port(3), **unilinkres)
+  unilinkres['delay'] = None
   nffg.add_undirected_link(switch.add_port(1), infra1.add_port(3), **unilinkres)
   nffg.add_undirected_link(switch.add_port(2), infra2.add_port(2), **unilinkres)
 
@@ -282,13 +324,13 @@ def _example_request_for_fallback ():
 
 if __name__ == '__main__':
   try:
-    # req = _constructExampleRequest()
-    # net = _constructExampleNetwork()
+    req = _constructExampleRequest()
+    net = _constructExampleNetwork()
 
-    req = _example_request_for_fallback()
+    # req = _example_request_for_fallback()
     # print req.dump()
     # this is the dynamic fallback topology taken from nffg.py
-    net = generate_dynamic_fallback_nffg()
+    # net = generate_dynamic_fallback_nffg()
     # print net.dump()
     mapped = MAP(req, net)
     print mapped.dump()
