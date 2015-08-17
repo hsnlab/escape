@@ -169,7 +169,7 @@ class AbstractAPI(EventMixin):
     if graph_file and not graph_file.startswith('/'):
       graph_file = os.path.abspath(graph_file)
     with open(graph_file, 'r') as f:
-      graph = json.load(f)
+      graph = f.read()
     return graph
 
   def __str__ (self):
@@ -427,7 +427,11 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       if real_path.startswith('/%s/' % self.static_prefix):
         self.func_name = real_path.split('/')[2]
         if self.rpc_mapper:
-          self.func_name = self.rpc_mapper[self.func_name]
+          try:
+            self.func_name = self.rpc_mapper[self.func_name]
+          except KeyError:
+            # No need for RPC name mapping, continue
+            pass
         if http_method in self.request_perm:
           if self.func_name in self.request_perm[http_method]:
             if hasattr(self, self.func_name):

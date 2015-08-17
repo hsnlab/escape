@@ -251,7 +251,7 @@ class AbstractDomainManager(EventMixin):
       self._detected = True
       log.info("Requesting resource information from %s domain..." % self.name)
       topo_nffg = self.topoAdapter.get_topology_resource()
-      print topo_nffg.dump()
+      # print topo_nffg.dump()
       if topo_nffg:
         log.debug("Save received NF-FG: %s..." % topo_nffg)
         self.update_resource_info(topo_nffg)

@@ -20,8 +20,10 @@ from escape import CONFIG
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest import LAYER_NAME
+from escape.service.sas_API import InstantiateNFFGEvent
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task
+from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
 
@@ -92,7 +94,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {'GET': ('ping',),
-                  'POST': ('ping', 'get_config', 'edit_config')}
+                  'POST': ('ping', 'topology_resource', 'install_nffg')}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'orchestration'
@@ -101,7 +103,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   # Logger. Must define.
   log = log.getChild("REST-API")
   # Name mapper to avoid Python naming constraint
-  rpc_mapper = {'get-config': "get_config", 'edit-config': "edit_config"}
+  rpc_mapper = {'topology-resource': "topology_resource",
+                'install-nffg': "install_nffg"}
 
   def __init__ (self, request, client_address, server):
     """
@@ -121,24 +124,30 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     self.end_headers()
     self.wfile.write(response_body)
 
-  def get_config (self):
+  def topology_resource (self):
     """
     Response configuration.
     """
     # TODO - implement
-    log.getChild("REST-API").debug("Call REST-API function: get-config")
-    self._proceed_API_call('request_config')
-    self.send_acknowledge()
+    log.getChild("REST-API").info("Call REST-API function: topology-resource")
+    config = self._proceed_API_call('api_topology_resource')
+    self.send_response(200)
+    self.send_header('Content-Type', 'application/json')
+    self.send_header('Content-Length', len(config))
+    self.end_headers()
+    self.wfile.write(config)
 
-  def edit_config (self):
+  def install_nffg (self):
     """
     Receive configuration and initiate orchestration.
     """
     # TODO - implement
-    log.getChild("REST-API").debug("Call REST-API function: edit-config")
-    # TODO - parsing body
-    parsed_cfg = None
-    self._proceed_API_call('set_config', parsed_cfg)
+    log.getChild("REST-API").info("Call REST-API function: install-nffg")
+    body = self._get_body()
+    log.getChild("REST-API").debug("Request body:\n%s" % body)
+    nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    log.getChild("REST-API").debug("Parsed NFFG install request: %s" % nffg)
+    self._proceed_API_call('api_install_nffg', nffg)
     self.send_acknowledge()
 
 
@@ -217,11 +226,23 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # Agent API functions starts here
   ##############################################################################
 
-  def request_config (self):
-    pass
+  def api_topology_resource (self):
+    dov = self.resource_orchestrator.virtualizerManager.dov
+    if dov is not None:
+      return dov.get_resource_info().dump()
 
-  def set_config (self, config):
-    pass
+
+  class RemoteROSEventHelper(object):
+
+    _core_name = "RemoteESCAPE"
+
+
+  def api_install_nffg (self, nffg):
+    log.getChild('API').info("Invoke install_nffg on %s with SG: %s " % (
+      self.__class__.__name__, nffg))
+    event = InstantiateNFFGEvent(nffg=nffg)
+    event.source = self.RemoteROSEventHelper
+    self._handle_InstantiateNFFGEvent(event=event)
 
   ##############################################################################
   # UNIFY Sl- Or API functions starts here

@@ -94,7 +94,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
     """
     params = json.loads(self._get_body())
     self.log_full_message("ECHO: %s - %s", self.raw_requestline, params)
-    self._send_json_response(params, rpc="echo")
+    self._send_json_response(params)
 
   def version (self):
     """
@@ -182,7 +182,7 @@ class ServiceLayerAPI(AbstractAPI):
     if self._sg_file:
       try:
         graph_json = self._read_json_from_file(self._sg_file)
-        sg_graph = NFFG(json=graph_json)
+        sg_graph = NFFG.parse(graph_json)
         self.request_service(sg_graph)
       except (ValueError, IOError, TypeError) as e:
         log.error(
