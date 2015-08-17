@@ -708,10 +708,3 @@ class CoreAlgorithm(object):
     added as extra key to chains."""
     self._preproc(copy.deepcopy(self.net0), copy.deepcopy(self.req0),
                   self.original_chains)
-
-  def getNodeCountInNetwork (self):
-    count = 0
-    for n, d in self.net.nodes_iter(data=True):
-      if d['type'] == 'INFRA':
-        count += 1
-    return count
