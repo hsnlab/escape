@@ -461,8 +461,12 @@ class CoreAlgorithm(object):
     helperlink = self.manager.link_mapping[v1][v2][reqlid]
     path = helperlink['mapped_to']
     linkids = helperlink['path_link_ids']
-    flowsrc = helperlink['infra_ports'][0]
-    flowdst = helperlink['infra_ports'][1]
+    if 'infra_ports' in helperlink:
+      flowsrc = helperlink['infra_ports'][0]
+      flowdst = helperlink['infra_ports'][1]
+    else:
+      flowsrc = None
+      flowdst = None
     reqlink = self.req[v1][v2][reqlid]
     # The action and match are the same format
     tag = "TAG=%s-%s-%s" % (v1, v2, reqlid)
@@ -639,7 +643,7 @@ class CoreAlgorithm(object):
       for i, j, k, d in self.req.out_edges_iter([vnf], data=True, keys=True):
         # i is always vnf
         self._addFlowrulesToNFFGDerivatedFromReqLinks(vnf, j, k, nffg)
-
+          
     # all VNFs are added to the NFFG, so now, req ids are valid in this
     # NFFG instance. Ports for the SG link ends are created here.
     # Add all the SGHops to the NFFG keeping the SGHops` identifiers, so the
@@ -708,10 +712,3 @@ class CoreAlgorithm(object):
     added as extra key to chains."""
     self._preproc(copy.deepcopy(self.net0), copy.deepcopy(self.req0),
                   self.original_chains)
-
-  def getNodeCountInNetwork (self):
-    count = 0
-    for n, d in self.net.nodes_iter(data=True):
-      if d['type'] == 'INFRA':
-        count += 1
-    return count
