@@ -71,7 +71,7 @@ def MAP (request, network):
       for i, j in zip(path[:-1], path[1:]):
         for sglink in request.sg_hops:
           if i == sglink.src.node.id and j == sglink.dst.node.id:
-            if len(path) == 2:
+            if len(path) == 2 and next(request.nfs, None) != None:
               # then add it as linklocal req insead of E2E
               if req.delay is not None:
                 setattr(request.network[i][j][sglink.id], 'delay', req.delay)
@@ -91,7 +91,7 @@ def MAP (request, network):
           break
 
       if not is_there_notSGlink_in_path:
-        if len(path) != 2:
+        if len(path) != 2 or next(request.nfs, None) == None:
           if len(path) - 1 != len(chain['link_ids']):
             raise Exception(
               "TEMPORARY Exception: Not all link ID-s found for a service "
@@ -240,6 +240,19 @@ def _constructExampleRequest ():
 
   return nffg
 
+def _onlySAPsRequest():
+  nffg = NFFG(id="BME-req-001")
+  sap1 = nffg.add_sap(name="SAP1", id="sap1")
+  sap2 = nffg.add_sap(name="SAP2", id="sap2")
+
+  nffg.add_sglink(sap1.add_port(0), sap2.add_port(0))
+  # nffg.add_sglink(sap1.add_port(1), sap2.add_port(1))
+
+  nffg.add_req(sap1.ports[0], sap2.ports[0], bandwidth=1000, delay=24)
+  nffg.add_req(sap1.ports[0], sap2.ports[0], bandwidth=1000, delay=24)
+  
+  return nffg
+
 
 def _constructExampleNetwork ():
   nffg = NFFG(id="BME-net-001")
@@ -324,13 +337,14 @@ def _example_request_for_fallback ():
 
 if __name__ == '__main__':
   try:
-    req = _constructExampleRequest()
-    net = _constructExampleNetwork()
+    # req = _constructExampleRequest()
+    # net = _constructExampleNetwork()
 
     # req = _example_request_for_fallback()
     # print req.dump()
     # this is the dynamic fallback topology taken from nffg.py
-    # net = generate_dynamic_fallback_nffg()
+    net = generate_dynamic_fallback_nffg()
+    req = _onlySAPsRequest()
     # print net.dump()
     mapped = MAP(req, net)
     print mapped.dump()
