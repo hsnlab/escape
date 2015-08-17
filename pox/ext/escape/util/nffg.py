@@ -875,6 +875,20 @@ def gen ():
   nffg.add_undirected_link(nc1.add_port(), comp.add_port(2), dynamic=True)
   nffg.add_undirected_link(nc2.add_port(), decomp.add_port(1), dynamic=True)
   nffg.add_undirected_link(nc2.add_port(), decomp.add_port(2), dynamic=True)
+  nc1.ports[1].add_flowrule(match="in_port=1;TAG=sap1-comp-139956882597136",
+                            action="output=%s;UNTAG" % nc1.ports.container[
+                              -1].id)
+  nc2.ports[2].add_flowrule(match="in_port=2;UNTAG",
+                            action="output=%s;TAG=sap1-comp-139956882597136" %
+                                   nc2.ports.container[-1].id)
+  p1 = nc1.ports.container[-1].id
+  # nc1.ports[p1].add_flowrule(match="in_port=%s;TAG=comp-sap1-%s" % (p1, 42),
+  # action="output=%s;UNTAG" % 1)
+  nc1.ports[p1].add_flowrule(match="in_port=%s;" % p1,
+                             action="output=%s;TAG=comp-sap1-%s" % (1, 42))
+  p2 = nc2.ports.container[-1].id
+  nc2.ports[p2].add_flowrule(match="in_port=%s;TAG=comp-sap1-%s" % (p2, 42),
+                             action="output=%s;" % 1)
   return nffg
 
 

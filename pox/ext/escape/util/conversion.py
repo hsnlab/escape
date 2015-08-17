@@ -19,6 +19,7 @@ import sys
 
 import nffglib as virt
 import virtualizer3 as virt3
+from virtualizer3 import Flowentry
 
 try:
   # Import for ESCAPEv2
@@ -1147,24 +1148,7 @@ def test_topo_un ():
         <node>
             <NF_instances>
                 <node>
-                    <name>First NF</name>
-                    <ports>
-                        <port>
-                            <name>NF input port</name>
-                            <port_type>port-abstract</port_type>
-                            <id>1</id>
-                        </port>
-                        <port>
-                            <name>NF output port</name>
-                            <port_type>port-abstract</port_type>
-                            <id>2</id>
-                        </port>
-                    </ports>
-                    <type>example</type>
-                    <id>NF1</id>
-                </node>
-                <node>
-                    <name>Second NF</name>
+                    <name>DPI NF</name>
                     <ports>
                         <port>
                             <name>NF input port</name>
@@ -1178,27 +1162,31 @@ def test_topo_un ():
                         </port>
                     </ports>
                     <type>dpi</type>
-                    <id>NF2</id>
+                    <id>NF1</id>
                 </node>
             </NF_instances>
             <flowtable>
                 <flowentry>
                     <port>../../../ports/port[id=1]</port>
                     <priority>100</priority>
+                    <action>
+                        <vlan>
+                            <pop/>
+                        </vlan>
+                    </action>
                     <id>1</id>
                     <match>
-                        <ip_proto>6</ip_proto>
-                        <tcp_dst>80</tcp_dst>
+                        <vlan_id>2</vlan_id>
                     </match>
-                    <out>../../../NF_instances/node[id=NF2]/ports/port[
-                    id=1]</out>
+                    <out>../../../NF_instances/node[id=NF1]/ports/port[id=1]
+                    </out>
                 </flowentry>
                 <flowentry>
-                    <port>../../../NF_instances/node[id=NF2]/ports/port[id=2]
+                    <port>../../../NF_instances/node[id=NF1]/ports/port[id=2]
                     </port>
                     <action>
                         <vlan>
-                            <push>21</push>
+                            <push>3</push>
                         </vlan>
                     </action>
                     <id>2</id>
@@ -1299,6 +1287,7 @@ def test_topo_un ():
                     <name>OVS-north external port</name>
                     <port_type>port-sap</port_type>
                     <id>1</id>
+                    <sap>SAP34</sap>
                 </port>
             </ports>
             <type>BisBis</type>
@@ -1320,304 +1309,99 @@ def test_topo_un ():
 def test_topo_os ():
   topo = """
 <virtualizer>
-	<name>ETH OpenStack-OpenDaylight domain</name>
-	<nodes>
-		<node>
-			<capabilities>
-				<supported_NFs>
-					<node>
-						<name>image0</name>
-						<ports>
-							<port>
-								<name>input port</name>
-								<port_type>port-abstract</port_type>
-								<id>0</id>
-							</port>
-						</ports>
-						<type>0</type>
-						<id>NF0</id>
-					</node>
-					<node>
-						<name>image1</name>
-						<ports>
-							<port>
-								<name>input port</name>
-								<port_type>port-abstract</port_type>
-								<id>0</id>
-							</port>
-						</ports>
-						<type>1</type>
-						<id>NF1</id>
-						<resources>
-							<mem>1024</mem>
-						</resources>
-					</node>
-				</supported_NFs>
-			</capabilities>
-			<ports>
-				<port>
-					<name>OVS-north external port</name>
-					<port_type>port-sap</port_type>
-					<id>0</id>
-				</port>
-			</ports>
-			<type>BisBis</type>
-			<id>UUID-01</id>
-			<resources>
-				<mem>32 GB</mem>
-				<storage>5 TB</storage>
-				<cpu>10 VCPU</cpu>
-			</resources>
-			<name>single Bis-Bis node representing the whole domain</name>
-		</node>
-	</nodes>
-	<id>UUID-ETH-001</id>
+    <name>ETH OpenStack-OpenDaylight domain with request</name>
+    <nodes>
+        <node>
+            <NF_instances>
+                <node>
+                    <name>Parental control B.4</name>
+                    <ports>
+                        <port>
+                            <name>in</name>
+                            <capability>...</capability>
+                            <port_type>port-abstract</port_type>
+                            <id>NF1_in</id>
+                        </port>
+                    </ports>
+                    <type>1</type>
+                    <id>NF1</id>
+                    <resources>
+                        <mem>1024</mem>
+                    </resources>
+                </node>
+            </NF_instances>
+            <flowtable>
+                <flowentry>
+                    <port>../../../ports/port[id=0]</port>
+                    <action>strip_vlan</action>
+                    <id>f1</id>
+                    <match>dl_vlan=1</match>
+                    <out>
+                        ../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]
+                    </out>
+                </flowentry>
+                <flowentry>
+                    <port>
+                        ../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]
+                    </port>
+                    <action>mod_vlan_vid:2</action>
+                    <id>f2</id>
+                    <out>../../../ports/port[id=0]</out>
+                </flowentry>
+            </flowtable>
+            <capabilities>
+                <supported_NFs>
+                    <node>
+                        <name>image0</name>
+                        <ports>
+                            <port>
+                                <name>input port</name>
+                                <port_type>port-abstract</port_type>
+                                <id>0</id>
+                            </port>
+                        </ports>
+                        <type>0</type>
+                        <id>NF0</id>
+                    </node>
+                    <node>
+                        <name>image1</name>
+                        <ports>
+                            <port>
+                                <name>input port</name>
+                                <port_type>port-abstract</port_type>
+                                <id>0</id>
+                            </port>
+                        </ports>
+                        <type>1</type>
+                        <id>NF1</id>
+                        <resources>
+                            <mem>1024</mem>
+                        </resources>
+                    </node>
+                </supported_NFs>
+            </capabilities>
+            <ports>
+                <port>
+                    <name>OVS-north external port</name>
+                    <port_type>port-sap</port_type>
+                    <id>0</id>
+                    <sap>SAP24</sap>
+                </port>
+            </ports>
+            <type>BisBis</type>
+            <id>UUID-01</id>
+            <resources>
+                <mem>32 GB</mem>
+                <storage>5 TB</storage>
+                <cpu>10 VCPU</cpu>
+            </resources>
+            <name>single Bis-Bis node representing the whole domain</name>
+        </node>
+    </nodes>
+    <id>UUID-ETH-001-req1</id>
 </virtualizer>
 """
   return topo
-
-
-def test_nffg_mapped ():
-  nffg = """
-{
-  "parameters": {
-    "id": "SG-decomp",
-    "name": "SG-name",
-    "version": "1.0"
-  },
-  "node_nfs": [
-    {
-      "id": "comp",
-      "name": "COMPRESSOR",
-      "ports": [
-        {
-          "id": 1
-        },
-        {
-          "id": 2
-        }
-      ],
-      "functional_type": "headerCompressor",
-      "specification": {
-        "resources": {
-          "cpu": 2,
-          "mem": 2,
-          "storage": 0
-        }
-      }
-    },
-    {
-      "id": "decomp",
-      "name": "DECOMPRESSOR",
-      "ports": [
-        {
-          "id": 1
-        },
-        {
-          "id": 2
-        }
-      ],
-      "functional_type": "headerDecompressor",
-      "specification": {
-        "resources": {
-          "cpu": 2,
-          "mem": 2,
-          "storage": 0
-        }
-      }
-    }
-  ],
-  "node_saps": [
-    {
-      "id": "sap2",
-      "name": "SAP2",
-      "ports": [
-        {
-          "id": 1
-        }
-      ]
-    },
-    {
-      "id": "sap1",
-      "name": "SAP1",
-      "ports": [
-        {
-          "id": 1
-        }
-      ]
-    }
-  ],
-  "node_infras": [
-    {
-      "id": "nc1",
-      "name": "NC1",
-      "ports": [
-        {
-          "id": 1
-        },
-        {
-          "id": 2
-        },
-        {
-          "id": 139974785558288
-        },
-        {
-          "id": 139974785558736
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "EE",
-      "resources": {
-        "cpu": 5,
-        "mem": 5,
-        "storage": 5,
-        "delay": 0.9,
-        "bandwidth": 5000
-      }
-    },
-    {
-      "id": "nc2",
-      "name": "NC2",
-      "ports": [
-        {
-          "id": 2
-        },
-        {
-          "id": 1
-        },
-        {
-          "id": 139974785558992
-        },
-        {
-          "id": 139974785559248
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "EE",
-      "resources": {
-        "cpu": 5,
-        "mem": 5,
-        "storage": 5,
-        "delay": 0.9,
-        "bandwidth": 5000
-      }
-    }
-  ],
-  "edge_links": [
-    {
-      "id": 139974785558416,
-      "src_node": "nc1",
-      "src_port": 139974785558288,
-      "dst_node": "comp",
-      "dst_port": 1
-    },
-    {
-      "id": 139974785558864,
-      "src_node": "nc1",
-      "src_port": 139974785558736,
-      "dst_node": "comp",
-      "dst_port": 2
-    },
-    {
-      "id": "l2",
-      "src_node": "nc1",
-      "src_port": 2,
-      "dst_node": "nc2",
-      "dst_port": 2,
-      "delay": 1.5,
-      "bandwidth": 2000
-    },
-    {
-      "id": "l1-back",
-      "src_node": "nc1",
-      "src_port": 1,
-      "dst_node": "sap1",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 2000
-    },
-    {
-      "id": "l2-back",
-      "src_node": "nc2",
-      "src_port": 2,
-      "dst_node": "nc1",
-      "dst_port": 2,
-      "delay": 1.5,
-      "bandwidth": 2000
-    },
-    {
-      "id": 139974785559120,
-      "src_node": "nc2",
-      "src_port": 139974785558992,
-      "dst_node": "decomp",
-      "dst_port": 1
-    },
-    {
-      "id": 139974785559376,
-      "src_node": "nc2",
-      "src_port": 139974785559248,
-      "dst_node": "decomp",
-      "dst_port": 2
-    },
-    {
-      "id": "l3",
-      "src_node": "nc2",
-      "src_port": 1,
-      "dst_node": "sap2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 2000
-    },
-    {
-      "id": "l3-back",
-      "src_node": "sap2",
-      "src_port": 1,
-      "dst_node": "nc2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 2000
-    },
-    {
-      "id": 139974785558672,
-      "src_node": "comp",
-      "src_port": 1,
-      "dst_node": "nc1",
-      "dst_port": 139974785558288
-    },
-    {
-      "id": 139974785558928,
-      "src_node": "comp",
-      "src_port": 2,
-      "dst_node": "nc1",
-      "dst_port": 139974785558736
-    },
-    {
-      "id": "l1",
-      "src_node": "sap1",
-      "src_port": 1,
-      "dst_node": "nc1",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 2000
-    },
-    {
-      "id": 139974785559184,
-      "src_node": "decomp",
-      "src_port": 1,
-      "dst_node": "nc2",
-      "dst_port": 139974785558992
-    },
-    {
-      "id": 139974785559440,
-      "src_node": "decomp",
-      "src_port": 2,
-      "dst_node": "nc2",
-      "dst_port": 139974785559248
-    }
-  ]
-}
-"""
-  return NFFG.parse(nffg)
 
 
 class NFFGConverter(object):
@@ -1668,7 +1452,8 @@ class NFFGConverter(object):
       # Add Infra Node
       infra = nffg.add_infra(id=_id, name=_name, domain=_domain,
                              infra_type=_type, cpu=_cpu, mem=_mem,
-                             storage=_storage, delay=0, bandwidth=sys.maxint)
+                             # storage=_storage, delay=0, bandwidth=sys.maxint)
+                             storage=_storage)
       # Add supported types
       for sup_nf in inode.capabilities.supported_NFs:
         # FIXME - check id,type or what should be collect?
@@ -1677,7 +1462,10 @@ class NFFGConverter(object):
       for port in inode.ports:
         # If it is a port connected to a SAP
         if port.port_type.getValue() == "port-sap":
-          s_id = "SAP%s" % len([s for s in nffg.saps])
+          if port.sap.isInitialized():
+            s_id = port.sap.getValue()
+          else:
+            s_id = "SAP%s" % len([s for s in nffg.saps])
           try:
             sap_port_id = int(port.id.getValue())
           except:
@@ -1690,7 +1478,7 @@ class NFFGConverter(object):
           sap_port.add_property("port_type:%s" % port.port_type.getValue())
           # Add properties
           if port.sap.isInitialized():
-            sap_port.add_property("sap:%s" % port.sap)
+            sap_port.add_property("sap:%s" % port.sap.getValue())
           # Create Infra port
           try:
             infra_port_id = int(port.id.getValue())
@@ -1704,8 +1492,9 @@ class NFFGConverter(object):
             infra_port.add_property(
               "capability:%s" % port.capability.getValue())
           # Add connection between infra - SAP
-          nffg.add_undirected_link(port1=sap_port, port2=infra_port, delay=0,
-                                   bandwidth=sys.maxint)
+          # nffg.add_undirected_link(port1=sap_port, port2=infra_port, delay=0,
+          #                          bandwidth=sys.maxint)
+          nffg.add_undirected_link(port1=sap_port, port2=infra_port)
         elif port.port_type.getValue() == "port-abstract":
           # Add default port
           try:
@@ -1736,7 +1525,8 @@ class NFFGConverter(object):
         # Create NodeNF
         nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
                          dep_type=nf_dtype, cpu=nf_cpu, mem=nf_mem,
-                         storage=nf_storage, delay=0, bandwidth=sys.maxint)
+                         # storage=nf_storage, delay=0, bandwidth=sys.maxint)
+                         storage=nf_storage)
         # Create NF ports
         for port in nf_inst.ports:
           nf_port = nf.add_port(id=port.id.getAsText())
@@ -1749,11 +1539,13 @@ class NFFGConverter(object):
           if port.sap.isInitialized():
             nf_port.add_property("sap:%s" % port.sap.getAsText())
           # Add connection between Infra - NF
-          next_port = max(max({p.id for p in infra.ports}),
-                          len(infra.ports)) + 1
+          next_port = max(max({p.id for p in infra.ports}) + 1,
+                          len(infra.ports))
           nffg.add_undirected_link(port1=nf_port,
                                    port2=infra.add_port(id=next_port),
-                                   dynamic=True, delay=0, bandwidth=sys.maxint)
+                                   # dynamic=True, delay=0,
+                                   # bandwidth=sys.maxint)
+                                   dynamic=True)
           # FIXME - add flowrule parsing
     return nffg, virtualizer
 
@@ -1798,26 +1590,24 @@ class NFFGConverter(object):
         sap_infra_links = [(u, v, l) for u, v, l in
                            nffg.network.out_edges_iter((sap.id,), data=True) if
                            l.dst.node.type == NFFG.TYPE_INFRA]
-        print sap_infra_links
         # Iterate over out edges
         for u, v, link in sap_infra_links:
           # FIXME - SAP port not added to SDN-SW infra
           # Create the sap-port - ports/port/{}
-          print link
+          s_id = str(link.dst.id)
           capability = None
-          sap = None
+          sap_t = None
           name = None
           # Iter over SAP's actual port properties
-          for property in link.dst.properties:
+          for property in link.src.properties:
             if str(property).startswith("capability"):
               capability = property.split(':')[1]
             elif str(property).startswith("name"):
               name = property.split(':')[1]
             elif str(property).startswith("sap"):
-              sap = property.split(':')[1]
-          sap_port = virt3.Port(id=str(link.dst.id), name=name,
-                                port_type="port-sap", capability=capability,
-                                sap=sap)
+              sap_t = property.split(':')[1]
+          sap_port = virt3.Port(id=s_id, name=name, port_type="port-sap",
+                                capability=capability, sap=sap_t)
           # Add sap-port to the Infra node
           virtualizer.nodes[v].ports.add(sap_port)
       # Add Nfs to the Infra node
@@ -1855,61 +1645,133 @@ class NFFGConverter(object):
                                port_type="port-abstract")
           # Add port to NF
           nf_inst.ports.add(nf_port)
-          # TODO - add static links???
-          # Add flowrules
-          if self.domain == "UN":
-            self._get_UN_flowrule()
-          elif self.domain == "OPENSTACK":
-            self._get_OPENSTACK_flowrule()
-          else:
-            raise RuntimeError("Not supported domain for flowrules!")
+      # TODO - add static links???
+      # FIXME - this is a little bit of hack
+      # FIXME - SAP ports created again -> override good sap port
+      # for infra in nffg.infras:
+      #   for port in infra.ports:
+      #     # bigger than 65535 --> virtual port which is an object id, not phy
+      #     if len(str(port.id)) > 5:
+      #       continue
+      #     # if the port not exist in the virtualizer
+      #     if str(port.id) not in virtualizer.nodes[
+      #       infra.id].ports.port.getKeys():
+      #       port_name = "port" + str(port.id)
+      #       for property in port.properties:
+      #         if property.startswith('name'):
+      #           port_name = property.split(':')[1]
+      #         break
+      #       virtualizer.nodes[infra.id].ports.add(
+      #         virt3.Port(id=str(port.id), name=port_name,
+      #                    port_type="port-abstract"), )
+      #       # print virtualizer
+      # TODO - add flowrule
       # Add flowrules
       cntr = 0
       for infra in nffg.infras:
         for port in infra.ports:
           for flowrule in port.flowrules:
-            id = str(cntr)
+            # print flowrule
+            # Get id
+            f_id = str(cntr)
             cntr += 1
+            # Get priority
             priority = str('100')
+            # Get in port
+            fr = flowrule.match.split(";")
+            if fr[0].split('=')[0] != "in_port":
+              raise RuntimeError(
+                "Wrong flowrule format: missing in in_port from match")
+            in_port = fr[0].split('=')[1]
             try:
-              port = virtualizer.nodes[infra.id].ports[port.id]
+              # Flowrule in_port is a phy port in Infra Node
+              in_port = virtualizer.nodes[infra.id].ports[in_port]
             except KeyError:
-              # In port is a dynamically generated port
-              port_id = [link.dst.id for u, v, link in
-                         nffg.network.out_edges_iter((infra.id,), data=True) if
-                         link.src.id == port.id][0]
-              port = virtualizer.nodes[infra.id].ports[port_id]
-
-            tmp = str(flowrule.match).split('=|;')
-            for t in tmp:
-              print t
-              # match =
-              # action =
-              # out =
-              # Got flowrule in port
+              # in_port is a dynamic port --> search for connected NF's port
+              in_port, p_nf = [(str(l.dst.id), l.dst.node.id) for u, v, l in
+                               nffg.network.out_edges_iter((infra.id,),
+                                                           data=True) if
+                               str(l.src.id) == in_port][0]
+              in_port = virtualizer.nodes[infra.id].NF_instances[p_nf].ports[
+                in_port]
+            # Get match
+            match = None
+            if len(fr) > 1:
+              if fr[1].split('=')[0] == "TAG":
+                vlan = int(fr[1].split('=')[1].split('-')[-1])
+                if self.domain == NFFG.DOMAIN_OS:
+                  match = r"dl_vlan=%s" % format(vlan, '#06x')
+                elif self.domain == NFFG.DOMAIN_UN:
+                  match = u"<vlan_id>%s<vlan_id>" % vlan
+              elif fr[1].split('=')[0] == "UNTAG":
+                if self.domain == NFFG.DOMAIN_OS:
+                  match = r"strip_vlan"
+                elif self.domain == NFFG.DOMAIN_UN:
+                  match = u"<vlan><pop/></vlan>"
+            # Get out port
+            fr = flowrule.action.split(';')
+            if fr[0].split('=')[0] != "output":
+              raise RuntimeError(
+                "Wrong flowrule format: missing output from action")
+            out_port = fr[0].split('=')[1]
+            try:
+              # Flowrule in_port is a phy port in Infra Node
+              out_port = virtualizer.nodes[infra.id].ports[out_port]
+            except KeyError:
+              # out_port is a dynamic port --> search for connected NF's port
+              out_port, p_nf = [(str(l.dst.id), l.dst.node.id) for u, v, l in
+                                nffg.network.out_edges_iter((infra.id,),
+                                                            data=True) if
+                                str(l.src.id) == out_port][0]
+              out_port = virtualizer.nodes[infra.id].NF_instances[p_nf].ports[
+                out_port]
+            # Get action
+            action = None
+            if len(fr) > 1:
+              if fr[1].split('=')[0] == "TAG":
+                vlan = int(fr[1].split('=')[1].split('-')[-1])
+                if self.domain == NFFG.DOMAIN_OS:
+                  action = r"dl_vlan=%s" % format(vlan, '#06x')
+                elif self.domain == NFFG.DOMAIN_UN:
+                  action = u"<vlan_id>%s<vlan_id>" % vlan
+              elif fr[1].split('=')[0] == "UNTAG":
+                if self.domain == NFFG.DOMAIN_OS:
+                  action = r"strip_vlan"
+                elif self.domain == NFFG.DOMAIN_UN:
+                  action = u"<vlan><pop/></vlan>"
+            # print out_port
+            virtualizer.nodes[infra.id].flowtable.add(
+              Flowentry(id=f_id, priority=priority, port=in_port, match=match,
+                        action=action, out=out_port))
     return virtualizer, nffg
 
-  def _get_UN_flowrule (self):
-    pass
-
-  def _get_OPENSTACK_flowrule (self):
-    pass
+  def _unescape_virtualizer_un_hack (self, data):
+    return out.replace("&lt;", "<").replace("&gt;", ">")
 
 
 if __name__ == "__main__":
   # test_xml_based_builder()
   # txt = test_virtualizer3_based_builder()
   # txt = test_topo_un()
-  # txt = test_topo_os()
+  txt = test_topo_os()
   # print txt
   # print Virtualizer3BasedNFFGBuilder.parse(txt)
-  c = NFFGConverter(domain=NFFG.DOMAIN_OS)
-  # nffg, vv = c.parse_from_Virtualizer3(xml_data=txt)
-  from nffg import gen
-
-  nffg = gen()
+  c = NFFGConverter(domain=NFFG.DOMAIN_UN)
+  nffg, vv = c.parse_from_Virtualizer3(xml_data=txt)
+  # # UN
+  # nffg.network.node['UUID11'].ports[1].add_flowrule(
+  #   match="in_port=1;TAG=sap1-comp-42", action="output=2;UNTAG")
+  # OS
+  nffg.network.node['UUID-01'].ports[1].add_flowrule(
+    match="in_port=1;TAG=sap1-comp-42", action="output=0;UNTAG")
   print nffg.dump()
+
+  # from nffg import gen
+  #
+  # nffg = gen()
+  # print nffg.dump()
   # v = c.dump_to_Virtualizer3(nffg, virtualizer=vv)
   v, nffg = c.dump_to_Virtualizer3(nffg)
-  print v
-  # print nffg.dump()
+  out = str(v)
+  out = out.replace("&lt;", "<").replace("&gt;", ">")
+  print out
