@@ -549,7 +549,7 @@ class NFFG(AbstractNFFG):
       if link.src.node.type == NFFG.TYPE_NF or link.dst.node.type == \
            NFFG.TYPE_NF:
         link.type = str(NFFG.TYPE_LINK_DYNAMIC)
-        nffg.add_edge(link.src.node, link.dst.node, link)
+      nffg.add_edge(link.src.node, link.dst.node, link)
     # Load SG next hops
     for hop in model.edge_sg_nexthops:
       nffg.add_edge(hop.src.node, hop.dst.node, hop)

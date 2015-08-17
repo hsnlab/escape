@@ -499,12 +499,12 @@ class OpenStackAPI(object):
     """
     raise NotImplementedError("Not implemented yet!")
 
-  def edit_config (self, config):
+  def edit_config (self, data):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 
-    :param config: whole domain view
-    :type config: :any::`NFFG`
+    :param data: whole domain view
+    :type data: :any::`NFFG`
     :return: status code
     :rtype: str
     """
@@ -536,7 +536,7 @@ class UnifiedNodeAPI(OpenStackAPI):
   def get_config (self):
     raise NotImplementedError("Not implemented yet!")
 
-  def edit_config (self, config):
+  def edit_config (self, data):
     raise NotImplementedError("Not implemented yet!")
 
 

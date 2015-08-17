@@ -1745,8 +1745,9 @@ class NFFGConverter(object):
                         action=action, out=out_port))
     return virtualizer, nffg
 
-  def _unescape_virtualizer_un_hack (self, data):
-    return out.replace("&lt;", "<").replace("&gt;", ">")
+  @staticmethod
+  def unescape_output_hack (data):
+    return data.replace("&lt;", "<").replace("&gt;", ">")
 
 
 if __name__ == "__main__":

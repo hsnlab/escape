@@ -582,6 +582,10 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("OpenStack base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self)
+    # Converter object
+    self.converter = NFFGConverter(domain=NFFG.DOMAIN_OS)
+    # Cache for parsed virtualizer
+    self.virtualizer = None
 
   def ping (self):
     try:
@@ -608,15 +612,20 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         "OpenStack agent responded with an error during 'get-config': %s" %
         e.message)
       return None
-    return NFFGConverter(NFFG.DOMAIN_OS).parse_from_Virtualizer3(data)
+    # Covert from XML-based Virtualizer to NFFG
+    nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
+    # Cache virtualizer
+    self.virtualizer = virt
+    return nffg
 
-  def edit_config (self, config):
-    if isinstance(config, NFFG):
-      config = NFFG.dump(config)
-    elif not isinstance(config, (str, unicode)):
+  def edit_config (self, data):
+    if isinstance(data, NFFG):
+      data = self.converter.dump_to_Virtualizer3(nffg=data)
+      data = self.converter.unescape_output_hack(data)
+    elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
-      self.send_request(self.POST, 'edit-config', config)
+      self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
       log.warning("OpenStack agent (%s) is not reachable: %s" % self._base_url)
       return None
@@ -653,6 +662,10 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("Unified Node base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self)
+    # Converter object
+    self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN)
+    # Cache for parsed virtualizer
+    self.virtualizer = None
 
   def ping (self):
     try:
@@ -680,15 +693,20 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         "Unified Node agent responded with an error during 'get-config': %s"
         % e.message)
       return None
-    return NFFG.parse(data)
+    # Covert from XML-based Virtualizer to NFFG
+    nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
+    # Cache virtualizer
+    self.virtualizer = virt
+    return nffg
 
-  def edit_config (self, config):
-    if isinstance(config, NFFG):
-      config = NFFG.dump(config)
-    elif not isinstance(config, (str, unicode)):
+  def edit_config (self, data):
+    if isinstance(data, NFFG):
+      data = self.converter.dump_to_Virtualizer3(nffg=data)
+      data = self.converter.unescape_output_hack(data)
+    elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
-      self.send_request(self.POST, 'edit-config', config)
+      self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
       log.warning(
         "Unified Node agent (%s) is not reachable: %s" % self._base_url)
