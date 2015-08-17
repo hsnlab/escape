@@ -69,11 +69,11 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
         "Mapping algorithm fails due to implementation error or conceptual "
         "error! Cause: %s" % e)
       log.warning("Mapping algorithm on %s aborted!" % graph)
-      return
+      raise
     except:
       log.error("Got unexpected error during mapping process! Cause: %s" %
                 sys.exc_info()[0])
-      return
+      raise
     log.debug(
       "Mapping algorithm: %s is finished on NF-FG: %s" % (cls.__name__, graph))
     return mapped_nffg
@@ -135,8 +135,10 @@ class ResourceOrchestrationMapper(AbstractMapper):
       log.warning(
         "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
         "return resource info..." % LAYER_NAME)
-      virt_resource.id = input_graph.id
-      return virt_resource
+      # virt_resource.id = input_graph.id
+      # return virt_resource
+      # Send request forward (probably to Remote ESCAPE)
+      return input_graph
     # Run actual mapping algorithm
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread

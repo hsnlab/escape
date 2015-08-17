@@ -490,6 +490,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     except KeyError as e:
       # Content-Length header is not defined
       # or charset is not defined in Content-Type header.
+      if e.args[0] == 'Content-Type':
+        self.log.warning("Missing header from request: %s" % e.args[0])
       if e.args[0] == 'Content-Length':
         # 411: ('Length Required', 'Client must specify Content-Length.'),
         raise RESTError(code=411)

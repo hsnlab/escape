@@ -275,8 +275,8 @@ class AbstractDomainManager(EventMixin):
     else:
       # FIXME - maybe just merge especially if we got a diff
       self.internal_topo = data
-    # TODO - implement actual updating
-    # update DoV
+      # TODO - implement actual updating
+      # update DoV
 
   def install_nffg (self, nffg_part):
     """
@@ -644,7 +644,7 @@ class AbstractRESTAdapter(Session):
     if body is not None:
       if isinstance(body, NFFG):
         # if given body is an NFFG
-        body = NFFG.dump(body)
+        body = body.dump()
         kwargs['headers']['Content-Type'] = "application/json"
     # Setup parameters - URL
     if url is not None:

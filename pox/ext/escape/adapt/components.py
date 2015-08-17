@@ -505,7 +505,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     log.debug("Init RemoteESCAPEv2RESTAdapter with URL: %s" % url)
     AbstractRESTAdapter.__init__(self, base_url=url)
-    log.debug("RemoteESCAPEv2 base URL is set to %s" % url)
+    log.debug("RemoteESCAPEv2 base URL is set to %s" % self._base_url)
     AbstractESCAPEAdapter.__init__(self)
 
   def ping (self):
@@ -538,9 +538,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return NFFG.parse(data)
 
   def install_nffg (self, config):
-    if isinstance(config, NFFG):
-      config = NFFG.dump(config)
-    elif not isinstance(config, (str, unicode)):
+    if not isinstance(config, (str, unicode, NFFG)):
       raise RuntimeError("Not supported config format for 'install-nffg'!")
     try:
       self.send_request(self.POST, 'install-nffg', config)
@@ -942,6 +940,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     # Init adapter for remote ESCAPEv2 domain
     self.topoAdapter = configurator.load_component(
       RemoteESCAPEv2RESTAdapter.name)
+    super(RemoteESCAPEDomainManager, self).init(configurator, **kwargs)
 
   def finit (self):
     """
