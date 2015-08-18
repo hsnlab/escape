@@ -739,8 +739,8 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def edit_config (self, data):
     if isinstance(data, NFFG):
-      data = self.converter.dump_to_Virtualizer3(nffg=data)
-      data = self.converter.unescape_output_hack(data)
+      virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
+      data = self.converter.unescape_output_hack(str(virtualizer))
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
@@ -750,7 +750,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return None
     except HTTPError as e:
       log.warning(
-        "OpenStack agent responded with an error during 'get-config': %s" %
+        "OpenStack agent responded with an error during 'edit-config': %s" %
         e.message)
       return None
     return self._response.status_code
@@ -1262,8 +1262,8 @@ class OpenStackDomainManager(AbstractDomainManager):
     log.info("Install %s domain part..." % self.name)
     # TODO - implement just convert NFFG to appropriate format and send out
     # FIXME - convert to appropriate format
-    config = nffg_part.dump()
-    self.topoAdapter.edit_config(config)
+    #config = nffg_part.dump()
+    self.topoAdapter.edit_config(nffg_part)
 
 
 class UnifiedNodeDomainManager(AbstractDomainManager):
