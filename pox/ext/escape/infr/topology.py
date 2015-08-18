@@ -19,6 +19,8 @@ from mininet.clean import cleanup
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
+from mininet.term import makeTerms
+from mininet.link import TCLink
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
@@ -338,6 +340,8 @@ class ESCAPENetworkBridge(object):
                           logger=LAYER_NAME)
         self.started = True
         log.debug("Mininet network has been started!")
+        log.debug("Starting xterm on SAPS...")
+        makeTerms(self.__mininet.hosts, 'host')
       else:
         log.warning(
           "Mininet network has already started! Skipping start task...")
@@ -433,7 +437,9 @@ class ESCAPENetworkBuilder(object):
                   'inNamespace': False,  # Not start element in namespace
                   'autoSetMacs': True,  # Set simple MACs
                   'autoStaticArp': True,  # Set static ARP entries
-                  'listenPort': None}
+                  'listenPort': 6644,  # Add listen port to OVS switches
+                  'link': TCLink  # Add default link
+                  }
   # Default internal storing format for NFFG parsing/reading from file
   DEFAULT_NFFG_FORMAT = "NFFG"
   # Constants
@@ -547,7 +553,8 @@ class ESCAPENetworkBuilder(object):
           "automatic port assignment based on internal Mininet "
           "implementation!" % edge)
       link = self.create_Link(src=mn_src_node, src_port=src_port,
-                              dst=mn_dst_node, dst_port=dst_port)
+                              dst=mn_dst_node, dst_port=dst_port,
+                              bw=edge.bandwidth, delay=str(edge.delay)+'ms')
       created_mn_links[edge.id] = link
     log.info("Topology creation from NFFG has been finished!")
 
