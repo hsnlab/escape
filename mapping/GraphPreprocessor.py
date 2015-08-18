@@ -130,7 +130,7 @@ class GraphPreprocessorClass(object):
         # not contained by E2E chains.
         raise uet.BadInputException(
           "All request edges should be included in some E2E chains - at least "
-          "in this version Request link %s, %s, id: %s is not in any SAP-SAP "
+          "in this version", "Request link %s, %s, id: %s is not in any SAP-SAP "
           "chain" % (i, j, k))
 
     return colored_req

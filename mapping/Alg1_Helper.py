@@ -207,11 +207,11 @@ class MappingManager(object):
 
   def addChain_SubChainDependency (self, subcid, chainids, subc, link_ids):
     """Adds a link between a subchain id and all the chain ids that are
-    contained subcid. Maybe_sap is the first element of the subchain,
-    if it is a SAP add its network pair to last_used_host attribute.
+    contained subcid. If the first element of subc is a SAP add its network 
+    pair to last_used_host attribute. 
     (at this stage, only SAPs are inside the vnf_mapping list)
-    'subchain' is a list of (vnf1,vnf2,linkid) tuples where the subchain
-    goes.
+    'subchain' attribute of a subchain data dictionary 
+    is a list of (vnf1,vnf2,linkid) tuples where the subchain goes.
     """
     # TODO: not E2E chains are also in self.chains, but we don`t find
     # subchains for them, so their latency is not checked, the not E2E

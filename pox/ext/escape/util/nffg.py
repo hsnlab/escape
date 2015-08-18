@@ -736,8 +736,10 @@ def generate_mn_topo ():
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   # Add supported types
-  ee1.add_supported_type(('headerCompressor', 'headerDecompressor'))
-  ee2.add_supported_type(('headerCompressor', 'headerDecompressor'))
+  ee1.add_supported_type(('headerCompressor', 'headerDecompressor', 
+                          'simpleForwarder'))
+  ee2.add_supported_type(('headerCompressor', 'headerDecompressor', 
+                          'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
@@ -749,13 +751,13 @@ def generate_mn_topo ():
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")
   # Add links
-  link_res = {'delay': 1.5, 'bandwidth': 2000}
+  link_res = {'delay': 1.5, 'bandwidth': 10}
   nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1", **link_res)
   nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="link2", **link_res)
   nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3", **link_res)
   nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4", **link_res)
   nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5", **link_res)
-  nffg.duplicate_static_links()
+  # nffg.duplicate_static_links()
   return nffg
 
 
@@ -842,14 +844,19 @@ def generate_mn_test_req ():
   sap1 = test.add_sap(name="SAP1", id="sap1")
   sap2 = test.add_sap(name="SAP2", id="sap2")
   comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
-                     cpu=2, mem=2, storage=0)
+                     cpu=1, mem=1, storage=0)
   decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
-                       func_type="headerDecompressor", cpu=2, mem=2, storage=0)
-  test.add_sglink(sap1.add_port(0), comp.add_port(0))
-  test.add_sglink(comp.add_port(1), decomp.add_port(0))
-  test.add_sglink(decomp.add_port(1), sap2.add_port(0))
+                       func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  fwd = test.add_nf(id="fwd", name="FORWARDER",
+                    func_type="simpleForwarder", cpu=1, mem=1, storage=0)
+  test.add_sglink(sap1.add_port(1), comp.add_port(1), id=1)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=2)
+  test.add_sglink(decomp.ports[1], sap2.add_port(1), id=3)
+  test.add_sglink(sap2.ports[1], fwd.add_port(1), id=4)
+  test.add_sglink(fwd.ports[1], sap1.ports[1], id=5)
 
-  test.add_req(sap1.ports[0], sap2.ports[0], bandwidth=1000, delay=24)
+  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20)
+  test.add_req(sap2.ports[1], sap1.ports[1], bandwidth=4, delay=20)
   return test
 
 
@@ -893,15 +900,74 @@ def gen ():
   return nffg
 
 
+def generate_sdn_topo ():
+  # Create NFFG
+  nffg = NFFG(id="SDN", name="SDN-Topology")
+  # Add MikroTik OF switches
+  sw1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=NFFG.DOMAIN_SDN,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
+  sw2 = nffg.add_infra(id="MT2", name="MikroTik-SW-2", domain=NFFG.DOMAIN_SDN,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
+  sw1.resources.delay = 0.2
+  sw1.resources.bandwidth = 4000
+  sw2.resources.delay = 0.2
+  sw2.resources.bandwidth = 4000
+  # Add SAPs
+  sap14 = nffg.add_sap(id="SAP14", name="SAP14")
+  sap24 = nffg.add_sap(id="SAP24", name="SAP24")
+  # sap34 = nffg.add_sap(id="SAP34", name="SAP34")
+  # Add links
+  l1 = nffg.add_link(sw1.add_port(1), sw2.add_port(1), id="link1")
+  l2 = nffg.add_link(sap14.add_port(1), sw1.add_port(2), id="link2")
+  sw1.add_port(3)
+  sw1.add_port(4)
+  l3 = nffg.add_link(sw2.add_port(2), sap24.add_port(1), id="link3")
+  # l4 = nffg.add_link(sw2.add_port(3), sap34.add_port(1), id="link4")
+  sw2.add_port(4)
+  l1.delay = 0.1
+  l1.bandwidth = 1000
+  l2.delay = 1.5
+  l2.bandwidth = 1000
+  l3.delay = 1.5
+  l3.bandwidth = 1000
+  # l4.delay = 1.5
+  # l4.bandwidth = 1000
+  return nffg
+
+
+def generate_sdn_req ():
+  # Create NFFG
+  nffg = NFFG(id="SDN", name="SDN-Topology")
+  # Add SAPs
+  sap14 = nffg.add_sap(id="SAP14", name="SAP14")
+  sap24 = nffg.add_sap(id="SAP24", name="SAP24")
+  # sap34 = nffg.add_sap(id="SAP34", name="SAP34")
+  sap14.add_port(1)
+  sap24.add_port(1)
+  # sap34.add_port(1)
+  nffg.add_sglink(sap14.ports[1], sap24.ports[1], id=1)
+  # nffg.add_sglink(sap14.ports[1], sap34.ports[1])
+  # nffg.add_sglink(sap24.ports[1], sap14.ports[1])
+  # nffg.add_sglink(sap34.ports[1], sap14.ports[1])
+  nffg.add_req(sap14.ports[1], sap24.ports[1], bandwidth=10, delay=100, id=2)
+  # nffg.add_req(sap14.ports[1], sap34.ports[1], bandwidth=10, delay=100)
+  # nffg.add_req(sap24.ports[1], sap14.ports[1], bandwidth=10, delay=100)
+  # nffg.add_req(sap34.ports[1], sap14.ports[1], bandwidth=10, delay=100)
+  return nffg
+
+
 if __name__ == "__main__":
   # test_NFFG()
   # nffg = generate_mn_topo()
-  # nffg = generate_mn_test_req()
+  nffg = generate_mn_test_req()
   # nffg = generate_dynamic_fallback_nffg()
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
   nffg = gen()
+  # nffg = generate_sdn_topo()
+  # nffg = generate_sdn_req()
 
-  pprint(nffg.network.__dict__)
+
+  # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
   print nffg.dump()
