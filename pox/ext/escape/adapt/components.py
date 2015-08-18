@@ -45,18 +45,24 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
   infra_to_dpid = {
     'MT1': 0x14c5e0c376e24,
     'MT2': 0x14c5e0c376fc6,
-    'SW1': 0x1,
-    'SW2': 0x2,
+    'EE1': 0x1,
+    'EE2': 0x2,
     'SW3': 0x3,
     'SW4': 0x4,
     }
   dpid_to_infra = {
     0x14c5e0c376e24 : 'MT1',
     0x14c5e0c376fc6 : 'MT2',
-    0x1 : 'SW1',
-    0x2 : 'SW2',
+    0x1 : 'EE1',
+    0x2 : 'EE2',
     0x3 : 'SW3',
     0x4 : 'SW4'
+    }
+  saps = {
+    'SW3' : {'port': '3', 
+             'dl_dst': '00:00:00:00:00:01', 'dl_src': '00:00:00:00:00:02'},
+    'SW4' : {'port': '3', 
+             'dl_dst': '00:00:00:00:00:02', 'dl_src': '00:00:00:00:00:01'}
     }
 
   def __init__ (self, name=None, address="127.0.0.1", port=6633):
@@ -211,12 +217,49 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     :type action: dict
     :return: None
     """
-    log.info("Install POX domain part: flow entry to INFRA %s..." % id)
-    print id
-    print infra_to_dpid[id]
-    print match
-    print action
+    from pox.core import core
+    import pox.openflow.libopenflow_01 as of
+    from pox.lib.addresses import EthAddr, IPAddr
 
+    log.info("Install POX domain part: flow entries to INFRA %s..." % id)
+    # print match
+    # print action
+    dpid = InternalPOXAdapter.infra_to_dpid[id]
+    con = core.openflow.getConnection(dpid)
+    
+    msg = of.ofp_flow_mod()
+    msg.match.in_port = match['in_port']
+    try:
+      vid = match['vlan_id']
+      msg.match.dl_vlan = int(vid)
+    except KeyError:
+      pass
+
+    try:
+      vid = action['vlan_push']
+      msg.actions.append(of.ofp_action_vlan_vid(
+          vlan_vid=int(action['vlan_push'])))
+      # msg.actions.append(of.ofp_action_vlan_vid())
+    except KeyError:
+      pass
+    try:
+      if action['vlan_pop']:
+        msg.actions.append(of.ofp_action_strip_vlan())
+    except KeyError:
+      pass
+    out = action['out']
+    try:
+      if out == InternalPOXAdapter.saps[id]['port']:
+        dl_dst = InternalPOXAdapter.saps[id]['dl_dst']
+        dl_src = InternalPOXAdapter.saps[id]['dl_src']
+        msg.actions.append(of.ofp_action_dl_addr.set_dst(EthAddr(dl_dst)))
+        msg.actions.append(of.ofp_action_dl_addr.set_src(EthAddr(dl_src)))
+    except KeyError:
+      pass
+    msg.actions.append(of.ofp_action_output(port = int(action['out'])))
+
+    log.info("flow entry: %s" % msg)
+    con.send(msg)
 
 class InternalMininetAdapter(AbstractESCAPEAdapter):
   """
@@ -804,6 +847,7 @@ class InternalDomainManager(AbstractDomainManager):
     super(InternalDomainManager, self).__init__(**kwargs)
     self.controlAdapter = None  # DomainAdapter for POX - InternalPOXAdapter
     self.remoteAdapter = None  # NETCONF communication - VNFStarterAdapter
+    self.portmap = {}  # Map (unique) dynamic ports to physical ports in EEs
 
   def init (self, configurator, **kwargs):
     """
@@ -842,7 +886,6 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    print nffg_part.dump()
     log.info("Install %s domain part..." % self.name)
     # print nffg_part.dump()
     self._deploy_nfs(nffg_part=nffg_part)
@@ -970,8 +1013,31 @@ class InternalDomainManager(AbstractDomainManager):
           l1, l2 = mn_topo.add_undirected_link(port1=nf_port, port2=infra_port,
                                                dynamic=True, delay=link.delay,
                                                bandwidth=link.bandwidth)
+          # Port mapping
+          dynamic_port = nffg_part.network.node[infra_id].ports[link.dst.id].id
+          self.portmap[dynamic_port] = infra_port_num
+          # Update port in nffg_part
+          nffg_part.network.node[infra_id].ports[link.dst.id].id = infra_port_num
+          
         log.debug("%s topology description is updated with NF: %s" % (
           self.name, deployed_nf.name))
+    # Update port numbers in flowrules
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
+      if infra.id not in (n.id for n in mn_topo.infras):
+        continue
+      for port in infra.ports:
+        for flowrule in port.flowrules:
+          for dyn, phy in self.portmap.iteritems():
+            match = flowrule.match.replace(str(dyn), str(phy))
+            flowrule.match = match
+            action = flowrule.action.replace(str(dyn), str(phy))
+            flowrule.action = action
+
     log.info("Initiation of NFs in NFFG part: %s is finished!" % nffg_part)
 
   def _deploy_flowrules(self, nffg_part):
@@ -984,7 +1050,65 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    pass
+    # Remove unnecessary SG and Requirement links to avoid mess up port
+    # definition of NFs
+    nffg_part.clear_links(NFFG.TYPE_LINK_SG)
+    nffg_part.clear_links(NFFG.TYPE_LINK_REQUIREMENT)
+
+    # # Get physical topology description from POX adapter
+    # topo = self.controlAdapter.get_topology_resource()
+    topo = self.topoAdapter.get_topology_resource()
+
+    import re  # regular expressions
+    # Iter through the container INFRAs in the given mapped NFFG part
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        log.debug(
+          "Infrastructure Node: %s (type: %s) is not Switch or Container type! "
+          "Continue to next Node..." % (infra.short_name, infra.infra_type))
+        continue
+      # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
+      if infra.id not in (n.id for n in topo.infras):
+        log.error(
+          "Infrastructure Node: %s is not found in the %s domain! Skip "
+          "flowrule install on this Node..." % (infra.short_name, self.name))
+        continue
+      for port in infra.ports:
+        for flowrule in port.flowrules:
+          match = {}
+          action = {}
+          # if re.search(r';', flowrule.match):
+          #   # multiple elements in match field
+          #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
+          # else:
+          #   # single element in match field
+          #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
+          match['in_port'] = port.id
+          # Check match fileds - currently only vlan_id
+          # TODO: add further match fields
+          if re.search(r'TAG', flowrule.match):
+            tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
+            match['vlan_id'] = tag
+
+          if re.search(r';', flowrule.action):
+            # multiple elements in action field
+            out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
+          else:
+            # single element in action field
+            out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
+          action['out'] = out
+
+          if re.search(r'TAG', flowrule.action):
+            if re.search(r'UNTAG', flowrule.action):
+              action['vlan_pop'] = True
+            else:
+              push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
+              action['vlan_push'] = push_tag
+
+          self.controlAdapter.install_flowrule(infra.id, 
+                                               match=match, action=action)
 
 
 class RemoteESCAPEDomainManager(AbstractDomainManager):
@@ -1243,6 +1367,7 @@ class SDNDomainManager(AbstractDomainManager):
     :return: None
     """
     log.info("Install %s domain part..." % self.name)
+    log.info("NFFG: \n %s" % nffg_part.dump())
     self._deploy_flowrules(nffg_part=nffg_part)
 
   def _deploy_flowrules(self, nffg_part):
@@ -1277,36 +1402,37 @@ class SDNDomainManager(AbstractDomainManager):
           "Infrastructure Node: %s is not found in the %s domain! Skip "
           "flowrule install on this Node..." % (infra.short_name, self.name))
         continue
-      for flowrule in nffg_part.flowrules:
-        match = {}
-        action = {}
-        if re.search(r';', flowrule['match']):
-          # multiple elements in match field
-          in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
-        else:
-          # single element in match field
-          in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
-        match['in_port'] = in_port
-        # Check match fileds - currently only vlan_id
-        # TODO: add further match fields
-        if re.search(r'TAG', flowrule['match']):
-          tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
-          match['vlan_id'] = tag
+      for port in infra.ports:
+        for flowrule in port.flowrules:
+          match = {}
+          action = {}
+          # if re.search(r';', flowrule.match):
+          #   # multiple elements in match field
+          #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
+          # else:
+          #   # single element in match field
+          #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
+          match['in_port'] = port.id
+          # Check match fileds - currently only vlan_id
+          # TODO: add further match fields
+          if re.search(r'TAG', flowrule.match):
+            tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
+            match['vlan_id'] = tag
 
-        if re.search(r';', flowrule['action']):
-          # multiple elements in action field
-          out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
-        else:
-          # single element in action field
-          out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
-        action['out'] = out
-
-        if re.search(r'TAG', flowrule['action']):
-          if re.search(r'UNTAG', flowrule['action']):
-            action['vlan_pop'] = True
+          if re.search(r';', flowrule.action):
+            # multiple elements in action field
+            out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
           else:
-            push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
-            action['vlan_push'] = push_tag
+            # single element in action field
+            out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
+          action['out'] = out
 
-        self.controlAdapter.install_flowrule(infra.id, 
-                                             match=match, action=action)
+          if re.search(r'TAG', flowrule.action):
+            if re.search(r'UNTAG', flowrule.action):
+              action['vlan_pop'] = True
+            else:
+              push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
+              action['vlan_push'] = push_tag
+
+          self.controlAdapter.install_flowrule(infra.id, 
+                                               match=match, action=action)
