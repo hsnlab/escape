@@ -1445,6 +1445,12 @@ class NFFGConverter(object):
         _cpu = inode.resources.cpu.getAsText().split(' ')[0]
         _mem = inode.resources.mem.getAsText().split(' ')[0]
         _storage = inode.resources.storage.getAsText().split(' ')[0]
+        try:
+          _cpu = int(_cpu)
+          _mem = int(_mem)
+          _storage = int(_storage)
+        except KeyError:
+          pass
       else:
         _cpu = sys.maxint
         _mem = sys.maxint
@@ -1452,8 +1458,8 @@ class NFFGConverter(object):
       # Add Infra Node
       infra = nffg.add_infra(id=_id, name=_name, domain=_domain,
                              infra_type=_type, cpu=_cpu, mem=_mem,
-                             # storage=_storage, delay=0, bandwidth=sys.maxint)
-                             storage=_storage)
+                             storage=_storage, delay=0, bandwidth=sys.maxint)
+                             # storage=_storage)
       # Add supported types
       for sup_nf in inode.capabilities.supported_NFs:
         # FIXME - check id,type or what should be collect?
@@ -1492,9 +1498,9 @@ class NFFGConverter(object):
             infra_port.add_property(
               "capability:%s" % port.capability.getValue())
           # Add connection between infra - SAP
-          # nffg.add_undirected_link(port1=sap_port, port2=infra_port, delay=0,
-          #                          bandwidth=sys.maxint)
-          nffg.add_undirected_link(port1=sap_port, port2=infra_port)
+          nffg.add_undirected_link(port1=sap_port, port2=infra_port, delay=0,
+                                   bandwidth=sys.maxint)
+          # nffg.add_undirected_link(port1=sap_port, port2=infra_port)
         elif port.port_type.getValue() == "port-abstract":
           # Add default port
           try:
@@ -1525,8 +1531,8 @@ class NFFGConverter(object):
         # Create NodeNF
         nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
                          dep_type=nf_dtype, cpu=nf_cpu, mem=nf_mem,
-                         # storage=nf_storage, delay=0, bandwidth=sys.maxint)
-                         storage=nf_storage)
+                         storage=nf_storage, delay=0, bandwidth=sys.maxint)
+                         #storage=nf_storage)
         # Create NF ports
         for port in nf_inst.ports:
           nf_port = nf.add_port(id=port.id.getAsText())
@@ -1543,9 +1549,9 @@ class NFFGConverter(object):
                           len(infra.ports))
           nffg.add_undirected_link(port1=nf_port,
                                    port2=infra.add_port(id=next_port),
-                                   # dynamic=True, delay=0,
-                                   # bandwidth=sys.maxint)
-                                   dynamic=True)
+                                   dynamic=True, delay=0,
+                                   bandwidth=sys.maxint)
+                                   #dynamic=True)
           # FIXME - add flowrule parsing
     return nffg, virtualizer
 
@@ -1731,7 +1737,7 @@ class NFFGConverter(object):
               if fr[1].split('=')[0] == "TAG":
                 vlan = int(fr[1].split('=')[1].split('-')[-1])
                 if self.domain == NFFG.DOMAIN_OS:
-                  action = r"dl_vlan=%s" % format(vlan, '#06x')
+                  action = r"mod_vlan_vid:%s" % format(vlan, '#06x')
                 elif self.domain == NFFG.DOMAIN_UN:
                   action = u"<vlan_id>%s<vlan_id>" % vlan
               elif fr[1].split('=')[0] == "UNTAG":
