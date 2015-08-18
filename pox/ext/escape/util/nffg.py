@@ -956,17 +956,30 @@ def generate_sdn_req ():
   return nffg
 
 
+def generate_os_req ():
+  test = NFFG(id="OS-req", name="SG-name")
+  sap1 = test.add_sap(name="SAP24", id="0")
+  webserver = test.add_nf(id="webserver", name="webserver", func_type="webserver",
+                     cpu=1, mem=1, storage=0)
+  test.add_sglink(sap1.add_port(0), webserver.add_port(0), id=1)
+  test.add_sglink(webserver.ports[0], sap1.ports[0], id=2)
+
+  test.add_req(sap1.ports[0], webserver.ports[0], bandwidth=1, delay=20)
+  test.add_req(webserver.ports[0], sap1.ports[0], bandwidth=1, delay=20)
+  return test
+
+
 if __name__ == "__main__":
   # test_NFFG()
   # nffg = generate_mn_topo()
-  nffg = generate_mn_test_req()
+  # nffg = generate_mn_test_req()
   # nffg = generate_dynamic_fallback_nffg()
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
   nffg = gen()
   # nffg = generate_sdn_topo()
   # nffg = generate_sdn_req()
-
+  nffg = generate_os_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()

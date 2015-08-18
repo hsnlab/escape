@@ -51,6 +51,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     """
     log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
+    # print graph.dump()
+    # print resource.dump()
     try:
       mapped_nffg = MAP(request=graph.copy(), network=resource.copy())
       # Set mapped NFFG id for original SG request tracking

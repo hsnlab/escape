@@ -59,7 +59,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
                         # "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
-                        "DEFAULTS": ("OPENSTACK", "SDN"),
+                        "DEFAULTS": ["OPENSTACK"],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.components",
                                          "class": "InternalPOXAdapter",
@@ -77,7 +77,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                         "url": "http://localhost:8888/escape/"},
                         "OpenStack-REST": {"module": "escape.adapt.components",
                                            "class": "OpenStackRESTAdapter",
-                                           "url": "http://localhost:8080"},
+                                           "url": "http://192.168.1.103:8888/virtualizer/"},
                         "UN-REST": {"module": "escape.adapt.components",
                                     "class": "UnifiedNodeRESTAdapter",
                                     "url": "http://localhost:8080"},

@@ -6,15 +6,6 @@
   }, 
   "node_saps": [
     {
-      "id": "SAP34", 
-      "name": "SAP34", 
-      "ports": [
-        {
-          "id": 1
-        }
-      ]
-    }, 
-    {
       "id": "SAP14", 
       "name": "SAP14", 
       "ports": [
@@ -43,9 +34,6 @@
         }, 
         {
           "id": 2
-        }, 
-        {
-          "id": 3
         }, 
         {
           "id": 4
@@ -85,21 +73,12 @@
   ], 
   "edge_links": [
     {
-      "id": "link4", 
-      "src_node": "MT2", 
-      "src_port": 3, 
-      "dst_node": "SAP34", 
-      "dst_port": 1, 
-      "delay": 1.5, 
-      "bandwidth": 1000
-    }, 
-    {
       "id": "link3", 
       "src_node": "MT2", 
       "src_port": 2, 
       "dst_node": "SAP24", 
       "dst_port": 1, 
-      "delay": 1.5, 
+      "delay": 0, 
       "bandwidth": 1000
     }, 
     {
@@ -113,11 +92,11 @@
     }, 
     {
       "id": "link2", 
-      "src_node": "MT1", 
-      "src_port": 2, 
-      "dst_node": "SAP14", 
-      "dst_port": 1, 
-      "delay": 1.5, 
+      "dst_node": "MT1", 
+      "dst_port": 2, 
+      "src_node": "SAP14", 
+      "src_port": 1, 
+      "delay": 0, 
       "bandwidth": 1000
     }
   ]
