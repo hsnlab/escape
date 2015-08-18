@@ -750,6 +750,9 @@ def generate_mn_topo ():
   # Add SAPs
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")
+  sap14 = nffg.add_sap(id="SAP14", name="SAP14")
+  sap14.domain = "SDN"
+
   # Add links
   link_res = {'delay': 1.5, 'bandwidth': 10}
   nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1", **link_res)
@@ -757,6 +760,7 @@ def generate_mn_topo ():
   nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3", **link_res)
   nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4", **link_res)
   nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5", **link_res)
+  nffg.add_link(sw4.add_port(4), sap14.add_port(1), id="link6", **link_res)
   # nffg.duplicate_static_links()
   return nffg
 
@@ -959,13 +963,17 @@ def generate_sdn_req ():
 def generate_os_req ():
   test = NFFG(id="OS-req", name="SG-name")
   sap1 = test.add_sap(name="SAP24", id="0")
+  sap2 = test.add_sap(name="SAP42", id="1")
   webserver = test.add_nf(id="webserver", name="webserver", func_type="webserver",
                      cpu=1, mem=1, storage=0)
+  # echo = test.add_nf(id="echo", name="echo", func_type="echo",
+  #                    cpu=1, mem=1, storage=0)
   test.add_sglink(sap1.add_port(0), webserver.add_port(0), id=1)
-  test.add_sglink(webserver.ports[0], sap1.ports[0], id=2)
+  test.add_sglink(webserver.ports[0], sap2.add_port(0), id=2)
 
-  test.add_req(sap1.ports[0], webserver.ports[0], bandwidth=1, delay=20)
-  test.add_req(webserver.ports[0], sap1.ports[0], bandwidth=1, delay=20)
+  # test.add_req(sap1.ports[0], webserver.ports[0], bandwidth=1, delay=20)
+  # test.add_req(webserver.ports[0], sap2.ports[0], bandwidth=1, delay=20)
+  test.add_req(sap1.ports[0], sap2.ports[0], bandwidth=1, delay=100)
   return test
 
 
@@ -976,7 +984,7 @@ if __name__ == "__main__":
   # nffg = generate_dynamic_fallback_nffg()
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
-  nffg = gen()
+  # nffg = gen()
   # nffg = generate_sdn_topo()
   # nffg = generate_sdn_req()
   nffg = generate_os_req()
