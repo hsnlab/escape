@@ -254,7 +254,10 @@ class AbstractDomainManager(EventMixin):
       # print topo_nffg.dump()
       if topo_nffg:
         log.debug("Save received NF-FG: %s..." % topo_nffg)
-        self.update_resource_info(topo_nffg)
+        # Cache the requested topo
+        self.update_local_resource_info(topo_nffg)
+        # Notify all components for topology change --> this event causes
+        # the DoV updating
         self.raiseEventNoErrors(DomainChangedEvent, domain=self.name,
                                 cause=DomainChangedEvent.TYPE.NETWORK_UP,
                                 data=topo_nffg)
@@ -262,7 +265,7 @@ class AbstractDomainManager(EventMixin):
         log.warning("Resource info is missing!")
     return self._detected
 
-  def update_resource_info (self, data=None):
+  def update_local_resource_info (self, data=None):
     """
     Update the resource information of this domain with the requested
     configuration.

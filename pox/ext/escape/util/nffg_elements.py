@@ -637,8 +637,27 @@ class NodeSAP(Node):
   Class for SAP nodes in the NF-FG.
   """
 
-  def __init__ (self, id=None, name=None):
+  def __init__ (self, id=None, name=None, domain=None):
     super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name)
+    # Signals if the SAP is an inter-domain SAP
+    self.domain = domain
+
+  def __str__ (self):
+    return "SAP(id: %s, name: %s)" % (self.id, self.name)
+
+  def __repr__ (self):
+    return super(NodeSAP, self).__repr__()
+
+  def persist (self):
+    sap = super(NodeSAP, self).persist()
+    if self.domain is not None:
+      sap['domain'] = self.domain
+    return sap
+
+  def load (self, data, *args, **kwargs):
+    super(NodeSAP, self).load(data)
+    self.domain = data.get('domain')
+    return self
 
 
 class NodeInfra(Node):
@@ -655,6 +674,7 @@ class NodeInfra(Node):
   DOMAIN_INTERNAL = "INTERNAL"
   DOMAIN_OS = "OPENSTACK"
   DOMAIN_UN = "UNIFIED_NODE"
+  DOMAIN_SDN = "SDN"
   DOMAIN_DOCKER = "DOCKER"
 
   def __init__ (self, id=None, name=None, domain=None, infra_type=None,
@@ -760,6 +780,13 @@ class NodeInfra(Node):
       self.resources.load(data['resources'])
     return self
 
+  def __str__ (self):
+    return "Infra(id: %s, name: %s, type: %s)" % (
+      self.id, self.name, self.infra_type)
+
+  def __repr__ (self):
+    return super(NodeInfra, self).__repr__()
+
 
 ################################################################################
 # ---------- SG REQUIREMENTS / SG NEXT_HOPS / INFRASTRUCTURE LINKS -----------
@@ -821,6 +848,10 @@ class EdgeLink(Link):
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
     return self
+
+  def __str__ (self):
+    return "Link(id: %s, src: %s, dst: %s, type: %s)" % (
+      self.id, self.src.id, self.dst.id, self.type)
 
   def __repr__ (self):
     return "<|ID: %s, Type: %s, Back: %s, src: %s, dst: %s --> %s|>" % (

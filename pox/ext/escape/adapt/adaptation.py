@@ -365,8 +365,11 @@ class DomainVirtualizer(AbstractVirtualizer):
       DoV, global_res))
     # Garbage-collector safe
     self.domainResManager = weakref.proxy(domainResManager)
-    self.__global_nffg = self.set_global_view(
-      global_res) if global_res is not None else None
+    if global_res is not None:
+      self.set_global_view(domain=NFFG.DOMAIN_VIRTUAL, nffg=global_res)
+    else:
+      self.__global_nffg = None
+      """:type: NFFG"""
 
   @property
   def name (self):
@@ -388,7 +391,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     return self.__global_nffg
 
-  def set_global_view (self, nffg):
+  def set_global_view (self, domain, nffg):
     """
     Set the copy of given NFFG as the global view of DoV.
 
@@ -396,21 +399,70 @@ class DomainVirtualizer(AbstractVirtualizer):
     :type nffg: :any:`NFFG`
     :return: None
     """
+    log.debug("DoV is empty! Add new domain: %s as the global view!" % domain)
     self.__global_nffg = nffg.copy()
     self.__global_nffg.id = "dov-" + self.__global_nffg.generate_id()
     self.__global_nffg.name = "DoV"
 
+  def merge_domain_into_dov (self, domain, nffg):
+    """
+    Add a newly detected domain to DoV.
+    """
+    # Create full copy
+    nffg = nffg.copy()
+    # from pprint import pprint
+    # pprint(self.__global_nffg.network.__dict__)
+    # Copy infras
+    log.debug("Merge domain: %s resource info into DoV..." % domain)
+    for infra in nffg.infras:
+      self.__global_nffg.add_infra(infra=infra)
+      log.debug("Copy infra node: %s" % infra)
+    # Copy SAPs
+    for sap in nffg.saps:
+      # If inter-domain connection is found -> merge saps into a link
+      if sap.id in {s.id for s in self.__global_nffg.saps}:
+        log.debug("Detected inter-domain SAP: %s" % sap)
+        # Get DoV side infra port of inter domain SAP
+        link_dov = [link for u, v, link in
+                    self.__global_nffg.network.out_edges_iter([sap.id],
+                                                              data=True) if
+                    link.type == NFFG.TYPE_LINK_STATIC]
+        if len(link_dov) > 1:
+          log.warning(
+            "Inter-domain SAP should be only one connection to it's domain!")
+        dov_port = link_dov[0].dst
+        # Add property to save inter-domain information in merged NFFG
+        dov_port.add_property("inter-domain:%s" % sap.id)
+        # Get new domain side infra port
+        link_nffg = [link for u, v, link in
+                     nffg.network.out_edges_iter([sap.id], data=True) if
+                     link.type == NFFG.TYPE_LINK_STATIC]
+        if len(link_nffg) > 1:
+          log.warning(
+            "Inter-domain SAP should be only one connection to it's domain!")
+        # Add property to save inter-domain information in merged NFFG
+        nffg_port = link_nffg[0].dst
+        nffg_port.add_property("inter-domain:%s" % sap.id)
+        # Add inter-domain link here, because it's not in any of the two NFFG
+        self.__global_nffg.add_undirected_link(port1=dov_port, port2=nffg_port,
+                                               delay=link_dov[0].delay,
+                                               bandwidth=link_dov[0].bandwidth)
+        # Remove original inter-domain SAP (and the connection as well)
+        self.__global_nffg.del_node(sap.id)
+        # Remove new domain SAP to skip founding it the further
+        nffg.del_node(sap.id)
+      else:
+        # Not inter-domain SAP -> just copy
+        log.debug("Copy SAP: %s" % sap)
+        self.__global_nffg.add_sap(sap=sap)
+      for link in {l for l in nffg.links if l.type == NFFG.TYPE_LINK_STATIC}:
+        log.debug("Copy connection: %s" % link)
+        self.__global_nffg.add_link(src_port=link.src, dst_port=link.dst,
+                                    link=link)
+
   def update_domain_view (self, domain, nffg):
     """
     """
-    pass
-
-  def add_domain_view (self, nffg):
-    """
-    """
-    pass
-
-  def update_global_view (self, nffg):
     pass
 
 
@@ -447,15 +499,22 @@ class DomainResourceManager(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
+    if domain == "INTERNAL-POX":
+      # skip POX events currently
+      pass
     if domain not in self._tracked_domains:
       log.info("Add %s domain to <Global Resource View> (DoV)..." % domain)
       if self._tracked_domains:
-        self.__dov.add_domain_view(nffg)
+        # Merge domain topo into global view
+        self.__dov.merge_domain_into_dov(domain, nffg)
       else:
-        self.__dov.set_global_view(nffg)
+        # No other domain detected, set NFFG as the whole global view
+        self.__dov.set_global_view(domain, nffg)
+      # Add detected domain to cached domains
       self._tracked_domains.add(domain)
     else:
       log.info("Updating <Global Resource View> from %s domain..." % domain)
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
-        self.__dov.update_global_view(nffg)
+        self.__dov.update_domain_view(nffg)
+    print self.__dov.get_resource_info().dump()

@@ -59,7 +59,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
                         # "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
-                        "DEFAULTS": [],
+                        "DEFAULTS": ["OPENSTACK"],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.components",
                                          "class": "InternalPOXAdapter"},

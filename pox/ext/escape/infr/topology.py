@@ -518,16 +518,23 @@ class ESCAPENetworkBuilder(object):
       else:
         raise RuntimeError("Building of %s is not supported by %s!" % (
           infra.infra_type, self.__class__.__name__))
-    # Create SAPs
-    for sap in nffg.saps:
+    # Create SAPs - skip the temporary, inter-domain SAPs
+    for sap in {s for s in nffg.saps if not s.domain}:
       # Create SAP
       sap_host = self.create_SAP(name=sap.id)
       created_mn_nodes[sap.id] = sap_host
     # Convert VNFs
     # TODO - implement --> currently the default Mininet topology does not
     # TODO contain NFs but it could be possible
-    # Convert connections
+    # Convert connections - copy link ref in a list and iter over it
     for edge in [l for l in nffg.links]:
+      # Skip initiation of links which connected to an inter-domain SAP
+      if (
+               edge.src.node.type == NFFG.TYPE_SAP and edge.src.node.domain
+           is not None) or (
+               edge.dst.node.type == NFFG.TYPE_SAP and edge.dst.node.domain
+           is not None):
+        continue
       # Create Links
       mn_src_node = created_mn_nodes.get(edge.src.node.id)
       mn_dst_node = created_mn_nodes.get(edge.dst.node.id)
