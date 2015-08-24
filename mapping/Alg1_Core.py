@@ -53,8 +53,8 @@ class CoreAlgorithm(object):
     self.original_chains = chains0
     
     # parameters contolling the backtrack process
-    self.bt_branching_factor = 2
-    self.bt_limit = 3
+    self.bt_branching_factor = 1
+    self.bt_limit = 0
 
     self._preproc(net0, req0, chains0)
 

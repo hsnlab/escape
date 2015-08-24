@@ -321,17 +321,75 @@ def _example_request_for_fallback ():
 
   return nffg
 
+def _testNetworkForBacktrack():
+  nffg = NFFG(id="backtracktest", name="backtrack")
+  sap1 = nffg.add_sap(name="SAP1", id="sap1")
+  sap2 = nffg.add_sap(name="SAP2", id="sap2")
+
+  uniformnoderes = {'cpu': 5, 'mem': 5, 'storage': 5, 'delay': 0.9,
+                    'bandwidth': 5500}
+  infra0 = nffg.add_infra(id="node0", name="INFRA0", **uniformnoderes)
+  uniformnoderes2 = {'cpu':9, 'mem': 9, 'storage': 9, 'delay': 0.9,
+                    'bandwidth': 5500}
+  infra1 = nffg.add_infra(id="node1", name="INFRA1", **uniformnoderes2)
+  swres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.0,
+                    'bandwidth': 10000}
+  sw = nffg.add_infra(id="sw", name="sw1", **swres)
+
+  infra0.add_supported_type(['A'])
+  infra1.add_supported_type(['A'])
+  
+  unilinkres = {'delay': 0.0, 'bandwidth': 2000}
+  nffg.add_undirected_link(sap1.add_port(0), infra0.add_port(0), 
+                           **unilinkres)
+  nffg.add_undirected_link(sap2.add_port(0), infra1.add_port(0), 
+                           **unilinkres)
+  rightlink = {'delay': 10.0, 'bandwidth': 2000}
+  leftlink = {'delay': 0.01, 'bandwidth': 5000}
+  nffg.add_link(infra0.add_port(1), sw.add_port(0), id="n0sw", **rightlink)
+  nffg.add_link(sw.add_port(1), infra1.add_port(1), id="swn1", **rightlink)
+  nffg.add_link(sw.ports[0], infra0.ports[1], id="swn0", **leftlink)
+  nffg.add_link(sw.ports[1], infra1.ports[1], id="swn1", **leftlink)
+  
+  return nffg
+  
+def _testRequestForBacktrack():
+  nffg = NFFG(id="backtracktest-req", name="btreq")
+  sap1 = nffg.add_sap(name="SAP1", id="sap1req")
+  sap2 = nffg.add_sap(name="SAP2", id="sap2req")
+  
+  a = nffg.add_nf(id="a", name="NetFunc0", func_type='A', cpu=3, mem=3,
+                    storage=3)
+  b = nffg.add_nf(id="b", name="NetFunc1", func_type='A', cpu=3, mem=3,
+                    storage=3)
+  c = nffg.add_nf(id="c", name="NetFunc2", func_type='A', cpu=3, mem=3,
+                    storage=3)
+
+  nffg.add_sglink(sap1.add_port(0), a.add_port(0), id="sa")
+  nffg.add_sglink(a.add_port(1), b.add_port(0), id="ab")
+  nffg.add_sglink(b.add_port(1), c.add_port(0), id="bc")
+  nffg.add_sglink(c.add_port(1), sap2.add_port(0), id="cs")
+
+  nffg.add_req(a.ports[0], b.ports[1], delay=1.0)
+  nffg.add_req(b.ports[0], c.ports[1], delay=1.0)
+  nffg.add_req(c.ports[0], sap2.ports[0], delay=1.0)
+  nffg.add_req(sap1.ports[0], sap2.ports[0], delay=50, bandwidth=10)
+  
+  return nffg
+
 
 if __name__ == '__main__':
   try:
-    req = _constructExampleRequest()
-    net = _constructExampleNetwork()
+    # req = _constructExampleRequest()
+    # net = _constructExampleNetwork()
 
     # req = _example_request_for_fallback()
     # print req.dump()
     # this is the dynamic fallback topology taken from nffg.py
     # net = generate_dynamic_fallback_nffg()
     # print net.dump()
+    req = _testRequestForBacktrack()
+    net = _testNetworkForBacktrack()
     mapped = MAP(req, net)
     print mapped.dump()
   except uet.UnifyException as ue:
