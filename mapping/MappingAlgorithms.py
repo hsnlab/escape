@@ -1,4 +1,4 @@
-# Copyright (c) 2014 Balazs Nemeth
+# Copyright (c) 2015 Balazs Nemeth
 #
 # This file is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ invocation details.
 NOTE: Currently only SAP-to-SAP EdgeReqs, or link-local (which are parallel 
 with an SGLink) EdgeReqs are supported. After generating the service chains
 from the EdgeReqs, all SG links must be in one of the subchains. 
-TODO: map best-effort links.
+TODO: map best-effort links (not part of any subchain).
 """
 
 import traceback

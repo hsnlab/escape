@@ -87,7 +87,8 @@ class GraphPreprocessorClass(object):
       self.log.error(
         "Chain end is further than latency requirement, for chain: %s" % chain)
       raise uet.MappingException(
-        "Chain end is further than latency requirement, for chain: %s" % chain)
+        "Chain end is further than latency requirement, for chain: %s" % chain,
+        False)
 
     # attributes of nx::subgraph() points to the original, better call copy()
     # -DON`T we want attribute changes to be reflected in the big
@@ -198,7 +199,8 @@ class GraphPreprocessorClass(object):
                               n in current_place_crit]
             if len(new_place_crit) == 0:
               raise uet.MappingException(
-                "Given and internal placement criteria has no intersection.")
+                "Given and internal placement criteria has no intersection.",
+                False)
             self.req_graph.network.node[
               next_vnf].placement_criteria = new_place_crit
           else:
@@ -455,18 +457,20 @@ class GraphPreprocessorClass(object):
         # we should also know how many links are mapped, now we subtract
         # only the VNF`s internal bandwidth requirement from the infra`s
         # bandwidth capacity
-        newres = helper.subtractNodeRes(net.network.node[n.id].availres,
-                                        net.network.node[vnf.id].resources)
-        if newres is None:
+        try: 
+          newres = helper.subtractNodeRes(net.network.node[n.id].availres,
+                                          net.network.node[vnf.id].resources,
+                                          net.network.node[n.id].resources)
+        except uet.InternalAlgorithmException:
           raise uet.BadInputException(
             "Infra node`s resources are expected to represent its maximal "
-            "capabilities. The NodeNF(s) running on Infra node %s, use(s) more "
-            "resource than the maximal." % n.name)
-        else:
-          net.network.node[n.id].availres = newres
-          # WARNING: by deleting the VNFs the dynamic links` end port
-          # in the Infra node, remains in the NFFG structure.
-          net.del_node(vnf.id)
+            "capabilities.", "The NodeNF(s) running on Infra node %s, use(s)"
+            "more resource than the maximal." % n.name)
+        
+        net.network.node[n.id].availres = newres
+        # WARNING: by deleting the VNFs the dynamic links` end port
+        # in the Infra node, remains in the NFFG structure.
+        net.del_node(vnf.id)
 
     for i, j, k in net.network.edges_iter(keys=True):
       if net.network[i][j][k].type != 'STATIC':
