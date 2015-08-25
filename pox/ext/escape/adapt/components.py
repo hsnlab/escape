@@ -126,6 +126,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
         with open(path, 'r') as f:
           log.info("Load SDN topology from file: %s" % path)
           self.topo = NFFG.parse(f.read())
+          self.topo.duplicate_static_links()
       except IOError:
         log.debug("SDN topology file not found: %s" % path)
         raise TopologyLoadException("Missing topology file!")
@@ -820,8 +821,8 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def edit_config (self, data):
     if isinstance(data, NFFG):
-      data = self.converter.dump_to_Virtualizer3(nffg=data)
-      data = self.converter.unescape_output_hack(data)
+      virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
+      data = self.converter.unescape_output_hack(str(virtualizer))
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
@@ -832,7 +833,7 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return None
     except HTTPError as e:
       log.warning(
-        "Unified Node agent responded with an error during 'get-config': %s"
+        "Unified Node agent responded with an error during 'edit-config': %s"
         % e.message)
       return None
     return self._response.status_code
@@ -1263,6 +1264,8 @@ class OpenStackDomainManager(AbstractDomainManager):
     # TODO - implement just convert NFFG to appropriate format and send out
     # FIXME - convert to appropriate format
     #config = nffg_part.dump()
+    with open('pox/global-mapped-os.nffg', 'r') as f:
+      nffg_part = f.read()
     self.topoAdapter.edit_config(nffg_part)
 
 
@@ -1304,8 +1307,11 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
     log.info("Install %s domain part..." % self.name)
     # TODO - implement just convert NFFG to appropriate format and send out
     # FIXME - convert to appropriate format
-    config = nffg_part.dump()
-    self.topoAdapter.edit_config(config)
+    # print nffg_part.dump()
+    # self.topoAdapter.edit_config(nffg_part)
+    with open('pox/global-mapped-un.nffg', 'r') as f:
+      nffg_part = f.read()
+    self.topoAdapter.edit_config(nffg_part)
 
 
 class DockerDomainManager(AbstractDomainManager):
@@ -1415,7 +1421,7 @@ class SDNDomainManager(AbstractDomainManager):
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in topo.infras):
-        log.error(
+        log.warning(
           "Infrastructure Node: %s is not found in the %s domain! Skip "
           "flowrule install on this Node..." % (infra.short_name, self.name))
         continue
