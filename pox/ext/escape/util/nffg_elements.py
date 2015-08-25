@@ -677,6 +677,7 @@ class NodeInfra(Node):
   DOMAIN_SDN = "SDN"
   DOMAIN_DOCKER = "DOCKER"
   DOMAIN_SDN = "SDN"
+  DOMAIN_REMOTE = "REMOTE"
 
   def __init__ (self, id=None, name=None, domain=None, infra_type=None,
        supported=None, res=None):
