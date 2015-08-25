@@ -28,6 +28,7 @@ TODO: map best-effort links (not part of any subchain).
 import traceback
 
 import networkx as nx
+from pprint import pformat
 
 try:
   from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg
@@ -172,10 +173,10 @@ def MAP (request, network):
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
-  # print "\nThe VNF mappings are (vnf_id, node_id):\n", pformat(
-  #   alg.manager.vnf_mapping)
-  # print "\n The link mappings are:\n", pformat(
-  #   alg.manager.link_mapping.edges(data=True, keys=True))
+  print "\nThe VNF mappings are (vnf_id, node_id):\n", pformat(
+     alg.manager.vnf_mapping)
+  print "\n The link mappings are:\n", pformat(
+     alg.manager.link_mapping.edges(data=True, keys=True))
 
   # n0_nffg = alg.returnMappedNFFGofOneBiSBiS("node0")
   # n1_nffg = alg.returnMappedNFFGofOneBiSBiS("node1")
@@ -326,10 +327,10 @@ def _testNetworkForBacktrack():
   sap1 = nffg.add_sap(name="SAP1", id="sap1")
   sap2 = nffg.add_sap(name="SAP2", id="sap2")
 
-  uniformnoderes = {'cpu': 5, 'mem': 5, 'storage': 5, 'delay': 0.9,
+  uniformnoderes = {'cpu': 5, 'mem': 5, 'storage': 5, 'delay': 0.4,
                     'bandwidth': 5500}
   infra0 = nffg.add_infra(id="node0", name="INFRA0", **uniformnoderes)
-  uniformnoderes2 = {'cpu':9, 'mem': 9, 'storage': 9, 'delay': 0.9,
+  uniformnoderes2 = {'cpu':9, 'mem': 9, 'storage': 9, 'delay': 0.4,
                     'bandwidth': 5500}
   infra1 = nffg.add_infra(id="node1", name="INFRA1", **uniformnoderes2)
   swres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.0,
@@ -349,7 +350,7 @@ def _testNetworkForBacktrack():
   nffg.add_link(infra0.add_port(1), sw.add_port(0), id="n0sw", **rightlink)
   nffg.add_link(sw.add_port(1), infra1.add_port(1), id="swn1", **rightlink)
   nffg.add_link(sw.ports[0], infra0.ports[1], id="swn0", **leftlink)
-  nffg.add_link(sw.ports[1], infra1.ports[1], id="swn1", **leftlink)
+  nffg.add_link(infra1.ports[1], sw.ports[1], id="n1sw", **leftlink)
   
   return nffg
   
@@ -391,7 +392,7 @@ if __name__ == '__main__':
     req = _testRequestForBacktrack()
     net = _testNetworkForBacktrack()
     mapped = MAP(req, net)
-    print mapped.dump()
+    # print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
     print traceback.format_exc()

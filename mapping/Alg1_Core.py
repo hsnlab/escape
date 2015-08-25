@@ -53,8 +53,10 @@ class CoreAlgorithm(object):
     self.original_chains = chains0
     
     # parameters contolling the backtrack process
-    self.bt_branching_factor = 1
-    self.bt_limit = 0
+    # how many of the best possible VNF mappings should be remembered
+    self.bt_branching_factor = 4
+    # how deep the backtrack should go back (1 already means no backtrack)
+    self.bt_limit = 2
 
     self._preproc(net0, req0, chains0)
 
@@ -307,7 +309,8 @@ class CoreAlgorithm(object):
         res_to_substractoradd = copy.deepcopy(self.req.node[vnf].resources)
         for attr in ['cpu', 'mem', 'storage', 'bandwidth']:
         # delay is not subtracted!!
-          res_to_substractoradd[attr] = -1 * res_to_substractoradd[attr]
+          if res_to_substractoradd[attr] is not None:
+            res_to_substractoradd[attr] = -1 * res_to_substractoradd[attr]
       else:
         res_to_substractoradd = self.req.node[vnf].resources
       newres = helper.subtractNodeRes(self.net.node[node].availres,
@@ -376,9 +379,7 @@ class CoreAlgorithm(object):
                  step_data['vnf_id'], key=step_data['reqlinkid'], 
                  mapped_to=step_data['path'], 
                  path_link_ids=step_data['path_link_ids'])
-    self._updateGraphResources(
-      self.req[step_data['prev_vnf_id']][step_data['vnf_id']]\
-      [step_data['reqlinkid']]['bandwidth'],
+    self._updateGraphResources(step_data['bw_req'],
       step_data['path'], step_data['path_link_ids'], step_data['vnf_id'], 
       step_data['target_infra'])
     self.manager.updateChainLatencyInfo(cid, step_data['used_latency'], 
@@ -396,7 +397,10 @@ class CoreAlgorithm(object):
     best_node_que = deque(maxlen = self.bt_branching_factor)
     deque_length = 0
     base_bt_record = {'prev_vnf_id': prev_vnf_id, 'vnf_id': vnf_id, 
-                      'reqlinkid': reqlinkid, 'last_used_node': start}
+                      'reqlinkid': reqlinkid, 'last_used_node': start,
+                      'bw_req': self.req[prev_vnf_id][vnf_id]\
+                      [reqlinkid].bandwidth,
+                      'link_mapping_record': False}
     '''Edge data must be used from the substrate network!
     NOTE(loops): shortest path from i to i is [i] (This path is the
     collocation, and 1 long paths are handled right by the
@@ -432,13 +436,13 @@ class CoreAlgorithm(object):
               else:
                 best_node_sofar = best_node_que.pop()
                 best_node_que.append(best_node_sofar)
-                if best_node_sofar['obj_func_value'] < value:
+                if best_node_sofar['obj_func_value'] > value:
                   best_node_que.append(just_found)
                 elif deque_length <= self.bt_branching_factor > 1:
                   least_good_que = deque()
                   least_good_sofar = best_node_que.popleft()
                   deque_length -= 1
-                  while least_good_sofar['obj_func_value'] <= value:
+                  while least_good_sofar['obj_func_value'] > value:
                     least_good_que.append(least_good_sofar)
                     # too many good nodes can be remove, because we already 
                     # know just found is worse than the best node
@@ -453,7 +457,11 @@ class CoreAlgorithm(object):
                     except IndexError:
                       break
     try:
+      # add the empty deque as well so the backtrack can handle 
+      # vnf_index_in_subchain variable right in getNextBacktrackRecord..()
+      self.bt_handler.addBacktrackLevel(cid, best_node_que)
       best_node_sofar = best_node_que.pop()
+      best_node_que.append(best_node_sofar)
       # we don't have to deal with the deque length anymore, because it is 
       # handled by the bactrack structure.
     except IndexError:
@@ -462,7 +470,6 @@ class CoreAlgorithm(object):
       raise uet.MappingException("Couldn`t map VNF %s anywhere trying"
                                  "backtrack..." % vnf_id,
                                  backtrack_possible = True)
-    self.bt_handler.addBacktrackLevel(cid, best_node_que)
     self._takeOneGreedyStep(cid, best_node_sofar)
 
   def _mapOneRequestLink (self, cid, g, vnf1, vnf2, reqlinkid):
@@ -511,9 +518,31 @@ class CoreAlgorithm(object):
         vnf1, vnf2, path))
     self._updateGraphResources(bw_req, path, linkids)
     self.manager.updateChainLatencyInfo(cid, used_lat, n2)
-    self.bt_handler.addLinkMappingRecord(cid, bw_req, path, linkids, used_lat)
+    self.bt_handler.addLinkMappingRecord(cid, bw_req, path, linkids, used_lat, 
+                                         vnf1, vnf2, reqlinkid)
     self.manager.link_mapping.add_edge(vnf1, vnf2, key=reqlinkid,
                                        mapped_to=path, path_link_ids=linkids)
+
+  def _resolveLinkMappingRecord(self, c, bt_record):
+    # means, we are on a hidden backtracking sublevel of an only  
+    # link mapping, only one of these should be in bt_struct 
+    # consequently, if there is more, rais InternelExcp.
+    self._updateGraphResources(bt_record['bw_req'], 
+                               bt_record['path'], bt_record['linkids'],
+                               redo = True)
+    self.manager.updateChainLatencyInfo(c['id'], 
+                          -1*bt_record['used_lat'], bt_record['path'][0])
+    self.manager.link_mapping.remove_edge(bt_record['vnf1'], bt_record['vnf2'], 
+                                          key = bt_record['reqlinkid'])
+    # if we want to store multiple possible paths for the reqlink 
+    # (if it has any use!!), 
+    # we need to reserve the new one here and 'break'.
+    c, sub, bt_record = \
+          self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph() 
+    if bt_record['link_mapping_record']:
+      raise uet.InternalAlgorithmException("Two consequent link "
+                              "mapping level found in the backtrack structure!")
+    return c, sub, bt_record
 
   def _addSAPandLinkToFromIt (self, netportid, bis_id, nffg, nodenf, reqportid,
        fc, toSAP=True):
@@ -810,41 +839,33 @@ class CoreAlgorithm(object):
             else:
               c, sub, bt_record = \
                  self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph()
-              if isinstance(bt_record, dict):
-                # means, we are on a hidden backtracking sublevel of an only  
-                # link mapping, only one of these should be in bt_struct 
-                # consequently, if there is more, rais InternelExcp.
-                self._updateGraphResources(bt_record['bw_req'], 
-                                           bt_record['path'], bt_record['linkids'],
+              if bt_record['link_mapping_record']:
+                c, sub, bt_record = self._resolveLinkMappingRecord(c, bt_record)
+              else:
+                # use bt_record to restore networks state 
+                self._updateGraphResources(bt_record['bw_req'],
+                                           bt_record['path'], 
+                                           bt_record['path_link_ids'],
+                                           bt_record['vnf_id'], 
+                                           bt_record['target_infra'],
                                            redo = True)
+                self.manager.link_mapping.remove_edge(bt_record['prev_vnf_id'], 
+                                                      bt_record['vnf_id'],
+                                                      key=bt_record['reqlinkid'])
+                self.manager.vnf_mapping.remove((bt_record['vnf_id'], 
+                                                 bt_record['target_infra']))
                 self.manager.updateChainLatencyInfo(c['id'], 
-                             -1*bt_record['used_lat'], bt_record['path'][0])
-                # if we want to store multiple possible paths for the reqlink 
-                # (if it has any use!!), 
-                # we need to reserve the new one here and 'break'.
+                                                    -1*bt_record['used_latency'], 
+                                                    bt_record['last_used_node'])
                 c, sub, bt_record = \
-                   self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph() 
-                if isinstance(bt_record, dict):
-                  raise uet.InternalAlgorithmException("Two consequent link "
-                            "mapping level found in the backtrack structure!")
+                    self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph()
+                if bt_record['link_mapping_record']:
+                  c, sub, bt_record = self._resolveLinkMappingRecord(c,
+                                                                     bt_record)
               curr_vnf = bt_record['prev_vnf_id']
               next_vnf = bt_record['vnf_id']
               linkid = bt_record['reqlinkid']
               last_used_node = bt_record['last_used_node']
-              # use bt_record to restore networks state 
-              self._updateGraphResources(bt_record['bw_req'],
-                                         bt_record['path'], 
-                                         bt_record['path_link_ids'],
-                                         curr_vnf, bt_record['target_infra'],
-                                         redo = True)
-              self.manager.link_mapping.remove_edge(bt_record['prev_vnf_id'], 
-                                                    bt_record['vnf_id'],
-                                                    key=bt_record['reqlinkid'])
-              self.manager.vnf_mapping.remove((bt_record['vnf_id'], 
-                                               bt_record['target_infra']))
-              self.manager.updateChainLatencyInfo(c['id'], 
-                                                  -1*bt_record['used_latency'], 
-                                                  bt_record['last_used_node'])
 
       '''Best-effort links should be mapped here. But I`m not sure it is
       required to deal with, because the upper layer could also specify
