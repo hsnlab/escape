@@ -20,13 +20,14 @@ from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
 from mininet.term import makeTerms
-from mininet.link import TCLink
+from mininet.link import TCLink, Intf, Link
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
 from escape.util.misc import quit_with_error, run_silent, call_as_coop_task, \
   run_cmd
+from pprint import pprint
 
 
 class AbstractTopology(Topo):
@@ -342,6 +343,47 @@ class ESCAPENetworkBridge(object):
         log.debug("Mininet network has been started!")
         log.debug("Starting xterm on SAPS...")
         makeTerms(self.__mininet.hosts, 'host')
+        
+        nffg = self.topo_desc
+        # Create inter-domain SAP ports, add phy interface to OVS
+        for sap in {s for s in nffg.saps if s.domain is not None}:
+          sap_switch_links = [(u, v, l) for u, v, l in
+                              nffg.network.out_edges_iter((sap.id, ), data=True)
+                              if l.dst.node.type == NFFG.TYPE_INFRA]
+          u, v, l = sap_switch_links[0]
+          sw_name = nffg.network.node[v].id
+          import os
+          for sw in self.__mininet.switches:
+            print sw.name
+            if sw.name == sw_name:
+              import os
+              os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
+              log.debug("Add physical port as inter-domain SAP: %s -> %s" % 
+                        (sap.domain, sap.id))
+
+              # Attempt #1:
+              # intf = Intf(sap.domain, sw)
+              # log.debug("Adding physical port as inter-domain SAP: %s -> %s" % 
+              #           (sap.domain, sap.id))
+
+              # Attempt #2:
+              # remote_sw = RemoteSwitch('remote', dpid=0x14c5e0c376e24)
+              # r_mac = 0x4c5e0c376e24
+              # r_port = 2
+              # intfName = sap.domain
+              # # r_mac = None # unknown, r.params['remote_mac']
+              # # r_port = r.params['remote_port']
+              # print '\tadd hw interface (%s) to node (%s)' % (intfName, sw.name)
+              # # This hack avoids calling __init__ which always makeIntfPair()
+              # link = Link.__new__(Link)
+              # i1 = Intf(intfName, node=sw, link=link)
+              # i2 = Intf(intfName, node=remote_sw, link=link,
+              #           mac=r_mac, port=r_port)
+              # i2.mac = r_mac # mn runs 'ifconfig', which resets mac to None
+              # #
+              # link.intf1, link.intf2 = i1, i2
+              # os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
+              continue
       else:
         log.warning(
           "Mininet network has already started! Skipping start task...")
@@ -496,6 +538,7 @@ class ESCAPENetworkBuilder(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
+    # pprint(nffg.network.__dict__)
     log.info("Start topology creation from NFFG(name: %s)..." % nffg.name)
     created_mn_nodes = {}  # created nodes as 'NFFG-id': <node>
     created_mn_links = {}  # created links as 'NFFG-id': <link>
