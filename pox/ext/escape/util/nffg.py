@@ -133,6 +133,7 @@ class NFFG(AbstractNFFG):
   DOMAIN_UN = NodeInfra.DOMAIN_UN
   DOMAIN_SDN = NodeInfra.DOMAIN_SDN
   DOMAIN_DOCKER = NodeInfra.DOMAIN_DOCKER
+  DOMAIN_REMOTE = NodeInfra.DOMAIN_REMOTE
   # Infra types
   TYPE_INFRA_SDN_SW = NodeInfra.TYPE_SDN_SWITCH
   TYPE_INFRA_EE = NodeInfra.TYPE_EE
@@ -751,7 +752,7 @@ def generate_mn_topo ():
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")
   sap14 = nffg.add_sap(id="SAP14", name="SAP14")
-  sap14.domain = "SDN"
+  sap14.domain = "eth0"
 
   # Add links
   link_res = {'delay': 1.5, 'bandwidth': 10}
@@ -977,6 +978,141 @@ def generate_os_req ():
   return test
 
 
+def generate_os_mn_req ():
+  test = NFFG(id="OS-MN-req", name="SG-name")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  # comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+  #                    cpu=1, mem=1, storage=0)
+  # decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+  #                      func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  # fwd = test.add_nf(id="fwd", name="FORWARDER",
+  #                   func_type="simpleForwarder", cpu=1, mem=1, storage=0)
+  # sap14 = test.add_sap(name="SAP14", id="0")
+  # sap24 = test.add_sap(name="SAP24", id="1")
+
+  webserver = test.add_nf(id="webserver", name="webserver", func_type="webserver",
+                     cpu=1, mem=1, storage=0)
+  # echo = test.add_nf(id="echo", name="echo", func_type="echo",
+  #                    cpu=1, mem=1, storage=0)
+  test.add_sglink(sap1.add_port(0), webserver.add_port(0), id=1)
+  test.add_sglink(webserver.ports[0], sap2.add_port(0), id=2)
+
+  # test.add_req(sap1.ports[0], webserver.ports[0], bandwidth=1, delay=20)
+  # test.add_req(webserver.ports[0], sap2.ports[0], bandwidth=1, delay=20)
+  test.add_req(sap1.ports[0], sap2.ports[0], bandwidth=1, delay=100)
+  return test
+
+
+def generate_dov ():
+  # Create NFFG
+  nffg = NFFG(id="INTERNAL", name="SIGCOMM")
+  # Add environments
+  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=NFFG.DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain=NFFG.DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  # Add supported types
+  ee1.add_supported_type(('headerCompressor', 'headerDecompressor', 
+                          'simpleForwarder'))
+  ee2.add_supported_type(('headerCompressor', 'headerDecompressor', 
+                          'simpleForwarder'))
+  # Add OVS switches
+  sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
+  sw4 = nffg.add_infra(id="SW4", name="switch-4", domain=NFFG.DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
+  # Add SAPs
+  sap1 = nffg.add_sap(id="SAP1", name="SAP1")
+  sap2 = nffg.add_sap(id="SAP2", name="SAP2")
+  # Add links
+  link_res = {'delay': 1.5, 'bandwidth': 10}
+  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1", **link_res)
+  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="link2", **link_res)
+  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3", **link_res)
+  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4", **link_res)
+  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5", **link_res)
+
+  # Add MikroTik OF switches
+  mt1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=NFFG.DOMAIN_SDN,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
+  mt2 = nffg.add_infra(id="MT2", name="MikroTik-SW-2", domain=NFFG.DOMAIN_SDN,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
+  mt1.resources.delay = 0.2
+  mt1.resources.bandwidth = 4000
+  mt2.resources.delay = 0.2
+  mt2.resources.bandwidth = 4000
+
+  # Add links
+  l11 = nffg.add_link(mt1.add_port(1), mt2.add_port(1), id="link11")
+  l12 = nffg.add_link(sw4.add_port(4), mt1.add_port(2), id="link12")
+  mt1.add_port(3)
+  mt1.add_port(4)
+  mt2.add_port(4)
+  l11.delay = 0.1
+  l11.bandwidth = 1000
+  l12.delay = 1.5
+  l12.bandwidth = 1000
+
+  os_bb = nffg.add_infra(id="UUID-01", name="Single BiSBiS in OS Domain", 
+                         domain=NFFG.DOMAIN_OS, infra_type=NFFG.TYPE_INFRA_BISBIS, 
+                         cpu=10, mem=32, storage=5, delay=0, bandwidth=100000)
+  # Add supported types
+  os_bb.add_supported_type(('webserver', 'echo'))
+
+  l21 = nffg.add_link(mt2.add_port(2), os_bb.add_port(0), id="link21")
+  l21.delay = 10
+  l21.bandwidth = 1000
+
+  un_bb = nffg.add_infra(id="UUID11", name="Universal Node", 
+                         domain=NFFG.DOMAIN_UN, infra_type=NFFG.TYPE_INFRA_BISBIS, 
+                         cpu=5, mem=16, storage=5, delay=0, bandwidth=100000)
+  # Add supported types
+  un_bb.add_supported_type(('dpi', 'example'))
+
+  l31 = nffg.add_link(mt2.add_port(3), un_bb.add_port(1), id="link31")
+  l31.delay = 10
+  l31.bandwidth = 1000
+
+  nffg.duplicate_static_links()
+  return nffg
+
+
+def generate_global_req ():
+  test = NFFG(id="SIGCOMM-Global-req1", name="SIGCOMM-Global-req1")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  # comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+  #                    cpu=1, mem=1, storage=0)
+  # decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+  #                      func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  # fwd = test.add_nf(id="fwd", name="FORWARDER",
+  #                   func_type="simpleForwarder", cpu=1, mem=1, storage=0)
+
+  webserver1 = test.add_nf(id="webserver1", name="webserver1", func_type="webserver",
+                           cpu=1, mem=1, storage=0)
+  # webserver2 = test.add_nf(id="webserver2", name="webserver2", func_type="webserver",
+  #                          cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi",
+                    cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=1)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=2)
+  test.add_sglink(dpi.add_port(2), sap2.add_port(1), id=3)
+
+  # test.add_sglink(sap2.add_port(1), webserver2.add_port(0), id=4)
+  # test.add_sglink(webserver2.ports[0], sap2.ports[1], id=5)
+
+  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=1, delay=100)
+  # test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=1, delay=100)
+
+  return test
+
+
 if __name__ == "__main__":
   # test_NFFG()
   # nffg = generate_mn_topo()
@@ -987,7 +1123,10 @@ if __name__ == "__main__":
   # nffg = gen()
   # nffg = generate_sdn_topo()
   # nffg = generate_sdn_req()
-  nffg = generate_os_req()
+  # nffg = generate_os_req()
+  # nffg = generate_os_mn_req()
+  # nffg = generate_dov()
+  nffg = generate_global_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
