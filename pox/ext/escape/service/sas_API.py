@@ -75,8 +75,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
     function.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('echo', 'version', 'operations'),
-                  'POST': ('echo', 'result', 'sg'), 'PUT': ('echo',),
+  request_perm = {'GET': ('echo', 'version', 'operations', 'poll_nffg'),
+                  'POST': ('echo', 'result', 'sg', 'poll_nffg'), 'PUT': ('echo',),
                   'DELETE': ('echo',)}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
@@ -140,6 +140,20 @@ class ServiceRequestHandler(AbstractRequestHandler):
     self._proceed_API_call('request_service', sg)
     self.send_acknowledge()
 
+  def poll_nffg (self):
+    """
+    Provide internal NFFG to the GUI
+
+    Internal NFFG is based on NetworkX and can be viewed by networkx_viewer
+    """
+    log.getChild("REST-API").info("Call REST-API function: poll_nffg")
+    config = self._proceed_API_call('poll_nffg')
+    self.send_response(200)
+    self.send_header('Content-Type', 'application/json')
+    self.send_header('Content-Length', len(config))
+    self.end_headers()
+    self.wfile.write(config)
+
 
 class ServiceLayerAPI(AbstractAPI):
   """
@@ -166,6 +180,7 @@ class ServiceLayerAPI(AbstractAPI):
     log.info("Starting Service Layer...")
     # Mandatory super() call
     super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
+    self.last_sg = NFFG(id=0, name='empty')
 
   def initialize (self):
     """
@@ -260,6 +275,13 @@ class ServiceLayerAPI(AbstractAPI):
     # If mapping is not threaded and finished with OK
     if nffg is not None:
       self._instantiate_NFFG(nffg)
+    self.last_sg = sg
+
+  def poll_nffg (self):
+    """
+    Poll nffg
+    """
+    return self.last_sg.dump()
 
   def get_result (self, id):
     """
