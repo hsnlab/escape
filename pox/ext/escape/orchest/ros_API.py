@@ -185,8 +185,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.resource_orchestrator = ResourceOrchestrator(self)
     if self._nffg_file:
       self._read_json_from_file(self._nffg_file)
-    if self._agent:
-      self._initiate_agent_api()
+    # if self._agent:
+    #   self._initiate_agent_api()
+    self._initiate_agent_api()
     log.info("Resource Orchestration Sublayer has been initialized!")
 
   def shutdown (self, event):
