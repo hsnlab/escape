@@ -48,7 +48,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "orchestration": {  # Resource Orchestration Sublayer
                            "MAPPER": {"module": "escape.orchest.ros_mapping",
                                       "class": "ResourceOrchestrationMapper",
-                                      "mapping-enabled": True},
+                                      "mapping-enabled": False},
                            "STRATEGY": {"module": "escape.orchest.ros_mapping",
                                         "class": "ESCAPEMappingStrategy",
                                         "THREADED": True},
@@ -59,7 +59,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
                         # "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
-                        "DEFAULTS": ["OPENSTACK"],
+                        "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK", "UN"],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.components",
                                          "class": "InternalPOXAdapter",
@@ -74,13 +74,13 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                        "server": "127.0.0.1", "port": 830},
                         "ESCAPE-REST": {"module": "escape.adapt.components",
                                         "class": "RemoteESCAPEv2RESTAdapter",
-                                        "url": "http://localhost:8888/escape/"},
+                                        "url": "http://192.168.1.111:8888/escape/"},
                         "OpenStack-REST": {"module": "escape.adapt.components",
                                            "class": "OpenStackRESTAdapter",
                                            "url": "http://192.168.1.103:8888/virtualizer/"},
                         "UN-REST": {"module": "escape.adapt.components",
                                     "class": "UnifiedNodeRESTAdapter",
-                                    "url": "http://localhost:8080"},
+                                    "url": "http://192.168.1.104:8080"},
                         # Specific Domain Managers
                         "INTERNAL": {"module": "escape.adapt.components",
                                      "class": "InternalDomainManager",
