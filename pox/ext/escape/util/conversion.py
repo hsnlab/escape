@@ -1688,16 +1688,30 @@ class NFFGConverter(object):
             if fr[0].split('=')[0] != "in_port":
               raise RuntimeError(
                 "Wrong flowrule format: missing in in_port from match")
-            in_port = fr[0].split('=')[1]
+            in_port = str(port.id)
+            #in_port = fr[0].split('=')[1]
             try:
               # Flowrule in_port is a phy port in Infra Node
               in_port = virtualizer.nodes[infra.id].ports[in_port]
             except KeyError:
               # in_port is a dynamic port --> search for connected NF's port
-              in_port, p_nf = [(str(l.dst.id), l.dst.node.id) for u, v, l in
-                               nffg.network.out_edges_iter((infra.id,),
-                                                           data=True) if
-                               str(l.src.id) == in_port][0]
+              from pprint import pprint
+              pprint(nffg.network.__dict__)
+              # in_port, p_nf = [(str(l.dst.id), l.dst.node.id) for u, v, l in
+              #                  nffg.network.out_edges_iter((infra.id,),
+              #                                              data=True) if
+              #                  str(l.src.id) == str(in_port)][0]
+              print virtualizer
+              for u, v, l in nffg.network.edges(data=True):
+                print u, v, l
+                if l.src.id == port.id:
+                  print l.dst.id
+
+              # in_port, p_nf = [(str(l.dst.id), l.dst.node.id) for u, v, l in
+              #                  nffg.network.out_edges_iter((infra.id,),
+              #                                              data=True) if
+              #                  str(l.src.id) == str(in_port)][0]
+
               in_port = virtualizer.nodes[infra.id].NF_instances[p_nf].ports[
                 in_port]
             # Get match
