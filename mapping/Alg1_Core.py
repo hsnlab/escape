@@ -477,6 +477,13 @@ class CoreAlgorithm(object):
     Maps a request link, when both ends are already mapped.
     Uses the weighted shortest path.
     TODO: Replace dijkstra with something more sophisticated.
+    UGLY: If a MappingException is raised in this function and we want to step 
+    back on the previous VNF mapping but the bt_struct.vnf_index_in_subchain 
+    will point to the end of the subchain, which is wrong. And due to the linkvnf
+    mapping record separation the decrementation of this variable is not done 
+    by bt_handler because there is no LinkMappingRecord saved at the time of 
+    exception raising.
+       TODO: make it nicer.
     """
     n1 = self.manager.getIdOfChainEnd_fromNetwork(vnf1)
     n2 = self.manager.getIdOfChainEnd_fromNetwork(vnf2)
@@ -492,6 +499,7 @@ class CoreAlgorithm(object):
       path = path[n2]
       linkids = linkids[n2]
     except (nx.NetworkXNoPath, KeyError) as e:
+      self.bt_handler.vnf_index_in_subchain -= 1
       raise uet.MappingException(
         "No path found between substrate nodes: %s and %s for mapping a "
         "request link between %s and %s" % (n1, n2, vnf1, vnf2),
@@ -503,12 +511,14 @@ class CoreAlgorithm(object):
       self.log.error(
         "Last link of chain or best-effort link %s, %s couldn`t be mapped!" % (
           vnf1, vnf2))
+      self.bt_handler.vnf_index_in_subchain -= 1
       raise uet.MappingException(
         "Last link of chain or best-effort link %s, %s, %s couldn`t be mapped "
         "due to link capacity" % (vnf1, vnf2, reqlinkid),
         backtrack_possible = True)
     elif self.manager.getLocalAllowedLatency(cid, vnf1, vnf2, reqlinkid) < \
          used_lat:
+      self.bt_handler.vnf_index_in_subchain -= 1
       raise uet.MappingException(
         "Last link %s, %s, %s of chain couldn`t be mapped due to latency "
         "requirement." % (vnf1, vnf2, reqlinkid),
@@ -832,6 +842,8 @@ class CoreAlgorithm(object):
                                       linkid)
             break
           except uet.MappingException as me:
+            self.log.debug("MappingException catched for backtrack purpose, "
+                           "its message is: "+me.msg)
             if not me.backtrack_possible:
               # re-raise the exception, we have ran out of backrack 
               # possibilities.
