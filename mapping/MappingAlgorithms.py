@@ -160,14 +160,18 @@ def MAP (request, network):
   for req in edgereqlist:
     srcnode = req.src.node
     dstnode = req.dst.node
-    if req.src.node.type == 'SAP':
+    srcportid = req.src.id
+    dstportid = req.dst.id
+    if srcnode.type == 'SAP':
       srcnode = mappedNFFG.network.node[
         alg.manager.getIdOfChainEnd_fromNetwork(req.src.node.id)]
-    if req.dst.node.type == 'SAP':
+      srcportid = alg._addSAPportIfNeeded(mappedNFFG, srcnode.id, srcportid)
+    if dstnode.type == 'SAP':
       dstnode = mappedNFFG.network.node[
         alg.manager.getIdOfChainEnd_fromNetwork(req.dst.node.id)]
-    mappedNFFG.add_req(srcnode.add_port(), dstnode.add_port(), id=req.id,
-                       delay=req.delay, bandwidth=req.bandwidth)
+      dstportid = alg._addSAPportIfNeeded(mappedNFFG, dstnode.id, dstportid)
+    mappedNFFG.add_req(srcnode.ports[srcportid], dstnode.ports[dstportid],
+                       id=req.id, delay=req.delay, bandwidth=req.bandwidth)
 
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
@@ -232,8 +236,8 @@ def _constructExampleRequest ():
   infra2 = nffg.add_infra(id="BiS-BiS2")
   nffg.add_undirected_link(infra1.add_port(0), nf0.add_port(3), dynamic=True)
   nffg.add_undirected_link(infra1.add_port(1), nf0.add_port(4), dynamic=True)
-  nffg.add_undirected_link(infra1.add_port(2), nf1.add_port(2), dynamic=True)
-  nffg.add_undirected_link(infra2.add_port(0), nf2.add_port(3), dynamic=True)
+  nffg.add_undirected_link(infra1.add_port(2), nf1.add_port(3), dynamic=True)
+  nffg.add_undirected_link(infra2.add_port(0), nf2.add_port(4), dynamic=True)
   nffg.add_undirected_link(infra2.add_port(1), nf3.add_port(2), dynamic=True)
   nffg.add_undirected_link(infra1.add_port(3), infra2.add_port(2),
                            bandwidth=31241242)
@@ -337,14 +341,14 @@ def _example_request_for_fallback ():
 
 if __name__ == '__main__':
   try:
-    # req = _constructExampleRequest()
-    # net = _constructExampleNetwork()
+    req = _constructExampleRequest()
+    net = _constructExampleNetwork()
 
     # req = _example_request_for_fallback()
     # print req.dump()
     # this is the dynamic fallback topology taken from nffg.py
-    net = generate_dynamic_fallback_nffg()
-    req = _onlySAPsRequest()
+    # net = generate_dynamic_fallback_nffg()
+    # req = _onlySAPsRequest()
     # print net.dump()
     mapped = MAP(req, net)
     print mapped.dump()

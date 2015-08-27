@@ -169,7 +169,7 @@ class CoreAlgorithm(object):
       # all (static and dynamic) ports of the host (BiS-BiS)
       sum_w = float(max_bw - (act_bw - bw_req - internal_bw_req)) / max_bw
       if act_bw < bw_req + internal_bw_req:
-        self.log.info(
+        self.log.debug(
           "Node %s don`t have %f Mbps capacity for mapping a link." % (
             path_to_map[0], bw_req))
         return -1
@@ -551,6 +551,16 @@ class CoreAlgorithm(object):
       nodenf = nffg.network.node[vnfid]
     return nodenf
 
+  def _addSAPportIfNeeded(self, nffg, sapid, portid):
+    """
+    The request and substrate SAPs are different objects, the substrate does not
+    neccessarily have the same ports which were used by the service graph.
+    """
+    if portid in [p.id for p in nffg.network.node[sapid].ports]:
+      return portid
+    else:
+      return nffg.network.node[sapid].add_port(portid).id
+
   def returnMappedNFFGofOneBiSBiS (self, bis_id):
     """
     Extracts the NFFG object of one BiS-BiS from the mapping found by the
@@ -655,21 +665,25 @@ class CoreAlgorithm(object):
         sapstartid = self.manager.getIdOfChainEnd_fromNetwork(i)
         if self.req.node[j].type == 'SAP':
           sapendid = self.manager.getIdOfChainEnd_fromNetwork(j)
-          nffg.add_sglink(nffg.network.node[sapstartid].add_port(),
-                          nffg.network.node[sapendid].add_port(), id=d.id,
-                          flowclass=d.flowclass)
+          nffg.add_sglink(nffg.network.node[sapstartid].ports[
+               self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
+                          nffg.network.node[sapendid].ports[
+               self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)], 
+                          id=d.id, flowclass=d.flowclass)
         else:
-          nffg.add_sglink(nffg.network.node[sapstartid].add_port(),
-                          nffg.network.node[j].add_port(), id=d.id,
+          nffg.add_sglink(nffg.network.node[sapstartid].ports[
+               self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
+                          nffg.network.node[j].ports[d.dst.id], id=d.id,
                           flowclass=d.flowclass)
       elif self.req.node[j].type == 'SAP':
         sapendid = self.manager.getIdOfChainEnd_fromNetwork(j)
-        nffg.add_sglink(nffg.network.node[i].add_port(),
-                        nffg.network.node[sapendid].add_port(), id=d.id,
-                        flowclass=d.flowclass)
+        nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
+                        nffg.network.node[sapendid].ports[
+                          self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)],
+                        id=d.id, flowclass=d.flowclass)
       else:
-        nffg.add_sglink(nffg.network.node[i].add_port(),
-                        nffg.network.node[j].add_port(), id=d.id,
+        nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
+                        nffg.network.node[j].ports[d.dst.id], id=d.id,
                         flowclass=d.flowclass)
     return nffg
 

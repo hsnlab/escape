@@ -84,10 +84,15 @@ class GraphPreprocessorClass(object):
         break
 
     if sap_end not in visited:
-      self.log.error(
-        "Chain end is further than latency requirement, for chain: %s" % chain)
-      raise uet.MappingException(
-        "Chain end is further than latency requirement, for chain: %s" % chain)
+      if nx.has_path(self.net.network, sap_begin, sap_end):
+        self.log.error(
+          "Chain end is further than latency requirement, for chain: %s" % chain)
+        raise uet.MappingException(
+          "Chain end is further than latency requirement, for chain: %s" % chain)
+      else:
+        raise uet.BadInputException("Ending SAP should be accessable from"
+                                    " starting SAP.", "There is no path between"
+                                    " the ends of the service chain!")
 
     # attributes of nx::subgraph() points to the original, better call copy()
     # -DON`T we want attribute changes to be reflected in the big
