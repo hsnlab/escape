@@ -52,4 +52,8 @@ class MappingException(UnifyException):
   Raised when a mapping could not be found for the request given from the
   upper layer. Not enough resources, no path found.
   """
-  pass
+
+  def __init__(self, msg, backtrack_possible):
+    super(MappingException, self).__init__(msg + " Backtrack available: %s"
+                                           %backtrack_possible)
+    self.backtrack_possible = backtrack_possible

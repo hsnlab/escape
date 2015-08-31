@@ -1,4 +1,4 @@
-# Copyright (c) 2014 Balazs Nemeth
+# Copyright (c) 2015 Balazs Nemeth
 #
 # This file is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -22,12 +22,13 @@ invocation details.
 NOTE: Currently only SAP-to-SAP EdgeReqs, or link-local (which are parallel 
 with an SGLink) EdgeReqs are supported. After generating the service chains
 from the EdgeReqs, all SG links must be in one of the subchains. 
-TODO: map best-effort links.
+TODO: map best-effort links (not part of any subchain).
 """
 
 import traceback
 
 import networkx as nx
+from pprint import pformat
 
 try:
   from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg
@@ -176,10 +177,10 @@ def MAP (request, network):
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
-  # print "\nThe VNF mappings are (vnf_id, node_id):\n", pformat(
-  #   alg.manager.vnf_mapping)
-  # print "\n The link mappings are:\n", pformat(
-  #   alg.manager.link_mapping.edges(data=True, keys=True))
+  print "\nThe VNF mappings are (vnf_id, node_id):\n", pformat(
+     alg.manager.vnf_mapping)
+  print "\n The link mappings are:\n", pformat(
+     alg.manager.link_mapping.edges(data=True, keys=True))
 
   # n0_nffg = alg.returnMappedNFFGofOneBiSBiS("node0")
   # n1_nffg = alg.returnMappedNFFGofOneBiSBiS("node1")
@@ -338,11 +339,67 @@ def _example_request_for_fallback ():
 
   return nffg
 
+def _testNetworkForBacktrack():
+  nffg = NFFG(id="backtracktest", name="backtrack")
+  sap1 = nffg.add_sap(name="SAP1", id="sap1")
+  sap2 = nffg.add_sap(name="SAP2", id="sap2")
+
+  uniformnoderes = {'cpu': 5, 'mem': 5, 'storage': 5, 'delay': 0.4,
+                    'bandwidth': 5500}
+  infra0 = nffg.add_infra(id="node0", name="INFRA0", **uniformnoderes)
+  uniformnoderes2 = {'cpu':9, 'mem': 9, 'storage': 9, 'delay': 0.4,
+                    'bandwidth': 5500}
+  infra1 = nffg.add_infra(id="node1", name="INFRA1", **uniformnoderes2)
+  swres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.0,
+                    'bandwidth': 10000}
+  sw = nffg.add_infra(id="sw", name="sw1", **swres)
+
+  infra0.add_supported_type(['A'])
+  infra1.add_supported_type(['A'])
+  
+  unilinkres = {'delay': 0.0, 'bandwidth': 2000}
+  nffg.add_undirected_link(sap1.add_port(0), infra0.add_port(0), 
+                           **unilinkres)
+  nffg.add_undirected_link(sap2.add_port(0), infra1.add_port(0), 
+                           **unilinkres)
+  rightlink = {'delay': 10.0, 'bandwidth': 2000}
+  leftlink = {'delay': 0.01, 'bandwidth': 5000}
+  nffg.add_link(infra0.add_port(1), sw.add_port(0), id="n0sw", **rightlink)
+  nffg.add_link(sw.add_port(1), infra1.add_port(1), id="swn1", **rightlink)
+  nffg.add_link(sw.ports[0], infra0.ports[1], id="swn0", **leftlink)
+  nffg.add_link(infra1.ports[1], sw.ports[1], id="n1sw", **leftlink)
+  
+  return nffg
+  
+def _testRequestForBacktrack():
+  nffg = NFFG(id="backtracktest-req", name="btreq")
+  sap1 = nffg.add_sap(name="SAP1", id="sap1req")
+  sap2 = nffg.add_sap(name="SAP2", id="sap2req")
+  
+  a = nffg.add_nf(id="a", name="NetFunc0", func_type='A', cpu=3, mem=3,
+                    storage=3)
+  b = nffg.add_nf(id="b", name="NetFunc1", func_type='A', cpu=3, mem=3,
+                    storage=3)
+  c = nffg.add_nf(id="c", name="NetFunc2", func_type='A', cpu=3, mem=3,
+                    storage=3)
+
+  nffg.add_sglink(sap1.add_port(0), a.add_port(0), id="sa")
+  nffg.add_sglink(a.add_port(1), b.add_port(0), id="ab")
+  nffg.add_sglink(b.add_port(1), c.add_port(0), id="bc")
+  nffg.add_sglink(c.add_port(1), sap2.add_port(0), id="cs")
+
+  nffg.add_req(a.ports[0], b.ports[1], delay=1.0)
+  nffg.add_req(b.ports[0], c.ports[1], delay=1.0)
+  nffg.add_req(c.ports[0], sap2.ports[0], delay=1.0)
+  nffg.add_req(sap1.ports[0], sap2.ports[0], delay=50, bandwidth=10)
+  
+  return nffg
+
 
 if __name__ == '__main__':
   try:
-    req = _constructExampleRequest()
-    net = _constructExampleNetwork()
+    # req = _constructExampleRequest()
+    # net = _constructExampleNetwork()
 
     # req = _example_request_for_fallback()
     # print req.dump()
@@ -350,8 +407,10 @@ if __name__ == '__main__':
     # net = generate_dynamic_fallback_nffg()
     # req = _onlySAPsRequest()
     # print net.dump()
+    req = _testRequestForBacktrack()
+    net = _testNetworkForBacktrack()
     mapped = MAP(req, net)
-    print mapped.dump()
+    # print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
     print traceback.format_exc()
