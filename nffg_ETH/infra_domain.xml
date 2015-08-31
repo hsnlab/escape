@@ -1,49 +1,51 @@
 <?xml version="1.0" ?>
 <virtualizer>
-    <name>ETH OpenStack-OpenDaylight domain with request</name>
+    <name>SG-name-ros-mapped</name>
     <nodes>
         <node>
             <NF_instances>
                 <node>
-                    <name>Parental control B.4</name>
+                    <name>webserver</name>
                     <ports>
                         <port>
-                            <name>in</name>
-                            <capability>...</capability>
+                            <name>port0</name>
                             <port_type>port-abstract</port_type>
-                            <id>NF1_in</id>
+                            <id>0</id>
                         </port>
                     </ports>
-                    <type>1</type>
-                    <id>NF1</id>
+                    <type>webserver</type>
+                    <id>webserver</id>
                     <resources>
-                        <mem>1024</mem>
+                        <mem>1</mem>
+                        <cpu>1</cpu>
                     </resources>
                 </node>
             </NF_instances>
             <flowtable>
                 <flowentry>
                     <port>../../../ports/port[id=0]</port>
+                    <priority>100</priority>
                     <action>strip_vlan</action>
-                    <id>f1</id>
-                    <match>dl_vlan=1</match>
+                    <id>0</id>
+                    <match>dl_vlan=0x0001</match>
                     <out>
-                        ../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]
+                        ../../../NF_instances/node[id=webserver]/ports/port[id=0]
                     </out>
                 </flowentry>
                 <flowentry>
                     <port>
-                        ../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]
+                        ../../../NF_instances/node[id=webserver]/ports/port[id=0]
                     </port>
-                    <action>mod_vlan_vid:2</action>
-                    <id>f2</id>
-                    <out>../../../ports/port[id=0]</out>
+                    <priority>100</priority>
+                    <action>mod_vlan_vid:0x0002</action>
+                    <id>1</id>
+                    <out>../../../ports/port[id=1]</out>
                 </flowentry>
             </flowtable>
             <capabilities>
                 <supported_NFs>
                     <node>
-                        <name>image0</name>
+                        <name>echo</name>
                         <ports>
                             <port>
                                 <name>input port</name>
@@ -51,11 +53,11 @@
                                 <id>0</id>
                             </port>
                         </ports>
-                        <type>0</type>
-                        <id>NF0</id>
+                        <type>echo</type>
+                        <id>NFecho</id>
                     </node>
                     <node>
-                        <name>image1</name>
+                        <name>webserver</name>
                         <ports>
                             <port>
                                 <name>input port</name>
@@ -63,31 +65,34 @@
                                 <id>0</id>
                             </port>
                         </ports>
-                        <type>1</type>
-                        <id>NF1</id>
-                        <resources>
-                            <mem>1024</mem>
-                        </resources>
+                        <type>webserver</type>
+                        <id>NFwebserver</id>
                     </node>
                 </supported_NFs>
             </capabilities>
             <ports>
                 <port>
-                    <name>OVS-north external port</name>
+                    <name>SAP24</name>
                     <port_type>port-sap</port_type>
-                    <id>0</id>
                     <sap>SAP24</sap>
+                    <id>0</id>
+                </port>
+                <port>
+                    <name>SAP42</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP42</sap>
+                    <id>1</id>
                 </port>
             </ports>
             <type>BisBis</type>
             <id>UUID-01</id>
             <resources>
-                <mem>32 GB</mem>
-                <storage>5 TB</storage>
-                <cpu>10 VCPU</cpu>
+                <mem>32</mem>
+                <storage>5</storage>
+                <cpu>10</cpu>
             </resources>
-            <name>single Bis-Bis node representing the whole domain</name>
+            <name>single Bis-Bis node representing the whole OS domain</name>
         </node>
     </nodes>
-    <id>UUID-ETH-001-req1</id>
+    <id>OS-req</id>
 </virtualizer>

@@ -343,7 +343,7 @@ class ESCAPENetworkBridge(object):
         log.debug("Mininet network has been started!")
         log.debug("Starting xterm on SAPS...")
         makeTerms(self.__mininet.hosts, 'host')
-        
+
         nffg = self.topo_desc
         # Create inter-domain SAP ports, add phy interface to OVS
         for sap in {s for s in nffg.saps if s.domain is not None}:
@@ -358,12 +358,12 @@ class ESCAPENetworkBridge(object):
             if sw.name == sw_name:
               import os
               os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
-              log.debug("Add physical port as inter-domain SAP: %s -> %s" % 
+              log.debug("Add physical port as inter-domain SAP: %s -> %s" %
                         (sap.domain, sap.id))
 
               # Attempt #1:
               # intf = Intf(sap.domain, sw)
-              # log.debug("Adding physical port as inter-domain SAP: %s -> %s" % 
+              # log.debug("Adding physical port as inter-domain SAP: %s -> %s" %
               #           (sap.domain, sap.id))
 
               # Attempt #2:
@@ -899,6 +899,8 @@ class ESCAPENetworkBuilder(object):
       else:
         raise RuntimeError("Unsupported topology format: %s" % type(topo))
       return self.get_network()
+    except SystemExit as e:
+      quit_with_error("Mininet core files is not installed and/or available!")
     except TopologyBuilderException:
       if self.fallback:
         # Search for fallback topology

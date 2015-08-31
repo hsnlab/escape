@@ -140,16 +140,21 @@ installations (see the help with the ``-h`` flag):
 
 .. code-block:: bash
 
-    $ sudo mininet/util/install.sh -a
+    $ sudo mininet/util/install.sh -en
 
 But the script mostly **NOT** works correctly, especially on newer
 distributions because the ``sudo apt-get install openvswitch-switch`` command
 not install the newest version of OVS due some major changes in OVS
 architecture! Check with the following command the install was correct:
 
-.. code-block:: bash
 
     $ sudo mn --test pingall
+
+However on some distributions the following install command is working:
+
+.. code-block:: bash
+
+    $ sudo apt-get install openvswitch-common openvswitch-switch openvswitch-testcontroller
 
 If the command complains about the Open vSwitch not installed then you have to
 install it from source. See more on http://openvswitch.org/download/` . On the

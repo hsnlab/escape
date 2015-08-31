@@ -328,8 +328,7 @@ class ControllerAdapter(object):
     log.info("Received DomainChange event from domain: %s, cause: %s" % (
       event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     if event.data is not None and isinstance(event.data, NFFG):
-      # self.domainResManager.update_domain_resource(event.domain, event.data)
-      pass
+      self.domainResManager.update_domain_resource(event.domain, event.data)
 
   def _slice_into_domains (self, nffg):
     """

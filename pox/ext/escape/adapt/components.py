@@ -33,6 +33,7 @@ class TopologyLoadException(Exception):
   """
   pass
 
+
 class InternalPOXAdapter(AbstractESCAPEAdapter):
   """
   Adapter class to handle communication with internal POX OpenFlow controller.
@@ -261,6 +262,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
     log.info("flow entry: %s" % msg)
     con.send(msg)
+
 
 class InternalMininetAdapter(AbstractESCAPEAdapter):
   """
@@ -657,7 +659,10 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.warning("Remote ESCAPEv2 agent responded with an error during "
                   "'topology-resource': %s" % e.message)
       return None
-    return NFFG.parse(data)
+    nffg = NFFG.parse(data)
+    for infra in nffg.infras:
+      infra.domain = NFFG.DOMAIN_REMOTE
+    return nffg
 
   def install_nffg (self, config):
     if not isinstance(config, (str, unicode, NFFG)):
@@ -1421,7 +1426,7 @@ class SDNDomainManager(AbstractDomainManager):
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in topo.infras):
-        log.warning(
+        log.error(
           "Infrastructure Node: %s is not found in the %s domain! Skip "
           "flowrule install on this Node..." % (infra.short_name, self.name))
         continue

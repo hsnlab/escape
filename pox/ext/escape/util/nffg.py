@@ -128,6 +128,7 @@ class NFFG(AbstractNFFG):
   # Some pre-define constant to avoid NFFGModel related class imports
   # Infra domains
   DOMAIN_INTERNAL = NodeInfra.DOMAIN_INTERNAL
+  DOMAIN_REMOTE = NodeInfra.DOMAIN_REMOTE
   DOMAIN_VIRTUAL = NodeInfra.DOMAIN_VIRTUAL
   DOMAIN_OS = NodeInfra.DOMAIN_OS
   DOMAIN_UN = NodeInfra.DOMAIN_UN
@@ -737,9 +738,9 @@ def generate_mn_topo ():
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   # Add supported types
-  ee1.add_supported_type(('headerCompressor', 'headerDecompressor', 
+  ee1.add_supported_type(('headerCompressor', 'headerDecompressor',
                           'simpleForwarder'))
-  ee2.add_supported_type(('headerCompressor', 'headerDecompressor', 
+  ee2.add_supported_type(('headerCompressor', 'headerDecompressor',
                           'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,

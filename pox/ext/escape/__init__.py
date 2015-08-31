@@ -60,11 +60,11 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         # Default managers need to start at init
                         # "DEFAULTS": ("OPENSTACK",), # OpenStack Agent REST API
                         "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK", "UN"],
+                        # "DEFAULTS": [],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.components",
                                          "class": "InternalPOXAdapter",
-                                         "address": "0.0.0.0",
-                                         "port": "6633"},
+                                         "address": "0.0.0.0", "port": "6633"},
                         "MININET": {"module": "escape.adapt.components",
                                     "class": "InternalMininetAdapter"},
                         "VNFStarter": {"module": "escape.adapt.components",
@@ -98,8 +98,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                    "class": "DockerDomainManager",
                                    "poll": False},
                         "SDN": {"module": "escape.adapt.components",
-                                "class": "SDNDomainManager",
-                                "poll": False}},
+                                "class": "SDNDomainManager", "poll": False}},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
                             "TOPO": "escape-mn-topo.nffg",  # relative to ext/
