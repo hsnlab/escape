@@ -256,7 +256,7 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     return infra
 
   def add_node_port (self, parent, type=PORT_ABSTRACT, id=None, name=None,
-       param=None):
+                     param=None):
     """
     Add a port to a Node. The parent node could be the nodes which can has
     ports i.e. a special infrastructure node, initiated and supported NF
@@ -424,7 +424,7 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     return supported_nf
 
   def add_flow_entry (self, parent, in_port, out_port, match=None, action=None,
-       delay=None, bandwidth=None):
+                      delay=None, bandwidth=None):
     """
     Add a flowentry to an Infrastructure Node.
 
@@ -491,7 +491,7 @@ class XMLBasedNFFGBuilder(AbstractNFFG):
     return flowentry
 
   def __add_connection (self, parent, src, dst, id=None, name=None, delay=None,
-       bandwidth=None):
+                        bandwidth=None):
     """
     Add a connection a.k.a a <link> to the Virtualizer or to a Node.
 
@@ -813,7 +813,7 @@ class Virtualizer3BasedNFFGBuilder(AbstractNFFG):
     return infranode
 
   def add_node_port (self, parent, type=PORT_ABSTRACT, id=None, name=None,
-       param=None):
+                     param=None):
     """
     Add a port to a Node. The parent node could be the nodes which can has
     ports i.e. a special infrastructure node, initiated and supported NF
@@ -934,7 +934,7 @@ class Virtualizer3BasedNFFGBuilder(AbstractNFFG):
     return supported_nf
 
   def add_flow_entry (self, parent, in_port, out_port, match=None, action=None,
-       delay=None, bandwidth=None):
+                      delay=None, bandwidth=None):
     """
     Add a flowentry to an Infrastructure Node.
 
@@ -978,7 +978,7 @@ class Virtualizer3BasedNFFGBuilder(AbstractNFFG):
     return flowentry
 
   def __add_connection (self, parent, src, dst, id=None, name=None, delay=None,
-       bandwidth=None):
+                        bandwidth=None):
     """
     Add a connection a.k.a a <link> to the Virtualizer or to a Node.
 
@@ -1406,7 +1406,7 @@ def test_topo_os ():
 
 class NFFGConverter(object):
   """
-  Covert different representation of NFFG in both ways.
+  Convert different representation of NFFG in both ways.
   """
 
   def __init__ (self, domain):
@@ -1422,22 +1422,32 @@ class NFFGConverter(object):
     :rtype: :any:`NFFG`
     """
     try:
+      # Parse given str to XML structure
       tree = ET.ElementTree(ET.fromstring(xml_data))
+      # Parse Virtualizer structure
       virtualizer = virt3.Virtualizer().parse(root=tree.getroot())
     except ET.ParseError as e:
       raise RuntimeError('ParseError: %s' % e.message)
+
     # Get NFFG init params
     nffg_id = virtualizer.id.getValue() if virtualizer.id.isInitialized() \
       else "NFFG-%s" % self.domain
     nffg_name = virtualizer.name.getValue() if \
       virtualizer.name.isInitialized() else nffg_id
+
     # Create NFFG
     nffg = NFFG(id=nffg_id, name=nffg_name)
+
+    # Define default delay,bw <-- Virtualizer does not store/handle delay/bw
+    _delay = None  # 0
+    _bandwidth = None  # sys.maxint
+
     # Iterate over virtualizer/nodes --> node = Infra
     for inode in virtualizer.nodes:
       # Node params
       _id = inode.id.getValue()
-      _name = inode.name.getValue() if inode.name.isInitialized() else _id
+      _name = inode.name.getValue() if inode.name.isInitialized() else \
+        "name-" + _id
       _domain = self.domain
       _type = inode.type.getValue()
       # Node-resources params
@@ -1449,110 +1459,146 @@ class NFFGConverter(object):
           _cpu = int(_cpu)
           _mem = int(_mem)
           _storage = int(_storage)
-        except KeyError:
+        except ValueError:
           pass
       else:
         _cpu = sys.maxint
         _mem = sys.maxint
         _storage = sys.maxint
+
       # Add Infra Node
       infra = nffg.add_infra(id=_id, name=_name, domain=_domain,
                              infra_type=_type, cpu=_cpu, mem=_mem,
-                             storage=_storage, delay=0, bandwidth=sys.maxint)
-                             # storage=_storage)
-      # Add supported types
+                             storage=_storage, delay=_delay,
+                             bandwidth=_bandwidth)
+
+      # Add supported types shrinked from the supported NF list
       for sup_nf in inode.capabilities.supported_NFs:
-        # FIXME - check id,type or what should be collect?
         infra.add_supported_type(sup_nf.type.getValue())
-      # Add ports
+
+      # Add ports to Infra Node
       for port in inode.ports:
         # If it is a port connected to a SAP
         if port.port_type.getValue() == "port-sap":
+          # Use unique SAP tag as the id of the SAP
           if port.sap.isInitialized():
             s_id = port.sap.getValue()
           else:
             s_id = "SAP%s" % len([s for s in nffg.saps])
           try:
             sap_port_id = int(port.id.getValue())
-          except:
+          except ValueError:
             sap_port_id = port.id.getValue()
-          s_name = port.name.getValue() if port.name.isInitialized() else s_id
+          s_name = port.name.getValue() if port.name.isInitialized() else \
+            "name-" + _ids_id
+
           # Create SAP and Add port to SAP
           # SAP default port: sap-type port number
           sap_port = nffg.add_sap(id=s_id, name=s_name).add_port(id=sap_port_id)
+          # Add port properties as metadata to SAP port
           sap_port.add_property("name:%s" % port.name.getValue())
           sap_port.add_property("port_type:%s" % port.port_type.getValue())
-          # Add properties
           if port.sap.isInitialized():
             sap_port.add_property("sap:%s" % port.sap.getValue())
-          # Create Infra port
+
+          # Create and add the opposite Infra port
           try:
             infra_port_id = int(port.id.getValue())
-          except:
+          except ValueError:
             infra_port_id = port.id.getValue()
           infra_port = infra.add_port(id=infra_port_id)
+          # Add port properties as metadata to Infra port too
           infra_port.add_property("name:%s" % port.name.getValue())
           infra_port.add_property("port_type:%s" % port.port_type.getValue())
-          # Add infra por capabilities
+          if port.sap.isInitialized():
+            infra_port.add_property("sap:%s" % port.sap.getValue())
+
+          # Add infra port capabilities
           if port.capability.isInitialized():
             infra_port.add_property(
               "capability:%s" % port.capability.getValue())
+
           # Add connection between infra - SAP
-          nffg.add_undirected_link(port1=sap_port, port2=infra_port, delay=0,
-                                   bandwidth=sys.maxint)
-          # nffg.add_undirected_link(port1=sap_port, port2=infra_port)
+          # SAP-Infra is static link --> create link for both direction
+          nffg.add_undirected_link(port1=sap_port, port2=infra_port,
+                                   delay=_delay,
+                                   bandwidth=_bandwidth)
+
+        # If it is not SAP port and probably connected to another infra
         elif port.port_type.getValue() == "port-abstract":
           # Add default port
           try:
             infra_port_id = int(port.id.getValue())
-          except:
+          except ValueError:
             infra_port_id = port.id.getValue()
+
+          # Add port properties as metadata to Infra port
           infra_port = infra.add_port(id=infra_port_id)
           infra_port.add_property("name:%s" % port.name.getValue())
           infra_port.add_property("port_type:%s" % port.port_type.getValue())
           if port.capability.isInitialized():
             infra_port.add_property(
               "capability:%s" % port.capability.getValue())
-            # FIXME - check if two infra is connected
+        # FIXME - check if two infra is connected and create undirected link
         else:
           raise RuntimeError(
             "Unsupported port type: %s" % port.port_type.getValue())
-      for nf_inst in inode.NF_instances:
-        # NF params
-        nf_id = nf_inst.id.getAsText()
-        nf_name = nf_inst.name.getAsText() if nf_inst.name.isInitialized() \
-          else nf_id
-        nf_ftype = nf_inst.type.getAsText() if nf_inst.type.isInitialized() \
-          else None
-        nf_dtype = None
-        nf_cpu = nf_inst.resources.cpu.getAsText()
-        nf_mem = nf_inst.resources.mem.getAsText()
-        nf_storage = nf_inst.resources.storage.getAsText()
-        # Create NodeNF
-        nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
-                         dep_type=nf_dtype, cpu=nf_cpu, mem=nf_mem,
-                         storage=nf_storage, delay=0, bandwidth=sys.maxint)
-                         #storage=nf_storage)
-        # Create NF ports
-        for port in nf_inst.ports:
-          nf_port = nf.add_port(id=port.id.getAsText())
-          if port.capability.isInitialized():
-            nf_port.add_property("capability:%s" % port.capability.getAsText())
-          if port.name.isInitialized():
-            nf_port.add_property("name:%s" % port.name.getAsText())
-          if port.port_type.isInitialized():
-            nf_port.add_property("port_type:%s" % port.port_type.getAsText())
-          if port.sap.isInitialized():
-            nf_port.add_property("sap:%s" % port.sap.getAsText())
-          # Add connection between Infra - NF
-          next_port = max(max({p.id for p in infra.ports}) + 1,
-                          len(infra.ports))
-          nffg.add_undirected_link(port1=nf_port,
-                                   port2=infra.add_port(id=next_port),
-                                   dynamic=True, delay=0,
-                                   bandwidth=sys.maxint)
-                                   #dynamic=True)
-          # FIXME - add flowrule parsing
+
+        # Create NF instances
+        for nf_inst in inode.NF_instances:
+          # Get NF params
+          nf_id = nf_inst.id.getAsText()
+          nf_name = nf_inst.name.getAsText() if nf_inst.name.isInitialized() \
+            else nf_id
+          nf_ftype = nf_inst.type.getAsText() if nf_inst.type.isInitialized() \
+            else None
+          nf_dtype = None
+          nf_cpu = nf_inst.resources.cpu.getAsText()
+          nf_mem = nf_inst.resources.mem.getAsText()
+          nf_storage = nf_inst.resources.storage.getAsText()
+          try:
+            nf_cpu = int(nf_cpu) if nf_cpu is not None else None
+            nf_mem = int(nf_mem) if nf_cpu is not None else None
+            nf_storage = int(nf_storage) if nf_cpu is not None else None
+          except ValueError:
+            pass
+          nf_cpu = nf_cpu
+          nf_mem = nf_mem
+          nf_storage = nf_storage
+
+          # Create NodeNF
+          nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
+                           dep_type=nf_dtype, cpu=nf_cpu, mem=nf_mem,
+                           storage=nf_storage, delay=_delay,
+                           bandwidth=_bandwidth)
+
+          # Create NF ports
+          for nf_inst_port in nf_inst.ports:
+
+            # Create and Add port
+            nf_port = nf.add_port(id=nf_inst_port.id.getAsText())
+
+            # Add port properties as metadata to NF port
+            if nf_inst_port.capability.isInitialized():
+              nf_port.add_property(
+                "capability:%s" % nf_inst_port.capability.getAsText())
+            if nf_inst_port.name.isInitialized():
+              nf_port.add_property("name:%s" % nf_inst_port.name.getAsText())
+            if nf_inst_port.port_type.isInitialized():
+              nf_port.add_property(
+                "port_type:%s" % nf_inst_port.port_type.getAsText())
+
+            # Add connection between Infra - NF
+            # Get the smallest available port for the Infra Node
+            next_port = max(max({p.id for p in infra.ports}) + 1,
+                            len(infra.ports))
+            # NF-Infra is dynamic link --> create special undirected link
+            nffg.add_undirected_link(port1=nf_port,
+                                     port2=infra.add_port(id=next_port),
+                                     dynamic=True, delay=_delay,
+                                     bandwidth=_bandwidth)
+            # dynamic=True)
+            # TODO - add flowrule parsing
     return nffg, virtualizer
 
   def dump_to_Virtualizer3 (self, nffg, virtualizer=None):
@@ -1689,7 +1735,7 @@ class NFFGConverter(object):
               raise RuntimeError(
                 "Wrong flowrule format: missing in in_port from match")
             in_port = str(port.id)
-            #in_port = fr[0].split('=')[1]
+            # in_port = fr[0].split('=')[1]
             try:
               # Flowrule in_port is a phy port in Infra Node
               in_port = virtualizer.nodes[infra.id].ports[in_port]
@@ -1773,18 +1819,21 @@ class NFFGConverter(object):
 if __name__ == "__main__":
   # test_xml_based_builder()
   # txt = test_virtualizer3_based_builder()
-  # txt = test_topo_un()
-  txt = test_topo_os()
+  txt = test_topo_un()
+  # txt = test_topo_os()
   # print txt
   # print Virtualizer3BasedNFFGBuilder.parse(txt)
-  c = NFFGConverter(domain=NFFG.DOMAIN_UN)
+  c = NFFGConverter(domain=NFFG.DOMAIN_OS)
   nffg, vv = c.parse_from_Virtualizer3(xml_data=txt)
   # # UN
   # nffg.network.node['UUID11'].ports[1].add_flowrule(
   #   match="in_port=1;TAG=sap1-comp-42", action="output=2;UNTAG")
   # OS
-  nffg.network.node['UUID-01'].ports[1].add_flowrule(
-    match="in_port=1;TAG=sap1-comp-42", action="output=0;UNTAG")
+  # nffg.network.node['UUID-01'].ports[1].add_flowrule(
+  #   match="in_port=1;TAG=sap1-comp-42", action="output=0;UNTAG")
+  from pprint import pprint
+
+  pprint(nffg.network.__dict__)
   print nffg.dump()
 
   # from nffg import gen
@@ -1792,7 +1841,7 @@ if __name__ == "__main__":
   # nffg = gen()
   # print nffg.dump()
   # v = c.dump_to_Virtualizer3(nffg, virtualizer=vv)
-  v, nffg = c.dump_to_Virtualizer3(nffg)
-  out = str(v)
-  out = out.replace("&lt;", "<").replace("&gt;", ">")
-  print out
+  # v, nffg = c.dump_to_Virtualizer3(nffg)
+  # out = str(v)
+  # out = out.replace("&lt;", "<").replace("&gt;", ">")
+  # print out

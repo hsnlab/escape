@@ -294,7 +294,7 @@ class NFFG(AbstractNFFG):
       return False
 
   def add_nf (self, nf=None, id=None, name=None, func_type=None, dep_type=None,
-       cpu=None, mem=None, storage=None, delay=None, bandwidth=None):
+              cpu=None, mem=None, storage=None, delay=None, bandwidth=None):
     """
     Add a Network Function to the structure.
 
@@ -349,8 +349,8 @@ class NFFG(AbstractNFFG):
     return sap
 
   def add_infra (self, infra=None, id=None, name=None, domain=None,
-       infra_type=None, cpu=None, mem=None, storage=None, delay=None,
-       bandwidth=None):
+                 infra_type=None, cpu=None, mem=None, storage=None, delay=None,
+                 bandwidth=None):
     """
     Add an Infrastructure Node to the structure.
 
@@ -387,7 +387,7 @@ class NFFG(AbstractNFFG):
     return infra
 
   def add_link (self, src_port, dst_port, link=None, id=None, dynamic=False,
-       backward=False, delay=None, bandwidth=None):
+                backward=False, delay=None, bandwidth=None):
     """
     Add a Link to the structure.
 
@@ -416,7 +416,7 @@ class NFFG(AbstractNFFG):
     return link
 
   def add_undirected_link (self, port1, port2, p1p2id=None, p2p1id=None,
-       dynamic=False, delay=None, bandwidth=None):
+                           dynamic=False, delay=None, bandwidth=None):
     """
     Add two Links to the structure, in both directions.
 
@@ -466,7 +466,7 @@ class NFFG(AbstractNFFG):
     return hop
 
   def add_req (self, src_port, dst_port, req=None, id=None, delay=None,
-       bandwidth=None):
+               bandwidth=None):
     """
     Add a requirement edge to the structure.
 
@@ -965,8 +965,9 @@ def generate_os_req ():
   test = NFFG(id="OS-req", name="SG-name")
   sap1 = test.add_sap(name="SAP24", id="0")
   sap2 = test.add_sap(name="SAP42", id="1")
-  webserver = test.add_nf(id="webserver", name="webserver", func_type="webserver",
-                     cpu=1, mem=1, storage=0)
+  webserver = test.add_nf(id="webserver", name="webserver",
+                          func_type="webserver",
+                          cpu=1, mem=1, storage=0)
   # echo = test.add_nf(id="echo", name="echo", func_type="echo",
   #                    cpu=1, mem=1, storage=0)
   test.add_sglink(sap1.add_port(0), webserver.add_port(0), id=1)
@@ -991,8 +992,9 @@ def generate_os_mn_req ():
   # sap14 = test.add_sap(name="SAP14", id="0")
   # sap24 = test.add_sap(name="SAP24", id="1")
 
-  webserver = test.add_nf(id="webserver", name="webserver", func_type="webserver",
-                     cpu=1, mem=1, storage=0)
+  webserver = test.add_nf(id="webserver", name="webserver",
+                          func_type="webserver",
+                          cpu=1, mem=1, storage=0)
   # echo = test.add_nf(id="echo", name="echo", func_type="echo",
   #                    cpu=1, mem=1, storage=0)
   test.add_sglink(sap1.add_port(0), webserver.add_port(0), id=1)
@@ -1015,9 +1017,9 @@ def generate_dov ():
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   # Add supported types
-  ee1.add_supported_type(('headerCompressor', 'headerDecompressor', 
+  ee1.add_supported_type(('headerCompressor', 'headerDecompressor',
                           'simpleForwarder'))
-  ee2.add_supported_type(('headerCompressor', 'headerDecompressor', 
+  ee2.add_supported_type(('headerCompressor', 'headerDecompressor',
                           'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
@@ -1058,8 +1060,9 @@ def generate_dov ():
   l12.delay = 1.5
   l12.bandwidth = 1000
 
-  os_bb = nffg.add_infra(id="UUID-01", name="Single BiSBiS in OS Domain", 
-                         domain=NFFG.DOMAIN_OS, infra_type=NFFG.TYPE_INFRA_BISBIS, 
+  os_bb = nffg.add_infra(id="UUID-01", name="Single BiSBiS in OS Domain",
+                         domain=NFFG.DOMAIN_OS,
+                         infra_type=NFFG.TYPE_INFRA_BISBIS,
                          cpu=10, mem=32, storage=5, delay=0, bandwidth=100000)
   # Add supported types
   os_bb.add_supported_type(('webserver', 'echo'))
@@ -1068,8 +1071,9 @@ def generate_dov ():
   l21.delay = 10
   l21.bandwidth = 1000
 
-  un_bb = nffg.add_infra(id="UUID11", name="Universal Node", 
-                         domain=NFFG.DOMAIN_UN, infra_type=NFFG.TYPE_INFRA_BISBIS, 
+  un_bb = nffg.add_infra(id="UUID11", name="Universal Node",
+                         domain=NFFG.DOMAIN_UN,
+                         infra_type=NFFG.TYPE_INFRA_BISBIS,
                          cpu=5, mem=16, storage=5, delay=0, bandwidth=100000)
   # Add supported types
   un_bb.add_supported_type(('dpi', 'example'))
@@ -1093,7 +1097,8 @@ def generate_global_req ():
   # fwd = test.add_nf(id="fwd", name="FORWARDER",
   #                   func_type="simpleForwarder", cpu=1, mem=1, storage=0)
 
-  webserver1 = test.add_nf(id="webserver1", name="webserver1", func_type="webserver",
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver",
                            cpu=1, mem=1, storage=0)
   # webserver2 = test.add_nf(id="webserver2", name="webserver2", func_type="webserver",
   #                          cpu=1, mem=1, storage=0)
@@ -1111,6 +1116,12 @@ def generate_global_req ():
   # test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=1, delay=100)
 
   return test
+
+
+class NFFGToolBox(object):
+  """
+  Helper functions for NFFG handling
+  """
 
 
 if __name__ == "__main__":
