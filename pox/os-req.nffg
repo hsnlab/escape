@@ -1,72 +1,72 @@
 {
   "parameters": {
-    "id": "OS-req", 
-    "name": "SG-name", 
+    "id": "OS-req",
+    "name": "SG-name",
     "version": "1.0"
-  }, 
+  },
   "node_nfs": [
     {
-      "id": "webserver", 
-      "name": "webserver", 
+      "id": "webserver",
+      "name": "webserver",
       "ports": [
         {
           "id": 0
         }
-      ], 
-      "functional_type": "webserver", 
+      ],
+      "functional_type": "webserver",
       "specification": {
         "resources": {
-          "cpu": 1, 
-          "mem": 1, 
+          "cpu": 1,
+          "mem": 1,
           "storage": 0
         }
       }
     }
-  ], 
+  ],
   "node_saps": [
     {
-      "id": "1", 
-      "name": "SAP42", 
+      "id": "1",
+      "name": "SAP42",
       "ports": [
         {
           "id": 0
         }
       ]
-    }, 
+    },
     {
-      "id": "0", 
-      "name": "SAP24", 
+      "id": "0",
+      "name": "SAP24",
       "ports": [
         {
           "id": 0
         }
       ]
     }
-  ], 
+  ],
   "edge_sg_nexthops": [
     {
-      "id": 1, 
-      "src_node": "0", 
-      "src_port": 0, 
-      "dst_node": "webserver", 
+      "id": 1,
+      "src_node": "0",
+      "src_port": 0,
+      "dst_node": "webserver",
       "dst_port": 0
-    }, 
+    },
     {
-      "id": 2, 
-      "src_node": "webserver", 
-      "src_port": 0, 
-      "dst_node": "1", 
+      "id": 2,
+      "src_node": "webserver",
+      "src_port": 0,
+      "dst_node": "1",
       "dst_port": 0
     }
-  ], 
+  ],
   "edge_reqs": [
     {
-      "id": 22086992, 
-      "src_node": "0", 
-      "src_port": 0, 
-      "dst_node": "1", 
-      "dst_port": 0, 
-      "delay": 100, 
+      "id": 22086992,
+      "src_node": "0",
+      "src_port": 0,
+      "dst_node": "1",
+      "dst_port": 0,
+      "delay": 100,
       "bandwidth": 1
     }
   ]

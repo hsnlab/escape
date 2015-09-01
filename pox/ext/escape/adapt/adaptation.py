@@ -215,7 +215,7 @@ class ComponentConfigurator(object):
     """
     # very dummy initialization
     for mgr in CONFIG.get_default_mgrs():
-      self.start_mgr(mgr)
+      self.start_mgr(domain_name=mgr)
 
   def load_internal_mgr (self):
     """
@@ -343,7 +343,7 @@ class ControllerAdapter(object):
     :rtype: list
     """
     # TODO - implement slicing, replace dummy 'all in' solution
-    
+
     with open('pox/global-mapped.nffg', 'r') as f:
       nffg = NFFG.parse(f.read())
     sliced_parts = []
@@ -352,7 +352,7 @@ class ControllerAdapter(object):
         continue
       nffg_part = NFFG(id=infra.id, name=infra.domain)
       nffg_part.add_infra(infra=infra)
-      for u, v, l in nffg.network.out_edges_iter((infra.id, ), data=True):
+      for u, v, l in nffg.network.out_edges_iter((infra.id,), data=True):
         if l.dst.node.type == NFFG.TYPE_NF:
           nf = l.dst.node
           if nf not in [n for n in nffg_part.nfs]:
@@ -368,7 +368,7 @@ class ControllerAdapter(object):
     #   print n[1].dump()
 
     return ((domain, nffg) for domain in self.domains.components)
-    #return sliced_parts
+    # return sliced_parts
 
     # for domain in self.domains.initiated:
     #   log.debug("Slicing mapped NFFG: %s for domain: %s" % (nffg, domain))
@@ -469,7 +469,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    log.debug("DoV is empty! Add new domain: %s as the global view!" % domain)
+    log.debug("Set domain: %s as the global view!" % domain)
     self.__global_nffg = nffg.copy()
     self.__global_nffg.id = "dov-" + self.__global_nffg.generate_id()
     self.__global_nffg.name = "DoV"
@@ -481,8 +481,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     # Create full copy
     nffg = nffg.copy()
     from pprint import pprint
-    #pprint(self.__global_nffg.network.__dict__)
-    #pprint(nffg.network.__dict__)
+    # pprint(self.__global_nffg.network.__dict__)
+    # pprint(nffg.network.__dict__)
     # Copy infras
     log.debug("Merge domain: %s resource info into DoV..." % domain)
     for infra in nffg.infras:
@@ -556,6 +556,8 @@ class DomainResourceManager(object):
     """
     super(DomainResourceManager, self).__init__()
     log.debug("Init DomainResourceManager")
+    # FIXME - SIGCOMM
+    # self.__dov = DomainVirtualizer(self)  # Domain Virtualizer
     with open('pox/dov.nffg', 'r') as f:
       nffg = NFFG.parse(f.read())
     self.__dov = DomainVirtualizer(self, global_res=nffg)  # Domain Virtualizer
@@ -590,6 +592,8 @@ class DomainResourceManager(object):
         self.__dov.merge_domain_into_dov(domain, nffg)
       else:
         # No other domain detected, set NFFG as the whole global view
+        log.debug(
+          "DoV is empty! Add new domain: %s as the global view!" % domain)
         self.__dov.set_global_view(domain, nffg)
       # Add detected domain to cached domains
       self._tracked_domains.add(domain)
@@ -597,5 +601,6 @@ class DomainResourceManager(object):
       log.info("Updating <Global Resource View> from %s domain..." % domain)
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
-        self.__dov.update_domain_view(nffg)
+        self.__dov.update_domain_view(domain, nffg)
+    # FIXME - SIGCOMM
     print self.__dov.get_resource_info().dump()

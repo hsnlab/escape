@@ -1,16 +1,31 @@
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""
+Contains manager and handling functions for global ESCAPE configuration.
+"""
 import copy
 from distutils.util import strtobool
 import importlib
 import json
 import os
+
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.infr import LAYER_NAME as INFR
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
 from escape.util.misc import Singleton
 from pox.core import log, core
-
-__author__ = 'Janos Czentye'
 
 
 class ESCAPEConfig(object):

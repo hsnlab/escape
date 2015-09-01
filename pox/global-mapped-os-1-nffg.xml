@@ -34,19 +34,6 @@
                         </port>
                     </ports>
                 </node>
-                <node>
-                    <id>NF2</id>
-                    <name>Web server NF</name>
-                    <type>webserver</type>
-                    <ports>
-                        <port>
-                            <id>NF2_in</id>
-                            <name>in</name>
-                            <port_type>port-abstract</port_type>
-                            <capability>...</capability>
-                        </port>
-                    </ports>
-                </node>
             </NF_instances>
             <flowtable>
                 <flowentry>
@@ -59,23 +46,9 @@
                 <flowentry>
                     <id>f2</id>
                     <port>../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]</port>
-                    <match></match>
+                    <match/>
                     <out>../../../ports/port[id=0]</out>
                     <action>mod_vlan_vid:2</action>
-                </flowentry>
-                <flowentry>
-                    <id>f3</id>
-                    <port>../../../ports/port[id=0]</port>
-                    <match>dl_vlan=21</match>
-                    <out>../../../NF_instances/node[id=NF2]/ports/port[id=NF2_in]</out>
-                    <action>strip_vlan</action>
-                </flowentry>
-                <flowentry>
-                    <id>f4</id>
-                    <port>../../../NF_instances/node[id=NF2]/ports/port[id=NF2_in]</port>
-                    <match></match>
-                    <out>../../../ports/port[id=0]</out>
-                    <action>mod_vlan_vid:22</action>
                 </flowentry>
             </flowtable>
         </node>

@@ -15,8 +15,9 @@
 Contains Adapter classes which represent the connections between ESCAPEv2 and
 other different domains.
 """
-from ncclient.operations.rpc import RPCError
 from requests.exceptions import ConnectionError, HTTPError, Timeout
+
+from ncclient.operations.rpc import RPCError
 
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.conversion import NFFGConverter
@@ -42,6 +43,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
   """
   name = "INTERNAL-POX"
 
+  # FIXME - SIGCOMM -
   # Static mapping of infra IDs and DPIDs
   infra_to_dpid = {
     'MT1': 0x14c5e0c376e24,
@@ -50,21 +52,21 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     'EE2': 0x2,
     'SW3': 0x3,
     'SW4': 0x4,
-    }
+  }
   dpid_to_infra = {
-    0x14c5e0c376e24 : 'MT1',
-    0x14c5e0c376fc6 : 'MT2',
-    0x1 : 'EE1',
-    0x2 : 'EE2',
-    0x3 : 'SW3',
-    0x4 : 'SW4'
-    }
+    0x14c5e0c376e24: 'MT1',
+    0x14c5e0c376fc6: 'MT2',
+    0x1: 'EE1',
+    0x2: 'EE2',
+    0x3: 'SW3',
+    0x4: 'SW4'
+  }
   saps = {
-    'SW3' : {'port': '3', 
-             'dl_dst': '00:00:00:00:00:01', 'dl_src': '00:00:00:00:00:02'},
-    'SW4' : {'port': '3', 
-             'dl_dst': '00:00:00:00:00:02', 'dl_src': '00:00:00:00:00:01'}
-    }
+    'SW3': {'port': '3',
+            'dl_dst': '00:00:00:00:00:01', 'dl_src': '00:00:00:00:00:02'},
+    'SW4': {'port': '3',
+            'dl_dst': '00:00:00:00:00:02', 'dl_src': '00:00:00:00:00:01'}
+  }
 
   def __init__ (self, name=None, address="127.0.0.1", port=6633):
     """
@@ -103,7 +105,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     log.debug("%s adapter: Start listening connections..." % self.name)
     # Currently static initialization from a config file
     # TODO: discover SDN topology and create the NFFG
-    self.topo = None   # SDN domain topology stored in NFFG
+    self.topo = None  # SDN domain topology stored in NFFG
     self.__init_from_CONFIG()
 
   def __init_from_CONFIG (self, path=None):
@@ -113,8 +115,6 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
     :param path: additional file path
     :type path: str
-    :param format: NF-FG storing format (default: internal NFFG representation)
-    :type format: str
     :return: None
     """
     if path is None:
@@ -221,14 +221,14 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     """
     from pox.core import core
     import pox.openflow.libopenflow_01 as of
-    from pox.lib.addresses import EthAddr, IPAddr
+    from pox.lib.addresses import EthAddr
 
     log.info("Install POX domain part: flow entries to INFRA %s..." % id)
     # print match
     # print action
     dpid = InternalPOXAdapter.infra_to_dpid[id]
     con = core.openflow.getConnection(dpid)
-    
+
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
     try:
@@ -240,7 +240,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     try:
       vid = action['vlan_push']
       msg.actions.append(of.ofp_action_vlan_vid(
-          vlan_vid=int(action['vlan_push'])))
+        vlan_vid=int(action['vlan_push'])))
       # msg.actions.append(of.ofp_action_vlan_vid())
     except KeyError:
       pass
@@ -258,7 +258,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
         msg.actions.append(of.ofp_action_dl_addr.set_src(EthAddr(dl_src)))
     except KeyError:
       pass
-    msg.actions.append(of.ofp_action_output(port = int(action['out'])))
+    msg.actions.append(of.ofp_action_output(port=int(action['out'])))
 
     log.info("flow entry: %s" % msg)
     con.send(msg)
@@ -925,6 +925,7 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
+    # FIXME - SIGCOMM
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
     nffg_part.clear_links(NFFG.TYPE_LINK_SG)
@@ -1040,7 +1041,7 @@ class InternalDomainManager(AbstractDomainManager):
           self.portmap[dynamic_port] = infra_port_num
           # Update port in nffg_part
           nffg_part.network.node[infra_id].ports[link.dst.id].id = infra_port_num
-          
+
         log.debug("%s topology description is updated with NF: %s" % (
           self.name, deployed_nf.name))
     # Update port numbers in flowrules
@@ -1062,7 +1063,7 @@ class InternalDomainManager(AbstractDomainManager):
 
     log.info("Initiation of NFs in NFFG part: %s is finished!" % nffg_part)
 
-  def _deploy_flowrules(self, nffg_part):
+  def _deploy_flowrules (self, nffg_part):
     """
     Install the flowrules given in the NFFG.
 
@@ -1129,7 +1130,7 @@ class InternalDomainManager(AbstractDomainManager):
               push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
               action['vlan_push'] = push_tag
 
-          self.controlAdapter.install_flowrule(infra.id, 
+          self.controlAdapter.install_flowrule(infra.id,
                                                match=match, action=action)
 
 
@@ -1267,9 +1268,9 @@ class OpenStackDomainManager(AbstractDomainManager):
   def install_nffg (self, nffg_part):
     log.info("Install %s domain part..." % self.name)
     # TODO - implement just convert NFFG to appropriate format and send out
-    # FIXME - convert to appropriate format
-    #config = nffg_part.dump()
-    with open('pox/global-mapped-os.nffg', 'r') as f:
+    # FIXME - SIGCOMM
+    # config = nffg_part.dump()
+    with open('pox/global-mapped-os-nffg.xml', 'r') as f:
       nffg_part = f.read()
     self.topoAdapter.edit_config(nffg_part)
 
@@ -1311,7 +1312,7 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
   def install_nffg (self, nffg_part):
     log.info("Install %s domain part..." % self.name)
     # TODO - implement just convert NFFG to appropriate format and send out
-    # FIXME - convert to appropriate format
+    # FIXME - SIGCOMM
     # print nffg_part.dump()
     # self.topoAdapter.edit_config(nffg_part)
     with open('pox/global-mapped-un.nffg', 'r') as f:
@@ -1398,7 +1399,7 @@ class SDNDomainManager(AbstractDomainManager):
     log.info("NFFG: \n %s" % nffg_part.dump())
     self._deploy_flowrules(nffg_part=nffg_part)
 
-  def _deploy_flowrules(self, nffg_part):
+  def _deploy_flowrules (self, nffg_part):
     """
     Install the flowrules given in the NFFG.
 
@@ -1462,5 +1463,5 @@ class SDNDomainManager(AbstractDomainManager):
               push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
               action['vlan_push'] = push_tag
 
-          self.controlAdapter.install_flowrule(infra.id, 
+          self.controlAdapter.install_flowrule(infra.id,
                                                match=match, action=action)

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Unifying package for ESCAPEv2 functions
+Unifying package for ESCAPEv2 functions.
 
 'cfg' defines the default configuration settings such as the concrete
 RequestHandler and strategy classes, the initial Adapter classes, etc.

@@ -53,13 +53,17 @@
                     <id>f1</id>
                     <port>../../../ports/port[id=0]</port>
                     <match>dl_vlan=1</match>
-                    <out>../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]</out>
+                    <out>
+                        ../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]
+                    </out>
                     <action>strip_vlan</action>
                 </flowentry>
                 <flowentry>
                     <id>f2</id>
-                    <port>../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]</port>
-                    <match></match>
+                    <port>
+                        ../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]
+                    </port>
+                    <match/>
                     <out>../../../ports/port[id=0]</out>
                     <action>mod_vlan_vid:2</action>
                 </flowentry>
@@ -67,13 +71,17 @@
                     <id>f3</id>
                     <port>../../../ports/port[id=0]</port>
                     <match>dl_vlan=21</match>
-                    <out>../../../NF_instances/node[id=NF2]/ports/port[id=NF2_in]</out>
+                    <out>
+                        ../../../NF_instances/node[id=NF2]/ports/port[id=NF2_in]
+                    </out>
                     <action>strip_vlan</action>
                 </flowentry>
                 <flowentry>
                     <id>f4</id>
-                    <port>../../../NF_instances/node[id=NF2]/ports/port[id=NF2_in]</port>
-                    <match></match>
+                    <port>
+                        ../../../NF_instances/node[id=NF2]/ports/port[id=NF2_in]
+                    </port>
+                    <match/>
                     <out>../../../ports/port[id=0]</out>
                     <action>mod_vlan_vid:22</action>
                 </flowentry>

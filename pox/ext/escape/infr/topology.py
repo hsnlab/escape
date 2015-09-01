@@ -19,15 +19,14 @@ from mininet.clean import cleanup
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
-from mininet.term import makeTerms
-from mininet.link import TCLink, Intf, Link
+from mininet.link import TCLink
+
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
 from escape.util.misc import quit_with_error, run_silent, call_as_coop_task, \
   run_cmd
-from pprint import pprint
 
 
 class AbstractTopology(Topo):
@@ -247,7 +246,7 @@ class InternalControllerProxy(RemoteController):
   """
 
   def __init__ (self, name="InternalPOXController", ip='127.0.0.1', port=6633,
-       **kwargs):
+                **kwargs):
     """
     Init.
 
@@ -341,14 +340,15 @@ class ESCAPENetworkBridge(object):
                           logger=LAYER_NAME)
         self.started = True
         log.debug("Mininet network has been started!")
-        log.debug("Starting xterm on SAPS...")
-        makeTerms(self.__mininet.hosts, 'host')
+        # FIXME - SIGCOMM
+        # log.debug("Starting xterm on SAPS...")
+        # makeTerms(self.__mininet.hosts, 'host')
 
         nffg = self.topo_desc
         # Create inter-domain SAP ports, add phy interface to OVS
         for sap in {s for s in nffg.saps if s.domain is not None}:
           sap_switch_links = [(u, v, l) for u, v, l in
-                              nffg.network.out_edges_iter((sap.id, ), data=True)
+                              nffg.network.out_edges_iter((sap.id,), data=True)
                               if l.dst.node.type == NFFG.TYPE_INFRA]
           u, v, l = sap_switch_links[0]
           sw_name = nffg.network.node[v].id
@@ -474,13 +474,14 @@ class ESCAPENetworkBuilder(object):
   Follows Builder design pattern.
   """
   # Default initial options for Mininet
-  default_opts = {"controller": InternalControllerProxy,  # Use own Controller
-                  'build': False,  # Not build during init
-                  'inNamespace': False,  # Not start element in namespace
-                  'autoSetMacs': True,  # Set simple MACs
+  default_opts = {"controller":    InternalControllerProxy,
+                  # Use own Controller
+                  'build':         False,  # Not build during init
+                  'inNamespace':   False,  # Not start element in namespace
+                  'autoSetMacs':   True,  # Set simple MACs
                   'autoStaticArp': True,  # Set static ARP entries
-                  'listenPort': 6644,  # Add listen port to OVS switches
-                  'link': TCLink  # Add default link
+                  'listenPort':    6644,  # Add listen port to OVS switches
+                  'link':          TCLink  # Add default link
                   }
   # Default internal storing format for NFFG parsing/reading from file
   DEFAULT_NFFG_FORMAT = "NFFG"
@@ -579,10 +580,8 @@ class ESCAPENetworkBuilder(object):
     for edge in [l for l in nffg.links]:
       # Skip initiation of links which connected to an inter-domain SAP
       if (
-               edge.src.node.type == NFFG.TYPE_SAP and edge.src.node.domain
-           is not None) or (
-               edge.dst.node.type == NFFG.TYPE_SAP and edge.dst.node.domain
-           is not None):
+               edge.src.node.type == NFFG.TYPE_SAP and edge.src.node.domain is not None) or (
+               edge.dst.node.type == NFFG.TYPE_SAP and edge.dst.node.domain is not None):
         continue
       # Create Links
       mn_src_node = created_mn_nodes.get(edge.src.node.id)
@@ -604,7 +603,7 @@ class ESCAPENetworkBuilder(object):
           "implementation!" % edge)
       link = self.create_Link(src=mn_src_node, src_port=src_port,
                               dst=mn_dst_node, dst_port=dst_port,
-                              bw=edge.bandwidth, delay=str(edge.delay)+'ms')
+                              bw=edge.bandwidth, delay=str(edge.delay) + 'ms')
       created_mn_links[edge.id] = link
     log.info("Topology creation from NFFG has been finished!")
 
