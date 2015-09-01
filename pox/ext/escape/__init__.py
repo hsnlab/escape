@@ -127,7 +127,8 @@ def add_dependencies ():
   for sub_folder in os.listdir(root):
     abs_sub_folder = os.path.join(root, sub_folder)
     if not sub_folder.startswith('.') and sub_folder not in (
-         "pox", "OpenYuma", "Unify_ncagent") and os.path.isdir(abs_sub_folder):
+         "pox", "OpenYuma", "Unify_ncagent", "tools") and os.path.isdir(
+      abs_sub_folder):
       if abs_sub_folder not in sys.path:
         sys.path.insert(0, abs_sub_folder)
         core.getLogger().debug("Add dependency: %s" % abs_sub_folder)
