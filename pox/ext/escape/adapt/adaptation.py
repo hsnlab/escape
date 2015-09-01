@@ -586,7 +586,7 @@ class DomainResourceManager(object):
       # skip POX events currently
       pass
     if domain not in self._tracked_domains:
-      log.info("Add %s domain to <Global Resource View> (DoV)..." % domain)
+      log.info("Append %s domain to <Global Resource View> (DoV)..." % domain)
       if self._tracked_domains:
         # Merge domain topo into global view
         self.__dov.merge_domain_into_dov(domain, nffg)
@@ -603,4 +603,4 @@ class DomainResourceManager(object):
       if domain == 'INTERNAL':
         self.__dov.update_domain_view(domain, nffg)
     # FIXME - SIGCOMM
-    print self.__dov.get_resource_info().dump()
+    # print self.__dov.get_resource_info().dump()
