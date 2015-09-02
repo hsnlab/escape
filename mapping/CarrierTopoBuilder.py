@@ -22,6 +22,8 @@ Parameter names are also based on the .ppt file.
 
 """
 
+import logging
+
 try:
   from escape.util.nffg import NFFG
 except ImportError:
@@ -36,6 +38,10 @@ except ImportError:
 # Aggregation links (100Gbps) Connecting Distribution nodes to Aggregation Nodes
 aggr_link = {'bandwidth': 100000, 'delay': 0.2}
 popcnt = 0
+
+log = logging.getLogger("TopoConstruct")
+logging.basicConfig(level=logging.DEBUG,
+                      format='%(levelname)s:%(name)s:%(message)s')
 
 def addRedundantPairedConnection(nffg, an0, an1, bn0, bn1, linkres):
   """
@@ -52,6 +58,7 @@ def addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS_PE,
   """
   Retail and Business part inside one PoP is structurally the same.
   """
+  log.debug("Adding %s part for %s..."%(part, popn))
   # add Distribution Nodes (100Gbps switching capacity)
   dnres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
            'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
@@ -67,6 +74,7 @@ def addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS_PE,
   # add BNAS or PE (10Gbps switching capacity) 
   # and connecting SAPs towards Retail Clients (links with BCT bandwidth)
   for i in range(0, BNAS_PE):
+    log.debug("Adding switch %s for %s part..."%(i, part))
     bnas_pe_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
                'bandwidth': 10000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
     bnas_pe = nffg.add_infra(id=part+"-switch-"+str(i)+popn, 
@@ -80,6 +88,7 @@ def addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS_PE,
                              **distr_link)
     
     # add clients to current BNAS or PE
+    log.debug("Connecting %s SAPs to switch %s of %s part."%(Cpb, i, part))
     for j in range(0, Cpb):
       nameid = part+"-SAP-"+str(j)+"-switch-"+str(i)+popn
       sap = nffg.add_sap(id=nameid, name=nameid)
@@ -89,6 +98,8 @@ def addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS_PE,
 
 def addCassis(nffg, fi0, fi1, cluster_id, chassis_id, popn, 
               SE, SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
+  log.debug("Adding Chassis no.%s with %s Servers for Cluster no.%s of %s."%
+            (chassis_id,SE,cluster_id,popn))
   fabricext_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
                    'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   fe0 = nffg.add_infra(id="FabricExt-0-Chassis-"+str(chassis_id)+"-Cluster-"\
@@ -119,6 +130,7 @@ def addCassis(nffg, fi0, fi1, cluster_id, chassis_id, popn,
 
 def addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
                     SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
+  log.debug("Adding Cloud/NFV part for %s."%popn)
   dnres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
            'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   dn0 = nffg.add_infra(id="DistributionNode"+popn+"CloudNFV-0", 
@@ -129,6 +141,7 @@ def addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
   
   # add Server Clusters
   for i in range(0, CL):
+    log.debug("Adding Cluster no.%s to Could/NFV part of %s"%(CL, popn))
     fi_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
               'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
     fabric_interconnect0 = nffg.add_infra(id="FabricInterconnect-0-Cluster-"+\
@@ -186,6 +199,8 @@ def addPoP(nffg, backbonenode0, backbonenode1,
   """
   global popcnt
   popn = "-PoP-"+str(popcnt)
+
+  log.debug("Adding PoP %s..."%popcnt)
   # add Aggregation Nodes (1Tbps switching capacity)
   anres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
            'bandwidth': 1000000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
@@ -217,12 +232,39 @@ def getCarrierTopo():
                    'bandwidth': 10000000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   bn0 = nffg.add_infra(id="BackboneNode0", **backbone_res)
   bn1 = nffg.add_infra(id="BackboneNode1", **backbone_res)
+  bn2 = nffg.add_infra(id="BackboneNode2", **backbone_res)
+  bn3 = nffg.add_infra(id="BackboneNode3", **backbone_res)
+
   nffg.add_undirected_link(bn0.add_port(), bn1.add_port(), bandwidth=1000000, 
                            delay=10)
+  nffg.add_undirected_link(bn1.add_port(), bn2.add_port(), bandwidth=1000000, 
+                           delay=10)
+  nffg.add_undirected_link(bn2.add_port(), bn3.add_port(), bandwidth=1000000, 
+                           delay=10)
+  nffg.add_undirected_link(bn3.add_port(), bn0.add_port(), bandwidth=1000000, 
+                           delay=10)
+
   #                      BNAS,RCpb,  RCT, PE,BCpb, BCT, CL,SE,SE_cores,SAN_bw, 
-  addPoP(nffg, bn0, bn1, 2,   10000, 0.2, 2, 4000, 0.2, 2, 8, 8,       160000,  
+  addPoP(nffg, bn0, bn1, 2,   10000, 0.2, 2, 8000, 0.2, 2, 8, 8,       160000,  
        # SAN_sto,  SE_cores,SE_mem,SE_sto,CL_bw, CH_links
          100000,   8,       32000, 150,   40000, 4)
+  
+  #                      BNAS,RCpb,  RCT, PE,BCpb, BCT, CL,SE,SE_cores,SAN_bw, 
+  addPoP(nffg, bn1, bn2, 2,   10000, 0.2, 2, 4000, 0.2, 2, 8, 8,       160000,  
+       # SAN_sto,  SE_cores,SE_mem,SE_sto,CL_bw, CH_links
+         100000,   8,       32000, 150,   40000, 4)  
+  
+  #                      BNAS,RCpb,  RCT, PE,BCpb, BCT, CL,SE,SE_cores,SAN_bw, 
+  addPoP(nffg, bn2, bn3, 4,   10000, 0.2, 2, 4000, 0.2, 2, 8, 8,       160000,  
+       # SAN_sto,  SE_cores,SE_mem,SE_sto,CL_bw, CH_links
+         100000,   8,       32000, 150,   40000, 4)  
+  
+  #                      BNAS,RCpb,  RCT, PE,BCpb, BCT, CL,SE,SE_cores,SAN_bw, 
+  addPoP(nffg, bn3, bn0, 8,   10000, 0.2, 4, 4000, 0.2, 2, 8, 8,       160000,  
+       # SAN_sto,  SE_cores,SE_mem,SE_sto,CL_bw, CH_links
+         100000,   8,       32000, 150,   40000, 4)
+  
+  log.debug("Carrier topology construction finished!")
   return nffg
 
 if __name__ == '__main__':
