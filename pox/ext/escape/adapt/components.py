@@ -741,7 +741,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
     # Cache virtualizer
     self.virtualizer = virt
-    print nffg.dump()
+    # print nffg.dump()
     return nffg
 
   def edit_config (self, data):
@@ -823,7 +823,7 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
     # Cache virtualizer
     self.virtualizer = virt
-    print nffg.dump()
+    # print nffg.dump()
     return nffg
 
   def edit_config (self, data):

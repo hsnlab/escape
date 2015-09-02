@@ -286,7 +286,8 @@ class ControllerAdapter(object):
     """
     Start NF-FG installation.
 
-    Process given :any:`NFFG`, slice information based on domains an invoke
+    Process given :any:`NFFG`, slice information self.__global_nffgd on
+    domains an invoke
     DomainManagers to install domain specific parts.
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
@@ -332,7 +333,8 @@ class ControllerAdapter(object):
 
   def _slice_into_domains (self, nffg):
     """
-    Slice given :any:`NFFG` into separate parts based on original domains.
+    Slice given :any:`NFFG` into separate parts self.__global_nffgd on
+    original domains.
 
     .. warning::
       Not implemented yet!
@@ -384,7 +386,8 @@ class ControllerAdapter(object):
     #   for node in {n for id, n in nffg_part.network.nodes_iter(data=True) if
     #                n.type == NFFG.TYPE_NF or n.type == NFFG.TYPE_SAP}:
     #     if len({l for u, v, l in
-    #             nffg_part.network.out_edges_iter((node.id,), data=True)}) == 0:
+    #             nffg_part.network.out_edges_iter((node.id,), data=True)}) 
+    # == 0:
     #       nffg_part.del_node(node)
     #   # Recreate inter-domain SAP from port
     #   for infra in nffg.infras:
@@ -435,15 +438,14 @@ class DomainVirtualizer(AbstractVirtualizer):
       DoV, global_res))
     # Garbage-collector safe
     self.domainResManager = weakref.proxy(domainResManager)
+    self._global_nffg = None
+    """:type: NFFG"""
     if global_res is not None:
       self.set_global_view(domain=NFFG.DOMAIN_VIRTUAL, nffg=global_res)
-    else:
-      self.__global_nffg = None
-      """:type: NFFG"""
 
   @property
   def name (self):
-    return self.__global_nffg.name if self.__global_nffg.name is not None \
+    return self._global_nffg.name if self._global_nffg.name is not None \
       else DoV + "-uninitialized"
 
   def __str__ (self):
@@ -459,7 +461,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: global resource info
     :rtype: :any:`NFFG`
     """
-    return self.__global_nffg
+    return self._global_nffg
 
   def set_global_view (self, domain, nffg):
     """
@@ -470,74 +472,97 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: None
     """
     log.debug("Set domain: %s as the global view!" % domain)
-    self.__global_nffg = nffg.copy()
-    self.__global_nffg.id = "dov-" + self.__global_nffg.generate_id()
-    self.__global_nffg.name = "DoV"
+    self._global_nffg = nffg.copy()
+    self._global_nffg.id = "dov-" + self._global_nffg.generate_id()
+    self._global_nffg.name = "DoV"
 
   def merge_domain_into_dov (self, domain, nffg):
     """
     Add a newly detected domain to DoV.
     """
-    # Create full copy
-    nffg = nffg.copy()
-    from pprint import pprint
-    # pprint(self.__global_nffg.network.__dict__)
-    # pprint(nffg.network.__dict__)
+    from copy import deepcopy
+
     # Copy infras
     log.debug("Merge domain: %s resource info into DoV..." % domain)
+
     for infra in nffg.infras:
-      pprint(self.__global_nffg.network.__dict__)
-      inf = self.__global_nffg.add_infra(infra=infra)
-      log.debug("Copy infra node: %s" % inf)
+      c_infra = self._global_nffg.add_infra(infra=deepcopy(infra))
+      log.debug("Copy infra node: %s" % c_infra)
+
+    # Copy NFs
+    for nf in nffg.nfs:
+      c_nf = self._global_nffg.add_nf(nf=deepcopy(nf))
+      log.debug("Copy NF node: %s" % c_nf)
+
     # Copy SAPs
-    saps_to_del = []
-    for sap in [s for s in nffg.saps]:
-      # If inter-domain connection is found -> merge saps into a link
-      if sap.id in [s.id for s in self.__global_nffg.saps]:
-        log.debug("Detected inter-domain SAP: %s" % sap)
-        # Get DoV side infra port of inter domain SAP
-        link_dov = [link for u, v, link in
-                    self.__global_nffg.network.out_edges_iter([sap.id],
-                                                              data=True) if
-                    link.type == NFFG.TYPE_LINK_STATIC]
-        if len(link_dov) > 1:
+    for sap_id in [s.id for s in nffg.saps]:
+      if sap_id in [s.id for s in self._global_nffg.saps]:
+        # Found inter-domain SAP
+        log.debug("Found Inter-domain SAP: %s" % sap_id)
+        # Search outgoing links from SAP, should be only one
+        b_links = [l for u, v, l in
+                   self._global_nffg.network.out_edges_iter([sap_id],
+                                                            data=True)]
+        if 2 < len(b_links) < 1:
           log.warning(
-            "Inter-domain SAP should have only one connection to it's domain!")
-        dov_port = link_dov[0].dst
-        # Add property to save inter-domain information in merged NFFG
-        dov_port.add_property("inter-domain:%s" % sap.id)
-        # Get new domain side infra port
-        link_nffg = [link for u, v, link in
-                     nffg.network.out_edges_iter([sap.id], data=True) if
-                     link.type == NFFG.TYPE_LINK_STATIC]
-        if len(link_nffg) > 1:
+            "Inter-domain SAP should have one and only one connection to the "
+            "domain!")
+          continue
+
+        # Get inter-domain port in self.__global_nffg NFFG
+        domain_port_dov = b_links[0].dst
+        log.debug("Found inter-domain port: %s" % domain_port_dov)
+        # Search outgoing links from SAP, should be only one
+        n_links = [l for u, v, l in
+                   nffg.network.out_edges_iter([sap_id], data=True)]
+
+        if 2 < len(n_links) < 1:
           log.warning(
-            "Inter-domain SAP should be only one connection to it's domain!")
-        # Add property to save inter-domain information in merged NFFG
-        nffg_port = link_nffg[0].dst
-        nffg_port.add_property("inter-domain:%s" % sap.id)
-        # Add inter-domain link here, because it's not in any of the two NFFG
-        self.__global_nffg.add_undirected_link(port1=dov_port, port2=nffg_port,
-                                               delay=link_dov[0].delay,
-                                               bandwidth=link_dov[0].bandwidth)
-        # Remove original inter-domain SAP (and the connection as well)
-        self.__global_nffg.del_node(sap.id)
-        # Remove new domain SAP to skip founding it the further
-        saps_to_del.append(sap.id)
-        nffg.del_node(sap.id)
+            "Inter-domain SAP should have one and only one connection to the "
+            "domain!")
+          continue
+
+        # Get port and Infra id's in nffg NFFG
+        p_id = n_links[0].dst.id
+        n_id = n_links[0].dst.node.id
+        # Get the inter-domain port from already copied Infra
+        domain_port_nffg = self._global_nffg.network.node[n_id].ports[p_id]
+        log.debug("Found inter-domain port: %s" % domain_port_nffg)
+
+        # Delete both inter-domain SAP and links connected to them
+        self._global_nffg.del_node(sap_id)
+        nffg.del_node(sap_id)
+        log.debug(
+          "Add inter-domain connection with delay: %s, bandwidth: %s" % (
+            b_links[0].delay, b_links[0].bandwidth))
+
+        # Add the inter-domain links for both ways
+        self._global_nffg.add_undirected_link(port1=domain_port_dov,
+          port2=domain_port_nffg, delay=b_links[0].delay,
+          bandwidth=b_links[0].bandwidth)
+
       else:
-        # Not inter-domain SAP -> just copy
-        log.debug("Copy SAP: %s" % sap)
-        self.__global_nffg.add_sap(sap=sap)
-      # pprint(self.__global_nffg.network.__dict__)
-      for link in {l for l in nffg.links if l.type == NFFG.TYPE_LINK_STATIC}:
-        log.debug("Copy connection: %s" % link)
-        self.__global_nffg.add_link(src_port=link.src, dst_port=link.dst,
-                                    link=link)
-        # pprint(self.__global_nffg.network.__dict__)
-    for sap in saps_to_del:
-      nffg.del_node(sap)
-      self.__global_nffg.del_node(sap)
+        # Normal SAP --> copy SAP
+        c_sap = self._global_nffg.add_sap(
+          sap=deepcopy(nffg.network.node[sap_id]))
+        log.debug("Copy SAP: %s" % c_sap)
+    
+    # Copy remaining links which should be valid
+    for u, v, link in nffg.network.edges_iter(data=True):
+      src_port = self._global_nffg.network.node[u].ports[link.src.id]
+      dst_port = self._global_nffg.network.node[v].ports[link.dst.id]
+      c_link = deepcopy(link)
+      c_link.src = src_port
+      c_link.dst = dst_port
+      self._global_nffg.add_link(src_port=src_port, dst_port=dst_port,
+                                 link=c_link)
+      log.debug("Copy Link: %s" % c_link)
+    # print self._global_nffg.dump()
+    # from pprint import pprint
+    # pprint(self._global_nffg.network.__dict__)
+
+    # Return the updated NFFG
+    return self._global_nffg
 
   def update_domain_view (self, domain, nffg):
     """
@@ -574,7 +599,7 @@ class DomainResourceManager(object):
 
   def update_domain_resource (self, domain, nffg):
     """
-    Update the global view database with the specific domain info.
+    Update the global view dataself.__global_nffg with the specific domain info.
 
     :param domain: domain name
     :type domain: str

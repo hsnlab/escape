@@ -1544,61 +1544,61 @@ class NFFGConverter(object):
           raise RuntimeError(
             "Unsupported port type: %s" % port.port_type.getValue())
 
-        # Create NF instances
-        for nf_inst in inode.NF_instances:
-          # Get NF params
-          nf_id = nf_inst.id.getAsText()
-          nf_name = nf_inst.name.getAsText() if nf_inst.name.isInitialized() \
-            else nf_id
-          nf_ftype = nf_inst.type.getAsText() if nf_inst.type.isInitialized() \
-            else None
-          nf_dtype = None
-          nf_cpu = nf_inst.resources.cpu.getAsText()
-          nf_mem = nf_inst.resources.mem.getAsText()
-          nf_storage = nf_inst.resources.storage.getAsText()
-          try:
-            nf_cpu = int(nf_cpu) if nf_cpu is not None else None
-            nf_mem = int(nf_mem) if nf_cpu is not None else None
-            nf_storage = int(nf_storage) if nf_cpu is not None else None
-          except ValueError:
-            pass
-          nf_cpu = nf_cpu
-          nf_mem = nf_mem
-          nf_storage = nf_storage
+      # Create NF instances
+      for nf_inst in inode.NF_instances:
+        # Get NF params
+        nf_id = nf_inst.id.getAsText()
+        nf_name = nf_inst.name.getAsText() if nf_inst.name.isInitialized() \
+          else nf_id
+        nf_ftype = nf_inst.type.getAsText() if nf_inst.type.isInitialized() \
+          else None
+        nf_dtype = None
+        nf_cpu = nf_inst.resources.cpu.getAsText()
+        nf_mem = nf_inst.resources.mem.getAsText()
+        nf_storage = nf_inst.resources.storage.getAsText()
+        try:
+          nf_cpu = int(nf_cpu) if nf_cpu is not None else None
+          nf_mem = int(nf_mem) if nf_cpu is not None else None
+          nf_storage = int(nf_storage) if nf_cpu is not None else None
+        except ValueError:
+          pass
+        nf_cpu = nf_cpu
+        nf_mem = nf_mem
+        nf_storage = nf_storage
 
-          # Create NodeNF
-          nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
-                           dep_type=nf_dtype, cpu=nf_cpu, mem=nf_mem,
-                           storage=nf_storage, delay=_delay,
-                           bandwidth=_bandwidth)
+        # Create NodeNF
+        nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
+                         dep_type=nf_dtype, cpu=nf_cpu, mem=nf_mem,
+                         storage=nf_storage, delay=_delay,
+                         bandwidth=_bandwidth)
 
-          # Create NF ports
-          for nf_inst_port in nf_inst.ports:
+        # Create NF ports
+        for nf_inst_port in nf_inst.ports:
 
-            # Create and Add port
-            nf_port = nf.add_port(id=nf_inst_port.id.getAsText())
+          # Create and Add port
+          nf_port = nf.add_port(id=nf_inst_port.id.getAsText())
 
-            # Add port properties as metadata to NF port
-            if nf_inst_port.capability.isInitialized():
-              nf_port.add_property(
-                "capability:%s" % nf_inst_port.capability.getAsText())
-            if nf_inst_port.name.isInitialized():
-              nf_port.add_property("name:%s" % nf_inst_port.name.getAsText())
-            if nf_inst_port.port_type.isInitialized():
-              nf_port.add_property(
-                "port_type:%s" % nf_inst_port.port_type.getAsText())
+          # Add port properties as metadata to NF port
+          if nf_inst_port.capability.isInitialized():
+            nf_port.add_property(
+              "capability:%s" % nf_inst_port.capability.getAsText())
+          if nf_inst_port.name.isInitialized():
+            nf_port.add_property("name:%s" % nf_inst_port.name.getAsText())
+          if nf_inst_port.port_type.isInitialized():
+            nf_port.add_property(
+              "port_type:%s" % nf_inst_port.port_type.getAsText())
 
-            # Add connection between Infra - NF
-            # Get the smallest available port for the Infra Node
-            next_port = max(max({p.id for p in infra.ports}) + 1,
-                            len(infra.ports))
-            # NF-Infra is dynamic link --> create special undirected link
-            nffg.add_undirected_link(port1=nf_port,
-                                     port2=infra.add_port(id=next_port),
-                                     dynamic=True, delay=_delay,
-                                     bandwidth=_bandwidth)
-            # dynamic=True)
-            # TODO - add flowrule parsing
+          # Add connection between Infra - NF
+          # Get the smallest available port for the Infra Node
+          next_port = max(max({p.id for p in infra.ports}) + 1,
+                          len(infra.ports))
+          # NF-Infra is dynamic link --> create special undirected link
+          nffg.add_undirected_link(port1=nf_port,
+                                   port2=infra.add_port(id=next_port),
+                                   dynamic=True, delay=_delay,
+                                   bandwidth=_bandwidth)
+          # dynamic=True)
+          # TODO - add flowrule parsing
     return nffg, virtualizer
 
   def dump_to_Virtualizer3 (self, nffg, virtualizer=None):
@@ -1608,9 +1608,9 @@ class NFFGConverter(object):
     :param nffg: nffg object
     :type: nffg: :any:`NFFG`
     :param virtualizer: use as the base Virtualizer object (optional)
-    :type virtualizer: :any:`Virtualizer`
+    :type virtualizer: :class:`virtualizer3.Virtualizer`
     :return: created Virtualizer object
-    :rtype: :any:`Virtualizer`
+    :rtype: :class:`virtualizer3.Virtualizer`
     """
     # Clear unnecessary links
     nffg.clear_links(NFFG.TYPE_LINK_REQUIREMENT)

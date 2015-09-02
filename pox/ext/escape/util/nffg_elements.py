@@ -94,6 +94,10 @@ class Element(Persistable):
     from copy import deepcopy
     return deepcopy(self)
 
+  ##############################################################################
+  # dict specific functions
+  ##############################################################################
+
   def __getitem__ (self, item):
     if hasattr(self, item):
       return getattr(self, item)
@@ -116,6 +120,16 @@ class Element(Persistable):
       return self[item]
     except KeyError:
       return default
+
+  def setdefault (self, key, default=None):
+    if not hasattr(self, key):
+      self[key] = default
+
+  def clear (self):
+    raise RuntimeError("This standard dict functions is not supported!")
+
+  def update (self, dict2):
+    raise RuntimeError("This standard dict functions is not supported!")
 
 
 class PortContainer(object):
@@ -245,6 +259,9 @@ class Node(Element):
   def __repr__ (self):
     return "<|ID: %s, Type: %s --> %s|>" % (
       self.id, self.type, super(Element, self).__repr__())
+
+  def __str__ (self):
+    return "%s(id:%s, type:%s)" % (self.__class__.__name__, self.id, self.type)
 
 
 class Link(Element):
@@ -634,6 +651,10 @@ class NodeNF(Node):
       if 'resources' in data['specification']:
         self.resources.load(data['specification']['resources'])
     return self
+
+  def __str__ (self):
+    return "%s(id:%s, type:%s)" % (
+    self.__class__.__name__, self.id, self.functional_type)
 
 
 class NodeSAP(Node):
