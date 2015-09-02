@@ -602,5 +602,5 @@ class DomainResourceManager(object):
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
         self.__dov.update_domain_view(domain, nffg)
-    # FIXME - SIGCOMM
-    # print self.__dov.get_resource_info().dump()
+        # FIXME - SIGCOMM
+        # print self.__dov.get_resource_info().dump()

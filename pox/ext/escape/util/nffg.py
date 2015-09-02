@@ -1123,6 +1123,76 @@ class NFFGToolBox(object):
   Helper functions for NFFG handling
   """
 
+  @staticmethod
+  def merge (base, nffg):
+    """
+    Merge the given ``nffg`` into the base NFFG.
+
+    :param base: base NFFG object
+    :type base: :any:`NFFG`
+    :param nffg: updating information
+    :type nffg: :any:`NFFG`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    from copy import deepcopy
+    # Copy infras
+    log.debug("Merge domain: %s resource info into DoV..." % domain)
+    for infra in nffg.infras:
+      inf = self.__global_nffg.add_infra(infra=deepcopy(infra))
+      log.debug("Copy infra node: %s" % inf)
+    # Copy SAPs
+    saps_to_del = []
+    for sap in nffg.saps:
+      # If inter-domain connection is found -> merge saps into a link
+      if sap.id in (s.id for s in self.__global_nffg.saps):
+        log.debug("Detected inter-domain SAP: %s" % sap)
+        # Get DoV side infra port of inter domain SAP
+        # Check infra's port and their properties for "sap:<...>"
+        link_dov = [link for u, v, link in
+                    self.__global_nffg.network.out_edges_iter([sap.id],
+                                                              data=True)]
+        if len(link_dov) > 1:
+          log.warning(
+            "Inter-domain SAP should be only one connection to it's domain!")
+        if len(link_dov) < 1:
+          log.warning("Connection from %s to an infra is not found!" % sap.id)
+        dov_port = link_dov[0].dst
+        # Add property to save inter-domain information in merged NFFG
+        dov_port.add_property("inter-domain:%s" % sap.id)
+        # Get new domain side infra port
+        link_nffg = [link for u, v, link in
+                     nffg.network.out_edges_iter([sap.id], data=True) if
+                     link.type == NFFG.TYPE_LINK_STATIC]
+        if len(link_nffg) > 1:
+          log.warning(
+            "Inter-domain SAP should be only one connection to it's domain!")
+        # Add property to save inter-domain information in merged NFFG
+        nffg_port = link_nffg[0].dst
+        nffg_port.add_property("inter-domain:%s" % sap.id)
+        # Add inter-domain link here, because it's not in any of the two NFFG
+        self.__global_nffg.add_undirected_link(port1=dov_port, port2=nffg_port,
+                                               delay=link_dov[0].delay,
+                                               bandwidth=link_dov[0].bandwidth)
+        # Remove original inter-domain SAP (and the connection as well)
+        self.__global_nffg.del_node(sap.id)
+        # Remove new domain SAP to skip founding it the further
+        saps_to_del.append(sap.id)
+        nffg.del_node(sap.id)
+      else:
+        # Not inter-domain SAP -> just copy
+        log.debug("Copy SAP: %s" % sap)
+        self.__global_nffg.add_sap(sap=sap)
+      # pprint(self.__global_nffg.network.__dict__)
+      for link in {l for l in nffg.links if l.type == NFFG.TYPE_LINK_STATIC}:
+        log.debug("Copy connection: %s" % link)
+        self.__global_nffg.add_link(src_port=link.src, dst_port=link.dst,
+                                    link=link)
+        # pprint(self.__global_nffg.network.__dict__)
+    for sap in saps_to_del:
+      nffg.del_node(sap)
+      self.__global_nffg.del_node(sap)
+
 
 if __name__ == "__main__":
   # test_NFFG()
@@ -1137,8 +1207,19 @@ if __name__ == "__main__":
   # nffg = generate_os_req()
   # nffg = generate_os_mn_req()
   # nffg = generate_dov()
-  nffg = generate_global_req()
+  # nffg = generate_global_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
-  print nffg.dump()
+  # pprint(nffg.network.__dict__)
+  # print nffg.dump()
+
+  from conversion import NFFGConverter
+
+  with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
+    base, tmp = NFFGConverter(domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(
+      f.read())
+  with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
+    nffg, tmp = NFFGConverter(domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(
+      f.read())
+  NFFGToolBox.merge(base, nffg)
