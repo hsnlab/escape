@@ -983,10 +983,12 @@ def generate_os_mn_req ():
   test = NFFG(id="OS-MN-req", name="SG-name")
   sap1 = test.add_sap(name="SAP1", id="sap1")
   sap2 = test.add_sap(name="SAP2", id="sap2")
-  # comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+  # comp = test.add_nf(id="comp", name="COMPRESSOR",
+  # func_type="headerCompressor",
   #                    cpu=1, mem=1, storage=0)
   # decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
-  #                      func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  #                      func_type="headerDecompressor", cpu=1, mem=1,
+  # storage=0)
   # fwd = test.add_nf(id="fwd", name="FORWARDER",
   #                   func_type="simpleForwarder", cpu=1, mem=1, storage=0)
   # sap14 = test.add_sap(name="SAP14", id="0")
@@ -1090,17 +1092,20 @@ def generate_global_req ():
   test = NFFG(id="SIGCOMM-Global-req1", name="SIGCOMM-Global-req1")
   sap1 = test.add_sap(name="SAP1", id="sap1")
   sap2 = test.add_sap(name="SAP2", id="sap2")
-  # comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+  # comp = test.add_nf(id="comp", name="COMPRESSOR",
+  # func_type="headerCompressor",
   #                    cpu=1, mem=1, storage=0)
   # decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
-  #                      func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  #                      func_type="headerDecompressor", cpu=1, mem=1,
+  # storage=0)
   # fwd = test.add_nf(id="fwd", name="FORWARDER",
   #                   func_type="simpleForwarder", cpu=1, mem=1, storage=0)
 
   webserver1 = test.add_nf(id="webserver1", name="webserver1",
                            func_type="webserver",
                            cpu=1, mem=1, storage=0)
-  # webserver2 = test.add_nf(id="webserver2", name="webserver2", func_type="webserver",
+  # webserver2 = test.add_nf(id="webserver2", name="webserver2",
+  # func_type="webserver",
   #                          cpu=1, mem=1, storage=0)
   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi",
                     cpu=1, mem=1, storage=0)
@@ -1124,7 +1129,7 @@ class NFFGToolBox(object):
   """
 
   @staticmethod
-  def merge (base, nffg):
+  def merge_domains (base, nffg):
     """
     Merge the given ``nffg`` into the base NFFG.
 
@@ -1137,61 +1142,66 @@ class NFFGToolBox(object):
     """
     from copy import deepcopy
     # Copy infras
-    log.debug("Merge domain: %s resource info into DoV..." % domain)
+    print "Merge %s into %s" % (nffg, base)
     for infra in nffg.infras:
-      inf = self.__global_nffg.add_infra(infra=deepcopy(infra))
-      log.debug("Copy infra node: %s" % inf)
+      c_infra = base.add_infra(infra=deepcopy(infra))
+      print "Copy infra: %s" % c_infra
+    # Copy NFs
+    for nf in nffg.nfs:
+      c_nf = base.add_nf(nf=deepcopy(nf))
+      print "Copy nf: %s" % c_nf
     # Copy SAPs
-    saps_to_del = []
-    for sap in nffg.saps:
-      # If inter-domain connection is found -> merge saps into a link
-      if sap.id in (s.id for s in self.__global_nffg.saps):
-        log.debug("Detected inter-domain SAP: %s" % sap)
-        # Get DoV side infra port of inter domain SAP
-        # Check infra's port and their properties for "sap:<...>"
-        link_dov = [link for u, v, link in
-                    self.__global_nffg.network.out_edges_iter([sap.id],
-                                                              data=True)]
-        if len(link_dov) > 1:
-          log.warning(
-            "Inter-domain SAP should be only one connection to it's domain!")
-        if len(link_dov) < 1:
-          log.warning("Connection from %s to an infra is not found!" % sap.id)
-        dov_port = link_dov[0].dst
-        # Add property to save inter-domain information in merged NFFG
-        dov_port.add_property("inter-domain:%s" % sap.id)
-        # Get new domain side infra port
-        link_nffg = [link for u, v, link in
-                     nffg.network.out_edges_iter([sap.id], data=True) if
-                     link.type == NFFG.TYPE_LINK_STATIC]
-        if len(link_nffg) > 1:
-          log.warning(
-            "Inter-domain SAP should be only one connection to it's domain!")
-        # Add property to save inter-domain information in merged NFFG
-        nffg_port = link_nffg[0].dst
-        nffg_port.add_property("inter-domain:%s" % sap.id)
-        # Add inter-domain link here, because it's not in any of the two NFFG
-        self.__global_nffg.add_undirected_link(port1=dov_port, port2=nffg_port,
-                                               delay=link_dov[0].delay,
-                                               bandwidth=link_dov[0].bandwidth)
-        # Remove original inter-domain SAP (and the connection as well)
-        self.__global_nffg.del_node(sap.id)
-        # Remove new domain SAP to skip founding it the further
-        saps_to_del.append(sap.id)
-        nffg.del_node(sap.id)
+    for sap_id in [s.id for s in nffg.saps]:
+      if sap_id in [s.id for s in base.saps]:
+        # Found inter-domain SAP
+        print "Found Inter-domain SAP: %s" % sap_id
+        # Search outgoing links from SAP, should be only one
+        b_links = [l for u, v, l in base.network.out_edges_iter([sap_id],
+                                                                data=True)]
+        if 2 < len(b_links) < 1:
+          print "Inter-domain SAP should have one and only one connection to " \
+                "the domain!"
+          continue
+        # Get inter-domain port in base NFFG
+        domain_port_base = b_links[0].dst
+        print "Found inter-domain port: %s" % domain_port_base
+        # Search outgoing links from SAP, should be only one
+        n_links = [l for u, v, l in nffg.network.out_edges_iter([sap_id],
+                                                                data=True)]
+        if 2 < len(n_links) < 1:
+          print "Inter-domain SAP should have one and only one connection to " \
+                "the domain!"
+          continue
+        # Get port and Infra id's in nffg NFFG
+        p_id = n_links[0].dst.id
+        n_id = n_links[0].dst.node.id
+        # Get the inter-domain port from already copied Infra
+        domain_port_nffg = base.network.node[n_id].ports[p_id]
+        print "Found inter-domain port: %s" % domain_port_nffg
+        # Delete both inter-domain SAP and links connected to them
+        base.del_node(sap_id)
+        nffg.del_node(sap_id)
+        print "Add inter-domain connection with delay: %s, bandwidth: %s" % (
+          b_links[0].delay, b_links[0].bandwidth)
+        # Add the inter-domain links for both ways
+        base.add_undirected_link(port1=domain_port_base,
+                                 port2=domain_port_nffg, delay=b_links[0].delay,
+                                 bandwidth=b_links[0].bandwidth)
       else:
-        # Not inter-domain SAP -> just copy
-        log.debug("Copy SAP: %s" % sap)
-        self.__global_nffg.add_sap(sap=sap)
-      # pprint(self.__global_nffg.network.__dict__)
-      for link in {l for l in nffg.links if l.type == NFFG.TYPE_LINK_STATIC}:
-        log.debug("Copy connection: %s" % link)
-        self.__global_nffg.add_link(src_port=link.src, dst_port=link.dst,
-                                    link=link)
-        # pprint(self.__global_nffg.network.__dict__)
-    for sap in saps_to_del:
-      nffg.del_node(sap)
-      self.__global_nffg.del_node(sap)
+        # Normal SAP --> copy SAP
+        c_sap = base.add_sap(sap=deepcopy(nffg.network.node[sap_id]))
+        print "Copy SAP: %s" % c_sap
+    # Copy remaining links which should be valid
+    for u, v, link in nffg.network.edges_iter(data=True):
+      src_port = base.network.node[u].ports[link.src.id]
+      dst_port = base.network.node[v].ports[link.dst.id]
+      c_link = deepcopy(link)
+      c_link.src = src_port
+      c_link.dst = dst_port
+      base.add_link(src_port=src_port, dst_port=dst_port, link=c_link)
+      print "Copy Link: %s" % c_link
+    # Return the updated NFFG
+    return base
 
 
 if __name__ == "__main__":
@@ -1222,4 +1232,10 @@ if __name__ == "__main__":
   with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
     nffg, tmp = NFFGConverter(domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(
       f.read())
-  NFFGToolBox.merge(base, nffg)
+  # print
+  # pprint(base.network.__dict__)
+  # print
+  # pprint(nffg.network.__dict__)
+  # print
+  merged = NFFGToolBox.merge_domains(base, nffg)
+  pprint(merged.network.__dict__)

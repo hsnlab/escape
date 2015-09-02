@@ -502,7 +502,7 @@ class DomainVirtualizer(AbstractVirtualizer):
                     link.type == NFFG.TYPE_LINK_STATIC]
         if len(link_dov) > 1:
           log.warning(
-            "Inter-domain SAP should be only one connection to it's domain!")
+            "Inter-domain SAP should have only one connection to it's domain!")
         dov_port = link_dov[0].dst
         # Add property to save inter-domain information in merged NFFG
         dov_port.add_property("inter-domain:%s" % sap.id)

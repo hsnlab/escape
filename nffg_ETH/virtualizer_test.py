@@ -254,7 +254,7 @@ class merge_test(unittest.TestCase):
     def test_self_merge(self):
         virt = parse(filename='./test.in/1-node.xml')
         virtCopy = copy.deepcopy(virt)
-        virt.merge(virtCopy)
+        virt.merge_domains(virtCopy)
         self.assertEqual(virt.xml(),virtCopy.xml())
 
     def test_merge_change_set_1_node(self):
@@ -267,7 +267,7 @@ class merge_test(unittest.TestCase):
             )
         )
 
-        virt.merge(virtCopy)
+        virt.merge_domains(virtCopy)
 
         expectedVirt = copy.deepcopy(virt)
         expectedVirt.nodes.add(
@@ -284,7 +284,7 @@ class merge_test(unittest.TestCase):
 
         virtCopy = parse(filename='./test.in/3-node.xml')
         
-        virt.merge(virtCopy)
+        virt.merge_domains(virtCopy)
 
         expectedVirt = parse(filename='./test.in/3-node.xml')
 
