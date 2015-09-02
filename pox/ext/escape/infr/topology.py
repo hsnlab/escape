@@ -345,6 +345,8 @@ class ESCAPENetworkBridge(object):
         # makeTerms(self.__mininet.hosts, 'host')
 
         nffg = self.topo_desc
+        # FIXME - SIGCOMM, move port creation into topo creation with MN's
+        # interface definition ???
         # Create inter-domain SAP ports, add phy interface to OVS
         for sap in {s for s in nffg.saps if s.domain is not None}:
           sap_switch_links = [(u, v, l) for u, v, l in

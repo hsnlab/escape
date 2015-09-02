@@ -1831,6 +1831,11 @@ if __name__ == "__main__":
   # OS
   # nffg.network.node['UUID-01'].ports[1].add_flowrule(
   #   match="in_port=1;TAG=sap1-comp-42", action="output=0;UNTAG")
+  # nffg.network.node['UUID-01'].ports[1].add_flowrule(
+  #   match="in_port=1;TAG=sap1-comp-42", action="output=0;UNTAG")
+  from pprint import pprint
+
+  pprint(nffg.network.__dict__)
   print nffg.dump()
 
   # from nffg import gen

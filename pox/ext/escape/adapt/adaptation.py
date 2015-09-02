@@ -502,7 +502,7 @@ class DomainVirtualizer(AbstractVirtualizer):
                     link.type == NFFG.TYPE_LINK_STATIC]
         if len(link_dov) > 1:
           log.warning(
-            "Inter-domain SAP should be only one connection to it's domain!")
+            "Inter-domain SAP should have only one connection to it's domain!")
         dov_port = link_dov[0].dst
         # Add property to save inter-domain information in merged NFFG
         dov_port.add_property("inter-domain:%s" % sap.id)
@@ -586,7 +586,7 @@ class DomainResourceManager(object):
       # skip POX events currently
       pass
     if domain not in self._tracked_domains:
-      log.info("Add %s domain to <Global Resource View> (DoV)..." % domain)
+      log.info("Append %s domain to <Global Resource View> (DoV)..." % domain)
       if self._tracked_domains:
         # Merge domain topo into global view
         self.__dov.merge_domain_into_dov(domain, nffg)
@@ -602,5 +602,5 @@ class DomainResourceManager(object):
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
         self.__dov.update_domain_view(domain, nffg)
-    # FIXME - SIGCOMM
-    print self.__dov.get_resource_info().dump()
+        # FIXME - SIGCOMM
+        # print self.__dov.get_resource_info().dump()
