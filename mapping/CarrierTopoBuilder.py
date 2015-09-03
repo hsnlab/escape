@@ -23,6 +23,8 @@ Parameter names are also based on the .ppt file.
 """
 
 import logging
+import math
+import random
 
 try:
   from escape.util.nffg import NFFG
@@ -52,6 +54,15 @@ def addRedundantPairedConnection(nffg, an0, an1, bn0, bn1, linkres):
   nffg.add_undirected_link(an1.add_port(), bn0.add_port(), **linkres)
   nffg.add_undirected_link(an1.add_port(), bn1.add_port(), **linkres)
 
+
+def index_gen():
+  while True:
+    yield int(math.floor(random.random() * 100000))
+    i += 1
+
+def gen_params(l):
+  while True:
+    yield l[next(index_gen()) % len(l)]
 
 def addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS_PE, 
                             Cpb, access_bw, part="Retail"):
@@ -97,7 +108,7 @@ def addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS_PE,
 
 
 def addCassis(nffg, fi0, fi1, cluster_id, chassis_id, popn, 
-              SE, SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
+              SE, NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
   log.debug("Adding Chassis no.%s with %s Servers for Cluster no.%s of %s."%
             (chassis_id,SE,cluster_id,popn))
   fabricext_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
@@ -112,16 +123,19 @@ def addCassis(nffg, fi0, fi1, cluster_id, chassis_id, popn,
                                bandwidth=float(CL_bw)/CH_links, delay=0.2)
       nffg.add_undirected_link(fi1.add_port(), fe1.add_port(), 
                                bandwidth=float(CL_bw)/CH_links, delay=0.2)
-  
+
   # add servers and connect them to Fabric Extenders
   for s in range(0, SE):
-    server_res = {'cpu': SE_cores, 'mem': SE_mem, 'storage': SE_storage, 
-                  'delay': 0.5, 'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_EE}
+    server_res = {'cpu': next(gen_params(SE_cores)), 'mem': next(gen_params(SE_mem)), 
+                  'storage': next(gen_params(SE_storage)), 
+                  'delay': 0.5, 'bandwidth': 100000, 
+                  'infra_type': NFFG.TYPE_INFRA_EE}
     server = nffg.add_infra(id="Server-"+str(s)+"-Chassis-"+str(chassis_id)+\
                             "-Cluster-"+str(cluster_id)+popn,
                             **server_res)
-    # TODO: add supported types
-    
+    # add supported types
+    server.add_supported_type(random.sample(NF_types, 
+                                            next(index_gen()) % len(NF_types)))
     # connect servers to Fabric Extenders with 10Gbps links
     server_link = {'bandwidth': 10000, 'delay': 0.2}
     nffg.add_undirected_link(server.add_port(), fe0.add_port(), **server_link)
@@ -129,7 +143,7 @@ def addCassis(nffg, fi0, fi1, cluster_id, chassis_id, popn,
 
 
 def addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
-                    SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
+                    NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
   log.debug("Adding Cloud/NFV part for %s."%popn)
   dnres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
            'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
@@ -150,12 +164,12 @@ def addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
                                           str(i)+popn, **fi_res)
     addRedundantPairedConnection(nffg, an0, an1, fabric_interconnect0, 
                                  fabric_interconnect1, aggr_link)
-    
+
+    # NOTE: SAN can't host any VNFs now!!
     # SAN is an Infra with big storage (internal bw should be big: e.g. 1Tbps)
     san_res = {'cpu': 0, 'mem': 0, 'storage': SAN_storage, 'delay': 0.1,
               'bandwidth': 1000000, 'infra_type': NFFG.TYPE_INFRA_EE}
     san = nffg.add_infra(id="SAN-Cluster-"+str(i)+popn, **san_res)
-    # TODO: add supported types
     # connect SAN to Fabric Interconnects
     nffg.add_undirected_link(san.add_port(), fabric_interconnect0.add_port(), 
                              bandwidth=SAN_bw, delay=0.1)
@@ -164,13 +178,13 @@ def addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
     # add Chassis
     for j in range(0, CH):
       addCassis(nffg, fabric_interconnect0, fabric_interconnect1, i, j, popn, 
-                SE, SE_cores, SE_mem, SE_storage, CL_bw, CH_links)
+                SE, NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links)
 
 
 def addPoP(nffg, backbonenode0, backbonenode1, 
            BNAS, RCpb, RCT, 
            PE, BCpb, BCT,
-           CL, CH, SE, SAN_bw, SAN_storage, 
+           CL, CH, SE, SAN_bw, SAN_storage, NF_types,
            SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
   """
   Create one PoP which consists of three domain:
@@ -189,9 +203,10 @@ def addPoP(nffg, backbonenode0, backbonenode1,
   SE: number of Servers per chassis (~8)
   SAN_bw: Cluster bandwith to SAN (160Gbps - 1.6Tbps)
   SAN_storage: storage of one SAN (?)
-  SE_cores: number of cores per server (~8-16)
-  SE_mem: memory per server (~32000MB - 64000MB)
-  SE_storage: (~300GB - 1500GB)
+  SE_cores: list of numbers of cores per server (~8-16)
+  SE_mem: list of memory capacities per server (~32000MB - 64000MB)
+  SE_storage: list of storage capacities per server (~300GB - 1500GB)
+  NF_types: list of supported NF types on the servers
   CL_bw: cluster bandwidth to servers per Chassis (~40Gbps - 160Gbps)
   CH_links: number of uplinks per Chassis (~4-16)
     NOTE: Link bw from Fabric Extender to Fabric Interc. equals 
@@ -218,7 +233,7 @@ def addPoP(nffg, backbonenode0, backbonenode1,
 
   if CL > 0:
       addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
-                      SE_cores, SE_mem, SE_storage, CL_bw, CH_links)
+                      NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links)
 
   popcnt += 1
   return
@@ -227,6 +242,13 @@ def getCarrierTopo():
   """
   Construct the core network and add PoPs with their parameters.
   """
+  # This initializes the random generator always to the same value, so the
+  # returned index sequence, and thus the network parameters will be generated 
+  # always the same (we want a fixed network environment)
+  # The generated identifiers are still different between genereations, but 
+  # those does not influence the mapping process
+  random.seed(0)
+  
   nffg = NFFG(id="CarrierTopo")
   backbone_res =  {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
                    'bandwidth': 10000000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
@@ -246,14 +268,14 @@ def getCarrierTopo():
 
   #                      BNAS,RCpb,  RCT, PE,BCpb, BCT, CL,SE,SE_cores,SAN_bw, 
   addPoP(nffg, bn0, bn1, 2,   10000, 0.2, 2, 8000, 0.2, 2, 8, 8,       160000,  
-       # SAN_sto,  SE_cores,SE_mem,SE_sto,CL_bw, CH_links
-         100000,   8,       32000, 150,   40000, 4)
+       # SAN_sto,NF_types,      SE_cores,SE_mem,  SE_sto,      CL_bw, CH_links
+         100000, ['A','B','C'], [8,16],  [32000], [100,150],   40000, 4)
   
   #                      BNAS,RCpb,  RCT, PE,BCpb, BCT, CL,SE,SE_cores,SAN_bw, 
   addPoP(nffg, bn1, bn2, 2,   10000, 0.2, 2, 4000, 0.2, 2, 8, 8,       160000,  
-       # SAN_sto,  SE_cores,SE_mem,SE_sto,CL_bw, CH_links
-         100000,   8,       32000, 150,   40000, 4)  
-  
+       # SAN_sto,NF_types,  SE_cores,  SE_mem,        SE_sto,  CL_bw, CH_links
+         100000, ['A','B'], [8,12,16], [32000,64000], [150],   40000, 4)  
+  """
   #                      BNAS,RCpb,  RCT, PE,BCpb, BCT, CL,SE,SE_cores,SAN_bw, 
   addPoP(nffg, bn2, bn3, 4,   10000, 0.2, 2, 4000, 0.2, 2, 8, 8,       160000,  
        # SAN_sto,  SE_cores,SE_mem,SE_sto,CL_bw, CH_links
@@ -263,7 +285,7 @@ def getCarrierTopo():
   addPoP(nffg, bn3, bn0, 8,   10000, 0.2, 4, 4000, 0.2, 2, 8, 8,       160000,  
        # SAN_sto,  SE_cores,SE_mem,SE_sto,CL_bw, CH_links
          100000,   8,       32000, 150,   40000, 4)
-  
+  """
   log.debug("Carrier topology construction finished!")
   return nffg
 
