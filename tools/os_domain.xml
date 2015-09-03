@@ -14,6 +14,13 @@
                     <sap>SAP24</sap>
                     <capability/>
                 </port>
+                <port>
+                    <id>1</id>
+                    <name>OVS-north external port</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP14</sap>
+                    <capability/>
+                </port>
             </ports>
             <resources>
                 <cpu>10</cpu>

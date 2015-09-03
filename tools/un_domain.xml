@@ -93,9 +93,18 @@
             </capabilities>
             <ports>
                 <port>
+                    <id>0</id>
                     <name>OVS-north external port</name>
                     <port_type>port-sap</port_type>
+                    <sap>SAP25</sap>
+                    <capability/>
+                </port>
+                <port>
                     <id>1</id>
+                    <name>UN-OS inter-domain SAP</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP24</sap>
+                    <capability/>
                 </port>
             </ports>
             <type>BisBis</type>

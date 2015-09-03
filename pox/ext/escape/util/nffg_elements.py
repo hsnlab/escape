@@ -94,6 +94,10 @@ class Element(Persistable):
     from copy import deepcopy
     return deepcopy(self)
 
+  ##############################################################################
+  # dict specific functions
+  ##############################################################################
+
   def __getitem__ (self, item):
     if hasattr(self, item):
       return getattr(self, item)
@@ -116,6 +120,16 @@ class Element(Persistable):
       return self[item]
     except KeyError:
       return default
+
+  def setdefault (self, key, default=None):
+    if not hasattr(self, key):
+      self[key] = default
+
+  def clear (self):
+    raise RuntimeError("This standard dict functions is not supported!")
+
+  def update (self, dict2):
+    raise RuntimeError("This standard dict functions is not supported!")
 
 
 class PortContainer(object):
@@ -246,6 +260,9 @@ class Node(Element):
     return "<|ID: %s, Type: %s --> %s|>" % (
       self.id, self.type, super(Element, self).__repr__())
 
+  def __str__ (self):
+    return "%s(id:%s, type:%s)" % (self.__class__.__name__, self.id, self.type)
+
 
 class Link(Element):
   """
@@ -304,9 +321,9 @@ class Link(Element):
     return self
 
   def __repr__ (self):
-    return "<|ID: %s, Type: %s, src: %s, dst: %s --> %s|>" % (
-      self.id, self.type, self.src.id, self.dst.id,
-      super(Element, self).__repr__())
+    return "<|ID: %s, Type: %s, src: %s[%s], dst: %s[%s] --> %s|>" % (
+      self.id, self.type, self.src.node.id, self.src.id, self.dst.node.id,
+      self.dst.id, super(Element, self).__repr__())
 
 
 ################################################################################
@@ -320,7 +337,7 @@ class NodeResource(Persistable):
   # YANG: grouping node_resource
 
   def __init__ (self, cpu=None, mem=None, storage=None, delay=None,
-       bandwidth=None):
+                bandwidth=None):
     """
     Init.
 
@@ -513,6 +530,10 @@ class Port(Element):
     for property in data.get('property', ()):
       self.properties.append(property)
 
+  def __repr__ (self):
+    return "%s(node: %s, id: %s)" % (
+      self.__class__.__name__, self.node.id, self.id)
+
 
 class InfraPort(Port):
   """
@@ -589,7 +610,7 @@ class NodeNF(Node):
   """
 
   def __init__ (self, id=None, name=None, func_type=None, dep_type=None,
-       res=None):
+                res=None):
     """
     Init.
 
@@ -630,6 +651,10 @@ class NodeNF(Node):
       if 'resources' in data['specification']:
         self.resources.load(data['specification']['resources'])
     return self
+
+  def __str__ (self):
+    return "%s(id:%s, type:%s)" % (
+    self.__class__.__name__, self.id, self.functional_type)
 
 
 class NodeSAP(Node):
@@ -679,7 +704,7 @@ class NodeInfra(Node):
   DOMAIN_DOCKER = "DOCKER"
 
   def __init__ (self, id=None, name=None, domain=None, infra_type=None,
-       supported=None, res=None):
+                supported=None, res=None):
     """
     Init.
 
@@ -802,7 +827,7 @@ class EdgeLink(Link):
   """
 
   def __init__ (self, src=None, dst=None, type=None, id=None, backward=False,
-       delay=None, bandwidth=None):
+                delay=None, bandwidth=None):
     """
     Init.
 
@@ -851,13 +876,14 @@ class EdgeLink(Link):
     return self
 
   def __str__ (self):
-    return "Link(id: %s, src: %s, dst: %s, type: %s)" % (
-      self.id, self.src.id, self.dst.id, self.type)
+    return "Link(id: %s, src: %s[%s], dst: %s[%s], type: %s)" % (
+      self.id, self.src.node.id, self.src.id, self.dst.node.id, self.dst.id,
+      self.type)
 
   def __repr__ (self):
-    return "<|ID: %s, Type: %s, Back: %s, src: %s, dst: %s --> %s|>" % (
-      self.id, self.type, self.backward, self.src.id, self.dst.id,
-      super(Element, self).__repr__())
+    return "<|ID: %s, Type: %s, Back: %s, src: %s[%s], dst: %s[%s] --> %s|>" % (
+      self.id, self.type, self.backward, self.src.node.id, self.src.id,
+      self.dst.node.id, self.dst.id, super(Element, self).__repr__())
 
 
 class EdgeSGLink(Link):

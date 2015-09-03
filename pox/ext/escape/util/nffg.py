@@ -294,7 +294,7 @@ class NFFG(AbstractNFFG):
       return False
 
   def add_nf (self, nf=None, id=None, name=None, func_type=None, dep_type=None,
-       cpu=None, mem=None, storage=None, delay=None, bandwidth=None):
+              cpu=None, mem=None, storage=None, delay=None, bandwidth=None):
     """
     Add a Network Function to the structure.
 
@@ -349,8 +349,8 @@ class NFFG(AbstractNFFG):
     return sap
 
   def add_infra (self, infra=None, id=None, name=None, domain=None,
-       infra_type=None, cpu=None, mem=None, storage=None, delay=None,
-       bandwidth=None):
+                 infra_type=None, cpu=None, mem=None, storage=None, delay=None,
+                 bandwidth=None):
     """
     Add an Infrastructure Node to the structure.
 
@@ -387,7 +387,7 @@ class NFFG(AbstractNFFG):
     return infra
 
   def add_link (self, src_port, dst_port, link=None, id=None, dynamic=False,
-       backward=False, delay=None, bandwidth=None):
+                backward=False, delay=None, bandwidth=None):
     """
     Add a Link to the structure.
 
@@ -416,7 +416,7 @@ class NFFG(AbstractNFFG):
     return link
 
   def add_undirected_link (self, port1, port2, p1p2id=None, p2p1id=None,
-       dynamic=False, delay=None, bandwidth=None):
+                           dynamic=False, delay=None, bandwidth=None):
     """
     Add two Links to the structure, in both directions.
 
@@ -466,7 +466,7 @@ class NFFG(AbstractNFFG):
     return hop
 
   def add_req (self, src_port, dst_port, req=None, id=None, delay=None,
-       bandwidth=None):
+               bandwidth=None):
     """
     Add a requirement edge to the structure.
 
@@ -965,8 +965,9 @@ def generate_os_req ():
   test = NFFG(id="OS-req", name="SG-name")
   sap1 = test.add_sap(name="SAP24", id="0")
   sap2 = test.add_sap(name="SAP42", id="1")
-  webserver = test.add_nf(id="webserver", name="webserver", func_type="webserver",
-                     cpu=1, mem=1, storage=0)
+  webserver = test.add_nf(id="webserver", name="webserver",
+                          func_type="webserver",
+                          cpu=1, mem=1, storage=0)
   # echo = test.add_nf(id="echo", name="echo", func_type="echo",
   #                    cpu=1, mem=1, storage=0)
   test.add_sglink(sap1.add_port(0), webserver.add_port(0), id=1)
@@ -982,17 +983,20 @@ def generate_os_mn_req ():
   test = NFFG(id="OS-MN-req", name="SG-name")
   sap1 = test.add_sap(name="SAP1", id="sap1")
   sap2 = test.add_sap(name="SAP2", id="sap2")
-  # comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+  # comp = test.add_nf(id="comp", name="COMPRESSOR",
+  # func_type="headerCompressor",
   #                    cpu=1, mem=1, storage=0)
   # decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
-  #                      func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  #                      func_type="headerDecompressor", cpu=1, mem=1,
+  # storage=0)
   # fwd = test.add_nf(id="fwd", name="FORWARDER",
   #                   func_type="simpleForwarder", cpu=1, mem=1, storage=0)
   # sap14 = test.add_sap(name="SAP14", id="0")
   # sap24 = test.add_sap(name="SAP24", id="1")
 
-  webserver = test.add_nf(id="webserver", name="webserver", func_type="webserver",
-                     cpu=1, mem=1, storage=0)
+  webserver = test.add_nf(id="webserver", name="webserver",
+                          func_type="webserver",
+                          cpu=1, mem=1, storage=0)
   # echo = test.add_nf(id="echo", name="echo", func_type="echo",
   #                    cpu=1, mem=1, storage=0)
   test.add_sglink(sap1.add_port(0), webserver.add_port(0), id=1)
@@ -1015,9 +1019,9 @@ def generate_dov ():
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   # Add supported types
-  ee1.add_supported_type(('headerCompressor', 'headerDecompressor', 
+  ee1.add_supported_type(('headerCompressor', 'headerDecompressor',
                           'simpleForwarder'))
-  ee2.add_supported_type(('headerCompressor', 'headerDecompressor', 
+  ee2.add_supported_type(('headerCompressor', 'headerDecompressor',
                           'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
@@ -1058,8 +1062,9 @@ def generate_dov ():
   l12.delay = 1.5
   l12.bandwidth = 1000
 
-  os_bb = nffg.add_infra(id="UUID-01", name="Single BiSBiS in OS Domain", 
-                         domain=NFFG.DOMAIN_OS, infra_type=NFFG.TYPE_INFRA_BISBIS, 
+  os_bb = nffg.add_infra(id="UUID-01", name="Single BiSBiS in OS Domain",
+                         domain=NFFG.DOMAIN_OS,
+                         infra_type=NFFG.TYPE_INFRA_BISBIS,
                          cpu=10, mem=32, storage=5, delay=0, bandwidth=100000)
   # Add supported types
   os_bb.add_supported_type(('webserver', 'echo'))
@@ -1068,8 +1073,9 @@ def generate_dov ():
   l21.delay = 10
   l21.bandwidth = 1000
 
-  un_bb = nffg.add_infra(id="UUID11", name="Universal Node", 
-                         domain=NFFG.DOMAIN_UN, infra_type=NFFG.TYPE_INFRA_BISBIS, 
+  un_bb = nffg.add_infra(id="UUID11", name="Universal Node",
+                         domain=NFFG.DOMAIN_UN,
+                         infra_type=NFFG.TYPE_INFRA_BISBIS,
                          cpu=5, mem=16, storage=5, delay=0, bandwidth=100000)
   # Add supported types
   un_bb.add_supported_type(('dpi', 'example'))
@@ -1086,16 +1092,20 @@ def generate_global_req ():
   test = NFFG(id="SIGCOMM-Global-req1", name="SIGCOMM-Global-req1")
   sap1 = test.add_sap(name="SAP1", id="sap1")
   sap2 = test.add_sap(name="SAP2", id="sap2")
-  # comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+  # comp = test.add_nf(id="comp", name="COMPRESSOR",
+  # func_type="headerCompressor",
   #                    cpu=1, mem=1, storage=0)
   # decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
-  #                      func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  #                      func_type="headerDecompressor", cpu=1, mem=1,
+  # storage=0)
   # fwd = test.add_nf(id="fwd", name="FORWARDER",
   #                   func_type="simpleForwarder", cpu=1, mem=1, storage=0)
 
-  webserver1 = test.add_nf(id="webserver1", name="webserver1", func_type="webserver",
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver",
                            cpu=1, mem=1, storage=0)
-  # webserver2 = test.add_nf(id="webserver2", name="webserver2", func_type="webserver",
+  # webserver2 = test.add_nf(id="webserver2", name="webserver2",
+  # func_type="webserver",
   #                          cpu=1, mem=1, storage=0)
   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi",
                     cpu=1, mem=1, storage=0)
@@ -1113,6 +1123,87 @@ def generate_global_req ():
   return test
 
 
+class NFFGToolBox(object):
+  """
+  Helper functions for NFFG handling
+  """
+
+  @staticmethod
+  def merge_domains (base, nffg):
+    """
+    Merge the given ``nffg`` into the base NFFG.
+
+    :param base: base NFFG object
+    :type base: :any:`NFFG`
+    :param nffg: updating information
+    :type nffg: :any:`NFFG`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    from copy import deepcopy
+    # Copy infras
+    print "Merge %s into %s" % (nffg, base)
+    for infra in nffg.infras:
+      c_infra = base.add_infra(infra=deepcopy(infra))
+      print "Copy infra: %s" % c_infra
+    # Copy NFs
+    for nf in nffg.nfs:
+      c_nf = base.add_nf(nf=deepcopy(nf))
+      print "Copy nf: %s" % c_nf
+    # Copy SAPs
+    for sap_id in [s.id for s in nffg.saps]:
+      if sap_id in [s.id for s in base.saps]:
+        # Found inter-domain SAP
+        print "Found Inter-domain SAP: %s" % sap_id
+        # Search outgoing links from SAP, should be only one
+        b_links = [l for u, v, l in base.network.out_edges_iter([sap_id],
+                                                                data=True)]
+        if 2 < len(b_links) < 1:
+          print "Inter-domain SAP should have one and only one connection to " \
+                "the domain!"
+          continue
+        # Get inter-domain port in base NFFG
+        domain_port_base = b_links[0].dst
+        print "Found inter-domain port: %s" % domain_port_base
+        # Search outgoing links from SAP, should be only one
+        n_links = [l for u, v, l in nffg.network.out_edges_iter([sap_id],
+                                                                data=True)]
+        if 2 < len(n_links) < 1:
+          print "Inter-domain SAP should have one and only one connection to " \
+                "the domain!"
+          continue
+        # Get port and Infra id's in nffg NFFG
+        p_id = n_links[0].dst.id
+        n_id = n_links[0].dst.node.id
+        # Get the inter-domain port from already copied Infra
+        domain_port_nffg = base.network.node[n_id].ports[p_id]
+        print "Found inter-domain port: %s" % domain_port_nffg
+        # Delete both inter-domain SAP and links connected to them
+        base.del_node(sap_id)
+        nffg.del_node(sap_id)
+        print "Add inter-domain connection with delay: %s, bandwidth: %s" % (
+          b_links[0].delay, b_links[0].bandwidth)
+        # Add the inter-domain links for both ways
+        base.add_undirected_link(port1=domain_port_base,
+                                 port2=domain_port_nffg, delay=b_links[0].delay,
+                                 bandwidth=b_links[0].bandwidth)
+      else:
+        # Normal SAP --> copy SAP
+        c_sap = base.add_sap(sap=deepcopy(nffg.network.node[sap_id]))
+        print "Copy SAP: %s" % c_sap
+    # Copy remaining links which should be valid
+    for u, v, link in nffg.network.edges_iter(data=True):
+      src_port = base.network.node[u].ports[link.src.id]
+      dst_port = base.network.node[v].ports[link.dst.id]
+      c_link = deepcopy(link)
+      c_link.src = src_port
+      c_link.dst = dst_port
+      base.add_link(src_port=src_port, dst_port=dst_port, link=c_link)
+      print "Copy Link: %s" % c_link
+    # Return the updated NFFG
+    return base
+
+
 if __name__ == "__main__":
   # test_NFFG()
   # nffg = generate_mn_topo()
@@ -1126,8 +1217,25 @@ if __name__ == "__main__":
   # nffg = generate_os_req()
   # nffg = generate_os_mn_req()
   # nffg = generate_dov()
-  nffg = generate_global_req()
+  # nffg = generate_global_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
-  print nffg.dump()
+  # pprint(nffg.network.__dict__)
+  # print nffg.dump()
+
+  from conversion import NFFGConverter
+
+  with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
+    base, tmp = NFFGConverter(domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(
+      f.read())
+  with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
+    nffg, tmp = NFFGConverter(domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(
+      f.read())
+  # print
+  # pprint(base.network.__dict__)
+  # print
+  # pprint(nffg.network.__dict__)
+  # print
+  merged = NFFGToolBox.merge_domains(base, nffg)
+  pprint(merged.network.__dict__)
