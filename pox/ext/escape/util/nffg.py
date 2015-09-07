@@ -213,6 +213,8 @@ class NFFG(AbstractNFFG):
     """
     Return True if n is a node, False otherwise.
     """
+    if isinstance(item, Node):
+      item = item.id
     return item in self.network
 
   def __iter__ (self, data=False):
@@ -1254,6 +1256,7 @@ class NFFGToolBox(object):
     :return: splitted parts as list ov domain name, domain part tuples
     :rtype: tuple
     """
+    print "Splitting given NFFG: %s" % nffg
     # Define DOMAIN names
     domains = set()
     for infra in nffg.infras:
@@ -1284,10 +1287,37 @@ class NFFGToolBox(object):
             deletable.add(v)
       # Copy the NFFG
       nffg_part = nffg.copy()
+      # Set metadata
+      nffg_part.id = domain
+      nffg_part.name = domain + "-splitted"
       # Delete needless nodes --> and as a side effect the connected links too
       nffg_part.network.remove_nodes_from(deletable)
       splitted_parts.append((domain, nffg_part))
-    # TODO - recreate inter-domain SAP
+      # TODO - recreate inter-domain SAP
+      # Recreate inter-domain SAP
+      for infra in nffg_part.infras:
+        for port in infra.ports:
+          # Check ports of remained Infra's for SAP ports
+          if "port_type:port-sap" in port.properties:
+            # Found inter-domain SAP port
+            print "Found inter-domain SAP port: %s" % port
+            # Create SAP object
+            sap = NodeSAP()
+            # Copy optional SAP metadata as special id or name
+            for property in port.properties:
+              if str(property).startswith("sap:"):
+                sap.id = property.split(":")[1]
+              if str(property).startswith("name:"):
+                sap.name = property.split(":")[1]
+            # Add port to SAP port number(id) is identical with the Infra's port
+            sap_port = sap.add_port(id=port.id, properties=port.properties[:])
+            # Add SAP to splitted NFFG
+            if sap.id in nffg_part:
+              print "%s is already in the splitted NFFG. Skip adding..." % sap
+              continue
+            nffg_part.add_sap(sap=sap)
+            # Connect SAP to Infra
+            nffg_part.add_undirected_link(port1=port, port2=sap_port)
     # TODO - remove unused ports
 
     # Return with the splitted parts
@@ -1336,6 +1366,7 @@ if __name__ == "__main__":
   merged = NFFGToolBox.merge_domains(merged, un_nffg)
 
   # pprint(merged.network.__dict__)
+  print 
   splitted = NFFGToolBox.split_domains(merged)
   for d, p in splitted:
     print "\n", d
