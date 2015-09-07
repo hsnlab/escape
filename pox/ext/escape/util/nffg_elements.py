@@ -122,14 +122,14 @@ class Element(Persistable):
       return default
 
   def setdefault (self, key, default=None):
-    if not hasattr(self, key):
+    if key not in self:
       self[key] = default
 
   def clear (self):
-    raise RuntimeError("This standard dict functions is not supported!")
+    raise RuntimeError("This standard dict functions is not supported by NFFG!")
 
   def update (self, dict2):
-    raise RuntimeError("This standard dict functions is not supported!")
+    raise RuntimeError("This standard dict functions is not supported by NFFG!")
 
 
 class PortContainer(object):
@@ -654,7 +654,7 @@ class NodeNF(Node):
 
   def __str__ (self):
     return "%s(id:%s, type:%s)" % (
-    self.__class__.__name__, self.id, self.functional_type)
+      self.__class__.__name__, self.id, self.functional_type)
 
 
 class NodeSAP(Node):

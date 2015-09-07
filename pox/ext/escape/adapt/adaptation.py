@@ -479,6 +479,8 @@ class DomainVirtualizer(AbstractVirtualizer):
   def merge_domain_into_dov (self, domain, nffg):
     """
     Add a newly detected domain to DoV.
+
+    Based on the feature: escape.util.nffg.NFFGToolBox#merge_domains
     """
     from copy import deepcopy
 
@@ -503,10 +505,13 @@ class DomainVirtualizer(AbstractVirtualizer):
         b_links = [l for u, v, l in
                    self._global_nffg.network.out_edges_iter([sap_id],
                                                             data=True)]
-        if 2 < len(b_links) < 1:
-          log.warning(
-            "Inter-domain SAP should have one and only one connection to the "
-            "domain!")
+        if len(b_links) < 1:
+          print "SAP is not connected to any node! Maybe you forget to call " \
+                "duplicate_static_links?"
+          return
+        if 2 < len(b_links):
+          print "Inter-domain SAP should have one and only one connection to " \
+                "the domain! Using only the first connection."
           continue
 
         # Get inter-domain port in self.__global_nffg NFFG
@@ -516,10 +521,13 @@ class DomainVirtualizer(AbstractVirtualizer):
         n_links = [l for u, v, l in
                    nffg.network.out_edges_iter([sap_id], data=True)]
 
-        if 2 < len(n_links) < 1:
-          log.warning(
-            "Inter-domain SAP should have one and only one connection to the "
-            "domain!")
+        if len(n_links) < 1:
+          print "SAP is not connected to any node! Maybe you forget to call " \
+                "duplicate_static_links?"
+          return
+        if 2 < len(n_links):
+          print "Inter-domain SAP should have one and only one connection to " \
+                "the domain! Using only the first connection."
           continue
 
         # Get port and Infra id's in nffg NFFG
@@ -538,15 +546,16 @@ class DomainVirtualizer(AbstractVirtualizer):
 
         # Add the inter-domain links for both ways
         self._global_nffg.add_undirected_link(port1=domain_port_dov,
-          port2=domain_port_nffg, delay=b_links[0].delay,
-          bandwidth=b_links[0].bandwidth)
+                                              port2=domain_port_nffg,
+                                              delay=b_links[0].delay,
+                                              bandwidth=b_links[0].bandwidth)
 
       else:
         # Normal SAP --> copy SAP
         c_sap = self._global_nffg.add_sap(
           sap=deepcopy(nffg.network.node[sap_id]))
         log.debug("Copy SAP: %s" % c_sap)
-    
+
     # Copy remaining links which should be valid
     for u, v, link in nffg.network.edges_iter(data=True):
       src_port = self._global_nffg.network.node[u].ports[link.src.id]
@@ -566,7 +575,9 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   def update_domain_view (self, domain, nffg):
     """
+    Update the existing domain in the merged Globan view.
     """
+    # TODO
     pass
 
 
@@ -585,7 +596,7 @@ class DomainResourceManager(object):
     # self.__dov = DomainVirtualizer(self)  # Domain Virtualizer
     with open('pox/dov.nffg', 'r') as f:
       nffg = NFFG.parse(f.read())
-    self.__dov = DomainVirtualizer(self, global_res=nffg)  # Domain Virtualizer
+    self._dov = DomainVirtualizer(self, global_res=nffg)  # Domain Virtualizer
     self._tracked_domains = set()  # Cache for detected and stored domains
 
   def get_global_view (self):
@@ -595,11 +606,11 @@ class DomainResourceManager(object):
     :return: global infrastructure view as the Domain Virtualizer
     :rtype: :any:`DomainVirtualizer`
     """
-    return self.__dov
+    return self._dov
 
   def update_domain_resource (self, domain, nffg):
     """
-    Update the global view dataself.__global_nffg with the specific domain info.
+    Update the global view data with the specific domain info.
 
     :param domain: domain name
     :type domain: str
@@ -614,18 +625,18 @@ class DomainResourceManager(object):
       log.info("Append %s domain to <Global Resource View> (DoV)..." % domain)
       if self._tracked_domains:
         # Merge domain topo into global view
-        self.__dov.merge_domain_into_dov(domain, nffg)
+        self._dov.merge_domain_into_dov(domain, nffg)
       else:
         # No other domain detected, set NFFG as the whole global view
         log.debug(
           "DoV is empty! Add new domain: %s as the global view!" % domain)
-        self.__dov.set_global_view(domain, nffg)
+        self._dov.set_global_view(domain, nffg)
       # Add detected domain to cached domains
       self._tracked_domains.add(domain)
     else:
       log.info("Updating <Global Resource View> from %s domain..." % domain)
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
-        self.__dov.update_domain_view(domain, nffg)
+        self._dov.update_domain_view(domain, nffg)
         # FIXME - SIGCOMM
         # print self.__dov.get_resource_info().dump()
