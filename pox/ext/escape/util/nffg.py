@@ -163,6 +163,7 @@ class NFFG(AbstractNFFG):
     """
     super(NFFG, self).__init__()
     self.network = networkx.MultiDiGraph()
+    """:type: networkx.MultiDiGraph"""
     self.id = str(id) if id is not None else str(generate(self))
     self.name = name if name is not None else "NFFG-" + str(self.id)
     self.version = version
@@ -197,12 +198,47 @@ class NFFG(AbstractNFFG):
     return (link for s, d, link in self.network.edges_iter(data=True) if
             link.type == Link.REQUIREMENT)
 
+  ##############################################################################
+  # dict specific functions
+  ##############################################################################
+
   def __str__ (self):
     return "NFFG(id=%s name=%s, version=%s)" % (
       self.id, self.name, self.version)
 
   def __repr__ (self):
     return super(NFFG, self).__repr__()
+
+  def __contains__ (self, item):
+    """
+    Return True if n is a node, False otherwise.
+    """
+    return item in self.network
+
+  def __iter__ (self, data=False):
+    """
+    Return an iterator over the nodes.
+
+    :param data: If True return a two-tuple of node and node data dictionary
+    :type data: bool
+    :return: An iterator over nodes.
+    """
+    return self.network.nodes_iter(data=data)
+
+  def __len__ (self):
+    """
+    Return the number of nodes.
+    """
+    return len(self.network)
+
+  def __getitem__ (self, item):
+    """
+    Return the object given by the id: item.
+
+    :param item: node id
+    :return: node object
+    """
+    return self.network.node[item]
 
   ##############################################################################
   # Builder design pattern related functions
@@ -737,10 +773,10 @@ def generate_mn_topo ():
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   # Add supported types
-  ee1.add_supported_type(('headerCompressor', 'headerDecompressor',
-                          'simpleForwarder'))
-  ee2.add_supported_type(('headerCompressor', 'headerDecompressor',
-                          'simpleForwarder'))
+  ee1.add_supported_type(
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+  ee2.add_supported_type(
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
@@ -852,8 +888,8 @@ def generate_mn_test_req ():
                      cpu=1, mem=1, storage=0)
   decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
                        func_type="headerDecompressor", cpu=1, mem=1, storage=0)
-  fwd = test.add_nf(id="fwd", name="FORWARDER",
-                    func_type="simpleForwarder", cpu=1, mem=1, storage=0)
+  fwd = test.add_nf(id="fwd", name="FORWARDER", func_type="simpleForwarder",
+                    cpu=1, mem=1, storage=0)
   test.add_sglink(sap1.add_port(1), comp.add_port(1), id=1)
   test.add_sglink(comp.ports[1], decomp.add_port(1), id=2)
   test.add_sglink(decomp.ports[1], sap2.add_port(1), id=3)
@@ -966,8 +1002,7 @@ def generate_os_req ():
   sap1 = test.add_sap(name="SAP24", id="0")
   sap2 = test.add_sap(name="SAP42", id="1")
   webserver = test.add_nf(id="webserver", name="webserver",
-                          func_type="webserver",
-                          cpu=1, mem=1, storage=0)
+                          func_type="webserver", cpu=1, mem=1, storage=0)
   # echo = test.add_nf(id="echo", name="echo", func_type="echo",
   #                    cpu=1, mem=1, storage=0)
   test.add_sglink(sap1.add_port(0), webserver.add_port(0), id=1)
@@ -995,8 +1030,7 @@ def generate_os_mn_req ():
   # sap24 = test.add_sap(name="SAP24", id="1")
 
   webserver = test.add_nf(id="webserver", name="webserver",
-                          func_type="webserver",
-                          cpu=1, mem=1, storage=0)
+                          func_type="webserver", cpu=1, mem=1, storage=0)
   # echo = test.add_nf(id="echo", name="echo", func_type="echo",
   #                    cpu=1, mem=1, storage=0)
   test.add_sglink(sap1.add_port(0), webserver.add_port(0), id=1)
@@ -1019,10 +1053,10 @@ def generate_dov ():
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   # Add supported types
-  ee1.add_supported_type(('headerCompressor', 'headerDecompressor',
-                          'simpleForwarder'))
-  ee2.add_supported_type(('headerCompressor', 'headerDecompressor',
-                          'simpleForwarder'))
+  ee1.add_supported_type(
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+  ee2.add_supported_type(
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
@@ -1064,8 +1098,8 @@ def generate_dov ():
 
   os_bb = nffg.add_infra(id="UUID-01", name="Single BiSBiS in OS Domain",
                          domain=NFFG.DOMAIN_OS,
-                         infra_type=NFFG.TYPE_INFRA_BISBIS,
-                         cpu=10, mem=32, storage=5, delay=0, bandwidth=100000)
+                         infra_type=NFFG.TYPE_INFRA_BISBIS, cpu=10, mem=32,
+                         storage=5, delay=0, bandwidth=100000)
   # Add supported types
   os_bb.add_supported_type(('webserver', 'echo'))
 
@@ -1075,8 +1109,8 @@ def generate_dov ():
 
   un_bb = nffg.add_infra(id="UUID11", name="Universal Node",
                          domain=NFFG.DOMAIN_UN,
-                         infra_type=NFFG.TYPE_INFRA_BISBIS,
-                         cpu=5, mem=16, storage=5, delay=0, bandwidth=100000)
+                         infra_type=NFFG.TYPE_INFRA_BISBIS, cpu=5, mem=16,
+                         storage=5, delay=0, bandwidth=100000)
   # Add supported types
   un_bb.add_supported_type(('dpi', 'example'))
 
@@ -1102,13 +1136,12 @@ def generate_global_req ():
   #                   func_type="simpleForwarder", cpu=1, mem=1, storage=0)
 
   webserver1 = test.add_nf(id="webserver1", name="webserver1",
-                           func_type="webserver",
-                           cpu=1, mem=1, storage=0)
+                           func_type="webserver", cpu=1, mem=1, storage=0)
   # webserver2 = test.add_nf(id="webserver2", name="webserver2",
   # func_type="webserver",
   #                          cpu=1, mem=1, storage=0)
-  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi",
-                    cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=1)
   test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=2)
@@ -1125,7 +1158,7 @@ def generate_global_req ():
 
 class NFFGToolBox(object):
   """
-  Helper functions for NFFG handling
+  Helper functions for NFFG handling.
   """
 
   @staticmethod
@@ -1156,21 +1189,29 @@ class NFFGToolBox(object):
         # Found inter-domain SAP
         print "Found Inter-domain SAP: %s" % sap_id
         # Search outgoing links from SAP, should be only one
-        b_links = [l for u, v, l in base.network.out_edges_iter([sap_id],
-                                                                data=True)]
-        if 2 < len(b_links) < 1:
+        b_links = [l for u, v, l in
+                   base.network.out_edges_iter([sap_id], data=True)]
+        if len(b_links) < 1:
+          print "SAP is not connected to any node! Maybe you forget to call " \
+                "duplicate_static_links?"
+          return
+        if 2 < len(b_links):
           print "Inter-domain SAP should have one and only one connection to " \
-                "the domain!"
+                "the domain! Using only the first connection."
           continue
         # Get inter-domain port in base NFFG
         domain_port_base = b_links[0].dst
         print "Found inter-domain port: %s" % domain_port_base
         # Search outgoing links from SAP, should be only one
-        n_links = [l for u, v, l in nffg.network.out_edges_iter([sap_id],
-                                                                data=True)]
-        if 2 < len(n_links) < 1:
+        n_links = [l for u, v, l in
+                   nffg.network.out_edges_iter([sap_id], data=True)]
+        if len(n_links) < 1:
+          print "SAP is not connected to any node! Maybe you forget to call " \
+                "duplicate_static_links?"
+          return
+        if 2 < len(n_links):
           print "Inter-domain SAP should have one and only one connection to " \
-                "the domain!"
+                "the domain! Using only the first connection."
           continue
         # Get port and Infra id's in nffg NFFG
         p_id = n_links[0].dst.id
@@ -1184,8 +1225,8 @@ class NFFGToolBox(object):
         print "Add inter-domain connection with delay: %s, bandwidth: %s" % (
           b_links[0].delay, b_links[0].bandwidth)
         # Add the inter-domain links for both ways
-        base.add_undirected_link(port1=domain_port_base,
-                                 port2=domain_port_nffg, delay=b_links[0].delay,
+        base.add_undirected_link(port1=domain_port_base, port2=domain_port_nffg,
+                                 delay=b_links[0].delay,
                                  bandwidth=b_links[0].bandwidth)
       else:
         # Normal SAP --> copy SAP
@@ -1202,6 +1243,55 @@ class NFFGToolBox(object):
       print "Copy Link: %s" % c_link
     # Return the updated NFFG
     return base
+
+  @staticmethod
+  def split_domains (nffg):
+    """
+    Split NFFG object into separate parts based on DOMAIN attribute.
+
+    :param nffg: global resource view (DoV)
+    :type nffg: :any:`NFFG`
+    :return: splitted parts as list ov domain name, domain part tuples
+    :rtype: tuple
+    """
+    # Define DOMAIN names
+    domains = set()
+    for infra in nffg.infras:
+      domains.add(infra.domain)
+    print "Detected domains: %s" % domains
+
+    splitted_parts = []
+    # Checks every domain
+    for domain in domains:
+      # Collect every node which not in the domain
+      deletable = set()
+      for infra in nffg.infras:
+        # Domains representations based on infras
+        if infra.domain == domain:
+          # Skip current domains infra
+          continue
+        # Mark the infra as deletable
+        deletable.add(infra.id)
+        # Look for orphan NF ans SAP nodes which connected to this deletable
+        # infra
+        for u, v, link in nffg.network.out_edges_iter([infra.id], data=True):
+          # Skip Requirement and SG links
+          if link.type != NFFG.TYPE_LINK_STATIC and link.type != \
+               NFFG.TYPE_LINK_DYNAMIC:
+            continue
+          if nffg.network.node[v].type == NFFG.TYPE_NF or nffg.network.node[
+            v].type == NFFG.TYPE_SAP:
+            deletable.add(v)
+      # Copy the NFFG
+      nffg_part = nffg.copy()
+      # Delete needless nodes --> and as a side effect the connected links too
+      nffg_part.network.remove_nodes_from(deletable)
+      splitted_parts.append((domain, nffg_part))
+    # TODO - recreate inter-domain SAP
+    # TODO - remove unused ports
+
+    # Return with the splitted parts
+    return splitted_parts
 
 
 if __name__ == "__main__":
@@ -1227,15 +1317,26 @@ if __name__ == "__main__":
   from conversion import NFFGConverter
 
   with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
-    base, tmp = NFFGConverter(domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(
-      f.read())
+    os_nffg, os_virt = NFFGConverter(
+      domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(f.read())
   with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
-    nffg, tmp = NFFGConverter(domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(
-      f.read())
+    un_nffg, un_virt = NFFGConverter(
+      domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(f.read())
+  with open("/home/czentye/escape/src/escape_v2/pox/escape-mn-topo.nffg") as f:
+    internal = NFFG.parse(f.read())
+    internal.duplicate_static_links()
   # print
-  # pprint(base.network.__dict__)
+  # pprint(os_nffg.network.__dict__)
   # print
-  # pprint(nffg.network.__dict__)
+  # pprint(un_nffg.network.__dict__)
   # print
-  merged = NFFGToolBox.merge_domains(base, nffg)
-  pprint(merged.network.__dict__)
+  # pprint(internal.network.__dict__)
+
+  merged = NFFGToolBox.merge_domains(internal, os_nffg)
+  merged = NFFGToolBox.merge_domains(merged, un_nffg)
+
+  # pprint(merged.network.__dict__)
+  splitted = NFFGToolBox.split_domains(merged)
+  for d, p in splitted:
+    print "\n", d
+    print p.dump()
