@@ -907,7 +907,6 @@ class CoreAlgorithm(object):
   def reset (self):
     """Resets the CoreAlgorithm instance to its initial (after preprocessor) 
     and   state. Links weights are also calculated by the preprocessor, so those
-    are reset too. self.original_chains is the input chain with maxhop
-    added as extra key to chains."""
+    are reset too. self.original_chains is the list of input chains."""
     self._preproc(copy.deepcopy(self.net0), copy.deepcopy(self.req0),
                   self.original_chains)

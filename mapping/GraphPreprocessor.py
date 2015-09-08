@@ -490,10 +490,10 @@ class GraphPreprocessorClass(object):
         "NodeNF %s couldn`t be removed from the NFFG" % net.network.node[n].id,
         "This NodeNF probably isn`t mapped anywhere")
 
+    self.log.debug("Calculating shortest paths...")
     self.shortest_paths = helper.shortestPathsInLatency(net.network)
     self.manager.addShortestRoutesInLatency(self.shortest_paths)
-    self.log.debug(
-      "Initial shortest_paths (in ms): %s" % pformat(self.shortest_paths))
+    self.log.debug("Shortest path calculation completed!")
 
     # calculate edge weights, we can call edges_iter, cuz there shouldn`t be
     # any NFs and dynamic links left.
