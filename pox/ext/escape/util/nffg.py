@@ -1343,7 +1343,6 @@ class NFFGToolBox(object):
     :param nffg: splitted NFFG (not necessarily in valid syntax)
     :return: modified Virtualizer object
     """
-    fr_cntr = 0
     print "Adapt modification from %s into %s" % (nffg, repr(virtualizer))
     # Check every infra Node
     for infra in nffg.infras:
