@@ -18,11 +18,13 @@ as building, parsing, processing NF-FG, helper functions, etc.
 import copy
 from pprint import pprint
 import sys
+import xml.etree.ElementTree as ET
 
 import networkx
 from networkx.exception import NetworkXError
 
 from nffg_elements import *
+import virtualizer3 as virt3
 
 
 class AbstractNFFG(object):
@@ -1332,6 +1334,163 @@ class NFFGToolBox(object):
     # Return with the splitted parts
     return splitted_parts
 
+  @staticmethod
+  def install_domain (virtualizer, nffg):
+    """
+    Install NFFG part or complete NFFG into given Virtualizer.
+
+    :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
+    :param nffg: splitted NFFG (not necessarily in valid syntax)
+    :return: modified Virtualizer object
+    """
+    fr_cntr = 0
+    print "Adapt modification from %s into %s" % (nffg, repr(virtualizer))
+    # Check every infra Node
+    for infra in nffg.infras:
+      # Check in infra is exist in the Virtualizer
+      if str(infra.id) not in virtualizer.nodes.node.getKeys():
+        print "InfraNode: %s is not in the domain: %s! Skip related " \
+              "initiations..."
+        continue
+      # Check every outgoing edge
+      for u, v, link in nffg.network.out_edges_iter([infra.id], data=True):
+        # Observe only the NF neighbours
+        if link.dst.node.type != NFFG.TYPE_NF:
+          continue
+        # Check if the NF is exist in the InfraNode
+        if str(v) not in virtualizer.nodes[str(u)].NF_instances.node.getKeys():
+          # Create NF object
+          nf = link.dst.node
+          print "Initiate %s on %s" % (nf, infra)
+          # Convert Resources to str for XML conversion
+          v_nf_cpu = str(nf.resources.cpu) if nf.resources.cpu else None
+          v_nf_mem = str(nf.resources.mem) if nf.resources.mem else None
+          v_nf_storage = str(
+            nf.resources.storage) if nf.resources.storage else None
+          # Create Node object for NF
+          v_nf = virt3.Node(id=str(nf.id), name=str(nf.name),
+                            type=str(nf.functional_type),
+                            resources=virt3.NodeResources(cpu=v_nf_cpu,
+                                                          mem=v_nf_mem,
+                                                          storage=v_nf_storage))
+          # Add NF to Infra object
+          virtualizer.nodes[str(u)].NF_instances.add(v_nf)
+          # Add NF ports
+          for port in nffg[v].ports:
+            print "Add %s to %s" % (port, nf)
+            nf_port = virt3.Port(id=str(port.id), port_type="port-abstract")
+            virtualizer.nodes[str(u)].NF_instances[str(v)].ports.add(nf_port)
+
+      # Add flowrules to Virtualizer
+      fr_cntr = 0
+      # traverse every pont in the Infra node
+      for port in infra.ports:
+        # Check every flowrule
+        for flowrule in port.flowrules:
+
+          # Define metadata
+          fr_id = "fr" + str(fr_cntr)
+          fr_cntr += 1
+          fr_pri = str(100)
+
+          # Check if match starts with in_port
+          fr = flowrule.match.split(';')
+          if fr[0].split('=')[0] != "in_port":
+            print "Missing 'in_port' from match. Skip flowrule conversion..."
+            continue
+
+          # Check if the src port is a physical or virtual port
+          in_port = fr[0].split('=')[1]
+          if str(port.id) in virtualizer.nodes[
+            str(infra.id)].ports.port.getKeys():
+            # Flowrule in_port is a phy port in Infra Node
+            in_port = virtualizer.nodes[str(infra.id)].ports[str(port.id)]
+          else:
+            # in_port is a dynamic port --> search for connected NF's port
+            nf_port = [l.dst for u, v, l in
+                       nffg.network.out_edges_iter([infra.id], data=True) if
+                       l.type == NFFG.TYPE_LINK_DYNAMIC and str(
+                         l.src.id) == in_port]
+            # There should be only one linkt between infra and NF
+            if len(nf_port) < 1:
+              print "NF port is not found for dynamic Infra port: %s defined " \
+                    "in match field!" % port
+              continue
+            nf_port = nf_port[0]
+            in_port = virtualizer.nodes[str(infra.id)].NF_instances[
+              str(nf_port.node.id)].ports[str(nf_port.id)]
+
+          # Process match field
+          match = None
+          if len(fr) > 1:
+            if fr[1].split('=')[0] == "TAG":
+              vlan = int(fr[1].split('=')[1].split('-')[-1])
+              if infra.domain == NFFG.DOMAIN_OS:
+                match = r"dl_vlan=%s" % format(vlan, '#06x')
+              elif infra.domain == NFFG.DOMAIN_UN:
+                match = ET.Element('match')
+                vlan_id = ET.SubElement(match, 'vlan_id')
+                vlan_id.text = str(vlan)
+            elif fr[1].split('=')[0] == "UNTAG":
+              if infra.domain == NFFG.DOMAIN_OS:
+                match = r"strip_vlan"
+              elif infra.domain == NFFG.DOMAIN_UN:
+                match = ET.Element('match')
+                ET.SubElement(ET.SubElement(match, 'vlan'), "pop")
+
+          # Check if action starts with outport
+          fr = flowrule.action.split(';')
+          if fr[0].split('=')[0] != "output":
+            print "Missing 'output' from match. Skip flowrule conversion..."
+            continue
+
+          # Check if the dst port is a physical or virtual port
+          out_port = fr[0].split('=')[1]
+          if str(out_port) in virtualizer.nodes[
+            str(infra.id)].ports.port.getKeys():
+            # Flowrule output is a phy port in Infra Node
+            out_port = virtualizer.nodes[str(infra.id)].ports[str(out_port)]
+          else:
+            # out_port is a dynamic port --> search for connected NF's port
+            nf_port = [l.dst for u, v, l in
+                       nffg.network.out_edges_iter([infra.id], data=True) if
+                       l.type == NFFG.TYPE_LINK_DYNAMIC and str(
+                         l.src.id) == out_port]
+            if len(nf_port) < 1:
+              print "NF port is not found for dynamic Infra port: %s defined " \
+                    "in action field!" % port
+              continue
+            nf_port = nf_port[0]
+            out_port = virtualizer.nodes[str(infra.id)].NF_instances[
+              str(nf_port.node.id)].ports[str(nf_port.id)]
+
+          # Process action field
+          action = None
+          if len(fr) > 1:
+            if fr[1].split('=')[0] == "TAG":
+              vlan = int(fr[1].split('=')[1].split('-')[-1])
+              if infra.domain == NFFG.DOMAIN_OS:
+                action = r"mod_vlan_vid:%s" % format(vlan, '#06x')
+              elif infra.domain == NFFG.DOMAIN_UN:
+                action = ET.Element('match')
+                vlan_id = ET.SubElement(action, 'vlan_id')
+                vlan_id.text = str(vlan)
+            elif fr[1].split('=')[0] == "UNTAG":
+              if infra.domain == NFFG.DOMAIN_OS:
+                action = r"strip_vlan"
+              elif infra.domain == NFFG.DOMAIN_UN:
+                action = ET.Element('match')
+                ET.SubElement(ET.SubElement(action, 'vlan'), "pop")
+
+          # Add Flowentry to Virtualizer
+          print "Add flowentry: %s" % flowrule
+          virtualizer.nodes[str(infra.id)].flowtable.add(
+            virt3.Flowentry(id=fr_id, priority=fr_pri, port=in_port,
+                            match=match, action=action, out=out_port))
+
+    # Return with modified Virtualizer
+    return virtualizer
+
 
 if __name__ == "__main__":
   # test_NFFG()
@@ -1377,6 +1536,22 @@ if __name__ == "__main__":
   # pprint(merged.network.__dict__)
   print
   splitted = NFFGToolBox.split_domains(merged)
-  for d, p in splitted:
-    print "\n", d
-    print p.dump()
+  print splitted
+  # for d, p in splitted:
+  #   print "\n", d
+  #   print p.dump()
+  os_virt.nodes['UUID-01'].clearData()
+  os_virt.nodes['UUID-01'].flowtable.clearData()
+  print
+  print str(os_virt)
+  os_splitted = [n for d, n in splitted if d == "OPENSTACK"][0]
+  os_splitted['UUID-01'].domain = NFFG.DOMAIN_UN
+  os_splitted['UUID-01'].ports[0].add_flowrule(match="in_port=0;TAG=42",
+                                               action="output=3;UNTAG")
+  os_splitted['UUID-01'].ports[2].add_flowrule(match="in_port=2;UNTAG",
+                                               action="output=1;TAG=24")
+
+  print os_splitted.dump()
+  virt = NFFGToolBox.install_domain(virtualizer=os_virt, nffg=os_splitted)
+  print
+  print str(virt)

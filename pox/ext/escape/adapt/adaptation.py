@@ -315,7 +315,7 @@ class ControllerAdapter(object):
     # print "Test mapped NFFG:\n", mapped_nffg.dump()
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
-    slices = self._slice_into_domains(mapped_nffg)
+    slices = self._split_into_domains(mapped_nffg)
     for domain, part in slices:
       if domain in self.domains.initiated:
         log.debug(
@@ -337,7 +337,7 @@ class ControllerAdapter(object):
     if event.data is not None and isinstance(event.data, NFFG):
       self.domainResManager.update_domain_resource(event.domain, event.data)
 
-  def _slice_into_domains (self, nffg):
+  def _split_into_domains (self, nffg):
     """
     Slice given :any:`NFFG` into separate parts self._global_nffg on
     original domains.

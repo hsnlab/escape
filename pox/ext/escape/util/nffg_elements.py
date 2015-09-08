@@ -442,6 +442,10 @@ class Flowrule(Persistable):
     return "Flowrule object:\nmatch: %s \naction: %s" % (
       self.match, self.action)
 
+  def __str__ (self):
+    return "%s(match: %s, action:%s)" % (
+      self.__class__.__name__, self.match, self.action)
+
 
 class Port(Element):
   """

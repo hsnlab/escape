@@ -17,7 +17,7 @@ Contains helper classes for conversion between different NF-FG representations.
 import xml.etree.ElementTree as ET
 import sys
 
-import nffglib as virt
+# import nffglib as virt
 import virtualizer3 as virt3
 from virtualizer3 import Flowentry
 
