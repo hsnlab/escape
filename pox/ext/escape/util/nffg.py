@@ -1293,7 +1293,7 @@ class NFFGToolBox(object):
       # Delete needless nodes --> and as a side effect the connected links too
       nffg_part.network.remove_nodes_from(deletable)
       splitted_parts.append((domain, nffg_part))
-      # TODO - recreate inter-domain SAP
+
       # Recreate inter-domain SAP
       for infra in nffg_part.infras:
         for port in infra.ports:
@@ -1301,24 +1301,33 @@ class NFFGToolBox(object):
           if "port_type:port-sap" in port.properties:
             # Found inter-domain SAP port
             print "Found inter-domain SAP port: %s" % port
-            # Create SAP object
-            sap = NodeSAP()
+            # Create default SAP object attributes
+            sap_id, sap_name = None, None
             # Copy optional SAP metadata as special id or name
             for property in port.properties:
               if str(property).startswith("sap:"):
-                sap.id = property.split(":")[1]
+                sap_id = property.split(":", 1)[1]
               if str(property).startswith("name:"):
-                sap.name = property.split(":")[1]
+                sap_name = property.split(":", 1)[1]
+            # Add SAP to splitted NFFG
+            if sap_id in nffg_part:
+              print "%s is already in the splitted NFFG. Skip adding..." % \
+                    nffg_part[sap_id]
+              continue
+            sap = nffg_part.add_sap(id=sap_id, name=sap_name)
             # Add port to SAP port number(id) is identical with the Infra's port
             sap_port = sap.add_port(id=port.id, properties=port.properties[:])
-            # Add SAP to splitted NFFG
-            if sap.id in nffg_part:
-              print "%s is already in the splitted NFFG. Skip adding..." % sap
-              continue
-            nffg_part.add_sap(sap=sap)
             # Connect SAP to Infra
             nffg_part.add_undirected_link(port1=port, port2=sap_port)
-    # TODO - remove unused ports
+            print "Create inter-domain SAP: %s" % sap
+
+      # Check orphaned or not connected nodes and remove them
+      for node_id in nffg_part.network.nodes():
+        if len(nffg_part.network.neighbors(node_id)) > 0:
+          continue
+        log.warning("Found orphaned node: %s! Remove from sliced part." %
+                    nffg_part.network.node[node_id])
+        nffg_part.network.remove_node(node_id)
 
     # Return with the splitted parts
     return splitted_parts
@@ -1366,7 +1375,7 @@ if __name__ == "__main__":
   merged = NFFGToolBox.merge_domains(merged, un_nffg)
 
   # pprint(merged.network.__dict__)
-  print 
+  print
   splitted = NFFGToolBox.split_domains(merged)
   for d, p in splitted:
     print "\n", d

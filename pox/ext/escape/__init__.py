@@ -58,9 +58,9 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                      "prefix": "escape"}},
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        # "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK", "UN"],
-                        "DEFAULTS": ["OPENSTACK", "UN"],
-                        # "DEFAULTS": [],
+                        # "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK",
+                        # "UN"],
+                        "DEFAULTS": ["OPENSTACK", "UN"], # "DEFAULTS": [],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.components",
                                          "class": "InternalPOXAdapter",
@@ -74,11 +74,11 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                        "server": "127.0.0.1", "port": 830},
                         "ESCAPE-REST": {"module": "escape.adapt.components",
                                         "class": "RemoteESCAPEv2RESTAdapter",
-                                        "url": "http://192.168.1.111:8888/escape/"},
+                                        "url":
+                                          "http://192.168.1.111:8888/escape/"},
                         "OpenStack-REST": {"module": "escape.adapt.components",
                                            "class": "OpenStackRESTAdapter",
-                                           "url":
-                                             "http://localhost:8081"},
+                                           "url": "http://localhost:8081"},
                         "UN-REST": {"module": "escape.adapt.components",
                                     "class": "UnifiedNodeRESTAdapter",
                                     "url": "http://localhost:8082"},

@@ -87,6 +87,11 @@
       "ports": [
         {
           "id": 1,
+          "property": [
+            "name:Inter-domain port: SDN-UN",
+            "port_type:port-sap",
+            "sap:SAP34"
+          ],
           "flowrules": [
             {
               "match": "in_port=1;TAG=webserver1-dpi-2",
@@ -143,6 +148,11 @@
         },
         {
           "id": 2,
+          "property": [
+            "name:Inter-domain port: SDN-OPENSTACK",
+            "port_type:port-sap",
+            "sap:SAP24"
+          ],
           "flowrules": [
             {
               "match": "in_port=2;TAG=webserver1-dpi-2",
@@ -156,6 +166,11 @@
         },
         {
           "id": 3,
+          "property": [
+            "name:Inter-domain port: SDN-UN",
+            "port_type:port-sap",
+            "sap:SAP34"
+          ],
           "flowrules": [
             {
               "match": "in_port=3;TAG=dpi-sap1-3",
@@ -201,6 +216,11 @@
         },
         {
           "id": 4,
+          "property": [
+            "name:Inter-domain port: Internal-SDN",
+            "port_type:port-sap",
+            "sap:SAP14"
+          ],
           "flowrules": [
             {
               "match": "in_port=4;TAG=dpi-sap1-3",
@@ -242,6 +262,11 @@
         },
         {
           "id": 2,
+          "property": [
+            "name:Inter-domain port: Internal-SDN",
+            "port_type:port-sap",
+            "sap:SAP14"
+          ],
           "flowrules": [
             {
               "match": "in_port=2;TAG=sap1-webserver1-1",
@@ -322,6 +347,11 @@
       "ports": [
         {
           "id": 0,
+          "property": [
+            "name:Inter-domain port: SDN-OPENSTACK",
+            "port_type:port-sap",
+            "sap:SAP24"
+          ],
           "flowrules": [
             {
               "match": "in_port=0;TAG=sap1-webserver1-1",
