@@ -75,6 +75,7 @@ def shortestPathsInLatency (G):
   dist = defaultdict(lambda: defaultdict(lambda: float('inf')))
   try:
     with open("shortest_paths.txt") as sp:
+      log.debug("Reading previously calculated shortest paths...")
       for line in sp:
         line = line.split(" ")
         dist[line[0]][line[1]] = float(line[2])

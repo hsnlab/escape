@@ -99,7 +99,7 @@ class GraphPreprocessorClass(object):
     # -DON`T we want attribute changes to be reflected in the big
     #  common graph.
     subg = self.net.network.subgraph(visited)
-    self.log.debug("Subgraph returned: %s" % subg.edges(keys=True))
+    # self.log.debug("Subgraph returned: %s" % subg.edges(keys=True))
     return subg
 
   def _colorLinksAndVNFs (self, e2e_w_graph, not_e2e):
@@ -337,8 +337,8 @@ class GraphPreprocessorClass(object):
     # sort the subchains in predecessor order and secondly latency req order
     # - Does it make the earlier latency sorting unnecessary?
     # - No, because this way lower latency requirement chains are
-    # prioritized to being cut into less number of  peaces, so they are
-    # guaranteed to be mapped in bigger peaces, maybe still not enough reason
+    # prioritized to being cut into less number of  pieces, so they are
+    # guaranteed to be mapped in bigger pieces, maybe still not enough reason
     starting_subchains = [c for c in output if self.req_graph.network.node[
       c[0]['chain'][0]].type == 'SAP']
     output = [c for c in output if c not in starting_subchains]

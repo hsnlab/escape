@@ -60,6 +60,7 @@ def generateRequestForCarrierTopo(networkparams, test_lvl):
   nffg = NFFG(id="Benchmark-Req-"+str(test_lvl))
   chain_maxlen = 10
   random.seed(0)
+  sg_path = []
   
   # generate some VNF-s connecting the two SAP-s
   for i in xrange(0, test_lvl):
@@ -77,17 +78,22 @@ def generateRequestForCarrierTopo(networkparams, test_lvl):
                        storage=random.random(),
                        delay=1 + random.random()*10,
                        bandwidth=random.random())
-      nffg.add_sglink(last_req_port, nf.add_port())
+      newport = nf.add_port()
+      sglinkid = "-".join((str(last_req_port.id), str(newport.id)))
+      nffg.add_sglink(last_req_port, newport, id=sglinkid)
+      sg_path.append(sglinkid)
       last_req_port = nf.add_port()
 
     sap2port = sap2.add_port()
-    nffg.add_sglink(last_req_port, sap2port)
+    last_sg_linkid = "-".join((str(last_req_port.id), str(sap2port.id)))
+    nffg.add_sglink(last_req_port, sap2port, id=last_sg_linkid)
+    sg_path.append(last_sg_linkid)
 
     # WARNING: this is completly a wild guess! Failing due to this doesn't 
     # necessarily mean algorithm failure
     # Bandwidth maximal random value should be min(SAP1acces_bw, SAP2access_bw)
     nffg.add_req(sap1port, sap2port, delay=random.uniform(20,100), 
-                 bandwidth=random.random()*0.2)
+                 bandwidth=random.random()*0.2, sg_path = sg_path)
   return nffg
 
 if __name__ == '__main__':
