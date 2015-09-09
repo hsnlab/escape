@@ -939,7 +939,8 @@ class EdgeReq(Link):
   Class for requirements between arbitrary NF modes.
   """
 
-  def __init__ (self, src=None, dst=None, id=None, delay=None, bandwidth=None):
+  def __init__ (self, src=None, dst=None, id=None, delay=None, bandwidth=None,
+                sg_path=None):
     """
     Init.
 
@@ -959,6 +960,13 @@ class EdgeReq(Link):
                                   id=id)
     self.delay = delay  # optional
     self.bandwidth = bandwidth  # optional
+    # Set sg_path types according to given param type
+    if isinstance(sg_path, (str, unicode)):
+      self.sg_path = [str(sg_path), ]
+    elif isinstance(sg_path, Iterable):
+      self.sg_path = [p for p in sg_path]
+    elif sg_path is None:
+      self.sg_path = []
 
   def persist (self):
     link = super(EdgeReq, self).persist()
@@ -966,6 +974,9 @@ class EdgeReq(Link):
       link["delay"] = self.delay
     if self.bandwidth is not None:
       link["bandwidth"] = self.bandwidth
+    sg_path = self.sg_path[:]
+    if sg_path:
+      link['sg_path'] = sg_path
     return link
 
   def load (self, data, container=None, *args, **kwargs):
@@ -978,6 +989,8 @@ class EdgeReq(Link):
     super(EdgeReq, self).load(data=data, container=container)
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
+    if 'sg_path' in data:
+      self.sg_path = data['sg_path']
     return self
 
 
@@ -1391,6 +1404,8 @@ def test_parse_load ():
   edge_req.id = "link2"
   edge_req.bandwidth = "100"
   edge_req.delay = "5"
+  edge_req.sg_path.append(edge_sg.id)
+  edge_req.sg_path.append(edge_link.id)
   # Generate
   nffg = NFFGModel()
   nffg.name = "NFFG1"
