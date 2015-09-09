@@ -59,8 +59,9 @@ class VirtualizationService(RequestHandler):
     elif rpc == 'topology-resource':
       LOG.debug('topology-resource received')
       with open(CONFIG_FILE) as f:
-        data = NFFG.parse(f.read()).dump()
-        self.write(data)
+        nffg = NFFG.parse(f.read())
+        nffg.duplicate_static_links()
+        self.write(nffg.dump())
       return
 
     elif rpc == 'install-nffg':

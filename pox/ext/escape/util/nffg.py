@@ -953,34 +953,34 @@ def generate_sdn_topo ():
   # Create NFFG
   nffg = NFFG(id="SDN", name="SDN-Topology")
   # Add MikroTik OF switches
-  sw1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=NFFG.DOMAIN_SDN,
+  mt1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=NFFG.DOMAIN_SDN,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
-  sw2 = nffg.add_infra(id="MT2", name="MikroTik-SW-2", domain=NFFG.DOMAIN_SDN,
+  mt2 = nffg.add_infra(id="MT2", name="MikroTik-SW-2", domain=NFFG.DOMAIN_SDN,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
-  sw1.resources.delay = 0.2
-  sw1.resources.bandwidth = 4000
-  sw2.resources.delay = 0.2
-  sw2.resources.bandwidth = 4000
+  mt1.resources.delay = 0.2
+  mt1.resources.bandwidth = 4000
+  mt2.resources.delay = 0.2
+  mt2.resources.bandwidth = 4000
   # Add SAPs
   sap14 = nffg.add_sap(id="SAP14", name="SAP14")
   sap24 = nffg.add_sap(id="SAP24", name="SAP24")
-  # sap34 = nffg.add_sap(id="SAP34", name="SAP34")
+  sap34 = nffg.add_sap(id="SAP34", name="SAP34")
   # Add links
-  l1 = nffg.add_link(sw1.add_port(1), sw2.add_port(1), id="link1")
-  l2 = nffg.add_link(sap14.add_port(1), sw1.add_port(2), id="link2")
-  sw1.add_port(3)
-  sw1.add_port(4)
-  l3 = nffg.add_link(sw2.add_port(2), sap24.add_port(1), id="link3")
-  # l4 = nffg.add_link(sw2.add_port(3), sap34.add_port(1), id="link4")
-  sw2.add_port(4)
+  l1 = nffg.add_link(mt1.add_port(1), mt2.add_port(1), id="link1")
+  l2 = nffg.add_link(sap14.add_port(1), mt1.add_port(2), id="link2")
+  mt1.add_port(3)
+  mt1.add_port(4)
+  l3 = nffg.add_link(mt2.add_port(2), sap24.add_port(1), id="link3")
+  l4 = nffg.add_link(mt2.add_port(3), sap34.add_port(1), id="link4")
+  mt2.add_port(4)
   l1.delay = 0.1
   l1.bandwidth = 1000
   l2.delay = 1.5
   l2.bandwidth = 1000
   l3.delay = 1.5
   l3.bandwidth = 1000
-  # l4.delay = 1.5
-  # l4.bandwidth = 1000
+  l4.delay = 1.5
+  l4.bandwidth = 1000
   return nffg
 
 
