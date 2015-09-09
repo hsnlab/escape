@@ -215,8 +215,7 @@ class PortSapVxlanCase(PortSapCase):
         super(PortSapCase, self).xml(e_port)
         e_sapType = ET.SubElement(e_port, "sap-type")
         e_sapType.text = self.l_sapType
-        if self.g_portSapVxlan:
-            self.g_portSapVxlan.xml(e_port)
+        PortSapVxlanGroup.xml(self.g_portSapVxlan, e_port)
 
 
 class PortSapVxlanGroup(base):

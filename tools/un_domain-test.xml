@@ -1,0 +1,121 @@
+<virtualizer>
+    <name>Single node</name>
+    <nodes>
+        <node>
+            <capabilities>
+                <supported_NFs>
+                    <node>
+                        <name>iptables based firewall</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>firewall</type>
+                        <id>NF1</id>
+                    </node>
+                    <node>
+                        <name>DPI based on libpcre</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>dpi</type>
+                        <id>NF2</id>
+                    </node>
+                    <node>
+                        <name>NAT based on iptables</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>nat</type>
+                        <id>NF3</id>
+                    </node>
+                    <node>
+                        <name>example VNF with several implementations</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>example</type>
+                        <id>NF4</id>
+                    </node>
+                    <node>
+                        <name>ntop monitor</name>
+                        <ports>
+                            <port>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                                <id>1</id>
+                            </port>
+                            <port>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                                <id>2</id>
+                            </port>
+                        </ports>
+                        <type>monitor</type>
+                        <id>NF5</id>
+                    </node>
+                </supported_NFs>
+            </capabilities>
+            <ports>
+                <port>
+                    <id>0</id>
+                    <name>OVS-north external port</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP25</sap>
+                    <capability/>
+                </port>
+                <port>
+                    <id>1</id>
+                    <name>UN-OS inter-domain SAP</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP24</sap>
+                    <capability/>
+                </port>
+            </ports>
+            <type>BisBis</type>
+            <id>UUID11</id>
+            <resources>
+                <mem>32 GB</mem>
+                <storage>5 TB</storage>
+                <cpu>10 VCPU</cpu>
+            </resources>
+            <name>Universal Node</name>
+        </node>
+    </nodes>
+    <id>UUID001</id>
+</virtualizer>

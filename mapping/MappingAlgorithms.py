@@ -61,57 +61,66 @@ def MAP (request, network):
   for req in request.reqs:
     edgereqlist.append(req)
     request.del_edge(req.src, req.dst, req.id)
-
+    
+  # construct chains fron EdgeReqs
   for req in edgereqlist:
-    number_of_simple_paths = 0
-    chains_of_one_req = []
-    for path in nx.all_simple_paths(request.network, req.src.node.id,
-                                    req.dst.node.id):
-      chain = {'chain': path, 'link_ids': []}
-      is_there_notSGlink_in_path = False
-      for i, j in zip(path[:-1], path[1:]):
-        for sglink in request.sg_hops:
-          if i == sglink.src.node.id and j == sglink.dst.node.id:
-            if len(path) == 2 and next(request.nfs, None) != None:
-              # then add it as linklocal req insead of E2E
-              if req.delay is not None:
-                setattr(request.network[i][j][sglink.id], 'delay', req.delay)
-              if req.bandwidth is not None:
-                setattr(request.network[i][j][sglink.id], 'bandwidth',
-                        req.bandwidth)
-            else:
-              chain['link_ids'].append(sglink.id)
-            break  # warning! the second of the double links in SG
-            # will not be taken into any service, which causes the
-            # algorithm to throw a bad input exception because not
-            # all SG links are in some subchain
-        else:
-          # This means `path` is not entirely in the service graph,
-          # so this should be ignored.
-          is_there_notSGlink_in_path = True
+
+    if len(req.sg_path) == 1:
+      # then add it as linklocal req insead of E2E req
+      reqlink = None
+      for sg_link in request.sg_hops:
+        if sg_link.id == req.sg_path[0]:
+          reqlink = sg_link
           break
+      if req.delay is not  None:
+        setattr(reqlink, 'delay', req.delay)
+      if req.bandwidth is not  None:
+        setattr(reqlink, 'bandwidth', req.bandwidth)
+    else:
+      try:
+        chain = {'id': cid, 'link_ids': req.sg_path, 
+                 'bandwidth': req.bandwidth if req.bandwidth is not None else 0,
+                 'delay': req.delay}
+      except AttributeError:
+        raise uet.BadInputException("Missing attribute of EdgeReq",
+                                    "EdgeReq attributes are: sg_path, bandwidth,"
+                                    " delay")
+      # reconstruct NF path from EdgeSGLink path
+      nf_chain = []
+      for reqlinkid in req.sg_path:
 
-      if not is_there_notSGlink_in_path:
-        if len(path) != 2 or next(request.nfs, None) == None:
-          if len(path) - 1 != len(chain['link_ids']):
-            raise Exception(
-              "TEMPORARY Exception: Not all link ID-s found for a service "
-              "chain")
-          chain['id'] = cid
-          cid += 1
-          chain['delay'] = req.delay
-          chains_of_one_req.append(chain)
-          number_of_simple_paths += 1
-          # else: In this case the SG link has been added as link
-          # requirement to the service graph
-
-    # distribute the bandwidth requirement uniformly...
-    for c in chains_of_one_req:
-      if req.bandwidth is not None:
-        c['bandwidth'] = float(req.bandwidth) / number_of_simple_paths
-      else:
-        c['bandwidth'] = 0
-    chainlist.extend(chains_of_one_req)
+        # find EdgeSGLink object of 'reqlinkid'
+        reqlink = None
+        for sg_link in request.sg_hops:
+          if sg_link.id == reqlinkid:
+            reqlink = sg_link
+            break
+        else:
+          raise uet.BadInputException("SG link %s couldn't be found in input "
+                                      "request NFFG"%reqlinkid, 
+                                      "Elements of EdgeReq.sg_path should be "
+                                      "EdgeSGLink.id-s.")
+        # add the srouce node id of the EdgeSGLink to NF path
+        nf_chain.append(reqlink.src.node.id)
+        # add the destination node id of the last EdgeSGLink to NF path
+        if reqlinkid == req.sg_path[-1]:
+          if reqlink.dst.node.id != req.dst.node.id:
+            raise uet.BadInputException("Last NF (%s) of EdgeReq.sg_path and "
+                      "destination of EdgeReq (%s) are not the same!"
+                      %(reqlink.dst.node.id, req.dst.node.id),
+                      "EdgeReq.sg_path should select a path between its two "
+                      "ends")
+          nf_chain.append(reqlink.dst.node.id)
+        # validate EdgeReq ends.
+        if reqlinkid == req.sg_path[0] and \
+           reqlink.src.node.id != req.src.node.id:
+          raise uet.BadInputException("First NF (%s) of EdgeReq.sg_path and "
+                    "source of EdgeReq (%s) are not the same!"
+                    %(reqlink.src.node.id, req.src.node.id),
+                    "EdgeReq.sg_path should select a path between its two ends")
+        chain['chain'] = nf_chain
+      cid += 1
+      chainlist.append(chain)
 
   # temorary workaround: If resource parameter is not given (None) set it the 
   # average of the appropriate given parameters (Thus those links will not be 
@@ -119,20 +128,17 @@ def MAP (request, network):
   for respar in ('cpu', 'mem', 'storage', 'delay', 'bandwidth'):
     avgs = 0.0
     cnt = 0
-    for n,d in network.network.nodes_iter(data=True):
-      if d.type == 'INFRA':
-        # WARN: also sets some cpu, mem, storage values to switches, 
-        # but if they have no 'supported_types' it wont cause a problem.
-        # None replacing should be done for delay and bw parameters
-        if d.resources[respar] != None:
+    for n in network.infras:
+      if n.infra_type != NFFG.TYPE_INFRA_SDN_SW:
+        if n.resources[respar] != None:
           cnt += 1
-          avgs += d.resources[respar]
+          avgs += n.resources[respar]
     if cnt > 0:
       avgs = float(avgs) / cnt
-    for n,d in network.network.nodes_iter(data=True):
-      if d.type == 'INFRA':
-        if d.resources[respar] == None:
-          d.resources[respar] = avgs
+    for n in network.infras:
+      if n.infra_type != NFFG.TYPE_INFRA_SDN_SW:
+        if n.resources[respar] == None:
+          n.resources[respar] = avgs
   # do the same with link data
   for par in ('bandwidth', 'delay'):
     avgs = 0.0
@@ -388,10 +394,11 @@ def _testRequestForBacktrack():
   nffg.add_sglink(b.add_port(1), c.add_port(0), id="bc")
   nffg.add_sglink(c.add_port(1), sap2.add_port(0), id="cs")
 
-  nffg.add_req(a.ports[0], b.ports[1], delay=1.0)
-  nffg.add_req(b.ports[0], c.ports[1], delay=1.0)
-  nffg.add_req(c.ports[0], sap2.ports[0], delay=1.0)
-  nffg.add_req(sap1.ports[0], sap2.ports[0], delay=50, bandwidth=10)
+  nffg.add_req(a.ports[0], b.ports[1], delay=1.0, sg_path=["ab"])
+  nffg.add_req(b.ports[0], c.ports[1], delay=1.0, sg_path=["bc"])
+  nffg.add_req(c.ports[0], sap2.ports[0], delay=1.0, sg_path=["cs"])
+  nffg.add_req(sap1.ports[0], sap2.ports[0], delay=50, bandwidth=10, 
+               sg_path=["sa", "ab", "bc", "cs"])
   
   return nffg
 

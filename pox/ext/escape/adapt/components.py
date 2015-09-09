@@ -45,28 +45,14 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
   # FIXME - SIGCOMM -
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {
-    'MT1': 0x14c5e0c376e24,
-    'MT2': 0x14c5e0c376fc6,
-    'EE1': 0x1,
-    'EE2': 0x2,
-    'SW3': 0x3,
-    'SW4': 0x4,
-  }
-  dpid_to_infra = {
-    0x14c5e0c376e24: 'MT1',
-    0x14c5e0c376fc6: 'MT2',
-    0x1: 'EE1',
-    0x2: 'EE2',
-    0x3: 'SW3',
-    0x4: 'SW4'
-  }
-  saps = {
-    'SW3': {'port': '3',
-            'dl_dst': '00:00:00:00:00:01', 'dl_src': '00:00:00:00:00:02'},
-    'SW4': {'port': '3',
-            'dl_dst': '00:00:00:00:00:02', 'dl_src': '00:00:00:00:00:01'}
-  }
+  infra_to_dpid = {'MT1': 0x14c5e0c376e24, 'MT2': 0x14c5e0c376fc6, 'EE1': 0x1,
+                   'EE2': 0x2, 'SW3': 0x3, 'SW4': 0x4, }
+  dpid_to_infra = {0x14c5e0c376e24: 'MT1', 0x14c5e0c376fc6: 'MT2', 0x1: 'EE1',
+                   0x2: 'EE2', 0x3: 'SW3', 0x4: 'SW4'}
+  saps = {'SW3': {'port': '3', 'dl_dst': '00:00:00:00:00:01',
+                  'dl_src': '00:00:00:00:00:02'},
+          'SW4': {'port': '3', 'dl_dst': '00:00:00:00:00:02',
+                  'dl_src': '00:00:00:00:00:01'}}
 
   def __init__ (self, name=None, address="127.0.0.1", port=6633):
     """
@@ -128,6 +114,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
           log.info("Load SDN topology from file: %s" % path)
           self.topo = NFFG.parse(f.read())
           self.topo.duplicate_static_links()
+          # print self.topo.dump()
       except IOError:
         log.debug("SDN topology file not found: %s" % path)
         raise TopologyLoadException("Missing topology file!")
@@ -239,8 +226,8 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
     try:
       vid = action['vlan_push']
-      msg.actions.append(of.ofp_action_vlan_vid(
-        vlan_vid=int(action['vlan_push'])))
+      msg.actions.append(
+        of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
       # msg.actions.append(of.ofp_action_vlan_vid())
     except KeyError:
       pass
@@ -708,7 +695,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("OpenStack base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self)
     # Converter object
-    self.converter = NFFGConverter(domain=NFFG.DOMAIN_OS)
+    self.converter = NFFGConverter(domain=NFFG.DOMAIN_OS, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
 
@@ -746,8 +733,10 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def edit_config (self, data):
     if isinstance(data, NFFG):
-      virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
-      data = self.converter.unescape_output_hack(str(virtualizer))
+      # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
+      # data = self.converter.unescape_output_hack(str(virtualizer))
+      data = str(self.converter.adapt_mapping_into_Virtualizer(
+        virtualizer=self.virtualizer, nffg=data))
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
@@ -789,7 +778,7 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("Unified Node base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self)
     # Converter object
-    self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN)
+    self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
 
@@ -828,8 +817,10 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def edit_config (self, data):
     if isinstance(data, NFFG):
-      virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
-      data = self.converter.unescape_output_hack(str(virtualizer))
+      # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
+      # data = self.converter.unescape_output_hack(str(virtualizer))
+      data = str(self.converter.adapt_mapping_into_Virtualizer(
+        virtualizer=self.virtualizer, nffg=data))
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
@@ -1042,15 +1033,15 @@ class InternalDomainManager(AbstractDomainManager):
           dynamic_port = nffg_part.network.node[infra_id].ports[link.dst.id].id
           self.portmap[dynamic_port] = infra_port_num
           # Update port in nffg_part
-          nffg_part.network.node[infra_id].ports[link.dst.id].id = infra_port_num
+          nffg_part.network.node[infra_id].ports[
+            link.dst.id].id = infra_port_num
 
         log.debug("%s topology description is updated with NF: %s" % (
           self.name, deployed_nf.name))
     # Update port numbers in flowrules
     for infra in nffg_part.infras:
       if infra.infra_type not in (
-           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-           NFFG.TYPE_INFRA_SDN_SW):
+      NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE, NFFG.TYPE_INFRA_SDN_SW):
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in mn_topo.infras):
@@ -1088,17 +1079,16 @@ class InternalDomainManager(AbstractDomainManager):
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
       if infra.infra_type not in (
-           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-           NFFG.TYPE_INFRA_SDN_SW):
+      NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE, NFFG.TYPE_INFRA_SDN_SW):
         log.debug(
           "Infrastructure Node: %s (type: %s) is not Switch or Container type! "
           "Continue to next Node..." % (infra.short_name, infra.infra_type))
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in topo.infras):
-        log.error(
-          "Infrastructure Node: %s is not found in the %s domain! Skip "
-          "flowrule install on this Node..." % (infra.short_name, self.name))
+        log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
+                  "flowrule install on this Node..." % (
+                    infra.short_name, self.name))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
@@ -1132,8 +1122,8 @@ class InternalDomainManager(AbstractDomainManager):
               push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
               action['vlan_push'] = push_tag
 
-          self.controlAdapter.install_flowrule(infra.id,
-                                               match=match, action=action)
+          self.controlAdapter.install_flowrule(infra.id, match=match,
+                                               action=action)
 
 
 class RemoteESCAPEDomainManager(AbstractDomainManager):
@@ -1421,17 +1411,16 @@ class SDNDomainManager(AbstractDomainManager):
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
       if infra.infra_type not in (
-           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-           NFFG.TYPE_INFRA_SDN_SW):
+      NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE, NFFG.TYPE_INFRA_SDN_SW):
         log.debug(
           "Infrastructure Node: %s (type: %s) is not Switch or Container type! "
           "Continue to next Node..." % (infra.short_name, infra.infra_type))
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in topo.infras):
-        log.error(
-          "Infrastructure Node: %s is not found in the %s domain! Skip "
-          "flowrule install on this Node..." % (infra.short_name, self.name))
+        log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
+                  "flowrule install on this Node..." % (
+                    infra.short_name, self.name))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
@@ -1465,5 +1454,5 @@ class SDNDomainManager(AbstractDomainManager):
               push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
               action['vlan_push'] = push_tag
 
-          self.controlAdapter.install_flowrule(infra.id,
-                                               match=match, action=action)
+          self.controlAdapter.install_flowrule(infra.id, match=match,
+                                               action=action)
