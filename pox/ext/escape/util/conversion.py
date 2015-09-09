@@ -16,6 +16,7 @@ Contains helper classes for conversion between different NF-FG representations.
 """
 import xml.etree.ElementTree as ET
 import sys
+import logging
 
 # import nffglib as virt
 import virtualizer3 as virt3
@@ -1409,9 +1410,9 @@ class NFFGConverter(object):
   Convert different representation of NFFG in both ways.
   """
 
-  def __init__ (self, domain, logger):
+  def __init__ (self, domain, logger=None):
     self.domain = domain
-    self.log = logger
+    self.log = logger if logger is not None else logging.getLogger(__name__)
 
   def parse_from_Virtualizer3 (self, xml_data):
     """

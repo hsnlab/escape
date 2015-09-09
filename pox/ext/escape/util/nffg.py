@@ -24,7 +24,11 @@ import networkx
 from networkx.exception import NetworkXError
 
 from nffg_elements import *
-import virtualizer3 as virt3
+
+try:
+  import virtualizer3 as virt3
+except ImportError:
+  pass
 
 
 class AbstractNFFG(object):
