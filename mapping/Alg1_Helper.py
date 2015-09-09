@@ -193,6 +193,9 @@ class MappingManager(object):
 
     # chain - subchain pairing, stored in a bipartie graph
     self.chain_subchain = nx.Graph()
+    for c in chains:
+      if c['delay'] is None:
+        c['delay'] = sys.float_info.max
     self.chain_subchain.add_nodes_from(
       (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay']}) 
       for c in chains)

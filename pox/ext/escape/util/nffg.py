@@ -510,7 +510,7 @@ class NFFG(AbstractNFFG):
     return hop
 
   def add_req (self, src_port, dst_port, req=None, id=None, delay=None,
-               bandwidth=None):
+               bandwidth=None, sg_path=None):
     """
     Add a requirement edge to the structure.
 
@@ -531,7 +531,7 @@ class NFFG(AbstractNFFG):
     """
     if req is None:
       req = EdgeReq(src=src_port, dst=dst_port, id=id, delay=delay,
-                    bandwidth=bandwidth)
+                    bandwidth=bandwidth, sg_path=sg_path)
     self.add_edge(src_port.node, dst_port.node, req)
     return req
 

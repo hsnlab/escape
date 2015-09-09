@@ -63,6 +63,8 @@ class GraphPreprocessorClass(object):
     pending = []
     visited = {sap_begin}
     dist = 0
+    if chain['delay'] is None:
+      return self.net.network
     while dist <= chain['delay']:
       for n in self.net.network.neighbors_iter(current):
         if not (n in visited or n in pending):
