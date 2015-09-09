@@ -350,8 +350,8 @@ class ControllerAdapter(object):
     :return: sliced parts as a list of (domain_name, nffg_part) tuples
     :rtype: list
     """
-    with open('pox/global-mapped.nffg', 'r') as f:
-      nffg = NFFG.parse(f.read())
+    # with open('pox/merged-global.nffg', 'r') as f:
+    #   nffg = NFFG.parse(f.read())
 
     log.info("Splitting mapped NFFG: %s according to detected domains" % nffg)
     # Define DOMAIN names

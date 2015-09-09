@@ -800,12 +800,12 @@ def generate_mn_topo ():
 
   # Add links
   link_res = {'delay': 1.5, 'bandwidth': 10}
-  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1", **link_res)
-  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="link2", **link_res)
-  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3", **link_res)
-  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4", **link_res)
-  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5", **link_res)
-  nffg.add_link(sw4.add_port(4), sap14.add_port(1), id="link6", **link_res)
+  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="mn-link1", **link_res)
+  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="mn-link2", **link_res)
+  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="mn-link3", **link_res)
+  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="mn-link4", **link_res)
+  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="mn-link5", **link_res)
+  nffg.add_link(sw4.add_port(4), sap14.add_port(1), id="mn-link6", **link_res)
   # nffg.duplicate_static_links()
   return nffg
 
@@ -966,12 +966,12 @@ def generate_sdn_topo ():
   sap24 = nffg.add_sap(id="SAP24", name="SAP24")
   sap34 = nffg.add_sap(id="SAP34", name="SAP34")
   # Add links
-  l1 = nffg.add_link(mt1.add_port(1), mt2.add_port(1), id="link1")
-  l2 = nffg.add_link(sap14.add_port(1), mt1.add_port(2), id="link2")
+  l1 = nffg.add_link(mt1.add_port(1), mt2.add_port(1), id="sdn-link1")
+  l2 = nffg.add_link(sap14.add_port(1), mt1.add_port(2), id="sdn-link2")
   mt1.add_port(3)
   mt1.add_port(4)
-  l3 = nffg.add_link(mt2.add_port(2), sap24.add_port(1), id="link3")
-  l4 = nffg.add_link(mt2.add_port(3), sap34.add_port(1), id="link4")
+  l3 = nffg.add_link(mt2.add_port(2), sap24.add_port(1), id="sdn-link3")
+  l4 = nffg.add_link(mt2.add_port(3), sap34.add_port(1), id="sdn-link4")
   mt2.add_port(4)
   l1.delay = 0.1
   l1.bandwidth = 1000
@@ -1497,7 +1497,7 @@ class NFFGToolBox(object):
 
 if __name__ == "__main__":
   # test_NFFG()
-  # nffg = generate_mn_topo()
+  nffg = generate_mn_topo()
   # nffg = generate_mn_test_req()
   # nffg = generate_dynamic_fallback_nffg()
   # nffg = generate_static_fallback_topo()
@@ -1513,48 +1513,48 @@ if __name__ == "__main__":
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
   # pprint(nffg.network.__dict__)
-  # print nffg.dump()
+  print nffg.dump()
 
-  from conversion import NFFGConverter
-
-  with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
-    os_nffg, os_virt = NFFGConverter(
-      domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(f.read())
-  with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
-    un_nffg, un_virt = NFFGConverter(
-      domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(f.read())
-  with open("/home/czentye/escape/src/escape_v2/pox/escape-mn-topo.nffg") as f:
-    internal = NFFG.parse(f.read())
-    internal.duplicate_static_links()
+  # from conversion import NFFGConverter
+  #
+  # with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
+  #   os_nffg, os_virt = NFFGConverter(
+  #     domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(f.read())
+  # with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
+  #   un_nffg, un_virt = NFFGConverter(
+  #     domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(f.read())
+  # with open("/home/czentye/escape/src/escape_v2/pox/escape-mn-topo.nffg") as f:
+  #   internal = NFFG.parse(f.read())
+  #   internal.duplicate_static_links()
+  # # print
+  # # pprint(os_nffg.network.__dict__)
+  # # print
+  # # pprint(un_nffg.network.__dict__)
+  # # print
+  # # pprint(internal.network.__dict__)
+  #
+  # merged = NFFGToolBox.merge_domains(internal, os_nffg)
+  # merged = NFFGToolBox.merge_domains(merged, un_nffg)
+  #
+  # # pprint(merged.network.__dict__)
   # print
-  # pprint(os_nffg.network.__dict__)
+  # splitted = NFFGToolBox.split_domains(merged)
+  # print splitted
+  # # for d, p in splitted:
+  # #   print "\n", d
+  # #   print p.dump()
+  # os_virt.nodes['UUID-01'].clearData()
+  # os_virt.nodes['UUID-01'].flowtable.clearData()
   # print
-  # pprint(un_nffg.network.__dict__)
+  # print str(os_virt)
+  # os_splitted = [n for d, n in splitted if d == "OPENSTACK"][0]
+  # os_splitted['UUID-01'].domain = NFFG.DOMAIN_UN
+  # os_splitted['UUID-01'].ports[0].add_flowrule(match="in_port=0;TAG=42",
+  #                                              action="output=3;UNTAG")
+  # os_splitted['UUID-01'].ports[2].add_flowrule(match="in_port=2;UNTAG",
+  #                                              action="output=1;TAG=24")
+  #
+  # print os_splitted.dump()
+  # virt = NFFGToolBox.install_domain(virtualizer=os_virt, nffg=os_splitted)
   # print
-  # pprint(internal.network.__dict__)
-
-  merged = NFFGToolBox.merge_domains(internal, os_nffg)
-  merged = NFFGToolBox.merge_domains(merged, un_nffg)
-
-  # pprint(merged.network.__dict__)
-  print
-  splitted = NFFGToolBox.split_domains(merged)
-  print splitted
-  # for d, p in splitted:
-  #   print "\n", d
-  #   print p.dump()
-  os_virt.nodes['UUID-01'].clearData()
-  os_virt.nodes['UUID-01'].flowtable.clearData()
-  print
-  print str(os_virt)
-  os_splitted = [n for d, n in splitted if d == "OPENSTACK"][0]
-  os_splitted['UUID-01'].domain = NFFG.DOMAIN_UN
-  os_splitted['UUID-01'].ports[0].add_flowrule(match="in_port=0;TAG=42",
-                                               action="output=3;UNTAG")
-  os_splitted['UUID-01'].ports[2].add_flowrule(match="in_port=2;UNTAG",
-                                               action="output=1;TAG=24")
-
-  print os_splitted.dump()
-  virt = NFFGToolBox.install_domain(virtualizer=os_virt, nffg=os_splitted)
-  print
-  print str(virt)
+  # print str(virt)

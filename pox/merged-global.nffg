@@ -1,6 +1,6 @@
 {
   "parameters": {
-    "id": "dov-139724019448464",
+    "id": "dov-140254499285968",
     "name": "DoV",
     "version": "1.0"
   },
@@ -239,7 +239,7 @@
   ],
   "edge_links": [
     {
-      "id": 139724017025872,
+      "id": 140254496822416,
       "src_node": "UUID11",
       "src_port": 1,
       "dst_node": "MT2",
@@ -248,7 +248,7 @@
       "bandwidth": 1000
     },
     {
-      "id": 139724017087504,
+      "id": 140254496916816,
       "src_node": "MT2",
       "src_port": 2,
       "dst_node": "UUID-01",
@@ -257,7 +257,7 @@
       "bandwidth": 1000
     },
     {
-      "id": "link1-back",
+      "id": "sdn-link1-back",
       "src_node": "MT2",
       "src_port": 1,
       "dst_node": "MT1",
@@ -266,7 +266,7 @@
       "bandwidth": 1000
     },
     {
-      "id": 139724017026320,
+      "id": 140254496963536,
       "src_node": "MT2",
       "src_port": 3,
       "dst_node": "UUID11",
@@ -275,7 +275,7 @@
       "bandwidth": 1000
     },
     {
-      "id": "link1",
+      "id": "sdn-link1",
       "src_node": "MT1",
       "src_port": 1,
       "dst_node": "MT2",
@@ -284,7 +284,7 @@
       "bandwidth": 1000
     },
     {
-      "id": 139724016952208,
+      "id": 140254496789712,
       "src_node": "MT1",
       "src_port": 2,
       "dst_node": "SW4",
@@ -293,7 +293,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link1",
+      "id": "mn-link1",
       "src_node": "EE1",
       "src_port": 1,
       "dst_node": "SW3",
@@ -302,7 +302,7 @@
       "bandwidth": 10
     },
     {
-      "id": 139724016954640,
+      "id": 140254496792144,
       "src_node": "SW4",
       "src_port": 4,
       "dst_node": "MT1",
@@ -311,7 +311,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link3-back",
+      "id": "mn-link3-back",
       "src_node": "SW4",
       "src_port": 2,
       "dst_node": "SW3",
@@ -320,7 +320,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link5",
+      "id": "mn-link5",
       "src_node": "SW4",
       "src_port": 3,
       "dst_node": "SAP2",
@@ -329,7 +329,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link2-back",
+      "id": "mn-link2-back",
       "src_node": "SW4",
       "src_port": 1,
       "dst_node": "EE2",
@@ -338,7 +338,7 @@
       "bandwidth": 10
     },
     {
-      "id": 139724017090320,
+      "id": 140254496915536,
       "src_node": "UUID-01",
       "src_port": 0,
       "dst_node": "MT2",
@@ -347,7 +347,7 @@
       "bandwidth": 1000
     },
     {
-      "id": "link1-back",
+      "id": "mn-link1-back",
       "src_node": "SW3",
       "src_port": 1,
       "dst_node": "EE1",
@@ -356,7 +356,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link3",
+      "id": "mn-link3",
       "src_node": "SW3",
       "src_port": 2,
       "dst_node": "SW4",
@@ -365,7 +365,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link4",
+      "id": "mn-link4",
       "src_node": "SW3",
       "src_port": 3,
       "dst_node": "SAP1",
@@ -374,7 +374,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link2",
+      "id": "mn-link2",
       "src_node": "EE2",
       "src_port": 1,
       "dst_node": "SW4",
@@ -383,7 +383,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link4-back",
+      "id": "mn-link4-back",
       "src_node": "SAP1",
       "src_port": 1,
       "dst_node": "SW3",
@@ -392,7 +392,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link5-back",
+      "id": "mn-link5-back",
       "src_node": "SAP2",
       "src_port": 1,
       "dst_node": "SW4",
