@@ -114,6 +114,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
           log.info("Load SDN topology from file: %s" % path)
           self.topo = NFFG.parse(f.read())
           self.topo.duplicate_static_links()
+          # print self.topo.dump()
       except IOError:
         log.debug("SDN topology file not found: %s" % path)
         raise TopologyLoadException("Missing topology file!")

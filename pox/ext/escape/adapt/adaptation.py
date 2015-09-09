@@ -399,7 +399,7 @@ class ControllerAdapter(object):
       for infra in nffg_part.infras:
         for port in infra.ports:
           # Check ports of remained Infra's for SAP ports
-          if "port_type:port-sap" in port.properties:
+          if "type:inter-domain" in port.properties:
             # Found inter-domain SAP port
             log.debug("Found inter-domain SAP port: %s" % port)
             # Create default SAP object attributes
@@ -434,6 +434,7 @@ class ControllerAdapter(object):
     for s in splitted_parts:
       print s[0], s[1].dump()
     return splitted_parts
+
 
 # Common reference name for the DomainVirtualizer
 DoV = "DoV"
@@ -532,15 +533,17 @@ class DomainVirtualizer(AbstractVirtualizer):
                    self._global_nffg.network.out_edges_iter([sap_id],
                                                             data=True)]
         if len(b_links) < 1:
-          print "SAP is not connected to any node! Maybe you forget to call " \
-                "duplicate_static_links?"
+          log.warning(
+            "SAP is not connected to any node! Maybe you forget to call "
+            "duplicate_static_links?")
           return
         if 2 < len(b_links):
-          print "Inter-domain SAP should have one and only one connection to " \
-                "the domain! Using only the first connection."
+          log.warning(
+            "Inter-domain SAP should have one and only one connection to the "
+            "domain! Using only the first connection.")
           continue
 
-        # Get inter-domain port in self.__global_nffg NFFG
+        # Get inter-domain port in self._global_nffg NFFG
         domain_port_dov = b_links[0].dst
         log.debug("Found inter-domain port: %s" % domain_port_dov)
         # Search outgoing links from SAP, should be only one
@@ -548,12 +551,14 @@ class DomainVirtualizer(AbstractVirtualizer):
                    nffg.network.out_edges_iter([sap_id], data=True)]
 
         if len(n_links) < 1:
-          print "SAP is not connected to any node! Maybe you forget to call " \
-                "duplicate_static_links?"
+          log.warning(
+            "SAP is not connected to any node! Maybe you forget to call "
+            "duplicate_static_links?")
           return
         if 2 < len(n_links):
-          print "Inter-domain SAP should have one and only one connection to " \
-                "the domain! Using only the first connection."
+          log.warning(
+            "Inter-domain SAP should have one and only one connection to the "
+            "domain! Using only the first connection.")
           continue
 
         # Get port and Infra id's in nffg NFFG
@@ -562,6 +567,26 @@ class DomainVirtualizer(AbstractVirtualizer):
         # Get the inter-domain port from already copied Infra
         domain_port_nffg = self._global_nffg.network.node[n_id].ports[p_id]
         log.debug("Found inter-domain port: %s" % domain_port_nffg)
+
+        # Copy inter-domain port properties for redundant storing
+        # FIXME - do it better
+        if len(domain_port_nffg.properties) > 0:
+          domain_port_dov.add_property(domain_port_nffg.properties)
+          log.debug(
+            "Copy inter-domain port properties: %s" %
+            domain_port_dov.properties)
+        elif len(domain_port_dov.properties) > 0:
+          domain_port_nffg.add_property(domain_port_dov.properties)
+          log.debug(
+            "Copy inter-domain port properties: %s" %
+            domain_port_nffg.properties)
+        else:
+          domain_port_dov.add_property("sap:%s" % sap_id)
+          domain_port_nffg.add_property("sap:%s" % sap_id)
+
+        # Signal Inter-domain port
+        domain_port_dov.add_property("type:inter-domain")
+        domain_port_nffg.add_property("type:inter-domain")
 
         # Delete both inter-domain SAP and links connected to them
         self._global_nffg.del_node(sap_id)
@@ -592,7 +617,7 @@ class DomainVirtualizer(AbstractVirtualizer):
       self._global_nffg.add_link(src_port=src_port, dst_port=dst_port,
                                  link=c_link)
       log.debug("Copy Link: %s" % c_link)
-    print self._global_nffg.dump()
+    # print self._global_nffg.dump()
     # from pprint import pprint
     # pprint(self._global_nffg.network.__dict__)
 
