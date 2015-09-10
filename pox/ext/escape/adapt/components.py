@@ -753,8 +753,8 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.get_config()
 
 
-class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
-                             UnifiedNodeAPI):
+class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
+                             UniversalNodeAPI):
   """
   This class is devoted to provide REST specific functions for UN domain.
   """
@@ -765,12 +765,12 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     Init.
 
-    :param url: Unified Node RESTful API URL
+    :param url: Universal Node RESTful API URL
     :type url: str
     """
-    log.debug("Init UnifiedNodeRESTAdapter with URL: %s" % url)
+    log.debug("Init UniversalNodeRESTAdapter with URL: %s" % url)
     AbstractRESTAdapter.__init__(self, base_url=url)
-    log.debug("Unified Node base URL is set to %s" % url)
+    log.debug("Universal Node base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self)
     # Converter object
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN, logger=log)
@@ -781,12 +781,12 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     try:
       return self.send_request(self.GET, 'ping')
     except ConnectionError:
-      log.warning("Unified Node agent (%s) is not reachable!" % self._base_url)
+      log.warning("Universal Node agent (%s) is not reachable!" % self._base_url)
     except Timeout:
-      log.warning("Unified Node agent (%s) not responding!" % self._base_url)
+      log.warning("Universal Node agent (%s) not responding!" % self._base_url)
     except HTTPError as e:
       log.warning(
-        "Unified Node agent responded with an error during 'ping': %s" %
+        "Universal Node agent responded with an error during 'ping': %s" %
         e.message)
 
   def get_config (self):
@@ -794,14 +794,14 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       data = self.send_request(self.POST, 'get-config')
       log.debug("Received config from remote agent at %s" % self._base_url)
     except ConnectionError:
-      log.warning("Unified Node agent (%s) is not reachable!" % self._base_url)
+      log.warning("Universal Node agent (%s) is not reachable!" % self._base_url)
       return None
     except Timeout:
-      log.warning("Unified Node agent (%s) not responding!" % self._base_url)
+      log.warning("Universal Node agent (%s) not responding!" % self._base_url)
       return None
     except HTTPError as e:
       log.warning(
-        "Unified Node agent responded with an error during 'get-config': %s"
+        "Universal Node agent responded with an error during 'get-config': %s"
         % e.message)
       return None
     if data:
@@ -825,11 +825,11 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
-      log.warning("Unified Node agent (%s) is not reachable!" % self._base_url)
+      log.warning("Universal Node agent (%s) is not reachable!" % self._base_url)
       return None
     except HTTPError as e:
       log.warning(
-        "Unified Node agent responded with an error during 'edit-config': %s"
+        "Universal Node agent responded with an error during 'edit-config': %s"
         % e.message)
       return None
     return self._response.status_code
@@ -1218,12 +1218,12 @@ class OpenStackDomainManager(AbstractDomainManager):
     self.topoAdapter.edit_config(nffg_part)
 
 
-class UnifiedNodeDomainManager(AbstractDomainManager):
+class UniversalNodeDomainManager(AbstractDomainManager):
   """
-  Manager class to handle communication with Unified Node (UN) domain.
+  Manager class to handle communication with Universal Node (UN) domain.
 
   .. note::
-    Uses :class:`UnifiedNodeRESTAdapter` for communicate with the remote domain.
+    Uses :class:`UniversalNodeRESTAdapter` for communicate with the remote domain.
   """
   # Domain name
   name = "UN"
@@ -1232,8 +1232,8 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
     """
     Init.
     """
-    log.debug("Init UnifiedNodeDomainManager - params: %s" % kwargs)
-    super(UnifiedNodeDomainManager, self).__init__(**kwargs)
+    log.debug("Init UniversalNodeDomainManager - params: %s" % kwargs)
+    super(UniversalNodeDomainManager, self).__init__(**kwargs)
 
   def init (self, configurator, **kwargs):
     """
@@ -1241,8 +1241,8 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    self.topoAdapter = configurator.load_component(UnifiedNodeRESTAdapter.name)
-    super(UnifiedNodeDomainManager, self).init(configurator, **kwargs)
+    self.topoAdapter = configurator.load_component(UniversalNodeRESTAdapter.name)
+    super(UniversalNodeDomainManager, self).init(configurator, **kwargs)
 
   def finit (self):
     """
@@ -1250,7 +1250,7 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    super(UnifiedNodeDomainManager, self).finit()
+    super(UniversalNodeDomainManager, self).finit()
 
   def install_nffg (self, nffg_part):
     log.info("Install %s domain part..." % self.name)

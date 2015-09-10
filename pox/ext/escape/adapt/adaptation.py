@@ -233,7 +233,7 @@ class ControllerAdapter(object):
   # DomainManager <-> NFFG domain name mapping
   DOMAIN_MAPPING = {NFFG.DOMAIN_INTERNAL: mgrs.InternalDomainManager.name,
                     NFFG.DOMAIN_OS: mgrs.OpenStackDomainManager.name,
-                    NFFG.DOMAIN_UN: mgrs.UnifiedNodeDomainManager.name,
+                    NFFG.DOMAIN_UN: mgrs.UniversalNodeDomainManager.name,
                     NFFG.DOMAIN_SDN: mgrs.SDNDomainManager.name,
                     NFFG.DOMAIN_REMOTE: mgrs.RemoteESCAPEDomainManager.name}
 
@@ -313,8 +313,9 @@ class ControllerAdapter(object):
     # mapped_nffg = nffg
     # # TEST - VNF initiation end
     # print "Test mapped NFFG:\n", mapped_nffg.dump()
-    with open('pox/global-mapped.nffg') as f:
+    with open('pox/merged-global.nffg') as f:
       mapped_nffg = NFFG.parse(f.read())
+    # print self.domainResManager._dov.get_resource_info().dump()
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
     slices = self._split_into_domains(mapped_nffg)

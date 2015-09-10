@@ -78,7 +78,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                            "class": "OpenStackRESTAdapter",
                                            "url": "http://localhost:8081"},
                         "UN-REST": {"module": "escape.adapt.components",
-                                    "class": "UnifiedNodeRESTAdapter",
+                                    "class": "UniversalNodeRESTAdapter",
                                     "url": "http://localhost:8082"},
                         # Specific Domain Managers
                         "INTERNAL": {"module": "escape.adapt.components",
@@ -91,7 +91,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                       "class": "OpenStackDomainManager",
                                       "poll": False},
                         "UN": {"module": "escape.adapt.components",
-                               "class": "UnifiedNodeDomainManager",
+                               "class": "UniversalNodeDomainManager",
                                "poll": False},
                         "DOCKER": {"module": "escape.adapt.components",
                                    "class": "DockerDomainManager",

@@ -523,9 +523,9 @@ class OpenStackAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class UnifiedNodeAPI(OpenStackAPI):
+class UniversalNodeAPI(OpenStackAPI):
   """
-  Define interface for managing Unified Node domain.
+  Define interface for managing Universal Node domain.
 
   .. note::
     Fitted to the API of ETH REST-like server which rely on virtualizer3!
