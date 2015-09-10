@@ -1946,25 +1946,11 @@ class NFFGConverter(object):
             in_port = virtualizer.nodes[str(infra.id)].NF_instances[
               str(nf_port.node.id)].ports[str(nf_port.id)]
             self.log.debug(
-              "Found associated physical port: %s" % in_port.id.getAsText())
+              "Found associated NF port: %s" % in_port.id.getAsText())
 
           # Process match field
-          match = None
-          if len(fr) > 1:
-            if fr[1].split('=')[0] == "TAG":
-              vlan = int(fr[1].split('=')[1].split('-')[-1])
-              if infra.domain == NFFG.DOMAIN_OS:
-                match = r"dl_vlan=%s" % format(vlan, '#06x')
-              elif infra.domain == NFFG.DOMAIN_UN:
-                match = ET.Element('match')
-                vlan_id = ET.SubElement(match, 'vlan_id')
-                vlan_id.text = str(vlan)
-            elif fr[1].split('=')[0] == "UNTAG":
-              if infra.domain == NFFG.DOMAIN_OS:
-                match = r"strip_vlan"
-              elif infra.domain == NFFG.DOMAIN_UN:
-                match = ET.Element('match')
-                ET.SubElement(ET.SubElement(match, 'vlan'), "pop")
+          match = self.__convert_flowrule_match(domain=self.domain,
+                                                match=flowrule.match)
 
           # Check if action starts with outport
           fr = flowrule.action.split(';')
@@ -2001,35 +1987,116 @@ class NFFGConverter(object):
             out_port = virtualizer.nodes[str(infra.id)].NF_instances[
               str(nf_port.node.id)].ports[str(nf_port.id)]
             self.log.debug(
-              "Found associated physical port: %s" % out_port.id.getAsText())
+              "Found associated NF port: %s" % out_port.id.getAsText())
 
           # Process action field
-          action = None
-          if len(fr) > 1:
-            if fr[1].split('=')[0] == "TAG":
-              vlan = int(fr[1].split('=')[1].split('-')[-1])
-              if infra.domain == NFFG.DOMAIN_OS:
-                action = r"mod_vlan_vid:%s" % format(vlan, '#06x')
-              elif infra.domain == NFFG.DOMAIN_UN:
-                action = ET.Element('match')
-                vlan_id = ET.SubElement(action, 'vlan_id')
-                vlan_id.text = str(vlan)
-            elif fr[1].split('=')[0] == "UNTAG":
-              if infra.domain == NFFG.DOMAIN_OS:
-                action = r"strip_vlan"
-              elif infra.domain == NFFG.DOMAIN_UN:
-                action = ET.Element('match')
-                ET.SubElement(ET.SubElement(action, 'vlan'), "pop")
+          action = self.__convert_flowrule_action(domain=self.domain,
+                                                  action=flowrule.action)
 
-          # Add Flowentry to Virtualizer
-          self.log.debug("Add converted flowentry...")
-          virtualizer.nodes[str(infra.id)].flowtable.add(
-            virt3.Flowentry(id=fr_id, priority=fr_pri, port=in_port,
-                            match=match, action=action, out=out_port))
+          # Add Flowentry with converted params
+          virtualizer.nodes[infra.id].flowtable.add(
+            Flowentry(id=fr_id, priority=fr_pri, port=in_port, match=match,
+                      action=action, out=out_port))
 
     self.log.debug("NFFG adaptation is finished.")
     # Return with modified Virtualizer
     return virtualizer
+
+  def __convert_flowrule_match (self, domain, match):
+    """
+    Convert Flowrule match field from NFFG format to Virtualizer according to
+    domain.
+
+    :param domain: domain name
+    :param match: flowrule match field
+    :return: converted data
+    """
+    # E.g.:  "match": "in_port=1;TAG=sap1-comp-55"
+    if len(match.split(';')) < 2:
+      return
+
+    op = match.split(';')[1].split('=')
+    if op[0] not in ('TAG',):
+      self.log.warning("Unsupported match operand: %s" % op[0])
+      return
+
+    if domain == NFFG.DOMAIN_OS:
+      if op[0] == "TAG":
+        # E.g.: <match>dl_vlan=0x0037</match>
+        try:
+          vlan = int(op[1].split('-')[-1])
+          return r"dl_vlan=%s" % format(vlan, '#06x')
+        except ValueError:
+          self.log.debug(
+            "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+          return
+
+    elif domain == NFFG.DOMAIN_UN:
+      if op[0] == "TAG":
+        # E.g.: <match><vlan_id>55</vlan_id></match>
+        try:
+          vlan = int(op[1].split('-')[-1])
+        except ValueError:
+          self.log.debug(
+            "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+          return
+        xml = ET.Element('match')
+        vlan_id = ET.SubElement(xml, 'vlan_id')
+        vlan_id.text = str(vlan)
+        return xml
+
+  def __convert_flowrule_action (self, domain, action):
+    """
+    Convert Flowrule action field from NFFG format to Virtualizer according
+    to domain.
+
+    :param domain: domain name
+    :param match: flowrule action field
+    :return: converted data
+    """
+    # E.g.:  "action": "output=2;UNTAG"
+    if len(action.split(';')) < 2:
+      return
+
+    op = action.split(';')[1].split('=')
+    if op[0] not in ('TAG', 'UNTAG'):
+      self.log.warning("Unsupported action operand: %s" % op[0])
+      return
+
+    if domain == NFFG.DOMAIN_OS:
+      if op[0] == "TAG":
+        # E.g.: <action>push_vlan:0x8100,set_field:0x0037</action>
+        try:
+          vlan = int(op[1].split('-')[-1])
+          return r"push_vlan:0x8100,set_field:%s" % format(vlan, '#06x')
+        except ValueError:
+          self.log.debug(
+            "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+          return
+
+      elif op[0] == "UNTAG":
+        # E.g.: <action>strip_vlan</action>
+        return r"strip_vlan"
+
+    elif domain == NFFG.DOMAIN_UN:
+      if op[0] == "TAG":
+        # E.g.: <action><vlan><push>55<push/></vlan></action>
+        try:
+          vlan = int(op[1].split('-')[-1])
+        except ValueError:
+          self.log.debug(
+            "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+          return
+        xml = ET.Element('action')
+        push = ET.SubElement(ET.SubElement(xml, 'vlan'), "push")
+        push.text = str(vlan)
+        return xml
+
+      elif op[0] == "UNTAG":
+        # E.g.: <action><vlan><pop/></vlan></action>
+        xml = ET.Element('action')
+        ET.SubElement(ET.SubElement(xml, 'vlan'), "pop")
+        return xml
 
 
 if __name__ == "__main__":

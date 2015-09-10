@@ -313,8 +313,8 @@ class ControllerAdapter(object):
     # mapped_nffg = nffg
     # # TEST - VNF initiation end
     # print "Test mapped NFFG:\n", mapped_nffg.dump()
-    with open('pox/merged-global.nffg') as f:
-      mapped_nffg = NFFG.parse(f.read())
+    # with open('pox/merged-global.nffg') as f:
+    #   mapped_nffg = NFFG.parse(f.read())
     # print self.domainResManager._dov.get_resource_info().dump()
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))

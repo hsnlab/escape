@@ -1495,26 +1495,7 @@ class NFFGToolBox(object):
     return virtualizer
 
 
-if __name__ == "__main__":
-  # test_NFFG()
-  nffg = generate_mn_topo()
-  # nffg = generate_mn_test_req()
-  # nffg = generate_dynamic_fallback_nffg()
-  # nffg = generate_static_fallback_topo()
-  # nffg = generate_one_bisbis()
-  # nffg = gen()
-  # nffg = generate_sdn_topo()
-  # nffg = generate_sdn_req()
-  # nffg = generate_os_req()
-  # nffg = generate_os_mn_req()
-  # nffg = generate_dov()
-  # nffg = generate_global_req()
-
-  # pprint(nffg.network.__dict__)
-  # nffg.merge_duplicated_links()
-  # pprint(nffg.network.__dict__)
-  print nffg.dump()
-
+def test_conversion ():
   from conversion import NFFGConverter
 
   with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
@@ -1558,3 +1539,53 @@ if __name__ == "__main__":
   virt = NFFGToolBox.install_domain(virtualizer=os_virt, nffg=os_splitted)
   print
   print str(virt)
+
+
+def generate_merged_mapped ():
+  with open("/home/czentye/escape/src/escape_v2/pox/merged-global.nffg") as f:
+    nffg = NFFG.parse(f.read())
+  nffg.id = "test-mapped-web-dpi"
+  nffg.name = "Test-NFFG"
+  nf_dpi = nffg.add_nf(id="dpi", name="DPI", func_type="dpi")
+  nf_web = nffg.add_nf(id="webserver", name="Webserver", func_type="webserver")
+  nffg.add_undirected_link(port1=nf_dpi.add_port(1),
+                           port2=nffg['UUID11'].add_port(111), dynamic=True)
+  nffg.add_undirected_link(port1=nf_dpi.add_port(2),
+                           port2=nffg['UUID11'].add_port(222), dynamic=True)
+  nffg.add_undirected_link(port1=nf_web.add_port(0),
+                           port2=nffg['UUID-01'].add_port(100), dynamic=True)
+  nffg.add_undirected_link(port1=nf_web.add_port(1),
+                           port2=nffg['UUID-01'].add_port(111), dynamic=True)
+  # UN domain flowrules
+  nffg['UUID11'].ports[1].add_flowrule("in_port=1;TAG=4242", "output=111;UNTAG")
+  nffg['UUID11'].ports[222].add_flowrule("in_port=222",
+                                         "output=1;TAG=2424")
+
+  # OS domain flowrules
+  nffg['UUID-01'].ports[0].add_flowrule("in_port=0;TAG=1313",
+                                        "output=100;UNTAG")
+  nffg['UUID-01'].ports[111].add_flowrule("in_port=111",
+                                          "output=0;TAG=3131")
+  return nffg.dump()
+
+
+if __name__ == "__main__":
+  # test_NFFG()
+  # nffg = generate_mn_topo()
+  # nffg = generate_mn_test_req()
+  # nffg = generate_dynamic_fallback_nffg()
+  # nffg = generate_static_fallback_topo()
+  # nffg = generate_one_bisbis()
+  # nffg = gen()
+  # nffg = generate_sdn_topo()
+  # nffg = generate_sdn_req()
+  # nffg = generate_os_req()
+  # nffg = generate_os_mn_req()
+  # nffg = generate_dov()
+  # nffg = generate_global_req()
+
+  # pprint(nffg.network.__dict__)
+  # nffg.merge_duplicated_links()
+  # pprint(nffg.network.__dict__)
+  # print nffg.dump()
+  print generate_merged_mapped()
