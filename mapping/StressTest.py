@@ -60,13 +60,13 @@ def generateRequestForCarrierTopo(networkparams, test_lvl):
   nffg = NFFG(id="Benchmark-Req-"+str(test_lvl))
   chain_maxlen = 10
   random.seed(0)
-  sg_path = []
   
   # generate some VNF-s connecting the two SAP-s
   for i in xrange(0, test_lvl):
     # find two SAP-s for chain ends.
     sap1 = genAndAddSAP(nffg, networkparams)
     sap2 = genAndAddSAP(nffg, networkparams)
+    sg_path = []
     sap1port = sap1.add_port()
     last_req_port = sap1port
     for vnf in xrange(0, next(gen_seq()) % chain_maxlen + 1):
@@ -79,15 +79,13 @@ def generateRequestForCarrierTopo(networkparams, test_lvl):
                        delay=1 + random.random()*10,
                        bandwidth=random.random())
       newport = nf.add_port()
-      sglinkid = "-".join((str(last_req_port.id), str(newport.id)))
-      nffg.add_sglink(last_req_port, newport, id=sglinkid)
-      sg_path.append(sglinkid)
+      sglink = nffg.add_sglink(last_req_port, newport)
+      sg_path.append(sglink.id)
       last_req_port = nf.add_port()
 
     sap2port = sap2.add_port()
-    last_sg_linkid = "-".join((str(last_req_port.id), str(sap2port.id)))
-    nffg.add_sglink(last_req_port, sap2port, id=last_sg_linkid)
-    sg_path.append(last_sg_linkid)
+    sglink = nffg.add_sglink(last_req_port, sap2port)
+    sg_path.append(sglink.id)
 
     # WARNING: this is completly a wild guess! Failing due to this doesn't 
     # necessarily mean algorithm failure
@@ -113,7 +111,7 @@ if __name__ == '__main__':
   #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
   #                                 [4,8,12,16], [32000,64000], [200], 40000, 4)})
   network = CarrierTopoBuilder.getCarrierTopo( topoparams )
-  test_lvl = 2
+  test_lvl = 16
   max_test_lvl = sys.maxint
   try:
     while test_lvl < max_test_lvl:
@@ -125,10 +123,8 @@ if __name__ == '__main__':
         test_lvl *= 2
         log.debug("Mapping successful!")
       except uet.MappingException as me:
-        if me.backtrack_possible:
-          raise
-        else:
-          log.debug("Mapping failed: %s"%me.msg)
+        log.debug("Mapping failed: %s"%me.msg)
+        break
   except uet.UnifyException as ue:
     print ue.msg 
     print traceback.format_exc()

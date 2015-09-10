@@ -366,6 +366,8 @@ class CoreAlgorithm(object):
     Calls all required functions to take a greedy step, mapping the actual 
     VNF and link to the selected host and path.
     Feasibility should be already tested for every case.
+    And adds the step_data back to the current backtrack level, so it could be 
+    undone just like in other cases.
     """
     self.log.debug(
       "Mapped VNF %s to node %s in network. Updating data accordingly..." % 
@@ -384,6 +386,7 @@ class CoreAlgorithm(object):
       step_data['target_infra'])
     self.manager.updateChainLatencyInfo(cid, step_data['used_latency'], 
                                         step_data['target_infra'])
+    self.bt_handler.addBacktrackRecordToCurrentLevel(step_data)
 
   def _mapOneVNF (self, cid, subgraph, start, prev_vnf_id, vnf_id, reqlinkid, 
                   bt_record = None):
@@ -499,7 +502,7 @@ class CoreAlgorithm(object):
       path = path[n2]
       linkids = linkids[n2]
     except (nx.NetworkXNoPath, KeyError) as e:
-      self.bt_handler.vnf_index_in_subchain -= 1
+      self.bt_handler.setKeepBacktrackLevel()
       raise uet.MappingException(
         "No path found between substrate nodes: %s and %s for mapping a "
         "request link between %s and %s" % (n1, n2, vnf1, vnf2),
@@ -511,14 +514,14 @@ class CoreAlgorithm(object):
       self.log.error(
         "Last link of chain or best-effort link %s, %s couldn`t be mapped!" % (
           vnf1, vnf2))
-      self.bt_handler.vnf_index_in_subchain -= 1
+      self.bt_handler.setKeepBacktrackLevel()
       raise uet.MappingException(
         "Last link of chain or best-effort link %s, %s, %s couldn`t be mapped "
         "due to link capacity" % (vnf1, vnf2, reqlinkid),
         backtrack_possible = True)
     elif self.manager.getLocalAllowedLatency(cid, vnf1, vnf2, reqlinkid) < \
          used_lat:
-      self.bt_handler.vnf_index_in_subchain -= 1
+      self.bt_handler.setKeepBacktrackLevel()
       raise uet.MappingException(
         "Last link %s, %s, %s of chain couldn`t be mapped due to latency "
         "requirement." % (vnf1, vnf2, reqlinkid),
@@ -537,6 +540,7 @@ class CoreAlgorithm(object):
     # means, we are on a hidden backtracking sublevel of an only  
     # link mapping, only one of these should be in bt_struct 
     # consequently, if there is more, rais InternelExcp.
+    self.log.debug("Redoing link resources due to LinkMappingRecord handling.")
     self._updateGraphResources(bt_record['bw_req'], 
                                bt_record['path'], bt_record['linkids'],
                                redo = True)
@@ -885,7 +889,7 @@ class CoreAlgorithm(object):
                 self.manager.vnf_mapping.remove((bt_record['vnf_id'], 
                                                  bt_record['target_infra']))
                 self.manager.updateChainLatencyInfo(c['id'], 
-                                                    -1*bt_record['used_latency'], 
+                                                    -1*bt_record['used_latency'],
                                                     bt_record['last_used_node'])
                 c, sub, bt_record = \
                     self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph()

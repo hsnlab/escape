@@ -48,7 +48,12 @@ class BacktrackHandler(object):
     self.subchains_with_subgraphs = subchains_with_subgraphs
     self.current_subchain_level = 0
     self.vnf_index_in_subchain = 0
+    self.keepBacktrackLevel = False
     
+  def setKeepBacktrackLevel(self):
+    self.keepBacktrackLevel = True
+    self.vnf_index_in_subchain -= 1
+
   def moveOneBacktrackLevelForward(self):
     """
     """
@@ -97,6 +102,16 @@ class BacktrackHandler(object):
     else:
       raise uet.InternalAlgorithmException("Backtrack structure maintenance"
       "error: current_subchain_level is ambiguous during addBacktrackLevel!")
+      
+  def addBacktrackRecordToCurrentLevel(self, bt_record):
+    """
+    Required when the takeOneGreedyStep function is called, because it 
+    should put the bt_record back to the bt_struct, so if we want to backtrack
+    on this branch, the reservation could be undone.
+    """
+    subchain_lvl, possible_hosts_of_vnf = self.bt_struct.pop()
+    possible_hosts_of_vnf.append(bt_record)
+    self.bt_struct.append((subchain_lvl, possible_hosts_of_vnf))
 
   def addLinkMappingRecord(self, subchain_id, bw_req, path, linkids, used_lat,
                            vnf1, vnf2, reqlinkid):
@@ -151,5 +166,8 @@ class BacktrackHandler(object):
                                       "error: backtrack step went wrong.")
     except IndexError:
       self.bt_struct.pop() # remove empty deque of possible mappings ('record')
-      self.vnf_index_in_subchain -= 1
+      if self.keepBacktrackLevel:
+        self.keepBacktrackLevel = False
+      else:
+        self.vnf_index_in_subchain -= 1
       return self.getNextBacktrackRecordAndSubchainSubgraph()
