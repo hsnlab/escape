@@ -54,7 +54,7 @@ class AbstractVirtualizer(object):
     self.id = id
 
   def __str__ (self):
-    return "Virtualizer(assigned=%s)" % self.id
+    return "%s(assigned=%s)" % (self.__class__.__name__, self.id)
 
   def __repr__ (self):
     return super(AbstractVirtualizer, self).__repr__()
@@ -164,20 +164,22 @@ class OneBisBisVirtualizer(AbstractVirtualizer):
     :return: 1 Bisbis topo
     :rtype: :any:`NFFG`
     """
+    log.debug("Generate trivial OneBiSBiS NFFG")
     nffg = NFFG(id="1BiSBiS", name="One-BiSBiS-View")
     bb = nffg.add_infra(id="1bisbis", name="One-BiSBiS",
                         domain=NFFG.DOMAIN_VIRTUAL,
-                        infra_type=NFFG.TYPE_INFRA_BISBIS)
-    bb.resources.cpu = sys.maxint
-    bb.resources.mem = sys.maxint
-    bb.resources.storage = sys.maxint
-    bb.resources.delay = 0
-    bb.resources.bandwidth = sys.maxint
+                        infra_type=NFFG.TYPE_INFRA_BISBIS, cpu=sys.maxint,
+                        mem=sys.maxint, storage=sys.maxint, delay=0,
+                        bandwidth=sys.maxint)
+    log.debug("Add Infra: %s" % bb)
     sap1 = nffg.add_sap(id="sap1", name="SAP1")
+    log.debug("Add SAP: %s" % sap1)
     sap2 = nffg.add_sap(id="sap2", name="SAP2")
-    nffg.add_link(sap1.add_port(1), bb.add_port(1), id='link1')
-    nffg.add_link(sap2.add_port(1), bb.add_port(2), id='link2')
-    nffg.duplicate_static_links()
+    log.debug("Add SAP: %s" % sap2)
+    nffg.add_link(sap1.add_port(1), bb.add_port(1), id='1bb-link1', delay=0,
+                  bandwidth=sys.maxint)
+    nffg.add_link(sap2.add_port(1), bb.add_port(2), id='1bb-link2')
+    log.debug("Add connections...")
     return nffg
 
 

@@ -223,7 +223,7 @@ class NFFG(AbstractNFFG):
       item = item.id
     return item in self.network
 
-  def __iter__ (self, data=False):
+  def __iter__ (self):
     """
     Return an iterator over the nodes.
 
@@ -231,7 +231,7 @@ class NFFG(AbstractNFFG):
     :type data: bool
     :return: An iterator over nodes.
     """
-    return self.network.nodes_iter(data=data)
+    return self.network.nodes_iter()
 
   def __len__ (self):
     """
@@ -1515,46 +1515,46 @@ if __name__ == "__main__":
   # pprint(nffg.network.__dict__)
   print nffg.dump()
 
-  # from conversion import NFFGConverter
-  #
-  # with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
-  #   os_nffg, os_virt = NFFGConverter(
-  #     domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(f.read())
-  # with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
-  #   un_nffg, un_virt = NFFGConverter(
-  #     domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(f.read())
-  # with open("/home/czentye/escape/src/escape_v2/pox/escape-mn-topo.nffg") as f:
-  #   internal = NFFG.parse(f.read())
-  #   internal.duplicate_static_links()
-  # # print
-  # # pprint(os_nffg.network.__dict__)
-  # # print
-  # # pprint(un_nffg.network.__dict__)
-  # # print
-  # # pprint(internal.network.__dict__)
-  #
-  # merged = NFFGToolBox.merge_domains(internal, os_nffg)
-  # merged = NFFGToolBox.merge_domains(merged, un_nffg)
-  #
-  # # pprint(merged.network.__dict__)
+  from conversion import NFFGConverter
+
+  with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
+    os_nffg, os_virt = NFFGConverter(
+      domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(f.read())
+  with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
+    un_nffg, un_virt = NFFGConverter(
+      domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(f.read())
+  with open("/home/czentye/escape/src/escape_v2/pox/escape-mn-topo.nffg") as f:
+    internal = NFFG.parse(f.read())
+    internal.duplicate_static_links()
   # print
-  # splitted = NFFGToolBox.split_domains(merged)
-  # print splitted
-  # # for d, p in splitted:
-  # #   print "\n", d
-  # #   print p.dump()
-  # os_virt.nodes['UUID-01'].clearData()
-  # os_virt.nodes['UUID-01'].flowtable.clearData()
+  # pprint(os_nffg.network.__dict__)
   # print
-  # print str(os_virt)
-  # os_splitted = [n for d, n in splitted if d == "OPENSTACK"][0]
-  # os_splitted['UUID-01'].domain = NFFG.DOMAIN_UN
-  # os_splitted['UUID-01'].ports[0].add_flowrule(match="in_port=0;TAG=42",
-  #                                              action="output=3;UNTAG")
-  # os_splitted['UUID-01'].ports[2].add_flowrule(match="in_port=2;UNTAG",
-  #                                              action="output=1;TAG=24")
-  #
-  # print os_splitted.dump()
-  # virt = NFFGToolBox.install_domain(virtualizer=os_virt, nffg=os_splitted)
+  # pprint(un_nffg.network.__dict__)
   # print
-  # print str(virt)
+  # pprint(internal.network.__dict__)
+
+  merged = NFFGToolBox.merge_domains(internal, os_nffg)
+  merged = NFFGToolBox.merge_domains(merged, un_nffg)
+
+  # pprint(merged.network.__dict__)
+  print
+  splitted = NFFGToolBox.split_domains(merged)
+  print splitted
+  # for d, p in splitted:
+  #   print "\n", d
+  #   print p.dump()
+  os_virt.nodes['UUID-01'].clearData()
+  os_virt.nodes['UUID-01'].flowtable.clearData()
+  print
+  print str(os_virt)
+  os_splitted = [n for d, n in splitted if d == "OPENSTACK"][0]
+  os_splitted['UUID-01'].domain = NFFG.DOMAIN_UN
+  os_splitted['UUID-01'].ports[0].add_flowrule(match="in_port=0;TAG=42",
+                                               action="output=3;UNTAG")
+  os_splitted['UUID-01'].ports[2].add_flowrule(match="in_port=2;UNTAG",
+                                               action="output=1;TAG=24")
+
+  print os_splitted.dump()
+  virt = NFFGToolBox.install_domain(virtualizer=os_virt, nffg=os_splitted)
+  print
+  print str(virt)

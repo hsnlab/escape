@@ -24,7 +24,7 @@ f = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
 sh.setFormatter(f)
 LOG.addHandler(sh)
 
-CONFIG_FILE = 'escape-mn-topo.nffg'
+CONFIG_FILE = 'escape-remote-topo.nffg'
 
 
 class VirtualizationService(RequestHandler):

@@ -135,7 +135,7 @@ class ServiceGraphMapper(AbstractMapper):
     if not CONFIG.get_mapping_enabled(LAYER_NAME):
       log.warning(
         "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
-        "forward request info..." % LAYER_NAME)
+        "forward service request to lower layer..." % LAYER_NAME)
       return input_graph
     # Run actual mapping algorithm
     if self._threaded:

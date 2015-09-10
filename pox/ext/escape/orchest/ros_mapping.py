@@ -136,7 +136,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     if not CONFIG.get_mapping_enabled(LAYER_NAME):
       log.warning(
         "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
-        "return resource info..." % LAYER_NAME)
+        "return service request to lower layer..." % LAYER_NAME)
       # virt_resource.id = input_graph.id
       # return virt_resource
       # Send request forward (probably to Remote ESCAPE)

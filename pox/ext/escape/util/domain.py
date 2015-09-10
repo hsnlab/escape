@@ -247,7 +247,7 @@ class AbstractDomainManager(EventMixin):
     :rtype: bool
     """
     if self.topoAdapter.check_domain_reachable():
-      log.info("%s domain confirmed!" % self.name)
+      log.info(">>> %s domain confirmed!" % self.name)
       self._detected = True
       log.info("Requesting resource information from %s domain..." % self.name)
       topo_nffg = self.topoAdapter.get_topology_resource()
