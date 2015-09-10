@@ -247,7 +247,7 @@ class AbstractDomainManager(EventMixin):
     :rtype: bool
     """
     if self.topoAdapter.check_domain_reachable():
-      log.info("%s domain confirmed!" % self.name)
+      log.info(">>> %s domain confirmed!" % self.name)
       self._detected = True
       log.info("Requesting resource information from %s domain..." % self.name)
       topo_nffg = self.topoAdapter.get_topology_resource()
@@ -523,9 +523,9 @@ class OpenStackAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class UnifiedNodeAPI(OpenStackAPI):
+class UniversalNodeAPI(OpenStackAPI):
   """
-  Define interface for managing Unified Node domain.
+  Define interface for managing Universal Node domain.
 
   .. note::
     Fitted to the API of ETH REST-like server which rely on virtualizer3!

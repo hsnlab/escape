@@ -179,21 +179,6 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
                                data={"DPID": event.dpid})
     self.raiseEventNoErrors(event)
 
-  def install_routes (self, routes):
-    """
-    Install routes related to the managed domain. Translates the generic
-    format of the routes into OpenFlow flow rules.
-
-    Routes are computed by the ControllerAdapter's main adaptation algorithm.
-
-    :param routes: list of routes
-    :type routes: :any:`NFFG`
-    :return: None
-    """
-    log.info("Install POX domain part: routes...")
-    # TODO - implement
-    pass
-
   def install_flowrule (self, id, match, action):
     """
     Install a flowrule in an OpenFlow switch.
@@ -635,6 +620,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   def topology_resource (self):
     try:
       data = self.send_request(self.POST, 'topology-resource')
+      log.debug("Received config from remote agent at %s" % self._base_url)
     except ConnectionError:
       log.warning(
         "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
@@ -646,19 +632,24 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.warning("Remote ESCAPEv2 agent responded with an error during "
                   "'topology-resource': %s" % e.message)
       return None
-    nffg = NFFG.parse(data)
-    for infra in nffg.infras:
-      infra.domain = NFFG.DOMAIN_REMOTE
-    return nffg
+    if data:
+      log.info("Parse and load received data...")
+      log.debug("Converting to NFFG format...")
+      nffg = NFFG.parse(data)
+      log.debug("Set Domain type to %s" % NFFG.DOMAIN_REMOTE)
+      for infra in nffg.infras:
+        infra.domain = NFFG.DOMAIN_REMOTE
+      return nffg
 
   def install_nffg (self, config):
     if not isinstance(config, (str, unicode, NFFG)):
       raise RuntimeError("Not supported config format for 'install-nffg'!")
     try:
+      log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'install-nffg', config)
     except ConnectionError:
       log.warning(
-        "Remote ESCAPEv2 agent (%s) is not reachable: %s" % self._base_url)
+        "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
       return None
     except HTTPError as e:
       log.warning(
@@ -713,6 +704,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   def get_config (self):
     try:
       data = self.send_request(self.POST, 'get-config')
+      log.debug("Received config from remote agent at %s" % self._base_url)
     except ConnectionError:
       log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
       return None
@@ -724,12 +716,14 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         "OpenStack agent responded with an error during 'get-config': %s" %
         e.message)
       return None
-    # Covert from XML-based Virtualizer to NFFG
-    nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
-    # Cache virtualizer
-    self.virtualizer = virt
-    # print nffg.dump()
-    return nffg
+    if data:
+      log.info("Parse and load received data...")
+      # Covert from XML-based Virtualizer to NFFG
+      nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
+      # Cache virtualizer
+      self.virtualizer = virt
+      # print nffg.dump()
+      return nffg
 
   def edit_config (self, data):
     if isinstance(data, NFFG):
@@ -740,9 +734,10 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
+      log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
-      log.warning("OpenStack agent (%s) is not reachable: %s" % self._base_url)
+      log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
       return None
     except HTTPError as e:
       log.warning(
@@ -758,8 +753,8 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.get_config()
 
 
-class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
-                             UnifiedNodeAPI):
+class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
+                             UniversalNodeAPI):
   """
   This class is devoted to provide REST specific functions for UN domain.
   """
@@ -770,12 +765,12 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     Init.
 
-    :param url: Unified Node RESTful API URL
+    :param url: Universal Node RESTful API URL
     :type url: str
     """
-    log.debug("Init UnifiedNodeRESTAdapter with URL: %s" % url)
+    log.debug("Init UniversalNodeRESTAdapter with URL: %s" % url)
     AbstractRESTAdapter.__init__(self, base_url=url)
-    log.debug("Unified Node base URL is set to %s" % url)
+    log.debug("Universal Node base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self)
     # Converter object
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN, logger=log)
@@ -786,34 +781,37 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     try:
       return self.send_request(self.GET, 'ping')
     except ConnectionError:
-      log.warning("Unified Node agent (%s) is not reachable!" % self._base_url)
+      log.warning("Universal Node agent (%s) is not reachable!" % self._base_url)
     except Timeout:
-      log.warning("Unified Node agent (%s) not responding!" % self._base_url)
+      log.warning("Universal Node agent (%s) not responding!" % self._base_url)
     except HTTPError as e:
       log.warning(
-        "Unified Node agent responded with an error during 'ping': %s" %
+        "Universal Node agent responded with an error during 'ping': %s" %
         e.message)
 
   def get_config (self):
     try:
       data = self.send_request(self.POST, 'get-config')
+      log.debug("Received config from remote agent at %s" % self._base_url)
     except ConnectionError:
-      log.warning("Unified Node agent (%s) is not reachable!" % self._base_url)
+      log.warning("Universal Node agent (%s) is not reachable!" % self._base_url)
       return None
     except Timeout:
-      log.warning("Unified Node agent (%s) not responding!" % self._base_url)
+      log.warning("Universal Node agent (%s) not responding!" % self._base_url)
       return None
     except HTTPError as e:
       log.warning(
-        "Unified Node agent responded with an error during 'get-config': %s"
+        "Universal Node agent responded with an error during 'get-config': %s"
         % e.message)
       return None
-    # Covert from XML-based Virtualizer to NFFG
-    nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
-    # Cache virtualizer
-    self.virtualizer = virt
-    # print nffg.dump()
-    return nffg
+    if data:
+      log.info("Parse and load received data...")
+      # Covert from XML-based Virtualizer to NFFG
+      nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
+      # Cache virtualizer
+      self.virtualizer = virt
+      # print nffg.dump()
+      return nffg
 
   def edit_config (self, data):
     if isinstance(data, NFFG):
@@ -824,14 +822,14 @@ class UnifiedNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
+      log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
-      log.warning(
-        "Unified Node agent (%s) is not reachable: %s" % self._base_url)
+      log.warning("Universal Node agent (%s) is not reachable!" % self._base_url)
       return None
     except HTTPError as e:
       log.warning(
-        "Unified Node agent responded with an error during 'edit-config': %s"
+        "Universal Node agent responded with an error during 'edit-config': %s"
         % e.message)
       return None
     return self._response.status_code
@@ -1210,69 +1208,22 @@ class OpenStackDomainManager(AbstractDomainManager):
     """
     super(OpenStackDomainManager, self).finit()
 
-  # def poll (self):
-  #   try:
-  #     if not self._detected:
-  #       # Trying to request config
-  #       raw_data = self.rest_adapter.send_request(self.rest_adapter.POST,
-  #                                                 'get-config')
-  #       # If no exception -> success
-  #       log.info("%s agent detected!" % self.name)
-  #       self._detected = True
-  #       log.info("Updating resource information from %s domain..." %
-  # self.name)
-  #       self.update_resource_info(raw_data)
-  #       self.restart_polling()
-  #     else:
-  #       # Just ping the agent if it's alive. If exception is raised -> problem
-  #       self.rest_adapter.send_request(self.rest_adapter.GET, 'ping')
-  #   except ConnectionError:
-  #     if self._detected is None:
-  #       # detected = None -> First try
-  #       log.warning("%s agent is not detected! Keep trying..." % self.name)
-  #       self._detected = False
-  #     elif self._detected:
-  #       # Detected before -> lost connection = big Problem
-  #       log.warning(
-  #         "Lost connection with %s agent! Go slow poll..." % self.name)
-  #       self._detected = False
-  #       self.restart_polling()
-  #     else:
-  #       # No success but not for the first try -> keep trying silently
-  #       pass
-  #   except Timeout:
-  #     if self._detected is None:
-  #       # detected = None -> First try
-  #       log.warning("%s agent not responding!" % self.name)
-  #       self._detected = False
-  #     elif self._detected:
-  #       # Detected before -> not responding = big Problem
-  #       log.warning(
-  #         "Detected %s agent not responding! Go slow poll..." % self.name)
-  #       self._detected = False
-  #       self.restart_polling()
-  #     else:
-  #       # No success but not for the first try -> keep trying silently
-  #       pass
-  #   except HTTPError:
-  #     raise
-
   def install_nffg (self, nffg_part):
     log.info("Install %s domain part..." % self.name)
     # TODO - implement just convert NFFG to appropriate format and send out
     # FIXME - SIGCOMM
     # config = nffg_part.dump()
-    with open('pox/global-mapped-os-nffg.xml', 'r') as f:
-      nffg_part = f.read()
+    # with open('pox/global-mapped-os-nffg.xml', 'r') as f:
+    #   nffg_part = f.read()
     self.topoAdapter.edit_config(nffg_part)
 
 
-class UnifiedNodeDomainManager(AbstractDomainManager):
+class UniversalNodeDomainManager(AbstractDomainManager):
   """
-  Manager class to handle communication with Unified Node (UN) domain.
+  Manager class to handle communication with Universal Node (UN) domain.
 
   .. note::
-    Uses :class:`UnifiedNodeRESTAdapter` for communicate with the remote domain.
+    Uses :class:`UniversalNodeRESTAdapter` for communicate with the remote domain.
   """
   # Domain name
   name = "UN"
@@ -1281,8 +1232,8 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
     """
     Init.
     """
-    log.debug("Init UnifiedNodeDomainManager - params: %s" % kwargs)
-    super(UnifiedNodeDomainManager, self).__init__(**kwargs)
+    log.debug("Init UniversalNodeDomainManager - params: %s" % kwargs)
+    super(UniversalNodeDomainManager, self).__init__(**kwargs)
 
   def init (self, configurator, **kwargs):
     """
@@ -1290,8 +1241,8 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    self.topoAdapter = configurator.load_component(UnifiedNodeRESTAdapter.name)
-    super(UnifiedNodeDomainManager, self).init(configurator, **kwargs)
+    self.topoAdapter = configurator.load_component(UniversalNodeRESTAdapter.name)
+    super(UniversalNodeDomainManager, self).init(configurator, **kwargs)
 
   def finit (self):
     """
@@ -1299,7 +1250,7 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    super(UnifiedNodeDomainManager, self).finit()
+    super(UniversalNodeDomainManager, self).finit()
 
   def install_nffg (self, nffg_part):
     log.info("Install %s domain part..." % self.name)
@@ -1307,8 +1258,8 @@ class UnifiedNodeDomainManager(AbstractDomainManager):
     # FIXME - SIGCOMM
     # print nffg_part.dump()
     # self.topoAdapter.edit_config(nffg_part)
-    with open('pox/global-mapped-un.nffg', 'r') as f:
-      nffg_part = f.read()
+    # with open('pox/global-mapped-un.nffg', 'r') as f:
+    #   nffg_part = f.read()
     self.topoAdapter.edit_config(nffg_part)
 
 
@@ -1388,8 +1339,8 @@ class SDNDomainManager(AbstractDomainManager):
     :return: None
     """
     log.info("Install %s domain part..." % self.name)
-    log.info("NFFG: \n %s" % nffg_part.dump())
-    self._deploy_flowrules(nffg_part=nffg_part)
+    # log.info("NFFG: \n %s" % nffg_part.dump())
+    # self._deploy_flowrules(nffg_part=nffg_part)
 
   def _deploy_flowrules (self, nffg_part):
     """

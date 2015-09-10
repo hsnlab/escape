@@ -223,7 +223,7 @@ class NFFG(AbstractNFFG):
       item = item.id
     return item in self.network
 
-  def __iter__ (self, data=False):
+  def __iter__ (self):
     """
     Return an iterator over the nodes.
 
@@ -231,7 +231,7 @@ class NFFG(AbstractNFFG):
     :type data: bool
     :return: An iterator over nodes.
     """
-    return self.network.nodes_iter(data=data)
+    return self.network.nodes_iter()
 
   def __len__ (self):
     """
@@ -800,12 +800,12 @@ def generate_mn_topo ():
 
   # Add links
   link_res = {'delay': 1.5, 'bandwidth': 10}
-  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="link1", **link_res)
-  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="link2", **link_res)
-  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="link3", **link_res)
-  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="link4", **link_res)
-  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5", **link_res)
-  nffg.add_link(sw4.add_port(4), sap14.add_port(1), id="link6", **link_res)
+  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="mn-link1", **link_res)
+  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="mn-link2", **link_res)
+  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="mn-link3", **link_res)
+  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="mn-link4", **link_res)
+  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="mn-link5", **link_res)
+  nffg.add_link(sw4.add_port(4), sap14.add_port(1), id="mn-link6", **link_res)
   # nffg.duplicate_static_links()
   return nffg
 
@@ -966,12 +966,12 @@ def generate_sdn_topo ():
   sap24 = nffg.add_sap(id="SAP24", name="SAP24")
   sap34 = nffg.add_sap(id="SAP34", name="SAP34")
   # Add links
-  l1 = nffg.add_link(mt1.add_port(1), mt2.add_port(1), id="link1")
-  l2 = nffg.add_link(sap14.add_port(1), mt1.add_port(2), id="link2")
+  l1 = nffg.add_link(mt1.add_port(1), mt2.add_port(1), id="sdn-link1")
+  l2 = nffg.add_link(sap14.add_port(1), mt1.add_port(2), id="sdn-link2")
   mt1.add_port(3)
   mt1.add_port(4)
-  l3 = nffg.add_link(mt2.add_port(2), sap24.add_port(1), id="link3")
-  l4 = nffg.add_link(mt2.add_port(3), sap34.add_port(1), id="link4")
+  l3 = nffg.add_link(mt2.add_port(2), sap24.add_port(1), id="sdn-link3")
+  l4 = nffg.add_link(mt2.add_port(3), sap34.add_port(1), id="sdn-link4")
   mt2.add_port(4)
   l1.delay = 0.1
   l1.bandwidth = 1000
@@ -1495,26 +1495,7 @@ class NFFGToolBox(object):
     return virtualizer
 
 
-if __name__ == "__main__":
-  # test_NFFG()
-  # nffg = generate_mn_topo()
-  # nffg = generate_mn_test_req()
-  # nffg = generate_dynamic_fallback_nffg()
-  # nffg = generate_static_fallback_topo()
-  # nffg = generate_one_bisbis()
-  # nffg = gen()
-  # nffg = generate_sdn_topo()
-  # nffg = generate_sdn_req()
-  # nffg = generate_os_req()
-  # nffg = generate_os_mn_req()
-  # nffg = generate_dov()
-  # nffg = generate_global_req()
-
-  # pprint(nffg.network.__dict__)
-  # nffg.merge_duplicated_links()
-  # pprint(nffg.network.__dict__)
-  # print nffg.dump()
-
+def test_conversion ():
   from conversion import NFFGConverter
 
   with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
@@ -1558,3 +1539,53 @@ if __name__ == "__main__":
   virt = NFFGToolBox.install_domain(virtualizer=os_virt, nffg=os_splitted)
   print
   print str(virt)
+
+
+def generate_merged_mapped ():
+  with open("/home/czentye/escape/src/escape_v2/pox/merged-global.nffg") as f:
+    nffg = NFFG.parse(f.read())
+  nffg.id = "test-mapped-web-dpi"
+  nffg.name = "Test-NFFG"
+  nf_dpi = nffg.add_nf(id="dpi", name="DPI", func_type="dpi")
+  nf_web = nffg.add_nf(id="webserver", name="Webserver", func_type="webserver")
+  nffg.add_undirected_link(port1=nf_dpi.add_port(1),
+                           port2=nffg['UUID11'].add_port(111), dynamic=True)
+  nffg.add_undirected_link(port1=nf_dpi.add_port(2),
+                           port2=nffg['UUID11'].add_port(222), dynamic=True)
+  nffg.add_undirected_link(port1=nf_web.add_port(0),
+                           port2=nffg['UUID-01'].add_port(100), dynamic=True)
+  nffg.add_undirected_link(port1=nf_web.add_port(1),
+                           port2=nffg['UUID-01'].add_port(111), dynamic=True)
+  # UN domain flowrules
+  nffg['UUID11'].ports[1].add_flowrule("in_port=1;TAG=4242", "output=111;UNTAG")
+  nffg['UUID11'].ports[222].add_flowrule("in_port=222",
+                                         "output=1;TAG=2424")
+
+  # OS domain flowrules
+  nffg['UUID-01'].ports[0].add_flowrule("in_port=0;TAG=1313",
+                                        "output=100;UNTAG")
+  nffg['UUID-01'].ports[111].add_flowrule("in_port=111",
+                                          "output=0;TAG=3131")
+  return nffg.dump()
+
+
+if __name__ == "__main__":
+  # test_NFFG()
+  # nffg = generate_mn_topo()
+  # nffg = generate_mn_test_req()
+  # nffg = generate_dynamic_fallback_nffg()
+  # nffg = generate_static_fallback_topo()
+  # nffg = generate_one_bisbis()
+  # nffg = gen()
+  # nffg = generate_sdn_topo()
+  # nffg = generate_sdn_req()
+  # nffg = generate_os_req()
+  # nffg = generate_os_mn_req()
+  # nffg = generate_dov()
+  # nffg = generate_global_req()
+
+  # pprint(nffg.network.__dict__)
+  # nffg.merge_duplicated_links()
+  # pprint(nffg.network.__dict__)
+  # print nffg.dump()
+  print generate_merged_mapped()

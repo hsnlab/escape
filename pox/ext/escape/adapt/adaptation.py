@@ -233,7 +233,7 @@ class ControllerAdapter(object):
   # DomainManager <-> NFFG domain name mapping
   DOMAIN_MAPPING = {NFFG.DOMAIN_INTERNAL: mgrs.InternalDomainManager.name,
                     NFFG.DOMAIN_OS: mgrs.OpenStackDomainManager.name,
-                    NFFG.DOMAIN_UN: mgrs.UnifiedNodeDomainManager.name,
+                    NFFG.DOMAIN_UN: mgrs.UniversalNodeDomainManager.name,
                     NFFG.DOMAIN_SDN: mgrs.SDNDomainManager.name,
                     NFFG.DOMAIN_REMOTE: mgrs.RemoteESCAPEDomainManager.name}
 
@@ -313,18 +313,24 @@ class ControllerAdapter(object):
     # mapped_nffg = nffg
     # # TEST - VNF initiation end
     # print "Test mapped NFFG:\n", mapped_nffg.dump()
+    # with open('pox/merged-global.nffg') as f:
+    #   mapped_nffg = NFFG.parse(f.read())
+    # print self.domainResManager._dov.get_resource_info().dump()
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
     slices = self._split_into_domains(mapped_nffg)
+    log.debug(
+      "Notify initiated domains: %s" % [d for d in self.domains.initiated])
     for domain, part in slices:
-      if domain in self.domains.initiated:
-        log.debug(
-          "Delegate splitted part: %s to %s domain manager..." % (part, domain))
-        self.domains[domain].install_nffg(part)
+      domain_mgr = self.DOMAIN_MAPPING[domain]
+      if domain_mgr in self.domains.initiated:
+        log.debug("Delegate splitted part: %s to %s domain manager..." % (
+          part, domain_mgr))
+        self.domains[domain_mgr].install_nffg(part)
       else:
         log.warning(
           "Domain manager associated to domain: %s is not initiated! Skip "
-          "install domain part..." % domain)
+          "install domain part..." % domain_mgr)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
 
   def _handle_DomainChangedEvent (self, event):
@@ -350,20 +356,20 @@ class ControllerAdapter(object):
     :return: sliced parts as a list of (domain_name, nffg_part) tuples
     :rtype: list
     """
-    with open('pox/global-mapped.nffg', 'r') as f:
-      nffg = NFFG.parse(f.read())
+    # with open('pox/merged-global.nffg', 'r') as f:
+    #   nffg = NFFG.parse(f.read())
+    splitted_parts = []
 
     log.info("Splitting mapped NFFG: %s according to detected domains" % nffg)
     # Define DOMAIN names
     domains = set()
     for infra in nffg.infras:
       domains.add(infra.domain)
-    log.info("Detected domains: %s" % domains)
+    log.info("Detected domains for splitting: %s" % domains)
 
-    splitted_parts = []
     # Checks every domain
     for domain in domains:
-      log.debug("Slicing for domain: %s" % domain)
+      log.debug("Create slice for domain: %s" % domain)
       # Collect every node which not in the domain
       deletable = set()
       for infra in nffg.infras:
@@ -384,13 +390,17 @@ class ControllerAdapter(object):
             v].type == NFFG.TYPE_SAP:
             deletable.add(v)
       log.debug("Nodes marked for deletion: %s" % deletable)
+
+      log.debug("Clone NFFG...")
       # Copy the NFFG
       nffg_part = nffg.copy()
       # Set metadata
       nffg_part.id = domain
       nffg_part.name = domain + "-splitted"
       # Delete needless nodes --> and as a side effect the connected links too
+      log.debug("Delete marked nodes...")
       nffg_part.network.remove_nodes_from(deletable)
+      log.debug("Remained nodes: %s" % [n for n in nffg_part])
       splitted_parts.append((domain, nffg_part))
 
       log.debug(
@@ -420,7 +430,8 @@ class ControllerAdapter(object):
             sap_port = sap.add_port(id=port.id, properties=port.properties[:])
             # Connect SAP to Infra
             nffg_part.add_undirected_link(port1=port, port2=sap_port)
-            log.debug("Create inter-domain SAP: %s" % sap)
+            log.debug(
+              "Add inter-domain SAP: %s with port: %s" % (sap, sap_port))
 
       # Check orphaned or not connected nodes and remove them
       for node_id in nffg_part.network.nodes():
@@ -431,8 +442,8 @@ class ControllerAdapter(object):
         nffg_part.network.remove_node(node_id)
 
     # Return with the splitted parts
-    for s in splitted_parts:
-      print s[0], s[1].dump()
+    # for s in splitted_parts:
+    #   print s[0], s[1].dump()
     return splitted_parts
 
 
@@ -476,7 +487,7 @@ class DomainVirtualizer(AbstractVirtualizer):
       else DoV + "-uninitialized"
 
   def __str__ (self):
-    return "DoV(name=%s)" % self.name
+    return "DomainVirtualizer(name=%s)" % self.name
 
   def __repr__ (self):
     return super(DomainVirtualizer, self).__repr__()
@@ -644,10 +655,10 @@ class DomainResourceManager(object):
     super(DomainResourceManager, self).__init__()
     log.debug("Init DomainResourceManager")
     # FIXME - SIGCOMM
-    # self.__dov = DomainVirtualizer(self)  # Domain Virtualizer
-    with open('pox/dov.nffg', 'r') as f:
-      nffg = NFFG.parse(f.read())
-    self._dov = DomainVirtualizer(self, global_res=nffg)  # Domain Virtualizer
+    self._dov = DomainVirtualizer(self)  # Domain Virtualizer
+    # with open('pox/dov.nffg', 'r') as f:
+    #   nffg = NFFG.parse(f.read())
+    # self._dov = DomainVirtualizer(self, global_res=nffg)  # Domain Virtualizer
     self._tracked_domains = set()  # Cache for detected and stored domains
 
   def get_global_view (self):

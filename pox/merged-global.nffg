@@ -1,7 +1,7 @@
 {
   "parameters": {
-    "id": "INTERNAL",
-    "name": "SIGCOMM",
+    "id": "dov-140270292942928",
+    "name": "DoV",
     "version": "1.0"
   },
   "node_saps": [
@@ -30,11 +30,17 @@
       "name": "Universal Node",
       "ports": [
         {
-          "id": 1
+          "id": 1,
+          "property": [
+            "name:Inter-Domain port - OVS-north external",
+            "port_type:port-sap",
+            "sap:SAP34",
+            "type:inter-domain"
+          ]
         }
       ],
       "domain": "UNIVERSAL_NODE",
-      "type": "BiSBiS",
+      "type": "BisBis",
       "supported": [
         "dpi",
         "example"
@@ -42,9 +48,7 @@
       "resources": {
         "cpu": 5,
         "mem": 16,
-        "storage": 5,
-        "delay": 0,
-        "bandwidth": 100000
+        "storage": 5
       }
     },
     {
@@ -55,13 +59,25 @@
           "id": 1
         },
         {
+          "id": 2,
+          "property": [
+            "name:Inter-Domain port - OVS-north external",
+            "port_type:port-sap",
+            "sap:SAP24",
+            "type:inter-domain"
+          ]
+        },
+        {
+          "id": 3,
+          "property": [
+            "name:Inter-Domain port - OVS-north external",
+            "port_type:port-sap",
+            "sap:SAP34",
+            "type:inter-domain"
+          ]
+        },
+        {
           "id": 4
-        },
-        {
-          "id": 2
-        },
-        {
-          "id": 3
         }
       ],
       "domain": "SDN",
@@ -79,7 +95,11 @@
           "id": 1
         },
         {
-          "id": 2
+          "id": 2,
+          "property": [
+            "sap:SAP14",
+            "type:inter-domain"
+          ]
         },
         {
           "id": 3
@@ -103,7 +123,7 @@
           "id": 1
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "EE",
       "supported": [
         "headerCompressor",
@@ -132,10 +152,14 @@
           "id": 3
         },
         {
-          "id": 4
+          "id": 4,
+          "property": [
+            "sap:SAP14",
+            "type:inter-domain"
+          ]
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "SDN-SWITCH",
       "resources": {
         "delay": 0.2,
@@ -147,21 +171,25 @@
       "name": "Single BiSBiS in OS Domain",
       "ports": [
         {
-          "id": 0
+          "id": 0,
+          "property": [
+            "name:Inter-Domain port - OVS-north external",
+            "port_type:port-sap",
+            "sap:SAP24",
+            "type:inter-domain"
+          ]
         }
       ],
       "domain": "OPENSTACK",
-      "type": "BiSBiS",
+      "type": "BisBis",
       "supported": [
-        "webserver",
-        "echo"
+        "echo",
+        "webserver"
       ],
       "resources": {
         "cpu": 10,
         "mem": 32,
-        "storage": 5,
-        "delay": 0,
-        "bandwidth": 100000
+        "storage": 5
       }
     },
     {
@@ -178,7 +206,7 @@
           "id": 3
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "SDN-SWITCH",
       "resources": {
         "delay": 0.2,
@@ -193,7 +221,7 @@
           "id": 1
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "EE",
       "supported": [
         "headerCompressor",
@@ -211,34 +239,25 @@
   ],
   "edge_links": [
     {
-      "id": "link31-back",
+      "id": 140270293001744,
       "src_node": "UUID11",
       "src_port": 1,
       "dst_node": "MT2",
       "dst_port": 3,
-      "delay": 10,
+      "delay": 1.5,
       "bandwidth": 1000
     },
     {
-      "id": "link21",
+      "id": 140270293018256,
       "src_node": "MT2",
       "src_port": 2,
       "dst_node": "UUID-01",
       "dst_port": 0,
-      "delay": 10,
+      "delay": 1.5,
       "bandwidth": 1000
     },
     {
-      "id": "link31",
-      "src_node": "MT2",
-      "src_port": 3,
-      "dst_node": "UUID11",
-      "dst_port": 1,
-      "delay": 10,
-      "bandwidth": 1000
-    },
-    {
-      "id": "link11-back",
+      "id": "sdn-link1-back",
       "src_node": "MT2",
       "src_port": 1,
       "dst_node": "MT1",
@@ -247,7 +266,16 @@
       "bandwidth": 1000
     },
     {
-      "id": "link11",
+      "id": 140270293074128,
+      "src_node": "MT2",
+      "src_port": 3,
+      "dst_node": "UUID11",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 1000
+    },
+    {
+      "id": "sdn-link1",
       "src_node": "MT1",
       "src_port": 1,
       "dst_node": "MT2",
@@ -256,16 +284,16 @@
       "bandwidth": 1000
     },
     {
-      "id": "link12-back",
+      "id": 140270292967504,
       "src_node": "MT1",
       "src_port": 2,
       "dst_node": "SW4",
       "dst_port": 4,
       "delay": 1.5,
-      "bandwidth": 1000
+      "bandwidth": 10
     },
     {
-      "id": "link1",
+      "id": "mn-link1",
       "src_node": "EE1",
       "src_port": 1,
       "dst_node": "SW3",
@@ -274,7 +302,16 @@
       "bandwidth": 10
     },
     {
-      "id": "link3-back",
+      "id": 140270292971472,
+      "src_node": "SW4",
+      "src_port": 4,
+      "dst_node": "MT1",
+      "dst_port": 2,
+      "delay": 1.5,
+      "bandwidth": 10
+    },
+    {
+      "id": "mn-link3-back",
       "src_node": "SW4",
       "src_port": 2,
       "dst_node": "SW3",
@@ -283,16 +320,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link12",
-      "src_node": "SW4",
-      "src_port": 4,
-      "dst_node": "MT1",
-      "dst_port": 2,
-      "delay": 1.5,
-      "bandwidth": 1000
-    },
-    {
-      "id": "link5",
+      "id": "mn-link5",
       "src_node": "SW4",
       "src_port": 3,
       "dst_node": "SAP2",
@@ -301,7 +329,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link2-back",
+      "id": "mn-link2-back",
       "src_node": "SW4",
       "src_port": 1,
       "dst_node": "EE2",
@@ -310,16 +338,16 @@
       "bandwidth": 10
     },
     {
-      "id": "link21-back",
+      "id": 140270293003408,
       "src_node": "UUID-01",
       "src_port": 0,
       "dst_node": "MT2",
       "dst_port": 2,
-      "delay": 10,
+      "delay": 1.5,
       "bandwidth": 1000
     },
     {
-      "id": "link1-back",
+      "id": "mn-link1-back",
       "src_node": "SW3",
       "src_port": 1,
       "dst_node": "EE1",
@@ -328,7 +356,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link3",
+      "id": "mn-link3",
       "src_node": "SW3",
       "src_port": 2,
       "dst_node": "SW4",
@@ -337,7 +365,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link4",
+      "id": "mn-link4",
       "src_node": "SW3",
       "src_port": 3,
       "dst_node": "SAP1",
@@ -346,7 +374,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link2",
+      "id": "mn-link2",
       "src_node": "EE2",
       "src_port": 1,
       "dst_node": "SW4",
@@ -355,7 +383,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link4-back",
+      "id": "mn-link4-back",
       "src_node": "SAP1",
       "src_port": 1,
       "dst_node": "SW3",
@@ -364,7 +392,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link5-back",
+      "id": "mn-link5-back",
       "src_node": "SAP2",
       "src_port": 1,
       "dst_node": "SW4",

@@ -1,6 +1,6 @@
 {
   "parameters": {
-    "id": "INTERNAL",
+    "id": "REMOTE",
     "name": "Internal-Mininet-Topology",
     "version": "1.0"
   },
@@ -13,7 +13,7 @@
           "id": 1
         }
       ],
-      "domain": "SDN"
+      "domain": "eth0"
     },
     {
       "id": "SAP1",
@@ -43,7 +43,7 @@
           "id": 1
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "EE",
       "supported": [
         "headerCompressor",
@@ -75,7 +75,7 @@
           "id": 4
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "SDN-SWITCH",
       "resources": {
         "delay": 0.2,
@@ -96,7 +96,7 @@
           "id": 3
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "SDN-SWITCH",
       "resources": {
         "delay": 0.2,
@@ -111,7 +111,7 @@
           "id": 1
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "EE",
       "supported": [
         "headerCompressor",
@@ -129,7 +129,7 @@
   ],
   "edge_links": [
     {
-      "id": "link1",
+      "id": "mn-link1",
       "src_node": "EE1",
       "src_port": 1,
       "dst_node": "SW3",
@@ -138,7 +138,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link6",
+      "id": "mn-link6",
       "src_node": "SW4",
       "src_port": 4,
       "dst_node": "SAP14",
@@ -147,7 +147,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link5",
+      "id": "mn-link5",
       "src_node": "SW4",
       "src_port": 3,
       "dst_node": "SAP2",
@@ -156,7 +156,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link3",
+      "id": "mn-link3",
       "src_node": "SW3",
       "src_port": 2,
       "dst_node": "SW4",
@@ -165,7 +165,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link4",
+      "id": "mn-link4",
       "src_node": "SW3",
       "src_port": 3,
       "dst_node": "SAP1",
@@ -174,7 +174,7 @@
       "bandwidth": 10
     },
     {
-      "id": "link2",
+      "id": "mn-link2",
       "src_node": "EE2",
       "src_port": 1,
       "dst_node": "SW4",

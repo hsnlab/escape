@@ -90,7 +90,8 @@
           "property": [
             "name:Inter-domain port: SDN-UN",
             "port_type:port-sap",
-            "sap:SAP34"
+            "sap:SAP34",
+            "type:inter-domain"
           ],
           "flowrules": [
             {
@@ -112,7 +113,7 @@
           "id": 42787088
         }
       ],
-      "domain": "UNIFIED_NODE",
+      "domain": "UNIVERSAL_NODE",
       "type": "BiSBiS",
       "supported": [
         "dpi",
@@ -151,7 +152,8 @@
           "property": [
             "name:Inter-domain port: SDN-OPENSTACK",
             "port_type:port-sap",
-            "sap:SAP24"
+            "sap:SAP24",
+            "type:inter-domain"
           ],
           "flowrules": [
             {
@@ -169,7 +171,8 @@
           "property": [
             "name:Inter-domain port: SDN-UN",
             "port_type:port-sap",
-            "sap:SAP34"
+            "sap:SAP34",
+            "type:inter-domain"
           ],
           "flowrules": [
             {
@@ -219,7 +222,8 @@
           "property": [
             "name:Inter-domain port: Internal-SDN",
             "port_type:port-sap",
-            "sap:SAP14"
+            "sap:SAP14",
+            "type:inter-domain"
           ],
           "flowrules": [
             {
@@ -233,7 +237,7 @@
           ]
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "SDN-SWITCH",
       "resources": {
         "cpu": 6.25,
@@ -265,7 +269,8 @@
           "property": [
             "name:Inter-domain port: Internal-SDN",
             "port_type:port-sap",
-            "sap:SAP14"
+            "sap:SAP14",
+            "type:inter-domain"
           ],
           "flowrules": [
             {
@@ -303,7 +308,7 @@
           "id": 1
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "EE",
       "supported": [
         "headerCompressor",
@@ -326,7 +331,7 @@
           "id": 1
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "EE",
       "supported": [
         "headerCompressor",
@@ -350,7 +355,8 @@
           "property": [
             "name:Inter-domain port: SDN-OPENSTACK",
             "port_type:port-sap",
-            "sap:SAP24"
+            "sap:SAP24",
+            "type:inter-domain"
           ],
           "flowrules": [
             {
@@ -422,7 +428,7 @@
           ]
         }
       ],
-      "domain": "INTERNAL",
+      "domain": "REMOTE",
       "type": "SDN-SWITCH",
       "resources": {
         "cpu": 6.25,

@@ -85,7 +85,7 @@
   ],
   "edge_links": [
     {
-      "id": "link4",
+      "id": "sdn-link4",
       "src_node": "MT2",
       "src_port": 3,
       "dst_node": "SAP34",
@@ -94,7 +94,7 @@
       "bandwidth": 1000
     },
     {
-      "id": "link3",
+      "id": "sdn-link3",
       "src_node": "MT2",
       "src_port": 2,
       "dst_node": "SAP24",
@@ -103,7 +103,7 @@
       "bandwidth": 1000
     },
     {
-      "id": "link2",
+      "id": "sdn-link2",
       "src_node": "SAP14",
       "src_port": 1,
       "dst_node": "MT1",
@@ -112,7 +112,7 @@
       "bandwidth": 1000
     },
     {
-      "id": "link1",
+      "id": "sdn-link1",
       "src_node": "MT1",
       "src_port": 1,
       "dst_node": "MT2",

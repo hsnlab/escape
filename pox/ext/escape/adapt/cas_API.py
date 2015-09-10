@@ -127,7 +127,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.getChild('API').info("Received mapped NF-FG: %s from %s Layer" % (
       event.mapped_nffg, str(event.source._core_name).title()))
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
-      self.__class__.__name__, event.mapped_nffg.name))
+      self.__class__.__name__, event.mapped_nffg))
     try:
       self.controller_adapter.install_nffg(event.mapped_nffg)
     except Exception as e:

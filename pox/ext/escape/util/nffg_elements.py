@@ -703,7 +703,7 @@ class NodeInfra(Node):
   DOMAIN_INTERNAL = "INTERNAL"
   DOMAIN_REMOTE = "REMOTE"
   DOMAIN_OS = "OPENSTACK"
-  DOMAIN_UN = "UNIFIED_NODE"
+  DOMAIN_UN = "UNIVERSAL_NODE"
   DOMAIN_SDN = "SDN"
   DOMAIN_DOCKER = "DOCKER"
 
@@ -873,7 +873,7 @@ class EdgeLink(Link):
         "Container reference is not given for edge endpoint lookup!")
     for link in container.edge_links:
       if link.id == data['id']:
-        raise RuntimeError("ID conflict during EdgeLink loading...")
+        raise RuntimeError("ID conflict during EdgeLink loading: %s" % link.id)
     super(EdgeLink, self).load(data=data, container=container)
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
@@ -926,7 +926,8 @@ class EdgeSGLink(Link):
         "Container reference is not given for edge endpoint lookup!")
     for link in container.edge_sg_nexthops:
       if link.id == data['id']:
-        raise RuntimeError("ID conflict during EdgeLink loading...")
+        raise RuntimeError(
+          "ID conflict during EdgeSGLink loading: %s" % link.id)
     super(EdgeSGLink, self).load(data=data, container=container)
     self.flowclass = data.get('flowclass')
     return self
@@ -985,7 +986,7 @@ class EdgeReq(Link):
         "Container reference is not given for edge endpoint lookup!")
     for link in container.edge_reqs:
       if link.id == data['id']:
-        raise RuntimeError("ID conflict during EdgeLink loading...")
+        raise RuntimeError("ID conflict during EdgeReq loading: %s" % link.id)
     super(EdgeReq, self).load(data=data, container=container)
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
