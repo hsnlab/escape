@@ -369,7 +369,7 @@ class ControllerAdapter(object):
 
     # Checks every domain
     for domain in domains:
-      log.debug("Create slice for domain: %s" % domain)
+      log.info("Create slice for domain: %s" % domain)
       # Collect every node which not in the domain
       deletable = set()
       for infra in nffg.infras:

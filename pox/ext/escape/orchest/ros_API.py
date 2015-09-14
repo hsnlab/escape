@@ -144,7 +144,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     # TODO - implement
     log.getChild("REST-API").info("Call REST-API function: install-nffg")
     body = self._get_body()
-    log.getChild("REST-API").debug("Request body:\n%s" % body)
+    # log.getChild("REST-API").debug("Request body:\n%s" % body)
     nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     log.getChild("REST-API").debug("Parsed NFFG install request: %s" % nffg)
     self._proceed_API_call('api_install_nffg', nffg)

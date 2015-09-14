@@ -30,7 +30,7 @@ class BacktrackHandler(object):
     """
     Initiates the backtrack structure, which is a deque of deques. Maxlen
     of the outer queue is bt_limit.
-    bt_struct consists of 2-tuples of:
+    bt_struct consists of 3-tuples of:
         subchain_id
       AND a dictionaries with keys (which is a bt_record): 
         prev_vnf_id, vnf_id, reqlinkid, 
@@ -38,6 +38,8 @@ class BacktrackHandler(object):
         last_used_node (where prev_vnf_id was mapped), path, path_link_ids,
         bw_req, used_latency, obj_func_value (evaluated objective funtion value
         for this mapping)
+      AND a link_mapping_record dictionary if this VNF is the last of the 
+      subchain. otherwise, this dict is None
     Elements to deques are added (with append) to the right, and shifted out 
     to the left if more than maxlen would be inside.
     """
@@ -48,7 +50,7 @@ class BacktrackHandler(object):
     self.subchains_with_subgraphs = subchains_with_subgraphs
     self.current_subchain_level = 0
     self.vnf_index_in_subchain = 0
-    
+
   def moveOneBacktrackLevelForward(self):
     """
     """
@@ -86,7 +88,8 @@ class BacktrackHandler(object):
     if self.subchains_with_subgraphs[self.current_subchain_level][0]['id'] \
        == subchain_id:
       self.bt_struct.append((self.current_subchain_level, 
-                             possible_hosts_of_a_vnf))
+                             possible_hosts_of_a_vnf,
+                             None))
       try:
           tmp = possible_hosts_of_a_vnf.pop()
           possible_hosts_of_a_vnf.append(tmp)
@@ -97,24 +100,32 @@ class BacktrackHandler(object):
     else:
       raise uet.InternalAlgorithmException("Backtrack structure maintenance"
       "error: current_subchain_level is ambiguous during addBacktrackLevel!")
+      
+  def addBacktrackRecordToCurrentLevel(self, bt_record):
+    """
+    Required when the takeOneGreedyStep function is called, because it 
+    should put the bt_record back to the bt_struct, so if we want to backtrack
+    on this branch, the reservation could be undone.
+    """
+    subchain_lvl, possible_hosts_of_vnf, link_mapping_rec= self.bt_struct.pop()
+    possible_hosts_of_vnf.append(bt_record)
+    self.bt_struct.append((subchain_lvl, possible_hosts_of_vnf, 
+                           link_mapping_rec))
 
   def addLinkMappingRecord(self, subchain_id, bw_req, path, linkids, used_lat,
                            vnf1, vnf2, reqlinkid):
     """
-    Adds an internal level between two BacktrackLevels indicating a mapping of 
-    last link of a chain. If we want to store multiple possible paths for a 
-    request link, the hidden backtracking step could update the path where the 
-    backtracking happened (because the path feasibilities has already been 
-    checked by _mapOneRequestLink()
+    Adds the link_mapping_rec to the 3rd place of bt_struct elements.
     """
     if self.subchains_with_subgraphs[self.current_subchain_level][0]['id'] \
        == subchain_id:
-      self.bt_struct.append((self.current_subchain_level, 
+      subc_level, bt_record, link_mapping_rec = self.bt_struct.pop()
+      self.bt_struct.append((subc_level,
+                             bt_record,
                              {'bw_req': bw_req, 'path': path, 
                               'linkids': linkids, 'used_lat': used_lat,
                               'vnf1': vnf1, 'vnf2': vnf2, 
-                              'reqlinkid': reqlinkid,
-                              'link_mapping_record': True}))
+                              'reqlinkid': reqlinkid}))
     else:
       raise uet.InternalAlgorithmException("Backtrack structure maintenance"
       "error: current_subchain_level is ambiguous during addLinkMappingRecord!")
@@ -135,17 +146,19 @@ class BacktrackHandler(object):
                                  "possibilities are available", 
                                  backtrack_possible = False)
     try:
-      tmp_subchain_level, possible_hosts_of_a_vnf = record
+      tmp_subchain_level, possible_hosts_of_a_vnf, link_mapping_rec = record
       if 0 <= self.current_subchain_level - tmp_subchain_level <= 1:
         # current_subchain_level can only stay, or decrease
         self.current_subchain_level = tmp_subchain_level
         bt_record = possible_hosts_of_a_vnf.pop()
-        self.log.debug("Stepping back on VNF %s of subchain %s."%
-                       (bt_record['vnf_id'], tmp_subchain_level))
-        # return c, sub, bt_record
+        self.log.debug("Stepping back on VNF %s of subchain %s, this step has "
+                       "link_mapping_rec: %s."%
+                       (bt_record['vnf_id'], tmp_subchain_level, 
+                        link_mapping_rec is not None))
+        # return c, sub, bt_record, link_mapping_rec
         return self.subchains_with_subgraphs[self.current_subchain_level][0],\
           self.subchains_with_subgraphs[self.current_subchain_level][1], \
-          bt_record
+          bt_record, link_mapping_rec
       else:
         raise uet.InternalAlgorithmException("Backtrack structure maintenance"
                                       "error: backtrack step went wrong.")

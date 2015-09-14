@@ -59,7 +59,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-ros-mapped"
     except MappingException as e:
-      log.error("Got exception during the mapping process! Cause: %s" % e)
+      log.error("Got exception during the mapping process! Cause: %s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except BadInputException as e:

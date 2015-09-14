@@ -48,7 +48,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "orchestration": {  # Resource Orchestration Sublayer
                            "MAPPER": {"module": "escape.orchest.ros_mapping",
                                       "class": "ResourceOrchestrationMapper",
-                                      "mapping-enabled": False},
+                                      "mapping-enabled": True},
                            "STRATEGY": {"module": "escape.orchest.ros_mapping",
                                         "class": "ESCAPEMappingStrategy",
                                         "THREADED": True},
@@ -59,7 +59,6 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
                         "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK", "UN"],
-                        # "DEFAULTS": ["OPENSTACK", "UN"],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.components",
                                          "class": "InternalPOXAdapter",

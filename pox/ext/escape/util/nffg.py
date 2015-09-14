@@ -1131,7 +1131,7 @@ def generate_dov ():
 
 
 def generate_global_req ():
-  test = NFFG(id="SIGCOMM-Global-req1", name="SIGCOMM-Global-req1")
+  test = NFFG(id="SIGCOMM-demo-req", name="SIGCOMM-2web-1dpi-2SAP-req")
   sap1 = test.add_sap(name="SAP1", id="sap1")
   sap2 = test.add_sap(name="SAP2", id="sap2")
   # comp = test.add_nf(id="comp", name="COMPRESSOR",
@@ -1145,21 +1145,22 @@ def generate_global_req ():
 
   webserver1 = test.add_nf(id="webserver1", name="webserver1",
                            func_type="webserver", cpu=1, mem=1, storage=0)
-  # webserver2 = test.add_nf(id="webserver2", name="webserver2",
-  # func_type="webserver",
-  #                          cpu=1, mem=1, storage=0)
+  webserver2 = test.add_nf(id="webserver2", name="webserver2",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
                     storage=0)
 
-  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=1)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=2)
-  test.add_sglink(dpi.add_port(2), sap2.add_port(1), id=3)
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id='11')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id='12')
+  test.add_sglink(dpi.add_port(2), sap1.ports[1], id='13')
 
-  # test.add_sglink(sap2.add_port(1), webserver2.add_port(0), id=4)
-  # test.add_sglink(webserver2.ports[0], sap2.ports[1], id=5)
+  test.add_sglink(sap2.add_port(1), webserver2.add_port(0), id='21')
+  test.add_sglink(webserver2.ports[0], sap2.ports[1], id='22')
 
-  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=1, delay=100)
-  # test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=1, delay=100)
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=('11', '12', '13'))
+  test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+               sg_path=('21', '22'))
 
   return test
 
@@ -1558,14 +1559,12 @@ def generate_merged_mapped ():
                            port2=nffg['UUID-01'].add_port(111), dynamic=True)
   # UN domain flowrules
   nffg['UUID11'].ports[1].add_flowrule("in_port=1;TAG=4242", "output=111;UNTAG")
-  nffg['UUID11'].ports[222].add_flowrule("in_port=222",
-                                         "output=1;TAG=2424")
+  nffg['UUID11'].ports[222].add_flowrule("in_port=222", "output=1;TAG=2424")
 
   # OS domain flowrules
   nffg['UUID-01'].ports[0].add_flowrule("in_port=0;TAG=1313",
                                         "output=100;UNTAG")
-  nffg['UUID-01'].ports[111].add_flowrule("in_port=111",
-                                          "output=0;TAG=3131")
+  nffg['UUID-01'].ports[111].add_flowrule("in_port=111", "output=0;TAG=3131")
   return nffg.dump()
 
 
@@ -1582,10 +1581,10 @@ if __name__ == "__main__":
   # nffg = generate_os_req()
   # nffg = generate_os_mn_req()
   # nffg = generate_dov()
-  # nffg = generate_global_req()
+  nffg = generate_global_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
   # pprint(nffg.network.__dict__)
-  # print nffg.dump()
-  print generate_merged_mapped()
+  print nffg.dump()
+  # print generate_merged_mapped()

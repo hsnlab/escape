@@ -82,9 +82,9 @@ def MAP (request, network):
                  'bandwidth': req.bandwidth if req.bandwidth is not None else 0,
                  'delay': req.delay}
       except AttributeError:
-        raise uet.BadInputException("Missing attribute of EdgeReq",
-                                    "EdgeReq attributes are: sg_path, bandwidth,"
-                                    " delay")
+        raise uet.BadInputException("EdgeReq attributes are: sg_path, bandwidth,"
+                                    " delay",
+                                    "Missing attribute of EdgeReq")
       # reconstruct NF path from EdgeSGLink path
       nf_chain = []
       for reqlinkid in req.sg_path:
@@ -96,28 +96,29 @@ def MAP (request, network):
             reqlink = sg_link
             break
         else:
-          raise uet.BadInputException("SG link %s couldn't be found in input "
-                                      "request NFFG"%reqlinkid, 
-                                      "Elements of EdgeReq.sg_path should be "
-                                      "EdgeSGLink.id-s.")
+          raise uet.BadInputException("Elements of EdgeReq.sg_path should be "
+                                      "EdgeSGLink.id-s.",
+                                      "SG link %s couldn't be found in input "
+                                      "request NFFG"%reqlinkid)
         # add the srouce node id of the EdgeSGLink to NF path
         nf_chain.append(reqlink.src.node.id)
         # add the destination node id of the last EdgeSGLink to NF path
         if reqlinkid == req.sg_path[-1]:
           if reqlink.dst.node.id != req.dst.node.id:
-            raise uet.BadInputException("Last NF (%s) of EdgeReq.sg_path and "
-                      "destination of EdgeReq (%s) are not the same!"
-                      %(reqlink.dst.node.id, req.dst.node.id),
-                      "EdgeReq.sg_path should select a path between its two "
-                      "ends")
+            raise uet.BadInputException(
+              "EdgeReq.sg_path should select a path between its two "
+              "ends", "Last NF (%s) of EdgeReq.sg_path and "
+              "destination of EdgeReq (%s) are not the same!"
+              %(reqlink.dst.node.id, req.dst.node.id))
           nf_chain.append(reqlink.dst.node.id)
         # validate EdgeReq ends.
         if reqlinkid == req.sg_path[0] and \
            reqlink.src.node.id != req.src.node.id:
-          raise uet.BadInputException("First NF (%s) of EdgeReq.sg_path and "
-                    "source of EdgeReq (%s) are not the same!"
-                    %(reqlink.src.node.id, req.src.node.id),
-                    "EdgeReq.sg_path should select a path between its two ends")
+          raise uet.BadInputException(
+            "EdgeReq.sg_path should select a path between its two ends",
+            "First NF (%s) of EdgeReq.sg_path and "
+            "source of EdgeReq (%s) are not the same!"
+            %(reqlink.src.node.id, req.src.node.id))
         chain['chain'] = nf_chain
       cid += 1
       chainlist.append(chain)

@@ -134,7 +134,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
     """
     log.getChild("REST-API").debug("Called REST-API function: sg")
     body = self._get_body()
-    log.getChild("REST-API").debug("Request body:\n%s" % body)
+    # log.getChild("REST-API").debug("Request body:\n%s" % body)
     sg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     log.getChild("REST-API").debug("Parsed service request: %s" % sg)
     self._proceed_API_call('request_service', sg)

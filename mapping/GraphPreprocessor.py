@@ -101,7 +101,7 @@ class GraphPreprocessorClass(object):
     # -DON`T we want attribute changes to be reflected in the big
     #  common graph.
     subg = self.net.network.subgraph(visited)
-    self.log.debug("Subgraph returned: %s" % subg.edges(keys=True))
+    # self.log.debug("Subgraph returned: %s" % subg.edges(keys=True))
     return subg
 
   def _colorLinksAndVNFs (self, e2e_w_graph, not_e2e):
@@ -154,7 +154,7 @@ class GraphPreprocessorClass(object):
     for c, g in chains_w_graphs:
       if c['id'] in chain_ids:
         intersect.remove_nodes_from(
-          n for n in intersect.nodes_iter() if n not in g)
+          [n for n in intersect.nodes_iter() if n not in g])
     '''We want only the graph structure to be copied, the attributes
     shall point to the original ones. Set the references back to the
     PREPROCESSED NETWORK wich`s attributes will be updated during mapping
@@ -169,8 +169,9 @@ class GraphPreprocessorClass(object):
   def _getNextIdOfSubchain (self, curr_vnf, act_color, colored_req, path):
     for curr, j, k, d in colored_req.out_edges_iter([curr_vnf], data=True,
                                                     keys=True):
-      if j in path:
-        continue
+      # This condition disables ending loops in subchains! 
+      # if j in path:
+      #   continue
       # comparing hash values is maybe faster
       if hash(d['color']) == hash(act_color):
         return j, k
@@ -229,7 +230,7 @@ class GraphPreprocessorClass(object):
     subc['id'] = self.max_chain_id
 
     self.log.debug(
-      "Subchain added: %s \n with subgraph: %s" % (subc, subg.edges()))
+      "Subchain added: %s \n with subgraph size: %s" % (subc, subg.size()))
 
     for i, j, k in zip(subc_path[:-1], subc_path[1:], link_ids):
       self.link_rechained.add_edge(i, j, key=k)
@@ -339,18 +340,22 @@ class GraphPreprocessorClass(object):
     # sort the subchains in predecessor order and secondly latency req order
     # - Does it make the earlier latency sorting unnecessary?
     # - No, because this way lower latency requirement chains are
-    # prioritized to being cut into less number of  peaces, so they are
-    # guaranteed to be mapped in bigger peaces, maybe still not enough reason
+    # prioritized to being cut into less number of  pieces, so they are
+    # guaranteed to be mapped in bigger pieces, maybe still not enough reason
     starting_subchains = [c for c in output if self.req_graph.network.node[
       c[0]['chain'][0]].type == 'SAP']
     output = [c for c in output if c not in starting_subchains]
     sorted_output = sorted(starting_subchains,
                            cmp=self._compareSubchainSubgraphTuples)
     while len(output) != 0:
+      # if for some 'c' there is any <<LOWER OR EQUAL>> 'd' in sorted_output,
+      # then add this 'c' to 'next_subchains'
       next_subchains = [c for c in output if reduce(lambda a, b: a or b, [
-        self._compareSubchainSubgraphTuples(d, c, use_latency=False) == -1 for d
+        self._compareSubchainSubgraphTuples(d, c, use_latency=False) != 1 for d
         in sorted_output])]
+      # subtract next_subchains from output
       output = [c for c in output if c not in next_subchains]
+      # sort (now using delay too) and add next_subchains to sorted_output
       sorted_output.extend(
         sorted(next_subchains, cmp=self._compareSubchainSubgraphTuples))
 
@@ -492,10 +497,10 @@ class GraphPreprocessorClass(object):
         "NodeNF %s couldn`t be removed from the NFFG" % net.network.node[n].id,
         "This NodeNF probably isn`t mapped anywhere")
 
+    self.log.debug("Calculating shortest paths...")
     self.shortest_paths = helper.shortestPathsInLatency(net.network)
     self.manager.addShortestRoutesInLatency(self.shortest_paths)
-    self.log.debug(
-      "Initial shortest_paths (in ms): %s" % pformat(self.shortest_paths))
+    self.log.debug("Shortest path calculation completed!")
 
     # calculate edge weights, we can call edges_iter, cuz there shouldn`t be
     # any NFs and dynamic links left.

@@ -1853,6 +1853,9 @@ class NFFGConverter(object):
     self.log.debug("Check up on mapped NFs...")
     # Check every infra Node
     for infra in nffg.infras:
+      # Cache discovered NF to avoid multiple detection of NF which has more
+      # than one port
+      discovered_nfs = []
       # Check in infra is exist in the Virtualizer
       if str(infra.id) not in virtualizer.nodes.node.getKeys():
         self.log.warning(
@@ -1865,6 +1868,9 @@ class NFFGConverter(object):
         if link.dst.node.type != NFFG.TYPE_NF:
           continue
         nf = link.dst.node
+        # Skip already detected NFs
+        if nf.id in discovered_nfs:
+          continue
         # Check if the NF is exist in the InfraNode
         if str(v) not in virtualizer.nodes[str(u)].NF_instances.node.getKeys():
           self.log.debug("Found uninitiated NF: %s in mapped NFFG" % nf)
@@ -1883,6 +1889,8 @@ class NFFGConverter(object):
                                                           storage=v_nf_storage))
           # Add NF to Infra object
           virtualizer.nodes[str(u)].NF_instances.add(v_nf)
+          # Cache discovered NF
+          discovered_nfs.append(nf.id)
           self.log.debug("Add NF: %s to Infra node(id=%s, name=%s, type=%s)" % (
             nf, virtualizer.nodes[str(u)].id.getAsText(),
             virtualizer.nodes[str(u)].name.getAsText(),
@@ -1945,8 +1953,9 @@ class NFFGConverter(object):
             nf_port = nf_port[0]
             in_port = virtualizer.nodes[str(infra.id)].NF_instances[
               str(nf_port.node.id)].ports[str(nf_port.id)]
-            self.log.debug(
-              "Found associated NF port: %s" % in_port.id.getAsText())
+            self.log.debug("Found associated NF port: node=%s, port=%s" % (
+              in_port.parent.parent.parent.id.getAsText(),
+              in_port.id.getAsText()))
 
           # Process match field
           match = self.__convert_flowrule_match(domain=self.domain,
@@ -1986,8 +1995,9 @@ class NFFGConverter(object):
             nf_port = nf_port[0]
             out_port = virtualizer.nodes[str(infra.id)].NF_instances[
               str(nf_port.node.id)].ports[str(nf_port.id)]
-            self.log.debug(
-              "Found associated NF port: %s" % out_port.id.getAsText())
+            self.log.debug("Found associated NF port: node=%s, port=%s" % (
+              out_port.parent.parent.parent.id.getAsText(),
+              out_port.id.getAsText()))
 
           # Process action field
           action = self.__convert_flowrule_action(domain=self.domain,
@@ -2027,7 +2037,7 @@ class NFFGConverter(object):
           vlan = int(op[1].split('-')[-1])
           return r"dl_vlan=%s" % format(vlan, '#06x')
         except ValueError:
-          self.log.debug(
+          self.log.warning(
             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
           return
 
@@ -2037,7 +2047,7 @@ class NFFGConverter(object):
         try:
           vlan = int(op[1].split('-')[-1])
         except ValueError:
-          self.log.debug(
+          self.log.warning(
             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
           return
         xml = ET.Element('match')
@@ -2068,9 +2078,10 @@ class NFFGConverter(object):
         # E.g.: <action>push_vlan:0x8100,set_field:0x0037</action>
         try:
           vlan = int(op[1].split('-')[-1])
-          return r"push_vlan:0x8100,set_field:%s" % format(vlan, '#06x')
+          # return r"push_vlan:0x8100,set_field:%s" % format(vlan, '#06x')
+          return r"mod_vlan_vid:%s" % format(vlan, '#06x')
         except ValueError:
-          self.log.debug(
+          self.log.warning(
             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
           return
 
@@ -2084,7 +2095,7 @@ class NFFGConverter(object):
         try:
           vlan = int(op[1].split('-')[-1])
         except ValueError:
-          self.log.debug(
+          self.log.warning(
             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
           return
         xml = ET.Element('action')
