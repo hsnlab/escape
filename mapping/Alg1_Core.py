@@ -386,7 +386,7 @@ class CoreAlgorithm(object):
       step_data['target_infra'])
     self.manager.updateChainLatencyInfo(cid, step_data['used_latency'], 
                                         step_data['target_infra'])
-    self.bt_handler.addBacktrackRecordToCurrentLevel(step_data)
+    self.bt_handler.addFreshlyMappedBacktrackRecord(step_data, None)
 
   def _mapOneVNF (self, cid, subgraph, start, prev_vnf_id, vnf_id, reqlinkid, 
                   bt_record = None):
@@ -459,11 +459,8 @@ class CoreAlgorithm(object):
                     except IndexError:
                       break
     try:
-      # add the empty deque as well so the backtrack can handle 
-      # vnf_index_in_subchain variable right in getNextBacktrackRecord..()
       self.bt_handler.addBacktrackLevel(cid, best_node_que)
       best_node_sofar = best_node_que.pop()
-      best_node_que.append(best_node_sofar)
       # we don't have to deal with the deque length anymore, because it is 
       # handled by the bactrack structure.
     except IndexError:
@@ -520,8 +517,11 @@ class CoreAlgorithm(object):
         vnf1, vnf2, path))
     self._updateGraphResources(bw_req, path, linkids)
     self.manager.updateChainLatencyInfo(cid, used_lat, n2)
-    self.bt_handler.addLinkMappingRecord(cid, bw_req, path, linkids, used_lat, 
-                                         vnf1, vnf2, reqlinkid)
+    link_mapping_rec = {'bw_req': bw_req, 'path': path, 
+                        'linkids': linkids, 'used_lat': used_lat,
+                        'vnf1': vnf1, 'vnf2': vnf2, 
+                        'reqlinkid': reqlinkid}
+    self.bt_handler.addFreshlyMappedBacktrackRecord(None, link_mapping_rec)
     self.manager.link_mapping.add_edge(vnf1, vnf2, key=reqlinkid,
                                        mapped_to=path, path_link_ids=linkids)
 
@@ -679,6 +679,7 @@ class CoreAlgorithm(object):
     else:
       return nffg.network.node[sapid].add_port(portid).id
 
+  '''
   def returnMappedNFFGofOneBiSBiS (self, bis_id):
     """
     Extracts the NFFG object of one BiS-BiS from the mapping found by the
@@ -727,6 +728,7 @@ class CoreAlgorithm(object):
             #  has
             # a VNF with incoming or outgoing requestlinks.
     return nffg
+  '''
 
   def constructOutputNFFG (self):
     # use the unchanged input from the lower layer (deepcopied in the
@@ -854,12 +856,10 @@ class CoreAlgorithm(object):
               # possibilities.
               raise
             else:
-              c, sub, bt_record, link_mapping_rec = \
-                 self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph()
-              link_mapping_already_undone = False
+              c, bt_record, link_mapping_rec = \
+                 self.bt_handler.getCurrentlyMappedBacktrackRecord()
               if link_mapping_rec is not None:
                 self._resolveLinkMappingRecord(c, link_mapping_rec)
-                link_mapping_already_undone = True
               # use bt_record to restore networks state 
               self._updateGraphResources(bt_record['bw_req'],
                                          bt_record['path'], 
@@ -870,20 +870,14 @@ class CoreAlgorithm(object):
               self.manager.link_mapping.remove_edge(bt_record['prev_vnf_id'], 
                                                     bt_record['vnf_id'],
                                                     key=bt_record['reqlinkid'])
-              self.manager.vnf_mapping.remove((bt_record['vnf_id'], 
-                                               bt_record['target_infra']))
+              if self.req.node[bt_record['vnf_id']].type != 'SAP':
+                self.manager.vnf_mapping.remove((bt_record['vnf_id'], 
+                                                 bt_record['target_infra']))
               self.manager.updateChainLatencyInfo(c['id'], 
                                                   -1*bt_record['used_latency'],
                                                   bt_record['last_used_node'])
               c, sub, bt_record, link_mapping_rec = \
                   self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph()
-              if link_mapping_rec is not None:
-                if link_mapping_already_undone:
-                  raise uet.InternalAlgorithmException("Two consequent "
-                            "link_mapping_records are not allowed in the "
-                            "backtrack process")
-                else:
-                  self._resolveLinkMappingRecord(c, link_mapping_rec)
               # use this bt_record to try another greedy step
               curr_vnf = bt_record['prev_vnf_id']
               next_vnf = bt_record['vnf_id']

@@ -111,7 +111,7 @@ if __name__ == '__main__':
   #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
   #                                 [4,8,12,16], [32000,64000], [200], 40000, 4)})
   network = CarrierTopoBuilder.getCarrierTopo( topoparams )
-  test_lvl = 2
+  test_lvl = 16
   max_test_lvl = sys.maxint
   try:
     while test_lvl < max_test_lvl:

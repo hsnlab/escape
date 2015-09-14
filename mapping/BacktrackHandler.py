@@ -47,6 +47,7 @@ class BacktrackHandler(object):
     self.log = log.getChild(self.__class__.__name__)
     self.branching_factor = branching_factor
     self.bt_struct = deque(maxlen = bt_limit)
+    self.currently_mapped = deque()
     self.subchains_with_subgraphs = subchains_with_subgraphs
     self.current_subchain_level = 0
     self.vnf_index_in_subchain = 0
@@ -101,17 +102,28 @@ class BacktrackHandler(object):
       raise uet.InternalAlgorithmException("Backtrack structure maintenance"
       "error: current_subchain_level is ambiguous during addBacktrackLevel!")
       
-  def addBacktrackRecordToCurrentLevel(self, bt_record):
+  def addFreshlyMappedBacktrackRecord(self, bt_record, link_mapping_rec):
     """
-    Required when the takeOneGreedyStep function is called, because it 
-    should put the bt_record back to the bt_struct, so if we want to backtrack
-    on this branch, the reservation could be undone.
+    Handles a queue of currently mapped BacktrackRecords, these should be
+    added back to the network resources when stepping back.
     """
-    subchain_lvl, possible_hosts_of_vnf, link_mapping_rec= self.bt_struct.pop()
-    possible_hosts_of_vnf.append(bt_record)
-    self.bt_struct.append((subchain_lvl, possible_hosts_of_vnf, 
-                           link_mapping_rec))
+    if bt_record is None:
+      tmp = self.currently_mapped.pop()
+      self.currently_mapped.append((tmp[0], link_mapping_rec))
+    else:
+      self.currently_mapped.append((self.current_subchain_level, bt_record, 
+                                    link_mapping_rec))
 
+  def getCurrentlyMappedBacktrackRecord(self):
+    """
+    Returns the BacktrackRecord which should be undone to take a proper 
+    backstep.
+    """
+    tmp = self.currently_mapped.pop()
+    return (self.subchains_with_subgraphs[self.current_subchain_level][0],
+            tmp[1], tmp[2])
+  
+  '''
   def addLinkMappingRecord(self, subchain_id, bw_req, path, linkids, used_lat,
                            vnf1, vnf2, reqlinkid):
     """
@@ -129,6 +141,7 @@ class BacktrackHandler(object):
     else:
       raise uet.InternalAlgorithmException("Backtrack structure maintenance"
       "error: current_subchain_level is ambiguous during addLinkMappingRecord!")
+  '''
   
   def getNextBacktrackRecordAndSubchainSubgraph(self):
     """
