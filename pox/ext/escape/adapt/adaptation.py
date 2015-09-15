@@ -531,13 +531,21 @@ class DomainVirtualizer(AbstractVirtualizer):
     log.debug("Merge domain: %s resource info into DoV..." % domain)
 
     for infra in nffg.infras:
-      c_infra = self._global_nffg.add_infra(infra=deepcopy(infra))
-      log.debug("Copy infra node: %s" % c_infra)
+      if infra.id not in self._global_nffg:
+        c_infra = self._global_nffg.add_infra(infra=deepcopy(infra))
+        log.debug("Copy infra node: %s" % c_infra)
+      else:
+        log.warning(
+          "Infra node: %s does already exist in DoV. Skip adding..." % infra)
 
     # Copy NFs
     for nf in nffg.nfs:
-      c_nf = self._global_nffg.add_nf(nf=deepcopy(nf))
-      log.debug("Copy NF node: %s" % c_nf)
+      if nf.id not in self._global_nffg:
+        c_nf = self._global_nffg.add_nf(nf=deepcopy(nf))
+        log.debug("Copy NF node: %s" % c_nf)
+      else:
+        log.warning(
+          "NF node: %s does already exist in DoV. Skip adding..." % nf)
 
     # Copy SAPs
     for sap_id in [s.id for s in nffg.saps]:

@@ -129,7 +129,9 @@ class Element(Persistable):
     raise RuntimeError("This standard dict functions is not supported by NFFG!")
 
   def update (self, dict2):
-    raise RuntimeError("This standard dict functions is not supported by NFFG!")
+    raise RuntimeError(
+      "This standard dict functions is not supported by NFFG! self:%s dict2: "
+      "%s" % (self, dict2))
 
 
 class PortContainer(object):

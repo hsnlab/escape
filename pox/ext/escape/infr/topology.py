@@ -356,7 +356,7 @@ class ESCAPENetworkBridge(object):
           sw_name = nffg.network.node[v].id
           import os
           for sw in self.__mininet.switches:
-            print sw.name
+            # print sw.name
             if sw.name == sw_name:
               import os
               os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
