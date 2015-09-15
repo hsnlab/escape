@@ -1099,7 +1099,7 @@ class InternalDomainManager(AbstractDomainManager):
           #   # single element in match field
           #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
           match['in_port'] = port.id
-          # Check match fileds - currently only vlan_id
+          # Check match fields - currently only vlan_id
           # TODO: add further match fields
           if re.search(r'TAG', flowrule.match):
             tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
@@ -1384,7 +1384,7 @@ class SDNDomainManager(AbstractDomainManager):
           #   # single element in match field
           #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
           match['in_port'] = port.id
-          # Check match fileds - currently only vlan_id
+          # Check match fields - currently only vlan_id
           # TODO: add further match fields
           if re.search(r'TAG', flowrule.match):
             tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
