@@ -97,7 +97,8 @@ class Yang(object):
 
     def reduce(self, reference, ignores=None):
         """
-        Delete instances which equivalently exist in the reference tree. The call is recursive, a node is removed if and only if all of its children are removed.
+        Delete instances which equivalently exist in the reference tree.
+        The call is recursive, a node is removed if and only if all of its children are removed.
         :param reference: Yang
         :return: True if object to be removed otherwise False
         """
@@ -123,7 +124,7 @@ class Yang(object):
 
     def get_path(self):
         """
-        Returns the complete path (since the root) of the instance
+        Returns the complete path (since the root) of the instance of Yang
         :param: -
         :return: string
         """
@@ -134,9 +135,9 @@ class Yang(object):
 
     def walk_path(self, path):
         """
-        
-        :param path:
-        :return: string
+        Follows the specified path to return the instance it represents
+        :param path: string
+        :return: attribute instance of Yang
         """
         if path == "":
             return self
@@ -163,7 +164,7 @@ class Yang(object):
     def get_rel_path(self, target):
         """
         Returns the relative path from self to the target
-        :param: instance
+        :param target: instance of Yang
         :return: string
         """
         src = self.get_path()
@@ -188,7 +189,7 @@ class Yang(object):
         Class method to create virtualizer from XML string
         :param parent: Yang
         :param root: ElementTree
-        :return: class instance
+        :return: class instance of Yang
         """
         temp = cls(root.tag, parent=parent)
         temp._parse(parent, root)
@@ -200,23 +201,39 @@ class Yang(object):
         param node: reference to the node element 
         return: Element of ElementTree
         """
-        if node is not None:
-            node = ET.SubElement(node, self.get_tag())
-        else:
-            node = ET.Element(self.get_tag())
+        _prohibited = ["_tag", "_sorted_children", "_key_attributes"]
+        attribs = {}
+        for key, item in self.__dict__.items():
+            if not isinstance(item,Yang):
+                if item is not None and key not in _prohibited:
+                    attribs[key.translate(None, '_')] = item
+
+
         if self.is_initialized():
+            if node is not None:
+                node = ET.SubElement(node, self.get_tag(), attrib=attribs)
+            else:
+                node = ET.Element(self.get_tag(), attrib=attribs)
             if len(self._sorted_children) > 0:
                 for c in self._sorted_children:
                     if self.__dict__[c] is not None:
                         self.__dict__[c]._et(node, inherited)
+        else:
+            if node is None:
+                node = ET.Element(self.get_tag(), attrib=attribs)
+
         return node
 
     def __str__(self):
+        """
+        Overide str methor to dump the class subtree as XML string
+        :return: string
+        """
         return self.xml()
 
     def contains_operation(self, operation="delete"): #FIXME: rename has_operation()
         """
-        Verifies if the instance constains operation set for any of its attributes
+        Verifies if the instance contains operation set for any of its attributes
         :param operation: string
         :return: boolean
         """
@@ -227,6 +244,14 @@ class Yang(object):
                 if v.contains_operation(operation):
                     return True
         return False
+
+    def get_operation(self):
+        """
+        Returns the _operation attribute
+        :param: -
+        :return: string
+        """
+        return self._operation
 
     def set_operation(self, operation="delete"):
         """
@@ -253,8 +278,8 @@ class Yang(object):
 
     def __eq__(self, other):
         """
-        Check if all the attributes and class attributes are the same in instance and other
-        :param: instance
+        Check if all the attributes and class attributes are the same in instance and other, returns True if yes
+        :param other: instance of Yang
         :return: boolean
         """
         eq = True
@@ -281,8 +306,8 @@ class Yang(object):
 
     def merge(self, target):
         """
-        Merge instance with target recursively, keeping in instance only values initialized
-        :param: instance
+        Merge instance with target recursively, keeping in instance only attributes initialized
+        :param target: instance of Yang
         :return: -
         """
         for k, v in self.__dict__.items():
@@ -299,17 +324,17 @@ class Yang(object):
 
     def empty_copy(self):
         """
-        Performs copy of instance
+        Performs copy of instance of Yang
         :param: -
-        :return: instance copy        
+        :return: instance copy (of Yang)
         """
         return self.__class__()
 
     def full_copy(self):
         """
-        Performs deepcopy of instance
+        Performs deepcopy of instance of Yang
         :param: -
-        :return: instance copy
+        :return: instance copy (of Yang)
         """
         return copy.deepcopy(self)
 
@@ -327,8 +352,8 @@ class Yang(object):
 
     def set_referred(self, leaf_ref):
         """
-        Append in referred names of leafs referred (children of) by instance
-        :param: leaf_ref
+        Append in referred names of leafs referred (children of) by instance of Yang
+        :param leaf_ref: LeafRef
         :return: -
         """
         if leaf_ref not in self.referred:
@@ -336,6 +361,7 @@ class Yang(object):
 
     def bind(self):
         """
+        Binds all elements of self attributes
         :param: -
         :return: -
         """
@@ -359,28 +385,26 @@ class Yang(object):
         :param root: ElementTree
         :return: -
         """
-        for key,item in self.__dict__.items():
+        for key, item in self.__dict__.items():
             if key is not "_parent":
                 if isinstance(item, Leaf):
                     item.parse(root)
                 elif isinstance(item, ListYang):
                     object_ = root.find(key)
-                    import virtualizer3 as virt3
-                    if key.capitalize() in dir(virt3):
-                        itemClass = getattr(virt3, key.capitalize())
+                    itemClass = item.get_type()
                     while object_ is not None:
-                        itemParsed = itemClass.parse(self, object_)
+                        itemparsed = itemClass.parse(itemClass, object_)
                         if "operation" in object_.attrib.keys():
-                            itemParsed.set_operation(object_.attrib["operation"])
-                            itemParsed.operation = object_.attrib["operation"]
-                        keyItem = itemParsed.keys()
-                        self.__dict__[key][keyItem] = itemParsed
+                            itemparsed.set_operation(object_.attrib["operation"])
+                            itemparsed.operation = object_.attrib["operation"]
+                        keyitem = itemparsed.keys()
+                        self.__dict__[key][keyitem] = itemparsed
                         root.remove(object_)
                         object_ = root.find(key)
                 elif isinstance(item, Yang):
                     object_ = root.find(key)
                     if object_ is not None:
-                        self.__dict__[key] = item.parse(self, object_)
+                        self.__dict__[key] = item.parse(item, object_)
                         if "operation" in object_.attrib.keys():
                             self.set_operation(object_.attrib["operation"])
                             self.operation = object_.attrib["operation"]
@@ -397,6 +421,8 @@ class Leaf(Yang):
         """:type: ???"""
         self.mandatory = False
         """:type: boolean"""
+        self.units = ""
+        """:type: string"""
 
     def get_as_text(self):
         """
@@ -416,9 +442,39 @@ class Leaf(Yang):
         """
         pass
 
+    def get_units(self):
+        """
+        Return self.units
+        :return: string
+        """
+        return self.units
+
+    def set_units(self, units):
+        """
+        Set self.units
+        :param units:
+        :return: -
+        """
+        self.units = units
+
+    def get_mandatory(self):
+        """
+        Return self.mandatory
+        :return: string
+        """
+        return self.mandatory
+
+    def set_mandatory(self, mandatory):
+        """
+        Set self.mandatory
+        :param mandatory:
+        :return: -
+        """
+        self.mandatory = mandatory
+
     def is_initialized(self):
         """
-        Overides Yang method to check if data contains data
+        Overides Yang method to check if data contains value
         :param: -
         :return: boolean
         """
@@ -429,7 +485,7 @@ class Leaf(Yang):
     def _et(self, parent, inherited=False):
         """
         Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
-        :param parent: instance
+        :param parent: ElementTree
         :return: Element of ElementTree
         """
         if self.is_initialized():
@@ -439,19 +495,24 @@ class Leaf(Yang):
 
     def clear_data(self):
         """
-        Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
+        Erases data defining it as None
         :param: -
-        :return: boolean
+        :return: -
         """
         self.data = None
 
-    def delete(self): #FIXME: document
+    def delete(self):
+        """
+        Erases data defining it as None
+        :param: -
+        :return: -
+        """
         self.data = None
 
     def reducer(self, other):
         """
-        Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
-        :param other: instance
+        Overides Yang method to reduce other, and clear its data if different from self.data or contains operation delete
+        :param other: instance of Yang
         :return: boolean
         """
         if not (self == other) or other.contains_operation("delete"):
@@ -459,14 +520,19 @@ class Leaf(Yang):
         else:
             other.clear_data()
 
-    def reduce(self, reference): #FIXME: document
+    def reduce(self, reference):
+        """
+        Overides Yang method to reduce other, return True if its data if different from self.data or _operation attributes mismatch
+        :param reference: instance of Yang
+        :return: boolean
+        """
         if (self.data != reference.data) or (self._operation != reference._operation):
             return False
         return True
 
     def __eq__(self, other):
         """
-        Check if other leaf has the same attributes and values
+        Check if other leaf has the same attributes and values, returns True if yes
         :param other: instance
         :return: boolean
         """
@@ -481,10 +547,14 @@ class StringLeaf(Leaf):
     """
     Class defining Leaf with string extensions
     """
-    def __init__(self, tag, parent=None, value=None):
+    def __init__(self, tag, parent=None, value=None, units="", mandatory=False):
         super(StringLeaf, self).__init__(tag, parent=parent)
         self.set_value(value)
         """:type: string"""
+        self.set_units(units)
+        """:type: string"""
+        self.set_mandatory(mandatory)
+        """:type: boolean"""
 
     def parse(self, root):
         """
@@ -505,8 +575,8 @@ class StringLeaf(Leaf):
 
     def _et(self, parent, inherited=False):
         """
-        Overides Yang method, return parent with subelement as leaf tag and data as text if it is initialized
-        :param parent: instance
+        Overides Yang method, return parent with SubElement as leaf tag and data as text if it is initialized
+        :param parent: instance of Yang
         :return: Element of ElementTree
         """
         if self.is_initialized():
@@ -548,20 +618,29 @@ class IntLeaf(Leaf):
     """
     Class defining Leaf with integer extensions (e.g., range)
     """
-    def __init__(self, tag, parent=None, value=None, int_range=[]):
+    def __init__(self, tag, parent=None, value=None, int_range=[], units="", mandatory=False):
         super(IntLeaf, self).__init__(tag, parent=parent)
         self.int_range = int_range
         self.data = None
         """:type: int"""
         if value is not None:
             self.set_value(value)
+        self.set_units(units)
+        """:type: string"""
+        self.set_mandatory(mandatory)
+        """:type: boolean"""
 
     def parse(self, root):
         """
-        Abstract method to create instance class IntLeaf from XML string
+        Creates instance IntLeaf setting its value from XML string
         :param root: ElementTree
         :return: -
         """
+        def check_int(s):
+            if s[0] in ('-', '+'):
+                return s[1:].isdigit()
+            return s.isdigit()
+
         e_data = root.find(self.get_tag())
         if e_data is not None:
             if len(e_data._children) > 0:
@@ -570,14 +649,23 @@ class IntLeaf(Leaf):
                 e_data.text = None
                 self.data = e_data  # ?? don't know if need to replace as others
             else:
-                self.set_value(e_data.text)
+                if self.units != "":
+                    for c in range(0, len(e_data.text)):
+                        v = len(e_data.text)-c
+                        st = e_data.text[:v]
+                        if check_int(st):
+                            self.set_value(st)
+                            self.set_units(e_data.text[v:len(e_data.text)])
+                            break
+                else:
+                    self.set_value(e_data.text)
             root.remove(e_data)
             self.initialized = True
 
     def _et(self, parent, inherited=False):
         """
         Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
-        :param parent: instance
+        :param parent: ElementTree
         :return: Element of ElementTree
         """
         if self.is_initialized():
@@ -585,7 +673,7 @@ class IntLeaf(Leaf):
                 parent.append(self.data)
             else:
                 e_data = ET.SubElement(parent, self.get_tag())
-                e_data.text = self.get_as_text()
+                e_data.text = self.get_as_text()+self.get_units()
         return parent
 
     def get_as_text(self):
@@ -640,9 +728,9 @@ class IntLeaf(Leaf):
 
 class Decimal64Leaf(Leaf):
     """
-    Class defining Leaf with decimal extensions (e.g., range)
+    Class defining Leaf with decimal extensions (e.g., dec_range)
     """
-    def __init__(self, tag, parent=None, value=None, dec_range=[], fraction_digits=1):
+    def __init__(self, tag, parent=None, value=None, dec_range=[], fraction_digits=1, units="", mandatory=False):
         super(Decimal64Leaf, self).__init__(tag, parent=parent)
         self.dec_range = dec_range
         self.fraction_digits = fraction_digits
@@ -650,10 +738,14 @@ class Decimal64Leaf(Leaf):
         """:type: Decimal"""
         if value is not None:
             self.set_value(value)
+        self.set_units(units)
+        """:type: string"""
+        self.set_mandatory(mandatory)
+        """:type: boolean"""
 
     def parse(self, root):
         """
-        Abstract method to create instance class Decimal64Leaf from XML string
+        Abstract method to instance class Decimal64Leaf from XML string
         :param root: ElementTree
         :return: -
         """
@@ -672,7 +764,7 @@ class Decimal64Leaf(Leaf):
     def _et(self, parent, inherited=False):
         """
         Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
-        :param parent: instance
+        :param parent: ElementTree
         :return: Element of ElementTree
         """
         if self.is_initialized():
@@ -697,14 +789,14 @@ class Decimal64Leaf(Leaf):
         """
         Returns data value
         :param: -
-        :return: int
+        :return: decimal
         """
         return self.data
 
     def set_value(self, value):
         """
         Sets data value as decimal
-        :param value: int
+        :param value: decimal
         :return: -
         """
         if type(value) is not Decimal:
@@ -734,14 +826,18 @@ class Decimal64Leaf(Leaf):
 
 class BooleanLeaf(Leaf):
     """
-    Class defining Leaf with boolean extensions (e.g., range)
+    Class defining Leaf with boolean extensions (e.g., True or False)
     """
-    def __init__(self, tag, parent=None, value=None):
+    def __init__(self, tag, parent=None, value=None, units="", mandatory=False):
         super(BooleanLeaf, self).__init__(tag, parent=parent)
         self.data = None
         """:type: boolean"""
         if value is not None:
             self.set_value(value)
+        self.set_units(units)
+        """:type: string"""
+        self.set_mandatory(mandatory)
+        """:type: boolean"""
 
     def parse(self, root):
         """
@@ -764,7 +860,7 @@ class BooleanLeaf(Leaf):
     def _et(self, parent, inherited=False):
         """
         Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
-        :param parent: instance
+        :param parent: ElementTree
         :return: Element of ElementTree
         """
         if self.is_initialized():
@@ -811,7 +907,7 @@ class Leafref(StringLeaf):
     """
     Class defining Leaf extensions for stringleaf when its data references other instances
     """
-    def __init__(self, tag, parent=None, value=None):
+    def __init__(self, tag, parent=None, value=None, units="", mandatory=False):
         super(Leafref, self).__init__(tag, parent=parent)
         self.target = None
         """:type: Yang"""
@@ -824,6 +920,8 @@ class Leafref(StringLeaf):
             self.target = value
         else:
             raise ValueError("Leafref value is of unknown type.")
+        self.set_mandatory(mandatory)
+        """:type: boolean"""
 
     def set_value(self, value):
         """
@@ -878,6 +976,7 @@ class Leafref(StringLeaf):
 
     def bind(self):
         """
+        Binds the target makes reference to LeafRef instance
         :param: -
         :return: -
         """
@@ -896,7 +995,7 @@ class ListedYang(Yang):
         """
         Returns parent`s parent of ListedYang
         :param: -
-        :return: instance
+        :return: instance of Yang
         """
         return self._parent.get_parent()
 
@@ -951,7 +1050,7 @@ class ListedYang(Yang):
             inst.__setitem__(k, copy.deepcopy(self.__getitem__(k)))
         return inst
 
-    def reduce(self, reference): #FIXME: document
+    def reduce(self, reference):
         """
         Delete instances which equivalently exist in the reference tree. The call is recursive, a node is removed if and only if all of its children are removed.
         :param reference: Yang
@@ -971,9 +1070,26 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
     """
     Class to express list as dictionary 
     """
-    def __init__(self, tag, parent=None):
+    def __init__(self, tag, parent=None, type=None):
         super(ListYang, self).__init__(tag, parent)
         self._data = OrderedDict()
+        self._type = type
+
+    def get_type(self):
+        """
+        Returns class which references elements of _data OrderedDict
+        :param: -
+        :return: Yang subclass
+        """
+        return self._type
+
+    def set_type(self, type):
+        """
+        Sets class which references elements of _data OrderedDict
+        :param: Yang subclass
+        :return: -
+        """
+        self._type = type
 
     def keys(self):
         """
@@ -983,7 +1099,12 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
         """
         return self._data.keys()
 
-    def values(self): #FIXME: document
+    def values(self):
+        """
+        Returns values of ListYang dictionary
+        :param: -
+        :return: list
+        """
         return self._data.values()
 
     def iterkeys(self):
@@ -1082,11 +1203,21 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
         return self._data.pop(item)
 
     def _et(self, node, inherited=False):
+        """
+        Overides Yang method to each ListYang component be defined as SubElement of ElementTree
+        :param node: ElementTree
+        :return: ElementTree
+        """
         for v in self.values():
             v._et(node)
         return node
 
     def __iter__(self):  # ???
+        """
+        Returns iterator of ListYang dict
+        :param: -
+        :return: iterator
+        """
         return self._data.__iter__()
 
     def next(self):
@@ -1122,7 +1253,7 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
 
     def clear_data(self):
         """
-        Empty ListYang dict
+        Clear ListYang dict
         :param: -
         :return: -
         """
@@ -1142,6 +1273,11 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
                     del other._data[key]
 
     def reduce(self, reference):
+        """
+        Check if all keys of reference are going to be reduced and erase their values if yes
+        :param reference: ListYang
+        :return: boolean
+        """
         _reduce = True
         for key in self.keys():
             if key in reference.keys():
@@ -1159,7 +1295,7 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
         """
         for item in target.keys():
             if item not in self.keys():
-                self.add(target[item])
+                self.add(target[item])  # it should be a full_copy()
             else:
                 if isinstance(self[item], Yang) and type(self[item]) == type(target[item]):
                     self[item].merge(target[item])
