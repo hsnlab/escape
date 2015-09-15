@@ -1387,7 +1387,7 @@ class NFFGToolBox(object):
 
       # Add flowrules to Virtualizer
       fr_cntr = 0
-      # traverse every pont in the Infra node
+      # traverse every point in the Infra node
       for port in infra.ports:
         # Check every flowrule
         for flowrule in port.flowrules:
@@ -1415,7 +1415,7 @@ class NFFGToolBox(object):
                        nffg.network.out_edges_iter([infra.id], data=True) if
                        l.type == NFFG.TYPE_LINK_DYNAMIC and str(
                          l.src.id) == in_port]
-            # There should be only one linkt between infra and NF
+            # There should be only one link between infra and NF
             if len(nf_port) < 1:
               print "NF port is not found for dynamic Infra port: %s defined " \
                     "in match field!" % port

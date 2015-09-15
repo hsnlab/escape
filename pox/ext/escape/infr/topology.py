@@ -438,7 +438,7 @@ class ESCAPENetworkBridge(object):
         "Mininet network is not stopped yet! Skipping cleanup task...")
     else:
       log.info("Schedule cleanup task after Mininet emulation...")
-      # Schedule a cleanup as a coop task to aviod threading issues
+      # Schedule a cleanup as a coop task to avoid threading issues
       call_as_coop_task(remove_junks)
 
   def get_agent_to_switch (self, switch_name):

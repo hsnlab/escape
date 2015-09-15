@@ -291,7 +291,7 @@ class ControllerAdapter(object):
     """
     Start NF-FG installation.
 
-    Process given :any:`NFFG`, slice information self.__global_nffgd on
+    Process given :any:`NFFG`, slice information self.__global_nffg on
     domains an invoke
     DomainManagers to install domain specific parts.
 
@@ -642,7 +642,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   def update_domain_view (self, domain, nffg):
     """
-    Update the existing domain in the merged Globan view.
+    Update the existing domain in the merged Global view.
     """
     # TODO
     pass
