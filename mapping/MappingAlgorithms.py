@@ -189,10 +189,6 @@ def MAP (request, network):
   print "\n The link mappings are:\n", pformat(
      alg.manager.link_mapping.edges(data=True, keys=True))
 
-  # n0_nffg = alg.returnMappedNFFGofOneBiSBiS("node0")
-  # n1_nffg = alg.returnMappedNFFGofOneBiSBiS("node1")
-  # n2_nffg = alg.returnMappedNFFGofOneBiSBiS("node2")
-
   return mappedNFFG
 
 

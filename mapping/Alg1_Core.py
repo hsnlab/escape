@@ -56,7 +56,7 @@ class CoreAlgorithm(object):
     # how many of the best possible VNF mappings should be remembered
     self.bt_branching_factor = 4
     # how deep the backtrack should go back (1 already means no backtrack)
-    self.bt_limit = 2
+    self.bt_limit = 4
 
     self._preproc(net0, req0, chains0)
 
@@ -479,7 +479,7 @@ class CoreAlgorithm(object):
     """
     n1 = self.manager.getIdOfChainEnd_fromNetwork(vnf1)
     n2 = self.manager.getIdOfChainEnd_fromNetwork(vnf2)
-    if n1 <= 0 or n2 <= 0:
+    if n1 == -1 or n2 == -1:
       self.log.error("Not both end of request link are mapped: %s, %s, %s" % (
         vnf1, vnf2, reqlinkid))
       raise uet.InternalAlgorithmException(
@@ -540,6 +540,27 @@ class CoreAlgorithm(object):
     self.manager.link_mapping.remove_edge(link_bt_record['vnf1'], 
                                           link_bt_record['vnf2'], 
                                           key = link_bt_record['reqlinkid'])
+
+  def _resolveBacktrackRecord(self, c, bt_record):
+    """
+    Undo VNF resource reservetion on host and path leading to it.
+    """
+    self._updateGraphResources(bt_record['bw_req'],
+                               bt_record['path'], 
+                               bt_record['path_link_ids'],
+                               bt_record['vnf_id'], 
+                               bt_record['target_infra'],
+                               redo = True)
+    self.manager.link_mapping.remove_edge(bt_record['prev_vnf_id'], 
+                                          bt_record['vnf_id'],
+                                          key=bt_record['reqlinkid'])
+    if self.req.node[bt_record['vnf_id']].type != 'SAP':
+      self.manager.vnf_mapping.remove((bt_record['vnf_id'], 
+                                       bt_record['target_infra']))
+    self.manager.updateChainLatencyInfo(c['id'], 
+                                        -1*bt_record['used_latency'],
+                                        bt_record['last_used_node'])
+
 
   def _addSAPandLinkToFromIt (self, netportid, bis_id, nffg, nodenf, reqportid,
        fc, toSAP=True):
@@ -679,57 +700,6 @@ class CoreAlgorithm(object):
     else:
       return nffg.network.node[sapid].add_port(portid).id
 
-  '''
-  def returnMappedNFFGofOneBiSBiS (self, bis_id):
-    """
-    Extracts the NFFG object of one BiS-BiS from the mapping found by the
-    orchestrator. The returned NFFG should be the input for the lower level
-    (inner) orchestration of the BiS-BiS.
-    Should be called after the algorithm returned from start().
-    NOT READY, SEE TODO
-    """
-    nffg = NFFG(id="%s-req" % bis_id)
-    for vnf, host in self.manager.vnf_mapping:
-      if bis_id == host:
-        nodenf = self._retrieveOrAddVNF(nffg, vnf)
-        for i, j, k, d in self.req.out_edges_iter([vnf], data=True, keys=True):
-          # i is always vnf
-          path = self.manager.link_mapping[vnf][j][k]['mapped_to']
-          linkids = self.manager.link_mapping[vnf][j][k]['path_link_ids']
-          if len(path) > 1:
-            # add a SAP with the name of the id of this BiS-BiS
-            # concatenated the outbound port identifier.
-            self._addSAPandLinkToFromIt(
-              self.net[path[0]][path[1]][linkids[0]].src.id, bis_id, nffg,
-              nodenf, d.src.id, d.flowclass)
-          elif len(path) == 1:
-            # A collocation happened between vnf and j
-            nodenf_next = self._retrieveOrAddVNF(nffg, j)
-            nffg.add_sglink(nodenf.ports[d.src.id], nodenf_next.ports[d.dst.id],
-                            flowclass=d.flowclass)
-          else:
-            raise uet.InternalAlgorithmException(
-              "No mapping given for a link, after the algorithm has finished "
-              "running!")
-        # current vnf is already added to nffg
-        for i, j, k, d in self.req.in_edges_iter([vnf], data=True, keys=True):
-          # j is always vnf, link is i-->vnf directed
-          path = self.manager.link_mapping[i][vnf][k]['mapped_to']
-          linkids = self.manager.link_mapping[i][vnf][k]['path_link_ids']
-          # collocation is handled by the out_edges_iter()
-          if len(path) > 1:
-            self._addSAPandLinkToFromIt(
-              self.net[path[-2]][path[-1]][linkids[-1]].dst.id, bis_id, nffg,
-              nodenf, d.dst.id, d.flowclass, toSAP=False)
-            # TODO: construct EdgeReqs too, decide how E2E requirements
-            # should be
-            # divided between sub NFFG-s
-            # TODO: Transit INFRA nodes are not handled yet, only those which
-            #  has
-            # a VNF with incoming or outgoing requestlinks.
-    return nffg
-  '''
-
   def constructOutputNFFG (self):
     # use the unchanged input from the lower layer (deepcopied in the
     # constructor, modify it now)
@@ -839,6 +809,7 @@ class CoreAlgorithm(object):
                                 curr_vnf, next_vnf, linkid)
               else:
                 self._takeOneGreedyStep(c['id'], bt_record)
+                
             else:
               '''We are on the end of the (sub)chain, and all chain
               elements are mapped except the last link.
@@ -861,32 +832,19 @@ class CoreAlgorithm(object):
               if link_mapping_rec is not None:
                 self._resolveLinkMappingRecord(c, link_mapping_rec)
               # use bt_record to restore networks state 
-              self._updateGraphResources(bt_record['bw_req'],
-                                         bt_record['path'], 
-                                         bt_record['path_link_ids'],
-                                         bt_record['vnf_id'], 
-                                         bt_record['target_infra'],
-                                         redo = True)
-              self.manager.link_mapping.remove_edge(bt_record['prev_vnf_id'], 
-                                                    bt_record['vnf_id'],
-                                                    key=bt_record['reqlinkid'])
-              if self.req.node[bt_record['vnf_id']].type != 'SAP':
-                self.manager.vnf_mapping.remove((bt_record['vnf_id'], 
-                                                 bt_record['target_infra']))
-              self.manager.updateChainLatencyInfo(c['id'], 
-                                                  -1*bt_record['used_latency'],
-                                                  bt_record['last_used_node'])
-              c, sub, bt_record, link_mapping_rec = \
-                  self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph()
+              self._resolveBacktrackRecord(c, bt_record)
+
+              c, sub, bt_record, prev_bt_rec, link_mapping_rec = \
+                 self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph()
+              if link_mapping_rec is not None:
+                self._resolveLinkMappingRecord(c, link_mapping_rec)
+              if prev_bt_rec is not None:
+                self._resolveBacktrackRecord(c, prev_bt_rec)
               # use this bt_record to try another greedy step
               curr_vnf = bt_record['prev_vnf_id']
               next_vnf = bt_record['vnf_id']
               linkid = bt_record['reqlinkid']
               last_used_node = bt_record['last_used_node']
-
-      '''Best-effort links should be mapped here. But I`m not sure it is
-      required to deal with, because the upper layer could also specify
-      them as service chains. '''
 
     # construct output NFFG with the mapping of VNFs and links
     return self.constructOutputNFFG()
