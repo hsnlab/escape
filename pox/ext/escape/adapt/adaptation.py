@@ -20,7 +20,7 @@ import weakref
 from escape import CONFIG
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
-import escape.adapt.components as mgrs
+import escape.adapt.managers as mgrs
 from escape.util.domain import DomainChangedEvent
 from escape.util.nffg import NFFG
 
@@ -205,6 +205,11 @@ class ComponentConfigurator(object):
     except AttributeError:
       log.error(
         "%s is not found. Skip component initialization!" % component_name)
+      raise
+    except ImportError:
+      log.error(
+        "%s module is not found. Skip component initialization!" %
+        component_name)
       raise
 
   def load_default_mgrs (self):
