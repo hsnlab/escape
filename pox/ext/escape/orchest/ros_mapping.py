@@ -63,7 +63,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except BadInputException as e:
-      log.error("Mapping algorithm refuse given input! Cause: %s" % e)
+      log.error("Mapping algorithm refuse given input! Cause: %s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except InternalAlgorithmException as e:
