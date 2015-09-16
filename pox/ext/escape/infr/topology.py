@@ -20,6 +20,7 @@ from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
 from mininet.link import TCLink
+from mininet.term import makeTerms
 
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
@@ -340,9 +341,8 @@ class ESCAPENetworkBridge(object):
                           logger=LAYER_NAME)
         self.started = True
         log.debug("Mininet network has been started!")
-        # FIXME - SIGCOMM
-        # log.debug("Starting xterm on SAPS...")
-        # makeTerms(self.__mininet.hosts, 'host')
+        log.debug("Starting xterm on SAPS...")
+        makeTerms(self.__mininet.hosts, 'host')
 
         nffg = self.topo_desc
         # FIXME - SIGCOMM, move port creation into topo creation with MN's
@@ -356,7 +356,7 @@ class ESCAPENetworkBridge(object):
           sw_name = nffg.network.node[v].id
           import os
           for sw in self.__mininet.switches:
-            print sw.name
+            # print sw.name
             if sw.name == sw_name:
               import os
               os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
