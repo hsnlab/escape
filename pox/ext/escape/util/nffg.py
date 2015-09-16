@@ -904,8 +904,10 @@ def generate_mn_test_req ():
   test.add_sglink(sap2.ports[1], fwd.add_port(1), id=4)
   test.add_sglink(fwd.ports[1], sap1.ports[1], id=5)
 
-  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20)
-  test.add_req(sap2.ports[1], sap1.ports[1], bandwidth=4, delay=20)
+  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20, 
+               sg_path=(1, 2, 3))
+  test.add_req(sap2.ports[1], sap1.ports[1], bandwidth=4, delay=20,
+               sg_path=(4, 5))
   return test
 
 
@@ -1571,7 +1573,7 @@ def generate_merged_mapped ():
 if __name__ == "__main__":
   # test_NFFG()
   # nffg = generate_mn_topo()
-  # nffg = generate_mn_test_req()
+  nffg = generate_mn_test_req()
   # nffg = generate_dynamic_fallback_nffg()
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
@@ -1581,7 +1583,7 @@ if __name__ == "__main__":
   # nffg = generate_os_req()
   # nffg = generate_os_mn_req()
   # nffg = generate_dov()
-  nffg = generate_global_req()
+  # nffg = generate_global_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
