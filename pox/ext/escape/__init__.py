@@ -58,11 +58,17 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                      "prefix": "escape"}},
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK", "UN"],
+                        "DEFAULTS": [],
+                        # "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK",
+                        # "UN"],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.adapters",
                                          "class": "InternalPOXAdapter",
-                                         "address": "0.0.0.0", "port": "6633"},
+                                         "address": "127.0.0.1",
+                                         "port": 6653},
+                        "SDN-POX": {"module": "escape.adapt.adapters",
+                                    "class": "SDNDomainPOXAdapter",
+                                    "address": "0.0.0.0", "port": 6633},
                         "MININET": {"module": "escape.adapt.adapters",
                                     "class": "InternalMininetAdapter"},
                         "VNFStarter": {"module": "escape.adapt.adapters",

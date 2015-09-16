@@ -16,7 +16,6 @@ Contains Adapter classes which represent the connections between ESCAPEv2 and
 other different domains.
 """
 from escape.adapt.adapters import *
-
 from escape.util.domain import *
 
 
@@ -495,7 +494,7 @@ class SDNDomainManager(AbstractDomainManager):
     :return: None
     """
     # Init adapter for internal controller: POX
-    self.controlAdapter = configurator.load_component(InternalPOXAdapter.name)
+    self.controlAdapter = configurator.load_component(SDNDomainPOXAdapter.name)
     # Use the same adapter for checking resources
     self.topoAdapter = self.controlAdapter
     super(SDNDomainManager, self).init(configurator, **kwargs)

@@ -26,6 +26,9 @@ from escape.util.netconf import AbstractNETCONFAdapter
 from escape.util.pox_extension import ExtendedOFConnectionArbiter, \
   OpenFlowBridge
 from escape import CONFIG
+from pox.core import core
+import pox.openflow.libopenflow_01 as of
+from pox.lib.addresses import EthAddr
 
 
 class TopologyLoadException(Exception):
@@ -54,7 +57,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
           'SW4': {'port': '3', 'dl_dst': '00:00:00:00:00:02',
                   'dl_src': '00:00:00:00:00:01'}}
 
-  def __init__ (self, name=None, address="127.0.0.1", port=6633):
+  def __init__ (self, name=None, address="127.0.0.1", port=6653):
     """
     Initialize attributes, register specific connection Arbiter if needed and
     set up listening of OpenFlow events.
@@ -67,8 +70,8 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     :type port: int
     """
     name = name if name is not None else self.name
-    log.debug("Init InternalPOXAdapter with name: %s address %s:%s" % (
-      name, address, port))
+    log.debug("Init %s with name: %s address %s:%s" % (
+      self.__class__.__name__, name, address, port))
     super(InternalPOXAdapter, self).__init__()
     # Set an OpenFlow nexus as a source of OpenFlow events
     self.openflow = OpenFlowBridge()
@@ -191,10 +194,6 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     :type action: dict
     :return: None
     """
-    from pox.core import core
-    import pox.openflow.libopenflow_01 as of
-    from pox.lib.addresses import EthAddr
-
     log.info("Install POX domain part: flow entries to INFRA %s..." % id)
     # print match
     # print action
@@ -234,6 +233,16 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
     log.info("flow entry: %s" % msg)
     con.send(msg)
+
+
+class SDNDomainPOXAdapter(InternalPOXAdapter):
+  """
+  Adapter class to handle communication with external SDN switches.
+  """
+  name = "SDN-POX"
+
+  def __init__ (self, name=None, address="0.0.0.0", port=6653):
+    super(SDNDomainPOXAdapter, self).__init__(name, address, port)
 
 
 class InternalMininetAdapter(AbstractESCAPEAdapter):
@@ -352,6 +361,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     try:
       return self.get(expr="vnf_starter/agent_name") is not None
     except:
+      # in case of RPCError, TransportError, OperationError
       return False
 
   def get_topology_resource (self):

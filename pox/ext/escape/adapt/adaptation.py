@@ -208,7 +208,7 @@ class ComponentConfigurator(object):
       raise
     except ImportError:
       log.error(
-        "%s module is not found. Skip component initialization!" %
+        "Could not import module: %s. Skip component initialization!" %
         component_name)
       raise
 

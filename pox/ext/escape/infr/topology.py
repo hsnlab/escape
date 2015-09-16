@@ -245,7 +245,7 @@ class InternalControllerProxy(RemoteController):
   internal controller initiated by InternalPOXAdapter.
   """
 
-  def __init__ (self, name="InternalPOXController", ip='127.0.0.1', port=6633,
+  def __init__ (self, name="InternalPOXController", ip='127.0.0.1', port=6653,
                 **kwargs):
     """
     Init.
