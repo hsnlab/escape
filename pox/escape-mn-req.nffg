@@ -1,137 +1,146 @@
 {
   "parameters": {
-    "id": "SG-decomp",
-    "name": "SG-name",
+    "id": "SG-decomp", 
+    "name": "SG-name", 
     "version": "1.0"
-  },
+  }, 
   "node_nfs": [
     {
-      "id": "fwd",
-      "name": "FORWARDER",
+      "id": "fwd", 
+      "name": "FORWARDER", 
       "ports": [
         {
           "id": 1
         }
-      ],
-      "functional_type": "simpleForwarder",
+      ], 
+      "functional_type": "simpleForwarder", 
       "specification": {
         "resources": {
-          "cpu": 1,
-          "mem": 1,
+          "cpu": 1, 
+          "mem": 1, 
           "storage": 0
         }
       }
-    },
+    }, 
     {
-      "id": "comp",
-      "name": "COMPRESSOR",
+      "id": "comp", 
+      "name": "COMPRESSOR", 
       "ports": [
         {
           "id": 1
         }
-      ],
-      "functional_type": "headerCompressor",
+      ], 
+      "functional_type": "headerCompressor", 
       "specification": {
         "resources": {
-          "cpu": 1,
-          "mem": 1,
+          "cpu": 1, 
+          "mem": 1, 
           "storage": 0
         }
       }
-    },
+    }, 
     {
-      "id": "decomp",
-      "name": "DECOMPRESSOR",
+      "id": "decomp", 
+      "name": "DECOMPRESSOR", 
       "ports": [
         {
           "id": 1
         }
-      ],
-      "functional_type": "headerDecompressor",
+      ], 
+      "functional_type": "headerDecompressor", 
       "specification": {
         "resources": {
-          "cpu": 1,
-          "mem": 1,
+          "cpu": 1, 
+          "mem": 1, 
           "storage": 0
         }
       }
     }
-  ],
+  ], 
   "node_saps": [
     {
-      "id": "sap1",
-      "name": "SAP1",
+      "id": "sap1", 
+      "name": "SAP1", 
       "ports": [
         {
           "id": 1
         }
       ]
-    },
+    }, 
     {
-      "id": "sap2",
-      "name": "SAP2",
+      "id": "sap2", 
+      "name": "SAP2", 
       "ports": [
         {
           "id": 1
         }
       ]
     }
-  ],
+  ], 
   "edge_sg_nexthops": [
     {
-      "id": 5,
-      "src_node": "fwd",
-      "src_port": 1,
-      "dst_node": "sap1",
+      "id": 5, 
+      "src_node": "fwd", 
+      "src_port": 1, 
+      "dst_node": "sap1", 
       "dst_port": 1
-    },
+    }, 
     {
-      "id": 2,
-      "src_node": "comp",
-      "src_port": 1,
-      "dst_node": "decomp",
+      "id": 2, 
+      "src_node": "comp", 
+      "src_port": 1, 
+      "dst_node": "decomp", 
       "dst_port": 1
-    },
+    }, 
     {
-      "id": 3,
-      "src_node": "decomp",
-      "src_port": 1,
-      "dst_node": "sap2",
+      "id": 3, 
+      "src_node": "decomp", 
+      "src_port": 1, 
+      "dst_node": "sap2", 
       "dst_port": 1
-    },
+    }, 
     {
-      "id": 1,
-      "src_node": "sap1",
-      "src_port": 1,
-      "dst_node": "comp",
+      "id": 1, 
+      "src_node": "sap1", 
+      "src_port": 1, 
+      "dst_node": "comp", 
       "dst_port": 1
-    },
+    }, 
     {
-      "id": 4,
-      "src_node": "sap2",
-      "src_port": 1,
-      "dst_node": "fwd",
+      "id": 4, 
+      "src_node": "sap2", 
+      "src_port": 1, 
+      "dst_node": "fwd", 
       "dst_port": 1
     }
-  ],
+  ], 
   "edge_reqs": [
     {
-      "id": 23987472,
-      "src_node": "sap1",
-      "src_port": 1,
-      "dst_node": "sap2",
-      "dst_port": 1,
-      "delay": 20,
-      "bandwidth": 4
-    },
+      "id": 29745296, 
+      "src_node": "sap1", 
+      "src_port": 1, 
+      "dst_node": "sap2", 
+      "dst_port": 1, 
+      "delay": 20, 
+      "bandwidth": 4, 
+      "sg_path": [
+        1, 
+        2, 
+        3
+      ]
+    }, 
     {
-      "id": 23987536,
-      "src_node": "sap2",
-      "src_port": 1,
-      "dst_node": "sap1",
-      "dst_port": 1,
-      "delay": 20,
-      "bandwidth": 4
+      "id": 29745360, 
+      "src_node": "sap2", 
+      "src_port": 1, 
+      "dst_node": "sap1", 
+      "dst_port": 1, 
+      "delay": 20, 
+      "bandwidth": 4, 
+      "sg_path": [
+        4, 
+        5
+      ]
     }
   ]
 }
