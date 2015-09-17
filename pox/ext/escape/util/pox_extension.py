@@ -111,6 +111,9 @@ class ExtendedOFConnectionArbiter(OpenFlowConnectionArbiter):
         event.nexus = self._listeners[con_address]
       else:
         # Fall back to core.openflow
+        core.getLogger().warning(
+          "No registered listener for connection: %s from %s. Using default "
+          "OpenFlowNexus" % (connection, con_address))
         event.nexus = self._fallback
     self.raiseEventNoErrors(event)
     return event.nexus

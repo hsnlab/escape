@@ -16,7 +16,7 @@
       "domain": "eth0"
     },
     {
-      "id": "SAP1",
+      "id": "remoteSAP1",
       "name": "SAP1",
       "ports": [
         {
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "id": "SAP2",
+      "id": "remoteSAP2",
       "name": "SAP2",
       "ports": [
         {
@@ -36,7 +36,7 @@
   ],
   "node_infras": [
     {
-      "id": "EE1",
+      "id": "remoteEE1",
       "name": "ee-infra-1",
       "ports": [
         {
@@ -59,7 +59,7 @@
       }
     },
     {
-      "id": "SW4",
+      "id": "remoteSW4",
       "name": "switch-4",
       "ports": [
         {
@@ -83,7 +83,7 @@
       }
     },
     {
-      "id": "SW3",
+      "id": "remoteSW3",
       "name": "switch-3",
       "ports": [
         {
@@ -104,7 +104,7 @@
       }
     },
     {
-      "id": "EE2",
+      "id": "remoteEE2",
       "name": "ee-infra-2",
       "ports": [
         {
@@ -130,16 +130,16 @@
   "edge_links": [
     {
       "id": "mn-link1",
-      "src_node": "EE1",
+      "src_node": "remoteEE1",
       "src_port": 1,
-      "dst_node": "SW3",
+      "dst_node": "remoteSW3",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link6",
-      "src_node": "SW4",
+      "src_node": "remoteSW4",
       "src_port": 4,
       "dst_node": "SAP14",
       "dst_port": 1,
@@ -148,36 +148,36 @@
     },
     {
       "id": "mn-link5",
-      "src_node": "SW4",
+      "src_node": "remoteSW4",
       "src_port": 3,
-      "dst_node": "SAP2",
+      "dst_node": "remoteSAP2",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link3",
-      "src_node": "SW3",
+      "src_node": "remoteSW3",
       "src_port": 2,
-      "dst_node": "SW4",
+      "dst_node": "remoteSW4",
       "dst_port": 2,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link4",
-      "src_node": "SW3",
+      "src_node": "remoteSW3",
       "src_port": 3,
-      "dst_node": "SAP1",
+      "dst_node": "remoteSAP1",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link2",
-      "src_node": "EE2",
+      "src_node": "remoteEE2",
       "src_port": 1,
-      "dst_node": "SW4",
+      "dst_node": "remoteSW4",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10

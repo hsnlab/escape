@@ -20,7 +20,7 @@ import weakref
 from escape import CONFIG
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
-import escape.adapt.components as mgrs
+import escape.adapt.managers as mgrs
 from escape.util.domain import DomainChangedEvent
 from escape.util.nffg import NFFG
 
@@ -206,6 +206,11 @@ class ComponentConfigurator(object):
       log.error(
         "%s is not found. Skip component initialization!" % component_name)
       raise
+    except ImportError:
+      log.error(
+        "Could not import module: %s. Skip component initialization!" %
+        component_name)
+      raise
 
   def load_default_mgrs (self):
     """
@@ -286,7 +291,7 @@ class ControllerAdapter(object):
     """
     Start NF-FG installation.
 
-    Process given :any:`NFFG`, slice information self.__global_nffgd on
+    Process given :any:`NFFG`, slice information self.__global_nffg on
     domains an invoke
     DomainManagers to install domain specific parts.
 
@@ -526,13 +531,21 @@ class DomainVirtualizer(AbstractVirtualizer):
     log.debug("Merge domain: %s resource info into DoV..." % domain)
 
     for infra in nffg.infras:
-      c_infra = self._global_nffg.add_infra(infra=deepcopy(infra))
-      log.debug("Copy infra node: %s" % c_infra)
+      if infra.id not in self._global_nffg:
+        c_infra = self._global_nffg.add_infra(infra=deepcopy(infra))
+        log.debug("Copy infra node: %s" % c_infra)
+      else:
+        log.warning(
+          "Infra node: %s does already exist in DoV. Skip adding..." % infra)
 
     # Copy NFs
     for nf in nffg.nfs:
-      c_nf = self._global_nffg.add_nf(nf=deepcopy(nf))
-      log.debug("Copy NF node: %s" % c_nf)
+      if nf.id not in self._global_nffg:
+        c_nf = self._global_nffg.add_nf(nf=deepcopy(nf))
+        log.debug("Copy NF node: %s" % c_nf)
+      else:
+        log.warning(
+          "NF node: %s does already exist in DoV. Skip adding..." % nf)
 
     # Copy SAPs
     for sap_id in [s.id for s in nffg.saps]:
@@ -637,7 +650,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   def update_domain_view (self, domain, nffg):
     """
-    Update the existing domain in the merged Globan view.
+    Update the existing domain in the merged Global view.
     """
     # TODO
     pass
