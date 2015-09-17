@@ -14,7 +14,6 @@
 """
 Contains components relevant to virtualization of resources and views.
 """
-import sys
 
 from escape.util.nffg import NFFG
 
@@ -120,7 +119,7 @@ class GlobalViewVirtualizer(AbstractVirtualizer):
     return self.global_view.get_resource_info()
 
 
-class OneBisBisVirtualizer(AbstractVirtualizer):
+class SingleBiSBiSVirtualizer(AbstractVirtualizer):
   """
   Actual Virtualizer class for ESCAPEv2.
 
@@ -136,8 +135,8 @@ class OneBisBisVirtualizer(AbstractVirtualizer):
     :param id: id of the assigned entity
     :type: id: str
     """
-    log.debug("Initiate default 1-BisBis <Virtual View>")
-    super(OneBisBisVirtualizer, self).__init__(id=id)
+    log.debug("Initiate default SingleBiSBiS <Virtual View>")
+    super(SingleBiSBiSVirtualizer, self).__init__(id=id)
     # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
     self.global_view = global_view
     self.__resource_cache = None
@@ -164,22 +163,34 @@ class OneBisBisVirtualizer(AbstractVirtualizer):
     :return: 1 Bisbis topo
     :rtype: :any:`NFFG`
     """
-    log.debug("Generate trivial OneBiSBiS NFFG")
-    nffg = NFFG(id="1BiSBiS", name="One-BiSBiS-View")
-    bb = nffg.add_infra(id="1bisbis", name="One-BiSBiS",
+    log.debug("Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
+    nffg = NFFG(id="SingleBiSBiS-NFFG", name="Single-BiSBiS-View")
+    dov = self.global_view.get_resource_info()
+    bb = nffg.add_infra(id="SingleBiSbiS", name="Single-BiSBiS",
                         domain=NFFG.DOMAIN_VIRTUAL,
-                        infra_type=NFFG.TYPE_INFRA_BISBIS, cpu=sys.maxint,
-                        mem=sys.maxint, storage=sys.maxint, delay=0,
-                        bandwidth=sys.maxint)
-    log.debug("Add Infra: %s" % bb)
-    sap1 = nffg.add_sap(id="sap1", name="SAP1")
-    log.debug("Add SAP: %s" % sap1)
-    sap2 = nffg.add_sap(id="sap2", name="SAP2")
-    log.debug("Add SAP: %s" % sap2)
-    nffg.add_link(sap1.add_port(1), bb.add_port(1), id='1bb-link1', delay=0,
-                  bandwidth=sys.maxint)
-    nffg.add_link(sap2.add_port(1), bb.add_port(2), id='1bb-link2')
-    log.debug("Add connections...")
+                        infra_type=NFFG.TYPE_INFRA_BISBIS)
+    log.debug("Add Infra BiSBiS: %s" % bb)
+    bb.resources.cpu = sum((n.resources.cpu for n in dov.infras if
+                            n.resources.cpu is not None))
+    bb.resources.mem = sum((n.resources.mem for n in dov.infras if
+                            n.resources.mem is not None))
+    bb.resources.storage = sum((n.resources.storage for n in dov.infras if
+                                n.resources.storage is not None))
+    bb.resources.delay = max((n.resources.delay for n in dov.infras if
+                              n.resources.delay is not None))
+    bb.resources.bandwidth = min((n.resources.bandwidth for n in dov.infras if
+                                  n.resources.bandwidth is not None))
+    log.debug("Set infra's resources: %s" % bb.resources)
+    from copy import deepcopy
+    for sap in dov.saps:
+      c_sap = nffg.add_sap(sap=deepcopy(sap))
+      log.debug("Add SAP: %s" % c_sap)
+      for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
+        link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
+                                        port2=bb.add_port(), p1p2id=l.id,
+                                        delay=l.delay, bandwidth=l.bandwidth)
+        log.debug("Add connection: %s" % link1)
+        log.debug("Add connection: %s" % link2)
     return nffg
 
 
@@ -268,15 +279,15 @@ class VirtualizerManager(EventMixin):
 
   def _generate_virtual_view (self, id):
     """
-    Generate a missing :class:`OneBisBisVirtualizer` for other layer
+    Generate a missing :class:`SingleBisBisVirtualizer` for other layer
     using global view (DoV) and a given layer id.
 
     :param id: layer ID
     :type id: int
     :return: generated Virtualizer derived from AbstractVirtualizer
-    :rtype: :any:`OneBisBisVirtualizer`
+    :rtype: :any:`SingleBisBisVirtualizer`
     """
     log.debug("Generating Virtualizer for upper layer (layer ID: %s)" % id)
     # Requesting a reference to DoV and create the trivial 1 Bis-Bis virtual
     # view
-    return OneBisBisVirtualizer(self.dov, id)
+    return SingleBiSBiSVirtualizer(self.dov, id)
