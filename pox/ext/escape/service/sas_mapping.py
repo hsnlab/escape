@@ -57,21 +57,21 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-sas-mapped"
     except MappingException as e:
-      log.error("Got exception during the mapping process! Cause: %s" % e)
+      log.error("Got exception during the mapping process! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except BadInputException as e:
-      log.error("Mapping algorithm refuse given input! Cause: %s" % e)
+      log.error("Mapping algorithm refuse given input! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except InternalAlgorithmException as e:
       log.critical(
         "Mapping algorithm fails due to implementation error or conceptual "
-        "error! Cause: %s" % e)
+        "error! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except:
-      log.error("Got unexpected error during mapping process! Cause: %s" %
+      log.error("Got unexpected error during mapping process! Cause:\n%s" %
                 sys.exc_info()[0])
       return
     log.debug(
@@ -150,8 +150,11 @@ class ServiceGraphMapper(AbstractMapper):
     else:
       nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
       # Steps after mapping (optional)
-      log.info("SG: %s orchestration is finished by %s" % (
-        input_graph, self.__class__.__name__))
+      if nffg is None:
+        log.warning("Mapping process is failed! Abort orchestration process.")
+      else:
+        log.info("SG: %s orchestration is finished by %s" % (
+          input_graph, self.__class__.__name__))
       return nffg
 
   def _mapping_finished (self, nffg):
@@ -162,5 +165,8 @@ class ServiceGraphMapper(AbstractMapper):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    log.debug("Inform SAS layer API that SG mapping has been finished...")
-    self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
+    if nffg is None:
+      log.warning("Mapping process is failed! Abort orchestration process.")
+    else:
+      log.debug("Inform SAS layer API that SG mapping has been finished...")
+      self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
