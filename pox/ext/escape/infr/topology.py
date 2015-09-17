@@ -258,7 +258,8 @@ class InternalControllerProxy(RemoteController):
     :param port: port number (default 6633)
     :type port: int
     """
-    super(InternalControllerProxy, self).__init__(name, ip, port, **kwargs)
+    # Using old-style class because of MN's RemoteController class
+    RemoteController.__init__(self, name, ip, port, **kwargs)
 
   def checkListening (self):
     """
@@ -316,6 +317,7 @@ class ESCAPENetworkBridge(object):
     self._need_clean = None
     # There is no such flag in the Mininet class so using this
     self.started = False
+    self.xterms = []
 
   @property
   def network (self):
@@ -342,7 +344,8 @@ class ESCAPENetworkBridge(object):
         self.started = True
         log.debug("Mininet network has been started!")
         log.debug("Starting xterm on SAPS...")
-        makeTerms(self.__mininet.hosts, 'host')
+        terms = makeTerms(self.__mininet.hosts, 'host')
+        self.xterms.extend(terms)
 
         nffg = self.topo_desc
         # FIXME - SIGCOMM, move port creation into topo creation with MN's
@@ -375,7 +378,8 @@ class ESCAPENetworkBridge(object):
               # intfName = sap.domain
               # # r_mac = None # unknown, r.params['remote_mac']
               # # r_port = r.params['remote_port']
-              # print '\tadd hw interface (%s) to node (%s)' % (intfName, sw.name)
+              # print '\tadd hw interface (%s) to node (%s)' % (intfName,
+              # sw.name)
               # # This hack avoids calling __init__ which always makeIntfPair()
               # link = Link.__new__(Link)
               # i1 = Intf(intfName, node=sw, link=link)
@@ -416,6 +420,12 @@ class ESCAPENetworkBridge(object):
     """
 
     def remove_junks ():
+      # Kill remained xterms
+      log.debug("Close SAP xterms...")
+      import os
+      import signal
+      for term in self.xterms:
+        os.killpg(term.pid, signal.SIGTERM)
       # Kill remained clickhelper.py/click
       log.debug("Cleanup still running VNF-related processes...")
       run_silent(r"sudo pkill -9 -f netconfd")
@@ -476,14 +486,14 @@ class ESCAPENetworkBuilder(object):
   Follows Builder design pattern.
   """
   # Default initial options for Mininet
-  default_opts = {"controller":    InternalControllerProxy,
+  default_opts = {"controller": InternalControllerProxy,
                   # Use own Controller
-                  'build':         False,  # Not build during init
-                  'inNamespace':   False,  # Not start element in namespace
-                  'autoSetMacs':   True,  # Set simple MACs
+                  'build': False,  # Not build during init
+                  'inNamespace': False,  # Not start element in namespace
+                  'autoSetMacs': True,  # Set simple MACs
                   'autoStaticArp': True,  # Set static ARP entries
-                  'listenPort':    6644,  # Add listen port to OVS switches
-                  'link':          TCLink  # Add default link
+                  'listenPort': 6644,  # Add listen port to OVS switches
+                  'link': TCLink  # Add default link
                   }
   # Default internal storing format for NFFG parsing/reading from file
   DEFAULT_NFFG_FORMAT = "NFFG"
@@ -582,8 +592,10 @@ class ESCAPENetworkBuilder(object):
     for edge in [l for l in nffg.links]:
       # Skip initiation of links which connected to an inter-domain SAP
       if (
-               edge.src.node.type == NFFG.TYPE_SAP and edge.src.node.domain is not None) or (
-               edge.dst.node.type == NFFG.TYPE_SAP and edge.dst.node.domain is not None):
+               edge.src.node.type == NFFG.TYPE_SAP and edge.src.node.domain
+           is not None) or (
+               edge.dst.node.type == NFFG.TYPE_SAP and edge.dst.node.domain
+           is not None):
         continue
       # Create Links
       mn_src_node = created_mn_nodes.get(edge.src.node.id)

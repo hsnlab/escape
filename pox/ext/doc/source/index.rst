@@ -174,6 +174,24 @@ https://github.com/mininet/mininet/wiki/Installing-new-version-of-Open-vSwitch
 If you use virtual machines, you should really consider to use the pre-build
 Mininet VM image.
 
+If you want to develop on your host machine, you should take care of a user for
+the netconfd server. This user's name and password will be used for the
+connection establishment between the ESCAPE and the Execution Environments. This
+parameters could be set in the global config under the VNFStarter Adapter or the
+widely used mininet user can be created with the following commands:
+
+.. code-block:: bash
+
+    $ sudo adduser --system --no-create-home mininet
+    $ sudo addgroup mininet sudo
+    $ sudo chsh -s /bin/bash mininet
+
+Check the created user with the following command:
+
+.. code-block:: bash
+
+    $ ssh mininet@localhost
+
 README
 ++++++
 

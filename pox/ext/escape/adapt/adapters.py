@@ -198,7 +198,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     # print match
     # print action
     dpid = InternalPOXAdapter.infra_to_dpid[id]
-    con = core.openflow.getConnection(dpid)
+    con = self.openflow.getConnection(dpid)
 
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
