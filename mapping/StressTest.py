@@ -56,10 +56,10 @@ def genAndAddSAP(nffg, networkparams):
     return nffg.network.node[sapid]
 
 
-def generateRequestForCarrierTopo(networkparams, test_lvl):
+def generateRequestForCarrierTopo(networkparams, test_lvl, seed):
   nffg = NFFG(id="Benchmark-Req-"+str(test_lvl))
   chain_maxlen = 10
-  random.seed(0)
+  random.seed(seed)
   
   # generate some VNF-s connecting the two SAP-s
   for i in xrange(0, test_lvl):
@@ -117,10 +117,10 @@ if __name__ == '__main__':
     while test_lvl < max_test_lvl:
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
-        request = generateRequestForCarrierTopo(topoparams, test_lvl)
+        request = generateRequestForCarrierTopo(topoparams, test_lvl, 0)
         # print request.dump()
         MappingAlgorithms.MAP(request, network)
-        test_lvl *= 2
+        test_lvl = int(1.5 * test_lvl)
         log.debug("Mapping successful!")
       except uet.MappingException as me:
         log.debug("Mapping failed: %s"%me.msg)

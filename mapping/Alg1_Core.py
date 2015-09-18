@@ -55,8 +55,7 @@ class CoreAlgorithm(object):
     # parameters contolling the backtrack process
     # how many of the best possible VNF mappings should be remembered
     self.bt_branching_factor = 4
-    # how deep the backtrack should go back (1 already means no backtrack)
-    self.bt_limit = 4
+    self.bt_limit = 5
 
     self._preproc(net0, req0, chains0)
 
@@ -827,19 +826,20 @@ class CoreAlgorithm(object):
               # possibilities.
               raise
             else:
+              """
               c, bt_record, link_mapping_rec = \
                  self.bt_handler.getCurrentlyMappedBacktrackRecord()
               if link_mapping_rec is not None:
                 self._resolveLinkMappingRecord(c, link_mapping_rec)
               # use bt_record to restore networks state 
               self._resolveBacktrackRecord(c, bt_record)
-
-              c, sub, bt_record, prev_bt_rec, link_mapping_rec = \
-                 self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph()
-              if link_mapping_rec is not None:
-                self._resolveLinkMappingRecord(c, link_mapping_rec)
-              if prev_bt_rec is not None:
-                self._resolveBacktrackRecord(c, prev_bt_rec)
+              """
+              c, sub, bt_record, link_bt_rec_list = \
+                 self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph([])
+              for c_prime, prev_bt_rec, link_mapping_rec in link_bt_rec_list:
+                if link_mapping_rec is not None:
+                  self._resolveLinkMappingRecord(c_prime, link_mapping_rec)
+                self._resolveBacktrackRecord(c_prime, prev_bt_rec)
               # use this bt_record to try another greedy step
               curr_vnf = bt_record['prev_vnf_id']
               next_vnf = bt_record['vnf_id']

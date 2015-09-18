@@ -87,9 +87,10 @@ def shortestPathsInLatency (G):
                                 "In every line: src_id dst_id "
                                 "<<float distance in ms>>")
   for u in G:
-    dist[u][u] = 0
-  # initialize path distance dictionary to be the adjacency matrix
-  # also set the distance to self to 0 (zero diagonal)
+    if G.node[u].type != 'SAP':
+      dist[u][u] = G.node[u].resources['delay']
+    else:
+      dist[u][u] = 0
   try:
     for u, v, d in G.edges(data=True):
       e_weight = d.delay

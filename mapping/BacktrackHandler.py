@@ -119,7 +119,7 @@ class BacktrackHandler(object):
     """
     if bt_record is None:
       tmp = self.currently_mapped.pop()
-      self.currently_mapped.append((self.currently_mapped, tmp[1], 
+      self.currently_mapped.append((self.current_subchain_level, tmp[1], 
                                     link_mapping_rec))
     else:
       self.currently_mapped.append((self.current_subchain_level, bt_record, 
@@ -134,20 +134,19 @@ class BacktrackHandler(object):
     return (self.subchains_with_subgraphs[self.current_subchain_level][0],
             tmp[1], tmp[2])
   
-  def getNextBacktrackRecordAndSubchainSubgraph(self, recursive = False):
+  def getNextBacktrackRecordAndSubchainSubgraph(self, link_bt_rec_list=[]):
     """
     Either returns a backtrack record where the mapping process can continue, 
     or raised a real, seroius MappingException, when mapping can't be continued.
     This is the actual backstepping. Should be called after catching a 
     MappingException indicating the need for backstep.
+    Returns the list of backtrack records to be undone and the next record which
+    can be mapped.
     """
     record = None
-    prev_bt_rec = None
-    link_mapping_rec = None
-    c_prime = None
-    if recursive:
-      c_prime, prev_bt_rec, link_mapping_rec = \
-                           self.getCurrentlyMappedBacktrackRecord()
+    c_prime, prev_bt_rec, link_mapping_rec = \
+                         self.getCurrentlyMappedBacktrackRecord()
+    link_bt_rec_list.append((c_prime, prev_bt_rec, link_mapping_rec))
     try:
       record = self.bt_struct.pop()
       self.bt_struct.append(record)
@@ -168,14 +167,14 @@ class BacktrackHandler(object):
           if c['id'] != c_prime['id']:
             raise uet.InternalAlgorithmException("BacktrackHandler error: "
                       "Unabgiuous current subchain level")
-        # return c, sub, bt_record, prev_bt_rec, link_mapping_rec
+        # return c, sub, bt_record, list of (cid, prev_bt_rec, link_mapping_rec)
         return c,\
           self.subchains_with_subgraphs[self.current_subchain_level][1], \
-          bt_record, prev_bt_rec, link_mapping_rec
+          bt_record, link_bt_rec_list
       else:
         raise uet.InternalAlgorithmException("Backtrack structure maintenance"
                                       "error: backtrack step went wrong.")
     except IndexError:
       self.bt_struct.pop() # remove empty deque of possible mappings ('record')
       self.vnf_index_in_subchain -= 1
-      return self.getNextBacktrackRecordAndSubchainSubgraph(True)
+      return self.getNextBacktrackRecordAndSubchainSubgraph(link_bt_rec_list)
