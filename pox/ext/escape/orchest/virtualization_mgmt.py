@@ -163,34 +163,67 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     :return: 1 Bisbis topo
     :rtype: :any:`NFFG`
     """
-    log.debug("Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
+    log.debug(
+      "Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
+
+    # Create Single BiSBiS NFFG
     nffg = NFFG(id="SingleBiSBiS-NFFG", name="Single-BiSBiS-View")
     dov = self.global_view.get_resource_info()
-    bb = nffg.add_infra(id="SingleBiSbiS", name="Single-BiSBiS",
-                        domain=NFFG.DOMAIN_VIRTUAL,
-                        infra_type=NFFG.TYPE_INFRA_BISBIS)
-    log.debug("Add Infra BiSBiS: %s" % bb)
-    bb.resources.cpu = sum((n.resources.cpu for n in dov.infras if
-                            n.resources.cpu is not None))
-    bb.resources.mem = sum((n.resources.mem for n in dov.infras if
-                            n.resources.mem is not None))
-    bb.resources.storage = sum((n.resources.storage for n in dov.infras if
-                                n.resources.storage is not None))
-    bb.resources.delay = max((n.resources.delay for n in dov.infras if
-                              n.resources.delay is not None))
-    bb.resources.bandwidth = min((n.resources.bandwidth for n in dov.infras if
-                                  n.resources.bandwidth is not None))
-    log.debug("Set infra's resources: %s" % bb.resources)
+    # Create the single BiSBiS infra
+    sbb = nffg.add_infra(id="SingleBiSbiS", name="Single-BiSBiS",
+                         domain=NFFG.DOMAIN_VIRTUAL,
+                         infra_type=NFFG.TYPE_INFRA_BISBIS)
+    log.debug("Add Infra BiSBiS: %s" % sbb)
+
+    # Compute and add resources
+    sbb.resources.cpu = sum(
+      # Sum of available CPU
+      (n.resources.cpu for n in dov.infras if
+       n.resources.cpu is not None))
+    sbb.resources.mem = sum(
+      # Sum of available memory
+      (n.resources.mem for n in dov.infras if
+       n.resources.mem is not None))
+    sbb.resources.storage = sum(
+      # Sum of available storage
+      (n.resources.storage for n in dov.infras if
+       n.resources.storage is not None))
+    sbb.resources.delay = min(
+      # Minimal available delay value of infras in DoV
+      min((n.resources.delay for n in dov.infras if
+           n.resources.delay is not None)),
+      # Minimal available delay value of inter-infra links
+      min((l.delay for l in dov.links if l.delay is not None)))
+    sbb.resources.bandwidth = max(
+      # Maximum available bandwidth value of infras in DoV
+      max((n.resources.bandwidth for n in dov.infras if
+           n.resources.bandwidth is not None)),
+      # Maximum available bandwidth value of inter-infra links
+      max(l.bandwidth for l in dov.links if l.bandwidth is not None))
+    log.debug("Set infra's resources: %s" % sbb.resources)
+
+    # Add supported types
+    s_types = set()
+    for infra in dov.infras:
+      s_types = s_types.union(infra.supported)
+    sbb.add_supported_type(s_types)
+    log.debug("Add supported types: %s" % s_types)
+
+    # Add existing SAPs and their connections to the SingleBiSBiS infra
     from copy import deepcopy
     for sap in dov.saps:
       c_sap = nffg.add_sap(sap=deepcopy(sap))
       log.debug("Add SAP: %s" % c_sap)
+      # Discover and add SAP connections
       for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
         link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
-                                        port2=bb.add_port(), p1p2id=l.id,
-                                        delay=l.delay, bandwidth=l.bandwidth)
+                                                port2=sbb.add_port(),
+                                                p1p2id=l.id,
+                                                delay=l.delay,
+                                                bandwidth=l.bandwidth)
         log.debug("Add connection: %s" % link1)
         log.debug("Add connection: %s" % link2)
+    # Return with Single BiSBiS infra
     return nffg
 
 
