@@ -179,7 +179,8 @@ def MAP (request, network):
         alg.manager.getIdOfChainEnd_fromNetwork(req.dst.node.id)]
       dstportid = alg._addSAPportIfNeeded(mappedNFFG, dstnode.id, dstportid)
     mappedNFFG.add_req(srcnode.ports[srcportid], dstnode.ports[dstportid],
-                       id=req.id, delay=req.delay, bandwidth=req.bandwidth)
+                       id=req.id, delay=req.delay, bandwidth=req.bandwidth,
+                       sg_path=req.sg_path)
 
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
