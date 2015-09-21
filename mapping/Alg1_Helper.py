@@ -73,25 +73,26 @@ def shortestPathsInLatency (G):
   # use some default dict magic here
   # for dist the default is the floating point inf value
   dist = defaultdict(lambda: defaultdict(lambda: float('inf')))
-  """
-  try:
-    with open("shortest_paths.txt") as sp:
-      log.debug("Reading previously calculated shortest paths...")
-      for line in sp:
-        line = line.split(" ")
-        dist[line[0]][line[1]] = float(line[2])
-      return dict(dist)
-  except IOError:
-    log.warn("No input shortest_paths.txt found, calculating shortest paths...")
-  except ValueError:
-    raise uet.BadInputException("Bad format in shortest_paths.txt",
-                                "In every line: src_id dst_id "
-                                "<<float distance in ms>>")
-  """
+  
+  # try:
+  #   with open("shortest_paths.txt") as sp:
+  #     log.debug("Reading previously calculated shortest paths...")
+  #     for line in sp:
+  #       line = line.split(" ")
+  #       dist[line[0]][line[1]] = float(line[2])
+  #     return dict(dist)
+  # except IOError:
+  #   log.warn("No input shortest_paths.txt found, calculating shortest paths...")
+  # except ValueError:
+  #   raise uet.BadInputException("Bad format in shortest_paths.txt",
+  #                               "In every line: src_id dst_id "
+  #                               "<<float distance in ms>>")
+  
   for u in G:
-    dist[u][u] = 0
-  # initialize path distance dictionary to be the adjacency matrix
-  # also set the distance to self to 0 (zero diagonal)
+    if G.node[u].type != 'SAP':
+      dist[u][u] = G.node[u].resources['delay']
+    else:
+      dist[u][u] = 0
   try:
     for u, v, d in G.edges(data=True):
       e_weight = d.delay
@@ -111,15 +112,15 @@ def shortestPathsInLatency (G):
   except KeyError as e:
     raise uet.BadInputException(
       "Node attribute missing %s {'delay': VALUE}" % e)
-  """
-  # write calclated paths to output for later use.
-  log.debug("Saving calculated shorest paths to shortest_paths.txt.")
-  sp = open("shortest_paths.txt", "w")
-  for u in G:
-    for v in G:
-      sp.write(" ".join((u, v, str(dist[u][v]), "\n")))
-  sp.close()
-  """
+  
+  # # write calclated paths to output for later use.
+  # log.debug("Saving calculated shorest paths to shortest_paths.txt.")
+  # sp = open("shortest_paths.txt", "w")
+  # for u in G:
+  #   for v in G:
+  #     sp.write(" ".join((u, v, str(dist[u][v]), "\n")))
+  # sp.close()
+  
   return dict(dist)
 
 
