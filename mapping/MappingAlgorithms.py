@@ -412,8 +412,13 @@ if __name__ == '__main__':
     # net = generate_dynamic_fallback_nffg()
     # req = _onlySAPsRequest()
     # print net.dump()
-    req = _testRequestForBacktrack()
-    net = _testNetworkForBacktrack()
+    # req = _testRequestForBacktrack()
+    # net = _testNetworkForBacktrack()
+    with open('../pox/escape-mn-req.nffg', "r") as f:
+      req = NFFG.parse(f.read())
+    with open('../pox/escape-mn-topo.nffg', "r") as g:
+      net = NFFG.parse(g.read())
+      net.duplicate_static_links()
     mapped = MAP(req, net)
     # print mapped.dump()
   except uet.UnifyException as ue:

@@ -63,7 +63,8 @@ class BacktrackHandler(object):
         if self.vnf_index_in_subchain == len(subchain['chain']) - 1 and \
            tmp_mapping_rec[2] is None or \
            tmp_mapping_rec[1]['vnf_id'] != \
-               subchain['chain'][self.vnf_index_in_subchain]:
+               subchain['chain'][self.vnf_index_in_subchain] and \
+           tmp_mapping_rec[2] is None:
           # this means the last link or vnf of the chain is not mapped yet, 
           # but the backtrack procedure would continue on next chain (can happen
           # when we step back on the last link of a subchain)
