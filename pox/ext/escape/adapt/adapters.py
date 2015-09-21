@@ -17,7 +17,9 @@ details for the connections between ESCAPEv2 and other different domains.
 """
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
+from ncclient.operations import OperationError
 from ncclient.operations.rpc import RPCError
+from ncclient.transport import TransportError
 
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.conversion import NFFGConverter
@@ -388,6 +390,17 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
           setattr(self, param, kwargs[param])
     return kwargs
 
+  def _invoke_rpc (self, request_data):
+    """
+    Override parent function to catch and log exceptions gracefully.
+    """
+    from ncclient.transport import TransportError
+    from ncclient.operations import OperationError
+    try:
+      super(VNFStarterAdapter, self)._invoke_rpc(request_data)
+    except (RPCError, TransportError, OperationError) as e:
+      log.error("Failed to invoke NETCONF based RPC! Cause: %s", e)
+
   ##############################################################################
   # RPC calls starts here
   ##############################################################################
@@ -585,12 +598,16 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         return adapter.getVNFInfo(vnf_id=vnf_id)
       except RPCError as e:
         log.error("Got Error during initiate VNF through NETCONF:")
-        from pprint import pprint
-        pprint(e.to_dict())
+        # from pprint import pprint
+        # pprint(e.to_dict())
+        raise
       except KeyError as e:
         log.warning(
           "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
           "VNF initiation." % e.args[0])
+      except (TransportError, OperationError) as e:
+        log.error(
+          "Failed to deploy NF due to a connection error! Cause: %s" % e)
 
 
 class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,

@@ -39,7 +39,7 @@ class AbstractNETCONFAdapter(object):
   RPC_NAMESPACE = None
 
   def __init__ (self, server, port, username, password, timeout=10,
-       debug=False):
+                debug=False):
     """
     Initialize connection parameters.
 
@@ -381,6 +381,9 @@ class AbstractNETCONFAdapter(object):
         return result
       else:
         raise
+    except (TransportError, OperationError):
+      # Need to handle here??
+      raise
 
   def __enter__ (self):
     """
