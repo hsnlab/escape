@@ -882,9 +882,10 @@ class EdgeLink(Link):
     return self
 
   def __str__ (self):
-    return "Link(id: %s, src: %s[%s], dst: %s[%s], type: %s)" % (
-      self.id, self.src.node.id, self.src.id, self.dst.node.id, self.dst.id,
-      self.type)
+    return "Link(id: %s, src: %s[%s], dst: %s[%s], type: %s, delay:%s, " \
+           "bandwidth: %s)" % (
+             self.id, self.src.node.id, self.src.id, self.dst.node.id,
+             self.dst.id, self.type, self.delay, self.bandwidth)
 
   def __repr__ (self):
     return "<|ID: %s, Type: %s, Back: %s, src: %s[%s], dst: %s[%s] --> %s|>" % (

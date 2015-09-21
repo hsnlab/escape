@@ -70,10 +70,10 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
         "error! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
-    except:
-      log.error("Got unexpected error during mapping process! Cause:\n%s" %
-                sys.exc_info()[0])
-      return
+    # except:
+    #   log.error("Got unexpected error during mapping process! Cause:\n%s" %
+    #             sys.exc_info()[0])
+    #   return
     log.debug(
       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
     return mapped_nffg
