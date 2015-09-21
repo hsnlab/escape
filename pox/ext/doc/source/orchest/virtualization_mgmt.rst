@@ -8,7 +8,7 @@ Contains components relevant to virtualization of resources and views.
 
 :any:`AbstractVirtualizer` contains the  central logic of Virtualizers.
 
-:any:`OneBisBisVirtualizer` implement the default, 1BisBis virtualization
+:any:`SingleBiSBiSVirtualizer` implement the default, 1-Bis-Bis virtualization
 logic of the Resource Orchestration Sublayer.
 
 :any:`MissingGlobalViewEvent` can signal missing global view.

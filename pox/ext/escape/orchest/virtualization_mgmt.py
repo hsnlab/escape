@@ -318,7 +318,7 @@ class VirtualizerManager(EventMixin):
     :param id: layer ID
     :type id: int
     :return: generated Virtualizer derived from AbstractVirtualizer
-    :rtype: :any:`SingleBisBisVirtualizer`
+    :rtype: :any:`SingleBiSBiSVirtualizer`
     """
     log.debug("Generating Virtualizer for upper layer (layer ID: %s)" % id)
     # Requesting a reference to DoV and create the trivial 1 Bis-Bis virtual

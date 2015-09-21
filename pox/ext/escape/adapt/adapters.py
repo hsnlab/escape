@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains Adapter classes which represent the connections between ESCAPEv2 and
-other different domains.
+Contains Adapter classes which contains protocol and technology specific
+details for the connections between ESCAPEv2 and other different domains.
 """
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
@@ -26,7 +26,6 @@ from escape.util.netconf import AbstractNETCONFAdapter
 from escape.util.pox_extension import ExtendedOFConnectionArbiter, \
   OpenFlowBridge
 from escape import CONFIG
-from pox.core import core
 import pox.openflow.libopenflow_01 as of
 from pox.lib.addresses import EthAddr
 

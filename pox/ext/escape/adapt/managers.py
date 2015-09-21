@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains Adapter classes which represent the connections between ESCAPEv2 and
-other different domains.
+Contains Manager classes which contains the higher-level logic for complete
+domain management. Uses Adapter classes for ensuring protocol-specific
+connections with entities in the particular domain.
 """
 from escape.adapt.adapters import *
 from escape.util.domain import *

@@ -16,6 +16,7 @@ Submodules
     :titlesonly:
 
     adaptation
+    adapters
     cas_API
-    components
+    managers
 
