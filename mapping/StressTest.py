@@ -111,16 +111,16 @@ if __name__ == '__main__':
   #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
   #                                 [4,8,12,16], [32000,64000], [200], 40000, 4)})
   network = CarrierTopoBuilder.getCarrierTopo( topoparams )
-  test_lvl = 32
+  test_lvl = 10
   max_test_lvl = sys.maxint
   try:
     while test_lvl < max_test_lvl:
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
-        request = generateRequestForCarrierTopo(topoparams, test_lvl, 0)
+        request = generateRequestForCarrierTopo(topoparams, test_lvl, 1)
         # print request.dump()
         MappingAlgorithms.MAP(request, network)
-        test_lvl = int(1.5 * test_lvl)
+        test_lvl = int(2 * test_lvl)
         log.debug("Mapping successful!")
       except uet.MappingException as me:
         log.debug("Mapping failed: %s"%me.msg)

@@ -458,8 +458,8 @@ class CoreAlgorithm(object):
                     except IndexError:
                       break
     try:
-      self.bt_handler.addBacktrackLevel(cid, best_node_que)
       best_node_sofar = best_node_que.pop()
+      self.bt_handler.addBacktrackLevel(cid, best_node_que)
       # we don't have to deal with the deque length anymore, because it is 
       # handled by the bactrack structure.
     except IndexError:

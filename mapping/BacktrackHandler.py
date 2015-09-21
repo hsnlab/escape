@@ -134,7 +134,7 @@ class BacktrackHandler(object):
     return (self.subchains_with_subgraphs[self.current_subchain_level][0],
             tmp[1], tmp[2])
   
-  def getNextBacktrackRecordAndSubchainSubgraph(self, link_bt_rec_list=[]):
+  def getNextBacktrackRecordAndSubchainSubgraph(self, link_bt_rec_list):
     """
     Either returns a backtrack record where the mapping process can continue, 
     or raised a real, seroius MappingException, when mapping can't be continued.
