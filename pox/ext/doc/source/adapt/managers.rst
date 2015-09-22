@@ -7,8 +7,14 @@ domain management.
 Uses Adapter classes for ensuring protocol-specific connections with entities in
 the particular domain.
 
-.. figure::  ../_static/components.png
-     :align:  center
+.. inheritance-diagram::
+   escape.adapt.managers.InternalDomainManager
+   escape.adapt.managers.RemoteESCAPEDomainManager
+   escape.adapt.managers.OpenStackDomainManager
+   escape.adapt.managers.UniversalNodeDomainManager
+   escape.adapt.managers.DockerDomainManager
+   escape.adapt.managers.SDNDomainManager
+   :parts: 3
 
 :any:`InternalDomainManager` represent the top class for interacting with the
 emulated infrastructure.

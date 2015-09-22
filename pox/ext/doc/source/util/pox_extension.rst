@@ -3,8 +3,11 @@
 
 Override and extend internal POX components to achieve ESCAPE-desired behaviour.
 
-.. figure::  ../_static/pox_extension.png
-   :align:  center
+.. inheritance-diagram::
+   escape.util.pox_extension.OpenFlowBridge
+   escape.util.pox_extension.ExtendedOFConnectionArbiter
+   escape.util.pox_extension.ESCAPEInteractiveHelper
+   :parts: 3
 
 :any:`OpenFlowBridge` is a special version of OpenFlow event originator class.
 

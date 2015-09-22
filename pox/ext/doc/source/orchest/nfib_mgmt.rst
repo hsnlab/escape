@@ -3,6 +3,10 @@
 
 Contains the class for managing NFIB.
 
+.. inheritance-diagram::
+   escape.orchest.nfib_mgmt.NFIBManager
+   :parts: 3
+
 :any:`NFIBManager` manages the handling of Network Function Information Base.
 
 Module contents

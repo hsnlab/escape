@@ -4,8 +4,12 @@
 Implements the platform and POX dependent logic for the Controller Adaptation
 Sublayer.
 
-.. figure::  ../_static/cas_API.png
-   :align:  center
+.. inheritance-diagram::
+   escape.adapt.cas_API.GlobalResInfoEvent
+   escape.adapt.cas_API.InstallationFinishedEvent
+   escape.adapt.cas_API.DeployNFFGEvent
+   escape.adapt.cas_API.ControllerAdaptationAPI
+   :parts: 3
 
 :any:`GlobalResInfoEvent` can send back global resource info requested from
 upper layer.

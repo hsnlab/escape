@@ -3,16 +3,15 @@
 
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 
-.. figure::  ../_static/ros_orchestration.png
-   :align:  center
+.. inheritance-diagram::
+   escape.orchest.ros_orchestration.ResourceOrchestrator
+   escape.orchest.ros_orchestration.NFFGManager
+   :parts: 3
 
 :any:`ResourceOrchestrator` orchestrates :any:`NFFG` mapping and centralize
 layer logic.
 
 :any:`NFFGManager` stores and handles Network Function Forwarding Graphs.
-
-:any:`NFIBManager` handles the Network Function Information Base and hides
-implementation dependent logic.
 
 Module contents
 ---------------

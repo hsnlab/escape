@@ -3,13 +3,22 @@
 
 Wrapper module for handling emulated test topology based on Mininet.
 
-.. figure::  ../_static/topology.png
-   :align:  center
+.. inheritance-diagram::
+   escape.infr.topology.AbstractTopology
+   escape.infr.topology.FallbackStaticTopology
+   escape.infr.topology.FallbackDynamicTopology
+   escape.infr.topology.InternalControllerProxy
+   escape.infr.topology.ESCAPENetworkBridge
+   escape.infr.topology.TopologyBuilderException
+   escape.infr.topology.ESCAPENetworkBuilder
+   :parts: 3
 
 :any:`AbstractTopology` can represent an emulated topology for the high-level
 API.
 
 :any:`FallbackStaticTopology` represents the static fallback topology.
+
+:any:`FallbackDynamicTopology` represents the static fallback topology.
 
 :any:`InternalControllerProxy` represents the connection between the internal
 controller and the emulated network.
@@ -19,7 +28,7 @@ controller and the emulated network.
 :any:`TopologyBuilderException` can signal various error related to the topology
 emulation.
 
-:any:`ESCAPENetworkBuilder` can construct a:any:`ESCAPENetworkBridge` object.
+:any:`ESCAPENetworkBuilder` can construct an :any:`ESCAPENetworkBridge` object.
 
 Module contents
 ---------------

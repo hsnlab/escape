@@ -4,8 +4,18 @@
 Contains Adapter classes which contains protocol and technology specific
 details for the connections between ESCAPEv2 and other different domains.
 
-.. figure::  ../_static/components.png
-   :align:  center
+.. inheritance-diagram::
+   escape.adapt.adapters.InternalPOXAdapter
+   escape.adapt.adapters.SDNDomainPOXAdapter
+   escape.adapt.adapters.TopologyLoadException
+   escape.adapt.adapters.InternalPOXAdapter
+   escape.adapt.adapters.SDNDomainPOXAdapter
+   escape.adapt.adapters.InternalMininetAdapter
+   escape.adapt.adapters.VNFStarterAdapter
+   escape.adapt.adapters.RemoteESCAPEv2RESTAdapter
+   escape.adapt.adapters.OpenStackRESTAdapter
+   escape.adapt.adapters.UniversalNodeRESTAdapter
+   :parts: 3
 
 :any:`InternalPOXAdapter` implements the OF controller functionality for the
 Mininet-based emulated topology.

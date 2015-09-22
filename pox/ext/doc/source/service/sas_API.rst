@@ -4,8 +4,12 @@
 Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer.
 
-.. figure::  ../_static/sas_API.png
-   :align:  center
+.. inheritance-diagram::
+   escape.service.sas_API.InstantiateNFFGEvent
+   escape.service.sas_API.GetVirtResInfoEvent
+   escape.service.sas_API.ServiceRequestHandler
+   escape.service.sas_API.ServiceLayerAPI
+   :parts: 3
 
 :any:`InstantiateNFFGEvent` can send NF-FG to the lower layer.
 

@@ -10,8 +10,9 @@ Requirements::
 
   sudo pip install ncclient
 
-.. figure::  ../_static/netconf.png
-   :align:  center
+.. inheritance-diagram::
+   escape.util.netconf.AbstractNETCONFAdapter
+   :parts: 3
 
 :any:`AbstractNETCONFAdapter` contains the main function for communication
 over NETCONF such as managing SSH channel, handling configuration, assemble

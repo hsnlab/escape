@@ -3,8 +3,10 @@
 
 Contains miscellaneous helper functions.
 
-.. figure::  ../_static/misc.png
-   :align:  center
+.. inheritance-diagram::
+   escape.util.misc.SimpleStandaloneHelper
+   escape.util.misc.Singleton
+   :parts: 3
 
 :any:`schedule_as_coop_task()` helps invoking a function in POX's cooperative
 microtask environment.

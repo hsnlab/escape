@@ -4,8 +4,14 @@
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 
-.. figure::  ../_static/ros_API.png
-   :align:  center
+.. inheritance-diagram::
+   escape.orchest.ros_API.InstallNFFGEvent
+   escape.orchest.ros_API.VirtResInfoEvent
+   escape.orchest.ros_API.GetGlobalResInfoEvent
+   escape.orchest.ros_API.InstantiationFinishedEvent
+   escape.orchest.ros_API.ROSAgentRequestHandler
+   escape.orchest.ros_API.ResourceOrchestrationAPI
+   :parts: 3
 
 :any:`InstallNFFGEvent` can send mapped NF-FG to the lower layer.
 
@@ -15,6 +21,8 @@ upper layer.
 :any:`GetGlobalResInfoEvent` can request global resource info from lower layer.
 
 :any:`InstantiationFinishedEvent` can signal info about NFFG instantiation.
+
+:any:`ROSAgentRequestHandler` implements the REST-API functions for agent mode.
 
 :any:`ResourceOrchestrationAPI` represents the ROS layer and implement all
 related functionality.

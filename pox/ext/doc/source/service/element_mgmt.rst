@@ -3,8 +3,10 @@
 
 Contains classes relevant to element management.
 
-.. figure::  ../_static/element_mgmt.png
-   :align:  center
+.. inheritance-diagram::
+   escape.service.element_mgmt.AbstractElementManager
+   escape.service.element_mgmt.ClickManager
+   :parts: 3
 
 :any:`AbstractElementManager` is an abstract class for element managers.
 

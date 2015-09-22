@@ -1,6 +1,12 @@
 *config.py* module
 ==================
 
+Contains manager and handling functions for global ESCAPE configuration.
+
+.. inheritance-diagram::
+   escape.util.config.ESCAPEConfig
+   :parts: 3
+
 :any:`ESCAPEConfig` is a wrapper class for CONFIG.
 
 Module contents

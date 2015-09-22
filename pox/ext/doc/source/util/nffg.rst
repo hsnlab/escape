@@ -4,12 +4,18 @@
 Abstract class and implementation for basic operations with a single NF-FG,
 such as building, parsing, processing NF-FG, helper functions, etc.
 
-.. figure::  ../_static/nffg.png
-   :align:  center
+.. inheritance-diagram::
+   escape.util.nffg.AbstractNFFG
+   escape.util.nffg.NFFG
+   escape.util.nffg.NFFGToolBox
+   :parts: 3
 
 :any:`AbstractNFFG` represents the common function for an NFFG representation.
 
 :any:`NFFG` is the internal representation of an NFFG.
+
+:any:`NFFGToolBox` contains helper functions for :any:`NFFG` handling and
+operations.
 
 Module contents
 ---------------

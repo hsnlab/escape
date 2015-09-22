@@ -37,7 +37,8 @@ for item in os.listdir(root):  # Dependency dirs like mininet
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx',
               'sphinx.ext.autosummary',
-              'sphinx.ext.ifconfig', ]  # 'sphinx.ext.viewcode'
+              'sphinx.ext.inheritance_diagram',
+              'sphinx.ext.ifconfig']  # 'sphinx.ext.viewcode'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -300,3 +301,9 @@ intersphinx_mapping = {'python': ('https://docs.python.org/2.7/', None),
 autodoc_member_order = 'bysource'
 autodoc_default_flags = ['members', 'private-members', 'special-members',
                          'undoc-members', 'show-inheritance']
+
+inheritance_graph_attrs = dict(rankdir="LR", size='""', fontsize=14)
+# inheritance_node_attrs = dict(fontsize=16, height=0.75)
+#  inheritance_node_attrs = dict(shape='ellipse', fontsize=14, height=0.75,
+#                               color='dodgerblue1', style='filled')
+# inheritance_edge_attrs = dict()

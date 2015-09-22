@@ -3,15 +3,22 @@
 
 Contains components relevant to virtualization of resources and views.
 
-.. figure::  ../_static/virtualization_mgmt.png
-   :align:  center
+.. inheritance-diagram::
+   escape.orchest.virtualization_mgmt.MissingGlobalViewEvent
+   escape.orchest.virtualization_mgmt.AbstractVirtualizer
+   escape.orchest.virtualization_mgmt.GlobalViewVirtualizer
+   escape.orchest.virtualization_mgmt.SingleBiSBiSVirtualizer
+   escape.orchest.virtualization_mgmt.VirtualizerManager
+   :parts: 3
 
-:any:`AbstractVirtualizer` contains the  central logic of Virtualizers.
+:any:`MissingGlobalViewEvent` can signal missing global view.
+
+:any:`AbstractVirtualizer` contains the central logic of Virtualizers.
+
+:any:`GlobalViewVirtualizer` implements a non-filtering/non-virtualizing logic.
 
 :any:`SingleBiSBiSVirtualizer` implement the default, 1-Bis-Bis virtualization
 logic of the Resource Orchestration Sublayer.
-
-:any:`MissingGlobalViewEvent` can signal missing global view.
 
 :any:`VirtualizerManager` stores and handles the virtualizers.
 

@@ -4,8 +4,12 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer.
 
-.. figure::  ../_static/adaptation.png
-   :align:  center
+.. inheritance-diagram::
+   escape.adapt.adaptation.ComponentConfigurator
+   escape.adapt.adaptation.ControllerAdapter
+   escape.adapt.adaptation.DomainVirtualizer
+   escape.adapt.adaptation.DomainResourceManager
+   :parts: 3
 
 :any:`ComponentConfigurator` creates, initializes, stores and manages different
 adaptation components, i.e. derived classes of :any:`AbstractDomainManager` and

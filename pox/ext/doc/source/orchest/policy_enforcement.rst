@@ -3,8 +3,11 @@
 
 Contains functionality related to policy enforcement.
 
-.. figure::  ../_static/policy_enforcement.png
-   :align:  center
+.. inheritance-diagram::
+   escape.orchest.policy_enforcement.PolicyEnforcementError
+   escape.orchest.policy_enforcement.PolicyEnforcementMetaClass
+   escape.orchest.policy_enforcement.PolicyEnforcement
+   :parts: 3
 
 :any:`PolicyEnforcementError` represents a violation during the policy
 checking process.

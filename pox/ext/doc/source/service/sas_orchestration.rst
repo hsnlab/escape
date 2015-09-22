@@ -3,8 +3,12 @@
 
 Contains classes relevant to Service Adaptation Sublayer functionality.
 
-.. figure::  ../_static/sas_orchestration.png
-   :align:  center
+.. inheritance-diagram::
+   escape.service.sas_orchestration.ServiceOrchestrator
+   escape.service.sas_orchestration.SGManager
+   escape.service.sas_orchestration.MissingVirtualViewEvent
+   escape.service.sas_orchestration.VirtualResourceManager
+   :parts: 3
 
 :any:`ServiceOrchestrator` orchestrates SG mapping and centralize layer logic.
 
