@@ -37,7 +37,7 @@ __status__ = "prototype"
 cfg = {"service": {  # Service Adaptation Sublayer
                      "MAPPER": {"module": "escape.service.sas_mapping",
                                 "class": "ServiceGraphMapper",
-                                "mapping-enabled": True},
+                                "mapping-enabled": False},
                      "STRATEGY": {"module": "escape.service.sas_mapping",
                                   "class": "DefaultServiceMappingStrategy",
                                   "THREADED": False},
