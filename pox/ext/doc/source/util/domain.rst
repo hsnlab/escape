@@ -8,6 +8,7 @@ Implement the supporting classes for domain adapters.
    escape.util.domain.DeployEvent
    escape.util.domain.AbstractDomainManager
    escape.util.domain.AbstractESCAPEAdapter
+   escape.util.domain.DefaultDomainRESTAPI
    escape.util.domain.VNFStarterAPI
    escape.util.domain.OpenStackAPI
    escape.util.domain.UniversalNodeAPI
@@ -23,6 +24,8 @@ an unified way.
 :any:`AbstractDomainManager` contains general logic for top domain managers.
 
 :any:`AbstractESCAPEAdapter` contains general logic for actual Adapters.
+
+:any:`DefaultDomainRESTAPI` defines unified interface for domain's REST-API.
 
 :any:`VNFStarterAPI` defines the interface for VNF management based on
 VNFStarter YANG description.

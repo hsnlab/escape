@@ -14,7 +14,6 @@
 Implement the supporting classes for domain adapters.
 """
 import urlparse
-
 from requests import Session
 
 from escape import __version__
@@ -376,7 +375,6 @@ class VNFStarterAPI(object):
   VNF_HEADER_DECOMP = "headerDecompressor"
   VNF_FORWARDER = "simpleForwarder"
 
-
   class VNFStatus(object):
     """
     Helper class for define VNF status code constants.
@@ -390,7 +388,6 @@ class VNFStarterAPI(object):
     UP_AND_RUNNING = 1
     s_UP_AND_RUNNING = "UP_AND_RUNNING"
 
-
   class ConnectedStatus(object):
     """
     Helper class for define VNF connection code constants.
@@ -401,7 +398,6 @@ class VNFStarterAPI(object):
     s_DISCONNECTED = "DISCONNECTED"
     CONNECTED = 1
     s_CONNECTED = "CONNECTED"
-
 
   def __init__ (self):
     super(VNFStarterAPI, self).__init__()
@@ -483,12 +479,9 @@ class VNFStarterAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class OpenStackAPI(object):
+class DefaultDomainRESTAPI(object):
   """
-  Define interface for managing OpenStack domain.
-
-  .. note::
-    Fitted to the API of ETH REST-like server which rely on virtualizer3!
+  Define unified interface for managing UNIFY domains with REST-API.
 
   Follows the MixIn design pattern approach to support OpenStack functionality.
   """
@@ -523,7 +516,18 @@ class OpenStackAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class UniversalNodeAPI(OpenStackAPI):
+class OpenStackAPI(DefaultDomainRESTAPI):
+  """
+  Define interface for managing OpenStack domain.
+
+  .. note::
+    Fitted to the API of ETH REST-like server which rely on virtualizer3!
+
+  Follows the MixIn design pattern approach to support OpenStack functionality.
+  """
+
+
+class UniversalNodeAPI(DefaultDomainRESTAPI):
   """
   Define interface for managing Universal Node domain.
 
@@ -533,52 +537,14 @@ class UniversalNodeAPI(OpenStackAPI):
   Follows the MixIn design pattern approach to support UN functionality.
   """
 
-  def ping (self):
-    raise NotImplementedError("Not implemented yet!")
 
-  def get_config (self):
-    raise NotImplementedError("Not implemented yet!")
-
-  def edit_config (self, data):
-    raise NotImplementedError("Not implemented yet!")
-
-
-class RemoteESCAPEv2API(object):
+class RemoteESCAPEv2API(DefaultDomainRESTAPI):
   """
   Define interface for managing remote ESCAPEv2 domain.
 
   Follows the MixIn design pattern approach to support remote ESCAPEv2
   functionality.
   """
-
-  def topology_resource (self):
-    """
-    Queries the infrastructure view with a netconf-like "get-config" command.
-
-    :return: infrastructure view
-    :rtype: :any::`NFFG`
-    """
-    raise NotImplementedError("Not implemented yet!")
-
-  def install_nffg (self, config):
-    """
-    Send the requested configuration with a netconf-like "edit-config" command.
-
-    :param config: whole domain view
-    :type config: :any::`NFFG`
-    :return: status code
-    :rtype: str
-    """
-    raise NotImplementedError("Not implemented yet!")
-
-  def ping (self):
-    """
-    Call the ping RPC.
-
-    :return: response text (should be: 'OK')
-    :rtype: str
-    """
-    raise NotImplementedError("Not implemented yet!")
 
 
 class AbstractRESTAdapter(Session):

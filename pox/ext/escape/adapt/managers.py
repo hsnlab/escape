@@ -352,7 +352,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    self.topoAdapter.install_nffg(nffg_part)
+    self.topoAdapter.edit_config(nffg_part)
 
 
 class OpenStackDomainManager(AbstractDomainManager):

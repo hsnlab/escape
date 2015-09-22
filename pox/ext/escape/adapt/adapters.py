@@ -643,9 +643,9 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         "Remote ESCAPEv2 agent responded with an error during 'ping': %s" %
         e.message)
 
-  def topology_resource (self):
+  def get_config (self):
     try:
-      data = self.send_request(self.POST, 'topology-resource')
+      data = self.send_request(self.POST, 'get-config')
       log.debug("Received config from remote agent at %s" % self._base_url)
     except ConnectionError:
       log.warning(
@@ -656,7 +656,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return None
     except HTTPError as e:
       log.warning("Remote ESCAPEv2 agent responded with an error during "
-                  "'topology-resource': %s" % e.message)
+                  "'get-config': %s" % e.message)
       return None
     if data:
       log.info("Parse and load received data...")
@@ -667,19 +667,19 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         infra.domain = NFFG.DOMAIN_REMOTE
       return nffg
 
-  def install_nffg (self, config):
+  def edit_config (self, config):
     if not isinstance(config, (str, unicode, NFFG)):
-      raise RuntimeError("Not supported config format for 'install-nffg'!")
+      raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
       log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
-      self.send_request(self.POST, 'install-nffg', config)
+      self.send_request(self.POST, 'edit-config', config)
     except ConnectionError:
       log.warning(
         "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
       return None
     except HTTPError as e:
       log.warning(
-        "Remote ESCAPEv2 responded with an error during 'install-nffg': %s" %
+        "Remote ESCAPEv2 responded with an error during 'edit-config': %s" %
         e.message)
       return None
     return self._response.status_code
@@ -688,7 +688,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.ping()
 
   def get_topology_resource (self):
-    return self.topology_resource()
+    return self.get_config()
 
 
 class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
