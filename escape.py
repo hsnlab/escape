@@ -39,20 +39,31 @@ escape.add_argument("-i", "--interactive", action="store_true", default=False,
                          "states")
 escape.add_argument("-a", "--agent", action="store_true", default=False,
                     help="run in agent role (without service layer)")
+escape.add_argument("-4", "--cfor", action="store_true", default=False,
+                    help="start the API for the Cf-Or interface")
 args = parser.parse_args()
 # Construct POX init command according to argument
+# basic command
 cmd = "./pox/pox.py unify"
+# Run the Infrastructure Layer with the required root privilege
 if args.full:
   cmd = "sudo %s --full" % cmd
+# Override optional external config file
 if args.config:
   cmd = "%s --config=%s" % (cmd, os.path.abspath(args.config))
+# Skip the Service Layer initiation and start the ROS agent REST-API
 if args.agent:
   cmd = "%s --agent" % cmd
+# Start an REST-API for the Cf-Or interface
+if args.cfor:
+  cmd = "%s --cfor" % cmd
 if args.debug:
   # Nothing to do
   pass
 else:
+  # Disable debug mode in normal mode
   cmd = "%s --debug=False" % cmd
+# Add the interactive shell if needed
 if args.interactive:
   cmd = "%s py --completion" % cmd
 

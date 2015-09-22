@@ -79,9 +79,9 @@ class InstantiationFinishedEvent(Event):
     self.error = error
 
 
-class ROSAgentRequestHandler(AbstractRequestHandler):
+class CfOrRequestHandler(AbstractRequestHandler):
   """
-  Request Handler for agent behaviour in Resource Orchestration SubLayer.
+  Request Handler for the Cf-OR interface..
 
   .. warning::
     This class is out of the context of the recoco's co-operative thread
@@ -93,15 +93,14 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     function.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('ping',),
-                  'POST': ('ping', 'edit_config', 'get_config')}
+  request_perm = {'GET': ('ping', 'get_config'),
+                  'POST': ('ping', 'get_config', 'edit_config')}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'orchestration'
-  # Set special prefix to imitate OpenStack agent API
-  static_prefix = "escape"
+  static_prefix = "cfor"
   # Logger. Must define.
-  log = log.getChild("REST-API")
+  log = log.getChild("Cf-Or")
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {'get-config': "get_config",
                 'edit-config': "edit_config"}
@@ -128,8 +127,77 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     """
     Response configuration.
     """
-    # TODO - implement
-    log.getChild("REST-API").info("Call REST-API function: get-config")
+    log.info("Call Cf-Or function: get-config")
+    config = self._proceed_API_call('api_cfor_get_config')
+    self.send_response(200)
+    self.send_header('Content-Type', 'application/json')
+    self.send_header('Content-Length', len(config))
+    self.end_headers()
+    self.wfile.write(config)
+
+  def edit_config (self):
+    """
+    Receive configuration and initiate orchestration.
+    """
+    log.info("Call Cf-Or function: edit-config")
+    body = self._get_body()
+    # log.getChild("REST-API").debug("Request body:\n%s" % body)
+    nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    log.debug("Parsed NFFG request: %s" % nffg)
+    self._proceed_API_call('api_cfor_edit_config', nffg)
+    self.send_acknowledge()
+
+
+class ROSAgentRequestHandler(AbstractRequestHandler):
+  """
+  Request Handler for agent behaviour in Resource Orchestration SubLayer.
+
+  .. warning::
+    This class is out of the context of the recoco's co-operative thread
+    context! While you don't need to worry much about synchronization between
+    recoco tasks, you do need to think about synchronization between recoco task
+    and normal threads. Synchronisation is needed to take care manually: use
+    relevant helper function of core object: `callLater`/`raiseLater` or use
+    `schedule_as_coop_task` decorator defined in util.misc on the called
+    function.
+  """
+  # Bind HTTP verbs to UNIFY's API functions
+  request_perm = {'GET': ('ping', 'get_config'),
+                  'POST': ('ping', 'get_config', 'edit_config')}
+  # Statically defined layer component to which this handler is bounded
+  # Need to be set by container class
+  bounded_layer = 'orchestration'
+  # Set special prefix to imitate OpenStack agent API
+  static_prefix = "escape"
+  # Logger. Must define.
+  log = log.getChild("Sl-Or-API")
+  # Name mapper to avoid Python naming constraint
+  rpc_mapper = {'get-config': "get_config",
+                'edit-config': "edit_config"}
+
+  def __init__ (self, request, client_address, server):
+    """
+    Init.
+    """
+    AbstractRequestHandler.__init__(self, request, client_address, server)
+
+  def ping (self):
+    """
+    For testing REST API aliveness and reachability.
+    """
+    response_body = "OK"
+    self.send_response(200)
+    self.send_header('Content-Type', 'text/plain')
+    self.send_header('Content-Length', len(response_body))
+    self.send_REST_headers()
+    self.end_headers()
+    self.wfile.write(response_body)
+
+  def get_config (self):
+    """
+    Response configuration.
+    """
+    log.info("Call REST-API function: get-config")
     config = self._proceed_API_call('api_agent_get_config')
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')
@@ -141,12 +209,11 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     """
     Receive configuration and initiate orchestration.
     """
-    # TODO - implement
-    log.getChild("REST-API").info("Call REST-API function: edit-config")
+    log.info("Call REST-API function: edit-config")
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    log.getChild("REST-API").debug("Parsed NFFG install request: %s" % nffg)
+    log.debug("Parsed NFFG install request: %s" % nffg)
     self._proceed_API_call('api_agent_edit_config', nffg)
     self.send_acknowledge()
 
@@ -185,9 +252,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.resource_orchestrator = ResourceOrchestrator(self)
     if self._nffg_file:
       self._read_json_from_file(self._nffg_file)
-    # if self._agent:
-    #   self._initiate_agent_api()
-    self._initiate_agent_api()
+    # Initiate Agent REST-API if needed
+    if self._agent:
+      self._initiate_agent_api()
+    # Initiate Cf-Or REST-API if needed
+    if self._cfor:
+      self._initiate_cfor_api()
+    # self._initiate_agent_api()
     log.info("Resource Orchestration Sublayer has been initialized!")
 
   def shutdown (self, event):
@@ -201,15 +272,30 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _initiate_agent_api (self):
     """
-    Initialize and se tup REST API in a different thread.
+    Initialize and setup REST API in a different thread.
 
     :return: None
     """
     # set bounded layer name here to avoid circular dependency problem
     handler = CONFIG.get_ros_agent_class()
     handler.bounded_layer = self._core_name
+    # can override from global config
     handler.prefix = CONFIG.get_ros_agent_prefix()
     self.agent_api = RESTServer(handler, *CONFIG.get_ros_agent_address())
+    self.agent_api.start()
+
+  def _initiate_cfor_api (self):
+    """
+    Initialize and se tup REST API in a different thread.
+
+    :return: None
+    """
+    # set bounded layer name here to avoid circular dependency problem
+    handler = CONFIG.get_cfor_api_class()
+    handler.bounded_layer = self._core_name
+    # can override from global config
+    handler.prefix = CONFIG.get_cfor_api_prefix()
+    self.agent_api = RESTServer(handler, *CONFIG.get_cfor_api_address())
     self.agent_api.start()
 
   def _handle_NFFGMappingFinishedEvent (self, event):
@@ -256,6 +342,30 @@ class ResourceOrchestrationAPI(AbstractAPI):
     event = InstantiateNFFGEvent(nffg=nffg)
     event.source = self.RemoteROSEventHelper
     self._handle_InstantiateNFFGEvent(event=event)
+
+  ##############################################################################
+  # Cf-Or API functions starts here
+  ##############################################################################
+
+  def api_cfor_get_config (self):
+    """
+    Implementation of Cf-Or REST-API RPC: get-config.
+
+    :return: dump of global view (DoV)
+    :rtype: str
+    """
+    # TODO
+    pass
+
+  def api_cfor_edit_config (self, nffg):
+    """
+    Implementation of Cf-Or REST-API RPC: edit-config
+
+    :param nffg: NFFG need to deploy
+    :type nffg: :any:`NFFG`
+    """
+    # TODO
+    pass
 
   ##############################################################################
   # UNIFY Sl- Or API functions starts here

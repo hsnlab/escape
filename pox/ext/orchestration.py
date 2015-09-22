@@ -39,7 +39,7 @@ def _start_layer (event):
 
 
 @poxutil.eval_args
-def launch (nffg_file='', standalone=False, agent=False):
+def launch (nffg_file='', standalone=False, agent=False, cfor=False):
   """
   Launch function called by POX core when core is up.
 
@@ -48,6 +48,8 @@ def launch (nffg_file='', standalone=False, agent=False):
   :param standalone: Run layer without dependency checking (optional)
   :type standalone: bool
   :param agent: start a REST API and act like an agent
+  :type agent: bool
+  :param agent: start a REST API for the Cf-Or interface
   :type agent: bool
   :return: None
   """

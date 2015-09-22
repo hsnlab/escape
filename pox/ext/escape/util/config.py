@@ -474,3 +474,42 @@ class ESCAPEConfig(object):
               self.__configuration[SERVICE]["REST-API"]['port'])
     except KeyError:
       return None
+
+  def get_cfor_api_class (self):
+    """
+    Return with the request handler class of Cf-Or REST API.
+
+    :return: REST API class
+    :rtype: :any:`AbstractRequestHandler`
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[ORCHEST]["Cf-Or"]['module']),
+        self.__configuration[ORCHEST]["Cf-Or"]['class'], None)
+    except KeyError:
+      return None
+
+  def get_cfor_api_prefix (self):
+    """
+    Return the REST API prefix for Cf-Or request handler.
+
+    :return: prefix
+    :rtype: str
+    """
+    try:
+      return self.__configuration[ORCHEST]["Cf-Or"]['prefix']
+    except KeyError:
+      return None
+
+  def get_cfor_api_address (self):
+    """
+    Return the REST API (address, port) for Cf-Or REST server.
+
+    :return: address and port
+    :rtype: tuple
+    """
+    try:
+      return (self.__configuration[ORCHEST]["Cf-Or"]['address'],
+              self.__configuration[ORCHEST]["Cf-Or"]['port'])
+    except KeyError:
+      return None

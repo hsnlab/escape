@@ -106,7 +106,7 @@ class Interactive (object):
 
     import code
     import sys
-    sys.ps1 = "POX> "
+    sys.ps1 = "ESCAPE> "
     sys.ps2 = " ... "
     self.running = True
     code.interact('Ready.', local=self.variables)

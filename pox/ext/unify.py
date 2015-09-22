@@ -48,7 +48,7 @@ def _start_components (event):
   # Launch Resource Orchestration Sublayer (ROS)
   from orchestration import launch
 
-  launch(agent=init_param['agent'])
+  launch(agent=init_param['agent'], cfor=init_param['cfor'])
   if not init_param['agent']:
     # Launch Service Layer (mostly SAS)
     from service import launch
@@ -58,7 +58,7 @@ def _start_components (event):
 
 @poxutil.eval_args
 def launch (sg_file='', config=None, gui=False, agent=False, full=False,
-     debug=True):
+            debug=True, cfor=False):
   """
   Launch function called by POX core when core is up.
 

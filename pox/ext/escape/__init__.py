@@ -54,12 +54,18 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                         "THREADED": False},
                            "AGENT": {"module": "escape.orchest.ros_API",
                                      "class": "ROSAgentRequestHandler",
-                                     "address": "0.0.0.0", "port": 8888,
-                                     "prefix": "escape"}},
+                                     "prefix": "escape",
+                                     "address": "0.0.0.0",
+                                     "port": 8888},
+                           "Cf-Or": {"module": "escape.orchest.ros_API",
+                                     "class": "CfOrRequestHandler",
+                                     "prefix": "cfor",
+                                     "address": "0.0.0.0",
+                                     "port": 8889}},
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK", "UN"],
-                        # "DEFAULTS": [],
+                        # "DEFAULTS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
+                        "DEFAULTS": [],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.adapters",
                                          "class": "InternalPOXAdapter",
