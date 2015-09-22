@@ -1858,7 +1858,7 @@ class NFFGConverter(object):
       # than one port
       discovered_nfs = []
       # Check in infra is exist in the Virtualizer
-      if str(infra.id) not in virtualizer.nodes.node.getKeys():
+      if str(infra.id) not in virtualizer.nodes.node.keys():
         self.log.warning(
           "InfraNode: %s is not in the Virtualizer! Skip related "
           "initiations..." % infra)
@@ -1873,7 +1873,7 @@ class NFFGConverter(object):
         if nf.id in discovered_nfs:
           continue
         # Check if the NF is exist in the InfraNode
-        if str(v) not in virtualizer.nodes[str(u)].NF_instances.node.getKeys():
+        if str(v) not in virtualizer.nodes[str(u)].NF_instances.node.keys():
           self.log.debug("Found uninitiated NF: %s in mapped NFFG" % nf)
           # Convert Resources to str for XML conversion
           v_nf_cpu = str(
@@ -1930,7 +1930,7 @@ class NFFGConverter(object):
           # Check if the src port is a physical or virtual port
           in_port = fr[0].split('=')[1]
           if str(port.id) in virtualizer.nodes[
-            str(infra.id)].ports.port.getKeys():
+            str(infra.id)].ports.port.keys():
             # Flowrule in_port is a phy port in Infra Node
             in_port = virtualizer.nodes[str(infra.id)].ports[str(port.id)]
             self.log.debug(
@@ -1973,7 +1973,7 @@ class NFFGConverter(object):
           # Check if the dst port is a physical or virtual port
           out_port = fr[0].split('=')[1]
           if str(out_port) in virtualizer.nodes[
-            str(infra.id)].ports.port.getKeys():
+            str(infra.id)].ports.port.keys():
             # Flowrule output is a phy port in Infra Node
             out_port = virtualizer.nodes[str(infra.id)].ports[str(out_port)]
             self.log.debug(
