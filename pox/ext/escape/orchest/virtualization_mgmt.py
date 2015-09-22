@@ -324,3 +324,20 @@ class VirtualizerManager(EventMixin):
     # Requesting a reference to DoV and create the trivial 1 Bis-Bis virtual
     # view
     return SingleBiSBiSVirtualizer(self.dov, id)
+
+  def generate_single_view (self, id):
+    """
+    Generate a Single BiSBiS virtualizer, store and return with it.
+
+    :param id: unique virtualizer id
+    :type id: int or str
+    :return: generated Virtualizer
+    :rtype: :any:`SingleBiSBiSVirtualizer`
+    """
+    if id in self._virtualizers:
+      log.warning(
+        "Requested Single BiS-BiS Virtualizer with ID: %s is already exist! "
+        "Virtualizer creation skipped..." % id)
+    else:
+      self._virtualizers[id] = SingleBiSBiSVirtualizer(self.dov, id)
+    return self._virtualizers[id]

@@ -286,7 +286,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _initiate_cfor_api (self):
     """
-    Initialize and se tup REST API in a different thread.
+    Initialize and setup REST API in a different thread.
 
     :return: None
     """
@@ -295,8 +295,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.bounded_layer = self._core_name
     # can override from global config
     handler.prefix = CONFIG.get_cfor_api_prefix()
-    self.agent_api = RESTServer(handler, *CONFIG.get_cfor_api_address())
-    self.agent_api.start()
+    self.cfor_api = RESTServer(handler, *CONFIG.get_cfor_api_address())
+    self.cfor_api.start()
 
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
@@ -320,11 +320,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of global view (DoV)
     :rtype: str
     """
+    log.getChild('API').info("Generate Single BiSBiS topo description...")
     dov = self.resource_orchestrator.virtualizerManager.dov
     if dov is not None:
       return dov.get_resource_info().dump()
 
-  class RemoteROSEventHelper(object):
+  class InstallEventHelper(object):
     """
     Helper class for emulating event.
     """
@@ -340,7 +341,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.getChild('API').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
     event = InstantiateNFFGEvent(nffg=nffg)
-    event.source = self.RemoteROSEventHelper
+    event.source = self.InstallEventHelper
     self._handle_InstantiateNFFGEvent(event=event)
 
   ##############################################################################
@@ -351,11 +352,17 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     Implementation of Cf-Or REST-API RPC: get-config.
 
-    :return: dump of global view (DoV)
+    :return: dump of a single BiSBiS view based on DoV
     :rtype: str
     """
-    # TODO
-    pass
+    # Request SingleBiSBiS for Cf-Or interface
+    if "CfOr" in self.resource_orchestrator.virtualizerManager._virtualizers:
+      view = self.resource_orchestrator.virtualizerManager.get_virtual_view(
+        "CfOr")
+    else:
+      view = self.resource_orchestrator.virtualizerManager.generate_single_view(
+        "CfOr")
+    return view.get_resource_info().dump()
 
   def api_cfor_edit_config (self, nffg):
     """
@@ -364,8 +371,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :param nffg: NFFG need to deploy
     :type nffg: :any:`NFFG`
     """
-    # TODO
-    pass
+    log.getChild('API').info("Invoke install_nffg on %s with SG: %s " % (
+      self.__class__.__name__, nffg))
+    event = InstantiateNFFGEvent(nffg=nffg)
+    event.source = self.InstallEventHelper
+    self._handle_InstantiateNFFGEvent(event=event)
 
   ##############################################################################
   # UNIFY Sl- Or API functions starts here
