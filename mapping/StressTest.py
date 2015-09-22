@@ -113,13 +113,15 @@ if __name__ == '__main__':
   network = CarrierTopoBuilder.getCarrierTopo( topoparams )
   test_lvl = 10
   max_test_lvl = sys.maxint
+  ever_successful = False
   try:
     while test_lvl < max_test_lvl:
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
         request = generateRequestForCarrierTopo(topoparams, test_lvl, 1)
         # print request.dump()
-        MappingAlgorithms.MAP(request, network)
+        MappingAlgorithms.MAP(request, network, enable_shortest_path_cache=True)
+        ever_successful = True
         test_lvl = int(2 * test_lvl)
         log.debug("Mapping successful!")
       except uet.MappingException as me:
@@ -131,5 +133,8 @@ if __name__ == '__main__':
   except Exception as e:
     print traceback.format_exc()
   print "First unsuccessful mapping was at %s test level."%test_lvl
-  print "Last successful was at %s test level."%int(test_lvl/2.0)
+  if ever_successful:
+    print "Last successful was at %s test level."%int(test_lvl/2.0)
+  else:
+    print "Mapping failed at starting test level (%s)"%test_lvl
 

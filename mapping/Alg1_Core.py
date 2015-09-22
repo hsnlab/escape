@@ -41,7 +41,7 @@ except ImportError:
 
 
 class CoreAlgorithm(object):
-  def __init__ (self, net0, req0, chains0):
+  def __init__ (self, net0, req0, chains0, cache_shortest_path):
     self.log = helper.log.getChild(self.__class__.__name__)
 
     self.log.info("Initializing algorithm variables")
@@ -51,6 +51,7 @@ class CoreAlgorithm(object):
     # needed for reset()
     self.net0 = copy.deepcopy(net0)
     self.original_chains = chains0
+    self.enable_shortest_path_cache = cache_shortest_path
     
     # parameters contolling the backtrack process
     # how many of the best possible VNF mappings should be remembered
@@ -90,7 +91,7 @@ class CoreAlgorithm(object):
     self.preprocessor = GraphPreprocessor.GraphPreprocessorClass(net0, req0,
                                                                  chains0,
                                                                  self.manager)
-    self.net = self.preprocessor.processNetwork()
+    self.net = self.preprocessor.processNetwork(self.enable_shortest_path_cache)
     self.req, chains_with_subgraphs = self.preprocessor.processRequest(
       self.net)
     self.bt_handler = backtrack.BacktrackHandler(chains_with_subgraphs, 
@@ -412,8 +413,9 @@ class CoreAlgorithm(object):
       if self.net.node[map_target].type == 'INFRA' and self.net.node[
         map_target].supported is not None:
         
-        for supp in self.net.node[map_target].supported:
+        """for supp in self.net.node[map_target].supported:
           self.log.debug(" ".join((map_target,"has supported type: ",supp)))
+        """
                          
         if self.req.node[vnf_id].functional_type in self.net.node[
           map_target].supported:
@@ -462,7 +464,8 @@ class CoreAlgorithm(object):
                     except IndexError:
                       break
             else:
-              self.log.debug("Host %s doesn't have enough resource."%map_target)
+              self.log.debug("Host %s is not a good candidate for hosting %s."
+                             %(map_target,vnf_id))
     try:
       best_node_sofar = best_node_que.pop()
       self.bt_handler.addBacktrackLevel(cid, best_node_que)
@@ -832,14 +835,6 @@ class CoreAlgorithm(object):
               # possibilities.
               raise
             else:
-              """
-              c, bt_record, link_mapping_rec = \
-                 self.bt_handler.getCurrentlyMappedBacktrackRecord()
-              if link_mapping_rec is not None:
-                self._resolveLinkMappingRecord(c, link_mapping_rec)
-              # use bt_record to restore networks state 
-              self._resolveBacktrackRecord(c, bt_record)
-              """
               c, sub, bt_record, link_bt_rec_list = \
                  self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph([])
               for c_prime, prev_bt_rec, link_mapping_rec in link_bt_rec_list:
