@@ -56,15 +56,15 @@ class VirtualizationService(RequestHandler):
       LOG.debug('ping received')
       self.write('OK')
 
-    elif rpc == 'topology-resource':
-      LOG.debug('topology-resource received')
+    elif rpc == 'get-config':
+      LOG.debug('get-config received')
       with open(CONFIG_FILE) as f:
         nffg = NFFG.parse(f.read())
         nffg.duplicate_static_links()
         self.write(nffg.dump())
       return
 
-    elif rpc == 'install-nffg':
+    elif rpc == 'edit-config':
       # parse body if it contains a Nf-fg:
       nffg = None
       if self.request.body:
@@ -72,7 +72,7 @@ class VirtualizationService(RequestHandler):
       if nffg is None:
         self.send_error(400)
         return
-      LOG.debug('Edit-config received: %s', nffg.dump())
+      LOG.debug('edit-config received: %s', nffg.dump())
       return
     else:
       self.set_status(404)

@@ -331,7 +331,7 @@ class ControllerAdapter(object):
       if domain_mgr in self.domains.initiated:
         log.debug("Delegate splitted part: %s to %s domain manager..." % (
           part, domain_mgr))
-        self.domains[domain_mgr].edit_config(part)
+        self.domains[domain_mgr].install_nffg(part)
       else:
         log.warning(
           "Domain manager associated to domain: %s is not initiated! Skip "
