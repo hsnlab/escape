@@ -904,7 +904,7 @@ def generate_mn_test_req ():
   test.add_sglink(sap2.ports[1], fwd.add_port(1), id=4)
   test.add_sglink(fwd.ports[1], sap1.ports[1], id=5)
 
-  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20, 
+  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20,
                sg_path=(1, 2, 3))
   test.add_req(sap2.ports[1], sap1.ports[1], bandwidth=4, delay=20,
                sg_path=(4, 5))
@@ -1334,10 +1334,9 @@ class NFFGToolBox(object):
       for node_id in nffg_part.network.nodes():
         if len(nffg_part.network.neighbors(node_id)) > 0:
           continue
-        log.warning("Found orphaned node: %s! Remove from sliced part." %
-                    nffg_part.network.node[node_id])
+        print "Found orphaned node: %s! Remove from sliced part." % \
+              nffg_part.network.node[node_id]
         nffg_part.network.remove_node(node_id)
-
     # Return with the splitted parts
     return splitted_parts
 
