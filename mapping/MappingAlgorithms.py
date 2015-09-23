@@ -46,10 +46,16 @@ import UnifyExceptionTypes as uet
 alg = None
 
 
-def MAP (request, network, enable_shortest_path_cache = False):
+def MAP (request, network, full_remap = False, 
+         enable_shortest_path_cache = False):
   """
   The parameters are NFFG classes.
   Calculates service chain requirements from EdgeReq classes.
+  enable_shortest_path_cache: whether we should store the calculated shortest 
+  paths in a file for later usage.
+  full_remap: whether the resources of the VNF-s contained in the resource
+  NFFG be subtracted and deleted or just deleted from the resource NFFG 
+  before mapping.
   """
   # EdgeReqs don`t specify exactly on which paths the requirement should hold
   # suppose we need it on all paths.
@@ -158,7 +164,8 @@ def MAP (request, network, enable_shortest_path_cache = False):
 
 
   # create the class of the algorithm
-  alg = CoreAlgorithm(network, request, chainlist, enable_shortest_path_cache)
+  alg = CoreAlgorithm(network, request, chainlist, full_remap,
+                      enable_shortest_path_cache)
   mappedNFFG = alg.start()
 
   # put the EdgeReqs back to the mappedNFFG for the lower layer
@@ -414,12 +421,12 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../pox/escape-mn-req.nffg', "r") as f:
+    with open('../pox/escape-mn-req-update.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('../pox/escape-mn-topo.nffg', "r") as g:
+    with open('../pox/escape-mn-mapped-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
-      net.duplicate_static_links()
-    mapped = MAP(req, net)
+      # net.duplicate_static_links()
+    mapped = MAP(req, net, full_remap = True)
     # print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
