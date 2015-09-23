@@ -46,7 +46,7 @@ import UnifyExceptionTypes as uet
 alg = None
 
 
-def MAP (request, network):
+def MAP (request, network, enable_shortest_path_cache = False):
   """
   The parameters are NFFG classes.
   Calculates service chain requirements from EdgeReq classes.
@@ -158,7 +158,7 @@ def MAP (request, network):
 
 
   # create the class of the algorithm
-  alg = CoreAlgorithm(network, request, chainlist)
+  alg = CoreAlgorithm(network, request, chainlist, enable_shortest_path_cache)
   mappedNFFG = alg.start()
 
   # put the EdgeReqs back to the mappedNFFG for the lower layer
