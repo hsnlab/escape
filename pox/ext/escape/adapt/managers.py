@@ -94,6 +94,7 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     # FIXME - SIGCOMM
+    self.portmap.clear()
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
     nffg_part.clear_links(NFFG.TYPE_LINK_SG)
@@ -118,11 +119,21 @@ class InternalDomainManager(AbstractDomainManager):
         continue
       # Iter over the NFs connected the actual INFRA
       for nf in nffg_part.running_nfs(infra.id):
-        # NF with id is already deployed --> continue
-        if nf.id in self.internal_topo.nfs:
+        # NF with id is already deployed --> change the dynamic port to
+        # static and continue
+        if nf.id in (nf.id for nf in self.internal_topo.nfs):
           log.debug(
             "NF: %s has already been initiated. Continue to next NF..." %
             nf.short_name)
+          for u, v, link in nffg_part.network.out_edges_iter([nf.id],
+                                                             data=True):
+            dyn_port = nffg_part[v].ports[link.dst.id]
+            for x, y, l in mn_topo.network.out_edges_iter([nf.id],
+                                                          data=True):
+              if l.src.id == link.src.id:
+                self.portmap[dyn_port.id] = l.dst.id
+                dyn_port.id = l.dst.id
+                break
           continue
         # Extract the initiation params
         params = {'nf_type': nf.functional_type,
