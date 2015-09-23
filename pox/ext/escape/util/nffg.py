@@ -154,6 +154,11 @@ class NFFG(AbstractNFFG):
   TYPE_LINK_DYNAMIC = Link.DYNAMIC
   TYPE_LINK_SG = Link.SG
   TYPE_LINK_REQUIREMENT = Link.REQUIREMENT
+  # Operations
+  OPERATION_ADD = Element.ADD
+  OPERATION_DEL = Element.DEL
+  OPERATION_MOD = Element.MOD
+  OPERATION_MOV = Element.MOV
 
   def __init__ (self, id=None, name=None, version="1.0"):
     """

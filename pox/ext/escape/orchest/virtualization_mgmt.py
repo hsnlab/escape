@@ -204,7 +204,7 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     print infra_count
     link_count = reduce(lambda a, b: a + 1, dov.links, 0)
     print link_count
-    
+
     # Maximum usable/reducible amount of bw to avoid false negative mapping
     # errors
     sbb.resources.bandwidth = max_bw * (infra_count + link_count)
