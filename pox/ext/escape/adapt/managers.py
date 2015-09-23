@@ -79,9 +79,7 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     log.info("Install %s domain part..." % self.name)
-    # print nffg_part.dump()
     self._deploy_nfs(nffg_part=nffg_part)
-    # TODO ... VNF initiation etc.
     self._deploy_flowrules(nffg_part=nffg_part)
 
   def _deploy_nfs (self, nffg_part):

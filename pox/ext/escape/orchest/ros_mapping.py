@@ -75,7 +75,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     except:
       log.error("Got unexpected error during mapping process! Cause:\n%s" %
                 sys.exc_info()[0])
-      raise
+      # raise
+      return
     log.debug(
       "Mapping algorithm: %s is finished on NF-FG: %s" % (cls.__name__, graph))
     return mapped_nffg
