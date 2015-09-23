@@ -449,7 +449,7 @@ class GraphPreprocessorClass(object):
 
     return self.req_graph, divided_chains_with_graphs
 
-  def processNetwork (self, cache_shortest_path):
+  def processNetwork (self, full_remap, cache_shortest_path):
     """
     Computes link weights. Removes mapped VNFs from the substrate
     network, and calculates the available resources of the Infra node,
@@ -459,6 +459,19 @@ class GraphPreprocessorClass(object):
     """
     net = copy.deepcopy(self.network)
 
+    # delete the ports which connect the to be deleted VNF-s to the Infras.
+    for link in net.links:
+      if link.type == link.DYNAMIC:
+        if link.src is not None:
+          if link.src.node.type == 'INFRA':
+            link.src.node.del_port(link.src.id)
+
+    # REQUEST or SG links between SAPs are not removed anywhere else
+    for i,j,link in net.network.edges_iter(data=True):
+      if link.src.node.type == 'SAP' and link.dst.node.type == 'SAP' \
+           and link.type != 'STATIC':
+        net.del_edge(link.src, link.dst, link.id)
+          
     # add available res attribute to all Infras and subtract the running
     # NFs` resources from the given max res
     for n in net.infras:
@@ -469,19 +482,19 @@ class GraphPreprocessorClass(object):
         # we should also know how many links are mapped, now we subtract
         # only the VNF`s internal bandwidth requirement from the infra`s
         # bandwidth capacity
-        try: 
-          newres = helper.subtractNodeRes(net.network.node[n.id].availres,
-                                          net.network.node[vnf.id].resources,
-                                          net.network.node[n.id].resources)
-        except uet.InternalAlgorithmException:
-          raise uet.BadInputException(
-            "Infra node`s resources are expected to represent its maximal "
-            "capabilities.", "The NodeNF(s) running on Infra node %s, use(s)"
-            "more resource than the maximal." % n.name)
+        if not full_remap:
+          # TODO: in case of full_remap all the flowrules should be deleted.
+          try: 
+            newres = helper.subtractNodeRes(net.network.node[n.id].availres,
+                                            net.network.node[vnf.id].resources,
+                                            net.network.node[n.id].resources)
+          except uet.InternalAlgorithmException:
+            raise uet.BadInputException(
+              "Infra node`s resources are expected to represent its maximal "
+              "capabilities.", "The NodeNF(s) running on Infra node %s, use(s)"
+              "more resource than the maximal." % n.name)
         
-        net.network.node[n.id].availres = newres
-        # WARNING: by deleting the VNFs the dynamic links` end port
-        # in the Infra node, remains in the NFFG structure.
+          net.network.node[n.id].availres = newres
         net.del_node(vnf.id)
 
     for i, j, k in net.network.edges_iter(keys=True):
@@ -490,7 +503,7 @@ class GraphPreprocessorClass(object):
         raise uet.BadInputException(
           "After removing the NodeNFs from the substrate NFFG, "
           "there shouldn`t be DYNAMIC, SG or REQUIREMENT links left in "
-          "the network. Link %s between nodes %s and %s is  a %s link" % (
+          "the network.", "Link %s between nodes %s and %s is  a %s link"%(
             k, i, j, net.network[i][j][k].type))
     for n in net.nfs:
       raise uet.BadInputException(

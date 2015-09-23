@@ -41,7 +41,7 @@ except ImportError:
 
 
 class CoreAlgorithm(object):
-  def __init__ (self, net0, req0, chains0, cache_shortest_path):
+  def __init__ (self, net0, req0, chains0, full_remap, cache_shortest_path):
     self.log = helper.log.getChild(self.__class__.__name__)
 
     self.log.info("Initializing algorithm variables")
@@ -52,6 +52,7 @@ class CoreAlgorithm(object):
     self.net0 = copy.deepcopy(net0)
     self.original_chains = chains0
     self.enable_shortest_path_cache = cache_shortest_path
+    self.full_remap = full_remap
     
     # parameters contolling the backtrack process
     # how many of the best possible VNF mappings should be remembered
@@ -77,6 +78,10 @@ class CoreAlgorithm(object):
                             storage=dict(c=0.4, e=2.5),
                             bandwidth=dict(c=0.1, e=10.0))
 
+    # we need to store the original preprocessed NFFG too. with remove VNF-s 
+    # and not STATIC links
+    self.bare_infrastucture_nffg = self.net
+    
     # The networkx graphs from the NFFG should be enough for the core
     # unwrap them, to save one indirection after the preprocessor has
     # finished.
@@ -91,7 +96,8 @@ class CoreAlgorithm(object):
     self.preprocessor = GraphPreprocessor.GraphPreprocessorClass(net0, req0,
                                                                  chains0,
                                                                  self.manager)
-    self.net = self.preprocessor.processNetwork(self.enable_shortest_path_cache)
+    self.net = self.preprocessor.processNetwork(self.full_remap, 
+                                                self.enable_shortest_path_cache)
     self.req, chains_with_subgraphs = self.preprocessor.processRequest(
       self.net)
     self.bt_handler = backtrack.BacktrackHandler(chains_with_subgraphs, 
@@ -711,7 +717,14 @@ class CoreAlgorithm(object):
   def constructOutputNFFG (self):
     # use the unchanged input from the lower layer (deepcopied in the
     # constructor, modify it now)
-    nffg = self.net0
+    if self.full_remap:
+      # use the already preprocessed network we don't need to append the VNF
+      # mappings to the existing VNF mappings
+      nffg = self.bare_infrastucture_nffg
+    else:
+      # the just mapped request should be appended to the one sent by the 
+      # lower layer indicating the already mapped VNF-s.
+      nffg = self.net0
     for vnf, host in self.manager.vnf_mapping:
       # duplicate the object, so the original one is not modified.
       if self.req.node[vnf].type == 'NF':
