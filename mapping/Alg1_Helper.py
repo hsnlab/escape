@@ -64,7 +64,7 @@ def subtractNodeRes (current, substrahend, maximal, link_count=1):
   return current
 
 
-def shortestPathsInLatency (G):
+def shortestPathsInLatency (G, enable_shortest_path_cache):
   """Wrapper function for Floyd`s algorithm to calculate shortest paths
   measured in latency, using also nodes` forwarding latencies.
   Modified source code taken from NetworkX library.
@@ -74,19 +74,20 @@ def shortestPathsInLatency (G):
   # for dist the default is the floating point inf value
   dist = defaultdict(lambda: defaultdict(lambda: float('inf')))
   
-  # try:
-  #   with open("shortest_paths.txt") as sp:
-  #     log.debug("Reading previously calculated shortest paths...")
-  #     for line in sp:
-  #       line = line.split(" ")
-  #       dist[line[0]][line[1]] = float(line[2])
-  #     return dict(dist)
-  # except IOError:
-  #   log.warn("No input shortest_paths.txt found, calculating shortest paths...")
-  # except ValueError:
-  #   raise uet.BadInputException("Bad format in shortest_paths.txt",
-  #                               "In every line: src_id dst_id "
-  #                               "<<float distance in ms>>")
+  if enable_shortest_path_cache:
+    try:
+      with open("shortest_paths.txt") as sp:
+        log.debug("Reading previously calculated shortest paths...")
+        for line in sp:
+          line = line.split(" ")
+          dist[line[0]][line[1]] = float(line[2])
+        return dict(dist)
+    except IOError:
+      log.warn("No input shortest_paths.txt found, calculating shortest paths...")
+    except ValueError:
+      raise uet.BadInputException("Bad format in shortest_paths.txt",
+                                  "In every line: src_id dst_id "
+                                  "<<float distance in ms>>")
   
   for u in G:
     if G.node[u].type != 'SAP':
@@ -112,14 +113,14 @@ def shortestPathsInLatency (G):
   except KeyError as e:
     raise uet.BadInputException(
       "Node attribute missing %s {'delay': VALUE}" % e)
-  
-  # # write calclated paths to output for later use.
-  # log.debug("Saving calculated shorest paths to shortest_paths.txt.")
-  # sp = open("shortest_paths.txt", "w")
-  # for u in G:
-  #   for v in G:
-  #     sp.write(" ".join((u, v, str(dist[u][v]), "\n")))
-  # sp.close()
+  if enable_shortest_path_cache:
+    # write calclated paths to output for later use.
+    log.debug("Saving calculated shorest paths to shortest_paths.txt.")
+    sp = open("shortest_paths.txt", "w")
+    for u in G:
+      for v in G:
+        sp.write(" ".join((u, v, str(dist[u][v]), "\n")))
+    sp.close()
   
   return dict(dist)
 

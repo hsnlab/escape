@@ -449,7 +449,7 @@ class GraphPreprocessorClass(object):
 
     return self.req_graph, divided_chains_with_graphs
 
-  def processNetwork (self):
+  def processNetwork (self, cache_shortest_path):
     """
     Computes link weights. Removes mapped VNFs from the substrate
     network, and calculates the available resources of the Infra node,
@@ -498,7 +498,8 @@ class GraphPreprocessorClass(object):
         "This NodeNF probably isn`t mapped anywhere")
 
     self.log.debug("Calculating shortest paths...")
-    self.shortest_paths = helper.shortestPathsInLatency(net.network)
+    self.shortest_paths = helper.shortestPathsInLatency(net.network, 
+                                                        cache_shortest_path)
     self.manager.addShortestRoutesInLatency(self.shortest_paths)
     self.log.debug("Shortest path calculation completed!")
 
