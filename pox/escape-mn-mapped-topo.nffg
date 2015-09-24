@@ -96,34 +96,37 @@
           "id": 1,
           "flowrules": [
             {
+              "id": 140310838299728,
               "match": "in_port=1;TAG=sap1-comp-1",
-              "action": "output=139740777115920;UNTAG"
+              "action": "output=140310838297040;UNTAG"
             }
           ]
         },
         {
-          "id": 139740777116112,
+          "id": 140310838296848,
           "flowrules": [
             {
-              "match": "in_port=139740777116112",
-              "action": "output=139740777117008"
+              "id": 140310838299024,
+              "match": "in_port=140310838296848",
+              "action": "output=140310838297680"
             }
           ]
         },
         {
-          "id": 139740777115920
+          "id": 140310838297040
         },
         {
-          "id": 139740777116816,
+          "id": 140310838297488,
           "flowrules": [
             {
-              "match": "in_port=139740777116816",
+              "id": 140310838299472,
+              "match": "in_port=140310838297488",
               "action": "output=1;TAG=decomp-sap2-3"
             }
           ]
         },
         {
-          "id": 139740777117008
+          "id": 140310838297680
         }
       ],
       "domain": "INTERNAL",
@@ -149,6 +152,7 @@
           "id": 1,
           "flowrules": [
             {
+              "id": 140310838298576,
               "match": "in_port=1;TAG=fwd-sap1-5",
               "action": "output=2"
             }
@@ -158,6 +162,7 @@
           "id": 2,
           "flowrules": [
             {
+              "id": 140310838299344,
               "match": "in_port=2;TAG=decomp-sap2-3",
               "action": "output=3;UNTAG"
             }
@@ -167,6 +172,7 @@
           "id": 3,
           "flowrules": [
             {
+              "id": 140310838299920,
               "match": "in_port=3",
               "action": "output=1;TAG=sap2-fwd-4"
             }
@@ -191,6 +197,7 @@
           "id": 1,
           "flowrules": [
             {
+              "id": 140310838299216,
               "match": "in_port=1;TAG=decomp-sap2-3",
               "action": "output=2"
             }
@@ -200,6 +207,7 @@
           "id": 2,
           "flowrules": [
             {
+              "id": 140310838298704,
               "match": "in_port=2;TAG=fwd-sap1-5",
               "action": "output=3;UNTAG"
             }
@@ -209,6 +217,7 @@
           "id": 3,
           "flowrules": [
             {
+              "id": 140310838299664,
               "match": "in_port=3",
               "action": "output=1;TAG=sap1-comp-1"
             }
@@ -230,22 +239,24 @@
           "id": 1,
           "flowrules": [
             {
+              "id": 140310838299984,
               "match": "in_port=1;TAG=sap2-fwd-4",
-              "action": "output=139740777117648;UNTAG"
+              "action": "output=140310838298320;UNTAG"
             }
           ]
         },
         {
-          "id": 139740777117456,
+          "id": 140310838298128,
           "flowrules": [
             {
-              "match": "in_port=139740777117456",
+              "id": 140310838298832,
+              "match": "in_port=140310838298128",
               "action": "output=1;TAG=fwd-sap1-5"
             }
           ]
         },
         {
-          "id": 139740777117648
+          "id": 140310838298320
         }
       ],
       "domain": "INTERNAL",
@@ -275,44 +286,44 @@
       "bandwidth": 10
     },
     {
-      "id": 139740777117584,
+      "id": 140310838298256,
       "src_node": "fwd",
       "src_port": 1,
       "dst_node": "EE2",
-      "dst_port": 139740777117456
+      "dst_port": 140310838298128
     },
     {
-      "id": 139740777117776,
+      "id": 140310838298448,
       "src_node": "fwd",
       "src_port": 1,
       "dst_node": "EE2",
-      "dst_port": 139740777117648
+      "dst_port": 140310838298320
     },
     {
-      "id": 139740777115984,
+      "id": 140310838296976,
       "src_node": "comp",
       "src_port": 1,
       "dst_node": "EE1",
-      "dst_port": 139740777116112
+      "dst_port": 140310838296848
     },
     {
-      "id": 139740777115792,
+      "id": 140310838297168,
       "src_node": "comp",
       "src_port": 1,
       "dst_node": "EE1",
-      "dst_port": 139740777115920
+      "dst_port": 140310838297040
     },
     {
-      "id": 139740777116048,
+      "id": 140310838296912,
       "src_node": "EE1",
-      "src_port": 139740777116112,
+      "src_port": 140310838296848,
       "dst_node": "comp",
       "dst_port": 1
     },
     {
-      "id": 139740777115856,
+      "id": 140310838297104,
       "src_node": "EE1",
-      "src_port": 139740777115920,
+      "src_port": 140310838297040,
       "dst_node": "comp",
       "dst_port": 1
     },
@@ -326,16 +337,16 @@
       "bandwidth": 10
     },
     {
-      "id": 139740777116880,
+      "id": 140310838297552,
       "src_node": "EE1",
-      "src_port": 139740777116816,
+      "src_port": 140310838297488,
       "dst_node": "decomp",
       "dst_port": 1
     },
     {
-      "id": 139740777117072,
+      "id": 140310838297744,
       "src_node": "EE1",
-      "src_port": 139740777117008,
+      "src_port": 140310838297680,
       "dst_node": "decomp",
       "dst_port": 1
     },
@@ -376,18 +387,18 @@
       "bandwidth": 10
     },
     {
-      "id": 139740777116944,
+      "id": 140310838297616,
       "src_node": "decomp",
       "src_port": 1,
       "dst_node": "EE1",
-      "dst_port": 139740777116816
+      "dst_port": 140310838297488
     },
     {
-      "id": 139740777117136,
+      "id": 140310838297808,
       "src_node": "decomp",
       "src_port": 1,
       "dst_node": "EE1",
-      "dst_port": 139740777117008
+      "dst_port": 140310838297680
     },
     {
       "id": "mn-link1-back",
@@ -417,16 +428,16 @@
       "bandwidth": 10
     },
     {
-      "id": 139740777117520,
+      "id": 140310838298192,
       "src_node": "EE2",
-      "src_port": 139740777117456,
+      "src_port": 140310838298128,
       "dst_node": "fwd",
       "dst_port": 1
     },
     {
-      "id": 139740777117712,
+      "id": 140310838298384,
       "src_node": "EE2",
-      "src_port": 139740777117648,
+      "src_port": 140310838298320,
       "dst_node": "fwd",
       "dst_port": 1
     },

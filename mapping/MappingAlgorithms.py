@@ -421,7 +421,7 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../pox/escape-mn-req.nffg', "r") as f:
+    with open('../pox/escape-mn-req-update.nffg', "r") as f:
       req = NFFG.parse(f.read())
     with open('../pox/escape-mn-mapped-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())

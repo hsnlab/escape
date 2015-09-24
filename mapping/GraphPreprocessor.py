@@ -483,7 +483,6 @@ class GraphPreprocessorClass(object):
         # only the VNF`s internal bandwidth requirement from the infra`s
         # bandwidth capacity
         if not full_remap:
-          # TODO: in case of full_remap all the flowrules should be deleted.
           try: 
             newres = helper.subtractNodeRes(net.network.node[n.id].availres,
                                             net.network.node[vnf.id].resources,
@@ -496,6 +495,13 @@ class GraphPreprocessorClass(object):
         
           net.network.node[n.id].availres = newres
         net.del_node(vnf.id)
+
+    # in case of full_remap all the flowrules should be deleted.
+    if full_remap:
+      for n in net.infras:
+        for p in n.ports:
+          for fr in p.flowrules:
+            p.del_flowrule(fr.id)
 
     for i, j, k in net.network.edges_iter(keys=True):
       if net.network[i][j][k].type != 'STATIC':
