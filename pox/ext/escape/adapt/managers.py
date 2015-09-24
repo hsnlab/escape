@@ -605,6 +605,7 @@ class SDNDomainManager(AbstractDomainManager):
       log.info("Install %s domain part..." % self.name)
       # log.info("NFFG:\n%s" % nffg_part.dump())
       log.info("NFFG: %s" % nffg_part)
+      self._delete_flowrules(nffg_part=nffg_part)
       self._deploy_flowrules(nffg_part=nffg_part)
       return True
     except:
