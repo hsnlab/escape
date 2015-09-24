@@ -42,6 +42,7 @@ except ImportError:
   from nffg import NFFG, generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
+import Alg1_Helper as helper
 # object for the algorithm instance
 alg = None
 
@@ -192,10 +193,10 @@ def MAP (request, network, full_remap = False,
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
-  print "\nThe VNF mappings are (vnf_id, node_id):\n", pformat(
-     alg.manager.vnf_mapping)
-  print "\n The link mappings are:\n", pformat(
-     alg.manager.link_mapping.edges(data=True, keys=True))
+  helper.log.debug("The VNF mappings are (vnf_id, node_id): \n%s"%pformat(
+     alg.manager.vnf_mapping))
+  helper.log.debug("The link mappings are: \n%s"%pformat(
+     alg.manager.link_mapping.edges(data=True, keys=True)))
 
   return mappedNFFG
 

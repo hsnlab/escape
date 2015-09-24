@@ -540,5 +540,7 @@ class GraphPreprocessorClass(object):
         net.network.node[n].weight = 1.0 / d.resources['bandwidth']
         self.log.debug(
           "Weight for node %s: %f" % (n, net.network.node[n].weight))
+        self.log.debug("Supported types of node %s: %s"
+                       %(n, net.network.node[n].supported))
     self.log.info("Link and node weights calculated")
     return net
