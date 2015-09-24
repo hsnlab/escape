@@ -18,6 +18,7 @@ connections with entities in the particular domain.
 """
 from escape.adapt.adapters import *
 from escape.util.domain import *
+from pox.lib.util import dpid_to_str
 
 
 class InternalDomainManager(AbstractDomainManager):
@@ -265,8 +266,8 @@ class InternalDomainManager(AbstractDomainManager):
       dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Connection for %s (DPID: %s) is not found! Skip relevant flow rule "
-          "deletions..." % (infra, dpid))
+          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
+          "deletions..." % (infra, dpid_to_str(dpid)))
         continue
       self.controlAdapter.delete_flowrules(infra.id)
 
@@ -309,8 +310,8 @@ class InternalDomainManager(AbstractDomainManager):
       dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Connection for %s (DPID: %s) is not found! Skip relevant flow rule "
-          "installations..." % (infra, dpid))
+          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
+          "installations..." % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
@@ -590,8 +591,8 @@ class SDNDomainManager(AbstractDomainManager):
       dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Connection for %s (DPID: %s) is not found! Skip relevant flow rule "
-          "deletions..." % (infra, dpid))
+          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
+          "deletions..." % (infra, dpid_to_str(dpid)))
         continue
 
       self.controlAdapter.delete_flowrules(infra.id)
@@ -632,8 +633,8 @@ class SDNDomainManager(AbstractDomainManager):
       dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Connection for %s (DPID: %s) is not found! Skip relevant flow rule "
-          "installations..." % (infra, dpid))
+          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
+          "installations..." % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:

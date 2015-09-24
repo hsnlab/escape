@@ -425,7 +425,7 @@ class Flowrule(Element):
   Class for storing a flowrule.
   """
   
-  def __init__ (self, id=None, match="", action=""):
+  def __init__ (self, id=None, match="", action="", bandwidth=None):
     """
     Init.
 
@@ -438,27 +438,31 @@ class Flowrule(Element):
     super(Flowrule, self).__init__(id=id, type="FLOWRULE")
     self.match = match  # mandatory
     self.action = action  # mandatory
+    self.bandwidth = bandwidth
   
   def persist (self):
     flowrule = super(Flowrule, self).persist()
     if self.match:
       flowrule['match'] = self.match
     flowrule['action'] = self.action
+    if self.bandwidth:
+      flowrule['bandwidth'] = self.bandwidth
     return flowrule
   
   def load (self, data, *args, **kwargs):
     super(Flowrule, self).load(data=data)
     self.match = data.get('match', "")
     self.action = data.get('action', "")
+    self.bandwidth = data.get('bandwidth')
     return self
   
   def __repr__ (self):
-    return "Flowrule object:\nmatch: %s \naction: %s" % (
-      self.match, self.action)
+    return "Flowrule object:\nmatch: %s \naction: %s \nbandwidth: %s" % (
+      self.match, self.action, self.bandwidth)
   
   def __str__ (self):
-    return "%s(match: %s, action:%s)" % (
-      self.__class__.__name__, self.match, self.action)
+    return "%s(match: %s, action: %s, bw: %s)" % (
+      self.__class__.__name__, self.match, self.action, self.bandwidth)
 
 
 class Port(Element):

@@ -1171,6 +1171,7 @@ def generate_global_req ():
 
   return test
 
+
 def generate_ewsdn_req1 ():
   test = NFFG(id="EWSDN-demo-req1", name="EWSDN-2web-2SAP-req")
   sap1 = test.add_sap(name="SAP1", id="sap1")
@@ -1193,6 +1194,7 @@ def generate_ewsdn_req1 ():
                sg_path=('21', '22'))
 
   return test
+
 
 def generate_ewsdn_req2 ():
   test = NFFG(id="EWSDN-demo-req2", name="EWSDN-2web-1dpi-2SAP-req")
@@ -1228,8 +1230,9 @@ def generate_ewsdn_req2 ():
 
   return test
 
+
 def generate_ewsdn_req3 ():
-  test = NFFG(id="EWSDN-demo-req3", 
+  test = NFFG(id="EWSDN-demo-req3",
               name="EWSDN-2web-1dpi-1comp-1decomp-2SAP-req")
   sap1 = test.add_sap(name="SAP1", id="sap1")
   sap2 = test.add_sap(name="SAP2", id="sap2")
