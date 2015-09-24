@@ -577,7 +577,7 @@ class InfraPort(Port):
     super(InfraPort, self).__init__(node=node, id=id, properties=properties)
     self.flowrules = []
   
-  def add_flowrule (self, match, action, id=None):
+  def add_flowrule (self, match, action, bandwidth=None, id=None):
     """
     Add a flowrule with the given params to the port of an Infrastructure Node.
 
@@ -588,7 +588,7 @@ class InfraPort(Port):
     :return: newly created and stored flowrule
     :rtype: :any:`Flowrule`
     """
-    flowrule = Flowrule(id=id, match=match, action=action)
+    flowrule = Flowrule(id=id, match=match, action=action, bandwidth=bandwidth)
     self.flowrules.append(flowrule)
     return flowrule
   
