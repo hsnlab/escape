@@ -49,13 +49,23 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
   # FIXME - SIGCOMM -
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {'MT1': 0x14c5e0c376e24, 'MT2': 0x14c5e0c376fc6, 'EE1': 0x1,
-                   'EE2': 0x2, 'SW3': 0x3, 'SW4': 0x4, }
-  dpid_to_infra = {0x14c5e0c376e24: 'MT1', 0x14c5e0c376fc6: 'MT2', 0x1: 'EE1',
-                   0x2: 'EE2', 0x3: 'SW3', 0x4: 'SW4'}
-  saps = {'SW3': {'port': '3', 'dl_dst': '00:00:00:00:00:01',
+  infra_to_dpid = {'MT1': 0x11, #0x14c5e0c376e24, 
+                   'MT2': 0x12, #0x14c5e0c376fc6, 
+                   'EE1': 0x1,
+                   'EE2': 0x2, 
+                   'SW3': 0x3, 
+                   'SW4': 0x4, }
+  dpid_to_infra = {0x11: 'MT1', #0x14c5e0c376e24: 'MT1', 
+                   0x12: 'MT2', #0x14c5e0c376fc6: 'MT2', 
+                   0x1: 'EE1',
+                   0x2: 'EE2', 
+                   0x3: 'SW3', 
+                   0x4: 'SW4'}
+  saps = {'SW3': {'port': '3', 
+                  'dl_dst': '00:00:00:00:00:01',
                   'dl_src': '00:00:00:00:00:02'},
-          'SW4': {'port': '3', 'dl_dst': '00:00:00:00:00:02',
+          'SW4': {'port': '3', 
+                  'dl_dst': '00:00:00:00:00:02',
                   'dl_src': '00:00:00:00:00:01'}}
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653):
@@ -182,6 +192,21 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
                                cause=DomainChangedEvent.TYPE.NODE_DOWN,
                                data={"DPID": event.dpid})
     self.raiseEventNoErrors(event)
+
+  def delete_flowrules (self, id):
+    """
+    Delete all flowrules from the first (default) table of an OpenFlow switch.
+
+    :param id: ID of the infra element stored in the NFFG
+    :type id: str
+    :return: None
+    """
+    log.info("Delete flow entries from INFRA %s..." % id)
+    dpid = InternalPOXAdapter.infra_to_dpid[id]
+    con = self.openflow.getConnection(dpid)
+
+    msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
+    con.send(msg)
 
   def install_flowrule (self, id, match, action):
     """
