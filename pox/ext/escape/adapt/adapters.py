@@ -49,22 +49,22 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
   # FIXME - SIGCOMM -
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {'MT1': 0x11, #0x14c5e0c376e24, 
-                   'MT2': 0x12, #0x14c5e0c376fc6, 
+  infra_to_dpid = {'MT1': 0x11,  # 0x14c5e0c376e24,
+                   'MT2': 0x12,  # 0x14c5e0c376fc6,
                    'EE1': 0x1,
-                   'EE2': 0x2, 
-                   'SW3': 0x3, 
+                   'EE2': 0x2,
+                   'SW3': 0x3,
                    'SW4': 0x4, }
-  dpid_to_infra = {0x11: 'MT1', #0x14c5e0c376e24: 'MT1', 
-                   0x12: 'MT2', #0x14c5e0c376fc6: 'MT2', 
+  dpid_to_infra = {0x11: 'MT1',  # 0x14c5e0c376e24: 'MT1',
+                   0x12: 'MT2',  # 0x14c5e0c376fc6: 'MT2',
                    0x1: 'EE1',
-                   0x2: 'EE2', 
-                   0x3: 'SW3', 
+                   0x2: 'EE2',
+                   0x3: 'SW3',
                    0x4: 'SW4'}
-  saps = {'SW3': {'port': '3', 
+  saps = {'SW3': {'port': '3',
                   'dl_dst': '00:00:00:00:00:01',
                   'dl_src': '00:00:00:00:00:02'},
-          'SW4': {'port': '3', 
+          'SW4': {'port': '3',
                   'dl_dst': '00:00:00:00:00:02',
                   'dl_src': '00:00:00:00:00:01'}}
 

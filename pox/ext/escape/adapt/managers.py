@@ -261,7 +261,13 @@ class InternalDomainManager(AbstractDomainManager):
                   "flowrule delete on this Node..." % (
                     infra.short_name, self.name))
         continue
-
+      # Check the OF connection is alive
+      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      if self.controlAdapter.openflow.getConnection(dpid) is None:
+        log.warning(
+          "Connection for %s (DPID: %s) is not found! Skip relevant flow rule "
+          "deletions..." % (infra, dpid))
+        continue
       self.controlAdapter.delete_flowrules(infra.id)
 
   def _deploy_flowrules (self, nffg_part):
@@ -298,6 +304,13 @@ class InternalDomainManager(AbstractDomainManager):
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
                   "flowrule install on this Node..." % (
                     infra.short_name, self.name))
+        continue
+      # Check the OF connection is alive
+      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      if self.controlAdapter.openflow.getConnection(dpid) is None:
+        log.warning(
+          "Connection for %s (DPID: %s) is not found! Skip relevant flow rule "
+          "installations..." % (infra, dpid))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
@@ -553,7 +566,7 @@ class SDNDomainManager(AbstractDomainManager):
     """
     log.info("Install %s domain part..." % self.name)
     # log.info("NFFG:\n%s" % nffg_part.dump())
-    log.info("NFFG:%s" % nffg_part)
+    log.info("NFFG: %s" % nffg_part)
     self._deploy_flowrules(nffg_part=nffg_part)
 
   def _delete_flowrules (self, nffg_part):
@@ -572,6 +585,13 @@ class SDNDomainManager(AbstractDomainManager):
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
                   "flowrule delete on this Node..." % (
                     infra.short_name, self.name))
+        continue
+      # Check the OF connection is alive
+      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      if self.controlAdapter.openflow.getConnection(dpid) is None:
+        log.warning(
+          "Connection for %s (DPID: %s) is not found! Skip relevant flow rule "
+          "deletions..." % (infra, dpid))
         continue
 
       self.controlAdapter.delete_flowrules(infra.id)
@@ -607,6 +627,13 @@ class SDNDomainManager(AbstractDomainManager):
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
                   "flowrule install on this Node..." % (
                     infra.short_name, self.name))
+        continue
+      # Check the OF connection is alive
+      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      if self.controlAdapter.openflow.getConnection(dpid) is None:
+        log.warning(
+          "Connection for %s (DPID: %s) is not found! Skip relevant flow rule "
+          "installations..." % (infra, dpid))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
