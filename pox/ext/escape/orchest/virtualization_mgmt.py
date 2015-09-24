@@ -194,12 +194,20 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
            n.resources.delay is not None)),
       # Minimal available delay value of inter-infra links
       min((l.delay for l in dov.links if l.delay is not None)))
-    sbb.resources.bandwidth = max(
+    max_bw = max(
       # Maximum available bandwidth value of infras in DoV
       max((n.resources.bandwidth for n in dov.infras if
            n.resources.bandwidth is not None)),
       # Maximum available bandwidth value of inter-infra links
       max(l.bandwidth for l in dov.links if l.bandwidth is not None))
+    infra_count = reduce(lambda a, b: a + 1, dov.infras, 0)
+    print infra_count
+    link_count = reduce(lambda a, b: a + 1, dov.links, 0)
+    print link_count
+
+    # Maximum usable/reducible amount of bw to avoid false negative mapping
+    # errors
+    sbb.resources.bandwidth = max_bw * (infra_count + link_count)
     log.debug("Set infra's resources: %s" % sbb.resources)
 
     # Add supported types

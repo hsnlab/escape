@@ -7,6 +7,7 @@ Element classes for NFFG based on ``nffg.yang``.
    escape.util.nffg_elements.NFFGModel
    escape.util.nffg_elements.Persistable
    escape.util.nffg_elements.Element
+   escape.util.nffg_elements.PortContainer
    escape.util.nffg_elements.Node
    escape.util.nffg_elements.Link
    escape.util.nffg_elements.NodeResource

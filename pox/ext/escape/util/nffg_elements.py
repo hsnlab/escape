@@ -28,7 +28,7 @@ class Persistable(object):
   """
   Define general persist function for the whole NFFG structure.
   """
-
+  
   def persist (self):
     """
     Common function to persist the actual element into a plain text format.
@@ -37,7 +37,7 @@ class Persistable(object):
     :rtype: object
     """
     raise NotImplementedError("All NF-FG entity must be persistable!")
-
+  
   def load (self, data, *args, **kwargs):
     """
     Common function to fill self with data from JSON data.
@@ -46,7 +46,7 @@ class Persistable(object):
     :return: self
     """
     raise NotImplementedError("All NF-FG entity must support load function!")
-
+  
   @classmethod
   def parse (cls, data, *args, **kwargs):
     """
@@ -67,8 +67,13 @@ class Element(Persistable):
 
   Contains the common functionality.
   """
-
-  def __init__ (self, id=None, type="ELEMENT"):
+  # Operation constants
+  ADD = "ADD"
+  DEL = "DELETE"
+  MOD = "MODIFIED"
+  MOV = "MOVED"
+  
+  def __init__ (self, id=None, type="ELEMENT", operation=None):
     """
     Init.
 
@@ -81,53 +86,58 @@ class Element(Persistable):
     super(Element, self).__init__()
     self.id = id if id is not None else generate(self)
     self.type = type
-
+    self.operation = operation
+  
   def persist (self):
     # Need to override
-    return super(Element, self).persist()
-
+    element = OrderedDict(id=self.id)
+    if self.operation is not None:
+      element["operation"] = self.operation
+    return element
+  
   def load (self, data, *args, **kwargs):
-    # Need to override
-    return super(Element, self).load(data)
-
+    self.id = data['id']
+    self.operation = data.get("operation")  # optional
+    return self
+  
   def copy (self):
     from copy import deepcopy
     return deepcopy(self)
-
+  
   ##############################################################################
   # dict specific functions
   ##############################################################################
-
+  
   def __getitem__ (self, item):
     if hasattr(self, item):
       return getattr(self, item)
     else:
       raise KeyError(
         "%s object has no key: %s" % (self.__class__.__name__, item))
-
+  
   def __setitem__ (self, key, value):
     if hasattr(self, key):
       return setattr(self, key, value)
     else:
       raise KeyError(
         "%s object has no key: %s" % (self.__class__.__name__, key))
-
+  
   def __contains__ (self, item):
     return hasattr(self, item)
-
+  
   def get (self, item, default=None):
     try:
       return self[item]
     except KeyError:
       return default
-
+  
   def setdefault (self, key, default=None):
     if key not in self:
       self[key] = default
-
+  
   def clear (self):
     raise RuntimeError("This standard dict functions is not supported by NFFG!")
-
+  
   def update (self, dict2):
     raise RuntimeError(
       "This standard dict functions is not supported by NFFG! self:%s dict2: "
@@ -143,38 +153,38 @@ class PortContainer(object):
     ...
     cont["port_id"]
   """
-
+  
   def __init__ (self, container=None):
     self.container = container if container is not None else []
-
+  
   def __getitem__ (self, id):
     for port in self.container:
       if port.id == id:
         return port
     raise KeyError("Port with id: %s is not defined!" % id)
-
+  
   def __iter__ (self):
     return iter(self.container)
-
+  
   def __len__ (self):
     return len(self.container)
-
+  
   def __contains__ (self, item):
     return item in self.container
-
+  
   def append (self, item):
     self.container.append(item)
     return item
-
+  
   def remove (self, item):
     return self.container.remove(item)
-
+  
   def clear (self):
     del self.container[:]
-
+  
   def __str__ (self):
     return str(self.container)
-
+  
   def __repr__ (self):
     return str(self)
 
@@ -190,7 +200,7 @@ class Node(Element):
   SAP = "SAP"
   # Network Function (NF) node --> abstract node represents a virtual function
   NF = "NF"
-
+  
   def __init__ (self, type, id=None, name=None):
     """
     Init.
@@ -206,11 +216,11 @@ class Node(Element):
     super(Node, self).__init__(id=id, type=type)
     self.name = name if name is not None else str(id)  # optional
     self.ports = PortContainer()  # list of Ports
-
+  
   @property
   def short_name (self):
     return self.name if self.name else "id: %s" % self.id
-
+  
   def add_port (self, id=None, properties=None):
     """
     Add a port with the given params to the Node.
@@ -225,7 +235,7 @@ class Node(Element):
     port = Port(node=self, properties=properties, id=id)
     self.ports.append(port)
     return port
-
+  
   def del_port (self, id):
     """
     Remove the port with the given id from the Node.
@@ -240,28 +250,27 @@ class Node(Element):
         del port.node
         return self.ports.remove(port)
       return True
-
+  
   def persist (self):
-    node = OrderedDict(id=self.id)
-    node['id'] = self.id
+    node = super(Node, self).persist()
     if self.name is not None:
       node["name"] = self.name
     ports = [port.persist() for port in self.ports]
     if ports:
       node["ports"] = ports
     return node
-
+  
   def load (self, data, *args, **kwargs):
-    self.id = data['id']
+    super(Node, self).load(data=data)
     self.name = data.get('name')  # optional
     for port in data.get('ports', ()):
       self.add_port(id=port['id'], properties=port.get('property'))
     return self
-
+  
   def __repr__ (self):
     return "<|ID: %s, Type: %s --> %s|>" % (
       self.id, self.type, super(Element, self).__repr__())
-
+  
   def __str__ (self):
     return "%s(id:%s, type:%s)" % (self.__class__.__name__, self.id, self.type)
 
@@ -279,7 +288,7 @@ class Link(Element):
   SG = "SG"
   # Requirement --> virtual link to define constraints between SG elements
   REQUIREMENT = "REQUIREMENT"
-
+  
   def __init__ (self, src=None, dst=None, type=None, id=None):
     """
     Init.
@@ -302,26 +311,26 @@ class Link(Element):
     self.src = src  # mandatory
     # Reference to dst Port object
     self.dst = dst  # mandatory
-
+  
   def persist (self):
-    link = OrderedDict(id=self.id)
+    link = super(Link, self).persist()
     link['src_node'] = self.src.node.id
     link['src_port'] = self.src.id
     link['dst_node'] = self.dst.node.id
     link['dst_port'] = self.dst.id
     return link
-
+  
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
         "Container reference is not given for edge endpoint lookup!")
-    self.id = data['id']
+    super(Link, self).load(data=data)
     self.src = container.get_port(data['src_node'], data['src_port'])
     self.dst = container.get_port(data['dst_node'], data['dst_port'])
     if self.src is None or self.dst is None:
       raise RuntimeError("Edge not found with params: %s !" % data)
     return self
-
+  
   def __repr__ (self):
     return "<|ID: %s, Type: %s, src: %s[%s], dst: %s[%s] --> %s|>" % (
       self.id, self.type, self.src.node.id, self.src.id, self.dst.node.id,
@@ -337,7 +346,7 @@ class NodeResource(Persistable):
   Class for storing resource information for Nodes.
   """
   # YANG: grouping node_resource
-
+  
   def __init__ (self, cpu=None, mem=None, storage=None, delay=None,
                 bandwidth=None):
     """
@@ -363,7 +372,7 @@ class NodeResource(Persistable):
     self.storage = storage
     self.delay = delay
     self.bandwidth = bandwidth
-
+  
   def persist (self):
     res = OrderedDict()
     if self.cpu is not None:
@@ -377,7 +386,7 @@ class NodeResource(Persistable):
     if self.bandwidth is not None:
       res["bandwidth"] = self.bandwidth
     return res
-
+  
   def load (self, data, *args, **kwargs):
     self.cpu = data.get('cpu')
     self.mem = data.get('mem')
@@ -385,38 +394,38 @@ class NodeResource(Persistable):
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
     return self
-
+  
   def __getitem__ (self, item):
     if hasattr(self, item):
       return getattr(self, item)
     else:
       raise KeyError(
         "%s object has no key: %s" % (self.__class__.__name__, item))
-
+  
   def __setitem__ (self, key, value):
     if hasattr(self, key):
       return setattr(self, key, value)
     else:
       raise KeyError(
         "%s object has no key: %s" % (self.__class__.__name__, key))
-
+  
   def __repr__ (self):
     return "Resources of %s:\ncpu: %s\nmem: %s\nstorage: %s\nbandwidth: " \
            "%s\ndelay: %s" % (
              self.__class__.__name__, self.cpu, self.mem, self.storage,
              self.bandwidth, self.delay)
-
+  
   def __str__ (self):
     return "cpu: %s mem: %s storage: %s bandwidth: %s delay: %s" % (
       self.cpu, self.mem, self.storage, self.bandwidth, self.delay)
 
 
-class Flowrule(Persistable):
+class Flowrule(Element):
   """
   Class for storing a flowrule.
   """
-
-  def __init__ (self, match="", action=""):
+  
+  def __init__ (self, id=None, match="", action=""):
     """
     Init.
 
@@ -426,24 +435,27 @@ class Flowrule(Persistable):
     :type action: str
     :return: None
     """
-    super(Flowrule, self).__init__()
+    super(Flowrule, self).__init__(id=id, type="FLOWRULE")
     self.match = match  # mandatory
     self.action = action  # mandatory
-
+  
   def persist (self):
-    flowrule = OrderedDict(match=self.match)
+    flowrule = super(Flowrule, self).persist()
+    if self.match:
+      flowrule['match'] = self.match
     flowrule['action'] = self.action
     return flowrule
-
+  
   def load (self, data, *args, **kwargs):
+    super(Flowrule, self).load(data=data)
     self.match = data.get('match', "")
     self.action = data.get('action', "")
     return self
-
+  
   def __repr__ (self):
     return "Flowrule object:\nmatch: %s \naction: %s" % (
       self.match, self.action)
-
+  
   def __str__ (self):
     return "%s(match: %s, action:%s)" % (
       self.__class__.__name__, self.match, self.action)
@@ -455,7 +467,7 @@ class Port(Element):
   """
   # Port type
   TYPE = "PORT"
-
+  
   def __init__ (self, node, properties=None, id=None):
     """
     Init.
@@ -485,16 +497,16 @@ class Port(Element):
     else:
       raise RuntimeError(
         "Port's properties attribute must be iterable or a string!")
-
+  
   @property
   def node (self):
     # return self.__node()
     return self.__node
-
+  
   @node.deleter
   def node (self):
     del self.__node
-
+  
   def add_property (self, property):
     """
     Add a property or list of properties to the port.
@@ -509,7 +521,7 @@ class Port(Element):
     elif isinstance(property, Iterable):
       self.properties.extend(property)
     return self
-
+  
   def del_property (self, property=None):
     """
     Remove the property from the Port. If no property is given remove all the
@@ -523,19 +535,19 @@ class Port(Element):
       self.properties[:] = []
     else:
       self.properties.remove(property)
-
+  
   def persist (self):
-    port = OrderedDict(id=self.id)
+    port = super(Port, self).persist()
     property = [property for property in self.properties]
     if property:
       port["property"] = property
     return port
-
+  
   def load (self, data, *args, **kwargs):
-    self.id = data['id']
+    super(Port, self).load(data=data)
     for property in data.get('property', ()):
       self.properties.append(property)
-
+  
   def __repr__ (self):
     return "%s(node: %s, id: %s)" % (
       self.__class__.__name__, self.node.id, self.id)
@@ -545,7 +557,7 @@ class InfraPort(Port):
   """
   Class for storing a port of Infra Node and handles flowrules.
   """
-
+  
   def __init__ (self, node, properties=None, id=None):
     """
     Init.
@@ -560,8 +572,8 @@ class InfraPort(Port):
     """
     super(InfraPort, self).__init__(node=node, id=id, properties=properties)
     self.flowrules = []
-
-  def add_flowrule (self, match, action):
+  
+  def add_flowrule (self, match, action, id=None):
     """
     Add a flowrule with the given params to the port of an Infrastructure Node.
 
@@ -572,14 +584,17 @@ class InfraPort(Port):
     :return: newly created and stored flowrule
     :rtype: :any:`Flowrule`
     """
-    flowrule = Flowrule(match=match, action=action)
+    flowrule = Flowrule(id=id, match=match, action=action)
     self.flowrules.append(flowrule)
     return flowrule
-
-  def del_flowrule (self, match, action):
+  
+  def del_flowrule (self, id=None, match=None, action=None):
     """
-    Remove the first flowrule with the given parameters from the Port.
+    Remove the flowrule with the given id or all flowrules which match the given
+    action/match parameters.
 
+    :param id: flowrule id
+    :type id: int or str
     :param match: matching rule
     :type match: str
     :param action: forwarding action
@@ -587,20 +602,31 @@ class InfraPort(Port):
     :return: the actual FlowRule is found and removed or not
     :rtype: bool
     """
-    for f in self.flowrules:
-      if f.match == match and f.action == action:
+    if id is not None:
+      for f in self.flowrules:
+        if f.id == id:
+          self.flowrules.remove(f)
+          return True
+    else:
+      deletable = []
+      ret = False
+      for f in self.flowrules:
+        if f.match == match or f.action == action:
+          deletable.append(f)
+      for f in deletable:
         self.flowrules.remove(f)
-        return True
-
+        ret = True
+      return ret
+  
   def persist (self):
     port = super(InfraPort, self).persist()
     flowrules = [f.persist() for f in self.flowrules]
     if flowrules:
       port["flowrules"] = flowrules
     return port
-
+  
   def load (self, data, *args, **kwargs):
-    super(InfraPort, self).load(data)
+    super(InfraPort, self).load(data=data)
     for flowrule in data('flowrules', ()):
       self.add_flowrule(match=flowrule.get('match'),
                         action=flowrule.get('action'))
@@ -614,7 +640,7 @@ class NodeNF(Node):
   """
   Network Function (NF) nodes in the graph.
   """
-
+  
   def __init__ (self, id=None, name=None, func_type=None, dep_type=None,
                 res=None):
     """
@@ -634,7 +660,7 @@ class NodeNF(Node):
     self.deployment_type = dep_type
     self.resources = res if res is not None else NodeResource()
     # container
-
+  
   def persist (self):
     node = super(NodeNF, self).persist()
     if self.functional_type is not None:
@@ -648,16 +674,16 @@ class NodeNF(Node):
     if specification:
       node["specification"] = specification
     return node
-
+  
   def load (self, data, *args, **kwargs):
-    super(NodeNF, self).load(data)
+    super(NodeNF, self).load(data=data)
     self.functional_type = data.get('functional_type')
     if 'specification' in data:
       self.deployment_type = data['specification'].get('deployment_type')
       if 'resources' in data['specification']:
         self.resources.load(data['specification']['resources'])
     return self
-
+  
   def __str__ (self):
     return "%s(id:%s, type:%s)" % (
       self.__class__.__name__, self.id, self.functional_type)
@@ -667,26 +693,26 @@ class NodeSAP(Node):
   """
   Class for SAP nodes in the NF-FG.
   """
-
+  
   def __init__ (self, id=None, name=None, domain=None):
     super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name)
     # Signals if the SAP is an inter-domain SAP
     self.domain = domain
-
+  
   def __str__ (self):
     return "SAP(id: %s, name: %s)" % (self.id, self.name)
-
+  
   def __repr__ (self):
     return super(NodeSAP, self).__repr__()
-
+  
   def persist (self):
     sap = super(NodeSAP, self).persist()
     if self.domain is not None:
       sap['domain'] = self.domain
     return sap
-
+  
   def load (self, data, *args, **kwargs):
-    super(NodeSAP, self).load(data)
+    super(NodeSAP, self).load(data=data)
     self.domain = data.get('domain')
     return self
 
@@ -708,7 +734,7 @@ class NodeInfra(Node):
   DOMAIN_UN = "UNIVERSAL_NODE"
   DOMAIN_SDN = "SDN"
   DOMAIN_DOCKER = "DOCKER"
-
+  
   def __init__ (self, id=None, name=None, domain=None, infra_type=None,
                 supported=None, res=None):
     """
@@ -737,7 +763,7 @@ class NodeInfra(Node):
       self.supported = []
       # Set resource container
     self.resources = res if res is not None else NodeResource()
-
+  
   def add_port (self, id=None, properties=None):
     """
     Add a port with the given params to the Infrastructure Node.
@@ -752,7 +778,7 @@ class NodeInfra(Node):
     port = InfraPort(self, properties=properties, id=id)
     self.ports.append(port)
     return port
-
+  
   def add_supported_type (self, functional_type):
     """
     Add a supported functional type or list of types to the Infrastructure Node.
@@ -769,7 +795,7 @@ class NodeInfra(Node):
     else:
       raise RuntimeError("Not supported parameter type!")
     return self
-
+  
   def del_supported_type (self, functional_type=None):
     """
     Remove the given functional type from the Infrastructure Node. If no type
@@ -783,7 +809,7 @@ class NodeInfra(Node):
       self.supported[:] = []
     else:
       self.supported.remove(functional_type)
-
+  
   def persist (self):
     node = super(NodeInfra, self).persist()
     if self.domain is not None:
@@ -796,9 +822,10 @@ class NodeInfra(Node):
     if res:
       node["resources"] = res
     return node
-
+  
   def load (self, data, *args, **kwargs):
     self.id = data['id']
+    self.operation = data.get("operation")  # optional
     self.name = data.get('name')  # optional
     for port in data.get('ports', ()):
       infra_port = self.add_port(id=port['id'], properties=port.get('property'))
@@ -811,11 +838,11 @@ class NodeInfra(Node):
     if 'resources' in data:
       self.resources.load(data['resources'])
     return self
-
+  
   def __str__ (self):
     return "Infra(id: %s, name: %s, type: %s)" % (
       self.id, self.name, self.infra_type)
-
+  
   def __repr__ (self):
     return super(NodeInfra, self).__repr__()
 
@@ -831,7 +858,7 @@ class EdgeLink(Link):
 
   Represent a static or dynamic link.
   """
-
+  
   def __init__ (self, src=None, dst=None, type=None, id=None, backward=False,
                 delay=None, bandwidth=None):
     """
@@ -860,7 +887,7 @@ class EdgeLink(Link):
     self.backward = backward  # always False by default
     self.delay = delay  # optional
     self.bandwidth = bandwidth  # optional
-
+  
   def persist (self):
     link = super(EdgeLink, self).persist()
     if self.delay is not None:
@@ -868,7 +895,7 @@ class EdgeLink(Link):
     if self.bandwidth is not None:
       link["bandwidth"] = self.bandwidth
     return link
-
+  
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
@@ -880,13 +907,13 @@ class EdgeLink(Link):
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
     return self
-
+  
   def __str__ (self):
     return "Link(id: %s, src: %s[%s], dst: %s[%s], type: %s, delay:%s, " \
            "bandwidth: %s)" % (
              self.id, self.src.node.id, self.src.id, self.dst.node.id,
              self.dst.id, self.type, self.delay, self.bandwidth)
-
+  
   def __repr__ (self):
     return "<|ID: %s, Type: %s, Back: %s, src: %s[%s], dst: %s[%s] --> %s|>" % (
       self.id, self.type, self.backward, self.src.node.id, self.src.id,
@@ -899,7 +926,7 @@ class EdgeSGLink(Link):
 
   Represent an edge between SG elements.
   """
-
+  
   def __init__ (self, src=None, dst=None, id=None, flowclass=None):
     """
     Init.
@@ -916,13 +943,13 @@ class EdgeSGLink(Link):
     """
     super(EdgeSGLink, self).__init__(src=src, dst=dst, type=Link.SG, id=id)
     self.flowclass = flowclass  # flowrule without action
-
+  
   def persist (self):
     link = super(EdgeSGLink, self).persist()
     if self.flowclass is not None:
       link["flowclass"] = self.flowclass
     return link
-
+  
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
@@ -942,7 +969,7 @@ class EdgeReq(Link):
 
   Class for requirements between arbitrary NF modes.
   """
-
+  
   def __init__ (self, src=None, dst=None, id=None, delay=None, bandwidth=None,
                 sg_path=None):
     """
@@ -971,7 +998,7 @@ class EdgeReq(Link):
       self.sg_path = [p for p in sg_path]
     elif sg_path is None:
       self.sg_path = []
-
+  
   def persist (self):
     link = super(EdgeReq, self).persist()
     if self.delay is not None:
@@ -982,7 +1009,7 @@ class EdgeReq(Link):
     if sg_path:
       link['sg_path'] = sg_path
     return link
-
+  
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
@@ -1020,7 +1047,7 @@ class NFFGModel(Element):
   DESCRIPTION = "Network Function Forwarding Graph (NF-FG) data model"
   # Container type
   TYPE = "NFFG"
-
+  
   def __init__ (self, id=None, name=None, version=None):
     """
     Init
@@ -1042,7 +1069,7 @@ class NFFGModel(Element):
     self.edge_links = []
     self.edge_sg_nexthops = []
     self.edge_reqs = []
-
+  
   @property
   def nodes (self):
     """
@@ -1056,7 +1083,7 @@ class NFFGModel(Element):
     nodes.extend(self.node_saps)
     nodes.extend(self.node_infras)
     return nodes
-
+  
   @property
   def edges (self):
     """
@@ -1070,7 +1097,7 @@ class NFFGModel(Element):
     edges.extend(self.edge_reqs)
     edges.extend(self.edge_sg_nexthops)
     return edges
-
+  
   def get_port (self, node_id, port_id):
     """
     Return the Port reference according to the given Node and Port ids.
@@ -1088,7 +1115,7 @@ class NFFGModel(Element):
           if port.id == port_id:
             return port
     return None
-
+  
   def add_nf (self, **kwargs):
     """
     Create and store a NF Node with the given parameters.
@@ -1103,7 +1130,7 @@ class NFFGModel(Element):
           "NodeNF with id: %s already exist in the container!" % node.id)
     self.node_nfs.append(nf)
     return nf
-
+  
   def del_nf (self, id):
     """
     Remove the NF Node with the given id.
@@ -1117,7 +1144,7 @@ class NFFGModel(Element):
       if node.id == id:
         self.node_nfs.remove(node)
         return True
-
+  
   def add_sap (self, **kwargs):
     """
     Create and store a SAP Node with the given parameters.
@@ -1132,7 +1159,7 @@ class NFFGModel(Element):
           "NodeNF with id: %s already exist in the container!" % node.id)
     self.node_saps.append(sap)
     return sap
-
+  
   def del_sap (self, id):
     """
     Remove the SAP Node with the given id.
@@ -1146,7 +1173,7 @@ class NFFGModel(Element):
       if node.id == id:
         self.node_saps.remove(node)
         return True
-
+  
   def add_infra (self, **kwargs):
     """
     Create and store an Infrastructure Node with the given parameters.
@@ -1161,7 +1188,7 @@ class NFFGModel(Element):
           "NodeNF with id: %s already exist in the container!" % node.id)
     self.node_infras.append(infra)
     return infra
-
+  
   def del_infra (self, id):
     """
     Remove Infrastructure Node with the given id.
@@ -1175,7 +1202,7 @@ class NFFGModel(Element):
       if node.id == id:
         self.node_infras.remove(node)
         return True
-
+  
   def add_link (self, src, dst, **kwargs):
     """
     Create and store a Link Edge with the given src and dst nodes.
@@ -1195,7 +1222,7 @@ class NFFGModel(Element):
           "container!" % (src.id, dst.id))
     self.edge_links.append(link)
     return link
-
+  
   def del_link (self, src, dst):
     """
     Remove Link Edge with given src and dst nodes.
@@ -1211,7 +1238,7 @@ class NFFGModel(Element):
       if edge.src.id == src.id and edge.dst.id == dst.id:
         self.edge_links.remove(edge)
         return True
-
+  
   def add_sg_hop (self, src, dst, **kwargs):
     """
     Create and store an SG next hop Edge with the given src and dst nodes.
@@ -1231,7 +1258,7 @@ class NFFGModel(Element):
           "container!" % (src.id, dst.id))
     self.edge_sg_nexthops.append(hop)
     return hop
-
+  
   def del_sg_hop (self, src, dst):
     """
     Remove SG next hop Edge with given src and dst nodes.
@@ -1247,7 +1274,7 @@ class NFFGModel(Element):
       if edge.src.id == src.id and edge.dst.id == dst.id:
         self.edge_sg_nexthops.remove(edge)
         return True
-
+  
   def add_req (self, src, dst, **kwargs):
     """
     Create and store a Requirement Edge with the given src and dst nodes.
@@ -1267,7 +1294,7 @@ class NFFGModel(Element):
           "container!" % (src.id, dst.id))
     self.edge_sg_nexthops.append(req)
     return req
-
+  
   def del_req (self, src, dst):
     """
     Remove Requirement Edge with given src and dst nodes.
@@ -1283,7 +1310,7 @@ class NFFGModel(Element):
       if edge.src.id == src.id and edge.dst.id == dst.id:
         self.edge_sg_nexthops.remove(edge)
         return True
-
+  
   def persist (self):
     nffg = OrderedDict(parameters=OrderedDict(id=self.id))
     if self.name is not None:
@@ -1302,7 +1329,7 @@ class NFFGModel(Element):
     if self.edge_reqs:
       nffg["edge_reqs"] = [req.persist() for req in self.edge_reqs]
     return nffg
-
+  
   def load (self, raw_data, *args, **kwargs):
     """
     Read the given JSON object structure and try to convert to an NF-FG
@@ -1325,7 +1352,7 @@ class NFFGModel(Element):
         return input.encode('utf-8')
       else:
         return input
-
+    
     try:
       # Load from plain text
       data = json.loads(raw_data, object_hook=unicode_to_str)
@@ -1352,7 +1379,7 @@ class NFFGModel(Element):
     except KeyError as e:
       raise RuntimeError("Not a valid NFFGModel format!", e)
     return container
-
+  
   def dump (self):
     """
     Dump the container in plain text based on JSON structure.
@@ -1385,6 +1412,7 @@ def test_parse_load ():
   # Infra
   infra = NodeInfra()
   infra.id = "infra1"
+  infra.operation = Element.ADD
   infra.name = "BisBis1"
   infra.domain = "virtual"
   infra.resources.cpu = "20"
@@ -1400,6 +1428,7 @@ def test_parse_load ():
   edge_link = EdgeLink(p2, p3, id="link3")
   edge_link.bandwidth = "100"
   edge_link.delay = "5"
+  edge_link.operation = Element.DEL
   # Edge SG next hop
   edge_sg = EdgeSGLink(p1, p2, id="link1")
   edge_sg.flowclass = "flowclass1"
