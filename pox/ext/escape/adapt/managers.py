@@ -531,7 +531,8 @@ class SDNDomainManager(AbstractDomainManager):
     :return: None
     """
     log.info("Install %s domain part..." % self.name)
-    log.info("NFFG: \n %s" % nffg_part.dump())
+    # log.info("NFFG:\n%s" % nffg_part.dump())
+    log.info("NFFG:%s" % nffg_part)
     self._deploy_flowrules(nffg_part=nffg_part)
 
   def _deploy_flowrules (self, nffg_part):

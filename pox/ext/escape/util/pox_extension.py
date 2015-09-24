@@ -14,7 +14,6 @@
 """
 Override and extend internal POX components to achieve ESCAPE-desired behaviour.
 """
-import nffglib
 from pox.core import core
 from pox.openflow import OpenFlowConnectionArbiter, OpenFlowNexus, ConnectionIn
 
@@ -142,85 +141,88 @@ class ESCAPEInteractiveHelper(object):
     """
     Call the ping() function of the OpenStackRESTAdapter.
     """
-    ret = core.adaptation.controller_adapter.domains.components[
-      'OPENSTACK'].rest_adapter.ping()
-    print "Return: ", ret
+    # ret = core.adaptation.controller_adapter.domains.components[
+    #   'OPENSTACK'].rest_adapter.ping()
+    # print "Return: ", ret
+    pass
 
   def get_config (self):
     """
     Call the get_config() function of the OpenStackRESTAdapter.
     """
-    ret = core.adaptation.controller_adapter.domains.components[
-      'OPENSTACK'].rest_adapter.get_config()
-    print "Return: ", ret
-    print core.adaptation.controller_adapter.domains.components[
-      'OPENSTACK'].rest_adapter._response.text
+    # ret = core.adaptation.controller_adapter.domains.components[
+    #   'OPENSTACK'].rest_adapter.get_config()
+    # print "Return: ", ret
+    # print core.adaptation.controller_adapter.domains.components[
+    #   'OPENSTACK'].rest_adapter._response.text
+    pass
 
   def edit_config (self):
     """
     Call the edit_config() function of OpenStackRESTAdapter with the default
     config.
     """
-    config = """<?xml version="1.0" ?>
-    <virtualizer>
-      <id>UUID-ETH-001</id>
-      <name>ETH OpenStack-OpenDaylight domain</name>
-      <nodes>
-        <node>
-          <id>UUID-01</id>
-          <name>single Bis-Bis node representing the whole domain</name>
-          <type>BisBis</type>
-          <ports>
-            <port>
-              <id>0</id>
-              <name>OVS-north external port</name>
-              <port_type>port-abstract</port_type>
-              <capability/>
-            </port>
-            <port>
-              <id>1</id>
-              <name>OVS-south external port</name>
-              <port_type>port-abstract</port_type>
-              <capability/>
-            </port>
-          </ports>
-          <resources>
-            <cpu>10 VCPU</cpu>
-            <mem>32 GB</mem>
-            <storage>5 TB</storage>
-          </resources>
-          <capabilities>
-            <supported_NFs>
-              <node>
-                <id>nf_a</id>
-                <name>tcp header compressor</name>
-                <type>0</type>
-                <ports>
-                  <port>
-                    <id>0</id>
-                    <name>in</name>
-                    <port_type>port-abstract</port_type>
-                    <capability>...</capability>
-                  </port>
-                  <port>
-                    <id>1</id>
-                    <name>out</name>
-                    <port_type>port-abstract</port_type>
-                    <capability>...</capability>
-                  </port>
-                </ports>
-              </node>
-            </supported_NFs>
-          </capabilities>
-        </node>
-      </nodes>
-    </virtualizer>"""
-    virtualizer = nffglib.Virtualizer.parse(text=config)
-    ret = core.adaptation.controller_adapter.domains.components[
-      'OPENSTACK'].rest_adapter.edit_config(virtualizer.xml())
-    print "Return: ", ret
-    print core.adaptation.controller_adapter.domains.components[
-      'OPENSTACK'].rest_adapter._response.text
+    # config = """<?xml version="1.0" ?>
+    # <virtualizer>
+    #   <id>UUID-ETH-001</id>
+    #   <name>ETH OpenStack-OpenDaylight domain</name>
+    #   <nodes>
+    #     <node>
+    #       <id>UUID-01</id>
+    #       <name>single Bis-Bis node representing the whole domain</name>
+    #       <type>BisBis</type>
+    #       <ports>
+    #         <port>
+    #           <id>0</id>
+    #           <name>OVS-north external port</name>
+    #           <port_type>port-abstract</port_type>
+    #           <capability/>
+    #         </port>
+    #         <port>
+    #           <id>1</id>
+    #           <name>OVS-south external port</name>
+    #           <port_type>port-abstract</port_type>
+    #           <capability/>
+    #         </port>
+    #       </ports>
+    #       <resources>
+    #         <cpu>10 VCPU</cpu>
+    #         <mem>32 GB</mem>
+    #         <storage>5 TB</storage>
+    #       </resources>
+    #       <capabilities>
+    #         <supported_NFs>
+    #           <node>
+    #             <id>nf_a</id>
+    #             <name>tcp header compressor</name>
+    #             <type>0</type>
+    #             <ports>
+    #               <port>
+    #                 <id>0</id>
+    #                 <name>in</name>
+    #                 <port_type>port-abstract</port_type>
+    #                 <capability>...</capability>
+    #               </port>
+    #               <port>
+    #                 <id>1</id>
+    #                 <name>out</name>
+    #                 <port_type>port-abstract</port_type>
+    #                 <capability>...</capability>
+    #               </port>
+    #             </ports>
+    #           </node>
+    #         </supported_NFs>
+    #       </capabilities>
+    #     </node>
+    #   </nodes>
+    # </virtualizer>"""
+    # virtualizer = nffglib.Virtualizer.parse(text=config)
+    # ret = core.adaptation.controller_adapter.domains.components[
+    #   'OPENSTACK'].rest_adapter.edit_config(virtualizer.xml())
+    # print "Return: ", ret
+    # print core.adaptation.controller_adapter.domains.components[
+    #   'OPENSTACK'].rest_adapter._response.text
+    pass
 
   def config (self):
     """

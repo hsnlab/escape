@@ -233,7 +233,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     msg.actions.append(of.ofp_action_output(port=int(action['out'])))
 
     log.info("flow entry: %s" % msg)
-    con.send(msg)
+    # con.send(msg)
 
 
 class SDNDomainPOXAdapter(InternalPOXAdapter):
