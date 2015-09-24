@@ -16,6 +16,8 @@ Contains Manager classes which contains the higher-level logic for complete
 domain management. Uses Adapter classes for ensuring protocol-specific
 connections with entities in the particular domain.
 """
+import sys
+
 from escape.adapt.adapters import *
 from escape.util.domain import *
 from pox.lib.util import dpid_to_str
@@ -79,10 +81,17 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    log.info("Install %s domain part..." % self.name)
-    self._deploy_nfs(nffg_part=nffg_part)
-    self._delete_flowrules(nffg_part=nffg_part)
-    self._deploy_flowrules(nffg_part=nffg_part)
+    try:
+      log.info("Install %s domain part..." % self.name)
+      self._deploy_nfs(nffg_part=nffg_part)
+      self._delete_flowrules(nffg_part=nffg_part)
+      self._deploy_flowrules(nffg_part=nffg_part)
+      return True
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
+      return False
 
   def _deploy_nfs (self, nffg_part):
     """
@@ -396,7 +405,16 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    self.topoAdapter.edit_config(nffg_part)
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      if status_code is not None:
+        return True
+      else:
+        return False
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
 
 
 class OpenStackDomainManager(AbstractDomainManager):
@@ -440,7 +458,16 @@ class OpenStackDomainManager(AbstractDomainManager):
     # config = nffg_part.dump()
     # with open('pox/global-mapped-os-nffg.xml', 'r') as f:
     #   nffg_part = f.read()
-    self.topoAdapter.edit_config(nffg_part)
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      if status_code is not None:
+        return True
+      else:
+        return False
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
 
 
 class UniversalNodeDomainManager(AbstractDomainManager):
@@ -487,7 +514,16 @@ class UniversalNodeDomainManager(AbstractDomainManager):
     # self.topoAdapter.edit_config(nffg_part)
     # with open('pox/global-mapped-un.nffg', 'r') as f:
     #   nffg_part = f.read()
-    self.topoAdapter.edit_config(nffg_part)
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      if status_code is not None:
+        return True
+      else:
+        return False
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
 
 
 class DockerDomainManager(AbstractDomainManager):
@@ -565,10 +601,17 @@ class SDNDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    log.info("Install %s domain part..." % self.name)
-    # log.info("NFFG:\n%s" % nffg_part.dump())
-    log.info("NFFG: %s" % nffg_part)
-    self._deploy_flowrules(nffg_part=nffg_part)
+    try:
+      log.info("Install %s domain part..." % self.name)
+      # log.info("NFFG:\n%s" % nffg_part.dump())
+      log.info("NFFG: %s" % nffg_part)
+      self._deploy_flowrules(nffg_part=nffg_part)
+      return True
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
+      return False
 
   def _delete_flowrules (self, nffg_part):
     """

@@ -285,21 +285,29 @@ class ControllerAdapter(object):
     slices = self._split_into_domains(mapped_nffg)
     log.debug(
       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
+    mapping_result = True
     for domain, part in slices:
       domain_mgr = self.DOMAIN_MAPPING[domain]
       if domain_mgr in self.domains.initiated:
         log.debug("Delegate splitted part: %s to %s domain manager..." % (
           part, domain_mgr))
-        installed_nffg_part = self.domains[domain_mgr].install_nffg(part)
-        # Update global view (DoV) with the installed components
-        self.update_dov(installed_nffg_part)
-        # FIXME - hardcoded, you can do it better
-        self.domainResManager.get_global_view().update_global_view(mapped_nffg)
+        # Invoke DomainAdapter's install
+        res = self.domains[domain_mgr].install_nffg(part)
+        # Note result according to others before
+        mapping_result = mapping_result and res
       else:
         log.warning(
           "Domain manager associated to domain: %s is not initiated! Skip "
           "install domain part..." % domain_mgr)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
+    # FIXME - hardcoded, you can do it better
+    if mapping_result:
+      log.info("All installation process has been finished with success! ")
+      log.debug(
+        "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
+      # Update global view (DoV) with the installed components
+      self.domainResManager.get_global_view().update_global_view(mapped_nffg)
+    print self.domainResManager.get_global_view().get_resource_info().dump()
 
   def _handle_DomainChangedEvent (self, event):
     """
@@ -417,8 +425,6 @@ class ControllerAdapter(object):
   def update_dov (self, nffg_part):
     """
     Update the global view with installed Nfs/Flowrules.
-
-    :param part:
     """
     pass
 
@@ -488,8 +494,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     log.debug("Set domain: %s as the global view!" % domain)
     self._global_nffg = nffg.copy()
-    self._global_nffg.id = DoV
     self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
+    self._global_nffg.id = DoV
 
   def merge_domain_into_dov (self, domain, nffg):
     """
@@ -627,11 +633,9 @@ class DomainVirtualizer(AbstractVirtualizer):
     :param global_nffg: updated global view which replace the stored one
     :type global_nffg: :any:`NFFG`
     """
-    log.info(
-      "Updating Global view according the given global view: %s" % global_nffg)
-    self._global_nffg = global_nffg
+    self._global_nffg = global_nffg.copy()
+    self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
     self._global_nffg.id = DoV
-    self._global_nffg.name = "dov-updated"
 
   def update_domain_view (self, domain, nffg):
     """
