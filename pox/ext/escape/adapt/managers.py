@@ -80,6 +80,7 @@ class InternalDomainManager(AbstractDomainManager):
     """
     log.info("Install %s domain part..." % self.name)
     self._deploy_nfs(nffg_part=nffg_part)
+    self._delete_flowrules(nffg_part=nffg_part)
     self._deploy_flowrules(nffg_part=nffg_part)
 
   def _deploy_nfs (self, nffg_part):
@@ -242,6 +243,26 @@ class InternalDomainManager(AbstractDomainManager):
             flowrule.action = action
 
     log.info("Initiation of NFs in NFFG part: %s is finished!" % nffg_part)
+
+  def _delete_flowrules (self, nffg_part):
+    """
+    Delete all flowrules from the first (default) table of all infras.
+    """
+    topo = self.controlAdapter.get_topology_resource()
+    # Iter through the container INFRAs in the given mapped NFFG part
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
+      if infra.id not in (n.id for n in topo.infras):
+        log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
+                  "flowrule delete on this Node..." % (
+                    infra.short_name, self.name))
+        continue
+
+      self.controlAdapter.delete_flowrules(infra.id)
 
   def _deploy_flowrules (self, nffg_part):
     """
@@ -532,7 +553,28 @@ class SDNDomainManager(AbstractDomainManager):
     """
     log.info("Install %s domain part..." % self.name)
     log.info("NFFG: \n %s" % nffg_part.dump())
+    self._delete_flowrules(nffg_part=nffg_part)
     self._deploy_flowrules(nffg_part=nffg_part)
+
+  def _delete_flowrules (self, nffg_part):
+    """
+    Delete all flowrules from the first (default) table of all infras.
+    """
+    topo = self.controlAdapter.get_topology_resource()
+    # Iter through the container INFRAs in the given mapped NFFG part
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
+      if infra.id not in (n.id for n in topo.infras):
+        log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
+                  "flowrule delete on this Node..." % (
+                    infra.short_name, self.name))
+        continue
+
+      self.controlAdapter.delete_flowrules(infra.id)
 
   def _deploy_flowrules (self, nffg_part):
     """
