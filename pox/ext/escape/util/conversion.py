@@ -2023,10 +2023,12 @@ class NFFGConverter(object):
                                                   action=flowrule.action)
 
           # Add Flowentry with converted params
+          virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
+                              match=match,
+                              action=action, out=out_port)
+          # virt_fe.bind(relative=True)
           self.log.debug("Generated Flowentry:\n%s" % virtualizer.nodes[
-            infra.id].flowtable.add(
-            Flowentry(id=fe_id, priority=fe_pri, port=in_port, match=match,
-                      action=action, out=out_port)))
+            infra.id].flowtable.add(virt_fe))
 
     self.log.debug("NFFG adaptation is finished.")
     # Return with modified Virtualizer

@@ -789,8 +789,10 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if isinstance(data, NFFG):
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
-      data = str(self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.virtualizer, nffg=data))
+      virt_data = self.converter.adapt_mapping_into_Virtualizer(
+        virtualizer=self.virtualizer, nffg=data)
+      # virt_data.bind(relative=True)
+      data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
@@ -886,8 +888,10 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if isinstance(data, NFFG):
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
-      data = str(self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.virtualizer, nffg=data))
+      virt_data = self.converter.adapt_mapping_into_Virtualizer(
+        virtualizer=self.virtualizer, nffg=data)
+      # virt_data.bind(relative=True)
+      data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
