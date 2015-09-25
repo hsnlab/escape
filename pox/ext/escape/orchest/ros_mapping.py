@@ -54,7 +54,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     # print graph.dump()
     # print resource.dump()
     try:
-      mapped_nffg = MAP(request=graph.copy(), network=resource.copy())
+      mapped_nffg = MAP(request=graph.copy(), network=resource.copy(),
+                        full_remap=True)
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-ros-mapped"
@@ -76,6 +77,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       log.error("Got unexpected error during mapping process! Cause:\n%s" %
                 sys.exc_info()[0])
       raise
+      # return
     log.debug(
       "Mapping algorithm: %s is finished on NF-FG: %s" % (cls.__name__, graph))
     return mapped_nffg
@@ -172,5 +174,6 @@ class ResourceOrchestrationMapper(AbstractMapper):
     if nffg is None:
       log.warning("Mapping process is failed! Abort orchestration process.")
     else:
-      log.debug("Inform actual layer API that NFFG mapping has been finished...")
+      log.debug(
+        "Inform actual layer API that NFFG mapping has been finished...")
       self.raiseEventNoErrors(NFFGMappingFinishedEvent, nffg)

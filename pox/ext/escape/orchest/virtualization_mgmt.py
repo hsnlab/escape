@@ -201,9 +201,7 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
       # Maximum available bandwidth value of inter-infra links
       max(l.bandwidth for l in dov.links if l.bandwidth is not None))
     infra_count = reduce(lambda a, b: a + 1, dov.infras, 0)
-    print infra_count
     link_count = reduce(lambda a, b: a + 1, dov.links, 0)
-    print link_count
 
     # Maximum usable/reducible amount of bw to avoid false negative mapping
     # errors
@@ -272,7 +270,7 @@ class VirtualizerManager(EventMixin):
     if DoV not in self._virtualizers:
       log.debug("Missing <Global Resource View>! Requesting the View now...")
       self.raiseEventNoErrors(MissingGlobalViewEvent)
-      if self._virtualizers[DoV] is not None:
+      if DoV in self._virtualizers and self._virtualizers[DoV] is not None:
         log.debug(
           "Got requested <Global Resource View>: %s" % self._virtualizers[DoV])
     # Return with resource info as a DomainVirtualizer

@@ -16,8 +16,11 @@ Contains Manager classes which contains the higher-level logic for complete
 domain management. Uses Adapter classes for ensuring protocol-specific
 connections with entities in the particular domain.
 """
+import sys
+
 from escape.adapt.adapters import *
 from escape.util.domain import *
+from pox.lib.util import dpid_to_str
 
 
 class InternalDomainManager(AbstractDomainManager):
@@ -78,11 +81,17 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    log.info("Install %s domain part..." % self.name)
-    # print nffg_part.dump()
-    self._deploy_nfs(nffg_part=nffg_part)
-    # TODO ... VNF initiation etc.
-    self._deploy_flowrules(nffg_part=nffg_part)
+    try:
+      log.info("Install %s domain part..." % self.name)
+      self._deploy_nfs(nffg_part=nffg_part)
+      self._delete_flowrules(nffg_part=nffg_part)
+      self._deploy_flowrules(nffg_part=nffg_part)
+      return True
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
+      return False
 
   def _deploy_nfs (self, nffg_part):
     """
@@ -96,6 +105,7 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     # FIXME - SIGCOMM
+    self.portmap.clear()
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
     nffg_part.clear_links(NFFG.TYPE_LINK_SG)
@@ -120,11 +130,21 @@ class InternalDomainManager(AbstractDomainManager):
         continue
       # Iter over the NFs connected the actual INFRA
       for nf in nffg_part.running_nfs(infra.id):
-        # NF with id is already deployed --> continue
-        if nf.id in self.internal_topo.nfs:
+        # NF with id is already deployed --> change the dynamic port to
+        # static and continue
+        if nf.id in (nf.id for nf in self.internal_topo.nfs):
           log.debug(
             "NF: %s has already been initiated. Continue to next NF..." %
             nf.short_name)
+          for u, v, link in nffg_part.network.out_edges_iter([nf.id],
+                                                             data=True):
+            dyn_port = nffg_part[v].ports[link.dst.id]
+            for x, y, l in mn_topo.network.out_edges_iter([nf.id],
+                                                          data=True):
+              if l.src.id == link.src.id:
+                self.portmap[dyn_port.id] = l.dst.id
+                dyn_port.id = l.dst.id
+                break
           continue
         # Extract the initiation params
         params = {'nf_type': nf.functional_type,
@@ -234,6 +254,32 @@ class InternalDomainManager(AbstractDomainManager):
 
     log.info("Initiation of NFs in NFFG part: %s is finished!" % nffg_part)
 
+  def _delete_flowrules (self, nffg_part):
+    """
+    Delete all flowrules from the first (default) table of all infras.
+    """
+    topo = self.controlAdapter.get_topology_resource()
+    # Iter through the container INFRAs in the given mapped NFFG part
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
+      if infra.id not in (n.id for n in topo.infras):
+        log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
+                  "flowrule delete on this Node..." % (
+                    infra.short_name, self.name))
+        continue
+      # Check the OF connection is alive
+      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      if self.controlAdapter.openflow.getConnection(dpid) is None:
+        log.warning(
+          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
+          "deletions..." % (infra, dpid_to_str(dpid)))
+        continue
+      self.controlAdapter.delete_flowrules(infra.id)
+
   def _deploy_flowrules (self, nffg_part):
     """
     Install the flowrules given in the NFFG.
@@ -268,6 +314,13 @@ class InternalDomainManager(AbstractDomainManager):
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
                   "flowrule install on this Node..." % (
                     infra.short_name, self.name))
+        continue
+      # Check the OF connection is alive
+      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      if self.controlAdapter.openflow.getConnection(dpid) is None:
+        log.warning(
+          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
+          "installations..." % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
@@ -352,7 +405,16 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    self.topoAdapter.edit_config(nffg_part)
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      if status_code is not None:
+        return True
+      else:
+        return False
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
 
 
 class OpenStackDomainManager(AbstractDomainManager):
@@ -396,7 +458,16 @@ class OpenStackDomainManager(AbstractDomainManager):
     # config = nffg_part.dump()
     # with open('pox/global-mapped-os-nffg.xml', 'r') as f:
     #   nffg_part = f.read()
-    self.topoAdapter.edit_config(nffg_part)
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      if status_code is not None:
+        return True
+      else:
+        return False
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
 
 
 class UniversalNodeDomainManager(AbstractDomainManager):
@@ -443,7 +514,16 @@ class UniversalNodeDomainManager(AbstractDomainManager):
     # self.topoAdapter.edit_config(nffg_part)
     # with open('pox/global-mapped-un.nffg', 'r') as f:
     #   nffg_part = f.read()
-    self.topoAdapter.edit_config(nffg_part)
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      if status_code is not None:
+        return True
+      else:
+        return False
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
 
 
 class DockerDomainManager(AbstractDomainManager):
@@ -521,9 +601,45 @@ class SDNDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    log.info("Install %s domain part..." % self.name)
-    log.info("NFFG: \n %s" % nffg_part.dump())
-    self._deploy_flowrules(nffg_part=nffg_part)
+    try:
+      log.info("Install %s domain part..." % self.name)
+      # log.info("NFFG:\n%s" % nffg_part.dump())
+      log.info("NFFG: %s" % nffg_part)
+      self._delete_flowrules(nffg_part=nffg_part)
+      self._deploy_flowrules(nffg_part=nffg_part)
+      return True
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()[0]))
+      return False
+
+  def _delete_flowrules (self, nffg_part):
+    """
+    Delete all flowrules from the first (default) table of all infras.
+    """
+    topo = self.controlAdapter.get_topology_resource()
+    # Iter through the container INFRAs in the given mapped NFFG part
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
+      if infra.id not in (n.id for n in topo.infras):
+        log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
+                  "flowrule delete on this Node..." % (
+                    infra.short_name, self.name))
+        continue
+      # Check the OF connection is alive
+      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      if self.controlAdapter.openflow.getConnection(dpid) is None:
+        log.warning(
+          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
+          "deletions..." % (infra, dpid_to_str(dpid)))
+        continue
+
+      self.controlAdapter.delete_flowrules(infra.id)
 
   def _deploy_flowrules (self, nffg_part):
     """
@@ -556,6 +672,13 @@ class SDNDomainManager(AbstractDomainManager):
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
                   "flowrule install on this Node..." % (
                     infra.short_name, self.name))
+        continue
+      # Check the OF connection is alive
+      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      if self.controlAdapter.openflow.getConnection(dpid) is None:
+        log.warning(
+          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
+          "installations..." % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:

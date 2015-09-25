@@ -1172,6 +1172,100 @@ def generate_global_req ():
   return test
 
 
+def generate_ewsdn_req1 ():
+  test = NFFG(id="EWSDN-demo-req1", name="EWSDN-2web-2SAP-req")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  webserver2 = test.add_nf(id="webserver2", name="webserver2",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id='11')
+  test.add_sglink(webserver1.ports[0], sap1.ports[1], id='12')
+
+  test.add_sglink(sap2.add_port(1), webserver2.add_port(0), id='21')
+  test.add_sglink(webserver2.ports[0], sap2.ports[1], id='22')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=('11', '12'))
+  test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+               sg_path=('21', '22'))
+
+  return test
+
+
+def generate_ewsdn_req2 ():
+  test = NFFG(id="EWSDN-demo-req2", name="EWSDN-2web-1dpi-2SAP-req")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  # comp = test.add_nf(id="comp", name="COMPRESSOR",
+  # func_type="headerCompressor",
+  #                    cpu=1, mem=1, storage=0)
+  # decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+  #                      func_type="headerDecompressor", cpu=1, mem=1,
+  # storage=0)
+  # fwd = test.add_nf(id="fwd", name="FORWARDER",
+  #                   func_type="simpleForwarder", cpu=1, mem=1, storage=0)
+
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  webserver2 = test.add_nf(id="webserver2", name="webserver2",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id='11')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id='12')
+  test.add_sglink(dpi.add_port(2), sap1.ports[1], id='13')
+
+  test.add_sglink(sap2.add_port(1), webserver2.add_port(0), id='21')
+  test.add_sglink(webserver2.ports[0], sap2.ports[1], id='22')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=('11', '12', '13'))
+  test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+               sg_path=('21', '22'))
+
+  return test
+
+
+def generate_ewsdn_req3 ():
+  test = NFFG(id="EWSDN-demo-req3",
+              name="EWSDN-2web-1dpi-1comp-1decomp-2SAP-req")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  comp = test.add_nf(id="comp", name="COMPRESSOR",
+                     func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1,
+                       storage=0)
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  webserver2 = test.add_nf(id="webserver2", name="webserver2",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id='11')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id='12')
+  test.add_sglink(dpi.add_port(2), comp.add_port(1), id='13')
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id='14')
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id='15')
+
+  test.add_sglink(sap2.add_port(1), webserver2.add_port(0), id='21')
+  test.add_sglink(webserver2.ports[0], sap2.ports[1], id='22')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=('11', '12', '13', '14', '15'))
+  test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+               sg_path=('21', '22'))
+
+  return test
+
+
 class NFFGToolBox(object):
   """
   Helper functions for NFFG handling.
@@ -1688,7 +1782,7 @@ def generate_merged_mapped ():
 if __name__ == "__main__":
   # test_NFFG()
   # nffg = generate_mn_topo()
-  nffg = generate_mn_test_req()
+  # nffg = generate_mn_test_req()
   # nffg = generate_dynamic_fallback_nffg()
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
@@ -1699,6 +1793,7 @@ if __name__ == "__main__":
   # nffg = generate_os_mn_req()
   # nffg = generate_dov()
   # nffg = generate_global_req()
+  nffg = generate_ewsdn_req3()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()

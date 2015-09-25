@@ -267,25 +267,6 @@ class ControllerAdapter(object):
       self.domains.load_internal_mgr()
     # Init default domain managers
     self.domains.load_default_mgrs()
-    # print "create test - VNFStarterAdapter"
-    # from escape.adapt.components import VNFStarterAdapter
-    # starter = VNFStarterAdapter(server='localhost', port=830,
-    #                             username='mininet', password='mininet',
-    #                             debug=True)
-    # from pprint import pprint
-    # with starter as s:
-    #   reply = s.getVNFInfo()
-    #   pprint(reply)
-    #   reply = s.initiateVNF(vnf_type=s.VNF_HEADER_COMP)
-    #   pprint(reply)
-    #   vnf_id = reply['access_info']['vnf_id']
-    #   reply = s.connectVNF(vnf_id=vnf_id, vnf_port=1, switch_id="EE1")
-    #   reply = s.connectVNF(vnf_id=vnf_id, vnf_port=2, switch_id="EE1")
-    #   pprint(reply)
-    #   reply = s.startVNF(vnf_id=vnf_id)
-    #   pprint(reply)
-    #   reply = s.getVNFInfo()
-    #   pprint(reply)
 
   def install_nffg (self, mapped_nffg):
     """
@@ -299,44 +280,34 @@ class ControllerAdapter(object):
     :type mapped_nffg: NFFG
     :return: None or internal domain NFFG part
     """
-    # # TEST - VNF initiation start
-    # import escape.util.nffg
-    #
-    # nffg = escape.util.nffg.generate_mn_topo()
-    # nf1 = nffg.add_nf(id='nf1', name="NF1", func_type="headerCompressor",
-    #                   cpu=10, mem=20, storage=30)
-    # nf2 = nffg.add_nf(id='nf2', name="NF2", func_type="headerDecompressor",
-    #                   mem=30, storage=40, delay=50)
-    # nffg.add_undirected_link(nf1.add_port(1),
-    #                          nffg.network.node['EE1'].add_port(),
-    # dynamic=True,
-    #                          delay=60, bandwidth=70)
-    # nffg.add_undirected_link(nf2.add_port(1),
-    #                          nffg.network.node['EE2'].add_port(),
-    # dynamic=True,
-    #                          delay=80, bandwidth=90)
-    # mapped_nffg = nffg
-    # # TEST - VNF initiation end
-    # print "Test mapped NFFG:\n", mapped_nffg.dump()
-    # with open('pox/merged-global.nffg') as f:
-    #   mapped_nffg = NFFG.parse(f.read())
-    # print self.domainResManager._dov.get_resource_info().dump()
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
     slices = self._split_into_domains(mapped_nffg)
     log.debug(
       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
+    mapping_result = True
     for domain, part in slices:
       domain_mgr = self.DOMAIN_MAPPING[domain]
       if domain_mgr in self.domains.initiated:
         log.debug("Delegate splitted part: %s to %s domain manager..." % (
           part, domain_mgr))
-        self.domains[domain_mgr].install_nffg(part)
+        # Invoke DomainAdapter's install
+        res = self.domains[domain_mgr].install_nffg(part)
+        # Note result according to others before
+        mapping_result = mapping_result and res
       else:
         log.warning(
           "Domain manager associated to domain: %s is not initiated! Skip "
           "install domain part..." % domain_mgr)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
+    # FIXME - hardcoded, you can do it better
+    if mapping_result:
+      log.info("All installation process has been finished with success! ")
+      log.debug(
+        "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
+      # Update global view (DoV) with the installed components
+      self.domainResManager.get_global_view().update_global_view(mapped_nffg)
+    print self.domainResManager.get_global_view().get_resource_info().dump()
 
   def _handle_DomainChangedEvent (self, event):
     """
@@ -350,7 +321,7 @@ class ControllerAdapter(object):
 
   def _split_into_domains (self, nffg):
     """
-    Slice given :any:`NFFG` into separate parts self._global_nffg on
+    Split given :any:`NFFG` into separate parts self._global_nffg on
     original domains.
 
     .. warning::
@@ -451,6 +422,12 @@ class ControllerAdapter(object):
     #   print s[0], s[1].dump()
     return splitted_parts
 
+  def update_dov (self, nffg_part):
+    """
+    Update the global view with installed Nfs/Flowrules.
+    """
+    pass
+
 
 # Common reference name for the DomainVirtualizer
 DoV = "DoV"
@@ -484,7 +461,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     self._global_nffg = None
     """:type: NFFG"""
     if global_res is not None:
-      self.set_global_view(domain=NFFG.DOMAIN_VIRTUAL, nffg=global_res)
+      self.set_domain_as_global_view(domain=NFFG.DOMAIN_VIRTUAL,
+                                     nffg=global_res)
 
   @property
   def name (self):
@@ -506,7 +484,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     return self._global_nffg
 
-  def set_global_view (self, domain, nffg):
+  def set_domain_as_global_view (self, domain, nffg):
     """
     Set the copy of given NFFG as the global view of DoV.
 
@@ -516,8 +494,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     log.debug("Set domain: %s as the global view!" % domain)
     self._global_nffg = nffg.copy()
-    self._global_nffg.id = "dov-" + self._global_nffg.generate_id()
-    self._global_nffg.name = "DoV"
+    self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
+    self._global_nffg.id = DoV
 
   def merge_domain_into_dov (self, domain, nffg):
     """
@@ -648,6 +626,17 @@ class DomainVirtualizer(AbstractVirtualizer):
     # Return the updated NFFG
     return self._global_nffg
 
+  def update_global_view (self, global_nffg):
+    """
+    Update the merged Global view with the given probably modified global view.
+
+    :param global_nffg: updated global view which replace the stored one
+    :type global_nffg: :any:`NFFG`
+    """
+    self._global_nffg = global_nffg.copy()
+    self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
+    self._global_nffg.id = DoV
+
   def update_domain_view (self, domain, nffg):
     """
     Update the existing domain in the merged Global view.
@@ -705,7 +694,7 @@ class DomainResourceManager(object):
         # No other domain detected, set NFFG as the whole global view
         log.debug(
           "DoV is empty! Add new domain: %s as the global view!" % domain)
-        self._dov.set_global_view(domain, nffg)
+        self._dov.set_domain_as_global_view(domain, nffg)
       # Add detected domain to cached domains
       self._tracked_domains.add(domain)
     else:

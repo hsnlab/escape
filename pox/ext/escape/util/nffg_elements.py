@@ -425,7 +425,7 @@ class Flowrule(Element):
   Class for storing a flowrule.
   """
   
-  def __init__ (self, id=None, match="", action=""):
+  def __init__ (self, id=None, match="", action="", bandwidth=None):
     """
     Init.
 
@@ -438,27 +438,31 @@ class Flowrule(Element):
     super(Flowrule, self).__init__(id=id, type="FLOWRULE")
     self.match = match  # mandatory
     self.action = action  # mandatory
+    self.bandwidth = bandwidth
   
   def persist (self):
     flowrule = super(Flowrule, self).persist()
     if self.match:
       flowrule['match'] = self.match
     flowrule['action'] = self.action
+    if self.bandwidth:
+      flowrule['bandwidth'] = self.bandwidth
     return flowrule
   
   def load (self, data, *args, **kwargs):
     super(Flowrule, self).load(data=data)
     self.match = data.get('match', "")
     self.action = data.get('action', "")
+    self.bandwidth = data.get('bandwidth')
     return self
   
   def __repr__ (self):
-    return "Flowrule object:\nmatch: %s \naction: %s" % (
-      self.match, self.action)
+    return "Flowrule object:\nmatch: %s \naction: %s \nbandwidth: %s" % (
+      self.match, self.action, self.bandwidth)
   
   def __str__ (self):
-    return "%s(match: %s, action:%s)" % (
-      self.__class__.__name__, self.match, self.action)
+    return "%s(match: %s, action: %s, bw: %s)" % (
+      self.__class__.__name__, self.match, self.action, self.bandwidth)
 
 
 class Port(Element):
@@ -573,7 +577,7 @@ class InfraPort(Port):
     super(InfraPort, self).__init__(node=node, id=id, properties=properties)
     self.flowrules = []
   
-  def add_flowrule (self, match, action, id=None):
+  def add_flowrule (self, match, action, bandwidth=None, id=None):
     """
     Add a flowrule with the given params to the port of an Infrastructure Node.
 
@@ -584,7 +588,7 @@ class InfraPort(Port):
     :return: newly created and stored flowrule
     :rtype: :any:`Flowrule`
     """
-    flowrule = Flowrule(id=id, match=match, action=action)
+    flowrule = Flowrule(id=id, match=match, action=action, bandwidth=bandwidth)
     self.flowrules.append(flowrule)
     return flowrule
   
