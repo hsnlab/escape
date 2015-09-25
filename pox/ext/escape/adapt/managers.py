@@ -479,8 +479,8 @@ class OpenStackDomainManager(AbstractDomainManager):
     empty_cfg = self.topoAdapter.original_virtualizer
     if empty_cfg is None:
       log.error(
-        "Missing original topology in %s domain! Skip domain Save "
-        "Virtualizer..." % self.name)
+        "Missing original topology in %s domain! Skip domain resetting..." %
+        self.name)
     log.debug("Reset %s domain config based on stored empty config" % self.name)
     self.topoAdapter.edit_config(data=empty_cfg.xml())
 
