@@ -29,7 +29,7 @@ import Alg1_Helper as helper
 import BacktrackHandler as backtrack
 
 try:
-  from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg
+  from escape.util.nffg import NFFG
 except ImportError:
   import sys, os, inspect
 
@@ -37,7 +37,7 @@ except ImportError:
     os.path.abspath(
       os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
                                   "pox/ext/escape/util/"))
-  from nffg import NFFG, generate_dynamic_fallback_nffg
+  from nffg import NFFG
 
 
 class CoreAlgorithm(object):
@@ -621,8 +621,9 @@ class CoreAlgorithm(object):
       flowsrc = None
       flowdst = None
     reqlink = self.req[v1][v2][reqlid]
+    bw = reqlink.bandwidth
     # The action and match are the same format
-    tag = "TAG=%s-%s-%s" % (v1, v2, reqlid)
+    tag = "TAG=%s|%s|%s" % (v1, v2, reqlid)
     if len(path) == 1:
       # collocation happened, none of helperlink`s port refs should be None
       match_str = "in_port="
@@ -636,7 +637,7 @@ class CoreAlgorithm(object):
       action_str += str(flowdst.id)
       self.log.debug("Collocated flowrule %s => %s added to Port %s of %s" % (
         match_str, action_str, flowsrc.id, path[0]))
-      flowsrc.add_flowrule(match_str, action_str)
+      flowsrc.add_flowrule(match_str, action_str, bw)
     else:
       # set the flowrules for the transit Infra nodes
       for i, j, k, lidij, lidjk in zip(path[:-2], path[1:-1], path[2:],
@@ -660,7 +661,7 @@ class CoreAlgorithm(object):
           action_str += ";UNTAG"
         self.log.debug("Transit flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str, self.net[i][j][lidij].dst.id, j))
-        nffg.network[i][j][lidij].dst.add_flowrule(match_str, action_str)
+        nffg.network[i][j][lidij].dst.add_flowrule(match_str, action_str, bw)
 
       # set flowrule for the first element if that is not a SAP
       if nffg.network.node[path[0]].type != 'SAP':
@@ -676,7 +677,7 @@ class CoreAlgorithm(object):
         action_str += ";" + tag
         self.log.debug("Starting flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str, flowsrc.id, path[0]))
-        flowsrc.add_flowrule(match_str, action_str)
+        flowsrc.add_flowrule(match_str, action_str, bw)
 
       # set flowrule for the last element if that is not a SAP
       if nffg.network.node[path[-1]].type != 'SAP':
@@ -694,7 +695,7 @@ class CoreAlgorithm(object):
           match_str, action_str,
           self.net[path[-2]][path[-1]][linkids[-1]].dst.id, path[-1]))
         nffg.network[path[-2]][path[-1]][linkids[-1]].dst.add_flowrule(
-          match_str, action_str)
+          match_str, action_str, bw)
 
   def _retrieveOrAddVNF (self, nffg, vnfid):
     if vnfid not in nffg.network:
