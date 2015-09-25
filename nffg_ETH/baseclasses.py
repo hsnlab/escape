@@ -29,6 +29,8 @@ class Yang(object):
         self._parent = parent
         self._tag = tag
         self._operation = None
+        self._referred = [] # to hold leafref references for backward search
+        self._sorted_children = [] # to hold children Yang list
 
     def get_parent(self):
         """
@@ -60,12 +62,12 @@ class Yang(object):
         """
         self._tag = tag
 
-    def xml(self):
+    def xml(self, ordered=True):
         """
         Dump the class subtree as XML string
         :return: string
         """
-        root = self._et(None, False)
+        root = self._et(None, False, ordered)
         xmlstr = ET.tostring(root, encoding="utf8", method="xml")
         dom = parseString(xmlstr)
         return dom.toprettyxml()
@@ -78,22 +80,6 @@ class Yang(object):
         :return: -
         """
         pass
-
-    def reducer(self, other):  #FIXME: see if reduce() is more logical name for this.
-        """
-        Calls the delete() method of the other instance if it is equal to the called instance.
-        The call is recursive, i.e., equality is checked from in depth first of the class tree, so a node is removed if and only if all of its sub-elements were removed.
-        Usage example: a received dataset (e.g., in edit-config) is reduced based on a reference dataset (e.g., a running config):
-        running_config.reducer(edit_config)
-        :param other: Yang
-        :return: -
-        """
-        for k, v in self.__dict__.items():
-            if isinstance(v, Yang):
-                for k_, v_ in other.__dict__.items():
-                    if k == k_ and type(v) == type(v_):
-                        if k != "_parent" and k != 'id':  # FIXME: why 'id' is here???
-                            v.reducer(v_)
 
     def reduce(self, reference, ignores=None):
         """
@@ -110,7 +96,12 @@ class Yang(object):
             else:
                 _ignores.append(ignores)
         for k, v in self.__dict__.items():
-            if not k in _ignores:
+            if hasattr(v, "mandatory") and v.get_mandatory() is True:
+                _ignores.append(k)
+            if type(self._parent) is ListYang:
+                if k == self.keys():
+                    _ignores.append(k)
+            if k not in _ignores:
                 if isinstance(v, Yang):
                     if k in reference.__dict__.keys():
                         if type(v) == type(reference.__dict__[k]):
@@ -195,19 +186,18 @@ class Yang(object):
         temp._parse(parent, root)
         return temp
 
-    def _et(self, node, inherited=False):
+    def _et(self, node, inherited=False, ordered=True):
         """
         Inserts node as subelement of current ElementTree or create a new tree if it is not initialized
         param node: reference to the node element 
         return: Element of ElementTree
         """
-        _prohibited = ["_tag", "_sorted_children", "_key_attributes"]
+        _prohibited = ["_tag", "_sorted_children", "_key_attributes", "_referred"]
         attribs = {}
         for key, item in self.__dict__.items():
-            if not isinstance(item,Yang):
+            if not isinstance(item, Yang):
                 if item is not None and key not in _prohibited:
                     attribs[key.translate(None, '_')] = item
-
 
         if self.is_initialized():
             if node is not None:
@@ -217,7 +207,7 @@ class Yang(object):
             if len(self._sorted_children) > 0:
                 for c in self._sorted_children:
                     if self.__dict__[c] is not None:
-                        self.__dict__[c]._et(node, inherited)
+                        self.__dict__[c]._et(node, inherited, ordered)
         else:
             if node is None:
                 node = ET.Element(self.get_tag(), attrib=attribs)
@@ -231,7 +221,7 @@ class Yang(object):
         """
         return self.xml()
 
-    def contains_operation(self, operation="delete"): #FIXME: rename has_operation()
+    def contains_operation(self, operation="delete"):  # FIXME: rename has_operation()
         """
         Verifies if the instance contains operation set for any of its attributes
         :param operation: string
@@ -318,6 +308,7 @@ class Yang(object):
                             if not v.is_initialized():
                                 self.__dict__[k] = v_
                             else:
+                                self.__dict__[k].set_operation(v_.get_operation())
                                 self.__dict__[k].merge(v_)
                     if k_ not in self.__dict__.keys():
                         self.__dict__[k_] = v_
@@ -356,27 +347,42 @@ class Yang(object):
         :param leaf_ref: LeafRef
         :return: -
         """
-        if leaf_ref not in self.referred:
-            self.referred.append(leaf_ref)
+        if leaf_ref not in self._referred:
+            self._referred.append(leaf_ref)
 
-    def bind(self):
+    def unset_referred(self, leaf_ref):
         """
-        Binds all elements of self attributes
-        :param: -
+        Append in referred names of leafs referred (children of) by instance of Yang
+        :param leaf_ref: LeafRef
         :return: -
         """
-        def _iterdic(dictionary):
-            dict_elements = []
-            for d in dictionary.values():
-                dict_elements.append(d)
-            return dict_elements
+        if leaf_ref in self._referred:
+            self._referred.remove(leaf_ref)
 
-        for a in self.__dict__.keys():
-            if isinstance(self.__dict__[a], Yang) and a != "_parent":
-                self.__dict__[a].bind()
-            elif type(self.__dict__[a]) is DictType and len(self.__dict__[a]) > 0 and a != "_parent":
-                for de in _iterdic(self.__dict__[a]):
-                    de.bind()
+    def bind(self, relative=False):
+        """
+        Binds all elements of self attributes
+        :param: relative: Boolean
+        :return: -
+        """
+        if len(self._sorted_children) > 0:
+            for c in self._sorted_children:
+                if self.__dict__[c] is not None:
+                    self.__dict__[c].bind(relative)
+        return
+
+        # def _iterdic(dictionary):
+        #     dict_elements = []
+        #     for d in dictionary.values():
+        #         dict_elements.append(d)
+        #     return dict_elements
+        #
+        # for a in self.__dict__.keys():
+        #     if isinstance(self.__dict__[a], Yang) and a != "_parent":
+        #         self.__dict__[a].bind(relative)
+        #     elif type(self.__dict__[a]) is DictType and len(self.__dict__[a]) > 0 and a != "_parent":
+        #         for de in _iterdic(self.__dict__[a]):
+        #             de.bind(relative)
 
     def _parse(self, parent, root):
         """
@@ -386,6 +392,8 @@ class Yang(object):
         :return: -
         """
         for key, item in self.__dict__.items():
+            if key == "nodes":
+                pass
             if key is not "_parent":
                 if isinstance(item, Leaf):
                     item.parse(root)
@@ -393,18 +401,21 @@ class Yang(object):
                     object_ = root.find(key)
                     itemClass = item.get_type()
                     while object_ is not None:
-                        itemparsed = itemClass.parse(itemClass, object_)
+                        itemparsed = itemClass.parse(self, object_)
+                        # itemparsed = item._parent(self, object_)
                         if "operation" in object_.attrib.keys():
                             itemparsed.set_operation(object_.attrib["operation"])
                             itemparsed.operation = object_.attrib["operation"]
-                        keyitem = itemparsed.keys()
-                        self.__dict__[key][keyitem] = itemparsed
+                        # keyitem = itemparsed.keys()
+                        # self.__dict__[key][keyitem] = itemparsed
+                        self.__dict__[key].add(itemparsed)
                         root.remove(object_)
                         object_ = root.find(key)
                 elif isinstance(item, Yang):
                     object_ = root.find(key)
                     if object_ is not None:
-                        self.__dict__[key] = item.parse(item, object_)
+                        # self.__dict__[key] = item._parse(self, object_)
+                        item._parse(self, object_)
                         if "operation" in object_.attrib.keys():
                             self.set_operation(object_.attrib["operation"])
                             self.operation = object_.attrib["operation"]
@@ -414,9 +425,7 @@ class Leaf(Yang):
     Class defining Leaf basis with attributes and methods
     """
     def __init__(self, tag, parent=None):
-        super(Leaf, self).__init__(parent)
-        self._tag = tag
-        """:type: string"""
+        super(Leaf, self).__init__(tag, parent)
         self.data = None
         """:type: ???"""
         self.mandatory = False
@@ -482,15 +491,18 @@ class Leaf(Yang):
             return True
         return False
 
-    def _et(self, parent, inherited=False):
+    def _et(self, parent, inherited=False, ordered=True):
         """
         Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
         :param parent: ElementTree
         :return: Element of ElementTree
         """
         if self.is_initialized():
-            e_data = ET.SubElement(parent, self.get_tag)
-            e_data.text = self.get_as_text()
+            if type(self.data) is ET.Element:
+                parent.append(self.data)
+            else:
+                e_data = ET.SubElement(parent, self.get_tag())
+                e_data.text = self.get_as_text()+self.get_units()
         return parent
 
     def clear_data(self):
@@ -509,24 +521,13 @@ class Leaf(Yang):
         """
         self.data = None
 
-    def reducer(self, other):
-        """
-        Overides Yang method to reduce other, and clear its data if different from self.data or contains operation delete
-        :param other: instance of Yang
-        :return: boolean
-        """
-        if not (self == other) or other.contains_operation("delete"):
-            pass
-        else:
-            other.clear_data()
-
     def reduce(self, reference):
         """
         Overides Yang method to reduce other, return True if its data if different from self.data or _operation attributes mismatch
         :param reference: instance of Yang
         :return: boolean
         """
-        if (self.data != reference.data) or (self._operation != reference._operation):
+        if (self.data != reference.data) or (self._operation != reference._operation) or self.contains_operation("delete"):
             return False
         return True
 
@@ -547,13 +548,13 @@ class StringLeaf(Leaf):
     """
     Class defining Leaf with string extensions
     """
-    def __init__(self, tag, parent=None, value=None, units="", mandatory=False):
+    def __init__(self, tag, parent=None, value=None, units="", mandatory=False): # FIXME: why having units for StringLeaf?
         super(StringLeaf, self).__init__(tag, parent=parent)
         self.set_value(value)
         """:type: string"""
         self.set_units(units)
         """:type: string"""
-        self.set_mandatory(mandatory)
+        self.set_mandatory(mandatory) # FIXME: Mandatory should be handled in the Leaf class!
         """:type: boolean"""
 
     def parse(self, root):
@@ -572,20 +573,6 @@ class StringLeaf(Leaf):
             else:
                 self.set_value(e_data.text)
             root.remove(e_data)
-
-    def _et(self, parent, inherited=False):
-        """
-        Overides Yang method, return parent with SubElement as leaf tag and data as text if it is initialized
-        :param parent: instance of Yang
-        :return: Element of ElementTree
-        """
-        if self.is_initialized():
-            if type(self.data) is ET.Element:
-                parent.append(self.data)
-            else:
-                e_data = ET.SubElement(parent, self.get_tag())
-                e_data.text = self.get_as_text()
-        return parent
 
     def get_as_text(self):
         """
@@ -661,20 +648,6 @@ class IntLeaf(Leaf):
                     self.set_value(e_data.text)
             root.remove(e_data)
             self.initialized = True
-
-    def _et(self, parent, inherited=False):
-        """
-        Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
-        :param parent: ElementTree
-        :return: Element of ElementTree
-        """
-        if self.is_initialized():
-            if type(self.data) is ET.Element:
-                parent.append(self.data)
-            else:
-                e_data = ET.SubElement(parent, self.get_tag())
-                e_data.text = self.get_as_text()+self.get_units()
-        return parent
 
     def get_as_text(self):
         """
@@ -761,20 +734,6 @@ class Decimal64Leaf(Leaf):
             root.remove(e_data)
             self.initialized = True
 
-    def _et(self, parent, inherited=False):
-        """
-        Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
-        :param parent: ElementTree
-        :return: Element of ElementTree
-        """
-        if self.is_initialized():
-            if type(self.data) is ET.Element:
-                parent.append(self.data)
-            else:
-                e_data = ET.SubElement(parent, self.get_tag())
-                e_data.text = self.get_as_text()
-        return parent
-
     def get_as_text(self):
         """
         Returns data value as text
@@ -857,20 +816,6 @@ class BooleanLeaf(Leaf):
             root.remove(e_data)
             self.initialized = True
 
-    def _et(self, parent, inherited=False):
-        """
-        Overides Yang method return parent with subelement as leaf tag and data as text if it is initialized
-        :param parent: ElementTree
-        :return: Element of ElementTree
-        """
-        if self.is_initialized():
-            if type(self.data) is ET.Element:
-                parent.append(self.data)
-            else:
-                e_data = ET.SubElement(parent, self.get_tag())
-                e_data.text = self.get_as_text()
-        return parent
-
     def get_as_text(self):
         """
         Returns data value as text
@@ -908,36 +853,35 @@ class Leafref(StringLeaf):
     Class defining Leaf extensions for stringleaf when its data references other instances
     """
     def __init__(self, tag, parent=None, value=None, units="", mandatory=False):
-        super(Leafref, self).__init__(tag, parent=parent)
-        self.target = None
+        self.target = None # must be before the super call as set_value() is overidden
         """:type: Yang"""
-        if value is None:
-            return
-        # cannot bind as parent is not registered yet
-        if type(value) is str:
-            self.data = value
-        elif issubclass(type(value), Yang):
-            self.target = value
-        else:
-            raise ValueError("Leafref value is of unknown type.")
-        self.set_mandatory(mandatory)
-        """:type: boolean"""
+        # super call calls set_value()
+        super(Leafref, self).__init__(tag, parent=parent, value=value, mandatory=mandatory)
 
     def set_value(self, value):
         """
-        Sets data value as decimal
-        :param value: int
+        Sets data value as either a path or a Yang object
+        :param value: path string or Yang object
         :return: -
         """
         if value is None:
+            self.unbind()
             self.data = None
             self.target = None
             return
         if type(value) is str:
-            self.data = value
+            if self.data != value:
+                self.unbind()
+                self.target = None
+                self.data = value
+                # self.bind()
         elif issubclass(type(value), Yang):
-            self.target = value
-            self.data = self.get_rel_path(value)
+            if self.target != value:
+                self.unbind()
+                self.data = None
+                self.target = value
+                self.target.set_referred(self)
+                # self.bind()
         else:
             raise ValueError("Leafref value is of unknown type.")
 
@@ -961,7 +905,8 @@ class Leafref(StringLeaf):
         if self.data is not None:
             return self.data
         if self.target is not None:
-            return self.get_rel_path(self.target)
+            self.bind()
+            return self.data
         else:
             raise ReferenceError("Leafref get_as_text() is called but neither data nor target exists.")
 
@@ -971,16 +916,31 @@ class Leafref(StringLeaf):
         :param: -
         :return: string
         """
-        if self.data is not None:
-            return self.walk_path(self.data)
+        if self.target is None:
+            self.bind() # sets the target
+        return self.target
+        # if self.data is not None:
+        #     return self.walk_path(self.data)
 
-    def bind(self):
+    def bind(self, relative=False):
         """
-        Binds the target makes reference to LeafRef instance
-        :param: -
+        Binds the target and add the referee to the referende list in the target. The path is updated to relative or absolut based on the parameter
+        :param: relative: Boolean
         :return: -
         """
-        self.get_target().set_referred(self)
+        if self.target is not None:
+            if relative:
+                self.data = self.get_rel_path(self.target)
+            else:
+                self.data = self.target.get_path()
+        elif self.data is not None:
+            if self._parent is not None:
+                self.target = self.walk_path(self.data)
+                self.target.set_referred(self)
+
+    def unbind(self):
+        if self.target is not None:
+            self.target.unset_referred(self)
 
 
 class ListedYang(Yang):
@@ -1045,14 +1005,14 @@ class ListedYang(Yang):
         :return: instance
         """
         inst = self.__class__()
-        keys = self.keys()
-        for k in keys:
-            inst.__setitem__(k, copy.deepcopy(self.__getitem__(k)))
+        for key in self._key_attributes:
+            setattr(inst, key, getattr(self, key))
         return inst
 
     def reduce(self, reference):
         """
-        Delete instances which equivalently exist in the reference tree. The call is recursive, a node is removed if and only if all of its children are removed.
+        Delete instances which equivalently exist in the reference tree.
+        The call is recursive, a node is removed if and only if all of its children are removed.
         :param reference: Yang
         :return:
         """
@@ -1066,7 +1026,7 @@ class ListedYang(Yang):
         #                     v.reduce(reference.__dict__[k])
 
 
-class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
+class ListYang(Yang):  # FIXME: to inherit from OrderedDict()
     """
     Class to express list as dictionary 
     """
@@ -1202,15 +1162,23 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
             item = item.keys()
         return self._data.pop(item)
 
-    def _et(self, node, inherited=False):
+    def _et(self, node, inherited=False, ordered=True):
         """
         Overides Yang method to each ListYang component be defined as SubElement of ElementTree
         :param node: ElementTree
         :return: ElementTree
         """
-        for v in self.values():
-            v._et(node)
+        if ordered:
+            ordered_keys = sorted(self.keys())
+            for k in ordered_keys:
+                self._data[k]._et(node, ordered)
+        else:
+            for v in self.values():
+                v._et(node, ordered)
         return node
+        # for v in self.values():
+        #     v._et(node)
+        # return node
 
     def __iter__(self):  # ???
         """
@@ -1259,19 +1227,6 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
         """
         self._data = dict()
 
-    def reducer(self, other):
-        """
-        Delete keys of other ListYang if it is not equal self instance
-        :param other: ListYang
-        :return: -
-        """
-        for key in other.keys():
-            if key in self._data.keys():
-                if not (self[key] == other[key]) or other[key].contains_operation("delete"):
-                    self[key].reducer(other[key])
-                else:
-                    del other._data[key]
-
     def reduce(self, reference):
         """
         Check if all keys of reference are going to be reduced and erase their values if yes
@@ -1298,6 +1253,7 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
                 self.add(target[item])  # it should be a full_copy()
             else:
                 if isinstance(self[item], Yang) and type(self[item]) == type(target[item]):
+                    self[item].set_operation(target[item].get_operation())
                     self[item].merge(target[item])
 
     def __eq__(self, other):
@@ -1330,6 +1286,11 @@ class ListYang(Yang):  #FIXME: to inherit from OrderedDict()
         super(ListYang, self).set_operation(operation)
         for key in self._data.keys():
             self._data[key].set_operation(operation)
+
+    def bind(self, relative=False):
+        for v in self.values():
+            v.bind(relative)
+
 
 class FilterYang(Yang):
     def __init__(self, filter):
