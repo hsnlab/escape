@@ -110,6 +110,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
     log.info("Controller Adaptation Sublayer is going down...")
+    self.controller_adapter.shutdown()
 
   ##############################################################################
   # UNIFY Or - Ca API functions starts here

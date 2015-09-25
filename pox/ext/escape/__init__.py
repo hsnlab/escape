@@ -110,7 +110,9 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                    "class": "DockerDomainManager",
                                    "poll": False},
                         "SDN": {"module": "escape.adapt.managers",
-                                "class": "SDNDomainManager", "poll": False}},
+                                "class": "SDNDomainManager", "poll": False},
+                        # Shutdown strategy config
+                        "RESET-DOMAIN-AFTER-SHUTDOWN": True},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
                             "TOPO": "escape-mn-topo.nffg",  # relative to ext/
