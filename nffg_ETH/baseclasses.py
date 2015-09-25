@@ -392,6 +392,8 @@ class Yang(object):
         :return: -
         """
         for key, item in self.__dict__.items():
+            if key == "nodes":
+                pass
             if key is not "_parent":
                 if isinstance(item, Leaf):
                     item.parse(root)
@@ -399,18 +401,21 @@ class Yang(object):
                     object_ = root.find(key)
                     itemClass = item.get_type()
                     while object_ is not None:
-                        itemparsed = itemClass.parse(itemClass, object_)
+                        itemparsed = itemClass.parse(self, object_)
+                        # itemparsed = item._parent(self, object_)
                         if "operation" in object_.attrib.keys():
                             itemparsed.set_operation(object_.attrib["operation"])
                             itemparsed.operation = object_.attrib["operation"]
-                        keyitem = itemparsed.keys()
-                        self.__dict__[key][keyitem] = itemparsed
+                        # keyitem = itemparsed.keys()
+                        # self.__dict__[key][keyitem] = itemparsed
+                        self.__dict__[key].add(itemparsed)
                         root.remove(object_)
                         object_ = root.find(key)
                 elif isinstance(item, Yang):
                     object_ = root.find(key)
                     if object_ is not None:
-                        self.__dict__[key] = item.parse(item, object_)
+                        # self.__dict__[key] = item._parse(self, object_)
+                        item._parse(self, object_)
                         if "operation" in object_.attrib.keys():
                             self.set_operation(object_.attrib["operation"])
                             self.operation = object_.attrib["operation"]

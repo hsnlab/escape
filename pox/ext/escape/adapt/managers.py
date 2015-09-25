@@ -93,6 +93,9 @@ class InternalDomainManager(AbstractDomainManager):
           self.name, sys.exc_info()[0]))
       return False
 
+  def clear_domain (self):
+    pass
+
   def _deploy_nfs (self, nffg_part):
     """
     Install the NFs mapped in the given NFFG.
@@ -416,6 +419,9 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()[0]))
 
+  def clear_domain (self):
+    pass
+
 
 class OpenStackDomainManager(AbstractDomainManager):
   """
@@ -468,6 +474,15 @@ class OpenStackDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()[0]))
+
+  def clear_domain (self):
+    empty_cfg = self.topoAdapter.original_virtualizer
+    if empty_cfg is None:
+      log.error(
+        "Missing original topology in %s domain! Skip domain Save "
+        "Virtualizer..." % self.name)
+    log.debug("Reset %s domain config based on stored empty config" % self.name)
+    self.topoAdapter.edit_config(data=empty_cfg.xml())
 
 
 class UniversalNodeDomainManager(AbstractDomainManager):
@@ -525,6 +540,15 @@ class UniversalNodeDomainManager(AbstractDomainManager):
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()[0]))
 
+  def clear_domain (self):
+    empty_cfg = self.topoAdapter.original_virtualizer
+    if empty_cfg is None:
+      log.error(
+        "Missing original topology in %s domain! Skip domain resetting..." %
+        self.name)
+    log.debug("Reset %s domain config based on stored empty config" % self.name)
+    self.topoAdapter.edit_config(data=empty_cfg.xml())
+
 
 class DockerDomainManager(AbstractDomainManager):
   """
@@ -546,6 +570,9 @@ class DockerDomainManager(AbstractDomainManager):
   def install_nffg (self, nffg_part):
     log.info("Install Docker domain part...")
     # TODO - implement
+    pass
+
+  def clear_domain (self):
     pass
 
 
@@ -613,6 +640,9 @@ class SDNDomainManager(AbstractDomainManager):
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()[0]))
       return False
+
+  def clear_domain (self):
+    pass
 
   def _delete_flowrules (self, nffg_part):
     """
