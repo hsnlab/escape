@@ -93,6 +93,9 @@ class InternalDomainManager(AbstractDomainManager):
           self.name, sys.exc_info()[0]))
       return False
 
+  def clear_domain (self):
+    pass
+
   def _deploy_nfs (self, nffg_part):
     """
     Install the NFs mapped in the given NFFG.
@@ -275,8 +278,8 @@ class InternalDomainManager(AbstractDomainManager):
       dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
-          "deletions..." % (infra, dpid_to_str(dpid)))
+          "Skipping DELETE flowrules. Cause: connection for %s - DPID: %s is "
+          "not found!" % (infra, dpid_to_str(dpid)))
         continue
       self.controlAdapter.delete_flowrules(infra.id)
 
@@ -319,8 +322,8 @@ class InternalDomainManager(AbstractDomainManager):
       dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
-          "installations..." % (infra, dpid_to_str(dpid)))
+          "Skipping INSTALL flowrule. Cause: connection for %s - DPID: %s is "
+          "not found!" % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
@@ -438,6 +441,9 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
         infra.domain = 'INTERNAL'
     return nffg_part
 
+  def clear_domain (self):
+    pass
+
 
 class OpenStackDomainManager(AbstractDomainManager):
   """
@@ -491,6 +497,15 @@ class OpenStackDomainManager(AbstractDomainManager):
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()[0]))
       raise
+
+  def clear_domain (self):
+    empty_cfg = self.topoAdapter.original_virtualizer
+    if empty_cfg is None:
+      log.error(
+        "Missing original topology in %s domain! Skip domain resetting..." %
+        self.name)
+    log.debug("Reset %s domain config based on stored empty config" % self.name)
+    self.topoAdapter.edit_config(data=empty_cfg.xml())
 
 
 class UniversalNodeDomainManager(AbstractDomainManager):
@@ -547,6 +562,15 @@ class UniversalNodeDomainManager(AbstractDomainManager):
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()[0]))
 
+  def clear_domain (self):
+    empty_cfg = self.topoAdapter.original_virtualizer
+    if empty_cfg is None:
+      log.error(
+        "Missing original topology in %s domain! Skip domain resetting..." %
+        self.name)
+    log.debug("Reset %s domain config based on stored empty config" % self.name)
+    self.topoAdapter.edit_config(data=empty_cfg.xml())
+
 
 class DockerDomainManager(AbstractDomainManager):
   """
@@ -568,6 +592,9 @@ class DockerDomainManager(AbstractDomainManager):
   def install_nffg (self, nffg_part):
     log.info("Install Docker domain part...")
     # TODO - implement
+    pass
+
+  def clear_domain (self):
     pass
 
 
@@ -636,6 +663,9 @@ class SDNDomainManager(AbstractDomainManager):
           self.name, sys.exc_info()[0]))
       return False
 
+  def clear_domain (self):
+    pass
+
   def _delete_flowrules (self, nffg_part):
     """
     Delete all flowrules from the first (default) table of all infras.
@@ -657,8 +687,8 @@ class SDNDomainManager(AbstractDomainManager):
       dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
-          "deletions..." % (infra, dpid_to_str(dpid)))
+          "Skipping DELETE flowrules. Cause: connection for %s - DPID: %s is "
+          "not found!" % (infra, dpid_to_str(dpid)))
         continue
 
       self.controlAdapter.delete_flowrules(infra.id)
@@ -699,8 +729,8 @@ class SDNDomainManager(AbstractDomainManager):
       dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Connection for %s - DPID: %s is not found! Skip relevant flow rule "
-          "installations..." % (infra, dpid_to_str(dpid)))
+          "Skipping INSTALL flowrule. Cause: connection for %s - DPID: %s is "
+          "not found!" % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:

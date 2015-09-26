@@ -15,10 +15,12 @@
 Contains Adapter classes which contains protocol and technology specific
 details for the connections between ESCAPEv2 and other different domains.
 """
+from copy import deepcopy
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from ncclient.operations import OperationError
 from ncclient.operations.rpc import RPCError
+
 from ncclient.transport import TransportError
 
 from escape.infr.il_API import InfrastructureLayerAPI
@@ -696,7 +698,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if not isinstance(config, (str, unicode, NFFG)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
-      log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
+      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'edit-config', config)
     except ConnectionError:
       log.warning(
@@ -740,6 +742,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_OS, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
+    self.original_virtualizer = None
 
   def ping (self):
     try:
@@ -773,6 +776,12 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
       self.virtualizer = virt
+      if self.original_virtualizer is None:
+        log.debug(
+          "Store Virtualizer(id: %s, name: %s) as the original domain "
+          "config..." % (
+            virt.id.get_as_text(), virt.name.get_as_text()))
+        self.original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
 
@@ -780,12 +789,14 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if isinstance(data, NFFG):
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
-      data = str(self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.virtualizer, nffg=data))
+      virt_data = self.converter.adapt_mapping_into_Virtualizer(
+        virtualizer=self.virtualizer, nffg=data)
+      # virt_data.bind(relative=True)
+      data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
-      log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
+      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
       log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
@@ -827,6 +838,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
+    self.original_virtualizer = None
 
   def ping (self):
     try:
@@ -863,6 +875,12 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
       self.virtualizer = virt
+      if self.original_virtualizer is None:
+        log.debug(
+          "Store Virtualizer(id: %s, name: %s) as the original domain "
+          "config..." % (
+            virt.id.get_as_text(), virt.name.get_as_text()))
+        self.original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
 
@@ -870,12 +888,14 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if isinstance(data, NFFG):
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
-      data = str(self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.virtualizer, nffg=data))
+      virt_data = self.converter.adapt_mapping_into_Virtualizer(
+        virtualizer=self.virtualizer, nffg=data)
+      # virt_data.bind(relative=True)
+      data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
-      log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
+      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
       log.warning(
