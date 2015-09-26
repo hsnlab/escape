@@ -2029,6 +2029,7 @@ class NFFGConverter(object):
                       action=action, out=out_port)))
 
     self.log.debug("NFFG adaptation is finished.")
+    virtualizer.bind(relative=True)
     # Return with modified Virtualizer
     return virtualizer
 
