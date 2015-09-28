@@ -504,6 +504,7 @@ class OpenStackDomainManager(AbstractDomainManager):
       log.error(
         "Missing original topology in %s domain! Skip domain resetting..." %
         self.name)
+      return
     log.debug("Reset %s domain config based on stored empty config" % self.name)
     self.topoAdapter.edit_config(data=empty_cfg.xml())
 
@@ -568,6 +569,7 @@ class UniversalNodeDomainManager(AbstractDomainManager):
       log.error(
         "Missing original topology in %s domain! Skip domain resetting..." %
         self.name)
+      return
     log.debug("Reset %s domain config based on stored empty config" % self.name)
     self.topoAdapter.edit_config(data=empty_cfg.xml())
 
