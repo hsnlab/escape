@@ -21,9 +21,6 @@ from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
 import warnings
 import weakref
 
-from pox.core import core
-from pox.lib.revent.revent import EventMixin
-
 
 def schedule_as_coop_task (func):
   """
@@ -36,7 +33,9 @@ def schedule_as_coop_task (func):
   :return: decorator function
   :rtype: func
   """
+  from pox.core import core
   # copy meta info from func to decorator for documentation generation
+
   @wraps(func)
   def decorator (*args, **kwargs):
     # Use POX internal thread-safe wrapper for scheduling
@@ -59,6 +58,7 @@ def call_as_coop_task (func, *args, **kwargs):
   :type kwargs: dict
   :return: None
   """
+  from pox.core import core
   core.callLater(func, *args, **kwargs)
 
 
@@ -157,6 +157,7 @@ class SimpleStandaloneHelper(object):
     :param cover_name: Container's name for logging
     :type cover_name: str
     """
+    from pox.lib.revent.revent import EventMixin
     super(SimpleStandaloneHelper, self).__init__()
     assert isinstance(container,
                       EventMixin), "container is not subclass of EventMixin"
@@ -189,6 +190,7 @@ class SimpleStandaloneHelper(object):
     :type event: Event
     :return: None
     """
+    from pox.core import core
     core.getLogger("StandaloneHelper").getChild(self._cover_name).info(
       "Got event: %s from %s Layer" % (
         event.__class__.__name__, str(event.source._core_name).title()))
@@ -223,3 +225,26 @@ def deprecated (func):
   newFunc.__doc__ = func.__doc__
   newFunc.__dict__.update(func.__dict__)
   return newFunc
+
+
+def remove_junks (log=logging.getLogger("cleanup")):
+  # Kill remained clickhelper.py/click
+  if os.geteuid() != 0:
+    log.error("Cleanup process requires root privilege!")
+    return
+  log.debug("Cleanup still running VNF-related processes...")
+  run_silent(r"sudo pkill -9 -f netconfd")
+  run_silent(r"sudo pkill -9 -f clickhelper")
+  run_silent(r"sudo pkill -9 -f click")
+  log.debug("Cleanup any remained veth pair...")
+  veths = run_cmd(r"ip link show | egrep -o '(uny_\w+)'").split('\n')
+  # only need to del one end of the veth pair
+  for veth in veths[::2]:
+    if veth != '':
+      run_silent(r"sudo ip link del %s" % veth)
+  log.debug("Cleanup any Mininet-specific junk...")
+  # Call Mininet's own cleanup stuff
+  from mininet.clean import cleanup
+  cleanup()
+  log.debug("Cleanup remained tmp files...")
+  run_silent(r"rm  /tmp/*-startup-cfg.xml")

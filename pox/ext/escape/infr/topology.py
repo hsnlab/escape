@@ -15,7 +15,6 @@
 Wrapper module for handling emulated test topology based on Mininet.
 """
 
-from mininet.clean import cleanup
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
@@ -26,8 +25,7 @@ from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
-from escape.util.misc import quit_with_error, run_silent, call_as_coop_task, \
-  run_cmd
+from escape.util.misc import quit_with_error, call_as_coop_task
 
 
 class AbstractTopology(Topo):
@@ -418,38 +416,20 @@ class ESCAPENetworkBridge(object):
     ..seealso::
       :func:`mininet.clean.cleanup() <mininet.clean.cleanup>`
     """
-
-    def remove_junks ():
+    if self.started:
+      log.warning(
+        "Mininet network is not stopped yet! Skipping cleanup task...")
+    else:
+      log.info("Schedule cleanup task after Mininet emulation...")
       # Kill remained xterms
       log.debug("Close SAP xterms...")
       import os
       import signal
       for term in self.xterms:
         os.killpg(term.pid, signal.SIGTERM)
-      # Kill remained clickhelper.py/click
-      log.debug("Cleanup still running VNF-related processes...")
-      run_silent(r"sudo pkill -9 -f netconfd")
-      run_silent(r"sudo pkill -9 -f clickhelper")
-      run_silent(r"sudo pkill -9 -f click")
-      log.debug("Cleanup any remained veth pair...")
-      veths = run_cmd(r"ip link show | egrep -o '(uny_\w+)'").split('\n')
-      # only need to del one end of the veth pair
-      for veth in veths[::2]:
-        if veth != '':
-          run_silent(r"sudo ip link del %s" % veth)
-      log.debug("Cleanup any Mininet-specific junk...")
-      # Call Mininet's own cleanup stuff
-      cleanup()
-      log.debug("Cleanup remained tmp files...")
-      run_silent(r"rm  /tmp/*-startup-cfg.xml")
-
-    if self.started:
-      log.warning(
-        "Mininet network is not stopped yet! Skipping cleanup task...")
-    else:
-      log.info("Schedule cleanup task after Mininet emulation...")
       # Schedule a cleanup as a coop task to avoid threading issues
-      call_as_coop_task(remove_junks)
+      from escape.util.misc import remove_junks
+      call_as_coop_task(remove_junks, log=log)
 
   def get_agent_to_switch (self, switch_name):
     """
