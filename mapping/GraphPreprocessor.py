@@ -385,7 +385,7 @@ class GraphPreprocessorClass(object):
     self.net = preprocessed_network
 
     # we want only the service graph
-    for n in self.req_graph.infras:
+    for n in [node for node in self.req_graph.infras]:
       # DYNAMIC and STATIC links should be removed by this.
       # SG links should be already processed to chains, and link reqs.
       # WARNING: the ports of the VNFs which were connecting to the
@@ -469,26 +469,41 @@ class GraphPreprocessorClass(object):
     """
     net = copy.deepcopy(self.network)
 
-    # delete the ports which connect the to be deleted VNF-s to the Infras.
-    for link in net.links:
-      if link.type == link.DYNAMIC:
-        if link.src is not None:
-          if link.src.node.type == 'INFRA':
-            link.src.node.del_port(link.src.id)
+    # intersection of VNFs in net and req.
+    vnf_to_be_left_in_place = set()
+    if not full_remap:
+      already_mapped_vnfs = set([n.id for n in net.nfs])
+      for vnf in self.req_graph.nfs:
+        if vnf.id in already_mapped_vnfs:
+          vnf_to_be_left_in_place.add(vnf.id)
+          # there should be only one Infra neighbor for one VNF
+          mapped_to_node = None
+          for node in net.infra_neighbors(vnf.id):
+            mapped_to_node = node.id
+          if mapped_to_node is None:
+            raise uet.BadInputException("All NF-s in the substrate NFFG should"
+                  " be connected to some Infra node",
+                  "NF %s has no Infra neighbors"%vnf.id)
+          if not hasattr(self.req_graph.network.node[vnf.id], 
+                         'placement_criteria'):
+            setattr(self.req_graph.network.node[vnf.id], 'placement_criteria',
+                    [mapped_to_node])
+          elif mapped_to_node in self.req_graph.network.node[vnf.id]\
+               ['placement_criteria']:
+            self.req_graph.network.node[vnf.id]['placement_criteria'] = \
+                                                         [mapped_to_node]
+          else:
+            raise uet.BadInputException("Placement criteria should be consistent"
+                  " with the already mapped NF's host","NF %s is already mapped "
+                  "outside of the currently given placement criteria."%vnf.id)
 
-    # REQUEST or SG links between SAPs are not removed anywhere else
-    for i,j,link in net.network.edges_iter(data=True):
-      if link.src.node.type == 'SAP' and link.dst.node.type == 'SAP' \
-           and link.type != 'STATIC':
-        net.del_edge(link.src, link.dst, link.id)
-          
     # add available res attribute to all Infras and subtract the running
     # NFs` resources from the given max res
     for n in net.infras:
       setattr(net.network.node[n.id], 'availres',
               copy.deepcopy(net.network.node[n.id].resources))
       for vnf in net.running_nfs(n.id):
-        if not full_remap:
+        if not full_remap and vnf.id not in vnf_to_be_left_in_place:
           try: 
             newres = helper.subtractNodeRes(net.network.node[n.id].availres,
                                             net.network.node[vnf.id].resources,
@@ -500,7 +515,78 @@ class GraphPreprocessorClass(object):
               "more resource than the maximal." % n.name)
         
           net.network.node[n.id].availres = newres
-        net.del_node(vnf.id)
+
+    # REQUEST or SG links between SAPs are not removed anywhere else
+    for i,j,link in net.network.edges_iter(data=True):
+      if link.src.node.type == 'SAP' and link.dst.node.type == 'SAP' \
+           and link.type != 'STATIC':
+        net.del_edge(link.src, link.dst, link.id)
+
+    # set availbandwidth to the maximal value
+    for i, j, k, d in net.network.edges_iter(data=True, keys=True):
+      if d.type == 'STATIC':
+        setattr(net.network[i][j][k], 'availbandwidth', d.bandwidth)
+
+    # in case of full_remap there is nothing to do with the flowrules, they 
+    # will be deleted...
+    if not full_remap:
+      # find all the flowrules with starting TAG and retrieve the paths, 
+      # and subtract the reserved link and internal (inside Infras) bandwidth
+      for d in net.infras:
+        reserved_internal_bw = 0
+        for p in d.ports:
+          for fr in p.flowrules:
+            if fr.bandwidth is not None:
+              reserved_internal_bw += fr.bandwidth
+          for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
+            path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, net, p)
+            # path_of_TAG is an empty list in case of collocation, but this case
+            # is also handled by the internal Flowrule.bandwidth summerizing 
+            #'for loop'
+            for link in path_of_TAG:
+              link.availbandwidth -= flow_bw
+              if link.availbandwidth < 0:
+                raise uet.InternalAlgorithmException("Available bandwidth "
+                      "capacity of link %s, %s, %s got below zero! (also could"
+                      " be BadInputException, but this part is hasn't been "
+                      "thoroughly tested...)"%(link.src.node.id, 
+                                               link.dst.node.id, link.id))
+        d.availres['bandwidth'] -= reserved_internal_bw
+
+    # calculated weights for infras based on their available bandwidth capacity
+    for d in net.infras:
+      if d.availres.bandwidth < 0:
+        raise uet.BadInputException("The sum of bandwidth capacity of internal"
+                  " Flowrules should be less than the available internal "
+                  "bandwidth", "On node %s internal bandwidth would get below "
+                                    "zero!"%d.id)
+      else:
+        setattr(d, 'weight', 1.0 / d.availres.bandwidth if \
+                d.availres.bandwidth > 0 else sys.float_info.max)
+        self.log.debug("Weight for node %s: %f" % (d.id, d.weight))
+        self.log.debug("Supported types of node %s: %s"%(d.id, d.supported))
+        
+    # after all the TAG values are traced back, and the reserved bandwidth 
+    # capacities are subtracted from the available resources, we can 
+    # calculate the link weights.
+    for i, j, k, d in net.network.edges_iter(data=True, keys=True):
+      if d.type == 'STATIC':
+        setattr(net.network[i][j][k], 'weight', 1.0 / d.availbandwidth)
+        self.log.debug("Weight for link %s, %s, %s: %f" % (
+          i, j, k, net.network[i][j][k].weight))
+    self.log.info("Link and node weights calculated")
+
+    # delete the ports which connect the to be deleted VNF-s to the Infras.
+    # NOTE: in case of NOT full_remap these ports will be still in the output.
+    for link in net.links:
+      if link.type == link.DYNAMIC:
+        if link.src is not None:
+          if link.src.node.type == 'INFRA':
+            link.src.node.del_port(link.src.id)
+
+    # delete the already mapped VNFs, we have used all the information needed.
+    for vnf in [v for v in net.nfs]:
+      net.del_node(vnf.id)
 
     # in case of full_remap all the flowrules should be deleted.
     if full_remap:
@@ -527,57 +613,5 @@ class GraphPreprocessorClass(object):
                                                         cache_shortest_path)
     self.manager.addShortestRoutesInLatency(self.shortest_paths)
     self.log.info("Shortest path calculation completed!")
-
-    # set availbandwidth to the maximal value
-    for i, j, k, d in net.network.edges_iter(data=True, keys=True):
-      setattr(net.network[i][j][k], 'availbandwidth', d.bandwidth)
-
-    # in case of full_remap there is nothing to do with the flowrules, they 
-    # are already deleted...
-    if not full_remap:
-      # find all the flowrules with starting TAG and retrieve the paths, 
-      # and subtract the reserved link and internal (inside Infras) bandwidth
-      for d in net.infras:
-        reserved_internal_bw = 0
-        for p in d.ports:
-          for fr in p.flowrules:
-            if fr.bandwidth is not None:
-              reserved_internal_bw += fr.bandwidth
-          for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
-            path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, net, p)
-            # path_of_TAG is an empty list in case of collocation, but this case
-            # is also handled by the internal Flowrule.bandwidth summerizing 
-            #'for loop'
-            for link in path_of_TAG:
-              new_link_bw = link.availbandwidth - flow_bw
-              if new_link_bw < 0:
-                raise uet.InternalAlgorithmException("Available bandwidth "
-                      "capacity of link %s, %s, %s got below zero! (also could"
-                      " be BadInputException, but this part is hasn't been "
-                      "thoroughly tested...)"%(link.src.node.id, 
-                                               link.dst.node.id, link.id))
-        d.availres['bandwidth'] -= reserved_internal_bw
-
-    for d in net.infras:
-      if d.availres.bandwidth < 0:
-        raise uet.BadInputException("The sum of bandwidth capacity of internal"
-                  " Flowrules should be less than the available internal "
-                  "bandwidth", "On node %s internal bandwidth would get below "
-                                    "zero!"%d.id)
-      else:
-        setattr(d, 'weight', 1.0 / d.availres.bandwidth if \
-                d.availres.bandwidth > 0 else sys.float_info.max)
-        self.log.debug("Weight for node %s: %f" % (d.id, d.weight))
-        self.log.debug("Supported types of node %s: %s"%(d.id, d.supported))
-        
-    # after all the TAG values are traced back, and the reserved bandwidth 
-    # capacities are subtracted from the available resources, we can 
-    # calculate the link weights.
-    for i, j, k, d in net.network.edges_iter(data=True, keys=True):
-      setattr(net.network[i][j][k], 'weight', 1.0 / d.availbandwidth)
-      self.log.debug("Weight for link %s, %s, %s: %f" % (
-                     i, j, k, net.network[i][j][k].weight))
-
-    self.log.info("Link and node weights calculated")
 
     return net

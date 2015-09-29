@@ -1595,115 +1595,152 @@ class NFFGToolBox(object):
     # Return with modified Virtualizer
     return virtualizer
     
-    @staticmethod
-    def _get_output_port_of_TAG_action (TAG, port):
-      for fr in port.flowrules:
-        actions = fr.action.split(";")
-        for action in actions:
-          command, param = action.split("=")
-          if command == "TAG" and param == TAG:
-            for action2 in actions:
-              command2, param2 = action2.split("=")
-              if command2 == "output":
-                return port.node.ports[int(param2)], fr.bandwidth
-            else:
-              raise RuntimeError("No 'output' action found for flowrule with"
-                                 " 'TAG' action!")
-      # No flowrule with the given tag action found.
-      return None, None
+  @staticmethod
+  def _get_output_port_of_TAG_action (TAG, port):
+    for fr in port.flowrules:
+      actions = fr.action.split(";")
+      for action in actions:
+        command, param = action.split("=")
+        if command == "TAG" and param == TAG:
+          for action2 in actions:
+            command2, param2 = action2.split("=")
+            if command2 == "output":
+              return port.node.ports[int(param2)], fr.bandwidth
+          else:
+            raise RuntimeError("No 'output' action found for flowrule with"
+                               " 'TAG' action!")
+    # No flowrule with the given tag action found.
+    return None, None
 
-    @staticmethod
-    def _find_outbound_static_link (nffg, port):
-      for i,j,d in nffg.network.edges_iter([port.node.id], data=True):
-        if port.id == d.src.id:
+  @staticmethod
+  def _find_static_link (nffg, port, outbound = True):
+    edges_func = None
+    if outbound:
+      edges_func = nffg.network.out_edges_iter
+    else:
+      edges_func = nffg.network.in_edges_iter
+    for i,j,d in edges_func([port.node.id], data=True):
+      if d.type == 'STATIC':
+        if outbound and port.id == d.src.id:
           return d
+        if not outbound and port.id == d.dst.id:
+          return d
+    return None
 
-    @staticmethod
-    def _is_port_finishing_flow (TAG, port):
-      for fr in port.flowrules:
-        matches = fr.match.split(";")
-        for match in matches:
+  @staticmethod
+  def _is_port_finishing_flow (TAG, port):
+    for fr in port.flowrules:
+      matches = fr.match.split(";")
+      for match in matches:
+        field, mparam = match.split("=")
+        if field == "TAG" and mparam == TAG:
+          for action in fr.action.split(";"):
+            if action == "UNTAG":
+              return True
+    return False
+
+  @staticmethod
+  def get_TAGs_of_starting_flows (port):
+    for fr in port.flowrules:
+      for action in fr.action.split(";"):
+        command_param = action.split("=")
+        if command_param[0] == "TAG":
+          yield command_param[1]
+
+  @staticmethod
+  def retrieve_mapped_path (TAG, nffg, starting_port):
+    """
+    Finds the list of links, where the traffic tagged with the given TAG is 
+    routed. starting_port is the first port where the tag is put onto the 
+    traffic (the outbound dynamic port of the starting VNF of the flow).
+    Returns the list of link objects and the corresponding bandwidth value.
+    TODO (?): add default 'None' parameter value for starting_port
+    , when the function should find where the given TAG is put on the traffic
+    """
+    edge_list = []
+    bandwidth = None
+    tag_list = TAG.split("|")
+    vnf1 = tag_list[0]
+    vnf2 = tag_list[1]
+    reqlinkid = tag_list[2]
+    reqlinkid = int(reqlinkid)
+    first_link = NFFGToolBox._find_static_link(nffg, starting_port, 
+                                               outbound=False)
+    if first_link is not None:
+      if first_link.src.node.type == 'SAP':
+        edge_list.append(first_link)
+    # if first link is None, it means the flow starts from a DYNAMIC port.
+    first_out_port, bandwidth = NFFGToolBox._get_output_port_of_TAG_action(
+      TAG, starting_port)
+    # if the TAG action couldn't be found in 'starting_port' maybe this link
+    # is collocated on this Infra.
+    if first_out_port is None:
+      if nffg.network.has_edge(vnf1, starting_port.node.id) and \
+         nffg.network.has_edge(vnf2, starting_port.node.id):
+        # then the flowrule should output the traffic from 'starting_port' to 
+        # the dynamic port leading to 'vnf2'
+        dynamic_ports_of_vnf2 = set()
+        for link in nffg.network[vnf2][starting_port.node.id].itervalues():
+          dynamic_ports_of_vnf2.add(link.dst.id)
+        for fr in starting_port.flowrules:
+          for action in fr.action.split(";"):
+            command, param = action.split("=")
+            if command == "output" and int(param) in dynamic_ports_of_vnf2:
+              # WARNING!! IF 'starting_port' has 2 flowrules leading to 'vnf2'
+              # (either same or different ports) we can't make difference 
+              # between the 2 collocation flows!!
+              # BUT if dynamic (infra) ports of(/leading to) 'vnf1' store the
+              # 2 flowrules in different dynamic ports, it is OK.
+              return [], fr.bandwidth
+      else:
+        raise RuntimeError("Neither starting flowrule nor collocation flowrule"
+                           " found in the given port for TAG: %s!"%TAG)
+
+    curr_link = NFFGToolBox._find_static_link(nffg, first_out_port)
+    edge_list.append(curr_link)
+    curr_port = curr_link.dst
+    next_link_found = False
+    while not NFFGToolBox._is_port_finishing_flow(TAG, curr_port):
+      for fr in curr_port.flowrules:
+        for match in fr.match.split(";"):
           field, mparam = match.split("=")
           if field == "TAG" and mparam == TAG:
             for action in fr.action.split(";"):
-              if action == "UNTAG":
-                return True
-      return False
-
-    @staticmethod
-    def get_TAGs_of_starting_flows (port):
-      for fr in port.flowrules:
-        for action in fr.action.split(";"):
-          command, param = action.split("=")
-          if command == "TAG":
-            yield param
-            
-    @staticmethod
-    def retrieve_mapped_path (TAG, nffg, starting_port):
-      """
-      Finds the list of links, where the traffic tagged with the given TAG is 
-      routed. starting_port is the first port where the tag is put onto the 
-      traffic (the outbound dynamic port of the starting VNF of the flow).
-      Returns the list of link objects and the corresponding bandwidth value.
-      TODO (?): add default 'None' parameter value for starting_port
-      , when the function should find where the given TAG is put on the traffic
-      """
-      edge_list = []
-      bandwidth = None
-      vnf1, vnf2, reqlinkid = TAG.split("|")
-      reqlinkid = int(reqlinkid)
-      first_out_port, bandwidth = NFFGToolBox._get_output_port_of_TAG_action(
-        TAG, starting_port)
-      # if the TAG action couldn't be found in 'starting_port' maybe this link
-      # is collocated on this Infra.
-      if first_out_port is None:
-        if nffg.network.has_edge(vnf1, starting_port.node.id) and \
-           nffg.network.has_edge(vnf2, starting_port.node.id):
-          # then the flowrule should output the traffic from 'starting_port' to 
-          # the dynamic port leading to 'vnf2'
-          dynamic_ports_of_vnf2 = set()
-          for link in nffg.network[vnf2][starting_port.node.id].itervalues():
-            dynamic_ports_of_vnf2.add(link.dst.id)
-          for fr in starting_port.flowrules:
-            for action in fr.action.split(";"):
-              command, param = action.split("=")
-              if command == "output" and int(param) in dynamic_ports_of_vnf2:
-                # WARNING!! IF 'starting_port' has 2 flowrules leading to 'vnf2'
-                # (either same or different ports) we can't make difference 
-                # between the 2 collocation flows!!
-                # BUT if dynamic (infra) ports of(/leading to) 'vnf1' store the
-                # 2 flowrules in different dynamic ports, it is OK.
-                return [], fr.bandwidth
-        else:
-          raise RuntimeError("Neither starting flowrule nor collocation flowrule"
-                             " found in the given port for TAG: %s!"%TAG)
-        
-      curr_link = NFFGToolBox._find_outbound_static_link(nffg, first_out_port)
-      edge_list.append(curr_link)
-      curr_port = curr_link.dst
-      next_link_found = False
-      while not NFFGToolBox._is_port_finishing_flow(TAG, curr_port):
-        for fr in curr_port.flowrules:
-          for match in fr.match.split(";"):
-            field, mparam = match.split("=")
-            if field == "TAG" and mparam == TAG:
-              for action in fr.action.split(";"):
-                command, cparam = action.split("=")
-                if command == "output":
-                  curr_link = NFFGToolBox._find_outbound_static_link(nffg, 
-                                          curr_port.node.ports[int(cparam)])
-                  edge_list.append(curr_link)
-                  curr_port = curr_link.dst
-                  next_link_found = True
-                  break
-            if next_link_found:
-              break
+              command, cparam = action.split("=")
+              if command == "output":
+                curr_link = NFFGToolBox._find_static_link(nffg, 
+                                        curr_port.node.ports[int(cparam)])
+                edge_list.append(curr_link)
+                curr_port = curr_link.dst
+                next_link_found = True
+                break
           if next_link_found:
             break
-        else:
-          raise RuntimeError("Finishing flowrule couldn't be found for TAG: %s"
-                             %TAG)
-      return edge_list, bandwidth
+        if next_link_found:
+          break
+      else:
+        raise RuntimeError("Finishing flowrule couldn't be found for TAG: %s"
+                           %TAG)
+    # curr_port is a flow finishing port, let's check whether the next node 
+    # would be a SAP
+    last_link_found = False
+    for fr in curr_port.flowrules:
+      for action in fr.action.split(";"):
+        action_split = action.split("=")
+        if len(action_split) == 2:
+          command, cparam = action_split
+          if command == "output":
+            last_link = NFFGToolBox._find_static_link(nffg, 
+                                    curr_port.node.ports[int(cparam)])
+            if last_link is not None:
+              if last_link.dst.node.type == 'SAP':
+                edge_list.append(last_link)
+                last_link_found = True
+                break
+      if last_link_found:
+        break
+
+    return edge_list, bandwidth
       
 
 

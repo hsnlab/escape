@@ -249,7 +249,7 @@ class Node(Element):
       if port.id == id:
         del port.node
         return self.ports.remove(port)
-      return True
+    return False
   
   def persist (self):
     node = super(Node, self).persist()

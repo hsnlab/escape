@@ -1,0 +1,146 @@
+{
+  "parameters": {
+    "id": "SG-decomp", 
+    "name": "SG-name-additional-request", 
+    "version": "1.0"
+  }, 
+  "node_nfs": [
+    {
+      "id": "fwd", 
+      "name": "FORWARDER", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "simpleForwarder", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "comp-additional", 
+      "name": "COMPRESSOR", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "headerCompressor", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "decomp-additional", 
+      "name": "DECOMPRESSOR", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "headerDecompressor", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }
+  ], 
+  "node_saps": [
+    {
+      "id": "sap1", 
+      "name": "SAP1", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "sap2", 
+      "name": "SAP2", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 10, 
+      "src_node": "fwd", 
+      "src_port": 1, 
+      "dst_node": "sap1", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 7, 
+      "src_node": "comp-additional", 
+      "src_port": 1, 
+      "dst_node": "decomp-additional", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 8, 
+      "src_node": "decomp-additional", 
+      "src_port": 1, 
+      "dst_node": "sap2", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 6, 
+      "src_node": "sap1", 
+      "src_port": 1, 
+      "dst_node": "comp-additional", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 9, 
+      "src_node": "sap2", 
+      "src_port": 1, 
+      "dst_node": "fwd", 
+      "dst_port": 1
+    }
+  ], 
+  "edge_reqs": [
+    {
+      "id": 29745297, 
+      "src_node": "sap1", 
+      "src_port": 1, 
+      "dst_node": "sap2", 
+      "dst_port": 1, 
+      "delay": 20, 
+      "bandwidth": 4, 
+      "sg_path": [
+        6, 
+        7, 
+        8
+      ]
+    }, 
+    {
+      "id": 29745361, 
+      "src_node": "sap2", 
+      "src_port": 1, 
+      "dst_node": "sap1", 
+      "dst_port": 1, 
+      "delay": 20, 
+      "bandwidth": 4, 
+      "sg_path": [
+        9, 
+        10
+      ]
+    }
+  ]
+}
