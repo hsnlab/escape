@@ -56,13 +56,13 @@ def genAndAddSAP(nffg, networkparams):
     return nffg.network.node[sapid]
 
 
-def generateRequestForCarrierTopo(networkparams, test_lvl, seed):
-  nffg = NFFG(id="Benchmark-Req-"+str(test_lvl))
+def generateRequestForCarrierTopo(networkparams, seed):
+  test_lvl = 1
   chain_maxlen = 10
   random.seed(seed)
-  
-  # generate some VNF-s connecting the two SAP-s
-  for i in xrange(0, test_lvl):
+  # generate some VNF-s connecting two SAP-s
+  while True:
+    nffg = NFFG(id="Benchmark-Req-"+str(test_lvl))
     # find two SAP-s for chain ends.
     sap1 = genAndAddSAP(nffg, networkparams)
     sap2 = genAndAddSAP(nffg, networkparams)
@@ -70,7 +70,7 @@ def generateRequestForCarrierTopo(networkparams, test_lvl, seed):
     sap1port = sap1.add_port()
     last_req_port = sap1port
     for vnf in xrange(0, next(gen_seq()) % chain_maxlen + 1):
-      nf = nffg.add_nf(id="-".join(("Test",str(test_lvl),"SC",str(i),"VNF",
+      nf = nffg.add_nf(id="-".join(("SC",str(test_lvl),"VNF",
                                     str(vnf))),
                        func_type=random.choice(['A','B','C']), 
                        cpu=random.choice([1,2,3]),
@@ -86,13 +86,15 @@ def generateRequestForCarrierTopo(networkparams, test_lvl, seed):
     sap2port = sap2.add_port()
     sglink = nffg.add_sglink(last_req_port, sap2port)
     sg_path.append(sglink.id)
+    test_lvl += 1
 
     # WARNING: this is completly a wild guess! Failing due to this doesn't 
     # necessarily mean algorithm failure
     # Bandwidth maximal random value should be min(SAP1acces_bw, SAP2access_bw)
+    # MAYBE: each SAP can only be once in the reqgraph?
     nffg.add_req(sap1port, sap2port, delay=random.uniform(20,100), 
                  bandwidth=random.random()*0.2, sg_path = sg_path)
-  return nffg
+    yield nffg
 
 if __name__ == '__main__':
   topoparams = []
@@ -111,19 +113,20 @@ if __name__ == '__main__':
   #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
   #                                 [4,8,12,16], [32000,64000], [200], 40000, 4)})
   network = CarrierTopoBuilder.getCarrierTopo( topoparams )
-  test_lvl = 10
+  test_lvl = 1
   max_test_lvl = sys.maxint
   ever_successful = False
   try:
     while test_lvl < max_test_lvl:
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
-        request = generateRequestForCarrierTopo(topoparams, test_lvl, 1)
-        # print request.dump()
-        MappingAlgorithms.MAP(request, network, enable_shortest_path_cache=True)
-        ever_successful = True
-        test_lvl = int(2 * test_lvl)
-        log.debug("Mapping successful!")
+        for request in generateRequestForCarrierTopo(topoparams, 4):
+          # print request.dump()
+          network = MappingAlgorithms.MAP(request, network, 
+                                          enable_shortest_path_cache=True)
+          ever_successful = True
+          test_lvl += 1
+          log.debug("Mapping successful on test level %s!"%test_lvl)
       except uet.MappingException as me:
         log.debug("Mapping failed: %s"%me.msg)
         break
@@ -134,7 +137,7 @@ if __name__ == '__main__':
     print traceback.format_exc()
   print "First unsuccessful mapping was at %s test level."%test_lvl
   if ever_successful:
-    print "Last successful was at %s test level."%int(test_lvl/2.0)
+    print "Last successful was at %s test level."%(test_lvl - 1)
   else:
     print "Mapping failed at starting test level (%s)"%test_lvl
 

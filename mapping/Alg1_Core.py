@@ -365,7 +365,8 @@ class CoreAlgorithm(object):
               self.net.node[j].weight = sys.float_info.max
             else:
               self.net.node[j].weight = 1.0 / new_bw_innode
-    self.log.debug("Available network resources are updated.")
+    self.log.debug("Available network resources are updated: redo: %s, vnf: "
+                   "%s, path: %s"%(redo, vnf, path))
 
   def _takeOneGreedyStep(self, cid, step_data):
     """

@@ -75,9 +75,9 @@ def addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS_PE,
   dn0 = None
   dn1 = None
   if BNAS_PE > 0:
-    dn0 = nffg.add_infra(id="DistributionNode"+popn+part+"-0", 
+    dn0 = nffg.add_infra(id="DistributionNode"+popn+"-"+part+"-0", 
                                 **dnres)
-    dn1 = nffg.add_infra(id="DistributionNode"+popn+part+"-1",
+    dn1 = nffg.add_infra(id="DistributionNode"+popn+"-"+part+"-1",
                                 **dnres)
     addRedundantPairedConnection(nffg, an0, an1, dn0, dn1, aggr_link)
 

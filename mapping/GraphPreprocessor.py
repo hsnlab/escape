@@ -546,11 +546,11 @@ class GraphPreprocessorClass(object):
             for link in path_of_TAG:
               link.availbandwidth -= flow_bw
               if link.availbandwidth < 0:
-                raise uet.InternalAlgorithmException("Available bandwidth "
-                      "capacity of link %s, %s, %s got below zero! (also could"
-                      " be BadInputException, but this part is hasn't been "
-                      "thoroughly tested...)"%(link.src.node.id, 
-                                               link.dst.node.id, link.id))
+                raise uet.BadInputException("The bandwidth usage implied by "
+                "the sum of flowrule bandwiths should determine the occupied",
+                " capacity on links.", "The bandwidth capacity on link %s, %s,"
+                " %s got below zero!"%(link.src.node.id, link.dst.node.id, 
+                                       link.id))
         d.availres['bandwidth'] -= reserved_internal_bw
 
     # calculated weights for infras based on their available bandwidth capacity

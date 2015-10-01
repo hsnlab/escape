@@ -1615,6 +1615,7 @@ class NFFGToolBox(object):
   @staticmethod
   def _find_static_link (nffg, port, outbound = True):
     edges_func = None
+    link = None
     if outbound:
       edges_func = nffg.network.out_edges_iter
     else:
@@ -1622,10 +1623,16 @@ class NFFGToolBox(object):
     for i,j,d in edges_func([port.node.id], data=True):
       if d.type == 'STATIC':
         if outbound and port.id == d.src.id:
-          return d
+          if link is not None:
+            raise Exception("InfraPort %s has more than one outbound "
+                            "STATIC links!")
+          link = d
         if not outbound and port.id == d.dst.id:
-          return d
-    return None
+          if link is not None:
+            raise Exception("InfraPort %s has more than one inbound "
+                            "STATIC links!")
+          link = d
+    return link
 
   @staticmethod
   def _is_port_finishing_flow (TAG, port):
@@ -1699,8 +1706,8 @@ class NFFGToolBox(object):
     curr_link = NFFGToolBox._find_static_link(nffg, first_out_port)
     edge_list.append(curr_link)
     curr_port = curr_link.dst
-    next_link_found = False
     while not NFFGToolBox._is_port_finishing_flow(TAG, curr_port):
+      next_link_found = False
       for fr in curr_port.flowrules:
         for match in fr.match.split(";"):
           field, mparam = match.split("=")
@@ -1723,22 +1730,33 @@ class NFFGToolBox(object):
                            %TAG)
     # curr_port is a flow finishing port, let's check whether the next node 
     # would be a SAP
-    last_link_found = False
-    for fr in curr_port.flowrules:
-      for action in fr.action.split(";"):
-        action_split = action.split("=")
-        if len(action_split) == 2:
-          command, cparam = action_split
-          if command == "output":
-            last_link = NFFGToolBox._find_static_link(nffg, 
-                                    curr_port.node.ports[int(cparam)])
-            if last_link is not None:
-              if last_link.dst.node.type == 'SAP':
-                edge_list.append(last_link)
-                last_link_found = True
-                break
-      if last_link_found:
-        break
+    if nffg.network.node[vnf2].type == 'SAP':
+      # we only need to find the last link separately if 'vnf2' is a SAP
+      last_link_found = False
+      for fr in curr_port.flowrules:
+        for match in fr.action.split(";"):
+          field_mparam = match.split("=")
+          if field_mparam[0] == 'TAG' and field_mparam[1] == TAG:
+            for action in fr.action.split(";"):
+              action_split = action.split("=")
+              if len(action_split) == 2:
+                command, cparam = action_split
+                if command == "output":
+                  last_link = NFFGToolBox._find_static_link(nffg, 
+                                          curr_port.node.ports[int(cparam)])
+                  if last_link is not None:
+                    # maybe there could be multiple output commands...
+                    if last_link.dst.node.type == 'SAP':
+                      edge_list.append(last_link)
+                      last_link_found = True
+                      break
+                  else:
+                    raise RuntimeError("No outbound link found for last port "
+                                       "of physical path of TAG: %s"%TAG)
+          if last_link_found:
+            break
+        if last_link_found:
+          break
 
     return edge_list, bandwidth
       
