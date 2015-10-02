@@ -43,7 +43,8 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:%(name)s:%(message)s')
 all_saps_beginning = []
 all_saps_ending = []
-running_nfs = []
+running_nfs = {}
+test_lvl = 1
 
 """
 def genAndAddSAP(nffg, networkparams):
@@ -65,10 +66,9 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
   """
   By default generates VNF-disjoint SC-s starting/ending only once in each SAP.
   With the 'loops' option, only loop SC-s are generated.
-  'vnf_sharing_probabilty' determines the probabilty whether we should choose 
-  from the already running VNF-s.
+  'vnf_sharing_probabilty' determines the ratio of 
+     #(VNF-s used by at least two SC-s)/#(not shared VNF-s).
   """
-  test_lvl = 1
   chain_maxlen = 10
   random.seed(seed)
   random.shuffle(all_saps_beginning)
@@ -93,16 +93,25 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
     sap1port = sap1.add_port()
     last_req_port = sap1port
     for vnf in xrange(0, next(gen_seq()) % chain_maxlen + 1):
-      if random.random() < vnf_sharing_probabilty and len(running_nfs) > 10:
-        nf = random.choice(running_nfs)
+      if random.random() < vnf_sharing_probabilty and len(running_nfs) > 0:
+        p = random.random()
+        sumlen = sum([n*len(running_nfs[n]) for n in running_nfs])
+        i = 1
+        ratio = float(len(running_nfs[i])) / sumlen
+        while ratio < p:
+          i += 1
+          ratio += float(i*len(running_nfs[i])) / sumlen
+        nf = random.choice(running_nfs[i])
+        while nf in nffg.nfs:
+          nf = random.choice(running_nfs[i])
         nffg.add_node(nf)
       else:
         nf = nffg.add_nf(id="-".join(("SC",str(test_lvl),"VNF",
                          str(vnf))),
                          func_type=random.choice(['A','B','C']), 
-                         cpu=random.choice([1,2,3]),
-                         mem=random.random()*500,
-                         storage=random.random(),
+                         cpu=random.randint(1,8),
+                         mem=random.random()*2000,
+                         storage=random.random()*3,
                          delay=1 + random.random()*10,
                          bandwidth=random.random())
       newport = nf.add_port()
@@ -113,7 +122,6 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
     sap2port = sap2.add_port()
     sglink = nffg.add_sglink(last_req_port, sap2port)
     sg_path.append(sglink.id)
-    test_lvl += 1
 
     # WARNING: this is completly a wild guess! Failing due to this doesn't 
     # necessarily mean algorithm failure
@@ -141,7 +149,6 @@ if __name__ == '__main__':
   #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
   #                                 [4,8,12,16], [32000,64000], [200], 40000, 4)})
   network = CarrierTopoBuilder.getCarrierTopo( topoparams )
-  test_lvl = 1
   max_test_lvl = sys.maxint
   ever_successful = False
   all_saps_ending = [s.id for s in network.saps]
@@ -150,10 +157,11 @@ if __name__ == '__main__':
     while test_lvl < max_test_lvl:
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
-        for request in generateRequestForCarrierTopo(topoparams, 2, loops=True,
-                                              vnf_sharing_probabilty=0.1,):
+        for request in generateRequestForCarrierTopo(topoparams, 3, loops=False,
+                                                     vnf_sharing_probabilty=0.1):
           # print request.dump()
-          running_nfs = [nf for nf in network.nfs]
+          running_nfs[test_lvl] = [nf for nf in request.nfs 
+                                   if nf.id.split("-")[1] == str(test_lvl)]
           network = MappingAlgorithms.MAP(request, network,
                                           enable_shortest_path_cache=True)
           ever_successful = True

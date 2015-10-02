@@ -48,7 +48,8 @@ alg = None
 
 
 def MAP (request, network, full_remap = False, 
-         enable_shortest_path_cache = False):
+         enable_shortest_path_cache = False,
+         bw_factor=1, res_factor=1, lat_factor=1):
   """
   The parameters are NFFG classes.
   Calculates service chain requirements from EdgeReq classes.
@@ -166,7 +167,9 @@ def MAP (request, network, full_remap = False,
 
   # create the class of the algorithm
   alg = CoreAlgorithm(network, request, chainlist, full_remap,
-                      enable_shortest_path_cache)
+                      enable_shortest_path_cache,
+                      bw_factor=bw_factor, res_factor=res_factor, 
+                      lat_factor=lat_factor)
   mappedNFFG = alg.start()
 
   # put the EdgeReqs back to the mappedNFFG for the lower layer
