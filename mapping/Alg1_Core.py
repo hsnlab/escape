@@ -739,6 +739,11 @@ class CoreAlgorithm(object):
           # connect the VNF to the Infra node.
           self.log.debug("Port %s added to Infra %s from NF %s" % (
             out_infra_port.id, host, vnf))
+          # this is needed when an already mapped VNF is being reused from an 
+          # earlier mapping, and the new SGHop's port only exists in the 
+          # current request. WARNING: no function for Port object addition!
+          if d.src not in mappednodenf.ports:
+            mappednodenf.add_port(id = d.src.id, properties = d.src.properties)
           nffg.add_undirected_link(out_infra_port, mappednodenf.ports[d.src.id],
                                    dynamic=True)
           helperlink = self.manager.link_mapping[i][j][k]
@@ -752,6 +757,8 @@ class CoreAlgorithm(object):
           in_infra_port = nffg.network.node[host].add_port()
           self.log.debug("Port %s added to Infra %s to NF %s" % (
             in_infra_port.id, host, vnf))
+          if d.dst not in mappednodenf.ports:
+            mappednodenf.add_port(id = d.dst.id, properties = d.dst.properties)
           nffg.add_undirected_link(in_infra_port, mappednodenf.ports[d.dst.id],
                                    dynamic=True)
           helperlink = self.manager.link_mapping[i][vnf][k]

@@ -41,43 +41,70 @@ def gen_seq():
 log = logging.getLogger("StressTest")
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:%(name)s:%(message)s')
+all_saps_beginning = []
+all_saps_ending = []
+running_nfs = []
 
+"""
 def genAndAddSAP(nffg, networkparams):
   popn = next(gen_seq()) % len(networkparams)
   popdata = networkparams[popn]
   part = random.choice(['Retail','Business'])
+  while
   sapid = "-".join((part,"SAP",
                     str(next(gen_seq()) % popdata[part][1]), 
                     "switch", str(next(gen_seq()) % popdata[part][0]),
                     "PoP", str(popn)))
-  if not sapid in nffg.network:
+  if sapid not in used_saps:
+    used_saps.append(sapid)
     return nffg.add_sap(id=sapid)
-  else:
-    return nffg.network.node[sapid]
+"""
 
-
-def generateRequestForCarrierTopo(networkparams, seed):
+def generateRequestForCarrierTopo(networkparams, seed, loops=False, 
+                                  vnf_sharing_probabilty=0.0):
+  """
+  By default generates VNF-disjoint SC-s starting/ending only once in each SAP.
+  With the 'loops' option, only loop SC-s are generated.
+  'vnf_sharing_probabilty' determines the probabilty whether we should choose 
+  from the already running VNF-s.
+  """
   test_lvl = 1
   chain_maxlen = 10
   random.seed(seed)
+  random.shuffle(all_saps_beginning)
+  random.shuffle(all_saps_ending)
   # generate some VNF-s connecting two SAP-s
-  while True:
+  while len(all_saps_ending) > 1 and len(all_saps_beginning) > 1:
     nffg = NFFG(id="Benchmark-Req-"+str(test_lvl))
     # find two SAP-s for chain ends.
-    sap1 = genAndAddSAP(nffg, networkparams)
-    sap2 = genAndAddSAP(nffg, networkparams)
+    sap1 = nffg.add_sap(id = all_saps_beginning.pop())
+    sap2 = None
+    if loops:
+      sap2 = sap1
+    else:
+      tmpid = all_saps_ending.pop()
+      while True:
+        if tmpid != sap1.id:
+          sap2 = nffg.add_sap(id = tmpid)
+          break
+        else:
+          tmpid = all_saps_ending.pop()
     sg_path = []
     sap1port = sap1.add_port()
     last_req_port = sap1port
     for vnf in xrange(0, next(gen_seq()) % chain_maxlen + 1):
-      nf = nffg.add_nf(id="-".join(("SC",str(test_lvl),"VNF",
-                                    str(vnf))),
-                       func_type=random.choice(['A','B','C']), 
-                       cpu=random.choice([1,2,3]),
-                       mem=random.random()*500,
-                       storage=random.random(),
-                       delay=1 + random.random()*10,
-                       bandwidth=random.random())
+      if random.random() < vnf_sharing_probabilty and len(running_nfs) > 10:
+        nf = random.choice(running_nfs)
+        nffg.add_node(nf)
+      else:
+        nf = nffg.add_nf(id="-".join(("SC",str(test_lvl),"VNF",
+                         str(vnf))),
+                         func_type=random.choice(['A','B','C']), 
+                         cpu=random.choice([1,2,3]),
+                         mem=random.random()*500,
+                         storage=random.random(),
+                         delay=1 + random.random()*10,
+                         bandwidth=random.random())
       newport = nf.add_port()
       sglink = nffg.add_sglink(last_req_port, newport)
       sg_path.append(sglink.id)
@@ -95,6 +122,7 @@ def generateRequestForCarrierTopo(networkparams, seed):
     nffg.add_req(sap1port, sap2port, delay=random.uniform(20,100), 
                  bandwidth=random.random()*0.2, sg_path = sg_path)
     yield nffg
+  raise StopIteration()
 
 if __name__ == '__main__':
   topoparams = []
@@ -116,19 +144,26 @@ if __name__ == '__main__':
   test_lvl = 1
   max_test_lvl = sys.maxint
   ever_successful = False
+  all_saps_ending = [s.id for s in network.saps]
+  all_saps_beginning = [s.id for s in network.saps]
   try:
     while test_lvl < max_test_lvl:
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
-        for request in generateRequestForCarrierTopo(topoparams, 4):
+        for request in generateRequestForCarrierTopo(topoparams, 2, loops=True,
+                                              vnf_sharing_probabilty=0.1,):
           # print request.dump()
-          network = MappingAlgorithms.MAP(request, network, 
+          running_nfs = [nf for nf in network.nfs]
+          network = MappingAlgorithms.MAP(request, network,
                                           enable_shortest_path_cache=True)
           ever_successful = True
           test_lvl += 1
           log.debug("Mapping successful on test level %s!"%test_lvl)
       except uet.MappingException as me:
         log.debug("Mapping failed: %s"%me.msg)
+        break
+      except StopIteration:
+        log.debug("Request generation reached its end!")
         break
   except uet.UnifyException as ue:
     print ue.msg 

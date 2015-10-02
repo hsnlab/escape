@@ -485,7 +485,7 @@ class GraphPreprocessorClass(object):
                   " be connected to some Infra node",
                   "NF %s has no Infra neighbors"%vnf.id)
           if not hasattr(self.req_graph.network.node[vnf.id], 
-                         'placement_criteria'):
+                      'placement_criteria') or len(vnf.placement_criteria) == 0:
             setattr(self.req_graph.network.node[vnf.id], 'placement_criteria',
                     [mapped_to_node])
           elif mapped_to_node in self.req_graph.network.node[vnf.id]\
