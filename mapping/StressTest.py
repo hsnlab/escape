@@ -21,7 +21,7 @@ network topology, reports how well the algorithm performed.
 import CarrierTopoBuilder
 import MappingAlgorithms
 import UnifyExceptionTypes as uet
-import random, math, traceback, sys, logging
+import random, math, traceback, sys, logging, getopt
 
 try:
   from escape.util.nffg import NFFG
@@ -46,19 +46,17 @@ all_saps_ending = []
 running_nfs = {}
 test_lvl = 1
 
-"""
-def genAndAddSAP(nffg, networkparams):
-  popn = next(gen_seq()) % len(networkparams)
-  popdata = networkparams[popn]
-  part = random.choice(['Retail','Business'])
-  while
-  sapid = "-".join((part,"SAP",
-                    str(next(gen_seq()) % popdata[part][1]), 
-                    "switch", str(next(gen_seq()) % popdata[part][0]),
-                    "PoP", str(popn)))
-  if sapid not in used_saps:
-    used_saps.append(sapid)
-    return nffg.add_sap(id=sapid)
+helpmsg = """StressTest.py options are:
+   -h                Print this message help message.
+   --loops           All Service Chains will be loops.
+   --fullremap       Ignores all VNF mappings in the substrate network.
+   --vnf_sharing=p   Sets the ratio of shared and not shared VNF-s.
+   --request_seed=i  Provides seed for the random generator.
+
+   --bw_factor=f     Controls the importance between bandwidth, infra resources
+   --res_factor=f    and distance in latency during the mapping process. The
+   --lat_factor=f    factors are advised to be summed to 3, if any is given the
+                     others are calculated based on this criteria.
 """
 
 def generateRequestForCarrierTopo(networkparams, seed, loops=False, 
@@ -109,8 +107,8 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
         nf = nffg.add_nf(id="-".join(("SC",str(test_lvl),"VNF",
                          str(vnf))),
                          func_type=random.choice(['A','B','C']), 
-                         cpu=random.randint(1,8),
-                         mem=random.random()*2000,
+                         cpu=random.randint(1,6),
+                         mem=random.random()*1000,
                          storage=random.random()*3,
                          delay=1 + random.random()*10,
                          bandwidth=random.random())
@@ -130,47 +128,78 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
     nffg.add_req(sap1port, sap2port, delay=random.uniform(20,100), 
                  bandwidth=random.random()*0.2, sg_path = sg_path)
     yield nffg
-  raise StopIteration()
+  yield None
 
-if __name__ == '__main__':
-  topoparams = []
-  # params of one PoP
-  # 'Retail': (BNAS, RCpb, RCT)
-  # 'Business': (PE, BCpb, BCT)
-  # 'CloudNFV': (CL,CH,SE,SAN_bw,SAN_sto,NF_types,SE_cores,SE_mem,SE_sto,
-  #              CL_bw, CH_links)
-  topoparams.append({'Retail': (2, 250, 0.2), 'Business': (2, 100, 0.2), 
-                     'CloudNFV': (2, 4, 8,  160000, 100000, ['A','B','C'], 
-                                  [4,8,16],  [32000], [100,150],   40000, 4)})
-  topoparams.append({'Retail': (2, 250, 0.2), 'Business': (2, 150, 0.2),
-                     'CloudNFV': (2, 2, 8,  160000, 100000, ['A','B'], 
-                                  [8,12,16], [32000,64000], [150], 40000, 4)})
-  # topoparams.append({'Retail': (2, 20000, 0.2), 'Business': (8, 4000, 0.2),
-  #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
-  #                                 [4,8,12,16], [32000,64000], [200], 40000, 4)})
-  network = CarrierTopoBuilder.getCarrierTopo( topoparams )
-  max_test_lvl = sys.maxint
+def main(argv):
+  try:
+    opts, args = getopt.getopt(argv,"h",["loops", "fullremap", "bw_factor=",
+                               "res_factor=", "lat_factor=", "request_seed=",
+                               "vnf_sharing="])
+  except getopt.GetoptError:
+    print helpmsg
+    sys.exit()
+  loops = False
+  fullremap = False
+  vnf_sharing = 0.0
+  seed = 3
+  bw_factor = 1
+  res_factor = 1
+  lat_factor = 1
+  for opt, arg in opts:
+    if opt == '-h':
+      print helpmsg
+      sys.exit()
+    elif opt == "loops":
+      loops = True
+    elif opt == "fullremap":
+      fullremap = True
+    elif opt == "request_seed":
+      seed = int(arg)
+    elif opt == "vnf_sharing":
+      vnf_sharing = float(arg)
+    elif opt == "bw_factor":
+      bw_factor = float(arg)
+    elif opt == "res_factor":
+      res_factor = float(arg)
+    elif opt == "lat_factor":
+      lat_factor = float(arg)
+  """
+  params, args = zip(*opts)
+  if "bw_factor" not in params or "res_factor" not in params or \
+     "bw_factor" not in params:
+    raise Exception("Not all algorithm params are given!")
+  """
+  
+  network, topoparams = CarrierTopoBuilder.getSmallTopo()
+  max_test_lvl = 50000
   ever_successful = False
+  global test_lvl
+  global all_saps_ending
+  global all_saps_beginning
   all_saps_ending = [s.id for s in network.saps]
   all_saps_beginning = [s.id for s in network.saps]
   try:
     while test_lvl < max_test_lvl:
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
-        for request in generateRequestForCarrierTopo(topoparams, 3, loops=False,
-                                                     vnf_sharing_probabilty=0.1):
+        for request in generateRequestForCarrierTopo(topoparams, seed, 
+                       loops=loops, vnf_sharing_probabilty=vnf_sharing):
           # print request.dump()
+          if test_lvl > max_test_lvl or request is None:
+            break
           running_nfs[test_lvl] = [nf for nf in request.nfs 
                                    if nf.id.split("-")[1] == str(test_lvl)]
-          network = MappingAlgorithms.MAP(request, network,
-                                          enable_shortest_path_cache=True)
+          network = MappingAlgorithms.MAP(request, network, full_remap=fullremap,
+                                      enable_shortest_path_cache=True,
+                                      bw_factor=bw_factor, res_factor=res_factor,
+                                      lat_factor=lat_factor)
           ever_successful = True
           test_lvl += 1
           log.debug("Mapping successful on test level %s!"%test_lvl)
       except uet.MappingException as me:
         log.debug("Mapping failed: %s"%me.msg)
         break
-      except StopIteration:
+      if request is None:
         log.debug("Request generation reached its end!")
         break
   except uet.UnifyException as ue:
@@ -184,3 +213,5 @@ if __name__ == '__main__':
   else:
     print "Mapping failed at starting test level (%s)"%test_lvl
 
+if __name__ == '__main__':
+  main(sys.argv[1:])
