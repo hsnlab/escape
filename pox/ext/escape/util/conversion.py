@@ -1955,7 +1955,7 @@ class NFFGConverter(object):
               "Virtualizer" % in_port.id.get_as_text())
           else:
             self.log.debug(
-              "Identify in_port: %s in match as a dynamic port. Track "
+              "Identify in_port: %s in match as a dynamic port. Tracking "
               "associated NF port in the Virtualizer..." % in_port)
             # in_port is a dynamic port --> search for connected NF's port
             nf_port = [l.dst for u, v, l in
