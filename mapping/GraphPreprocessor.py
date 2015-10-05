@@ -592,8 +592,11 @@ class GraphPreprocessorClass(object):
     if full_remap:
       for n in net.infras:
         for p in n.ports:
+          deletable = []
           for fr in p.flowrules:
-            p.del_flowrule(fr.id)
+            deletable.append(fr)
+          for f in deletable:
+            p.flowrules.remove(f)
 
     for i, j, k in net.network.edges_iter(keys=True):
       if net.network[i][j][k].type != 'STATIC':
