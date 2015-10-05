@@ -94,8 +94,8 @@ def main ():
 
 
 def kill_remained_parts ():
-  # Tailor Python path for importing mics functions without intitialize
-  # escape or util packeges.
+  # Tailor Python path for importing mics functions without initialize
+  # escape or util packages.
   import sys
   mn = os.path.abspath(os.path.dirname(__file__) + "/mininet")
   misc = os.path.abspath(os.path.dirname(__file__) + "/pox/ext/escape/util")

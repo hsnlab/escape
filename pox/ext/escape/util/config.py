@@ -388,9 +388,9 @@ class ESCAPEConfig(object):
     """
     try:
       # Project root dir relative to this module which is/must be under pox/ext
-      return os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../..",
-                     self.__configuration[INFR]["SDN-TOPO"]))
+      return os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..",
+                                          self.__configuration[INFR][
+                                            "SDN-TOPO"]))
     except KeyError:
       return None
 

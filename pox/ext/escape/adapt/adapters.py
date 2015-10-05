@@ -19,6 +19,7 @@ from copy import deepcopy
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from ncclient.operations import OperationError
+
 from ncclient.operations.rpc import RPCError
 
 from ncclient.transport import TransportError
@@ -51,15 +52,11 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
   # FIXME - SIGCOMM -
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {'MT1': 0x11,  # 0x14c5e0c376e24,
-                   'MT2': 0x12,  # 0x14c5e0c376fc6,
-                   'EE1': 0x1,
+  infra_to_dpid = {'EE1': 0x1,
                    'EE2': 0x2,
                    'SW3': 0x3,
                    'SW4': 0x4, }
-  dpid_to_infra = {0x11: 'MT1',  # 0x14c5e0c376e24: 'MT1',
-                   0x12: 'MT2',  # 0x14c5e0c376fc6: 'MT2',
-                   0x1: 'EE1',
+  dpid_to_infra = {0x1: 'EE1',
                    0x2: 'EE2',
                    0x3: 'SW3',
                    0x4: 'SW4'}
@@ -95,6 +92,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     arbiter.add_connection_listener(self.controller_address, self.openflow)
     # Launch OpenFlow connection handler if not started before with given name
     # launch() return the registered openflow module which is a coop Task
+    log.debug("Setup OF interface and initiate handler object")
     from pox.openflow.of_01 import launch
 
     of = launch(name=name, address=address, port=port)
@@ -105,39 +103,6 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     # register OpenFlow event listeners
     self.openflow.addListeners(self)
     log.debug("%s adapter: Start listening connections..." % self.name)
-    # Currently static initialization from a config file
-    # TODO: discover SDN topology and create the NFFG
-    self.topo = None  # SDN domain topology stored in NFFG
-    self.__init_from_CONFIG()
-
-  def __init_from_CONFIG (self, path=None):
-    """
-    Load a pre-defined topology from an NFFG stored in a file.
-    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
-
-    :param path: additional file path
-    :type path: str
-    :return: None
-    """
-    if path is None:
-      path = CONFIG.get_sdn_topology()
-    if path is None:
-      log.warning("SDN topology is missing from CONFIG!")
-      raise TopologyLoadException("Missing Topology!")
-    else:
-      try:
-        with open(path, 'r') as f:
-          log.info("Load SDN topology from file: %s" % path)
-          self.topo = NFFG.parse(f.read())
-          self.topo.duplicate_static_links()
-          # print self.topo.dump()
-      except IOError:
-        log.debug("SDN topology file not found: %s" % path)
-        raise TopologyLoadException("Missing topology file!")
-      except ValueError as e:
-        log.error(
-          "An error occurred when load topology from file: %s" % e.message)
-        raise TopologyLoadException("File parsing error!")
 
   def check_domain_reachable (self):
     """
@@ -159,7 +124,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     # raise RuntimeError("InternalPoxController not supported this function: "
     #                    "get_topology_resource() !")
     # return static topology
-    return self.topo
+    return None
 
   def filter_connections (self, event):
     """
@@ -204,7 +169,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     :return: None
     """
     log.info("Delete flow entries from INFRA %s..." % id)
-    dpid = InternalPOXAdapter.infra_to_dpid[id]
+    dpid = self.infra_to_dpid[id]
     con = self.openflow.getConnection(dpid)
 
     msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
@@ -225,7 +190,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     log.info("Install POX domain part: flow entries to INFRA %s..." % id)
     # print match
     # print action
-    dpid = InternalPOXAdapter.infra_to_dpid[id]
+    dpid = self.infra_to_dpid[id]
     con = self.openflow.getConnection(dpid)
 
     msg = of.ofp_flow_mod()
@@ -250,9 +215,9 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
       pass
     out = action['out']
     try:
-      if out == InternalPOXAdapter.saps[id]['port']:
-        dl_dst = InternalPOXAdapter.saps[id]['dl_dst']
-        dl_src = InternalPOXAdapter.saps[id]['dl_src']
+      if out == self.saps[id]['port']:
+        dl_dst = self.saps[id]['dl_dst']
+        dl_src = self.saps[id]['dl_src']
         msg.actions.append(of.ofp_action_dl_addr.set_dst(EthAddr(dl_dst)))
         msg.actions.append(of.ofp_action_dl_addr.set_src(EthAddr(dl_src)))
     except KeyError:
@@ -269,8 +234,50 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   """
   name = "SDN-POX"
 
+  # FIXME - SIGCOMM -
+  # Static mapping of infra IDs and DPIDs
+  infra_to_dpid = {'MT1': 0x11,  # 0x14c5e0c376e24,
+                   'MT2': 0x12,  # 0x14c5e0c376fc6,
+                   }
+  dpid_to_infra = {0x11: 'MT1',  # 0x14c5e0c376e24: 'MT1',
+                   0x12: 'MT2',  # 0x14c5e0c376fc6: 'MT2',
+                   }
+
   def __init__ (self, name=None, address="0.0.0.0", port=6653):
     super(SDNDomainPOXAdapter, self).__init__(name, address, port)
+    # Currently static initialization from a config file
+    # TODO: discover SDN topology and create the NFFG
+    self.topo = None  # SDN domain topology stored in NFFG
+    self.__init_from_CONFIG()
+
+  def __init_from_CONFIG (self, path=None):
+    """
+    Load a pre-defined topology from an NFFG stored in a file.
+    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
+
+    :param path: additional file path
+    :type path: str
+    :return: None
+    """
+    if path is None:
+      path = CONFIG.get_sdn_topology()
+    if path is None:
+      log.warning("SDN topology is missing from CONFIG!")
+      raise TopologyLoadException("Missing Topology!")
+    else:
+      try:
+        with open(path, 'r') as f:
+          log.info("Load SDN topology from file: %s" % path)
+          self.topo = NFFG.parse(f.read())
+          self.topo.duplicate_static_links()
+          # print self.topo.dump()
+      except IOError:
+        log.debug("SDN topology file not found: %s" % path)
+        raise TopologyLoadException("Missing topology file!")
+      except ValueError as e:
+        log.error(
+          "An error occurred when load topology from file: %s" % e.message)
+        raise TopologyLoadException("File parsing error!")
 
 
 class InternalMininetAdapter(AbstractESCAPEAdapter):
