@@ -51,14 +51,14 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
   # FIXME - SIGCOMM -
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {'MT1': 0x11,  # 0x14c5e0c376e24,
-                   'MT2': 0x12,  # 0x14c5e0c376fc6,
+  infra_to_dpid = {'MT1': 0x14c5e0c376e24, # 0x0040f46b9c6b,
+                   'MT2': 0x14c5e0c376fc6,
                    'EE1': 0x1,
                    'EE2': 0x2,
                    'SW3': 0x3,
                    'SW4': 0x4, }
-  dpid_to_infra = {0x11: 'MT1',  # 0x14c5e0c376e24: 'MT1',
-                   0x12: 'MT2',  # 0x14c5e0c376fc6: 'MT2',
+  dpid_to_infra = {0x14c5e0c376e24: 'MT1',
+                   0x14c5e0c376fc6: 'MT2',
                    0x1: 'EE1',
                    0x2: 'EE2',
                    0x3: 'SW3',
@@ -100,6 +100,8 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     of = launch(name=name, address=address, port=port)
     # Start listening for OpenFlow connections
     of.start()
+    from pox.openflow.keepalive import launch
+    launch(ofnexus=self.openflow)
     self.task_name = name if name else "of_01"
     of.name = self.task_name
     # register OpenFlow event listeners
