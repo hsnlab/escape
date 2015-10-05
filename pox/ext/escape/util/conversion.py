@@ -2057,7 +2057,7 @@ class NFFGConverter(object):
       if op[0] == "TAG":
         # E.g.: <match>dl_vlan=0x0037</match>
         try:
-          vlan = int(op[1].split('-')[-1])
+          vlan = int(op[1].split('|')[-1])
           return r"dl_vlan=%s" % format(vlan, '#06x')
         except ValueError:
           self.log.warning(
@@ -2068,7 +2068,7 @@ class NFFGConverter(object):
       if op[0] == "TAG":
         # E.g.: <match><vlan_id>55</vlan_id></match>
         try:
-          vlan = int(op[1].split('-')[-1])
+          vlan = int(op[1].split('|')[-1])
         except ValueError:
           self.log.warning(
             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
@@ -2100,7 +2100,7 @@ class NFFGConverter(object):
       if op[0] == "TAG":
         # E.g.: <action>push_vlan:0x8100,set_field:0x0037</action>
         try:
-          vlan = int(op[1].split('-')[-1])
+          vlan = int(op[1].split('|')[-1])
           # return r"push_vlan:0x8100,set_field:%s" % format(vlan, '#06x')
           return r"mod_vlan_vid:%s" % format(vlan, '#06x')
         except ValueError:
@@ -2116,7 +2116,7 @@ class NFFGConverter(object):
       if op[0] == "TAG":
         # E.g.: <action><vlan><push>55<push/></vlan></action>
         try:
-          vlan = int(op[1].split('-')[-1])
+          vlan = int(op[1].split('|')[-1])
         except ValueError:
           self.log.warning(
             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])

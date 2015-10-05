@@ -339,7 +339,7 @@ class InternalDomainManager(AbstractDomainManager):
           # Check match fields - currently only vlan_id
           # TODO: add further match fields
           if re.search(r'TAG', flowrule.match):
-            tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
+            tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
             match['vlan_id'] = tag
 
           if re.search(r';', flowrule.action):
@@ -354,7 +354,7 @@ class InternalDomainManager(AbstractDomainManager):
             if re.search(r'UNTAG', flowrule.action):
               action['vlan_pop'] = True
             else:
-              push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
+              push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
               action['vlan_push'] = push_tag
 
           self.controlAdapter.install_flowrule(infra.id, match=match,
@@ -748,7 +748,7 @@ class SDNDomainManager(AbstractDomainManager):
           # Check match fields - currently only vlan_id
           # TODO: add further match fields
           if re.search(r'TAG', flowrule.match):
-            tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
+            tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
             match['vlan_id'] = tag
 
           if re.search(r';', flowrule.action):
@@ -763,7 +763,7 @@ class SDNDomainManager(AbstractDomainManager):
             if re.search(r'UNTAG', flowrule.action):
               action['vlan_pop'] = True
             else:
-              push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
+              push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
               action['vlan_push'] = push_tag
 
           self.controlAdapter.install_flowrule(infra.id, match=match,
