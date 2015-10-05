@@ -261,7 +261,7 @@ class InternalDomainManager(AbstractDomainManager):
     """
     Delete all flowrules from the first (default) table of all infras.
     """
-    topo = self.controlAdapter.get_topology_resource()
+    topo = self.topoAdapter.get_topology_resource()
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
       if infra.infra_type not in (
