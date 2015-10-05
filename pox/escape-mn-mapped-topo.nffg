@@ -96,37 +96,40 @@
           "id": 1,
           "flowrules": [
             {
-              "id": 140310838299728,
-              "match": "in_port=1;TAG=sap1-comp-1",
-              "action": "output=140310838297040;UNTAG"
+              "id": 140338574196304,
+              "match": "in_port=1;TAG=sap1|comp|1",
+              "action": "output=140338574193168;UNTAG",
+              "bandwidth": 4
             }
           ]
         },
         {
-          "id": 140310838296848,
+          "id": 140338574193360,
           "flowrules": [
             {
-              "id": 140310838299024,
-              "match": "in_port=140310838296848",
-              "action": "output=140310838297680"
+              "id": 140338574195600,
+              "match": "in_port=140338574193360",
+              "action": "output=140338574194256",
+              "bandwidth": 4
             }
           ]
         },
         {
-          "id": 140310838297040
+          "id": 140338574193168
         },
         {
-          "id": 140310838297488,
+          "id": 140338574194064,
           "flowrules": [
             {
-              "id": 140310838299472,
-              "match": "in_port=140310838297488",
-              "action": "output=1;TAG=decomp-sap2-3"
+              "id": 140338574196048,
+              "match": "in_port=140338574194064",
+              "action": "output=1;TAG=decomp|sap2|3",
+              "bandwidth": 4
             }
           ]
         },
         {
-          "id": 140310838297680
+          "id": 140338574194256
         }
       ],
       "domain": "INTERNAL",
@@ -152,9 +155,10 @@
           "id": 1,
           "flowrules": [
             {
-              "id": 140310838298576,
-              "match": "in_port=1;TAG=fwd-sap1-5",
-              "action": "output=2"
+              "id": 140338574195152,
+              "match": "in_port=1;TAG=fwd|sap1|5",
+              "action": "output=2",
+              "bandwidth": 4
             }
           ]
         },
@@ -162,9 +166,10 @@
           "id": 2,
           "flowrules": [
             {
-              "id": 140310838299344,
-              "match": "in_port=2;TAG=decomp-sap2-3",
-              "action": "output=3;UNTAG"
+              "id": 140338574195920,
+              "match": "in_port=2;TAG=decomp|sap2|3",
+              "action": "output=3;UNTAG",
+              "bandwidth": 4
             }
           ]
         },
@@ -172,9 +177,10 @@
           "id": 3,
           "flowrules": [
             {
-              "id": 140310838299920,
+              "id": 140338574196496,
               "match": "in_port=3",
-              "action": "output=1;TAG=sap2-fwd-4"
+              "action": "output=1;TAG=sap2|fwd|4",
+              "bandwidth": 4
             }
           ]
         },
@@ -197,9 +203,10 @@
           "id": 1,
           "flowrules": [
             {
-              "id": 140310838299216,
-              "match": "in_port=1;TAG=decomp-sap2-3",
-              "action": "output=2"
+              "id": 140338574195792,
+              "match": "in_port=1;TAG=decomp|sap2|3",
+              "action": "output=2",
+              "bandwidth": 4
             }
           ]
         },
@@ -207,9 +214,10 @@
           "id": 2,
           "flowrules": [
             {
-              "id": 140310838298704,
-              "match": "in_port=2;TAG=fwd-sap1-5",
-              "action": "output=3;UNTAG"
+              "id": 140338574195280,
+              "match": "in_port=2;TAG=fwd|sap1|5",
+              "action": "output=3;UNTAG",
+              "bandwidth": 4
             }
           ]
         },
@@ -217,9 +225,10 @@
           "id": 3,
           "flowrules": [
             {
-              "id": 140310838299664,
+              "id": 140338574196240,
               "match": "in_port=3",
-              "action": "output=1;TAG=sap1-comp-1"
+              "action": "output=1;TAG=sap1|comp|1",
+              "bandwidth": 4
             }
           ]
         }
@@ -239,24 +248,26 @@
           "id": 1,
           "flowrules": [
             {
-              "id": 140310838299984,
-              "match": "in_port=1;TAG=sap2-fwd-4",
-              "action": "output=140310838298320;UNTAG"
+              "id": 140338574196560,
+              "match": "in_port=1;TAG=sap2|fwd|4",
+              "action": "output=140338574194896;UNTAG",
+              "bandwidth": 4
             }
           ]
         },
         {
-          "id": 140310838298128,
+          "id": 140338574194704,
           "flowrules": [
             {
-              "id": 140310838298832,
-              "match": "in_port=140310838298128",
-              "action": "output=1;TAG=fwd-sap1-5"
+              "id": 140338574195408,
+              "match": "in_port=140338574194704",
+              "action": "output=1;TAG=fwd|sap1|5",
+              "bandwidth": 4
             }
           ]
         },
         {
-          "id": 140310838298320
+          "id": 140338574194896
         }
       ],
       "domain": "INTERNAL",
@@ -286,44 +297,44 @@
       "bandwidth": 10
     },
     {
-      "id": 140310838298256,
+      "id": 140338574194832,
       "src_node": "fwd",
       "src_port": 1,
       "dst_node": "EE2",
-      "dst_port": 140310838298128
+      "dst_port": 140338574194704
     },
     {
-      "id": 140310838298448,
+      "id": 140338574195024,
       "src_node": "fwd",
       "src_port": 1,
       "dst_node": "EE2",
-      "dst_port": 140310838298320
+      "dst_port": 140338574194896
     },
     {
-      "id": 140310838296976,
+      "id": 140338574193232,
       "src_node": "comp",
       "src_port": 1,
       "dst_node": "EE1",
-      "dst_port": 140310838296848
+      "dst_port": 140338574193360
     },
     {
-      "id": 140310838297168,
+      "id": 140338574193040,
       "src_node": "comp",
       "src_port": 1,
       "dst_node": "EE1",
-      "dst_port": 140310838297040
+      "dst_port": 140338574193168
     },
     {
-      "id": 140310838296912,
+      "id": 140338574193296,
       "src_node": "EE1",
-      "src_port": 140310838296848,
+      "src_port": 140338574193360,
       "dst_node": "comp",
       "dst_port": 1
     },
     {
-      "id": 140310838297104,
+      "id": 140338574193104,
       "src_node": "EE1",
-      "src_port": 140310838297040,
+      "src_port": 140338574193168,
       "dst_node": "comp",
       "dst_port": 1
     },
@@ -337,16 +348,16 @@
       "bandwidth": 10
     },
     {
-      "id": 140310838297552,
+      "id": 140338574194128,
       "src_node": "EE1",
-      "src_port": 140310838297488,
+      "src_port": 140338574194064,
       "dst_node": "decomp",
       "dst_port": 1
     },
     {
-      "id": 140310838297744,
+      "id": 140338574194320,
       "src_node": "EE1",
-      "src_port": 140310838297680,
+      "src_port": 140338574194256,
       "dst_node": "decomp",
       "dst_port": 1
     },
@@ -387,18 +398,18 @@
       "bandwidth": 10
     },
     {
-      "id": 140310838297616,
+      "id": 140338574194192,
       "src_node": "decomp",
       "src_port": 1,
       "dst_node": "EE1",
-      "dst_port": 140310838297488
+      "dst_port": 140338574194064
     },
     {
-      "id": 140310838297808,
+      "id": 140338574194384,
       "src_node": "decomp",
       "src_port": 1,
       "dst_node": "EE1",
-      "dst_port": 140310838297680
+      "dst_port": 140338574194256
     },
     {
       "id": "mn-link1-back",
@@ -428,16 +439,16 @@
       "bandwidth": 10
     },
     {
-      "id": 140310838298192,
+      "id": 140338574194768,
       "src_node": "EE2",
-      "src_port": 140310838298128,
+      "src_port": 140338574194704,
       "dst_node": "fwd",
       "dst_port": 1
     },
     {
-      "id": 140310838298384,
+      "id": 140338574194960,
       "src_node": "EE2",
-      "src_port": 140310838298320,
+      "src_port": 140338574194896,
       "dst_node": "fwd",
       "dst_port": 1
     },

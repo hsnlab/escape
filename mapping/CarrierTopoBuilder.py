@@ -75,9 +75,9 @@ def addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS_PE,
   dn0 = None
   dn1 = None
   if BNAS_PE > 0:
-    dn0 = nffg.add_infra(id="DistributionNode"+popn+part+"-0", 
+    dn0 = nffg.add_infra(id="DistributionNode"+popn+"-"+part+"-0", 
                                 **dnres)
-    dn1 = nffg.add_infra(id="DistributionNode"+popn+part+"-1",
+    dn1 = nffg.add_infra(id="DistributionNode"+popn+"-"+part+"-1",
                                 **dnres)
     addRedundantPairedConnection(nffg, an0, an1, dn0, dn1, aggr_link)
 
@@ -313,3 +313,26 @@ if __name__ == '__main__':
   #                                 [4,8,12,16], [32000,64000], [200], 40000, 4)})
   topo = getCarrierTopo(topoparams)
   print topo.dump()
+
+
+def getSmallTopo():
+  """
+  Constructs a small topology which is structurally similar to carrier topology,
+  but could be executed fast enough for testing.
+  """
+  topoparams = []
+  # params of one PoP
+  # 'Retail': (BNAS, RCpb, RCT)
+  # 'Business': (PE, BCpb, BCT)
+  # 'CloudNFV': (CL,CH,SE,SAN_bw,SAN_sto,NF_types,SE_cores,SE_mem,SE_sto,
+  #              CL_bw, CH_links)
+  topoparams.append({'Retail': (2, 250, 0.2), 'Business': (2, 100, 0.2), 
+                     'CloudNFV': (2, 4, 8,  160000, 100000, ['A','B','C'], 
+                                  [4,8,16],  [32000], [100,150],   40000, 4)})
+  topoparams.append({'Retail': (2, 250, 0.2), 'Business': (2, 150, 0.2),
+                     'CloudNFV': (2, 2, 8,  160000, 100000, ['A','B'], 
+                                  [8,12,16], [32000,64000], [150], 40000, 4)})
+  # topoparams.append({'Retail': (2, 4000, 0.2), 'Business': (8, 2000, 0.2),
+  #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
+  # [4,8,12,16], [32000,64000], [200], 40000, 4)})
+  return getCarrierTopo(topoparams), topoparams
