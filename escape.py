@@ -28,7 +28,7 @@ def main ():
     description="ESCAPE: Extensible Service ChAin Prototyping Environment "
                 "using "
                 "Mininet, Click, NETCONF and POX")
-
+  # Optional arguments
   parser.add_argument("-v", "--version", action="version", version="2.0.0")
   escape = parser.add_argument_group("ESCAPE arguments")
   escape.add_argument("-c", "--config", metavar="path", type=str,
@@ -48,17 +48,19 @@ def main ():
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
-
+  # Remaining arguments
+  escape.add_argument("modules", metavar="...", nargs=argparse.REMAINDER,
+                      help="optional POX modules")
+  # Parsing arguments
   args = parser.parse_args()
-
-  # Construct POX init command according to argument
-  # basic command
-
-  cmd = "./pox/pox.py unify"
 
   if args.clean:
     kill_remained_parts()
     return
+
+  # Construct POX init command according to argument
+  # basic command
+  cmd = "./pox/pox.py unify"
 
   # Run the Infrastructure Layer with the required root privilege
   if args.full:
@@ -86,6 +88,8 @@ def main ():
   if args.interactive:
     cmd = "%s py --completion" % cmd
 
+  # Add optional POX modules
+  cmd = "%s %s" % (cmd, " ".join(args.modules))
   # Starting ESCAPEv2 (as a POX module)
   print "Starting ESCAPEv2..."
   if args.debug:
