@@ -64,17 +64,21 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                      "port": 8889}},
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK", "UN"],
-                        # "DEFAULTS": [],
+                        # "DEFAULTS": ["SDN", "OPENSTACK", "UN"],
+                        # "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK",
+                        # "UN"],
+                        "DEFAULTS": [],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.adapters",
                                          "class": "InternalPOXAdapter",
                                          "address": "127.0.0.1",
-                                         "port": 6653},
+                                         "port": 6653,
+                                         "keepalive": False},
                         "SDN-POX": {"module": "escape.adapt.adapters",
                                     "class": "SDNDomainPOXAdapter",
                                     # "address": "192.168.1.101", "port": 6633},
-                                    "address": "0.0.0.0", "port": 6633},
+                                    "address": "0.0.0.0", "port": 6633,
+                                    "keepalive": False},
                         "MININET": {"module": "escape.adapt.adapters",
                                     "class": "InternalMininetAdapter"},
                         "VNFStarter": {"module": "escape.adapt.adapters",
@@ -121,6 +125,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                               "class":
                                                 "FallbackDynamicTopology"},
                             "SDN-TOPO": "sdn-topo.nffg",  # relative to ext/
+                            # "SDN-TOPO": "escape-mn-topo.nffg",  # relative
+                            # to ext/
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}  # relative to ext/
 

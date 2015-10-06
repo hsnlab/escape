@@ -522,3 +522,16 @@ class ESCAPEConfig(object):
               self.__configuration[ORCHEST]["Cf-Or"]['port'])
     except KeyError:
       return None
+
+  def get_adapter_keepalive (self, adapter):
+    """
+    Return the value if the keepalive functionality (periodic OF Echo request)
+    is need to be initiated or not.
+
+    :return: keepalive
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT][adapter]['keepalive']
+    except (KeyError, AttributeError):
+      return False
