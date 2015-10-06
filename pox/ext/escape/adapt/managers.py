@@ -502,7 +502,7 @@ class OpenStackDomainManager(AbstractDomainManager):
   def clear_domain (self):
     empty_cfg = self.topoAdapter.original_virtualizer
     if empty_cfg is None:
-      log.error(
+      log.warning(
         "Missing original topology in %s domain! Skip domain resetting..." %
         self.name)
       return
@@ -567,7 +567,7 @@ class UniversalNodeDomainManager(AbstractDomainManager):
   def clear_domain (self):
     empty_cfg = self.topoAdapter.original_virtualizer
     if empty_cfg is None:
-      log.error(
+      log.warning(
         "Missing original topology in %s domain! Skip domain resetting..." %
         self.name)
       return

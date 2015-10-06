@@ -42,9 +42,13 @@ def main ():
                       help="run an interactive shell for observing internal "
                            "states")
   escape.add_argument("-a", "--agent", action="store_true", default=False,
-                      help="run in agent role (without service layer)")
+                      help="run in agent role an start an REST API (without "
+                           "service layer)")
+  escape.add_argument("-r", "--rosapi", action="store_true", default=False,
+                      help="start the REST-API for the Resource Orchestration "
+                           "layer")
   escape.add_argument("-4", "--cfor", action="store_true", default=False,
-                      help="start the API for the Cf-Or interface")
+                      help="start the REST-API for the Cf-Or interface")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
@@ -73,6 +77,10 @@ def main ():
   # Skip the Service Layer initiation and start the ROS agent REST-API
   if args.agent:
     cmd = "%s --agent" % cmd
+
+  # Start the REST-API for the ROS layer
+  if args.rosapi:
+    cmd = "%s --rosapi" % cmd
 
   # Start an REST-API for the Cf-Or interface
   if args.cfor:

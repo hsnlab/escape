@@ -252,8 +252,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.resource_orchestrator = ResourceOrchestrator(self)
     if self._nffg_file:
       self._read_json_from_file(self._nffg_file)
-    # Initiate Agent REST-API if needed
-    if self._agent:
+    # Initiate ROS REST-API if needed
+    if self._agent or self._rosapi:
       self._initiate_agent_api()
     # Initiate Cf-Or REST-API if needed
     if self._cfor:
