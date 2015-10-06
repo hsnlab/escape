@@ -721,7 +721,7 @@ class AbstractRESTAdapter(Session):
   # Set custom header
   custom_headers = {'User-Agent': "ESCAPE/" + __version__}
   # Connection timeout (sec)
-  CONNECTION_TIMEOUT = 3
+  CONNECTION_TIMEOUT = 5
   # HTTP methods
   GET = "GET"
   POST = "POST"

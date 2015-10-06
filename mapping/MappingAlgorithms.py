@@ -42,12 +42,14 @@ except ImportError:
   from nffg import NFFG, generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
+import Alg1_Helper as helper
 # object for the algorithm instance
 alg = None
 
 
 def MAP (request, network, full_remap = False, 
-         enable_shortest_path_cache = False):
+         enable_shortest_path_cache = False,
+         bw_factor=1, res_factor=1, lat_factor=1):
   """
   The parameters are NFFG classes.
   Calculates service chain requirements from EdgeReq classes.
@@ -165,7 +167,9 @@ def MAP (request, network, full_remap = False,
 
   # create the class of the algorithm
   alg = CoreAlgorithm(network, request, chainlist, full_remap,
-                      enable_shortest_path_cache)
+                      enable_shortest_path_cache,
+                      bw_factor=bw_factor, res_factor=res_factor, 
+                      lat_factor=lat_factor)
   mappedNFFG = alg.start()
 
   # put the EdgeReqs back to the mappedNFFG for the lower layer
@@ -192,10 +196,10 @@ def MAP (request, network, full_remap = False,
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
-  print "\nThe VNF mappings are (vnf_id, node_id):\n", pformat(
-     alg.manager.vnf_mapping)
-  print "\n The link mappings are:\n", pformat(
-     alg.manager.link_mapping.edges(data=True, keys=True))
+  helper.log.info("The VNF mappings are (vnf_id, node_id): \n%s"%pformat(
+     alg.manager.vnf_mapping))
+  helper.log.info("The link mappings are: \n%s"%pformat(
+     alg.manager.link_mapping.edges(data=True, keys=True)))
 
   return mappedNFFG
 
@@ -421,13 +425,13 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../pox/escape-mn-req-update.nffg', "r") as f:
+    with open('../pox/escape-mn-req-additional.nffg', "r") as f:
       req = NFFG.parse(f.read())
     with open('../pox/escape-mn-mapped-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
       # net.duplicate_static_links()
     mapped = MAP(req, net, full_remap = True)
-    # print mapped.dump()
+    print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
     print traceback.format_exc()

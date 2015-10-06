@@ -564,7 +564,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         # Return with whole VNF description
         return adapter.getVNFInfo(vnf_id=vnf_id)
       except RPCError as e:
-        log.error("Got Error during initiate VNF through NETCONF:")
+        log.error("Got Error during deployVNF through NETCONF:")
         # from pprint import pprint
         # pprint(e.to_dict())
         raise
@@ -575,6 +575,29 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
       except (TransportError, OperationError) as e:
         log.error(
           "Failed to deploy NF due to a connection error! Cause: %s" % e)
+
+  def removeNF (self, vnf_id):
+    """
+    Stop and remove the given NF using the general RPC calls.
+    """
+    with self as adapter:
+      try:
+        # return adapter.stopVNF(vnf_id=vnf_id)
+        reply = adapter.stopVNF(vnf_id=vnf_id)
+        from pprint import pprint
+        pprint(adapter.getVNFInfo())
+        return reply
+      except RPCError as e:
+        log.error("Got Error during removeVNF through NETCONF:")
+        raise
+      except KeyError as e:
+        log.warning(
+          "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
+          "VNF initiation." % e.args[0])
+      except (TransportError, OperationError) as e:
+        log.error(
+          "Failed to remove NF due to a connection error! Cause: %s" % e)
+
 
 
 class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,

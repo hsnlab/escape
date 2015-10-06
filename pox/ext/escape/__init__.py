@@ -126,8 +126,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                               "class":
                                                 "FallbackDynamicTopology"},
                             "SDN-TOPO": "sdn-topo.nffg",  # relative to ext/
-                            # "SDN-TOPO": "escape-mn-topo.nffg",  # relative
-                            # to ext/
+                            # "SDN-TOPO": "escape-mn-topo.nffg",  # relative to ext/
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}  # relative to ext/
 

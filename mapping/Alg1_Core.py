@@ -29,7 +29,7 @@ import Alg1_Helper as helper
 import BacktrackHandler as backtrack
 
 try:
-  from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg
+  from escape.util.nffg import NFFG
 except ImportError:
   import sys, os, inspect
 
@@ -37,11 +37,12 @@ except ImportError:
     os.path.abspath(
       os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
                                   "pox/ext/escape/util/"))
-  from nffg import NFFG, generate_dynamic_fallback_nffg
+  from nffg import NFFG
 
 
 class CoreAlgorithm(object):
-  def __init__ (self, net0, req0, chains0, full_remap, cache_shortest_path):
+  def __init__ (self, net0, req0, chains0, full_remap, cache_shortest_path, 
+                bw_factor=1, res_factor=1, lat_factor=1):
     self.log = helper.log.getChild(self.__class__.__name__)
 
     self.log.info("Initializing algorithm variables")
@@ -62,12 +63,12 @@ class CoreAlgorithm(object):
     self._preproc(net0, req0, chains0)
 
     # must be sorted in alphabetic order of keys: cpu, mem, storage
-    self.resource_priorities = [0.3333, 0.3333, 0.3333]
+    self.resource_priorities = [0.5, 0.5, 0.0]
 
     # which should count more in the objective function
-    self.bw_factor = 1
-    self.res_factor = 1
-    self.lat_factor = 1
+    self.bw_factor = bw_factor
+    self.res_factor = res_factor
+    self.lat_factor = lat_factor
 
     ''' The new preference parameters are f(x) == 0 if x<c and f(1) == e,
     exponential in between.
@@ -365,7 +366,8 @@ class CoreAlgorithm(object):
               self.net.node[j].weight = sys.float_info.max
             else:
               self.net.node[j].weight = 1.0 / new_bw_innode
-    self.log.debug("Available network resources are updated.")
+    self.log.debug("Available network resources are updated: redo: %s, vnf: "
+                   "%s, path: %s"%(redo, vnf, path))
 
   def _takeOneGreedyStep(self, cid, step_data):
     """
@@ -621,8 +623,9 @@ class CoreAlgorithm(object):
       flowsrc = None
       flowdst = None
     reqlink = self.req[v1][v2][reqlid]
+    bw = reqlink.bandwidth
     # The action and match are the same format
-    tag = "TAG=%s-%s-%s" % (v1, v2, reqlid)
+    tag = "TAG=%s|%s|%s" % (v1, v2, reqlid)
     if len(path) == 1:
       # collocation happened, none of helperlink`s port refs should be None
       match_str = "in_port="
@@ -636,7 +639,7 @@ class CoreAlgorithm(object):
       action_str += str(flowdst.id)
       self.log.debug("Collocated flowrule %s => %s added to Port %s of %s" % (
         match_str, action_str, flowsrc.id, path[0]))
-      flowsrc.add_flowrule(match_str, action_str)
+      flowsrc.add_flowrule(match_str, action_str, bw)
     else:
       # set the flowrules for the transit Infra nodes
       for i, j, k, lidij, lidjk in zip(path[:-2], path[1:-1], path[2:],
@@ -660,7 +663,7 @@ class CoreAlgorithm(object):
           action_str += ";UNTAG"
         self.log.debug("Transit flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str, self.net[i][j][lidij].dst.id, j))
-        nffg.network[i][j][lidij].dst.add_flowrule(match_str, action_str)
+        nffg.network[i][j][lidij].dst.add_flowrule(match_str, action_str, bw)
 
       # set flowrule for the first element if that is not a SAP
       if nffg.network.node[path[0]].type != 'SAP':
@@ -676,7 +679,7 @@ class CoreAlgorithm(object):
         action_str += ";" + tag
         self.log.debug("Starting flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str, flowsrc.id, path[0]))
-        flowsrc.add_flowrule(match_str, action_str)
+        flowsrc.add_flowrule(match_str, action_str, bw)
 
       # set flowrule for the last element if that is not a SAP
       if nffg.network.node[path[-1]].type != 'SAP':
@@ -694,7 +697,7 @@ class CoreAlgorithm(object):
           match_str, action_str,
           self.net[path[-2]][path[-1]][linkids[-1]].dst.id, path[-1]))
         nffg.network[path[-2]][path[-1]][linkids[-1]].dst.add_flowrule(
-          match_str, action_str)
+          match_str, action_str, bw)
 
   def _retrieveOrAddVNF (self, nffg, vnfid):
     if vnfid not in nffg.network:
@@ -737,6 +740,11 @@ class CoreAlgorithm(object):
           # connect the VNF to the Infra node.
           self.log.debug("Port %s added to Infra %s from NF %s" % (
             out_infra_port.id, host, vnf))
+          # this is needed when an already mapped VNF is being reused from an 
+          # earlier mapping, and the new SGHop's port only exists in the 
+          # current request. WARNING: no function for Port object addition!
+          if d.src not in mappednodenf.ports:
+            mappednodenf.add_port(id = d.src.id, properties = d.src.properties)
           nffg.add_undirected_link(out_infra_port, mappednodenf.ports[d.src.id],
                                    dynamic=True)
           helperlink = self.manager.link_mapping[i][j][k]
@@ -750,6 +758,8 @@ class CoreAlgorithm(object):
           in_infra_port = nffg.network.node[host].add_port()
           self.log.debug("Port %s added to Infra %s to NF %s" % (
             in_infra_port.id, host, vnf))
+          if d.dst not in mappednodenf.ports:
+            mappednodenf.add_port(id = d.dst.id, properties = d.dst.properties)
           nffg.add_undirected_link(in_infra_port, mappednodenf.ports[d.dst.id],
                                    dynamic=True)
           helperlink = self.manager.link_mapping[i][vnf][k]

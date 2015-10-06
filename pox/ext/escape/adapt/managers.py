@@ -43,7 +43,9 @@ class InternalDomainManager(AbstractDomainManager):
     self.controlAdapter = None  # DomainAdapter for POX - InternalPOXAdapter
     self.remoteAdapter = None  # NETCONF communication - VNFStarterAdapter
     self.portmap = {}  # Map (unique) dynamic ports to physical ports in EEs
-    self.topo = None  # Store topology description
+    self.deployed_vnfs = {}  # container for replied NETCONF messages of
+    # deployNF, key: (infra_id, nf_id), value: initiated_vnf part of the
+    # parsed reply in JSON
 
   def init (self, configurator, **kwargs):
     """
@@ -84,6 +86,7 @@ class InternalDomainManager(AbstractDomainManager):
     """
     try:
       log.info("Install %s domain part..." % self.name)
+      self._delete_nfs()
       self._deploy_nfs(nffg_part=nffg_part)
       self._delete_flowrules(nffg_part=nffg_part)
       self._deploy_flowrules(nffg_part=nffg_part)
@@ -91,11 +94,57 @@ class InternalDomainManager(AbstractDomainManager):
     except:
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.name, sys.exc_info()[0]))
+          self.name, sys.exc_info()))
       return False
 
   def clear_domain (self):
     pass
+
+  def _delete_nfs (self):
+    """
+    Stop and delete deployed NFs.
+
+    :return: None
+    """
+    # print self.topoAdapter.get_topology_resource().dump()
+    log.debug("Remove deployed NFs...")
+    # for nf in self.topoAdapter.get_topology_resource().nfs:
+    #   print "NF: " + str(nf)
+
+    topo = self.topoAdapter.get_topology_resource()
+    for infra in topo.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
+        continue
+      for nf in [n for n in topo.running_nfs(infra.id)]:
+        # Create connection Adapter to EE agent
+        connection_params = self.topoAdapter.get_agent_connection_params(
+          infra.id)
+        if connection_params is None:
+          log.error(
+            "Missing connection params for communication with the agent of "
+            "Node: %s" % infra.short_name)
+        updated = self.remoteAdapter.update_connection_params(
+          **connection_params)
+        try:
+          vnf_id = self.deployed_vnfs[(infra.id, nf.id)]['vnf_id']
+          reply = self.remoteAdapter.removeNF(vnf_id=vnf_id)
+          print reply
+          # Delete infra ports connected to the deletable NF
+          for u, v, link in topo.network.out_edges([nf.id], data=True):
+            topo[v].del_port(id=link.dst.id)
+          # Delete NF
+          topo.del_node(nf.id)
+          log.debug("Removed NF: %s" % nf)
+        except KeyError:
+          log.error(
+            "Deployed VNF data for NF: %s is not found! Skip deletion..." % nf)
+        except RPCError:
+          log.error(
+            "Got RPC communication error during NF: %s initiation! Skip "
+            "initiation..." % nf.name)
+          continue
+          # print self.topoAdapter.get_topology_resource().dump()
 
   def _deploy_nfs (self, nffg_part):
     """
@@ -108,7 +157,6 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    # FIXME - SIGCOMM
     self.portmap.clear()
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
@@ -117,6 +165,7 @@ class InternalDomainManager(AbstractDomainManager):
     # Get physical topology description from Mininet
     mn_topo = self.topoAdapter.get_topology_resource()
     # Iter through the container INFRAs in the given mapped NFFG part
+    # print mn_topo.dump()
     for infra in nffg_part.infras:
       if infra.infra_type not in (
            NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
@@ -177,6 +226,8 @@ class InternalDomainManager(AbstractDomainManager):
             self.remoteAdapter.__class__.__name__, updated))
         try:
           vnf = self.remoteAdapter.deployNF(**params)
+          # from pprint import pprint
+          # pprint(vnf)
         except RPCError:
           log.error(
             "Got RPC communication error during NF: %s initiation! Skip "
@@ -193,6 +244,8 @@ class InternalDomainManager(AbstractDomainManager):
             "Initiated NF: %s is not verified. Initiation was unsuccessful!"
             % nf.short_name)
           continue
+        # Store NETCONF related info of deployed NF
+        self.deployed_vnfs[(infra.id, nf.id)] = vnf['initiated_vnfs']
         # Add initiated NF to topo description
         log.info("Update Infrastructure layer topology description...")
         deployed_nf = nf.copy()
@@ -204,6 +257,8 @@ class InternalDomainManager(AbstractDomainManager):
           # Get Link's src ref to new NF's port
           # nf_port = deployed_nf.ports[link.src.id]
           # Create new Port for new NF
+          # print nf.__dict__
+          # print link
           nf_port = deployed_nf.ports.append(nf.ports[link.src.id].copy())
 
           def get_sw_port (vnf):
@@ -340,7 +395,7 @@ class InternalDomainManager(AbstractDomainManager):
           # Check match fields - currently only vlan_id
           # TODO: add further match fields
           if re.search(r'TAG', flowrule.match):
-            tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
+            tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
             match['vlan_id'] = tag
 
           if re.search(r';', flowrule.action):
@@ -355,7 +410,7 @@ class InternalDomainManager(AbstractDomainManager):
             if re.search(r'UNTAG', flowrule.action):
               action['vlan_pop'] = True
             else:
-              push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
+              push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
               action['vlan_push'] = push_tag
 
           self.controlAdapter.install_flowrule(infra.id, match=match,
@@ -419,7 +474,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     except:
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.name, sys.exc_info()[0]))
+          self.name, sys.exc_info()))
 
   def _update_nffg (self, nffg_part):
     """
@@ -496,8 +551,7 @@ class OpenStackDomainManager(AbstractDomainManager):
     except:
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.name, sys.exc_info()[0]))
-      raise
+          self.name, sys.exc_info()))
 
   def clear_domain (self):
     empty_cfg = self.topoAdapter.original_virtualizer
@@ -562,7 +616,7 @@ class UniversalNodeDomainManager(AbstractDomainManager):
     except:
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.name, sys.exc_info()[0]))
+          self.name, sys.exc_info()))
 
   def clear_domain (self):
     empty_cfg = self.topoAdapter.original_virtualizer
@@ -663,7 +717,7 @@ class SDNDomainManager(AbstractDomainManager):
     except:
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.name, sys.exc_info()[0]))
+          self.name, sys.exc_info()))
       return False
 
   def clear_domain (self):
@@ -742,7 +796,7 @@ class SDNDomainManager(AbstractDomainManager):
           # Check match fields - currently only vlan_id
           # TODO: add further match fields
           if re.search(r'TAG', flowrule.match):
-            tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.match)
+            tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
             match['vlan_id'] = tag
 
           if re.search(r';', flowrule.action):
@@ -757,7 +811,7 @@ class SDNDomainManager(AbstractDomainManager):
             if re.search(r'UNTAG', flowrule.action):
               action['vlan_pop'] = True
             else:
-              push_tag = re.sub(r'.*TAG=.*-(.*);?', r'\1', flowrule.action)
+              push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
               action['vlan_push'] = push_tag
 
           self.controlAdapter.install_flowrule(infra.id, match=match,
