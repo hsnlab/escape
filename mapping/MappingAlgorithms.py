@@ -196,9 +196,9 @@ def MAP (request, network, full_remap = False,
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
-  helper.log.debug("The VNF mappings are (vnf_id, node_id): \n%s"%pformat(
+  helper.log.info("The VNF mappings are (vnf_id, node_id): \n%s"%pformat(
      alg.manager.vnf_mapping))
-  helper.log.debug("The link mappings are: \n%s"%pformat(
+  helper.log.info("The link mappings are: \n%s"%pformat(
      alg.manager.link_mapping.edges(data=True, keys=True)))
 
   return mappedNFFG
@@ -430,7 +430,7 @@ if __name__ == '__main__':
     with open('../pox/escape-mn-mapped-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
       # net.duplicate_static_links()
-    mapped = MAP(req, net, full_remap = False)
+    mapped = MAP(req, net, full_remap = True)
     print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
