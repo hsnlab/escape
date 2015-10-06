@@ -113,12 +113,12 @@ def kill_remained_parts ():
   misc = os.path.abspath(os.path.dirname(__file__) + "/pox/ext/escape/util")
   sys.path.append(mn)
   sys.path.append(misc)
-  from misc import remove_junks
   if os.geteuid() != 0:
     print "Cleanup process requires root privilege!"
     return
   else:
     print "Run cleaning process..."
+    from misc import remove_junks
     remove_junks()
 
 

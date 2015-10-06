@@ -233,7 +233,6 @@ def remove_junks (log=logging.getLogger("cleanup")):
     log.error("Cleanup process requires root privilege!")
     return
   log.debug("Cleanup stacked POX processes...")
-  run_silent(r"sudo pkill -9 -f pox.py")
   log.debug("Cleanup still running VNF-related processes...")
   run_silent(r"sudo pkill -9 -f netconfd")
   run_silent(r"sudo pkill -9 -f clickhelper")
@@ -250,3 +249,4 @@ def remove_junks (log=logging.getLogger("cleanup")):
   cleanup()
   log.debug("Cleanup remained tmp files...")
   run_silent(r"rm  /tmp/*-startup-cfg.xml")
+  run_silent(r"sudo pkill -9 -f pox.py")
