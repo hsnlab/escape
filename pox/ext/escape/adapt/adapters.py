@@ -19,7 +19,6 @@ from copy import deepcopy
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from ncclient.operations import OperationError
-
 from ncclient.operations.rpc import RPCError
 
 from ncclient.transport import TransportError
@@ -45,8 +44,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
   Can be used to define a controller (based on POX) for other external domains.
   """
   name = "INTERNAL-POX"
-  
-  # FIXME - SIGCOMM -
+
   # Static mapping of infra IDs and DPIDs
   infra_to_dpid = {'EE1': 0x1,
                    'EE2': 0x2,
@@ -76,8 +74,8 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     :param port: socket port (default: 6633)
     :type port: int
     """
-    log.debug("Init %s with name: %s address %s:%s" % (
-      self.__class__.__name__, name, address, port))
+    log.debug("Init %s with address %s:%s, optional name: %s" % (
+      self.__class__.__name__, address, port, name))
     super(InternalPOXAdapter, self).__init__(name=name, address=address,
                                              port=port, keepalive=keepalive)
   
@@ -130,8 +128,7 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   Adapter class to handle communication with external SDN switches.
   """
   name = "SDN-POX"
-  
-  # FIXME - SIGCOMM -
+
   # Static mapping of infra IDs and DPIDs
   infra_to_dpid = {'MT1': 0x11,  # 0x14c5e0c376e24,
                    'MT2': 0x12,  # 0x14c5e0c376fc6,
@@ -146,42 +143,12 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
     # Currently static initialization from a config file
     # TODO: discover SDN topology and create the NFFG
     self.topo = None  # SDN domain topology stored in NFFG
-    self.__init_from_CONFIG()
 
   def get_topology_resource (self):
     super(SDNDomainPOXAdapter, self).get_topology_resource()
 
   def check_domain_reachable (self):
     super(SDNDomainPOXAdapter, self).check_domain_reachable()
-
-  def __init_from_CONFIG (self, path=None):
-    """
-    Load a pre-defined topology from an NFFG stored in a file.
-    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
-
-    :param path: additional file path
-    :type path: str
-    :return: None
-    """
-    if path is None:
-      path = CONFIG.get_sdn_topology()
-    if path is None:
-      log.warning("SDN topology is missing from CONFIG!")
-      raise TopologyLoadException("Missing Topology!")
-    else:
-      try:
-        with open(path, 'r') as f:
-          log.info("Load SDN topology from file: %s" % path)
-          self.topo = NFFG.parse(f.read())
-          self.topo.duplicate_static_links()
-          # print self.topo.dump()
-      except IOError:
-        log.debug("SDN topology file not found: %s" % path)
-        raise TopologyLoadException("Missing topology file!")
-      except ValueError as e:
-        log.error(
-          "An error occurred when load topology from file: %s" % e.message)
-        raise TopologyLoadException("File parsing error!")
 
 
 class InternalMininetAdapter(AbstractESCAPEAdapter):
@@ -249,6 +216,68 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     return {"server": "127.0.0.1", "port": agent.agentPort,
             "username": agent.username,
             "password": agent.passwd} if agent is not None else {}
+
+
+class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
+  """
+  Adapter class to return the topology description of the SDN domain.
+
+  Currently it just read the static description from file, and not discover it.
+  """
+  name = "SDN-topo"
+
+  def __init__ (self, path=None):
+    log.debug("Init SDNDomainTopoAdapter with optional path: %s" % path)
+    super(SDNDomainTopoAdapter, self).__init__()
+    self.topo = None
+    self.__init_from_CONFIG(path=path)
+
+  def check_domain_reachable (self):
+    """
+    Checker function for domain. Naively return True.
+
+    :return: the domain is detected or not
+    :rtype: bool
+    """
+    return True
+
+  def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG` parsed from file.
+
+    :return: the static topology description
+    :rtype: :any:`NFFG`
+    """
+    return self.topo
+
+  def __init_from_CONFIG (self, path=None):
+    """
+    Load a pre-defined topology from an NFFG stored in a file.
+    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
+
+    :param path: additional file path
+    :type path: str
+    :return: None
+    """
+    if path is None:
+      path = CONFIG.get_sdn_topology()
+    if path is None:
+      log.warning("SDN topology is missing from CONFIG!")
+      raise TopologyLoadException("Missing Topology!")
+    else:
+      try:
+        with open(path, 'r') as f:
+          log.info("Load SDN topology from file: %s" % path)
+          self.topo = NFFG.parse(f.read())
+          self.topo.duplicate_static_links()
+          # print self.topo.dump()
+      except IOError:
+        log.debug("SDN topology file not found: %s" % path)
+        raise TopologyLoadException("Missing topology file!")
+      except ValueError as e:
+        log.error(
+          "An error occurred when load topology from file: %s" % e.message)
+        raise TopologyLoadException("File parsing error!")
 
 
 class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
