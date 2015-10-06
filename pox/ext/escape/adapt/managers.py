@@ -95,7 +95,6 @@ class InternalDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
-      raise
       return False
 
   def clear_domain (self):
@@ -145,7 +144,7 @@ class InternalDomainManager(AbstractDomainManager):
             "Got RPC communication error during NF: %s initiation! Skip "
             "initiation..." % nf.name)
           continue
-    # print self.topoAdapter.get_topology_resource().dump()
+          # print self.topoAdapter.get_topology_resource().dump()
 
   def _deploy_nfs (self, nffg_part):
     """
@@ -476,7 +475,6 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
-      raise
 
   def _update_nffg (self, nffg_part):
     """
@@ -554,7 +552,6 @@ class OpenStackDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
-      raise
 
   def clear_domain (self):
     empty_cfg = self.topoAdapter.original_virtualizer
@@ -620,7 +617,6 @@ class UniversalNodeDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
-      raise
 
   def clear_domain (self):
     empty_cfg = self.topoAdapter.original_virtualizer
@@ -722,7 +718,6 @@ class SDNDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
-      raise
       return False
 
   def clear_domain (self):
