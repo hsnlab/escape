@@ -209,7 +209,7 @@ def main(argv):
     print traceback.format_exc()
   log.info("First unsuccessful mapping was at %s test level."%test_lvl)
   if ever_successful:
-    print "\nLast successful mapping was at %s test level.\n"%(test_lvl - 1)
+    # print "\nLast successful mapping was at %s test level.\n"%(test_lvl - 1)
     with open("paramsearch.out", "a") as f:
       f.write("\nLast successful mapping was at %s test level.\n"%(test_lvl - 1))
   else:
