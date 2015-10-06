@@ -135,7 +135,6 @@ class AbstractDomainManager(EventMixin):
     Abstract function for starting component.
     """
     self.stop_polling()
-    del self.topoAdapter
 
   def suspend (self):
     """
@@ -287,6 +286,12 @@ class AbstractDomainManager(EventMixin):
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
     :return: None
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def clear_domain (self):
+    """
+    Clear the Domain according to the first received config.
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -559,7 +564,7 @@ class AbstractRESTAdapter(Session):
   # Set custom header
   custom_headers = {'User-Agent': "ESCAPE/" + __version__}
   # Connection timeout (sec)
-  CONNECTION_TIMEOUT = 3
+  CONNECTION_TIMEOUT = 5
   # HTTP methods
   GET = "GET"
   POST = "POST"

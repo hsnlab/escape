@@ -956,7 +956,7 @@ def gen ():
   return nffg
 
 
-def generate_sdn_topo ():
+def generate_sdn_topo2 ():
   # Create NFFG
   nffg = NFFG(id="SDN", name="SDN-Topology")
   # Add MikroTik OF switches
@@ -988,6 +988,31 @@ def generate_sdn_topo ():
   l3.bandwidth = 1000
   l4.delay = 1.5
   l4.bandwidth = 1000
+  return nffg
+
+
+def generate_sdn_topo2 ():
+  # Create NFFG
+  nffg = NFFG(id="SDN", name="SDN-Topology")
+  # Add MikroTik OF switches
+  mt1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=NFFG.DOMAIN_SDN,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
+  mt1.resources.delay = 0.2
+  mt1.resources.bandwidth = 4000
+  # Add SAPs
+  sap14 = nffg.add_sap(id="SAP14", name="SAP14")
+  sap24 = nffg.add_sap(id="SAP24", name="SAP24")
+  sap34 = nffg.add_sap(id="SAP34", name="SAP34")
+  # Add links
+  l1 = nffg.add_link(sap14.add_port(1), mt1.add_port(1), id="sdn-link1")
+  l2 = nffg.add_link(sap24.add_port(1), mt1.add_port(2), id="sdn-link2")
+  l3 = nffg.add_link(sap34.add_port(1), mt1.add_port(3), id="sdn-link3")
+  l1.delay = 0.1
+  l1.bandwidth = 1000
+  l2.delay = 1.5
+  l2.bandwidth = 1000
+  l3.delay = 1.5
+  l3.bandwidth = 1000
   return nffg
 
 
@@ -1842,13 +1867,13 @@ if __name__ == "__main__":
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
   # nffg = gen()
-  # nffg = generate_sdn_topo()
+  nffg = generate_sdn_topo2()
   # nffg = generate_sdn_req()
   # nffg = generate_os_req()
   # nffg = generate_os_mn_req()
   # nffg = generate_dov()
   # nffg = generate_global_req()
-  nffg = generate_ewsdn_req3()
+  # nffg = generate_ewsdn_req3()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()

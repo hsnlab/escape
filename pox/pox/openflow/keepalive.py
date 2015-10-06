@@ -52,15 +52,17 @@ _running = False
 _switch_timeout = None # This amount beyond interval
 _interval = None
 
-def launch (interval = 20, timeout = 3):
+def launch (interval = 20, timeout = 3, ofnexus = None):
   global _interval, _switch_timeout
   _interval = float(interval)
   _switch_timeout = float(timeout)
+  if ofnexus is None:
+    ofnexus = core.openflow
   def start ():
     global _running
     if _running:
       log.error("Keepalive already running")
       return
     _running = True
-    Timer(_interval, _handle_timer, recurring=True, args=(core.openflow,))
+    Timer(_interval, _handle_timer, recurring=True, args=(ofnexus,))
   core.call_when_ready(start, "openflow", __name__)

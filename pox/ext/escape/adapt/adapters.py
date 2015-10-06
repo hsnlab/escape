@@ -15,10 +15,12 @@
 Contains Adapter classes which contains protocol and technology specific
 details for the connections between ESCAPEv2 and other different domains.
 """
+from copy import deepcopy
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from ncclient.operations import OperationError
 from ncclient.operations.rpc import RPCError
+
 from ncclient.transport import TransportError
 
 from escape.infr.il_API import InfrastructureLayerAPI
@@ -49,14 +51,14 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
 
   # FIXME - SIGCOMM -
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {'MT1': 0x11,  # 0x14c5e0c376e24,
-                   'MT2': 0x12,  # 0x14c5e0c376fc6,
+  infra_to_dpid = {'MT1': 0x14c5e0c376e24,  # 0x0040f46b9c6b,
+                   'MT2': 0x14c5e0c376fc6,
                    'EE1': 0x1,
                    'EE2': 0x2,
                    'SW3': 0x3,
                    'SW4': 0x4, }
-  dpid_to_infra = {0x11: 'MT1',  # 0x14c5e0c376e24: 'MT1',
-                   0x12: 'MT2',  # 0x14c5e0c376fc6: 'MT2',
+  dpid_to_infra = {0x14c5e0c376e24: 'MT1',
+                   0x14c5e0c376fc6: 'MT2',
                    0x1: 'EE1',
                    0x2: 'EE2',
                    0x3: 'SW3',
@@ -98,6 +100,8 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     of = launch(name=name, address=address, port=port)
     # Start listening for OpenFlow connections
     of.start()
+    # from pox.openflow.keepalive import launch
+    # launch(ofnexus=self.openflow)
     self.task_name = name if name else "of_01"
     of.name = self.task_name
     # register OpenFlow event listeners
@@ -622,7 +626,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         # Return with whole VNF description
         return adapter.getVNFInfo(vnf_id=vnf_id)
       except RPCError as e:
-        log.error("Got Error during initiate VNF through NETCONF:")
+        log.error("Got Error during deployVNF through NETCONF:")
         # from pprint import pprint
         # pprint(e.to_dict())
         raise
@@ -633,6 +637,29 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
       except (TransportError, OperationError) as e:
         log.error(
           "Failed to deploy NF due to a connection error! Cause: %s" % e)
+
+  def removeNF (self, vnf_id):
+    """
+    Stop and remove the given NF using the general RPC calls.
+    """
+    with self as adapter:
+      try:
+        # return adapter.stopVNF(vnf_id=vnf_id)
+        reply = adapter.stopVNF(vnf_id=vnf_id)
+        from pprint import pprint
+        pprint(adapter.getVNFInfo())
+        return reply
+      except RPCError as e:
+        log.error("Got Error during removeVNF through NETCONF:")
+        raise
+      except KeyError as e:
+        log.warning(
+          "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
+          "VNF initiation." % e.args[0])
+      except (TransportError, OperationError) as e:
+        log.error(
+          "Failed to remove NF due to a connection error! Cause: %s" % e)
+
 
 
 class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
@@ -696,7 +723,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if not isinstance(config, (str, unicode, NFFG)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
-      log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
+      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'edit-config', config)
     except ConnectionError:
       log.warning(
@@ -740,6 +767,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_OS, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
+    self.original_virtualizer = None
 
   def ping (self):
     try:
@@ -773,6 +801,12 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
       self.virtualizer = virt
+      if self.original_virtualizer is None:
+        log.debug(
+          "Store Virtualizer(id: %s, name: %s) as the original domain "
+          "config..." % (
+            virt.id.get_as_text(), virt.name.get_as_text()))
+        self.original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
 
@@ -780,12 +814,14 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if isinstance(data, NFFG):
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
-      data = str(self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.virtualizer, nffg=data))
+      virt_data = self.converter.adapt_mapping_into_Virtualizer(
+        virtualizer=self.virtualizer, nffg=data)
+      # virt_data.bind(relative=True)
+      data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
-      log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
+      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
       log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
@@ -827,6 +863,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
+    self.original_virtualizer = None
 
   def ping (self):
     try:
@@ -863,6 +900,12 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
       self.virtualizer = virt
+      if self.original_virtualizer is None:
+        log.debug(
+          "Store Virtualizer(id: %s, name: %s) as the original domain "
+          "config..." % (
+            virt.id.get_as_text(), virt.name.get_as_text()))
+        self.original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
 
@@ -870,12 +913,14 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if isinstance(data, NFFG):
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
-      data = str(self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.virtualizer, nffg=data))
+      virt_data = self.converter.adapt_mapping_into_Virtualizer(
+        virtualizer=self.virtualizer, nffg=data)
+      # virt_data.bind(relative=True)
+      data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
-      log.debug("Send NFFG part to domain agent at %s..." % self._base_url)
+      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
       self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
       log.warning(

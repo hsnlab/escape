@@ -122,7 +122,7 @@ class ComponentConfigurator(object):
       # Call finalize
       self.__repository[domain_name].finit()
       # Remove from repository
-      del self.__repository[domain_name]
+      # del self.__repository[domain_name]
     else:
       log.warning(
         "Missing domain component: %s! Skipping stop task..." % domain_name)
@@ -230,6 +230,27 @@ class ComponentConfigurator(object):
     """
     self.start_mgr(mgrs.InternalDomainManager.name)
 
+  def clear_initiated_mgrs (self):
+    """
+    Clear initiated DomainManagers based on the first received config.
+
+    :return: None
+    """
+    for name, mgr in self:
+      mgr.clear_domain()
+
+  def stop_initiated_mgrs (self):
+    """
+    Stop initiated DomainManagers.
+
+    :return: None
+    """
+    for name, mgr in self:
+      log.debug("Shutdown %s domain manager..." % name)
+      self.stop_mgr(domain_name=name)
+    # Do not del mgr in for loop because of the iterator use
+    self.__repository.clear()
+
 
 class ControllerAdapter(object):
   """
@@ -267,6 +288,19 @@ class ControllerAdapter(object):
       self.domains.load_internal_mgr()
     # Init default domain managers
     self.domains.load_default_mgrs()
+
+  def shutdown (self):
+    """
+    Shutdown ControllerAdapter, related components and stop DomainManagers.
+
+    :return: None
+    """
+    # Clear DomainManagers config if needed
+    if CONFIG.reset_domains_after_shutdown() is True:
+      log.debug("Reset detected domains...")
+      self.domains.clear_initiated_mgrs()
+    # Stop initiated DomainManagers
+    self.domains.stop_initiated_mgrs()
 
   def install_nffg (self, mapped_nffg):
     """
@@ -307,7 +341,7 @@ class ControllerAdapter(object):
         "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
       # Update global view (DoV) with the installed components
       self.domainResManager.get_global_view().update_global_view(mapped_nffg)
-    print self.domainResManager.get_global_view().get_resource_info().dump()
+    # print self.domainResManager.get_global_view().get_resource_info().dump()
 
   def _handle_DomainChangedEvent (self, event):
     """

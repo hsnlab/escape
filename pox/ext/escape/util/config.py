@@ -344,6 +344,15 @@ class ESCAPEConfig(object):
     except KeyError:
       return ()
 
+  def reset_domains_after_shutdown (self):
+    """
+    Return with the shutdown strategy to reset domain or not.
+    """
+    try:
+      return self.__configuration[ADAPT]['RESET-DOMAIN-AFTER-SHUTDOWN']
+    except KeyError:
+      return True
+
   def get_mininet_topology (self):
     """
     Return the Mininet topology class.

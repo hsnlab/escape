@@ -73,8 +73,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                          "port": 6653},
                         "SDN-POX": {"module": "escape.adapt.adapters",
                                     "class": "SDNDomainPOXAdapter",
-                                    # "address": "192.168.1.101", "port": 6633},
-                                    "address": "0.0.0.0", "port": 6633},
+                                    "address": "192.168.1.101", "port": 6633},
+                                    # "address": "0.0.0.0", "port": 6633},
                         "MININET": {"module": "escape.adapt.adapters",
                                     "class": "InternalMininetAdapter"},
                         "VNFStarter": {"module": "escape.adapt.adapters",
@@ -84,16 +84,16 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                        "server": "127.0.0.1", "port": 830},
                         "ESCAPE-REST": {"module": "escape.adapt.adapters",
                                         "class": "RemoteESCAPEv2RESTAdapter",
-                                        "url": "http://localhost:8083"},
-                        # "url": "http://192.168.1.111:8888/escape/"},
+                                        # "url": "http://localhost:8083"},
+                                        "url": "http://192.168.1.111:8888/escape/"},
                         "OpenStack-REST": {"module": "escape.adapt.adapters",
                                            "class": "OpenStackRESTAdapter",
-                                           "url": "http://localhost:8081"},
-                        # "url": "http://192.168.1.103:8888/virtualizer/"},
+                                           # "url": "http://localhost:8081"},
+                                           "url": "http://192.168.1.103:8888/virtualizer/"},
                         "UN-REST": {"module": "escape.adapt.adapters",
                                     "class": "UniversalNodeRESTAdapter",
-                                    "url": "http://localhost:8082"},
-                        # "url": "http://192.168.1.104:8080"},
+                                    # "url": "http://localhost:8082"},
+                                    "url": "http://192.168.1.104:8080"},
                         # Specific Domain Managers
                         "INTERNAL": {"module": "escape.adapt.managers",
                                      "class": "InternalDomainManager",
@@ -111,7 +111,9 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                    "class": "DockerDomainManager",
                                    "poll": False},
                         "SDN": {"module": "escape.adapt.managers",
-                                "class": "SDNDomainManager", "poll": False}},
+                                "class": "SDNDomainManager", "poll": False},
+                        # Shutdown strategy config
+                        "RESET-DOMAIN-AFTER-SHUTDOWN": True},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
                             "TOPO": "escape-mn-topo.nffg",  # relative to ext/
@@ -119,6 +121,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                               "class":
                                                 "FallbackDynamicTopology"},
                             "SDN-TOPO": "sdn-topo.nffg",  # relative to ext/
+                            # "SDN-TOPO": "escape-mn-topo.nffg",  # relative to ext/
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}  # relative to ext/
 

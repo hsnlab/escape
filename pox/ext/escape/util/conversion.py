@@ -1955,7 +1955,7 @@ class NFFGConverter(object):
               "Virtualizer" % in_port.id.get_as_text())
           else:
             self.log.debug(
-              "Identify in_port: %s in match as a dynamic port. Track "
+              "Identify in_port: %s in match as a dynamic port. Tracking "
               "associated NF port in the Virtualizer..." % in_port)
             # in_port is a dynamic port --> search for connected NF's port
             nf_port = [l.dst for u, v, l in
@@ -2023,12 +2023,15 @@ class NFFGConverter(object):
                                                   action=flowrule.action)
 
           # Add Flowentry with converted params
+          virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
+                              match=match,
+                              action=action, out=out_port)
+          # virt_fe.bind(relative=True)
           self.log.debug("Generated Flowentry:\n%s" % virtualizer.nodes[
-            infra.id].flowtable.add(
-            Flowentry(id=fe_id, priority=fe_pri, port=in_port, match=match,
-                      action=action, out=out_port)))
+            infra.id].flowtable.add(virt_fe))
 
     self.log.debug("NFFG adaptation is finished.")
+    virtualizer.bind(relative=True)
     # Return with modified Virtualizer
     return virtualizer
 
@@ -2054,7 +2057,7 @@ class NFFGConverter(object):
       if op[0] == "TAG":
         # E.g.: <match>dl_vlan=0x0037</match>
         try:
-          vlan = int(op[1].split('-')[-1])
+          vlan = int(op[1].split('|')[-1])
           return r"dl_vlan=%s" % format(vlan, '#06x')
         except ValueError:
           self.log.warning(
@@ -2065,7 +2068,7 @@ class NFFGConverter(object):
       if op[0] == "TAG":
         # E.g.: <match><vlan_id>55</vlan_id></match>
         try:
-          vlan = int(op[1].split('-')[-1])
+          vlan = int(op[1].split('|')[-1])
         except ValueError:
           self.log.warning(
             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
@@ -2097,7 +2100,7 @@ class NFFGConverter(object):
       if op[0] == "TAG":
         # E.g.: <action>push_vlan:0x8100,set_field:0x0037</action>
         try:
-          vlan = int(op[1].split('-')[-1])
+          vlan = int(op[1].split('|')[-1])
           # return r"push_vlan:0x8100,set_field:%s" % format(vlan, '#06x')
           return r"mod_vlan_vid:%s" % format(vlan, '#06x')
         except ValueError:
@@ -2113,7 +2116,7 @@ class NFFGConverter(object):
       if op[0] == "TAG":
         # E.g.: <action><vlan><push>55<push/></vlan></action>
         try:
-          vlan = int(op[1].split('-')[-1])
+          vlan = int(op[1].split('|')[-1])
         except ValueError:
           self.log.warning(
             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
