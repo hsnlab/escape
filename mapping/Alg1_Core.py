@@ -624,6 +624,11 @@ class CoreAlgorithm(object):
       flowdst = None
     reqlink = self.req[v1][v2][reqlid]
     bw = reqlink.bandwidth
+    # Let's use the substrate SAPs' ID-s for TAG definition.
+    if self.req.node[v1].type == 'SAP':
+      v1 = self.manager.getIdOfChainEnd_fromNetwork(v1)
+    if self.req.node[v2].type == 'SAP':
+      v2 = self.manager.getIdOfChainEnd_fromNetwork(v2)
     # The action and match are the same format
     tag = "TAG=%s|%s|%s" % (v1, v2, reqlid)
     if len(path) == 1:
@@ -735,18 +740,34 @@ class CoreAlgorithm(object):
 
         for i, j, k, d in self.req.out_edges_iter([vnf], data=True, keys=True):
           # i is always vnf
-          out_infra_port = nffg.network.node[host].add_port()
-          # use the (copies of the) ports between the SGLinks to
-          # connect the VNF to the Infra node.
-          self.log.debug("Port %s added to Infra %s from NF %s" % (
-            out_infra_port.id, host, vnf))
-          # this is needed when an already mapped VNF is being reused from an 
-          # earlier mapping, and the new SGHop's port only exists in the 
-          # current request. WARNING: no function for Port object addition!
-          if d.src not in mappednodenf.ports:
-            mappednodenf.add_port(id = d.src.id, properties = d.src.properties)
-          nffg.add_undirected_link(out_infra_port, mappednodenf.ports[d.src.id],
-                                   dynamic=True)
+          # Generate only ONE InfraPort for every Port of the NF-s with 
+          # predictable port ID. Format: <<InfraID|NFID|NFPortID>>
+          infra_port_id = "|".join((str(host),str(vnf),str(d.src.id)))
+          # WARNING: PortContainer's "in" operator needs a Port object!!
+          # We need to use try catch to test inclusion for port ID
+          try:
+            out_infra_port = nffg.network.node[host].ports[infra_port_id]
+            self.log.debug("Port %s found in Infra %s leading to port %s of NF"
+                           " %s."%(infra_port_id, host, d.dst.id, vnf))
+          except KeyError:
+            out_infra_port = nffg.network.node[host].add_port(id=infra_port_id)
+            self.log.debug("Port %s added to Infra %s to NF %s." 
+                           % (out_infra_port.id, host, vnf))
+            # this is needed when an already mapped VNF is being reused from an 
+            # earlier mapping, and the new SGHop's port only exists in the 
+            # current request. WARNING: no function for Port object addition!
+            try:
+              mappednodenf.ports[d.src.id]
+            except KeyError:
+              mappednodenf.add_port(id = d.src.id, properties = d.src.properties)
+            # use the (copies of the) ports between the SGLinks to
+            # connect the VNF to the Infra node.
+            # Add the mapping indicator DYNAMIC link only if the port was just
+            # added. NOTE: In case of NOT FULL_REMAP, the VNF-s left in place 
+            # still have these links. In case of (future) VNF replacement, 
+            # change is required here!
+            nffg.add_undirected_link(out_infra_port, mappednodenf.ports[d.src.id],
+                                     dynamic=True)
           helperlink = self.manager.link_mapping[i][j][k]
           if 'infra_ports' in helperlink:
             helperlink['infra_ports'][0] = out_infra_port
@@ -755,13 +776,21 @@ class CoreAlgorithm(object):
 
         for i, j, k, d in self.req.in_edges_iter([vnf], data=True, keys=True):
           # j is always vnf
-          in_infra_port = nffg.network.node[host].add_port()
-          self.log.debug("Port %s added to Infra %s to NF %s" % (
-            in_infra_port.id, host, vnf))
-          if d.dst not in mappednodenf.ports:
-            mappednodenf.add_port(id = d.dst.id, properties = d.dst.properties)
-          nffg.add_undirected_link(in_infra_port, mappednodenf.ports[d.dst.id],
-                                   dynamic=True)
+          infra_port_id = "|".join((str(host),str(vnf),str(d.dst.id)))
+          try:
+            in_infra_port = nffg.network.node[host].ports[infra_port_id]
+            self.log.debug("Port %s found in Infra %s leading to port %s of NF"
+                           " %s."%(infra_port_id, host, d.dst.id, vnf))
+          except KeyError:
+            in_infra_port = nffg.network.node[host].add_port(id=infra_port_id)
+            self.log.debug("Port %s added to Infra %s to NF %s." 
+                           % (in_infra_port.id, host, vnf))
+            try:
+              mappednodenf.ports[d.dst.id]
+            except KeyError:
+              mappednodenf.add_port(id = d.dst.id, properties = d.dst.properties)
+            nffg.add_undirected_link(in_infra_port, mappednodenf.ports[d.dst.id],
+                                     dynamic=True)
           helperlink = self.manager.link_mapping[i][vnf][k]
           if 'infra_ports' in helperlink:
             helperlink['infra_ports'][1] = in_infra_port
@@ -776,36 +805,42 @@ class CoreAlgorithm(object):
         self._addFlowrulesToNFFGDerivatedFromReqLinks(vnf, j, k, nffg)
           
     # all VNFs are added to the NFFG, so now, req ids are valid in this
-    # NFFG instance. Ports for the SG link ends are created here.
+    # NFFG instance. Ports for the SG link ends are reused from the mapped NFFG.
     # Add all the SGHops to the NFFG keeping the SGHops` identifiers, so the
     # installed flowrules and TAG-s will be still valid
-    for i, j, d in self.req.edges_iter(data=True):
-      if self.req.node[i].type == 'SAP':
-        # if i is a SAP we have to find what is its ID in the network
-        # d.id is the link`s key
-        sapstartid = self.manager.getIdOfChainEnd_fromNetwork(i)
-        if self.req.node[j].type == 'SAP':
+    try:
+      for i, j, d in self.req.edges_iter(data=True):
+        if self.req.node[i].type == 'SAP':
+          # if i is a SAP we have to find what is its ID in the network
+          # d.id is the link`s key
+          sapstartid = self.manager.getIdOfChainEnd_fromNetwork(i)
+          if self.req.node[j].type == 'SAP':
+            sapendid = self.manager.getIdOfChainEnd_fromNetwork(j)
+            nffg.add_sglink(nffg.network.node[sapstartid].ports[
+                 self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
+                            nffg.network.node[sapendid].ports[
+                 self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)], 
+                            id=d.id, flowclass=d.flowclass)
+          else:
+            nffg.add_sglink(nffg.network.node[sapstartid].ports[
+                 self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
+                            nffg.network.node[j].ports[d.dst.id], id=d.id,
+                            flowclass=d.flowclass)
+        elif self.req.node[j].type == 'SAP':
           sapendid = self.manager.getIdOfChainEnd_fromNetwork(j)
-          nffg.add_sglink(nffg.network.node[sapstartid].ports[
-               self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
+          nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
                           nffg.network.node[sapendid].ports[
-               self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)], 
+                            self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)],
                           id=d.id, flowclass=d.flowclass)
         else:
-          nffg.add_sglink(nffg.network.node[sapstartid].ports[
-               self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
+          nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
                           nffg.network.node[j].ports[d.dst.id], id=d.id,
                           flowclass=d.flowclass)
-      elif self.req.node[j].type == 'SAP':
-        sapendid = self.manager.getIdOfChainEnd_fromNetwork(j)
-        nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
-                        nffg.network.node[sapendid].ports[
-                          self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)],
-                        id=d.id, flowclass=d.flowclass)
-      else:
-        nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
-                        nffg.network.node[j].ports[d.dst.id], id=d.id,
-                        flowclass=d.flowclass)
+    except RuntimeError as re:
+      raise uet.InternalAlgorithmException("RuntimeError catched during SGLink"
+          " addition to the output NFFG. Not Yet Implemented feature: keeping "
+          "already mapped SGLinks in place if not full_remap. Maybe same SGLink "
+          "ID in current request and a previous request?")
     return nffg
 
 

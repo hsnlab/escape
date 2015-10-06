@@ -170,6 +170,11 @@ class PortContainer(object):
     return len(self.container)
   
   def __contains__ (self, item):
+    # this type checking is important because with Port ID input the function
+    # would silently return False!
+    if not isinstance(item, Port):
+      raise RuntimeError("PortContainer's operator \"in\" works only with Port"
+                         " objects (and not Port ID-s!)")
     return item in self.container
   
   def append (self, item):
