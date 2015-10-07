@@ -599,7 +599,6 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
           "Failed to remove NF due to a connection error! Cause: %s" % e)
 
 
-
 class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                                 RemoteESCAPEv2API):
   """
@@ -619,6 +618,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("RemoteESCAPEv2 base URL is set to %s" % self._base_url)
     AbstractESCAPEAdapter.__init__(self)
+    self._original_nffg = None
   
   def ping (self):
     try:
@@ -649,20 +649,25 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                   "'get-config': %s" % e.message)
       return None
     if data:
+      # Convert raw data to NFFG
       log.info("Parse and load received data...")
       log.debug("Converting to NFFG format...")
       nffg = NFFG.parse(data)
       log.debug("Set Domain type to %s" % NFFG.DOMAIN_REMOTE)
       for infra in nffg.infras:
         infra.domain = NFFG.DOMAIN_REMOTE
+      # Store original config for domain resetting
+      if self._original_nffg is None:
+        log.debug("Store %s as the original domain config..." % nffg)
+        self._original_nffg= nffg.copy()
       return nffg
   
-  def edit_config (self, config):
-    if not isinstance(config, (str, unicode, NFFG)):
+  def edit_config (self, data):
+    if not isinstance(data, (str, unicode, NFFG)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
     try:
       log.debug("Send NFFG to domain agent at %s..." % self._base_url)
-      self.send_request(self.POST, 'edit-config', config)
+      self.send_request(self.POST, 'edit-config', data)
     except ConnectionError:
       log.warning(
         "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
@@ -705,7 +710,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_OS, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
-    self.original_virtualizer = None
+    self._original_virtualizer = None
   
   def ping (self):
     try:
@@ -739,12 +744,12 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
       self.virtualizer = virt
-      if self.original_virtualizer is None:
+      if self._original_virtualizer is None:
         log.debug(
           "Store Virtualizer(id: %s, name: %s) as the original domain "
           "config..." % (
             virt.id.get_as_text(), virt.name.get_as_text()))
-        self.original_virtualizer = deepcopy(virt)
+        self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
   
@@ -801,7 +806,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
-    self.original_virtualizer = None
+    self._original_virtualizer = None
   
   def ping (self):
     try:
@@ -838,12 +843,12 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
       self.virtualizer = virt
-      if self.original_virtualizer is None:
+      if self._original_virtualizer is None:
         log.debug(
           "Store Virtualizer(id: %s, name: %s) as the original domain "
           "config..." % (
             virt.id.get_as_text(), virt.name.get_as_text()))
-        self.original_virtualizer = deepcopy(virt)
+        self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
   

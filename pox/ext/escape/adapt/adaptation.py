@@ -236,6 +236,7 @@ class ComponentConfigurator(object):
 
     :return: None
     """
+    log.info("Resetting detected domains before shutdown...")
     for name, mgr in self:
       mgr.clear_domain()
 
@@ -297,7 +298,6 @@ class ControllerAdapter(object):
     """
     # Clear DomainManagers config if needed
     if CONFIG.reset_domains_after_shutdown() is True:
-      log.debug("Reset detected domains...")
       self.domains.clear_initiated_mgrs()
     # Stop initiated DomainManagers
     self.domains.stop_initiated_mgrs()

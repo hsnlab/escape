@@ -232,7 +232,6 @@ def remove_junks (log=logging.getLogger("cleanup")):
   if os.geteuid() != 0:
     log.error("Cleanup process requires root privilege!")
     return
-  log.debug("Cleanup stacked POX processes...")
   log.debug("Cleanup still running VNF-related processes...")
   run_silent(r"sudo pkill -9 -f netconfd")
   run_silent(r"sudo pkill -9 -f clickhelper")
@@ -244,9 +243,8 @@ def remove_junks (log=logging.getLogger("cleanup")):
     if veth != '':
       run_silent(r"sudo ip link del %s" % veth)
   log.debug("Cleanup any Mininet-specific junk...")
+  log.debug("Cleanup remained tmp files...")
+  run_silent(r"rm  /tmp/*-startup-cfg.xml")
   # Call Mininet's own cleanup stuff
   from mininet.clean import cleanup
   cleanup()
-  log.debug("Cleanup remained tmp files...")
-  run_silent(r"rm  /tmp/*-startup-cfg.xml")
-  run_silent(r"sudo pkill -9 -f pox.py")

@@ -14,18 +14,18 @@
 """
 Wrapper module for handling emulated test topology based on Mininet.
 """
+import threading
 
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
 from mininet.link import TCLink
 from mininet.term import makeTerms
-
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
-from escape.util.misc import quit_with_error, call_as_coop_task
+from escape.util.misc import quit_with_error
 
 
 class AbstractTopology(Topo):
@@ -429,7 +429,8 @@ class ESCAPENetworkBridge(object):
         os.killpg(term.pid, signal.SIGTERM)
       # Schedule a cleanup as a coop task to avoid threading issues
       from escape.util.misc import remove_junks
-      call_as_coop_task(remove_junks, log=log)
+      # call_as_coop_task(remove_junks, log=log)
+      threading.Thread(target=remove_junks, name="cleanup", args=(log,)).start()
 
   def get_agent_to_switch (self, switch_name):
     """

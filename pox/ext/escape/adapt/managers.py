@@ -40,7 +40,8 @@ class InternalDomainManager(AbstractDomainManager):
     """
     log.debug("Init InternalDomainManager - params: %s" % kwargs)
     super(InternalDomainManager, self).__init__(**kwargs)
-    self.controlAdapter = None  # DomainAdapter for POX - InternalPOXAdapter
+    self.controlAdapter = None  # DomainAdapter for POX-InternalPOXAdapter
+    self.topoAdapter = None  # DomainAdapter for Mininet-InternalMininetAdapter
     self.remoteAdapter = None  # NETCONF communication - VNFStarterAdapter
     self.portmap = {}  # Map (unique) dynamic ports to physical ports in EEs
     self.deployed_vnfs = {}  # container for replied NETCONF messages of
@@ -98,7 +99,14 @@ class InternalDomainManager(AbstractDomainManager):
       return False
 
   def clear_domain (self):
-    pass
+    """
+    Infrastructure Layer has already been stopped and probably cleared.
+
+    Skip cleanup process here.
+
+    :return: None
+    """
+    log.debug("Mininet domain has already been cleared!")
 
   def _delete_nfs (self):
     """
@@ -417,244 +425,6 @@ class InternalDomainManager(AbstractDomainManager):
                                                action=action)
 
 
-class RemoteESCAPEDomainManager(AbstractDomainManager):
-  """
-  Manager class to handle communication with other ESCAPEv2 processes started
-  in agent-mode through
-  a REST-API which is provided by the Resource Orchestration Sublayer.
-
-  .. note::
-    Uses :class:`RemoteESCAPEv2RESTAdapter` for communicate with the remote
-    domain.
-  """
-  # Domain name
-  name = "REMOTE-ESCAPE"
-
-  def __init__ (self, **kwargs):
-    """
-    Init
-    """
-    log.debug("Init RemoteESCAPEDomainManager - params: %s" % kwargs)
-    super(RemoteESCAPEDomainManager, self).__init__(**kwargs)
-
-  def init (self, configurator, **kwargs):
-    """
-    Initialize Internal domain manager.
-
-    :return: None
-    """
-    # Init adapter for remote ESCAPEv2 domain
-    self.topoAdapter = configurator.load_component(
-      RemoteESCAPEv2RESTAdapter.name)
-    super(RemoteESCAPEDomainManager, self).init(configurator, **kwargs)
-
-  def finit (self):
-    """
-    Stop polling and release dependent components.
-
-    :return: None
-    """
-    super(RemoteESCAPEDomainManager, self).finit()
-
-  def install_nffg (self, nffg_part):
-    """
-    Install an :any:`NFFG` related to the internal domain.
-
-    :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
-    :return: None
-    """
-    nffg_part = self._update_nffg(nffg_part.copy())
-    try:
-      status_code = self.topoAdapter.edit_config(nffg_part)
-      if status_code is not None:
-        return True
-      else:
-        return False
-    except:
-      log.error(
-        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.name, sys.exc_info()))
-
-  def _update_nffg (self, nffg_part):
-    """
-    Update domain descriptor of infras: REMOTE -> INTERNAL
-
-    :param nffg_part: NF-FG need to be updated
-    :type nffg_part: :any:`NFFG`
-    :return: updated NFFG
-    :rtype: :any:`NFFG`
-    """
-    for infra in nffg_part.infras:
-      if infra.infra_type not in (
-           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-           NFFG.TYPE_INFRA_SDN_SW):
-        log.debug(
-          "Infrastructure Node: %s (type: %s) is not Switch or Container type! "
-          "Continue to next Node..." % (infra.short_name, infra.infra_type))
-        continue
-      if infra.domain == 'REMOTE':
-        infra.domain = 'INTERNAL'
-    return nffg_part
-
-  def clear_domain (self):
-    pass
-
-
-class OpenStackDomainManager(AbstractDomainManager):
-  """
-  Manager class to handle communication with OpenStack domain.
-
-  .. note::
-    Uses :class:`OpenStackRESTAdapter` for communicate with the remote domain.
-  """
-  # Domain name
-  name = "OPENSTACK"
-
-  def __init__ (self, **kwargs):
-    """
-    Init.
-    """
-    log.debug("Init OpenStackDomainManager - params: %s" % kwargs)
-    super(OpenStackDomainManager, self).__init__(**kwargs)
-
-  def init (self, configurator, **kwargs):
-    """
-    Initialize OpenStack domain manager.
-
-    :return: None
-    """
-    self.topoAdapter = configurator.load_component(OpenStackRESTAdapter.name)
-    super(OpenStackDomainManager, self).init(configurator, **kwargs)
-
-  def finit (self):
-    """
-    Stop polling and release dependent components.
-
-    :return: None
-    """
-    super(OpenStackDomainManager, self).finit()
-
-  def install_nffg (self, nffg_part):
-    log.info("Install %s domain part..." % self.name)
-    # TODO - implement just convert NFFG to appropriate format and send out
-    # FIXME - SIGCOMM
-    # config = nffg_part.dump()
-    # with open('pox/global-mapped-os-nffg.xml', 'r') as f:
-    #   nffg_part = f.read()
-    try:
-      status_code = self.topoAdapter.edit_config(nffg_part)
-      if status_code is not None:
-        return True
-      else:
-        return False
-    except:
-      log.error(
-        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.name, sys.exc_info()))
-
-  def clear_domain (self):
-    empty_cfg = self.topoAdapter.original_virtualizer
-    if empty_cfg is None:
-      log.warning(
-        "Missing original topology in %s domain! Skip domain resetting..." %
-        self.name)
-      return
-    log.debug("Reset %s domain config based on stored empty config" % self.name)
-    self.topoAdapter.edit_config(data=empty_cfg.xml())
-
-
-class UniversalNodeDomainManager(AbstractDomainManager):
-  """
-  Manager class to handle communication with Universal Node (UN) domain.
-
-  .. note::
-    Uses :class:`UniversalNodeRESTAdapter` for communicate with the remote
-    domain.
-  """
-  # Domain name
-  name = "UN"
-
-  def __init__ (self, **kwargs):
-    """
-    Init.
-    """
-    log.debug("Init UniversalNodeDomainManager - params: %s" % kwargs)
-    super(UniversalNodeDomainManager, self).__init__(**kwargs)
-
-  def init (self, configurator, **kwargs):
-    """
-    Initialize OpenStack domain manager.
-
-    :return: None
-    """
-    self.topoAdapter = configurator.load_component(
-      UniversalNodeRESTAdapter.name)
-    super(UniversalNodeDomainManager, self).init(configurator, **kwargs)
-
-  def finit (self):
-    """
-    Stop polling and release dependent components.
-
-    :return: None
-    """
-    super(UniversalNodeDomainManager, self).finit()
-
-  def install_nffg (self, nffg_part):
-    log.info("Install %s domain part..." % self.name)
-    # TODO - implement just convert NFFG to appropriate format and send out
-    # FIXME - SIGCOMM
-    # print nffg_part.dump()
-    # with open('pox/global-mapped-un.nffg', 'r') as f:
-    #   nffg_part = f.read()
-    try:
-      status_code = self.topoAdapter.edit_config(nffg_part)
-      if status_code is not None:
-        return True
-      else:
-        return False
-    except:
-      log.error(
-        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.name, sys.exc_info()))
-
-  def clear_domain (self):
-    empty_cfg = self.topoAdapter.original_virtualizer
-    if empty_cfg is None:
-      log.warning(
-        "Missing original topology in %s domain! Skip domain resetting..." %
-        self.name)
-      return
-    log.debug("Reset %s domain config based on stored empty config" % self.name)
-    self.topoAdapter.edit_config(data=empty_cfg.xml())
-
-
-class DockerDomainManager(AbstractDomainManager):
-  """
-  Adapter class to handle communication component in a Docker domain.
-
-  .. warning::
-    Not implemented yet!
-  """
-  # Domain name
-  name = "DOCKER"
-
-  def __init__ (self, **kwargs):
-    """
-    Init
-    """
-    log.debug("Init DockerDomainManager - params %s" % kwargs)
-    super(DockerDomainManager, self).__init__()
-
-  def install_nffg (self, nffg_part):
-    log.info("Install Docker domain part...")
-    # TODO - implement
-    pass
-
-  def clear_domain (self):
-    pass
-
-
 class SDNDomainManager(AbstractDomainManager):
   """
   Manager class to handle communication with POX-controlled SDN domain.
@@ -672,7 +442,7 @@ class SDNDomainManager(AbstractDomainManager):
     log.debug("Init SDNDomainManager - params: %s" % kwargs)
     super(SDNDomainManager, self).__init__(**kwargs)
     self.controlAdapter = None  # DomainAdapter for POX - InternalPOXAdapter
-    self.topo = None  # SDN domain topology stored in NFFG
+    self.topoAdapter = None  # SDN topology adapter - SDNDomainTopoAdapter
 
   def init (self, configurator, **kwargs):
     """
@@ -720,12 +490,11 @@ class SDNDomainManager(AbstractDomainManager):
           self.name, sys.exc_info()))
       return False
 
-  def clear_domain (self):
-    pass
-
   def _delete_flowrules (self, nffg_part):
     """
     Delete all flowrules from the first (default) table of all infras.
+
+    :return: None
     """
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
@@ -816,3 +585,279 @@ class SDNDomainManager(AbstractDomainManager):
 
           self.controlAdapter.install_flowrule(infra.id, match=match,
                                                action=action)
+
+  def clear_domain (self):
+    """
+    Delete all flowrule in the registered SDN/OF switches.
+
+    :return: None
+    """
+    log.debug("Clear all flowrules from switches registered in SDN domain...")
+    # Delete all flowrules in the Infra nodes defined the topology file.
+    self._delete_flowrules(nffg_part=self.topoAdapter.get_topology_resource())
+
+
+class RemoteESCAPEDomainManager(AbstractDomainManager):
+  """
+  Manager class to handle communication with other ESCAPEv2 processes started
+  in agent-mode through
+  a REST-API which is provided by the Resource Orchestration Sublayer.
+
+  .. note::
+    Uses :class:`RemoteESCAPEv2RESTAdapter` for communicate with the remote
+    domain.
+  """
+  # Domain name
+  name = "REMOTE-ESCAPE"
+
+  def __init__ (self, **kwargs):
+    """
+    Init
+    """
+    log.debug("Init RemoteESCAPEDomainManager - params: %s" % kwargs)
+    super(RemoteESCAPEDomainManager, self).__init__(**kwargs)
+    self.topoAdapter = None
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize Internal domain manager.
+
+    :return: None
+    """
+    # Init adapter for remote ESCAPEv2 domain
+    self.topoAdapter = configurator.load_component(
+      RemoteESCAPEv2RESTAdapter.name)
+    super(RemoteESCAPEDomainManager, self).init(configurator, **kwargs)
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(RemoteESCAPEDomainManager, self).finit()
+
+  def install_nffg (self, nffg_part):
+    """
+    Install an :any:`NFFG` related to the internal domain.
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
+    nffg_part = self._update_nffg(nffg_part.copy())
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      if status_code is not None:
+        return True
+      else:
+        return False
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()))
+
+  def _update_nffg (self, nffg_part):
+    """
+    Update domain descriptor of infras: REMOTE -> INTERNAL
+
+    :param nffg_part: NF-FG need to be updated
+    :type nffg_part: :any:`NFFG`
+    :return: updated NFFG
+    :rtype: :any:`NFFG`
+    """
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        log.debug(
+          "Infrastructure Node: %s (type: %s) is not Switch or Container type! "
+          "Continue to next Node..." % (infra.short_name, infra.infra_type))
+        continue
+      if infra.domain == 'REMOTE':
+        infra.domain = 'INTERNAL'
+    return nffg_part
+
+  def clear_domain (self):
+    """
+    Reset remote domain based on the original (first response) topology.
+
+    :return: None
+    """
+    empty_cfg = self.topoAdapter._original_nffg
+    if empty_cfg is None:
+      log.warning(
+        "Missing original topology in %s domain! Skip domain resetting..." %
+        self.name)
+      return
+    log.debug(
+      "Reset %s domain based to original topology description..." % self.name)
+    self.topoAdapter.edit_config(data=empty_cfg)
+
+
+class OpenStackDomainManager(AbstractDomainManager):
+  """
+  Manager class to handle communication with OpenStack domain.
+
+  .. note::
+    Uses :class:`OpenStackRESTAdapter` for communicate with the remote domain.
+  """
+  # Domain name
+  name = "OPENSTACK"
+
+  def __init__ (self, **kwargs):
+    """
+    Init.
+    """
+    log.debug("Init OpenStackDomainManager - params: %s" % kwargs)
+    super(OpenStackDomainManager, self).__init__(**kwargs)
+    self.topoAdapter = None
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize OpenStack domain manager.
+
+    :return: None
+    """
+    self.topoAdapter = configurator.load_component(OpenStackRESTAdapter.name)
+    super(OpenStackDomainManager, self).init(configurator, **kwargs)
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(OpenStackDomainManager, self).finit()
+
+  def install_nffg (self, nffg_part):
+    log.info("Install %s domain part..." % self.name)
+    # TODO - implement just convert NFFG to appropriate format and send out
+    # FIXME - SIGCOMM
+    # config = nffg_part.dump()
+    # with open('pox/global-mapped-os-nffg.xml', 'r') as f:
+    #   nffg_part = f.read()
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      if status_code is not None:
+        return True
+      else:
+        return False
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()))
+
+  def clear_domain (self):
+    """
+    Reset remote domain based on the original (first response) topology.
+
+    :return: None
+    """
+    empty_cfg = self.topoAdapter._original_virtualizer
+    if empty_cfg is None:
+      log.warning(
+        "Missing original topology in %s domain! Skip domain resetting..." %
+        self.name)
+      return
+    log.debug(
+      "Reset %s domain config based on stored empty config..." % self.name)
+    self.topoAdapter.edit_config(data=empty_cfg.xml())
+
+
+class UniversalNodeDomainManager(AbstractDomainManager):
+  """
+  Manager class to handle communication with Universal Node (UN) domain.
+
+  .. note::
+    Uses :class:`UniversalNodeRESTAdapter` for communicate with the remote
+    domain.
+  """
+  # Domain name
+  name = "UN"
+
+  def __init__ (self, **kwargs):
+    """
+    Init.
+    """
+    log.debug("Init UniversalNodeDomainManager - params: %s" % kwargs)
+    super(UniversalNodeDomainManager, self).__init__(**kwargs)
+    self.topoAdapter = None
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize OpenStack domain manager.
+
+    :return: None
+    """
+    self.topoAdapter = configurator.load_component(
+      UniversalNodeRESTAdapter.name)
+    super(UniversalNodeDomainManager, self).init(configurator, **kwargs)
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(UniversalNodeDomainManager, self).finit()
+
+  def install_nffg (self, nffg_part):
+    log.info("Install %s domain part..." % self.name)
+    # TODO - implement just convert NFFG to appropriate format and send out
+    # FIXME - SIGCOMM
+    # print nffg_part.dump()
+    # with open('pox/global-mapped-un.nffg', 'r') as f:
+    #   nffg_part = f.read()
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      if status_code is not None:
+        return True
+      else:
+        return False
+    except:
+      log.error(
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.name, sys.exc_info()))
+
+  def clear_domain (self):
+    """
+    Reset remote domain based on the original (first response) topology.
+
+    :return: None
+    """
+    empty_cfg = self.topoAdapter._original_virtualizer
+    if empty_cfg is None:
+      log.warning(
+        "Missing original topology in %s domain! Skip domain resetting..." %
+        self.name)
+      return
+    log.debug("Reset %s domain config based on stored empty config" % self.name)
+    self.topoAdapter.edit_config(data=empty_cfg.xml())
+
+
+class DockerDomainManager(AbstractDomainManager):
+  """
+  Adapter class to handle communication component in a Docker domain.
+
+  .. warning::
+    Not implemented yet!
+  """
+  # Domain name
+  name = "DOCKER"
+
+  def __init__ (self, **kwargs):
+    """
+    Init
+    """
+    log.debug("Init DockerDomainManager - params %s" % kwargs)
+    super(DockerDomainManager, self).__init__()
+    self.topoAdapter = None
+
+  def install_nffg (self, nffg_part):
+    log.info("Install Docker domain part...")
+    # TODO - implement
+    pass
+
+  def clear_domain (self):
+    pass

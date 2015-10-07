@@ -65,9 +65,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
                         # "DEFAULTS": ["SDN", "OPENSTACK", "UN"],
-                        # "DEFAULTS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK",
-                        # "UN"],
-                        "DEFAULTS": ["SDN"],
+                        "DEFAULTS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
+                        # "DEFAULTS": ["SDN"],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.adapters",
                                          "class": "InternalPOXAdapter",
