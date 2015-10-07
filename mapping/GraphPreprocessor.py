@@ -503,6 +503,9 @@ class GraphPreprocessorClass(object):
       setattr(net.network.node[n.id], 'availres',
               copy.deepcopy(net.network.node[n.id].resources))
       for vnf in net.running_nfs(n.id):
+        # if a VNF needs to be left in place, then it is still mapped by the 
+        # mapping process, but with placement criteria, so its resource 
+        # requirements will be subtracted during the greedy process.
         if not full_remap and vnf.id not in vnf_to_be_left_in_place:
           try: 
             newres = helper.subtractNodeRes(net.network.node[n.id].availres,
@@ -540,11 +543,15 @@ class GraphPreprocessorClass(object):
               reserved_internal_bw += fr.bandwidth
           for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
             path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, net, p)
-            # path_of_TAG is an empty list in case of collocation, but this case
-            # is also handled by the internal Flowrule.bandwidth summerizing 
-            #'for loop'
+            # collocation flowrules have not TAGs so their empty lists are not 
+            # returned by get_TAGs_of_starting_flows, but this case
+            # is also handled by the Flowrule.bandwidth summerizing 'for loop'
             for link in path_of_TAG:
               link.availbandwidth -= flow_bw
+              # the last infra on the path is either a SAP or the last flowrule 
+              # is subtracted when we get there with the outer loop
+              if link.id != path_of_TAG[-1].id:
+                link.dst.node.availres.bandwidth -= flow_bw
               if link.availbandwidth < 0:
                 raise uet.BadInputException("The bandwidth usage implied by "
                 "the sum of flowrule bandwiths should determine the occupied",

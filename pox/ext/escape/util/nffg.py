@@ -1629,8 +1629,12 @@ class NFFGToolBox(object):
         if command == "TAG" and param == TAG:
           for action2 in actions:
             command2, param2 = action2.split("=")
+            try:
+              param2 = int(param2)
+            except ValueError:
+              pass
             if command2 == "output":
-              return port.node.ports[int(param2)], fr.bandwidth
+              return port.node.ports[param2], fr.bandwidth
           else:
             raise RuntimeError("No 'output' action found for flowrule with"
                                " 'TAG' action!")
@@ -1695,7 +1699,10 @@ class NFFGToolBox(object):
     vnf1 = tag_list[0]
     vnf2 = tag_list[1]
     reqlinkid = tag_list[2]
-    reqlinkid = int(reqlinkid)
+    try:
+      reqlinkid = int(reqlinkid)
+    except ValueError:
+      pass
     first_link = NFFGToolBox._find_static_link(nffg, starting_port, 
                                                outbound=False)
     if first_link is not None:
@@ -1709,21 +1716,31 @@ class NFFGToolBox(object):
     if first_out_port is None:
       if nffg.network.has_edge(vnf1, starting_port.node.id) and \
          nffg.network.has_edge(vnf2, starting_port.node.id):
-        # then the flowrule should output the traffic from 'starting_port' to 
-        # the dynamic port leading to 'vnf2'
-        dynamic_ports_of_vnf2 = set()
-        for link in nffg.network[vnf2][starting_port.node.id].itervalues():
-          dynamic_ports_of_vnf2.add(link.dst.id)
         for fr in starting_port.flowrules:
           for action in fr.action.split(";"):
             command, param = action.split("=")
-            if command == "output" and int(param) in dynamic_ports_of_vnf2:
-              # WARNING!! IF 'starting_port' has 2 flowrules leading to 'vnf2'
-              # (either same or different ports) we can't make difference 
-              # between the 2 collocation flows!!
-              # BUT if dynamic (infra) ports of(/leading to) 'vnf1' store the
-              # 2 flowrules in different dynamic ports, it is OK.
-              return [], fr.bandwidth
+            try:
+              param = int(param)
+              continue
+            except ValueError:
+              pass
+            splitted_portid = param.split("|")
+            if command == "output" and len(splitted_portid) == 3:
+              # no TAG action was found, so the output port must be a dynamic 
+              # port with ID format InfraID|NFID|NFPortID
+              infraid, nfid, nfportid = splitted_portid
+              try:
+                nfportid = int(nfportid)
+              except ValueError:
+                pass
+              # SGHops should be still in the NFFG
+              if nfid == vnf2 and nffg.network[vnf1][vnf2][reqlinkid]\
+                                              .dst.id == nfportid:
+                # WARNING!! IF 'starting_port' has 2 flowrules leading to the same
+                # port of 'vnf2', we can't make difference between the 2 
+                # collocation flows!! --> Parallel SGHops to AND from the same 
+                # ports shouldn't be allowed! BUT otherwise, it is OK.
+                return [], fr.bandwidth
       else:
         raise RuntimeError("Neither starting flowrule nor collocation flowrule"
                            " found in the given port for TAG: %s!"%TAG)
@@ -1739,9 +1756,13 @@ class NFFGToolBox(object):
           if field == "TAG" and mparam == TAG:
             for action in fr.action.split(";"):
               command, cparam = action.split("=")
+              try:
+                cparam = int(cparam)
+              except ValueError:
+                pass
               if command == "output":
                 curr_link = NFFGToolBox._find_static_link(nffg, 
-                                        curr_port.node.ports[int(cparam)])
+                                        curr_port.node.ports[cparam])
                 edge_list.append(curr_link)
                 curr_port = curr_link.dst
                 next_link_found = True
@@ -1768,7 +1789,7 @@ class NFFGToolBox(object):
                 command, cparam = action_split
                 if command == "output":
                   last_link = NFFGToolBox._find_static_link(nffg, 
-                                          curr_port.node.ports[int(cparam)])
+                                          curr_port.node.ports[cparam])
                   if last_link is not None:
                     # maybe there could be multiple output commands...
                     if last_link.dst.node.type == 'SAP':
@@ -1784,9 +1805,12 @@ class NFFGToolBox(object):
           break
 
     return edge_list, bandwidth
-      
-
-
+  
+  @staticmethod
+  def generate_all_TAGs_of_NFFG (nffg):
+    for sg in nffg.sg_links:
+      yield "|".join((sg.src.node.id, sg.dst.node.id, sg.id))
+    
 def test_conversion ():
   from conversion import NFFGConverter
 

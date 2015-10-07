@@ -149,19 +149,19 @@ def main(argv):
     if opt == '-h':
       print helpmsg
       sys.exit()
-    elif opt == "loops":
+    elif opt == "--loops":
       loops = True
-    elif opt == "fullremap":
+    elif opt == "--fullremap":
       fullremap = True
-    elif opt == "request_seed":
+    elif opt == "--request_seed":
       seed = int(arg)
-    elif opt == "vnf_sharing":
+    elif opt == "--vnf_sharing":
       vnf_sharing = float(arg)
-    elif opt == "bw_factor":
+    elif opt == "--bw_factor":
       bw_factor = float(arg)
-    elif opt == "res_factor":
+    elif opt == "--res_factor":
       res_factor = float(arg)
-    elif opt == "lat_factor":
+    elif opt == "--lat_factor":
       lat_factor = float(arg)
   """
   params, args = zip(*opts)
@@ -189,29 +189,31 @@ def main(argv):
             break
           running_nfs[test_lvl] = [nf for nf in request.nfs 
                                    if nf.id.split("-")[1] == str(test_lvl)]
-          network = MappingAlgorithms.MAP(request, network, full_remap=fullremap,
-                                      enable_shortest_path_cache=True,
-                                      bw_factor=bw_factor, res_factor=res_factor,
-                                      lat_factor=lat_factor)
+          network = MappingAlgorithms.MAP(request, network, 
+                    full_remap=fullremap, enable_shortest_path_cache=True,
+                    bw_factor=bw_factor, res_factor=res_factor,
+                    lat_factor=lat_factor)
           ever_successful = True
-          test_lvl += 1
           log.debug("Mapping successful on test level %s!"%test_lvl)
+          test_lvl += 1
       except uet.MappingException as me:
-        log.debug("Mapping failed: %s"%me.msg)
+        log.info("Mapping failed: %s"%me.msg)
         break
       if request is None:
-        log.debug("Request generation reached its end!")
+        log.info("Request generation reached its end!")
         break
   except uet.UnifyException as ue:
     print ue.msg 
     print traceback.format_exc()
   except Exception as e:
     print traceback.format_exc()
-  print "First unsuccessful mapping was at %s test level."%test_lvl
+  log.info("First unsuccessful mapping was at %s test level."%test_lvl)
   if ever_successful:
-    print "Last successful was at %s test level."%(test_lvl - 1)
+    # print "\nLast successful mapping was at %s test level.\n"%(test_lvl - 1)
+    with open("paramsearch.out", "a") as f:
+      f.write("\nLast successful mapping was at %s test level.\n"%(test_lvl - 1))
   else:
-    print "Mapping failed at starting test level (%s)"%test_lvl
+    print "\nMapping failed at starting test level (%s)\n"%test_lvl
 
 if __name__ == '__main__':
   main(sys.argv[1:])

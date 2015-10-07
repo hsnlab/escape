@@ -430,7 +430,7 @@ if __name__ == '__main__':
     with open('../pox/escape-mn-mapped-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
       # net.duplicate_static_links()
-    mapped = MAP(req, net, full_remap = True)
+    mapped = MAP(req, net, full_remap = False)
     print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
