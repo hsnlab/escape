@@ -132,7 +132,7 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
 
 def main(argv):
   try:
-    opts, args = getopt.getopt(argv,"h",["loops", "fullremap", "bw_factor=",
+    opts, args = getopt.getopt(argv,"ho:",["loops", "fullremap", "bw_factor=",
                                "res_factor=", "lat_factor=", "request_seed=",
                                "vnf_sharing="])
   except getopt.GetoptError:
@@ -145,10 +145,13 @@ def main(argv):
   bw_factor = 1
   res_factor = 1
   lat_factor = 1
+  outputfile = "paramsearch.out"
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
       sys.exit()
+    elif opt == '-o':
+      outputfile = arg
     elif opt == "--loops":
       loops = True
     elif opt == "--fullremap":
@@ -210,10 +213,11 @@ def main(argv):
   log.info("First unsuccessful mapping was at %s test level."%test_lvl)
   if ever_successful:
     # print "\nLast successful mapping was at %s test level.\n"%(test_lvl - 1)
-    with open("paramsearch.out", "a") as f:
+    with open(outputfile, "a") as f:
       f.write("\nLast successful mapping was at %s test level.\n"%(test_lvl - 1))
   else:
-    print "\nMapping failed at starting test level (%s)\n"%test_lvl
+    with open(outputfile, "a") as f:
+      f.write("\nMapping failed at starting test level (%s)\n"%test_lvl)
 
 if __name__ == '__main__':
   main(sys.argv[1:])
