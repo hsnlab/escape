@@ -130,7 +130,7 @@ def kill_remained_parts ():
     print "Run cleaning process..."
     from misc import remove_junks
     remove_junks()
-    print "Finished."
+    print "Cleaned."
 
 
 if __name__ == '__main__':

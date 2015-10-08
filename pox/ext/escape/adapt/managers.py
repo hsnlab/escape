@@ -645,7 +645,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
-    nffg_part = self._update_nffg(nffg_part.copy())
+    # nffg_part = self._update_nffg(nffg_part.copy())
     try:
       status_code = self.topoAdapter.edit_config(nffg_part)
       if status_code is not None:
@@ -657,26 +657,23 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
 
-  def _update_nffg (self, nffg_part):
-    """
-    Update domain descriptor of infras: REMOTE -> INTERNAL
-
-    :param nffg_part: NF-FG need to be updated
-    :type nffg_part: :any:`NFFG`
-    :return: updated NFFG
-    :rtype: :any:`NFFG`
-    """
-    for infra in nffg_part.infras:
-      if infra.infra_type not in (
-           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-           NFFG.TYPE_INFRA_SDN_SW):
-        log.debug(
-          "Infrastructure Node: %s (type: %s) is not Switch or Container type! "
-          "Continue to next Node..." % (infra.short_name, infra.infra_type))
-        continue
-      if infra.domain == 'REMOTE':
-        infra.domain = 'INTERNAL'
-    return nffg_part
+  # def __update_nffg (self, nffg_part):
+  #   """
+  #   Update domain descriptor of infras: REMOTE -> INTERNAL
+  #
+  #   :param nffg_part: NF-FG need to be updated
+  #   :type nffg_part: :any:`NFFG`
+  #   :return: updated NFFG
+  #   :rtype: :any:`NFFG`
+  #   """
+  #   for infra in nffg_part.infras:
+  #     if infra.infra_type not in (
+  #          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+  #          NFFG.TYPE_INFRA_SDN_SW):
+  #       continue
+  #     if infra.domain == 'REMOTE':
+  #       infra.domain = 'INTERNAL'
+  #   return nffg_part
 
   def clear_domain (self):
     """

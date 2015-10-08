@@ -160,7 +160,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     else:
       mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
       if mapped_nffg is None:
-        log.warning("Mapping process is failed! Abort orchestration process.")
+        log.error("Mapping process is failed! Abort orchestration process.")
       else:
         # Steps after mapping (optional)
         log.info("NF-FG: %s orchestration is finished by %s" % (
@@ -176,7 +176,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     :return: None
     """
     if nffg is None:
-      log.warning("Mapping process is failed! Abort orchestration process.")
+      log.error("Mapping process is failed! Abort orchestration process.")
     else:
       log.debug(
         "Inform actual layer API that NFFG mapping has been finished...")

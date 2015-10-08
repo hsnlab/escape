@@ -158,7 +158,7 @@ class ServiceGraphMapper(AbstractMapper):
       nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
       # Steps after mapping (optional)
       if nffg is None:
-        log.warning("Mapping process is failed! Abort orchestration process.")
+        log.error("Mapping process is failed! Abort orchestration process.")
       else:
         log.info("SG: %s orchestration is finished by %s" % (
           input_graph, self.__class__.__name__))
@@ -173,7 +173,7 @@ class ServiceGraphMapper(AbstractMapper):
     :return: None
     """
     if nffg is None:
-      log.warning("Mapping process is failed! Abort orchestration process.")
+      log.error("Mapping process is failed! Abort orchestration process.")
     else:
       log.debug("Inform SAS layer API that SG mapping has been finished...")
       self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)

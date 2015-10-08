@@ -76,7 +76,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {'GET': ('echo', 'version', 'operations', 'poll_nffg'),
-                  'POST': ('echo', 'result', 'sg', 'poll_nffg'), 'PUT': ('echo',),
+                  'POST': ('echo', 'result', 'sg', 'poll_nffg'),
+                  'PUT': ('echo',),
                   'DELETE': ('echo',)}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
@@ -197,9 +198,9 @@ class ServiceLayerAPI(AbstractAPI):
     # Read input from file if it's given and initiate SG
     if self._sg_file:
       try:
-        graph_json = self._read_json_from_file(self._sg_file)
-        sg_graph = NFFG.parse(graph_json)
-        self.request_service(sg=sg_graph)
+        service_request = self._read_json_from_file(self._sg_file)
+        service_request = NFFG.parse(service_request)
+        self.request_service(sg=service_request)
       except (ValueError, IOError, TypeError) as e:
         log.error(
           "Can't load service request from file because of: " + str(e))
