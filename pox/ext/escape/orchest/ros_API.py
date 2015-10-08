@@ -213,9 +213,30 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    # Rewrite domain name to INTERNAL
+    # nffg = self._update_REMOTE_ESCAPE_domain(nffg_part=nffg)
     log.debug("Parsed NFFG install request: %s" % nffg)
     self._proceed_API_call('api_agent_edit_config', nffg)
     self.send_acknowledge()
+
+  def _update_REMOTE_ESCAPE_domain (self, nffg_part):
+    """
+    Update domain descriptor of infras: REMOTE -> INTERNAL
+
+    :param nffg_part: NF-FG need to be updated
+    :type nffg_part: :any:`NFFG`
+    :return: updated NFFG
+    :rtype: :any:`NFFG`
+    """
+    log.debug("Rewrite domain name of incoming NFFG to INTERNAL...")
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      if infra.domain == 'REMOTE':
+        infra.domain = 'INTERNAL'
+    return nffg_part
 
 
 class ResourceOrchestrationAPI(AbstractAPI):

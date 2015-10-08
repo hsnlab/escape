@@ -51,6 +51,12 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     """
     log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
+    if graph is None:
+      log.error("Missing request NFFG! Abort mapping process...")
+      return
+    if resource is None:
+      log.error("Missing resource NFFG! Abort mapping process...")
+      return
     try:
       mapped_nffg = MAP(request=graph, network=resource)
       # Set mapped NFFG id for original SG request tracking
@@ -71,8 +77,9 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except:
-      log.error("Got unexpected error during mapping process! Cause:\n%s" %
-                sys.exc_info()[0])
+      log.error("Got unexpected error during mapping process! Cause:")
+      for e in sys.exc_info():
+        log.error(str(e))
       return
     log.debug(
       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))

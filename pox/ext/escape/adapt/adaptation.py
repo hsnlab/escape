@@ -144,7 +144,7 @@ class ComponentConfigurator(object):
     Return the dict of initiated Domain managers.
 
     :return: container of initiated DomainManagers
-    :rtype: dict
+    :rtype: dictget_resource_info
     """
     return self.__repository
 
@@ -317,6 +317,11 @@ class ControllerAdapter(object):
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
     slices = self._split_into_domains(mapped_nffg)
+    if slices is None:
+      log.warning(
+        "Given mapped NFFG: %s can not be sliced! Skip domain notification "
+        "steps" % mapped_nffg)
+      return
     log.debug(
       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
     mapping_result = True
@@ -341,7 +346,7 @@ class ControllerAdapter(object):
         "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
       # Update global view (DoV) with the installed components
       self.domainResManager.get_global_view().update_global_view(mapped_nffg)
-    # print self.domainResManager.get_global_view().get_resource_info().dump()
+      # print self.domainResManager.get_global_view().get_resource_info().dump()
 
   def _handle_DomainChangedEvent (self, event):
     """
@@ -375,7 +380,11 @@ class ControllerAdapter(object):
     domains = set()
     for infra in nffg.infras:
       domains.add(infra.domain)
-    log.info("Detected domains for splitting: %s" % domains)
+    log.debug("Detected domains for splitting: %s" % domains)
+
+    if len(domains) == 0:
+      log.warning("No domain has been detected!")
+      return
 
     # Checks every domain
     for domain in domains:
@@ -500,8 +509,10 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   @property
   def name (self):
-    return self._global_nffg.name if self._global_nffg.name is not None \
-      else DoV + "-uninitialized"
+    if self._global_nffg is not None and hasattr(self._global_nffg, 'name'):
+      return self._global_nffg.name
+    else:
+      return DoV + "-uninitialized"
 
   def __str__ (self):
     return "DomainVirtualizer(name=%s)" % self.name

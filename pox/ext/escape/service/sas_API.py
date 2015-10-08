@@ -181,6 +181,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Mandatory super() call
     super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
     self.last_sg = NFFG(id=0, name='empty')
+    self.rest_api = None
 
   def initialize (self):
     """
@@ -198,7 +199,7 @@ class ServiceLayerAPI(AbstractAPI):
       try:
         graph_json = self._read_json_from_file(self._sg_file)
         sg_graph = NFFG.parse(graph_json)
-        self.request_service(sg_graph)
+        self.request_service(sg=sg_graph)
       except (ValueError, IOError, TypeError) as e:
         log.error(
           "Can't load graph representation from file because of: " + str(e))
@@ -265,10 +266,12 @@ class ServiceLayerAPI(AbstractAPI):
     :type sg: :any:`NFFG`
     :return: None
     """
-    self.rest_api.request_cache.add_request(id=sg.id)
+    # Store request if it is received on REST-API
+    if self.rest_api:
+      self.rest_api.request_cache.add_request(id=sg.id)
+      self.rest_api.request_cache.set_in_progress(id=sg.id)
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
       self.__class__.__name__, sg))
-    self.rest_api.request_cache.set_in_progress(id=sg.id)
     nffg = self.service_orchestrator.initiate_service_graph(sg)
     log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
@@ -348,7 +351,8 @@ class ServiceLayerAPI(AbstractAPI):
   def _handle_InstantiationFinishedEvent (self, event):
     """
     """
-    self.rest_api.request_cache.set_result(id=event.id, result=event.result)
+    if self.rest_api is not None:
+      self.rest_api.request_cache.set_result(id=event.id, result=event.result)
     if event.result:
       log.getChild('API').info(
         "Service request(id=%s) has been finished successfully!" % event.id)

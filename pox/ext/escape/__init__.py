@@ -65,8 +65,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
                         # "DEFAULTS": ["SDN", "OPENSTACK", "UN"],
-                        "DEFAULTS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
-                        # "DEFAULTS": ["SDN"],
+                        # "DEFAULTS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
+                        "DEFAULTS": [],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.adapters",
                                          "class": "InternalPOXAdapter",
@@ -80,7 +80,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         "MININET": {"module": "escape.adapt.adapters",
                                     "class": "InternalMininetAdapter"},
                         "SDN-topo": {"module": "escape.adapt.adapters",
-                                    "class": "SDNDomainTopoAdapter"},
+                                     "class": "SDNDomainTopoAdapter"},
                         "VNFStarter": {"module": "escape.adapt.adapters",
                                        "class": "VNFStarterAdapter",
                                        "username": "mininet",
@@ -125,7 +125,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                               "class":
                                                 "FallbackDynamicTopology"},
                             "SDN-TOPO": "sdn-topo.nffg",  # relative to ext/
-                            # "SDN-TOPO": "escape-mn-topo.nffg",  # relative to ext/
+                            # "SDN-TOPO": "escape-mn-topo.nffg",  # relative
+                            # to ext/
                             "SHUTDOWN-CLEAN": True},
        "additional-config-file": "escape.config"}  # relative to ext/
 
@@ -147,7 +148,7 @@ def add_dependencies ():
   for sub_folder in os.listdir(root):
     abs_sub_folder = os.path.join(root, sub_folder)
     if not sub_folder.startswith('.') and sub_folder not in (
-         "pox", "OpenYuma", "Unify_ncagent", "tools") and os.path.isdir(
+         "pox", "OpenYuma", "Unify_ncagent", "tools", "gui") and os.path.isdir(
       abs_sub_folder):
       if abs_sub_folder not in sys.path:
         sys.path.insert(0, abs_sub_folder)
