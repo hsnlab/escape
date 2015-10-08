@@ -202,7 +202,7 @@ class ServiceLayerAPI(AbstractAPI):
         self.request_service(sg=sg_graph)
       except (ValueError, IOError, TypeError) as e:
         log.error(
-          "Can't load graph representation from file because of: " + str(e))
+          "Can't load service request from file because of: " + str(e))
       else:
         log.info("Graph representation is loaded successfully!")
     else:
