@@ -187,8 +187,10 @@ class POXCore (EventMixin):
     RereadConfiguration,
   ])
 
-  version = (0,5,0)
-  version_name = "eel"
+  # version = (0,5,0)
+  version = (2,0,0)
+  # version_name = "eel"
+  version_name = "PoC"
 
   def __init__ (self, threaded_selecthub=True, epoll_selecthub=False,
                 handle_signals=True):
@@ -218,7 +220,8 @@ class POXCore (EventMixin):
 
   @property
   def version_string (self):
-    return "POX %s (%s)" % ('.'.join(map(str,self.version)),self.version_name)
+    # return "POX %s (%s)" % ('.'.join(map(str,self.version)),self.version_name)
+    return "ESCAPEv2 %s (%s)" % ('.'.join(map(str,self.version)),self.version_name)
 
   def callDelayed (_self, _seconds, _func, *args, **kw):
     """
