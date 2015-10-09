@@ -75,8 +75,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
     function.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('echo', 'version', 'operations', 'poll_nffg'),
-                  'POST': ('echo', 'result', 'sg', 'poll_nffg'),
+  request_perm = {'GET': ('echo', 'version', 'operations', 'topology'),
+                  'POST': ('echo', 'result', 'sg', 'topology'),
                   'PUT': ('echo',),
                   'DELETE': ('echo',)}
   # Statically defined layer component to which this handler is bounded
@@ -103,7 +103,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    log.getChild("REST-API").debug("Call REST-API function: version")
+    log.getChild("U-Sl-API").debug("Call REST-API function: version")
     self._send_json_response({"name": __project__, "version": __version__})
 
   def operations (self):
@@ -112,7 +112,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    log.getChild("REST-API").debug("Call REST-API function: operations")
+    log.getChild("U-Sl-API").debug("Call REST-API function: operations")
     self._send_json_response(self.request_perm)
 
   def result (self):
@@ -133,27 +133,25 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     Bounded to POST HTTP verb
     """
-    log.getChild("REST-API").debug("Called REST-API function: sg")
+    log.getChild("U-Sl-API").debug("Called REST-API function: sg")
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
-    sg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    log.getChild("REST-API").debug("Parsed service request: %s" % sg)
-    self._proceed_API_call('request_service', sg)
+    service_nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    log.getChild("U-Sl-API").debug("Parsed service request: %s" % service_nffg)
+    self._proceed_API_call('api_sas_sg_request', service_nffg)
     self.send_acknowledge()
 
-  def poll_nffg (self):
+  def topology (self):
     """
-    Provide internal NFFG to the GUI
-
-    Internal NFFG is based on NetworkX and can be viewed by networkx_viewer
+    Provide internal topology description
     """
-    log.getChild("REST-API").info("Call REST-API function: poll_nffg")
-    config = self._proceed_API_call('poll_nffg')
+    log.getChild("U-Sl-API").info("Call REST-API function: topology")
+    topology = self._proceed_API_call('api_sas_get_topology')
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')
-    self.send_header('Content-Length', len(config))
+    self.send_header('Content-Length', len(topology))
     self.end_headers()
-    self.wfile.write(config)
+    self.wfile.write(topology)
 
 
 class ServiceLayerAPI(AbstractAPI):
@@ -200,7 +198,7 @@ class ServiceLayerAPI(AbstractAPI):
       try:
         service_request = self._read_json_from_file(self._sg_file)
         service_request = NFFG.parse(service_request)
-        self.request_service(sg=service_request)
+        self.api_sas_sg_request(service_nffg=service_request)
       except (ValueError, IOError, TypeError) as e:
         log.error(
           "Can't load service request from file because of: " + str(e))
@@ -259,33 +257,40 @@ class ServiceLayerAPI(AbstractAPI):
   ##############################################################################
 
   @schedule_as_coop_task
-  def request_service (self, sg):
+  def api_sas_sg_request (self, service_nffg):
     """
     Initiate a Service Graph (UNIFY U-Sl API).
 
-    :param sg: service graph instance
-    :type sg: :any:`NFFG`
+    :param service_nffg: service graph instance
+    :type service_nffg: :any:`NFFG`
     :return: None
     """
     # Store request if it is received on REST-API
     if self.rest_api:
-      self.rest_api.request_cache.add_request(id=sg.id)
-      self.rest_api.request_cache.set_in_progress(id=sg.id)
+      self.rest_api.request_cache.add_request(id=service_nffg.id)
+      self.rest_api.request_cache.set_in_progress(id=service_nffg.id)
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
-      self.__class__.__name__, sg))
-    nffg = self.service_orchestrator.initiate_service_graph(sg)
+      self.__class__.__name__, service_nffg))
+    service_nffg = self.service_orchestrator.initiate_service_graph(
+      service_nffg)
     log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
-    if nffg is not None:
-      self._instantiate_NFFG(nffg)
-    self.last_sg = sg
+    if service_nffg is not None:
+      self._instantiate_NFFG(service_nffg)
+    self.last_sg = service_nffg
 
-  def poll_nffg (self):
+  def api_sas_get_topology (self):
     """
-    Poll nffg
+    Return with the topology description.
+
+    :return: topology description requested from the layer's Virtualizer
+    :rtype: :any:`NFFG`
     """
-    return self.last_sg.dump()
+    # Get or if not available then request the layer's Virtualizer
+    sas_virtualizer = self.service_orchestrator.virtResManager.virtual_view
+    # return with the virtual view as an NFFG
+    return sas_virtualizer.get_resource_info().dump()
 
   def get_result (self, id):
     """

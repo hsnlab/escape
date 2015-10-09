@@ -220,8 +220,7 @@ class POXCore (EventMixin):
 
   @property
   def version_string (self):
-    # return "POX %s (%s)" % ('.'.join(map(str,self.version)),self.version_name)
-    return "ESCAPEv2 %s (%s)" % ('.'.join(map(str,self.version)),self.version_name)
+    return "POX %s (%s)" % ('.'.join(map(str,self.version)),self.version_name)
 
   def callDelayed (_self, _seconds, _func, *args, **kw):
     """
@@ -351,7 +350,8 @@ class POXCore (EventMixin):
     self.raiseLater(core, RereadConfiguration)
 
   def goUp (self):
-    log.debug(self.version_string + " going up...")
+    # log.debug(self.version_string + " going up...")
+    log.debug("ESCAPEv2 going up...")
 
     log.debug("Running on " + self._get_python_version())
     log.debug("Platform is " + self._get_platform_info())
@@ -377,7 +377,7 @@ class POXCore (EventMixin):
     self._waiter_notify()
 
     if self.running:
-      log.info(self.version_string + " is up.")
+      log.info("ESCAPEv2 is up.")
 
   def _waiter_notify (self):
     if len(self._waiters):
