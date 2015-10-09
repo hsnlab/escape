@@ -903,6 +903,8 @@ class EdgeLink(Link):
       link["delay"] = self.delay
     if self.bandwidth is not None:
       link["bandwidth"] = self.bandwidth
+    if self.backward:
+      link["backward"] = self.backward
     return link
   
   def load (self, data, container=None, *args, **kwargs):
@@ -915,6 +917,7 @@ class EdgeLink(Link):
     super(EdgeLink, self).load(data=data, container=container)
     self.delay = data.get('delay')
     self.bandwidth = data.get('bandwidth')
+    self.backward = data.get('backward', False)
     return self
   
   def __str__ (self):
@@ -1437,6 +1440,7 @@ def test_parse_load ():
   edge_link = EdgeLink(p2, p3, id="link3")
   edge_link.bandwidth = "100"
   edge_link.delay = "5"
+  edge_link.backward = True
   edge_link.operation = Element.DEL
   # Edge SG next hop
   edge_sg = EdgeSGLink(p1, p2, id="link1")
