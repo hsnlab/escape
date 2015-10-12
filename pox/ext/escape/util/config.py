@@ -349,7 +349,7 @@ class ESCAPEConfig(object):
     Return with the shutdown strategy to reset domain or not.
     """
     try:
-      return self.__configuration[ADAPT]['RESET-DOMAIN-AFTER-SHUTDOWN']
+      return self.__configuration[ADAPT]['RESET-DOMAINS-AFTER-SHUTDOWN']
     except KeyError:
       return True
 

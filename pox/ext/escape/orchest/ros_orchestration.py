@@ -63,7 +63,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     :return: mapped NFFG instance
     :rtype: :any:`NFFG`
     """
-    log.debug("Invoke %s to instantiate NF-FG" % self.__class__.__name__)
+    log.debug("Invoke %s to instantiate given NF-FG" % self.__class__.__name__)
     # Store newly created NF-FG
     self.nffgManager.save(nffg)
     # Get Domain Virtualizer to acquire global domain view

@@ -40,16 +40,17 @@ def main ():
   escape.add_argument("-f", "--full", action="store_true", default=False,
                       help="run the infrastructure layer also")
   escape.add_argument("-s", "--service", metavar="file", type=str,
-                      help="define the service request from a file")
+                      help="skip the SAS REST-API initiation and read the "
+                           "service request from the given file")
   escape.add_argument("-i", "--interactive", action="store_true", default=False,
                       help="run an interactive shell for observing internal "
                            "states")
   escape.add_argument("-a", "--agent", action="store_true", default=False,
-                      help="run in agent role an start an REST API (without "
-                           "service layer)")
+                      help="run in agent mode: start the ROS REST-API ("
+                           "without the Service sublayer (SAS))")
   escape.add_argument("-r", "--rosapi", action="store_true", default=False,
                       help="start the REST-API for the Resource Orchestration "
-                           "layer")
+                           "sublayer (ROS)")
   escape.add_argument("-4", "--cfor", action="store_true", default=False,
                       help="start the REST-API for the Cf-Or interface")
   escape.add_argument("-x", "--clean", action="store_true", default=False,

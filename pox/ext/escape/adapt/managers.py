@@ -646,6 +646,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     :return: None
     """
     # nffg_part = self._update_nffg(nffg_part.copy())
+    log.info("Install %s domain part..." % self.name)
     try:
       status_code = self.topoAdapter.edit_config(nffg_part)
       if status_code is not None:

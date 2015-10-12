@@ -306,8 +306,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     If agent_mod is set rewrite the received NFFG domain from REMOTE to
     INTERNAL.
 
-    :param agent_mode: current ESCAPE instance is a local orchestrator or not
-    :type agent_mode: bool
     :return: None
     """
     # set bounded layer name here to avoid circular dependency problem
@@ -434,7 +432,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # UNIFY Sl- Or API functions starts here
   ##############################################################################
 
-  @schedule_as_coop_task
   def _handle_InstantiateNFFGEvent (self, event):
     """
     Instantiate given NF-FG (UNIFY Sl - Or API).
@@ -447,12 +444,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
       event.nffg, str(event.source._core_name).title()))
     self.__proceed_instantiation(nffg=event.nffg)
 
+  @schedule_as_coop_task
   def __proceed_instantiation (self, nffg):
     """
     Helper function to instantiate the NFFG mapping from different source.
 
     :param nffg: pre-mapped service request
-    :type nffg: :nay:`NFFG`
+    :type nffg: :any:`NFFG`
     :return: None
     """
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (

@@ -65,8 +65,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
                         # "DEFAULTS": ["SDN", "OPENSTACK", "UN"],
-                        # "DEFAULTS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
-                        "DEFAULTS": [],
+                        "DEFAULTS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
+                        # "DEFAULTS": [],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.adapters",
                                          "class": "InternalPOXAdapter",
@@ -117,7 +117,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         "SDN": {"module": "escape.adapt.managers",
                                 "class": "SDNDomainManager", "poll": False},
                         # Shutdown strategy config
-                        "RESET-DOMAIN-AFTER-SHUTDOWN": True},
+                        "RESET-DOMAINS-AFTER-SHUTDOWN": True},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
                             "TOPO": "escape-mn-topo.nffg",  # relative to ext/

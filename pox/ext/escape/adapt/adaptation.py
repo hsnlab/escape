@@ -18,6 +18,7 @@ Adaptation Sublayer
 import weakref
 
 from escape import CONFIG
+from escape.adapt.managers import InternalDomainManager
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
 import escape.adapt.managers as mgrs
@@ -220,6 +221,7 @@ class ComponentConfigurator(object):
     """
     # very dummy initialization
     for mgr in CONFIG.get_default_mgrs():
+      log.debug("Init domain Manager for domain: %s" % mgr)
       self.start_mgr(domain_name=mgr)
 
   def load_internal_mgr (self):
@@ -228,6 +230,7 @@ class ComponentConfigurator(object):
 
     :return: None
     """
+    log.debug("Init domain Manager for domain: %s" % InternalDomainManager.name)
     self.start_mgr(mgrs.InternalDomainManager.name)
 
   def clear_initiated_mgrs (self):
@@ -283,11 +286,11 @@ class ControllerAdapter(object):
     # Set virtualizer-related components
     self.domainResManager = DomainResourceManager()
     self.domains = ComponentConfigurator(self)
-    log.info("Initializing Domain Managers...")
     if with_infr:
       # Init internal domain manager if Infrastructure Layer is started
       self.domains.load_internal_mgr()
     # Init default domain managers
+    log.info("Initializing Domain Managers...")
     self.domains.load_default_mgrs()
 
   def shutdown (self):

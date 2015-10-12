@@ -236,6 +236,7 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
                                                 bandwidth=l.bandwidth)
         log.debug("Add connection: %s" % link1)
         log.debug("Add connection: %s" % link2)
+    log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return nffg
 
