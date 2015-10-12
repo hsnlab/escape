@@ -208,7 +208,9 @@ Usage:
 .. code-block:: bash
 
     $ ./escape.py -h
-    usage: escape.py [-h] [-v] [-d] [-f] [-i]
+    usage: escape.py [-h] [-v] [-c path] [-d] [-f] [-s file] [-i] [-a] [-r] [-4]
+                     [-x]
+                     ...
 
     ESCAPE: Extensible Service ChAin Prototyping Environment using Mininet, Click,
     NETCONF and POX
@@ -222,8 +224,18 @@ Usage:
                             override default config filename
       -d, --debug           run the ESCAPE in debug mode
       -f, --full            run the infrastructure layer also
+      -s file, --service file
+                            skip the SAS REST-API initiation and read the service
+                            request from the given file
       -i, --interactive     run an interactive shell for observing internal states
-      -a, --agent           run in agent role (without service layer)
+      -a, --agent           run in agent mode: start the ROS REST-API (without the
+                            Service sublayer (SAS))
+      -r, --rosapi          start the REST-API for the Resource Orchestration
+                            sublayer (ROS)
+      -4, --cfor            start the REST-API for the Cf-Or interface
+      -x, --clean           run the cleanup task standalone and kill remained
+                            programs, interfaces, veth parts and junk files
+      ...                   optional POX modules
 
 
 **More advanced commands:**
@@ -291,7 +303,7 @@ Start layers with graph-represented input contained in a specific file:
     $ ./pox.py unify --sg_file=<path>
 
     $ ./pox.py orchestration --nffg_file=<path> ...
-    $ ./pox.py adaptation --mapped_nffg_file=<path> ...
+    $ ./pox.py adaptation --mapped_nffg=<path> ...
 
 Start ESCAPEv2 with built-in GUI:
 
