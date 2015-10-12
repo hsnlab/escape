@@ -22,7 +22,14 @@ the script where the result is written.
 import os, sys, copy, getopt, traceback, threading
 
 helpmsg = """ParameterSearch.py usage:
-   -h       Print this help message.
+   -h              Print this help message.
+   -o file         The base name for the output files. One output file is 
+                   generated for every seed.
+   --threads=i     Determines how many cores should be used at most at the same
+                   time.
+   --seeds=a,b,..  The sequence of seeds which should be used for the SC 
+                   sequence generation. The length of the list determines how 
+                   many should be executed.
 """
 
 def oneLineInParameterSpace(factor1, factor2, factor3, outfile, other=[]):

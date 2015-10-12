@@ -43,11 +43,14 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:%(name)s:%(message)s')
 all_saps_beginning = []
 all_saps_ending = []
-running_nfs = {}
+# dictionary of newly added VNF-s keyed by the number of 'test_lvl' when it 
+# was added.
+running_nfs = {} 
 test_lvl = 1
 
 helpmsg = """StressTest.py options are:
    -h                Print this message help message.
+   -o                The output file where the result shall be printed.
    --loops           All Service Chains will be loops.
    --fullremap       Ignores all VNF mappings in the substrate network.
    --vnf_sharing=p   Sets the ratio of shared and not shared VNF-s.
@@ -56,11 +59,17 @@ helpmsg = """StressTest.py options are:
    --bw_factor=f     Controls the importance between bandwidth, infra resources
    --res_factor=f    and distance in latency during the mapping process. The
    --lat_factor=f    factors are advised to be summed to 3, if any is given the
-                     others are calculated based on this criteria.
+                     others shall be given too!
+
+   --multiple_scs    One request will contain at least 2 chains with vnf sharing
+                     probability defined by "--vnf_sharing" option.
+   --max_sc_count=i  Determines how many chains should one request contain at 
+                     most.
 """
 
 def generateRequestForCarrierTopo(networkparams, seed, loops=False, 
-                                  vnf_sharing_probabilty=0.0):
+                                  vnf_sharing_probabilty=0.0,
+                                  multiSC=False, max_sc_count=2):
   """
   By default generates VNF-disjoint SC-s starting/ending only once in each SAP.
   With the 'loops' option, only loop SC-s are generated.
@@ -71,70 +80,91 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
   random.seed(seed)
   random.shuffle(all_saps_beginning)
   random.shuffle(all_saps_ending)
-  # generate some VNF-s connecting two SAP-s
-  while len(all_saps_ending) > 1 and len(all_saps_beginning) > 1:
+  sc_count=1
+  if multiSC:
+    sc_count = random.randint(2,max_sc_count)
+  while len(all_saps_ending) > sc_count and len(all_saps_beginning) > sc_count:
     nffg = NFFG(id="Benchmark-Req-"+str(test_lvl))
-    # find two SAP-s for chain ends.
-    sap1 = nffg.add_sap(id = all_saps_beginning.pop())
-    sap2 = None
-    if loops:
-      sap2 = sap1
-    else:
-      tmpid = all_saps_ending.pop()
-      while True:
-        if tmpid != sap1.id:
-          sap2 = nffg.add_sap(id = tmpid)
-          break
-        else:
-          tmpid = all_saps_ending.pop()
-    sg_path = []
-    sap1port = sap1.add_port()
-    last_req_port = sap1port
-    for vnf in xrange(0, next(gen_seq()) % chain_maxlen + 1):
-      if random.random() < vnf_sharing_probabilty and len(running_nfs) > 0:
-        p = random.random()
-        sumlen = sum([n*len(running_nfs[n]) for n in running_nfs])
-        i = 1
-        ratio = float(len(running_nfs[i])) / sumlen
-        while ratio < p:
-          i += 1
-          ratio += float(i*len(running_nfs[i])) / sumlen
-        nf = random.choice(running_nfs[i])
-        while nf in nffg.nfs:
-          nf = random.choice(running_nfs[i])
-        nffg.add_node(nf)
+    # newly added NF-s of one request
+    current_nfs = []
+    for scid in xrange(0,sc_count):
+      # find two SAP-s for chain ends.
+      nfs_this_sc = []
+      sap1 = nffg.add_sap(id = all_saps_beginning.pop())
+      sap2 = None
+      if loops:
+        sap2 = sap1
       else:
-        nf = nffg.add_nf(id="-".join(("SC",str(test_lvl),"VNF",
-                         str(vnf))),
-                         func_type=random.choice(['A','B','C']), 
-                         cpu=random.randint(1,6),
-                         mem=random.random()*1000,
-                         storage=random.random()*3,
-                         delay=1 + random.random()*10,
-                         bandwidth=random.random())
-      newport = nf.add_port()
-      sglink = nffg.add_sglink(last_req_port, newport)
+        tmpid = all_saps_ending.pop()
+        while True:
+          if tmpid != sap1.id:
+            sap2 = nffg.add_sap(id = tmpid)
+            break
+          else:
+            tmpid = all_saps_ending.pop()
+      sg_path = []
+      sap1port = sap1.add_port()
+      last_req_port = sap1port
+      # generate some VNF-s connecting the two SAP-s
+      for vnf in xrange(0, next(gen_seq()) % chain_maxlen + 1):
+        # in the first case p is used to determine which previous chain should 
+        # be used to share the VNF, in the latter case it is used to determine
+        # whether we should share now.
+        p = random.random()
+        if random.random() < vnf_sharing_probabilty and len(running_nfs) > 0 \
+           and not multiSC:
+          sumlen = sum([n*len(running_nfs[n]) for n in running_nfs])
+          i = 1
+          ratio = float(len(running_nfs[i])) / sumlen
+          while ratio < p:
+            i += 1
+            ratio += float(i*len(running_nfs[i])) / sumlen
+          nf = random.choice(running_nfs[i])
+          while nf in nffg.nfs:
+            nf = random.choice(running_nfs[i])
+          nffg.add_node(nf)
+        elif multiSC and p < vnf_sharing_probabilty and len(current_nfs) > 0:
+          nf = random.choice(current_nfs)
+        else:
+          nf = nffg.add_nf(id="-".join(("Test",str(test_lvl),"SC",str(scid),
+                                        "VNF",str(vnf))),
+                           func_type=random.choice(['A','B','C']), 
+                           cpu=random.randint(1,6),
+                           mem=random.random()*1000,
+                           storage=random.random()*3,
+                           delay=1 + random.random()*10,
+                           bandwidth=random.random())
+          nfs_this_sc.append(nf)
+        newport = nf.add_port()
+        sglink = nffg.add_sglink(last_req_port, newport)
+        sg_path.append(sglink.id)
+        last_req_port = nf.add_port()
+
+      sap2port = sap2.add_port()
+      sglink = nffg.add_sglink(last_req_port, sap2port)
       sg_path.append(sglink.id)
-      last_req_port = nf.add_port()
 
-    sap2port = sap2.add_port()
-    sglink = nffg.add_sglink(last_req_port, sap2port)
-    sg_path.append(sglink.id)
-
-    # WARNING: this is completly a wild guess! Failing due to this doesn't 
-    # necessarily mean algorithm failure
-    # Bandwidth maximal random value should be min(SAP1acces_bw, SAP2access_bw)
-    # MAYBE: each SAP can only be once in the reqgraph?
-    nffg.add_req(sap1port, sap2port, delay=random.uniform(20,100), 
-                 bandwidth=random.random()*0.2, sg_path = sg_path)
-    yield nffg
+      # WARNING: this is completly a wild guess! Failing due to this doesn't 
+      # necessarily mean algorithm failure
+      # Bandwidth maximal random value should be min(SAP1acces_bw, SAP2access_bw)
+      # MAYBE: each SAP can only be once in the reqgraph? - this is the case now.
+      nffg.add_req(sap1port, sap2port, delay=random.uniform(20,100), 
+                   bandwidth=random.random()*0.2, sg_path = sg_path)
+      # this prevents loops in the chains and makes new and old NF-s equally 
+      # preferable in total for NF sharing
+      for tmp in xrange(-1, scid):
+        current_nfs.extend(nfs_this_sc)
+      if not multiSC:
+        yield nffg
+    if multiSC:
+      yield nffg
   yield None
 
 def main(argv):
   try:
     opts, args = getopt.getopt(argv,"ho:",["loops", "fullremap", "bw_factor=",
                                "res_factor=", "lat_factor=", "request_seed=",
-                               "vnf_sharing="])
+                               "vnf_sharing=", "multiple_scs", "max_sc_count="])
   except getopt.GetoptError:
     print helpmsg
     sys.exit()
@@ -146,6 +176,8 @@ def main(argv):
   res_factor = 1
   lat_factor = 1
   outputfile = "paramsearch.out"
+  multiple_scs = False
+  max_sc_count = 2
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
@@ -166,12 +198,15 @@ def main(argv):
       res_factor = float(arg)
     elif opt == "--lat_factor":
       lat_factor = float(arg)
-  """
+    elif opt == "--multiple_scs":
+      multiple_scs = True
+    elif opt == "--max_sc_count":
+      max_sc_count = int(arg)
   params, args = zip(*opts)
-  if "bw_factor" not in params or "res_factor" not in params or \
-     "bw_factor" not in params:
+  if "--bw_factor" not in params or "--res_factor" not in params or \
+     "--lat_factor" not in params:
+    print helpmsg
     raise Exception("Not all algorithm params are given!")
-  """
   
   network, topoparams = CarrierTopoBuilder.getSmallTopo()
   max_test_lvl = 50000
@@ -186,7 +221,8 @@ def main(argv):
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
         for request in generateRequestForCarrierTopo(topoparams, seed, 
-                       loops=loops, vnf_sharing_probabilty=vnf_sharing):
+                       loops=loops, vnf_sharing_probabilty=vnf_sharing,
+                       multiSC=multiple_scs, max_sc_count=max_sc_count):
           # print request.dump()
           if test_lvl > max_test_lvl or request is None:
             break
@@ -206,10 +242,16 @@ def main(argv):
         log.info("Request generation reached its end!")
         break
   except uet.UnifyException as ue:
-    print ue.msg 
-    print traceback.format_exc()
+    log.error(ue.msg)
+    log.error(traceback.format_exc())
+    with open(outputfile, "a") as f:
+      f.write("\n".join(("UnifyException cought during StressTest: ",
+                         ue.msg,traceback.format_exc())))
   except Exception as e:
-    print traceback.format_exc()
+    log.error(traceback.format_exc())
+    with open(outputfile, "a") as f:
+      f.write("\n".join(("Exception cought during StressTest: ",
+                         traceback.format_exc())))
   log.info("First unsuccessful mapping was at %s test level."%test_lvl)
   if ever_successful:
     # print "\nLast successful mapping was at %s test level.\n"%(test_lvl - 1)

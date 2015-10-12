@@ -181,7 +181,7 @@ class GraphPreprocessorClass(object):
                                                     keys=True):
       # This condition disables ending loops in subchains! 
       # if j in path:
-      #   continue
+      #  continue
       # comparing hash values is maybe faster
       if hash(d['color']) == hash(act_color):
         return j, k
