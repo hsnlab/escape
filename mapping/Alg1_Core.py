@@ -42,7 +42,7 @@ except ImportError:
 
 class CoreAlgorithm(object):
   def __init__ (self, net0, req0, chains0, full_remap, cache_shortest_path, 
-                bw_factor=1, res_factor=1, lat_factor=1):
+                bw_factor=1, res_factor=1, lat_factor=1, shortest_paths=None):
     self.log = helper.log.getChild(self.__class__.__name__)
 
     self.log.info("Initializing algorithm variables")
@@ -60,7 +60,7 @@ class CoreAlgorithm(object):
     self.bt_branching_factor = 4
     self.bt_limit = 5
 
-    self._preproc(net0, req0, chains0)
+    self._preproc(net0, req0, chains0, shortest_paths)
 
     # must be sorted in alphabetic order of keys: cpu, mem, storage
     self.resource_priorities = [0.5, 0.5, 0.0]
@@ -89,7 +89,7 @@ class CoreAlgorithm(object):
     self.net = self.net.network
     self.req = self.req.network
 
-  def _preproc (self, net0, req0, chains0):
+  def _preproc (self, net0, req0, chains0, shortest_paths):
     self.log.info("Preprocessing:")
     
     self.manager = helper.MappingManager(net0, req0, chains0)
@@ -97,6 +97,7 @@ class CoreAlgorithm(object):
     self.preprocessor = GraphPreprocessor.GraphPreprocessorClass(net0, req0,
                                                                  chains0,
                                                                  self.manager)
+    self.preprocessor.shortest_paths = shortest_paths
     self.net = self.preprocessor.processNetwork(self.full_remap, 
                                                 self.enable_shortest_path_cache)
     self.req, chains_with_subgraphs = self.preprocessor.processRequest(

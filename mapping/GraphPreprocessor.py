@@ -44,6 +44,7 @@ class GraphPreprocessorClass(object):
     self.req_graph = req_graph0
     self.chains = chains0
     self.log = helper.log.getChild(self.__class__.__name__)
+    self.log.setLevel(self.log.getEffectiveLevel())
     self.manager = manager0
 
     '''Indicates if we have already inserted a vnf in a subchain.
@@ -618,9 +619,13 @@ class GraphPreprocessorClass(object):
         "NodeNF %s couldn`t be removed from the NFFG" % net.network.node[n].id,
         "This NodeNF probably isn`t mapped anywhere")
 
-    self.log.info("Calculating shortest paths measured in latency...")
-    self.shortest_paths = helper.shortestPathsInLatency(net.network, 
-                                                        cache_shortest_path)
+    if self.shortest_paths is None:
+      self.log.info("Calculating shortest paths measured in latency...")
+      self.shortest_paths = helper.shortestPathsInLatency(net.network, 
+                                   cache_shortest_path, 
+                                   enable_network_cutting=True)
+    else:
+      self.log.info("Shortest paths are received from previous run!")
     self.manager.addShortestRoutesInLatency(self.shortest_paths)
     self.log.info("Shortest path calculation completed!")
 

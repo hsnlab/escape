@@ -175,8 +175,9 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
         minlat = 5.0 * (len(nfs_this_sc) + 2)
         maxlat = 13.0 * (len(nfs_this_sc) + 2)
       else:
-        minlat = 5.0 * (len(nffg.nfs) + 2)
-        maxlat = 13.0 * (len(nffg.nfs) + 2)
+        nfcnt = len([i for i in nffg.nfs])
+        minlat = 5.0 * (nfcnt + 2)
+        maxlat = 13.0 * (nfcnt + 2)
       nffg.add_req(sap1port, sap2port, delay=random.uniform(minlat,maxlat), 
                    bandwidth=random.random()*0.2, sg_path = sg_path)
       # this prevents loops in the chains and makes new and old NF-s equally 
@@ -249,6 +250,7 @@ def main(argv):
     while test_lvl < max_test_lvl:
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
+        shortest_paths = None
         for request in generateRequestForCarrierTopo(topoparams, seed, 
                        loops=loops, vnf_sharing_probabilty=vnf_sharing,
                        multiSC=multiple_scs, max_sc_count=max_sc_count):
@@ -257,10 +259,11 @@ def main(argv):
             break
           running_nfs[test_lvl] = [nf for nf in request.nfs 
                                    if nf.id.split("-")[1] == str(test_lvl)]
-          network = MappingAlgorithms.MAP(request, network, 
+          network, shortest_paths = MappingAlgorithms.MAP(request, network, 
                     full_remap=fullremap, enable_shortest_path_cache=True,
                     bw_factor=bw_factor, res_factor=res_factor,
-                    lat_factor=lat_factor)
+                    lat_factor=lat_factor, shortest_paths=shortest_paths, 
+                    return_dist=True)
           ever_successful = True
           log.debug("Mapping successful on test level %s!"%test_lvl)
           test_lvl += 1
