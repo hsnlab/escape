@@ -17,7 +17,7 @@ import urlparse
 from requests import Session
 import time
 
-from escape import __version__, CONFIG
+from escape import __version__
 from escape.adapt import log
 from escape.util.misc import enum
 from escape.util.nffg import NFFG
@@ -372,6 +372,10 @@ class AbstractESCAPEAdapter(EventMixin):
 
 
 class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
+  """
+  Abstract class for different domain adapters wich need SDN/OF controller
+  capability.
+  """
   # Keepalive constants
   _interval = 20
   _switch_timeout = 5

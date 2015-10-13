@@ -61,10 +61,9 @@ Dependencies:
 .. code-block:: bash
 
     $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev \
-      python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko \
-      python-dev libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev \
-      libglib2.0-dev libgtk2.0-dev gcc make automake openssh-client \
-      openssh-server ssh
+      python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko python-dev python-networkx \
+      libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev \
+      gcc make automake openssh-client openssh-server ssh
 
     $ sudo pip install requests jinja2 ncclient lxml networkx py2neo \
       networkx_viewer numpy
@@ -74,6 +73,12 @@ For doc generations:
 .. code-block:: bash
 
     $ sudo pip install sphinx
+
+For domain emulation scripts:
+
+.. code-block:: bash
+
+    $ sudo pip install tornado
 
 Installation
 ++++++++++++
