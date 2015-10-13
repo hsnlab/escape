@@ -110,6 +110,7 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
         # in the first case p is used to determine which previous chain should 
         # be used to share the VNF, in the latter case it is used to determine
         # whether we should share now.
+        vnf_added = False
         p = random.random()
         if random.random() < vnf_sharing_probabilty and len(running_nfs) > 0 \
            and not multiSC:
@@ -120,11 +121,29 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
             i += 1
             ratio += float(i*len(running_nfs[i])) / sumlen
           nf = random.choice(running_nfs[i])
-          while nf in nffg.nfs:
-            nf = random.choice(running_nfs[i])
-          nffg.add_node(nf)
+          if reduce(lambda a,b: a and b, [v in nffg.nfs for v in running_nfs[i]]):
+            # failing to add a VNF due to this criteria infuences the provided 
+            # vnf_sharing_probabilty, but it is estimated to be insignificant, 
+            # otherwise the generation can run into infinite loop!
+            log.warn("All the VNF-s of the subchain selected for VNF sharing are"
+                     " already in the current chain under construction! Skipping"
+                     " VNF sharing...")
+          else:
+            while nf in nffg.nfs:
+              nf = random.choice(running_nfs[i])
+            nffg.add_node(nf)
+            vnf_added = True
         elif multiSC and p < vnf_sharing_probabilty and len(current_nfs) > 0:
-          nf = random.choice(current_nfs)
+          if reduce(lambda a,b: a and b, [v in nfs_this_sc for 
+                                          v in current_nfs]):
+            log.warn("All shareable VNF-s are already added to this chain! "
+                     "Skipping VNF sharing...")
+          else:
+            nf = random.choice(current_nfs)
+            while nf in nfs_this_sc:
+              nf = random.choice(current_nfs)
+            # the VNF is already in the subchain, we just need to add the links
+            vnf_added = True
         else:
           nf = nffg.add_nf(id="-".join(("Test",str(test_lvl),"SC",str(scid),
                                         "VNF",str(vnf))),
@@ -134,11 +153,15 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
                            storage=random.random()*3,
                            delay=1 + random.random()*10,
                            bandwidth=random.random())
-          nfs_this_sc.append(nf)
-        newport = nf.add_port()
-        sglink = nffg.add_sglink(last_req_port, newport)
-        sg_path.append(sglink.id)
-        last_req_port = nf.add_port()
+          vnf_added = True
+        if vnf_added:
+          # add olny the newly added VNF-s, not the shared ones.
+          if nf not in current_nfs:
+            nfs_this_sc.append(nf)
+          newport = nf.add_port()
+          sglink = nffg.add_sglink(last_req_port, newport)
+          sg_path.append(sglink.id)
+          last_req_port = nf.add_port()
 
       sap2port = sap2.add_port()
       sglink = nffg.add_sglink(last_req_port, sap2port)
@@ -148,7 +171,13 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
       # necessarily mean algorithm failure
       # Bandwidth maximal random value should be min(SAP1acces_bw, SAP2access_bw)
       # MAYBE: each SAP can only be once in the reqgraph? - this is the case now.
-      nffg.add_req(sap1port, sap2port, delay=random.uniform(20,100), 
+      if multiSC:
+        minlat = 5.0 * (len(nfs_this_sc) + 2)
+        maxlat = 13.0 * (len(nfs_this_sc) + 2)
+      else:
+        minlat = 5.0 * (len(nffg.nfs) + 2)
+        maxlat = 13.0 * (len(nffg.nfs) + 2)
+      nffg.add_req(sap1port, sap2port, delay=random.uniform(minlat,maxlat), 
                    bandwidth=random.random()*0.2, sg_path = sg_path)
       # this prevents loops in the chains and makes new and old NF-s equally 
       # preferable in total for NF sharing

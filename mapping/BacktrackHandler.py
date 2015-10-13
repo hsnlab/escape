@@ -180,7 +180,7 @@ class BacktrackHandler(object):
           bt_record, link_bt_rec_list
       else:
         raise uet.InternalAlgorithmException("Backtrack structure maintenance"
-                                      "error: backtrack step went wrong.")
+                                      " error: backtrack step went wrong.")
     except IndexError:
       self.bt_struct.pop() # remove empty deque of possible mappings ('record')
       self.vnf_index_in_subchain -= 1
