@@ -26,6 +26,7 @@ from heapq import heappush, heappop
 from itertools import count
 
 log = logging.getLogger("mapping")
+log.setLevel(logging.INFO)
 if not log.getEffectiveLevel():
   logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
   log.setLevel(logging.INFO)
@@ -63,6 +64,27 @@ def subtractNodeRes (current, substrahend, maximal, link_count=1):
       current[attr] -= k * substrahend[attr]
   return current
 
+def retrieveFullDistMtx (dist, G_full):
+  # this fix access latency is used by CarrierTopoBuilder.py
+  log.debug("Retrieving path lengths of SAP-s excepted because "
+            "of cutting...")
+  access_lat = 0.5
+  for u in G_full:
+    if G_full.node[u].type == 'SAP':
+      u_switch_id = "-".join(tuple(u.split("-")[:1] + u.split("-")[-4:]))
+      for v in G_full:
+        if u == v:
+          dist[u][v] = 0
+        elif G_full.node[v].type == 'SAP':
+          v_switch_id = "-".join(tuple(v.split("-")[:1] + \
+                                       v.split("-")[-4:]))
+          dist[u][v] = 2 * access_lat + dist[u_switch_id][v_switch_id]
+          dist[v][u] = 2 * access_lat + dist[v_switch_id][u_switch_id]
+        else:
+          dist[u][v] = access_lat + dist[u_switch_id][v]
+          dist[v][u] = access_lat + dist[v][u_switch_id]
+  return dist
+
 
 def shortestPathsInLatency (G_full, enable_shortest_path_cache, 
                             enable_network_cutting=False):
@@ -87,8 +109,6 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
         G.remove_node(n)
   else:
     G = G_full
-  # this fix access latency is used by CarrierTopoBuilder.py
-  access_lat = 0.5
   filename = "shortest_paths_cut.txt" if enable_network_cutting \
              else "shortest_paths.txt"
   if enable_shortest_path_cache:
@@ -98,24 +118,8 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
         for line in sp:
           line = line.split(" ")
           dist[line[0]][line[1]] = float(line[2])
-      log.debug("Retrieving path lengths of SAP-s excepted because "
-                "of cutting...")
       if enable_network_cutting:
-        for u in G_full:
-          if G_full.node[u].type == 'SAP':
-            u_switch_id = "-".join(tuple(u.split("-")[:1] + u.split("-")[-4:]))
-            for v in G_full:
-              if u == v:
-                dist[u][v] = 0
-              elif G_full.node[v].type == 'SAP':
-                v_switch_id = "-".join(tuple(v.split("-")[:1] + \
-                                             v.split("-")[-4:]))
-                dist[u][v] = 2 * access_lat + dist[u_switch_id][v_switch_id]
-                dist[v][u] = 2 * access_lat + dist[v_switch_id][u_switch_id]
-              else:
-                dist[u][v] = access_lat + dist[u_switch_id][v]
-                dist[v][u] = access_lat + dist[v][u_switch_id]
-      return dict(dist)
+        return dict(retrieveFullDistMtx(dist, G_full))
     except IOError:
       log.warn("No input %s found, calculating shortest paths..."%filename)
     except ValueError:
@@ -156,7 +160,10 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
         sp.write(" ".join((u, v, str(dist[u][v]), "\n")))
     sp.close()
   
-  return dict(dist)
+  if enable_network_cutting:
+    return dict(retrieveFullDistMtx(dist, G_full))
+  else:
+    return dict(dist)
 
 
 def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
@@ -217,6 +224,7 @@ class MappingManager(object):
 
   def __init__ (self, net, req, chains):
     self.log = log.getChild(self.__class__.__name__)
+    self.log.setLevel(log.getEffectiveLevel())
     # list of tuples of mapping (vnf_id, node_id)
     self.vnf_mapping = []
     # SAP mapping can be done here based on their names

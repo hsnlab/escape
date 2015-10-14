@@ -44,6 +44,7 @@ class CoreAlgorithm(object):
   def __init__ (self, net0, req0, chains0, full_remap, cache_shortest_path, 
                 bw_factor=1, res_factor=1, lat_factor=1, shortest_paths=None):
     self.log = helper.log.getChild(self.__class__.__name__)
+    self.log.setLevel(helper.log.getEffectiveLevel())
 
     self.log.info("Initializing algorithm variables")
     # only needed to get SAP`s name by its ID and for reset()
@@ -899,7 +900,8 @@ class CoreAlgorithm(object):
               for c_prime, prev_bt_rec, link_mapping_rec in link_bt_rec_list:
                 if link_mapping_rec is not None:
                   self._resolveLinkMappingRecord(c_prime, link_mapping_rec)
-                self._resolveBacktrackRecord(c_prime, prev_bt_rec)
+                if prev_bt_rec is not None:
+                  self._resolveBacktrackRecord(c_prime, prev_bt_rec)
               # use this bt_record to try another greedy step
               curr_vnf = bt_record['prev_vnf_id']
               next_vnf = bt_record['vnf_id']

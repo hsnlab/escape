@@ -62,6 +62,7 @@ class TestSequence(threading.Thread):
     semaphore.acquire()
     with open(outfile, "w") as f:
       f.write(self.threadname+" seed: "+s)
+    """
     oneLineInParameterSpace("--res_factor=", "--bw_factor=", "--lat_factor=", 
                             outfile, ["--request_seed="+s])
     oneLineInParameterSpace("--res_factor=", "--lat_factor=", "--bw_factor=", 
@@ -78,15 +79,21 @@ class TestSequence(threading.Thread):
     oneLineInParameterSpace("--lat_factor=", "--bw_factor=", "--res_factor=", 
                             outfile, ["--vnf_sharing=0.3",
                                       "--request_seed="+s])
-
+    """
     oneLineInParameterSpace("--res_factor=", "--bw_factor=", "--lat_factor=", 
-                            outfile, ["--loops",
+                            outfile, ["--vnf_sharing=0.2",
+                                      "--multiple_scs",
+                                      "--max_sc_count=3",
                                       "--request_seed="+s])
     oneLineInParameterSpace("--res_factor=", "--lat_factor=", "--bw_factor=", 
-                            outfile, ["--loops",
+                            outfile, ["--vnf_sharing=0.2",
+                                      "--multiple_scs",
+                                      "--max_sc_count=3",
                                       "--request_seed="+s])
     oneLineInParameterSpace("--lat_factor=", "--bw_factor=", "--res_factor=", 
-                            outfile, ["--loops",
+                            outfile, ["--vnf_sharing=0.2",
+                                      "--multiple_scs",
+                                      "--max_sc_count=3",
                                       "--request_seed="+s])
     semaphore.release()
 

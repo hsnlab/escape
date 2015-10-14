@@ -44,7 +44,7 @@ class GraphPreprocessorClass(object):
     self.req_graph = req_graph0
     self.chains = chains0
     self.log = helper.log.getChild(self.__class__.__name__)
-    self.log.setLevel(self.log.getEffectiveLevel())
+    self.log.setLevel(helper.log.getEffectiveLevel())
     self.manager = manager0
 
     '''Indicates if we have already inserted a vnf in a subchain.

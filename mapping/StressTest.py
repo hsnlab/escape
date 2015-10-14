@@ -106,7 +106,8 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
       sap1port = sap1.add_port()
       last_req_port = sap1port
       # generate some VNF-s connecting the two SAP-s
-      for vnf in xrange(0, next(gen_seq()) % chain_maxlen + 1):
+      vnf_cnt = next(gen_seq()) % chain_maxlen + 1
+      for vnf in xrange(0, vnf_cnt):
         # in the first case p is used to determine which previous chain should 
         # be used to share the VNF, in the latter case it is used to determine
         # whether we should share now.
@@ -133,7 +134,12 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
               nf = random.choice(running_nfs[i])
             nffg.add_node(nf)
             vnf_added = True
-        elif multiSC and p < vnf_sharing_probabilty and len(current_nfs) > 0:
+        elif multiSC and \
+             p < vnf_sharing_probabilty and len(current_nfs) > 0:
+          # temporary workaround: first and last VNF-s can't be shared because 
+          # they can casue a backtrack error! TODO: resolve!
+          """and vnf > 0 and vnf < vnf_cnt - 1 """ 
+          # this influences the the given VNF sharing probability...
           if reduce(lambda a,b: a and b, [v in nfs_this_sc for 
                                           v in current_nfs]):
             log.warn("All shareable VNF-s are already added to this chain! "
