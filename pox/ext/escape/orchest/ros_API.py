@@ -20,7 +20,6 @@ from escape import CONFIG
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest import LAYER_NAME
-from escape.service.sas_API import InstantiateNFFGEvent
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
@@ -81,7 +80,7 @@ class InstantiationFinishedEvent(Event):
 
 class CfOrRequestHandler(AbstractRequestHandler):
   """
-  Request Handler for the Cf-OR interface..
+  Request Handler for the Cf-OR interface.
 
   .. warning::
     This class is out of the context of the recoco's co-operative thread
@@ -91,6 +90,8 @@ class CfOrRequestHandler(AbstractRequestHandler):
     relevant helper function of core object: `callLater`/`raiseLater` or use
     `schedule_as_coop_task` decorator defined in util.misc on the called
     function.
+
+  Contains handler functions for REST-API.
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {'GET': ('ping', 'get_config'),
@@ -160,6 +161,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     relevant helper function of core object: `callLater`/`raiseLater` or use
     `schedule_as_coop_task` decorator defined in util.misc on the called
     function.
+
+  Contains handler functions for REST-API.
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {'GET': ('ping', 'get_config'),
@@ -263,6 +266,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.info("Starting Resource Orchestration Sublayer...")
     # Mandatory super() call
     super(ResourceOrchestrationAPI, self).__init__(standalone, **kwargs)
+    self.ros_api = None
+    self.cfor_api = None
 
   def initialize (self):
     """
@@ -296,8 +301,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
     log.info("Resource Orchestration Sublayer is going down...")
-    if hasattr(self, 'agent_api') and self.ros_api:
+    if self.ros_api is not None:
       self.ros_api.stop()
+    if self.cfor_api is not None:
+      self.cfor_api.stop()
 
   def _initiate_ros_api (self):
     """
