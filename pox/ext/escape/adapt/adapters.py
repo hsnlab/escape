@@ -130,11 +130,11 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   name = "SDN-POX"
 
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {'MT1': 0x11,  # 0x14c5e0c376e24,
-                   'MT2': 0x12,  # 0x14c5e0c376fc6,
+  infra_to_dpid = {'MT1': 0x14c5e0c376e24,
+                   'MT2': 0x14c5e0c376fc6,
                    }
-  dpid_to_infra = {0x11: 'MT1',  # 0x14c5e0c376e24: 'MT1',
-                   0x12: 'MT2',  # 0x14c5e0c376fc6: 'MT2',
+  dpid_to_infra = {0x14c5e0c376e24: 'MT1',
+                   0x14c5e0c376fc6: 'MT2',
                    }
   
   def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False):
