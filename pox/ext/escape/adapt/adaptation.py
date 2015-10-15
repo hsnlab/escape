@@ -18,6 +18,7 @@ Adaptation Sublayer
 import weakref
 
 from escape import CONFIG
+from escape.adapt.managers import InternalDomainManager
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.adapt import log as log
 import escape.adapt.managers as mgrs
@@ -144,7 +145,7 @@ class ComponentConfigurator(object):
     Return the dict of initiated Domain managers.
 
     :return: container of initiated DomainManagers
-    :rtype: dict
+    :rtype: dictget_resource_info
     """
     return self.__repository
 
@@ -220,6 +221,7 @@ class ComponentConfigurator(object):
     """
     # very dummy initialization
     for mgr in CONFIG.get_default_mgrs():
+      log.debug("Init domain Manager for domain: %s" % mgr)
       self.start_mgr(domain_name=mgr)
 
   def load_internal_mgr (self):
@@ -228,6 +230,7 @@ class ComponentConfigurator(object):
 
     :return: None
     """
+    log.debug("Init domain Manager for domain: %s" % InternalDomainManager.name)
     self.start_mgr(mgrs.InternalDomainManager.name)
 
   def clear_initiated_mgrs (self):
@@ -283,11 +286,11 @@ class ControllerAdapter(object):
     # Set virtualizer-related components
     self.domainResManager = DomainResourceManager()
     self.domains = ComponentConfigurator(self)
-    log.info("Initializing Domain Managers...")
     if with_infr:
       # Init internal domain manager if Infrastructure Layer is started
       self.domains.load_internal_mgr()
     # Init default domain managers
+    log.info("Initializing Domain Managers...")
     self.domains.load_default_mgrs()
 
   def shutdown (self):
@@ -317,6 +320,11 @@ class ControllerAdapter(object):
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
     slices = self._split_into_domains(mapped_nffg)
+    if slices is None:
+      log.warning(
+        "Given mapped NFFG: %s can not be sliced! Skip domain notification "
+        "steps" % mapped_nffg)
+      return
     log.debug(
       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
     mapping_result = True
@@ -341,7 +349,7 @@ class ControllerAdapter(object):
         "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
       # Update global view (DoV) with the installed components
       self.domainResManager.get_global_view().update_global_view(mapped_nffg)
-    # print self.domainResManager.get_global_view().get_resource_info().dump()
+      # print self.domainResManager.get_global_view().get_resource_info().dump()
 
   def _handle_DomainChangedEvent (self, event):
     """
@@ -375,7 +383,11 @@ class ControllerAdapter(object):
     domains = set()
     for infra in nffg.infras:
       domains.add(infra.domain)
-    log.info("Detected domains for splitting: %s" % domains)
+    log.debug("Detected domains for splitting: %s" % domains)
+
+    if len(domains) == 0:
+      log.warning("No domain has been detected!")
+      return
 
     # Checks every domain
     for domain in domains:
@@ -500,8 +512,10 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   @property
   def name (self):
-    return self._global_nffg.name if self._global_nffg.name is not None \
-      else DoV + "-uninitialized"
+    if self._global_nffg is not None and hasattr(self._global_nffg, 'name'):
+      return self._global_nffg.name
+    else:
+      return DoV + "-uninitialized"
 
   def __str__ (self):
     return "DomainVirtualizer(name=%s)" % self.name

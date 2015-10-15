@@ -9,7 +9,7 @@ details for the connections between ESCAPEv2 and other different domains.
    escape.adapt.adapters.SDNDomainPOXAdapter
    escape.adapt.adapters.TopologyLoadException
    escape.adapt.adapters.InternalPOXAdapter
-   escape.adapt.adapters.SDNDomainPOXAdapter
+   escape.adapt.adapters.SDNDomainTopoAdapter
    escape.adapt.adapters.InternalMininetAdapter
    escape.adapt.adapters.VNFStarterAdapter
    escape.adapt.adapters.RemoteESCAPEv2RESTAdapter
@@ -25,6 +25,8 @@ external SDN/OpenFlow switches.
 
 :any:`InternalMininetAdapter` implements Mininet related functionality
 transparently e.g. start/stop/clean topology built from an :any:'NFFG'.
+
+:any:`SDNDomainTopoAdapter` implements SDN topology related functions.
 
 :any:`VNFStarterAdapter` is a helper/wrapper class for vnf_starter NETCONF
 module.

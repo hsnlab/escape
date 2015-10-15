@@ -91,6 +91,7 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
     sap1port = sap1.add_port()
     last_req_port = sap1port
     for vnf in xrange(0, next(gen_seq()) % chain_maxlen + 1):
+      vnf_added = False
       if random.random() < vnf_sharing_probabilty and len(running_nfs) > 0:
         p = random.random()
         sumlen = sum([n*len(running_nfs[n]) for n in running_nfs])
@@ -100,9 +101,18 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
           i += 1
           ratio += float(i*len(running_nfs[i])) / sumlen
         nf = random.choice(running_nfs[i])
-        while nf in nffg.nfs:
-          nf = random.choice(running_nfs[i])
-        nffg.add_node(nf)
+        if reduce(lambda a,b: a and b, [v in nffg.nfs for v in running_nfs[i]]):
+          # failing to add a VNF due to this criteria infuences the provided 
+          # vnf_sharing_probabilty, but it is estimated to be insignificant, 
+          # otherwise the generation can run into infinite loop!
+          log.warn("All the VNF-s of the subchain selected for VNF sharing are"
+                   " already in the current chain under construction! Skipping"
+                   " VNF sharing...")
+        else:
+          while nf in nffg.nfs:
+            nf = random.choice(running_nfs[i])
+          nffg.add_node(nf)
+          vnf_added = True
       else:
         nf = nffg.add_nf(id="-".join(("SC",str(test_lvl),"VNF",
                          str(vnf))),
@@ -112,11 +122,13 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
                          storage=random.random()*3,
                          delay=1 + random.random()*10,
                          bandwidth=random.random())
-      newport = nf.add_port()
-      sglink = nffg.add_sglink(last_req_port, newport)
-      sg_path.append(sglink.id)
-      last_req_port = nf.add_port()
-
+        vnf_added = True
+      if vnf_added:
+        newport = nf.add_port()
+        sglink = nffg.add_sglink(last_req_port, newport)
+        sg_path.append(sglink.id)
+        last_req_port = nf.add_port()
+        
     sap2port = sap2.add_port()
     sglink = nffg.add_sglink(last_req_port, sap2port)
     sg_path.append(sglink.id)
@@ -132,7 +144,7 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
 
 def main(argv):
   try:
-    opts, args = getopt.getopt(argv,"h",["loops", "fullremap", "bw_factor=",
+    opts, args = getopt.getopt(argv,"ho:",["loops", "fullremap", "bw_factor=",
                                "res_factor=", "lat_factor=", "request_seed=",
                                "vnf_sharing="])
   except getopt.GetoptError:
@@ -145,10 +157,13 @@ def main(argv):
   bw_factor = 1
   res_factor = 1
   lat_factor = 1
+  outputfile = "paramsearch.out"
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
       sys.exit()
+    elif opt == '-o':
+      outputfile = arg
     elif opt == "--loops":
       loops = True
     elif opt == "--fullremap":
@@ -210,10 +225,11 @@ def main(argv):
   log.info("First unsuccessful mapping was at %s test level."%test_lvl)
   if ever_successful:
     # print "\nLast successful mapping was at %s test level.\n"%(test_lvl - 1)
-    with open("paramsearch.out", "a") as f:
+    with open(outputfile, "a") as f:
       f.write("\nLast successful mapping was at %s test level.\n"%(test_lvl - 1))
   else:
-    print "\nMapping failed at starting test level (%s)\n"%test_lvl
+    with open(outputfile, "a") as f:
+      f.write("\nMapping failed at starting test level (%s)\n"%test_lvl)
 
 if __name__ == '__main__':
   main(sys.argv[1:])

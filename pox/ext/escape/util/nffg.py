@@ -528,9 +528,9 @@ class NFFG(AbstractNFFG):
     :param id: optional link id
     :type id: str or int
     :param delay: delay resource
-    :type delay: str or int
+    :type delay: str or int or float
     :param bandwidth: bandwidth resource
-    :type bandwidth: str or int
+    :type bandwidth: str or int or float
     :return: newly created edge
     :rtype: :any:`EdgeReq`
     """

@@ -51,14 +51,22 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     """
     log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
-    # print graph.dump()
-    # print resource.dump()
+    if graph is None:
+      log.error("Missing request NFFG! Abort mapping process...")
+      return
+    if resource is None:
+      log.error("Missing resource NFFG! Abort mapping process...")
+      return
     try:
       mapped_nffg = MAP(request=graph.copy(), network=resource.copy(),
                         full_remap=True)
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-ros-mapped"
+      log.debug(
+        "Mapping algorithm: %s is finished on NF-FG: %s" % (
+          cls.__name__, graph))
+      return mapped_nffg
     except MappingException as e:
       log.error("Got exception during the mapping process! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
@@ -74,13 +82,9 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       log.warning("Mapping algorithm on %s aborted!" % graph)
       raise
     except:
-      log.error("Got unexpected error during mapping process! Cause:\n%s" %
-                sys.exc_info()[0])
-      raise
-      # return
-    log.debug(
-      "Mapping algorithm: %s is finished on NF-FG: %s" % (cls.__name__, graph))
-    return mapped_nffg
+      log.error("Got unexpected error during mapping process! Cause:")
+      for e in sys.exc_info():
+        log.error(str(e))
 
 
 class NFFGMappingFinishedEvent(Event):
@@ -156,7 +160,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     else:
       mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
       if mapped_nffg is None:
-        log.warning("Mapping process is failed! Abort orchestration process.")
+        log.error("Mapping process is failed! Abort orchestration process.")
       else:
         # Steps after mapping (optional)
         log.info("NF-FG: %s orchestration is finished by %s" % (
@@ -172,7 +176,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     :return: None
     """
     if nffg is None:
-      log.warning("Mapping process is failed! Abort orchestration process.")
+      log.error("Mapping process is failed! Abort orchestration process.")
     else:
       log.debug(
         "Inform actual layer API that NFFG mapping has been finished...")

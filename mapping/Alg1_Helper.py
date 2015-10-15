@@ -26,7 +26,7 @@ from heapq import heappush, heappop
 from itertools import count
 
 log = logging.getLogger("mapping")
-if not log.level:
+if not log.getEffectiveLevel():
   logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
   log.setLevel(logging.INFO)
 

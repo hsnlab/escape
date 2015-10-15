@@ -27,9 +27,10 @@ def main ():
   parser = argparse.ArgumentParser(
     description="ESCAPE: Extensible Service ChAin Prototyping Environment "
                 "using "
-                "Mininet, Click, NETCONF and POX")
+                "Mininet, Click, NETCONF and POX",
+    add_help=True,
+    version="2.0.0")
   # Optional arguments
-  parser.add_argument("-v", "--version", action="version", version="2.0.0")
   escape = parser.add_argument_group("ESCAPE arguments")
   escape.add_argument("-c", "--config", metavar="path", type=str,
                       # default="pox/escape.config",
@@ -38,15 +39,18 @@ def main ():
                       help="run the ESCAPE in debug mode")
   escape.add_argument("-f", "--full", action="store_true", default=False,
                       help="run the infrastructure layer also")
+  escape.add_argument("-s", "--service", metavar="file", type=str,
+                      help="skip the SAS REST-API initiation and read the "
+                           "service request from the given file")
   escape.add_argument("-i", "--interactive", action="store_true", default=False,
                       help="run an interactive shell for observing internal "
                            "states")
   escape.add_argument("-a", "--agent", action="store_true", default=False,
-                      help="run in agent role an start an REST API (without "
-                           "service layer)")
+                      help="run in agent mode: start the ROS REST-API ("
+                           "without the Service sublayer (SAS))")
   escape.add_argument("-r", "--rosapi", action="store_true", default=False,
                       help="start the REST-API for the Resource Orchestration "
-                           "layer")
+                           "sublayer (ROS)")
   escape.add_argument("-4", "--cfor", action="store_true", default=False,
                       help="start the REST-API for the Cf-Or interface")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
@@ -62,13 +66,20 @@ def main ():
     kill_remained_parts()
     return
 
+  # Create absolute path for the pox.py initial script
+  cmd = os.path.abspath(os.path.dirname(__file__) + "/pox/pox.py")
+
   # Construct POX init command according to argument
   # basic command
-  cmd = "./pox/pox.py unify"
+  cmd = "%s unify" % cmd
 
   # Run the Infrastructure Layer with the required root privilege
   if args.full:
     cmd = "sudo %s --full" % cmd
+
+  # Read the service request NFFG from a file and start the mapping process
+  if args.service:
+    cmd = "sudo %s --sg_file=%s" % (cmd, os.path.abspath(args.service))
 
   # Override optional external config file
   if args.config:
@@ -120,6 +131,7 @@ def kill_remained_parts ():
     print "Run cleaning process..."
     from misc import remove_junks
     remove_junks()
+    print "Cleaned."
 
 
 if __name__ == '__main__':

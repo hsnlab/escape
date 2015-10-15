@@ -165,10 +165,17 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     """
     log.debug(
       "Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
-
     # Create Single BiSBiS NFFG
     nffg = NFFG(id="SingleBiSBiS-NFFG", name="Single-BiSBiS-View")
+    if self.global_view is None:
+      log.error(
+        "Missing global view from %s. Skip OneBiSBiS generation!" %
+        self.__class__.__name__)
+      return
     dov = self.global_view.get_resource_info()
+    if dov is None:
+      log.error("Missing resource info from DoV. Skip OneBisBis generation!")
+      return
     # Create the single BiSBiS infra
     sbb = nffg.add_infra(id="SingleBiSbiS", name="Single-BiSBiS",
                          domain=NFFG.DOMAIN_VIRTUAL,
@@ -229,6 +236,7 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
                                                 bandwidth=l.bandwidth)
         log.debug("Add connection: %s" % link1)
         log.debug("Add connection: %s" % link2)
+    log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return nffg
 

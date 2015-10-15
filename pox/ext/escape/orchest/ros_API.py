@@ -198,7 +198,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     Response configuration.
     """
     log.info("Call REST-API function: get-config")
-    config = self._proceed_API_call('api_agent_get_config')
+    config = self._proceed_API_call('api_ros_get_config')
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(config))
@@ -213,9 +213,30 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    # Rewrite domain name to INTERNAL
+    # nffg = self._update_REMOTE_ESCAPE_domain(nffg_part=nffg)
     log.debug("Parsed NFFG install request: %s" % nffg)
-    self._proceed_API_call('api_agent_edit_config', nffg)
+    self._proceed_API_call('api_ros_edit_config', nffg)
     self.send_acknowledge()
+
+  def _update_REMOTE_ESCAPE_domain (self, nffg_part):
+    """
+    Update domain descriptor of infras: REMOTE -> INTERNAL
+
+    :param nffg_part: NF-FG need to be updated
+    :type nffg_part: :any:`NFFG`
+    :return: updated NFFG
+    :rtype: :any:`NFFG`
+    """
+    log.debug("Rewrite domain name of incoming NFFG to INTERNAL...")
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      if infra.domain == 'REMOTE':
+        infra.domain = 'INTERNAL'
+    return nffg_part
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -251,10 +272,18 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.debug("Initializing Resource Orchestration Sublayer...")
     self.resource_orchestrator = ResourceOrchestrator(self)
     if self._nffg_file:
-      self._read_json_from_file(self._nffg_file)
+      try:
+        service_request = self._read_json_from_file(self._nffg_file)
+        service_request = NFFG.parse(service_request)
+        self.__proceed_instantiation(nffg=service_request)
+      except (ValueError, IOError, TypeError) as e:
+        log.error(
+          "Can't load service request from file because of: " + str(e))
+      else:
+        log.info("Graph representation is loaded successfully!")
     # Initiate ROS REST-API if needed
     if self._agent or self._rosapi:
-      self._initiate_agent_api()
+      self._initiate_ros_api()
     # Initiate Cf-Or REST-API if needed
     if self._cfor:
       self._initiate_cfor_api()
@@ -267,12 +296,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
     log.info("Resource Orchestration Sublayer is going down...")
-    if hasattr(self, 'agent_api') and self.agent_api:
-      self.agent_api.stop()
+    if hasattr(self, 'agent_api') and self.ros_api:
+      self.ros_api.stop()
 
-  def _initiate_agent_api (self):
+  def _initiate_ros_api (self):
     """
     Initialize and setup REST API in a different thread.
+
+    If agent_mod is set rewrite the received NFFG domain from REMOTE to
+    INTERNAL.
 
     :return: None
     """
@@ -281,8 +313,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.bounded_layer = self._core_name
     # can override from global config
     handler.prefix = CONFIG.get_ros_agent_prefix()
-    self.agent_api = RESTServer(handler, *CONFIG.get_ros_agent_address())
-    self.agent_api.start()
+    self.ros_api = RESTServer(handler, *CONFIG.get_ros_agent_address())
+    self.ros_api.start()
+    if self._agent:
+      log.info("REST-API is set in AGENT mode")
 
   def _initiate_cfor_api (self):
     """
@@ -313,7 +347,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # Agent API functions starts here
   ##############################################################################
 
-  def api_agent_get_config (self):
+  def api_ros_get_config (self):
     """
     Implementation of REST-API RPC: get-config.
 
@@ -325,13 +359,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if dov is not None:
       return dov.get_resource_info().dump()
 
-  class InstallEventHelper(object):
-    """
-    Helper class for emulating event.
-    """
-    _core_name = "RemoteESCAPE"
-
-  def api_agent_edit_config (self, nffg):
+  def api_ros_edit_config (self, nffg):
     """
     Implementation of REST-API RPC: edit-config
 
@@ -340,9 +368,34 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
-    event = InstantiateNFFGEvent(nffg=nffg)
-    event.source = self.InstallEventHelper
-    self._handle_InstantiateNFFGEvent(event=event)
+    if self._agent:
+      # ESCAPE serves as a local orchestrator, probably with infrastructure
+      # layer --> rewrite domain
+      nffg = self.__update_nffg(nffg_part=nffg)
+    # ESCAPE serves as a global or proxy orchestrator
+    self.__proceed_instantiation(nffg=nffg)
+
+  def __update_nffg (self, nffg_part):
+    """
+    Update domain descriptor of infras: REMOTE -> INTERNAL
+
+    :param nffg_part: NF-FG need to be updated
+    :type nffg_part: :any:`NFFG`
+    :return: updated NFFG
+    :rtype: :any:`NFFG`
+    """
+    log.debug("Rewrite received NFFG domain to INTERNAL...")
+    rewritten = []
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      if infra.domain == 'REMOTE':
+        infra.domain = 'INTERNAL'
+        rewritten.append(infra.id)
+    log.debug("Rewritten infrastructure nodes: %s" % rewritten)
+    return nffg_part
 
   ##############################################################################
   # Cf-Or API functions starts here
@@ -373,15 +426,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
-    event = InstantiateNFFGEvent(nffg=nffg)
-    event.source = self.InstallEventHelper
-    self._handle_InstantiateNFFGEvent(event=event)
+    self.__proceed_instantiation(nffg=nffg)
 
   ##############################################################################
   # UNIFY Sl- Or API functions starts here
   ##############################################################################
 
-  @schedule_as_coop_task
   def _handle_InstantiateNFFGEvent (self, event):
     """
     Instantiate given NF-FG (UNIFY Sl - Or API).
@@ -392,14 +442,25 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Received NF-FG: %s from %s layer" % (
       event.nffg, str(event.source._core_name).title()))
+    self.__proceed_instantiation(nffg=event.nffg)
+
+  @schedule_as_coop_task
+  def __proceed_instantiation (self, nffg):
+    """
+    Helper function to instantiate the NFFG mapping from different source.
+
+    :param nffg: pre-mapped service request
+    :type nffg: :any:`NFFG`
+    :return: None
+    """
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
-      self.__class__.__name__, event.nffg.name))
-    mapped_nffg = self.resource_orchestrator.instantiate_nffg(event.nffg)
+      self.__class__.__name__, nffg.name))
+    mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
     log.getChild('API').debug(
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
     if mapped_nffg is not None:
-      self._install_NFFG(mapped_nffg)
+      self._install_NFFG(mapped_nffg=mapped_nffg)
 
   def _install_NFFG (self, mapped_nffg):
     """
