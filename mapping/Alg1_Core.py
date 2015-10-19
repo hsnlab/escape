@@ -750,7 +750,7 @@ class CoreAlgorithm(object):
           try:
             out_infra_port = nffg.network.node[host].ports[infra_port_id]
             self.log.debug("Port %s found in Infra %s leading to port %s of NF"
-                           " %s."%(infra_port_id, host, d.dst.id, vnf))
+                           " %s."%(infra_port_id, host, d.src.id, vnf))
           except KeyError:
             out_infra_port = nffg.network.node[host].add_port(id=infra_port_id)
             self.log.debug("Port %s added to Infra %s to NF %s." 

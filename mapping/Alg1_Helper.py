@@ -378,8 +378,9 @@ class MappingManager(object):
       # feasibility already checked by the core algorithm
       self.chain_subchain.node[c]['avail_latency'] -= used_lat
       new_avail_lat = self.chain_subchain.node[c]['avail_latency']
-      if new_avail_lat > self.chain_subchain.node[c]['permitted_latency'] or \
-         new_avail_lat <= 0:
+      permitted = self.chain_subchain.node[c]['permitted_latency']
+      if new_avail_lat > 1.01*permitted or \
+         new_avail_lat <= -0.01*permitted:
         raise uet.InternalAlgorithmException("MappingManager error: End-to-End"
          " available latency cannot exceed maximal permitted or got below zero!")
     self.chain_subchain.node[subchain_id]['last_used_host'] = last_used_host
