@@ -54,6 +54,81 @@ class AbstractMappingStrategy(object):
     raise NotImplementedError("Derived class must override this function!")
 
 
+class ValidationError(Exception):
+  """
+  Specific error signaling characteristics (one or more) does not meet the
+  requirements checked and/or defined in a inherited class of
+  :any:`AbstractValidator`.
+  """
+  pass
+
+
+class AbstractValidator(object):
+  """
+  Abstract class for contain and perform validation steps.
+  """
+
+  def pre_mapping_validation (self, input_graph, resource_graph):
+    """
+    Invoked right before the mapping algorithm.
+
+    The given attributes are direct reference to the :any:`NFFG` objects
+    which are forwarded to the algorithm.
+
+    If there is a return value considering True (e.g. True, not-empty
+    container, collection, an object reference etc.) or a kind of specific
+    ValidationError is thrown in the function the mapping process will be
+    skipped and the orchestration process will be aborted.
+
+    The Validator instance is created during the initialization of ESCAPEv2
+    and used the same instance before/after every mapping process to provide
+    a persistent way to cache data between validations.
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_graph: resource information
+    :type resource_graph: :any:`NFFG`
+    :return: need to abort the mapping process
+    :rtype: bool or None
+    """
+    raise NotImplementedError("Derived class must override this function!")
+
+  def post_mapping_validation (self, input_graph, resource_graph, result_graph):
+    """
+    Invoked right after if the mapping algorithm is completed without an error.
+
+    The given attributes are direct reference to the :any:`NFFG` objects
+    the mapping algorithm is worked on.
+
+    If there is a return value considering True (e.g. True, not-empty
+    container, collection, an object reference etc.) or a kind of specific
+    ValidationError is thrown in the function the orchestration process will
+    be aborted.
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_graph: resource information
+    :type resource_graph: :any:`NFFG`
+    :param result_graph: result of the mapping process
+    :type result_graph: :any:`NFFG`
+    :return: need to abort the mapping process
+    :rtype: bool or None
+    """
+    raise NotImplementedError("Derived class must override this function!")
+
+
+class ValidatorSkipper(AbstractValidator):
+  """
+  Default class for skipping validation and proceed to mapping algorithm.
+  """
+
+  def pre_mapping_validation (self, input_graph, resource_graph):
+    return False
+
+  def post_mapping_validation (self, input_graph, resource_graph, result_graph):
+    return False
+
+
 class AbstractMapper(EventMixin):
   """
   Abstract class for graph mapping function.
@@ -91,6 +166,7 @@ class AbstractMapper(EventMixin):
     :type threaded: bool
     :return: None
     """
+    self._layer_name = layer_name
     # Set threaded
     self._threaded = threaded if threaded is not None else CONFIG.get_threaded(
       layer_name)
@@ -108,7 +184,28 @@ class AbstractMapper(EventMixin):
                       AbstractMappingStrategy), "Mapping strategy is not " \
                                                 "subclass of " \
                                                 "AbstractMappingStrategy!"
+    self.validator = CONFIG.get_mapping_validator(layer_name)()
     super(AbstractMapper, self).__init__()
+
+  def _perform_mapping (self, input_graph, resource_view):
+    """
+    Abstract function for wrapping optional steps connected to initiate
+    mapping algorithm.
+
+    Implemented function call the mapping algorithm.
+
+    .. warning::
+      Derived class have to override this function
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_view: resource information
+    :type resource_view: :any:`AbstractVirtualizer`
+    :raise: NotImplementedError
+    :return: mapped graph
+    :rtype: :any:`NFFG`
+    """
+    raise NotImplementedError("Derived class must override this function!")
 
   def orchestrate (self, input_graph, resource_view):
     """
@@ -127,7 +224,28 @@ class AbstractMapper(EventMixin):
     :return: mapped graph
     :rtype: :any:`NFFG`
     """
-    raise NotImplementedError("Derived class must override this function!")
+    # If validator is not None call the pre/post functions
+    if CONFIG.get_validation_enabled(layer=self._layer_name):
+      if self.validator is not None:
+        # Get resource info
+        resource_graph = resource_view.get_resource_info()
+        # Preform pre-mapping validation
+        if self.validator.pre_mapping_validation(
+             input_graph=input_graph, resource_graph=resource_graph):
+          raise ValidationError("Pre mapping validation is failed!")
+        # Invoke mapping algorithm
+        mapping_result = self._perform_mapping(input_graph=input_graph,
+                                               resource_view=resource_view)
+        # Perform post-mapping validation
+        if self.validator.post_mapping_validation(input_graph=input_graph,
+                                                  resource_graph=resource_graph,
+                                                  result_graph=mapping_result):
+          raise ValidationError("Post mapping validation is failed!")
+        return mapping_result
+    else:
+      # Invoke only the mapping algorithm
+      return self._perform_mapping(input_graph=input_graph,
+                                   resource_view=resource_view)
 
   def _start_mapping (self, graph, resource):
     """
@@ -177,19 +295,19 @@ class AbstractOrchestrator(object):
   # Default Mapper class as a fallback mapper
   DEFAULT_MAPPER = None
 
-  def __init__ (self, layer_name, mapper=None, strategy=None):
+  def __init__ (self, layer_API, mapper=None, strategy=None):
     """
     Init.
 
-    :param layer_name: name of the layer which initialize this class. This
-      value is used to search the layer configuration in `CONFIG`
-    :type layer_name: str
+    :param layer_API: reference os the actual layer performing the orchestration
+    :type layer_API: :any:`AbstractAPI`
     :param mapper: additional mapper class (optional)
     :type mapper: :any:`AbstractMapper`
     :param strategy: override strategy class for the used Mapper (optional)
     :type strategy: :any:`AbstractMappingStrategy`
     :return: None
     """
+    layer_name = layer_API._core_name
     # Set Mapper
     if mapper is None:
       # Use the Mapper in CONFIG
@@ -202,4 +320,9 @@ class AbstractOrchestrator(object):
     assert issubclass(mapper, AbstractMapper), "Mapper is not subclass of " \
                                                "AbstractMapper!"
     self.mapper = mapper(strategy=strategy)
+    # Init Mapper listeners
+    # Listeners must be weak references in order the layer API can garbage
+    # collected
+    # self.mapper is set by the AbstractOrchestrator's constructor
+    self.mapper.addListeners(layer_API, weak=True)
     super(AbstractOrchestrator, self).__init__()

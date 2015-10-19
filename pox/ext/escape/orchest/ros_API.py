@@ -468,6 +468,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # If mapping is not threaded and finished with OK
     if mapped_nffg is not None:
       self._install_NFFG(mapped_nffg=mapped_nffg)
+    else:
+      log.warning(
+        "Something went wrong in service request instantiation: mapped service "
+        "request is missing!")
 
   def _install_NFFG (self, mapped_nffg):
     """

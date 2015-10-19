@@ -92,10 +92,15 @@ class ESCAPEConfig(object):
         "Load explicitly given config file: %s" % os.path.basename(config))
     else:
       # Detect default config
-      config = os.path.abspath(
-        os.path.dirname(__file__) + "../../../../" + self.__configuration[
-          self.DEFAULT_CFG])
-      log.debug("Load default config file: %s" % os.path.basename(config))
+      try:
+        config = os.path.abspath(
+          os.path.dirname(__file__) + "../../../../" + self.__configuration[
+            self.DEFAULT_CFG])
+        log.debug("Load default config file: %s" % os.path.basename(config))
+      except KeyError:
+        log.debug(
+          "Additional config file is not found! Skip configuration update")
+        return self
     try:
       # Load file
       with open(os.path.abspath(config), 'r') as f:
@@ -110,7 +115,7 @@ class ESCAPEConfig(object):
           log.warning(
             "Unidentified layer name in loaded configuration: %s" % layer)
       if changed:
-        log.info("Part(s) of running configuration has been updated!")
+        log.info("Running configuration has been updated from file!")
         return self
     except IOError as e:
       log.debug("Additional configuration file not found: %s" % config)
@@ -267,12 +272,12 @@ class ESCAPEConfig(object):
       return getattr(importlib.import_module(
         self.__configuration[layer]['STRATEGY']['module']),
         self.__configuration[layer]['STRATEGY']['class'], None)
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError, TypeError):
       return None
 
   def get_mapper (self, layer):
     """
-    Return with th Mapper class of the given layer.
+    Return with the Mapper class of the given layer.
 
     :param layer: layer name
     :type layer: str
@@ -283,8 +288,38 @@ class ESCAPEConfig(object):
       return getattr(importlib.import_module(
         self.__configuration[layer]['MAPPER']['module']),
         self.__configuration[layer]['MAPPER']['class'], None)
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError, TypeError):
       return None
+
+  def get_mapping_validator (self, layer):
+    """
+    Return with Validator class of the given layer.
+
+    :param layer: layer name
+    :type layer: str
+    :return: Validator class
+    :rtype: :any:`AbstractValidator`
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[layer]['VALIDATOR']['module']),
+        self.__configuration[layer]['VALIDATOR']['class'], None)
+    except (KeyError, AttributeError, TypeError):
+      return None
+
+  def get_validation_enabled (self, layer):
+    """
+    Return the mapping process is enabled for the ``layer`` or not.
+
+    :param layer: layer name
+    :type layer: str
+    :return: enabled value (default: True)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[layer]['VALIDATOR']['validation-enabled']
+    except KeyError:
+      return False
 
   def get_threaded (self, layer):
     """
@@ -389,8 +424,8 @@ class ESCAPEConfig(object):
     try:
       # Project root dir relative to this module which is/must be under pox/ext
       return os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..",
-                                          self.__configuration[INFR][
-                                            "SDN-TOPO"]))
+                                          self.__configuration[ADAPT][
+                                            "SDN-TOPO"]["path"]))
     except KeyError:
       return None
 
@@ -533,5 +568,17 @@ class ESCAPEConfig(object):
     """
     try:
       return self.__configuration[ADAPT][adapter]['keepalive']
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError, TypeError):
       return False
+
+  def get_SAP_xterms (self):
+    """
+    Return the value if need to initiate xtemrs assigned to SAPs.
+
+    :return: xterms
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[INFR]["SAP-xterms"]
+    except (KeyError, AttributeError, TypeError):
+      return True

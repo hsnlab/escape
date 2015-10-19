@@ -278,6 +278,10 @@ class ServiceLayerAPI(AbstractAPI):
     # If mapping is not threaded and finished with OK
     if service_nffg is not None:
       self._instantiate_NFFG(service_nffg)
+    else:
+      log.warning(
+        "Something went wrong in service request initiation: mapped service "
+        "request is missing!")
     self.last_sg = service_nffg
 
   def api_sas_get_topology (self):

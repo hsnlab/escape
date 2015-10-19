@@ -41,6 +41,9 @@ cfg = {"service": {  # Service Adaptation Sublayer
                      "STRATEGY": {"module": "escape.service.sas_mapping",
                                   "class": "DefaultServiceMappingStrategy",
                                   "THREADED": False},
+                     "VALIDATOR": {"module": "escape.util.mapping",
+                                   "class": "ValidatorSkipper",
+                                   "validation-enabled": False},
                      "REST-API": {"module": "escape.service.sas_API",
                                   "class": "ServiceRequestHandler",
                                   "address": "0.0.0.0", "port": 8008,
@@ -52,6 +55,9 @@ cfg = {"service": {  # Service Adaptation Sublayer
                            "STRATEGY": {"module": "escape.orchest.ros_mapping",
                                         "class": "ESCAPEMappingStrategy",
                                         "THREADED": False},
+                           "VALIDATOR": {"module": "escape.util.mapping",
+                                         "class": "ValidatorSkipper",
+                                         "validation-enabled": True},
                            "AGENT": {"module": "escape.orchest.ros_API",
                                      "class": "ROSAgentRequestHandler",
                                      "prefix": "escape",
@@ -64,9 +70,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                      "port": 8889}},
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        # "DEFAULTS": ["SDN", "OPENSTACK", "UN"],
-                        "DEFAULTS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
-                        # "DEFAULTS": [],
+                        # "DEFAULTS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
+                        "DEFAULTS": [],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.adapters",
                                          "class": "InternalPOXAdapter",
@@ -74,13 +79,14 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                          "keepalive": False},
                         "SDN-POX": {"module": "escape.adapt.adapters",
                                     "class": "SDNDomainPOXAdapter",
-                                    "address": "192.168.1.101", "port": 6633,
-                                    # "address": "0.0.0.0", "port": 6633,
+                                    "address": "0.0.0.0", "port": 6633,
                                     "keepalive": False},
                         "MININET": {"module": "escape.adapt.adapters",
                                     "class": "InternalMininetAdapter"},
-                        "SDN-topo": {"module": "escape.adapt.adapters",
-                                     "class": "SDNDomainTopoAdapter"},
+                        "SDN-TOPO": {"module": "escape.adapt.adapters",
+                                     "class": "SDNDomainTopoAdapter",
+                                     "path": "sdn-topo.nffg"  # relative to ext/
+                                     },
                         "VNFStarter": {"module": "escape.adapt.adapters",
                                        "class": "VNFStarterAdapter",
                                        "username": "mininet",
@@ -88,17 +94,13 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                        "server": "127.0.0.1", "port": 830},
                         "ESCAPE-REST": {"module": "escape.adapt.adapters",
                                         "class": "RemoteESCAPEv2RESTAdapter",
-                                        # "url": "http://localhost:8083"},
-                                        # "url": "http://192.168.1.111:8888/escape/"},
-                                        "url": "http://192.168.1.102:8888/escape/"},
+                                        "url": "http://localhost:8083"},
                         "OpenStack-REST": {"module": "escape.adapt.adapters",
                                            "class": "OpenStackRESTAdapter",
-                                           # "url": "http://localhost:8081"},
-                                           "url": "http://192.168.1.103:8888/virtualizer/"},
+                                           "url": "http://localhost:8081"},
                         "UN-REST": {"module": "escape.adapt.adapters",
                                     "class": "UniversalNodeRESTAdapter",
-                                    # "url": "http://localhost:8082"},
-                                    "url": "http://192.168.1.104:8080"},
+                                    "url": "http://localhost:8082"},
                         # Specific Domain Managers
                         "INTERNAL": {"module": "escape.adapt.managers",
                                      "class": "InternalDomainManager",
@@ -125,11 +127,10 @@ cfg = {"service": {  # Service Adaptation Sublayer
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
                                                 "FallbackDynamicTopology"},
-                            "SDN-TOPO": "sdn-topo.nffg",  # relative to ext/
-                            # "SDN-TOPO": "escape-mn-topo.nffg",  # relative
-                            # to ext/
+                            "SAP-xterms": True,
                             "SHUTDOWN-CLEAN": True},
-       "additional-config-file": "escape.config"}  # relative to ext/
+       "additional-config-file": "escape.config"
+       }  # relative to ext/
 
 
 def add_dependencies ():

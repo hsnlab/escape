@@ -121,7 +121,7 @@ class ServiceGraphMapper(AbstractMapper):
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, self.strategy.__name__))
 
-  def orchestrate (self, input_graph, resource_view):
+  def _perform_mapping (self, input_graph, resource_view):
     """
     Orchestrate mapping of given service graph on given virtual resource.
 
@@ -135,7 +135,7 @@ class ServiceGraphMapper(AbstractMapper):
     log.debug("Request %s to launch orchestration on SG: %s with View: %s" % (
       self.__class__.__name__, input_graph, resource_view))
     # Steps before mapping (optional)
-    # log.debug("Request global resource info...")
+    log.debug("Request resource info from layer virtualizer...")
     virt_resource = resource_view.get_resource_info()
     # resource_view.sanity_check(input_graph)
     # Check if the mapping algorithm is enabled

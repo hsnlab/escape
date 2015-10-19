@@ -15,10 +15,10 @@
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
-from escape.orchest import log as log, LAYER_NAME
+from escape.orchest import log as log
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer, \
   VirtualizerManager
-from escape.util.mapping import AbstractOrchestrator
+from escape.util.mapping import AbstractOrchestrator, ValidationError
 from escape.orchest.nfib_mgmt import NFIBManager
 
 
@@ -37,7 +37,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     :type layer_API: :any:`ResourceOrchestrationAPI`
     :return: None
     """
-    super(ResourceOrchestrator, self).__init__(LAYER_NAME)
+    super(ResourceOrchestrator, self).__init__(layer_API=layer_API)
     log.debug("Init %s" % self.__class__.__name__)
     self.nffgManager = NFFGManager()
     # Init virtualizer manager
@@ -45,11 +45,6 @@ class ResourceOrchestrator(AbstractOrchestrator):
     # collected
     self.virtualizerManager = VirtualizerManager()
     self.virtualizerManager.addListeners(layer_API, weak=True)
-    # Init RO Mapper listeners
-    # Listeners must be weak references in order the layer API can garbage
-    # collected
-    # self.mapper is set by the AbstractOrchestrator's constructor
-    self.mapper.addListeners(layer_API, weak=True)
     # Init NFIB manager
     self.nfibManager = NFIBManager()
     self.nfibManager.initialize()
@@ -71,10 +66,13 @@ class ResourceOrchestrator(AbstractOrchestrator):
     if global_view is not None:
       if isinstance(global_view, AbstractVirtualizer):
         # Run Nf-FG mapping orchestration
-        mapped_nffg = self.mapper.orchestrate(nffg, global_view)
-        log.debug(
-          "NF-FG instantiation is finished by %s" % self.__class__.__name__)
-        return mapped_nffg
+        try:
+          mapped_nffg = self.mapper.orchestrate(nffg, global_view)
+          log.debug(
+            "NF-FG instantiation is finished by %s" % self.__class__.__name__)
+          return mapped_nffg
+        except ValidationError as e:
+          log.warning("Validation was unsuccessful! Cause: %s" % e)
       else:
         log.warning("Global view is not subclass of AbstractVirtualizer!")
     else:

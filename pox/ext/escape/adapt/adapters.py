@@ -224,13 +224,14 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
 
   Currently it just read the static description from file, and not discover it.
   """
-  name = "SDN-topo"
+  name = "SDN-TOPO"
 
   def __init__ (self, path=None):
     log.debug("Init SDNDomainTopoAdapter with optional path: %s" % path)
+    print path
     super(SDNDomainTopoAdapter, self).__init__()
     self.topo = None
-    self.__init_from_CONFIG(path=path)
+    self.__init_from_CONFIG()
 
   def check_domain_reachable (self):
     """

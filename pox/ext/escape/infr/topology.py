@@ -341,9 +341,12 @@ class ESCAPENetworkBridge(object):
                           logger=LAYER_NAME)
         self.started = True
         log.debug("Mininet network has been started!")
-        log.debug("Starting xterm on SAPS...")
-        terms = makeTerms(self.__mininet.hosts, 'host')
-        self.xterms.extend(terms)
+        if CONFIG.get_SAP_xterms():
+          log.debug("Starting xterm on SAPS...")
+          terms = makeTerms(self.__mininet.hosts, 'host')
+          self.xterms.extend(terms)
+        else:
+          log.debug("Skip starting xterms on SAPS according to global config")
 
         nffg = self.topo_desc
         # FIXME - SIGCOMM, move port creation into topo creation with MN's

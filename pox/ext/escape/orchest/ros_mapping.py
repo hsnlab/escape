@@ -118,11 +118,12 @@ class ResourceOrchestrationMapper(AbstractMapper):
 
     :return: None
     """
-    super(ResourceOrchestrationMapper, self).__init__(LAYER_NAME, strategy)
+    super(ResourceOrchestrationMapper, self).__init__(layer_name=LAYER_NAME,
+                                                      strategy=strategy)
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, self.strategy.__name__))
 
-  def orchestrate (self, input_graph, resource_view):
+  def _perform_mapping (self, input_graph, resource_view):
     """
     Orchestrate mapping of given NF-FG on given global resource.
 
@@ -136,7 +137,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     log.debug("Request %s to launch orchestration on NF-FG: %s with View: "
               "%s" % (self.__class__.__name__, input_graph, resource_view))
     # Steps before mapping (optional)
-    # log.debug("Request global resource info...")
+    log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
     # Check if the mapping algorithm is enabled
     if not CONFIG.get_mapping_enabled(LAYER_NAME):
