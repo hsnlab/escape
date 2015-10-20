@@ -112,18 +112,6 @@ class CfOrRequestHandler(AbstractRequestHandler):
     """
     AbstractRequestHandler.__init__(self, request, client_address, server)
 
-  def ping (self):
-    """
-    For testing REST API aliveness and reachability.
-    """
-    response_body = "OK"
-    self.send_response(200)
-    self.send_header('Content-Type', 'text/plain')
-    self.send_header('Content-Length', len(response_body))
-    self.send_REST_headers()
-    self.end_headers()
-    self.wfile.write(response_body)
-
   def get_config (self):
     """
     Response configuration.
@@ -186,18 +174,6 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     Init.
     """
     AbstractRequestHandler.__init__(self, request, client_address, server)
-
-  def ping (self):
-    """
-    For testing REST API aliveness and reachability.
-    """
-    response_body = "OK"
-    self.send_response(200)
-    self.send_header('Content-Type', 'text/plain')
-    self.send_header('Content-Length', len(response_body))
-    self.send_REST_headers()
-    self.end_headers()
-    self.wfile.write(response_body)
 
   def get_config (self):
     """
