@@ -78,6 +78,7 @@ class BacktrackHandler(object):
         if self.current_subchain_level < len(self.subchains_with_subgraphs):
           subchain = self.subchains_with_subgraphs[self.current_subchain_level][0]
           subgraph = self.subchains_with_subgraphs[self.current_subchain_level][1]
+          self.log.info("Starting to map next subchain: %s"%subchain['chain'])
         else:
           return None
       self.vnf_index_in_subchain += 1

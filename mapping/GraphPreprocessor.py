@@ -65,11 +65,21 @@ class GraphPreprocessorClass(object):
     """
     sap_begin = self.manager.getIdOfChainEnd_fromNetwork(chain['chain'][0])
     sap_end = self.manager.getIdOfChainEnd_fromNetwork(chain['chain'][-1])
-
+    
     if sap_end == -1 or sap_begin == -1:
       raise uet.InternalAlgorithmException(
         "Called subgraph finding with one of the chain ends not yet mapped!")
 
+    req_saps = {self.manager.getIdOfChainEnd_fromNetwork(sap.id) \
+                for sap in self.req_graph.saps \
+                if sap.id != chain['chain'][0] and sap.id != chain['chain'][-1]}
+    req_saps.add(sap_begin)
+    req_saps.add(sap_end)
+    if -1 in req_saps:
+      raise uet.BadInputException("All SAPs in the Request graph should have"
+                " unambiguous pair in the substrate network","One of the "
+                "request SAPs couldn't be mapped to a SAP in the substrate"
+                                  " network!")
     current = sap_begin
     pending = []
     visited = {sap_begin}
@@ -82,8 +92,10 @@ class GraphPreprocessorClass(object):
           forwarding_latency = 0.0
           if self.net.network.node[n].type != 'SAP':
             forwarding_latency = self.net.network.node[n].resources['delay']
-          if self.shortest_paths[n][sap_end] + dist + forwarding_latency <= \
-               chain['delay']:
+          elif n not in req_saps:
+            continue
+          if self.shortest_paths[n][sap_end] + dist + \
+             forwarding_latency <= chain['delay']:
             self.log.debug("Node %s in sight with good distance" % n)
             pending.append(n)
       if len(pending) > 0:
@@ -291,6 +303,7 @@ class GraphPreprocessorClass(object):
     e2e_sorted = sorted([t[0] for t in e2e_w_graph], key=lambda c: c['delay'])
 
     rechaining_cycles = 0
+    self.log.info("Creating subchains...")
     while colored_req.number_of_edges() != 0:
       e2e = e2e_sorted[rechaining_cycles % len(e2e_sorted)]
       vnfs_sorted_by_degree = sorted(

@@ -849,6 +849,7 @@ class CoreAlgorithm(object):
   def start (self):
     # breaking when there are no more BacktrackLevels forward, meaning the 
     # mapping is full. Or exception is thrown, when mapping can't be finished.
+    self.log.info("Starting core mapping procedure...")
     while True:
       # Mapping must be started with subchains derived from e2e chains,
       # with lower latency requirement. It is realiyed by the preprocessor,
