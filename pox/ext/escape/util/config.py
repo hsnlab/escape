@@ -291,19 +291,19 @@ class ESCAPEConfig(object):
     except (KeyError, AttributeError, TypeError):
       return None
 
-  def get_mapping_validator (self, layer):
+  def get_mapping_processor (self, layer):
     """
     Return with Validator class of the given layer.
 
     :param layer: layer name
     :type layer: str
     :return: Validator class
-    :rtype: :any:`AbstractValidator`
+    :rtype: :any:`AbstractMappingDataProcessor`
     """
     try:
       return getattr(importlib.import_module(
-        self.__configuration[layer]['VALIDATOR']['module']),
-        self.__configuration[layer]['VALIDATOR']['class'], None)
+        self.__configuration[layer]['PROCESSOR']['module']),
+        self.__configuration[layer]['PROCESSOR']['class'], None)
     except (KeyError, AttributeError, TypeError):
       return None
 
@@ -317,7 +317,7 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[layer]['VALIDATOR']['validation-enabled']
+      return self.__configuration[layer]['PROCESSOR']['enabled']
     except KeyError:
       return False
 
@@ -450,8 +450,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-        self.__configuration[ORCHEST]["AGENT"]['module']),
-        self.__configuration[ORCHEST]["AGENT"]['class'], None)
+        self.__configuration[ORCHEST]["Sl-Or"]['module']),
+        self.__configuration[ORCHEST]["Sl-Or"]['class'], None)
     except KeyError:
       return None
 
@@ -463,7 +463,7 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     try:
-      return self.__configuration[ORCHEST]["AGENT"]['prefix']
+      return self.__configuration[ORCHEST]["Sl-Or"]['prefix']
     except KeyError:
       return None
 
@@ -475,8 +475,8 @@ class ESCAPEConfig(object):
     :rtype: tuple
     """
     try:
-      return (self.__configuration[ORCHEST]["AGENT"]['address'],
-              self.__configuration[ORCHEST]["AGENT"]['port'])
+      return (self.__configuration[ORCHEST]["Sl-Or"]['address'],
+              self.__configuration[ORCHEST]["Sl-Or"]['port'])
     except KeyError:
       return None
 
@@ -556,6 +556,21 @@ class ESCAPEConfig(object):
       return (self.__configuration[ORCHEST]["Cf-Or"]['address'],
               self.__configuration[ORCHEST]["Cf-Or"]['port'])
     except KeyError:
+      return None
+
+  def get_api_virtualizer (self, layer_name, api_name):
+    """
+    Return the type of the assigned Virtualizer.
+
+
+    :param api_name: name of the REST-API in the global config.
+    :type api_name: str
+    :return: type of the Virtualizer as in :any:`VirtualizerManager.TYPES`
+    :rtype: str
+    """
+    try:
+      return self.__configuration[layer_name][api_name]["virtualizer_type"]
+    except (KeyError, AttributeError, TypeError):
       return None
 
   def get_adapter_keepalive (self, adapter):

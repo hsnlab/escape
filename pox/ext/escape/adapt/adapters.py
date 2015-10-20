@@ -228,7 +228,6 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
 
   def __init__ (self, path=None):
     log.debug("Init SDNDomainTopoAdapter with optional path: %s" % path)
-    print path
     super(SDNDomainTopoAdapter, self).__init__()
     self.topo = None
     self.__init_from_CONFIG()

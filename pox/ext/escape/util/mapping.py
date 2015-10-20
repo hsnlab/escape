@@ -184,7 +184,7 @@ class AbstractMapper(EventMixin):
                       AbstractMappingStrategy), "Mapping strategy is not " \
                                                 "subclass of " \
                                                 "AbstractMappingStrategy!"
-    self.validator = CONFIG.get_mapping_validator(layer_name)()
+    self.validator = CONFIG.get_mapping_processor(layer_name)()
     super(AbstractMapper, self).__init__()
 
   def _perform_mapping (self, input_graph, resource_view):

@@ -21,7 +21,7 @@ import os.path
 import threading
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
-from escape import __version__, CONFIG
+from escape import __version__, CONFIG, __project__
 from escape.util.misc import SimpleStandaloneHelper
 from pox.lib.revent import EventMixin
 from pox.core import core
@@ -272,6 +272,8 @@ class RESTServer(HTTPServer, ThreadingMixIn):
     self._thread.daemon = True
     self.started = False
     self.request_cache = RequestCache()
+    self.api_id = None
+    self.virtualizer_type = None
 
   def start (self):
     """
@@ -343,7 +345,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   server_version = "ESCAPE/" + __version__
   static_prefix = "escape"
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': (), 'POST': (), 'PUT': (), 'DELETE': ()}
+  request_perm = {'GET': ('ping', 'version', 'operations'),
+                  'POST': ('ping',)}
   # Name of the layer API to which the server bounded
   bounded_layer = None
   # Name mapper to avoid Python naming constraint (dict: rpc-name: mapped name)
@@ -628,3 +631,37 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     else:
       self.log.error('Error: No component has registered with the name: %s, '
                      'ABORT function call!' % self.bounded_layer)
+
+  ##############################################################################
+  # Basic REST-API functions
+  ##############################################################################
+
+  def ping (self):
+    """
+    For testing REST API aliveness and reachability.
+    """
+    response_body = "OK"
+    self.send_response(200)
+    self.send_header('Content-Type', 'text/plain')
+    self.send_header('Content-Length', len(response_body))
+    self.send_REST_headers()
+    self.end_headers()
+    self.wfile.write(response_body)
+
+  def version (self):
+    """
+    Return with version
+
+    :return: None
+    """
+    self.log.debug("Call REST-API function: version")
+    self._send_json_response({"name": __project__, "version": __version__})
+
+  def operations (self):
+    """
+    Return with allowed operations
+
+    :return: None
+    """
+    self.log.debug("Call REST-API function: operations")
+    self._send_json_response(self.request_perm)

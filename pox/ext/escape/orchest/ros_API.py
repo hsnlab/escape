@@ -94,7 +94,7 @@ class CfOrRequestHandler(AbstractRequestHandler):
   Contains handler functions for REST-API.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('ping', 'get_config'),
+  request_perm = {'GET': ('ping', 'version', 'operations', 'get_config'),
                   'POST': ('ping', 'get_config', 'edit_config')}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
@@ -130,6 +130,9 @@ class CfOrRequestHandler(AbstractRequestHandler):
     """
     log.info("Call Cf-Or function: get-config")
     config = self._proceed_API_call('api_cfor_get_config')
+    if config is None:
+      self.send_error(404, message="Resource info is missing!")
+      return
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(config))
@@ -165,7 +168,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   Contains handler functions for REST-API.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('ping', 'get_config'),
+  request_perm = {'GET': ('ping', 'version', 'operations', 'get_config'),
                   'POST': ('ping', 'get_config', 'edit_config')}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
@@ -173,7 +176,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   # Set special prefix to imitate OpenStack agent API
   static_prefix = "escape"
   # Logger. Must define.
-  log = log.getChild("Sl-Or-API")
+  log = log.getChild("Sl-Or")
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {'get-config': "get_config",
                 'edit-config': "edit_config"}
@@ -202,6 +205,9 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     """
     log.info("Call REST-API function: get-config")
     config = self._proceed_API_call('api_ros_get_config')
+    if config is None:
+      self.send_error(404, message="Resource info is missing!")
+      return
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(config))
@@ -266,8 +272,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.info("Starting Resource Orchestration Sublayer...")
     # Mandatory super() call
     super(ResourceOrchestrationAPI, self).__init__(standalone, **kwargs)
-    self.ros_api = None
-    self.cfor_api = None
 
   def initialize (self):
     """
@@ -321,6 +325,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # can override from global config
     handler.prefix = CONFIG.get_ros_agent_prefix()
     self.ros_api = RESTServer(handler, *CONFIG.get_ros_agent_address())
+    # Virtualizer ID of the Sl-Or interface
+    self.ros_api.api_id = "Sl-Or"
+    # Virtualizer type for Sl-Or API
+    self.ros_api.virtualizer_type = CONFIG.get_api_virtualizer(
+      layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
     self.ros_api.start()
     if self._agent:
       log.info("REST-API is set in AGENT mode")
@@ -337,6 +346,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # can override from global config
     handler.prefix = CONFIG.get_cfor_api_prefix()
     self.cfor_api = RESTServer(handler, *CONFIG.get_cfor_api_address())
+    # Virtualizer ID of the Cf-Or interface
+    self.cfor_api.api_id = "Cf-Or"
+    # Virtualizer type for Cf-Or API
+    self.cfor_api.virtualizer_type = CONFIG.get_api_virtualizer(
+      layer_name=LAYER_NAME, api_name=self.cfor_api.api_id)
     self.cfor_api.start()
 
   def _handle_NFFGMappingFinishedEvent (self, event):
@@ -361,10 +375,18 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of global view (DoV)
     :rtype: str
     """
-    log.getChild('API').info("Generate Single BiSBiS topo description...")
-    dov = self.resource_orchestrator.virtualizerManager.dov
-    if dov is not None:
-      return dov.get_resource_info().dump()
+    print self.__dict__
+    log.getChild('Sl-Or').info("Requesting Virtualizer for REST-API")
+    virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
+      virtualizer_id=self.ros_api.api_id, type=self.ros_api.virtualizer_type)
+    if virt is not None:
+      log.getChild('Sl-Or').info("Generate topo description...")
+      res = virt.get_resource_info()
+      return res.dump() if res is not None else None
+    else:
+      log.error(
+        "Virtualizer(id=%s) assigned to REST-API is not found!" %
+        self.ros_api.api_id)
 
   def api_ros_edit_config (self, nffg):
     """
@@ -373,7 +395,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :param nffg: NFFG need to deploy
     :type nffg: :any:`NFFG`
     """
-    log.getChild('API').info("Invoke install_nffg on %s with SG: %s " % (
+    log.getChild('Sl-Or').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
     if self._agent:
       # ESCAPE serves as a local orchestrator, probably with infrastructure
@@ -415,14 +437,17 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of a single BiSBiS view based on DoV
     :rtype: str
     """
-    # Request SingleBiSBiS for Cf-Or interface
-    if "CfOr" in self.resource_orchestrator.virtualizerManager._virtualizers:
-      view = self.resource_orchestrator.virtualizerManager.get_virtual_view(
-        "CfOr")
+    log.getChild('Cf-Or').info("Requesting Virtualizer for REST-API")
+    virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
+      virtualizer_id=self.cfor_api.api_id, type=self.cfor_api.virtualizer_type)
+    if virt is not None:
+      log.getChild('Cf-Or').info("Generate topo description...")
+      res = virt.get_resource_info()
+      return res.dump() if res is not None else None
     else:
-      view = self.resource_orchestrator.virtualizerManager.generate_single_view(
-        "CfOr")
-    return view.get_resource_info().dump()
+      log.error(
+        "Virtualizer(id=%s) assigned to REST-API is not found!" %
+        self.cfor_api.api_id)
 
   def api_cfor_edit_config (self, nffg):
     """
@@ -431,7 +456,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :param nffg: NFFG need to deploy
     :type nffg: :any:`NFFG`
     """
-    log.getChild('API').info("Invoke install_nffg on %s with SG: %s " % (
+    log.getChild('Cf-Or').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
     self.__proceed_instantiation(nffg=nffg)
 

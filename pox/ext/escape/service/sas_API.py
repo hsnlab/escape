@@ -75,10 +75,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
     function.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('echo', 'version', 'operations', 'topology'),
-                  'POST': ('echo', 'result', 'sg', 'topology'),
-                  'PUT': ('echo',),
-                  'DELETE': ('echo',)}
+  request_perm = {'GET': ('ping', 'version', 'operations', 'topology'),
+                  'POST': ('ping', 'result', 'sg', 'topology')}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'service'
@@ -86,34 +84,6 @@ class ServiceRequestHandler(AbstractRequestHandler):
   log = log.getChild("REST-API")
 
   # REST API call --> UNIFY U-Sl call
-
-  def echo (self):
-    """
-    Test function for REST-API.
-
-    :return: None
-    """
-    params = json.loads(self._get_body())
-    self.log_full_message("ECHO: %s - %s", self.raw_requestline, params)
-    self._send_json_response(params)
-
-  def version (self):
-    """
-    Return with version
-
-    :return: None
-    """
-    log.getChild("U-Sl-API").debug("Call REST-API function: version")
-    self._send_json_response({"name": __project__, "version": __version__})
-
-  def operations (self):
-    """
-    Return with allowed operations
-
-    :return: None
-    """
-    log.getChild("U-Sl-API").debug("Call REST-API function: operations")
-    self._send_json_response(self.request_perm)
 
   def result (self):
     """
@@ -147,6 +117,9 @@ class ServiceRequestHandler(AbstractRequestHandler):
     """
     log.getChild("U-Sl-API").info("Call REST-API function: topology")
     topology = self._proceed_API_call('api_sas_get_topology')
+    if topology is None:
+      self.send_error(404, message="Resource info is missing!")
+      return
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(topology))
