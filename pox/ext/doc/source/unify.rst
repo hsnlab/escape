@@ -10,7 +10,7 @@ The *unify.py* top module
    :show-inheritance:
 
 Submodules
-----------
+++++++++++
 
 .. toctree::
     :maxdepth: 1

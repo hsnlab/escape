@@ -43,15 +43,17 @@ Class structure
 +++++++++++++++
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 6
+    :titlesonly:
 
-    ESCAPEv2 <top>
+    escape
 
-Main modules for layers/sublayers
-+++++++++++++++++++++++++++++++++
+Topmost POX modules for UNIFY's layers/sublayers
+++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
+    :titlesonly:
 
     UNIFY <unify>
 
