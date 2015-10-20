@@ -54,7 +54,7 @@ class AbstractMappingStrategy(object):
     raise NotImplementedError("Derived class must override this function!")
 
 
-class ValidationError(Exception):
+class ProcessorError(Exception):
   """
   Specific error signaling characteristics (one or more) does not meet the
   requirements checked and/or defined in a inherited class of
@@ -63,12 +63,12 @@ class ValidationError(Exception):
   pass
 
 
-class AbstractValidator(object):
+class AbstractMappingDataProcessor(object):
   """
   Abstract class for contain and perform validation steps.
   """
 
-  def pre_mapping_validation (self, input_graph, resource_graph):
+  def pre_mapping_exec (self, input_graph, resource_graph):
     """
     Invoked right before the mapping algorithm.
 
@@ -93,7 +93,7 @@ class AbstractValidator(object):
     """
     raise NotImplementedError("Derived class must override this function!")
 
-  def post_mapping_validation (self, input_graph, resource_graph, result_graph):
+  def post_mapping_exec (self, input_graph, resource_graph, result_graph):
     """
     Invoked right after if the mapping algorithm is completed without an error.
 
@@ -117,15 +117,15 @@ class AbstractValidator(object):
     raise NotImplementedError("Derived class must override this function!")
 
 
-class ValidatorSkipper(AbstractValidator):
+class ProcessorSkipper(AbstractMappingDataProcessor):
   """
   Default class for skipping validation and proceed to mapping algorithm.
   """
 
-  def pre_mapping_validation (self, input_graph, resource_graph):
+  def pre_mapping_exec (self, input_graph, resource_graph):
     return False
 
-  def post_mapping_validation (self, input_graph, resource_graph, result_graph):
+  def post_mapping_exec (self, input_graph, resource_graph, result_graph):
     return False
 
 
@@ -230,17 +230,17 @@ class AbstractMapper(EventMixin):
         # Get resource info
         resource_graph = resource_view.get_resource_info()
         # Preform pre-mapping validation
-        if self.validator.pre_mapping_validation(
+        if self.validator.pre_mapping_exec(
              input_graph=input_graph, resource_graph=resource_graph):
-          raise ValidationError("Pre mapping validation is failed!")
+          raise ProcessorError("Pre mapping validation is failed!")
         # Invoke mapping algorithm
         mapping_result = self._perform_mapping(input_graph=input_graph,
                                                resource_view=resource_view)
         # Perform post-mapping validation
-        if self.validator.post_mapping_validation(input_graph=input_graph,
-                                                  resource_graph=resource_graph,
-                                                  result_graph=mapping_result):
-          raise ValidationError("Post mapping validation is failed!")
+        if self.validator.post_mapping_exec(input_graph=input_graph,
+                                    resource_graph=resource_graph,
+                                    result_graph=mapping_result):
+          raise ProcessorError("Post mapping validation is failed!")
         return mapping_result
     else:
       # Invoke only the mapping algorithm

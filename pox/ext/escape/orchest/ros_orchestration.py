@@ -18,7 +18,7 @@ from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.orchest import log as log
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer, \
   VirtualizerManager
-from escape.util.mapping import AbstractOrchestrator, ValidationError
+from escape.util.mapping import AbstractOrchestrator, ProcessorError
 from escape.orchest.nfib_mgmt import NFIBManager
 
 
@@ -71,7 +71,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
           log.debug(
             "NF-FG instantiation is finished by %s" % self.__class__.__name__)
           return mapped_nffg
-        except ValidationError as e:
+        except ProcessorError as e:
           log.warning("Validation was unsuccessful! Cause: %s" % e)
       else:
         log.warning("Global view is not subclass of AbstractVirtualizer!")

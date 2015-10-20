@@ -129,7 +129,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                                 "FallbackDynamicTopology"},
                             "SAP-xterms": True,
                             "SHUTDOWN-CLEAN": True},
-       "additional-config-file": "escape.config"
+       # "additional-config-file": "escape.config"
        }  # relative to ext/
 
 

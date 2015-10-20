@@ -18,7 +18,7 @@ from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.service.sas_mapping import ServiceGraphMapper
 from escape.service import log as log
 from pox.lib.revent.revent import EventMixin, Event
-from escape.util.mapping import AbstractOrchestrator, ValidationError
+from escape.util.mapping import AbstractOrchestrator, ProcessorError
 
 
 class MissingVirtualViewEvent(Event):
@@ -75,7 +75,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
           nffg = self.mapper.orchestrate(sg, virtual_view)
           log.debug("SG initiation is finished by %s" % self.__class__.__name__)
           return nffg
-        except ValidationError as e:
+        except ProcessorError as e:
           log.warning("Validation was unsuccessful! Cause: %s" % e)
       else:
         log.warning("Virtual view is not subclass of AbstractVirtualizer!")
