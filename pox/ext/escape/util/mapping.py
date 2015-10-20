@@ -57,8 +57,8 @@ class AbstractMappingStrategy(object):
 class ProcessorError(Exception):
   """
   Specific error signaling characteristics (one or more) does not meet the
-  requirements checked and/or defined in a inherited class of
-  :any:`AbstractValidator`.
+  requirements checked and/or defined in a inherited class
+  of :any:`ProcessorError`.
   """
   pass
 
@@ -238,8 +238,8 @@ class AbstractMapper(EventMixin):
                                                resource_view=resource_view)
         # Perform post-mapping validation
         if self.validator.post_mapping_exec(input_graph=input_graph,
-                                    resource_graph=resource_graph,
-                                    result_graph=mapping_result):
+                                            resource_graph=resource_graph,
+                                            result_graph=mapping_result):
           raise ProcessorError("Post mapping validation is failed!")
         return mapping_result
     else:
