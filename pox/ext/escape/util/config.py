@@ -53,7 +53,11 @@ class ESCAPEConfig(object):
     """
     self.__configuration = default if default else dict.fromkeys(self.LAYERS,
                                                                  {})
-    self.loaded = False
+    self.__initiated = False
+
+  @property
+  def in_initiated (self):
+    return self.__initiated
 
   def add_cfg (self, cfg):
     """
@@ -81,6 +85,8 @@ class ESCAPEConfig(object):
     :return: self
     :rtype: :class:`ESCAPEConfig`
     """
+    if self.__initiated:
+      return self
     if config:
       # Config is set directly
       log.info(
@@ -100,6 +106,7 @@ class ESCAPEConfig(object):
       except KeyError:
         log.debug(
           "Additional config file is not found! Skip configuration update")
+        self.__initiated = True
         return self
     try:
       # Load file
@@ -124,7 +131,7 @@ class ESCAPEConfig(object):
     finally:
       # Register config into pox.core to be reachable for other future
       # components -not used currently
-      self.loaded = True
+      self.__initiated = True
       core.register("CONFIG", self)
     log.info("No change during config update! Using default configuration...")
     return self
@@ -209,7 +216,7 @@ class ESCAPEConfig(object):
     :type layer: str
     :return: None
     """
-    if not self.loaded:
+    if not self.__initiated:
       self.load_config()
     self.__configuration[layer]['LOADED'] = True
 
