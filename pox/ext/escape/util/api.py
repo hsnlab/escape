@@ -15,13 +15,11 @@
 Contains abstract classes for concrete layer API modules.
 """
 from SocketServer import ThreadingMixIn
-import traceback
 import urlparse
 import json
 import os.path
 import threading
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from pygments.styles import trac
 
 from escape import __version__, CONFIG, __project__
 from escape.util.misc import SimpleStandaloneHelper, quit_with_error

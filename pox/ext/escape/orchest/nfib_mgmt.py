@@ -21,7 +21,6 @@ import sys
 import py2neo
 from py2neo import Graph, Relationship
 import networkx
-
 from py2neo.packages.httpstream.http import SocketError
 
 from escape.orchest import log as log

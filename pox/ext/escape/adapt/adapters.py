@@ -20,7 +20,6 @@ from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from ncclient.operations import OperationError
 from ncclient.operations.rpc import RPCError
-
 from ncclient.transport import TransportError
 
 from escape.infr.il_API import InfrastructureLayerAPI
@@ -659,7 +658,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # Store original config for domain resetting
       if self._original_nffg is None:
         log.debug("Store %s as the original domain config..." % nffg)
-        self._original_nffg= nffg.copy()
+        self._original_nffg = nffg.copy()
       return nffg
   
   def edit_config (self, data):

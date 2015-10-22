@@ -21,7 +21,7 @@ from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest import LAYER_NAME
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
-from escape.util.misc import schedule_as_coop_task, quit_with_error
+from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
