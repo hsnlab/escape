@@ -148,6 +148,10 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
               v]:
               dist[u][v] = dist[u][w] + G.node[w].resources['delay'] + dist[w][
                 v]
+              dist[v][u] = dist[v][w] + G.node[w].resources['delay'] + dist[w][
+                u]
+            if u == v:
+              break
   except KeyError as e:
     raise uet.BadInputException(
       "Node attribute missing %s {'delay': VALUE}" % e)

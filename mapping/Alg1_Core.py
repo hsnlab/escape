@@ -569,9 +569,13 @@ class CoreAlgorithm(object):
                                bt_record['vnf_id'], 
                                bt_record['target_infra'],
                                redo = True)
-    self.manager.link_mapping.remove_edge(bt_record['prev_vnf_id'], 
-                                          bt_record['vnf_id'],
-                                          key=bt_record['reqlinkid'])
+    try:
+      self.manager.link_mapping.remove_edge(bt_record['prev_vnf_id'], 
+                                            bt_record['vnf_id'],
+                                            key=bt_record['reqlinkid'])
+    except nx.NetworkXError as nxe:
+      raise uet.InternalAlgorithmException("Tried to remove edge from link "
+                "mapping structure which is not mapped!")
     if self.req.node[bt_record['vnf_id']].type != 'SAP':
       self.manager.vnf_mapping.remove((bt_record['vnf_id'], 
                                        bt_record['target_infra']))

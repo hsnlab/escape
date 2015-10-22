@@ -67,7 +67,7 @@ helpmsg = """StressTest.py options are:
                      most.
 """
 
-def generateRequestForCarrierTopo(networkparams, seed, loops=False, 
+def generateRequestForCarrierTopo(seed, loops=False, 
                                   vnf_sharing_probabilty=0.0,
                                   multiSC=False, max_sc_count=2):
   """
@@ -77,9 +77,6 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
      #(VNF-s used by at least two SC-s)/#(not shared VNF-s).
   """
   chain_maxlen = 10
-  random.seed(seed)
-  random.shuffle(all_saps_beginning)
-  random.shuffle(all_saps_ending)
   sc_count=1
   if multiSC:
     sc_count = random.randint(2,max_sc_count)
@@ -136,9 +133,6 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
             vnf_added = True
         elif multiSC and \
              p < vnf_sharing_probabilty and len(current_nfs) > 0:
-          # temporary workaround: first and last VNF-s can't be shared because 
-          # they can casue a backtrack error! TODO: resolve!
-          """and vnf > 0 and vnf < vnf_cnt - 1 """ 
           # this influences the the given VNF sharing probability...
           if reduce(lambda a,b: a and b, [v in nfs_this_sc for 
                                           v in current_nfs]):
@@ -162,8 +156,7 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
           vnf_added = True
         if vnf_added:
           # add olny the newly added VNF-s, not the shared ones.
-          if nf not in current_nfs:
-            nfs_this_sc.append(nf)
+          nfs_this_sc.append(nf)
           newport = nf.add_port()
           sglink = nffg.add_sglink(last_req_port, newport)
           sg_path.append(sglink.id)
@@ -188,13 +181,14 @@ def generateRequestForCarrierTopo(networkparams, seed, loops=False,
                    bandwidth=random.random()*0.2, sg_path = sg_path)
       # this prevents loops in the chains and makes new and old NF-s equally 
       # preferable in total for NF sharing
-      for tmp in xrange(-1, scid):
-        current_nfs.extend(nfs_this_sc)
+      new_nfs = [vnf for vnf in nfs_this_sc if vnf not in current_nfs]
+      for tmp in xrange(0, scid+1):
+        current_nfs.extend(new_nfs)
       if not multiSC:
-        yield nffg
+        return nffg
     if multiSC:
-      yield nffg
-  yield None
+      return nffg
+  return None
 
 def main(argv):
   try:
@@ -252,16 +246,19 @@ def main(argv):
   global all_saps_beginning
   all_saps_ending = [s.id for s in network.saps]
   all_saps_beginning = [s.id for s in network.saps]
+  random.seed(seed)
+  random.shuffle(all_saps_beginning)
+  random.shuffle(all_saps_ending)
   try:
     while test_lvl < max_test_lvl:
       try:
         log.debug("Trying mapping with test level %s..."%test_lvl)
         shortest_paths = None
-        for request in generateRequestForCarrierTopo(topoparams, seed, 
-                       loops=loops, vnf_sharing_probabilty=vnf_sharing,
-                       multiSC=multiple_scs, max_sc_count=max_sc_count):
-          # print request.dump()
-          if test_lvl > max_test_lvl or request is None:
+        request = generateRequestForCarrierTopo(seed, 
+                  loops=loops, vnf_sharing_probabilty=vnf_sharing,
+                  multiSC=multiple_scs, max_sc_count=max_sc_count)
+        while request is not None:
+          if test_lvl > max_test_lvl:
             break
           running_nfs[test_lvl] = [nf for nf in request.nfs 
                                    if nf.id.split("-")[1] == str(test_lvl)]
@@ -273,6 +270,11 @@ def main(argv):
           ever_successful = True
           log.debug("Mapping successful on test level %s!"%test_lvl)
           test_lvl += 1
+          # needed to change from generator style due to some bug 
+          # with all_saps_ lists. Parameters needs to be modified two places!!
+          request = generateRequestForCarrierTopo(seed, 
+                  loops=loops, vnf_sharing_probabilty=vnf_sharing,
+                  multiSC=multiple_scs, max_sc_count=max_sc_count)
       except uet.MappingException as me:
         log.info("Mapping failed: %s"%me.msg)
         break

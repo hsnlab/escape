@@ -40,7 +40,7 @@ except ImportError:
 
 class GraphPreprocessorClass(object):
   def __init__ (self, network0, req_graph0, chains0, manager0):
-    self.network = network0
+    self.net = network0
     self.req_graph = req_graph0
     self.chains = chains0
     self.log = helper.log.getChild(self.__class__.__name__)
@@ -163,7 +163,7 @@ class GraphPreprocessorClass(object):
           "All request edges should be included in some E2E chains - at least "
           "in this version", "Request link %s, %s, id: %s is not in any SAP-SAP "
           "chain" % (i, j, k))
-
+    self.log.info("Request graph coloring finished!")
     return colored_req
 
   def _getIntersectionOfSubgraphs_by_ChainIds (self, chain_ids,
@@ -173,9 +173,9 @@ class GraphPreprocessorClass(object):
     the given list of chain ids.
     Subgraph intersections are unwrapped from the NFFG class
     """
-    intersect = self.net.network.copy()
+    intersect = self.smallest.copy()
     for c, g in chains_w_graphs:
-      if c['id'] in chain_ids:
+      if c['id'] in chain_ids and g is not self.smallest:
         intersect.remove_nodes_from(
           [n for n in intersect.nodes_iter() if n not in g])
     '''We want only the graph structure to be copied, the attributes
@@ -260,7 +260,7 @@ class GraphPreprocessorClass(object):
 
     self.manager.addChain_SubChainDependency(subc['id'], act_color, subc_path,
                                              link_ids)
-
+    self.log.info("Subchain found: %s"%subc['chain'])
     return subc, subg
 
   def _compareSubchainSubgraphTuples (self, a, b, use_latency=True):
@@ -345,9 +345,7 @@ class GraphPreprocessorClass(object):
     '''TODO: Zero edges in colored_req doesn`t mean all links are mapped!!
     WHY? WHY SO SLOW??
     - is this still a problem? (isn`t it resolved by the possible multiple
-    iterations on the e2e_sorted?)
-    TODO: if there is a chain which is not E2E and not part of any E2E chain,
-    then is the previous `while` an infinite loop?'''
+    iterations on the e2e_sorted?)'''
     if not reduce(lambda a, b: a and b, self.rechained.values()):
       self.log.critical("There is a VNF, which is not in any subchain!!")
       raise uet.InternalAlgorithmException(
@@ -358,8 +356,6 @@ class GraphPreprocessorClass(object):
       self.log.critical("There is a link, which is not in any subchain!!")
       raise uet.InternalAlgorithmException(
         "There is a link, which is not in any subchain!!")
-
-    '''TODO: Test with more complicated req_graph - IN PROGRESS'''
 
     # sort the subchains in predecessor order and secondly latency req order
     # - Does it make the earlier latency sorting unnecessary?
@@ -461,7 +457,9 @@ class GraphPreprocessorClass(object):
       raise uet.BadInputException(
         "Request with SAP-to-SAP chains. Service chains do not contain any "
         "SAP-to-SAP chain")
-
+    # determine the smallest subgraph for efficient intersection calculation
+    self.smallest = min(map(lambda b: b[1], e2e_chains_with_graphs), 
+                        key=lambda a: a.size())
     '''These chains are disjoint on the set of links, each has a subgraph
     which it should be mapped to.'''
     divided_chains_with_graphs = self._divideIntoDisjointSubchains(
@@ -481,7 +479,8 @@ class GraphPreprocessorClass(object):
     from the network.
     Calculates shortest paths on the infrastructure, weighted by latency.
     """
-    net = copy.deepcopy(self.network)
+    # remove deepcopy!! (we already saved the full input, in Core)
+    net = self.net
 
     # intersection of VNFs in net and req.
     vnf_to_be_left_in_place = set()
