@@ -101,7 +101,7 @@ class CfOrRequestHandler(AbstractRequestHandler):
   bounded_layer = 'orchestration'
   static_prefix = "cfor"
   # Logger. Must define.
-  log = log.getChild("Cf-Or")
+  log = log.getChild("[Cf-Or]")
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {'get-config': "get_config",
                 'edit-config': "edit_config"}
@@ -164,7 +164,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   # Set special prefix to imitate OpenStack agent API
   static_prefix = "escape"
   # Logger. Must define.
-  log = log.getChild("Sl-Or")
+  log = log.getChild("[Sl-Or]")
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {'get-config': "get_config",
                 'edit-config': "edit_config"}
@@ -272,7 +272,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Initiate Cf-Or REST-API if needed
     if self._cfor:
       self._initiate_cfor_api()
-    # self._initiate_agent_api()
     log.info("Resource Orchestration Sublayer has been initialized!")
 
   def shutdown (self, event):
@@ -300,12 +299,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.bounded_layer = self._core_name
     # can override from global config
     handler.prefix = CONFIG.get_ros_agent_prefix()
-    self.ros_api = RESTServer(handler, *CONFIG.get_ros_agent_address())
+    address = CONFIG.get_ros_agent_address()
+    self.ros_api = RESTServer(handler, *address)
     # Virtualizer ID of the Sl-Or interface
     self.ros_api.api_id = "Sl-Or"
     # Virtualizer type for Sl-Or API
     self.ros_api.virtualizer_type = CONFIG.get_api_virtualizer(
       layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
+    handler.log.debug(
+      "Init REST-API [Sl-Or] on %s:%s!" % (address[0], address[1]))
     self.ros_api.start()
     if self._agent:
       log.info("REST-API is set in AGENT mode")
@@ -321,12 +323,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.bounded_layer = self._core_name
     # can override from global config
     handler.prefix = CONFIG.get_cfor_api_prefix()
-    self.cfor_api = RESTServer(handler, *CONFIG.get_cfor_api_address())
+    address = CONFIG.get_cfor_api_address()
+    self.cfor_api = RESTServer(handler, *address)
     # Virtualizer ID of the Cf-Or interface
     self.cfor_api.api_id = "Cf-Or"
     # Virtualizer type for Cf-Or API
     self.cfor_api.virtualizer_type = CONFIG.get_api_virtualizer(
       layer_name=LAYER_NAME, api_name=self.cfor_api.api_id)
+    handler.log.debug(
+      "Init REST-API [Cf-Or] on %s:%s!" % (address[0], address[1]))
     self.cfor_api.start()
 
   def _handle_NFFGMappingFinishedEvent (self, event):

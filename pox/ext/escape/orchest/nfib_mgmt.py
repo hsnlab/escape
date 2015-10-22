@@ -21,6 +21,7 @@ import sys
 import py2neo
 from py2neo import Graph, Relationship
 import networkx
+
 from py2neo.packages.httpstream.http import SocketError
 
 from escape.orchest import log as log
@@ -684,6 +685,5 @@ class NFIBManager(object):
       raise
     except:
       log.error("Got unexpected error during NFIB initialization! Cause:")
-      for e in sys.exc_info():
-        log.error(str(e))
+      log.error(reduce(lambda x, y: str(x) + " " + str(y), sys.exc_info()))
       raise

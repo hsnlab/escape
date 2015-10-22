@@ -81,7 +81,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
   # Need to be set by container class
   bounded_layer = 'service'
   # Logger. Must define.
-  log = log.getChild("REST-API")
+  log = log.getChild("[U-Sl]")
 
   # REST API call --> UNIFY U-Sl call
 
@@ -103,11 +103,11 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     Bounded to POST HTTP verb
     """
-    log.getChild("U-Sl-API").debug("Called REST-API function: sg")
+    self.log.debug("Called REST-API function: sg")
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     service_nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    log.getChild("U-Sl-API").debug("Parsed service request: %s" % service_nffg)
+    self.log.debug("Parsed service request: %s" % service_nffg)
     self._proceed_API_call('api_sas_sg_request', service_nffg)
     self.send_acknowledge()
 
@@ -115,7 +115,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
     """
     Provide internal topology description
     """
-    log.getChild("U-Sl-API").info("Call REST-API function: topology")
+    self.log.info("Call REST-API function: topology")
     topology = self._proceed_API_call('api_sas_get_topology')
     if topology is None:
       self.send_error(404, message="Resource info is missing!")
@@ -153,7 +153,6 @@ class ServiceLayerAPI(AbstractAPI):
     # Mandatory super() call
     super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
     self.last_sg = NFFG(id=0, name='empty')
-    self.rest_api = None
 
   def initialize (self):
     """
@@ -204,7 +203,10 @@ class ServiceLayerAPI(AbstractAPI):
     handler = CONFIG.get_sas_api_class()
     handler.bounded_layer = self._core_name
     handler.prefix = CONFIG.get_sas_api_prefix()
-    self.rest_api = RESTServer(handler, *CONFIG.get_sas_api_address())
+    address = CONFIG.get_sas_api_address()
+    self.rest_api = RESTServer(handler, *address)
+    handler.log.debug(
+      "Init REST-API [U-Sl] on %s:%s!" % (address[0], address[1]))
     self.rest_api.start()
 
   def _initiate_gui (self):

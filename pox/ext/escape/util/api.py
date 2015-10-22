@@ -252,7 +252,7 @@ class RequestCache(object):
       return self.UNKNOWN
 
 
-class RESTServer(HTTPServer, ThreadingMixIn):
+class RESTServer(ThreadingMixIn, HTTPServer):
   """
   Base HTTP server for RESTful API.
 
@@ -273,7 +273,8 @@ class RESTServer(HTTPServer, ThreadingMixIn):
       """
     HTTPServer.__init__(self, (address, port), RequestHandlerClass)
     # self._server = Server((address, port), RequestHandlerClass)
-    self._thread = threading.Thread(target=self.run)
+    self._thread = threading.Thread(target=self.run,
+                                    name="REST-%s:%s" % (address, port))
     self._thread.daemon = True
     self.started = False
     self.request_cache = RequestCache()
@@ -298,10 +299,12 @@ class RESTServer(HTTPServer, ThreadingMixIn):
     """
     Handle one request at a time until shutdown.
     """
-    self.RequestHandlerClass.log.debug(
-      "Init REST-API on %s:%d!" % self.server_address)
+    # self.RequestHandlerClass.log.debug(
+    #   "Init REST-API on %s:%d!" % self.server_address)
     # Start API loop
+    # print "start"
     self.serve_forever()
+    # print "stop"
     self.RequestHandlerClass.log.debug(
       "REST-API on %s:%d is shutting down..." % self.server_address)
 

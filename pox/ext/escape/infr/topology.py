@@ -25,7 +25,7 @@ from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
-from escape.util.misc import quit_with_error
+from escape.util.misc import quit_with_error, call_as_coop_task
 
 
 class AbstractTopology(Topo):
