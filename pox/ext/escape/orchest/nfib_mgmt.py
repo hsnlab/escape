@@ -16,11 +16,13 @@ Contains the class for managing NFIB.
 """
 from collections import deque
 import os
+import sys
 
 import py2neo
-
 from py2neo import Graph, Relationship
 import networkx
+
+from py2neo.packages.httpstream.http import SocketError
 
 from escape.orchest import log as log
 from escape.util.nffg import NFFG
@@ -559,7 +561,7 @@ class NFIBManager(object):
     """
     self.graph_db.delete_all()
 
-  def initialize (self):
+  def __initialize (self):
     """
     Initialize NFIB with test data.
     """
@@ -670,3 +672,18 @@ class NFIBManager(object):
 
     log.debug(
       "%s: NF decompositions were added to the DB" % self.__class__.__name__)
+
+  def initialize (self):
+    """
+    Initialize NFIB with test data.
+    """
+    try:
+      self.__initialize()
+    except SocketError as e:
+      log.error(
+        "NFIB is not reachable due to failed neo4j service! Cause: " + str(e))
+    except:
+      log.error("Got unexpected error during NFIB initialization! Cause:")
+      for e in sys.exc_info():
+        log.error(str(e))
+      return
