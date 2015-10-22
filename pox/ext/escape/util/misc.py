@@ -18,6 +18,7 @@ from functools import wraps
 import logging
 import os
 from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
+import traceback
 import warnings
 import weakref
 
@@ -119,7 +120,7 @@ def enum (*sequential, **named):
   return type('enum', (), enums)
 
 
-def quit_with_error (msg, logger=None):
+def quit_with_error (msg, logger=None, exception=False):
   """
   Helper function for quitting in case of an error.
 
@@ -130,16 +131,16 @@ def quit_with_error (msg, logger=None):
   :return: None
   """
   from pox.core import core
-  import sys
-
-  if isinstance(logger, logging.Logger):
-    logger.fatal(msg)
-  elif isinstance(logger, str):
-    core.getLogger(logger).fatal(msg)
-  else:
-    core.getLogger("core").fatal(msg)
+  if isinstance(logger, str):
+    logger = core.getLogger(logger)
+  elif not isinstance(logger, logging.Logger):
+    logger = core.getLogger("core")
+  logger.fatal(msg)
+  if exception:
+    logger.fatal("Caught exception:")
+    traceback.print_exc()
   core.quit()
-  sys.exit(1)
+  os._exit(1)
 
 
 class SimpleStandaloneHelper(object):

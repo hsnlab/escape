@@ -72,7 +72,8 @@ class ResourceOrchestrator(AbstractOrchestrator):
             "NF-FG instantiation is finished by %s" % self.__class__.__name__)
           return mapped_nffg
         except ProcessorError as e:
-          log.warning("Validation was unsuccessful! Cause: %s" % e)
+          log.warning(
+            "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
       else:
         log.warning("Global view is not subclass of AbstractVirtualizer!")
     else:

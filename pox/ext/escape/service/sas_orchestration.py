@@ -76,7 +76,8 @@ class ServiceOrchestrator(AbstractOrchestrator):
           log.debug("SG initiation is finished by %s" % self.__class__.__name__)
           return nffg
         except ProcessorError as e:
-          log.warning("Validation was unsuccessful! Cause: %s" % e)
+          log.warning(
+            "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
       else:
         log.warning("Virtual view is not subclass of AbstractVirtualizer!")
     else:

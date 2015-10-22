@@ -15,14 +15,16 @@
 Contains abstract classes for concrete layer API modules.
 """
 from SocketServer import ThreadingMixIn
+import traceback
 import urlparse
 import json
 import os.path
 import threading
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from pygments.styles import trac
 
 from escape import __version__, CONFIG, __project__
-from escape.util.misc import SimpleStandaloneHelper
+from escape.util.misc import SimpleStandaloneHelper, quit_with_error
 from pox.lib.revent import EventMixin
 from pox.core import core
 
@@ -95,41 +97,46 @@ class AbstractAPI(EventMixin):
 
     :return: None
     """
-    self.initialize()
-    # With fully event-driven communication between the layers the dependency
-    # handling takes care by listen_to_dependencies() run into a dead-lock.
-    # The root of this problem is the bidirectional or cyclic dependency
-    # between the components, so basically the layers will always wait to each
-    # other to be registered on core. To avoid this situation the naming
-    # convention of event handlers on which the dependency checking based is
-    # not followed (a.k.a. leave _handle_<component name>_<event name>) and
-    # the event listeners is set up manually. For automatic core registration
-    # the components have to contain dependencies explicitly.
-    for dep in self.dependencies:
-      if not self._standalone:
-        if core.core.hasComponent(dep):
-          dep_layer = core.components[dep]
-          # Register actual event handlers on dependent layer
-          dep_layer.addListeners(self)
-          # Register dependent layer's event handlers on actual layer
-          self.addListeners(dep_layer)
+    try:
+      self.initialize()
+      # With fully event-driven communication between the layers the dependency
+      # handling takes care by listen_to_dependencies() run into a dead-lock.
+      # The root of this problem is the bidirectional or cyclic dependency
+      # between the components, so basically the layers will always wait to each
+      # other to be registered on core. To avoid this situation the naming
+      # convention of event handlers on which the dependency checking based is
+      # not followed (a.k.a. leave _handle_<component name>_<event name>) and
+      # the event listeners is set up manually. For automatic core registration
+      # the components have to contain dependencies explicitly.
+      for dep in self.dependencies:
+        if not self._standalone:
+          if core.core.hasComponent(dep):
+            dep_layer = core.components[dep]
+            # Register actual event handlers on dependent layer
+            dep_layer.addListeners(self)
+            # Register dependent layer's event handlers on actual layer
+            self.addListeners(dep_layer)
+          else:
+            raise AttributeError("Component is not registered on core")
         else:
-          raise AttributeError("Component is not registered on core")
-      else:
-        # In case of standalone mode set up a StandaloneHelper in this object
-        # with the name of the dependency to handle raised events automatically
-        setattr(self, dep, SimpleStandaloneHelper(self, dep))
-    # Subscribe for GoingDownEvent to finalize API classes
-    # shutdown() function will be called if POX's core going down
-    core.addListenerByName('GoingDownEvent', self.shutdown)
-    # Subscribe core event for advanced functions
-    # Listeners' name must follow POX naming conventions
-    core.addListeners(self)
-    # Everything is set up an "running" so register the component on pox.core
-    # as a final step. Other dependent component can finish initialization now.
-    core.core.register(self._core_name, self)
-    # Set "running" config for convenience purposes
-    CONFIG.set_layer_loaded(self._core_name)
+          # In case of standalone mode set up a StandaloneHelper in this object
+          # with the name of the dependency to handle raised events
+          # automatically
+          setattr(self, dep, SimpleStandaloneHelper(self, dep))
+      # Subscribe for GoingDownEvent to finalize API classes
+      # shutdown() function will be called if POX's core going down
+      core.addListenerByName('GoingDownEvent', self.shutdown)
+      # Subscribe core event for advanced functions
+      # Listeners' name must follow POX naming conventions
+      core.addListeners(self)
+      # Everything is set up an "running" so register the component on pox.core
+      # as a final step. Other dependent component can finish initialization
+      # now.
+      core.core.register(self._core_name, self)
+      # Set "running" config for convenience purposes
+      CONFIG.set_layer_loaded(self._core_name)
+    except:
+      quit_with_error(msg="Abort ESCAPEv2 initialization...", exception=True)
 
   def initialize (self):
     """
