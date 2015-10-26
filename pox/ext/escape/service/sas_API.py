@@ -191,6 +191,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.info("Service Layer is going down...")
     if hasattr(self, 'rest_api') and self.rest_api:
+      log.debug("REST-API [U-Sl] is shutting down...")
       self.rest_api.stop()
 
   def _initiate_rest_api (self):

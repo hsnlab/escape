@@ -299,14 +299,15 @@ class RESTServer(ThreadingMixIn, HTTPServer):
     """
     Handle one request at a time until shutdown.
     """
-    # self.RequestHandlerClass.log.debug(
-    #   "Init REST-API on %s:%d!" % self.server_address)
     # Start API loop
     # print "start"
-    self.serve_forever()
+    try:
+      self.serve_forever()
+    except:
+      pass
     # print "stop"
-    self.RequestHandlerClass.log.debug(
-      "REST-API on %s:%d is shutting down..." % self.server_address)
+    # self.RequestHandlerClass.log.debug(
+    #   "REST-API on %s:%d is shutting down..." % self.server_address)
 
 
 class RESTError(Exception):

@@ -280,9 +280,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
     log.info("Resource Orchestration Sublayer is going down...")
-    if self.ros_api is not None:
+    if self._agent or self._rosapi:
+      log.debug("REST-API [Sl-Or] is shutting down...")
       self.ros_api.stop()
-    if self.cfor_api is not None:
+    if self._cfor:
+      log.debug("REST-API [Cf-Or] is shutting down...")
       self.cfor_api.stop()
 
   def _initiate_ros_api (self):
