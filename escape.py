@@ -66,8 +66,11 @@ def main ():
     kill_remained_parts()
     return
 
+  # Get base dir of this script
+  base_dir = os.path.abspath(os.path.dirname(__file__))
+
   # Create absolute path for the pox.py initial script
-  cmd = os.path.abspath(os.path.dirname(__file__) + "/pox/pox.py")
+  cmd = os.path.join(base_dir, "pox/pox.py")
 
   # Construct POX init command according to argument
   # basic command
@@ -109,6 +112,19 @@ def main ():
 
   # Add optional POX modules
   cmd = "%s %s" % (cmd, " ".join(args.modules))
+
+  # Activate virtual environment if necessary
+  for entry in os.listdir(base_dir):
+    if entry.upper().startswith(".USE_VIRTUALENV"):
+      try:
+        activate_this = os.path.join(base_dir, 'bin/activate_this.py')
+        execfile(activate_this, dict(__file__=activate_this))
+      except IOError as e:
+        print "Virtualenv is not set properly: %s" % e
+        print "Remove the '.set_virtualenv' file or configure the virtenv!"
+        os._exit(1)
+      break
+
   # Starting ESCAPEv2 (as a POX module)
   print "Starting ESCAPEv2..."
   if args.debug:

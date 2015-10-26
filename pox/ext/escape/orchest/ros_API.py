@@ -282,10 +282,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.info("Resource Orchestration Sublayer is going down...")
     if self._agent or self._rosapi:
       log.debug("REST-API [Sl-Or] is shutting down...")
-      self.ros_api.stop()
+      # self.ros_api.stop()
     if self._cfor:
       log.debug("REST-API [Cf-Or] is shutting down...")
-      self.cfor_api.stop()
+      # self.cfor_api.stop()
 
   def _initiate_ros_api (self):
     """
