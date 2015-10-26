@@ -1,0 +1,14 @@
+*.pem
+*.pyc
+*.pyo
+*.py~
+*.py.bak
+old.*
+.*
+*.patch
+*.rej
+*.diff
+*.orig
+*.swp
+*.pcap
+*~
