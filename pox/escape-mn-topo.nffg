@@ -6,16 +6,6 @@
   },
   "node_saps": [
     {
-      "id": "SAP14",
-      "name": "SAP14",
-      "ports": [
-        {
-          "id": 1
-        }
-      ],
-      "domain": "eth0"
-    },
-    {
       "id": "SAP1",
       "name": "SAP1",
       "ports": [
@@ -133,15 +123,6 @@
       "src_node": "EE1",
       "src_port": 1,
       "dst_node": "SW3",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10
-    },
-    {
-      "id": "mn-link6",
-      "src_node": "SW4",
-      "src_port": 4,
-      "dst_node": "SAP14",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
