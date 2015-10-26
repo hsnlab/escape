@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
 # Fail on error
-set -e
+trap on_error ERR
+
+function on_error() {
+    echo "Error during installation!"
+    exit 1
+}
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
