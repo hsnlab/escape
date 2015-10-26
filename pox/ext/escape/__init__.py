@@ -151,12 +151,15 @@ def add_dependencies ():
   root = os.path.abspath(os.path.dirname(__file__) + "../../../..")
   for sub_folder in os.listdir(root):
     abs_sub_folder = os.path.join(root, sub_folder)
-    if not sub_folder.startswith('.') and sub_folder not in (
-         "pox", "OpenYuma", "Unify_ncagent", "tools", "gui") and os.path.isdir(
-      abs_sub_folder):
+    if not os.path.isdir(abs_sub_folder):
+      continue
+    if not(sub_folder.startswith('.') or sub_folder.upper().startswith(
+         'PYTHON')) and sub_folder not in (
+         "pox", "OpenYuma", "Unify_ncagent", "tools", "gui", "include", "share",
+         "lib", "bin"):
       if abs_sub_folder not in sys.path:
-        sys.path.insert(0, abs_sub_folder)
         core.getLogger().debug("Add dependency: %s" % abs_sub_folder)
+        sys.path.insert(0, abs_sub_folder)
       else:
         core.getLogger().debug("Dependency: %s already added." % abs_sub_folder)
 

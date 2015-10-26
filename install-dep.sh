@@ -29,8 +29,8 @@ libglib2.0-dev libgtk2.0-dev gcc make automake openssh-client openssh-server ssh
 libssl-dev
 
 info "=== Install Python-specific dependencies ==="
-sudo pip install requests jinja2 ncclient lxml networkx pysqlite py2neo \
-networkx_viewer numpy
+sudo pip install requests jinja2 ncclient lxml networkx py2neo networkx_viewer \
+numpy
 
 info "=== Install OpenYuma for NETCONF capability ==="
 cd "$DIR/OpenYuma"

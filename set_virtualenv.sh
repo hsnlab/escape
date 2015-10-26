@@ -45,7 +45,7 @@ virtualenv --python="${PYTHON_DIR}/bin/python" --no-site-packages $PROJECT_DIR
 info "=== Install Python dependencies into virtual environment ==="
 cd $PROJECT_DIR
 source ./bin/activate
-pip install requests jinja2 ncclient lxml networkx py2neo pysqlite numpy
+pip install requests jinja2 ncclient lxml networkx py2neo numpy
 deactivate
 
 info "=== Enable virtualenv for 'escape.py' script ==="
