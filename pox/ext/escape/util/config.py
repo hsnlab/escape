@@ -314,7 +314,7 @@ class ESCAPEConfig(object):
     except (KeyError, AttributeError, TypeError):
       return None
 
-  def get_validation_enabled (self, layer):
+  def get_processor_enabled (self, layer):
     """
     Return the mapping process is enabled for the ``layer`` or not.
 
