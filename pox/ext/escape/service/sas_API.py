@@ -61,6 +61,18 @@ class GetVirtResInfoEvent(Event):
     self.sid = sid
 
 
+class PreMapEvent(Event):
+  """
+  Raised before the service graph is mapped to the (virtual) resources.
+
+  Event handlers might modify the service graph, for example, to
+  enforce some decomposition rules.
+  """
+
+  def __init__ (self, sg):
+    self.sg = sg
+
+
 class ServiceRequestHandler(AbstractRequestHandler):
   """
   Request Handler for Service Adaptation SubLayer.
@@ -140,7 +152,7 @@ class ServiceLayerAPI(AbstractAPI):
   # Layer id constant
   LAYER_ID = "ESCAPE-" + LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent}
+  _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent, PreMapEvent}
   # Dependencies
   dependencies = ('orchestration',)
 
