@@ -603,6 +603,29 @@ class ESCAPENetworkBuilder(object):
                               dst=mn_dst_node, dst_port=dst_port,
                               bw=edge.bandwidth, delay=str(edge.delay) + 'ms')
       created_mn_links[edge.id] = link
+
+    ## Set port properties of SAP nodes.
+    #  A possible excerpt from a escape-mn-topo.nffg file:
+    #  "ports": [{ "id": 1,
+    #              "property": ["ip:10.0.10.1/24"] }]
+    #
+    for n in {s for s in nffg.saps if not s.domain}:
+      mn_node = self.mn.getNodeByName(n.id)
+      for port in n.ports:
+        # ip should be something like '10.0.123.1/24'.
+        ip = port.get_property('ip')
+        if ip is None:
+          continue
+        intf = mn_node.intfs.get(port.id)
+        if intf is None:
+          log.warn(("Port %s of node %s is not connected,"
+                    "it will remain unconfigured!") % (port.id, n.name))
+          continue
+        if intf == mn_node.defaultIntf():
+          # Workaround a bug in Mininet
+          mn_node.params.update({'ip': ip})
+        mn_node.setIP(ip, intf=intf)
+
     log.info("Topology creation from NFFG has been finished!")
 
   def __init_from_AbstractTopology (self, topo_class):
