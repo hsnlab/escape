@@ -82,7 +82,7 @@ def main ():
 
   # Read the service request NFFG from a file and start the mapping process
   if args.service:
-    cmd = "sudo %s --sg_file=%s" % (cmd, os.path.abspath(args.service))
+    cmd = "%s --sg_file=%s" % (cmd, os.path.abspath(args.service))
 
   # Override optional external config file
   if args.config:

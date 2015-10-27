@@ -242,7 +242,7 @@ class ServiceLayerAPI(AbstractAPI):
     :return: None
     """
     # Store request if it is received on REST-API
-    if self.rest_api:
+    if hasattr(self, 'rest_api') and self.rest_api:
       self.rest_api.request_cache.add_request(id=service_nffg.id)
       self.rest_api.request_cache.set_in_progress(id=service_nffg.id)
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
@@ -337,7 +337,7 @@ class ServiceLayerAPI(AbstractAPI):
   def _handle_InstantiationFinishedEvent (self, event):
     """
     """
-    if self.rest_api is not None:
+    if hasattr(self, 'rest_api') and self.rest_api:
       self.rest_api.request_cache.set_result(id=event.id, result=event.result)
     if event.result:
       log.getChild('API').info(

@@ -36,11 +36,15 @@ and running service chains.
 
     For further information contact sonkoly@tmit.bme.hu
 
-ESCAPEv2 structure
-------------------
+API documentation
+-----------------
+This documentation contains only the Python class structure and description of
+the multi-domain multi-level service orchestrator.
 
-Class structure
-+++++++++++++++
+The modified Mininet-based emulation is not documented here.
+
+ESCAPEv2 class structure
+++++++++++++++++++++++++
 
 .. toctree::
     :maxdepth: 6
@@ -57,18 +61,19 @@ Topmost POX modules for UNIFY's layers/sublayers
 
     UNIFY <unify>
 
-Dependencies:
-+++++++++++++
+Dependencies
+------------
 
 .. code-block:: bash
 
-    $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev \
-      python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko python-dev python-networkx \
-      libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev \
-      gcc make automake openssh-client openssh-server ssh
+    $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev libsqlite3-dev \
+        python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko python-dev \
+        python-networkx libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev \
+        libglib2.0-dev libgtk2.0-dev gcc make automake openssh-client openssh-server ssh \
+        libssl-dev
 
-    $ sudo pip install requests jinja2 ncclient lxml networkx py2neo \
-      networkx_viewer numpy
+    $ sudo pip install requests jinja2 ncclient lxml networkx py2neo networkx_viewer \
+        numpy
 
 For doc generations:
 
@@ -83,7 +88,7 @@ For domain emulation scripts:
     $ sudo pip install tornado
 
 Installation
-++++++++++++
+------------
 
 **The preferred way:**
 
@@ -98,7 +103,8 @@ tools (Mininet scripts and Open vSwitch).
   Username/password: **mininet/mininet**
 
   Our implementation relies on Mininet 2.1.0, but ESCAPEv2 has been tested on
-  the newest image too and no problem has occurred yet!
+  the newest image too (Mininet 2.2.1 on Ubuntu 14.04 - 64 bit) and no problem
+  has occurred yet!
 
 2. Create the .ssh folder in the home directory and copy your private RSA key
 which you gave on the fp7-unify.eu GitLab site into the VM with the name
@@ -108,9 +114,10 @@ which you gave on the fp7-unify.eu GitLab site into the VM with the name
 
     $ cd
     $ mkdir .ssh
-    $ mv <your rsa key> ~/.ss/id_rsa
+    $ mv <your_rsa_key> ~/.ssh/id_rsa
 
-3. Clone the shared escape repository.
+3. Clone the shared escape repository in a folder named:
+*escape*.
 
   .. code-block:: bash
 
@@ -122,13 +129,23 @@ and Python packages, OpenYuma with VNFStarter module):
   .. code-block:: bash
 
     $ cd escape
-    escape$ ./install_dep.sh
+    $ ./install_dep.sh
 
-5. Run ESCAPEv2 with one of the commands listed below.
+
+  In a high level the script above do the following things:
+    * Install the necessary system and Python packages
+    * Compile and install the `OpenYuma <https://github.com/OpenClovis/OpenYuma>`_
+      tools with our *VNF starter* module
+    * Compile and install `Click <http://read.cs.ucla.edu/click/click>`_ modular
+      router and The Click GUI: `Clicky <http://read.cs.ucla.edu/click/clicky>`_
+    * Install `neo4j <http://neo4j.com/>`_ graph database for NFIB
+
+5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
+available arguments of the top stating script check the help menu:
 
   .. code-block:: bash
 
-    escape$ ./escape.py --debug --full
+    $ ./escape.py --help
 
 
 **The hard way:**
@@ -140,32 +157,33 @@ To install the Python dependencies and other system packages you can use the
 dependency installation script mentioned above.
 
 To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
-host (more precisely the **Open vSwitch** implementation and the **mnexec**
-utility script is required globally).
+host (more precisely the **Open vSwitch** implementation and the specific
+**mnexec** utility script is need to be installed globally).
 
 If one version of Mininet has already been installed, there should be nothing to
 do. ESCAPEv2 uses the specifically-modified Mininet files in the project folder
-(Mininet v2.1.0mod-ESCAPE) which use the globally installed Mininet utility
+(*Mininet v2.1.0mod-ESCAPE*) which use the globally installed Mininet utility
 scripts (mnexec).
 
 Otherwise these assets have to be install manually which could be done from our
 Mininet folder (escape/mininet) or from the official Mininet git repository
-(https://github.com/mininet/mininet/ ). Mininet has an install script for the
+(https://github.com/mininet/mininet/_ ). Mininet has an install script for the
 installations (see the help with the ``-h`` flag):
 
 .. code-block:: bash
 
     $ sudo mininet/util/install.sh -en
 
-But the script mostly **NOT** works correctly, especially on newer
+But the script occasionally **NOT** works correctly, especially on newer
 distributions because the ``sudo apt-get install openvswitch-switch`` command
 not install the newest version of OVS due some major changes in OVS
-architecture! Check with the following command the install was correct:
+architecture! Run the following command to check the installation was correct:
 
+.. code-block:: bash
 
     $ sudo mn --test pingall
 
-However on some distributions the following install command is working:
+However you can install the Open vSwitch packages manually:
 
 .. code-block:: bash
 
@@ -175,17 +193,19 @@ If the command complains about the Open vSwitch not installed then you have to
 install it from source. See more on http://openvswitch.org/download/` . On the
 newest distributions (e.g. Ubuntu 15.04) more steps and explicit patching is
 required. For that the only way is sadly to use google and search for it based
-on your distro. But a good choice to start here (this not worked for me):
+on your distro. But a good choice to start here:
 https://github.com/mininet/mininet/wiki/Installing-new-version-of-Open-vSwitch
 
-If you use virtual machines, you should really consider to use the pre-build
-Mininet VM image.
+.. hint::
+
+  If your intention is to run ESCAPEv2 in a virtual machine, you should really
+  consider to use one of the pre-build Mininet VM images.
 
 If you want to develop on your host machine, you should take care of a user for
 the netconfd server. This user's name and password will be used for the
-connection establishment between the ESCAPE and the Execution Environments. This
-parameters could be set in the global config under the VNFStarter Adapter or the
-widely used mininet user can be created with the following commands:
+connection establishment between the ESCAPE and the Execution Environments (EE).
+This parameters could be set in the global config under the VNFStarter Adapter
+or the widely used mininet user can be created with the following commands:
 
 .. code-block:: bash
 
@@ -199,16 +219,14 @@ Check the created user with the following command:
 
     $ ssh mininet@localhost
 
-README
-++++++
-
 ESCAPEv2 example commands
+-------------------------
 
 **The simplest use-case:**
 
 .. code-block:: bash
 
-    $ ./escape.py
+    $ ./escape.py -df
 
 Usage:
 
@@ -244,8 +262,65 @@ Usage:
                             programs, interfaces, veth parts and junk files
       ...                   optional POX modules
 
+During a test or development the ``-d`` flag is almost necessary.
 
-**More advanced commands:**
+If you want to run a test request on a test topology, use the ``-f`` flag.
+ESCAPEv2 will parse the topology description form file (``escape-mn-topo.nffg``
+by default) and start the Infrastructure layer with the Mininet-based emulation.
+
+If the request is in a file it's more convenient to give it as an initial
+parameter and not bother with the REST-API.
+
+In an error is occurred or need to observe the internal states you can start
+ESCAPEv2 with an interactive Python shell.
+
+The main layers which grouping the entities are reachable through the main POX
+object called ``core`` with the names:
+
+  * ``service`` - Service layer
+  * ``orchestration`` - Resource Orchestration Sublayer
+  * ``adaptation`` - Controller Adaptation Sublayer
+  * ``infrastructure`` - Infrastructure layer
+
+.. hint::
+
+  Tab-auto completion is working in most cases.
+
+So a possible starting command for testing ESCAPEv2 with a test request given in
+a file and check the state of the DoV:
+
+.. code-block:: bash
+
+    $ ./escape.py -dfi -s pox/escape-mn-req.nffg
+    Starting ESCAPEv2...
+    Command: sudo /home/czentye/escape/pox/pox.py unify --full --sg_file=/home/czentye/escape/pox/escape-mn-req.nffg py --completion
+
+    ...
+
+    ESCAPE> print core.adaptation.controller_adapter.domainResManager._dov.get_resource_info().dump()
+    {
+      "parameters": {
+        "id": "DoV",
+        "name": "dov-140454330075984",
+        "version": "1.0"
+      },
+      "node_saps": [
+        {
+          "id": "SAP1",
+
+    ...
+
+
+
+**More advanced commands (mostly advisable for testing purposes):**
+
+For more flexible control ESCAPEv2 can be started directly with POX's starting
+script under the ``pox`` folder.
+
+.. note::
+
+  The topmost ``escape.py`` script use this ``pox.py`` script to start ESCAPEv2.
+  In debug mode the assembled POX command is printed also.
 
 Basic command:
 
@@ -260,7 +335,7 @@ One of a basic commands for debugging:
     $ ./pox.py --verbose unify py
 
 For forcing to log on DEBUG level the ``--verbose`` flag of the ``pox.py``
-script can be used. Or the log.level POX module can be used which would be the
+script can be used. Or the *log.level* POX module can be used which would be the
 preferred way. E.g.:
 
 .. code-block:: bash
@@ -330,41 +405,101 @@ Start layer in standalone mode (no dependency check and handling) for test/debug
 
     $ ./pox.py service orchestration --standalone
 
-REST API
-++++++++
+REST APIs
+---------
+
+ESCAPEv2 has currently 3 REST-APIs.
+
+The Service layer has a REST-API for communication with users/GUI. This API is
+initiated by default when the layer was started.
+
+The Resource Orchestration layer has 2 API which are only initiated if the
+appropriate flag is given to the starting script.
+The ROS API can be used for communicating with other UNIFY layer e.g. a
+Controller Adaptation Sublayer of a standalone ESCAPEv2 in a multi-level
+scenario or with a GUI.
+The CfOr API realizes the interface for the elastic routing capability.
+
+
+Common API functions
+++++++++++++++++++++
+
+*Operations:*   Every API has the following 3 function (defined in :any:`AbstractRequestHandler`):
+
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+|      Path         |     Params     |     HTTP verbs    | Description                                                               |
++===================+================+===================+===========================================================================+
+| */version*        | ``None``       | GET               | Returns with the current version of ESCAPEv2                              |
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+| */ping*           | ``None``       | ALL               | Returns with the "OK" string                                              |
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+| */operations*     | ``None``       | GET               | Returns with the implemented operations assigned to the HTTP verbs        |
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+
+Service API specific function:
+++++++++++++++++++++++++++++++
 
 *Content Negotiation:* The Service layer's RESTful API accepts and returns data only in JSON format.
 
-*Operations:*   Every operation need to be called under the **escape/** path. E.g. *http://localhost/escape/version*
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+|      Path         |     Params     |     HTTP verbs    | Description                                                               |
++===================+================+===================+===========================================================================+
+| */topology*       | ``None``       | GET               | Returns with the resource view of the Service layer                       |
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+| */sg*             | ``NFFG``       | ALL               | Initiate given NFFG. Returns the given NFFG initiation is accepted or not |
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
 
-+-------------------+----------------+-------------------+-----------------------------------------------------------------------------------+
-|      Path         |     Params     |     HTTP verbs    | Description                                                                       |
-+===================+================+===================+===================================================================================+
-| */version*        | ``None``       | GET               | Returns with the current version of ESCAPEv2                                      |
-+-------------------+----------------+-------------------+-----------------------------------------------------------------------------------+
-| */echo*           | ``ANY``        | ALL               | Returns with the given parameters                                                 |
-+-------------------+----------------+-------------------+-----------------------------------------------------------------------------------+
-| */operations*     | ``None``       | GET               | Returns with the implemented operations as a list                                 |
-+-------------------+----------------+-------------------+-----------------------------------------------------------------------------------+
-| */sg*             | ``NFFG``       | POST              | Initiate given NFFG. Returns the given NFFG initiation is accepted or not.        |
-+-------------------+----------------+-------------------+-----------------------------------------------------------------------------------+
+ROS API specific function:
+++++++++++++++++++++++++++
+
+Can be started with the ``--agent`` or ``--rosapi`` initial flags.
+
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+|      Path         |     Params     |     HTTP verbs    | Description                                                               |
++===================+================+===================+===========================================================================+
+| */get-config*     | ``None``       | GET               | Returns with the resource view of the Resource Orchestration Sublayer     |
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+| */edit-config*    | ``NFFG``       | ALL               | Initiate given NFFG.                                                      |
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+
+Cf-Or API specific function:
+++++++++++++++++++++++++++++
+
+Can be started with the ``--cfor`` flag.
+
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+|      Path         |     Params     |     HTTP verbs    | Description                                                               |
++===================+================+===================+===========================================================================+
+| */get-config*     | ``None``       | GET               | Returns with the resource view from the assigned Virtualizer              |
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
+| */edit-config*    | ``NFFG``       | ALL               | Initiate given NFFG.                                                      |
++-------------------+----------------+-------------------+---------------------------------------------------------------------------+
 
 Configuration
-+++++++++++++
+-------------
 
 ESCAPEv2 has a default configuration under the `escape` package (in the
-`__init__.py` file as `cfg`). This configuration is used as the running config
-also. This config also contains the necessary information for component
-instantiation and initialization.
+`__init__.py` file as ``cfg``). This configuration contains the necessary
+information for manager/adapter initialization, remote connections, etc. and
+also used as the running config.
 
 To override some of the parameters you can change it in the `cfg` directly (not
-preferred) or you can define it in the additional config file: `escape.config`.
+preferred) or you can define it in the additional config file: ``escape.config``.
 The ESCAPEv2 checks this file at every start, and update/override the internal
-config if it"s necessary. The config file can be changed during start with the
-`--config` initial parameter.
+config if it's necessary.
+
+The config file can be changed during start with the ``--config`` initial
+parameter.
+
+The additional config can be added only in JSON format, but the structure of the
+configuration is strictly follows the default configuration.
+
+The configuration values is derived from the initial attributes of the
+adapter/managers constructors. Other values are single data, paths or flags which
+are taken out by helper functions of the :any:`ESCAPEConfig` class.
 
 Development
-+++++++++++
+-----------
 
 Suggested IDE: `Pycharm Community Edition <https://www.jetbrains.com/pycharm/>`_
 
@@ -382,7 +517,7 @@ Coding conventions:
 * Use double blank lines around classes and top-level functions
 
 Debugging
-+++++++++
+---------
 
 You can use PyCharm for debugging. In this case you have to specify a new Python
 interpreter using the *python_root_debugger.sh* script to be able to run ESCAPE
@@ -422,6 +557,13 @@ More help and description about the useful helper functions and the *core*
 object is in the comments/documentation and on the POX's
 `wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`_
 site.
+
+Contacts
+--------
+
+János Czentye - czentye@tmit.bme.hu
+
+Balázs Sonkoly - sonkoly@tmit.bme.hu
 
 Indices and tables
 ==================
