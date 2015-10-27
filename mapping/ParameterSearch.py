@@ -115,7 +115,8 @@ def runAllTestSequences(par1, par2, par3, seeds, outfile):
 
 if __name__ == '__main__':
   try: 
-    opts, args = getopt.getopt(sys.argv[1:],"ho:", ["threads=", "seeds=", "param_number="])
+    opts, args = getopt.getopt(sys.argv[1:],"ho:", ["threads=", "seeds=", 
+                                                    "param_number="])
     baseoutfile = "paramsearch"
     threads = 1
     seedlist = [0,1]

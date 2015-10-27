@@ -42,7 +42,7 @@ aggr_link = {'bandwidth': 100000, 'delay': 0.2}
 popcnt = 0
 
 log = logging.getLogger("TopoConstruct")
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.WARN,
                       format='%(levelname)s:%(name)s:%(message)s')
 
 def addRedundantPairedConnection(nffg, an0, an1, bn0, bn1, linkres):
@@ -335,4 +335,14 @@ def getSmallTopo():
   # topoparams.append({'Retail': (2, 4000, 0.2), 'Business': (8, 2000, 0.2),
   #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
   # [4,8,12,16], [32000,64000], [200], 40000, 4)})
+  return getCarrierTopo(topoparams), topoparams
+
+def getMicroTopo():
+  topoparams = []
+  topoparams.append({'Retail': (2, 50, 0.2), 'Business': (2, 30, 0.2),
+                     'CloudNFV': (2, 2, 4,  160000, 100000, ['A','B'], 
+                                  [8,12,16], [32000,64000], [150], 40000, 4)})
+  topoparams.append({'Retail': (2, 50, 0.2), 'Business': (2, 30, 0.2),
+                     'CloudNFV': (2, 2, 4,  160000, 100000, ['A','B', 'C'], 
+                                  [8,12,16], [32000,64000], [150], 40000, 4)})
   return getCarrierTopo(topoparams), topoparams

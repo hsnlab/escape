@@ -41,12 +41,8 @@ def gen_seq():
 log = logging.getLogger("StressTest")
 logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)s:%(name)s:%(message)s')
-all_saps_beginning = []
-all_saps_ending = []
 # dictionary of newly added VNF-s keyed by the number of 'test_lvl' when it 
 # was added.
-running_nfs = {} 
-test_lvl = 1
 
 helpmsg = """StressTest.py options are:
    -h                Print this message help message.
@@ -67,7 +63,8 @@ helpmsg = """StressTest.py options are:
                      most.
 """
 
-def generateRequestForCarrierTopo(seed, loops=False, 
+def generateRequestForCarrierTopo(test_lvl, all_saps_beginning, all_saps_ending,
+                                  running_nfs, loops=False, 
                                   vnf_sharing_probabilty=0.0,
                                   multiSC=False, max_sc_count=2):
   """
@@ -185,10 +182,104 @@ def generateRequestForCarrierTopo(seed, loops=False,
       for tmp in xrange(0, scid+1):
         current_nfs.extend(new_nfs)
       if not multiSC:
-        return nffg
+        return nffg, all_saps_beginning, all_saps_ending
     if multiSC:
-      return nffg
-  return None
+      return nffg, all_saps_beginning, all_saps_ending
+  return None, all_saps_beginning, all_saps_ending
+
+def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count, 
+                   fullremap, bw_factor, res_factor, lat_factor, outputfile, 
+                   queue=None, shortest_paths_precalc=None, filehandler=None):
+  """
+  If queue is given, the result will be put in that Queue object too. Meanwhile
+  if shortest_paths_precalc is not given, it means the caller needs the 
+  shortest_paths, so we send it back. In this case the resulting test_lvl will
+  be sent by the queue.
+  NOTE: outputfile is only used inside the function if an exception is thrown 
+  and than it is logged there.
+  """
+  network, topoparams = CarrierTopoBuilder.getMicroTopo()
+  max_test_lvl = 50000
+  test_lvl = 1
+  all_saps_ending = [s.id for s in network.saps]
+  all_saps_beginning = [s.id for s in network.saps]
+  running_nfs = {} 
+  random.seed(0)
+  random.jumpahead(seed)
+  random.shuffle(all_saps_beginning)
+  random.shuffle(all_saps_ending)
+  shortest_paths = shortest_paths_precalc
+  if filehandler is not None:
+    log.addHandler(filehandler)
+  if shortest_paths is not None and type(shortest_paths) != dict:
+    excp = Exception("StressTest received something else other than shortest_"
+                    "paths dictionary: %s"%type(shortest_paths))
+    if queue is not None:
+      queue.put(excp)
+    raise excp
+
+  try:
+    while test_lvl < max_test_lvl:
+      try:
+        log.debug("Trying mapping with test level %s..."%test_lvl)
+        request, all_saps_beginning, all_saps_ending = \
+                 generateRequestForCarrierTopo(test_lvl, all_saps_beginning, 
+                                               all_saps_ending, running_nfs,
+                  loops=loops, vnf_sharing_probabilty=vnf_sharing,
+                  multiSC=multiple_scs, max_sc_count=max_sc_count)
+        while request is not None:
+          if test_lvl > max_test_lvl:
+            break
+          running_nfs[test_lvl] = [nf for nf in request.nfs 
+                                   if nf.id.split("-")[1] == str(test_lvl)]
+          network, shortest_paths = MappingAlgorithms.MAP(request, network, 
+                    full_remap=fullremap, enable_shortest_path_cache=True,
+                    bw_factor=bw_factor, res_factor=res_factor,
+                    lat_factor=lat_factor, shortest_paths=shortest_paths, 
+                    return_dist=True)
+          log.debug("Mapping successful on test level %s!"%test_lvl)
+          test_lvl += 1
+          # needed to change from generator style due to some bug 
+          # with all_saps_ lists. Parameters needs to be modified two places!!
+          request, all_saps_beginning, all_saps_ending = \
+                   generateRequestForCarrierTopo(test_lvl, all_saps_beginning, 
+                                                 all_saps_ending, running_nfs,
+                  loops=loops, vnf_sharing_probabilty=vnf_sharing,
+                  multiSC=multiple_scs, max_sc_count=max_sc_count)
+      except uet.MappingException as me:
+        log.info("Mapping failed: %s"%me.msg)
+        break
+      if request is None:
+        log.warn("Request generation reached its end!")
+        break
+  except uet.UnifyException as ue:
+    log.error(ue.msg)
+    log.error(traceback.format_exc())
+    with open(outputfile, "a") as f:
+      f.write("\n".join(("UnifyException cought during StressTest: ",
+                         ue.msg,traceback.format_exc())))
+    if queue is not None:
+      queue.put(ue)
+      sys.exit()
+  except Exception as e:
+    log.error(traceback.format_exc())
+    with open(outputfile, "a") as f:
+      f.write("\n".join(("Exception cought during StressTest: ",
+                         traceback.format_exc())))
+    if queue is not None:
+      queue.put(e)
+      sys.exit()
+  # put the result to the queue
+  if queue is not None:
+    log.debug("%s.%s:Putting %s to communication queue"%(os.getppid(), 
+                                            os.getpid(), test_lvl-1))
+    queue.put(test_lvl-1)
+    if shortest_paths_precalc is None:
+      log.debug("%s.%s:Returning shortest_paths!"%(os.getppid(), 
+                                                   os.getpid()))
+      return shortest_paths
+  # if returned_test_lvl is 0, we failed at the very fist mapping!
+  return test_lvl-1
 
 def main(argv):
   try:
@@ -238,68 +329,19 @@ def main(argv):
     print helpmsg
     raise Exception("Not all algorithm params are given!")
   
-  network, topoparams = CarrierTopoBuilder.getSmallTopo()
-  max_test_lvl = 50000
-  ever_successful = False
-  global test_lvl
-  global all_saps_ending
-  global all_saps_beginning
-  all_saps_ending = [s.id for s in network.saps]
-  all_saps_beginning = [s.id for s in network.saps]
-  random.seed(seed)
-  random.shuffle(all_saps_beginning)
-  random.shuffle(all_saps_ending)
-  try:
-    while test_lvl < max_test_lvl:
-      try:
-        log.debug("Trying mapping with test level %s..."%test_lvl)
-        shortest_paths = None
-        request = generateRequestForCarrierTopo(seed, 
-                  loops=loops, vnf_sharing_probabilty=vnf_sharing,
-                  multiSC=multiple_scs, max_sc_count=max_sc_count)
-        while request is not None:
-          if test_lvl > max_test_lvl:
-            break
-          running_nfs[test_lvl] = [nf for nf in request.nfs 
-                                   if nf.id.split("-")[1] == str(test_lvl)]
-          network, shortest_paths = MappingAlgorithms.MAP(request, network, 
-                    full_remap=fullremap, enable_shortest_path_cache=True,
-                    bw_factor=bw_factor, res_factor=res_factor,
-                    lat_factor=lat_factor, shortest_paths=shortest_paths, 
-                    return_dist=True)
-          ever_successful = True
-          log.debug("Mapping successful on test level %s!"%test_lvl)
-          test_lvl += 1
-          # needed to change from generator style due to some bug 
-          # with all_saps_ lists. Parameters needs to be modified two places!!
-          request = generateRequestForCarrierTopo(seed, 
-                  loops=loops, vnf_sharing_probabilty=vnf_sharing,
-                  multiSC=multiple_scs, max_sc_count=max_sc_count)
-      except uet.MappingException as me:
-        log.info("Mapping failed: %s"%me.msg)
-        break
-      if request is None:
-        log.info("Request generation reached its end!")
-        break
-  except uet.UnifyException as ue:
-    log.error(ue.msg)
-    log.error(traceback.format_exc())
+  returned_test_lvl = StressTestCore(seed, loops, vnf_sharing,
+           multiple_scs, max_sc_count, fullremap, bw_factor, res_factor,
+                                     lat_factor, outputfile)
+  
+  log.info("First unsuccessful mapping was at %s test level."%
+           (returned_test_lvl+1))
+  if returned_test_lvl > 0:
     with open(outputfile, "a") as f:
-      f.write("\n".join(("UnifyException cought during StressTest: ",
-                         ue.msg,traceback.format_exc())))
-  except Exception as e:
-    log.error(traceback.format_exc())
-    with open(outputfile, "a") as f:
-      f.write("\n".join(("Exception cought during StressTest: ",
-                         traceback.format_exc())))
-  log.info("First unsuccessful mapping was at %s test level."%test_lvl)
-  if ever_successful:
-    # print "\nLast successful mapping was at %s test level.\n"%(test_lvl - 1)
-    with open(outputfile, "a") as f:
-      f.write("\nLast successful mapping was at %s test level.\n"%(test_lvl - 1))
+      f.write("\nLast successful mapping was at %s test level.\n"%
+              (returned_test_lvl))
   else:
     with open(outputfile, "a") as f:
-      f.write("\nMapping failed at starting test level (%s)\n"%test_lvl)
+      f.write("\nMapping failed at starting test level (%s)\n"%(returned_test_lvl+1))
 
 if __name__ == '__main__':
   main(sys.argv[1:])
