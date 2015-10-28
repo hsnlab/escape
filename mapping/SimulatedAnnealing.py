@@ -41,6 +41,8 @@ helpmsg = """SimulatedAnnealing.py usage:
 --start_bw=f     Exactly two of the three parameters should be given as the 
 --start_res=f    starting point for the annealing. The three parameters are
                  summed to 3.0. 
+--start_temp=f   Sets the starting temerature.
+--temp_step=f    Sets the decrementation of temperature during one step.
 """
 
 
@@ -64,7 +66,7 @@ def evaluatePoint(bw, res, test_seed, error_file, queue=None,
   log.debug("Examination of point %s,%s started..."%(bw,res))
   if shortest_paths is not None:
     mp.Process(target=st.StressTestCore, args=(test_seed, False, 0.3, True, 3, 
-                                               True, bw, res, lat, error_file),
+                                               False, bw, res, lat, error_file),
                kwargs={'queue':multi_test, 
                        'shortest_paths_precalc':shortest_paths, 
                        'filehandler':handler}).start()
@@ -74,30 +76,32 @@ def evaluatePoint(bw, res, test_seed, error_file, queue=None,
     # don't give the Queue to it, we want it to calculate shortest path so
     # we could give it to the next two.
     shortest_paths_calced = st.StressTestCore(test_seed, False, 0.3, True, 3, 
-                                              True, bw, res, lat, error_file, 
+                                              False, bw, res, lat, error_file, 
                                               queue=multi_test, 
                                               filehandler=handler)
     shortest_paths_sendback = True
 
   single_test = mp.Queue()
   mp.Process(target=st.StressTestCore, args=(test_seed, False, 0.0, False, 0, 
-                                             True, bw, res, lat, error_file), 
+                                             False, bw, res, lat, error_file),
              kwargs={'queue':single_test, 
                      'shortest_paths_precalc':shortest_paths_calced, 
                      'filehandler':handler}).start()
   shared_test = mp.Queue()
   mp.Process(target=st.StressTestCore, args=(test_seed, False, 0.2, False, 0,
-                                             True, bw, res, lat, error_file),
+                                             False, bw, res, lat, error_file),
              kwargs={'queue':shared_test, 
                      'shortest_paths_precalc':shortest_paths_calced, 
                      'filehandler':handler}).start()
   
   # wait all three test sequences to finish
-  result_vector = (multi_test.get(), single_test.get(), shared_test.get())
-  for res, test in zip(result_vector, ("multi", "single", "shared")):
-    if issubclass(res.__class__, (Exception, Warning)):
+  result_vector = (multi_test.get(), 
+                   single_test.get(), 
+                   shared_test.get())
+  for result, test in zip(result_vector, ("multi", "single", "shared")):
+    if issubclass(result.__class__, (Exception, Warning)):
       log.warn("An exception was thrown by the \"%s\" StressTest: %s"%(test, 
-                                                                       res))
+                                                                       result))
       if shortest_paths_sendback:
         return 0.0, None
       else:
@@ -124,16 +128,19 @@ if __name__ == '__main__':
     opts, args = getopt.getopt(sys.argv[1:],"ho:", ["neighbor_cnt=", "minstep=", 
                                                     "maxstep=", "test_seed=",
                                                     "seed=", "start_res=", 
-                                                    "start_bw="])
+                                                    "start_bw=", "start_temp=",
+                                                    "temp_step="])
     baseoutfile = "simulannealing"
     minstep = 0.05
     maxstep = 0.3
     bw = None
     res = None
-    maxiters = 200
+    maxiters = 30
     neighbor_cnt = 4
     seed = math.floor(time.time())
     test_seed = 0
+    start_temp = 100
+    temp_step = 5
     for opt, arg in opts:
       if opt == "-h":
         print helpmsg
@@ -156,6 +163,10 @@ if __name__ == '__main__':
         res = float(arg)
       elif opt == "--neighbor_cnt":
         neighbor_cnt = int(arg)
+      elif opt == "--start_temp":
+        start_temp = float(arg)
+      elif opt == "--temp_step":
+        temp_step = float(arg)
     if bw is None or res is None:
       raise Exception("Starting parameters must be given!")
     elif bw + res > 3.0:
@@ -171,8 +182,13 @@ if __name__ == '__main__':
   # evaluate the starting point and receive the shortest path for speeding up
   currvalue, shortest_paths = evaluatePoint(current[0], current[1], test_seed, 
                                             baseoutfile)
+  if shortest_paths is None:
+    raise Exception("The evaluation of starting point and thus shortest path "
+                    "calculation is failed!")
   random.seed(seed)
-  temperature = 100
+  temperature = start_temp
+  best = current
+  bestvalue = currvalue
   while itercnt <= maxiters:
     step = random.random() * (maxstep - minstep) + minstep
     x = random.random()
@@ -186,7 +202,22 @@ if __name__ == '__main__':
     deg = 360 / float(neighbor_cnt)
     log.info("Examining the neighbors of %s,%s"%(current[0],current[1]))
     for i in range(0, neighbor_cnt):
-      mp.Process(target=evaluatePoint, args=(current[0]+v0[0], current[1]+v0[1], 
+      v0_limited = list(v0)
+      # preventing escaping from parameter space with boundaries.
+      if current[0]+v0_limited[0] < 0:
+        v0_limited[0] = -1 * current[0]
+        v0_limited[1] = ((-1 * current[0]) / v0_limited[0]) * v0_limited[1]
+      if current[1]+v0_limited[1] < 0:
+        v0_limited[0] = ((-1 * current[1]) / v0_limited[1]) * v0_limited[0]
+        v0_limited[1] = -1 * current[1]
+      if current[0]+v0[0] + current[1]+v0[1] > 3:
+        v0_limited[0] = v0_limited[0] * (3.0 - current[0] - current[1]) / \
+                        (v0_limited[0] + v0_limited[1])
+        v0_limited[1] = v0_limited[1] * (3.0 - current[0] - current[1]) / \
+                        (v0_limited[0] + v0_limited[1])
+           
+      mp.Process(target=evaluatePoint, args=(current[0]+v0_limited[0], 
+                                             current[1]+v0_limited[1], 
                                              test_seed, baseoutfile), 
                  kwargs={'queue':results_q, 'shortest_paths':shortest_paths})\
         .start()
@@ -204,13 +235,17 @@ if __name__ == '__main__':
     
     # check whether the maximal move of the moveset is better than the current
     max_, maxvalue = max(results_l, key=lambda a: a[1])
-    probability = math.e **(-(currvalue-maxvalue)/temperature)
+    probability = math.e **(-bestvalue/temperature)
     log.debug("Max value of neighbors: %s "%maxvalue)
     log.debug("Probability of accepting worse case: %s"%probability)
     if maxvalue >= currvalue:
       current = max_
       currvalue = maxvalue
       log.info("Accepted better point with value %s!"%currvalue)
+      if maxvalue >= bestvalue:
+        best = max_
+        bestvalue = maxvalue
+        log.info("Overall best point %s found with value %s!"%(best, bestvalue))
     elif random.random() < probability:
       # if not, we can still accept is with some probability
       current = max_
@@ -219,6 +254,6 @@ if __name__ == '__main__':
     else:
       log.debug("Staying in place...")
       
-    temperature = temperature-1 if temperature-1 > 0 else 0.0000001
-    
+    temperature = temperature-temp_step if temperature-temp_step > 0 else 0.0000001
+    log.info("Temperature is %s"%temperature)
     itercnt += 1

@@ -39,8 +39,8 @@ def gen_seq():
     yield int(math.floor(random.random() * 999999999))
 
 log = logging.getLogger("StressTest")
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(levelname)s:%(name)s:%(message)s')
+log.setLevel(logging.INFO)
+logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
 # dictionary of newly added VNF-s keyed by the number of 'test_lvl' when it 
 # was added.
 
@@ -209,6 +209,7 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
   random.shuffle(all_saps_beginning)
   random.shuffle(all_saps_ending)
   shortest_paths = shortest_paths_precalc
+  ppid_pid = ""
   if filehandler is not None:
     log.addHandler(filehandler)
   if shortest_paths is not None and type(shortest_paths) != dict:
@@ -217,11 +218,13 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
     if queue is not None:
       queue.put(excp)
     raise excp
+  if queue is not None:
+    ppid_pid = "%s.%s:"%(os.getppid(), os.getpid())
 
   try:
     while test_lvl < max_test_lvl:
       try:
-        log.debug("Trying mapping with test level %s..."%test_lvl)
+        log.debug(ppid_pid+"Trying mapping with test level %s..."%test_lvl)
         request, all_saps_beginning, all_saps_ending = \
                  generateRequestForCarrierTopo(test_lvl, all_saps_beginning, 
                                                all_saps_ending, running_nfs,
@@ -237,7 +240,7 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
                     bw_factor=bw_factor, res_factor=res_factor,
                     lat_factor=lat_factor, shortest_paths=shortest_paths, 
                     return_dist=True)
-          log.debug("Mapping successful on test level %s!"%test_lvl)
+          log.debug(ppid_pid+"Mapping successful on test level %s!"%test_lvl)
           test_lvl += 1
           # needed to change from generator style due to some bug 
           # with all_saps_ lists. Parameters needs to be modified two places!!
@@ -247,14 +250,14 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
                   loops=loops, vnf_sharing_probabilty=vnf_sharing,
                   multiSC=multiple_scs, max_sc_count=max_sc_count)
       except uet.MappingException as me:
-        log.info("Mapping failed: %s"%me.msg)
+        log.debug(ppid_pid+"Mapping failed: %s"%me.msg)
         break
       if request is None:
-        log.warn("Request generation reached its end!")
+        log.warn(ppid_pid+"Request generation reached its end!")
         break
   except uet.UnifyException as ue:
-    log.error(ue.msg)
-    log.error(traceback.format_exc())
+    log.error(ppid_pid+ue.msg)
+    log.error(ppid_pid+traceback.format_exc())
     with open(outputfile, "a") as f:
       f.write("\n".join(("UnifyException cought during StressTest: ",
                          ue.msg,traceback.format_exc())))
@@ -262,7 +265,7 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
       queue.put(ue)
       sys.exit()
   except Exception as e:
-    log.error(traceback.format_exc())
+    log.error(ppid_pid+traceback.format_exc())
     with open(outputfile, "a") as f:
       f.write("\n".join(("Exception cought during StressTest: ",
                          traceback.format_exc())))
@@ -271,12 +274,10 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
       sys.exit()
   # put the result to the queue
   if queue is not None:
-    log.debug("%s.%s:Putting %s to communication queue"%(os.getppid(), 
-                                            os.getpid(), test_lvl-1))
+    log.info(ppid_pid+"Putting %s to communication queue"%(test_lvl-1))
     queue.put(test_lvl-1)
     if shortest_paths_precalc is None:
-      log.debug("%s.%s:Returning shortest_paths!"%(os.getppid(), 
-                                                   os.getpid()))
+      log.info(ppid_pid+"Returning shortest_paths!")
       return shortest_paths
   # if returned_test_lvl is 0, we failed at the very fist mapping!
   return test_lvl-1

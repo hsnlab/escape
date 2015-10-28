@@ -39,7 +39,6 @@ except ImportError:
 
 # Aggregation links (100Gbps) Connecting Distribution nodes to Aggregation Nodes
 aggr_link = {'bandwidth': 100000, 'delay': 0.2}
-popcnt = 0
 
 log = logging.getLogger("TopoConstruct")
 logging.basicConfig(level=logging.WARN,
@@ -181,7 +180,7 @@ def addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
                 SE, NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links)
 
 
-def addPoP(nffg, backbonenode0, backbonenode1, 
+def addPoP(nffg, popcnt, backbonenode0, backbonenode1, 
            BNAS, RCpb, RCT, 
            PE, BCpb, BCT,
            CL, CH, SE, SAN_bw, SAN_storage, NF_types,
@@ -212,7 +211,6 @@ def addPoP(nffg, backbonenode0, backbonenode1,
     NOTE: Link bw from Fabric Extender to Fabric Interc. equals 
     CL_bw/CH_links (~10Gbps).
   """
-  global popcnt
   popn = "-PoP-"+str(popcnt)
 
   log.debug("Adding PoP %s..."%popcnt)
@@ -235,7 +233,6 @@ def addPoP(nffg, backbonenode0, backbonenode1,
       addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
                       NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links)
 
-  popcnt += 1
   return
     
 def getCarrierTopo(params):
@@ -253,7 +250,7 @@ def getCarrierTopo(params):
   # The generated identifiers are still different between genereations, but 
   # those does not influence the mapping process
   random.seed(0)
-  
+  popcnt = 0
   nffg = NFFG(id="CarrierTopo")
   backbone_res =  {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
                    'bandwidth': 10000000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
@@ -270,7 +267,6 @@ def getCarrierTopo(params):
                            delay=10)
   nffg.add_undirected_link(bn3.add_port(), bn0.add_port(), bandwidth=1000000, 
                            delay=10)
-  i = 0
   backbones = (bn0, bn1, bn2, bn3)
   bnlen = len(backbones)
   for popdata in params:
@@ -278,8 +274,9 @@ def getCarrierTopo(params):
     tmp.extend(popdata['Retail'])
     tmp.extend(popdata['Business'])
     tmp.extend(popdata['CloudNFV'])
-    addPoP(nffg, backbones[i%bnlen], backbones[(i+1)%bnlen], *tmp)
-    i += 1
+    addPoP(nffg, popcnt, backbones[popcnt%bnlen], backbones[(popcnt+1)%bnlen],
+           *tmp)
+    popcnt += 1
   """
   #                      BNAS,RCpb,  RCT, PE,BCpb, BCT, CL,CH,SE, SAN_bw, 
   addPoP(nffg, bn2, bn3, 2,   10000, 0.2, 2, 4000, 0.2, 2, 8, 8,  160000,  
