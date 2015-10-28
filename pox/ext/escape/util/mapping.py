@@ -18,8 +18,8 @@ import threading
 
 from escape import CONFIG
 from escape.util.misc import call_as_coop_task
-from pox.lib.revent.revent import EventMixin
-from pox import core
+from pox.lib.revent.revent import EventMixin, Event
+from pox.core import core
 
 
 class AbstractMappingStrategy(object):
@@ -129,6 +129,34 @@ class ProcessorSkipper(AbstractMappingDataProcessor):
     return False
 
 
+class PreMapEvent(Event):
+  """
+  Raised before the request graph is mapped to the (virtual) resources.
+
+  Event handlers might modify the request graph, for example, to
+  enforce some decomposition rules.
+  """
+
+  def __init__ (self, input_graph, resource_view):
+    super(PreMapEvent, self).__init__()
+    self.input_graph = input_graph
+    self.resource_view = resource_view
+
+
+class PostMapEvent(Event):
+  """
+  Raised after the request graph is mapped to the (virtual) resources.
+
+  Event handlers might modify the mapped request graph.
+  """
+
+  def __init__ (self, input_graph, resource_view, result_graph):
+    super(PostMapEvent, self).__init__()
+    self.input_graph = input_graph
+    self.resource_view = resource_view
+    self.result_graph = result_graph
+
+
 class AbstractMapper(EventMixin):
   """
   Abstract class for graph mapping function.
@@ -213,8 +241,17 @@ class AbstractMapper(EventMixin):
 
     Implemented function call the mapping algorithm.
 
+    If a derived class of :any:`AbstractMappingDataProcessor` is set in the
+    global config under the name "PROCESSOR" then the this class performs
+    pre/post mapping steps.
+
+    After the pre/post-processor steps the relevant Mapping event will be
+    raised on the main API class of the layer!
+
     .. warning::
       Derived class have to override this function
+
+    Follows the Template Method design pattern.
 
     :param input_graph: graph representation which need to be mapped
     :type input_graph: :any:`NFFG`
@@ -233,14 +270,26 @@ class AbstractMapper(EventMixin):
         if self.validator.pre_mapping_exec(
              input_graph=input_graph, resource_graph=resource_graph):
           raise ProcessorError("Pre mapping validation is failed!")
+        # Raise event for external POX modules
+        core.components[self._layer_name].raiseEvent(PreMapEvent,
+                                                     input_graph=input_graph,
+                                                     resource_view=resource_view)
         # Invoke mapping algorithm
         mapping_result = self._perform_mapping(input_graph=input_graph,
                                                resource_view=resource_view)
         # Perform post-mapping validation
+        # If the mapping is threaded skip post mapping here
+        if self._threaded:
+          return mapping_result
         if self.validator.post_mapping_exec(input_graph=input_graph,
                                             resource_graph=resource_graph,
                                             result_graph=mapping_result):
           raise ProcessorError("Post mapping validation is failed!")
+        # Raise event for external POX modules
+        core.components[self._layer_name].raiseEvent(PostMapEvent,
+                                                     input_graph=input_graph,
+                                                     resource_view=resource_view,
+                                                     result_graph=mapping_result)
         return mapping_result
     else:
       # Invoke only the mapping algorithm

@@ -23,6 +23,7 @@ from escape.service import log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
+from escape.util.mapping import PreMapEvent, PostMapEvent
 from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
@@ -59,18 +60,6 @@ class GetVirtResInfoEvent(Event):
     super(GetVirtResInfoEvent, self).__init__()
     # service layer ID
     self.sid = sid
-
-
-class PreMapEvent(Event):
-  """
-  Raised before the service graph is mapped to the (virtual) resources.
-
-  Event handlers might modify the service graph, for example, to
-  enforce some decomposition rules.
-  """
-
-  def __init__ (self, sg):
-    self.sg = sg
 
 
 class ServiceRequestHandler(AbstractRequestHandler):
@@ -152,7 +141,8 @@ class ServiceLayerAPI(AbstractAPI):
   # Layer id constant
   LAYER_ID = "ESCAPE-" + LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent, PreMapEvent}
+  _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent, PreMapEvent,
+                        PostMapEvent}
   # Dependencies
   dependencies = ('orchestration',)
 

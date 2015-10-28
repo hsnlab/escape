@@ -72,9 +72,6 @@ class ServiceOrchestrator(AbstractOrchestrator):
     if virtual_view is not None:
       if isinstance(virtual_view, AbstractVirtualizer):
         try:
-          from escape.service.sas_API import PreMapEvent
-          core.service.raiseEvent(PreMapEvent, sg)
-
           # Run orchestration before service mapping algorithm
           nffg = self.mapper.orchestrate(sg, virtual_view)
           log.debug("SG initiation is finished by %s" % self.__class__.__name__)
