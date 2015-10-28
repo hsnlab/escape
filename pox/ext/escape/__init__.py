@@ -125,7 +125,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         "RESET-DOMAINS-AFTER-SHUTDOWN": True},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
-                            "TOPO": "escape-mn-topo.nffg",  # relative to ext/
+                            "TOPO": "escape-mn-topo.nffg-copy",  # relative to ext/
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
                                                 "FallbackDynamicTopology"},

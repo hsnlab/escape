@@ -252,3 +252,14 @@ def remove_junks (log=logging.getLogger("cleanup")):
   # Call Mininet's own cleanup stuff
   from mininet.clean import cleanup
   cleanup()
+
+
+def get_ifaces ():
+  """
+  Return the list of all defined interface. Rely on 'ifconfig' command.
+
+  :return: list of interfaces
+  :rtype: list
+  """
+  return [iface.split(' ', 1)[0] for iface in os.popen('ifconfig -a -s') if
+          not iface.startswith('Iface')]
