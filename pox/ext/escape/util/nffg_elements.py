@@ -516,16 +516,22 @@ class Port(Element):
   def node (self):
     del self.__node
   
-  def add_property (self, property):
+  def add_property (self, property, value=None):
     """
     Add a property or list of properties to the port.
+    If value is not None, then property is used as a key.
 
     :param property: property
     :type property: str or list or tuple
+    :param value: optional property value
+    :type value: str
     :return: the Port object to allow function chaining
     :rtype: :any:`Port`
     """
     if isinstance(property, str):
+      if value is not None:
+        ## wouldn't it be better to store properties as key-value pairs?
+        property = property + ':' + value
       self.properties.append(property)
     elif isinstance(property, Iterable):
       self.properties.extend(property)
@@ -544,6 +550,19 @@ class Port(Element):
       self.properties[:] = []
     else:
       self.properties.remove(property)
+
+  def get_property (self, property):
+    """
+    Return the value of property
+
+    :param property: property
+    :type property: str
+    :return: the value of the property
+    :rtype: str
+    """
+    for prop in self.properties:
+      if prop.startswith(property + ":"):
+        return prop.split(":", 1)[1]
   
   def persist (self):
     port = super(Port, self).persist()
