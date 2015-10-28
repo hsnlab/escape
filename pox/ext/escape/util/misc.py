@@ -17,6 +17,7 @@ Contains miscellaneous helper functions.
 from functools import wraps
 import logging
 import os
+import re
 from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
 import traceback
 import warnings
@@ -237,15 +238,17 @@ def remove_junks (log=logging.getLogger("cleanup")):
   run_silent(r"sudo pkill -9 -f netconfd")
   run_silent(r"sudo pkill -9 -f clickhelper")
   run_silent(r"sudo pkill -9 -f click")
-  log.debug("Cleanup any remained veth pair...")
+  log.debug("Delete any remained veth pair...")
   veths = run_cmd(r"ip link show | egrep -o '(uny_\w+)'").split('\n')
   # only need to del one end of the veth pair
   for veth in veths[::2]:
     if veth != '':
       run_silent(r"sudo ip link del %s" % veth)
+  log.debug("Remove remained tmp files and stacked netconfd sockets...")
+  for f in os.listdir('/tmp'):
+    if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
+      os.remove(os.path.join('/tmp/', f))
   log.debug("Cleanup any Mininet-specific junk...")
-  log.debug("Cleanup remained tmp files...")
-  run_silent(r"rm  /tmp/*-startup-cfg.xml")
   # Call Mininet's own cleanup stuff
   from mininet.clean import cleanup
   cleanup()
