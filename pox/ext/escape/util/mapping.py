@@ -68,6 +68,10 @@ class AbstractMappingDataProcessor(object):
   Abstract class for contain and perform validation steps.
   """
 
+  def __init__ (self, layer_name):
+    super(AbstractMappingDataProcessor, self).__init__()
+    self._layer_name = layer_name
+
   def pre_mapping_exec (self, input_graph, resource_graph):
     """
     Invoked right before the mapping algorithm.
@@ -129,6 +133,31 @@ class ProcessorSkipper(AbstractMappingDataProcessor):
     return False
 
 
+class PrePostMapNotifier(AbstractMappingDataProcessor):
+  """
+  Notifier class for notifying other POX modules about pre/post map event.
+
+  For future features, currently AbstractMapper explicitly raise the event.
+  """
+
+  def pre_mapping_exec (self, input_graph, resource_graph):
+    # Raise event for external POX modules
+    core.components[self._layer_name].raiseEvent(PreMapEvent,
+                                                 input_graph=input_graph,
+                                                 resource_graph=resource_graph)
+    # Return everything is OK.
+    return False
+
+  def post_mapping_exec (self, input_graph, resource_graph, result_graph):
+    # Raise event for external POX modules
+    core.components[self._layer_name].raiseEvent(PostMapEvent,
+                                                 input_graph=input_graph,
+                                                 resource_graph=resource_graph,
+                                                 result_graph=result_graph)
+    # Return everything is OK.
+    return False
+
+
 class PreMapEvent(Event):
   """
   Raised before the request graph is mapped to the (virtual) resources.
@@ -137,10 +166,17 @@ class PreMapEvent(Event):
   enforce some decomposition rules.
   """
 
-  def __init__ (self, input_graph, resource_view):
+  def __init__ (self, input_graph, resource_graph):
     super(PreMapEvent, self).__init__()
     self.input_graph = input_graph
-    self.resource_view = resource_view
+    self.resource_graph = resource_graph
+
+  @property
+  def sg (self):
+    """
+    For support backward compatibility.
+    """
+    return self.input_graph
 
 
 class PostMapEvent(Event):
@@ -150,10 +186,10 @@ class PostMapEvent(Event):
   Event handlers might modify the mapped request graph.
   """
 
-  def __init__ (self, input_graph, resource_view, result_graph):
+  def __init__ (self, input_graph, resource_graph, result_graph):
     super(PostMapEvent, self).__init__()
     self.input_graph = input_graph
-    self.resource_view = resource_view
+    self.resource_graph = resource_graph
     self.result_graph = result_graph
 
 
@@ -212,7 +248,7 @@ class AbstractMapper(EventMixin):
                       AbstractMappingStrategy), "Mapping strategy is not " \
                                                 "subclass of " \
                                                 "AbstractMappingStrategy!"
-    self.validator = CONFIG.get_mapping_processor(layer_name)()
+    self.processor = CONFIG.get_mapping_processor(layer_name)(layer_name)
     super(AbstractMapper, self).__init__()
 
   def _perform_mapping (self, input_graph, resource_view):
@@ -262,18 +298,18 @@ class AbstractMapper(EventMixin):
     :rtype: :any:`NFFG`
     """
     # If validator is not None call the pre/post functions
-    if CONFIG.get_validation_enabled(layer=self._layer_name):
-      if self.validator is not None:
+    if CONFIG.get_processor_enabled(layer=self._layer_name):
+      if self.processor is not None:
         # Get resource info
         resource_graph = resource_view.get_resource_info()
         # Preform pre-mapping validation
-        if self.validator.pre_mapping_exec(
+        if self.processor.pre_mapping_exec(
              input_graph=input_graph, resource_graph=resource_graph):
           raise ProcessorError("Pre mapping validation is failed!")
         # Raise event for external POX modules
         core.components[self._layer_name].raiseEvent(PreMapEvent,
                                                      input_graph=input_graph,
-                                                     resource_view=resource_view)
+                                                     resource_graph=resource_graph)
         # Invoke mapping algorithm
         mapping_result = self._perform_mapping(input_graph=input_graph,
                                                resource_view=resource_view)
@@ -281,20 +317,33 @@ class AbstractMapper(EventMixin):
         # If the mapping is threaded skip post mapping here
         if self._threaded:
           return mapping_result
-        if self.validator.post_mapping_exec(input_graph=input_graph,
+        if self.processor.post_mapping_exec(input_graph=input_graph,
                                             resource_graph=resource_graph,
                                             result_graph=mapping_result):
           raise ProcessorError("Post mapping validation is failed!")
         # Raise event for external POX modules
         core.components[self._layer_name].raiseEvent(PostMapEvent,
                                                      input_graph=input_graph,
-                                                     resource_view=resource_view,
+                                                     resource_graph=resource_graph,
                                                      result_graph=mapping_result)
         return mapping_result
     else:
       # Invoke only the mapping algorithm
-      return self._perform_mapping(input_graph=input_graph,
-                                   resource_view=resource_view)
+      # Get resource info
+      resource_graph = resource_view.get_resource_info()
+      # Raise event for external POX modules
+      core.components[self._layer_name].raiseEvent(PreMapEvent,
+                                                   input_graph=input_graph,
+                                                   resource_graph=resource_graph)
+      # Invoke mapping algorithm
+      mapping_result = self._perform_mapping(input_graph=input_graph,
+                                             resource_view=resource_view)
+      # Raise event for external POX modules
+      core.components[self._layer_name].raiseEvent(PostMapEvent,
+                                                   input_graph=input_graph,
+                                                   resource_graph=resource_graph,
+                                                   result_graph=mapping_result)
+      return mapping_result
 
   def _start_mapping (self, graph, resource):
     """
