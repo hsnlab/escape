@@ -536,15 +536,15 @@ following function call:
 .. code-block:: bash
 
   $ Ready.
-  $ POX>
-  $ POX> core.service.rest_api.stop()
+  $ ESCAPE>
+  $ ESCAPE> core.service.rest_api.stop()
 
 One instance of the *ESCAPEInteractiveHelper* is registered by default under the
 name: *helper*. An example to dump the running configuration of ESCAPEv2:
 
 .. code-block:: bash
 
-  $ POX> core.helper.config()
+  $ ESCAPE> core.helper.config()
     {
         "infrastructure": {
             "NETWORK-OPTS": null,
