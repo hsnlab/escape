@@ -22,6 +22,7 @@ accommodate mapping algorithms from abstract service descriptions to deployed
 and running service chains.
 
 .. seealso::
+
     The source code of previous ESCAPE version is available at our `github page
     <https://github.com/nemethf/escape>`_. For more information we first suggest
     to read our paper:
@@ -61,8 +62,99 @@ Topmost POX modules for UNIFY's layers/sublayers
 
     UNIFY <unify>
 
-Dependencies
+Installation
 ------------
+
+Because ESCAPEv2 relies on POX and written in Python there is no need for
+explicit compiling or installation.  The only requirement need to be pre-installed
+is a Python interpreter.
+
+The recommended Python version in which the development and mostly the testing are
+performed is the standard CPython **2.7.9** but the 2.7.6 (pre-build Mininet VM)
+and 2.7.10 versions are also supported.
+
+.. warning::
+
+  Only the standard CPython interpreter and supported!
+
+If you want to use a different and separated Python version check the Virtual
+Environment section below.
+
+The preferred way
++++++++++++++++++
+
+1. Download one of pre-build Mininet image which has already had the necessary
+tools (Mininet scripts and Open vSwitch).
+
+  https://github.com/mininet/mininet/wiki/Mininet-VM-Images
+
+  The images are in an open virtual format (``.ovf``) which can be imported by
+  most of the virtualization managers.
+
+  Username/password: **mininet/mininet**
+
+  Our implementation relies on Mininet 2.1.0, but ESCAPEv2 has been tested on
+  the newest image too (Mininet 2.2.1 on Ubuntu 14.04 - 64 bit) and no problem
+  has occurred yet!
+
+2. Create the .ssh folder in the home directory and copy your private RSA key
+which you gave on the fp7-unify.eu GitLab site into the VM with the name
+``id_rsa``. If you use the Mininet image then the following command can be used
+in the VM to copy your RSA key from your host:
+
+  .. code-block:: bash
+
+    $ cd
+    $ mkdir .ssh
+    $ scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
+
+3. Clone the shared escape repository in a folder named:
+*escape*.
+
+  .. code-block:: bash
+
+    $ git clone git@gitlab.fp7-unify.eu:Balazs.Sonkoly/escape-shared.git escape
+
+4. Install the necessary dependencies with the ``install_dep.sh`` script (system
+and Python packages, OpenYuma with VNFStarter module):
+
+  .. code-block:: bash
+
+    $ cd escape
+    $ ./install_dep.sh
+
+
+  In a high level the script above does the following things:
+    * Install the necessary system and Python packages
+    * Compile and install the `OpenYuma <https://github.com/OpenClovis/OpenYuma>`_
+      tools with our *VNF starter* module
+    * Compile and install `Click <http://read.cs.ucla.edu/click/click>`_ modular
+      router and The Click GUI: `Clicky <http://read.cs.ucla.edu/click/clicky>`_
+    * Install `neo4j <http://neo4j.com/>`_ graph database for NFIB
+
+5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
+available arguments of the top stating script check the help menu:
+
+  .. code-block:: bash
+
+    $ ./escape.py --help
+
+The hard way
+++++++++++++
+
+Obviously you can install ESCAPEv2 on your host or on an empty VM too. For that
+you need to install the requirements manually.
+
+To install the Python dependencies and other system packages you can use the
+dependency installation script mentioned above or do it manually.
+
+**Dependencies**
+
+If you don't want to install the Python dependencies globally you can follow the
+hard way and can setup a virtual environment. Otherwise just run the following
+command(s):
+
+Required system and Python packages:
 
 .. code-block:: bash
 
@@ -87,74 +179,6 @@ For domain emulation scripts:
 
     $ sudo pip install tornado
 
-Installation
-------------
-
-**The preferred way:**
-
-1. Download one of pre-build Mininet image which has already had the necessary
-tools (Mininet scripts and Open vSwitch).
-
-  https://github.com/mininet/mininet/wiki/Mininet-VM-Images
-
-  The images are in an open virtual format (``.ovf``) which can be imported by
-  most of the virtualization managers.
-
-  Username/password: **mininet/mininet**
-
-  Our implementation relies on Mininet 2.1.0, but ESCAPEv2 has been tested on
-  the newest image too (Mininet 2.2.1 on Ubuntu 14.04 - 64 bit) and no problem
-  has occurred yet!
-
-2. Create the .ssh folder in the home directory and copy your private RSA key
-which you gave on the fp7-unify.eu GitLab site into the VM with the name
-``id_rsa``.
-
-  .. code-block:: bash
-
-    $ cd
-    $ mkdir .ssh
-    $ mv <your_rsa_key> ~/.ssh/id_rsa
-
-3. Clone the shared escape repository in a folder named:
-*escape*.
-
-  .. code-block:: bash
-
-    $ git clone git@gitlab.fp7-unify.eu:Balazs.Sonkoly/escape-shared.git escape
-
-4. Install the necessary dependencies with the ``install_dep.sh`` script (system
-and Python packages, OpenYuma with VNFStarter module):
-
-  .. code-block:: bash
-
-    $ cd escape
-    $ ./install_dep.sh
-
-
-  In a high level the script above do the following things:
-    * Install the necessary system and Python packages
-    * Compile and install the `OpenYuma <https://github.com/OpenClovis/OpenYuma>`_
-      tools with our *VNF starter* module
-    * Compile and install `Click <http://read.cs.ucla.edu/click/click>`_ modular
-      router and The Click GUI: `Clicky <http://read.cs.ucla.edu/click/clicky>`_
-    * Install `neo4j <http://neo4j.com/>`_ graph database for NFIB
-
-5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
-available arguments of the top stating script check the help menu:
-
-  .. code-block:: bash
-
-    $ ./escape.py --help
-
-
-**The hard way:**
-
-Obviously you can install ESCAPEv2 on your host or on an empty VM too. For that
-you need to install the requirements manually.
-
-To install the Python dependencies and other system packages you can use the
-dependency installation script mentioned above.
 
 To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
 host (more precisely the **Open vSwitch** implementation and the specific
@@ -204,20 +228,64 @@ https://github.com/mininet/mininet/wiki/Installing-new-version-of-Open-vSwitch
 If you want to develop on your host machine, you should take care of a user for
 the netconfd server. This user's name and password will be used for the
 connection establishment between the ESCAPE and the Execution Environments (EE).
-This parameters could be set in the global config under the VNFStarter Adapter
-or the widely used mininet user can be created with the following commands:
+
+.. note::
+
+  This parameters could be change in the global config under the VNFStarter
+  Adapter config conveniently.
+
+An another solution is to define a system user for the netconfd. To create a user
+(advisable to use `mininet` as in the Mininet-based VM) use the following commands:
 
 .. code-block:: bash
 
-    $ sudo adduser --system --no-create-home mininet
+    $ sudo adduser --system --shell /bin/bash --no-create-home mininet
     $ sudo addgroup mininet sudo
-    $ sudo chsh -s /bin/bash mininet
+
+For security reasons it's highly recommended to limit the SSH connections for the
+`mininet` user to only localhost.
+
+.. code-block:: bash
+
+    $ sudo echo "AllowUsers    <your_user1> <other_user...> mininet@localhost" >> /etc/ssh/sshd_config
+    $ sudo service ssh reload
 
 Check the created user with the following command:
 
 .. code-block:: bash
 
     $ ssh mininet@localhost
+
+Setup a Virtual environment (optional)
+++++++++++++++++++++++++++++++++++++++
+
+ESCAPEv2 also support Python-based virtual environment in order to setup a different
+Python version/interpreter for ESCAPEv2 or to separate dependent packages from
+globally installed Python.
+
+To setup a virtual environment based on `virtualenv <https://virtualenv.readthedocs.org/en/latest/>`_
+Python package with a standalone CPython 2.7.10 interpreter run the following script:
+
+.. code-block:: bash
+
+    $ ./set_virtualenv.sh
+
+This script does the following steps:
+  * Install additional dependencies
+  * Download, compile and install the 2.7.10 (currently the newest) interpreter
+    in a separated folder
+  * Setup a virtual environment in the main project directory independently from
+    the globally installed Python packages
+  * Install the Python dependencies in this environment
+  * and finally create a ``.use_virtualenv"`` file to enable the newly created
+    virtual environment for the topmost ``escape.py`` starting script.
+
+The ``escape.py`` script can detect the ``.use_virtualenv"`` file automatically
+and activates the virtual environment transparently.
+
+To setup the environment manually, define other Python version or even interpreter,
+enable system-wide Python/``pip`` packages or activate/deativate the environment manually
+check the content of the setup script.
 
 ESCAPEv2 example commands
 -------------------------
@@ -439,7 +507,12 @@ Common API functions
 Service API specific function:
 ++++++++++++++++++++++++++++++
 
-*Content Negotiation:* The Service layer's RESTful API accepts and returns data only in JSON format.
+The SAS API is automatically initiated by the Service layer. If the ``-s`` flag
+is used the service request is loaded from the given file and the REST-API
+initiation is skipped.
+
+*Content Negotiation:* The Service layer's RESTful API accepts and returns data
+only in JSON format.
 
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
 |      Path         |     Params     |     HTTP verbs    | Description                                                               |
