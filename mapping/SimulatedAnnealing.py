@@ -107,7 +107,7 @@ def evaluatePoint(bw, res, test_seed, error_file, queue=None,
       if queue is not None:
         queue.put(((bw, res), 0.0))
       if shortest_paths_sendback:
-        return 0.0, None
+        return 0.0, shortest_paths_calced
       else:
         return 0.0
   # the length of the result vector is the value
@@ -202,10 +202,11 @@ if __name__ == '__main__':
   # evaluate the starting point and receive the shortest path for speeding up
   currvalue, shortest_paths = evaluatePoint(current[0], current[1], test_seed, 
                                             baseoutfile)
-  point_eval_cache[current] = currvalue
   if shortest_paths is None:
     raise Exception("The evaluation of starting point and thus shortest path "
                     "calculation is failed!")
+  else:
+      point_eval_cache[current] = currvalue
   random.seed(seed)
   temperature = start_temp
   best = current
