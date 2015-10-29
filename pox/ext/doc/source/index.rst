@@ -284,7 +284,20 @@ The ``escape.py`` script can detect the ``.use_virtualenv"`` file automatically
 and activates the virtual environment transparently.
 
 To setup the environment manually, define other Python version or even interpreter,
-enable system-wide Python/``pip`` packages or activate/deativate the environment manually
+enable system-wide Python/``pip`` packages
+
+.. code-block:: bash
+
+    $ virtualenv --python=<python_dir> --no-site-packages/system-site-packages <...> escape
+
+or activate/deactivate the environment manually
+
+.. code-block:: bash
+
+    $ cd escape
+    $ source bin/activate # activate virtual environment
+    $ deactivate  # deactivate
+
 check the content of the setup script.
 
 ESCAPEv2 example commands
@@ -330,17 +343,17 @@ Usage:
                             programs, interfaces, veth parts and junk files
       ...                   optional POX modules
 
-During a test or development the ``-d`` flag is almost necessary.
+During a test or development the ``--debug`` flag is almost necessary.
 
-If you want to run a test request on a test topology, use the ``-f`` flag.
+If you want to run a test request on a test topology, use the ``--full`` flag.
 ESCAPEv2 will parse the topology description form file (``escape-mn-topo.nffg``
 by default) and start the Infrastructure layer with the Mininet-based emulation.
 
 If the request is in a file it's more convenient to give it as an initial
-parameter and not bother with the REST-API.
+parameter with the ``service`` argument and not bother with the REST-API.
 
 In an error is occurred or need to observe the internal states you can start
-ESCAPEv2 with an interactive Python shell.
+ESCAPEv2 with an interactive Python shell with the ``interactive`` flag.
 
 The main layers which grouping the entities are reachable through the main POX
 object called ``core`` with the names:
@@ -507,7 +520,7 @@ Common API functions
 Service API specific function:
 ++++++++++++++++++++++++++++++
 
-The SAS API is automatically initiated by the Service layer. If the ``-s`` flag
+The SAS API is automatically initiated by the Service layer. If the ``--service`` flag
 is used the service request is loaded from the given file and the REST-API
 initiation is skipped.
 

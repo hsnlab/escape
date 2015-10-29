@@ -29,10 +29,10 @@ an unified way.
 :any:`AbstractOFControllerAdapter` contains general logic for actual OF
 controller based Adapters.
 
-:any:`DefaultDomainRESTAPI` defines unified interface for domain's REST-API.
-
 :any:`VNFStarterAPI` defines the interface for VNF management based on
 VNFStarter YANG description.
+
+:any:`DefaultDomainRESTAPI` defines unified interface for domain's REST-API.
 
 :any:`OpenStackAPI` defines the interface for communication with OpenStack
 domain.

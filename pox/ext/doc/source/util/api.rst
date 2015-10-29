@@ -15,10 +15,10 @@ Contains abstract classes for concrete layer API modules.
 layer APIs, the event handling/registering logic and defines the general
 functions for initialization and finalization steps.
 
+:any:`RequestCache` stores HTTP request states.
+
 :any:`RESTServer` is a general HTTP server which parse HTTP request and
 forward to explicitly given request handler.
-
-:any:`RequestCache` stores HTTP request states.
 
 :any:`RESTError` can signal various error related to RESTful communication.
 

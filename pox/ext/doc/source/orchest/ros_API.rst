@@ -10,6 +10,7 @@ Sublayer.
    escape.orchest.ros_API.GetGlobalResInfoEvent
    escape.orchest.ros_API.InstantiationFinishedEvent
    escape.orchest.ros_API.ROSAgentRequestHandler
+   escape.orchest.ros_API.CfOrRequestHandler
    escape.orchest.ros_API.ResourceOrchestrationAPI
    :parts: 3
 
@@ -22,7 +23,9 @@ upper layer.
 
 :any:`InstantiationFinishedEvent` can signal info about NFFG instantiation.
 
-:any:`ROSAgentRequestHandler` implements the REST-API functions for agent mode.
+:any:`ROSAgentRequestHandler` implements the REST-API functions for Sl-Or API.
+
+:any:`CfOrRequestHandler` implements the REST-API functions for Cf-Or API.
 
 :any:`ResourceOrchestrationAPI` represents the ROS layer and implement all
 related functionality.
