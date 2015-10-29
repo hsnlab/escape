@@ -8,6 +8,7 @@ details for the connections between ESCAPEv2 and other different domains.
    escape.adapt.adapters.InternalPOXAdapter
    escape.adapt.adapters.SDNDomainPOXAdapter
    escape.adapt.adapters.TopologyLoadException
+   escape.adapt.adapters.InternalPOXAdapter
    escape.adapt.adapters.SDNDomainTopoAdapter
    escape.adapt.adapters.InternalMininetAdapter
    escape.adapt.adapters.VNFStarterAdapter
@@ -21,8 +22,6 @@ Mininet-based emulated topology.
 
 :any:`SDNDomainPOXAdapter` implements the OF controller functionality for the
 external SDN/OpenFlow switches.
-
-:any:`TopologyLoadException` can signal errors occurred during topology building.
 
 :any:`InternalMininetAdapter` implements Mininet related functionality
 transparently e.g. start/stop/clean topology built from an :any:'NFFG'.

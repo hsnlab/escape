@@ -28,8 +28,6 @@ Element classes for NFFG based on ``nffg.yang``.
 
 :any:`Element` represents the common functions for elements.
 
-:any:`PortContainer` can contain :any:`Port` objects.
-
 :any:`Node` represents the common functions for Node elements.
 
 :any:`Link` represents the common functions for Edge elements.
