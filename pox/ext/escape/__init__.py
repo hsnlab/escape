@@ -32,6 +32,9 @@ __maintainer__ = "Janos Czentye"
 __email__ = "czentye@tmit.bme.hu"
 __status__ = "prototype"
 
+from escape.util.config import ESCAPEConfig
+CONFIG = None
+
 # Default configuration object which contains static and running
 # configuration for Layer APIs, DomainManagers, Adapters and other components
 cfg = {"service": {  # Service Adaptation Sublayer
@@ -163,10 +166,10 @@ def add_dependencies ():
       else:
         core.getLogger().debug("Dependency: %s already added." % abs_sub_folder)
 
+def launch():
+  # Detect and add dependency directories
+  add_dependencies()
 
-# Detect and add dependency directories
-add_dependencies()
-
-from escape.util.config import ESCAPEConfig
-# Define global configuration and try to load additions from file
-CONFIG = ESCAPEConfig(cfg).load_config()
+  # Define global configuration and try to load additions from file
+  global CONFIG
+  CONFIG = ESCAPEConfig(cfg).load_config()

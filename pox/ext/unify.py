@@ -89,5 +89,9 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   # confuse with POX's modules
   if config:
     setattr(core, "config_file_name", config)
+
+  from escape import launch
+  launch()
+
   # Register _start_components() to be called when POX is up
   core.addListenerByName("GoingUpEvent", _start_components)
