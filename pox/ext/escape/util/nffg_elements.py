@@ -17,7 +17,7 @@ Classes for handling the elements of the NF-FG data structure
 import json
 from collections import Iterable, OrderedDict
 from __builtin__ import id as generate
-
+import random
 
 ################################################################################
 # ---------- BASE classes of NFFG elements -------------------
@@ -84,7 +84,8 @@ class Element(Persistable):
     :return: None
     """
     super(Element, self).__init__()
-    self.id = id if id is not None else generate(self)
+    self.id = id if id is not None else generate(self) \
+              + random.randint(0,999999)
     self.type = type
     self.operation = operation
   

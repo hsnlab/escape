@@ -263,7 +263,7 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
                          ue.msg,traceback.format_exc())))
     if queue is not None:
       queue.put(ue)
-      sys.exit()
+      return test_lvl-1
   except Exception as e:
     log.error(ppid_pid+traceback.format_exc())
     with open(outputfile, "a") as f:
@@ -271,7 +271,7 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
                          traceback.format_exc())))
     if queue is not None:
       queue.put(e)
-      sys.exit()
+      return test_lvl-1
   # put the result to the queue
   if queue is not None:
     log.info(ppid_pid+"Putting %s to communication queue"%(test_lvl-1))
