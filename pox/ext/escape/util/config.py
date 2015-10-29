@@ -99,12 +99,13 @@ class ESCAPEConfig(object):
     else:
       # Detect default config
       try:
+        # util/escape/ext/pox/root
         config = os.path.abspath(
-          os.path.dirname(__file__) + "../../../../" + self.__configuration[
+          os.path.dirname(__file__) + "../../../../../" + self.__configuration[
             self.DEFAULT_CFG])
         log.debug("Load default config file: %s" % os.path.basename(config))
       except KeyError:
-        log.debug(
+        log.warning(
           "Additional config file is not found! Skip configuration update")
         self.__initiated = True
         return self
@@ -125,7 +126,7 @@ class ESCAPEConfig(object):
         log.info("Running configuration has been updated from file!")
         return self
     except IOError as e:
-      log.debug("Additional configuration file not found: %s" % config)
+      log.warning("Additional configuration file not found: %s" % config)
     except ValueError as e:
       log.error("An error occurred when load configuration: %s" % e)
     finally:
@@ -251,6 +252,17 @@ class ESCAPEConfig(object):
   ##############################################################################
   # Helper functions
   ##############################################################################
+
+  @staticmethod
+  def get_project_root_dir ():
+    """
+    Return the absolute path of project dir
+
+    :return: path of project dir
+    :rtype: str
+    """
+    return os.path.abspath(
+      os.path.join(os.path.dirname(__file__), "../../../.."))
 
   def get_mapping_enabled (self, layer):
     """
@@ -403,7 +415,7 @@ class ESCAPEConfig(object):
     """
     try:
       # Project root dir relative to this module which is/must be under pox/ext
-      return os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..",
+      return os.path.abspath(os.path.join(self.get_project_root_dir(),
                                           self.__configuration[INFR]["TOPO"]))
     except KeyError:
       return None
@@ -429,10 +441,11 @@ class ESCAPEConfig(object):
     :return:  topo class
     """
     try:
-      # Project root dir relative to this module which is/must be under pox/ext
-      return os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..",
-                                          self.__configuration[ADAPT][
-                                            "SDN-TOPO"]["path"]))
+      # Project root dir relative to this module which is/must be under root
+      # util/escape/ext/pox/root
+      return os.path.abspath(
+        os.path.join(self.get_project_root_dir(),
+                     self.__configuration[ADAPT]["SDN-TOPO"]["path"]))
     except KeyError:
       return None
 

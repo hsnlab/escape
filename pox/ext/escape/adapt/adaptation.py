@@ -15,6 +15,7 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
 """
+import traceback
 import weakref
 
 from escape import CONFIG
@@ -241,7 +242,11 @@ class ComponentConfigurator(object):
     """
     log.info("Resetting detected domains before shutdown...")
     for name, mgr in self:
-      mgr.clear_domain()
+      try:
+        mgr.clear_domain()
+      except:
+        log.error("Got exception during domain resetting!")
+        traceback.print_exc()
 
   def stop_initiated_mgrs (self):
     """
@@ -251,7 +256,11 @@ class ComponentConfigurator(object):
     """
     for name, mgr in self:
       log.debug("Shutdown %s domain manager..." % name)
-      self.stop_mgr(domain_name=name)
+      try:
+        self.stop_mgr(domain_name=name)
+      except:
+        log.error("Got exception during domain resetting!")
+        traceback.print_exc()
     # Do not del mgr in for loop because of the iterator use
     self.__repository.clear()
 

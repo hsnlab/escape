@@ -20,6 +20,8 @@ RequestHandler and strategy classes, the initial Adapter classes, etc.
 `CONFIG` contains the ESCAPEv2 dependent configuration as an
 :any:`ESCAPEConfig`.
 """
+from escape.util.config import ESCAPEConfig
+
 __project__ = "ESCAPEv2"
 __authors__ = "Janos Czentye, Balazs Sonkoly, Levente Csikor"
 __copyright__ = "Copyright 2015, under Apache License Version 2.0"
@@ -31,9 +33,6 @@ __version__ = "2.0.0"
 __maintainer__ = "Janos Czentye"
 __email__ = "czentye@tmit.bme.hu"
 __status__ = "prototype"
-
-from escape.util.config import ESCAPEConfig
-CONFIG = None
 
 # Default configuration object which contains static and running
 # configuration for Layer APIs, DomainManagers, Adapters and other components
@@ -90,7 +89,8 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                     "class": "InternalMininetAdapter"},
                         "SDN-TOPO": {"module": "escape.adapt.adapters",
                                      "class": "SDNDomainTopoAdapter",
-                                     "path": "sdn-topo.nffg"  # relative to ext/
+                                     # relative to project root
+                                     "path": "pox/sdn-topo.nffg"
                                      },
                         "VNFStarter": {"module": "escape.adapt.adapters",
                                        "class": "VNFStarterAdapter",
@@ -128,14 +128,16 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         "RESET-DOMAINS-AFTER-SHUTDOWN": True},
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
-                            "TOPO": "escape-mn-topo.nffg",  # relative to ext/
+                            # relative to project root
+                            "TOPO": "pox/escape-mn-topo.nffg",
+                            # relative to project root
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
                                                 "FallbackDynamicTopology"},
                             "SAP-xterms": True,
                             "SHUTDOWN-CLEAN": True},
-       # "additional-config-file": "escape.config"
-       }  # relative to ext/
+       "additional-config-file": "escape.config"  # relative to project root
+       }
 
 
 def add_dependencies ():
@@ -149,14 +151,14 @@ def add_dependencies ():
   import sys
   from pox.core import core
 
-  # Project root dir relative to unify.py top module which is/must be under
-  # pox/ext
-  root = os.path.abspath(os.path.dirname(__file__) + "../../../..")
+  # Project root dir
+
+  root = ESCAPEConfig.get_project_root_dir()
   for sub_folder in os.listdir(root):
     abs_sub_folder = os.path.join(root, sub_folder)
     if not os.path.isdir(abs_sub_folder):
       continue
-    if not(sub_folder.startswith('.') or sub_folder.upper().startswith(
+    if not (sub_folder.startswith('.') or sub_folder.upper().startswith(
          'PYTHON')) and sub_folder not in (
          "pox", "OpenYuma", "Unify_ncagent", "tools", "gui", "include", "share",
          "lib", "bin"):
@@ -166,10 +168,9 @@ def add_dependencies ():
       else:
         core.getLogger().debug("Dependency: %s already added." % abs_sub_folder)
 
-def launch():
-  # Detect and add dependency directories
-  add_dependencies()
 
-  # Define global configuration and try to load additions from file
-  global CONFIG
-  CONFIG = ESCAPEConfig(cfg).load_config()
+# Detect and add dependency directories
+add_dependencies()
+
+# Define global configuration and try to load additions from file
+CONFIG = ESCAPEConfig(cfg).load_config()

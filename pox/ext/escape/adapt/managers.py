@@ -594,7 +594,11 @@ class SDNDomainManager(AbstractDomainManager):
     """
     log.debug("Clear all flowrules from switches registered in SDN domain...")
     # Delete all flowrules in the Infra nodes defined the topology file.
-    self._delete_flowrules(nffg_part=self.topoAdapter.get_topology_resource())
+    sdn_topo = self.topoAdapter.get_topology_resource()
+    if sdn_topo is not None:
+      self._delete_flowrules(nffg_part=sdn_topo)
+    else:
+      log.warning("SDN topology is missing! Skip domain resetting...")
 
 
 class RemoteESCAPEDomainManager(AbstractDomainManager):

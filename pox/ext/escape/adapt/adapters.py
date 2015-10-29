@@ -19,7 +19,9 @@ from copy import deepcopy
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from ncclient.operations import OperationError
+
 from ncclient.operations.rpc import RPCError
+
 from ncclient.transport import TransportError
 
 from escape.infr.il_API import InfrastructureLayerAPI
@@ -59,7 +61,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
           'SW4': {'port': '3',
                   'dl_dst': '00:00:00:00:00:02',
                   'dl_src': '00:00:00:00:00:01'}}
-  
+
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
                 keepalive=False):
     """
@@ -77,7 +79,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
       self.__class__.__name__, address, port, name))
     super(InternalPOXAdapter, self).__init__(name=name, address=address,
                                              port=port, keepalive=keepalive)
-  
+
   def check_domain_reachable (self):
     """
     Checker function for domain polling.
@@ -87,7 +89,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     """
     from pox.core import core
     return core.hasComponent(self.name)
-  
+
   def get_topology_resource (self):
     """
     Return with the topology description as an :any:`NFFG`.
@@ -99,7 +101,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     #                    "get_topology_resource() !")
     # return static topology
     return None
-  
+
   def _handle_ConnectionUp (self, event):
     """
     Handle incoming OpenFlow connections.
@@ -110,7 +112,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
                                  cause=DomainChangedEvent.TYPE.NODE_UP,
                                  data={"DPID": event.dpid})
       self.raiseEventNoErrors(event)
-  
+
   def _handle_ConnectionDown (self, event):
     """
     Handle disconnected device.
@@ -135,7 +137,7 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   dpid_to_infra = {0x14c5e0c376e24: 'MT1',
                    0x14c5e0c376fc6: 'MT2',
                    }
-  
+
   def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False):
     super(SDNDomainPOXAdapter, self).__init__(name=name, address=address,
                                               port=port, keepalive=keepalive)
@@ -160,7 +162,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
   name = "MININET"
-  
+
   def __init__ (self, net=None):
     """
     Init.
@@ -173,14 +175,14 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     AbstractESCAPEAdapter.__init__(self)
     if not net:
       from pox import core
-      
+
       if core.core.hasComponent(InfrastructureLayerAPI._core_name):
         # reference to MN --> ESCAPENetworkBridge
         self.IL_topo_ref = core.core.components[
           InfrastructureLayerAPI._core_name].topology
         if self.IL_topo_ref is None:
           log.error("Unable to get emulated network reference!")
-  
+
   def check_domain_reachable (self):
     """
     Checker function for domain polling.
@@ -190,7 +192,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
     return self.IL_topo_ref.started
-  
+
   def get_topology_resource (self):
     """
     Return with the topology description as an :any:`NFFG`.
@@ -200,7 +202,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
     return self.IL_topo_ref.topo_desc if self.IL_topo_ref.started else None
-  
+
   def get_agent_connection_params (self, ee_name):
     """
     Return the connection parameters for the agent of the switch given by the
@@ -229,7 +231,10 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
     log.debug("Init SDNDomainTopoAdapter with optional path: %s" % path)
     super(SDNDomainTopoAdapter, self).__init__()
     self.topo = None
-    self.__init_from_CONFIG()
+    try:
+      self.__init_from_CONFIG()
+    except TopologyLoadException as e:
+      log.error("SDN adapter is not initialized properly: " % e)
 
   def check_domain_reachable (self):
     """
@@ -238,7 +243,7 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
     :return: the domain is detected or not
     :rtype: bool
     """
-    return True
+    return self.topo is not None
 
   def get_topology_resource (self):
     """
@@ -271,8 +276,7 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
           self.topo.duplicate_static_links()
           # print self.topo.dump()
       except IOError:
-        log.debug("SDN topology file not found: %s" % path)
-        raise TopologyLoadException("Missing topology file!")
+        log.warning("SDN topology file not found: %s" % path)
       except ValueError as e:
         log.error(
           "An error occurred when load topology from file: %s" % e.message)
@@ -290,11 +294,11 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
 
   Follows the MixIn design pattern approach to support NETCONF functionality.
   """
-  
+
   RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'
-  
+
   name = "VNFStarter"
-  
+
   # RPC namespace
   # Adapter name used in CONFIG and ControllerAdapter class
   def __init__ (self, **kwargs):
@@ -317,7 +321,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     AbstractNETCONFAdapter.__init__(self, **kwargs)
     AbstractESCAPEAdapter.__init__(self)
     log.debug("Init VNFStarterAdapter - params: %s" % kwargs)
-  
+
   def check_domain_reachable (self):
     """
     Checker function for domain polling.
@@ -330,7 +334,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     except:
       # in case of RPCError, TransportError, OperationError
       return False
-  
+
   def get_topology_resource (self):
     """
     Return with the topology description as an :any:`NFFG`.
@@ -340,7 +344,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     """
     raise RuntimeError("VNFStarterAdapter not supported this function: "
                        "get_topology_resource() !")
-  
+
   def update_connection_params (self, **kwargs):
     """
     Update connection params.
@@ -355,7 +359,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         else:
           setattr(self, param, kwargs[param])
     return kwargs
-  
+
   def _invoke_rpc (self, request_data):
     """
     Override parent function to catch and log exceptions gracefully.
@@ -366,11 +370,11 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
       super(VNFStarterAdapter, self)._invoke_rpc(request_data)
     except (RPCError, TransportError, OperationError) as e:
       log.error("Failed to invoke NETCONF based RPC! Cause: %s", e)
-  
+
   ##############################################################################
   # RPC calls starts here
   ##############################################################################
-  
+
   def initiateVNF (self, vnf_type, vnf_description=None, options=None):
     """
     This RCP will start a VNF.
@@ -399,7 +403,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     log.debug("Call initiateVNF - VNF type: %s" % vnf_type)
     return self.call_RPC("initiateVNF", vnf_type=vnf_type,
                          vnf_description=vnf_description, options=options)
-  
+
   def connectVNF (self, vnf_id, vnf_port, switch_id):
     """
     This RPC will practically start and connect the initiated VNF/CLICK to
@@ -429,7 +433,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
       vnf_id, vnf_port, switch_id))
     return self.call_RPC("connectVNF", vnf_id=vnf_id, vnf_port=vnf_port,
                          switch_id=switch_id)
-  
+
   def disconnectVNF (self, vnf_id, vnf_port):
     """
     This RPC will disconnect the VNF(s)/CLICK(s) from the switch(es).
@@ -451,7 +455,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     """
     log.debug("Call disconnectVNF - VNF: %s port: %s" % (vnf_id, vnf_port))
     return self.call_RPC("disconnectVNF", vnf_id=vnf_id, vnf_port=vnf_port)
-  
+
   def startVNF (self, vnf_id):
     """
     This RPC will actually start the VNF/CLICK instance.
@@ -467,7 +471,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     """
     log.debug("Call startVNF - VNF: %s" % vnf_id)
     return self.call_RPC("startVNF", vnf_id=vnf_id)
-  
+
   def stopVNF (self, vnf_id):
     """
     This RPC will gracefully shut down the VNF/CLICK instance.
@@ -488,7 +492,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     """
     log.debug("Call stopVNF...")
     return self.call_RPC("stopVNF", vnf_id=vnf_id)
-  
+
   def getVNFInfo (self, vnf_id=None):
     """
     This RPC will send back all data of all VNFs that have been initiated by
@@ -522,11 +526,11 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     log.debug(
       "Call getVNFInfo - VNF: %s" % vnf_id if vnf_id is not None else "all")
     return self.call_RPC('getVNFInfo', vnf_id=vnf_id)
-  
+
   ##############################################################################
   # High-level helper functions
   ##############################################################################
-  
+
   def deployNF (self, nf_type, nf_ports, infra_id, nf_desc=None, nf_opt=None):
     """
     Initiate and start the given NF using the general RPC calls.
@@ -605,7 +609,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   domain.
   """
   name = "ESCAPE-REST"
-  
+
   def __init__ (self, url):
     """
     Init.
@@ -618,7 +622,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("RemoteESCAPEv2 base URL is set to %s" % self._base_url)
     AbstractESCAPEAdapter.__init__(self)
     self._original_nffg = None
-  
+
   def ping (self):
     try:
       return self.send_request(self.GET, 'ping')
@@ -631,7 +635,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.warning(
         "Remote ESCAPEv2 agent responded with an error during 'ping': %s" %
         e.message)
-  
+
   def get_config (self):
     try:
       data = self.send_request(self.POST, 'get-config')
@@ -660,7 +664,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.debug("Store %s as the original domain config..." % nffg)
         self._original_nffg = nffg.copy()
       return nffg
-  
+
   def edit_config (self, data):
     if not isinstance(data, (str, unicode, NFFG)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
@@ -677,10 +681,10 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         e.message)
       return None
     return self._response.status_code
-  
+
   def check_domain_reachable (self):
     return self.ping()
-  
+
   def get_topology_resource (self):
     return self.get_config()
 
@@ -693,7 +697,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   """
   # Adapter name used in CONFIG and ControllerAdapter class
   name = "OpenStack-REST"
-  
+
   def __init__ (self, url):
     """
     Init.
@@ -710,7 +714,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None
-  
+
   def ping (self):
     try:
       return self.send_request(self.GET, 'ping')
@@ -721,7 +725,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     except HTTPError as e:
       log.warning(
         "OpenStack agent responded with an error during 'ping': %s" % e.message)
-  
+
   def get_config (self):
     try:
       data = self.send_request(self.POST, 'get-config')
@@ -751,7 +755,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
-  
+
   def edit_config (self, data):
     if isinstance(data, NFFG):
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
@@ -774,10 +778,10 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         e.message)
       return None
     return self._response.status_code
-  
+
   def check_domain_reachable (self):
     return self.ping()
-  
+
   def get_topology_resource (self):
     return self.get_config()
 
@@ -789,7 +793,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   """
   # Adapter name used in CONFIG and ControllerAdapter class
   name = "UN-REST"
-  
+
   def __init__ (self, url):
     """
     Init.
@@ -806,7 +810,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None
-  
+
   def ping (self):
     try:
       return self.send_request(self.GET, 'ping')
@@ -819,7 +823,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.warning(
         "Universal Node agent responded with an error during 'ping': %s" %
         e.message)
-  
+
   def get_config (self):
     try:
       data = self.send_request(self.POST, 'get-config')
@@ -850,7 +854,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
-  
+
   def edit_config (self, data):
     if isinstance(data, NFFG):
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
@@ -874,9 +878,9 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         % e.message)
       return None
     return self._response.status_code
-  
+
   def check_domain_reachable (self):
     return self.ping()
-  
+
   def get_topology_resource (self):
     return self.get_config()
