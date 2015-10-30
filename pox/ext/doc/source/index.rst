@@ -12,14 +12,13 @@ development of several parts of the service chaining architecture
 including VNF implementation, traffic steering, virtual network
 embedding, etc.  On the other hand, ESCAPE is a proof of concept
 prototype implementing a novel SFC (Service Function Chaining)
-architecture proposed by `EU FP7 UNIFY project
-<https://www.fp7-unify.eu/>`_.  It is a realization of the UNIFY
-service programming and orchestration framework which enables the
-joint programming and virtualization of cloud and networking
+architecture proposed by `EU FP7 UNIFY project <https://www.fp7-unify.eu/>`__.
+It is a realization of the UNIFY service programming and orchestration framework
+which enables the joint programming and virtualization of cloud and networking
 resources.
 
 .. hint::
-   
+
    For more information on the concept, motivation and demo use-cases, we
    suggest the following papers.
 
@@ -37,10 +36,10 @@ resources.
      *Multi-domain service orchestration over networks and clouds: a
      unified approach*, In Proceedings of ACM SIGCOMM (Demo), August
      17-21, 2015, London, United Kingdom.  `Download the paper
-     <http://conferences.sigcomm.org/sigcomm/2015/pdf/papers/p377.pdf>`_
-   * `Demo video <https://www.youtube.com/watch?v=T3Fna5v-hFw>`_
+     <http://conferences.sigcomm.org/sigcomm/2015/pdf/papers/p377.pdf>`__
+   * `Demo video <https://www.youtube.com/watch?v=T3Fna5v-hFw>`__
    * `Demo video as a presentation with manual control
-     <http://prezi.com/f-ms1rwxxdwa/?utm_campaign=share&utm_medium=copy&rc=ex0share>`_
+     <http://prezi.com/f-ms1rwxxdwa/?utm_campaign=share&utm_medium=copy&rc=ex0share>`__
 
    **Previous version of ESCAPE:**
 
@@ -49,9 +48,9 @@ resources.
      Service ChAin Prototyping Environment using Mininet, Click, NETCONF
      and POX*, In Proceedings of ACM SIGCOMM (Demo), August 17-22, 2014,
      Chicago, IL, USA.  `Download the paper
-     <http://dl.acm.org/authorize?N71297>`_
+     <http://dl.acm.org/authorize?N71297>`__
    * The source code of the previous version of ESCAPE is available at
-     our `github page <https://github.com/nemethf/escape>`_.
+     our `github page <https://github.com/nemethf/escape>`__.
 
 For further information contact balazs.sonkoly@tmit.bme.hu
 
@@ -85,7 +84,7 @@ Installation
 ------------
 
 Because ESCAPEv2 relies on POX and written in Python there is no need for
-explicit compiling or installation.  The only requirement need to be pre-installed
+explicit compiling or installation. The only requirement need to be pre-installed
 is a Python interpreter.
 
 The recommended Python version in which the development and mostly the testing are
@@ -94,7 +93,7 @@ and 2.7.10 versions are also supported.
 
 .. warning::
 
-  Only the standard CPython interpreter and supported!
+  Only the standard CPython interpreter is supported!
 
 If you want to use a different and separated Python version check the Virtual
 Environment section below.
@@ -116,8 +115,8 @@ tools (Mininet scripts and Open vSwitch).
   the newest image too (Mininet 2.2.1 on Ubuntu 14.04 - 64 bit) and no problem
   has occurred yet!
 
-2. Create the .ssh folder in the home directory and copy your private RSA key
-which you gave on the fp7-unify.eu GitLab site into the VM with the name
+2. Create the ``.ssh`` folder in the home directory and copy your private RSA key
+which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
 ``id_rsa``. If you use the Mininet image then the following command can be used
 in the VM to copy your RSA key from your host:
 
@@ -145,11 +144,11 @@ and Python packages, OpenYuma with VNFStarter module):
 
   In a high level the script above does the following things:
     * Install the necessary system and Python packages
-    * Compile and install the `OpenYuma <https://github.com/OpenClovis/OpenYuma>`_
-      tools with our *VNF starter* module
-    * Compile and install `Click <http://read.cs.ucla.edu/click/click>`_ modular
-      router and The Click GUI: `Clicky <http://read.cs.ucla.edu/click/clicky>`_
-    * Install `neo4j <http://neo4j.com/>`_ graph database for NFIB
+    * Compile and install the `OpenYuma <https://github.com/OpenClovis/OpenYuma>`__
+      tools with our `VNF_starter` module
+    * Compile and install `Click <http://read.cs.ucla.edu/click/click>`__ modular
+      router and The Click GUI: `Clicky <http://read.cs.ucla.edu/click/clicky>`__
+    * Install `neo4j <http://neo4j.com/>`__ graph database for NFIB
 
 5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
 available arguments of the top stating script check the help menu:
@@ -198,6 +197,13 @@ For domain emulation scripts:
 
     $ sudo pip install tornado
 
+Other required programs (OpenYuma, click, neo4j, etc.) are also need to be installed
+manually which will be installed by the `install_dep.sh` script by default.
+
+In extreme cases, e.g. the `install_dep.sh` ran into an error, you should install
+these dependencies one by one according to your OS, distro or development environment.
+For that you can check the steps in the install script and/or the online documentations
+referenced in entry 4. of the previous subsection.
 
 To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
 host (more precisely the **Open vSwitch** implementation and the specific
@@ -210,7 +216,7 @@ scripts (mnexec).
 
 Otherwise these assets have to be install manually which could be done from our
 Mininet folder (escape/mininet) or from the official Mininet git repository
-(https://github.com/mininet/mininet/_ ). Mininet has an install script for the
+(https://github.com/mininet/mininet/ ). Mininet has an install script for the
 installations (see the help with the ``-h`` flag):
 
 .. code-block:: bash
@@ -219,8 +225,10 @@ installations (see the help with the ``-h`` flag):
 
 But the script occasionally **NOT** works correctly, especially on newer
 distributions because the ``sudo apt-get install openvswitch-switch`` command
-not install the newest version of OVS due some major changes in OVS
-architecture! Run the following command to check the installation was correct:
+will not install the newest version of OVS due some major changes in OVS
+architecture!
+
+Run the following command to check the installation was correct:
 
 .. code-block:: bash
 
@@ -233,7 +241,7 @@ However you can install the Open vSwitch packages manually:
     $ sudo apt-get install openvswitch-common openvswitch-switch openvswitch-testcontroller
 
 If the command complains about the Open vSwitch not installed then you have to
-install it from source. See more on http://openvswitch.org/download/` . On the
+install it from source. See more on http://openvswitch.org/download/ . On the
 newest distributions (e.g. Ubuntu 15.04) more steps and explicit patching is
 required. For that the only way is sadly to use google and search for it based
 on your distro. But a good choice to start here:
@@ -250,8 +258,8 @@ connection establishment between the ESCAPE and the Execution Environments (EE).
 
 .. note::
 
-  This parameters could be change in the global config under the VNFStarter
-  Adapter config conveniently.
+  This parameters could be change in the global config under the config entry of
+  *VNFStarter Adapter* conveniently.
 
 An another solution is to define a system user for the netconfd. To create a user
 (advisable to use `mininet` as in the Mininet-based VM) use the following commands:
@@ -262,7 +270,7 @@ An another solution is to define a system user for the netconfd. To create a use
     $ sudo addgroup mininet sudo
 
 For security reasons it's highly recommended to limit the SSH connections for the
-`mininet` user to only localhost.
+`mininet` user only to localhost.
 
 .. code-block:: bash
 
@@ -278,11 +286,11 @@ Check the created user with the following command:
 Setup a Virtual environment (optional)
 ++++++++++++++++++++++++++++++++++++++
 
-ESCAPEv2 also support Python-based virtual environment in order to setup a different
-Python version/interpreter for ESCAPEv2 or to separate dependent packages from
-globally installed Python.
+ESCAPEv2 also supports Python-based virtual environment in order to setup a
+different Python version or even a different interpreter (not recommended) for
+ESCAPEv2 or to separate dependent packages from system-wide Python.
 
-To setup a virtual environment based on `virtualenv <https://virtualenv.readthedocs.org/en/latest/>`_
+To setup a virtual environment based on `virtualenv <https://virtualenv.readthedocs.org/en/latest/>`__
 Python package with a standalone CPython 2.7.10 interpreter run the following script:
 
 .. code-block:: bash
@@ -294,22 +302,61 @@ This script does the following steps:
   * Download, compile and install the 2.7.10 (currently the newest) interpreter
     in a separated folder
   * Setup a virtual environment in the main project directory independently from
-    the globally installed Python packages
+    the system-wide Python packages
   * Install the Python dependencies in this environment
   * and finally create a ``.use_virtualenv"`` file to enable the newly created
     virtual environment for the topmost ``escape.py`` starting script.
 
-The ``escape.py`` script can detect the ``.use_virtualenv"`` file automatically
-and activates the virtual environment transparently.
+Usage:
 
-To setup the environment manually, define other Python version or even interpreter,
-enable system-wide Python/``pip`` packages or activate/deativate the environment manually
-check the content of the setup script.
+.. code-block:: bash
+
+    $ ./set_virtualenv.sh -h
+      Usage: ./set_virtualenv.sh [-p python_version] [-h]
+
+      Install script for ESCAPEv2 to setup virtual environment
+
+      optional parameters:
+
+        -p   set Python version (default: 2.7.10)
+        -h   show this help message and exit
+
+      Example: ./set_virtualenv.sh -p 2.7.9
+
+      Based on virtualenv. More information: virtualenv -h
+
+
+The ``escape.py`` script can detect the ``.use_virtualenv`` file automatically
+and activates the virtual environment transparently. If you want to disable the
+virtual environment then just delete the ``.use_virtualenv`` file.
+
+The virtualenv can be enabled by the ``--environment`` flag of the topmost
+``escape.py`` script.
+
+To setup the environment manually in order to define other Python version or interpreter,
+enable system-wide Python / ``pip`` packages
+
+.. code-block:: bash
+
+    $ virtualenv --python=<python_dir> --no-site-packages/system-site-packages <...> escape
+
+or activate/deactivate the environment manually
+
+.. code-block:: bash
+
+    $ cd escape
+    $ source bin/activate # activate virtual environment
+    $ deactivate  # deactivate
+
+check the content of the setup script or see the
+`Virtualenv User Guide <https://virtualenv.readthedocs.org/en/latest/userguide.html>`_.
 
 ESCAPEv2 example commands
 -------------------------
 
 **The simplest use-case:**
+
+Run ESCAPEv2 with the Mininet-based Infrastructure layer and debug logging mode:
 
 .. code-block:: bash
 
@@ -320,46 +367,47 @@ Usage:
 .. code-block:: bash
 
     $ ./escape.py -h
-    usage: escape.py [-h] [-v] [-c path] [-d] [-f] [-s file] [-i] [-a] [-r] [-4]
-                     [-x]
-                     ...
+      usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-i] [-r] [-s file]
+                       [-x] [-4]
+                       ...
 
-    ESCAPE: Extensible Service ChAin Prototyping Environment using Mininet, Click,
-    NETCONF and POX
+      ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet,
+      Click, NETCONF and POX
 
-    optional arguments:
-      -h, --help            show this help message and exit
-      -v, --version         show program's version number and exit
+      optional arguments:
+        -h, --help            show this help message and exit
+        -v, --version         show program's version number and exit
 
-    ESCAPE arguments:
-      -c path, --config path
-                            override default config filename
-      -d, --debug           run the ESCAPE in debug mode
-      -f, --full            run the infrastructure layer also
-      -s file, --service file
-                            skip the SAS REST-API initiation and read the service
-                            request from the given file
-      -i, --interactive     run an interactive shell for observing internal states
-      -a, --agent           run in agent mode: start the ROS REST-API (without the
-                            Service sublayer (SAS))
-      -r, --rosapi          start the REST-API for the Resource Orchestration
-                            sublayer (ROS)
-      -4, --cfor            start the REST-API for the Cf-Or interface
-      -x, --clean           run the cleanup task standalone and kill remained
-                            programs, interfaces, veth parts and junk files
-      ...                   optional POX modules
+      ESCAPEv2 arguments:
+        -a, --agent           run in agent mode: start the ROS REST-API (without the
+                              Service sublayer (SAS))
+        -c path, --config path
+                              override default config filename
+        -d, --debug           run the ESCAPE in debug mode
+        -e, --environment     run ESCAPEv2 in the pre-defined virtualenv
+        -f, --full            run the infrastructure layer also
+        -i, --interactive     run an interactive shell for observing internal states
+        -r, --rosapi          start the REST-API for the Resource Orchestration
+                              sublayer (ROS)
+        -s file, --service file
+                              skip the SAS REST-API initiation and read the service
+                              request from the given file
+        -x, --clean           run the cleanup task standalone and kill remained
+                              programs, interfaces, veth parts and junk files
+        -4, --cfor            start the REST-API for the Cf-Or interface
+        ...                   optional POX modules
 
-During a test or development the ``-d`` flag is almost necessary.
+During a test or development the ``--debug`` flag is almost necessary.
 
-If you want to run a test request on a test topology, use the ``-f`` flag.
+If you want to run a test request on a test topology, use the ``--full`` flag.
 ESCAPEv2 will parse the topology description form file (``escape-mn-topo.nffg``
 by default) and start the Infrastructure layer with the Mininet-based emulation.
 
-If the request is in a file it's more convenient to give it as an initial
-parameter and not bother with the REST-API.
+If the request is in a file it's more convenient to give it with the ``--service``
+initial parameter and not bother with the REST-API.
 
-In an error is occurred or need to observe the internal states you can start
-ESCAPEv2 with an interactive Python shell.
+If an error is occurred or need to observe the internal states you can start
+ESCAPEv2 with an interactive Python shell using the ``--interactive`` flag.
 
 The main layers which grouping the entities are reachable through the main POX
 object called ``core`` with the names:
@@ -371,10 +419,10 @@ object called ``core`` with the names:
 
 .. hint::
 
-  Tab-auto completion is working in most cases.
+  In the interactive shell the tab-auto completion is working in most cases.
 
-So a possible starting command for testing ESCAPEv2 with a test request given in
-a file and check the state of the DoV:
+So a possible scenario for testing ESCAPEv2 with a test request given in a file
+and check the state of the DoV:
 
 .. code-block:: bash
 
@@ -396,8 +444,6 @@ a file and check the state of the DoV:
           "id": "SAP1",
 
     ...
-
-
 
 **More advanced commands (mostly advisable for testing purposes):**
 
@@ -505,7 +551,7 @@ appropriate flag is given to the starting script.
 The ROS API can be used for communicating with other UNIFY layer e.g. a
 Controller Adaptation Sublayer of a standalone ESCAPEv2 in a multi-level
 scenario or with a GUI.
-The CfOr API realizes the interface for the elastic routing capability.
+The CfOr API realizes the interface for service elasticity.
 
 
 Common API functions
@@ -526,7 +572,7 @@ Common API functions
 Service API specific function:
 ++++++++++++++++++++++++++++++
 
-The SAS API is automatically initiated by the Service layer. If the ``-s`` flag
+The SAS API is automatically initiated by the Service layer. If the ``--service`` flag
 is used the service request is loaded from the given file and the REST-API
 initiation is skipped.
 
@@ -580,7 +626,7 @@ preferred) or you can define it in the additional config file: ``escape.config``
 The ESCAPEv2 checks this file at every start, and update/override the internal
 config if it's necessary.
 
-The config file can be changed during start with the ``--config`` initial
+The config file path can be changed during start with the ``--config`` initial
 parameter.
 
 The additional config can be added only in JSON format, but the structure of the
@@ -593,7 +639,7 @@ are taken out by helper functions of the :any:`ESCAPEConfig` class.
 Development
 -----------
 
-Suggested IDE: `Pycharm Community Edition <https://www.jetbrains.com/pycharm/>`_
+Suggested IDE: `Pycharm Community Edition <https://www.jetbrains.com/pycharm/>`__
 
 Coding conventions:
 
@@ -647,7 +693,7 @@ name: *helper*. An example to dump the running configuration of ESCAPEv2:
 
 More help and description about the useful helper functions and the *core*
 object is in the comments/documentation and on the POX's
-`wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`_
+`wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`__
 site.
 
 Contacts
