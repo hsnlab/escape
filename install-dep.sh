@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Install Python and system-wide packages, required programs and configurations
+# for ESCAPEv2
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'

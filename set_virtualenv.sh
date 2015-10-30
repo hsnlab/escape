@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Install script for ESCAPEv2 to setup virtual environment
+# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
@@ -16,19 +19,49 @@ function info() {
     echo -e "${GREEN}$1${NC}"
 }
 
+# Default variables
 VERSION=2.7.10
 ENABLE=".use_virtualenv"
 
-info  "=== Install virtualenv for ESCAPEv2 ==="
+# Read initial parameters
+while getopts ":p:h" option; do
+    case ${option} in
+    p)
+        VERSION=${OPTARG}
+        ;;
+    h)
+        echo -e "Usage: $0 [-p python_version] [-h]\n"
+        echo -e "Install script for ESCAPEv2 to setup virtual environment\n"
+        echo -e "optional parameters:\n"
+        echo -e "\t-p   set Python version (default: $VERSION)"
+        echo -e "\t-h   show this help message and exit"
+        echo -e "\nExample: ./set_virtualenv.sh -p 2.7.9"
+        echo -e "\nBased on virtualenv. More information: virtualenv -h"
+        exit 0
+        ;;
+    :)
+        echo "Option -$OPTARG requires an argument." >&2
+        exit 1
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+    esac
+done
 
-echo "Used Python version: $VERSION"
+info  "=== Install virtualenv for ESCAPEv2 ==="
+echo "User Python version: $VERSION"
+
+info "=== Download Python in a separate folder ==="
+wget "https://www.python.org/ftp/python/${VERSION}/Python-${VERSION}.tar.xz"
+exit 0
 
 info "=== Installing dependencies ==="
 sudo apt-get update && sudo apt-get install libsqlite3-dev libssl-dev
 sudo pip install virtualenv
 
-info "=== Download,compile and install Python in a separate folder ==="
-wget "https://www.python.org/ftp/python/${VERSION}/Python-${VERSION}.tar.xz"
+info "=== Compile and install Python ==="
 tar xvJf "Python-${VERSION}.tar.xz"
 cd ./"Python-${VERSION}"
 PYTHON_DIR=$PWD
