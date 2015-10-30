@@ -6,43 +6,62 @@ Welcome! This is the API documentation for **ESCAPEv2**.
 Overview
 --------
 
-`Mininet <http://mininet.org/>`_ is a great prototyping tool which takes
-existing SDN-related software components (e.g. Open vSwitch, OpenFlow
-controllers, network namespaces, cgroups, etc.) and combines them into a
-framework, which can automatically set up and configure customized OpenFlow
-testbeds scaling up to hundreds of nodes. Standing on the shoulders of Mininet,
-we have implemented a similar prototyping system called ESCAPE, which can be
-used to develop and test various components of the service chaining
-architecture. Our framework incorporates
-`Click <http://www.read.cs.ucla.edu/click/>`_ for implementing Virtual Network
-Functions (VNF), NETCONF (:rfc:`6241`) for managing Click-based VNFs and
-`POX <https://openflow.stanford.edu/display/ONL/POX+Wiki>`_ for taking care of
-traffic steering. We also add our extensible Orchestrator module, which can
-accommodate mapping algorithms from abstract service descriptions to deployed
-and running service chains.
+On the one hand, ESCAPE (Extensible Service ChAin Prototyping
+Environment) is a general prototyping framework which supports the
+development of several parts of the service chaining architecture
+including VNF implementation, traffic steering, virtual network
+embedding, etc.  On the other hand, ESCAPE is a proof of concept
+prototype implementing a novel SFC (Service Function Chaining)
+architecture proposed by `EU FP7 UNIFY project
+<https://www.fp7-unify.eu/>`_.  It is a realization of the UNIFY
+service programming and orchestration framework which enables the
+joint programming and virtualization of cloud and networking
+resources.
 
-.. seealso::
+.. hint::
+   
+   For more information on the concept, motivation and demo use-cases, we
+   suggest the following papers.
 
-    The source code of previous ESCAPE version is available at our `github page
-    <https://github.com/nemethf/escape>`_. For more information we first suggest
-    to read our paper:
+   **UNIFY Architecture:**
 
-    Attila Csoma, Balazs Sonkoly, Levente Csikor, Felician Nemeth, Andras Gulyas,
-    Wouter Tavernier, and Sahel Sahhaf: **ESCAPE: Extensible Service ChAin
-    Prototyping Environment using Mininet, Click, NETCONF and POX**.
-    Demo paper at Sigcomm'14.
+   * Balázs Sonkoly, Robert Szabo, Dávid Jocha, János Czentye, Mario
+     Kind, and Fritz-Joachim Westphal, *UNIFYing Cloud and Carrier
+     Network Resources: An Architectural View*, in Proc. IEEE Global
+     Telecommunications Conference (GLOBECOM), 2015.
 
-    * `Download the paper <http://dl.acm.org/authorize?N71297>`_
-    * `Accompanying poster <http://sb.tmit.bme.hu/mediawiki/images/b/ba/Sigcomm2014_poster.png>`_
+   **ESCAPE as a multi-domain orchestrator:**
 
-    For further information contact sonkoly@tmit.bme.hu
+   * Balázs Sonkoly, János Czentye, Robert Szabo, Dávid Jocha, János
+     Elek, Sahel Sahhaf, Wouter Tavernier, Fulvio Risso,
+     *Multi-domain service orchestration over networks and clouds: a
+     unified approach*, In Proceedings of ACM SIGCOMM (Demo), August
+     17-21, 2015, London, United Kingdom.  `Download the paper
+     <http://conferences.sigcomm.org/sigcomm/2015/pdf/papers/p377.pdf>`_
+   * `Demo video <https://www.youtube.com/watch?v=T3Fna5v-hFw>`_
+   * `Demo video as a presentation with manual control
+     <http://prezi.com/f-ms1rwxxdwa/?utm_campaign=share&utm_medium=copy&rc=ex0share>`_
+
+   **Previous version of ESCAPE:**
+
+   * Attila Csoma, Balázs Sonkoly, Levente Csikor, Felicián Németh,
+     András Gulyás, Wouter Tavernier, Sahel Sahhaf, *ESCAPE: Extensible
+     Service ChAin Prototyping Environment using Mininet, Click, NETCONF
+     and POX*, In Proceedings of ACM SIGCOMM (Demo), August 17-22, 2014,
+     Chicago, IL, USA.  `Download the paper
+     <http://dl.acm.org/authorize?N71297>`_
+   * The source code of the previous version of ESCAPE is available at
+     our `github page <https://github.com/nemethf/escape>`_.
+
+For further information contact balazs.sonkoly@tmit.bme.hu
 
 API documentation
 -----------------
 This documentation contains only the Python class structure and description of
 the multi-domain multi-level service orchestrator.
 
-The modified Mininet-based emulation is not documented here.
+Our Mininet-based infrastructure, which is an extended version of
+Mininet, is not documented here.
 
 ESCAPEv2 class structure
 ++++++++++++++++++++++++
@@ -634,9 +653,9 @@ site.
 Contacts
 --------
 
-János Czentye - czentye@tmit.bme.hu
+János Czentye - janos.czentye@tmit.bme.hu
 
-Balázs Sonkoly - sonkoly@tmit.bme.hu
+Balázs Sonkoly - balazs.sonkoly@tmit.bme.hu
 
 Indices and tables
 ==================
