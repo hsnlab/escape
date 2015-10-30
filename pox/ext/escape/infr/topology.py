@@ -148,7 +148,7 @@ class FallbackStaticTopology(AbstractTopology):
     nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="l5")
     # Duplicate one-way static links to become undirected in order to fit to
     # the orchestration algorithm
-    nffg.duplicate_static_links()
+    # nffg.duplicate_static_links()
     return nffg
 
 
@@ -233,7 +233,8 @@ class FallbackDynamicTopology(AbstractTopology):
     nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="l5", **linkres)
     # Duplicate one-way static links to become undirected in order to fit to
     # the orchestration algorithm
-    nffg.duplicate_static_links()
+    # No need for that, ESCAPENetworkBridge do this later
+    # nffg.duplicate_static_links()
     return nffg
 
 
@@ -644,7 +645,7 @@ class ESCAPENetworkBuilder(object):
           else:
             raise RuntimeError("Unsupported file format: %s!" % format)
       except IOError:
-        log.debug("Additional topology file not found: %s" % path)
+        log.warning("Additional topology file not found: %s" % path)
         raise TopologyBuilderException("Missing topology file!")
       except ValueError as e:
         log.error(
@@ -936,7 +937,7 @@ class ESCAPENetworkBuilder(object):
       else:
         raise RuntimeError("Unsupported topology format: %s" % type(topo))
       return self.get_network()
-    except SystemExit as e:
+    except SystemExit:
       quit_with_error("Mininet core files is not installed and/or available!")
     except TopologyBuilderException:
       if self.fallback:

@@ -14,7 +14,7 @@
 Implement the supporting classes for domain adapters.
 """
 import urlparse
-from requests import Session
+from requests import Session, ConnectionError, HTTPError, Timeout
 import time
 
 from escape import __version__
@@ -793,3 +793,39 @@ class AbstractRESTAdapter(Session):
     self._response.raise_for_status()
     # Return with body content
     return self._response.text
+
+  def send_no_error (self, method, url=None, body=None, **kwargs):
+    """
+    Send REST request with handling exceptions.
+
+    :param method: HTTP method
+    :type method: str
+    :param url: valid URL or relevant part follows ``self.base_url``
+    :type url: str
+    :param body: request body
+    :type body: :any:`NFFG` or dict or bytes or str
+    :return: raw response data
+    :rtype: str
+    """
+    try:
+      self.send_request(method, url, body, **kwargs)
+      return self._response.status_code if self._response is not None else None
+    except ConnectionError:
+      log.error(
+        "Remote agent(domain: %s, url: %s) is not reachable!" % (
+          self.name, self._base_url))
+      return None
+    except HTTPError as e:
+      log.error(
+        "Remote agent(domain: %s, url: %s) responded with an error: %s" % (
+          self.name, self._base_url, e.message))
+      return None
+    except Timeout:
+      log.error("Remote agent(domain: %s, url: %s) not responding!" % (
+        self.name, self._base_url))
+      return None
+    except KeyboardInterrupt:
+      log.warning(
+        "Request to remote agent(domain: %s, url: %s) is interrupted by "
+        "user!" % (self.name, self._base_url))
+      return None

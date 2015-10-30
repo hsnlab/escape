@@ -16,7 +16,6 @@ Contains Adapter classes which contains protocol and technology specific
 details for the connections between ESCAPEv2 and other different domains.
 """
 from copy import deepcopy
-from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from ncclient.operations import OperationError
 
@@ -624,33 +623,11 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self._original_nffg = None
 
   def ping (self):
-    try:
-      return self.send_request(self.GET, 'ping')
-    except ConnectionError:
-      log.warning(
-        "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
-    except Timeout:
-      log.warning("Remote ESCAPEv2 agent (%s) not responding!" % self._base_url)
-    except HTTPError as e:
-      log.warning(
-        "Remote ESCAPEv2 agent responded with an error during 'ping': %s" %
-        e.message)
+    return self.send_no_error(self.GET, 'ping')
 
   def get_config (self):
-    try:
-      data = self.send_request(self.POST, 'get-config')
-      log.debug("Received config from remote agent at %s" % self._base_url)
-    except ConnectionError:
-      log.warning(
-        "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
-      return None
-    except Timeout:
-      log.warning("Remote ESCAPEv2 agent (%s) not responding!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning("Remote ESCAPEv2 agent responded with an error during "
-                  "'get-config': %s" % e.message)
-      return None
+    data = self.send_no_error(self.POST, 'get-config')
+    log.debug("Received config from remote agent at %s" % self._base_url)
     if data:
       # Convert raw data to NFFG
       log.info("Parse and load received data...")
@@ -668,19 +645,8 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   def edit_config (self, data):
     if not isinstance(data, (str, unicode, NFFG)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
-    try:
-      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
-      self.send_request(self.POST, 'edit-config', data)
-    except ConnectionError:
-      log.warning(
-        "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "Remote ESCAPEv2 responded with an error during 'edit-config': %s" %
-        e.message)
-      return None
-    return self._response.status_code
+    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
     return self.ping()
@@ -716,31 +682,10 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self._original_virtualizer = None
 
   def ping (self):
-    try:
-      return self.send_request(self.GET, 'ping')
-    except ConnectionError:
-      log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
-    except Timeout:
-      log.warning("OpenStack agent (%s) not responding!" % self._base_url)
-    except HTTPError as e:
-      log.warning(
-        "OpenStack agent responded with an error during 'ping': %s" % e.message)
+    return self.send_no_error(self.GET, 'ping')
 
   def get_config (self):
-    try:
-      data = self.send_request(self.POST, 'get-config')
-      log.debug("Received config from remote agent at %s" % self._base_url)
-    except ConnectionError:
-      log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
-      return None
-    except Timeout:
-      log.warning("OpenStack agent (%s) not responding!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "OpenStack agent responded with an error during 'get-config': %s" %
-        e.message)
-      return None
+    data = self.send_no_error(self.POST, 'get-config')
     if data:
       log.info("Parse and load received data...")
       # Covert from XML-based Virtualizer to NFFG
@@ -766,18 +711,8 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
-    try:
-      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
-      self.send_request(self.POST, 'edit-config', data)
-    except ConnectionError:
-      log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "OpenStack agent responded with an error during 'edit-config': %s" %
-        e.message)
-      return None
-    return self._response.status_code
+    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
     return self.ping()
@@ -812,34 +747,11 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self._original_virtualizer = None
 
   def ping (self):
-    try:
-      return self.send_request(self.GET, 'ping')
-    except ConnectionError:
-      log.warning(
-        "Universal Node agent (%s) is not reachable!" % self._base_url)
-    except Timeout:
-      log.warning("Universal Node agent (%s) not responding!" % self._base_url)
-    except HTTPError as e:
-      log.warning(
-        "Universal Node agent responded with an error during 'ping': %s" %
-        e.message)
+    return self.send_no_error(self.GET, 'ping')
 
   def get_config (self):
-    try:
-      data = self.send_request(self.POST, 'get-config')
-      log.debug("Received config from remote agent at %s" % self._base_url)
-    except ConnectionError:
-      log.warning(
-        "Universal Node agent (%s) is not reachable!" % self._base_url)
-      return None
-    except Timeout:
-      log.warning("Universal Node agent (%s) not responding!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "Universal Node agent responded with an error during 'get-config': %s"
-        % e.message)
-      return None
+    data = self.send_no_error(self.POST, 'get-config')
+    log.debug("Received config from remote agent at %s" % self._base_url)
     if data:
       log.info("Parse and load received data...")
       # Covert from XML-based Virtualizer to NFFG
@@ -865,19 +777,8 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
-    try:
-      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
-      self.send_request(self.POST, 'edit-config', data)
-    except ConnectionError:
-      log.warning(
-        "Universal Node agent (%s) is not reachable!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "Universal Node agent responded with an error during 'edit-config': %s"
-        % e.message)
-      return None
-    return self._response.status_code
+    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
     return self.ping()
