@@ -514,7 +514,6 @@ class DomainVirtualizer(AbstractVirtualizer):
     # Garbage-collector safe
     self.domainResManager = weakref.proxy(domainResManager)
     self._global_nffg = None
-    """:type: NFFG"""
     if global_res is not None:
       self.set_domain_as_global_view(domain=NFFG.DOMAIN_VIRTUAL,
                                      nffg=global_res)
