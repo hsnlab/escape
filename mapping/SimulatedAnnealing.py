@@ -57,6 +57,10 @@ helpmsg = """SimulatedAnnealing.py usage:
                    shared: single chains are generated in each step, but VNF-s
                            can be shared with any chain mapped earlier in the 
                            test sequence.
+--prob_exponent_multiplier=f
+                 Controls the exponent of the probablity generating function.
+                 The smaller it is, the longer the probability to accept worse
+                 points stays high.
 """
 
 
@@ -151,7 +155,7 @@ def evaluatePoint(bw, res, test_seed, error_file, queue=None,
   else:
     return value
 
-def checkEvalCache(cache, point, delta=0.05):
+def checkEvalCache(cache, point, delta=0.0000001):
   for p in cache:
     if math.fabs(p[0] - point[0]) < delta and math.fabs(p[1] - point[1]) < delta:
       return p, cache[p]
@@ -170,6 +174,7 @@ if __name__ == '__main__':
                                                     "seed=", "start_res=", 
                                                     "start_bw=", "start_temp=",
                                                     "temp_step=", "maxidle=",
+                                                    "prob_exponent_multiplier=",
                                                     "maxiters=", "test_types="])
     baseoutfile = "simulannealing"
     stepsize = 0.05
@@ -183,6 +188,7 @@ if __name__ == '__main__':
     start_temp = 100
     temp_step = 5
     maxidle = 10
+    prob_exponent_multiplier = 0.3
     single = False
     multi = False
     shared = False
@@ -222,6 +228,8 @@ if __name__ == '__main__':
           multi = True
         if "shared" in types:
           shared = True
+        elif opt == "--prob_exponent_multiplier":
+          prob_exponent_multiplier = float(arg)
     if bw is None or res is None:
       raise Exception("Starting parameters must be given!")
     elif bw + res > 3.0:
@@ -253,16 +261,18 @@ if __name__ == '__main__':
   temperature = start_temp
   best = current
   bestvalue = currvalue
-  x = random.random()
-  y = random.random()
+  x = random.random() - 0.5
+  y = random.random() - 0.5
   length = math.sqrt(x*x + y*y)
   # this defines the tangent of the net in the parameter space where we will
   # continue searching. The annealing can't escape from this net.
   netdirection = (x / length * stepsize, y / length * stepsize)
+  log.debug("Net direction is %s %s"%(netdirection[0], netdirection[1]))
   while itercnt <= maxiters:
     try:
       step_number = random.randint(1, maxstep)
       v0 = (step_number*netdirection[0], step_number*netdirection[1])
+      log.debug("%i: V0 is: %s"%(itercnt,v0))
       is_cached = []
       threads = []
       for i in range(0, neighbor_cnt):
@@ -277,15 +287,15 @@ if __name__ == '__main__':
       for i in range(0, neighbor_cnt):
         v0_limited = list(v0)
         # preventing escaping from parameter space with boundaries.
-        if current[0]+v0_limited[0] < 0 and math.fabs(v0_limited[0]) > 0.0001:
+        if current[0]+v0_limited[0] < 0 and math.fabs(v0_limited[0]) > 0.00001:
           v0_limited[1] = ((-1 * current[0]) / v0_limited[0]) * v0_limited[1]
           v0_limited[0] = -1 * current[0]
-        if current[1]+v0_limited[1] < 0 and math.fabs(v0_limited[1]) > 0.0001:
+        if current[1]+v0_limited[1] < 0 and math.fabs(v0_limited[1]) > 0.00001:
           v0_limited[0] = ((-1 * current[1]) / v0_limited[1]) * v0_limited[0]
           v0_limited[1] = -1 * current[1]
         if current[0]+v0[0] + current[1]+v0[1] > 3 and \
-           v0_limited[0] + v0_limited[1] > 0.0001 or \
-           v0_limited[0] + v0_limited[1] < -0.0001:
+           (v0_limited[0] + v0_limited[1] > 0.00001 or \
+           v0_limited[0] + v0_limited[1] < -0.00001):
           temp = list(v0_limited)
           v0_limited[0] = temp[0] * (3.0 - current[0] - current[1]) / \
                           (temp[0] + temp[1])
@@ -320,40 +330,51 @@ if __name__ == '__main__':
 
       # restore random module state after points are evaluated.
       random.setstate(randomstate)
-
-      # check whether the maximal move of the moveset is better than the current
-      max_, maxvalue = max(results_l, key=lambda a: a[1])
-      probability = math.e **(-(start_temp/6.0)/temperature)
-      log.debug("%i:Max value of neighbors: %s "%(itercnt, maxvalue))
+      
+      probability = math.e **(-(start_temp*prob_exponent_multiplier)/temperature)
+      log.debug("%i:Trying neighbors of %s %s..."%(itercnt, current[0], 
+                                                        current[1]))
       log.debug("%i:Probability of accepting worse case: %s"%
                 (itercnt, probability))
-      if maxvalue >= currvalue:
-        if math.fabs(maxvalue - currvalue) < 0.000001:
-          idlehistory.append(True)
-        else:
+      for neigh, nvalue in sorted(results_l, key=lambda a: a[1], reverse=True):
+        # check whether a move of the moveset is better than the current
+        if nvalue >= currvalue:
+          # if we were here last iteration, then let us check other neighbors.
+          if idlehistory[-1]:
+            continue
+          if math.fabs(nvalue - currvalue) < 0.000001:
+            idlehistory.append(True)
+          else:
+            idlehistory.append(False)
+          current = neigh
+          currvalue = nvalue
+          log.info("%i:Accepted better point %s %s with value %s!"%
+                   (itercnt,current[0],current[1],currvalue))
+          if nvalue >= bestvalue:
+            best = neigh
+            bestvalue = nvalue
+            log.info("Overall best point %s %s found with value %s!"%
+                     (best[0], best[1], bestvalue))
+          break
+        elif random.random() < probability:
+          # if not, we can still accept it with some probability
+          current = neigh
+          currvalue = nvalue
+          log.debug("%i:Accepted worse point %s %s with value %s!"%
+                    (itercnt, current[0], current[1], currvalue))
           idlehistory.append(False)
-        current = max_
-        currvalue = maxvalue
-        log.info("%i:Accepted better point %s %s with value %s!"%
-                 (itercnt,current[0],current[1],currvalue))
-        if maxvalue >= bestvalue:
-          best = max_
-          bestvalue = maxvalue
-          log.info("Overall best point %s %s found with value %s!"%
-                   (best[0], best[1], bestvalue))
-      elif random.random() < probability:
-        # if not, we can still accept is with some probability
-        current = max_
-        currvalue = maxvalue
-        log.debug("%i:Accepted worse point %s %s with value %s!"%
-                  (itercnt, current[0], current[1], currvalue))
-        idlehistory.append(False)
+          break
+        log.debug("%i:Point %s %s with value %s wasn't accepted, trying next"
+                  " negihbor..."%(itercnt, neigh[0], neigh[1], nvalue))
       else:
-        log.debug("%i:Staying in place %s..."%(itercnt, current))
+        # if none of the neighbors are selected to step forward
+        log.debug("%i:No negihbors left, Staying in place %s %s..."%
+                  (itercnt, current[0], current[1]))
         idlehistory.append(True)
 
       # remove the oldest element
       idlehistory = idlehistory[1:]
+      log.debug("%i:Idle history: %s"%(itercnt,idlehistory))
       if reduce(lambda a,b: a and b, idlehistory):
         log.info("%i:The process stayed in place for %i consequent iterations"
                  "...Exiting..."%(itercnt, len(idlehistory)))
