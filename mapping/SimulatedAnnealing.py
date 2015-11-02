@@ -47,6 +47,16 @@ helpmsg = """SimulatedAnnealing.py usage:
 --maxidle=i      Defines how many iterations without moving to other parameter
                  points should cause the algorithm to exit.
 --maxiters=i     The number of iterations to complete at most.
+--test_types=    Defines which test sequences shall be used to evaluate a 
+                 parameter point. All of them launches an extra thread per 
+                 paralelly examined neighboring point. Possible comma separated 
+                 values (in any combinations) are:
+                   single: only disjoint SAP-SAP chains are generated one by one.
+                   multi: more chains are generated, VNF-s can be shared among 
+                          chains of the same chain batch.
+                   shared: single chains are generated in each step, but VNF-s
+                           can be shared with any chain mapped earlier in the 
+                           test sequence.
 """
 
 
@@ -55,51 +65,71 @@ log.setLevel(logging.DEBUG)
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
 
 def evaluatePoint(bw, res, test_seed, error_file, queue=None,
-                  shortest_paths=None):
+                  shortest_paths=None, single=False, multi=False, shared=False):
   """
   If shortest_paths is None than, the calculated paths are sent back with the
   resulting point value as a tuple.
   NOTE: the same file can be written here simulaniously, but it is only used
   in case an exception is thrown and that is logged there.
   """
+  if not single and not multi and not shared:
+    raise Exception("Point evaluation cannot be started because no desired test"
+                    " sequence were selected!")
   lat = 3.0 - bw - res
-  single_test = mp.Queue()
-  shortest_paths_calced = None
+  shortest_paths_calced = shortest_paths
   log.debug("Examination of point %s %s started..."%(bw,res))
-  if shortest_paths is not None:
-    mp.Process(target=st.StressTestCore, args=(test_seed, False, 0.0, False, 0, 
-                                               False, bw, res, lat, error_file),
-               kwargs={'queue':single_test, 
-                       'shortest_paths_precalc':shortest_paths_calced, 
-                       'filehandler':handler}).start()
-    shortest_paths_sendback = False
-    shortest_paths_calced = shortest_paths
-  else:
-    # don't give the Queue to it, we want it to calculate shortest path so
-    # we could give it to the next two.
-    shortest_paths_calced = st.StressTestCore(test_seed, False, 0.0, False, 0, 
-                                              False, bw, res, lat, error_file, 
-                                              queue=single_test, 
-                                              filehandler=handler)
-    shortest_paths_sendback = True
-
-  multi_test = mp.Queue()
-  mp.Process(target=st.StressTestCore, args=(test_seed, False, 0.3, True, 3, 
-                                             False, bw, res, lat, error_file),
-             kwargs={'queue':multi_test, 
-                     'shortest_paths_precalc':shortest_paths, 
-                     'filehandler':handler}).start()
-  shared_test = mp.Queue()
-  mp.Process(target=st.StressTestCore, args=(test_seed, False, 0.2, False, 0,
-                                             False, bw, res, lat, error_file),
-             kwargs={'queue':shared_test, 
-                     'shortest_paths_precalc':shortest_paths_calced, 
-                     'filehandler':handler}).start()
+  shortest_paths_sendback = shortest_paths is None
+  # TODO: refactor this: save params to tuple and dict and give it to a for cycle
+  # to start the function in parallel or sequenctual.
+  if single:
+    single_test = mp.Queue()
+    if shortest_paths is not None:
+      mp.Process(target=st.StressTestCore, args=(test_seed, False, 0.0, False, 0, 
+                                                 False, bw, res, lat, error_file),
+                 kwargs={'queue':single_test, 
+                         'shortest_paths_precalc':shortest_paths_calced, 
+                         'filehandler':handler}).start()
+    else:
+      # With shortest path not given, but queue given, it will return 
+      # shortest_path so we could give it to the next two.
+      shortest_paths_calced = st.StressTestCore(test_seed, False, 0.0, False, 0, 
+                                                False, bw, res, lat, error_file, 
+                                                queue=single_test,
+                                                shortest_paths_precalc=None,
+                                                filehandler=handler)
+  if multi:
+    multi_test = mp.Queue()
+    if shortest_paths is not None:
+      mp.Process(target=st.StressTestCore, args=(test_seed, False, 0.3, True, 3,
+                                                 False, bw, res, lat, error_file),
+                 kwargs={'queue':multi_test, 
+                         'shortest_paths_precalc':shortest_paths_calced, 
+                         'filehandler':handler}).start()
+    else:
+      shortest_paths_calced = st.StressTestCore(test_seed, False, 0.3, True, 3,
+                                 False, bw, res, lat, error_file,
+                                 queue=multi_test, 
+                                 shortest_paths_precalc=None, 
+                                 filehandler=handler)
+  if shared:
+    shared_test = mp.Queue()
+    if shortest_paths is not None:
+      mp.Process(target=st.StressTestCore, args=(test_seed, False, 0.2, False, 0,
+                                                 False, bw, res, lat, error_file),
+                 kwargs={'queue':shared_test, 
+                         'shortest_paths_precalc':shortest_paths_calced, 
+                         'filehandler':handler}).start()
+    else:
+      shortest_paths_calced = st.StressTestCore(test_seed, False, 0.2, False, 0,
+                                 False, bw, res, lat, error_file,
+                                 queue=shared_test, 
+                                 shortest_paths_precalc=None, 
+                                 filehandler=handler)
   
   # wait all three test sequences to finish
-  result_vector = (single_test.get(), 
-                   multi_test.get(),
-                   shared_test.get())
+  result_vector = (single_test.get() if single else 0, 
+                   multi_test.get() if multi else 0,
+                   shared_test.get() if shared else 0)
   for result, test in zip(result_vector, ("single", "multi", "shared")):
     if issubclass(result.__class__, (Exception, Warning)):
       log.warn("An exception was thrown by the \"%s\" StressTest: %s"%
@@ -140,7 +170,7 @@ if __name__ == '__main__':
                                                     "seed=", "start_res=", 
                                                     "start_bw=", "start_temp=",
                                                     "temp_step=", "maxidle=",
-                                                    "maxiters="])
+                                                    "maxiters=", "test_types="])
     baseoutfile = "simulannealing"
     stepsize = 0.05
     maxstep = 6
@@ -153,6 +183,9 @@ if __name__ == '__main__':
     start_temp = 100
     temp_step = 5
     maxidle = 10
+    single = False
+    multi = False
+    shared = False
     for opt, arg in opts:
       if opt == "-h":
         print helpmsg
@@ -181,6 +214,14 @@ if __name__ == '__main__':
         maxidle = int(arg)
       elif opt == "--maxiters":
         maxiters = int(arg)
+      elif opt == "--test_types":
+        types = arg.split(",")
+        if "single" in types:
+          single = True
+        if "multi" in types:
+          multi = True
+        if "shared" in types:
+          shared = True
     if bw is None or res is None:
       raise Exception("Starting parameters must be given!")
     elif bw + res > 3.0:
@@ -201,7 +242,8 @@ if __name__ == '__main__':
     idlehistory.append(False)
   # evaluate the starting point and receive the shortest path for speeding up
   currvalue, shortest_paths = evaluatePoint(current[0], current[1], test_seed, 
-                                            baseoutfile)
+                                            baseoutfile, single=single, 
+                                            multi=multi, shared=shared)
   if shortest_paths is None:
     raise Exception("The evaluation of starting point and thus shortest path "
                     "calculation is failed!")
@@ -258,7 +300,8 @@ if __name__ == '__main__':
                                                    current[1]+v0_limited[1], 
                                                    test_seed, baseoutfile), 
                        kwargs={'queue':results_q, 
-                               'shortest_paths':shortest_paths}))
+                               'shortest_paths':shortest_paths,
+                               'single':single, 'multi':multi, 'shared':shared}))
           threads[-1].start()
         else:
           log.debug("%i:Point %s %s was cached!"%(itercnt,point[0], point[1]))
