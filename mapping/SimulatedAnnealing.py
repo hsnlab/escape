@@ -319,14 +319,17 @@ if __name__ == '__main__':
           is_cached[i] = True
         v0 = rotateVector(v0, deg)
 
-      results_l = []
+      results_new = []
+      results_old = []
       # wait all evaluations to finish and decide where should we step forward
       for i in range(0, neighbor_cnt):
         result = results_q.get()
         log.debug("%i:Result received from neighbor number %s."%(itercnt,i))
-        results_l.append(result)
         if not is_cached[i]:
           point_eval_cache[result[0]] = result[1]
+          results_new.append(result)
+        else:
+          results_old.append(result)
 
       # restore random module state after points are evaluated.
       random.setstate(randomstate)
@@ -336,7 +339,9 @@ if __name__ == '__main__':
                                                         current[1]))
       log.debug("%i:Probability of accepting worse case: %s"%
                 (itercnt, probability))
-      for neigh, nvalue in sorted(results_l, key=lambda a: a[1], reverse=True):
+      result_l = sorted(results_new, key=lambda a: a[1], reverse=True)
+      result_l.extend(sorted(results_old, key=lambda a: a[1], reverse=True))
+      for neigh, nvalue in result_l:
         # check whether a move of the moveset is better than the current
         if nvalue >= currvalue:
           # if we were here last iteration, then let us check other neighbors.
