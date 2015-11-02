@@ -90,7 +90,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         "SDN-TOPO": {"module": "escape.adapt.adapters",
                                      "class": "SDNDomainTopoAdapter",
                                      # relative to project root
-                                     "path": "pox/sdn-topo.nffg"
+                                     "path": "examples/sdn-topo.nffg"
                                      },
                         "VNFStarter": {"module": "escape.adapt.adapters",
                                        "class": "VNFStarterAdapter",
@@ -129,7 +129,7 @@ cfg = {"service": {  # Service Adaptation Sublayer
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
                             # relative to project root
-                            "TOPO": "pox/escape-mn-topo.nffg",
+                            "TOPO": "examples/escape-mn-topo.nffg",
                             # relative to project root
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
