@@ -759,96 +759,166 @@ Other simple values can be added too to refine the control of the emulation such
 as enable/disable the xterm initiation for SAPs (``SAP-xterm``) or the cleanup
 task (``SHUTDOWN-CLEAN``).
 
-Configuration template
-----------------------
+Default configuration
+---------------------
 
-The following snippet defines a template of ESCAPEv2 configurations with the more
-significant keywords and their types:
+The following snippet represents the default configuration of ESCAPEv2
+in JSON format. An additional configuration file should be based on a subpart of
+this configurations structure.
 
 .. code-block:: json
 
     {
         "service": {
             "MAPPER": {
-                "module": "str",
-                "class": "str",
-                "mapping-enabled": "bool"
+                "module": "escape.service.sas_mapping",
+                "class": "ServiceGraphMapper",
+                "mapping-enabled": false
             },
             "STRATEGY": {
-                "module": "str",
-                "class": "str",
-                "THREADED": "bool"
+                "module": "escape.service.sas_mapping",
+                "class": "DefaultServiceMappingStrategy",
+                "THREADED": false
             },
             "PROCESSOR": {
-                "module": "str",
-                "class": "str",
-                "enabled": "bool"
+                "module": "escape.util.mapping",
+                "class": "ProcessorSkipper",
+                "enabled": false
             },
             "REST-API": {
-                "module": "str",
-                "class": "str",
-                "prefix": "str",
-                "address": "str",
-                "port": "int"
+                "module": "escape.service.sas_API",
+                "class": "ServiceRequestHandler",
+                "prefix": "escape",
+                "address": "0.0.0.0",
+                "port": 8008
             }
         },
         "orchestration": {
             "MAPPER": {
-                "module": "str",
-                "class": "str",
-                "mapping-enabled": "bool"
+                "module": "escape.orchest.ros_mapping",
+                "class": "ResourceOrchestrationMapper",
+                "mapping-enabled": true
             },
             "STRATEGY": {
-                "module": "str",
-                "class": "str",
-                "THREADED": "bool"
+                "module": "escape.orchest.ros_mapping",
+                "class": "ESCAPEMappingStrategy",
+                "THREADED": false
             },
             "PROCESSOR": {
-                "module": "str",
-                "class": "str",
-                "enabled": "bool"
+                "module": "escape.util.mapping",
+                "class": "ProcessorSkipper",
+                "enabled": true
             },
             "Sl-Or": {
-                "module": "str",
-                "class": "str",
-                "prefix": "str",
-                "address": "str",
-                "port": "int",
-                "virtualizer_type": "str"
+                "module": "escape.orchest.ros_API",
+                "class": "ROSAgentRequestHandler",
+                "prefix": "escape",
+                "address": "0.0.0.0",
+                "port": 8888,
+                "virtualizer_type": "GLOBAL"
             },
             "Cf-Or": {
-                "module": "str",
-                "class": "str",
-                "prefix": "str",
-                "address": "str",
-                "port": "int",
-                "virtualizer_type": "str"
+                "module": "escape.orchest.ros_API",
+                "class": "CfOrRequestHandler",
+                "prefix": "cfor",
+                "address": "0.0.0.0",
+                "port": 8889,
+                "virtualizer_type": "GLOBAL"
             }
         },
         "adaptation": {
             "MANAGERS": [],
-            "adapter123": {
-                "module": "str",
-                "class": "str",
-                "opt123": "any"
+            "INTERNAL-POX": {
+                "module": "escape.adapt.adapters",
+                "class": "InternalPOXAdapter",
+                "name": null,
+                "address": "127.0.0.1",
+                "port": 6653,
+                "keepalive": false
             },
-            "manager123": {
-                "module": "str",
-                "class": "str",
-                "poll": "bool",
-                "opt123": "any"
+            "SDN-POX": {
+                "module": "escape.adapt.adapters",
+                "class": "SDNDomainPOXAdapter",
+                "name": null,
+                "address": "0.0.0.0",
+                "port": 6633,
+                "keepalive": false
             },
-            "RESET-DOMAINS-AFTER-SHUTDOWN": "bool"
+            "MININET": {
+                "module": "escape.adapt.adapters",
+                "class": "InternalMininetAdapter",
+                "net": null
+            },
+            "SDN-TOPO": {
+                "module": "escape.adapt.adapters",
+                "class": "SDNDomainTopoAdapter",
+                "path": "examples/sdn-topo.nffg"
+            },
+            "VNFStarter": {
+                "module": "escape.adapt.adapters",
+                "class": "VNFStarterAdapter",
+                "username": "mininet",
+                "password": "mininet",
+                "server": "127.0.0.1",
+                "port": 830,
+                "timeout": null
+            },
+            "ESCAPE-REST": {
+                "module": "escape.adapt.adapters",
+                "class": "RemoteESCAPEv2RESTAdapter",
+                "url": "http://localhost:8083"
+            },
+            "OpenStack-REST": {
+                "module": "escape.adapt.adapters",
+                "class": "OpenStackRESTAdapter",
+                "url": "http://localhost:8081"
+             },
+            "UN-REST": {
+                "module": "escape.adapt.adapters",
+                "class": "UniversalNodeRESTAdapter",
+                "url": "http://localhost:8082"
+            },
+            "INTERNAL": {
+                "module": "escape.adapt.managers",
+                "class": "InternalDomainManager",
+                "poll": false
+            },
+            "REMOTE-ESCAPE": {
+                "module": "escape.adapt.managers",
+                "class": "RemoteESCAPEDomainManager",
+                "poll": false
+            },
+            "OPENSTACK": {
+                "module": "escape.adapt.managers",
+                "class": "OpenStackDomainManager",
+                "poll": false
+            },
+            "UN": {
+                "module": "escape.adapt.managers",
+                "class": "UniversalNodeDomainManager",
+                "poll": false
+            },
+            "DOCKER": {
+                "module": "escape.adapt.managers",
+                "class": "DockerDomainManager",
+                "poll": false
+            },
+            "SDN": {
+                "module": "escape.adapt.managers",
+                "class": "SDNDomainManager",
+                "poll": false
+            },
+            "RESET-DOMAINS-AFTER-SHUTDOWN": true
         },
         "infrastructure": {
-            "NETWORK-OPTS": "dict",
-            "TOPO": "str",
+            "NETWORK-OPTS": null,
+            "TOPO": "examples/escape-mn-topo.nffg",
             "FALLBACK-TOPO": {
-                "module": "str",
-                "class": "str"
+                "module": "escape.infr.topology",
+                "class": "FallbackDynamicTopology"
             },
-            "SAP-xterm": "bool",
-            "SHUTDOWN-CLEAN": "bool"
+            "SAP-xterms": true,
+            "SHUTDOWN-CLEAN": true
         },
     "additional-config-file": "escape.config"
     }

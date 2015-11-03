@@ -91,16 +91,21 @@ cfg = {"service": {  # Service Adaptation Sublayer
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.adapters",
                                          "class": "InternalPOXAdapter",
-                                         "address": "127.0.0.1", "port": 6653,
+                                         "name": None,
+                                         "address": "127.0.0.1",
+                                         "port": 6653,
                                          "keepalive": False
                                          },
                         "SDN-POX": {"module": "escape.adapt.adapters",
                                     "class": "SDNDomainPOXAdapter",
-                                    "address": "0.0.0.0", "port": 6633,
+                                    "name": None,
+                                    "address": "0.0.0.0",
+                                    "port": 6633,
                                     "keepalive": False
                                     },
                         "MININET": {"module": "escape.adapt.adapters",
-                                    "class": "InternalMininetAdapter"
+                                    "class": "InternalMininetAdapter",
+                                    "net": None
                                     },
                         "SDN-TOPO": {"module": "escape.adapt.adapters",
                                      "class": "SDNDomainTopoAdapter",
@@ -111,7 +116,9 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                        "class": "VNFStarterAdapter",
                                        "username": "mininet",
                                        "password": "mininet",
-                                       "server": "127.0.0.1", "port": 830
+                                       "server": "127.0.0.1",
+                                       "port": 830,
+                                       "timeout": None
                                        },
                         "ESCAPE-REST": {"module": "escape.adapt.adapters",
                                         "class": "RemoteESCAPEv2RESTAdapter",
