@@ -1,0 +1,4661 @@
+{
+  "parameters": {
+    "id": "CarrierTopo", 
+    "name": "NFFG-CarrierTopo", 
+    "version": "1.0"
+  }, 
+  "node_saps": [
+    {
+      "id": "Retail-SAP-1-switch-0-PoP-0", 
+      "name": "Retail-SAP-1-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 27
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-1-switch-0-PoP-1", 
+      "name": "Retail-SAP-1-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 171
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-0-switch-0-PoP-1", 
+      "name": "Retail-SAP-0-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 169
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-0-switch-0-PoP-0", 
+      "name": "Retail-SAP-0-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 25
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-2-switch-1-PoP-0", 
+      "name": "Retail-SAP-2-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 43
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-4-switch-1-PoP-0", 
+      "name": "Business-SAP-4-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 83
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-2-switch-0-PoP-0", 
+      "name": "Business-SAP-2-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 65
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-2-switch-0-PoP-1", 
+      "name": "Business-SAP-2-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 195
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-0-switch-0-PoP-0", 
+      "name": "Business-SAP-0-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 61
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-0-switch-0-PoP-1", 
+      "name": "Business-SAP-0-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 191
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-2-switch-1-PoP-1", 
+      "name": "Business-SAP-2-switch-1-PoP-1", 
+      "ports": [
+        {
+          "id": 209
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-2-switch-1-PoP-0", 
+      "name": "Business-SAP-2-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 79
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-3-switch-0-PoP-1", 
+      "name": "Business-SAP-3-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 197
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-3-switch-0-PoP-0", 
+      "name": "Business-SAP-3-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 67
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-4-switch-0-PoP-1", 
+      "name": "Retail-SAP-4-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 177
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-4-switch-0-PoP-0", 
+      "name": "Retail-SAP-4-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 33
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-3-switch-1-PoP-0", 
+      "name": "Business-SAP-3-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 81
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-3-switch-1-PoP-1", 
+      "name": "Business-SAP-3-switch-1-PoP-1", 
+      "ports": [
+        {
+          "id": 211
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-0-switch-1-PoP-0", 
+      "name": "Retail-SAP-0-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 39
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-2-switch-0-PoP-0", 
+      "name": "Retail-SAP-2-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 29
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-4-switch-0-PoP-0", 
+      "name": "Business-SAP-4-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 69
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-4-switch-0-PoP-1", 
+      "name": "Business-SAP-4-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 199
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-3-switch-1-PoP-0", 
+      "name": "Retail-SAP-3-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 45
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-1-switch-1-PoP-0", 
+      "name": "Business-SAP-1-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 77
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-1-switch-1-PoP-1", 
+      "name": "Business-SAP-1-switch-1-PoP-1", 
+      "ports": [
+        {
+          "id": 207
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-1-switch-0-PoP-1", 
+      "name": "Business-SAP-1-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 193
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-1-switch-0-PoP-0", 
+      "name": "Business-SAP-1-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 63
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-3-switch-0-PoP-0", 
+      "name": "Retail-SAP-3-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 31
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-3-switch-0-PoP-1", 
+      "name": "Retail-SAP-3-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 175
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-1-switch-1-PoP-0", 
+      "name": "Retail-SAP-1-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 41
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-4-switch-1-PoP-0", 
+      "name": "Retail-SAP-4-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 47
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-4-switch-1-PoP-1", 
+      "name": "Business-SAP-4-switch-1-PoP-1", 
+      "ports": [
+        {
+          "id": 213
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-0-switch-1-PoP-1", 
+      "name": "Business-SAP-0-switch-1-PoP-1", 
+      "ports": [
+        {
+          "id": 205
+        }
+      ]
+    }, 
+    {
+      "id": "Business-SAP-0-switch-1-PoP-0", 
+      "name": "Business-SAP-0-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 75
+        }
+      ]
+    }, 
+    {
+      "id": "Retail-SAP-2-switch-0-PoP-1", 
+      "name": "Retail-SAP-2-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 173
+        }
+      ]
+    }
+  ], 
+  "node_infras": [
+    {
+      "id": "DistributionNode-PoP-0-Retail-1", 
+      "name": "DistributionNode-PoP-0-Retail-1", 
+      "ports": [
+        {
+          "id": 15
+        }, 
+        {
+          "id": 19
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-0-Retail-0", 
+      "name": "DistributionNode-PoP-0-Retail-0", 
+      "ports": [
+        {
+          "id": 13
+        }, 
+        {
+          "id": 17
+        }, 
+        {
+          "id": 20
+        }, 
+        {
+          "id": 22
+        }, 
+        {
+          "id": 34
+        }, 
+        {
+          "id": 36
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-3-Chassis-1-Cluster-0-PoP-1", 
+      "name": "Server-3-Chassis-1-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 278
+        }, 
+        {
+          "id": 280
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "C", 
+        "B"
+      ], 
+      "resources": {
+        "cpu": 16, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-3-Chassis-1-Cluster-0-PoP-0", 
+      "name": "Server-3-Chassis-1-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 148
+        }, 
+        {
+          "id": 150
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "B"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-3-Chassis-0-Cluster-0-PoP-0", 
+      "name": "Server-3-Chassis-0-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 124
+        }, 
+        {
+          "id": 126
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "B", 
+        "A"
+      ], 
+      "resources": {
+        "cpu": 8, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-3-Chassis-0-Cluster-0-PoP-1", 
+      "name": "Server-3-Chassis-0-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 254
+        }, 
+        {
+          "id": 256
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "A", 
+        "B"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Retail-switch-1-PoP-0", 
+      "name": "Retail-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 35
+        }, 
+        {
+          "id": 37
+        }, 
+        {
+          "id": 38
+        }, 
+        {
+          "id": 40
+        }, 
+        {
+          "id": 42
+        }, 
+        {
+          "id": 44
+        }, 
+        {
+          "id": 46
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000
+      }
+    }, 
+    {
+      "id": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "name": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 261
+        }, 
+        {
+          "id": 265
+        }, 
+        {
+          "id": 269
+        }, 
+        {
+          "id": 273
+        }, 
+        {
+          "id": 277
+        }, 
+        {
+          "id": 281
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "name": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 131
+        }, 
+        {
+          "id": 135
+        }, 
+        {
+          "id": 139
+        }, 
+        {
+          "id": 143
+        }, 
+        {
+          "id": 147
+        }, 
+        {
+          "id": 151
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "SAN-Cluster-0-PoP-0", 
+      "name": "SAN-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 100
+        }, 
+        {
+          "id": 102
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 100000, 
+        "delay": 0.1, 
+        "bandwidth": 1000000
+      }
+    }, 
+    {
+      "id": "SAN-Cluster-0-PoP-1", 
+      "name": "SAN-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 230
+        }, 
+        {
+          "id": 232
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 100000, 
+        "delay": 0.1, 
+        "bandwidth": 1000000
+      }
+    }, 
+    {
+      "id": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "name": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 129
+        }, 
+        {
+          "id": 133
+        }, 
+        {
+          "id": 137
+        }, 
+        {
+          "id": 141
+        }, 
+        {
+          "id": 145
+        }, 
+        {
+          "id": 149
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "name": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 259
+        }, 
+        {
+          "id": 263
+        }, 
+        {
+          "id": 267
+        }, 
+        {
+          "id": 271
+        }, 
+        {
+          "id": 275
+        }, 
+        {
+          "id": 279
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-1-Business-1", 
+      "name": "DistributionNode-PoP-1-Business-1", 
+      "ports": [
+        {
+          "id": 181
+        }, 
+        {
+          "id": 185
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-1-Business-0", 
+      "name": "DistributionNode-PoP-1-Business-0", 
+      "ports": [
+        {
+          "id": 179
+        }, 
+        {
+          "id": 183
+        }, 
+        {
+          "id": 186
+        }, 
+        {
+          "id": 188
+        }, 
+        {
+          "id": 200
+        }, 
+        {
+          "id": 202
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-1-Chassis-0-Cluster-0-PoP-1", 
+      "name": "Server-1-Chassis-0-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 246
+        }, 
+        {
+          "id": 248
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "C"
+      ], 
+      "resources": {
+        "cpu": 16, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "BackboneNode0", 
+      "name": "BackboneNode0", 
+      "ports": [
+        {
+          "id": 0
+        }, 
+        {
+          "id": 7
+        }, 
+        {
+          "id": 9
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000000
+      }
+    }, 
+    {
+      "id": "BackboneNode1", 
+      "name": "BackboneNode1", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 11
+        }, 
+        {
+          "id": 153
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000000
+      }
+    }, 
+    {
+      "id": "BackboneNode2", 
+      "name": "BackboneNode2", 
+      "ports": [
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }, 
+        {
+          "id": 155
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000000
+      }
+    }, 
+    {
+      "id": "BackboneNode3", 
+      "name": "BackboneNode3", 
+      "ports": [
+        {
+          "id": 5
+        }, 
+        {
+          "id": 6
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000000
+      }
+    }, 
+    {
+      "id": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "name": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 107
+        }, 
+        {
+          "id": 111
+        }, 
+        {
+          "id": 115
+        }, 
+        {
+          "id": 119
+        }, 
+        {
+          "id": 123
+        }, 
+        {
+          "id": 127
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "name": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 237
+        }, 
+        {
+          "id": 241
+        }, 
+        {
+          "id": 245
+        }, 
+        {
+          "id": 249
+        }, 
+        {
+          "id": 253
+        }, 
+        {
+          "id": 257
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-0-Chassis-1-Cluster-0-PoP-0", 
+      "name": "Server-0-Chassis-1-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 136
+        }, 
+        {
+          "id": 138
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "A"
+      ], 
+      "resources": {
+        "cpu": 16, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-0-Chassis-1-Cluster-0-PoP-1", 
+      "name": "Server-0-Chassis-1-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 266
+        }, 
+        {
+          "id": 268
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "B"
+      ], 
+      "resources": {
+        "cpu": 16, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-2-Chassis-1-Cluster-0-PoP-0", 
+      "name": "Server-2-Chassis-1-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 144
+        }, 
+        {
+          "id": 146
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "A", 
+        "B"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-2-Chassis-1-Cluster-0-PoP-1", 
+      "name": "Server-2-Chassis-1-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 274
+        }, 
+        {
+          "id": 276
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "B", 
+        "C"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-1-Chassis-1-Cluster-0-PoP-1", 
+      "name": "Server-1-Chassis-1-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 270
+        }, 
+        {
+          "id": 272
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "B"
+      ], 
+      "resources": {
+        "cpu": 16, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Business-switch-1-PoP-0", 
+      "name": "Business-switch-1-PoP-0", 
+      "ports": [
+        {
+          "id": 71
+        }, 
+        {
+          "id": 73
+        }, 
+        {
+          "id": 74
+        }, 
+        {
+          "id": 76
+        }, 
+        {
+          "id": 78
+        }, 
+        {
+          "id": 80
+        }, 
+        {
+          "id": 82
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000
+      }
+    }, 
+    {
+      "id": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "name": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 95
+        }, 
+        {
+          "id": 99
+        }, 
+        {
+          "id": 103
+        }, 
+        {
+          "id": 106
+        }, 
+        {
+          "id": 110
+        }, 
+        {
+          "id": 130
+        }, 
+        {
+          "id": 134
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "name": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 225
+        }, 
+        {
+          "id": 229
+        }, 
+        {
+          "id": 233
+        }, 
+        {
+          "id": 236
+        }, 
+        {
+          "id": 240
+        }, 
+        {
+          "id": 260
+        }, 
+        {
+          "id": 264
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Retail-switch-0-PoP-1", 
+      "name": "Retail-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 165
+        }, 
+        {
+          "id": 167
+        }, 
+        {
+          "id": 168
+        }, 
+        {
+          "id": 170
+        }, 
+        {
+          "id": 172
+        }, 
+        {
+          "id": 174
+        }, 
+        {
+          "id": 176
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000
+      }
+    }, 
+    {
+      "id": "Retail-switch-0-PoP-0", 
+      "name": "Retail-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 21
+        }, 
+        {
+          "id": 23
+        }, 
+        {
+          "id": 24
+        }, 
+        {
+          "id": 26
+        }, 
+        {
+          "id": 28
+        }, 
+        {
+          "id": 30
+        }, 
+        {
+          "id": 32
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000
+      }
+    }, 
+    {
+      "id": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "name": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 223
+        }, 
+        {
+          "id": 227
+        }, 
+        {
+          "id": 231
+        }, 
+        {
+          "id": 234
+        }, 
+        {
+          "id": 238
+        }, 
+        {
+          "id": 258
+        }, 
+        {
+          "id": 262
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "name": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 93
+        }, 
+        {
+          "id": 97
+        }, 
+        {
+          "id": 101
+        }, 
+        {
+          "id": 104
+        }, 
+        {
+          "id": 108
+        }, 
+        {
+          "id": 128
+        }, 
+        {
+          "id": 132
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "AggregationNode-1-PoP-0", 
+      "name": "AggregationNode-1-PoP-0", 
+      "ports": [
+        {
+          "id": 10
+        }, 
+        {
+          "id": 16
+        }, 
+        {
+          "id": 18
+        }, 
+        {
+          "id": 52
+        }, 
+        {
+          "id": 54
+        }, 
+        {
+          "id": 88
+        }, 
+        {
+          "id": 90
+        }, 
+        {
+          "id": 96
+        }, 
+        {
+          "id": 98
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000000
+      }
+    }, 
+    {
+      "id": "AggregationNode-1-PoP-1", 
+      "name": "AggregationNode-1-PoP-1", 
+      "ports": [
+        {
+          "id": 154
+        }, 
+        {
+          "id": 160
+        }, 
+        {
+          "id": 162
+        }, 
+        {
+          "id": 182
+        }, 
+        {
+          "id": 184
+        }, 
+        {
+          "id": 218
+        }, 
+        {
+          "id": 220
+        }, 
+        {
+          "id": 226
+        }, 
+        {
+          "id": 228
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-0-Business-0", 
+      "name": "DistributionNode-PoP-0-Business-0", 
+      "ports": [
+        {
+          "id": 49
+        }, 
+        {
+          "id": 53
+        }, 
+        {
+          "id": 56
+        }, 
+        {
+          "id": 58
+        }, 
+        {
+          "id": 70
+        }, 
+        {
+          "id": 72
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-0-Business-1", 
+      "name": "DistributionNode-PoP-0-Business-1", 
+      "ports": [
+        {
+          "id": 51
+        }, 
+        {
+          "id": 55
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Business-switch-1-PoP-1", 
+      "name": "Business-switch-1-PoP-1", 
+      "ports": [
+        {
+          "id": 201
+        }, 
+        {
+          "id": 203
+        }, 
+        {
+          "id": 204
+        }, 
+        {
+          "id": 206
+        }, 
+        {
+          "id": 208
+        }, 
+        {
+          "id": 210
+        }, 
+        {
+          "id": 212
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000
+      }
+    }, 
+    {
+      "id": "Server-1-Chassis-1-Cluster-0-PoP-0", 
+      "name": "Server-1-Chassis-1-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 140
+        }, 
+        {
+          "id": 142
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "A", 
+        "B"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-0-Chassis-0-Cluster-0-PoP-1", 
+      "name": "Server-0-Chassis-0-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 242
+        }, 
+        {
+          "id": 244
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "C"
+      ], 
+      "resources": {
+        "cpu": 8, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-0-Chassis-0-Cluster-0-PoP-0", 
+      "name": "Server-0-Chassis-0-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 112
+        }, 
+        {
+          "id": 114
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "B", 
+        "A"
+      ], 
+      "resources": {
+        "cpu": 16, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "AggregationNode-0-PoP-1", 
+      "name": "AggregationNode-0-PoP-1", 
+      "ports": [
+        {
+          "id": 152
+        }, 
+        {
+          "id": 156
+        }, 
+        {
+          "id": 158
+        }, 
+        {
+          "id": 178
+        }, 
+        {
+          "id": 180
+        }, 
+        {
+          "id": 214
+        }, 
+        {
+          "id": 216
+        }, 
+        {
+          "id": 222
+        }, 
+        {
+          "id": 224
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000000
+      }
+    }, 
+    {
+      "id": "AggregationNode-0-PoP-0", 
+      "name": "AggregationNode-0-PoP-0", 
+      "ports": [
+        {
+          "id": 8
+        }, 
+        {
+          "id": 12
+        }, 
+        {
+          "id": 14
+        }, 
+        {
+          "id": 48
+        }, 
+        {
+          "id": 50
+        }, 
+        {
+          "id": 84
+        }, 
+        {
+          "id": 86
+        }, 
+        {
+          "id": 92
+        }, 
+        {
+          "id": 94
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-0CloudNFV-0", 
+      "name": "DistributionNode-PoP-0CloudNFV-0", 
+      "ports": [
+        {
+          "id": 85
+        }, 
+        {
+          "id": 89
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "name": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 235
+        }, 
+        {
+          "id": 239
+        }, 
+        {
+          "id": 243
+        }, 
+        {
+          "id": 247
+        }, 
+        {
+          "id": 251
+        }, 
+        {
+          "id": 255
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "name": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 105
+        }, 
+        {
+          "id": 109
+        }, 
+        {
+          "id": 113
+        }, 
+        {
+          "id": 117
+        }, 
+        {
+          "id": 121
+        }, 
+        {
+          "id": 125
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-2-Chassis-0-Cluster-0-PoP-1", 
+      "name": "Server-2-Chassis-0-Cluster-0-PoP-1", 
+      "ports": [
+        {
+          "id": 250
+        }, 
+        {
+          "id": 252
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "A", 
+        "C"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-2-Chassis-0-Cluster-0-PoP-0", 
+      "name": "Server-2-Chassis-0-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 120
+        }, 
+        {
+          "id": 122
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "A", 
+        "B"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Business-switch-0-PoP-0", 
+      "name": "Business-switch-0-PoP-0", 
+      "ports": [
+        {
+          "id": 57
+        }, 
+        {
+          "id": 59
+        }, 
+        {
+          "id": 60
+        }, 
+        {
+          "id": 62
+        }, 
+        {
+          "id": 64
+        }, 
+        {
+          "id": 66
+        }, 
+        {
+          "id": 68
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000
+      }
+    }, 
+    {
+      "id": "Business-switch-0-PoP-1", 
+      "name": "Business-switch-0-PoP-1", 
+      "ports": [
+        {
+          "id": 187
+        }, 
+        {
+          "id": 189
+        }, 
+        {
+          "id": 190
+        }, 
+        {
+          "id": 192
+        }, 
+        {
+          "id": 194
+        }, 
+        {
+          "id": 196
+        }, 
+        {
+          "id": 198
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 10000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-0CloudNFV-1", 
+      "name": "DistributionNode-PoP-0CloudNFV-1", 
+      "ports": [
+        {
+          "id": 87
+        }, 
+        {
+          "id": 91
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-1-Retail-0", 
+      "name": "DistributionNode-PoP-1-Retail-0", 
+      "ports": [
+        {
+          "id": 157
+        }, 
+        {
+          "id": 161
+        }, 
+        {
+          "id": 164
+        }, 
+        {
+          "id": 166
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-1-Retail-1", 
+      "name": "DistributionNode-PoP-1-Retail-1", 
+      "ports": [
+        {
+          "id": 159
+        }, 
+        {
+          "id": 163
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "Server-1-Chassis-0-Cluster-0-PoP-0", 
+      "name": "Server-1-Chassis-0-Cluster-0-PoP-0", 
+      "ports": [
+        {
+          "id": 116
+        }, 
+        {
+          "id": 118
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "B", 
+        "A"
+      ], 
+      "resources": {
+        "cpu": 16, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-1CloudNFV-0", 
+      "name": "DistributionNode-PoP-1CloudNFV-0", 
+      "ports": [
+        {
+          "id": 215
+        }, 
+        {
+          "id": 219
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }, 
+    {
+      "id": "DistributionNode-PoP-1CloudNFV-1", 
+      "name": "DistributionNode-PoP-1CloudNFV-1", 
+      "ports": [
+        {
+          "id": 217
+        }, 
+        {
+          "id": 221
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100000
+      }
+    }
+  ], 
+  "edge_links": [
+    {
+      "id": 139839879803621, 
+      "src_node": "DistributionNode-PoP-0-Retail-1", 
+      "src_port": 19, 
+      "dst_node": "AggregationNode-1-PoP-0", 
+      "dst_port": 18, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879148698, 
+      "src_node": "DistributionNode-PoP-0-Retail-1", 
+      "src_port": 15, 
+      "dst_node": "AggregationNode-0-PoP-0", 
+      "dst_port": 14, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879219432, 
+      "src_node": "DistributionNode-PoP-0-Retail-0", 
+      "src_port": 36, 
+      "dst_node": "Retail-switch-1-PoP-0", 
+      "dst_port": 37, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879048491, 
+      "src_node": "DistributionNode-PoP-0-Retail-0", 
+      "src_port": 34, 
+      "dst_node": "Retail-switch-1-PoP-0", 
+      "dst_port": 35, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879210643, 
+      "src_node": "DistributionNode-PoP-0-Retail-0", 
+      "src_port": 20, 
+      "dst_node": "Retail-switch-0-PoP-0", 
+      "dst_port": 21, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878984358, 
+      "src_node": "DistributionNode-PoP-0-Retail-0", 
+      "src_port": 22, 
+      "dst_node": "Retail-switch-0-PoP-0", 
+      "dst_port": 23, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879881041, 
+      "src_node": "DistributionNode-PoP-0-Retail-0", 
+      "src_port": 17, 
+      "dst_node": "AggregationNode-1-PoP-0", 
+      "dst_port": 16, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879655020, 
+      "src_node": "DistributionNode-PoP-0-Retail-0", 
+      "src_port": 13, 
+      "dst_node": "AggregationNode-0-PoP-0", 
+      "dst_port": 12, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878696342, 
+      "src_node": "Retail-SAP-1-switch-0-PoP-0", 
+      "src_port": 27, 
+      "dst_node": "Retail-switch-0-PoP-0", 
+      "dst_port": 26, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878577755, 
+      "src_node": "Retail-SAP-1-switch-0-PoP-1", 
+      "src_port": 171, 
+      "dst_node": "Retail-switch-0-PoP-1", 
+      "dst_port": 170, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869684271, 
+      "src_node": "Server-3-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 280, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 281, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839868881479, 
+      "src_node": "Server-3-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 278, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 279, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878478294, 
+      "src_node": "Server-3-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 148, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 149, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878765973, 
+      "src_node": "Server-3-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 150, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 151, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878732496, 
+      "src_node": "Server-3-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 126, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 127, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878978082, 
+      "src_node": "Server-3-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 124, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 125, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869213381, 
+      "src_node": "Server-3-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 254, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 255, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839868846273, 
+      "src_node": "Server-3-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 256, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 257, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878513897, 
+      "src_node": "Retail-switch-1-PoP-0", 
+      "src_port": 35, 
+      "dst_node": "DistributionNode-PoP-0-Retail-0", 
+      "dst_port": 34, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878898359, 
+      "src_node": "Retail-switch-1-PoP-0", 
+      "src_port": 37, 
+      "dst_node": "DistributionNode-PoP-0-Retail-0", 
+      "dst_port": 36, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878689899, 
+      "src_node": "Retail-switch-1-PoP-0", 
+      "src_port": 46, 
+      "dst_node": "Retail-SAP-4-switch-1-PoP-0", 
+      "dst_port": 47, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879363938, 
+      "src_node": "Retail-switch-1-PoP-0", 
+      "src_port": 42, 
+      "dst_node": "Retail-SAP-2-switch-1-PoP-0", 
+      "dst_port": 43, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879322588, 
+      "src_node": "Retail-switch-1-PoP-0", 
+      "src_port": 38, 
+      "dst_node": "Retail-SAP-0-switch-1-PoP-0", 
+      "dst_port": 39, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878823716, 
+      "src_node": "Retail-switch-1-PoP-0", 
+      "src_port": 44, 
+      "dst_node": "Retail-SAP-3-switch-1-PoP-0", 
+      "dst_port": 45, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878498310, 
+      "src_node": "Retail-switch-1-PoP-0", 
+      "src_port": 40, 
+      "dst_node": "Retail-SAP-1-switch-1-PoP-0", 
+      "dst_port": 41, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879493260, 
+      "src_node": "Retail-SAP-0-switch-0-PoP-1", 
+      "src_port": 169, 
+      "dst_node": "Retail-switch-0-PoP-1", 
+      "dst_port": 168, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878183405, 
+      "src_node": "Retail-SAP-0-switch-0-PoP-0", 
+      "src_port": 25, 
+      "dst_node": "Retail-switch-0-PoP-0", 
+      "dst_port": 24, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878743958, 
+      "src_node": "Retail-SAP-2-switch-1-PoP-0", 
+      "src_port": 43, 
+      "dst_node": "Retail-switch-1-PoP-0", 
+      "dst_port": 42, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879073424, 
+      "src_node": "Business-SAP-4-switch-1-PoP-0", 
+      "src_port": 83, 
+      "dst_node": "Business-switch-1-PoP-0", 
+      "dst_port": 82, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868854855, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 281, 
+      "dst_node": "Server-3-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 280, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868963102, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 277, 
+      "dst_node": "Server-2-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 276, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869460296, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 261, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "dst_port": 260, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868825989, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 265, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "dst_port": 264, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869312678, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 273, 
+      "dst_node": "Server-1-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 272, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869767581, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 269, 
+      "dst_node": "Server-0-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 268, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878397905, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 147, 
+      "dst_node": "Server-2-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 146, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878482434, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 151, 
+      "dst_node": "Server-3-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 150, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878403128, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 131, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "dst_port": 130, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878236147, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 135, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "dst_port": 134, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878622632, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 139, 
+      "dst_node": "Server-0-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 138, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878422001, 
+      "src_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 143, 
+      "dst_node": "Server-1-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 142, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879385805, 
+      "src_node": "Business-SAP-2-switch-0-PoP-0", 
+      "src_port": 65, 
+      "dst_node": "Business-switch-0-PoP-0", 
+      "dst_port": 64, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879303039, 
+      "src_node": "Business-SAP-2-switch-0-PoP-1", 
+      "src_port": 195, 
+      "dst_node": "Business-switch-0-PoP-1", 
+      "dst_port": 194, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878490219, 
+      "src_node": "SAN-Cluster-0-PoP-0", 
+      "src_port": 102, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "dst_port": 103, 
+      "delay": 0.1, 
+      "bandwidth": 160000
+    }, 
+    {
+      "id": 139839878877843, 
+      "src_node": "SAN-Cluster-0-PoP-0", 
+      "src_port": 100, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "dst_port": 101, 
+      "delay": 0.1, 
+      "bandwidth": 160000
+    }, 
+    {
+      "id": 139839869297812, 
+      "src_node": "SAN-Cluster-0-PoP-1", 
+      "src_port": 232, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "dst_port": 233, 
+      "delay": 0.1, 
+      "bandwidth": 160000
+    }, 
+    {
+      "id": 139839869038602, 
+      "src_node": "SAN-Cluster-0-PoP-1", 
+      "src_port": 230, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "dst_port": 231, 
+      "delay": 0.1, 
+      "bandwidth": 160000
+    }, 
+    {
+      "id": 139839879479243, 
+      "src_node": "Business-SAP-0-switch-0-PoP-0", 
+      "src_port": 61, 
+      "dst_node": "Business-switch-0-PoP-0", 
+      "dst_port": 60, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878522257, 
+      "src_node": "Business-SAP-0-switch-0-PoP-1", 
+      "src_port": 191, 
+      "dst_node": "Business-switch-0-PoP-1", 
+      "dst_port": 190, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878064772, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 145, 
+      "dst_node": "Server-2-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 144, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878466219, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 149, 
+      "dst_node": "Server-3-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 148, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878414769, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 141, 
+      "dst_node": "Server-1-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 140, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878899437, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 137, 
+      "dst_node": "Server-0-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 136, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878736761, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 129, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "dst_port": 128, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878657863, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 133, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "dst_port": 132, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868899827, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 279, 
+      "dst_node": "Server-3-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 278, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869632598, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 275, 
+      "dst_node": "Server-2-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 274, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869136236, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 271, 
+      "dst_node": "Server-1-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 270, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869181585, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 263, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "dst_port": 262, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869686130, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 259, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "dst_port": 258, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868935670, 
+      "src_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 267, 
+      "dst_node": "Server-0-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 266, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878967465, 
+      "src_node": "DistributionNode-PoP-1-Business-1", 
+      "src_port": 181, 
+      "dst_node": "AggregationNode-0-PoP-1", 
+      "dst_port": 180, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879313285, 
+      "src_node": "DistributionNode-PoP-1-Business-1", 
+      "src_port": 185, 
+      "dst_node": "AggregationNode-1-PoP-1", 
+      "dst_port": 184, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878498501, 
+      "src_node": "DistributionNode-PoP-1-Business-0", 
+      "src_port": 179, 
+      "dst_node": "AggregationNode-0-PoP-1", 
+      "dst_port": 178, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878558279, 
+      "src_node": "DistributionNode-PoP-1-Business-0", 
+      "src_port": 183, 
+      "dst_node": "AggregationNode-1-PoP-1", 
+      "dst_port": 182, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878367518, 
+      "src_node": "DistributionNode-PoP-1-Business-0", 
+      "src_port": 202, 
+      "dst_node": "Business-switch-1-PoP-1", 
+      "dst_port": 203, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879314695, 
+      "src_node": "DistributionNode-PoP-1-Business-0", 
+      "src_port": 200, 
+      "dst_node": "Business-switch-1-PoP-1", 
+      "dst_port": 201, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878540580, 
+      "src_node": "DistributionNode-PoP-1-Business-0", 
+      "src_port": 188, 
+      "dst_node": "Business-switch-0-PoP-1", 
+      "dst_port": 189, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878720126, 
+      "src_node": "DistributionNode-PoP-1-Business-0", 
+      "src_port": 186, 
+      "dst_node": "Business-switch-0-PoP-1", 
+      "dst_port": 187, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878392228, 
+      "src_node": "Business-SAP-2-switch-1-PoP-1", 
+      "src_port": 209, 
+      "dst_node": "Business-switch-1-PoP-1", 
+      "dst_port": 208, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879525868, 
+      "src_node": "Business-SAP-2-switch-1-PoP-0", 
+      "src_port": 79, 
+      "dst_node": "Business-switch-1-PoP-0", 
+      "dst_port": 78, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878962929, 
+      "src_node": "Business-SAP-3-switch-0-PoP-1", 
+      "src_port": 197, 
+      "dst_node": "Business-switch-0-PoP-1", 
+      "dst_port": 196, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879326165, 
+      "src_node": "Business-SAP-3-switch-0-PoP-0", 
+      "src_port": 67, 
+      "dst_node": "Business-switch-0-PoP-0", 
+      "dst_port": 66, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869407494, 
+      "src_node": "Server-1-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 246, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 247, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869755568, 
+      "src_node": "Server-1-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 248, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 249, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879562086, 
+      "src_node": "BackboneNode0", 
+      "src_port": 9, 
+      "dst_node": "AggregationNode-0-PoP-0", 
+      "dst_port": 8, 
+      "delay": 0.1, 
+      "bandwidth": 1000000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879821333, 
+      "src_node": "BackboneNode0", 
+      "src_port": 0, 
+      "dst_node": "BackboneNode1", 
+      "dst_port": 1, 
+      "delay": 10, 
+      "bandwidth": 1000000
+    }, 
+    {
+      "id": 139839879279264, 
+      "src_node": "BackboneNode0", 
+      "src_port": 7, 
+      "dst_node": "BackboneNode3", 
+      "dst_port": 6, 
+      "delay": 10, 
+      "bandwidth": 1000000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879483262, 
+      "src_node": "BackboneNode1", 
+      "src_port": 11, 
+      "dst_node": "AggregationNode-1-PoP-0", 
+      "dst_port": 10, 
+      "delay": 0.1, 
+      "bandwidth": 1000000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879734482, 
+      "src_node": "BackboneNode1", 
+      "src_port": 1, 
+      "dst_node": "BackboneNode0", 
+      "dst_port": 0, 
+      "delay": 10, 
+      "bandwidth": 1000000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878111563, 
+      "src_node": "BackboneNode1", 
+      "src_port": 153, 
+      "dst_node": "AggregationNode-0-PoP-1", 
+      "dst_port": 152, 
+      "delay": 0.1, 
+      "bandwidth": 1000000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879397227, 
+      "src_node": "BackboneNode1", 
+      "src_port": 2, 
+      "dst_node": "BackboneNode2", 
+      "dst_port": 3, 
+      "delay": 10, 
+      "bandwidth": 1000000
+    }, 
+    {
+      "id": 139839878324266, 
+      "src_node": "BackboneNode2", 
+      "src_port": 155, 
+      "dst_node": "AggregationNode-1-PoP-1", 
+      "dst_port": 154, 
+      "delay": 0.1, 
+      "bandwidth": 1000000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879235636, 
+      "src_node": "BackboneNode2", 
+      "src_port": 3, 
+      "dst_node": "BackboneNode1", 
+      "dst_port": 2, 
+      "delay": 10, 
+      "bandwidth": 1000000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879486906, 
+      "src_node": "BackboneNode2", 
+      "src_port": 4, 
+      "dst_node": "BackboneNode3", 
+      "dst_port": 5, 
+      "delay": 10, 
+      "bandwidth": 1000000
+    }, 
+    {
+      "id": 139839879759686, 
+      "src_node": "BackboneNode3", 
+      "src_port": 6, 
+      "dst_node": "BackboneNode0", 
+      "dst_port": 7, 
+      "delay": 10, 
+      "bandwidth": 1000000
+    }, 
+    {
+      "id": 139839879380630, 
+      "src_node": "BackboneNode3", 
+      "src_port": 5, 
+      "dst_node": "BackboneNode2", 
+      "dst_port": 4, 
+      "delay": 10, 
+      "bandwidth": 1000000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878581576, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 107, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "dst_port": 106, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878947222, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 111, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "dst_port": 110, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878641465, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 115, 
+      "dst_node": "Server-0-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 114, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879026468, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 127, 
+      "dst_node": "Server-3-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 126, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878995481, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 119, 
+      "dst_node": "Server-1-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 118, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878098594, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 123, 
+      "dst_node": "Server-2-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 122, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869419950, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 249, 
+      "dst_node": "Server-1-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 248, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869451227, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 245, 
+      "dst_node": "Server-0-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 244, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869079448, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 241, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "dst_port": 240, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868930002, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 237, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "dst_port": 236, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869366664, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 253, 
+      "dst_node": "Server-2-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 252, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869646058, 
+      "src_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 257, 
+      "dst_node": "Server-3-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 256, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878709156, 
+      "src_node": "Retail-SAP-4-switch-0-PoP-1", 
+      "src_port": 177, 
+      "dst_node": "Retail-switch-0-PoP-1", 
+      "dst_port": 176, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878887923, 
+      "src_node": "Retail-SAP-4-switch-0-PoP-0", 
+      "src_port": 33, 
+      "dst_node": "Retail-switch-0-PoP-0", 
+      "dst_port": 32, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878418863, 
+      "src_node": "Server-0-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 136, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 137, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878312900, 
+      "src_node": "Server-0-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 138, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 139, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869773217, 
+      "src_node": "Server-0-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 268, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 269, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869330663, 
+      "src_node": "Server-0-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 266, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 267, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878714016, 
+      "src_node": "Server-2-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 144, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 145, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878255749, 
+      "src_node": "Server-2-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 146, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 147, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839868850140, 
+      "src_node": "Server-2-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 276, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 277, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869713424, 
+      "src_node": "Server-2-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 274, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 275, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869312408, 
+      "src_node": "Server-1-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 272, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 273, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869730758, 
+      "src_node": "Server-1-Chassis-1-Cluster-0-PoP-1", 
+      "src_port": 270, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 271, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879159682, 
+      "src_node": "Business-switch-1-PoP-0", 
+      "src_port": 74, 
+      "dst_node": "Business-SAP-0-switch-1-PoP-0", 
+      "dst_port": 75, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879582605, 
+      "src_node": "Business-switch-1-PoP-0", 
+      "src_port": 80, 
+      "dst_node": "Business-SAP-3-switch-1-PoP-0", 
+      "dst_port": 81, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879222855, 
+      "src_node": "Business-switch-1-PoP-0", 
+      "src_port": 82, 
+      "dst_node": "Business-SAP-4-switch-1-PoP-0", 
+      "dst_port": 83, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879126777, 
+      "src_node": "Business-switch-1-PoP-0", 
+      "src_port": 71, 
+      "dst_node": "DistributionNode-PoP-0-Business-0", 
+      "dst_port": 70, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879339491, 
+      "src_node": "Business-switch-1-PoP-0", 
+      "src_port": 73, 
+      "dst_node": "DistributionNode-PoP-0-Business-0", 
+      "dst_port": 72, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879607173, 
+      "src_node": "Business-switch-1-PoP-0", 
+      "src_port": 78, 
+      "dst_node": "Business-SAP-2-switch-1-PoP-0", 
+      "dst_port": 79, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879441203, 
+      "src_node": "Business-switch-1-PoP-0", 
+      "src_port": 76, 
+      "dst_node": "Business-SAP-1-switch-1-PoP-0", 
+      "dst_port": 77, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878395846, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "src_port": 110, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 111, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839879043558, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "src_port": 106, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 107, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839878734460, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "src_port": 99, 
+      "dst_node": "AggregationNode-1-PoP-0", 
+      "dst_port": 98, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879164701, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "src_port": 95, 
+      "dst_node": "AggregationNode-0-PoP-0", 
+      "dst_port": 94, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878906176, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "src_port": 130, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 131, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839878503578, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "src_port": 134, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 135, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839878978353, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "src_port": 103, 
+      "dst_node": "SAN-Cluster-0-PoP-0", 
+      "dst_port": 102, 
+      "delay": 0.1, 
+      "bandwidth": 160000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868798608, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "src_port": 236, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 237, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839869154033, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "src_port": 240, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 241, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839869086431, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "src_port": 225, 
+      "dst_node": "AggregationNode-0-PoP-1", 
+      "dst_port": 224, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869730602, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "src_port": 229, 
+      "dst_node": "AggregationNode-1-PoP-1", 
+      "dst_port": 228, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869234923, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "src_port": 260, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 261, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839868991055, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "src_port": 264, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 265, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839869042799, 
+      "src_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "src_port": 233, 
+      "dst_node": "SAN-Cluster-0-PoP-1", 
+      "dst_port": 232, 
+      "delay": 0.1, 
+      "bandwidth": 160000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879220226, 
+      "src_node": "Retail-switch-0-PoP-1", 
+      "src_port": 172, 
+      "dst_node": "Retail-SAP-2-switch-0-PoP-1", 
+      "dst_port": 173, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879302117, 
+      "src_node": "Retail-switch-0-PoP-1", 
+      "src_port": 165, 
+      "dst_node": "DistributionNode-PoP-1-Retail-0", 
+      "dst_port": 164, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879305742, 
+      "src_node": "Retail-switch-0-PoP-1", 
+      "src_port": 167, 
+      "dst_node": "DistributionNode-PoP-1-Retail-0", 
+      "dst_port": 166, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878681777, 
+      "src_node": "Retail-switch-0-PoP-1", 
+      "src_port": 168, 
+      "dst_node": "Retail-SAP-0-switch-0-PoP-1", 
+      "dst_port": 169, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879127312, 
+      "src_node": "Retail-switch-0-PoP-1", 
+      "src_port": 170, 
+      "dst_node": "Retail-SAP-1-switch-0-PoP-1", 
+      "dst_port": 171, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878811745, 
+      "src_node": "Retail-switch-0-PoP-1", 
+      "src_port": 176, 
+      "dst_node": "Retail-SAP-4-switch-0-PoP-1", 
+      "dst_port": 177, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878896936, 
+      "src_node": "Retail-switch-0-PoP-1", 
+      "src_port": 174, 
+      "dst_node": "Retail-SAP-3-switch-0-PoP-1", 
+      "dst_port": 175, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878769759, 
+      "src_node": "Retail-switch-0-PoP-0", 
+      "src_port": 23, 
+      "dst_node": "DistributionNode-PoP-0-Retail-0", 
+      "dst_port": 22, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879629815, 
+      "src_node": "Retail-switch-0-PoP-0", 
+      "src_port": 21, 
+      "dst_node": "DistributionNode-PoP-0-Retail-0", 
+      "dst_port": 20, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878554782, 
+      "src_node": "Retail-switch-0-PoP-0", 
+      "src_port": 24, 
+      "dst_node": "Retail-SAP-0-switch-0-PoP-0", 
+      "dst_port": 25, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878519371, 
+      "src_node": "Retail-switch-0-PoP-0", 
+      "src_port": 26, 
+      "dst_node": "Retail-SAP-1-switch-0-PoP-0", 
+      "dst_port": 27, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878997443, 
+      "src_node": "Retail-switch-0-PoP-0", 
+      "src_port": 28, 
+      "dst_node": "Retail-SAP-2-switch-0-PoP-0", 
+      "dst_port": 29, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878560993, 
+      "src_node": "Retail-switch-0-PoP-0", 
+      "src_port": 30, 
+      "dst_node": "Retail-SAP-3-switch-0-PoP-0", 
+      "dst_port": 31, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878343836, 
+      "src_node": "Retail-switch-0-PoP-0", 
+      "src_port": 32, 
+      "dst_node": "Retail-SAP-4-switch-0-PoP-0", 
+      "dst_port": 33, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839869228160, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "src_port": 234, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 235, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839869273658, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "src_port": 238, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 239, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839869537543, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "src_port": 223, 
+      "dst_node": "AggregationNode-0-PoP-1", 
+      "dst_port": 222, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868789634, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "src_port": 227, 
+      "dst_node": "AggregationNode-1-PoP-1", 
+      "dst_port": 226, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869485060, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "src_port": 258, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 259, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839868902478, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "src_port": 262, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-1", 
+      "dst_port": 263, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839869143927, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "src_port": 231, 
+      "dst_node": "SAN-Cluster-0-PoP-1", 
+      "dst_port": 230, 
+      "delay": 0.1, 
+      "bandwidth": 160000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879065145, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "src_port": 108, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 109, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839878365854, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "src_port": 104, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 105, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839878330580, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "src_port": 97, 
+      "dst_node": "AggregationNode-1-PoP-0", 
+      "dst_port": 96, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878907557, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "src_port": 93, 
+      "dst_node": "AggregationNode-0-PoP-0", 
+      "dst_port": 92, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878118546, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "src_port": 128, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 129, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839878311695, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "src_port": 132, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 133, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0
+    }, 
+    {
+      "id": 139839879092005, 
+      "src_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "src_port": 101, 
+      "dst_node": "SAN-Cluster-0-PoP-0", 
+      "dst_port": 100, 
+      "delay": 0.1, 
+      "bandwidth": 160000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878860927, 
+      "src_node": "AggregationNode-1-PoP-0", 
+      "src_port": 98, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "dst_port": 99, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879708665, 
+      "src_node": "AggregationNode-1-PoP-0", 
+      "src_port": 18, 
+      "dst_node": "DistributionNode-PoP-0-Retail-1", 
+      "dst_port": 19, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879807746, 
+      "src_node": "AggregationNode-1-PoP-0", 
+      "src_port": 16, 
+      "dst_node": "DistributionNode-PoP-0-Retail-0", 
+      "dst_port": 17, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879631572, 
+      "src_node": "AggregationNode-1-PoP-0", 
+      "src_port": 90, 
+      "dst_node": "DistributionNode-PoP-0CloudNFV-1", 
+      "dst_port": 91, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879575886, 
+      "src_node": "AggregationNode-1-PoP-0", 
+      "src_port": 88, 
+      "dst_node": "DistributionNode-PoP-0CloudNFV-0", 
+      "dst_port": 89, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879886368, 
+      "src_node": "AggregationNode-1-PoP-0", 
+      "src_port": 10, 
+      "dst_node": "BackboneNode1", 
+      "dst_port": 11, 
+      "delay": 0.1, 
+      "bandwidth": 1000000
+    }, 
+    {
+      "id": 139839878580685, 
+      "src_node": "AggregationNode-1-PoP-0", 
+      "src_port": 52, 
+      "dst_node": "DistributionNode-PoP-0-Business-0", 
+      "dst_port": 53, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879450164, 
+      "src_node": "AggregationNode-1-PoP-0", 
+      "src_port": 54, 
+      "dst_node": "DistributionNode-PoP-0-Business-1", 
+      "dst_port": 55, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879040573, 
+      "src_node": "AggregationNode-1-PoP-0", 
+      "src_port": 96, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "dst_port": 97, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839868912484, 
+      "src_node": "AggregationNode-1-PoP-1", 
+      "src_port": 228, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "dst_port": 229, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878821612, 
+      "src_node": "AggregationNode-1-PoP-1", 
+      "src_port": 160, 
+      "dst_node": "DistributionNode-PoP-1-Retail-0", 
+      "dst_port": 161, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878987014, 
+      "src_node": "AggregationNode-1-PoP-1", 
+      "src_port": 162, 
+      "dst_node": "DistributionNode-PoP-1-Retail-1", 
+      "dst_port": 163, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879088833, 
+      "src_node": "AggregationNode-1-PoP-1", 
+      "src_port": 184, 
+      "dst_node": "DistributionNode-PoP-1-Business-1", 
+      "dst_port": 185, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878537096, 
+      "src_node": "AggregationNode-1-PoP-1", 
+      "src_port": 182, 
+      "dst_node": "DistributionNode-PoP-1-Business-0", 
+      "dst_port": 183, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878510328, 
+      "src_node": "AggregationNode-1-PoP-1", 
+      "src_port": 154, 
+      "dst_node": "BackboneNode2", 
+      "dst_port": 155, 
+      "delay": 0.1, 
+      "bandwidth": 1000000
+    }, 
+    {
+      "id": 139839869368906, 
+      "src_node": "AggregationNode-1-PoP-1", 
+      "src_port": 226, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "dst_port": 227, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878559796, 
+      "src_node": "AggregationNode-1-PoP-1", 
+      "src_port": 218, 
+      "dst_node": "DistributionNode-PoP-1CloudNFV-0", 
+      "dst_port": 219, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878361105, 
+      "src_node": "AggregationNode-1-PoP-1", 
+      "src_port": 220, 
+      "dst_node": "DistributionNode-PoP-1CloudNFV-1", 
+      "dst_port": 221, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879605530, 
+      "src_node": "Business-SAP-3-switch-1-PoP-0", 
+      "src_port": 81, 
+      "dst_node": "Business-switch-1-PoP-0", 
+      "dst_port": 80, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879051932, 
+      "src_node": "Business-SAP-3-switch-1-PoP-1", 
+      "src_port": 211, 
+      "dst_node": "Business-switch-1-PoP-1", 
+      "dst_port": 210, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879262086, 
+      "src_node": "DistributionNode-PoP-0-Business-0", 
+      "src_port": 53, 
+      "dst_node": "AggregationNode-1-PoP-0", 
+      "dst_port": 52, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879464772, 
+      "src_node": "DistributionNode-PoP-0-Business-0", 
+      "src_port": 49, 
+      "dst_node": "AggregationNode-0-PoP-0", 
+      "dst_port": 48, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879047889, 
+      "src_node": "DistributionNode-PoP-0-Business-0", 
+      "src_port": 56, 
+      "dst_node": "Business-switch-0-PoP-0", 
+      "dst_port": 57, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879646353, 
+      "src_node": "DistributionNode-PoP-0-Business-0", 
+      "src_port": 58, 
+      "dst_node": "Business-switch-0-PoP-0", 
+      "dst_port": 59, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879552437, 
+      "src_node": "DistributionNode-PoP-0-Business-0", 
+      "src_port": 72, 
+      "dst_node": "Business-switch-1-PoP-0", 
+      "dst_port": 73, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879129375, 
+      "src_node": "DistributionNode-PoP-0-Business-0", 
+      "src_port": 70, 
+      "dst_node": "Business-switch-1-PoP-0", 
+      "dst_port": 71, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879875121, 
+      "src_node": "DistributionNode-PoP-0-Business-1", 
+      "src_port": 55, 
+      "dst_node": "AggregationNode-1-PoP-0", 
+      "dst_port": 54, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878944689, 
+      "src_node": "DistributionNode-PoP-0-Business-1", 
+      "src_port": 51, 
+      "dst_node": "AggregationNode-0-PoP-0", 
+      "dst_port": 50, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879166089, 
+      "src_node": "Retail-SAP-0-switch-1-PoP-0", 
+      "src_port": 39, 
+      "dst_node": "Retail-switch-1-PoP-0", 
+      "dst_port": 38, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879050974, 
+      "src_node": "Retail-SAP-2-switch-0-PoP-0", 
+      "src_port": 29, 
+      "dst_node": "Retail-switch-0-PoP-0", 
+      "dst_port": 28, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879230697, 
+      "src_node": "Business-SAP-4-switch-0-PoP-0", 
+      "src_port": 69, 
+      "dst_node": "Business-switch-0-PoP-0", 
+      "dst_port": 68, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878789501, 
+      "src_node": "Business-SAP-4-switch-0-PoP-1", 
+      "src_port": 199, 
+      "dst_node": "Business-switch-0-PoP-1", 
+      "dst_port": 198, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879369047, 
+      "src_node": "Retail-SAP-3-switch-1-PoP-0", 
+      "src_port": 45, 
+      "dst_node": "Retail-switch-1-PoP-0", 
+      "dst_port": 44, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879560882, 
+      "src_node": "Business-SAP-1-switch-1-PoP-0", 
+      "src_port": 77, 
+      "dst_node": "Business-switch-1-PoP-0", 
+      "dst_port": 76, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879288278, 
+      "src_node": "Business-SAP-1-switch-1-PoP-1", 
+      "src_port": 207, 
+      "dst_node": "Business-switch-1-PoP-1", 
+      "dst_port": 206, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879030388, 
+      "src_node": "Business-switch-1-PoP-1", 
+      "src_port": 204, 
+      "dst_node": "Business-SAP-0-switch-1-PoP-1", 
+      "dst_port": 205, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879099678, 
+      "src_node": "Business-switch-1-PoP-1", 
+      "src_port": 210, 
+      "dst_node": "Business-SAP-3-switch-1-PoP-1", 
+      "dst_port": 211, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879006289, 
+      "src_node": "Business-switch-1-PoP-1", 
+      "src_port": 212, 
+      "dst_node": "Business-SAP-4-switch-1-PoP-1", 
+      "dst_port": 213, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878721305, 
+      "src_node": "Business-switch-1-PoP-1", 
+      "src_port": 201, 
+      "dst_node": "DistributionNode-PoP-1-Business-0", 
+      "dst_port": 200, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878389671, 
+      "src_node": "Business-switch-1-PoP-1", 
+      "src_port": 203, 
+      "dst_node": "DistributionNode-PoP-1-Business-0", 
+      "dst_port": 202, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879260011, 
+      "src_node": "Business-switch-1-PoP-1", 
+      "src_port": 208, 
+      "dst_node": "Business-SAP-2-switch-1-PoP-1", 
+      "dst_port": 209, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879296278, 
+      "src_node": "Business-switch-1-PoP-1", 
+      "src_port": 206, 
+      "dst_node": "Business-SAP-1-switch-1-PoP-1", 
+      "dst_port": 207, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879015609, 
+      "src_node": "Server-1-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 140, 
+      "dst_node": "FabricExt-0-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 141, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878350613, 
+      "src_node": "Server-1-Chassis-1-Cluster-0-PoP-0", 
+      "src_port": 142, 
+      "dst_node": "FabricExt-1-Chassis-1-Cluster-0-PoP-0", 
+      "dst_port": 143, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869727541, 
+      "src_node": "Server-0-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 242, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 243, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869230654, 
+      "src_node": "Server-0-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 244, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 245, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878826144, 
+      "src_node": "Server-0-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 114, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 115, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878884935, 
+      "src_node": "Server-0-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 112, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 113, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878894274, 
+      "src_node": "Business-SAP-1-switch-0-PoP-1", 
+      "src_port": 193, 
+      "dst_node": "Business-switch-0-PoP-1", 
+      "dst_port": 192, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879545089, 
+      "src_node": "Business-SAP-1-switch-0-PoP-0", 
+      "src_port": 63, 
+      "dst_node": "Business-switch-0-PoP-0", 
+      "dst_port": 62, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878948909, 
+      "src_node": "Retail-SAP-3-switch-0-PoP-0", 
+      "src_port": 31, 
+      "dst_node": "Retail-switch-0-PoP-0", 
+      "dst_port": 30, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879173699, 
+      "src_node": "Retail-SAP-3-switch-0-PoP-1", 
+      "src_port": 175, 
+      "dst_node": "Retail-switch-0-PoP-1", 
+      "dst_port": 174, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869466611, 
+      "src_node": "AggregationNode-0-PoP-1", 
+      "src_port": 224, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-1", 
+      "dst_port": 225, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878223302, 
+      "src_node": "AggregationNode-0-PoP-1", 
+      "src_port": 156, 
+      "dst_node": "DistributionNode-PoP-1-Retail-0", 
+      "dst_port": 157, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878553137, 
+      "src_node": "AggregationNode-0-PoP-1", 
+      "src_port": 158, 
+      "dst_node": "DistributionNode-PoP-1-Retail-1", 
+      "dst_port": 159, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878726915, 
+      "src_node": "AggregationNode-0-PoP-1", 
+      "src_port": 152, 
+      "dst_node": "BackboneNode1", 
+      "dst_port": 153, 
+      "delay": 0.1, 
+      "bandwidth": 1000000
+    }, 
+    {
+      "id": 139839879261787, 
+      "src_node": "AggregationNode-0-PoP-1", 
+      "src_port": 180, 
+      "dst_node": "DistributionNode-PoP-1-Business-1", 
+      "dst_port": 181, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879213404, 
+      "src_node": "AggregationNode-0-PoP-1", 
+      "src_port": 178, 
+      "dst_node": "DistributionNode-PoP-1-Business-0", 
+      "dst_port": 179, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839869081264, 
+      "src_node": "AggregationNode-0-PoP-1", 
+      "src_port": 222, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "dst_port": 223, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879254150, 
+      "src_node": "AggregationNode-0-PoP-1", 
+      "src_port": 214, 
+      "dst_node": "DistributionNode-PoP-1CloudNFV-0", 
+      "dst_port": 215, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878724145, 
+      "src_node": "AggregationNode-0-PoP-1", 
+      "src_port": 216, 
+      "dst_node": "DistributionNode-PoP-1CloudNFV-1", 
+      "dst_port": 217, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879243761, 
+      "src_node": "AggregationNode-0-PoP-0", 
+      "src_port": 94, 
+      "dst_node": "FabricInterconnect-1-Cluster-0-PoP-0", 
+      "dst_port": 95, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879517072, 
+      "src_node": "AggregationNode-0-PoP-0", 
+      "src_port": 14, 
+      "dst_node": "DistributionNode-PoP-0-Retail-1", 
+      "dst_port": 15, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879180989, 
+      "src_node": "AggregationNode-0-PoP-0", 
+      "src_port": 12, 
+      "dst_node": "DistributionNode-PoP-0-Retail-0", 
+      "dst_port": 13, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879492604, 
+      "src_node": "AggregationNode-0-PoP-0", 
+      "src_port": 86, 
+      "dst_node": "DistributionNode-PoP-0CloudNFV-1", 
+      "dst_port": 87, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879386899, 
+      "src_node": "AggregationNode-0-PoP-0", 
+      "src_port": 84, 
+      "dst_node": "DistributionNode-PoP-0CloudNFV-0", 
+      "dst_port": 85, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879455044, 
+      "src_node": "AggregationNode-0-PoP-0", 
+      "src_port": 8, 
+      "dst_node": "BackboneNode0", 
+      "dst_port": 9, 
+      "delay": 0.1, 
+      "bandwidth": 1000000
+    }, 
+    {
+      "id": 139839878735591, 
+      "src_node": "AggregationNode-0-PoP-0", 
+      "src_port": 48, 
+      "dst_node": "DistributionNode-PoP-0-Business-0", 
+      "dst_port": 49, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879299643, 
+      "src_node": "AggregationNode-0-PoP-0", 
+      "src_port": 50, 
+      "dst_node": "DistributionNode-PoP-0-Business-1", 
+      "dst_port": 51, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839879134867, 
+      "src_node": "AggregationNode-0-PoP-0", 
+      "src_port": 92, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "dst_port": 93, 
+      "delay": 0.2, 
+      "bandwidth": 100000
+    }, 
+    {
+      "id": 139839878990873, 
+      "src_node": "Retail-SAP-1-switch-1-PoP-0", 
+      "src_port": 41, 
+      "dst_node": "Retail-switch-1-PoP-0", 
+      "dst_port": 40, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879066406, 
+      "src_node": "Retail-SAP-4-switch-1-PoP-0", 
+      "src_port": 47, 
+      "dst_node": "Retail-switch-1-PoP-0", 
+      "dst_port": 46, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879270521, 
+      "src_node": "DistributionNode-PoP-0CloudNFV-0", 
+      "src_port": 89, 
+      "dst_node": "AggregationNode-1-PoP-0", 
+      "dst_port": 88, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878956290, 
+      "src_node": "DistributionNode-PoP-0CloudNFV-0", 
+      "src_port": 85, 
+      "dst_node": "AggregationNode-0-PoP-0", 
+      "dst_port": 84, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869095027, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 243, 
+      "dst_node": "Server-0-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 242, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869156387, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 247, 
+      "dst_node": "Server-1-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 246, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869230064, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 251, 
+      "dst_node": "Server-2-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 250, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869140744, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 255, 
+      "dst_node": "Server-3-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 254, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868989866, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 235, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "dst_port": 234, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839868821534, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 239, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-1", 
+      "dst_port": 238, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878268832, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 117, 
+      "dst_node": "Server-1-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 116, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878856338, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 113, 
+      "dst_node": "Server-0-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 112, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878229088, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 125, 
+      "dst_node": "Server-3-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 124, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878239277, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 121, 
+      "dst_node": "Server-2-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 120, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878469244, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 105, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "dst_port": 104, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878349903, 
+      "src_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 109, 
+      "dst_node": "FabricInterconnect-0-Cluster-0-PoP-0", 
+      "dst_port": 108, 
+      "delay": 0.2, 
+      "bandwidth": 10000.0, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879063349, 
+      "src_node": "Business-SAP-4-switch-1-PoP-1", 
+      "src_port": 213, 
+      "dst_node": "Business-switch-1-PoP-1", 
+      "dst_port": 212, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839869300459, 
+      "src_node": "Server-2-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 250, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 251, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839869270330, 
+      "src_node": "Server-2-Chassis-0-Cluster-0-PoP-1", 
+      "src_port": 252, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-1", 
+      "dst_port": 253, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878562788, 
+      "src_node": "Server-2-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 122, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 123, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878409189, 
+      "src_node": "Server-2-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 120, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 121, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839879753874, 
+      "src_node": "Business-switch-0-PoP-0", 
+      "src_port": 60, 
+      "dst_node": "Business-SAP-0-switch-0-PoP-0", 
+      "dst_port": 61, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879486784, 
+      "src_node": "Business-switch-0-PoP-0", 
+      "src_port": 59, 
+      "dst_node": "DistributionNode-PoP-0-Business-0", 
+      "dst_port": 58, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879490291, 
+      "src_node": "Business-switch-0-PoP-0", 
+      "src_port": 57, 
+      "dst_node": "DistributionNode-PoP-0-Business-0", 
+      "dst_port": 56, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879905806, 
+      "src_node": "Business-switch-0-PoP-0", 
+      "src_port": 62, 
+      "dst_node": "Business-SAP-1-switch-0-PoP-0", 
+      "dst_port": 63, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879516851, 
+      "src_node": "Business-switch-0-PoP-0", 
+      "src_port": 68, 
+      "dst_node": "Business-SAP-4-switch-0-PoP-0", 
+      "dst_port": 69, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879528945, 
+      "src_node": "Business-switch-0-PoP-0", 
+      "src_port": 64, 
+      "dst_node": "Business-SAP-2-switch-0-PoP-0", 
+      "dst_port": 65, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879537422, 
+      "src_node": "Business-switch-0-PoP-0", 
+      "src_port": 66, 
+      "dst_node": "Business-SAP-3-switch-0-PoP-0", 
+      "dst_port": 67, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878837544, 
+      "src_node": "Business-switch-0-PoP-1", 
+      "src_port": 190, 
+      "dst_node": "Business-SAP-0-switch-0-PoP-1", 
+      "dst_port": 191, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879294402, 
+      "src_node": "Business-switch-0-PoP-1", 
+      "src_port": 189, 
+      "dst_node": "DistributionNode-PoP-1-Business-0", 
+      "dst_port": 188, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879418723, 
+      "src_node": "Business-switch-0-PoP-1", 
+      "src_port": 187, 
+      "dst_node": "DistributionNode-PoP-1-Business-0", 
+      "dst_port": 186, 
+      "delay": 0.2, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878715945, 
+      "src_node": "Business-switch-0-PoP-1", 
+      "src_port": 192, 
+      "dst_node": "Business-SAP-1-switch-0-PoP-1", 
+      "dst_port": 193, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879093167, 
+      "src_node": "Business-switch-0-PoP-1", 
+      "src_port": 198, 
+      "dst_node": "Business-SAP-4-switch-0-PoP-1", 
+      "dst_port": 199, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839879233957, 
+      "src_node": "Business-switch-0-PoP-1", 
+      "src_port": 194, 
+      "dst_node": "Business-SAP-2-switch-0-PoP-1", 
+      "dst_port": 195, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878575420, 
+      "src_node": "Business-switch-0-PoP-1", 
+      "src_port": 196, 
+      "dst_node": "Business-SAP-3-switch-0-PoP-1", 
+      "dst_port": 197, 
+      "delay": 0.5, 
+      "bandwidth": 0.2
+    }, 
+    {
+      "id": 139839878907811, 
+      "src_node": "Business-SAP-0-switch-1-PoP-1", 
+      "src_port": 205, 
+      "dst_node": "Business-switch-1-PoP-1", 
+      "dst_port": 204, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878773040, 
+      "src_node": "Business-SAP-0-switch-1-PoP-0", 
+      "src_port": 75, 
+      "dst_node": "Business-switch-1-PoP-0", 
+      "dst_port": 74, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879481557, 
+      "src_node": "Retail-SAP-2-switch-0-PoP-1", 
+      "src_port": 173, 
+      "dst_node": "Retail-switch-0-PoP-1", 
+      "dst_port": 172, 
+      "delay": 0.5, 
+      "bandwidth": 0.2, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879261567, 
+      "src_node": "DistributionNode-PoP-0CloudNFV-1", 
+      "src_port": 91, 
+      "dst_node": "AggregationNode-1-PoP-0", 
+      "dst_port": 90, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879530525, 
+      "src_node": "DistributionNode-PoP-0CloudNFV-1", 
+      "src_port": 87, 
+      "dst_node": "AggregationNode-0-PoP-0", 
+      "dst_port": 86, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879368280, 
+      "src_node": "DistributionNode-PoP-1-Retail-0", 
+      "src_port": 166, 
+      "dst_node": "Retail-switch-0-PoP-1", 
+      "dst_port": 167, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878959900, 
+      "src_node": "DistributionNode-PoP-1-Retail-0", 
+      "src_port": 164, 
+      "dst_node": "Retail-switch-0-PoP-1", 
+      "dst_port": 165, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878593253, 
+      "src_node": "DistributionNode-PoP-1-Retail-0", 
+      "src_port": 157, 
+      "dst_node": "AggregationNode-0-PoP-1", 
+      "dst_port": 156, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839879376115, 
+      "src_node": "DistributionNode-PoP-1-Retail-0", 
+      "src_port": 161, 
+      "dst_node": "AggregationNode-1-PoP-1", 
+      "dst_port": 160, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878627340, 
+      "src_node": "DistributionNode-PoP-1-Retail-1", 
+      "src_port": 159, 
+      "dst_node": "AggregationNode-0-PoP-1", 
+      "dst_port": 158, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878804554, 
+      "src_node": "DistributionNode-PoP-1-Retail-1", 
+      "src_port": 163, 
+      "dst_node": "AggregationNode-1-PoP-1", 
+      "dst_port": 162, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878859194, 
+      "src_node": "Server-1-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 118, 
+      "dst_node": "FabricExt-1-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 119, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878182087, 
+      "src_node": "Server-1-Chassis-0-Cluster-0-PoP-0", 
+      "src_port": 116, 
+      "dst_node": "FabricExt-0-Chassis-0-Cluster-0-PoP-0", 
+      "dst_port": 117, 
+      "delay": 0.2, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": 139839878991645, 
+      "src_node": "DistributionNode-PoP-1CloudNFV-0", 
+      "src_port": 215, 
+      "dst_node": "AggregationNode-0-PoP-1", 
+      "dst_port": 214, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878939141, 
+      "src_node": "DistributionNode-PoP-1CloudNFV-0", 
+      "src_port": 219, 
+      "dst_node": "AggregationNode-1-PoP-1", 
+      "dst_port": 218, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878889688, 
+      "src_node": "DistributionNode-PoP-1CloudNFV-1", 
+      "src_port": 217, 
+      "dst_node": "AggregationNode-0-PoP-1", 
+      "dst_port": 216, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }, 
+    {
+      "id": 139839878503295, 
+      "src_node": "DistributionNode-PoP-1CloudNFV-1", 
+      "src_port": 221, 
+      "dst_node": "AggregationNode-1-PoP-1", 
+      "dst_port": 220, 
+      "delay": 0.2, 
+      "bandwidth": 100000, 
+      "backward": true
+    }
+  ]
+}
