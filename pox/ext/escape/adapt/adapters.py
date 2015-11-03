@@ -16,9 +16,9 @@ Contains Adapter classes which contains protocol and technology specific
 details for the connections between ESCAPEv2 and other different domains.
 """
 from copy import deepcopy
-from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from ncclient.operations import OperationError
+
 from ncclient.operations.rpc import RPCError
 
 from ncclient.transport import TransportError
@@ -27,11 +27,7 @@ from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
-from escape.util.pox_extension import ExtendedOFConnectionArbiter, \
-  OpenFlowBridge
 from escape import CONFIG
-import pox.openflow.libopenflow_01 as of
-from pox.lib.addresses import EthAddr
 
 
 class TopologyLoadException(Exception):
@@ -41,7 +37,7 @@ class TopologyLoadException(Exception):
   pass
 
 
-class InternalPOXAdapter(AbstractESCAPEAdapter):
+class InternalPOXAdapter(AbstractOFControllerAdapter):
   """
   Adapter class to handle communication with internal POX OpenFlow controller.
 
@@ -49,17 +45,12 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
   """
   name = "INTERNAL-POX"
 
-  # FIXME - SIGCOMM -
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {'MT1': 0x14c5e0c376e24,  # 0x0040f46b9c6b,
-                   'MT2': 0x14c5e0c376fc6,
-                   'EE1': 0x1,
+  infra_to_dpid = {'EE1': 0x1,
                    'EE2': 0x2,
                    'SW3': 0x3,
                    'SW4': 0x4, }
-  dpid_to_infra = {0x14c5e0c376e24: 'MT1',
-                   0x14c5e0c376fc6: 'MT2',
-                   0x1: 'EE1',
+  dpid_to_infra = {0x1: 'EE1',
                    0x2: 'EE2',
                    0x3: 'SW3',
                    0x4: 'SW4'}
@@ -70,7 +61,8 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
                   'dl_dst': '00:00:00:00:00:02',
                   'dl_src': '00:00:00:00:00:01'}}
 
-  def __init__ (self, name=None, address="127.0.0.1", port=6653):
+  def __init__ (self, name=None, address="127.0.0.1", port=6653,
+                keepalive=False):
     """
     Initialize attributes, register specific connection Arbiter if needed and
     set up listening of OpenFlow events.
@@ -82,64 +74,10 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     :param port: socket port (default: 6633)
     :type port: int
     """
-    name = name if name is not None else self.name
-    log.debug("Init %s with name: %s address %s:%s" % (
-      self.__class__.__name__, name, address, port))
-    super(InternalPOXAdapter, self).__init__()
-    # Set an OpenFlow nexus as a source of OpenFlow events
-    self.openflow = OpenFlowBridge()
-    self.controller_address = (address, port)
-    # Initiate our specific connection Arbiter
-    arbiter = ExtendedOFConnectionArbiter.activate()
-    # Register our OpenFlow event source
-    arbiter.add_connection_listener(self.controller_address, self.openflow)
-    # Launch OpenFlow connection handler if not started before with given name
-    # launch() return the registered openflow module which is a coop Task
-    from pox.openflow.of_01 import launch
-
-    of = launch(name=name, address=address, port=port)
-    # Start listening for OpenFlow connections
-    of.start()
-    # from pox.openflow.keepalive import launch
-    # launch(ofnexus=self.openflow)
-    self.task_name = name if name else "of_01"
-    of.name = self.task_name
-    # register OpenFlow event listeners
-    self.openflow.addListeners(self)
-    log.debug("%s adapter: Start listening connections..." % self.name)
-    # Currently static initialization from a config file
-    # TODO: discover SDN topology and create the NFFG
-    self.topo = None  # SDN domain topology stored in NFFG
-    self.__init_from_CONFIG()
-
-  def __init_from_CONFIG (self, path=None):
-    """
-    Load a pre-defined topology from an NFFG stored in a file.
-    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
-
-    :param path: additional file path
-    :type path: str
-    :return: None
-    """
-    if path is None:
-      path = CONFIG.get_sdn_topology()
-    if path is None:
-      log.warning("SDN topology is missing from CONFIG!")
-      raise TopologyLoadException("Missing Topology!")
-    else:
-      try:
-        with open(path, 'r') as f:
-          log.info("Load SDN topology from file: %s" % path)
-          self.topo = NFFG.parse(f.read())
-          self.topo.duplicate_static_links()
-          # print self.topo.dump()
-      except IOError:
-        log.debug("SDN topology file not found: %s" % path)
-        raise TopologyLoadException("Missing topology file!")
-      except ValueError as e:
-        log.error(
-          "An error occurred when load topology from file: %s" % e.message)
-        raise TopologyLoadException("File parsing error!")
+    log.debug("Init %s with address %s:%s, optional name: %s" % (
+      self.__class__.__name__, address, port, name))
+    super(InternalPOXAdapter, self).__init__(name=name, address=address,
+                                             port=port, keepalive=keepalive)
 
   def check_domain_reachable (self):
     """
@@ -161,20 +99,7 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
     # raise RuntimeError("InternalPoxController not supported this function: "
     #                    "get_topology_resource() !")
     # return static topology
-    return self.topo
-
-  def filter_connections (self, event):
-    """
-    Handle which connection should be handled by this Adapter class.
-
-    This adapter accept every OpenFlow connection by default.
-
-    :param event: POX internal ConnectionUp event (event.dpid, event.connection)
-    :type event: :class:`pox.openflow.ConnectionUp`
-    :return: True os False obviously
-    :rtype: bool
-    """
-    return True
+    return None
 
   def _handle_ConnectionUp (self, event):
     """
@@ -197,73 +122,6 @@ class InternalPOXAdapter(AbstractESCAPEAdapter):
                                data={"DPID": event.dpid})
     self.raiseEventNoErrors(event)
 
-  def delete_flowrules (self, id):
-    """
-    Delete all flowrules from the first (default) table of an OpenFlow switch.
-
-    :param id: ID of the infra element stored in the NFFG
-    :type id: str
-    :return: None
-    """
-    log.info("Delete flow entries from INFRA %s..." % id)
-    dpid = InternalPOXAdapter.infra_to_dpid[id]
-    con = self.openflow.getConnection(dpid)
-
-    msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
-    con.send(msg)
-
-  def install_flowrule (self, id, match, action):
-    """
-    Install a flowrule in an OpenFlow switch.
-
-    :param id: ID of the infra element stored in the NFFG
-    :type id: str
-    :param match: match part of the rule (keys: in_port, vlan_id)
-    :type match: dict
-    :param action: action part of the rule (keys: out, vlan_push, vlan_pop)
-    :type action: dict
-    :return: None
-    """
-    log.info("Install POX domain part: flow entries to INFRA %s..." % id)
-    # print match
-    # print action
-    dpid = InternalPOXAdapter.infra_to_dpid[id]
-    con = self.openflow.getConnection(dpid)
-
-    msg = of.ofp_flow_mod()
-    msg.match.in_port = match['in_port']
-    try:
-      vid = match['vlan_id']
-      msg.match.dl_vlan = int(vid)
-    except KeyError:
-      pass
-
-    try:
-      vid = action['vlan_push']
-      msg.actions.append(
-        of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
-      # msg.actions.append(of.ofp_action_vlan_vid())
-    except KeyError:
-      pass
-    try:
-      if action['vlan_pop']:
-        msg.actions.append(of.ofp_action_strip_vlan())
-    except KeyError:
-      pass
-    out = action['out']
-    try:
-      if out == InternalPOXAdapter.saps[id]['port']:
-        dl_dst = InternalPOXAdapter.saps[id]['dl_dst']
-        dl_src = InternalPOXAdapter.saps[id]['dl_src']
-        msg.actions.append(of.ofp_action_dl_addr.set_dst(EthAddr(dl_dst)))
-        msg.actions.append(of.ofp_action_dl_addr.set_src(EthAddr(dl_src)))
-    except KeyError:
-      pass
-    msg.actions.append(of.ofp_action_output(port=int(action['out'])))
-
-    log.info("flow entry: %s" % msg)
-    con.send(msg)
-
 
 class SDNDomainPOXAdapter(InternalPOXAdapter):
   """
@@ -271,8 +129,26 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   """
   name = "SDN-POX"
 
-  def __init__ (self, name=None, address="0.0.0.0", port=6653):
-    super(SDNDomainPOXAdapter, self).__init__(name, address, port)
+  # Static mapping of infra IDs and DPIDs
+  infra_to_dpid = {'MT1': 0x14c5e0c376e24,
+                   'MT2': 0x14c5e0c376fc6,
+                   }
+  dpid_to_infra = {0x14c5e0c376e24: 'MT1',
+                   0x14c5e0c376fc6: 'MT2',
+                   }
+
+  def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False):
+    super(SDNDomainPOXAdapter, self).__init__(name=name, address=address,
+                                              port=port, keepalive=keepalive)
+    # Currently static initialization from a config file
+    # TODO: discover SDN topology and create the NFFG
+    self.topo = None  # SDN domain topology stored in NFFG
+
+  def get_topology_resource (self):
+    super(SDNDomainPOXAdapter, self).get_topology_resource()
+
+  def check_domain_reachable (self):
+    super(SDNDomainPOXAdapter, self).check_domain_reachable()
 
 
 class InternalMininetAdapter(AbstractESCAPEAdapter):
@@ -340,6 +216,70 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     return {"server": "127.0.0.1", "port": agent.agentPort,
             "username": agent.username,
             "password": agent.passwd} if agent is not None else {}
+
+
+class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
+  """
+  Adapter class to return the topology description of the SDN domain.
+
+  Currently it just read the static description from file, and not discover it.
+  """
+  name = "SDN-TOPO"
+
+  def __init__ (self, path=None):
+    log.debug("Init SDNDomainTopoAdapter with optional path: %s" % path)
+    super(SDNDomainTopoAdapter, self).__init__()
+    self.topo = None
+    try:
+      self.__init_from_CONFIG()
+    except TopologyLoadException as e:
+      log.error("SDN adapter is not initialized properly: " % e)
+
+  def check_domain_reachable (self):
+    """
+    Checker function for domain. Naively return True.
+
+    :return: the domain is detected or not
+    :rtype: bool
+    """
+    return self.topo is not None
+
+  def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG` parsed from file.
+
+    :return: the static topology description
+    :rtype: :any:`NFFG`
+    """
+    return self.topo
+
+  def __init_from_CONFIG (self, path=None):
+    """
+    Load a pre-defined topology from an NFFG stored in a file.
+    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
+
+    :param path: additional file path
+    :type path: str
+    :return: None
+    """
+    if path is None:
+      path = CONFIG.get_sdn_topology()
+    if path is None:
+      log.warning("SDN topology is missing from CONFIG!")
+      raise TopologyLoadException("Missing Topology!")
+    else:
+      try:
+        with open(path, 'r') as f:
+          log.info("Load SDN topology from file: %s" % path)
+          self.topo = NFFG.parse(f.read())
+          self.topo.duplicate_static_links()
+          # print self.topo.dump()
+      except IOError:
+        log.warning("SDN topology file not found: %s" % path)
+      except ValueError as e:
+        log.error(
+          "An error occurred when load topology from file: %s" % e.message)
+        raise TopologyLoadException("File parsing error!")
 
 
 class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
@@ -661,7 +601,6 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
           "Failed to remove NF due to a connection error! Cause: %s" % e)
 
 
-
 class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                                 RemoteESCAPEv2API):
   """
@@ -681,60 +620,33 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("RemoteESCAPEv2 base URL is set to %s" % self._base_url)
     AbstractESCAPEAdapter.__init__(self)
+    self._original_nffg = None
 
   def ping (self):
-    try:
-      return self.send_request(self.GET, 'ping')
-    except ConnectionError:
-      log.warning(
-        "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
-    except Timeout:
-      log.warning("Remote ESCAPEv2 agent (%s) not responding!" % self._base_url)
-    except HTTPError as e:
-      log.warning(
-        "Remote ESCAPEv2 agent responded with an error during 'ping': %s" %
-        e.message)
+    return self.send_no_error(self.GET, 'ping')
 
   def get_config (self):
-    try:
-      data = self.send_request(self.POST, 'get-config')
-      log.debug("Received config from remote agent at %s" % self._base_url)
-    except ConnectionError:
-      log.warning(
-        "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
-      return None
-    except Timeout:
-      log.warning("Remote ESCAPEv2 agent (%s) not responding!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning("Remote ESCAPEv2 agent responded with an error during "
-                  "'get-config': %s" % e.message)
-      return None
+    data = self.send_no_error(self.POST, 'get-config')
+    log.debug("Received config from remote agent at %s" % self._base_url)
     if data:
+      # Convert raw data to NFFG
       log.info("Parse and load received data...")
       log.debug("Converting to NFFG format...")
       nffg = NFFG.parse(data)
       log.debug("Set Domain type to %s" % NFFG.DOMAIN_REMOTE)
       for infra in nffg.infras:
         infra.domain = NFFG.DOMAIN_REMOTE
+      # Store original config for domain resetting
+      if self._original_nffg is None:
+        log.debug("Store %s as the original domain config..." % nffg)
+        self._original_nffg = nffg.copy()
       return nffg
 
-  def edit_config (self, config):
-    if not isinstance(config, (str, unicode, NFFG)):
+  def edit_config (self, data):
+    if not isinstance(data, (str, unicode, NFFG)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
-    try:
-      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
-      self.send_request(self.POST, 'edit-config', config)
-    except ConnectionError:
-      log.warning(
-        "Remote ESCAPEv2 agent (%s) is not reachable!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "Remote ESCAPEv2 responded with an error during 'edit-config': %s" %
-        e.message)
-      return None
-    return self._response.status_code
+    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
     return self.ping()
@@ -767,46 +679,25 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_OS, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
-    self.original_virtualizer = None
+    self._original_virtualizer = None
 
   def ping (self):
-    try:
-      return self.send_request(self.GET, 'ping')
-    except ConnectionError:
-      log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
-    except Timeout:
-      log.warning("OpenStack agent (%s) not responding!" % self._base_url)
-    except HTTPError as e:
-      log.warning(
-        "OpenStack agent responded with an error during 'ping': %s" % e.message)
+    return self.send_no_error(self.GET, 'ping')
 
   def get_config (self):
-    try:
-      data = self.send_request(self.POST, 'get-config')
-      log.debug("Received config from remote agent at %s" % self._base_url)
-    except ConnectionError:
-      log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
-      return None
-    except Timeout:
-      log.warning("OpenStack agent (%s) not responding!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "OpenStack agent responded with an error during 'get-config': %s" %
-        e.message)
-      return None
+    data = self.send_no_error(self.POST, 'get-config')
     if data:
       log.info("Parse and load received data...")
       # Covert from XML-based Virtualizer to NFFG
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
       self.virtualizer = virt
-      if self.original_virtualizer is None:
+      if self._original_virtualizer is None:
         log.debug(
           "Store Virtualizer(id: %s, name: %s) as the original domain "
           "config..." % (
             virt.id.get_as_text(), virt.name.get_as_text()))
-        self.original_virtualizer = deepcopy(virt)
+        self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
 
@@ -820,18 +711,8 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
-    try:
-      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
-      self.send_request(self.POST, 'edit-config', data)
-    except ConnectionError:
-      log.warning("OpenStack agent (%s) is not reachable!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "OpenStack agent responded with an error during 'edit-config': %s" %
-        e.message)
-      return None
-    return self._response.status_code
+    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
     return self.ping()
@@ -863,49 +744,26 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
-    self.original_virtualizer = None
+    self._original_virtualizer = None
 
   def ping (self):
-    try:
-      return self.send_request(self.GET, 'ping')
-    except ConnectionError:
-      log.warning(
-        "Universal Node agent (%s) is not reachable!" % self._base_url)
-    except Timeout:
-      log.warning("Universal Node agent (%s) not responding!" % self._base_url)
-    except HTTPError as e:
-      log.warning(
-        "Universal Node agent responded with an error during 'ping': %s" %
-        e.message)
+    return self.send_no_error(self.GET, 'ping')
 
   def get_config (self):
-    try:
-      data = self.send_request(self.POST, 'get-config')
-      log.debug("Received config from remote agent at %s" % self._base_url)
-    except ConnectionError:
-      log.warning(
-        "Universal Node agent (%s) is not reachable!" % self._base_url)
-      return None
-    except Timeout:
-      log.warning("Universal Node agent (%s) not responding!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "Universal Node agent responded with an error during 'get-config': %s"
-        % e.message)
-      return None
+    data = self.send_no_error(self.POST, 'get-config')
+    log.debug("Received config from remote agent at %s" % self._base_url)
     if data:
       log.info("Parse and load received data...")
       # Covert from XML-based Virtualizer to NFFG
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
       self.virtualizer = virt
-      if self.original_virtualizer is None:
+      if self._original_virtualizer is None:
         log.debug(
           "Store Virtualizer(id: %s, name: %s) as the original domain "
           "config..." % (
             virt.id.get_as_text(), virt.name.get_as_text()))
-        self.original_virtualizer = deepcopy(virt)
+        self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
 
@@ -919,19 +777,8 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
-    try:
-      log.debug("Send NFFG to domain agent at %s..." % self._base_url)
-      self.send_request(self.POST, 'edit-config', data)
-    except ConnectionError:
-      log.warning(
-        "Universal Node agent (%s) is not reachable!" % self._base_url)
-      return None
-    except HTTPError as e:
-      log.warning(
-        "Universal Node agent responded with an error during 'edit-config': %s"
-        % e.message)
-      return None
-    return self._response.status_code
+    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
     return self.ping()

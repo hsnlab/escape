@@ -21,6 +21,7 @@ from escape.adapt import log as log  # Adaptation layer logger
 from escape.adapt.adaptation import ControllerAdapter
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
+from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 
@@ -100,8 +101,15 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.debug("Initializing Controller Adaptation Sublayer...")
     self.controller_adapter = ControllerAdapter(self, with_infr=self._with_infr)
-    if self._mapped_nffg_file:
-      self._read_json_from_file(self.mapped_nffg_file)
+    if self._mapped_nffg:
+      try:
+        mapped_request = self._read_json_from_file(self._mapped_nffg)
+        mapped_request = NFFG.parse(mapped_request)
+        self.__proceed_installation(mapped_nffg=mapped_request)
+      except (ValueError, IOError, TypeError) as e:
+        log.error("Can't load service request from file because of: " + str(e))
+      else:
+        log.info("Graph representation is loaded successfully!")
     log.info("Controller Adaptation Sublayer has been initialized!")
 
   def shutdown (self, event):
@@ -116,7 +124,6 @@ class ControllerAdaptationAPI(AbstractAPI):
   # UNIFY Or - Ca API functions starts here
   ##############################################################################
 
-  @schedule_as_coop_task
   def _handle_InstallNFFGEvent (self, event):
     """
     Install mapped NF-FG (UNIFY Or - Ca API).
@@ -127,17 +134,28 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.getChild('API').info("Received mapped NF-FG: %s from %s Layer" % (
       event.mapped_nffg, str(event.source._core_name).title()))
+    self.__proceed_installation(mapped_nffg=event.mapped_nffg)
+
+  @schedule_as_coop_task
+  def __proceed_installation (self, mapped_nffg):
+    """
+    Helper function to instantiate the NFFG mapping from different source.
+
+    :param mapped_nffg: pre-mapped service request
+    :type mapped_nffg: :any:`NFFG`
+    :return: None
+    """
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
-      self.__class__.__name__, event.mapped_nffg))
+      self.__class__.__name__, mapped_nffg))
     try:
-      self.controller_adapter.install_nffg(event.mapped_nffg)
+      self.controller_adapter.install_nffg(mapped_nffg)
     except Exception as e:
       log.error("Something went wrong during NFFG installation!")
       self.raiseEventNoErrors(InstallationFinishedEvent, result=False, error=e)
       raise
     log.getChild('API').debug(
       "Invoked install_nffg on %s is finished" % self.__class__.__name__)
-    self.raiseEventNoErrors(InstallationFinishedEvent, id=event.mapped_nffg.id,
+    self.raiseEventNoErrors(InstallationFinishedEvent, id=mapped_nffg.id,
                             result=True)
 
   ##############################################################################

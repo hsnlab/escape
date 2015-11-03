@@ -53,7 +53,11 @@ class ESCAPEConfig(object):
     """
     self.__configuration = default if default else dict.fromkeys(self.LAYERS,
                                                                  {})
-    self.loaded = False
+    self.__initiated = False
+
+  @property
+  def in_initiated (self):
+    return self.__initiated
 
   def add_cfg (self, cfg):
     """
@@ -81,6 +85,8 @@ class ESCAPEConfig(object):
     :return: self
     :rtype: :class:`ESCAPEConfig`
     """
+    if self.__initiated:
+      return self
     if config:
       # Config is set directly
       log.info(
@@ -92,10 +98,17 @@ class ESCAPEConfig(object):
         "Load explicitly given config file: %s" % os.path.basename(config))
     else:
       # Detect default config
-      config = os.path.abspath(
-        os.path.dirname(__file__) + "../../../../" + self.__configuration[
-          self.DEFAULT_CFG])
-      log.debug("Load default config file: %s" % os.path.basename(config))
+      try:
+        # util/escape/ext/pox/root
+        config = os.path.abspath(
+          os.path.dirname(__file__) + "../../../../../" + self.__configuration[
+            self.DEFAULT_CFG])
+        log.debug("Load default config file: %s" % os.path.basename(config))
+      except KeyError:
+        log.warning(
+          "Additional config file is not found! Skip configuration update")
+        self.__initiated = True
+        return self
     try:
       # Load file
       with open(os.path.abspath(config), 'r') as f:
@@ -110,16 +123,16 @@ class ESCAPEConfig(object):
           log.warning(
             "Unidentified layer name in loaded configuration: %s" % layer)
       if changed:
-        log.info("Part(s) of running configuration has been updated!")
+        log.info("Running configuration has been updated from file!")
         return self
     except IOError as e:
-      log.debug("Additional configuration file not found: %s" % config)
+      log.warning("Additional configuration file not found: %s" % config)
     except ValueError as e:
       log.error("An error occurred when load configuration: %s" % e)
     finally:
       # Register config into pox.core to be reachable for other future
       # components -not used currently
-      self.loaded = True
+      self.__initiated = True
       core.register("CONFIG", self)
     log.info("No change during config update! Using default configuration...")
     return self
@@ -204,7 +217,7 @@ class ESCAPEConfig(object):
     :type layer: str
     :return: None
     """
-    if not self.loaded:
+    if not self.__initiated:
       self.load_config()
     self.__configuration[layer]['LOADED'] = True
 
@@ -235,6 +248,17 @@ class ESCAPEConfig(object):
     Disable explicit layer config deletion.
     """
     raise RuntimeError("Explicit layer config deletion is not supported!")
+
+  @staticmethod
+  def get_project_root_dir ():
+    """
+    Return the absolute path of project dir
+
+    :return: path of project dir
+    :rtype: str
+    """
+    return os.path.abspath(
+      os.path.join(os.path.dirname(__file__), "../../../.."))
 
   ##############################################################################
   # Helper functions
@@ -267,12 +291,12 @@ class ESCAPEConfig(object):
       return getattr(importlib.import_module(
         self.__configuration[layer]['STRATEGY']['module']),
         self.__configuration[layer]['STRATEGY']['class'], None)
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError, TypeError):
       return None
 
   def get_mapper (self, layer):
     """
-    Return with th Mapper class of the given layer.
+    Return with the Mapper class of the given layer.
 
     :param layer: layer name
     :type layer: str
@@ -283,8 +307,38 @@ class ESCAPEConfig(object):
       return getattr(importlib.import_module(
         self.__configuration[layer]['MAPPER']['module']),
         self.__configuration[layer]['MAPPER']['class'], None)
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError, TypeError):
       return None
+
+  def get_mapping_processor (self, layer):
+    """
+    Return with Validator class of the given layer.
+
+    :param layer: layer name
+    :type layer: str
+    :return: Validator class
+    :rtype: :any:`AbstractMappingDataProcessor`
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[layer]['PROCESSOR']['module']),
+        self.__configuration[layer]['PROCESSOR']['class'], None)
+    except (KeyError, AttributeError, TypeError):
+      return None
+
+  def get_processor_enabled (self, layer):
+    """
+    Return the mapping process is enabled for the ``layer`` or not.
+
+    :param layer: layer name
+    :type layer: str
+    :return: enabled value (default: True)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[layer]['PROCESSOR']['enabled']
+    except KeyError:
+      return False
 
   def get_threaded (self, layer):
     """
@@ -332,7 +386,7 @@ class ESCAPEConfig(object):
     del params['class']
     return params
 
-  def get_default_mgrs (self):
+  def get_managers (self):
     """
     Return the default DomainManagers for initialization on start.
 
@@ -340,7 +394,7 @@ class ESCAPEConfig(object):
     :rtype: list
     """
     try:
-      return self.__configuration[ADAPT]['DEFAULTS']
+      return self.__configuration[ADAPT]['MANAGERS']
     except KeyError:
       return ()
 
@@ -349,7 +403,7 @@ class ESCAPEConfig(object):
     Return with the shutdown strategy to reset domain or not.
     """
     try:
-      return self.__configuration[ADAPT]['RESET-DOMAIN-AFTER-SHUTDOWN']
+      return self.__configuration[ADAPT]['RESET-DOMAINS-AFTER-SHUTDOWN']
     except KeyError:
       return True
 
@@ -361,7 +415,7 @@ class ESCAPEConfig(object):
     """
     try:
       # Project root dir relative to this module which is/must be under pox/ext
-      return os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..",
+      return os.path.abspath(os.path.join(self.get_project_root_dir(),
                                           self.__configuration[INFR]["TOPO"]))
     except KeyError:
       return None
@@ -387,10 +441,11 @@ class ESCAPEConfig(object):
     :return:  topo class
     """
     try:
-      # Project root dir relative to this module which is/must be under pox/ext
+      # Project root dir relative to this module which is/must be under root
+      # util/escape/ext/pox/root
       return os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../..",
-                     self.__configuration[INFR]["SDN-TOPO"]))
+        os.path.join(self.get_project_root_dir(),
+                     self.__configuration[ADAPT]["SDN-TOPO"]["path"]))
     except KeyError:
       return None
 
@@ -415,8 +470,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-        self.__configuration[ORCHEST]["AGENT"]['module']),
-        self.__configuration[ORCHEST]["AGENT"]['class'], None)
+        self.__configuration[ORCHEST]["Sl-Or"]['module']),
+        self.__configuration[ORCHEST]["Sl-Or"]['class'], None)
     except KeyError:
       return None
 
@@ -428,7 +483,7 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     try:
-      return self.__configuration[ORCHEST]["AGENT"]['prefix']
+      return self.__configuration[ORCHEST]["Sl-Or"]['prefix']
     except KeyError:
       return None
 
@@ -440,8 +495,8 @@ class ESCAPEConfig(object):
     :rtype: tuple
     """
     try:
-      return (self.__configuration[ORCHEST]["AGENT"]['address'],
-              self.__configuration[ORCHEST]["AGENT"]['port'])
+      return (self.__configuration[ORCHEST]["Sl-Or"]['address'],
+              self.__configuration[ORCHEST]["Sl-Or"]['port'])
     except KeyError:
       return None
 
@@ -522,3 +577,43 @@ class ESCAPEConfig(object):
               self.__configuration[ORCHEST]["Cf-Or"]['port'])
     except KeyError:
       return None
+
+  def get_api_virtualizer (self, layer_name, api_name):
+    """
+    Return the type of the assigned Virtualizer.
+
+
+    :param api_name: name of the REST-API in the global config.
+    :type api_name: str
+    :return: type of the Virtualizer as in :any:`VirtualizerManager.TYPES`
+    :rtype: str
+    """
+    try:
+      return self.__configuration[layer_name][api_name]["virtualizer_type"]
+    except (KeyError, AttributeError, TypeError):
+      return None
+
+  def get_adapter_keepalive (self, adapter):
+    """
+    Return the value if the keepalive functionality (periodic OF Echo request)
+    is need to be initiated or not.
+
+    :return: keepalive
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT][adapter]['keepalive']
+    except (KeyError, AttributeError, TypeError):
+      return False
+
+  def get_SAP_xterms (self):
+    """
+    Return the value if need to initiate xtemrs assigned to SAPs.
+
+    :return: xterms
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[INFR]["SAP-xterms"]
+    except (KeyError, AttributeError, TypeError):
+      return True

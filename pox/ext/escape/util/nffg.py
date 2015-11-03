@@ -528,9 +528,9 @@ class NFFG(AbstractNFFG):
     :param id: optional link id
     :type id: str or int
     :param delay: delay resource
-    :type delay: str or int
+    :type delay: str or int or float
     :param bandwidth: bandwidth resource
-    :type bandwidth: str or int
+    :type bandwidth: str or int or float
     :return: newly created edge
     :rtype: :any:`EdgeReq`
     """
@@ -1619,7 +1619,7 @@ class NFFGToolBox(object):
 
     # Return with modified Virtualizer
     return virtualizer
-    
+
   @staticmethod
   def _get_output_port_of_TAG_action (TAG, port):
     for fr in port.flowrules:
@@ -1642,14 +1642,14 @@ class NFFGToolBox(object):
     return None, None
 
   @staticmethod
-  def _find_static_link (nffg, port, outbound = True):
+  def _find_static_link (nffg, port, outbound=True):
     edges_func = None
     link = None
     if outbound:
       edges_func = nffg.network.out_edges_iter
     else:
       edges_func = nffg.network.in_edges_iter
-    for i,j,d in edges_func([port.node.id], data=True):
+    for i, j, d in edges_func([port.node.id], data=True):
       if d.type == 'STATIC':
         if outbound and port.id == d.src.id:
           if link is not None:
@@ -1703,7 +1703,7 @@ class NFFGToolBox(object):
       reqlinkid = int(reqlinkid)
     except ValueError:
       pass
-    first_link = NFFGToolBox._find_static_link(nffg, starting_port, 
+    first_link = NFFGToolBox._find_static_link(nffg, starting_port,
                                                outbound=False)
     if first_link is not None:
       if first_link.src.node.type == 'SAP':
@@ -1715,7 +1715,7 @@ class NFFGToolBox(object):
     # is collocated on this Infra.
     if first_out_port is None:
       if nffg.network.has_edge(vnf1, starting_port.node.id) and \
-         nffg.network.has_edge(vnf2, starting_port.node.id):
+           nffg.network.has_edge(vnf2, starting_port.node.id):
         for fr in starting_port.flowrules:
           for action in fr.action.split(";"):
             command, param = action.split("=")
@@ -1734,16 +1734,17 @@ class NFFGToolBox(object):
               except ValueError:
                 pass
               # SGHops should be still in the NFFG
-              if nfid == vnf2 and nffg.network[vnf1][vnf2][reqlinkid]\
-                                              .dst.id == nfportid:
-                # WARNING!! IF 'starting_port' has 2 flowrules leading to the same
+              if nfid == vnf2 and nffg.network[vnf1][vnf2][reqlinkid] \
+                   .dst.id == nfportid:
+                # WARNING!! IF 'starting_port' has 2 flowrules leading to the
+                #  same
                 # port of 'vnf2', we can't make difference between the 2 
                 # collocation flows!! --> Parallel SGHops to AND from the same 
                 # ports shouldn't be allowed! BUT otherwise, it is OK.
                 return [], fr.bandwidth
       else:
         raise RuntimeError("Neither starting flowrule nor collocation flowrule"
-                           " found in the given port for TAG: %s!"%TAG)
+                           " found in the given port for TAG: %s!" % TAG)
 
     curr_link = NFFGToolBox._find_static_link(nffg, first_out_port)
     edge_list.append(curr_link)
@@ -1761,8 +1762,9 @@ class NFFGToolBox(object):
               except ValueError:
                 pass
               if command == "output":
-                curr_link = NFFGToolBox._find_static_link(nffg, 
-                                        curr_port.node.ports[cparam])
+                curr_link = NFFGToolBox._find_static_link(nffg,
+                                                          curr_port.node.ports[
+                                                            cparam])
                 edge_list.append(curr_link)
                 curr_port = curr_link.dst
                 next_link_found = True
@@ -1773,7 +1775,7 @@ class NFFGToolBox(object):
           break
       else:
         raise RuntimeError("Finishing flowrule couldn't be found for TAG: %s"
-                           %TAG)
+                           % TAG)
     # curr_port is a flow finishing port, let's check whether the next node 
     # would be a SAP
     if nffg.network.node[vnf2].type == 'SAP':
@@ -1788,8 +1790,9 @@ class NFFGToolBox(object):
               if len(action_split) == 2:
                 command, cparam = action_split
                 if command == "output":
-                  last_link = NFFGToolBox._find_static_link(nffg, 
-                                          curr_port.node.ports[cparam])
+                  last_link = NFFGToolBox._find_static_link(nffg,
+                                                            curr_port.node.ports[
+                                                              cparam])
                   if last_link is not None:
                     # maybe there could be multiple output commands...
                     if last_link.dst.node.type == 'SAP':
@@ -1798,7 +1801,7 @@ class NFFGToolBox(object):
                       break
                   else:
                     raise RuntimeError("No outbound link found for last port "
-                                       "of physical path of TAG: %s"%TAG)
+                                       "of physical path of TAG: %s" % TAG)
           if last_link_found:
             break
         if last_link_found:
@@ -1810,7 +1813,8 @@ class NFFGToolBox(object):
   def generate_all_TAGs_of_NFFG (nffg):
     for sg in nffg.sg_links:
       yield "|".join((sg.src.node.id, sg.dst.node.id, sg.id))
-    
+
+
 def test_conversion ():
   from conversion import NFFGConverter
 

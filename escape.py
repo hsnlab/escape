@@ -21,48 +21,83 @@ import argparse
 import os
 
 
-# Implement parser options
-
 def main ():
+  # Implement parser options
   parser = argparse.ArgumentParser(
-    description="ESCAPE: Extensible Service ChAin Prototyping Environment "
+    description="ESCAPEv2: Extensible Service ChAin Prototyping Environment "
                 "using "
-                "Mininet, Click, NETCONF and POX")
-
-  parser.add_argument("-v", "--version", action="version", version="2.0.0")
-  escape = parser.add_argument_group("ESCAPE arguments")
+                "Mininet, Click, NETCONF and POX",
+    add_help=True,
+    version="2.0.0")
+  # Optional arguments
+  escape = parser.add_argument_group("ESCAPEv2 arguments")
+  escape.add_argument("-a", "--agent", action="store_true", default=False,
+                      help="run in agent mode: start the ROS REST-API ("
+                           "without the Service sublayer (SAS))")
   escape.add_argument("-c", "--config", metavar="path", type=str,
                       # default="pox/escape.config",
                       help="override default config filename")
   escape.add_argument("-d", "--debug", action="store_true", default=False,
                       help="run the ESCAPE in debug mode")
+  escape.add_argument("-e", "--environment", action="store_true", default=False,
+                      help="run ESCAPEv2 in the pre-defined virtualenv")
   escape.add_argument("-f", "--full", action="store_true", default=False,
                       help="run the infrastructure layer also")
   escape.add_argument("-i", "--interactive", action="store_true", default=False,
                       help="run an interactive shell for observing internal "
                            "states")
-  escape.add_argument("-a", "--agent", action="store_true", default=False,
-                      help="run in agent role (without service layer)")
-  escape.add_argument("-4", "--cfor", action="store_true", default=False,
-                      help="start the API for the Cf-Or interface")
+  escape.add_argument("-r", "--rosapi", action="store_true", default=False,
+                      help="start the REST-API for the Resource Orchestration "
+                           "sublayer (ROS)")
+  escape.add_argument("-s", "--service", metavar="file", type=str,
+                      help="skip the SAS REST-API initiation and read the "
+                           "service request from the given file")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
-
+  escape.add_argument("-4", "--cfor", action="store_true", default=False,
+                      help="start the REST-API for the Cf-Or interface")
+  # Remaining arguments
+  escape.add_argument("modules", metavar="...", nargs=argparse.REMAINDER,
+                      help="optional POX modules")
+  # Parsing arguments
   args = parser.parse_args()
+
+  if args.clean:
+    # Tailor Python path for importing mics functions without initialize
+    # escape or util packages.
+    import sys
+    mn = os.path.abspath(os.path.dirname(__file__) + "/mininet")
+    misc = os.path.abspath(os.path.dirname(__file__) + "/pox/ext/escape/util")
+    sys.path.append(mn)
+    sys.path.append(misc)
+    if os.geteuid() != 0:
+      print "Cleanup process requires root privilege!"
+      return
+    else:
+      print "Run cleaning process..."
+      from misc import remove_junks
+      remove_junks()
+      print "Cleaned."
+      return
+
+  # Get base dir of this script
+  base_dir = os.path.abspath(os.path.dirname(__file__))
+
+  # Create absolute path for the pox.py initial script
+  cmd = os.path.join(base_dir, "pox/pox.py")
 
   # Construct POX init command according to argument
   # basic command
-
-  cmd = "./pox/pox.py unify"
-
-  if args.clean:
-    kill_remained_parts()
-    return
+  cmd = "%s unify" % cmd
 
   # Run the Infrastructure Layer with the required root privilege
   if args.full:
     cmd = "sudo %s --full" % cmd
+
+  # Read the service request NFFG from a file and start the mapping process
+  if args.service:
+    cmd = "%s --sg_file=%s" % (cmd, os.path.abspath(args.service))
 
   # Override optional external config file
   if args.config:
@@ -71,6 +106,10 @@ def main ():
   # Skip the Service Layer initiation and start the ROS agent REST-API
   if args.agent:
     cmd = "%s --agent" % cmd
+
+  # Start the REST-API for the ROS layer
+  if args.rosapi:
+    cmd = "%s --rosapi" % cmd
 
   # Start an REST-API for the Cf-Or interface
   if args.cfor:
@@ -86,28 +125,37 @@ def main ():
   if args.interactive:
     cmd = "%s py --completion" % cmd
 
+  # Add optional POX modules
+  cmd = "%s %s" % (cmd, " ".join(args.modules))
+
+  def __activate_virtualenv ():
+    """
+    Activate virtualenv based on activate script under bin/
+
+    :return: None
+    """
+    try:
+      activate_this = os.path.join(base_dir, 'bin/activate_this.py')
+      execfile(activate_this, dict(__file__=activate_this))
+    except IOError as e:
+      print "Virtualenv is not set properly:\n%s" % e
+      print "Remove the '.set_virtualenv' file or configure the virtualenv!"
+      os._exit(1)
+
+  # Activate virtual environment if necessary
+  if args.environment:
+    __activate_virtualenv()
+  else:
+    for entry in os.listdir(base_dir):
+      if entry.upper().startswith(".USE_VIRTUALENV"):
+        __activate_virtualenv()
+        break
+
   # Starting ESCAPEv2 (as a POX module)
   print "Starting ESCAPEv2..."
   if args.debug:
     print "Command: %s" % cmd
   os.system(cmd)
-
-
-def kill_remained_parts ():
-  # Tailor Python path for importing mics functions without intitialize
-  # escape or util packeges.
-  import sys
-  mn = os.path.abspath(os.path.dirname(__file__) + "/mininet")
-  misc = os.path.abspath(os.path.dirname(__file__) + "/pox/ext/escape/util")
-  sys.path.append(mn)
-  sys.path.append(misc)
-  from misc import remove_junks
-  if os.geteuid() != 0:
-    print "Cleanup process requires root privilege!"
-    return
-  else:
-    print "Run cleaning process..."
-    remove_junks()
 
 
 if __name__ == '__main__':

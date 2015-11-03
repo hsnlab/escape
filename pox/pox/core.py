@@ -187,8 +187,10 @@ class POXCore (EventMixin):
     RereadConfiguration,
   ])
 
-  version = (0,5,0)
-  version_name = "eel"
+  # version = (0,5,0)
+  version = (2,0,0)
+  # version_name = "eel"
+  version_name = "PoC"
 
   def __init__ (self, threaded_selecthub=True, epoll_selecthub=False,
                 handle_signals=True):
@@ -348,7 +350,8 @@ class POXCore (EventMixin):
     self.raiseLater(core, RereadConfiguration)
 
   def goUp (self):
-    log.debug(self.version_string + " going up...")
+    # log.debug(self.version_string + " going up...")
+    log.debug("ESCAPEv2 going up...")
 
     log.debug("Running on " + self._get_python_version())
     log.debug("Platform is " + self._get_platform_info())
@@ -374,7 +377,7 @@ class POXCore (EventMixin):
     self._waiter_notify()
 
     if self.running:
-      log.info(self.version_string + " is up.")
+      log.info("ESCAPEv2 is up.")
 
   def _waiter_notify (self):
     if len(self._waiters):

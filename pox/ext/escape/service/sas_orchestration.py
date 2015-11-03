@@ -16,9 +16,10 @@ Contains classes relevant to Service Adaptation Sublayer functionality.
 """
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.service.sas_mapping import ServiceGraphMapper
-from escape.service import log as log, LAYER_NAME
+from escape.service import log as log
 from pox.lib.revent.revent import EventMixin, Event
-from escape.util.mapping import AbstractOrchestrator
+from escape.util.mapping import AbstractOrchestrator, ProcessorError
+from pox.core import core
 
 
 class MissingVirtualViewEvent(Event):
@@ -43,7 +44,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
     :type layer_API: :any:`ServiceLayerAPI`
     :return: None
     """
-    super(ServiceOrchestrator, self).__init__(LAYER_NAME)
+    super(ServiceOrchestrator, self).__init__(layer_API=layer_API)
     log.debug("Init %s" % self.__class__.__name__)
     # Init SG Manager
     self.sgManager = SGManager()
@@ -52,11 +53,6 @@ class ServiceOrchestrator(AbstractOrchestrator):
     # collected
     self.virtResManager = VirtualResourceManager()
     self.virtResManager.addListeners(layer_API, weak=True)
-    # Init Service Graph Mapper
-    # Listeners must be weak references in order the layer API can garbage
-    # collected
-    # self.mapper is set by the AbstractOrchestrator's constructor
-    self.mapper.addListeners(layer_API, weak=True)
 
   def initiate_service_graph (self, sg):
     """
@@ -75,14 +71,19 @@ class ServiceOrchestrator(AbstractOrchestrator):
     virtual_view = self.virtResManager.virtual_view
     if virtual_view is not None:
       if isinstance(virtual_view, AbstractVirtualizer):
-        # Run orchestration before service mapping algorithm
-        nffg = self.mapper.orchestrate(sg, virtual_view)
-        log.debug("SG initiation is finished by %s" % self.__class__.__name__)
-        return nffg
+        try:
+          # Run orchestration before service mapping algorithm
+          nffg = self.mapper.orchestrate(sg, virtual_view)
+          log.debug("SG initiation is finished by %s" % self.__class__.__name__)
+          return nffg
+        except ProcessorError as e:
+          log.warning(
+            "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
       else:
         log.warning("Virtual view is not subclass of AbstractVirtualizer!")
     else:
       log.warning("Virtual view is not acquired correctly!")
+    # Only goes there if there is a problem
     log.error("Abort mapping process!")
 
 

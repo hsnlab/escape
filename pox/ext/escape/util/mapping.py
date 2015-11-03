@@ -18,8 +18,8 @@ import threading
 
 from escape import CONFIG
 from escape.util.misc import call_as_coop_task
-from pox.lib.revent.revent import EventMixin
-from pox import core
+from pox.lib.revent.revent import EventMixin, Event
+from pox.core import core
 
 
 class AbstractMappingStrategy(object):
@@ -52,6 +52,145 @@ class AbstractMappingStrategy(object):
     :rtype: NFFG
     """
     raise NotImplementedError("Derived class must override this function!")
+
+
+class ProcessorError(Exception):
+  """
+  Specific error signaling characteristics (one or more) does not meet the
+  requirements checked and/or defined in a inherited class
+  of :any:`ProcessorError`.
+  """
+  pass
+
+
+class AbstractMappingDataProcessor(object):
+  """
+  Abstract class for contain and perform validation steps.
+  """
+
+  def __init__ (self, layer_name):
+    super(AbstractMappingDataProcessor, self).__init__()
+    self._layer_name = layer_name
+
+  def pre_mapping_exec (self, input_graph, resource_graph):
+    """
+    Invoked right before the mapping algorithm.
+
+    The given attributes are direct reference to the :any:`NFFG` objects
+    which are forwarded to the algorithm.
+
+    If there is a return value considering True (e.g. True, not-empty
+    container, collection, an object reference etc.) or a kind of specific
+    ValidationError is thrown in the function the mapping process will be
+    skipped and the orchestration process will be aborted.
+
+    The Validator instance is created during the initialization of ESCAPEv2
+    and used the same instance before/after every mapping process to provide
+    a persistent way to cache data between validations.
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_graph: resource information
+    :type resource_graph: :any:`NFFG`
+    :return: need to abort the mapping process
+    :rtype: bool or None
+    """
+    raise NotImplementedError("Derived class must override this function!")
+
+  def post_mapping_exec (self, input_graph, resource_graph, result_graph):
+    """
+    Invoked right after if the mapping algorithm is completed without an error.
+
+    The given attributes are direct reference to the :any:`NFFG` objects
+    the mapping algorithm is worked on.
+
+    If there is a return value considering True (e.g. True, not-empty
+    container, collection, an object reference etc.) or a kind of specific
+    ValidationError is thrown in the function the orchestration process will
+    be aborted.
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_graph: resource information
+    :type resource_graph: :any:`NFFG`
+    :param result_graph: result of the mapping process
+    :type result_graph: :any:`NFFG`
+    :return: need to abort the mapping process
+    :rtype: bool or None
+    """
+    raise NotImplementedError("Derived class must override this function!")
+
+
+class ProcessorSkipper(AbstractMappingDataProcessor):
+  """
+  Default class for skipping validation and proceed to mapping algorithm.
+  """
+
+  def pre_mapping_exec (self, input_graph, resource_graph):
+    return False
+
+  def post_mapping_exec (self, input_graph, resource_graph, result_graph):
+    return False
+
+
+class PrePostMapNotifier(AbstractMappingDataProcessor):
+  """
+  Notifier class for notifying other POX modules about pre/post map event.
+
+  For future features, currently AbstractMapper explicitly raise the event.
+  """
+
+  def pre_mapping_exec (self, input_graph, resource_graph):
+    # Raise event for external POX modules
+    core.components[self._layer_name].raiseEvent(PreMapEvent,
+                                                 input_graph=input_graph,
+                                                 resource_graph=resource_graph)
+    # Return everything is OK.
+    return False
+
+  def post_mapping_exec (self, input_graph, resource_graph, result_graph):
+    # Raise event for external POX modules
+    core.components[self._layer_name].raiseEvent(PostMapEvent,
+                                                 input_graph=input_graph,
+                                                 resource_graph=resource_graph,
+                                                 result_graph=result_graph)
+    # Return everything is OK.
+    return False
+
+
+class PreMapEvent(Event):
+  """
+  Raised before the request graph is mapped to the (virtual) resources.
+
+  Event handlers might modify the request graph, for example, to
+  enforce some decomposition rules.
+  """
+
+  def __init__ (self, input_graph, resource_graph):
+    super(PreMapEvent, self).__init__()
+    self.input_graph = input_graph
+    self.resource_graph = resource_graph
+
+  @property
+  def sg (self):
+    """
+    For support backward compatibility.
+    """
+    return self.input_graph
+
+
+class PostMapEvent(Event):
+  """
+  Raised after the request graph is mapped to the (virtual) resources.
+
+  Event handlers might modify the mapped request graph.
+  """
+
+  def __init__ (self, input_graph, resource_graph, result_graph):
+    super(PostMapEvent, self).__init__()
+    self.input_graph = input_graph
+    self.resource_graph = resource_graph
+    self.result_graph = result_graph
 
 
 class AbstractMapper(EventMixin):
@@ -91,6 +230,7 @@ class AbstractMapper(EventMixin):
     :type threaded: bool
     :return: None
     """
+    self._layer_name = layer_name
     # Set threaded
     self._threaded = threaded if threaded is not None else CONFIG.get_threaded(
       layer_name)
@@ -108,11 +248,13 @@ class AbstractMapper(EventMixin):
                       AbstractMappingStrategy), "Mapping strategy is not " \
                                                 "subclass of " \
                                                 "AbstractMappingStrategy!"
+    self.processor = CONFIG.get_mapping_processor(layer_name)(layer_name)
     super(AbstractMapper, self).__init__()
 
-  def orchestrate (self, input_graph, resource_view):
+  def _perform_mapping (self, input_graph, resource_view):
     """
-    Abstract function for wrapping optional steps connected to orchestration.
+    Abstract function for wrapping optional steps connected to initiate
+    mapping algorithm.
 
     Implemented function call the mapping algorithm.
 
@@ -128,6 +270,84 @@ class AbstractMapper(EventMixin):
     :rtype: :any:`NFFG`
     """
     raise NotImplementedError("Derived class must override this function!")
+
+  def orchestrate (self, input_graph, resource_view):
+    """
+    Abstract function for wrapping optional steps connected to orchestration.
+
+    Implemented function call the mapping algorithm.
+
+    If a derived class of :any:`AbstractMappingDataProcessor` is set in the
+    global config under the name "PROCESSOR" then the this class performs
+    pre/post mapping steps.
+
+    After the pre/post-processor steps the relevant Mapping event will be
+    raised on the main API class of the layer!
+
+    .. warning::
+      Derived class have to override this function
+
+    Follows the Template Method design pattern.
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_view: resource information
+    :type resource_view: :any:`AbstractVirtualizer`
+    :raise: NotImplementedError
+    :return: mapped graph
+    :rtype: :any:`NFFG`
+    """
+    # If validator is not None call the pre/post functions
+    if CONFIG.get_processor_enabled(layer=self._layer_name):
+      if self.processor is not None:
+        # Get resource info
+        resource_graph = resource_view.get_resource_info()
+        # Preform pre-mapping validation
+        if self.processor.pre_mapping_exec(
+             input_graph=input_graph, resource_graph=resource_graph):
+          raise ProcessorError("Pre mapping validation is failed!")
+        # Raise event for external POX modules
+        if core.hasComponent(self._layer_name):
+          core.components[self._layer_name].raiseEvent(PreMapEvent,
+                                                       input_graph=input_graph,
+                                                       resource_graph=resource_graph)
+        # Invoke mapping algorithm
+        mapping_result = self._perform_mapping(input_graph=input_graph,
+                                               resource_view=resource_view)
+        # Perform post-mapping validation
+        # If the mapping is threaded skip post mapping here
+        if self._threaded:
+          return mapping_result
+        if self.processor.post_mapping_exec(input_graph=input_graph,
+                                            resource_graph=resource_graph,
+                                            result_graph=mapping_result):
+          raise ProcessorError("Post mapping validation is failed!")
+        # Raise event for external POX modules
+        if core.hasComponent(self._layer_name):
+          core.components[self._layer_name].raiseEvent(PostMapEvent,
+                                                       input_graph=input_graph,
+                                                       resource_graph=resource_graph,
+                                                       result_graph=mapping_result)
+        return mapping_result
+    else:
+      # Invoke only the mapping algorithm
+      # Get resource info
+      resource_graph = resource_view.get_resource_info()
+      # Raise event for external POX modules
+      if core.hasComponent(self._layer_name):
+        core.components[self._layer_name].raiseEvent(PreMapEvent,
+                                                     input_graph=input_graph,
+                                                     resource_graph=resource_graph)
+      # Invoke mapping algorithm
+      mapping_result = self._perform_mapping(input_graph=input_graph,
+                                             resource_view=resource_view)
+      # Raise event for external POX modules
+      if core.hasComponent(self._layer_name):
+        core.components[self._layer_name].raiseEvent(PostMapEvent,
+                                                     input_graph=input_graph,
+                                                     resource_graph=resource_graph,
+                                                     result_graph=mapping_result)
+      return mapping_result
 
   def _start_mapping (self, graph, resource):
     """
@@ -177,19 +397,19 @@ class AbstractOrchestrator(object):
   # Default Mapper class as a fallback mapper
   DEFAULT_MAPPER = None
 
-  def __init__ (self, layer_name, mapper=None, strategy=None):
+  def __init__ (self, layer_API, mapper=None, strategy=None):
     """
     Init.
 
-    :param layer_name: name of the layer which initialize this class. This
-      value is used to search the layer configuration in `CONFIG`
-    :type layer_name: str
+    :param layer_API: reference os the actual layer performing the orchestration
+    :type layer_API: :any:`AbstractAPI`
     :param mapper: additional mapper class (optional)
     :type mapper: :any:`AbstractMapper`
     :param strategy: override strategy class for the used Mapper (optional)
     :type strategy: :any:`AbstractMappingStrategy`
     :return: None
     """
+    layer_name = layer_API._core_name
     # Set Mapper
     if mapper is None:
       # Use the Mapper in CONFIG
@@ -202,4 +422,9 @@ class AbstractOrchestrator(object):
     assert issubclass(mapper, AbstractMapper), "Mapper is not subclass of " \
                                                "AbstractMapper!"
     self.mapper = mapper(strategy=strategy)
+    # Init Mapper listeners
+    # Listeners must be weak references in order the layer API can garbage
+    # collected
+    # self.mapper is set by the AbstractOrchestrator's constructor
+    self.mapper.addListeners(layer_API, weak=True)
     super(AbstractOrchestrator, self).__init__()

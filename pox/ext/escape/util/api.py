@@ -21,8 +21,8 @@ import os.path
 import threading
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
-from escape import __version__, CONFIG
-from escape.util.misc import SimpleStandaloneHelper
+from escape import __version__, CONFIG, __project__
+from escape.util.misc import SimpleStandaloneHelper, quit_with_error
 from pox.lib.revent import EventMixin
 from pox.core import core
 
@@ -95,41 +95,46 @@ class AbstractAPI(EventMixin):
 
     :return: None
     """
-    self.initialize()
-    # With fully event-driven communication between the layers the dependency
-    # handling takes care by listen_to_dependencies() run into a dead-lock.
-    # The root of this problem is the bidirectional or cyclic dependency
-    # between the components, so basically the layers will always wait to each
-    # other to be registered on core. To avoid this situation the naming
-    # convention of event handlers on which the dependency checking based is
-    # not followed (a.k.a. leave _handle_<component name>_<event name>) and
-    # the event listeners is set up manually. For automatic core registration
-    # the components have to contain dependencies explicitly.
-    for dep in self.dependencies:
-      if not self._standalone:
-        if core.core.hasComponent(dep):
-          dep_layer = core.components[dep]
-          # Register actual event handlers on dependent layer
-          dep_layer.addListeners(self)
-          # Register dependent layer's event handlers on actual layer
-          self.addListeners(dep_layer)
+    try:
+      self.initialize()
+      # With fully event-driven communication between the layers the dependency
+      # handling takes care by listen_to_dependencies() run into a dead-lock.
+      # The root of this problem is the bidirectional or cyclic dependency
+      # between the components, so basically the layers will always wait to each
+      # other to be registered on core. To avoid this situation the naming
+      # convention of event handlers on which the dependency checking based is
+      # not followed (a.k.a. leave _handle_<component name>_<event name>) and
+      # the event listeners is set up manually. For automatic core registration
+      # the components have to contain dependencies explicitly.
+      for dep in self.dependencies:
+        if not self._standalone:
+          if core.core.hasComponent(dep):
+            dep_layer = core.components[dep]
+            # Register actual event handlers on dependent layer
+            dep_layer.addListeners(self)
+            # Register dependent layer's event handlers on actual layer
+            self.addListeners(dep_layer)
+          else:
+            raise AttributeError("Component is not registered on core")
         else:
-          raise AttributeError("Component is not registered on core")
-      else:
-        # In case of standalone mode set up a StandaloneHelper in this object
-        # with the name of the dependency to handle raised events automatically
-        setattr(self, dep, SimpleStandaloneHelper(self, dep))
-    # Subscribe for GoingDownEvent to finalize API classes
-    # shutdown() function will be called if POX's core going down
-    core.addListenerByName('GoingDownEvent', self.shutdown)
-    # Subscribe core event for advanced functions
-    # Listeners' name must follow POX naming conventions
-    core.addListeners(self)
-    # Everything is set up an "running" so register the component on pox.core
-    # as a final step. Other dependent component can finish initialization now.
-    core.core.register(self._core_name, self)
-    # Set "running" config for convenience purposes
-    CONFIG.set_layer_loaded(self._core_name)
+          # In case of standalone mode set up a StandaloneHelper in this object
+          # with the name of the dependency to handle raised events
+          # automatically
+          setattr(self, dep, SimpleStandaloneHelper(self, dep))
+      # Subscribe for GoingDownEvent to finalize API classes
+      # shutdown() function will be called if POX's core going down
+      core.addListenerByName('GoingDownEvent', self.shutdown)
+      # Subscribe core event for advanced functions
+      # Listeners' name must follow POX naming conventions
+      core.addListeners(self)
+      # Everything is set up an "running" so register the component on pox.core
+      # as a final step. Other dependent component can finish initialization
+      # now.
+      core.core.register(self._core_name, self)
+      # Set "running" config for convenience purposes
+      CONFIG.set_layer_loaded(self._core_name)
+    except:
+      quit_with_error(msg="Abort ESCAPEv2 initialization...", exception=True)
 
   def initialize (self):
     """
@@ -247,7 +252,7 @@ class RequestCache(object):
       return self.UNKNOWN
 
 
-class RESTServer(HTTPServer, ThreadingMixIn):
+class RESTServer(ThreadingMixIn, HTTPServer):
   """
   Base HTTP server for RESTful API.
 
@@ -268,10 +273,13 @@ class RESTServer(HTTPServer, ThreadingMixIn):
       """
     HTTPServer.__init__(self, (address, port), RequestHandlerClass)
     # self._server = Server((address, port), RequestHandlerClass)
-    self._thread = threading.Thread(target=self.run)
+    self._thread = threading.Thread(target=self.run,
+                                    name="REST-%s:%s" % (address, port))
     self._thread.daemon = True
     self.started = False
     self.request_cache = RequestCache()
+    self.api_id = None
+    self.virtualizer_type = None
 
   def start (self):
     """
@@ -291,12 +299,15 @@ class RESTServer(HTTPServer, ThreadingMixIn):
     """
     Handle one request at a time until shutdown.
     """
-    self.RequestHandlerClass.log.debug(
-      "Init REST-API on %s:%d!" % self.server_address)
     # Start API loop
-    self.serve_forever()
-    self.RequestHandlerClass.log.debug(
-      "REST-API on %s:%d is shutting down..." % self.server_address)
+    # print "start"
+    try:
+      self.serve_forever()
+    except:
+      pass
+    # print "stop"
+    # self.RequestHandlerClass.log.debug(
+    #   "REST-API on %s:%d is shutting down..." % self.server_address)
 
 
 class RESTError(Exception):
@@ -343,7 +354,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   server_version = "ESCAPE/" + __version__
   static_prefix = "escape"
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': (), 'POST': (), 'PUT': (), 'DELETE': ()}
+  request_perm = {'GET': ('ping', 'version', 'operations'),
+                  'POST': ('ping',)}
   # Name of the layer API to which the server bounded
   bounded_layer = None
   # Name mapper to avoid Python naming constraint (dict: rpc-name: mapped name)
@@ -628,3 +640,37 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     else:
       self.log.error('Error: No component has registered with the name: %s, '
                      'ABORT function call!' % self.bounded_layer)
+
+  ##############################################################################
+  # Basic REST-API functions
+  ##############################################################################
+
+  def ping (self):
+    """
+    For testing REST API aliveness and reachability.
+    """
+    response_body = "OK"
+    self.send_response(200)
+    self.send_header('Content-Type', 'text/plain')
+    self.send_header('Content-Length', len(response_body))
+    self.send_REST_headers()
+    self.end_headers()
+    self.wfile.write(response_body)
+
+  def version (self):
+    """
+    Return with version
+
+    :return: None
+    """
+    self.log.debug("Call REST-API function: version")
+    self._send_json_response({"name": __project__, "version": __version__})
+
+  def operations (self):
+    """
+    Return with allowed operations
+
+    :return: None
+    """
+    self.log.debug("Call REST-API function: operations")
+    self._send_json_response(self.request_perm)

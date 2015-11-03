@@ -8,3 +8,12 @@ The *service.py* main module
    :exclude-members: __dict__,__weakref__,__module__
    :undoc-members:
    :show-inheritance:
+
+Service related classes
++++++++++++++++++++++++
+
+.. toctree::
+    :maxdepth: 2
+    :titlesonly:
+
+    service/service

@@ -165,10 +165,17 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     """
     log.debug(
       "Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
-
     # Create Single BiSBiS NFFG
     nffg = NFFG(id="SingleBiSBiS-NFFG", name="Single-BiSBiS-View")
+    if self.global_view is None:
+      log.error(
+        "Missing global view from %s. Skip OneBiSBiS generation!" %
+        self.__class__.__name__)
+      return
     dov = self.global_view.get_resource_info()
+    if dov is None:
+      log.error("Missing resource info from DoV. Skip OneBisBis generation!")
+      return
     # Create the single BiSBiS infra
     sbb = nffg.add_infra(id="SingleBiSbiS", name="Single-BiSBiS",
                          domain=NFFG.DOMAIN_VIRTUAL,
@@ -229,6 +236,7 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
                                                 bandwidth=l.bandwidth)
         log.debug("Add connection: %s" % link1)
         log.debug("Add connection: %s" % link2)
+    log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return nffg
 
@@ -241,6 +249,9 @@ class VirtualizerManager(EventMixin):
   """
   # Events raised by this class
   _eventMixin_events = {MissingGlobalViewEvent}
+
+  TYPES = {"GLOBAL": GlobalViewVirtualizer,
+           "SINGLE": SingleBiSBiSVirtualizer}
 
   def __init__ (self):
     """
@@ -296,13 +307,17 @@ class VirtualizerManager(EventMixin):
     """
     del self._virtualizers[DoV]
 
-  def get_virtual_view (self, virtualizer_id):
+  def get_virtual_view (self, virtualizer_id, type=None, cls=None):
     """
     Return the Virtual View as a derived class of :class:`AbstractVirtualizer
     <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`.
 
     :param virtualizer_id: unique id of the requested Virtual view
     :type virtualizer_id: int or str
+    :param type: type of the Virtualizer predefined in this class
+    :type type: str
+    :param cls: specific Virtualizer class if type is not given
+    :type cls: :any:`AbstractVirtualizer`
     :return: virtual view
     :rtype: :any:`AbstractVirtualizer`
     """
@@ -310,28 +325,31 @@ class VirtualizerManager(EventMixin):
       self.__class__.__name__, virtualizer_id))
     # If this is the first request, need to generate the view
     if virtualizer_id not in self._virtualizers:
-      # Pass the global resource as the DomainVirtualizer
-      self._virtualizers[virtualizer_id] = self._generate_virtual_view(
-        virtualizer_id)
+      if type is not None:
+        # SINGLE: generate a trivial Single BiS-BiS virtualizer
+        if type == "SINGLE":
+          self._generate_single_view(id=virtualizer_id)
+        # GLOBAL: generate a non-filtering Global View Virtualizer
+        elif type == "GLOBAL":
+          self._generate_global_view(id=virtualizer_id)
+        # Not supported format
+        else:
+          log.warning("Unsupported Virtualizer type: %s" % type)
+          return
+      # If a specific AbstractVirtualizer type was given
+      elif cls is not None:
+        log.debug(
+          "Generating Virtualizer type: %s with id: %s" % (cls.__name__, id))
+        self._virtualizers[id] = cls(self.dov, id)
+      # Generate a Single BiS-BiS Virtualizer by default
+      else:
+        # Virtualizer type is not defined: Use SingleBiSBiSVirtualizer by
+        # default
+        self._generate_single_view(id=virtualizer_id)
     # Return Virtualizer
     return self._virtualizers[virtualizer_id]
 
-  def _generate_virtual_view (self, id):
-    """
-    Generate a missing :class:`SingleBisBisVirtualizer` for other layer
-    using global view (DoV) and a given layer id.
-
-    :param id: layer ID
-    :type id: int
-    :return: generated Virtualizer derived from AbstractVirtualizer
-    :rtype: :any:`SingleBiSBiSVirtualizer`
-    """
-    log.debug("Generating Virtualizer for upper layer (layer ID: %s)" % id)
-    # Requesting a reference to DoV and create the trivial 1 Bis-Bis virtual
-    # view
-    return SingleBiSBiSVirtualizer(self.dov, id)
-
-  def generate_single_view (self, id):
+  def _generate_single_view (self, id):
     """
     Generate a Single BiSBiS virtualizer, store and return with it.
 
@@ -342,8 +360,29 @@ class VirtualizerManager(EventMixin):
     """
     if id in self._virtualizers:
       log.warning(
-        "Requested Single BiS-BiS Virtualizer with ID: %s is already exist! "
+        "Requested Virtualizer with ID: %s is already exist! "
         "Virtualizer creation skipped..." % id)
     else:
+      log.debug(
+        "Generating Single BiSBiS Virtualizer with id: %s" % id)
       self._virtualizers[id] = SingleBiSBiSVirtualizer(self.dov, id)
+    return self._virtualizers[id]
+
+  def _generate_global_view (self, id):
+    """
+    Generate a Global View virtualizer, store and return with it.
+
+    :param id: unique virtualizer id
+    :type id: int or str
+    :return: generated Virtualizer
+    :rtype: :any:`GlobalViewVirtualizer`
+    """
+    if id in self._virtualizers:
+      log.warning(
+        "Requested Virtualizer with ID: %s is already exist! "
+        "Virtualizer creation skipped..." % id)
+    else:
+      log.debug(
+        "Generating Global View Virtualizer with id: %s" % id)
+      self._virtualizers[id] = GlobalViewVirtualizer(self.dov, id)
     return self._virtualizers[id]

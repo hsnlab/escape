@@ -87,4 +87,5 @@
 #    modules.rst
 
 make html
+make latexpdf
 #sphinx-build -b html -d build/doctrees   source build/html

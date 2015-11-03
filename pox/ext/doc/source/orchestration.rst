@@ -8,3 +8,12 @@ The *orchestration.py* main module
    :exclude-members: __dict__,__weakref__,__module__
    :undoc-members:
    :show-inheritance:
+
+Orchestration related classes
++++++++++++++++++++++++++++++
+
+.. toctree::
+    :maxdepth: 2
+    :titlesonly:
+
+    orchest/orchest

@@ -20,7 +20,6 @@ from escape import CONFIG
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest import LAYER_NAME
-from escape.service.sas_API import InstantiateNFFGEvent
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
@@ -81,7 +80,7 @@ class InstantiationFinishedEvent(Event):
 
 class CfOrRequestHandler(AbstractRequestHandler):
   """
-  Request Handler for the Cf-OR interface..
+  Request Handler for the Cf-OR interface.
 
   .. warning::
     This class is out of the context of the recoco's co-operative thread
@@ -91,16 +90,18 @@ class CfOrRequestHandler(AbstractRequestHandler):
     relevant helper function of core object: `callLater`/`raiseLater` or use
     `schedule_as_coop_task` decorator defined in util.misc on the called
     function.
+
+  Contains handler functions for REST-API.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('ping', 'get_config'),
+  request_perm = {'GET': ('ping', 'version', 'operations', 'get_config'),
                   'POST': ('ping', 'get_config', 'edit_config')}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'orchestration'
   static_prefix = "cfor"
   # Logger. Must define.
-  log = log.getChild("Cf-Or")
+  log = log.getChild("[Cf-Or]")
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {'get-config': "get_config",
                 'edit-config': "edit_config"}
@@ -111,24 +112,15 @@ class CfOrRequestHandler(AbstractRequestHandler):
     """
     AbstractRequestHandler.__init__(self, request, client_address, server)
 
-  def ping (self):
-    """
-    For testing REST API aliveness and reachability.
-    """
-    response_body = "OK"
-    self.send_response(200)
-    self.send_header('Content-Type', 'text/plain')
-    self.send_header('Content-Length', len(response_body))
-    self.send_REST_headers()
-    self.end_headers()
-    self.wfile.write(response_body)
-
   def get_config (self):
     """
     Response configuration.
     """
     log.info("Call Cf-Or function: get-config")
     config = self._proceed_API_call('api_cfor_get_config')
+    if config is None:
+      self.send_error(404, message="Resource info is missing!")
+      return
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(config))
@@ -160,9 +152,11 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     relevant helper function of core object: `callLater`/`raiseLater` or use
     `schedule_as_coop_task` decorator defined in util.misc on the called
     function.
+
+  Contains handler functions for REST-API.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('ping', 'get_config'),
+  request_perm = {'GET': ('ping', 'version', 'operations', 'get_config'),
                   'POST': ('ping', 'get_config', 'edit_config')}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
@@ -170,7 +164,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   # Set special prefix to imitate OpenStack agent API
   static_prefix = "escape"
   # Logger. Must define.
-  log = log.getChild("Sl-Or-API")
+  log = log.getChild("[Sl-Or]")
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {'get-config': "get_config",
                 'edit-config': "edit_config"}
@@ -181,24 +175,15 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     """
     AbstractRequestHandler.__init__(self, request, client_address, server)
 
-  def ping (self):
-    """
-    For testing REST API aliveness and reachability.
-    """
-    response_body = "OK"
-    self.send_response(200)
-    self.send_header('Content-Type', 'text/plain')
-    self.send_header('Content-Length', len(response_body))
-    self.send_REST_headers()
-    self.end_headers()
-    self.wfile.write(response_body)
-
   def get_config (self):
     """
     Response configuration.
     """
     log.info("Call REST-API function: get-config")
-    config = self._proceed_API_call('api_agent_get_config')
+    config = self._proceed_API_call('api_ros_get_config')
+    if config is None:
+      self.send_error(404, message="Resource info is missing!")
+      return
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(config))
@@ -213,9 +198,30 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    # Rewrite domain name to INTERNAL
+    # nffg = self._update_REMOTE_ESCAPE_domain(nffg_part=nffg)
     log.debug("Parsed NFFG install request: %s" % nffg)
-    self._proceed_API_call('api_agent_edit_config', nffg)
+    self._proceed_API_call('api_ros_edit_config', nffg)
     self.send_acknowledge()
+
+  def _update_REMOTE_ESCAPE_domain (self, nffg_part):
+    """
+    Update domain descriptor of infras: REMOTE -> INTERNAL
+
+    :param nffg_part: NF-FG need to be updated
+    :type nffg_part: :any:`NFFG`
+    :return: updated NFFG
+    :rtype: :any:`NFFG`
+    """
+    log.debug("Rewrite domain name of incoming NFFG to INTERNAL...")
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      if infra.domain == 'REMOTE':
+        infra.domain = 'INTERNAL'
+    return nffg_part
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -251,14 +257,21 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.debug("Initializing Resource Orchestration Sublayer...")
     self.resource_orchestrator = ResourceOrchestrator(self)
     if self._nffg_file:
-      self._read_json_from_file(self._nffg_file)
-    # Initiate Agent REST-API if needed
-    if self._agent:
-      self._initiate_agent_api()
+      try:
+        service_request = self._read_json_from_file(self._nffg_file)
+        service_request = NFFG.parse(service_request)
+        self.__proceed_instantiation(nffg=service_request)
+      except (ValueError, IOError, TypeError) as e:
+        log.error(
+          "Can't load service request from file because of: " + str(e))
+      else:
+        log.info("Graph representation is loaded successfully!")
+    # Initiate ROS REST-API if needed
+    if self._agent or self._rosapi:
+      self._initiate_ros_api()
     # Initiate Cf-Or REST-API if needed
     if self._cfor:
       self._initiate_cfor_api()
-    # self._initiate_agent_api()
     log.info("Resource Orchestration Sublayer has been initialized!")
 
   def shutdown (self, event):
@@ -267,12 +280,19 @@ class ResourceOrchestrationAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
     """
     log.info("Resource Orchestration Sublayer is going down...")
-    if hasattr(self, 'agent_api') and self.agent_api:
-      self.agent_api.stop()
+    if self._agent or self._rosapi:
+      log.debug("REST-API [Sl-Or] is shutting down...")
+      # self.ros_api.stop()
+    if self._cfor:
+      log.debug("REST-API [Cf-Or] is shutting down...")
+      # self.cfor_api.stop()
 
-  def _initiate_agent_api (self):
+  def _initiate_ros_api (self):
     """
     Initialize and setup REST API in a different thread.
+
+    If agent_mod is set rewrite the received NFFG domain from REMOTE to
+    INTERNAL.
 
     :return: None
     """
@@ -281,8 +301,18 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.bounded_layer = self._core_name
     # can override from global config
     handler.prefix = CONFIG.get_ros_agent_prefix()
-    self.agent_api = RESTServer(handler, *CONFIG.get_ros_agent_address())
-    self.agent_api.start()
+    address = CONFIG.get_ros_agent_address()
+    self.ros_api = RESTServer(handler, *address)
+    # Virtualizer ID of the Sl-Or interface
+    self.ros_api.api_id = "Sl-Or"
+    # Virtualizer type for Sl-Or API
+    self.ros_api.virtualizer_type = CONFIG.get_api_virtualizer(
+      layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
+    handler.log.debug(
+      "Init REST-API [Sl-Or] on %s:%s!" % (address[0], address[1]))
+    self.ros_api.start()
+    if self._agent:
+      log.info("REST-API is set in AGENT mode")
 
   def _initiate_cfor_api (self):
     """
@@ -295,7 +325,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.bounded_layer = self._core_name
     # can override from global config
     handler.prefix = CONFIG.get_cfor_api_prefix()
-    self.cfor_api = RESTServer(handler, *CONFIG.get_cfor_api_address())
+    address = CONFIG.get_cfor_api_address()
+    self.cfor_api = RESTServer(handler, *address)
+    # Virtualizer ID of the Cf-Or interface
+    self.cfor_api.api_id = "Cf-Or"
+    # Virtualizer type for Cf-Or API
+    self.cfor_api.virtualizer_type = CONFIG.get_api_virtualizer(
+      layer_name=LAYER_NAME, api_name=self.cfor_api.api_id)
+    handler.log.debug(
+      "Init REST-API [Cf-Or] on %s:%s!" % (address[0], address[1]))
     self.cfor_api.start()
 
   def _handle_NFFGMappingFinishedEvent (self, event):
@@ -313,36 +351,63 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # Agent API functions starts here
   ##############################################################################
 
-  def api_agent_get_config (self):
+  def api_ros_get_config (self):
     """
     Implementation of REST-API RPC: get-config.
 
     :return: dump of global view (DoV)
     :rtype: str
     """
-    log.getChild('API').info("Generate Single BiSBiS topo description...")
-    dov = self.resource_orchestrator.virtualizerManager.dov
-    if dov is not None:
-      return dov.get_resource_info().dump()
+    print self.__dict__
+    log.getChild('Sl-Or').info("Requesting Virtualizer for REST-API")
+    virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
+      virtualizer_id=self.ros_api.api_id, type=self.ros_api.virtualizer_type)
+    if virt is not None:
+      log.getChild('Sl-Or').info("Generate topo description...")
+      res = virt.get_resource_info()
+      return res.dump() if res is not None else None
+    else:
+      log.error(
+        "Virtualizer(id=%s) assigned to REST-API is not found!" %
+        self.ros_api.api_id)
 
-  class InstallEventHelper(object):
-    """
-    Helper class for emulating event.
-    """
-    _core_name = "RemoteESCAPE"
-
-  def api_agent_edit_config (self, nffg):
+  def api_ros_edit_config (self, nffg):
     """
     Implementation of REST-API RPC: edit-config
 
     :param nffg: NFFG need to deploy
     :type nffg: :any:`NFFG`
     """
-    log.getChild('API').info("Invoke install_nffg on %s with SG: %s " % (
+    log.getChild('Sl-Or').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
-    event = InstantiateNFFGEvent(nffg=nffg)
-    event.source = self.InstallEventHelper
-    self._handle_InstantiateNFFGEvent(event=event)
+    if self._agent:
+      # ESCAPE serves as a local orchestrator, probably with infrastructure
+      # layer --> rewrite domain
+      nffg = self.__update_nffg(nffg_part=nffg)
+    # ESCAPE serves as a global or proxy orchestrator
+    self.__proceed_instantiation(nffg=nffg)
+
+  def __update_nffg (self, nffg_part):
+    """
+    Update domain descriptor of infras: REMOTE -> INTERNAL
+
+    :param nffg_part: NF-FG need to be updated
+    :type nffg_part: :any:`NFFG`
+    :return: updated NFFG
+    :rtype: :any:`NFFG`
+    """
+    log.debug("Rewrite received NFFG domain to INTERNAL...")
+    rewritten = []
+    for infra in nffg_part.infras:
+      if infra.infra_type not in (
+           NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+           NFFG.TYPE_INFRA_SDN_SW):
+        continue
+      if infra.domain == 'REMOTE':
+        infra.domain = 'INTERNAL'
+        rewritten.append(infra.id)
+    log.debug("Rewritten infrastructure nodes: %s" % rewritten)
+    return nffg_part
 
   ##############################################################################
   # Cf-Or API functions starts here
@@ -355,14 +420,17 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of a single BiSBiS view based on DoV
     :rtype: str
     """
-    # Request SingleBiSBiS for Cf-Or interface
-    if "CfOr" in self.resource_orchestrator.virtualizerManager._virtualizers:
-      view = self.resource_orchestrator.virtualizerManager.get_virtual_view(
-        "CfOr")
+    log.getChild('Cf-Or').info("Requesting Virtualizer for REST-API")
+    virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
+      virtualizer_id=self.cfor_api.api_id, type=self.cfor_api.virtualizer_type)
+    if virt is not None:
+      log.getChild('Cf-Or').info("Generate topo description...")
+      res = virt.get_resource_info()
+      return res.dump() if res is not None else None
     else:
-      view = self.resource_orchestrator.virtualizerManager.generate_single_view(
-        "CfOr")
-    return view.get_resource_info().dump()
+      log.error(
+        "Virtualizer(id=%s) assigned to REST-API is not found!" %
+        self.cfor_api.api_id)
 
   def api_cfor_edit_config (self, nffg):
     """
@@ -371,17 +439,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :param nffg: NFFG need to deploy
     :type nffg: :any:`NFFG`
     """
-    log.getChild('API').info("Invoke install_nffg on %s with SG: %s " % (
+    log.getChild('Cf-Or').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
-    event = InstantiateNFFGEvent(nffg=nffg)
-    event.source = self.InstallEventHelper
-    self._handle_InstantiateNFFGEvent(event=event)
+    self.__proceed_instantiation(nffg=nffg)
 
   ##############################################################################
   # UNIFY Sl- Or API functions starts here
   ##############################################################################
 
-  @schedule_as_coop_task
   def _handle_InstantiateNFFGEvent (self, event):
     """
     Instantiate given NF-FG (UNIFY Sl - Or API).
@@ -392,14 +457,29 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Received NF-FG: %s from %s layer" % (
       event.nffg, str(event.source._core_name).title()))
+    self.__proceed_instantiation(nffg=event.nffg)
+
+  @schedule_as_coop_task
+  def __proceed_instantiation (self, nffg):
+    """
+    Helper function to instantiate the NFFG mapping from different source.
+
+    :param nffg: pre-mapped service request
+    :type nffg: :any:`NFFG`
+    :return: None
+    """
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
-      self.__class__.__name__, event.nffg.name))
-    mapped_nffg = self.resource_orchestrator.instantiate_nffg(event.nffg)
+      self.__class__.__name__, nffg.name))
+    mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
     log.getChild('API').debug(
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
     if mapped_nffg is not None:
-      self._install_NFFG(mapped_nffg)
+      self._install_NFFG(mapped_nffg=mapped_nffg)
+    else:
+      log.warning(
+        "Something went wrong in service request instantiation: mapped service "
+        "request is missing!")
 
   def _install_NFFG (self, mapped_nffg):
     """

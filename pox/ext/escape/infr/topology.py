@@ -18,14 +18,13 @@ Wrapper module for handling emulated test topology based on Mininet.
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.topo import Topo
-from mininet.link import TCLink
+from mininet.link import TCLink, Intf
 from mininet.term import makeTerms
-
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
-from escape.util.misc import quit_with_error, call_as_coop_task
+from escape.util.misc import quit_with_error, get_ifaces
 
 
 class AbstractTopology(Topo):
@@ -149,7 +148,7 @@ class FallbackStaticTopology(AbstractTopology):
     nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="l5")
     # Duplicate one-way static links to become undirected in order to fit to
     # the orchestration algorithm
-    nffg.duplicate_static_links()
+    # nffg.duplicate_static_links()
     return nffg
 
 
@@ -234,7 +233,8 @@ class FallbackDynamicTopology(AbstractTopology):
     nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="l5", **linkres)
     # Duplicate one-way static links to become undirected in order to fit to
     # the orchestration algorithm
-    nffg.duplicate_static_links()
+    # No need for that, ESCAPENetworkBridge do this later
+    # nffg.duplicate_static_links()
     return nffg
 
 
@@ -327,6 +327,20 @@ class ESCAPENetworkBridge(object):
     """
     return self.__mininet
 
+  def runXTerms (self):
+    """
+    Start an xterm to every SAP if it's enabled in the global config. SAP are
+    stored as hosts in the Mininet class.
+
+    :return: None
+    """
+    if CONFIG.get_SAP_xterms():
+      log.debug("Starting xterm on SAPS...")
+      terms = makeTerms(nodes=self.__mininet.hosts, title='SAP', term="xterm")
+      self.xterms.extend(terms)
+    else:
+      log.debug("Skip starting xterms on SAPS according to global config")
+
   def start_network (self):
     """
     Start network.
@@ -341,53 +355,7 @@ class ESCAPENetworkBridge(object):
                           logger=LAYER_NAME)
         self.started = True
         log.debug("Mininet network has been started!")
-        log.debug("Starting xterm on SAPS...")
-        terms = makeTerms(self.__mininet.hosts, 'host')
-        self.xterms.extend(terms)
-
-        nffg = self.topo_desc
-        # FIXME - SIGCOMM, move port creation into topo creation with MN's
-        # interface definition ???
-        # Create inter-domain SAP ports, add phy interface to OVS
-        for sap in {s for s in nffg.saps if s.domain is not None}:
-          sap_switch_links = [(u, v, l) for u, v, l in
-                              nffg.network.out_edges_iter((sap.id,), data=True)
-                              if l.dst.node.type == NFFG.TYPE_INFRA]
-          u, v, l = sap_switch_links[0]
-          sw_name = nffg.network.node[v].id
-          import os
-          for sw in self.__mininet.switches:
-            # print sw.name
-            if sw.name == sw_name:
-              import os
-              os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
-              log.debug("Add physical port as inter-domain SAP: %s -> %s" %
-                        (sap.domain, sap.id))
-
-              # Attempt #1:
-              # intf = Intf(sap.domain, sw)
-              # log.debug("Adding physical port as inter-domain SAP: %s -> %s" %
-              #           (sap.domain, sap.id))
-
-              # Attempt #2:
-              # remote_sw = RemoteSwitch('remote', dpid=0x14c5e0c376e24)
-              # r_mac = 0x4c5e0c376e24
-              # r_port = 2
-              # intfName = sap.domain
-              # # r_mac = None # unknown, r.params['remote_mac']
-              # # r_port = r.params['remote_port']
-              # print '\tadd hw interface (%s) to node (%s)' % (intfName,
-              # sw.name)
-              # # This hack avoids calling __init__ which always makeIntfPair()
-              # link = Link.__new__(Link)
-              # i1 = Intf(intfName, node=sw, link=link)
-              # i2 = Intf(intfName, node=remote_sw, link=link,
-              #           mac=r_mac, port=r_port)
-              # i2.mac = r_mac # mn runs 'ifconfig', which resets mac to None
-              # #
-              # link.intf1, link.intf2 = i1, i2
-              # os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
-              continue
+        self.runXTerms()
       else:
         log.warning(
           "Mininet network has already started! Skipping start task...")
@@ -429,7 +397,12 @@ class ESCAPENetworkBridge(object):
         os.killpg(term.pid, signal.SIGTERM)
       # Schedule a cleanup as a coop task to avoid threading issues
       from escape.util.misc import remove_junks
-      call_as_coop_task(remove_junks, log=log)
+      # call_as_coop_task(remove_junks, log=log)
+      # threading.Thread(target=remove_junks, name="cleanup", args=(log,
+      # )).start()
+      # multiprocessing.Process(target=remove_junks, name="cleanup",
+      #                         args=(log,)).start()
+      remove_junks(log=log)
 
   def get_agent_to_switch (self, switch_name):
     """
@@ -599,6 +572,33 @@ class ESCAPENetworkBuilder(object):
                               dst=mn_dst_node, dst_port=dst_port,
                               bw=edge.bandwidth, delay=str(edge.delay) + 'ms')
       created_mn_links[edge.id] = link
+
+    ## Set port properties of SAP nodes.
+    #  A possible excerpt from a escape-mn-topo.nffg file:
+    #  "ports": [{ "id": 1,
+    #              "property": ["ip:10.0.10.1/24"] }]
+    #
+    for n in {s for s in nffg.saps if not s.domain}:
+      mn_node = self.mn.getNodeByName(n.id)
+      for port in n.ports:
+        # ip should be something like '10.0.123.1/24'.
+        ip = port.get_property('ip')
+        if ip is None:
+          continue
+        intf = mn_node.intfs.get(port.id)
+        if intf is None:
+          log.warn(("Port %s of node %s is not connected,"
+                    "it will remain unconfigured!") % (port.id, n.name))
+          continue
+        if intf == mn_node.defaultIntf():
+          # Workaround a bug in Mininet
+          mn_node.params.update({'ip': ip})
+        mn_node.setIP(ip, intf=intf)
+
+    # For inter-domain SAPs no need to create host/xterm just add the SAP as
+    # a port to the border Node
+    # Iterate inter-domain SAPs
+    self.bind_inter_domain_SAPs(nffg=nffg)
     log.info("Topology creation from NFFG has been finished!")
 
   def __init_from_AbstractTopology (self, topo_class):
@@ -645,7 +645,7 @@ class ESCAPENetworkBuilder(object):
           else:
             raise RuntimeError("Unsupported file format: %s!" % format)
       except IOError:
-        log.debug("Additional topology file not found: %s" % path)
+        log.warning("Additional topology file not found: %s" % path)
         raise TopologyBuilderException("Missing topology file!")
       except ValueError as e:
         log.error(
@@ -823,6 +823,51 @@ class ESCAPENetworkBuilder(object):
     log.debug("Create SAP with name: %s" % name)
     return self.mn.addHost(name=name, cls=cls, **params)
 
+  def bind_inter_domain_SAPs (self, nffg):
+    """
+    Search for inter-domain SAPs in given :any:`NFFG`, create them as a
+    switch port and bind them to a physical interface given in sap.domain
+    attribute.
+
+    :param nffg: topology description
+    :type nffg: :any:`NFFG`
+    :return: None
+    """
+    log.debug("Search for inter-domain SAPs...")
+    # Create the inter-domain SAP ports
+    for sap in {s for s in nffg.saps if s.domain is not None}:
+      # NFFG is the raw NFFG without link duplication --> iterate over every
+      # edges in or out there should be only one link in this case
+      # e = (u, v, data)
+      sap_switch_links = [e for e in
+                          nffg.network.edges_iter(data=True) if sap.id in e]
+      try:
+        if sap_switch_links[0][0] == sap.id:
+          border_node = sap_switch_links[0][1]
+        else:
+          border_node = sap_switch_links[0][0]
+      except IndexError:
+        log.error(
+          "Link for inter-domain SAP: %s is not found. Skip SAP creation..."
+          % sap)
+        continue
+      log.debug("Detected inter-domain SAP: %s connected to border Node: %s" % (
+        sap, border_node))
+      sw_name = nffg.network.node[border_node].id
+      for sw in self.mn.switches:
+        # print sw.name
+        if sw.name == sw_name:
+          if sap.domain not in get_ifaces():
+            log.warning(
+              "Physical interface: %s is not found! Skip binding..."
+              % sap.domain)
+            continue
+          log.debug("Add physical port as inter-domain SAP: %s -> %s" %
+                    (sap.domain, sap.id))
+          # Add interface to border switch in Mininet
+          # os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
+          sw.addIntf(intf=Intf(name=sap.domain, node=sw))
+
   def create_Link (self, src, dst, src_port=None, dst_port=None, **params):
     """
     Create an undirected connection between src and dst.
@@ -892,7 +937,7 @@ class ESCAPENetworkBuilder(object):
       else:
         raise RuntimeError("Unsupported topology format: %s" % type(topo))
       return self.get_network()
-    except SystemExit as e:
+    except SystemExit:
       quit_with_error("Mininet core files is not installed and/or available!")
     except TopologyBuilderException:
       if self.fallback:

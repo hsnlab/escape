@@ -17,7 +17,9 @@ Contains miscellaneous helper functions.
 from functools import wraps
 import logging
 import os
+import re
 from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
+import traceback
 import warnings
 import weakref
 
@@ -119,7 +121,7 @@ def enum (*sequential, **named):
   return type('enum', (), enums)
 
 
-def quit_with_error (msg, logger=None):
+def quit_with_error (msg, logger=None, exception=False):
   """
   Helper function for quitting in case of an error.
 
@@ -130,16 +132,16 @@ def quit_with_error (msg, logger=None):
   :return: None
   """
   from pox.core import core
-  import sys
-
-  if isinstance(logger, logging.Logger):
-    logger.fatal(msg)
-  elif isinstance(logger, str):
-    core.getLogger(logger).fatal(msg)
-  else:
-    core.getLogger("core").fatal(msg)
+  if isinstance(logger, str):
+    logger = core.getLogger(logger)
+  elif not isinstance(logger, logging.Logger):
+    logger = core.getLogger("core")
+  logger.fatal(msg)
+  if exception:
+    logger.fatal("Caught exception:")
+    traceback.print_exc()
   core.quit()
-  sys.exit(1)
+  os._exit(1)
 
 
 class SimpleStandaloneHelper(object):
@@ -236,15 +238,28 @@ def remove_junks (log=logging.getLogger("cleanup")):
   run_silent(r"sudo pkill -9 -f netconfd")
   run_silent(r"sudo pkill -9 -f clickhelper")
   run_silent(r"sudo pkill -9 -f click")
-  log.debug("Cleanup any remained veth pair...")
+  log.debug("Delete any remained veth pair...")
   veths = run_cmd(r"ip link show | egrep -o '(uny_\w+)'").split('\n')
   # only need to del one end of the veth pair
   for veth in veths[::2]:
     if veth != '':
       run_silent(r"sudo ip link del %s" % veth)
+  log.debug("Remove remained tmp files and stacked netconfd sockets...")
+  for f in os.listdir('/tmp'):
+    if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
+      os.remove(os.path.join('/tmp/', f))
   log.debug("Cleanup any Mininet-specific junk...")
   # Call Mininet's own cleanup stuff
   from mininet.clean import cleanup
   cleanup()
-  log.debug("Cleanup remained tmp files...")
-  run_silent(r"rm  /tmp/*-startup-cfg.xml")
+
+
+def get_ifaces ():
+  """
+  Return the list of all defined interface. Rely on 'ifconfig' command.
+
+  :return: list of interfaces
+  :rtype: list
+  """
+  return [iface.split(' ', 1)[0] for iface in os.popen('ifconfig -a -s') if
+          not iface.startswith('Iface')]

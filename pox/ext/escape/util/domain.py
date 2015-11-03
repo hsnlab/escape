@@ -14,14 +14,19 @@
 Implement the supporting classes for domain adapters.
 """
 import urlparse
-from requests import Session
+from requests import Session, ConnectionError, HTTPError, Timeout
+import time
 
 from escape import __version__
 from escape.adapt import log
 from escape.util.misc import enum
 from escape.util.nffg import NFFG
+from escape.util.pox_extension import OpenFlowBridge, \
+  ExtendedOFConnectionArbiter
+from pox.lib.addresses import EthAddr
 from pox.lib.recoco import Timer
 from pox.lib.revent import EventMixin, Event
+import pox.openflow.libopenflow_01 as of
 
 
 class DomainChangedEvent(Event):
@@ -366,6 +371,162 @@ class AbstractESCAPEAdapter(EventMixin):
     raise NotImplementedError("Not implemented yet!")
 
 
+class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
+  """
+  Abstract class for different domain adapters wich need SDN/OF controller
+  capability.
+  """
+  # Keepalive constants
+  _interval = 20
+  _switch_timeout = 5
+  # Static mapping of infra IDs and DPIDs
+  infra_to_dpid = {}
+  dpid_to_infra = {}
+  saps = {}
+
+  def __init__ (self, name=None, address="127.0.0.1", port=6653,
+                keepalive=False):
+    """
+    Initialize attributes, register specific connection Arbiter if needed and
+    set up listening of OpenFlow events.
+
+    :param name: name used to register component ito ``pox.core``
+    :type name: str
+    :param address: socket address (default: 127.0.0.1)
+    :type address: str
+    :param port: socket port (default: 6633)
+    :type port: int
+    """
+    name = name if name is not None else self.name
+    super(AbstractOFControllerAdapter, self).__init__()
+    # Set an OpenFlow nexus as a source of OpenFlow events
+    self.openflow = OpenFlowBridge()
+    self.controller_address = (address, port)
+    # Initiate our specific connection Arbiter
+    arbiter = ExtendedOFConnectionArbiter.activate()
+    # Register our OpenFlow event source
+    arbiter.add_connection_listener(self.controller_address, self.openflow)
+    # Launch OpenFlow connection handler if not started before with given name
+    # launch() return the registered openflow module which is a coop Task
+    log.debug(
+      "Setup OF interface and initiate handler object for connection: (%s, "
+      "%i)" % (address, port))
+    from pox.openflow.of_01 import launch
+
+    of = launch(name=name, address=address, port=port)
+    # Start listening for OpenFlow connections
+    of.start()
+    self.task_name = name if name else "of_01"
+    of.name = self.task_name
+    # register OpenFlow event listeners
+    self.openflow.addListeners(self)
+    log.debug("%s adapter: Start listening connections..." % self.name)
+    # initiate keepalive if needed
+    if keepalive:
+      Timer(self._interval, self._handle_keepalive_handler, recurring=True,
+            args=(self.openflow,))
+
+  @classmethod
+  def _handle_keepalive_handler (cls, ofnexus):
+    # Construct OF Echo Request packet
+    er = of.ofp_echo_request().pack()
+    t = time.time()
+    dead = []
+    for dpid, con in ofnexus.connections.iteritems():
+      if t - con.idle_time > (cls._interval + cls._switch_timeout):
+        dead.append(con)
+        continue
+      con.send(er)
+    for con in dead:
+      con.disconnect("Timeout")
+
+  def filter_connections (self, event):
+    """
+    Handle which connection should be handled by this Adapter class.
+
+    This adapter accept every OpenFlow connection by default.
+
+    :param event: POX internal ConnectionUp event (event.dpid, event.connection)
+    :type event: :class:`pox.openflow.ConnectionUp`
+    :return: True os False obviously
+    :rtype: bool
+    """
+    return True
+
+  def get_topology_resource (self):
+    raise NotImplementedError("Not implemented yet!")
+
+  def check_domain_reachable (self):
+    raise NotImplementedError("Not implemented yet!")
+
+  def delete_flowrules (self, id):
+    """
+    Delete all flowrules from the first (default) table of an OpenFlow switch.
+
+    :param id: ID of the infra element stored in the NFFG
+    :type id: str
+    :return: None
+    """
+    log.info("Delete flow entries from INFRA %s..." % id)
+    dpid = self.infra_to_dpid[id]
+    con = self.openflow.getConnection(dpid)
+
+    msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
+    con.send(msg)
+
+  def install_flowrule (self, id, match, action):
+    """
+    Install a flowrule in an OpenFlow switch.
+
+    :param id: ID of the infra element stored in the NFFG
+    :type id: str
+    :param match: match part of the rule (keys: in_port, vlan_id)
+    :type match: dict
+    :param action: action part of the rule (keys: out, vlan_push, vlan_pop)
+    :type action: dict
+    :return: None
+    """
+    log.info("Install POX domain part: flow entries to INFRA %s..." % id)
+    # print match
+    # print action
+    dpid = self.infra_to_dpid[id]
+    con = self.openflow.getConnection(dpid)
+
+    msg = of.ofp_flow_mod()
+    msg.match.in_port = match['in_port']
+    try:
+      vid = match['vlan_id']
+      msg.match.dl_vlan = int(vid)
+    except KeyError:
+      pass
+
+    try:
+      vid = action['vlan_push']
+      msg.actions.append(
+        of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
+      # msg.actions.append(of.ofp_action_vlan_vid())
+    except KeyError:
+      pass
+    try:
+      if action['vlan_pop']:
+        msg.actions.append(of.ofp_action_strip_vlan())
+    except KeyError:
+      pass
+    out = action['out']
+    try:
+      if out == self.saps[id]['port']:
+        dl_dst = self.saps[id]['dl_dst']
+        dl_src = self.saps[id]['dl_src']
+        msg.actions.append(of.ofp_action_dl_addr.set_dst(EthAddr(dl_dst)))
+        msg.actions.append(of.ofp_action_dl_addr.set_src(EthAddr(dl_src)))
+    except KeyError:
+      pass
+    msg.actions.append(of.ofp_action_output(port=int(action['out'])))
+
+    log.info("flow entry: %s" % msg)
+    con.send(msg)
+
+
 class VNFStarterAPI(object):
   """
   Define interface for managing VNFs.
@@ -632,3 +793,39 @@ class AbstractRESTAdapter(Session):
     self._response.raise_for_status()
     # Return with body content
     return self._response.text
+
+  def send_no_error (self, method, url=None, body=None, **kwargs):
+    """
+    Send REST request with handling exceptions.
+
+    :param method: HTTP method
+    :type method: str
+    :param url: valid URL or relevant part follows ``self.base_url``
+    :type url: str
+    :param body: request body
+    :type body: :any:`NFFG` or dict or bytes or str
+    :return: raw response data
+    :rtype: str
+    """
+    try:
+      self.send_request(method, url, body, **kwargs)
+      return self._response.status_code if self._response is not None else None
+    except ConnectionError:
+      log.error(
+        "Remote agent(domain: %s, url: %s) is not reachable!" % (
+          self.name, self._base_url))
+      return None
+    except HTTPError as e:
+      log.error(
+        "Remote agent(domain: %s, url: %s) responded with an error: %s" % (
+          self.name, self._base_url, e.message))
+      return None
+    except Timeout:
+      log.error("Remote agent(domain: %s, url: %s) not responding!" % (
+        self.name, self._base_url))
+      return None
+    except KeyboardInterrupt:
+      log.warning(
+        "Request to remote agent(domain: %s, url: %s) is interrupted by "
+        "user!" % (self.name, self._base_url))
+      return None

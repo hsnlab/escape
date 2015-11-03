@@ -17,12 +17,13 @@ Sublayer.
 """
 import json
 
-from escape import __project__, __version__, CONFIG
+from escape import CONFIG
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
+from escape.util.mapping import PreMapEvent, PostMapEvent
 from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
@@ -75,44 +76,15 @@ class ServiceRequestHandler(AbstractRequestHandler):
     function.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('echo', 'version', 'operations', 'poll_nffg'),
-                  'POST': ('echo', 'result', 'sg', 'poll_nffg'), 'PUT': ('echo',),
-                  'DELETE': ('echo',)}
+  request_perm = {'GET': ('ping', 'version', 'operations', 'topology'),
+                  'POST': ('ping', 'result', 'sg', 'topology')}
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'service'
   # Logger. Must define.
-  log = log.getChild("REST-API")
+  log = log.getChild("[U-Sl]")
 
   # REST API call --> UNIFY U-Sl call
-
-  def echo (self):
-    """
-    Test function for REST-API.
-
-    :return: None
-    """
-    params = json.loads(self._get_body())
-    self.log_full_message("ECHO: %s - %s", self.raw_requestline, params)
-    self._send_json_response(params)
-
-  def version (self):
-    """
-    Return with version
-
-    :return: None
-    """
-    log.getChild("REST-API").debug("Call REST-API function: version")
-    self._send_json_response({"name": __project__, "version": __version__})
-
-  def operations (self):
-    """
-    Return with allowed operations
-
-    :return: None
-    """
-    log.getChild("REST-API").debug("Call REST-API function: operations")
-    self._send_json_response(self.request_perm)
 
   def result (self):
     """
@@ -132,27 +104,28 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     Bounded to POST HTTP verb
     """
-    log.getChild("REST-API").debug("Called REST-API function: sg")
+    self.log.debug("Called REST-API function: sg")
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
-    sg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    log.getChild("REST-API").debug("Parsed service request: %s" % sg)
-    self._proceed_API_call('request_service', sg)
+    service_nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    self.log.debug("Parsed service request: %s" % service_nffg)
+    self._proceed_API_call('api_sas_sg_request', service_nffg)
     self.send_acknowledge()
 
-  def poll_nffg (self):
+  def topology (self):
     """
-    Provide internal NFFG to the GUI
-
-    Internal NFFG is based on NetworkX and can be viewed by networkx_viewer
+    Provide internal topology description
     """
-    log.getChild("REST-API").info("Call REST-API function: poll_nffg")
-    config = self._proceed_API_call('poll_nffg')
+    self.log.info("Call REST-API function: topology")
+    topology = self._proceed_API_call('api_sas_get_topology')
+    if topology is None:
+      self.send_error(404, message="Resource info is missing!")
+      return
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')
-    self.send_header('Content-Length', len(config))
+    self.send_header('Content-Length', len(topology))
     self.end_headers()
-    self.wfile.write(config)
+    self.wfile.write(topology)
 
 
 class ServiceLayerAPI(AbstractAPI):
@@ -168,7 +141,8 @@ class ServiceLayerAPI(AbstractAPI):
   # Layer id constant
   LAYER_ID = "ESCAPE-" + LAYER_NAME
   # Events raised by this class
-  _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent}
+  _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent, PreMapEvent,
+                        PostMapEvent}
   # Dependencies
   dependencies = ('orchestration',)
 
@@ -196,12 +170,12 @@ class ServiceLayerAPI(AbstractAPI):
     # Read input from file if it's given and initiate SG
     if self._sg_file:
       try:
-        graph_json = self._read_json_from_file(self._sg_file)
-        sg_graph = NFFG.parse(graph_json)
-        self.request_service(sg_graph)
+        service_request = self._read_json_from_file(self._sg_file)
+        service_request = NFFG.parse(service_request)
+        self.api_sas_sg_request(service_nffg=service_request)
       except (ValueError, IOError, TypeError) as e:
         log.error(
-          "Can't load graph representation from file because of: " + str(e))
+          "Can't load service request from file because of: " + str(e))
       else:
         log.info("Graph representation is loaded successfully!")
     else:
@@ -219,7 +193,8 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.info("Service Layer is going down...")
     if hasattr(self, 'rest_api') and self.rest_api:
-      self.rest_api.stop()
+      log.debug("REST-API [U-Sl] is shutting down...")
+      # self.rest_api.stop()
 
   def _initiate_rest_api (self):
     """
@@ -231,7 +206,10 @@ class ServiceLayerAPI(AbstractAPI):
     handler = CONFIG.get_sas_api_class()
     handler.bounded_layer = self._core_name
     handler.prefix = CONFIG.get_sas_api_prefix()
-    self.rest_api = RESTServer(handler, *CONFIG.get_sas_api_address())
+    address = CONFIG.get_sas_api_address()
+    self.rest_api = RESTServer(handler, *address)
+    handler.log.debug(
+      "Init REST-API [U-Sl] on %s:%s!" % (address[0], address[1]))
     self.rest_api.start()
 
   def _initiate_gui (self):
@@ -257,31 +235,44 @@ class ServiceLayerAPI(AbstractAPI):
   ##############################################################################
 
   @schedule_as_coop_task
-  def request_service (self, sg):
+  def api_sas_sg_request (self, service_nffg):
     """
     Initiate a Service Graph (UNIFY U-Sl API).
 
-    :param sg: service graph instance
-    :type sg: :any:`NFFG`
+    :param service_nffg: service graph instance
+    :type service_nffg: :any:`NFFG`
     :return: None
     """
-    self.rest_api.request_cache.add_request(id=sg.id)
+    # Store request if it is received on REST-API
+    if hasattr(self, 'rest_api') and self.rest_api:
+      self.rest_api.request_cache.add_request(id=service_nffg.id)
+      self.rest_api.request_cache.set_in_progress(id=service_nffg.id)
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
-      self.__class__.__name__, sg))
-    self.rest_api.request_cache.set_in_progress(id=sg.id)
-    nffg = self.service_orchestrator.initiate_service_graph(sg)
+      self.__class__.__name__, service_nffg))
+    service_nffg = self.service_orchestrator.initiate_service_graph(
+      service_nffg)
     log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
-    if nffg is not None:
-      self._instantiate_NFFG(nffg)
-    self.last_sg = sg
+    if service_nffg is not None:
+      self._instantiate_NFFG(service_nffg)
+    else:
+      log.warning(
+        "Something went wrong in service request initiation: mapped service "
+        "request is missing!")
+    self.last_sg = service_nffg
 
-  def poll_nffg (self):
+  def api_sas_get_topology (self):
     """
-    Poll nffg
+    Return with the topology description.
+
+    :return: topology description requested from the layer's Virtualizer
+    :rtype: :any:`NFFG`
     """
-    return self.last_sg.dump()
+    # Get or if not available then request the layer's Virtualizer
+    sas_virtualizer = self.service_orchestrator.virtResManager.virtual_view
+    # return with the virtual view as an NFFG
+    return sas_virtualizer.get_resource_info().dump()
 
   def get_result (self, id):
     """
@@ -348,7 +339,8 @@ class ServiceLayerAPI(AbstractAPI):
   def _handle_InstantiationFinishedEvent (self, event):
     """
     """
-    self.rest_api.request_cache.set_result(id=event.id, result=event.result)
+    if hasattr(self, 'rest_api') and self.rest_api:
+      self.rest_api.request_cache.set_result(id=event.id, result=event.result)
     if event.result:
       log.getChild('API').info(
         "Service request(id=%s) has been finished successfully!" % event.id)
