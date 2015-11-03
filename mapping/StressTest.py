@@ -262,7 +262,7 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
       f.write("\n".join(("UnifyException cought during StressTest: ",
                          ue.msg,traceback.format_exc())))
     if queue is not None:
-      queue.put(ue)
+      queue.put(str(ue.__class__))
       return test_lvl-1
   except Exception as e:
     log.error(ppid_pid+traceback.format_exc())
@@ -270,7 +270,7 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
       f.write("\n".join(("Exception cought during StressTest: ",
                          traceback.format_exc())))
     if queue is not None:
-      queue.put(e)
+      queue.put(str(e.__class__))
       return test_lvl-1
   # put the result to the queue
   if queue is not None:

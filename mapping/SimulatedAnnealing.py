@@ -135,15 +135,15 @@ def evaluatePoint(bw, res, test_seed, error_file, queue=None,
                    multi_test.get() if multi else 0,
                    shared_test.get() if shared else 0)
   for result, test in zip(result_vector, ("single", "multi", "shared")):
-    if issubclass(result.__class__, (Exception, Warning)):
+    if type(result) == str:
       log.warn("An exception was thrown by the \"%s\" StressTest: %s"%
-               (test, result.msg if hasattr(result, 'msg') else result))
+               (test, result))
       if queue is not None:
-        queue.put(((bw, res), 0.0))
+        queue.put(((bw, res), -1.0))
       if shortest_paths_sendback:
-        return 0.0, shortest_paths_calced
+        return -1.0, shortest_paths_calced
       else:
-        return 0.0
+        return -1.0
   # the length of the result vector is the value
   value = math.sqrt(reduce(lambda a, b: a+b*b, result_vector, 0))
   log.debug("Examination of point %s %s finished, scores are: %s"%
@@ -155,7 +155,7 @@ def evaluatePoint(bw, res, test_seed, error_file, queue=None,
   else:
     return value
 
-def checkEvalCache(cache, point, delta=0.0000001):
+def checkEvalCache(cache, point, delta=0.001):
   for p in cache:
     if math.fabs(p[0] - point[0]) < delta and math.fabs(p[1] - point[1]) < delta:
       return p, cache[p]
