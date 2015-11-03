@@ -1,10 +1,11 @@
+####################################
 Welcome to ESCAPEv2's documentation!
-====================================
+####################################
 
 Welcome! This is the API documentation for **ESCAPEv2**.
 
 Overview
---------
+========
 
 On the one hand, ESCAPE (Extensible Service ChAin Prototyping
 Environment) is a general prototyping framework which supports the
@@ -17,7 +18,7 @@ It is a realization of the UNIFY service programming and orchestration framework
 which enables the joint programming and virtualization of cloud and networking
 resources.
 
-.. hint::
+.. tip::
 
    For more information on the concept, motivation and demo use-cases, we
    suggest the following papers.
@@ -55,7 +56,8 @@ resources.
 For further information contact balazs.sonkoly@tmit.bme.hu
 
 API documentation
------------------
+=================
+
 This documentation contains only the Python class structure and description of
 the multi-domain multi-level service orchestrator.
 
@@ -63,7 +65,7 @@ Our Mininet-based infrastructure, which is an extended version of
 Mininet, is not documented here.
 
 ESCAPEv2 class structure
-++++++++++++++++++++++++
+------------------------
 
 .. toctree::
     :maxdepth: 6
@@ -72,7 +74,7 @@ ESCAPEv2 class structure
     escape
 
 Topmost POX modules for UNIFY's layers/sublayers
-++++++++++++++++++++++++++++++++++++++++++++++++
+------------------------------------------------
 
 .. toctree::
     :maxdepth: 2
@@ -81,15 +83,15 @@ Topmost POX modules for UNIFY's layers/sublayers
     UNIFY <unify>
 
 Installation
-------------
+============
 
 Because ESCAPEv2 relies on POX and written in Python there is no need for
 explicit compiling or installation. The only requirement need to be pre-installed
 is a Python interpreter.
 
-The recommended Python version in which the development and mostly the testing are
-performed is the standard CPython **2.7.9** but the 2.7.6 (pre-build Mininet VM)
-and 2.7.10 versions are also supported.
+The recommended Python version, in which the development and mostly the testing
+are performed, is the standard CPython **2.7.9** but the 2.7.6 (pre-build
+Mininet VM) and 2.7.10 versions are also tested and supported.
 
 .. warning::
 
@@ -99,7 +101,7 @@ If you want to use a different and separated Python version check the Virtual
 Environment section below.
 
 The preferred way
-+++++++++++++++++
+-----------------
 
 1. Download one of pre-build Mininet image which has already had the necessary
 tools (Mininet scripts and Open vSwitch).
@@ -117,7 +119,7 @@ tools (Mininet scripts and Open vSwitch).
 
 2. Create the ``.ssh`` folder in the home directory and copy your private RSA key
 which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
-``id_rsa``. If you use the Mininet image then the following command can be used
+``id_rsa``. If you use the Mininet image then the following commands can be used
 in the VM to copy your RSA key from your host:
 
   .. code-block:: bash
@@ -151,25 +153,25 @@ and Python packages, OpenYuma with VNFStarter module):
     * Install `neo4j <http://neo4j.com/>`__ graph database for NFIB
 
 5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
-available arguments of the top stating script check the help menu:
+available arguments of the top starting script check the help menu:
 
   .. code-block:: bash
 
     $ ./escape.py --help
 
 The hard way
-++++++++++++
+------------
 
 Obviously you can install ESCAPEv2 on your host or on an empty VM too. For that
 you need to install the requirements manually.
 
 To install the Python dependencies and other system packages you can use the
-dependency installation script mentioned above or do it manually.
+dependency installation script mentioned above or you can do it manually.
 
 **Dependencies**
 
 If you don't want to install the Python dependencies globally you can follow the
-hard way and can setup a virtual environment. Otherwise just run the following
+hard way and setup a virtual environment. Otherwise just run the following
 command(s):
 
 Required system and Python packages:
@@ -197,8 +199,8 @@ For domain emulation scripts:
 
     $ sudo pip install tornado
 
-Other required programs (OpenYuma, click, neo4j, etc.) are also need to be installed
-manually which will be installed by the `install_dep.sh` script by default.
+Other required programs (OpenYuma, click, neo4j, etc.), which are installed by
+the `install_dep.sh` script by default, are also need to be installed manually.
 
 In extreme cases, e.g. the `install_dep.sh` ran into an error, you should install
 these dependencies one by one according to your OS, distro or development environment.
@@ -207,7 +209,7 @@ referenced in entry 4. of the previous subsection.
 
 To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
 host (more precisely the **Open vSwitch** implementation and the specific
-**mnexec** utility script is need to be installed globally).
+**mnexec** utility script is also need to be installed globally).
 
 If one version of Mininet has already been installed, there should be nothing to
 do. ESCAPEv2 uses the specifically-modified Mininet files in the project folder
@@ -216,7 +218,7 @@ scripts (mnexec).
 
 Otherwise these assets have to be install manually which could be done from our
 Mininet folder (escape/mininet) or from the official Mininet git repository
-(https://github.com/mininet/mininet/ ). Mininet has an install script for the
+(`<https://github.com/mininet/mininet/>`__). Mininet has an install script for the
 installations (see the help with the ``-h`` flag):
 
 .. code-block:: bash
@@ -225,7 +227,7 @@ installations (see the help with the ``-h`` flag):
 
 But the script occasionally **NOT** works correctly, especially on newer
 distributions because the ``sudo apt-get install openvswitch-switch`` command
-will not install the newest version of OVS due some major changes in OVS
+will not install the newest version of OVS properly due some major changes in OVS
 architecture!
 
 Run the following command to check the installation was correct:
@@ -241,7 +243,7 @@ However you can install the Open vSwitch packages manually:
     $ sudo apt-get install openvswitch-common openvswitch-switch openvswitch-testcontroller
 
 If the command complains about the Open vSwitch not installed then you have to
-install it from source. See more on http://openvswitch.org/download/ . On the
+install it from source. See more on `<http://openvswitch.org/download/>`_. On the
 newest distributions (e.g. Ubuntu 15.04) more steps and explicit patching is
 required. For that the only way is sadly to use google and search for it based
 on your distro. But a good choice to start here:
@@ -254,12 +256,12 @@ https://github.com/mininet/mininet/wiki/Installing-new-version-of-Open-vSwitch
 
 If you want to develop on your host machine, you should take care of a user for
 the netconfd server. This user's name and password will be used for the
-connection establishment between the ESCAPE and the Execution Environments (EE).
+connection establishment between ESCAPEv2 and the Execution Environments (EE).
 
 .. note::
 
-  This parameters could be change in the global config under the config entry of
-  *VNFStarter Adapter* conveniently.
+  These parameters can be changed conveniently in the global config under the
+  config entry of *VNFStarter Adapter* .
 
 An another solution is to define a system user for the netconfd. To create a user
 (advisable to use `mininet` as in the Mininet-based VM) use the following commands:
@@ -284,7 +286,7 @@ Check the created user with the following command:
     $ ssh mininet@localhost
 
 Setup a Virtual environment (optional)
-++++++++++++++++++++++++++++++++++++++
+--------------------------------------
 
 ESCAPEv2 also supports Python-based virtual environment in order to setup a
 different Python version or even a different interpreter (not recommended) for
@@ -299,8 +301,8 @@ Python package with a standalone CPython 2.7.10 interpreter run the following sc
 
 This script does the following steps:
   * Install additional dependencies
-  * Download, compile and install the 2.7.10 (currently the newest) interpreter
-    in a separated folder
+  * Download, compile and install the 2.7.10 (currently the newest) Python
+    interpreter in a separated directory
   * Setup a virtual environment in the main project directory independently from
     the system-wide Python packages
   * Install the Python dependencies in this environment
@@ -330,10 +332,10 @@ The ``escape.py`` script can detect the ``.use_virtualenv`` file automatically
 and activates the virtual environment transparently. If you want to disable the
 virtual environment then just delete the ``.use_virtualenv`` file.
 
-The virtualenv can be enabled by the ``--environment`` flag of the topmost
+The virtualenv can also be enabled by the ``--environment`` flag of the topmost
 ``escape.py`` script.
 
-To setup the environment manually in order to define other Python version or interpreter,
+In order to setup the environment manually, define other Python version/interpreter,
 enable system-wide Python / ``pip`` packages
 
 .. code-block:: bash
@@ -352,9 +354,14 @@ check the content of the setup script or see the
 `Virtualenv User Guide <https://virtualenv.readthedocs.org/en/latest/userguide.html>`_.
 
 ESCAPEv2 example commands
--------------------------
+=========================
 
-**The simplest use-case:**
+ESCAPEv2 can be started with the topmost ``escape.py`` script in the project's
+root directory or can be started calling the ``pox.py`` script directly with the
+layer modules and necessary arguments under the `pox` directory.
+
+The simplest use-case
+---------------------
 
 Run ESCAPEv2 with the Mininet-based Infrastructure layer and debug logging mode:
 
@@ -384,7 +391,7 @@ Usage:
         -c path, --config path
                               override default config filename
         -d, --debug           run the ESCAPE in debug mode
-        -e, --environment     run ESCAPEv2 in the pre-defined virtualenv
+        -e, --environment     run ESCAPEv2 in the pre-defined virtualenv environment
         -f, --full            run the infrastructure layer also
         -i, --interactive     run an interactive shell for observing internal states
         -r, --rosapi          start the REST-API for the Resource Orchestration
@@ -399,7 +406,7 @@ Usage:
 
 During a test or development the ``--debug`` flag is almost necessary.
 
-If you want to run a test request on a test topology, use the ``--full`` flag.
+If you want to run  a test topology, use the ``--full`` flag.
 ESCAPEv2 will parse the topology description form file (``escape-mn-topo.nffg``
 by default) and start the Infrastructure layer with the Mininet-based emulation.
 
@@ -445,14 +452,15 @@ and check the state of the DoV:
 
     ...
 
-**More advanced commands (mostly advisable for testing purposes):**
+More advanced commands (mostly advisable for testing purposes)
+--------------------------------------------------------------
 
 For more flexible control ESCAPEv2 can be started directly with POX's starting
 script under the ``pox`` folder.
 
 .. note::
 
-  The topmost ``escape.py`` script use this ``pox.py`` script to start ESCAPEv2.
+  The topmost ``escape.py`` script uses this ``pox.py`` script to start ESCAPEv2.
   In debug mode the assembled POX command is printed also.
 
 Basic command:
@@ -539,7 +547,7 @@ Start layer in standalone mode (no dependency check and handling) for test/debug
     $ ./pox.py service orchestration --standalone
 
 REST APIs
----------
+=========
 
 ESCAPEv2 has currently 3 REST-APIs.
 
@@ -551,11 +559,10 @@ appropriate flag is given to the starting script.
 The ROS API can be used for communicating with other UNIFY layer e.g. a
 Controller Adaptation Sublayer of a standalone ESCAPEv2 in a multi-level
 scenario or with a GUI.
-The CfOr API realizes the interface for service elasticity.
-
+The CfOr API realizes the interface for service elasticity feature.
 
 Common API functions
-++++++++++++++++++++
+--------------------
 
 *Operations:*   Every API has the following 3 function (defined in :any:`AbstractRequestHandler`):
 
@@ -569,8 +576,8 @@ Common API functions
 | */operations*     | ``None``       | GET               | Returns with the implemented operations assigned to the HTTP verbs        |
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
 
-Service API specific function:
-++++++++++++++++++++++++++++++
+Service API specific functions
+------------------------------
 
 The SAS API is automatically initiated by the Service layer. If the ``--service`` flag
 is used the service request is loaded from the given file and the REST-API
@@ -587,8 +594,8 @@ only in JSON format.
 | */sg*             | ``NFFG``       | ALL               | Initiate given NFFG. Returns the given NFFG initiation is accepted or not |
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
 
-ROS API specific function:
-++++++++++++++++++++++++++
+ROS API specific functions
+--------------------------
 
 Can be started with the ``--agent`` or ``--rosapi`` initial flags.
 
@@ -600,8 +607,8 @@ Can be started with the ``--agent`` or ``--rosapi`` initial flags.
 | */edit-config*    | ``NFFG``       | ALL               | Initiate given NFFG.                                                      |
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
 
-Cf-Or API specific function:
-++++++++++++++++++++++++++++
+Cf-Or API specific functions
+----------------------------
 
 Can be started with the ``--cfor`` flag.
 
@@ -614,30 +621,241 @@ Can be started with the ``--cfor`` flag.
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
 
 Configuration
--------------
+=============
 
 ESCAPEv2 has a default configuration under the `escape` package (in the
 `__init__.py` file as ``cfg``). This configuration contains the necessary
-information for manager/adapter initialization, remote connections, etc. and
-also used as the running config.
+information for manager/adapter initializations, remote connections, etc. and
+also provides the base for the internal running configuration.
 
-To override some of the parameters you can change it in the `cfg` directly (not
-preferred) or you can define it in the additional config file: ``escape.config``.
-The ESCAPEv2 checks this file at every start, and update/override the internal
-config if it's necessary.
+If you want to override some of the parameters you can change the default values
+in the ``cfg`` directly (not preferred) or you can just define them in an
+additional config file.
 
-The config file path can be changed during start with the ``--config`` initial
-parameter.
+The default configuration file which ESCAPEv2 is looking for is ``escape.config``.
+At every start ESCAPEv2 checks the presence of this file and updates/overrides
+the running configuration if it's necessary.
+
+The ``escape.py`` starting script also provides the opportunity to specify a
+different configuration file with the ``--config`` initial argument.
 
 The additional config can be added only in JSON format, but the structure of the
-configuration is strictly follows the default configuration.
+configuration is strictly follows the default configuration which is defined in Python
+with basic data structures.
 
-The configuration values is derived from the initial attributes of the
-adapter/managers constructors. Other values are single data, paths or flags which
-are taken out by helper functions of the :any:`ESCAPEConfig` class.
+The configuration units (coherent values, single boolean flags, paths, etc.) are
+handled through the main :any:`ESCAPEConfig` class so every possible configuration
+entry has an assigned `getter` function in the main class.
+
+.. important::
+
+  The configurations is parsed during the starting process. Changes in the config
+  file have no effect at runtime.
+
+Configuration structure
+-----------------------
+
+The configurations is divided to 4 parts according to the UNIFY's / ESCAPEv2's
+main layers, namely ``service``, ``orchestration``, ``adaptation`` and
+``infrastructure``.
+
+service and orchestration
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The top 2 layer (``service`` and ``orchestration``) has similar configuration
+parameters. In both layers the mapping process can be controlled with the following
+entries:
+
+  * **MAPPER** defines the mapping class which controls the mapping process
+    (inherited from :any:`AbstractMapper`)
+  * **STRATEGY** defines the mapping strategy class which calls the actual mapping
+    algorithm (inherited from :any:`AbstractMappingStrategy`)
+  * **PROCESSOR** defines the Processor class which contains the pre/post mapping
+    functions for validation and other auxiliary functions (inherited from
+    :any:`AbstractMappingDataProcessor`)
+
+The values of class configurations (such the entries above) always contains the
+**module** and **class** names of the actual class. With this approach ESCAPEv2 can
+also instantiate and use different implementations from external Python packages.
+The only requirement for these classes is to be included in the scope of ESCAPEv2
+(more precisely in the PYTHONPATH of the Python interpreter which runs ESCAPEv2).
+
+.. note::
+
+  Every additional subdirectory in the project's root is always added to the search
+  path (scope) dynamically at initial time by the main ``escape`` module.
+
+The mapping process and pre/post processing can be enabled/disabled with the
+``mapping-enabled`` (boolean) and ``enabled`` (boolean) values under the
+appropriate entries.
+
+The mapping algorithm called in the Strategy class can be initiated in a worker
+thread with the ``THREADED`` flag, but this feature is still in experimental phase.
+
+These 2 layers can initiate REST-APIs also. The initial parameters are defined
+under the names of the APIs:
+
+  * **REST-API** - top REST-API in the SAS layer
+  * **Sl-Or** - Sl-Or interface in the ROS layer for external components
+    i.e. for upper UNIFY entities, GUI or other ESCAPEv2 instance in a distributed,
+    multi-layered scenario
+  * **Cf-Or** - Cf-Or interface in the ROS layer for supporting service elasticity
+    feature
+
+These REST-API configurations consist of
+
+  * a specific handler class which initiated for every request and handles the
+    requests (inherited from :any:`AbstractRequestHandler`) defined with the
+    ``module`` and ``class`` pair
+  * address of the REST-API defined with the ``address`` and ``port`` (integer)
+    pair
+  * ``prefix`` of the API which appears in the URL right before the REST functions
+  * optionally the type of used Virtualizer (``virtualizer_type``) which filters
+    the data flow of the API (currently only supported the global (`GLOBAL`) and
+    single BiS-BiS (`SINGLE`) Virtualizer)
+
+adaptation
+^^^^^^^^^^
+
+The ``adaptation`` layer contains the different Manager (inherited from
+:any:`AbstractDomainManager`) and Adapter (inherited from :any:`AbstractESCAPEAdapter`)
+classes under their specific name which is defined in the ``name`` class attribute.
+These configurations are used by the :any:`ComponentConfigurator` to initiate
+the required component dynamically.
+The class configurations can be given by the ``module`` and ``class`` pair
+similar way as so far.
+Other values such as path, url, keepalive, etc. will be forwarded to the
+constructor of the component at initialization time so the possible config names
+and types result from the constructor attributes.
+
+The ``MANAGERS`` config value contains the Managers need to be initiated.
+
+.. hint::
+
+  In order to activate a manager and manage the specific domain add the config
+  name of the DomainManager to the ``MANAGERS`` list. The manager will be
+  initiated with other Managers at boot time of ESCAPEv2.
+
+
+With the ``RESET-DOMAINS-AFTER-SHUTDOWN`` config entry can be enabled/disabled
+the cleanup of the domains.
+
+infrastructure
+^^^^^^^^^^^^^^
+
+The configuration of ``infrastructure`` layer controls the Mininet-based
+emulation.
+
+The ``TOPO`` path value defines the file which will be parsed and processed to
+build the Mininet structure.
+
+The ``FALLBACK-TOPO`` defines an inner class which can initiate a topology if
+the topology file is not found.
+
+The ``NETWORK-OPTS`` is an optional data which can be added to override the
+default constructor parameters of the Mininet class.
+
+Other simple values can be added too to refine the control of the emulation such
+as enable/disable the xterm initiation for SAPs (``SAP-xterm``) or the cleanup
+task (``SHUTDOWN-CLEAN``).
+
+Configuration template
+----------------------
+
+The following snippet defines a template of ESCAPEv2 configurations with the more
+significant keywords and their types:
+
+.. code-block:: json
+
+    {
+        "service": {
+            "MAPPER": {
+                "module": "str",
+                "class": "str",
+                "mapping-enabled": "bool"
+            },
+            "STRATEGY": {
+                "module": "str",
+                "class": "str",
+                "THREADED": "bool"
+            },
+            "PROCESSOR": {
+                "module": "str",
+                "class": "str",
+                "enabled": "bool"
+            },
+            "REST-API": {
+                "module": "str",
+                "class": "str",
+                "prefix": "str",
+                "address": "str",
+                "port": "int"
+            }
+        },
+        "orchestration": {
+            "MAPPER": {
+                "module": "str",
+                "class": "str",
+                "mapping-enabled": "bool"
+            },
+            "STRATEGY": {
+                "module": "str",
+                "class": "str",
+                "THREADED": "bool"
+            },
+            "PROCESSOR": {
+                "module": "str",
+                "class": "str",
+                "enabled": "bool"
+            },
+            "Sl-Or": {
+                "module": "str",
+                "class": "str",
+                "prefix": "str",
+                "address": "str",
+                "port": "int",
+                "virtualizer_type": "str"
+            },
+            "Cf-Or": {
+                "module": "str",
+                "class": "str",
+                "prefix": "str",
+                "address": "str",
+                "port": "int",
+                "virtualizer_type": "str"
+            }
+        },
+        "adaptation": {
+            "MANAGERS": [],
+            "adapter123": {
+                "module": "str",
+                "class": "str",
+                "opt123": "any"
+            },
+            "manager123": {
+                "module": "str",
+                "class": "str",
+                "poll": "bool",
+                "opt123": "any"
+            },
+            "RESET-DOMAINS-AFTER-SHUTDOWN": "bool"
+        },
+        "infrastructure": {
+            "NETWORK-OPTS": "dict",
+            "TOPO": "str",
+            "FALLBACK-TOPO": {
+                "module": "str",
+                "class": "str"
+            },
+            "SAP-xterm": "bool",
+            "SHUTDOWN-CLEAN": "bool"
+        },
+    "additional-config-file": "escape.config"
+    }
+
 
 Development
------------
+===========
 
 Suggested IDE: `Pycharm Community Edition <https://www.jetbrains.com/pycharm/>`__
 
@@ -655,7 +873,7 @@ Coding conventions:
 * Use double blank lines around classes and top-level functions
 
 Debugging
----------
+=========
 
 You can use PyCharm for debugging. In this case you have to specify a new Python
 interpreter using the *python_root_debugger.sh* script to be able to run ESCAPE
@@ -697,7 +915,7 @@ object is in the comments/documentation and on the POX's
 site.
 
 Contacts
---------
+========
 
 János Czentye - janos.czentye@tmit.bme.hu
 

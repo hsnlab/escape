@@ -1,28 +1,26 @@
 ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet, Click,
 NETCONF and POX
 
-Mininet is a great prototyping tool which takes existing SDN-related software
-components (e.g. Open vSwitch, OpenFlow controllers, network namespaces, cgroups,
-etc.) and combines them into a framework, which can automatically set up and
-configure customized OpenFlow testbeds scaling up to hundreds of nodes. Standing
-on the shoulders of Mininet, we have implemented a similar prototyping system
-called ESCAPE, which can be used to develop and test various components of the
-service chaining architecture. Our framework incorporates Click for implementing
-Virtual Network Functions (VNF), NETCONF for managing Click-based VNFs and POX
-for taking care of traffic steering. We also add our extensible Orchestrator
-module, which can accommodate mapping algorithms from abstract service
-descriptions to deployed and running service chains.
+On the one hand, ESCAPE (Extensible Service ChAin Prototyping Environment) is a
+general prototyping framework which supports the development of several parts of
+the service chaining architecture including VNF implementation, traffic steering,
+virtual network embedding, etc.  On the other hand, ESCAPE is a proof of concept
+prototype implementing a novel SFC (Service Function Chaining) architecture
+proposed by EU FP7 UNIFY project: https://www.fp7-unify.eu/>.
+It is a realization of the UNIFY service programming and orchestration framework
+which enables the joint programming and virtualization of cloud and networking
+resources.
 
 Dependencies:
 
-    $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev \
-      python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko \
-      python-dev libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev \
-      libglib2.0-dev libgtk2.0-dev gcc make automake openssh-client \
-      openssh-server ssh
+    $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev libsqlite3-dev \
+        python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko python-dev \
+        python-networkx libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev \
+        libglib2.0-dev libgtk2.0-dev gcc make automake openssh-client openssh-server ssh \
+        libssl-dev
 
-    $ sudo pip install requests jinja2 ncclient lxml networkx py2neo \
-      networkx_viewer numpy
+    $ sudo pip install requests jinja2 ncclient lxml networkx py2neo networkx_viewer \
+        numpy
 
 Installation:
 
@@ -36,18 +34,20 @@ The preferred way:
     The images is in an open virtual format (.ovf) which can import most of the
     virtualization manager. Username/password: mininet/mininet
 
-    Our implementation is rely on Mininet 2.1.0, but ESCAPEv2 has been tested on
-    the newest image too and no problem has occurred yet!
+    Our implementation relies on Mininet 2.1.0, but ESCAPEv2 has been tested on
+    the newest image too (Mininet 2.2.1 on Ubuntu 14.04 - 64 bit) and no problem
+    has occurred yet!
 
   2. Create the .ssh folder in the home directory and copy your private RSA key
-    which is given on the fp7-unify.eu GitLab site from your host into the VM
-    with the name "id_rsa".
+    which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
+    id_rsa. If you use the Mininet image then the following command can be used
+    in the VM to copy your RSA key from your host:
 
     $ cd
     $ mkdir .ssh
-    $ mv <your rsa key> ~/.ss/id_rsa
+    $ scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
 
-  3. Clone the shared escape repository.
+  3. Clone the shared escape repository in a folder named: escape.
 
     $ git clone git@gitlab.fp7-unify.eu:Balazs.Sonkoly/escape-shared.git escape
 
@@ -57,199 +57,16 @@ The preferred way:
     $ cd escape
     escape$ ./install_dep.sh
 
-  5. Run ESCAPEv2 with command fit your needs.
+    In a high level the script above does the following things:
+      * Install the necessary system and Python packages
+      * Compile and install the OpenYuma
+        tools with our `VNF_starter` module
+      * Compile and install Click modular router and The Click GUI.
+      * Install neo4j graph database for NFIB
 
-    escape$ ./escape.py --debug
+  5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
+    available arguments of the top stating script check the help menu:
 
-The hard way:
+    $ ./escape.py --help
 
-Obviously you can install ESCAPEv2 on your host or on a empty VM. For that you
-need to install the requirements manually.
-
-To install the Python dependencies and other system packages you can use the
-dependency installation script described above.
-
-To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
-host (more precisely the Open vSwitch implementation and the mnexec utility
-script is required globally).
-
-If one version of Mininet has already been installed, there should be nothing to
-do. ESCAPEv2 uses the specifically-modified Mininet files in the project folder
-(Mininet v2.1.0mod-ESCAPE) which use the globally installed Mininet utility
-scripts mentioned above (mnexec).
-
-Otherwise these assets have to be install manually which could be done from our
-Mininet folder (escape/mininet) or from the official git repository
-(https://github.com/mininet/mininet/). Mininet has an install script for
-installation (see the help with the -h flag):
-
-    $ sudo mininet/util/install.sh -a
-
-But the script mostly NOT works correctly, especially on newer distributions
-because the sudo apt-get install openvswitch-switch command not install the
-newer version of OVS due some major changes in OVS architecture!
-Check the install was correct with the following command:
-
-    $ sudo mn --test pingall
-
-If the command complains about the Open vSwitch not installed then you have to
-install it from source. See more on http://openvswitch.org/download/. On the
-newest distributions (e.g. Ubuntu 15.04) more steps and explicit patching is
-required. For that the only way is sadly to use google and search for it based
-on your distro. But a good choice to start here (this not worked for me):
-https://github.com/mininet/mininet/wiki/Installing-new-version-of-Open-vSwitch
-
-If you use virtual machines, you should really consider to use the pre-build
-Mininet VM images.
-
-Usage:
-
-The simplest use-case:
-    $ ./escape.py
-
-    $ ./escape.py -h
-    usage: escape.py [-h] [-v] [-d] [-f] [-i]
-
-    ESCAPE: Extensible Service ChAin Prototyping Environment using Mininet, Click,
-    NETCONF and POX
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      -v, --version         show program's version number and exit
-
-    ESCAPE arguments:
-      -c path, --config path
-                            override default config filename
-      -d, --debug           run the ESCAPE in debug mode
-      -f, --full            run the infrastructure layer also
-      -i, --interactive     run an interactive shell for observing internal states
-      -a, --agent           run in agent role (without service layer)
-
-More advanced commands:
-Basic command:
-    $ ./pox.py unify
-
-Basic command for debugging:
-    $ ./pox.py --verbose --no-openflow unify py
-
-For forcing to log on DEBUG level the --verbose flag of the pox.py script can be
-used. Or the log.level POX module can be used which would be the preferred way.
-E.g.:
-    $ ./pox.py --verbose <modules>
-    $ ./pox.py log.level --DEBUG <modules>
-
-Basic command to initiate a built-in emulated network for testing:
-    # Infrastructure layer requires root privileges due to use of Mininet!
-    $ sudo ./pox.py unify --full
-
-Minimal command with explicitly-defined components
-(components' order is irrelevant):
-    $ ./pox.py service orchestration adaptation
-
-Without service layer:
-    $ ./pox.py orchestration adaptation
-
-With infrastructure layer:
-    $ sudo ./pox.py service orchestration adaptation --with_infr infrastructure
-
-Long version with debugging and explicitly-defined components
-(analogous with ./pox.py unify --full):
-    $ sudo ./pox.py --verbose log.level --DEBUG samples.pretty_log service \
-    orchestration adaptation--with_infr infrastructure
-
-Start layers with graph-represented input contained in a specific file:
-    $ ./pox.py service --sg_file=<path> ...
-    $ ./pox.py unify --sg_file=<path>
-
-    $ ./pox.py orchestration --nffg_file=<path> ...
-    $ ./pox.py adaptation --mapped_nffg_file=<path> ...
-
-Start ESCAPEv2 with built-in GUI:
-    $ ./pox.py service --gui ...
-    $ ./pox.py unify --gui
-
-Start layer in standalone mode (no dependency handling) for test/debug:
-    $ ./pox.py service --standalone
-    $ ./pox.py orchestration --standalone
-    $ ./pox.py adaptation --standalone
-    $ sudo ./pox.py infrastructure --standalone
-
-    $ ./pox.py service orchestration --standalone
-
-REST API
-
-Content Negotiation: The Service layer's RESTful API accepts and returns data
-                     only in JSON format.
-Operations: Every operation need to be called under the escape/ path.
-            E.g. http://localhost/escape/version
-
-Path          Params   HTTP    Description
-/version      None     GET     Returns with the current version of ESCAPEv2
-/echo         ANY      ALL     Returns with the given parameters
-/operations   None     GET     Returns with the implemented operations as a list
-/sg           NFFG     POST    Initiate given NFFG
-
-Configuration
-
-ESCAPEv2 has a default configuration under the escape package (in the
-__init__.py file as "cfg"). This configuration is used as the running config
-also. This config also contains the necessary information for component
-instantiation and initialization.
-
-To override some of the parameters you can change it in the cfg directly (not
-preferred) or you can define it in the additional config file: escape.config.
-The ESCAPEv2 checks this file at every start, and update/override the internal
-config if it"s necessary. The config file can be changed during start with the
---config initial parameter.
-
-Development
-
-Suggested IDE: Pycharm Community Edition Pycharm Community Edition
-
-Coding conventions:
-
-* Sizes:
-    * Tab size: 2
-    * Indent: 2
-    * Continuation indent: 5
-    * Right margin (columns): 80
-* Use spaces instead of tab characters
-* Use one space before method declaration parentheses
-* Use spaces around operators
-* Not use spaces in named parameters and keywords argument
-* Use double blank lines around classes and top-level functions
-
-Debugging
-
-You can use PyCharm for debugging. In this case you have to specify a new Python
-interpreter using the python_root_debugger.sh script to be able to run ESCAPE
-with root privileges.
-
-You can use POX's "py" stock component also which open an interactive Python
-shell. With that you can observe the internal state of the running ESCAPE
-instance, experiment or even call different functions.
-
-POX uses a topmost object called core which serves a rendezvous point between
-POX's components (e.g. our components representing the UNIFY layers). Through
-that object we can reach every registered object easily.
-E.g. to shut down the REST API of the Service layer manually we can use the
-following function call:
-
-  $ Ready.
-  $ POX>
-  $ POX> core.service.rest_api.stop()
-
-One instance of the ESCAPEInteractiveHelper is registered by default under the
-name: helper. An example to dump the running configuration of ESCAPEv2:
-
-  $ POX> core.helper.config()
-    {
-        "infrastructure": {
-            "NETWORK-OPTS": null,
-            "FALLBACK-TOPO": {
-                "class": "BackupTopology",
-                "module": "escape.infr.topology"
-    ...
-
-More help and description about the useful helper functions and the "core"
-object is in the comments/documentation and on the POX's wiki site.
+For more information see: https://sb.tmit.bme.hu/escape/
