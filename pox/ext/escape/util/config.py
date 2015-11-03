@@ -249,10 +249,6 @@ class ESCAPEConfig(object):
     """
     raise RuntimeError("Explicit layer config deletion is not supported!")
 
-  ##############################################################################
-  # Helper functions
-  ##############################################################################
-
   @staticmethod
   def get_project_root_dir ():
     """
@@ -263,6 +259,10 @@ class ESCAPEConfig(object):
     """
     return os.path.abspath(
       os.path.join(os.path.dirname(__file__), "../../../.."))
+
+  ##############################################################################
+  # Helper functions
+  ##############################################################################
 
   def get_mapping_enabled (self, layer):
     """
@@ -386,7 +386,7 @@ class ESCAPEConfig(object):
     del params['class']
     return params
 
-  def get_default_mgrs (self):
+  def get_managers (self):
     """
     Return the default DomainManagers for initialization on start.
 
@@ -394,7 +394,7 @@ class ESCAPEConfig(object):
     :rtype: list
     """
     try:
-      return self.__configuration[ADAPT]['DEFAULTS']
+      return self.__configuration[ADAPT]['MANAGERS']
     except KeyError:
       return ()
 

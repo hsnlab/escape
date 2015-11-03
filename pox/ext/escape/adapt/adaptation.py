@@ -221,7 +221,7 @@ class ComponentConfigurator(object):
     :return: None
     """
     # very dummy initialization
-    for mgr in CONFIG.get_default_mgrs():
+    for mgr in CONFIG.get_managers():
       log.debug("Init domain Manager for domain: %s" % mgr)
       self.start_mgr(domain_name=mgr)
 

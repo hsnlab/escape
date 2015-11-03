@@ -39,54 +39,69 @@ __status__ = "prototype"
 cfg = {"service": {  # Service Adaptation Sublayer
                      "MAPPER": {"module": "escape.service.sas_mapping",
                                 "class": "ServiceGraphMapper",
-                                "mapping-enabled": False},
+                                "mapping-enabled": False
+                                },
                      "STRATEGY": {"module": "escape.service.sas_mapping",
                                   "class": "DefaultServiceMappingStrategy",
-                                  "THREADED": False},
+                                  "THREADED": False  # still experimental
+                                  },
                      "PROCESSOR": {"module": "escape.util.mapping",
                                    "class": "ProcessorSkipper",
-                                   "enabled": False},
+                                   "enabled": False
+                                   },
                      "REST-API": {"module": "escape.service.sas_API",
                                   "class": "ServiceRequestHandler",
-                                  "address": "0.0.0.0", "port": 8008,
-                                  "prefix": "escape"}},
+                                  "prefix": "escape",
+                                  "address": "0.0.0.0",
+                                  "port": 8008
+                                  }
+                     },
        "orchestration": {  # Resource Orchestration Sublayer
                            "MAPPER": {"module": "escape.orchest.ros_mapping",
                                       "class": "ResourceOrchestrationMapper",
-                                      "mapping-enabled": True},
+                                      "mapping-enabled": True
+                                      },
                            "STRATEGY": {"module": "escape.orchest.ros_mapping",
                                         "class": "ESCAPEMappingStrategy",
-                                        "THREADED": False},
+                                        "THREADED": False  # still experimental
+                                        },
                            "PROCESSOR": {"module": "escape.util.mapping",
                                          "class": "ProcessorSkipper",
-                                         "enabled": True},
+                                         "enabled": True
+                                         },
                            "Sl-Or": {"module": "escape.orchest.ros_API",
                                      "class": "ROSAgentRequestHandler",
                                      "prefix": "escape",
                                      "address": "0.0.0.0",
                                      "port": 8888,
-                                     "virtualizer_type": "GLOBAL"},
+                                     "virtualizer_type": "GLOBAL"
+                                     },
                            "Cf-Or": {"module": "escape.orchest.ros_API",
                                      "class": "CfOrRequestHandler",
                                      "prefix": "cfor",
                                      "address": "0.0.0.0",
                                      "port": 8889,
-                                     "virtualizer_type": "GLOBAL"}},
+                                     "virtualizer_type": "GLOBAL"
+                                     }
+                           },
        "adaptation": {  # Controller Adaptation Sublayer
                         # Default managers need to start at init
-                        # "DEFAULTS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
-                        "DEFAULTS": [],
+                        # "MANAGERS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
+                        "MANAGERS": [],
                         # Specific Domain Adapters for DomainManagers
                         "INTERNAL-POX": {"module": "escape.adapt.adapters",
                                          "class": "InternalPOXAdapter",
                                          "address": "127.0.0.1", "port": 6653,
-                                         "keepalive": False},
+                                         "keepalive": False
+                                         },
                         "SDN-POX": {"module": "escape.adapt.adapters",
                                     "class": "SDNDomainPOXAdapter",
                                     "address": "0.0.0.0", "port": 6633,
-                                    "keepalive": False},
+                                    "keepalive": False
+                                    },
                         "MININET": {"module": "escape.adapt.adapters",
-                                    "class": "InternalMininetAdapter"},
+                                    "class": "InternalMininetAdapter"
+                                    },
                         "SDN-TOPO": {"module": "escape.adapt.adapters",
                                      "class": "SDNDomainTopoAdapter",
                                      # relative to project root
@@ -96,36 +111,48 @@ cfg = {"service": {  # Service Adaptation Sublayer
                                        "class": "VNFStarterAdapter",
                                        "username": "mininet",
                                        "password": "mininet",
-                                       "server": "127.0.0.1", "port": 830},
+                                       "server": "127.0.0.1", "port": 830
+                                       },
                         "ESCAPE-REST": {"module": "escape.adapt.adapters",
                                         "class": "RemoteESCAPEv2RESTAdapter",
-                                        "url": "http://localhost:8083"},
+                                        "url": "http://localhost:8083"
+                                        },
                         "OpenStack-REST": {"module": "escape.adapt.adapters",
                                            "class": "OpenStackRESTAdapter",
-                                           "url": "http://localhost:8081"},
+                                           "url": "http://localhost:8081"
+                                           },
                         "UN-REST": {"module": "escape.adapt.adapters",
                                     "class": "UniversalNodeRESTAdapter",
-                                    "url": "http://localhost:8082"},
+                                    "url": "http://localhost:8082"
+                                    },
                         # Specific Domain Managers
                         "INTERNAL": {"module": "escape.adapt.managers",
                                      "class": "InternalDomainManager",
-                                     "poll": False},
+                                     "poll": False
+                                     },
                         "REMOTE-ESCAPE": {"module": "escape.adapt.managers",
                                           "class": "RemoteESCAPEDomainManager",
-                                          "poll": False},
+                                          "poll": False
+                                          },
                         "OPENSTACK": {"module": "escape.adapt.managers",
                                       "class": "OpenStackDomainManager",
-                                      "poll": False},
+                                      "poll": False
+                                      },
                         "UN": {"module": "escape.adapt.managers",
                                "class": "UniversalNodeDomainManager",
-                               "poll": False},
+                               "poll": False
+                               },
                         "DOCKER": {"module": "escape.adapt.managers",
                                    "class": "DockerDomainManager",
-                                   "poll": False},
+                                   "poll": False
+                                   },
                         "SDN": {"module": "escape.adapt.managers",
-                                "class": "SDNDomainManager", "poll": False},
+                                "class": "SDNDomainManager",
+                                "poll": False
+                                },
                         # Shutdown strategy config
-                        "RESET-DOMAINS-AFTER-SHUTDOWN": True},
+                        "RESET-DOMAINS-AFTER-SHUTDOWN": True
+                        },
        "infrastructure": {  # Infrastructure Layer
                             "NETWORK-OPTS": None,  # Additional opts for Mininet
                             # relative to project root
@@ -133,9 +160,11 @@ cfg = {"service": {  # Service Adaptation Sublayer
                             # relative to project root
                             "FALLBACK-TOPO": {"module": "escape.infr.topology",
                                               "class":
-                                                "FallbackDynamicTopology"},
+                                                "FallbackDynamicTopology"
+                                              },
                             "SAP-xterms": True,
-                            "SHUTDOWN-CLEAN": True},
+                            "SHUTDOWN-CLEAN": True
+                            },
        "additional-config-file": "escape.config"  # relative to project root
        }
 
@@ -152,8 +181,8 @@ def add_dependencies ():
   from pox.core import core
 
   # Project root dir
-
   root = ESCAPEConfig.get_project_root_dir()
+
   for sub_folder in os.listdir(root):
     abs_sub_folder = os.path.join(root, sub_folder)
     if not os.path.isdir(abs_sub_folder):
