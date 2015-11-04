@@ -19,7 +19,7 @@
 This example resets the vnf catalog.
 """
 
-from mininet.vnfcatalog import Catalog
+from vnfcatalog import Catalog
 
 def del_VNFs(vnf_list):
     for vnf in vnf_list:
