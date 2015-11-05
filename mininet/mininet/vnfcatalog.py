@@ -16,9 +16,9 @@
 """
 Helper objects to launch Virtual Network Functions and container managers.
 """
-import os
-import inspect
 import copy
+import inspect
+import os
 import sqlite3
 
 from log import error
@@ -39,6 +39,7 @@ class Catalog(object):
   Catalog of VNFs.
   """
   __shared_state = {}
+
   # __metaclass__ = Singleton
 
   def __init__ (self, filename=None):
@@ -173,6 +174,7 @@ class VnfClick(object):
   """
   Helper object for convenient launching of click-based vnfs.
   """
+
   # __metaclass__ = Singleton
 
   def __init__ (self):
@@ -323,10 +325,12 @@ class VnfClick(object):
     self.gw = kwargs.get('gw', self.vnfDevs[0] + ':gw')
     self.mac = kwargs.get('mac', '')
     self.public = kwargs.get('public', '')
-    templateVars = {'DEV': self.dev, 'METHOD': self.method,
-                    'DADDR': self.daddress, 'INTERVAL': self.interval,
-                    'LIMIT': self.limit, 'GW': self.gw, 'MAC': self.mac,
-                    'public': self.public}
+    templateVars = {
+      'DEV': self.dev, 'METHOD': self.method,
+      'DADDR': self.daddress, 'INTERVAL': self.interval,
+      'LIMIT': self.limit, 'GW': self.gw, 'MAC': self.mac,
+      'public': self.public
+    }
     for i, dev in enumerate(self.vnfDevs):
       templ = 'VNFDEV' + str(i)
       templateVars[templ] = dev
@@ -417,3 +421,78 @@ class VnfNetConf(object):
       return cmd + ' &'
     else:
       return cmd
+
+
+class VnfOVS(object):
+  """
+  Helper object for convenient launching of OVS-based vnfs.
+  """
+
+  # __metaclass__ = Singleton
+
+  def __init__ (self):
+    pass
+
+  def make_cmd (self, **kwargs):
+
+    self.vnfName = kwargs.get('name', '')
+    self.OVSExp = self.instantiate_VNF(**kwargs)
+    self.cmd = "sudo /bin/sh -c "
+    self.cmd = self.cmd + "'" + self.OVSExp + "'"
+
+    return self.cmd + ' &'
+
+  def add_VNF (self, catalog, **kwargs):
+
+    this_file = os.path.abspath(inspect.getfile(inspect.currentframe()))
+    dirname = os.path.dirname(this_file)
+    self.vnfName = kwargs.get('vnf_name', '')
+    self.vnfType = kwargs.get('vnf_type', '')
+    self.read_handlers = []
+    self.write_handlers = []
+    self.dependency = []
+
+    self.TempPath = kwargs.get('TempPath',
+                               dirname + '/templates/' + self.vnfName +
+                               '.jinja2')
+
+    self.vnfDescription = kwargs.get('description', '')
+    self.icon = kwargs.get('icon', '')
+    self.builder_class = kwargs.get('builder_class', '')
+    self.hidden = kwargs.get('hidden', '')
+
+    if os.path.exists(self.TempPath):
+      template = open(self.TempPath, 'r').read()
+    else:
+      template = ''
+
+    # Add to the DataBase
+    cur = catalog.conn.cursor()
+    sql = (self.vnfName, self.vnfType, self.vnfDescription, str(template),
+           repr(self.read_handlers), repr(self.write_handlers),
+           repr(self.dependency),
+           self.icon, self.builder_class, self.hidden)
+    cur.execute('INSERT INTO VNFs VALUES (?,?,?,?,?,?,?,?,?,?)', sql)
+    catalog.conn.commit()
+
+  def instantiate_VNF (self, **kwargs):
+    """
+    Instantiate the VNF (OVS script) with the given parameters.
+    """
+    from jinja2 import Template
+    self.OVSExp = kwargs.get('command', '')
+    # all the required parameters for instantiation of the OVS scripts
+    # should be set here
+    self.sw = kwargs.get('swName', 's1')
+    self.ctrlIP = kwargs.get('ctrlIP', '10.0.10.100')
+    self.ctrlPort = kwargs.get('ctrlPort', '6633')
+    self.ports = kwargs.get('ports', [])
+
+    if self.ports == []:
+      # static use-case, single device name is derived from vnf name
+      self.ports = [{'name': self.vnfName + '-eth1'}]
+
+    template = Template(self.OVSExp)
+    return template.render(sw=self.sw, ctrlIP=self.ctrlIP,
+                           ctrlPort=self.ctrlPort,
+                           ports=self.ports)
