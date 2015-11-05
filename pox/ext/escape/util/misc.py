@@ -41,8 +41,44 @@ def schedule_as_coop_task (func):
   @wraps(func)
   def decorator (*args, **kwargs):
     # Use POX internal thread-safe wrapper for scheduling
-    core.callLater(func, *args, **kwargs)
+    return core.callLater(func, *args, **kwargs)
 
+  return decorator
+
+
+def schedule_delayed_as_coop_task (delay=0):
+  """
+  Decorator functions for running functions delayed in recoco's cooperative
+  multitasking context.
+
+  :param delay: delay in sec (default: 1s)
+  :type delay: int
+  :return: decorator function
+  :rtype: func
+  """
+
+  def decorator (func):
+    from pox.core import core
+    if delay:
+      # If delay is set use callDelayed to call function delayed
+      @wraps(func)
+      def delayed_wrapper (*args, **kwargs):
+        # Use POX internal thread-safe wrapper for scheduling
+        return core.callDelayed(delay, func, *args, **kwargs)
+
+      # Return specific wrapper
+      return delayed_wrapper
+    else:
+      # If delay is not set use regular callLater to call function
+      @wraps(func)
+      def one_time_wrapper (*args, **kwargs):
+        # Use POX internal thread-safe wrapper for scheduling
+        return core.callLater(func, *args, **kwargs)
+
+      # Return specific wrapper
+      return one_time_wrapper
+
+  # Return the decorator
   return decorator
 
 
