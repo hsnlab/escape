@@ -736,6 +736,7 @@ class AbstractRESTAdapter(Session):
     self.auth = auth
     # Store the last request
     self._response = None
+    # Suppress low level logging
     self.__suppress_requests_logging()
 
   @property
@@ -746,6 +747,8 @@ class AbstractRESTAdapter(Session):
     """
     Suppress annoying and detailed logging of `requests` and `urllib3` packages.
 
+    :param level: level of logging (default: WARNING)
+    :type level: str
     :return: None
     """
     import logging

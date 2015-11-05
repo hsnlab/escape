@@ -70,6 +70,20 @@ class AbstractNETCONFAdapter(object):
     # Server side and connection parameters
     self.__connection = None
     self.__config = None
+    # Suppress low level logging
+    self.__suppress_ncclient_logging()
+
+  def __suppress_ncclient_logging (self, level=None):
+    """
+    Suppress annoying and detailed logging of `ncclient` package.
+
+    :param level: level of logging (default: WARNING)
+    :type level: str
+    :return: None
+    """
+    import logging
+    level = level if level is not None else logging.WARNING
+    logging.getLogger("ncclient").setLevel(level)
 
   @property
   def connected (self):

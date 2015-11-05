@@ -238,15 +238,15 @@ def add_dependencies ():
 
   # Project root dir
   root = ESCAPEConfig.get_project_root_dir()
-
+  # Skipped folders under project's root
+  SKIPPED = ("examples", "pox", "OpenYuma", "Unify_ncagent", "tools", "gui",
+             "include", "share", "lib", "bin")
   for sub_folder in os.listdir(root):
     abs_sub_folder = os.path.join(root, sub_folder)
     if not os.path.isdir(abs_sub_folder):
       continue
     if not (sub_folder.startswith('.') or sub_folder.upper().startswith(
-         'PYTHON')) and sub_folder not in (
-         "pox", "OpenYuma", "Unify_ncagent", "tools", "gui", "include", "share",
-         "lib", "bin"):
+         'PYTHON')) and sub_folder not in SKIPPED:
       if abs_sub_folder not in sys.path:
         core.getLogger().debug("Add dependency: %s" % abs_sub_folder)
         sys.path.insert(0, abs_sub_folder)

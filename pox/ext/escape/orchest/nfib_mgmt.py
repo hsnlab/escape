@@ -41,6 +41,7 @@ class NFIBManager(object):
     """
     super(NFIBManager, self).__init__()
     log.debug("Init %s based on neo4j" % self.__class__.__name__)
+    # Suppress low level logging
     self.__suppress_neo4j_logging()
     self.graph_db = Graph()
 
@@ -49,6 +50,8 @@ class NFIBManager(object):
     Suppress annoying and detailed logging of `py2neo` and `httpstream`
     packages.
 
+    :param level: level of logging (default: WARNING)
+    :type level: str
     :return: None
     """
     import logging
