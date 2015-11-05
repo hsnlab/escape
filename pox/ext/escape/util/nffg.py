@@ -16,9 +16,9 @@ Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
 import copy
-from pprint import pprint
 import sys
 import xml.etree.ElementTree as ET
+from pprint import pprint
 
 import networkx
 from networkx.exception import NetworkXError
@@ -1808,7 +1808,7 @@ class NFFGToolBox(object):
           break
 
     return edge_list, bandwidth
-  
+
   @staticmethod
   def generate_all_TAGs_of_NFFG (nffg):
     for sg in nffg.sg_links:

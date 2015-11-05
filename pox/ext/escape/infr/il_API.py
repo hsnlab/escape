@@ -47,6 +47,7 @@ class InfrastructureLayerAPI(AbstractAPI):
   _core_name = LAYER_NAME
   # Events raised by this class
   _eventMixin_events = {DeploymentFinishedEvent}
+
   # Dependencies
   # None
 

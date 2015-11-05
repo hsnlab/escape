@@ -14,11 +14,11 @@
 """
 Contains functionality related to policy enforcement.
 """
-from functools import wraps
 import repr
+from functools import wraps
 
-from escape.orchest import log as log
 import escape.orchest.virtualization_mgmt
+from escape.orchest import log as log
 
 
 class PolicyEnforcementError(RuntimeError):

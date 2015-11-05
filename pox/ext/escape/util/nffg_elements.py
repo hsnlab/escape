@@ -15,8 +15,8 @@
 Classes for handling the elements of the NF-FG data structure
 """
 import json
-from collections import Iterable, OrderedDict
 from __builtin__ import id as generate
+from collections import Iterable, OrderedDict
 
 
 ################################################################################
@@ -350,6 +350,7 @@ class NodeResource(Persistable):
   """
   Class for storing resource information for Nodes.
   """
+
   # YANG: grouping node_resource
 
   def __init__ (self, cpu=None, mem=None, storage=None, delay=None,
@@ -1371,6 +1372,7 @@ class NFFGModel(Element):
     :return: the constructed NF-FG representation
     :rtype: :any:`NFFGModel`
     """
+
     # Converter function to avoid unicode
     def unicode_to_str (input):
       if isinstance(input, dict):

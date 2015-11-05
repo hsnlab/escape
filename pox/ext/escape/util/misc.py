@@ -14,14 +14,14 @@
 """
 Contains miscellaneous helper functions.
 """
-from functools import wraps
 import logging
 import os
 import re
-from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
 import traceback
 import warnings
 import weakref
+from functools import wraps
+from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
 
 
 def schedule_as_coop_task (func):

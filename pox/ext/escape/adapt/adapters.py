@@ -18,16 +18,14 @@ details for the connections between ESCAPEv2 and other different domains.
 from copy import deepcopy
 
 from ncclient.operations import OperationError
-
 from ncclient.operations.rpc import RPCError
-
 from ncclient.transport import TransportError
 
+from escape import CONFIG
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
-from escape import CONFIG
 
 
 class TopologyLoadException(Exception):
@@ -46,20 +44,29 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
   name = "INTERNAL-POX"
 
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {'EE1': 0x1,
-                   'EE2': 0x2,
-                   'SW3': 0x3,
-                   'SW4': 0x4, }
-  dpid_to_infra = {0x1: 'EE1',
-                   0x2: 'EE2',
-                   0x3: 'SW3',
-                   0x4: 'SW4'}
-  saps = {'SW3': {'port': '3',
-                  'dl_dst': '00:00:00:00:00:01',
-                  'dl_src': '00:00:00:00:00:02'},
-          'SW4': {'port': '3',
-                  'dl_dst': '00:00:00:00:00:02',
-                  'dl_src': '00:00:00:00:00:01'}}
+  infra_to_dpid = {
+    'EE1': 0x1,
+    'EE2': 0x2,
+    'SW3': 0x3,
+    'SW4': 0x4, }
+  dpid_to_infra = {
+    0x1: 'EE1',
+    0x2: 'EE2',
+    0x3: 'SW3',
+    0x4: 'SW4'
+    }
+  saps = {
+    'SW3': {
+      'port': '3',
+      'dl_dst': '00:00:00:00:00:01',
+      'dl_src': '00:00:00:00:00:02'
+      },
+    'SW4': {
+      'port': '3',
+      'dl_dst': '00:00:00:00:00:02',
+      'dl_src': '00:00:00:00:00:01'
+      }
+    }
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
                 keepalive=False):
@@ -130,12 +137,14 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   name = "SDN-POX"
 
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {'MT1': 0x14c5e0c376e24,
-                   'MT2': 0x14c5e0c376fc6,
-                   }
-  dpid_to_infra = {0x14c5e0c376e24: 'MT1',
-                   0x14c5e0c376fc6: 'MT2',
-                   }
+  infra_to_dpid = {
+    'MT1': 0x14c5e0c376e24,
+    'MT2': 0x14c5e0c376fc6,
+    }
+  dpid_to_infra = {
+    0x14c5e0c376e24: 'MT1',
+    0x14c5e0c376fc6: 'MT2',
+    }
 
   def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False):
     super(SDNDomainPOXAdapter, self).__init__(name=name, address=address,
@@ -213,9 +222,11 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :rtype: dict
     """
     agent = self.IL_topo_ref.get_agent_to_switch(ee_name)
-    return {"server": "127.0.0.1", "port": agent.agentPort,
-            "username": agent.username,
-            "password": agent.passwd} if agent is not None else {}
+    return {
+      "server": "127.0.0.1", "port": agent.agentPort,
+      "username": agent.username,
+      "password": agent.passwd
+      } if agent is not None else {}
 
 
 class SDNDomainTopoAdapter(AbstractESCAPEAdapter):

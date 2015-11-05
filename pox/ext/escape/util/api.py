@@ -14,17 +14,17 @@
 """
 Contains abstract classes for concrete layer API modules.
 """
-from SocketServer import ThreadingMixIn
-import urlparse
 import json
 import os.path
 import threading
+import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from SocketServer import ThreadingMixIn
 
 from escape import __version__, CONFIG, __project__
 from escape.util.misc import SimpleStandaloneHelper, quit_with_error
-from pox.lib.revent import EventMixin
 from pox.core import core
+from pox.lib.revent import EventMixin
 
 
 class AbstractAPI(EventMixin):
@@ -39,6 +39,7 @@ class AbstractAPI(EventMixin):
   _core_name = "AbstractAPI"
   # Explicitly defined dependencies as POX components
   dependencies = ()
+
   # Events raised by this class, but already defined in superclass
   # _eventMixin_events = set()
 
@@ -305,9 +306,9 @@ class RESTServer(ThreadingMixIn, HTTPServer):
       self.serve_forever()
     except:
       pass
-    # print "stop"
-    # self.RequestHandlerClass.log.debug(
-    #   "REST-API on %s:%d is shutting down..." % self.server_address)
+      # print "stop"
+      # self.RequestHandlerClass.log.debug(
+      #   "REST-API on %s:%d is shutting down..." % self.server_address)
 
 
 class RESTError(Exception):
@@ -354,8 +355,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   server_version = "ESCAPE/" + __version__
   static_prefix = "escape"
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('ping', 'version', 'operations'),
-                  'POST': ('ping',)}
+  request_perm = {
+    'GET': ('ping', 'version', 'operations'),
+    'POST': ('ping',)
+    }
   # Name of the layer API to which the server bounded
   bounded_layer = None
   # Name mapper to avoid Python naming constraint (dict: rpc-name: mapped name)
@@ -581,8 +584,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     self.log_error("code %d, message %s", code, message)
     # using _quote_html to prevent Cross Site Scripting attacks (see bug
     # #1100201)
-    content = {"title": "Error response", 'Error code': code,
-               'Message': message, 'Explanation': explain}
+    content = {
+      "title": "Error response", 'Error code': code,
+      'Message': message, 'Explanation': explain
+      }
     self.send_response(code, message)
     self.send_header("Content-Type", self.error_content_type)
     self.send_header('Connection', 'close')

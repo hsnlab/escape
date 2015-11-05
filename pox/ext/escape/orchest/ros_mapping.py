@@ -20,8 +20,8 @@ from MappingAlgorithms import MAP
 from UnifyExceptionTypes import MappingException, BadInputException, \
   InternalAlgorithmException
 from escape import CONFIG
-from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.orchest import log as log, LAYER_NAME
+from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.util.misc import call_as_coop_task
 from pox.lib.revent.revent import Event
 

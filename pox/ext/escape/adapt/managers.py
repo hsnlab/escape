@@ -208,11 +208,13 @@ class InternalDomainManager(AbstractDomainManager):
                 break
           continue
         # Extract the initiation params
-        params = {'nf_type': nf.functional_type,
-                  'nf_ports': [link.src.id for u, v, link in
-                               nffg_part.network.out_edges_iter((nf.id,),
-                                                                data=True)],
-                  'infra_id': infra.id}
+        params = {
+          'nf_type': nf.functional_type,
+          'nf_ports': [link.src.id for u, v, link in
+                       nffg_part.network.out_edges_iter((nf.id,),
+                                                        data=True)],
+          'infra_id': infra.id
+          }
         # Check if every param is not None or empty
         if not all(params.values()):
           log.error(
