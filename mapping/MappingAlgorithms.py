@@ -39,7 +39,8 @@ except ImportError:
     os.path.abspath(
       os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
                                   "pox/ext/escape/util/"))
-  from nffg import NFFG, generate_dynamic_fallback_nffg
+  from nffg import NFFG
+  from nffg_tests import generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
 import Alg1_Helper as helper

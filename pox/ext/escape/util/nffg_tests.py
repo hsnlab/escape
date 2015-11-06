@@ -1,25 +1,10 @@
-# Copyright 2015 Balazs Sonkoly, Janos Czentye
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at:
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""
-Abstract class and implementation for basic operations with a single NF-FG, such
-as building, parsing, processing NF-FG, helper functions, etc.
-"""
+#!/usr/bin/env python
+
 import copy
 import sys
 from pprint import pprint
 
-from escape.util.nffg import *
+from nffg import *
 
 
 def test_NFFG ():
@@ -662,6 +647,42 @@ def generate_merged_mapped ():
   return nffg.dump()
 
 
+def generate_simple_test_topo ():
+  # Create NFFG
+  nffg = NFFG(id="TEST", name="Simple-Test-Topology")
+  # Add environments
+  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=NFFG.DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  # Add supported types
+  ee1.add_supported_type(
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder', 'ovs'))
+  # Add SAPs
+  sap1 = nffg.add_sap(id="SAP1", name="SAP1")
+  sap2 = nffg.add_sap(id="SAP2", name="SAP2")
+
+  # Add links
+  link_res = {'delay': 1.5, 'bandwidth': 10}
+  nffg.add_link(sap1.add_port(1), ee1.add_port(1), id="mn-link1", **link_res)
+  nffg.add_link(sap2.add_port(1), ee1.add_port(2), id="mn-link2", **link_res)
+  # nffg.duplicate_static_links()
+  return nffg
+
+
+def generate_simple_test_req ():
+  test = NFFG(id="Simple-test-req", name="Simple test request")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  ovs = test.add_nf(id="ovs", name="OVS switch", func_type="ovs",
+                    cpu=1, mem=1, storage=0)
+  test.add_sglink(sap1.add_port(1), ovs.add_port(1), id=1)
+  test.add_sglink(ovs.ports[1], sap2.add_port(1), id=2)
+
+  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=1, delay=10,
+               sg_path=(1, 2))
+  return test
+
+
 if __name__ == "__main__":
   # test_NFFG()
   # nffg = generate_mn_topo()
@@ -670,13 +691,15 @@ if __name__ == "__main__":
   # nffg = generate_static_fallback_topo()
   # nffg = generate_one_bisbis()
   # nffg = gen()
-  nffg = generate_sdn_topo2()
+  # nffg = generate_sdn_topo2()
   # nffg = generate_sdn_req()
   # nffg = generate_os_req()
   # nffg = generate_os_mn_req()
   # nffg = generate_dov()
   # nffg = generate_global_req()
   # nffg = generate_ewsdn_req3()
+  # nffg = generate_simple_test_topo()
+  nffg = generate_simple_test_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
