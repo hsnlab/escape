@@ -448,7 +448,7 @@ class ESCAPENetworkBuilder(object):
     'autoStaticArp': True,  # Set static ARP entries
     'listenPort': 6644,  # Add listen port to OVS switches
     'link': TCLink  # Add default link
-    }
+  }
   # Default internal storing format for NFFG parsing/reading from file
   DEFAULT_NFFG_FORMAT = "NFFG"
   # Constants
@@ -938,8 +938,8 @@ class ESCAPENetworkBuilder(object):
       else:
         raise RuntimeError("Unsupported topology format: %s" % type(topo))
       return self.get_network()
-    except SystemExit:
-      quit_with_error("Mininet core files is not installed and/or available!")
+    except SystemExit as e:
+      quit_with_error(msg="Mininet exited unexpectedly! Cause: %s" % e.message)
     except TopologyBuilderException:
       if self.fallback:
         # Search for fallback topology
