@@ -240,7 +240,7 @@ def add_dependencies ():
   root = ESCAPEConfig.get_project_root_dir()
   # Skipped folders under project's root
   SKIPPED = ("examples", "pox", "OpenYuma", "Unify_ncagent", "tools", "gui",
-             "include", "share", "lib", "bin")
+             "nffg_BME", "include", "share", "lib", "bin")
   for sub_folder in os.listdir(root):
     abs_sub_folder = os.path.join(root, sub_folder)
     if not os.path.isdir(abs_sub_folder):

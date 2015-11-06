@@ -100,6 +100,26 @@ def call_as_coop_task (func, *args, **kwargs):
   core.callLater(func, *args, **kwargs)
 
 
+def call_delayed_as_coop_task (func, delay=0, *args, **kwargs):
+  """
+  Schedule a coop microtask with a given time.
+
+  Use POX core logic directly.
+
+  :param delay: delay of time
+  :type delay: int
+  :param func: function need to run
+  :type func: func
+  :param args: nameless arguments
+  :type args: tuple
+  :param kwargs: named arguments
+  :type kwargs: dict
+  :return: None
+  """
+  from pox.core import core
+  core.callDelayed(delay, func, *args, **kwargs)
+
+
 def run_silent (cmd):
   """
   Run the given shell command silent.

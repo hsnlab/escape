@@ -62,42 +62,62 @@ class AbstractNFFG(object):
   def add_link (self, src, dst):
     """
     Add a static or dynamic infrastructure link to the NF-FG.
+
+    :param src: source port
+    :param dst: destination port
     """
     raise NotImplementedError("Not implemented yet!")
 
   def add_sglink (self, src, dst):
     """
     Add an SG link to the NF-FG.
+
+    :param src: source port
+    :param dst: destination port
     """
     raise NotImplementedError("Not implemented yet!")
 
   def add_req (self, src, dst):
     """
     Add a requirement link to the NF-FG.
+
+    :param src: source port
+    :param dst: destination port
     """
     raise NotImplementedError("Not implemented yet!")
 
   def add_node (self, node):
     """
     Add a single node to the NF-FG.
+
+    :param node: node object
     """
     raise NotImplementedError("Not implemented yet!")
 
   def del_node (self, id):
     """
     Remove a single node from the NF-FG.
+
+    :param id: id of the node
     """
     raise NotImplementedError("Not implemented yet!")
 
   def add_edge (self, src, dst, link):
     """
-    Add an edge to the NF-FG..
+    Add an edge to the NF-FG.
+
+    :param src: source port
+    :param dst: destination port
+    :param link: link object
     """
     raise NotImplementedError("Not implemented yet!")
 
   def del_edge (self, src, dst):
     """
     Remove an edge from the NF-FG.
+
+    :param src: source port
+    :param dst: destination port
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -228,7 +248,7 @@ class NFFG(AbstractNFFG):
       item = item.id
     return item in self.network
 
-  def __iter__ (self):
+  def __iter__ (self, data=False):
     """
     Return an iterator over the nodes.
 
@@ -236,7 +256,7 @@ class NFFG(AbstractNFFG):
     :type data: bool
     :return: An iterator over nodes.
     """
-    return self.network.nodes_iter()
+    return self.network.nodes_iter(data=data)
 
   def __len__ (self):
     """
@@ -442,12 +462,14 @@ class NFFG(AbstractNFFG):
 
     :param link: add this explicit Link object instead of create one
     :type link: :any:`EdgeLink`
-    :param src_port: source Node
+    :param src_port: source port
     :type src_port: :any:`Port`
     :param dst_port: destination port
     :type dst_port: :any:`Port`
     :param id: optional link id
     :type id: str or int
+    :param backward: the link is a backward link compared to an another Link
+    :type backward: bool
     :param delay: delay resource
     :type delay: str or int
     :param dynamic: set the link dynamic (default: False)
@@ -498,7 +520,7 @@ class NFFG(AbstractNFFG):
 
     :param hop: add this explicit SG Link object instead of create one
     :type hop: :any:`EdgeSGLink`
-    :param src_port: source Node
+    :param src_port: source port
     :type src_port: :any:`Port`
     :param dst_port: destination port
     :type dst_port: :any:`Port`
@@ -521,7 +543,7 @@ class NFFG(AbstractNFFG):
 
     :param req: add this explicit Requirement Link object instead of create one
     :type req: :any:`EdgeReq`
-    :param src_port: source Node
+    :param src_port: source port
     :type src_port: :any:`Port`
     :param dst_port: destination port
     :type dst_port: :any:`Port`
@@ -531,6 +553,8 @@ class NFFG(AbstractNFFG):
     :type delay: str or int or float
     :param bandwidth: bandwidth resource
     :type bandwidth: str or int or float
+    :param sg_path: list of ids of sg_links represents end-to-end requirement
+    :type sg_path: list or tuple
     :return: newly created edge
     :rtype: :any:`EdgeReq`
     """
@@ -956,7 +980,7 @@ def gen ():
   return nffg
 
 
-def generate_sdn_topo2 ():
+def generate_sdn_topo ():
   # Create NFFG
   nffg = NFFG(id="SDN", name="SDN-Topology")
   # Add MikroTik OF switches
@@ -1499,9 +1523,9 @@ class NFFGToolBox(object):
           # Create Node object for NF
           v_nf = virt3.Node(id=str(nf.id), name=str(nf.name),
                             type=str(nf.functional_type),
-                            resources=virt3.NodeResources(cpu=v_nf_cpu,
-                                                          mem=v_nf_mem,
-                                                          storage=v_nf_storage))
+                            resources=virt3.Software_resource(cpu=v_nf_cpu,
+                                                              mem=v_nf_mem,
+                                                              storage=v_nf_storage))
           # Add NF to Infra object
           virtualizer.nodes[str(u)].NF_instances.add(v_nf)
           # Add NF ports

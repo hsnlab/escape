@@ -177,7 +177,7 @@ class ServiceLayerAPI(AbstractAPI):
         log.info("Graph representation is loaded successfully!")
         service_request = NFFG.parse(service_request)
         log.debug("Converted to NFFG...")
-        log.info("Schedule service request delayed...")
+        log.info("Schedule service request delayed by 3 seconds...")
         self.api_sas_sg_request_delayed(service_nffg=service_request)
       except (ValueError, IOError, TypeError) as e:
         log.error(
