@@ -73,11 +73,11 @@ class Catalog(object):
       try:
         self.db[metadata['name']] = metadata
       except KeyError:
-        error('invaild vnf data: %s' % metadata)
+        error('invalid vnf data: %s' % metadata)
 
   def get_db (self):
     """
-    Return the list of metadatas for VNFs available to launch.
+    Return the list of metadata for VNFs available to launch.
     """
     # don't let callers mess with our database
     return copy.deepcopy(self.db)
@@ -367,7 +367,7 @@ class VnfLookBusy(object):
   """
 
   def make_cmd (self, **kw):
-    "Asseble a complex lookbusy commandline."
+    "Assemble a complex lookbusy commandline."
     args = ['verbose', 'quiet', 'cpu-util', 'ncpus', 'cpu-mode',
             'cpu-curve-period', 'cpu-curve-peak', 'utc', 'mem-util',
             'mem-sleep', 'disk-util', 'disk-sleep', 'disk-block-size',
@@ -388,7 +388,11 @@ class VnfFakeLoad(object):
   """
 
   def make_cmd (self, cpu='', mem='', **kw):
-    """Generate load for testing VNF load balancers."""
+    """Generate load for testing VNF load balancers.
+    :param kw:
+    :param mem:
+    :param cpu:
+    """
     cmd = 'lookbusy'
     if cpu:
       cmd = cmd + ' -c ' + cpu
@@ -488,7 +492,7 @@ class VnfOVS(object):
     self.ctrlPort = kwargs.get('ctrlPort', '6633')
     self.ports = kwargs.get('ports', [])
 
-    if self.ports == []:
+    if not self.ports:
       # static use-case, single device name is derived from vnf name
       self.ports = [{'name': self.vnfName + '-eth1'}]
 
