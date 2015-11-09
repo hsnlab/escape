@@ -26,6 +26,7 @@ from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
+from pox.lib.util import dpid_to_str
 
 
 class TopologyLoadException(Exception):
@@ -54,12 +55,14 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     'SW3': {
       'port': '3',
       'dl_dst': '00:00:00:00:00:01',
-      'dl_src': '00:00:00:00:00:02'
+      # 'dl_src': '00:00:00:00:00:02'
+      'dl_src': 'ff:ff:ff:ff:ff:ff'
     },
     'SW4': {
       'port': '3',
       'dl_dst': '00:00:00:00:00:02',
-      'dl_src': '00:00:00:00:00:01'
+      # 'dl_src': '00:00:00:00:00:01'
+      'dl_src': 'ff:ff:ff:ff:ff:ff'
     }
   }
 
@@ -123,6 +126,14 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     Handle disconnected device.
     """
     log.debug("Handle disconnection by %s" % self.task_name)
+    if event.dpid in self.infra_to_dpid.itervalues():
+      for k in self.infra_to_dpid:
+        if self.infra_to_dpid[k] == event.dpid:
+          del self.infra_to_dpid[k]
+          break
+      log.debug("DPID: %s removed from infra-dpid assignments" % dpid_to_str(
+        event.dpid))
+
     event = DomainChangedEvent(domain=self.name,
                                cause=DomainChangedEvent.TYPE.NODE_DOWN,
                                data={"DPID": event.dpid})
