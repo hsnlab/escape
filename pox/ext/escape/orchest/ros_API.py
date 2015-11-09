@@ -366,7 +366,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of global view (DoV)
     :rtype: str
     """
-    print self.__dict__
     log.getChild('Sl-Or').info("Requesting Virtualizer for REST-API")
     virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       virtualizer_id=self.ros_api.api_id, type=self.ros_api.virtualizer_type)
