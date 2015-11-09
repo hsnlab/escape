@@ -634,7 +634,7 @@ class GraphPreprocessorClass(object):
     if self.shortest_paths is None:
       self.log.info("Calculating shortest paths measured in latency...")
       self.shortest_paths = helper.shortestPathsInLatency(net.network, 
-                                   enable_shortest_path_cache, 
+                                   enable_shortest_path_cache=True, 
                                    enable_network_cutting=False)
     else:
       self.log.info("Shortest paths are received from previous run!")

@@ -429,9 +429,9 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../pox/escape-mn-req-additional.nffg', "r") as f:
+    with open('ReqForNanoTopo.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('../pox/escape-mn-mapped-topo.nffg', "r") as g:
+    with open('NanoTopo.nffg', "r") as g:
       net = NFFG.parse(g.read())
       # net.duplicate_static_links()
     mapped = MAP(req, net, full_remap = False)
