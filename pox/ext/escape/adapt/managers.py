@@ -17,6 +17,7 @@ domain management. Uses Adapter classes for ensuring protocol-specific
 connections with entities in the particular domain.
 """
 import sys
+import traceback
 
 from escape.adapt.adapters import *
 from escape.util.domain import *
@@ -96,6 +97,7 @@ class InternalDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
       return False
 
   def clear_domain (self):
@@ -501,6 +503,7 @@ class SDNDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
       return False
 
   def _delete_flowrules (self, nffg_part):
@@ -685,6 +688,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
+      return False
 
   # def __update_nffg (self, nffg_part):
   #   """
@@ -773,6 +778,8 @@ class OpenStackDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
+      return False
 
   def clear_domain (self):
     """
@@ -845,6 +852,8 @@ class UniversalNodeDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
+      return False
 
   def clear_domain (self):
     """
