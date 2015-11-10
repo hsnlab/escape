@@ -434,7 +434,8 @@ class ESCAPENetworkBuilder(object):
   an empty instance.
 
   Always return with an ESCAPENetworkBridge instance which offer a generic
-  interface for created :any::`Mininet` object and hide implementation's nature.
+  interface for created :class:`mininet.net.Mininet` object and hide
+  implementation's nature.
 
   Follows Builder design pattern.
   """
@@ -460,10 +461,11 @@ class ESCAPENetworkBuilder(object):
     Initialize NetworkBuilder.
 
     If the topology definition is not found, an exception will be raised or
-    an empty :any::`Mininet` topology will be created if ``run_dry`` is set.
+    an empty :class:`mininet.net.Mininet` topology will be created if
+    ``run_dry`` is set.
 
     :param net: update given Mininet object instead of creating a new one
-    :type net: :any::`Mininet`
+    :type net: :class:`mininet.net.Mininet`
     :param opts: update default options with the given opts
     :type opts: dict
     :param fallback: search for fallback topology (default: True)

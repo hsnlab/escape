@@ -149,7 +149,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     Mininet for interfaces in an OVS switch e.g.: EE1, EE1-eth1, EE1-eth2, etc.
 
     :param connection: inner Connection class of POX
-    :type connection: :any:`pox.openflow.of_01.Connection`
+    :type connection: :class:`pox.openflow.of_01.Connection`
     :return: None
     """
     dpid = connection.dpid
@@ -226,8 +226,8 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
 
   def get_mn_wrapper (self):
     """
-    Return the specific wrapper for :any:`Mininet` object represents the
-    emulated network.
+    Return the specific wrapper for :class:`mininet.net.Mininet` object
+    represents the emulated network.
 
     :return: emulated network wrapper
     :rtype: :any:`ESCAPENetworkBridge`
