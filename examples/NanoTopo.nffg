@@ -336,6 +336,9 @@
         }, 
         {
           "id": 35
+        }, 
+        {
+          "id": 38
         }
       ], 
       "domain": "INTERNAL", 
@@ -732,6 +735,9 @@
         }, 
         {
           "id": 19
+        }, 
+        {
+          "id": 22
         }
       ], 
       "domain": "INTERNAL", 
@@ -756,9 +762,6 @@
         }, 
         {
           "id": 20
-        }, 
-        {
-          "id": 22
         }
       ], 
       "domain": "INTERNAL", 
@@ -816,9 +819,6 @@
         }, 
         {
           "id": 36
-        }, 
-        {
-          "id": 38
         }
       ], 
       "domain": "INTERNAL", 
@@ -834,7 +834,7 @@
   ], 
   "edge_links": [
     {
-      "id": 140631490876626, 
+      "id": 139830489201234, 
       "src_node": "san0", 
       "src_port": 60, 
       "dst_node": "fi0", 
@@ -843,7 +843,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491025806, 
+      "id": 139830489350862, 
       "src_node": "san0", 
       "src_port": 62, 
       "dst_node": "fi1", 
@@ -852,7 +852,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490483961, 
+      "id": 139830489141305, 
       "src_node": "host7", 
       "src_port": 108, 
       "dst_node": "fe2", 
@@ -861,7 +861,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490150328, 
+      "id": 139830488807672, 
       "src_node": "host7", 
       "src_port": 110, 
       "dst_node": "fe3", 
@@ -870,7 +870,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490006411, 
+      "id": 139830488663755, 
       "src_node": "host6", 
       "src_port": 104, 
       "dst_node": "fe2", 
@@ -879,7 +879,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490538910, 
+      "id": 139830489196254, 
       "src_node": "host6", 
       "src_port": 106, 
       "dst_node": "fe3", 
@@ -888,7 +888,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490037535, 
+      "id": 139830488723615, 
       "src_node": "host5", 
       "src_port": 100, 
       "dst_node": "fe2", 
@@ -897,7 +897,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490453533, 
+      "id": 139830489110877, 
       "src_node": "host5", 
       "src_port": 102, 
       "dst_node": "fe3", 
@@ -906,7 +906,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490737943, 
+      "id": 139830489424023, 
       "src_node": "host4", 
       "src_port": 96, 
       "dst_node": "fe2", 
@@ -915,7 +915,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631489901063, 
+      "id": 139830488587143, 
       "src_node": "host4", 
       "src_port": 98, 
       "dst_node": "fe3", 
@@ -924,7 +924,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490107336, 
+      "id": 139830488760584, 
       "src_node": "host3", 
       "src_port": 84, 
       "dst_node": "fe0", 
@@ -933,7 +933,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631489875663, 
+      "id": 139830488528911, 
       "src_node": "host3", 
       "src_port": 86, 
       "dst_node": "fe1", 
@@ -942,7 +942,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631489856468, 
+      "id": 139830488509716, 
       "src_node": "host2", 
       "src_port": 80, 
       "dst_node": "fe0", 
@@ -951,7 +951,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490260796, 
+      "id": 139830488914044, 
       "src_node": "host2", 
       "src_port": 82, 
       "dst_node": "fe1", 
@@ -960,7 +960,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490913629, 
+      "id": 139830489276125, 
       "src_node": "host1", 
       "src_port": 76, 
       "dst_node": "fe0", 
@@ -969,7 +969,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490363449, 
+      "id": 139830489016697, 
       "src_node": "host1", 
       "src_port": 78, 
       "dst_node": "fe1", 
@@ -978,7 +978,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490940210, 
+      "id": 139830489302706, 
       "src_node": "host0", 
       "src_port": 72, 
       "dst_node": "fe0", 
@@ -987,7 +987,7 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490906156, 
+      "id": 139830489268652, 
       "src_node": "host0", 
       "src_port": 74, 
       "dst_node": "fe1", 
@@ -996,207 +996,16 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631490653248, 
-      "src_node": "fe2", 
-      "src_port": 109, 
-      "dst_node": "host7", 
-      "dst_port": 108, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490165675, 
-      "src_node": "fe2", 
-      "src_port": 105, 
-      "dst_node": "host6", 
-      "dst_port": 104, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631489820994, 
-      "src_node": "fe2", 
-      "src_port": 89, 
-      "dst_node": "fi0", 
-      "dst_port": 88, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490456861, 
-      "src_node": "fe2", 
-      "src_port": 93, 
-      "dst_node": "fi0", 
-      "dst_port": 92, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0, 
-      "backward": true
-    }, 
-    {
-      "id": 140631489961947, 
-      "src_node": "fe2", 
-      "src_port": 97, 
-      "dst_node": "host4", 
-      "dst_port": 96, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490027245, 
-      "src_node": "fe2", 
-      "src_port": 101, 
-      "dst_node": "host5", 
-      "dst_port": 100, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490058767, 
-      "src_node": "fe3", 
-      "src_port": 111, 
-      "dst_node": "host7", 
-      "dst_port": 110, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631489987808, 
-      "src_node": "fe3", 
-      "src_port": 99, 
-      "dst_node": "host4", 
-      "dst_port": 98, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490156965, 
-      "src_node": "fe3", 
-      "src_port": 103, 
-      "dst_node": "host5", 
-      "dst_port": 102, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490686032, 
-      "src_node": "fe3", 
-      "src_port": 91, 
-      "dst_node": "fi1", 
-      "dst_port": 90, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490411527, 
-      "src_node": "fe3", 
-      "src_port": 95, 
-      "dst_node": "fi1", 
-      "dst_port": 94, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490645702, 
-      "src_node": "fe3", 
-      "src_port": 107, 
-      "dst_node": "host6", 
-      "dst_port": 106, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491615661, 
+      "id": 139830489162460, 
       "src_node": "dn3", 
-      "src_port": 31, 
-      "dst_node": "an0", 
-      "dst_port": 30, 
+      "src_port": 38, 
+      "dst_node": "pe0", 
+      "dst_port": 39, 
       "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
+      "bandwidth": 100
     }, 
     {
-      "id": 140631490396841, 
-      "src_node": "dn3", 
-      "src_port": 35, 
-      "dst_node": "an1", 
-      "dst_port": 34, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490249785, 
-      "src_node": "fe1", 
-      "src_port": 71, 
-      "dst_node": "fi1", 
-      "dst_port": 70, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490447445, 
-      "src_node": "fe1", 
-      "src_port": 67, 
-      "dst_node": "fi1", 
-      "dst_port": 66, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0, 
-      "backward": true
-    }, 
-    {
-      "id": 140631489921478, 
-      "src_node": "fe1", 
-      "src_port": 87, 
-      "dst_node": "host3", 
-      "dst_port": 86, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490404563, 
-      "src_node": "fe1", 
-      "src_port": 83, 
-      "dst_node": "host2", 
-      "dst_port": 82, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490723476, 
-      "src_node": "fe1", 
-      "src_port": 79, 
-      "dst_node": "host1", 
-      "dst_port": 78, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490961933, 
-      "src_node": "fe1", 
-      "src_port": 75, 
-      "dst_node": "host0", 
-      "dst_port": 74, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490461517, 
+      "id": 139830488465997, 
       "src_node": "an0", 
       "src_port": 52, 
       "dst_node": "fi0", 
@@ -1205,7 +1014,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490889524, 
+      "id": 139830488893748, 
       "src_node": "an0", 
       "src_port": 54, 
       "dst_node": "fi1", 
@@ -1214,7 +1023,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490752196, 
+      "id": 139830488771972, 
       "src_node": "an0", 
       "src_port": 8, 
       "dst_node": "bn0", 
@@ -1223,7 +1032,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490573739, 
+      "id": 139830488575403, 
       "src_node": "an0", 
       "src_port": 46, 
       "dst_node": "dn5", 
@@ -1232,7 +1041,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490707492, 
+      "id": 139830488709284, 
       "src_node": "an0", 
       "src_port": 44, 
       "dst_node": "dn4", 
@@ -1241,7 +1050,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491370640, 
+      "id": 139830488914896, 
       "src_node": "an0", 
       "src_port": 14, 
       "dst_node": "dn1", 
@@ -1250,7 +1059,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491034301, 
+      "id": 139830488578109, 
       "src_node": "an0", 
       "src_port": 12, 
       "dst_node": "dn0", 
@@ -1259,7 +1068,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491227297, 
+      "id": 139830488813345, 
       "src_node": "an0", 
       "src_port": 30, 
       "dst_node": "dn3", 
@@ -1268,7 +1077,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491663555, 
+      "id": 139830489249091, 
       "src_node": "an0", 
       "src_port": 28, 
       "dst_node": "dn2", 
@@ -1277,7 +1086,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490170513, 
+      "id": 139830488495121, 
       "src_node": "an1", 
       "src_port": 56, 
       "dst_node": "fi0", 
@@ -1286,7 +1095,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490768209, 
+      "id": 139830489092881, 
       "src_node": "an1", 
       "src_port": 58, 
       "dst_node": "fi1", 
@@ -1295,7 +1104,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491183264, 
+      "id": 139830489203744, 
       "src_node": "an1", 
       "src_port": 10, 
       "dst_node": "bn1", 
@@ -1304,7 +1113,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491184571, 
+      "id": 139830489188027, 
       "src_node": "an1", 
       "src_port": 50, 
       "dst_node": "dn5", 
@@ -1313,7 +1122,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490620519, 
+      "id": 139830488623207, 
       "src_node": "an1", 
       "src_port": 48, 
       "dst_node": "dn4", 
@@ -1322,7 +1131,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491559609, 
+      "id": 139830489107257, 
       "src_node": "an1", 
       "src_port": 18, 
       "dst_node": "dn1", 
@@ -1331,7 +1140,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491658818, 
+      "id": 139830489206530, 
       "src_node": "an1", 
       "src_port": 16, 
       "dst_node": "dn0", 
@@ -1340,7 +1149,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491298411, 
+      "id": 139830488885547, 
       "src_node": "an1", 
       "src_port": 34, 
       "dst_node": "dn3", 
@@ -1349,7 +1158,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491010524, 
+      "id": 139830488597084, 
       "src_node": "an1", 
       "src_port": 32, 
       "dst_node": "dn2", 
@@ -1358,7 +1167,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490647985, 
+      "id": 139830489012337, 
       "src_node": "fi0", 
       "src_port": 64, 
       "dst_node": "fe0", 
@@ -1367,7 +1176,7 @@
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140631490638387, 
+      "id": 139830489000883, 
       "src_node": "fi0", 
       "src_port": 68, 
       "dst_node": "fe0", 
@@ -1376,7 +1185,7 @@
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140631490310405, 
+      "id": 139830488996485, 
       "src_node": "fi0", 
       "src_port": 92, 
       "dst_node": "fe2", 
@@ -1385,7 +1194,7 @@
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140631490473366, 
+      "id": 139830489159446, 
       "src_node": "fi0", 
       "src_port": 88, 
       "dst_node": "fe2", 
@@ -1394,37 +1203,7 @@
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140631490701190, 
-      "src_node": "fi0", 
-      "src_port": 53, 
-      "dst_node": "an0", 
-      "dst_port": 52, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490612787, 
-      "src_node": "fi0", 
-      "src_port": 57, 
-      "dst_node": "an1", 
-      "dst_port": 56, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490602379, 
-      "src_node": "fi0", 
-      "src_port": 61, 
-      "dst_node": "san0", 
-      "dst_port": 60, 
-      "delay": 0.1, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631489803160, 
+      "id": 139830488489240, 
       "src_node": "fi1", 
       "src_port": 94, 
       "dst_node": "fe3", 
@@ -1433,7 +1212,7 @@
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140631490349818, 
+      "id": 139830489035898, 
       "src_node": "fi1", 
       "src_port": 90, 
       "dst_node": "fe3", 
@@ -1442,37 +1221,7 @@
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140631491314609, 
-      "src_node": "fi1", 
-      "src_port": 55, 
-      "dst_node": "an0", 
-      "dst_port": 54, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490608512, 
-      "src_node": "fi1", 
-      "src_port": 59, 
-      "dst_node": "an1", 
-      "dst_port": 58, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490665217, 
-      "src_node": "fi1", 
-      "src_port": 63, 
-      "dst_node": "san0", 
-      "dst_port": 62, 
-      "delay": 0.1, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490656910, 
+      "id": 139830489021262, 
       "src_node": "fi1", 
       "src_port": 66, 
       "dst_node": "fe1", 
@@ -1481,7 +1230,7 @@
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140631490252383, 
+      "id": 139830488614879, 
       "src_node": "fi1", 
       "src_port": 70, 
       "dst_node": "fe1", 
@@ -1490,17 +1239,7 @@
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140631490681366, 
-      "src_node": "bn3", 
-      "src_port": 5, 
-      "dst_node": "bn2", 
-      "dst_port": 4, 
-      "delay": 10, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491060486, 
+      "id": 139830489078470, 
       "src_node": "bn3", 
       "src_port": 6, 
       "dst_node": "bn0", 
@@ -1509,7 +1248,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490786362, 
+      "id": 139830488805690, 
       "src_node": "bn2", 
       "src_port": 4, 
       "dst_node": "bn3", 
@@ -1518,17 +1257,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490535668, 
-      "src_node": "bn2", 
-      "src_port": 3, 
-      "dst_node": "bn1", 
-      "dst_port": 2, 
-      "delay": 10, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490697451, 
+      "id": 139830488714731, 
       "src_node": "bn1", 
       "src_port": 2, 
       "dst_node": "bn2", 
@@ -1537,37 +1266,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631491035090, 
-      "src_node": "bn1", 
-      "src_port": 1, 
-      "dst_node": "bn0", 
-      "dst_port": 0, 
-      "delay": 10, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490780030, 
-      "src_node": "bn1", 
-      "src_port": 11, 
-      "dst_node": "an1", 
-      "dst_port": 10, 
-      "delay": 0.1, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490580384, 
-      "src_node": "bn0", 
-      "src_port": 7, 
-      "dst_node": "bn3", 
-      "dst_port": 6, 
-      "delay": 10, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491121621, 
+      "id": 139830489138325, 
       "src_node": "bn0", 
       "src_port": 0, 
       "dst_node": "bn1", 
@@ -1576,17 +1275,7 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140631490859046, 
-      "src_node": "bn0", 
-      "src_port": 9, 
-      "dst_node": "an0", 
-      "dst_port": 8, 
-      "delay": 0.1, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491250914, 
+      "id": 139830489251170, 
       "src_node": "pe0", 
       "src_port": 42, 
       "dst_node": "sap3", 
@@ -1595,7 +1284,7 @@
       "bandwidth": 10
     }, 
     {
-      "id": 140631490381382, 
+      "id": 139830488339206, 
       "src_node": "pe0", 
       "src_port": 40, 
       "dst_node": "sap2", 
@@ -1604,27 +1293,7 @@
       "bandwidth": 10
     }, 
     {
-      "id": 140631491048009, 
-      "src_node": "pe0", 
-      "src_port": 39, 
-      "dst_node": "dn2", 
-      "dst_port": 38, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490781559, 
-      "src_node": "pe0", 
-      "src_port": 37, 
-      "dst_node": "dn2", 
-      "dst_port": 36, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491223710, 
+      "id": 139830488807326, 
       "src_node": "bnas0", 
       "src_port": 24, 
       "dst_node": "sap0", 
@@ -1633,27 +1302,7 @@
       "bandwidth": 10
     }, 
     {
-      "id": 140631491432735, 
-      "src_node": "bnas0", 
-      "src_port": 23, 
-      "dst_node": "dn0", 
-      "dst_port": 22, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491478391, 
-      "src_node": "bnas0", 
-      "src_port": 21, 
-      "dst_node": "dn0", 
-      "dst_port": 20, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491185099, 
+      "id": 139830488769739, 
       "src_node": "bnas0", 
       "src_port": 26, 
       "dst_node": "sap1", 
@@ -1662,87 +1311,16 @@
       "bandwidth": 10
     }, 
     {
-      "id": 140631490950118, 
-      "src_node": "dn5", 
-      "src_port": 47, 
-      "dst_node": "an0", 
-      "dst_port": 46, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490829425, 
-      "src_node": "dn5", 
-      "src_port": 51, 
-      "dst_node": "an1", 
-      "dst_port": 50, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491252951, 
-      "src_node": "dn4", 
-      "src_port": 45, 
-      "dst_node": "an0", 
-      "dst_port": 44, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491349572, 
-      "src_node": "dn4", 
-      "src_port": 49, 
-      "dst_node": "an1", 
-      "dst_port": 48, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491002586, 
+      "id": 139830489233574, 
       "src_node": "dn1", 
-      "src_port": 15, 
-      "dst_node": "an0", 
-      "dst_port": 14, 
+      "src_port": 22, 
+      "dst_node": "bnas0", 
+      "dst_port": 23, 
       "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
+      "bandwidth": 100
     }, 
     {
-      "id": 140631491651685, 
-      "src_node": "dn1", 
-      "src_port": 19, 
-      "dst_node": "an1", 
-      "dst_port": 18, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491508140, 
-      "src_node": "dn0", 
-      "src_port": 13, 
-      "dst_node": "an0", 
-      "dst_port": 12, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491732369, 
-      "src_node": "dn0", 
-      "src_port": 17, 
-      "dst_node": "an1", 
-      "dst_port": 16, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491058643, 
+      "id": 139830488644627, 
       "src_node": "dn0", 
       "src_port": 20, 
       "dst_node": "bnas0", 
@@ -1751,151 +1329,13 @@
       "bandwidth": 100
     }, 
     {
-      "id": 140631491647654, 
-      "src_node": "dn0", 
-      "src_port": 22, 
-      "dst_node": "bnas0", 
-      "dst_port": 23, 
-      "delay": 0.2, 
-      "bandwidth": 100
-    }, 
-    {
-      "id": 140631490353129, 
-      "src_node": "fe0", 
-      "src_port": 69, 
-      "dst_node": "fi0", 
-      "dst_port": 68, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490505421, 
-      "src_node": "fe0", 
-      "src_port": 65, 
-      "dst_node": "fi0", 
-      "dst_port": 64, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490590777, 
-      "src_node": "fe0", 
-      "src_port": 85, 
-      "dst_node": "host3", 
-      "dst_port": 84, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490386943, 
-      "src_node": "fe0", 
-      "src_port": 81, 
-      "dst_node": "host2", 
-      "dst_port": 80, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490959246, 
-      "src_node": "fe0", 
-      "src_port": 77, 
-      "dst_node": "host1", 
-      "dst_port": 76, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490986885, 
-      "src_node": "fe0", 
-      "src_port": 73, 
-      "dst_node": "host0", 
-      "dst_port": 72, 
-      "delay": 0.2, 
-      "bandwidth": 100, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491102952, 
+      "id": 139830489057064, 
       "src_node": "dn2", 
       "src_port": 36, 
       "dst_node": "pe0", 
       "dst_port": 37, 
       "delay": 0.2, 
       "bandwidth": 100
-    }, 
-    {
-      "id": 140631491208604, 
-      "src_node": "dn2", 
-      "src_port": 38, 
-      "dst_node": "pe0", 
-      "dst_port": 39, 
-      "delay": 0.2, 
-      "bandwidth": 100
-    }, 
-    {
-      "id": 140631491717214, 
-      "src_node": "dn2", 
-      "src_port": 29, 
-      "dst_node": "an0", 
-      "dst_port": 28, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491555123, 
-      "src_node": "dn2", 
-      "src_port": 33, 
-      "dst_node": "an1", 
-      "dst_port": 32, 
-      "delay": 0.2, 
-      "bandwidth": 1000, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490852205, 
-      "src_node": "sap0", 
-      "src_port": 25, 
-      "dst_node": "bnas0", 
-      "dst_port": 24, 
-      "delay": 0.5, 
-      "bandwidth": 10, 
-      "backward": true
-    }, 
-    {
-      "id": 140631491361878, 
-      "src_node": "sap1", 
-      "src_port": 27, 
-      "dst_node": "bnas0", 
-      "dst_port": 26, 
-      "delay": 0.5, 
-      "bandwidth": 10, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490874073, 
-      "src_node": "sap2", 
-      "src_port": 41, 
-      "dst_node": "pe0", 
-      "dst_port": 40, 
-      "delay": 0.5, 
-      "bandwidth": 10, 
-      "backward": true
-    }, 
-    {
-      "id": 140631490627350, 
-      "src_node": "sap3", 
-      "src_port": 43, 
-      "dst_node": "pe0", 
-      "dst_port": 42, 
-      "delay": 0.5, 
-      "bandwidth": 10, 
-      "backward": true
     }
   ]
 }

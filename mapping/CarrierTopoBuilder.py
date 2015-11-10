@@ -129,7 +129,7 @@ def addRetailOrBusinessPart(nffg, an0, an1, p, popn, BNAS_PE,
     #add Distribution Links towards Distribution Nodes
     nffg.add_undirected_link(add_port(dn0, p), add_port(bnas_pe, p), 
                              **distr_link)
-    nffg.add_undirected_link(add_port(dn0, p), add_port(bnas_pe, p), 
+    nffg.add_undirected_link(add_port(dn1, p), add_port(bnas_pe, p), 
                              **distr_link)
     
     # add clients to current BNAS or PE

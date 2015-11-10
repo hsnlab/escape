@@ -60,7 +60,7 @@
   "node_saps": [
     {
       "id": "sap1", 
-      "name": "sap2", 
+      "name": "sap1", 
       "ports": [
         {
           "id": 1
