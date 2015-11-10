@@ -25,6 +25,7 @@ from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.term import makeTerms
 from mininet.topo import Topo
+from mininet.log import setLogLevel
 
 
 class AbstractTopology(Topo):
@@ -447,7 +448,7 @@ class ESCAPENetworkBuilder(object):
     'inNamespace': False,  # Not start element in namespace
     'autoSetMacs': True,  # Set simple MACs
     'autoStaticArp': True,  # Set static ARP entries
-    'listenPort': 6644,  # Add listen port to OVS switches
+    'listenPort': 6000,  # Add listen port to OVS switches
     'link': TCLink  # Add default link
   }
   # Default internal storing format for NFFG parsing/reading from file
@@ -474,6 +475,7 @@ class ESCAPENetworkBuilder(object):
     :type run_dry: bool
     :return: None
     """
+    #setLogLevel('debug')
     self.opts = dict(self.default_opts)
     if opts is not None:
       self.opts.update(opts)
