@@ -496,6 +496,15 @@ class VnfOVS(object):
       # static use-case, single device name is derived from vnf name
       self.ports = [{'name': self.vnfName + '-eth1'}]
 
+    self.vnfDevs = kwargs.get('devs', [])
+    if not self.vnfDevs:
+      # static use-case, single device name is derived from vnf name
+      self.ports = [{'name': self.vnfName + '-eth1'}]
+    else:
+      self.ports = []
+      for dev in self.vnfDevs:
+        self.ports.append({'name': dev})
+
     template = Template(self.OVSExp)
     return template.render(sw=self.sw, ctrlIP=self.ctrlIP,
                            ctrlPort=self.ctrlPort,

@@ -17,6 +17,7 @@ domain management. Uses Adapter classes for ensuring protocol-specific
 connections with entities in the particular domain.
 """
 import sys
+import traceback
 
 from escape.adapt.adapters import *
 from escape.util.domain import *
@@ -52,15 +53,23 @@ class InternalDomainManager(AbstractDomainManager):
     """
     Initialize Internal domain manager.
 
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :param kwargs: optional parameters
+    :type kwargs: dict
     :return: None
     """
     # Init adapter for internal topo emulation: Mininet
     self.topoAdapter = configurator.load_component(InternalMininetAdapter.name)
     # Init adapter for internal controller: POX
     self.controlAdapter = configurator.load_component(InternalPOXAdapter.name)
+    log.debug("Set %s as the topology Adapter for %s" % (
+      self.topoAdapter.__class__.__name__,
+      self.controlAdapter.__class__.__name__))
     # Init default NETCONF adapter
     self.remoteAdapter = configurator.load_component(VNFStarterAdapter.name)
     super(InternalDomainManager, self).init(configurator, **kwargs)
+    self._collect_SAP_infos()
 
   def finit (self):
     """
@@ -76,6 +85,34 @@ class InternalDomainManager(AbstractDomainManager):
   @property
   def controller_name (self):
     return self.controlAdapter.task_name
+
+  def _collect_SAP_infos (self):
+    """
+    Collect necessary information from SAPs for traffic steering.
+
+    :return: None
+    """
+    log.debug("Collect SAP info...")
+    mn = self.topoAdapter.get_mn_wrapper().network
+    topo = self.topoAdapter.get_topology_resource()
+    if topo is None or mn is None:
+      log.error(
+        "Missing topology description from topology Adapter! Skip SAP data "
+        "discovery.")
+    for sap in topo.saps:
+      connected_node = [(v, link.dst.id) for u, v, link in
+                        topo.network.out_edges_iter(sap.id, data=True)]
+      if len(connected_node) > 1:
+        log.warning("%s is connection to multiple nodes (%s)!" % (
+          sap, [n[0] for n in connected_node]))
+      for node in connected_node:
+        mac = mn.getNodeByName(sap.id).MAC()
+        ip = mn.getNodeByName(sap.id).IP()
+        log.debug("Detected IP(%s) | MAC(%s) for %s" % (ip, mac, sap))
+        self.controlAdapter.saps[node[0]] = {'port': str(node[1]),
+                                             'dl_src': "ff:ff:ff:ff:ff:ff",
+                                             'dl_dst': str(mac),
+                                             'nw_dst': str(ip)}
 
   def install_nffg (self, nffg_part):
     """
@@ -96,6 +133,7 @@ class InternalDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
       return False
 
   def clear_domain (self):
@@ -501,6 +539,7 @@ class SDNDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
       return False
 
   def _delete_flowrules (self, nffg_part):
@@ -685,6 +724,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
+      return False
 
   # def __update_nffg (self, nffg_part):
   #   """
@@ -773,6 +814,8 @@ class OpenStackDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
+      return False
 
   def clear_domain (self):
     """
@@ -845,6 +888,8 @@ class UniversalNodeDomainManager(AbstractDomainManager):
       log.error(
         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
           self.name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
+      return False
 
   def clear_domain (self):
     """

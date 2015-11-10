@@ -280,7 +280,7 @@ class ESCAPENetworkBridge(object):
 
   Separate the interface using internally from original Mininet object to
   implement loose coupling and avoid changes caused by Mininet API changes
-  e.g. 2.1.0 -> 2.2.0
+  e.g. 2.1.0 -> 2.2.0.
 
   Follows Bridge design pattern.
   """
@@ -434,7 +434,8 @@ class ESCAPENetworkBuilder(object):
   an empty instance.
 
   Always return with an ESCAPENetworkBridge instance which offer a generic
-  interface for created :any::`Mininet` object and hide implementation's nature.
+  interface for created :class:`mininet.net.Mininet` object and hide
+  implementation's nature.
 
   Follows Builder design pattern.
   """
@@ -460,10 +461,11 @@ class ESCAPENetworkBuilder(object):
     Initialize NetworkBuilder.
 
     If the topology definition is not found, an exception will be raised or
-    an empty :any::`Mininet` topology will be created if ``run_dry`` is set.
+    an empty :class:`mininet.net.Mininet` topology will be created if
+    ``run_dry`` is set.
 
     :param net: update given Mininet object instead of creating a new one
-    :type net: :any::`Mininet`
+    :type net: :class:`mininet.net.Mininet`
     :param opts: update default options with the given opts
     :type opts: dict
     :param fallback: search for fallback topology (default: True)
@@ -545,11 +547,10 @@ class ESCAPENetworkBuilder(object):
     # Convert connections - copy link ref in a list and iter over it
     for edge in [l for l in nffg.links]:
       # Skip initiation of links which connected to an inter-domain SAP
-      if (
-               edge.src.node.type == NFFG.TYPE_SAP and edge.src.node.domain
-           is not None) or (
-               edge.dst.node.type == NFFG.TYPE_SAP and edge.dst.node.domain
-           is not None):
+      if (edge.src.node.type == NFFG.TYPE_SAP and
+              edge.src.node.domain is not None) or (
+               edge.dst.node.type == NFFG.TYPE_SAP and
+               edge.dst.node.domain is not None):
         continue
       # Create Links
       mn_src_node = created_mn_nodes.get(edge.src.node.id)

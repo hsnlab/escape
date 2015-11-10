@@ -115,7 +115,8 @@ class AbstractDomainManager(EventMixin):
 
     :param configurator: component configurator for configuring adapters
     :type configurator: :any:`ComponentConfigurator`
-
+    :param kwargs: optional parameters
+    :type kwargs: dict
     :return: None
     """
     # Skip to start polling is it's set
@@ -380,9 +381,24 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
   _interval = 20
   _switch_timeout = 5
   # Static mapping of infra IDs and DPIDs
-  infra_to_dpid = {}
-  dpid_to_infra = {}
-  saps = {}
+  infra_to_dpid = {
+    # 'EE1': 0x1,
+    # 'EE2': 0x2,
+    # 'SW3': 0x3,
+    # 'SW4': 0x4
+  }
+  saps = {
+    # 'SW3': {
+    #   'port': '3',
+    #   'dl_dst': '00:00:00:00:00:01',
+    #   'dl_src': 'ff:ff:ff:ff:ff:ff'  # '00:00:00:00:00:02'
+    # },
+    # 'SW4': {
+    #   'port': '3',
+    #   'dl_dst': '00:00:00:00:00:02',
+    #   'dl_src': 'ff:ff:ff:ff:ff:ff'  # '00:00:00:00:00:02'
+    # }
+  }
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
                 keepalive=False):

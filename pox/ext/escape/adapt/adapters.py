@@ -26,6 +26,7 @@ from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
+from pox.lib.util import dpid_to_str
 
 
 class TopologyLoadException(Exception):
@@ -45,28 +46,25 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
 
   # Static mapping of infra IDs and DPIDs
   infra_to_dpid = {
-    'EE1': 0x1,
-    'EE2': 0x2,
-    'SW3': 0x3,
-    'SW4': 0x4, }
-  dpid_to_infra = {
-    0x1: 'EE1',
-    0x2: 'EE2',
-    0x3: 'SW3',
-    0x4: 'SW4'
-    }
+    # 'EE1': 0x1,
+    # 'EE2': 0x2,
+    # 'SW3': 0x3,
+    # 'SW4': 0x4
+  }
   saps = {
-    'SW3': {
-      'port': '3',
-      'dl_dst': '00:00:00:00:00:01',
-      'dl_src': '00:00:00:00:00:02'
-      },
-    'SW4': {
-      'port': '3',
-      'dl_dst': '00:00:00:00:00:02',
-      'dl_src': '00:00:00:00:00:01'
-      }
-    }
+    # 'SW3': {
+    #   'port': '3',
+    #   'dl_dst': '00:00:00:00:00:01',
+    #   # 'dl_src': '00:00:00:00:00:02'
+    #   'dl_src': 'ff:ff:ff:ff:ff:ff'
+    # },
+    # 'SW4': {
+    #   'port': '3',
+    #   'dl_dst': '00:00:00:00:00:02',
+    #   # 'dl_src': '00:00:00:00:00:01'
+    #   'dl_src': 'ff:ff:ff:ff:ff:ff'
+    # }
+  }
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
                 keepalive=False):
@@ -85,6 +83,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
       self.__class__.__name__, address, port, name))
     super(InternalPOXAdapter, self).__init__(name=name, address=address,
                                              port=port, keepalive=keepalive)
+    self.topoAdapter = None
 
   def check_domain_reachable (self):
     """
@@ -113,10 +112,14 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     Handle incoming OpenFlow connections.
     """
     log.debug("Handle connection by %s" % self.task_name)
+    self._identify_ovs_device(connection=event.connection)
     if self.filter_connections(event):
       event = DomainChangedEvent(domain=self.name,
                                  cause=DomainChangedEvent.TYPE.NODE_UP,
-                                 data={"DPID": event.dpid})
+                                 data={
+                                   "DPID": event.dpid,
+                                   "connection": event.connection
+                                 })
       self.raiseEventNoErrors(event)
 
   def _handle_ConnectionDown (self, event):
@@ -124,10 +127,40 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     Handle disconnected device.
     """
     log.debug("Handle disconnection by %s" % self.task_name)
+    if event.dpid in self.infra_to_dpid.itervalues():
+      for k in self.infra_to_dpid:
+        if self.infra_to_dpid[k] == event.dpid:
+          del self.infra_to_dpid[k]
+          break
+      log.debug("DPID: %s removed from infra-dpid assignments" % dpid_to_str(
+        event.dpid))
+
     event = DomainChangedEvent(domain=self.name,
                                cause=DomainChangedEvent.TYPE.NODE_DOWN,
                                data={"DPID": event.dpid})
     self.raiseEventNoErrors(event)
+
+  def _identify_ovs_device (self, connection):
+    """
+    Identify the representing Node of the OVS switch according to the given
+    connection and extend the dpid-infra binding dictionary.
+
+    The discovery algorithm takes the advantage of the naming convention of
+    Mininet for interfaces in an OVS switch e.g.: EE1, EE1-eth1, EE1-eth2, etc.
+
+    :param connection: inner Connection class of POX
+    :type connection: :class:`pox.openflow.of_01.Connection`
+    :return: None
+    """
+    dpid = connection.dpid
+    ports = [port.name for port in connection.features.ports]
+    for port in ports:
+      if all(map(lambda p: p.startswith(port), ports)):
+        from pox.lib.util import dpid_to_str
+        log.debug("Identified Infra(id: %s) on the OF connection: %s" % (
+          port, dpid_to_str(dpid)))
+        self.infra_to_dpid[port] = dpid
+        break
 
 
 class SDNDomainPOXAdapter(InternalPOXAdapter):
@@ -140,11 +173,11 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   infra_to_dpid = {
     'MT1': 0x14c5e0c376e24,
     'MT2': 0x14c5e0c376fc6,
-    }
+  }
   dpid_to_infra = {
     0x14c5e0c376e24: 'MT1',
     0x14c5e0c376fc6: 'MT2',
-    }
+  }
 
   def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False):
     super(SDNDomainPOXAdapter, self).__init__(name=name, address=address,
@@ -186,10 +219,20 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
 
       if core.core.hasComponent(InfrastructureLayerAPI._core_name):
         # reference to MN --> ESCAPENetworkBridge
-        self.IL_topo_ref = core.core.components[
+        self.__IL_topo_ref = core.core.components[
           InfrastructureLayerAPI._core_name].topology
-        if self.IL_topo_ref is None:
+        if self.__IL_topo_ref is None:
           log.error("Unable to get emulated network reference!")
+
+  def get_mn_wrapper (self):
+    """
+    Return the specific wrapper for :class:`mininet.net.Mininet` object
+    represents the emulated network.
+
+    :return: emulated network wrapper
+    :rtype: :any:`ESCAPENetworkBridge`
+    """
+    return self.__IL_topo_ref
 
   def check_domain_reachable (self):
     """
@@ -199,7 +242,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :rtype: bool
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
-    return self.IL_topo_ref.started
+    return self.__IL_topo_ref.started
 
   def get_topology_resource (self):
     """
@@ -209,7 +252,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :rtype: :any:`NFFG`
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
-    return self.IL_topo_ref.topo_desc if self.IL_topo_ref.started else None
+    return self.__IL_topo_ref.topo_desc if self.__IL_topo_ref.started else None
 
   def get_agent_connection_params (self, ee_name):
     """
@@ -221,12 +264,12 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :return: connection params
     :rtype: dict
     """
-    agent = self.IL_topo_ref.get_agent_to_switch(ee_name)
+    agent = self.__IL_topo_ref.get_agent_to_switch(ee_name)
     return {
       "server": "127.0.0.1", "port": agent.agentPort,
       "username": agent.username,
       "password": agent.passwd
-      } if agent is not None else {}
+    } if agent is not None else {}
 
 
 class SDNDomainTopoAdapter(AbstractESCAPEAdapter):

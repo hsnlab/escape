@@ -146,7 +146,7 @@ class ComponentConfigurator(object):
     Return the dict of initiated Domain managers.
 
     :return: container of initiated DomainManagers
-    :rtype: dictget_resource_info
+    :rtype: dict
     """
     return self.__repository
 
@@ -222,7 +222,7 @@ class ComponentConfigurator(object):
     """
     # very dummy initialization
     for mgr in CONFIG.get_managers():
-      log.debug("Init domain Manager for domain: %s" % mgr)
+      log.debug("Init DomainManager for domain: %s" % mgr)
       self.start_mgr(domain_name=mgr)
 
   def load_internal_mgr (self):
@@ -231,7 +231,7 @@ class ComponentConfigurator(object):
 
     :return: None
     """
-    log.debug("Init domain Manager for domain: %s" % InternalDomainManager.name)
+    log.debug("Init DomainManager for domain: %s" % InternalDomainManager.name)
     self.start_mgr(mgrs.InternalDomainManager.name)
 
   def clear_initiated_mgrs (self):
@@ -255,7 +255,7 @@ class ComponentConfigurator(object):
     :return: None
     """
     for name, mgr in self:
-      log.debug("Shutdown %s domain manager..." % name)
+      log.debug("Shutdown %s DomainManager..." % name)
       try:
         self.stop_mgr(domain_name=name)
       except:
@@ -301,7 +301,7 @@ class ControllerAdapter(object):
       # Init internal domain manager if Infrastructure Layer is started
       self.domains.load_internal_mgr()
     # Init default domain managers
-    log.info("Initializing Domain Managers...")
+    log.info("Initializing DomainManagers...")
     self.domains.load_default_mgrs()
 
   def shutdown (self):
@@ -342,7 +342,7 @@ class ControllerAdapter(object):
     for domain, part in slices:
       domain_mgr = self.DOMAIN_MAPPING[domain]
       if domain_mgr in self.domains.initiated:
-        log.debug("Delegate splitted part: %s to %s domain manager..." % (
+        log.debug("Delegate splitted part: %s to %s DomainManager..." % (
           part, domain_mgr))
         # Invoke DomainAdapter's install
         res = self.domains[domain_mgr].install_nffg(part)
