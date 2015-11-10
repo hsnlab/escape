@@ -38,21 +38,47 @@ except ImportError:
   from nffg import NFFG
 
 # Aggregation links (100Gbps) Connecting Distribution nodes to Aggregation Nodes
-aggr_link = {'bandwidth': 100000, 'delay': 0.2}
-popcnt = 0
+aggr_link = {'bandwidth': 1000, 'delay': 0.2}
 
 log = logging.getLogger("TopoConstruct")
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.WARN,
                       format='%(levelname)s:%(name)s:%(message)s')
 
-def addRedundantPairedConnection(nffg, an0, an1, bn0, bn1, linkres):
+global_port_id = 0
+def add_port(obj, increment_port_ids=False):
+  # WARNING! this function is not thread safe!!
+  global global_port_id
+  if not increment_port_ids:
+    port = obj.add_port()
+  else:
+    port = obj.add_port(id=global_port_id)
+    global_port_id += 1
+  return port
+
+def getGenForName(prefix):
+  number = 0
+  while True:
+    yield prefix+str(number)
+    number += 1
+
+prefixes = {}
+def getName(prefix):
+  global prefixes
+  while True:
+    if prefix in prefixes:
+      return prefixes[prefix].next()
+    else:
+      prefixes[prefix] = getGenForName(prefix)
+      return prefixes[prefix].next()
+
+def addRedundantPairedConnection(nffg, an0, an1, bn0, bn1, p, linkres):
   """
   Connects A-s to B-s and B-s to A-s with undirected links with linkres.
   """
-  nffg.add_undirected_link(an0.add_port(), bn0.add_port(), **linkres)
-  nffg.add_undirected_link(an0.add_port(), bn1.add_port(), **linkres)
-  nffg.add_undirected_link(an1.add_port(), bn0.add_port(), **linkres)
-  nffg.add_undirected_link(an1.add_port(), bn1.add_port(), **linkres)
+  nffg.add_undirected_link(add_port(an0, p), add_port(bn0, p), **linkres)
+  nffg.add_undirected_link(add_port(an0, p), add_port(bn1, p), **linkres)
+  nffg.add_undirected_link(add_port(an1, p), add_port(bn0, p), **linkres)
+  nffg.add_undirected_link(add_port(an1, p), add_port(bn1, p), **linkres)
 
 
 def index_gen():
@@ -63,64 +89,73 @@ def gen_params(l):
   while True:
     yield l[next(index_gen()) % len(l)]
 
-def addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS_PE, 
-                            Cpb, access_bw, part="Retail"):
+def addRetailOrBusinessPart(nffg, an0, an1, p, popn, BNAS_PE, 
+                            Cpb, access_bw, part="R"):
   """
   Retail and Business part inside one PoP is structurally the same.
   """
   log.debug("Adding %s part for %s..."%(part, popn))
   # add Distribution Nodes (100Gbps switching capacity)
   dnres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-           'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
+           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
+           'domain': NFFG.DOMAIN_INTERNAL}
   dn0 = None
   dn1 = None
   if BNAS_PE > 0:
-    dn0 = nffg.add_infra(id="DistributionNode"+popn+"-"+part+"-0", 
+    dn0 = nffg.add_infra(id=getName("dn"), 
                                 **dnres)
-    dn1 = nffg.add_infra(id="DistributionNode"+popn+"-"+part+"-1",
+    dn1 = nffg.add_infra(id=getName("dn"),
                                 **dnres)
-    addRedundantPairedConnection(nffg, an0, an1, dn0, dn1, aggr_link)
+    addRedundantPairedConnection(nffg, an0, an1, dn0, dn1, p, aggr_link)
 
   # add BNAS or PE (10Gbps switching capacity) 
   # and connecting SAPs towards Retail Clients (links with BCT bandwidth)
   for i in range(0, BNAS_PE):
     log.debug("Adding switch %s for %s part..."%(i, part))
     bnas_pe_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-               'bandwidth': 10000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
-    bnas_pe = nffg.add_infra(id=part+"-switch-"+str(i)+popn, 
-                             **bnas_pe_res)
-    distr_link = {'bandwidth': 10000, 'delay': 0.2}
+               'bandwidth': 100, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
+               'domain': NFFG.DOMAIN_INTERNAL}
+    if part == "R":
+      bnas_pe = nffg.add_infra(id=getName("bnas"), 
+                               **bnas_pe_res)
+    elif part == "B":
+      bnas_pe = nffg.add_infra(id=getName("pe"), 
+                               **bnas_pe_res)
+    else:
+      raise Exception("Invalid part identifier given for CarrierTopoBuilder"
+                      ".addRetailOrBusinessPart")
+    distr_link = {'bandwidth': 100, 'delay': 0.2}
     
     #add Distribution Links towards Distribution Nodes
-    nffg.add_undirected_link(dn0.add_port(), bnas_pe.add_port(), 
+    nffg.add_undirected_link(add_port(dn0, p), add_port(bnas_pe, p), 
                              **distr_link)
-    nffg.add_undirected_link(dn0.add_port(), bnas_pe.add_port(), 
+    nffg.add_undirected_link(add_port(dn1, p), add_port(bnas_pe, p), 
                              **distr_link)
     
     # add clients to current BNAS or PE
     log.debug("Connecting %s SAPs to switch %s of %s part."%(Cpb, i, part))
     for j in range(0, Cpb):
-      nameid = part+"-SAP-"+str(j)+"-switch-"+str(i)+popn
+      nameid = getName("sap")
       sap = nffg.add_sap(id=nameid, name=nameid)
       access_link = {'bandwidth': access_bw, 'delay': 0.5}
-      nffg.add_undirected_link(bnas_pe.add_port(), sap.add_port(), **access_link)
+      nffg.add_undirected_link(add_port(bnas_pe, p), add_port(sap, p), 
+                               **access_link)
 
 
-def addCassis(nffg, fi0, fi1, cluster_id, chassis_id, popn, 
+def addCassis(nffg, fi0, fi1, p, cluster_id, chassis_id, popn, 
               SE, NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
   log.debug("Adding Chassis no.%s with %s Servers for Cluster no.%s of %s."%
             (chassis_id,SE,cluster_id,popn))
   fabricext_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-                   'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
-  fe0 = nffg.add_infra(id="FabricExt-0-Chassis-"+str(chassis_id)+"-Cluster-"\
-                       +str(cluster_id)+popn)
-  fe1 = nffg.add_infra(id="FabricExt-1-Chassis-"+str(chassis_id)+"-Cluster-"\
-                       +str(cluster_id)+popn)
+                   'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
+                   'domain': NFFG.DOMAIN_INTERNAL}
+  fe0 = nffg.add_infra(id=getName("fe"), **fabricext_res)
+  fe1 = nffg.add_infra(id=getName("fe"), **fabricext_res)
   # add links connecting the Fabric Interconnects and Fabric Extenders
   for i in range(0, CH_links/2):
-      nffg.add_undirected_link(fi0.add_port(), fe0.add_port(), 
+      nffg.add_undirected_link(add_port(fi0, p), add_port(fe0, p), 
                                bandwidth=float(CL_bw)/CH_links, delay=0.2)
-      nffg.add_undirected_link(fi1.add_port(), fe1.add_port(), 
+      nffg.add_undirected_link(add_port(fi1, p), add_port(fe1, p), 
                                bandwidth=float(CL_bw)/CH_links, delay=0.2)
 
   # add servers and connect them to Fabric Extenders
@@ -128,60 +163,61 @@ def addCassis(nffg, fi0, fi1, cluster_id, chassis_id, popn,
     server_res = {'cpu': next(gen_params(SE_cores)), 
                   'mem': next(gen_params(SE_mem)), 
                   'storage': next(gen_params(SE_storage)), 
-                  'delay': 0.5, 'bandwidth': 100000, 
-                  'infra_type': NFFG.TYPE_INFRA_EE}
-    server = nffg.add_infra(id="Server-"+str(s)+"-Chassis-"+str(chassis_id)+\
-                            "-Cluster-"+str(cluster_id)+popn,
+                  'delay': 0.5, 'bandwidth': 1000, 
+                  'infra_type': NFFG.TYPE_INFRA_EE,
+                  'domain': NFFG.DOMAIN_INTERNAL}
+    server = nffg.add_infra(id=getName("host"),
                             **server_res)
     # add supported types
     server.add_supported_type(random.sample(NF_types, 
                                      (next(index_gen()) % len(NF_types)) + 1))
     # connect servers to Fabric Extenders with 10Gbps links
-    server_link = {'bandwidth': 10000, 'delay': 0.2}
-    nffg.add_undirected_link(server.add_port(), fe0.add_port(), **server_link)
-    nffg.add_undirected_link(server.add_port(), fe1.add_port(), **server_link)
+    server_link = {'bandwidth': 100, 'delay': 0.2}
+    nffg.add_undirected_link(add_port(server, p), add_port(fe0, p), **server_link)
+    nffg.add_undirected_link(add_port(server, p), add_port(fe1, p), **server_link)
 
 
-def addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
+def addCloudNFVPart(nffg, an0, an1, p, popn, CL, CH, SE, SAN_bw, SAN_storage,
                     NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
   log.debug("Adding Cloud/NFV part for %s."%popn)
   dnres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-           'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
-  dn0 = nffg.add_infra(id="DistributionNode"+popn+"CloudNFV-0", 
+           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
+           'domain': NFFG.DOMAIN_INTERNAL}
+  dn0 = nffg.add_infra(id=getName("dn"), 
                        **dnres)
-  dn1 = nffg.add_infra(id="DistributionNode"+popn+"CloudNFV-1",
+  dn1 = nffg.add_infra(id=getName("dn"),
                        **dnres)
-  addRedundantPairedConnection(nffg, an0, an1, dn0, dn1, aggr_link)
+  addRedundantPairedConnection(nffg, an0, an1, dn0, dn1, p, aggr_link)
   
   # add Server Clusters
   for i in range(0, CL):
     log.debug("Adding Cluster no.%s to Could/NFV part of %s"%(i, popn))
     fi_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-              'bandwidth': 100000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
-    fabric_interconnect0 = nffg.add_infra(id="FabricInterconnect-0-Cluster-"+\
-                                          str(i)+popn, **fi_res)
-    fabric_interconnect1 = nffg.add_infra(id="FabricInterconnect-1-Cluster-"+\
-                                          str(i)+popn, **fi_res)
+              'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
+              'domain': NFFG.DOMAIN_INTERNAL}
+    fabric_interconnect0 = nffg.add_infra(id=getName("fi"), **fi_res)
+    fabric_interconnect1 = nffg.add_infra(id=getName("fi"), **fi_res)
     addRedundantPairedConnection(nffg, an0, an1, fabric_interconnect0, 
-                                 fabric_interconnect1, aggr_link)
+                                 fabric_interconnect1, p, aggr_link)
 
     # NOTE: SAN can't host any VNFs now!!
     # SAN is an Infra with big storage (internal bw should be big: e.g. 1Tbps)
     san_res = {'cpu': 0, 'mem': 0, 'storage': SAN_storage, 'delay': 0.1,
-              'bandwidth': 1000000, 'infra_type': NFFG.TYPE_INFRA_EE}
-    san = nffg.add_infra(id="SAN-Cluster-"+str(i)+popn, **san_res)
+              'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_EE,
+               'domain': NFFG.DOMAIN_INTERNAL}
+    san = nffg.add_infra(id=getName("san"), **san_res)
     # connect SAN to Fabric Interconnects
-    nffg.add_undirected_link(san.add_port(), fabric_interconnect0.add_port(), 
+    nffg.add_undirected_link(add_port(san, p), add_port(fabric_interconnect0, p), 
                              bandwidth=SAN_bw, delay=0.1)
-    nffg.add_undirected_link(san.add_port(), fabric_interconnect1.add_port(), 
+    nffg.add_undirected_link(add_port(san, p), add_port(fabric_interconnect1, p), 
                              bandwidth=SAN_bw, delay=0.1)
     # add Chassis
     for j in range(0, CH):
-      addCassis(nffg, fabric_interconnect0, fabric_interconnect1, i, j, popn, 
+      addCassis(nffg, fabric_interconnect0, fabric_interconnect1, p, i, j, popn,
                 SE, NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links)
 
 
-def addPoP(nffg, backbonenode0, backbonenode1, 
+def addPoP(nffg, popcnt, backbonenode0, backbonenode1, p,
            BNAS, RCpb, RCT, 
            PE, BCpb, BCT,
            CL, CH, SE, SAN_bw, SAN_storage, NF_types,
@@ -212,33 +248,33 @@ def addPoP(nffg, backbonenode0, backbonenode1,
     NOTE: Link bw from Fabric Extender to Fabric Interc. equals 
     CL_bw/CH_links (~10Gbps).
   """
-  global popcnt
-  popn = "-PoP-"+str(popcnt)
+  popn = "PoP"+str(popcnt)
 
   log.debug("Adding PoP %s..."%popcnt)
   # add Aggregation Nodes (1Tbps switching capacity)
   anres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-           'bandwidth': 1000000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
-  an0 = nffg.add_infra(id="AggregationNode-0"+popn, **anres)
-  an1 = nffg.add_infra(id="AggregationNode-1"+popn, **anres)
+           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
+           'domain': NFFG.DOMAIN_INTERNAL}
+  an0 = nffg.add_infra(id=getName("an"), **anres)
+  an1 = nffg.add_infra(id=getName("an"), **anres)
   
   # add uplinks to the Backbone
-  nffg.add_undirected_link(an0.add_port(), backbonenode0.add_port(), 
-                           bandwidth=1000000, delay=0.1)
-  nffg.add_undirected_link(an1.add_port(), backbonenode1.add_port(), 
-                           bandwidth=1000000, delay=0.1)
+  nffg.add_undirected_link(add_port(an0, p), add_port(backbonenode0, p), 
+                           bandwidth=1000, delay=0.1)
+  nffg.add_undirected_link(add_port(an1, p), add_port(backbonenode1, p), 
+                           bandwidth=1000, delay=0.1)
 
-  addRetailOrBusinessPart(nffg, an0, an1, popn, BNAS, RCpb, RCT)
-  addRetailOrBusinessPart(nffg, an0, an1, popn, PE, BCpb, BCT, part="Business")
+  addRetailOrBusinessPart(nffg, an0, an1, p, popn, BNAS, RCpb, RCT)
+  addRetailOrBusinessPart(nffg, an0, an1, p, popn, PE, BCpb, BCT, 
+                          part="B")
 
   if CL > 0:
-      addCloudNFVPart(nffg, an0, an1, popn, CL, CH, SE, SAN_bw, SAN_storage,
+      addCloudNFVPart(nffg, an0, an1, p, popn, CL, CH, SE, SAN_bw, SAN_storage,
                       NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links)
 
-  popcnt += 1
   return
     
-def getCarrierTopo(params):
+def getCarrierTopo(params, increment_port_ids=False):
   """
   Construct the core network and add PoPs with their parameters.
   params is a list of dictionaries with PoP data:
@@ -246,6 +282,8 @@ def getCarrierTopo(params):
     'Business': (PE, BCpb, BCT)
     'CloudNFV': (CL,CH,SE,SAN_bw,SAN_sto,NF_types,SE_cores,SE_mem,SE_sto,
                  CL_bw, CH_links)
+  WARNING: using this function with increment_port_ids=True this function is not 
+  thread safe, because it uses global variable then!
   """
   # This initializes the random generator always to the same value, so the
   # returned index sequence, and thus the network parameters will be generated 
@@ -253,24 +291,25 @@ def getCarrierTopo(params):
   # The generated identifiers are still different between genereations, but 
   # those does not influence the mapping process
   random.seed(0)
-  
+  popcnt = 0
   nffg = NFFG(id="CarrierTopo")
+  p = increment_port_ids
   backbone_res =  {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-                   'bandwidth': 10000000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
-  bn0 = nffg.add_infra(id="BackboneNode0", **backbone_res)
-  bn1 = nffg.add_infra(id="BackboneNode1", **backbone_res)
-  bn2 = nffg.add_infra(id="BackboneNode2", **backbone_res)
-  bn3 = nffg.add_infra(id="BackboneNode3", **backbone_res)
+                   'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
+                   'domain': NFFG.DOMAIN_INTERNAL}
+  bn0 = nffg.add_infra(id=getName("bn"), **backbone_res)
+  bn1 = nffg.add_infra(id=getName("bn"), **backbone_res)
+  bn2 = nffg.add_infra(id=getName("bn"), **backbone_res)
+  bn3 = nffg.add_infra(id=getName("bn"), **backbone_res)
 
-  nffg.add_undirected_link(bn0.add_port(), bn1.add_port(), bandwidth=1000000, 
+  nffg.add_undirected_link(add_port(bn0, p), add_port(bn1, p), bandwidth=1000, 
                            delay=10)
-  nffg.add_undirected_link(bn1.add_port(), bn2.add_port(), bandwidth=1000000, 
+  nffg.add_undirected_link(add_port(bn1, p), add_port(bn2, p), bandwidth=1000, 
                            delay=10)
-  nffg.add_undirected_link(bn2.add_port(), bn3.add_port(), bandwidth=1000000, 
+  nffg.add_undirected_link(add_port(bn2, p), add_port(bn3, p), bandwidth=1000, 
                            delay=10)
-  nffg.add_undirected_link(bn3.add_port(), bn0.add_port(), bandwidth=1000000, 
+  nffg.add_undirected_link(add_port(bn3, p), add_port(bn0, p), bandwidth=1000, 
                            delay=10)
-  i = 0
   backbones = (bn0, bn1, bn2, bn3)
   bnlen = len(backbones)
   for popdata in params:
@@ -278,8 +317,9 @@ def getCarrierTopo(params):
     tmp.extend(popdata['Retail'])
     tmp.extend(popdata['Business'])
     tmp.extend(popdata['CloudNFV'])
-    addPoP(nffg, backbones[i%bnlen], backbones[(i+1)%bnlen], *tmp)
-    i += 1
+    addPoP(nffg, popcnt, backbones[popcnt%bnlen], backbones[(popcnt+1)%bnlen],
+           p, *tmp)
+    popcnt += 1
   """
   #                      BNAS,RCpb,  RCT, PE,BCpb, BCT, CL,CH,SE, SAN_bw, 
   addPoP(nffg, bn2, bn3, 2,   10000, 0.2, 2, 4000, 0.2, 2, 8, 8,  160000,  
@@ -314,6 +354,32 @@ if __name__ == '__main__':
   topo = getCarrierTopo(topoparams)
   print topo.dump()
 
+def getMediumTopo():
+  """
+  Constructs a medium sized topology for worst case presentation, if the bigger
+  would take too long to finish. Its size is around 12 460 nodes
+  (~4500 with SAP cutting)
+  """
+  topoparams = []
+  # params of one PoP
+  # 'Retail': (BNAS, RCpb, RCT)
+  # 'Business': (PE, BCpb, BCT)
+  # 'CloudNFV': (CL,CH,SE,SAN_bw,SAN_sto,NF_types,SE_cores,SE_mem,SE_sto,
+  #              CL_bw, CH_links)
+  topoparams.append({'Retail': (6, 250, 0.2), 'Business': (6, 200, 0.2),
+                     'CloudNFV': (4, 40, 8,  160000, 100000, ['A','B','C'],
+                                 [4,8,16],  [32000, 64000], [100,150], 40000, 4)})
+  topoparams.append({'Retail': (6, 100, 0.2), 'Business': (4, 200, 0.2),
+                     'CloudNFV': (4, 20, 8,  160000, 100000, ['A','B'],
+                                  [8,12,16], [32000,64000], [150], 40000, 4)})
+  topoparams.append({'Retail': (3, 400, 0.2), 'Business': (8, 100, 0.2),
+                    'CloudNFV': (4, 30, 8,  160000, 100000, ['B', 'C'],
+                                [4,8,12,16], [32000,64000], [200], 40000, 4)})
+  topoparams.append({'Retail': (10, 100, 0.2), 'Business': (8, 150, 0.2),
+                    'CloudNFV': (4, 40, 8,  160000, 100000, ['B', 'C'],
+                                [4,8,12,16], [32000,64000], [200], 40000, 4)})
+  return getCarrierTopo(topoparams), topoparams
+
 
 def getSmallTopo():
   """
@@ -336,3 +402,26 @@ def getSmallTopo():
   #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
   # [4,8,12,16], [32000,64000], [200], 40000, 4)})
   return getCarrierTopo(topoparams), topoparams
+
+def getMicroTopo():
+  topoparams = []
+  topoparams.append({'Retail': (2, 50, 0.2), 'Business': (2, 30, 0.2),
+                     'CloudNFV': (2, 2, 4,  160000, 100000, ['A','B'], 
+                                  [8,12,16], [32000,64000], [150], 40000, 4)})
+  topoparams.append({'Retail': (2, 50, 0.2), 'Business': (2, 30, 0.2),
+                     'CloudNFV': (2, 2, 4,  160000, 100000, ['A','B', 'C'], 
+                                  [8,12,16], [32000,64000], [150], 40000, 4)})
+  return getCarrierTopo(topoparams), topoparams
+
+def getNanoTopo():
+  topoparams = []
+  topoparams.append({'Retail': (1, 2, 10), 'Business': (1, 2, 10),
+                     'CloudNFV': (1, 2, 4,  1000, 100000, ['simpleForwarder',
+                                   'headerCompressor', 'headerDecompressor'], 
+                                  [8,12,16], [32000,64000], [150], 4000, 4)})
+  """
+  topoparams.append({'Retail': (2, 5, 0.2), 'Business': (2, 5, 0.2),
+                     'CloudNFV': (1, 2, 4,  160000, 100000, ['A','B', 'C'], 
+                                  [8,12,16], [32000,64000], [150], 4000, 4)})
+  """
+  return getCarrierTopo(topoparams, increment_port_ids=True), topoparams

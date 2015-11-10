@@ -42,8 +42,9 @@ except ImportError:
 
 class CoreAlgorithm(object):
   def __init__ (self, net0, req0, chains0, full_remap, cache_shortest_path, 
-                bw_factor=1, res_factor=1, lat_factor=1):
+                bw_factor=1, res_factor=1, lat_factor=1, shortest_paths=None):
     self.log = helper.log.getChild(self.__class__.__name__)
+    self.log.setLevel(helper.log.getEffectiveLevel())
 
     self.log.info("Initializing algorithm variables")
     # only needed to get SAP`s name by its ID and for reset()
@@ -60,7 +61,7 @@ class CoreAlgorithm(object):
     self.bt_branching_factor = 4
     self.bt_limit = 5
 
-    self._preproc(net0, req0, chains0)
+    self._preproc(net0, req0, chains0, shortest_paths)
 
     # must be sorted in alphabetic order of keys: cpu, mem, storage
     self.resource_priorities = [0.5, 0.5, 0.0]
@@ -89,7 +90,7 @@ class CoreAlgorithm(object):
     self.net = self.net.network
     self.req = self.req.network
 
-  def _preproc (self, net0, req0, chains0):
+  def _preproc (self, net0, req0, chains0, shortest_paths):
     self.log.info("Preprocessing:")
     
     self.manager = helper.MappingManager(net0, req0, chains0)
@@ -97,6 +98,7 @@ class CoreAlgorithm(object):
     self.preprocessor = GraphPreprocessor.GraphPreprocessorClass(net0, req0,
                                                                  chains0,
                                                                  self.manager)
+    self.preprocessor.shortest_paths = shortest_paths
     self.net = self.preprocessor.processNetwork(self.full_remap, 
                                                 self.enable_shortest_path_cache)
     self.req, chains_with_subgraphs = self.preprocessor.processRequest(
@@ -567,9 +569,13 @@ class CoreAlgorithm(object):
                                bt_record['vnf_id'], 
                                bt_record['target_infra'],
                                redo = True)
-    self.manager.link_mapping.remove_edge(bt_record['prev_vnf_id'], 
-                                          bt_record['vnf_id'],
-                                          key=bt_record['reqlinkid'])
+    try:
+      self.manager.link_mapping.remove_edge(bt_record['prev_vnf_id'], 
+                                            bt_record['vnf_id'],
+                                            key=bt_record['reqlinkid'])
+    except nx.NetworkXError as nxe:
+      raise uet.InternalAlgorithmException("Tried to remove edge from link "
+                "mapping structure which is not mapped!")
     if self.req.node[bt_record['vnf_id']].type != 'SAP':
       self.manager.vnf_mapping.remove((bt_record['vnf_id'], 
                                        bt_record['target_infra']))
@@ -748,7 +754,7 @@ class CoreAlgorithm(object):
           try:
             out_infra_port = nffg.network.node[host].ports[infra_port_id]
             self.log.debug("Port %s found in Infra %s leading to port %s of NF"
-                           " %s."%(infra_port_id, host, d.dst.id, vnf))
+                           " %s."%(infra_port_id, host, d.src.id, vnf))
           except KeyError:
             out_infra_port = nffg.network.node[host].add_port(id=infra_port_id)
             self.log.debug("Port %s added to Infra %s to NF %s." 
@@ -847,6 +853,7 @@ class CoreAlgorithm(object):
   def start (self):
     # breaking when there are no more BacktrackLevels forward, meaning the 
     # mapping is full. Or exception is thrown, when mapping can't be finished.
+    self.log.info("Starting core mapping procedure...")
     while True:
       # Mapping must be started with subchains derived from e2e chains,
       # with lower latency requirement. It is realiyed by the preprocessor,
@@ -898,7 +905,8 @@ class CoreAlgorithm(object):
               for c_prime, prev_bt_rec, link_mapping_rec in link_bt_rec_list:
                 if link_mapping_rec is not None:
                   self._resolveLinkMappingRecord(c_prime, link_mapping_rec)
-                self._resolveBacktrackRecord(c_prime, prev_bt_rec)
+                if prev_bt_rec is not None:
+                  self._resolveBacktrackRecord(c_prime, prev_bt_rec)
               # use this bt_record to try another greedy step
               curr_vnf = bt_record['prev_vnf_id']
               next_vnf = bt_record['vnf_id']
