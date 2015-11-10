@@ -52,18 +52,18 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     # 'SW4': 0x4
   }
   saps = {
-    'SW3': {
-      'port': '3',
-      'dl_dst': '00:00:00:00:00:01',
-      # 'dl_src': '00:00:00:00:00:02'
-      'dl_src': 'ff:ff:ff:ff:ff:ff'
-    },
-    'SW4': {
-      'port': '3',
-      'dl_dst': '00:00:00:00:00:02',
-      # 'dl_src': '00:00:00:00:00:01'
-      'dl_src': 'ff:ff:ff:ff:ff:ff'
-    }
+    # 'SW3': {
+    #   'port': '3',
+    #   'dl_dst': '00:00:00:00:00:01',
+    #   # 'dl_src': '00:00:00:00:00:02'
+    #   'dl_src': 'ff:ff:ff:ff:ff:ff'
+    # },
+    # 'SW4': {
+    #   'port': '3',
+    #   'dl_dst': '00:00:00:00:00:02',
+    #   # 'dl_src': '00:00:00:00:00:01'
+    #   'dl_src': 'ff:ff:ff:ff:ff:ff'
+    # }
   }
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
@@ -83,6 +83,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
       self.__class__.__name__, address, port, name))
     super(InternalPOXAdapter, self).__init__(name=name, address=address,
                                              port=port, keepalive=keepalive)
+    self.topoAdapter = None
 
   def check_domain_reachable (self):
     """
@@ -218,10 +219,20 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
 
       if core.core.hasComponent(InfrastructureLayerAPI._core_name):
         # reference to MN --> ESCAPENetworkBridge
-        self.IL_topo_ref = core.core.components[
+        self.__IL_topo_ref = core.core.components[
           InfrastructureLayerAPI._core_name].topology
-        if self.IL_topo_ref is None:
+        if self.__IL_topo_ref is None:
           log.error("Unable to get emulated network reference!")
+
+  def get_mn_wrapper (self):
+    """
+    Return the specific wrapper for :any:`Mininet` object represents the
+    emulated network.
+
+    :return: emulated network wrapper
+    :rtype: :any:`ESCAPENetworkBridge`
+    """
+    return self.__IL_topo_ref
 
   def check_domain_reachable (self):
     """
@@ -231,7 +242,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :rtype: bool
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
-    return self.IL_topo_ref.started
+    return self.__IL_topo_ref.started
 
   def get_topology_resource (self):
     """
@@ -241,7 +252,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :rtype: :any:`NFFG`
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
-    return self.IL_topo_ref.topo_desc if self.IL_topo_ref.started else None
+    return self.__IL_topo_ref.topo_desc if self.__IL_topo_ref.started else None
 
   def get_agent_connection_params (self, ee_name):
     """
@@ -253,7 +264,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :return: connection params
     :rtype: dict
     """
-    agent = self.IL_topo_ref.get_agent_to_switch(ee_name)
+    agent = self.__IL_topo_ref.get_agent_to_switch(ee_name)
     return {
       "server": "127.0.0.1", "port": agent.agentPort,
       "username": agent.username,

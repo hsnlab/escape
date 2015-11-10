@@ -106,9 +106,13 @@ class InternalDomainManager(AbstractDomainManager):
         log.warning("%s is connection to multiple nodes (%s)!" % (
           sap, [n[0] for n in connected_node]))
       for node in connected_node:
-        print node[0]
-        print "port " + str(node[1])
-        print mn.getNodeByName(sap.id).__dict__
+        mac = mn.getNodeByName(sap.id).MAC()
+        ip = mn.getNodeByName(sap.id).IP()
+        log.debug("Detected IP(%s) | MAC(%s) for %s" % (ip, mac, sap))
+        self.controlAdapter.saps[node[0]] = {'port': str(node[1]),
+                                             'dl_src': "ff:ff:ff:ff:ff:ff",
+                                             'dl_dst': str(mac),
+                                             'nw_dst': str(ip)}
 
   def install_nffg (self, nffg_part):
     """

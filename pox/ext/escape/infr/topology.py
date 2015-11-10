@@ -280,7 +280,7 @@ class ESCAPENetworkBridge(object):
 
   Separate the interface using internally from original Mininet object to
   implement loose coupling and avoid changes caused by Mininet API changes
-  e.g. 2.1.0 -> 2.2.0
+  e.g. 2.1.0 -> 2.2.0.
 
   Follows Bridge design pattern.
   """
@@ -545,11 +545,10 @@ class ESCAPENetworkBuilder(object):
     # Convert connections - copy link ref in a list and iter over it
     for edge in [l for l in nffg.links]:
       # Skip initiation of links which connected to an inter-domain SAP
-      if (
-               edge.src.node.type == NFFG.TYPE_SAP and edge.src.node.domain
-           is not None) or (
-               edge.dst.node.type == NFFG.TYPE_SAP and edge.dst.node.domain
-           is not None):
+      if (edge.src.node.type == NFFG.TYPE_SAP and
+              edge.src.node.domain is not None) or (
+               edge.dst.node.type == NFFG.TYPE_SAP and
+               edge.dst.node.domain is not None):
         continue
       # Create Links
       mn_src_node = created_mn_nodes.get(edge.src.node.id)
