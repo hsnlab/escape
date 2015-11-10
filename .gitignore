@@ -12,4 +12,15 @@ old.*
 *.swp
 *.pcap
 *~
+*.a
 escape.config
+Python-*
+bin/
+include/
+lib/
+share/
+OpenYuma/libtoaster/bin/
+OpenYuma/libtoaster/lib/
+Unify_ncagent/vnf_starter/bin/
+Unify_ncagent/vnf_starter/lib/
+pip-selfcheck.json
