@@ -53,15 +53,23 @@ class InternalDomainManager(AbstractDomainManager):
     """
     Initialize Internal domain manager.
 
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :param kwargs: optional parameters
+    :type kwargs: dict
     :return: None
     """
     # Init adapter for internal topo emulation: Mininet
     self.topoAdapter = configurator.load_component(InternalMininetAdapter.name)
     # Init adapter for internal controller: POX
     self.controlAdapter = configurator.load_component(InternalPOXAdapter.name)
+    log.debug("Set %s as the topology Adapter for %s" % (
+      self.topoAdapter.__class__.__name__,
+      self.controlAdapter.__class__.__name__))
     # Init default NETCONF adapter
     self.remoteAdapter = configurator.load_component(VNFStarterAdapter.name)
     super(InternalDomainManager, self).init(configurator, **kwargs)
+    self._collect_SAP_infos()
 
   def finit (self):
     """
@@ -77,6 +85,30 @@ class InternalDomainManager(AbstractDomainManager):
   @property
   def controller_name (self):
     return self.controlAdapter.task_name
+
+  def _collect_SAP_infos (self):
+    """
+    Collect necessary information from SAPs for traffic steering.
+
+    :return: None
+    """
+    log.debug("Collect SAP info...")
+    mn = self.topoAdapter.get_mn_wrapper().network
+    topo = self.topoAdapter.get_topology_resource()
+    if topo is None or mn is None:
+      log.error(
+        "Missing topology description from topology Adapter! Skip SAP data "
+        "discovery.")
+    for sap in topo.saps:
+      connected_node = [(v, link.dst.id) for u, v, link in
+                        topo.network.out_edges_iter(sap.id, data=True)]
+      if len(connected_node) > 1:
+        log.warning("%s is connection to multiple nodes (%s)!" % (
+          sap, [n[0] for n in connected_node]))
+      for node in connected_node:
+        print node[0]
+        print "port " + str(node[1])
+        print mn.getNodeByName(sap.id).__dict__
 
   def install_nffg (self, nffg_part):
     """
