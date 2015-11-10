@@ -755,6 +755,10 @@ the topology file is not found.
 The ``NETWORK-OPTS`` is an optional data which can be added to override the
 default constructor parameters of the Mininet class.
 
+The ``Controller``, ``EE``, ``Switch``, ``SAP`` and ``Link`` dictionaries can
+contain optional parameters for the constructors of the internal Mininet-based
+representation. In most cases these parameters need to be left unchanged.
+
 Other simple values can be added too to refine the control of the emulation such
 as enable/disable the xterm initiation for SAPs (``SAP-xterm``) or the cleanup
 task (``SHUTDOWN-CLEAN``).
@@ -911,11 +915,20 @@ this configurations structure.
             "RESET-DOMAINS-AFTER-SHUTDOWN": true
         },
         "infrastructure": {
-            "NETWORK-OPTS": null,
             "TOPO": "examples/escape-mn-topo.nffg",
-            "FALLBACK-TOPO": {
-                "module": "escape.infr.topology",
-                "class": "FallbackDynamicTopology"
+            "NETWORK-OPTS": null,
+            "Controller": {
+                "ip": "127.0.0.1",
+                "port": 6653
+            },
+            "EE": null,
+            "Switch": null,
+            "SAP": null,
+            "Link": null,
+            "FALLBACK-TOPO":
+            {
+              "module": "escape.infr.topology",
+              "class": "FallbackDynamicTopology"
             },
             "SAP-xterms": true,
             "SHUTDOWN-CLEAN": true

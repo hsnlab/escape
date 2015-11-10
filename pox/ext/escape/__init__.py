@@ -211,8 +211,16 @@ cfg = {
     },
   "infrastructure":  # Infrastructure Layer
     {
-      "NETWORK-OPTS": None,  # Additional opts for Mininet
       "TOPO": "examples/escape-mn-topo.nffg",  # relative to project root
+      "NETWORK-OPTS": None,  # Additional opts for Mininet
+      "Controller": {  # Additional params for InternalControllerProxy
+        "ip": "127.0.0.1",
+        "port": 6653
+      },
+      "EE": None,  # Additional params for EE creator func
+      "Switch": None,  # Additional params for Switch creator func
+      "SAP": None,  # Additional params for SAP creator func
+      "Link": None,  # Additional params for Link creator func
       "FALLBACK-TOPO":  # relative to project root
         {
           "module": "escape.infr.topology",

@@ -617,3 +617,73 @@ class ESCAPEConfig(object):
       return self.__configuration[INFR]["SAP-xterms"]
     except (KeyError, AttributeError, TypeError):
       return True
+
+  def get_Controller_params (self):
+    """
+    Return the additional parameter which are forwarded to the constructor of
+    the specific :any:`InternalControllerProxy` class during Mininet building.
+
+    :return: additional parameters as a dict (default: empty dict)
+    :rtype: dict
+    """
+    try:
+      cfg = self.__configuration[INFR]["Controller"]
+      return cfg if cfg is not None else {}
+    except (KeyError, AttributeError, TypeError):
+      return {}
+
+  def get_EE_params (self):
+    """
+    Return the additional parameter which are forwarded to the constructor of
+    the :class:`mininet.node.EE` class during Mininet building.
+
+    :return: additional parameters as a dict (default: empty dict)
+    :rtype: dict
+    """
+    try:
+      cfg = self.__configuration[INFR]["EE"]
+      return cfg if cfg is not None else {}
+    except (KeyError, AttributeError, TypeError):
+      return {}
+
+  def get_Switch_params (self):
+    """
+    Return the additional parameter which are forwarded to the constructor of
+    the specific :class:`mininet.node.Switch` class during Mininet building.
+
+    :return: additional parameters as a dict (default: empty dict)
+    :rtype: dict
+    """
+    try:
+      cfg = self.__configuration[INFR]["Switch"]
+      return cfg if cfg is not None else {}
+    except (KeyError, AttributeError, TypeError):
+      return {}
+
+  def get_SAP_params (self):
+    """
+    Return the additional parameter which are forwarded to the constructor of
+    the :class:`mininet.node.Host` class during Mininet building.
+
+    :return: additional parameters as a dict (default: empty dict)
+    :rtype: dict
+    """
+    try:
+      cfg = self.__configuration[INFR]["SAP"]
+      return cfg if cfg is not None else {}
+    except (KeyError, AttributeError, TypeError):
+      return {}
+
+  def get_Link_params (self):
+    """
+    Return the additional parameter which are forwarded to the constructor of
+    the :class:`mininet.node.Link` class during Mininet building.
+
+    :return: additional parameters as a dict (default: empty dict)
+    :rtype: dict
+    """
+    try:
+      cfg = self.__configuration[INFR]["Link"]
+      return cfg if cfg is not None else {}
+    except (KeyError, AttributeError, TypeError):
+      return {}

@@ -697,14 +697,16 @@ class ESCAPENetworkBuilder(object):
     :rtype: :class:`mininet.node.EE`
     """
     # create static EE
+    cfg = CONFIG.get_EE_params()
+    cfg.update(params)
     log.debug("Create static EE with name: %s" % name)
-    ee = self.mn.addEE(name=name, cls=cls, **params)
-    if 'cores' in params:
-      ee.setCPUs(**params['cores'])
-    if 'frac' in params:
-      ee.setCPUFrac(**params['frac'])
-    if 'vlanif' in params:
-      for vif in params['vlaninf']:
+    ee = self.mn.addEE(name=name, cls=cls, **cfg)
+    if 'cores' in cfg:
+      ee.setCPUs(**cfg['cores'])
+    if 'frac' in cfg:
+      ee.setCPUFrac(**cfg['frac'])
+    if 'vlanif' in cfg:
+      for vif in cfg['vlaninf']:
         ee.cmdPrint('vconfig add ' + name + '-eth0 ' + vif[1])
         ee.cmdPrint('ifconfig ' + name + '-eth0.' + vif[1] + ' ' + vif[0])
     return ee
@@ -736,6 +738,8 @@ class ESCAPENetworkBuilder(object):
     :rtype: tuple
     """
     type = type.upper()
+    cfg = CONFIG.get_EE_params()
+    cfg.update(params)
     if type == self.TYPE_EE_LOCAL:
       # create local NETCONF-based
       log.debug("Create local NETCONF EE with name: %s" % name)
@@ -743,12 +747,11 @@ class ESCAPENetworkBuilder(object):
     elif type == self.TYPE_EE_REMOTE:
       # create remote NETCONF-based
       log.debug("Create remote NETCONF EE with name: %s" % name)
-      params["inNamespace"] = False
-
-      sw = self.mn.addRemoteSwitch(name, cls=None, **params)
+      cfg["inNamespace"] = False
+      sw = self.mn.addRemoteSwitch(name, cls=None, **cfg)
     else:
       raise RuntimeError("Unsupported NETCONF-based EE type: %s!" % type)
-    agt = self.mn.addAgent('agt_' + name, cls=None, **params)
+    agt = self.mn.addAgent('agt_' + name, cls=None, **cfg)
     agt.setSwitch(sw)
     return agt, sw
 
@@ -779,11 +782,13 @@ class ESCAPENetworkBuilder(object):
     :rtype: :class:`mininet.node.Switch`
     """
     log.debug("Create Switch with name: %s" % name)
-    sw = self.mn.addSwitch(name=name, cls=cls, **params)
-    if 'of_ver' in params:
-      sw.setOpenFlowVersion(params['of_ver'])
-    if 'ip' in params:
-      sw.setSwitchIP(params['ip'])
+    cfg = CONFIG.get_Switch_params()
+    cfg.update(params)
+    sw = self.mn.addSwitch(name=name, cls=cls, **cfg)
+    if 'of_ver' in cfg:
+      sw.setOpenFlowVersion(cfg['of_ver'])
+    if 'ip' in cfg:
+      sw.setSwitchIP(cfg['ip'])
     return sw
 
   def create_Controller (self, name, controller=None, **params):
@@ -806,7 +811,9 @@ class ESCAPENetworkBuilder(object):
     :rtype: :class:`mininet.node.Controller`
     """
     log.debug("Create Controller with name: %s" % name)
-    return self.mn.addController(name=name, controller=controller, **params)
+    cfg = CONFIG.get_Controller_params()
+    cfg.update(params)
+    return self.mn.addController(name=name, controller=controller, **cfg)
 
   def create_SAP (self, name, cls=None, **params):
     """
@@ -823,7 +830,9 @@ class ESCAPENetworkBuilder(object):
     :rtype: :class:`mininet.node.Host`
     """
     log.debug("Create SAP with name: %s" % name)
-    return self.mn.addHost(name=name, cls=cls, **params)
+    cfg = CONFIG.get_SAP_params()
+    cfg.update(params)
+    return self.mn.addHost(name=name, cls=cls, **cfg)
 
   def bind_inter_domain_SAPs (self, nffg):
     """
@@ -888,8 +897,10 @@ class ESCAPENetworkBuilder(object):
       ":%s" % dst_port if dst_port is not None else ""))
     remote = filter(lambda n: isinstance(n, RemoteSwitch), [src, dst])
     local = filter(lambda n: not isinstance(n, RemoteSwitch), [src, dst])
+    cfg = CONFIG.get_Link_params()
+    cfg.update(params)
     if not remote:
-      self.mn.addLink(src, dst, src_port, dst_port, **params)
+      self.mn.addLink(src, dst, src_port, dst_port, **cfg)
     else:
       # sw = local[0]  # one of the local Node
       # r = remote[0]  # other Node which is the remote
