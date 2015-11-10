@@ -15,16 +15,16 @@
 Wrapper module for handling emulated test topology based on Mininet.
 """
 
-from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
-from mininet.node import RemoteController, RemoteSwitch
-from mininet.topo import Topo
-from mininet.link import TCLink, Intf
-from mininet.term import makeTerms
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
+from escape.util.misc import quit_with_error, get_ifaces
 from escape.util.nffg import NFFG
 from escape.util.nffg_elements import NodeInfra
-from escape.util.misc import quit_with_error, get_ifaces
+from mininet.link import TCLink, Intf
+from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
+from mininet.node import RemoteController, RemoteSwitch
+from mininet.term import makeTerms
+from mininet.topo import Topo
 
 
 class AbstractTopology(Topo):
@@ -439,15 +439,16 @@ class ESCAPENetworkBuilder(object):
   Follows Builder design pattern.
   """
   # Default initial options for Mininet
-  default_opts = {"controller": InternalControllerProxy,
-                  # Use own Controller
-                  'build': False,  # Not build during init
-                  'inNamespace': False,  # Not start element in namespace
-                  'autoSetMacs': True,  # Set simple MACs
-                  'autoStaticArp': True,  # Set static ARP entries
-                  'listenPort': 6644,  # Add listen port to OVS switches
-                  'link': TCLink  # Add default link
-                  }
+  default_opts = {
+    "controller": InternalControllerProxy,
+    # Use own Controller
+    'build': False,  # Not build during init
+    'inNamespace': False,  # Not start element in namespace
+    'autoSetMacs': True,  # Set simple MACs
+    'autoStaticArp': True,  # Set static ARP entries
+    'listenPort': 6644,  # Add listen port to OVS switches
+    'link': TCLink  # Add default link
+  }
   # Default internal storing format for NFFG parsing/reading from file
   DEFAULT_NFFG_FORMAT = "NFFG"
   # Constants
@@ -937,8 +938,8 @@ class ESCAPENetworkBuilder(object):
       else:
         raise RuntimeError("Unsupported topology format: %s" % type(topo))
       return self.get_network()
-    except SystemExit:
-      quit_with_error("Mininet core files is not installed and/or available!")
+    except SystemExit as e:
+      quit_with_error(msg="Mininet exited unexpectedly! Cause: %s" % e.message)
     except TopologyBuilderException:
       if self.fallback:
         # Search for fallback topology

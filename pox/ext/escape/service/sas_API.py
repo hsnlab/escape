@@ -24,7 +24,8 @@ from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.mapping import PreMapEvent, PostMapEvent
-from escape.util.misc import schedule_as_coop_task
+from escape.util.misc import schedule_delayed_as_coop_task, \
+  schedule_as_coop_task
 from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
@@ -76,8 +77,10 @@ class ServiceRequestHandler(AbstractRequestHandler):
     function.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('ping', 'version', 'operations', 'topology'),
-                  'POST': ('ping', 'result', 'sg', 'topology')}
+  request_perm = {
+    'GET': ('ping', 'version', 'operations', 'topology'),
+    'POST': ('ping', 'result', 'sg', 'topology')
+  }
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'service'
@@ -171,13 +174,14 @@ class ServiceLayerAPI(AbstractAPI):
     if self._sg_file:
       try:
         service_request = self._read_json_from_file(self._sg_file)
+        log.info("Graph representation is loaded successfully!")
         service_request = NFFG.parse(service_request)
-        self.api_sas_sg_request(service_nffg=service_request)
+        log.debug("Converted to NFFG...")
+        log.info("Schedule service request delayed by 3 seconds...")
+        self.api_sas_sg_request_delayed(service_nffg=service_request)
       except (ValueError, IOError, TypeError) as e:
         log.error(
           "Can't load service request from file because of: " + str(e))
-      else:
-        log.info("Graph representation is loaded successfully!")
     else:
       # Init REST-API if no input file is given
       self._initiate_rest_api()
@@ -236,6 +240,27 @@ class ServiceLayerAPI(AbstractAPI):
 
   @schedule_as_coop_task
   def api_sas_sg_request (self, service_nffg):
+    """
+    Initiate service graph in a cooperative micro-task.
+
+    :param service_nffg: service graph instance
+    :type service_nffg: :any:`NFFG`
+    :return: None
+    """
+    self.__proceed_sg_request(service_nffg)
+
+  @schedule_delayed_as_coop_task(delay=3)
+  def api_sas_sg_request_delayed (self, service_nffg):
+    """
+    Initiate service graph in a cooperative micro-task.
+
+    :param service_nffg: service graph instance
+    :type service_nffg: :any:`NFFG`
+    :return: None
+    """
+    return self.__proceed_sg_request(service_nffg)
+
+  def __proceed_sg_request (self, service_nffg):
     """
     Initiate a Service Graph (UNIFY U-Sl API).
 

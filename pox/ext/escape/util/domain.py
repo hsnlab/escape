@@ -13,10 +13,11 @@
 """
 Implement the supporting classes for domain adapters.
 """
+import time
 import urlparse
 from requests import Session, ConnectionError, HTTPError, Timeout
-import time
 
+import pox.openflow.libopenflow_01 as of
 from escape import __version__
 from escape.adapt import log
 from escape.util.misc import enum
@@ -26,7 +27,6 @@ from escape.util.pox_extension import OpenFlowBridge, \
 from pox.lib.addresses import EthAddr
 from pox.lib.recoco import Timer
 from pox.lib.revent import EventMixin, Event
-import pox.openflow.libopenflow_01 as of
 
 
 class DomainChangedEvent(Event):
@@ -736,6 +736,7 @@ class AbstractRESTAdapter(Session):
     self.auth = auth
     # Store the last request
     self._response = None
+    # Suppress low level logging
     self.__suppress_requests_logging()
 
   @property
@@ -746,6 +747,8 @@ class AbstractRESTAdapter(Session):
     """
     Suppress annoying and detailed logging of `requests` and `urllib3` packages.
 
+    :param level: level of logging (default: WARNING)
+    :type level: str
     :return: None
     """
     import logging

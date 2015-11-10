@@ -15,9 +15,9 @@
 Classes for handling the elements of the NF-FG data structure
 """
 import json
-from collections import Iterable, OrderedDict
 from __builtin__ import id as generate
 import random
+from collections import Iterable, OrderedDict
 
 ################################################################################
 # ---------- BASE classes of NFFG elements -------------------
@@ -351,6 +351,7 @@ class NodeResource(Persistable):
   """
   Class for storing resource information for Nodes.
   """
+
   # YANG: grouping node_resource
 
   def __init__ (self, cpu=None, mem=None, storage=None, delay=None,
@@ -531,7 +532,7 @@ class Port(Element):
     """
     if isinstance(property, str):
       if value is not None:
-        ## wouldn't it be better to store properties as key-value pairs?
+        # wouldn't it be better to store properties as key-value pairs?
         property = property + ':' + value
       self.properties.append(property)
     elif isinstance(property, Iterable):
@@ -610,6 +611,10 @@ class InfraPort(Port):
     :type match: str
     :param action: forwarding action
     :type action: str
+    :param bandwidth: bandwidth value
+    :type bandwidth: int
+    :param id: specific id of the flowrule
+    :type id: str or int
     :return: newly created and stored flowrule
     :rtype: :any:`Flowrule`
     """
@@ -1017,6 +1022,8 @@ class EdgeReq(Link):
     :type delay: float
     :param bandwidth: bandwidth resource
     :type bandwidth: float
+    :param sg_path: list of ids of sg_links represents end-to-end requirement
+    :type sg_path: list ot tuple
     :return: None
     """
     super(EdgeReq, self).__init__(src=src, dst=dst, type=Link.REQUIREMENT,
@@ -1372,6 +1379,7 @@ class NFFGModel(Element):
     :return: the constructed NF-FG representation
     :rtype: :any:`NFFGModel`
     """
+
     # Converter function to avoid unicode
     def unicode_to_str (input):
       if isinstance(input, dict):

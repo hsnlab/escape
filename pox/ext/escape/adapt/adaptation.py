@@ -18,11 +18,11 @@ Adaptation Sublayer
 import traceback
 import weakref
 
+import escape.adapt.managers as mgrs
 from escape import CONFIG
+from escape.adapt import log as log
 from escape.adapt.managers import InternalDomainManager
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
-from escape.adapt import log as log
-import escape.adapt.managers as mgrs
 from escape.util.domain import DomainChangedEvent
 from escape.util.nffg import NFFG
 
@@ -270,11 +270,13 @@ class ControllerAdapter(object):
   Higher-level class for :any:`NFFG` adaptation between multiple domains.
   """
   # DomainManager <-> NFFG domain name mapping
-  DOMAIN_MAPPING = {NFFG.DOMAIN_INTERNAL: mgrs.InternalDomainManager.name,
-                    NFFG.DOMAIN_OS: mgrs.OpenStackDomainManager.name,
-                    NFFG.DOMAIN_UN: mgrs.UniversalNodeDomainManager.name,
-                    NFFG.DOMAIN_SDN: mgrs.SDNDomainManager.name,
-                    NFFG.DOMAIN_REMOTE: mgrs.RemoteESCAPEDomainManager.name}
+  DOMAIN_MAPPING = {
+    NFFG.DOMAIN_INTERNAL: mgrs.InternalDomainManager.name,
+    NFFG.DOMAIN_OS: mgrs.OpenStackDomainManager.name,
+    NFFG.DOMAIN_UN: mgrs.UniversalNodeDomainManager.name,
+    NFFG.DOMAIN_SDN: mgrs.SDNDomainManager.name,
+    NFFG.DOMAIN_REMOTE: mgrs.RemoteESCAPEDomainManager.name
+    }
 
   def __init__ (self, layer_API, with_infr=False):
     """

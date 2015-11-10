@@ -15,11 +15,10 @@
 Contains classes relevant to Service Adaptation Sublayer functionality.
 """
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
-from escape.service.sas_mapping import ServiceGraphMapper
 from escape.service import log as log
-from pox.lib.revent.revent import EventMixin, Event
+from escape.service.sas_mapping import ServiceGraphMapper
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
-from pox.core import core
+from pox.lib.revent.revent import EventMixin, Event
 
 
 class MissingVirtualViewEvent(Event):

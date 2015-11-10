@@ -14,8 +14,8 @@
 """
 Implement the supporting classes for communication over NETCONF.
 """
-from lxml import etree
 from StringIO import StringIO
+from lxml import etree
 
 from ncclient import manager
 from ncclient.operations import RPCError, OperationError
@@ -62,7 +62,7 @@ class AbstractNETCONFAdapter(object):
     self.port = int(port)
     self.username = username
     self.password = password
-    self.timeout = int(timeout)
+    self.timeout = int(timeout) if timeout is not None else 10
     self.debug = debug
     # variables for the last RPC reply
     self._rpc_reply_formatted = dict()
@@ -70,6 +70,20 @@ class AbstractNETCONFAdapter(object):
     # Server side and connection parameters
     self.__connection = None
     self.__config = None
+    # Suppress low level logging
+    self.__suppress_ncclient_logging()
+
+  def __suppress_ncclient_logging (self, level=None):
+    """
+    Suppress annoying and detailed logging of `ncclient` package.
+
+    :param level: level of logging (default: WARNING)
+    :type level: str
+    :return: None
+    """
+    import logging
+    level = level if level is not None else logging.WARNING
+    logging.getLogger("ncclient").setLevel(level)
 
   @property
   def connected (self):
@@ -410,6 +424,7 @@ if __name__ == "__main__":
   # TEST
   from pprint import pprint
   from collections import OrderedDict
+
   # print "Create VNFRemoteManager..."
   # vrm = VNFRemoteManager(server='192.168.12.128', port=830,
   # username='mininet', password='mininet', debug=True)

@@ -208,11 +208,13 @@ class InternalDomainManager(AbstractDomainManager):
                 break
           continue
         # Extract the initiation params
-        params = {'nf_type': nf.functional_type,
-                  'nf_ports': [link.src.id for u, v, link in
-                               nffg_part.network.out_edges_iter((nf.id,),
-                                                                data=True)],
-                  'infra_id': infra.id}
+        params = {
+          'nf_type': nf.functional_type,
+          'nf_ports': [link.src.id for u, v, link in
+                       nffg_part.network.out_edges_iter((nf.id,),
+                                                        data=True)],
+          'infra_id': infra.id
+        }
         # Check if every param is not None or empty
         if not all(params.values()):
           log.error(
@@ -338,11 +340,16 @@ class InternalDomainManager(AbstractDomainManager):
                   "flowrule delete on this Node..." % (
                     infra.short_name, self.name))
         continue
+      try:
+        dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      except KeyError as e:
+        log.warning(
+          "Missing DPID for Infra(id: %s)! Skip deletion of flowrules" % e)
+        continue
       # Check the OF connection is alive
-      dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Skipping DELETE flowrules. Cause: connection for %s - DPID: %s is "
+          "Skipping DELETE flowrules! Cause: connection for %s - DPID: %s is "
           "not found!" % (infra, dpid_to_str(dpid)))
         continue
       self.controlAdapter.delete_flowrules(infra.id)
@@ -382,11 +389,17 @@ class InternalDomainManager(AbstractDomainManager):
                   "flowrule install on this Node..." % (
                     infra.short_name, self.name))
         continue
+      try:
+        dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      except KeyError as e:
+        log.warning(
+          "Missing DPID for Infra(id: %s)! Skip deploying flowrules for "
+          "Infra" % e)
+        continue
       # Check the OF connection is alive
-      dpid = self.controlAdapter.infra_to_dpid[infra.id]
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Skipping INSTALL flowrule. Cause: connection for %s - DPID: %s is "
+          "Skipping INSTALL flowrule! Cause: connection for %s - DPID: %s is "
           "not found!" % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:
@@ -503,10 +516,15 @@ class SDNDomainManager(AbstractDomainManager):
            NFFG.TYPE_INFRA_SDN_SW):
         continue
       # Check the OF connection is alive
-      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      try:
+        dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      except KeyError as e:
+        log.warning(
+          "Missing DPID for Infra(id: %s)! Skip deletion of flowrules" % e)
+        continue
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Skipping DELETE flowrules. Cause: connection for %s - DPID: %s is "
+          "Skipping DELETE flowrules! Cause: connection for %s - DPID: %s is "
           "not found!" % (infra, dpid_to_str(dpid)))
         continue
 
@@ -545,10 +563,16 @@ class SDNDomainManager(AbstractDomainManager):
                     infra.short_name, self.name))
         continue
       # Check the OF connection is alive
-      dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      try:
+        dpid = self.controlAdapter.infra_to_dpid[infra.id]
+      except KeyError as e:
+        log.warning(
+          "Missing DPID for Infra(id: %s)! Skip deploying flowrules for "
+          "Infra" % e)
+        continue
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-          "Skipping INSTALL flowrule. Cause: connection for %s - DPID: %s is "
+          "Skipping INSTALL flowrule! Cause: connection for %s - DPID: %s is "
           "not found!" % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:

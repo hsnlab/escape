@@ -14,14 +14,13 @@
 """
 Contains the class for managing NFIB.
 """
-from collections import deque
 import os
 import sys
+from collections import deque
 
+import networkx
 import py2neo
 from py2neo import Graph, Relationship
-import networkx
-
 from py2neo.packages.httpstream.http import SocketError
 
 from escape.orchest import log as log
@@ -41,6 +40,7 @@ class NFIBManager(object):
     """
     super(NFIBManager, self).__init__()
     log.debug("Init %s based on neo4j" % self.__class__.__name__)
+    # Suppress low level logging
     self.__suppress_neo4j_logging()
     self.graph_db = Graph()
 
@@ -49,6 +49,8 @@ class NFIBManager(object):
     Suppress annoying and detailed logging of `py2neo` and `httpstream`
     packages.
 
+    :param level: level of logging (default: WARNING)
+    :type level: str
     :return: None
     """
     import logging
@@ -150,8 +152,10 @@ class NFIBManager(object):
 
     # 4. Add the NF to the DB
     nf.update(
-      {'dependency': repr(dependency), 'read_handlers': repr(read_handlers),
-       'write_handlers': repr(write_handlers), 'command': str(template)})
+      {
+        'dependency': repr(dependency), 'read_handlers': repr(read_handlers),
+        'write_handlers': repr(write_handlers), 'command': str(template)
+        })
     self.addNode(nf)
 
   def addVMNF (self, nf):
@@ -337,21 +341,27 @@ class NFIBManager(object):
         dst_label = 'NA'
 
       self.addRelationship(
-        {'src_label': 'graph', 'dst_label': dst_label, 'src_id': decomp_id,
-         'dst_id': n, 'rel_type': 'CONTAINS'})
+        {
+          'src_label': 'graph', 'dst_label': dst_label, 'src_id': decomp_id,
+          'dst_id': n, 'rel_type': 'CONTAINS'
+          })
 
     for e in decomp.edges():
-      temp = {'src_label': decomp.node[e[0]]['properties']['label'],
-              'src_id': e[0],
-              'dst_label': decomp.node[e[1]]['properties']['label'],
-              'dst_id': e[1], 'rel_type': 'CONNECTED'}
+      temp = {
+        'src_label': decomp.node[e[0]]['properties']['label'],
+        'src_id': e[0],
+        'dst_label': decomp.node[e[1]]['properties']['label'],
+        'dst_id': e[1], 'rel_type': 'CONNECTED'
+        }
       temp.update(decomp.edge[e[0]][e[1]]['properties'])
 
       self.addRelationship(temp)
 
     self.addRelationship(
-      {'src_label': 'NF', 'src_id': nf_id, 'dst_label': 'graph',
-       'dst_id': decomp_id, 'rel_type': 'DECOMPOSED'})
+      {
+        'src_label': 'NF', 'src_id': nf_id, 'dst_label': 'graph',
+        'dst_id': decomp_id, 'rel_type': 'DECOMPOSED'
+        })
     return True
 
   def removeDecomp (self, decomp_id):

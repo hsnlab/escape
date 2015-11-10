@@ -15,10 +15,10 @@
 Contains manager and handling functions for global ESCAPE configuration.
 """
 import copy
-from distutils.util import strtobool
 import importlib
 import json
 import os
+from distutils.util import strtobool
 
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.infr import LAYER_NAME as INFR

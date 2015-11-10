@@ -250,8 +250,10 @@ class VirtualizerManager(EventMixin):
   # Events raised by this class
   _eventMixin_events = {MissingGlobalViewEvent}
 
-  TYPES = {"GLOBAL": GlobalViewVirtualizer,
-           "SINGLE": SingleBiSBiSVirtualizer}
+  TYPES = {
+    "GLOBAL": GlobalViewVirtualizer,
+    "SINGLE": SingleBiSBiSVirtualizer
+    }
 
   def __init__ (self):
     """

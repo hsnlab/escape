@@ -17,9 +17,9 @@ Sublayer.
 """
 
 from escape import CONFIG
-from escape.orchest.ros_orchestration import ResourceOrchestrator
-from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest import LAYER_NAME
+from escape.orchest import log as log  # Orchestration layer logger
+from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.misc import schedule_as_coop_task
 from escape.util.nffg import NFFG
@@ -94,8 +94,10 @@ class CfOrRequestHandler(AbstractRequestHandler):
   Contains handler functions for REST-API.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('ping', 'version', 'operations', 'get_config'),
-                  'POST': ('ping', 'get_config', 'edit_config')}
+  request_perm = {
+    'GET': ('ping', 'version', 'operations', 'get_config'),
+    'POST': ('ping', 'get_config', 'edit_config')
+    }
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'orchestration'
@@ -103,8 +105,10 @@ class CfOrRequestHandler(AbstractRequestHandler):
   # Logger. Must define.
   log = log.getChild("[Cf-Or]")
   # Name mapper to avoid Python naming constraint
-  rpc_mapper = {'get-config': "get_config",
-                'edit-config': "edit_config"}
+  rpc_mapper = {
+    'get-config': "get_config",
+    'edit-config': "edit_config"
+    }
 
   def __init__ (self, request, client_address, server):
     """
@@ -156,8 +160,10 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   Contains handler functions for REST-API.
   """
   # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {'GET': ('ping', 'version', 'operations', 'get_config'),
-                  'POST': ('ping', 'get_config', 'edit_config')}
+  request_perm = {
+    'GET': ('ping', 'version', 'operations', 'get_config'),
+    'POST': ('ping', 'get_config', 'edit_config')
+    }
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'orchestration'
@@ -166,8 +172,10 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   # Logger. Must define.
   log = log.getChild("[Sl-Or]")
   # Name mapper to avoid Python naming constraint
-  rpc_mapper = {'get-config': "get_config",
-                'edit-config': "edit_config"}
+  rpc_mapper = {
+    'get-config': "get_config",
+    'edit-config': "edit_config"
+    }
 
   def __init__ (self, request, client_address, server):
     """
@@ -358,7 +366,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of global view (DoV)
     :rtype: str
     """
-    print self.__dict__
     log.getChild('Sl-Or').info("Requesting Virtualizer for REST-API")
     virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       virtualizer_id=self.ros_api.api_id, type=self.ros_api.virtualizer_type)
