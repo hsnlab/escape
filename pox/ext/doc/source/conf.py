@@ -57,7 +57,7 @@ master_doc = 'index'
 # from escape import __version__, __project__, __copyright__, __maintainer__
 # General information about the project.
 project = "ESCAPEv2"
-author = "Janos Czentye, Sonkoly Balazs"
+author = "Janos Czentye, Balazs Sonkoly"
 copyright = author + " 2015, under Apache License Version 2.0"
 
 # The version info for the project you're documenting, acts as replacement for
