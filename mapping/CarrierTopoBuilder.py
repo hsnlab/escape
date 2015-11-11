@@ -44,15 +44,19 @@ log = logging.getLogger("TopoConstruct")
 logging.basicConfig(level=logging.WARN,
                       format='%(levelname)s:%(name)s:%(message)s')
 
-global_port_id = 0
+max_portids = {}
 def add_port(obj, increment_port_ids=False):
   # WARNING! this function is not thread safe!!
-  global global_port_id
+  global max_portids
   if not increment_port_ids:
     port = obj.add_port()
   else:
-    port = obj.add_port(id=global_port_id)
-    global_port_id += 1
+    if obj in max_portids:
+      max_portids[obj] += 1
+      port = obj.add_port(id=max_portids[obj])
+    else:
+      max_portids[obj] = 1
+      port = obj.add_port(id=1)
   return port
 
 def getGenForName(prefix):
