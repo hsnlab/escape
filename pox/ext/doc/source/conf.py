@@ -57,7 +57,7 @@ master_doc = 'index'
 # from escape import __version__, __project__, __copyright__, __maintainer__
 # General information about the project.
 project = "ESCAPEv2"
-author = "Janos Czentye, Balazs Sonkoly"
+author = u"János Czentye, Balázs Sonkoly"
 copyright = author + " 2015, under Apache License Version 2.0"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -230,11 +230,11 @@ latex_elements = {  # The paper size ('letterpaper' or 'a4paper').
 # (source start file, target name, title,
 # author, documentclass [howto, manual, or own class]).
 latex_documents = [(master_doc, 'ESCAPEv2.tex', u'ESCAPEv2 Documentation',
-                    u'János Czentye', 'manual'), ]
+                    author, 'manual'), ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-# latex_logo = None
+latex_logo = 'Logo-unify-claim-rgb.pdf'
 
 # For "manual" documents, if this is true, then top-level headings are parts,
 # not chapters.
