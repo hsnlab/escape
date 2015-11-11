@@ -49,7 +49,7 @@
       }
     },
     {
-      "id": "SW4",
+      "id": "SW1",
       "name": "switch-4",
       "ports": [
         {
@@ -73,7 +73,7 @@
       }
     },
     {
-      "id": "SW3",
+      "id": "SW2",
       "name": "switch-3",
       "ports": [
         {
@@ -122,14 +122,14 @@
       "id": "mn-link1",
       "src_node": "EE1",
       "src_port": 1,
-      "dst_node": "SW3",
+      "dst_node": "SW2",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link5",
-      "src_node": "SW4",
+      "src_node": "SW1",
       "src_port": 3,
       "dst_node": "SAP2",
       "dst_port": 1,
@@ -138,16 +138,16 @@
     },
     {
       "id": "mn-link3",
-      "src_node": "SW3",
+      "src_node": "SW2",
       "src_port": 2,
-      "dst_node": "SW4",
+      "dst_node": "SW1",
       "dst_port": 2,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link4",
-      "src_node": "SW3",
+      "src_node": "SW2",
       "src_port": 3,
       "dst_node": "SAP1",
       "dst_port": 1,
@@ -158,7 +158,7 @@
       "id": "mn-link2",
       "src_node": "EE2",
       "src_port": 1,
-      "dst_node": "SW4",
+      "dst_node": "SW1",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
