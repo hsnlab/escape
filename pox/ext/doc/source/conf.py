@@ -12,8 +12,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -113,7 +113,6 @@ pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
-
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -216,10 +215,10 @@ htmlhelp_basename = 'ESCAPEv2doc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {  # The paper size ('letterpaper' or 'a4paper').
-                    'papersize': 'a4paper',
-                    # The font size ('10pt', '11pt' or '12pt').
-                    'pointsize': '10pt',
-                    }
+  'papersize': 'a4paper',
+  # The font size ('10pt', '11pt' or '12pt').
+  'pointsize': '10pt',
+}
 
 # Additional stuff for the LaTeX preamble.
 # 'preamble': '',
@@ -287,11 +286,13 @@ texinfo_documents = [(master_doc, 'ESCAPEv2', u'ESCAPEv2 Documentation', author,
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'python': ('https://docs.python.org/2.7/', None),
-                       'ncclient': (
-                         'http://ncclient.readthedocs.org/en/latest/', None),
-                       'requests': (
-                         'http://docs.python-requests.org/en/latest/', None)}
+intersphinx_mapping = {
+  'python': ('https://docs.python.org/2.7/', None),
+  'ncclient': (
+    'http://ncclient.readthedocs.org/en/latest/', None),
+  'requests': (
+    'http://docs.python-requests.org/en/latest/', None)
+  }
 
 # Autodoc config
 autodoc_member_order = 'bysource'
