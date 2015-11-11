@@ -579,6 +579,8 @@ class Mininet( object ):
         for agt in self.agents:
             info( agt.name + ' ')
             agt.start()
+            import time
+            time.sleep(1)
         info( '\n' )
 
         if self.ees:
