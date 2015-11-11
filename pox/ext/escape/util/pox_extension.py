@@ -25,6 +25,9 @@ class OpenFlowBridge(OpenFlowNexus):
 
   Purpose of the class mostly fits the Bride design pattern.
   """
+  # do not clear flowrules on connection up
+  clear_flows_on_connect = False
+
   pass
 
 
