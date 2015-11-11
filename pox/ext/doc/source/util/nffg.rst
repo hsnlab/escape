@@ -8,7 +8,7 @@ such as building, parsing, processing NF-FG, helper functions, etc.
    escape.util.nffg.AbstractNFFG
    escape.util.nffg.NFFG
    escape.util.nffg.NFFGToolBox
-   :parts: 3
+   :parts: 1
 
 :any:`AbstractNFFG` represents the common function for an NFFG representation.
 

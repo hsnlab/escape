@@ -9,7 +9,7 @@ Sublayer.
    escape.service.sas_API.GetVirtResInfoEvent
    escape.service.sas_API.ServiceRequestHandler
    escape.service.sas_API.ServiceLayerAPI
-   :parts: 3
+   :parts: 1
 
 :any:`InstantiateNFFGEvent` can send NF-FG to the lower layer.
 

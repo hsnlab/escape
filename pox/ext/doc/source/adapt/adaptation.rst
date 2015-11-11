@@ -9,7 +9,7 @@ Adaptation Sublayer.
    escape.adapt.adaptation.ControllerAdapter
    escape.adapt.adaptation.DomainVirtualizer
    escape.adapt.adaptation.DomainResourceManager
-   :parts: 3
+   :parts: 1
 
 :any:`ComponentConfigurator` creates, initializes, stores and manages different
 adaptation components, i.e. derived classes of :any:`AbstractDomainManager` and

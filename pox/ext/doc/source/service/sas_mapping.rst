@@ -7,7 +7,7 @@ Contains classes which implement SG mapping functionality.
    escape.service.sas_mapping.DefaultServiceMappingStrategy
    escape.service.sas_mapping.SGMappingFinishedEvent
    escape.service.sas_mapping.ServiceGraphMapper
-   :parts: 3
+   :parts: 1
 
 :any:`DefaultServiceMappingStrategy` implements a default mapping algorithm
 which map given SG on a single Bis-Bis.

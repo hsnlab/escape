@@ -244,7 +244,7 @@ latex_logo = 'Logo-unify-claim-rgb.pdf'
 # latex_show_pagerefs = False
 
 # If true, show URL addresses after external links.
-# latex_show_urls = False
+latex_show_urls = "False"
 
 # Documents to append as an appendix to all manuals.
 # latex_appendices = []
@@ -292,14 +292,15 @@ intersphinx_mapping = {
     'http://ncclient.readthedocs.org/en/latest/', None),
   'requests': (
     'http://docs.python-requests.org/en/latest/', None)
-  }
+}
 
 # Autodoc config
 autodoc_member_order = 'bysource'
 autodoc_default_flags = ['members', 'private-members', 'special-members',
                          'undoc-members', 'show-inheritance']
 
-inheritance_graph_attrs = dict(rankdir="LR", size='""', fontsize=14)
+inheritance_graph_attrs = dict(rankdir="LR", size='"12.0, 5.0"', fontsize=14,
+                               ratio="compress")
 # inheritance_node_attrs = dict(fontsize=16, height=0.75)
 #  inheritance_node_attrs = dict(shape='ellipse', fontsize=14, height=0.75,
 #                               color='dodgerblue1', style='filled')

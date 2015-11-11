@@ -8,7 +8,7 @@ Contains classes relevant to Service Adaptation Sublayer functionality.
    escape.service.sas_orchestration.SGManager
    escape.service.sas_orchestration.MissingVirtualViewEvent
    escape.service.sas_orchestration.VirtualResourceManager
-   :parts: 3
+   :parts: 1
 
 :any:`ServiceOrchestrator` orchestrates SG mapping and centralize layer logic.
 

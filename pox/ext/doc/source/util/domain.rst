@@ -15,7 +15,7 @@ Implement the supporting classes for domain adapters.
    escape.util.domain.UniversalNodeAPI
    escape.util.domain.RemoteESCAPEv2API
    escape.util.domain.AbstractRESTAdapter
-   :parts: 3
+   :parts: 1
 
 :any:`DomainChangedEvent` signals changes for :any:`ControllerAdapter` in
 an unified way.

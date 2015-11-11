@@ -7,7 +7,7 @@ Contains classes which implement :any:`NFFG` mapping functionality.
    escape.orchest.ros_mapping.ESCAPEMappingStrategy
    escape.orchest.ros_mapping.NFFGMappingFinishedEvent
    escape.orchest.ros_mapping.ResourceOrchestrationMapper
-   :parts: 3
+   :parts: 1
 
 :any:`ESCAPEMappingStrategy` implements a default :any:`NFFG` mapping algorithm
 of ESCAPEv2.

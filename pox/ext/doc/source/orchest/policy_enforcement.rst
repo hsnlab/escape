@@ -7,7 +7,7 @@ Contains functionality related to policy enforcement.
    escape.orchest.policy_enforcement.PolicyEnforcementError
    escape.orchest.policy_enforcement.PolicyEnforcementMetaClass
    escape.orchest.policy_enforcement.PolicyEnforcement
-   :parts: 3
+   :parts: 1
 
 :any:`PolicyEnforcementError` represents a violation during the policy
 checking process.

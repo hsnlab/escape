@@ -3,16 +3,17 @@
 
 Implement the supporting classes for communication over NETCONF.
 
-Requirements::
+Requirements:
 
-  sudo apt-get install python-setuptools python-paramiko python-lxml \
-  python-libxml2 python-libxslt1 libxml2 libxslt1-dev
+.. code-block:: bash
 
-  sudo pip install ncclient
+    $ sudo apt-get install python-setuptools python-paramiko python-lxml \
+      python-libxml2 python-libxslt1 libxml2 libxslt1-dev
+    $ sudo pip install ncclient
 
 .. inheritance-diagram::
    escape.util.netconf.AbstractNETCONFAdapter
-   :parts: 3
+   :parts: 1
 
 :any:`AbstractNETCONFAdapter` contains the main function for communication
 over NETCONF such as managing SSH channel, handling configuration, assemble

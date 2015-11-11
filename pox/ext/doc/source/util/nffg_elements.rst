@@ -20,7 +20,7 @@ Element classes for NFFG based on ``nffg.yang``.
    escape.util.nffg_elements.EdgeLink
    escape.util.nffg_elements.EdgeSGLink
    escape.util.nffg_elements.EdgeReq
-   :parts: 3
+   :parts: 1
 
 :any:`NFFGModel` represents the main container class.
 

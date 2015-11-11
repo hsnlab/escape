@@ -11,7 +11,7 @@ Wrapper module for handling emulated test topology based on Mininet.
    escape.infr.topology.ESCAPENetworkBridge
    escape.infr.topology.TopologyBuilderException
    escape.infr.topology.ESCAPENetworkBuilder
-   :parts: 3
+   :parts: 1
 
 :any:`AbstractTopology` can represent an emulated topology for the high-level
 API.

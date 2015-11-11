@@ -152,10 +152,10 @@ Required system and Python packages:
 .. code-block:: bash
 
     $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev libsqlite3-dev \
-        python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko python-dev \
-        python-networkx libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev \
-        libglib2.0-dev libgtk2.0-dev gcc make automake openssh-client openssh-server ssh \
-        libssl-dev
+        python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko \
+        python-dev python-networkx libxml2-dev libssh2-1-dev libgcrypt11-dev \
+        libncurses5-dev libglib2.0-dev libgtk2.0-dev gcc make automake openssh-client \
+        openssh-server ssh libssl-dev
 
     $ sudo pip install requests jinja2 ncclient lxml networkx py2neo networkx_viewer \
         numpy
@@ -213,7 +213,8 @@ However you can install the Open vSwitch packages manually:
 
 .. code-block:: bash
 
-    $ sudo apt-get install openvswitch-common openvswitch-switch openvswitch-testcontroller
+    $ sudo apt-get install openvswitch-common openvswitch-switch \
+        openvswitch-testcontroller
 
 If the command complains about the Open vSwitch not installed then you have to
 install it from source. See more on `<http://openvswitch.org/download/>`_. On the
@@ -249,7 +250,8 @@ For security reasons it's highly recommended to limit the SSH connections for th
 
 .. code-block:: bash
 
-    $ sudo echo "AllowUsers    <your_user1> <other_user...> mininet@localhost" >> /etc/ssh/sshd_config
+    $ sudo echo "AllowUsers    <your_user1 user2 ...>  mininet@localhost" >> \
+        /etc/ssh/sshd_config
     $ sudo service ssh reload
 
 Check the created user with the following command:
@@ -313,7 +315,7 @@ enable system-wide Python / ``pip`` packages
 
 .. code-block:: bash
 
-    $ virtualenv --python=<python_dir> --no-site-packages/system-site-packages <...> escape
+    $ virtualenv -p=<python_dir> --no-site-packages/system-site-packages <...> escape
 
 or activate/deactivate the environment manually
 
@@ -408,11 +410,13 @@ and check the state of the DoV:
 
     $ ./escape.py -dfi -s pox/escape-mn-req.nffg
     Starting ESCAPEv2...
-    Command: sudo /home/czentye/escape/pox/pox.py unify --full --sg_file=/home/czentye/escape/pox/escape-mn-req.nffg py --completion
+    Command: sudo /home/czentye/escape/pox/pox.py unify --full \
+        --sg_file=/home/czentye/escape/pox/escape-mn-req.nffg py --completion
 
     ...
 
-    ESCAPE> print core.adaptation.controller_adapter.domainResManager._dov.get_resource_info().dump()
+    ESCAPE> print core.adaptation.controller_adapter.domainResManager._dov
+                .get_resource_info().dump()
     {
       "parameters": {
         "id": "DoV",
@@ -539,15 +543,15 @@ Common API functions
 
 *Operations:*   Every API has the following 3 function (defined in :any:`AbstractRequestHandler`):
 
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
-|      Path         |     Params     |     HTTP verbs    | Description                                                               |
-+===================+================+===================+===========================================================================+
-| */version*        | ``None``       | GET               | Returns with the current version of ESCAPEv2                              |
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
-| */ping*           | ``None``       | ALL               | Returns with the "OK" string                                              |
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
-| */operations*     | ``None``       | GET               | Returns with the implemented operations assigned to the HTTP verbs        |
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
++-------------------+----------------+-------------------+----------------------------------------------+
+|      Path         |     Params     |     HTTP verbs    | Description                                  |
++===================+================+===================+==============================================+
+| */version*        | ``None``       | GET               | Returns with the current version of ESCAPEv2 |
++-------------------+----------------+-------------------+----------------------------------------------+
+| */ping*           | ``None``       | ALL               | Returns with the "OK" string                 |
++-------------------+----------------+-------------------+----------------------------------------------+
+| */operations*     | ``None``       | GET               | Returns with the implemented operations      |
++-------------------+----------------+-------------------+----------------------------------------------+
 
 Service API specific functions
 ------------------------------
@@ -559,26 +563,26 @@ initiation is skipped.
 *Content Negotiation:* The Service layer's RESTful API accepts and returns data
 only in JSON format.
 
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
-|      Path         |     Params     |     HTTP verbs    | Description                                                               |
-+===================+================+===================+===========================================================================+
-| */topology*       | ``None``       | GET               | Returns with the resource view of the Service layer                       |
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
-| */sg*             | ``NFFG``       | ALL               | Initiate given NFFG. Returns the given NFFG initiation is accepted or not |
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
++-------------------+----------------+-------------------+----------------------------------------------------------------+
+|      Path         |     Params     |     HTTP verbs    | Description                                                    |
++===================+================+===================+================================================================+
+| */topology*       | ``None``       | GET               | Returns with the resource view of the Service layer            |
++-------------------+----------------+-------------------+----------------------------------------------------------------+
+| */sg*             | ``NFFG``       | ALL               | Initiate given NFFG. Returns the initiation is accepted or not |
++-------------------+----------------+-------------------+----------------------------------------------------------------+
 
 ROS API specific functions
 --------------------------
 
 Can be started with the ``--agent`` or ``--rosapi`` initial flags.
 
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
-|      Path         |     Params     |     HTTP verbs    | Description                                                               |
-+===================+================+===================+===========================================================================+
-| */get-config*     | ``None``       | GET               | Returns with the resource view of the Resource Orchestration Sublayer     |
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
-| */edit-config*    | ``NFFG``       | ALL               | Initiate given NFFG.                                                      |
-+-------------------+----------------+-------------------+---------------------------------------------------------------------------+
++-------------------+----------------+-------------------+-------------------------------------------+
+|      Path         |     Params     |     HTTP verbs    | Description                               |
++===================+================+===================+===========================================+
+| */get-config*     | ``None``       | GET               | Returns with the resource view of the ROS |
++-------------------+----------------+-------------------+-------------------------------------------+
+| */edit-config*    | ``NFFG``       | ALL               | Initiate given NFFG.                      |
++-------------------+----------------+-------------------+-------------------------------------------+
 
 Cf-Or API specific functions
 ----------------------------
