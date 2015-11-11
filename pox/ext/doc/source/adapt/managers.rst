@@ -14,7 +14,7 @@ the particular domain.
    escape.adapt.managers.UniversalNodeDomainManager
    escape.adapt.managers.DockerDomainManager
    escape.adapt.managers.SDNDomainManager
-   :parts: 3
+   :parts: 1
 
 :any:`InternalDomainManager` represent the top class for interacting with the
 emulated infrastructure.

@@ -6,7 +6,7 @@ Contains helper classes for conversion between different NF-FG representations.
 .. inheritance-diagram::
    escape.util.conversion.Virtualizer3BasedNFFGBuilder
    escape.util.conversion.NFFGConverter
-   :parts: 3
+   :parts: 1
 
 :any:`Virtualizer3BasedNFFGBuilder` contains the common function for an NFFG
 representation based on virtualizer3.py.

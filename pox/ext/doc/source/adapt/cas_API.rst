@@ -9,7 +9,7 @@ Sublayer.
    escape.adapt.cas_API.InstallationFinishedEvent
    escape.adapt.cas_API.DeployNFFGEvent
    escape.adapt.cas_API.ControllerAdaptationAPI
-   :parts: 3
+   :parts: 1
 
 :any:`GlobalResInfoEvent` can send back global resource info requested from
 upper layer.

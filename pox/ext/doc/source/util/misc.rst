@@ -6,7 +6,7 @@ Contains miscellaneous helper functions.
 .. inheritance-diagram::
    escape.util.misc.SimpleStandaloneHelper
    escape.util.misc.Singleton
-   :parts: 3
+   :parts: 1
 
 :any:`schedule_as_coop_task()` helps invoking a function in POX's cooperative
 microtask environment.

@@ -10,7 +10,7 @@ Contains abstract classes for NFFG mapping.
    escape.util.mapping.ProcessorError
    escape.util.mapping.AbstractMappingDataProcessor
    escape.util.mapping.ProcessorSkipper
-   :parts: 3
+   :parts: 1
 
 :any:`AbstractMapper` is an abstract class for orchestration method which
 should implement mapping preparations and invoke actual mapping algorithm.

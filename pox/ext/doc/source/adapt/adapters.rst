@@ -15,7 +15,7 @@ details for the connections between ESCAPEv2 and other different domains.
    escape.adapt.adapters.RemoteESCAPEv2RESTAdapter
    escape.adapt.adapters.OpenStackRESTAdapter
    escape.adapt.adapters.UniversalNodeRESTAdapter
-   :parts: 3
+   :parts: 1
 
 :any:`InternalPOXAdapter` implements the OF controller functionality for the
 Mininet-based emulated topology.

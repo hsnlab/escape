@@ -9,7 +9,7 @@ Contains components relevant to virtualization of resources and views.
    escape.orchest.virtualization_mgmt.GlobalViewVirtualizer
    escape.orchest.virtualization_mgmt.SingleBiSBiSVirtualizer
    escape.orchest.virtualization_mgmt.VirtualizerManager
-   :parts: 3
+   :parts: 1
 
 :any:`MissingGlobalViewEvent` can signal missing global view.
 

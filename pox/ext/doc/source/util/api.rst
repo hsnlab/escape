@@ -9,7 +9,7 @@ Contains abstract classes for concrete layer API modules.
    escape.util.api.RESTServer
    escape.util.api.RESTError
    escape.util.api.AbstractRequestHandler
-   :parts: 3
+   :parts: 1
 
 :any:`AbstractAPI` contains the register mechanism into the POX core for
 layer APIs, the event handling/registering logic and defines the general

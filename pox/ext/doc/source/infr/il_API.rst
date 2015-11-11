@@ -6,7 +6,7 @@ Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet.
 .. inheritance-diagram::
    escape.infr.il_API.DeploymentFinishedEvent
    escape.infr.il_API.InfrastructureLayerAPI
-   :parts: 3
+   :parts: 1
 
 :any:`DeploymentFinishedEvent` can send status info about NFFG deployment.
 

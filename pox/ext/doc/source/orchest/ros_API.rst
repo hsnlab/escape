@@ -11,7 +11,7 @@ Sublayer.
    escape.orchest.ros_API.InstantiationFinishedEvent
    escape.orchest.ros_API.ROSAgentRequestHandler
    escape.orchest.ros_API.ResourceOrchestrationAPI
-   :parts: 3
+   :parts: 1
 
 :any:`InstallNFFGEvent` can send mapped NF-FG to the lower layer.
 
