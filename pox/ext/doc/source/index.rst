@@ -2,7 +2,7 @@
 Welcome to ESCAPEv2's documentation!
 ####################################
 
-Welcome! This is the API documentation for **ESCAPEv2**.
+.. Welcome! This is the API documentation for **ESCAPEv2**.
 
 Overview
 ========
@@ -54,33 +54,6 @@ resources.
      our `github page <https://github.com/nemethf/escape>`__.
 
 For further information contact balazs.sonkoly@tmit.bme.hu
-
-API documentation
-=================
-
-This documentation contains only the Python class structure and description of
-the multi-domain multi-level service orchestrator.
-
-Our Mininet-based infrastructure, which is an extended version of
-Mininet, is not documented here.
-
-ESCAPEv2 class structure
-------------------------
-
-.. toctree::
-    :maxdepth: 6
-    :titlesonly:
-
-    escape
-
-Topmost POX modules for UNIFY's layers/sublayers
-------------------------------------------------
-
-.. toctree::
-    :maxdepth: 2
-    :titlesonly:
-
-    UNIFY <unify>
 
 Installation
 ============
@@ -996,6 +969,33 @@ More help and description about the useful helper functions and the *core*
 object is in the comments/documentation and on the POX's
 `wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`__
 site.
+
+API documentation
+=================
+
+This documentation contains only the Python class structure and description of
+the multi-domain multi-level service orchestrator.
+
+Our Mininet-based infrastructure, which is an extended version of
+Mininet, is not documented here.
+
+ESCAPEv2 class structure
+------------------------
+
+.. toctree::
+    :maxdepth: 6
+    :titlesonly:
+
+    escape
+
+Topmost POX modules for UNIFY's layers/sublayers
+------------------------------------------------
+
+.. toctree::
+    :maxdepth: 2
+    :titlesonly:
+
+    UNIFY <unify>
 
 Contacts
 ========
