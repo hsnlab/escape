@@ -530,9 +530,9 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       pass
     out = action['out']
     try:
-      if out in self.saps[id]:
-        dl_dst = self.saps[id][str(out)]['dl_dst']
-        dl_src = self.saps[id][str(out)]['dl_src']
+      if out == self.saps[id]['port']:
+        dl_dst = self.saps[id]['dl_dst']
+        dl_src = self.saps[id]['dl_src']
         msg.actions.append(of.ofp_action_dl_addr.set_dst(EthAddr(dl_dst)))
         msg.actions.append(of.ofp_action_dl_addr.set_src(EthAddr(dl_src)))
     except KeyError:
