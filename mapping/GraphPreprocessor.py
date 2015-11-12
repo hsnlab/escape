@@ -20,7 +20,6 @@ And divides the e2e chains to disjunct subchains for core mapping.
 """
 
 import copy, sys
-from pprint import pformat
 
 import networkx as nx
 
@@ -65,7 +64,7 @@ class GraphPreprocessorClass(object):
     """
     sap_begin = self.manager.getIdOfChainEnd_fromNetwork(chain['chain'][0])
     sap_end = self.manager.getIdOfChainEnd_fromNetwork(chain['chain'][-1])
-    
+
     if sap_end == -1 or sap_begin == -1:
       raise uet.InternalAlgorithmException(
         "Called subgraph finding with one of the chain ends not yet mapped!")
@@ -417,7 +416,7 @@ class GraphPreprocessorClass(object):
       else:
         raise uet.BadInputException(
           "After preprocessing stage, only SAPs or VNFs should be in the "
-          "request graph. Node %s, type: %s is still in the graph" % (
+          "request graph.", "Node %s, type: %s is still in the graph" % (
             vnf, data.type))
 
     self.max_chain_id = max(c['id'] for c in self.chains)
@@ -455,10 +454,10 @@ class GraphPreprocessorClass(object):
     if len(e2e_chains_with_graphs) == 0:
       self.log.error("No SAP - SAP chain was given!")
       raise uet.BadInputException(
-        "Request with SAP-to-SAP chains. Service chains do not contain any "
+        "Request with SAP-to-SAP chains.", "Service chains do not contain any "
         "SAP-to-SAP chain")
     # determine the smallest subgraph for efficient intersection calculation
-    self.smallest = min(map(lambda b: b[1], e2e_chains_with_graphs), 
+    self.smallest = min(map(lambda b: b[1], e2e_chains_with_graphs),
                         key=lambda a: a.size())
     '''These chains are disjoint on the set of links, each has a subgraph
     which it should be mapped to.'''
@@ -497,7 +496,7 @@ class GraphPreprocessorClass(object):
             raise uet.BadInputException("All NF-s in the substrate NFFG should"
                   " be connected to some Infra node",
                   "NF %s has no Infra neighbors"%vnf.id)
-          if not hasattr(self.req_graph.network.node[vnf.id], 
+          if not hasattr(self.req_graph.network.node[vnf.id],
                       'placement_criteria') or len(vnf.placement_criteria) == 0:
             setattr(self.req_graph.network.node[vnf.id], 'placement_criteria',
                     [mapped_to_node])
@@ -520,7 +519,7 @@ class GraphPreprocessorClass(object):
         # mapping process, but with placement criteria, so its resource 
         # requirements will be subtracted during the greedy process.
         if not full_remap and vnf.id not in vnf_to_be_left_in_place:
-          try: 
+          try:
             newres = helper.subtractNodeRes(net.network.node[n.id].availres,
                                             net.network.node[vnf.id].resources,
                                             net.network.node[n.id].resources)
@@ -529,7 +528,7 @@ class GraphPreprocessorClass(object):
               "Infra node`s resources are expected to represent its maximal "
               "capabilities.", "The NodeNF(s) running on Infra node %s, use(s)"
               "more resource than the maximal." % n.name)
-        
+
           net.network.node[n.id].availres = newres
 
     # REQUEST or SG links between SAPs are not removed anywhere else
@@ -567,9 +566,9 @@ class GraphPreprocessorClass(object):
                 link.dst.node.availres.bandwidth -= flow_bw
               if link.availbandwidth < 0:
                 raise uet.BadInputException("The bandwidth usage implied by "
-                "the sum of flowrule bandwiths should determine the occupied",
+                "the sum of flowrule bandwiths should determine the occupied"
                 " capacity on links.", "The bandwidth capacity on link %s, %s,"
-                " %s got below zero!"%(link.src.node.id, link.dst.node.id, 
+                " %s got below zero!"%(link.src.node.id, link.dst.node.id,
                                        link.id))
         d.availres['bandwidth'] -= reserved_internal_bw
 
@@ -585,7 +584,7 @@ class GraphPreprocessorClass(object):
                 d.availres.bandwidth > 0 else sys.float_info.max)
         self.log.debug("Weight for node %s: %f" % (d.id, d.weight))
         self.log.debug("Supported types of node %s: %s"%(d.id, d.supported))
-        
+
     # after all the TAG values are traced back, and the reserved bandwidth 
     # capacities are subtracted from the available resources, we can 
     # calculate the link weights.
@@ -633,8 +632,8 @@ class GraphPreprocessorClass(object):
 
     if self.shortest_paths is None:
       self.log.info("Calculating shortest paths measured in latency...")
-      self.shortest_paths = helper.shortestPathsInLatency(net.network, 
-                                   enable_shortest_path_cache=True, 
+      self.shortest_paths = helper.shortestPathsInLatency(net.network,
+                                   enable_shortest_path_cache=cache_shortest_path,
                                    enable_network_cutting=False)
     else:
       self.log.info("Shortest paths are received from previous run!")

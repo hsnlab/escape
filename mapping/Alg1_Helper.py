@@ -26,7 +26,7 @@ from heapq import heappush, heappop
 from itertools import count
 
 log = logging.getLogger("mapping")
-log.setLevel(logging.DEBUG)
+# log.setLevel(logging.DEBUG)
 if not log.getEffectiveLevel():
   logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
   log.setLevel(logging.DEBUG)
@@ -153,7 +153,7 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
             if u == v:
               break
   except KeyError as e:
-    raise uet.BadInputException(
+    raise uet.BadInputException("",
       "Node attribute missing %s {'delay': VALUE}" % e)
   if enable_shortest_path_cache:
     # write calclated paths to output for later use.
