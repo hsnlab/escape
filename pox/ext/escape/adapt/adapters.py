@@ -152,16 +152,15 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     :type connection: :class:`pox.openflow.of_01.Connection`
     :return: None
     """
-    from pox.lib.util import dpid_to_str
     dpid = connection.dpid
     ports = [port.name for port in connection.features.ports]
     for port in ports:
       if all(map(lambda p: p.startswith(port), ports)):
-        log.debug("Identified Infra(id: %s) on OF connection: %s" % (
+        from pox.lib.util import dpid_to_str
+        log.debug("Identified Infra(id: %s) on the OF connection: %s" % (
           port, dpid_to_str(dpid)))
         self.infra_to_dpid[port] = dpid
-        return
-    log.warning("Unidentified OF connection: %s " % dpid_to_str(dpid))
+        break
 
 
 class SDNDomainPOXAdapter(InternalPOXAdapter):

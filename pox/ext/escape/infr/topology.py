@@ -25,6 +25,7 @@ from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.term import makeTerms
 from mininet.topo import Topo
+from mininet.log import setLogLevel
 
 
 class AbstractTopology(Topo):
@@ -455,9 +456,6 @@ class ESCAPENetworkBuilder(object):
   # Constants
   TYPE_EE_LOCAL = "LOCAL"
   TYPE_EE_REMOTE = "REMOTE"
-  # Constants for DPID generation
-  dpidBase = 0  # Switches start with port 1 in OpenFlow
-  dpidLen = 16  # digits in dpid passed to switch
 
   def __init__ (self, net=None, opts=None, fallback=True, run_dry=True):
     """
@@ -477,7 +475,7 @@ class ESCAPENetworkBuilder(object):
     :type run_dry: bool
     :return: None
     """
-    # setLogLevel('debug')
+    #setLogLevel('debug')
     self.opts = dict(self.default_opts)
     if opts is not None:
       self.opts.update(opts)
@@ -498,13 +496,6 @@ class ESCAPENetworkBuilder(object):
     # Cache of the topology description as an NFFG which is parsed during
     # initialization
     self.topo_desc = None
-    self.__dpid_cntr = self.dpidBase
-
-  def __get_new_dpid (self):
-    self.__dpid_cntr += 1
-    dpid = hex(int(self.__dpid_cntr))[2:]
-    dpid = '0' * (self.dpidLen - len(dpid)) + dpid
-    return dpid
 
   ##############################################################################
   # Topology initializer functions
@@ -535,16 +526,14 @@ class ESCAPENetworkBuilder(object):
         else:
           ee_type = self.TYPE_EE_REMOTE
           # FIXME - set resource info in MN EE if can - cpu,mem,delay,bandwidth?
-        agt, sw = self.create_NETCONF_EE(name=infra.id, type=ee_type,
-                                         dpid=self.__get_new_dpid())
+        agt, sw = self.create_NETCONF_EE(name=infra.id, type=ee_type)
         created_mn_nodes[infra.id] = sw
       # Create Switch
       elif infra.infra_type == NodeInfra.TYPE_SDN_SWITCH:
-        switch = self.create_Switch(name=infra.id, dpid=self.__get_new_dpid())
+        switch = self.create_Switch(name=infra.id)
         created_mn_nodes[infra.id] = switch
       elif infra.infra_type == NodeInfra.TYPE_STATIC_EE:
-        static_ee = self.create_static_EE(name=infra.id,
-                                          dpid=self.__get_new_dpid())
+        static_ee = self.create_static_EE(name=infra.id)
         created_mn_nodes[infra.id] = static_ee
       else:
         raise RuntimeError("Building of %s is not supported by %s!" % (
