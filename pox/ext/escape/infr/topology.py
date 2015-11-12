@@ -445,9 +445,9 @@ class ESCAPENetworkBuilder(object):
     # Use own Controller
     'build': False,  # Not build during init
     'inNamespace': False,  # Not start element in namespace
-    'autoSetMacs': True,  # Set simple MACs
+    'autoSetMacs': False,  # Set simple MACs
     'autoStaticArp': True,  # Set static ARP entries
-    'listenPort': 6000,  # Add listen port to OVS switches
+    'listenPort': None, # Add listen port to OVS switches
     'link': TCLink  # Add default link
   }
   # Default internal storing format for NFFG parsing/reading from file
