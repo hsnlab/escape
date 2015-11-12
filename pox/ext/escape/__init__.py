@@ -212,7 +212,8 @@ cfg = {
   "infrastructure":  # Infrastructure Layer
     {
       "TOPO": "examples/escape-mn-topo.nffg",  # relative to project root
-      "NETWORK-OPTS": None,  # Additional opts for Mininet
+      "NETWORK-OPTS": {  # Additional opts for Mininet
+      },
       "Controller": {  # Additional params for InternalControllerProxy
         "ip": "127.0.0.1",
         "port": 6653

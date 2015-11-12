@@ -152,15 +152,23 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     :type connection: :class:`pox.openflow.of_01.Connection`
     :return: None
     """
+    # Get DPID
     dpid = connection.dpid
+    # Generate the list of port names from OF Feature Reply msg
     ports = [port.name for port in connection.features.ports]
+    # Mininet naming convention for port in OVS:
+    # <bridge_name> (internal), <bridge_name>-eth<num>, ...
+    # Define the internal port and use the port name (same as bridge name) as
+    # the Infra id
     for port in ports:
+      # If all other port starts with this name --> internal port
       if all(map(lambda p: p.startswith(port), ports)):
         from pox.lib.util import dpid_to_str
-        log.debug("Identified Infra(id: %s) on the OF connection: %s" % (
+        log.debug("Identified Infra(id: %s) on OF connection: %s" % (
           port, dpid_to_str(dpid)))
         self.infra_to_dpid[port] = dpid
-        break
+        return
+    log.warning("No Node is identified for connection: %s" % connection)
 
 
 class SDNDomainPOXAdapter(InternalPOXAdapter):

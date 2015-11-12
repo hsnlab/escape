@@ -108,14 +108,16 @@ class InternalDomainManager(AbstractDomainManager):
       for node in connected_node:
         mac = mn.getNodeByName(sap.id).MAC()
         ip = mn.getNodeByName(sap.id).IP()
-        log.debug("Detected IP(%s) | MAC(%s) for %s on %s" % 
-                  (ip, mac, sap, node[1]))
+        log.debug(
+          "Detected IP(%s) | MAC(%s) for %s connected to Node(%s) on port: %s" %
+          (ip, mac, sap, node[0], node[1]))
         if node[0] not in self.controlAdapter.saps:
           self.controlAdapter.saps[node[0]] = {}
-        self.controlAdapter.saps[node[0]][str(node[1])] = { 
+        self.controlAdapter.saps[node[0]][str(node[1])] = {
           'dl_src': "ff:ff:ff:ff:ff:ff",
           'dl_dst': str(mac),
-          'nw_dst': str(ip)}
+          'nw_dst': str(ip)
+        }
 
   def install_nffg (self, nffg_part):
     """
