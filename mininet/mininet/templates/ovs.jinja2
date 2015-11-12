@@ -1,0 +1,18 @@
+mkdir -p /tmp/mininet-{{sw}};
+if [ -e /tmp/mininet-{{sw}}/conf.db ]; 
+then echo "DB already exists"; 
+else ovsdb-tool create /tmp/mininet-{{sw}}/conf.db /usr/share/openvswitch/vswitch.ovsschema; 
+fi;
+sleep 1; 
+ovsdb-server /tmp/mininet-{{sw}}/conf.db -vconsole:emer -vsyslog:err -vfile:info --remote=punix:/tmp/mininet-{{sw}}/db.sock --private-key=db:Open_vSwitch,SSL,private_key --certificate=db:Open_vSwitch,SSL,certificate --bootstrap-ca-cert=db:Open_vSwitch,SSL,ca_cert --no-chdir --log-file=/tmp/mininet-{{sw}}/ovsdb-server.log --pidfile=/tmp/mininet-{{sw}}/ovsdb-server.pid --detach --monitor ; 
+ovs-vsctl --db=unix:/tmp/mininet-{{sw}}/db.sock --no-wait init;
+ovs-vswitchd unix:/tmp/mininet-{{sw}}/db.sock -vconsole:emer -vsyslog:err -vfile:info --mlockall --no-chdir --log-file=/tmp/mininet-{{sw}}/ovs-vswitchd.log --pidfile=/tmp/mininet-{{sw}}/ovs-vswitchd.pid --detach --monitor;
+ovs-vsctl --db=unix:/tmp/mininet-{{sw}}/db.sock add-br {{sw}};
+ovs-vsctl --db=unix:/tmp/mininet-{{sw}}/db.sock set bridge {{sw}} datapath_type=netdev;
+{% for port in ports %}
+ovs-vsctl --db=unix:/tmp/mininet-{{sw}}/db.sock add-port {{sw}} {{sw}}-{{port.name}};
+{% endfor %}
+ovs-vsctl --db=unix:/tmp/mininet-{{sw}}/db.sock set-fail-mode {{sw}} secure;
+ovs-vsctl --db=unix:/tmp/mininet-{{sw}}/db.sock set-controller {{sw}} tcp:{{ctrlIP}}:{{ctrlPort}};
+ovs-vsctl --db=unix:/tmp/mininet-{{sw}}/db.sock set bridge {{sw}} other_config:disable-in-band=true;
+ovs-vsctl --db=unix:/tmp/mininet-{{sw}}/db.sock show;

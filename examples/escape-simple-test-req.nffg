@@ -1,0 +1,77 @@
+{
+  "parameters": {
+    "id": "Simple-test-req", 
+    "name": "Simple test request", 
+    "version": "1.0"
+  }, 
+  "node_nfs": [
+    {
+      "id": "ovs", 
+      "name": "OVS switch", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "ovs", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }
+  ], 
+  "node_saps": [
+    {
+      "id": "sap1", 
+      "name": "SAP1", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "sap2", 
+      "name": "SAP2", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 2, 
+      "src_node": "ovs", 
+      "src_port": 1, 
+      "dst_node": "sap2", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 1, 
+      "src_node": "sap1", 
+      "src_port": 1, 
+      "dst_node": "ovs", 
+      "dst_port": 1
+    }
+  ], 
+  "edge_reqs": [
+    {
+      "id": 140643917398992, 
+      "src_node": "sap1", 
+      "src_port": 1, 
+      "dst_node": "sap2", 
+      "dst_port": 1, 
+      "delay": 10, 
+      "bandwidth": 1, 
+      "sg_path": [
+        1, 
+        2
+      ]
+    }
+  ]
+}
