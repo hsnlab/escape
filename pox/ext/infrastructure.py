@@ -42,12 +42,14 @@ def _start_layer (event):
 
 
 @poxutil.eval_args
-def launch (standalone=False):
+def launch (standalone=False, topo=None):
   """
   Launch function called by POX core when core is up.
 
   :param standalone: Run layer without dependency checking (optional)
   :type standalone: bool
+  :param topo: Load the topology description from file (optional)
+  :type topo: str
   :return: None
   """
   global init_param

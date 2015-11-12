@@ -639,37 +639,49 @@ class ESCAPENetworkBuilder(object):
       raise RuntimeError("TYPE field of the Topology class need to be set!")
     self.topo_desc = topo_class.get_topo_desc()
 
-  def __init_from_CONFIG (self, path=None, format=DEFAULT_NFFG_FORMAT):
+  def __init_from_CONFIG (self, format=DEFAULT_NFFG_FORMAT):
     """
     Build a pre-defined topology from an NFFG stored in a file.
     The file path is searched in CONFIG with tha name ``TOPO``.
 
-    :param path: additional file path
+    :param format: NF-FG storing format (default: internal NFFG representation)
+    :type format: str
+    :return: None
+    """
+    path = CONFIG.get_mininet_topology()
+    if path is None:
+      raise TopologyBuilderException("Missing Topology!")
+    self.__init_from_file(path=path, format=format)
+
+  def __init_from_file (self, path, format=DEFAULT_NFFG_FORMAT):
+    """
+    Build a pre-defined topology from an NFFG stored in a file.
+    The file path is searched in CONFIG with tha name ``TOPO``.
+
+    :param path: file path
     :type path: str
     :param format: NF-FG storing format (default: internal NFFG representation)
     :type format: str
     :return: None
     """
     if path is None:
-      path = CONFIG.get_mininet_topology()
-    if path is None:
-      log.warning("Topology is missing from CONFIG!")
-      raise TopologyBuilderException("Missing Topology!")
-    else:
-      try:
-        with open(path, 'r') as f:
-          log.info("Load topology from file: %s" % path)
-          if format == self.DEFAULT_NFFG_FORMAT:
-            self.__init_from_NFFG(NFFG.parse(f.read()))
-          else:
-            raise RuntimeError("Unsupported file format: %s!" % format)
-      except IOError:
-        log.warning("Additional topology file not found: %s" % path)
-        raise TopologyBuilderException("Missing topology file!")
-      except ValueError as e:
-        log.error(
-          "An error occurred when load topology from file: %s" % e.message)
-        raise TopologyBuilderException("File parsing error!")
+      log.error("Missing file path of Topology description")
+      return
+    try:
+      with open(path, 'r') as f:
+        log.info("Load topology from file: %s" % path)
+        if format == self.DEFAULT_NFFG_FORMAT:
+          log.info("Using file format: %s" % format)
+          self.__init_from_NFFG(nffg=NFFG.parse(f.read()))
+        else:
+          raise RuntimeError("Unsupported file format: %s!" % format)
+    except IOError:
+      log.warning("Additional topology file not found: %s" % path)
+      raise TopologyBuilderException("Missing topology file!")
+    except ValueError as e:
+      log.error(
+        "An error occurred when load topology from file: %s" % e.message)
+      raise TopologyBuilderException("File parsing error!")
 
   def get_network (self):
     """
@@ -959,16 +971,20 @@ class ESCAPENetworkBuilder(object):
     # Load topology
     try:
       if topo is None:
-        log.info("Load Topology description from CONFIG...")
+        log.info("Get Topology description from CONFIG...")
         self.__init_from_CONFIG()
       elif isinstance(topo, NFFG):
-        log.info("Load Topology description from given NFFG...")
+        log.info("Get Topology description from given NFFG...")
         self.__init_from_NFFG(nffg=topo)
+      elif isinstance(topo, str) and topo.startswith('/'):
+        log.info("Get Topology description from given file...")
+        self.__init_from_file(path=topo)
       elif isinstance(topo, AbstractTopology):
-        log.info("Load Topology description based on Topology class...")
+        log.info("Get Topology description based on Topology class...")
         self.__init_from_AbstractTopology(topo_class=topo)
       else:
-        raise RuntimeError("Unsupported topology format: %s" % type(topo))
+        raise RuntimeError(
+          "Unsupported topology format: %s - %s" % (type(topo), topo))
       return self.get_network()
     except SystemExit as e:
       quit_with_error(msg="Mininet exited unexpectedly! Cause: %s" % e.message)

@@ -52,6 +52,8 @@ def main ():
   escape.add_argument("-s", "--service", metavar="file", type=str,
                       help="skip the SAS REST-API initiation and read the "
                            "service request from the given file")
+  escape.add_argument("-t", "--topo", metavar="file", type=str,
+                      help="read the topology from the given file explicitly.")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
@@ -120,6 +122,13 @@ def main ():
   else:
     # Disable debug mode in normal mode
     cmd = "%s --debug=False" % cmd
+
+  # Add topology file if --full is set
+  if args.topo:
+    if args.full:
+      cmd = "%s --topo=%s" % (cmd, os.path.abspath(args.topo))
+    else:
+      parser.error(message="-t/--topo can be used only with -f/--full!")
 
   # Add the interactive shell if needed
   if args.interactive:

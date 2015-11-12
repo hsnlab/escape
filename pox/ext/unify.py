@@ -40,7 +40,7 @@ def _start_components (event):
     # Launch Infrastructure Layer (IL) optionally
     from infrastructure import launch
 
-    launch()
+    launch(topo=init_param['topo'])
   # Launch Controller Adaptation Sublayer (CAS)
   from adaptation import launch
 
@@ -59,7 +59,7 @@ def _start_components (event):
 
 @poxutil.eval_args
 def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
-            full=False, debug=True, cfor=False):
+            full=False, debug=True, cfor=False, topo=None):
   """
   Launch function called by POX core when core is up.
 
@@ -71,8 +71,15 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   :type gui: bool
   :param agent: Do not start the service layer (optional)
   :type agent: bool
+  :param rosapi:
   :param full: Initiate Infrastructure Layer also
   :type full: bool
+  :param debug: run in debug mode  (optional)
+  :type debug: bool
+  :param cfor: start Cf-Or REST API (optional)
+  :type cfor: bool
+  :param topo: Path of the initial topology graph (optional)
+  :type topo: str
   :return: None
   """
   global init_param

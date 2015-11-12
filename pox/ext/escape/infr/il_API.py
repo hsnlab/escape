@@ -69,7 +69,8 @@ class InfrastructureLayerAPI(AbstractAPI):
     CONFIG.set_layer_loaded(self._core_name)
     mn_opts = CONFIG.get_mn_network_opts()
     # Build the emulated topology with the NetworkBuilder
-    self.topology = ESCAPENetworkBuilder(**mn_opts).build()
+    optional_topo = getattr(self, '_topo', None)
+    self.topology = ESCAPENetworkBuilder(**mn_opts).build(topo=optional_topo)
     log.info("Infrastructure Layer has been initialized!")
 
   def shutdown (self, event):
