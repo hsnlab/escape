@@ -1,0 +1,63 @@
+<virtualizer>
+    <id>UN-UUID001</id>
+    <name>Universal Node Domain</name>
+    <nodes>
+        <node>
+            <id>UUID11</id>
+            <name>Universal Node</name>
+            <type>BisBis</type>
+            <ports>
+                <port>
+                    <id>1</id>
+                    <name>Inter-Domain port - OVS-north external</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP34</sap>
+                    <capabilities/>
+                </port>
+            </ports>
+            <resources>
+                <cpu>5 VCPU</cpu>
+                <mem>16 GB</mem>
+                <storage>5 TB</storage>
+            </resources>
+            <capabilities>
+                <supported_NFs>
+                    <node>
+                        <id>UN-NF1</id>
+                        <name>DPI based on libpcre</name>
+                        <type>dpi</type>
+                        <ports>
+                            <port>
+                                <id>1</id>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                            </port>
+                            <port>
+                                <id>2</id>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                            </port>
+                        </ports>
+                    </node>
+                    <node>
+                        <id>UN-NF2</id>
+                        <name>Example VNF with several implementations</name>
+                        <type>example</type>
+                        <ports>
+                            <port>
+                                <id>1</id>
+                                <name>VNF port 1</name>
+                                <port_type>port-abstract</port_type>
+                            </port>
+                            <port>
+                                <id>2</id>
+                                <name>VNF port 2</name>
+                                <port_type>port-abstract</port_type>
+                            </port>
+                        </ports>
+                    </node>
+                </supported_NFs>
+            </capabilities>
+        </node>
+    </nodes>
+</virtualizer>
