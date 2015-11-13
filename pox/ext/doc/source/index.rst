@@ -349,9 +349,9 @@ Usage:
 .. code-block:: bash
 
     $ ./escape.py -h
-      usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-i] [-r] [-s file]
-                       [-x] [-4]
-                       ...
+        usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-i] [-r] [-s file]
+                         [-t file] [-x] [-4]
+                         ...
 
       ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet,
       Click, NETCONF and POX
@@ -374,6 +374,7 @@ Usage:
         -s file, --service file
                               skip the SAS REST-API initiation and read the service
                               request from the given file
+        -t file, --topo file  read the topology from the given file explicitly
         -x, --clean           run the cleanup task standalone and kill remained
                               programs, interfaces, veth parts and junk files
         -4, --cfor            start the REST-API for the Cf-Or interface
@@ -381,15 +382,30 @@ Usage:
 
 During a test or development the ``--debug`` flag is almost necessary.
 
-If you want to run  a test topology, use the ``--full`` flag.
+If you want to run a test topology, use the ``--full`` flag to initiate the
+Infrastructure layer also.
 ESCAPEv2 will parse the topology description form file (``escape-mn-topo.nffg``
 by default) and start the Infrastructure layer with the Mininet-based emulation.
 
 If the request is in a file it's more convenient to give it with the ``--service``
 initial parameter and not bother with the REST-API.
 
+An additional configuration file can be given with the ``--config`` flag. The
+configuration file is loaded during initialization and ESCAPEv2 only updates
+the default configuration instead of replaces it in order to minimize the sizes
+of the additional parameters.
+
+The most common changes in the configurations is the file path of the initial
+topology which is used by the Infrastructure layer to initiate the Mininet-emulated
+network. To simplify this case the topology file can be given with the ``--topo``
+parameter explicitly.
+
 If an error is occurred or need to observe the internal states you can start
 ESCAPEv2 with an interactive Python shell using the ``--interactive`` flag.
+
+With the ``--environment`` flag ESCAPEv2 can be started in a pre-defined virtualenv
+environment whether the virtualenv is permanently enabled with the
+``.use_virtualenv`` file or not.
 
 The main layers which grouping the entities are reachable through the main POX
 object called ``core`` with the names:

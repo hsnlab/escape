@@ -53,7 +53,7 @@ def main ():
                       help="skip the SAS REST-API initiation and read the "
                            "service request from the given file")
   escape.add_argument("-t", "--topo", metavar="file", type=str,
-                      help="read the topology from the given file explicitly.")
+                      help="read the topology from the given file explicitly")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
