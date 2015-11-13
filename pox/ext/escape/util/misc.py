@@ -286,16 +286,16 @@ def deprecated (func):
 
 
 def remove_junks (log=logging.getLogger("cleanup")):
-  # Reset /etc/hosts file
-  import os
-  os.system("sed '/# BEGIN ESCAPE SAPS/,/# END ESCAPE SAPS/d' "
-            "/etc/hosts > /etc/hosts2")
-  os.system("mv /etc/hosts2 /etc/hosts")
-  # Kill remained clickhelper.py/click
   if os.geteuid() != 0:
     log.error("Cleanup process requires root privilege!")
     return
+  log.debug("Remove SAP names from /etc/hosts...")
+  # Reset /etc/hosts file
+  os.system("sed '/# BEGIN ESCAPE SAPS/,/# END ESCAPE SAPS/d' "
+            "/etc/hosts > /etc/hosts2")
+  os.system("mv /etc/hosts2 /etc/hosts")
   log.debug("Cleanup still running VNF-related processes...")
+  # Kill remained clickhelper.py/click
   run_silent(r"sudo pkill -9 -f netconfd")
   run_silent(r"sudo pkill -9 -f clickhelper")
   run_silent(r"sudo pkill -9 -f click")
