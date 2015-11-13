@@ -483,9 +483,10 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     :type id: str
     :return: None
     """
-    log.info("Delete flow entries from INFRA %s..." % id)
     dpid = self.infra_to_dpid[id]
     con = self.openflow.getConnection(dpid)
+    log.debug(
+      "Delete flow entries from INFRA %s on connection: %s ..." % (id, con))
 
     msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
     con.send(msg)
@@ -502,12 +503,12 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     :type action: dict
     :return: None
     """
-    log.info("Install flow entry to INFRA %s..." % id)
     # print match
     # print action
     dpid = self.infra_to_dpid[id]
     con = self.openflow.getConnection(dpid)
-    log.debug("OF connection: %s" % con)
+    log.debug(
+      "Install flow entry into INFRA %s on connection: %s ..." % (id, con))
 
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
@@ -540,7 +541,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       pass
     msg.actions.append(of.ofp_action_output(port=int(action['out'])))
 
-    log.info("Send flow entry:\n%s" % msg)
+    log.debug("Send flow entry:\n%s" % msg)
     con.send(msg)
 
 

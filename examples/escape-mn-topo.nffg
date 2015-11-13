@@ -73,7 +73,7 @@
       }
     },
     {
-      "id": "SW3",
+      "id": "SW1",
       "name": "switch-3",
       "ports": [
         {
@@ -122,7 +122,7 @@
       "id": "mn-link1",
       "src_node": "EE1",
       "src_port": 1,
-      "dst_node": "SW3",
+      "dst_node": "SW1",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
@@ -138,7 +138,7 @@
     },
     {
       "id": "mn-link3",
-      "src_node": "SW3",
+      "src_node": "SW1",
       "src_port": 2,
       "dst_node": "SW4",
       "dst_port": 2,
@@ -147,7 +147,7 @@
     },
     {
       "id": "mn-link4",
-      "src_node": "SW3",
+      "src_node": "SW1",
       "src_port": 3,
       "dst_node": "SAP1",
       "dst_port": 1,

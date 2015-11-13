@@ -98,3 +98,4 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
     setattr(core, "config_file_name", config)
   # Register _start_components() to be called when POX is up
   core.addListenerByName("GoingUpEvent", _start_components)
+  core.getLogger().info("Starting ESCAPEv2 components...")

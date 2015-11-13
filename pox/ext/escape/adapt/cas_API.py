@@ -110,7 +110,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       except (ValueError, IOError, TypeError) as e:
         log.error("Can't load service request from file because of: " + str(e))
       else:
-        log.info("Graph representation is loaded successfully!")
+        log.debug("Graph representation is loaded successfully!")
     log.info("Controller Adaptation Sublayer has been initialized!")
 
   def shutdown (self, event):

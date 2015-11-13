@@ -71,17 +71,7 @@ class InternalDomainManager(AbstractDomainManager):
     super(InternalDomainManager, self).init(configurator, **kwargs)
     self.sapinfos = {}
     self._collect_SAP_infos()
-    # Update /etc/hosts with hostname - IP address mapping
-    import os
-    os.system("sed '/# BEGIN ESCAPE SAPS/,/# END ESCAPE SAPS/d' "
-              "/etc/hosts > /etc/hosts2")
-    os.system("mv /etc/hosts2 /etc/hosts")
-    hosts = "# BEGIN ESCAPE SAPS \n"
-    for sap, info in self.sapinfos.iteritems():
-      hosts += "%s %s \n" % (info['nw_dst'], sap)
-    hosts += "# END ESCAPE SAPS \n"
-    with open('/etc/hosts', 'a') as f:
-        f.write(hosts)
+    self._setup_sap_hostnames()
 
   def finit (self):
     """
@@ -97,6 +87,27 @@ class InternalDomainManager(AbstractDomainManager):
   @property
   def controller_name (self):
     return self.controlAdapter.task_name
+
+  def _setup_sap_hostnames (self):
+    """
+    Setup hostnames in /etc/hosts for SAPs.
+
+    :return: None
+    """
+    # Update /etc/hosts with hostname - IP address mapping
+    import os
+    os.system("sed '/# BEGIN ESCAPE SAPS/,/# END ESCAPE SAPS/d' "
+              "/etc/hosts > /etc/hosts2")
+    os.system("mv /etc/hosts2 /etc/hosts")
+    hosts = "# BEGIN ESCAPE SAPS \n"
+    for sap, info in self.sapinfos.iteritems():
+      hosts += "%s %s \n" % (info['nw_dst'], sap)
+    hosts += "# END ESCAPE SAPS \n"
+    with open('/etc/hosts', 'a') as f:
+      f.write(hosts)
+    log.debug("Setup SAP hostnames: %s" % "; ".join(
+      ["%s --> %s" % (sap, info['nw_dst']) for sap, info in
+       self.sapinfos.iteritems()]))
 
   def _collect_SAP_infos (self):
     """
@@ -142,9 +153,10 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     try:
-      log.info("Install %s domain part..." % self.name)
+      log.info(">>> Install %s domain part..." % self.name)
       self._delete_nfs()
       self._deploy_nfs(nffg_part=nffg_part)
+      log.info("Perform traffic steering according to mapped tunnels/labels...")
       self._delete_flowrules(nffg_part=nffg_part)
       self._deploy_flowrules(nffg_part=nffg_part)
       return True
@@ -172,7 +184,7 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     # print self.topoAdapter.get_topology_resource().dump()
-    log.debug("Remove deployed NFs...")
+    log.debug("Reset domain and remove deployed NFs...")
     # for nf in self.topoAdapter.get_topology_resource().nfs:
     #   print "NF: " + str(nf)
 
@@ -222,6 +234,7 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
+    log.info("Deploy mapped NFs into the domain: %s..." % self.name)
     self.portmap.clear()
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
@@ -378,12 +391,14 @@ class InternalDomainManager(AbstractDomainManager):
             action = flowrule.action.replace(str(dyn), str(phy))
             flowrule.action = action
 
-    log.info("Initiation of NFs in NFFG part: %s is finished!" % nffg_part)
+    log.info(
+      "Initiation of NFs in NFFG part: %s has been finished!" % nffg_part)
 
   def _delete_flowrules (self, nffg_part):
     """
     Delete all flowrules from the first (default) table of all infras.
     """
+    log.debug("Reset domain steering and delete installed flowrules...")
     topo = self.topoAdapter.get_topology_resource()
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
@@ -421,6 +436,7 @@ class InternalDomainManager(AbstractDomainManager):
     :type nffg_part: :any:`NFFG`
     :return: None
     """
+    log.info("Deploy flowrules into the domain: %s..." % self.name)
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
     nffg_part.clear_links(NFFG.TYPE_LINK_SG)
