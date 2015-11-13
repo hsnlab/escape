@@ -105,7 +105,7 @@ class ESCAPEConfig(object):
             self.DEFAULT_CFG])
         log.debug("Load default config file: %s" % os.path.basename(config))
       except KeyError:
-        log.warning(
+        log.error(
           "Additional config file is not found! Skip configuration update")
         self.__initiated = True
         return self
@@ -126,7 +126,7 @@ class ESCAPEConfig(object):
         log.info("Running configuration has been updated from file!")
         return self
     except IOError as e:
-      log.warning("Additional configuration file not found: %s" % config)
+      log.error("Additional configuration file not found: %s" % config)
     except ValueError as e:
       log.error("An error occurred when load configuration: %s" % e)
     finally:
@@ -406,6 +406,19 @@ class ESCAPEConfig(object):
       return self.__configuration[ADAPT]['RESET-DOMAINS-AFTER-SHUTDOWN']
     except KeyError:
       return True
+
+  def get_mn_network_opts (self):
+    """
+    Return the optional Mininet parameters for initiation.
+
+    :return: optional constructor params (default: empty dict)
+    :rtype: dict
+    """
+    try:
+      mn_opts = self.__configuration[INFR]['NETWORK-OPTS']
+      return mn_opts if mn_opts is not None else {}
+    except KeyError:
+      return {}
 
   def get_mininet_topology (self):
     """

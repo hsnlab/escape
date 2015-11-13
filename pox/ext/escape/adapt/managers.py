@@ -69,7 +69,19 @@ class InternalDomainManager(AbstractDomainManager):
     # Init default NETCONF adapter
     self.remoteAdapter = configurator.load_component(VNFStarterAdapter.name)
     super(InternalDomainManager, self).init(configurator, **kwargs)
+    self.sapinfos = {}
     self._collect_SAP_infos()
+    # Update /etc/hosts with hostname - IP address mapping
+    import os
+    os.system("sed '/# BEGIN ESCAPE SAPS/,/# END ESCAPE SAPS/d' "
+              "/etc/hosts > /etc/hosts2")
+    os.system("mv /etc/hosts2 /etc/hosts")
+    hosts = "# BEGIN ESCAPE SAPS \n"
+    for sap, info in self.sapinfos.iteritems():
+      hosts += "%s %s \n" % (info['nw_dst'], sap)
+    hosts += "# END ESCAPE SAPS \n"
+    with open('/etc/hosts', 'a') as f:
+        f.write(hosts)
 
   def finit (self):
     """
@@ -108,14 +120,18 @@ class InternalDomainManager(AbstractDomainManager):
       for node in connected_node:
         mac = mn.getNodeByName(sap.id).MAC()
         ip = mn.getNodeByName(sap.id).IP()
-        log.debug("Detected IP(%s) | MAC(%s) for %s on %s" % 
-                  (ip, mac, sap, node[1]))
+        log.debug(
+          "Detected IP(%s) | MAC(%s) for %s connected to Node(%s) on port: %s" %
+          (ip, mac, sap, node[0], node[1]))
         if node[0] not in self.controlAdapter.saps:
           self.controlAdapter.saps[node[0]] = {}
-        self.controlAdapter.saps[node[0]][str(node[1])] = { 
+        sapinfo = {
           'dl_src': "ff:ff:ff:ff:ff:ff",
           'dl_dst': str(mac),
-          'nw_dst': str(ip)}
+          'nw_dst': str(ip)
+        }
+        self.controlAdapter.saps[node[0]][str(node[1])] = sapinfo
+        self.sapinfos[str(sap.id)] = sapinfo
 
   def install_nffg (self, nffg_part):
     """

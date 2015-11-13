@@ -286,6 +286,11 @@ def deprecated (func):
 
 
 def remove_junks (log=logging.getLogger("cleanup")):
+  # Reset /etc/hosts file
+  import os
+  os.system("sed '/# BEGIN ESCAPE SAPS/,/# END ESCAPE SAPS/d' "
+            "/etc/hosts > /etc/hosts2")
+  os.system("mv /etc/hosts2 /etc/hosts")
   # Kill remained clickhelper.py/click
   if os.geteuid() != 0:
     log.error("Cleanup process requires root privilege!")

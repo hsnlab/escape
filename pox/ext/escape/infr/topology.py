@@ -25,7 +25,6 @@ from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
 from mininet.term import makeTerms
 from mininet.topo import Topo
-from mininet.log import setLogLevel
 
 
 class AbstractTopology(Topo):
@@ -52,7 +51,8 @@ class AbstractTopology(Topo):
   TYPE = None
 
   def __init__ (self, hopts=None, sopts=None, lopts=None, eopts=None):
-    super(AbstractTopology, self).__init__(hopts, sopts, lopts, eopts)
+    # Topo is Old-style class
+    Topo.__init__(self, hopts, sopts, lopts, eopts)
 
   def construct (self, builder=None):
     """
@@ -448,7 +448,7 @@ class ESCAPENetworkBuilder(object):
     'inNamespace': False,  # Not start element in namespace
     'autoSetMacs': False,  # Set simple MACs
     'autoStaticArp': True,  # Set static ARP entries
-    'listenPort': None, # Add listen port to OVS switches
+    'listenPort': None,  # Add listen port to OVS switches
     'link': TCLink  # Add default link
   }
   # Default internal storing format for NFFG parsing/reading from file
@@ -456,6 +456,9 @@ class ESCAPENetworkBuilder(object):
   # Constants
   TYPE_EE_LOCAL = "LOCAL"
   TYPE_EE_REMOTE = "REMOTE"
+  # Constants for DPID generation
+  dpidBase = 1  # Switches start with port 1 in OpenFlow
+  dpidLen = 16  # digits in dpid passed to switch
 
   def __init__ (self, net=None, opts=None, fallback=True, run_dry=True):
     """
@@ -475,7 +478,6 @@ class ESCAPENetworkBuilder(object):
     :type run_dry: bool
     :return: None
     """
-    #setLogLevel('debug')
     self.opts = dict(self.default_opts)
     if opts is not None:
       self.opts.update(opts)
@@ -496,6 +498,19 @@ class ESCAPENetworkBuilder(object):
     # Cache of the topology description as an NFFG which is parsed during
     # initialization
     self.topo_desc = None
+    self.__dpid_cntr = self.dpidBase
+
+  def __get_new_dpid (self):
+    """
+    Generate a new DPID and return the valid format for Mininet/OVS.
+
+    :return: new DPID
+    :rtype: str
+    """
+    dpid = hex(int(self.__dpid_cntr))[2:]
+    dpid = '0' * (self.dpidLen - len(dpid)) + dpid
+    self.__dpid_cntr += 1
+    return dpid
 
   ##############################################################################
   # Topology initializer functions
@@ -701,6 +716,7 @@ class ESCAPENetworkBuilder(object):
     # create static EE
     cfg = CONFIG.get_EE_params()
     cfg.update(params)
+    cfg['dpid'] = self.__get_new_dpid()
     log.debug("Create static EE with name: %s" % name)
     ee = self.mn.addEE(name=name, cls=cls, **cfg)
     if 'cores' in cfg:
@@ -742,10 +758,11 @@ class ESCAPENetworkBuilder(object):
     type = type.upper()
     cfg = CONFIG.get_EE_params()
     cfg.update(params)
+    cfg['dpid'] = self.__get_new_dpid()
     if type == self.TYPE_EE_LOCAL:
       # create local NETCONF-based
       log.debug("Create local NETCONF EE with name: %s" % name)
-      sw = self.mn.addSwitch(name)
+      sw = self.mn.addSwitch(name, **cfg)
     elif type == self.TYPE_EE_REMOTE:
       # create remote NETCONF-based
       log.debug("Create remote NETCONF EE with name: %s" % name)
@@ -786,6 +803,7 @@ class ESCAPENetworkBuilder(object):
     log.debug("Create Switch with name: %s" % name)
     cfg = CONFIG.get_Switch_params()
     cfg.update(params)
+    cfg['dpid'] = self.__get_new_dpid()
     sw = self.mn.addSwitch(name=name, cls=cls, **cfg)
     if 'of_ver' in cfg:
       sw.setOpenFlowVersion(cfg['of_ver'])

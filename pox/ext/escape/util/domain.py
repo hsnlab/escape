@@ -502,11 +502,12 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     :type action: dict
     :return: None
     """
-    log.info("Install POX domain part: flow entries to INFRA %s..." % id)
+    log.info("Install flow entry to INFRA %s..." % id)
     # print match
     # print action
     dpid = self.infra_to_dpid[id]
     con = self.openflow.getConnection(dpid)
+    log.debug("OF connection: %s" % con)
 
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
@@ -539,7 +540,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       pass
     msg.actions.append(of.ofp_action_output(port=int(action['out'])))
 
-    log.info("flow entry: %s" % msg)
+    log.info("Send flow entry:\n%s" % msg)
     con.send(msg)
 
 
