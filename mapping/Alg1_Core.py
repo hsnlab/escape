@@ -64,7 +64,7 @@ class CoreAlgorithm(object):
     self._preproc(net0, req0, chains0, shortest_paths)
 
     # must be sorted in alphabetic order of keys: cpu, mem, storage
-    self.resource_priorities = [0.5, 0.5, 0.0]
+    self.resource_priorities = [0.333, 0.333, 0.333]
 
     # which should count more in the objective function
     self.bw_factor = bw_factor

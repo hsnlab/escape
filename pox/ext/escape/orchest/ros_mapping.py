@@ -59,7 +59,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       return
     try:
       mapped_nffg = MAP(request=graph.copy(), network=resource.copy(),
-                        full_remap=True)
+                        full_remap=True,
+                        bw_factor=0.0, res_factor=0.0, lat_factor=3.0)
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-ros-mapped"
