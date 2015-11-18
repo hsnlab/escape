@@ -218,6 +218,9 @@ latex_elements = {  # The paper size ('letterpaper' or 'a4paper').
   'papersize': 'a4paper',
   # The font size ('10pt', '11pt' or '12pt').
   'pointsize': '10pt',
+  'classoptions': ',openany,oneside',
+  'babel' : '\usepackage[english]{babel}',
+  'preamble': '\usepackage[columns=1]{idxlayout} '
 }
 
 # Additional stuff for the LaTeX preamble.

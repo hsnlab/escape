@@ -830,7 +830,8 @@ class AbstractRESTAdapter(Session):
     """
     try:
       self.send_request(method, url, body, **kwargs)
-      return self._response.status_code if self._response is not None else None
+      # return self._response.status_code if self._response is not None else None
+      return self._response.text if self._response is not None else None
     except ConnectionError:
       log.error(
         "Remote agent(domain: %s, url: %s) is not reachable!" % (
