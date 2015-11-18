@@ -156,6 +156,10 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     dpid = connection.dpid
     # Generate the list of port names from OF Feature Reply msg
     ports = [port.name for port in connection.features.ports]
+    # Remove inter-domain SAP ports (starting with 'eth')
+    inter_domain_ports = [p for p in ports if p.startswith('eth')]
+    for p in inter_domain_ports:
+      ports.remove(p)
     # Mininet naming convention for port in OVS:
     # <bridge_name> (internal), <bridge_name>-eth<num>, ...
     # Define the internal port and use the port name (same as bridge name) as
