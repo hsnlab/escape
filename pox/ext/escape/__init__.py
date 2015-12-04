@@ -43,7 +43,11 @@ cfg = {
         {
           "module": "escape.service.sas_mapping",
           "class": "ServiceGraphMapper",
-          "mapping-enabled": False
+          "mapping-enabled": False,
+          "mapping-config":
+            {
+              "full_remap": True
+            }
         },
       "STRATEGY":
         {
@@ -72,7 +76,11 @@ cfg = {
         {
           "module": "escape.orchest.ros_mapping",
           "class": "ResourceOrchestrationMapper",
-          "mapping-enabled": True
+          "mapping-enabled": True,
+          "mapping-config":
+            {
+              "full_remap": True
+            }
         },
       "STRATEGY":
         {
