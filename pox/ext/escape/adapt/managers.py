@@ -123,6 +123,9 @@ class InternalDomainManager(AbstractDomainManager):
         "Missing topology description from topology Adapter! Skip SAP data "
         "discovery.")
     for sap in topo.saps:
+      # skip inter-domain SAPs
+      if sap.domain is not None:
+        continue;
       connected_node = [(v, link.dst.id) for u, v, link in
                         topo.network.out_edges_iter(sap.id, data=True)]
       if len(connected_node) > 1:

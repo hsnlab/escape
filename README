@@ -70,3 +70,11 @@ The preferred way:
     $ ./escape.py --help
 
 For more information see: https://sb.tmit.bme.hu/escape/
+
+To setup virtulizer library as a subtree module, use the following commands from
+the project's root directory:
+
+rm -rf unify_virtualizer/
+git remote add virtualizer https://github.com/Ericsson/unify-virtualizer.git
+git subtree add -P unify_virtualizer virtualizer master
+git config alias.virtualizer-pull "subtree pull --prefix=unify_virtualizer virtualizer master"

@@ -564,7 +564,7 @@ Common API functions
 +===================+================+===================+==============================================+
 | */version*        | ``None``       | GET               | Returns with the current version of ESCAPEv2 |
 +-------------------+----------------+-------------------+----------------------------------------------+
-| */ping*           | ``None``       | ALL               | Returns with the "OK" string                 |
+| */ping*           | ``None``       | GET, POST         | Returns with the "OK" string                 |
 +-------------------+----------------+-------------------+----------------------------------------------+
 | */operations*     | ``None``       | GET               | Returns with the implemented operations      |
 +-------------------+----------------+-------------------+----------------------------------------------+
@@ -579,12 +579,14 @@ initiation is skipped.
 *Content Negotiation:* The Service layer's RESTful API accepts and returns data
 only in JSON format.
 
+The following functions are defined in :any:`ServiceRequestHandler`.
+
 +-------------------+----------------+-------------------+----------------------------------------------------------------+
 |      Path         |     Params     |     HTTP verbs    | Description                                                    |
 +===================+================+===================+================================================================+
-| */topology*       | ``None``       | GET               | Returns with the resource view of the Service layer            |
+| */topology*       | ``None``       | GET, POST         | Returns with the resource view of the Service layer            |
 +-------------------+----------------+-------------------+----------------------------------------------------------------+
-| */sg*             | ``NFFG``       | ALL               | Initiate given NFFG. Returns the initiation is accepted or not |
+| */sg*             | ``NFFG``       | POST              | Initiate given NFFG. Returns the initiation is accepted or not |
 +-------------------+----------------+-------------------+----------------------------------------------------------------+
 
 ROS API specific functions
@@ -592,12 +594,14 @@ ROS API specific functions
 
 Can be started with the ``--agent`` or ``--rosapi`` initial flags.
 
+The following functions are defined in :any:`ROSAgentRequestHandler`.
+
 +-------------------+----------------+-------------------+-------------------------------------------+
 |      Path         |     Params     |     HTTP verbs    | Description                               |
 +===================+================+===================+===========================================+
-| */get-config*     | ``None``       | GET               | Returns with the resource view of the ROS |
+| */get-config*     | ``None``       | GET, POST         | Returns with the resource view of the ROS |
 +-------------------+----------------+-------------------+-------------------------------------------+
-| */edit-config*    | ``NFFG``       | ALL               | Initiate given NFFG.                      |
+| */edit-config*    | ``NFFG``       | POST              | Initiate given NFFG.                      |
 +-------------------+----------------+-------------------+-------------------------------------------+
 
 Cf-Or API specific functions
@@ -605,12 +609,14 @@ Cf-Or API specific functions
 
 Can be started with the ``--cfor`` flag.
 
+The following functions are defined in :any:`CfOrRequestHandler`.
+
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
 |      Path         |     Params     |     HTTP verbs    | Description                                                               |
 +===================+================+===================+===========================================================================+
-| */get-config*     | ``None``       | GET               | Returns with the resource view from the assigned Virtualizer              |
+| */get-config*     | ``None``       | GET, POST         | Returns with the resource view from the assigned Virtualizer              |
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
-| */edit-config*    | ``NFFG``       | ALL               | Initiate given NFFG.                                                      |
+| */edit-config*    | ``NFFG``       | POST              | Initiate given NFFG.                                                      |
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
 
 Configuration
