@@ -100,6 +100,7 @@ in the VM to copy your RSA key from your host:
     $ cd
     $ mkdir .ssh
     $ scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
+    $ sudo chmod 700 .ssh && sudo chmod 600 .ssh/id_rsa
 
 3. Clone the shared escape repository in a folder named:
 *escape*.
@@ -131,6 +132,26 @@ available arguments of the top starting script check the help menu:
   .. code-block:: bash
 
     $ ./escape.py --help
+
+.. important::
+
+    If you want to initiate more then 15 node (switch and Execution Environment
+    too) in the Mininet-based Infrastructure layer zou should recompile the
+    OpenSSH server from source to increase the number of possible listening ports
+    up to 256. In this case you can use the following commands:
+
+     .. code-block:: bash
+
+         $ sudo -i
+         $ cd /usr/src
+         $ apt-get update && apt-get source openssh-server
+         $ cd openssh-*
+         $ sed -in 's/\(\#define MAX_LISTEN_SOCKS\).*/\1 256/' sshd.c
+         $ sed -in 's/\(\#define MAX_PORTS\).*/\1 256/' servconf.h
+         $ ./configure --prefix=/usr --sysconfdir=/etc/ssh --with-default-path=$PATH
+         $ make
+         $ make install
+         $ service ssh restart
 
 The hard way
 ------------
