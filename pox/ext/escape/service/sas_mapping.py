@@ -15,7 +15,6 @@
 Contains classes which implement SG mapping functionality.
 """
 import sys
-
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import MappingException, BadInputException, \
   InternalAlgorithmException
@@ -58,7 +57,9 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       log.error("Missing resource NFFG! Abort mapping process...")
       return
     try:
-      mapped_nffg = MAP(request=graph, network=resource)
+      mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
+      mapped_nffg = MAP(request=graph.copy(), network=resource.copy(),
+                        **mapper_params)
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-sas-mapped"

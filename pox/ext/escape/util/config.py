@@ -278,6 +278,20 @@ class ESCAPEConfig(object):
     except KeyError:
       return True
 
+  def get_mapping_config(self, layer):
+    """
+    Return the mapping config for the ``layer`` or not.
+
+    :param layer: layer name
+    :type layer: str
+    :return: config parameters for main mapper function (default: empty dict)
+    :rtype: dict
+    """
+    try:
+      return self.__configuration[layer]['MAPPER']['mapping-config']
+    except (KeyError, AttributeError):
+      return {}
+
   def get_strategy (self, layer):
     """
     Return with the Strategy class of the given layer.
