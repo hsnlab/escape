@@ -118,103 +118,111 @@ cfg = {
       # Default managers need to start at init
       # "MANAGERS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
       "MANAGERS": [],
-      # Specific Domain Adapters for DomainManagers
-      "INTERNAL-POX":
-        {
-          "module": "escape.adapt.adapters",
-          "class": "InternalPOXAdapter",
-          "name": None,
-          "address": "127.0.0.1",
-          "port": 6653,
-          "keepalive": False
-        },
-      "SDN-POX":
-        {
-          "module": "escape.adapt.adapters",
-          "class": "SDNDomainPOXAdapter",
-          "name": None,
-          "address": "0.0.0.0",
-          "port": 6633,
-          "keepalive": False
-        },
-      "MININET":
-        {
-          "module": "escape.adapt.adapters",
-          "class": "InternalMininetAdapter",
-          "net": None
-        },
-      "SDN-TOPO":
-        {
-          "module": "escape.adapt.adapters",
-          "class": "SDNDomainTopoAdapter",
-
-          "path": "examples/sdn-topo.nffg"  # relative to project root
-        },
-      "VNFStarter":
-        {
-          "module": "escape.adapt.adapters",
-          "class": "VNFStarterAdapter",
-          "username": "mininet",
-          "password": "mininet",
-          "server": "127.0.0.1",
-          "port": 830,
-          "timeout": 5
-        },
-      "ESCAPE-REST":
-        {
-          "module": "escape.adapt.adapters",
-          "class": "RemoteESCAPEv2RESTAdapter",
-          "url": "http://localhost:8083"
-        },
-      "OpenStack-REST":
-        {
-          "module": "escape.adapt.adapters",
-          "class": "OpenStackRESTAdapter",
-          "url": "http://localhost:8081"
-        },
-      "UN-REST":
-        {
-          "module": "escape.adapt.adapters",
-          "class": "UniversalNodeRESTAdapter",
-          "url": "http://localhost:8082"
-        },
       # Specific Domain Managers
       "INTERNAL":
         {
           "module": "escape.adapt.managers",
           "class": "InternalDomainManager",
-          "poll": False
+          "poll": False,
+          # Specific Domain Adapters for DomainManager
+          "adapters": {
+            "CONTROLLER":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "InternalPOXAdapter",
+                "name": None,
+                "address": "127.0.0.1",
+                "port": 6653,
+                "keepalive": False
+              },
+            "TOPOLOGY":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "InternalMininetAdapter",
+                "net": None
+              },
+            "MANAGEMENT":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "VNFStarterAdapter",
+                "username": "mininet",
+                "password": "mininet",
+                "server": "127.0.0.1",
+                "port": 830,
+                "timeout": 5
+              }
+          }
         },
       "REMOTE-ESCAPE":
         {
           "module": "escape.adapt.managers",
           "class": "RemoteESCAPEDomainManager",
-          "poll": False
+          "poll": False,
+          "adapters": {
+            "ESCAPE-REST":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "RemoteESCAPEv2RESTAdapter",
+                "url": "http://localhost:8083"
+              }
+          }
         },
       "OPENSTACK":
         {
           "module": "escape.adapt.managers",
           "class": "OpenStackDomainManager",
-          "poll": False
+          "poll": False,
+          "adapters": {
+            "OpenStack-REST":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "OpenStackRESTAdapter",
+                "url": "http://localhost:8081"
+              }
+          }
         },
       "UN":
         {
           "module": "escape.adapt.managers",
           "class": "UniversalNodeDomainManager",
-          "poll": False
+          "poll": False,
+          "adapters": {
+            "UN-REST":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "UniversalNodeRESTAdapter",
+                "url": "http://localhost:8082"
+              }
+          }
         },
+      "SDN": {
+        "module": "escape.adapt.managers",
+        "class": "SDNDomainManager",
+        "poll": False,
+        "adapters": {
+          "SDN-POX":
+            {
+              "module": "escape.adapt.adapters",
+              "class": "SDNDomainPOXAdapter",
+              "name": None,
+              "address": "0.0.0.0",
+              "port": 6633,
+              "keepalive": False
+            },
+          "SDN-TOPO":
+            {
+              "module": "escape.adapt.adapters",
+              "class": "SDNDomainTopoAdapter",
+              "path": "examples/sdn-topo.nffg"  # relative to project root
+            }
+        }
+      },
       "DOCKER":
         {
           "module": "escape.adapt.managers",
           "class": "DockerDomainManager",
           "poll": False
         },
-      "SDN": {
-        "module": "escape.adapt.managers",
-        "class": "SDNDomainManager",
-        "poll": False
-      },
-
       "RESET-DOMAINS-AFTER-SHUTDOWN": True  # Shutdown strategy config
     },
   "infrastructure":  # Infrastructure Layer

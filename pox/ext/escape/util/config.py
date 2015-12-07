@@ -14,7 +14,6 @@
 """
 Contains manager and handling functions for global ESCAPE configuration.
 """
-import copy
 import importlib
 import json
 import os
@@ -26,6 +25,13 @@ from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
 from escape.util.misc import Singleton
 from pox.core import log, core
+
+
+class ConfigurationError(RuntimeError):
+  """
+  Error class for signaling errors related to configuration load, parse etc.
+  """
+  pass
 
 
 class ESCAPEConfig(object):
@@ -125,7 +131,7 @@ class ESCAPEConfig(object):
       if changed:
         log.info("Running configuration has been updated from file!")
         return self
-    except IOError as e:
+    except IOError:
       log.error("Additional configuration file not found: %s" % config)
     except ValueError as e:
       log.error("An error occurred when load configuration: %s" % e)
@@ -261,7 +267,7 @@ class ESCAPEConfig(object):
       os.path.join(os.path.dirname(__file__), "../../../.."))
 
   ##############################################################################
-  # Helper functions
+  # Mapping related getters
   ##############################################################################
 
   def get_mapping_enabled (self, layer):
@@ -278,7 +284,7 @@ class ESCAPEConfig(object):
     except KeyError:
       return True
 
-  def get_mapping_config(self, layer):
+  def get_mapping_config (self, layer):
     """
     Return the mapping config for the ``layer`` or not.
 
@@ -369,163 +375,25 @@ class ESCAPEConfig(object):
     except KeyError:
       return False
 
-  def get_component (self, component):
+  def get_api_virtualizer (self, layer_name, api_name):
     """
-    Return with the class of the adaptation component.
+    Return the type of the assigned Virtualizer.
 
-    :param component: component name
-    :type component: str
-    :return: component class
-    """
-    try:
-      return getattr(importlib.import_module(
-        self.__configuration[ADAPT][component]['module']),
-        self.__configuration[ADAPT][component]['class'], None)
-    except KeyError:
-      return None
-
-  def get_component_params (self, component):
-    """
-    Return with the initial parameters of the given component defined in CONFIG.
-    The param's name must be identical with the attribute name of the component
-    constructor.
-
-    :param component: component name
-    :type component: str
-    :return: initial params
-    :rtype: dict
-    """
-    params = copy.deepcopy(self.__configuration[ADAPT][component])
-    del params['module']
-    del params['class']
-    return params
-
-  def get_managers (self):
-    """
-    Return the default DomainManagers for initialization on start.
-
-    :return: list of :any:`AbstractDomainManager`
-    :rtype: list
-    """
-    try:
-      return self.__configuration[ADAPT]['MANAGERS']
-    except KeyError:
-      return ()
-
-  def reset_domains_after_shutdown (self):
-    """
-    Return with the shutdown strategy to reset domain or not.
-    """
-    try:
-      return self.__configuration[ADAPT]['RESET-DOMAINS-AFTER-SHUTDOWN']
-    except KeyError:
-      return True
-
-  def get_mn_network_opts (self):
-    """
-    Return the optional Mininet parameters for initiation.
-
-    :return: optional constructor params (default: empty dict)
-    :rtype: dict
-    """
-    try:
-      mn_opts = self.__configuration[INFR]['NETWORK-OPTS']
-      return mn_opts if mn_opts is not None else {}
-    except KeyError:
-      return {}
-
-  def get_mininet_topology (self):
-    """
-    Return the Mininet topology class.
-
-    :return:  topo class
-    """
-    try:
-      # Project root dir relative to this module which is/must be under pox/ext
-      return os.path.abspath(os.path.join(self.get_project_root_dir(),
-                                          self.__configuration[INFR]["TOPO"]))
-    except KeyError:
-      return None
-
-  def get_fallback_topology (self):
-    """
-    Return the fallback topology class.
-
-    :return: fallback topo class
-    :rtype: :any::`AbstractTopology`
-    """
-    try:
-      return getattr(importlib.import_module(
-        self.__configuration[INFR]["FALLBACK-TOPO"]['module']),
-        self.__configuration[INFR]["FALLBACK-TOPO"]['class'], None)
-    except KeyError:
-      return None
-
-  def get_sdn_topology (self):
-    """
-    Return the path of the SDN topology config file.
-
-    :return:  topo class
-    """
-    try:
-      # Project root dir relative to this module which is/must be under root
-      # util/escape/ext/pox/root
-      return os.path.abspath(
-        os.path.join(self.get_project_root_dir(),
-                     self.__configuration[ADAPT]["SDN-TOPO"]["path"]))
-    except KeyError:
-      return None
-
-  def get_clean_after_shutdown (self):
-    """
-    Return with the value if a cleaning process need to be done or not.
-
-    :return: cleanup (default: False)
-    :rtype: bool
-    """
-    try:
-      return strtobool(str(self.__configuration[INFR]['SHUTDOWN-CLEAN']))
-    except KeyError:
-      return False
-
-  def get_ros_agent_class (self):
-    """
-    Return with the request handler class of Agent REST API.
-
-    :return: agent class
-    :rtype: :any:`AbstractRequestHandler`
-    """
-    try:
-      return getattr(importlib.import_module(
-        self.__configuration[ORCHEST]["Sl-Or"]['module']),
-        self.__configuration[ORCHEST]["Sl-Or"]['class'], None)
-    except KeyError:
-      return None
-
-  def get_ros_agent_prefix (self):
-    """
-    Return the REST API prefix for agent request handler.
-
-    :return: prefix
+    :param layer_name: main layer of the API
+    :type layer_name: str
+    :param api_name: name of the REST-API in the global config.
+    :type api_name: str
+    :return: type of the Virtualizer as in :any:`VirtualizerManager.TYPES`
     :rtype: str
     """
     try:
-      return self.__configuration[ORCHEST]["Sl-Or"]['prefix']
-    except KeyError:
+      return self.__configuration[layer_name][api_name]["virtualizer_type"]
+    except (KeyError, AttributeError, TypeError):
       return None
 
-  def get_ros_agent_address (self):
-    """
-    Return the REST API (address, port) for agent REST server.
-
-    :return: address and port
-    :rtype: tuple
-    """
-    try:
-      return (self.__configuration[ORCHEST]["Sl-Or"]['address'],
-              self.__configuration[ORCHEST]["Sl-Or"]['port'])
-    except KeyError:
-      return None
+  ##############################################################################
+  # SERVICE layer getters
+  ##############################################################################
 
   def get_sas_api_class (self):
     """
@@ -563,6 +431,49 @@ class ESCAPEConfig(object):
     try:
       return (self.__configuration[SERVICE]["REST-API"]['address'],
               self.__configuration[SERVICE]["REST-API"]['port'])
+    except KeyError:
+      return None
+
+  ##############################################################################
+  # ORCHESTRATION layer getters
+  ##############################################################################
+
+  def get_ros_agent_class (self):
+    """
+    Return with the request handler class of Agent REST API.
+
+    :return: agent class
+    :rtype: :any:`AbstractRequestHandler`
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[ORCHEST]["Sl-Or"]['module']),
+        self.__configuration[ORCHEST]["Sl-Or"]['class'], None)
+    except KeyError:
+      return None
+
+  def get_ros_agent_prefix (self):
+    """
+    Return the REST API prefix for agent request handler.
+
+    :return: prefix
+    :rtype: str
+    """
+    try:
+      return self.__configuration[ORCHEST]["Sl-Or"]['prefix']
+    except KeyError:
+      return None
+
+  def get_ros_agent_address (self):
+    """
+    Return the REST API (address, port) for agent REST server.
+
+    :return: address and port
+    :rtype: tuple
+    """
+    try:
+      return (self.__configuration[ORCHEST]["Sl-Or"]['address'],
+              self.__configuration[ORCHEST]["Sl-Or"]['port'])
     except KeyError:
       return None
 
@@ -605,32 +516,137 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
-  def get_api_virtualizer (self, layer_name, api_name):
+  ##############################################################################
+  # ADAPTATION layer getters
+  ##############################################################################
+
+  def get_component (self, component, parent=None):
     """
-    Return the type of the assigned Virtualizer.
+    Return with the class of the adaptation component.
 
-
-    :param api_name: name of the REST-API in the global config.
-    :type api_name: str
-    :return: type of the Virtualizer as in :any:`VirtualizerManager.TYPES`
-    :rtype: str
+    :param component: component name
+    :type component: str
+    :param parent: define the parent of the actual component's configuration
+    :type parent: dict
+    :return: component class
     """
     try:
-      return self.__configuration[layer_name][api_name]["virtualizer_type"]
-    except (KeyError, AttributeError, TypeError):
+      comp = self.__configuration[ADAPT][component] if parent is None \
+        else parent[component]
+      return getattr(importlib.import_module(comp['module']), comp['class'])
+    except KeyError:
       return None
 
-  def get_adapter_keepalive (self, adapter):
+  def get_component_params (self, component, parent=None):
     """
-    Return the value if the keepalive functionality (periodic OF Echo request)
-    is need to be initiated or not.
+    Return with the initial parameters of the given component defined in CONFIG.
+    The param's name must be identical with the attribute name of the component
+    constructor.
 
-    :return: keepalive
+    :param component: component name
+    :type component: str
+    :param parent: define the parent of the actual component's configuration
+    :type parent: dict
+    :return: initial params
+    :rtype: dict
+    """
+    params = self.__configuration[ADAPT][component] if parent is None else \
+      parent[component]
+    del params['module']
+    del params['class']
+    return params
+
+  def get_managers (self):
+    """
+    Return the default DomainManagers for initialization on start.
+
+    :return: list of :any:`AbstractDomainManager`
+    :rtype: list
+    """
+    try:
+      return self.__configuration[ADAPT]['MANAGERS']
+    except KeyError:
+      return ()
+
+  def reset_domains_after_shutdown (self):
+    """
+    Return with the shutdown strategy to reset domain or not.
+    """
+    try:
+      return self.__configuration[ADAPT]['RESET-DOMAINS-AFTER-SHUTDOWN']
+    except KeyError:
+      return True
+
+  def get_sdn_topology (self):
+    """
+    Return the path of the SDN topology config file.
+
+    :return:  path of topology config file
+    :rtype
+    """
+    try:
+      # Project root dir relative to this module which is/must be under root
+      # util/escape/ext/pox/root
+      return os.path.abspath(
+        os.path.join(self.get_project_root_dir(),
+                     self.__configuration[ADAPT]["SDN"]["TOPOLOGY"]["path"]))
+    except KeyError:
+      return None
+
+  ##############################################################################
+  # INFRASTRUCTURE layer getters
+  ##############################################################################
+
+  def get_mn_network_opts (self):
+    """
+    Return the optional Mininet parameters for initiation.
+
+    :return: optional constructor params (default: empty dict)
+    :rtype: dict
+    """
+    try:
+      mn_opts = self.__configuration[INFR]['NETWORK-OPTS']
+      return mn_opts if mn_opts is not None else {}
+    except KeyError:
+      return {}
+
+  def get_mininet_topology (self):
+    """
+    Return the Mininet topology class.
+
+    :return:  topo class
+    """
+    try:
+      # Project root dir relative to this module which is/must be under pox/ext
+      return os.path.abspath(os.path.join(self.get_project_root_dir(),
+                                          self.__configuration[INFR]["TOPO"]))
+    except KeyError:
+      return None
+
+  def get_fallback_topology (self):
+    """
+    Return the fallback topology class.
+
+    :return: fallback topo class
+    :rtype: :any::`AbstractTopology`
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[INFR]["FALLBACK-TOPO"]['module']),
+        self.__configuration[INFR]["FALLBACK-TOPO"]['class'], None)
+    except KeyError:
+      return None
+
+  def get_clean_after_shutdown (self):
+    """
+    Return with the value if a cleaning process need to be done or not.
+
+    :return: cleanup (default: False)
     :rtype: bool
     """
     try:
-      return self.__configuration[ADAPT][adapter]['keepalive']
-    except (KeyError, AttributeError, TypeError):
+      return strtobool(str(self.__configuration[INFR]['SHUTDOWN-CLEAN']))
+    except KeyError:
       return False
 
   def get_SAP_xterms (self):
