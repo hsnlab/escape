@@ -13,7 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Top starter script of ESCAPEv2 for convenient purposes
 """
@@ -25,8 +24,7 @@ def main ():
   # Implement parser options
   parser = argparse.ArgumentParser(
     description="ESCAPEv2: Extensible Service ChAin Prototyping Environment "
-                "using "
-                "Mininet, Click, NETCONF and POX",
+                "using Mininet, Click, NETCONF and POX",
     add_help=True,
     version="2.0.0")
   # Optional arguments
