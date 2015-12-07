@@ -36,7 +36,7 @@ info "=== Checkout submodules ==="
 cd unify_virtualizer
 git submodule init
 git submodule update
-cd $DIR
+cd ${DIR}
 
 info "=== Install Python-specific dependencies ==="
 sudo pip install requests jinja2 ncclient lxml networkx py2neo networkx_viewer \
@@ -83,23 +83,23 @@ make
 sudo make install
 
 info "=== Install Click, clicky and netconfhelper.py for Infrastructure layer ==="
-cd "$DIR"
+cd ${DIR}
 git clone --depth 1 https://github.com/kohler/click.git
 cd click
 ./configure --disable-linuxmodule
 CPU=$(grep -c '^processor' /proc/cpuinfo)
-make -j$CPU
+make -j${CPU}
 sudo make install
 
 cd apps/clicky
 autoreconf -i
 ./configure
-make -j$CPU
+make -j${CPU}
 sudo make install
-cd "$DIR"
+cd ${DIR}
 rm -rf click
 
-# install clickhelper.py to be availble from netconfd
+# install clickhelper.py to be available from netconfd
 sudo ln -s "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
 
 info "=== Install neo4j graph database ==="
