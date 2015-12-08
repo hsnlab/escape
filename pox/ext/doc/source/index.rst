@@ -185,6 +185,7 @@ For doc generations:
 
 .. code-block:: bash
 
+    $ sudo apt-get install graphviz
     $ sudo pip install sphinx
 
 For domain emulation scripts:
@@ -738,10 +739,14 @@ adaptation
 ^^^^^^^^^^
 
 The ``adaptation`` layer contains the different Manager (inherited from
-:any:`AbstractDomainManager`) and Adapter (inherited from :any:`AbstractESCAPEAdapter`)
-classes under their specific name which is defined in the ``name`` class attribute.
-These configurations are used by the :any:`ComponentConfigurator` to initiate
-the required component dynamically.
+:any:`AbstractDomainManager`) classes under their specific name which is defined
+in the ``name`` class attribute. These configurations are used by the
+:any:`ComponentConfigurator` to initiate the required components dynamically.
+Every Manager use different Adapters (inherited from :any:`AbstractESCAPEAdapter`)
+to hide the specific protocol-agnostic steps in the communication between the
+ESCAPE orchestrator and network elements. The configurations of these Adapters
+can be found under the related Manager names in order to be able to initiate
+multiple Managers based on the same class with different Adapter configurations.
 The class configurations can be given by the ``module`` and ``class`` pair
 similar way as so far.
 Other values such as path, url, keepalive, etc. will be forwarded to the
@@ -797,7 +802,10 @@ this configurations structure.
             "MAPPER": {
                 "module": "escape.service.sas_mapping",
                 "class": "ServiceGraphMapper",
-                "mapping-enabled": false
+                "mapping-enabled": false,
+                "mapping-config": {
+                    "full_remap": true
+                }
             },
             "STRATEGY": {
                 "module": "escape.service.sas_mapping",
@@ -821,7 +829,10 @@ this configurations structure.
             "MAPPER": {
                 "module": "escape.orchest.ros_mapping",
                 "class": "ResourceOrchestrationMapper",
-                "mapping-enabled": true
+                "mapping-enabled": true,
+                "mapping-config": {
+                    "full_remap": true
+                }
             },
             "STRATEGY": {
                 "module": "escape.orchest.ros_mapping",
@@ -851,92 +862,108 @@ this configurations structure.
             }
         },
         "adaptation": {
-            "MANAGERS": [],
-            "INTERNAL-POX": {
-                "module": "escape.adapt.adapters",
-                "class": "InternalPOXAdapter",
-                "name": null,
-                "address": "127.0.0.1",
-                "port": 6653,
-                "keepalive": false
-            },
-            "SDN-POX": {
-                "module": "escape.adapt.adapters",
-                "class": "SDNDomainPOXAdapter",
-                "name": null,
-                "address": "0.0.0.0",
-                "port": 6633,
-                "keepalive": false
-            },
-            "MININET": {
-                "module": "escape.adapt.adapters",
-                "class": "InternalMininetAdapter",
-                "net": null
-            },
-            "SDN-TOPO": {
-                "module": "escape.adapt.adapters",
-                "class": "SDNDomainTopoAdapter",
-                "path": "examples/sdn-topo.nffg"
-            },
-            "VNFStarter": {
-                "module": "escape.adapt.adapters",
-                "class": "VNFStarterAdapter",
-                "username": "mininet",
-                "password": "mininet",
-                "server": "127.0.0.1",
-                "port": 830,
-                "timeout": null
-            },
-            "ESCAPE-REST": {
-                "module": "escape.adapt.adapters",
-                "class": "RemoteESCAPEv2RESTAdapter",
-                "url": "http://localhost:8083"
-            },
-            "OpenStack-REST": {
-                "module": "escape.adapt.adapters",
-                "class": "OpenStackRESTAdapter",
-                "url": "http://localhost:8081"
-             },
-            "UN-REST": {
-                "module": "escape.adapt.adapters",
-                "class": "UniversalNodeRESTAdapter",
-                "url": "http://localhost:8082"
-            },
+            "MANAGERS": [
+                "REMOTE-ESCAPE",
+                "SDN",
+                "OPENSTACK",
+                "UN"
+            ],
             "INTERNAL": {
                 "module": "escape.adapt.managers",
                 "class": "InternalDomainManager",
-                "poll": false
+                "poll": false,
+                "adapters": {
+                    "CONTROLLER": {
+                        "module": "escape.adapt.adapters",
+                        "class": "InternalPOXAdapter",
+                        "name": null,
+                        "address": "127.0.0.1",
+                        "port": 6653,
+                        "keepalive": false
+                    },
+                    "TOPOLOGY": {
+                        "module": "escape.adapt.adapters",
+                        "class": "InternalMininetAdapter",
+                        "net": null
+                    },
+                    "MANAGEMENT": {
+                        "module": "escape.adapt.adapters",
+                        "class": "VNFStarterAdapter",
+                        "username": "mininet",
+                        "password": "mininet",
+                        "server": "127.0.0.1",
+                        "port": 830,
+                        "timeout": 5
+                    }
+                }
             },
             "REMOTE-ESCAPE": {
                 "module": "escape.adapt.managers",
                 "class": "RemoteESCAPEDomainManager",
-                "poll": false
+                "poll": false,
+                "adapters": {
+                    "REMOTE": {
+                        "module": "escape.adapt.adapters",
+                        "class": "RemoteESCAPEv2RESTAdapter",
+                        "url": "http://localhost:8083"
+                    }
+                }
             },
             "OPENSTACK": {
                 "module": "escape.adapt.managers",
                 "class": "OpenStackDomainManager",
-                "poll": false
+                "poll": false,
+                "adapters": {
+                    "REMOTE": {
+                        "module": "escape.adapt.adapters",
+                        "class": "OpenStackRESTAdapter",
+                        "url": "http://localhost:8081"
+                    }
+                }
             },
             "UN": {
                 "module": "escape.adapt.managers",
                 "class": "UniversalNodeDomainManager",
-                "poll": false
+                "poll": false,
+                "adapters": {
+                    "REMOTE": {
+                        "module": "escape.adapt.adapters",
+                        "class": "UniversalNodeRESTAdapter",
+                        "url": "http://localhost:8082"
+                    }
+                }
+            },
+            "SDN": {
+                "module": "escape.adapt.managers",
+                "class": "SDNDomainManager",
+                "poll": false,
+                "adapters": {
+                    "CONTROLLER": {
+                        "module": "escape.adapt.adapters",
+                        "class": "SDNDomainPOXAdapter",
+                        "name": null,
+                        "address": "0.0.0.0",
+                        "port": 6633,
+                        "keepalive": false
+                    },
+                    "TOPOLOGY": {
+                        "module": "escape.adapt.adapters",
+                        "class": "SDNDomainTopoAdapter",
+                        "path": "examples/sdn-topo.nffg"
+                    }
+                }
             },
             "DOCKER": {
                 "module": "escape.adapt.managers",
                 "class": "DockerDomainManager",
                 "poll": false
             },
-            "SDN": {
-                "module": "escape.adapt.managers",
-                "class": "SDNDomainManager",
-                "poll": false
-            },
             "RESET-DOMAINS-AFTER-SHUTDOWN": true
         },
         "infrastructure": {
             "TOPO": "examples/escape-mn-topo.nffg",
-            "NETWORK-OPTS": null,
+            "NETWORK-OPTS": {
+            },
             "Controller": {
                 "ip": "127.0.0.1",
                 "port": 6653
@@ -945,15 +972,14 @@ this configurations structure.
             "Switch": null,
             "SAP": null,
             "Link": null,
-            "FALLBACK-TOPO":
-            {
-              "module": "escape.infr.topology",
-              "class": "FallbackDynamicTopology"
+            "FALLBACK-TOPO": {
+                "module": "escape.infr.topology",
+                "class": "FallbackDynamicTopology"
             },
             "SAP-xterms": true,
             "SHUTDOWN-CLEAN": true
         },
-    "additional-config-file": "escape.config"
+        "additional-config-file": "escape.config"
     }
 
 
