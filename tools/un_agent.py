@@ -18,7 +18,7 @@ from tornado.ioloop import IOLoop
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
   os.path.abspath(
     os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
-                                "nffg_ETH"))
+                                "unify_virtualizer"))
 import virtualizer3
 
 LOG = logging.getLogger(__name__)
