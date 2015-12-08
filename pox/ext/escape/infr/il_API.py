@@ -57,6 +57,7 @@ class InfrastructureLayerAPI(AbstractAPI):
       :func:`AbstractAPI.__init__() <escape.util.api.AbstractAPI.__init__>`
     """
     log.info("Starting Infrastructure Layer...")
+    self.topology = None
     super(InfrastructureLayerAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
@@ -92,8 +93,8 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     # Check if our POX controller is up
     # ESCAPEConfig follows Singleton design pattern
-    if event.name == ESCAPEConfig().get_component(
-         "INTERNAL-POX").name and isinstance(event.component, OpenFlow_01_Task):
+    if event.name == "INTERNAL-POX" and isinstance(event.component,
+                                                   OpenFlow_01_Task):
       if self.topology is not None:
         log.info("Internal domain controller is up! Initiate network emulation "
                  "now...")

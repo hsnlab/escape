@@ -19,7 +19,7 @@ connections with entities in the particular domain.
 import sys
 import traceback
 
-from escape.adapt.adapters import *
+from escape.util.config import ConfigurationError
 from escape.util.domain import *
 from pox.lib.util import dpid_to_str
 
@@ -39,7 +39,9 @@ class InternalDomainManager(AbstractDomainManager):
     """
     Init
     """
-    log.debug("Init InternalDomainManager - params: %s" % kwargs)
+    adapters = [adapt['class'] for adapt in kwargs['adapters'].itervalues()]
+    log.debug(
+      "Init InternalDomainManager - %s" % adapters)
     super(InternalDomainManager, self).__init__(**kwargs)
     self.controlAdapter = None  # DomainAdapter for POX-InternalPOXAdapter
     self.topoAdapter = None  # DomainAdapter for Mininet-InternalMininetAdapter
@@ -48,6 +50,7 @@ class InternalDomainManager(AbstractDomainManager):
     self.deployed_vnfs = {}  # container for replied NETCONF messages of
     # deployNF, key: (infra_id, nf_id), value: initiated_vnf part of the
     # parsed reply in JSON
+    self.sapinfos = {}
 
   def init (self, configurator, **kwargs):
     """
@@ -60,16 +63,26 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     # Init adapter for internal topo emulation: Mininet
-    self.topoAdapter = configurator.load_component(InternalMininetAdapter.name)
+    if not self._adapters_cfg:
+      log.fatal(
+        "Missing Adapter configurations from DomainManager: %s" % self.name)
+      raise ConfigurationError("Missing configuration")
+    log.debug("Init Adapters for DomainManager: %s..." % self.name)
+    self.topoAdapter = configurator.load_component(
+      component_name=AbstractESCAPEAdapter.TYPE_TOPOLOGY,
+      parent=self._adapters_cfg)
     # Init adapter for internal controller: POX
-    self.controlAdapter = configurator.load_component(InternalPOXAdapter.name)
+    self.controlAdapter = configurator.load_component(
+      component_name=AbstractESCAPEAdapter.TYPE_CONTROLLER,
+      parent=self._adapters_cfg)
     log.debug("Set %s as the topology Adapter for %s" % (
       self.topoAdapter.__class__.__name__,
       self.controlAdapter.__class__.__name__))
     # Init default NETCONF adapter
-    self.remoteAdapter = configurator.load_component(VNFStarterAdapter.name)
+    self.remoteAdapter = configurator.load_component(
+      component_name=AbstractESCAPEAdapter.TYPE_MANAGEMENT,
+      parent=self._adapters_cfg)
     super(InternalDomainManager, self).init(configurator, **kwargs)
-    self.sapinfos = {}
     self._collect_SAP_infos()
     self._setup_sap_hostnames()
 
@@ -125,7 +138,7 @@ class InternalDomainManager(AbstractDomainManager):
     for sap in topo.saps:
       # skip inter-domain SAPs
       if sap.domain is not None:
-        continue;
+        continue
       connected_node = [(v, link.dst.id) for u, v, link in
                         topo.network.out_edges_iter(sap.id, data=True)]
       if len(connected_node) > 1:
@@ -528,7 +541,8 @@ class SDNDomainManager(AbstractDomainManager):
     """
     Init
     """
-    log.debug("Init SDNDomainManager - params: %s" % kwargs)
+    adapters = [adapt['class'] for adapt in kwargs['adapters'].itervalues()]
+    log.debug("Init SDNDomainManager - adapters: %s" % adapters)
     super(SDNDomainManager, self).__init__(**kwargs)
     self.controlAdapter = None  # DomainAdapter for POX - InternalPOXAdapter
     self.topoAdapter = None  # SDN topology adapter - SDNDomainTopoAdapter
@@ -540,9 +554,13 @@ class SDNDomainManager(AbstractDomainManager):
     :return: None
     """
     # Init adapter for internal controller: POX
-    self.controlAdapter = configurator.load_component(SDNDomainPOXAdapter.name)
+    self.controlAdapter = configurator.load_component(
+      component_name=AbstractESCAPEAdapter.TYPE_CONTROLLER,
+      parent=self._adapters_cfg)
     # Init adapter for static domain topology
-    self.topoAdapter = configurator.load_component(SDNDomainTopoAdapter.name)
+    self.topoAdapter = configurator.load_component(
+      component_name=AbstractESCAPEAdapter.TYPE_TOPOLOGY,
+      parent=self._adapters_cfg)
     super(SDNDomainManager, self).init(configurator, **kwargs)
 
   def finit (self):
@@ -719,7 +737,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     """
     Init
     """
-    log.debug("Init RemoteESCAPEDomainManager - params: %s" % kwargs)
+    adapters = [adapt['class'] for adapt in kwargs['adapters'].itervalues()]
+    log.debug("Init RemoteESCAPEDomainManager - adapters: %s" % adapters)
     super(RemoteESCAPEDomainManager, self).__init__(**kwargs)
     self.topoAdapter = None
 
@@ -731,7 +750,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     """
     # Init adapter for remote ESCAPEv2 domain
     self.topoAdapter = configurator.load_component(
-      RemoteESCAPEv2RESTAdapter.name)
+      component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
+      parent=self._adapters_cfg)
     super(RemoteESCAPEDomainManager, self).init(configurator, **kwargs)
 
   def finit (self):
@@ -814,7 +834,8 @@ class OpenStackDomainManager(AbstractDomainManager):
     """
     Init.
     """
-    log.debug("Init OpenStackDomainManager - params: %s" % kwargs)
+    adapters = [adapt['class'] for adapt in kwargs['adapters'].itervalues()]
+    log.debug("Init OpenStackDomainManager - adapters: %s" % adapters)
     super(OpenStackDomainManager, self).__init__(**kwargs)
     self.topoAdapter = None
 
@@ -824,7 +845,9 @@ class OpenStackDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    self.topoAdapter = configurator.load_component(OpenStackRESTAdapter.name)
+    self.topoAdapter = configurator.load_component(
+      component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
+      parent=self._adapters_cfg)
     super(OpenStackDomainManager, self).init(configurator, **kwargs)
 
   def finit (self):
@@ -887,7 +910,8 @@ class UniversalNodeDomainManager(AbstractDomainManager):
     """
     Init.
     """
-    log.debug("Init UniversalNodeDomainManager - params: %s" % kwargs)
+    adapters = [adapt['class'] for adapt in kwargs['adapters'].itervalues()]
+    log.debug("Init UniversalNodeDomainManager - adapters: %s" % adapters)
     super(UniversalNodeDomainManager, self).__init__(**kwargs)
     self.topoAdapter = None
 
@@ -898,7 +922,8 @@ class UniversalNodeDomainManager(AbstractDomainManager):
     :return: None
     """
     self.topoAdapter = configurator.load_component(
-      UniversalNodeRESTAdapter.name)
+      component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
+      parent=self._adapters_cfg)
     super(UniversalNodeDomainManager, self).init(configurator, **kwargs)
 
   def finit (self):
@@ -959,7 +984,8 @@ class DockerDomainManager(AbstractDomainManager):
     """
     Init
     """
-    log.debug("Init DockerDomainManager - params %s" % kwargs)
+    adapters = [adapt['class'] for adapt in kwargs['adapters'].itervalues()]
+    log.debug("Init DockerDomainManager - adapters %s" % adapters)
     super(DockerDomainManager, self).__init__()
     self.topoAdapter = None
 

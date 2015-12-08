@@ -15,7 +15,6 @@
 Implements the platform and POX dependent logic for the Controller Adaptation
 Sublayer.
 """
-
 from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
 from escape.adapt.adaptation import ControllerAdapter
@@ -93,6 +92,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       log.debug("Set Infrastructure Layer as a dependency")
       self.dependencies = self.dependencies + (INFR_LAYER_NAME,)
     # Mandatory super() call
+    self.controller_adapter = None
     super(ControllerAdaptationAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):

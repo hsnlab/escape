@@ -116,8 +116,8 @@ cfg = {
   "adaptation":  # Controller Adaptation Sublayer
     {
       # Default managers need to start at init
-      # "MANAGERS": ["REMOTE-ESCAPE","SDN","OPENSTACK","UN"],
-      "MANAGERS": [],
+      "MANAGERS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK", "UN"],
+      # "MANAGERS": [],
       # Specific Domain Managers
       "INTERNAL":
         {
@@ -159,7 +159,7 @@ cfg = {
           "class": "RemoteESCAPEDomainManager",
           "poll": False,
           "adapters": {
-            "ESCAPE-REST":
+            "REMOTE":
               {
                 "module": "escape.adapt.adapters",
                 "class": "RemoteESCAPEv2RESTAdapter",
@@ -173,7 +173,7 @@ cfg = {
           "class": "OpenStackDomainManager",
           "poll": False,
           "adapters": {
-            "OpenStack-REST":
+            "REMOTE":
               {
                 "module": "escape.adapt.adapters",
                 "class": "OpenStackRESTAdapter",
@@ -187,7 +187,7 @@ cfg = {
           "class": "UniversalNodeDomainManager",
           "poll": False,
           "adapters": {
-            "UN-REST":
+            "REMOTE":
               {
                 "module": "escape.adapt.adapters",
                 "class": "UniversalNodeRESTAdapter",
@@ -200,7 +200,7 @@ cfg = {
         "class": "SDNDomainManager",
         "poll": False,
         "adapters": {
-          "SDN-POX":
+          "CONTROLLER":
             {
               "module": "escape.adapt.adapters",
               "class": "SDNDomainPOXAdapter",
@@ -209,7 +209,7 @@ cfg = {
               "port": 6633,
               "keepalive": False
             },
-          "SDN-TOPO":
+          "TOPOLOGY":
             {
               "module": "escape.adapt.adapters",
               "class": "SDNDomainTopoAdapter",
