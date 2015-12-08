@@ -43,6 +43,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
   Can be used to define a controller (based on POX) for other external domains.
   """
   name = "INTERNAL-POX"
+  type = AbstractESCAPEAdapter.TYPE_CONTROLLER
 
   # Static mapping of infra IDs and DPIDs
   infra_to_dpid = {
@@ -79,8 +80,8 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     :param port: socket port (default: 6633)
     :type port: int
     """
-    log.debug("Init %s with address %s:%s, optional name: %s" % (
-      self.__class__.__name__, address, port, name))
+    log.debug("Init %s - type: %s, address %s:%s, optional name: %s" % (
+      self.__class__.__name__, self.type, address, port, name))
     super(InternalPOXAdapter, self).__init__(name=name, address=address,
                                              port=port, keepalive=keepalive)
     self.topoAdapter = None
@@ -180,6 +181,7 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   Adapter class to handle communication with external SDN switches.
   """
   name = "SDN-POX"
+  type = AbstractESCAPEAdapter.TYPE_CONTROLLER
 
   # Static mapping of infra IDs and DPIDs
   infra_to_dpid = {
@@ -215,6 +217,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
   name = "MININET"
+  type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
   def __init__ (self, net=None):
     """
@@ -223,7 +226,8 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :param net: set pre-defined network (optional)
     :type net: :class:`ESCAPENetworkBridge`
     """
-    log.debug("Init InternalMininetAdapter - initial network: %s" % net)
+    log.debug("Init InternalMininetAdapter - type: %s, initial network: %s" % (
+      self.type, net))
     # Call base constructors directly to avoid super() and MRO traps
     AbstractESCAPEAdapter.__init__(self)
     if not net:
@@ -291,15 +295,17 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
   Currently it just read the static description from file, and not discover it.
   """
   name = "SDN-TOPO"
+  type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
   def __init__ (self, path=None):
-    log.debug("Init SDNDomainTopoAdapter with optional path: %s" % path)
+    log.debug("Init SDNDomainTopoAdapter - type: %s, optional path: %s" % (
+      self.type, path))
     super(SDNDomainTopoAdapter, self).__init__()
     self.topo = None
     try:
-      self.__init_from_CONFIG()
+      self.__init_from_CONFIG(path=path)
     except TopologyLoadException as e:
-      log.error("SDN adapter is not initialized properly: " % e)
+      log.error("SDN adapter is not initialized properly: %s" % e)
 
   def check_domain_reachable (self):
     """
@@ -363,6 +369,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
   RPC_NAMESPACE = u'http://csikor.tmit.bme.hu/netconf/unify/vnf_starter'
 
   name = "VNFStarter"
+  type = AbstractESCAPEAdapter.TYPE_MANAGEMENT
 
   # RPC namespace
   # Adapter name used in CONFIG and ControllerAdapter class
@@ -385,7 +392,8 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     # Call base constructors directly to avoid super() and MRO traps
     AbstractNETCONFAdapter.__init__(self, **kwargs)
     AbstractESCAPEAdapter.__init__(self)
-    log.debug("Init VNFStarterAdapter - params: %s" % kwargs)
+    log.debug(
+      "Init VNFStarterAdapter - type: %s, params: %s" % (self.type, kwargs))
 
   def check_domain_reachable (self):
     """
@@ -674,6 +682,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   domain.
   """
   name = "ESCAPE-REST"
+  type = AbstractESCAPEAdapter.TYPE_REMOTE
 
   def __init__ (self, url):
     """
@@ -682,7 +691,8 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param url: remote ESCAPEv2 RESTful API URL
     :type url: str
     """
-    log.debug("Init RemoteESCAPEv2RESTAdapter with URL: %s" % url)
+    log.debug(
+      "Init RemoteESCAPEv2RESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("RemoteESCAPEv2 base URL is set to %s" % self._base_url)
     AbstractESCAPEAdapter.__init__(self)
@@ -729,6 +739,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   """
   # Adapter name used in CONFIG and ControllerAdapter class
   name = "OpenStack-REST"
+  type = AbstractESCAPEAdapter.TYPE_REMOTE
 
   def __init__ (self, url):
     """
@@ -737,7 +748,8 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param url: OpenStack RESTful API URL
     :type url: str
     """
-    log.debug("Init OpenStackRESTAdapter with URL: %s" % url)
+    log.debug(
+      "Init OpenStackRESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("OpenStack base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self)
@@ -794,6 +806,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   """
   # Adapter name used in CONFIG and ControllerAdapter class
   name = "UN-REST"
+  type = AbstractESCAPEAdapter.TYPE_REMOTE
 
   def __init__ (self, url):
     """
@@ -802,7 +815,8 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param url: Universal Node RESTful API URL
     :type url: str
     """
-    log.debug("Init UniversalNodeRESTAdapter with URL: %s" % url)
+    log.debug(
+      "Init UniversalNodeRESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url)
     log.debug("Universal Node base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self)

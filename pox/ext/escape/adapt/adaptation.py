@@ -23,6 +23,7 @@ from escape import CONFIG
 from escape.adapt import log as log
 from escape.adapt.managers import InternalDomainManager
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
+from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent
 from escape.util.nffg import NFFG
 
@@ -77,7 +78,7 @@ class ComponentConfigurator(object):
         return self.start_mgr(domain_name)
       else:
         raise AttributeError(
-          "No adapter is defined with the name: %s" % domain_name)
+          "No component is registered with the name: %s" % domain_name)
 
   def start_mgr (self, domain_name, autostart=True):
     """
@@ -173,7 +174,7 @@ class ComponentConfigurator(object):
 
   # Configuration related functions
 
-  def load_component (self, component_name):
+  def load_component (self, component_name, parent=None):
     """
     Load given component (DomainAdapter/DomainManager) from config.
     Initiate the given component class, pass the additional attributes,
@@ -181,16 +182,20 @@ class ComponentConfigurator(object):
 
     :param component_name: component's name
     :type component_name: str
+    :param parent: define the parent of the actual component's configuration
+    :type parent: dict
     :return: initiated component
     :rtype: :any:`AbstractESCAPEAdapter` or :any:`AbstractDomainManager`
     """
     try:
       # Get component class
-      component_class = CONFIG.get_component(component_name)
+      component_class = CONFIG.get_component(component=component_name,
+                                             parent=parent)
       # If it's found
       if component_class is not None:
         # Get optional parameters of this component
-        params = CONFIG.get_component_params(component_name)
+        params = CONFIG.get_component_params(component=component_name,
+                                             parent=parent)
         # Initialize component
         component = component_class(**params)
         # Set up listeners for e.g. DomainChangedEvents
@@ -276,7 +281,7 @@ class ControllerAdapter(object):
     NFFG.DOMAIN_UN: mgrs.UniversalNodeDomainManager.name,
     NFFG.DOMAIN_SDN: mgrs.SDNDomainManager.name,
     NFFG.DOMAIN_REMOTE: mgrs.RemoteESCAPEDomainManager.name
-    }
+  }
 
   def __init__ (self, layer_API, with_infr=False):
     """
@@ -297,12 +302,17 @@ class ControllerAdapter(object):
     # Set virtualizer-related components
     self.domainResManager = DomainResourceManager()
     self.domains = ComponentConfigurator(self)
-    if with_infr:
-      # Init internal domain manager if Infrastructure Layer is started
-      self.domains.load_internal_mgr()
-    # Init default domain managers
-    log.info("Initializing DomainManagers...")
-    self.domains.load_default_mgrs()
+    try:
+      if with_infr:
+        # Init internal domain manager if Infrastructure Layer is started
+        self.domains.load_internal_mgr()
+      # Init default domain managers
+      log.info("Initializing DomainManagers...")
+      self.domains.load_default_mgrs()
+    except (ImportError, AttributeError, ConfigurationError) as e:
+      from escape.util.misc import quit_with_error
+      quit_with_error(msg="Shutting down ESCAPEv2! Cause: %s" % e,
+                      logger=log)
 
   def shutdown (self):
     """

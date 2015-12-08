@@ -16,7 +16,6 @@ Implement the supporting classes for domain adapters.
 import time
 import urlparse
 from requests import Session, ConnectionError, HTTPError, Timeout
-
 import pox.openflow.libopenflow_01 as of
 from escape import __version__
 from escape.adapt import log
@@ -89,7 +88,7 @@ class AbstractDomainManager(EventMixin):
   # Polling interval
   POLL_INTERVAL = 3
 
-  def __init__ (self, **kwargs):
+  def __init__ (self, adapters=None, **kwargs):
     """
     Init.
     """
@@ -100,6 +99,7 @@ class AbstractDomainManager(EventMixin):
     self.internal_topo = None  # Description of the domain topology as an NFFG
     self.topoAdapter = None  # Special adapter which can handle the topology
     # description, request it, and install mapped NFs from internal NFFG
+    self._adapters_cfg = adapters
     if 'poll' in kwargs:
       self._poll = kwargs['poll']
     else:
@@ -274,6 +274,8 @@ class AbstractDomainManager(EventMixin):
     Update the resource information of this domain with the requested
     configuration.
 
+    :param data: new data
+    :type data: :any:`NFFG`
     :return: None
     """
     # Cache requested topo info
@@ -317,10 +319,18 @@ class AbstractESCAPEAdapter(EventMixin):
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
-  # Adapter name used in CONFIG and ControllerAdapter class
+  # Adapter name used in POX's core or CONFIG, etc.
   name = None
+  # Adapter type used in CONFIG under the specific DomainManager
+  # Defines the general Adapter name in the CONFIG
+  type = None
+  # Pre-defined constants for type field
+  TYPE_CONTROLLER = "CONTROLLER"
+  TYPE_TOPOLOGY = "TOPOLOGY"
+  TYPE_MANAGEMENT = "MANAGEMENT"
+  TYPE_REMOTE = "REMOTE"
 
-  def __init__ (self):
+  def __init__ (self, *args, **kwargs):
     """
     Init.
     """
@@ -559,6 +569,7 @@ class VNFStarterAPI(object):
   VNF_HEADER_DECOMP = "headerDecompressor"
   VNF_FORWARDER = "simpleForwarder"
 
+
   class VNFStatus(object):
     """
     Helper class for define VNF status code constants.
@@ -572,6 +583,7 @@ class VNFStarterAPI(object):
     UP_AND_RUNNING = 1
     s_UP_AND_RUNNING = "UP_AND_RUNNING"
 
+
   class ConnectedStatus(object):
     """
     Helper class for define VNF connection code constants.
@@ -582,6 +594,7 @@ class VNFStarterAPI(object):
     s_DISCONNECTED = "DISCONNECTED"
     CONNECTED = 1
     s_CONNECTED = "CONNECTED"
+
 
   def __init__ (self):
     super(VNFStarterAPI, self).__init__()
@@ -830,7 +843,8 @@ class AbstractRESTAdapter(Session):
     """
     try:
       self.send_request(method, url, body, **kwargs)
-      # return self._response.status_code if self._response is not None else None
+      # return self._response.status_code if self._response is not None else
+      # None
       return self._response.text if self._response is not None else None
     except ConnectionError:
       log.error(

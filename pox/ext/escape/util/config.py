@@ -582,7 +582,7 @@ class ESCAPEConfig(object):
     Return the path of the SDN topology config file.
 
     :return:  path of topology config file
-    :rtype
+    :rtype: str
     """
     try:
       # Project root dir relative to this module which is/must be under root
