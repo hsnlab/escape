@@ -208,7 +208,7 @@ class ComponentConfigurator(object):
         log.error(
           "Configuration of '%s' is missing. Skip initialization!" %
           component_name)
-        raise RuntimeError("Missing component configuration!")
+        raise ConfigurationError("Missing component configuration!")
     except AttributeError:
       log.error(
         "%s is not found. Skip component initialization!" % component_name)
