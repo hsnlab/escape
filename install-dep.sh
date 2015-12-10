@@ -106,7 +106,7 @@ info "=== Install neo4j graph database ==="
 sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
 sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' > /etc/apt/sources.list.d/neo4j.list"
 sudo apt-get update
-sudo apt-get -y install neo4j
+sudo apt-get -y install neo4j=2.2.7
 # disable authentication in /etc/neo4j/neo4j-server.properties
 sudo sed -i s/dbms\.security\.auth_enabled=true/dbms\.security\.auth_enabled=false/ \
     /etc/neo4j/neo4j-server.properties
