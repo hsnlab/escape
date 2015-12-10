@@ -197,6 +197,22 @@ For domain emulation scripts:
 Other required programs (OpenYuma, click, neo4j, etc.), which are installed by
 the `install_dep.sh` script by default, are also need to be installed manually.
 
+On Ubuntu the newest ``neo4j`` database server (2.3.1) does not work with ESCAPEv2
+due to a socket Exception raised during connection initiation. The latest tested
+version is *2.2.7*.
+
+If a newer versin has been installed on the system, use the following commands to
+downgrade. In this case the authentication bypass needs to be done again.
+
+.. code-block:: bash
+    
+    $ sudo -i
+    $ apt-get purge neo4j
+    $ rm -rf /var/lib/neo4j/data/
+    $ rm -rf /etc/neo4j/
+    $ apt-get install neo4j=2.2.7
+    $ apt-mark hold neo4j
+
 In extreme cases, e.g. the `install_dep.sh` ran into an error, you should install
 these dependencies one by one according to your OS, distro or development environment.
 For that you can check the steps in the install script and/or the online documentations
@@ -266,6 +282,7 @@ An another solution is to define a system user for the netconfd. To create a use
 
     $ sudo adduser --system --shell /bin/bash --no-create-home mininet
     $ sudo addgroup mininet sudo
+    $ sudo passwd mininet	# password: mininet also
 
 For security reasons it's highly recommended to limit the SSH connections for the
 `mininet` user only to localhost.
