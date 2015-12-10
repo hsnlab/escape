@@ -146,8 +146,8 @@ available arguments of the top starting script check the help menu:
          $ cd /usr/src
          $ apt-get update && apt-get source openssh-server
          $ cd openssh-*
-         $ sed -in 's/\(\#define MAX_LISTEN_SOCKS\).*/\1 256/' sshd.c
-         $ sed -in 's/\(\#define MAX_PORTS\).*/\1 256/' servconf.h
+         $ sed -i 's/^\(#define\s*MAX_LISTEN_SOCKS\s*\).*/\1256/' sshd.c
+         $ sed -i 's/^\(#define\s*MAX_PORTS\s*\).*/\1256/' servconf.h
          $ ./configure --prefix=/usr --sysconfdir=/etc/ssh --with-default-path=$PATH
          $ make
          $ make install
