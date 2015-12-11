@@ -21,7 +21,6 @@ import weakref
 import escape.adapt.managers as mgrs
 from escape import CONFIG
 from escape.adapt import log as log
-from escape.adapt.managers import InternalDomainManager
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent
@@ -78,7 +77,7 @@ class ComponentConfigurator(object):
         return self.start_mgr(domain_name)
       else:
         raise AttributeError(
-          "No component is registered with the name: %s" % domain_name)
+           "No component is registered with the name: %s" % domain_name)
 
   def start_mgr (self, domain_name, autostart=True):
     """
@@ -128,7 +127,7 @@ class ComponentConfigurator(object):
       # del self.__repository[domain_name]
     else:
       log.warning(
-        "Missing domain component: %s! Skipping stop task..." % domain_name)
+         "Missing domain component: %s! Skipping stop task..." % domain_name)
 
   def is_started (self, domain_name):
     """
@@ -206,17 +205,17 @@ class ComponentConfigurator(object):
         return component
       else:
         log.error(
-          "Configuration of '%s' is missing. Skip initialization!" %
-          component_name)
+           "Configuration of '%s' is missing. Skip initialization!" %
+           component_name)
         raise ConfigurationError("Missing component configuration!")
     except AttributeError:
       log.error(
-        "%s is not found. Skip component initialization!" % component_name)
+         "%s is not found. Skip component initialization!" % component_name)
       raise
     except ImportError:
       log.error(
-        "Could not import module: %s. Skip component initialization!" %
-        component_name)
+         "Could not import module: %s. Skip component initialization!" %
+         component_name)
       raise
 
   def load_default_mgrs (self):
@@ -236,7 +235,8 @@ class ComponentConfigurator(object):
 
     :return: None
     """
-    log.debug("Init DomainManager for domain: %s" % InternalDomainManager.name)
+    log.debug(
+      "Init DomainManager for domain: %s" % mgrs.InternalDomainManager.name)
     self.start_mgr(mgrs.InternalDomainManager.name)
 
   def clear_initiated_mgrs (self):
@@ -343,11 +343,11 @@ class ControllerAdapter(object):
     slices = self._split_into_domains(mapped_nffg)
     if slices is None:
       log.warning(
-        "Given mapped NFFG: %s can not be sliced! Skip domain notification "
-        "steps" % mapped_nffg)
+         "Given mapped NFFG: %s can not be sliced! Skip domain notification "
+         "steps" % mapped_nffg)
       return
     log.debug(
-      "Notify initiated domains: %s" % [d for d in self.domains.initiated])
+       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
     mapping_result = True
     for domain, part in slices:
       domain_mgr = self.DOMAIN_MAPPING[domain]
@@ -360,14 +360,14 @@ class ControllerAdapter(object):
         mapping_result = mapping_result and res
       else:
         log.warning(
-          "Domain manager associated to domain: %s is not initiated! Skip "
-          "install domain part..." % domain_mgr)
+           "Domain manager associated to domain: %s is not initiated! Skip "
+           "install domain part..." % domain_mgr)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
     # FIXME - hardcoded, you can do it better
     if mapping_result:
       log.info("All installation process has been finished with success! ")
       log.debug(
-        "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
+         "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
       # Update global view (DoV) with the installed components
       self.domainResManager.get_global_view().update_global_view(mapped_nffg)
       # print self.domainResManager.get_global_view().get_resource_info().dump()
@@ -427,7 +427,7 @@ class ControllerAdapter(object):
         for u, v, link in nffg.network.out_edges_iter([infra.id], data=True):
           # Skip Requirement and SG links
           if link.type != NFFG.TYPE_LINK_STATIC and link.type != \
-               NFFG.TYPE_LINK_DYNAMIC:
+             NFFG.TYPE_LINK_DYNAMIC:
             continue
           if nffg.network.node[v].type == NFFG.TYPE_NF or nffg.network.node[
             v].type == NFFG.TYPE_SAP:
@@ -447,7 +447,7 @@ class ControllerAdapter(object):
       splitted_parts.append((domain, nffg_part))
 
       log.debug(
-        "Search for inter-domain SAP ports and recreate associated SAPs...")
+         "Search for inter-domain SAP ports and recreate associated SAPs...")
       # Recreate inter-domain SAP
       for infra in nffg_part.infras:
         for port in infra.ports:
@@ -474,7 +474,7 @@ class ControllerAdapter(object):
             # Connect SAP to Infra
             nffg_part.add_undirected_link(port1=port, port2=sap_port)
             log.debug(
-              "Add inter-domain SAP: %s with port: %s" % (sap, sap_port))
+               "Add inter-domain SAP: %s with port: %s" % (sap, sap_port))
 
       # Check orphaned or not connected nodes and remove them
       for node_id in nffg_part.network.nodes():
@@ -582,7 +582,7 @@ class DomainVirtualizer(AbstractVirtualizer):
         log.debug("Copy infra node: %s" % c_infra)
       else:
         log.warning(
-          "Infra node: %s does already exist in DoV. Skip adding..." % infra)
+           "Infra node: %s does already exist in DoV. Skip adding..." % infra)
 
     # Copy NFs
     for nf in nffg.nfs:
@@ -591,7 +591,7 @@ class DomainVirtualizer(AbstractVirtualizer):
         log.debug("Copy NF node: %s" % c_nf)
       else:
         log.warning(
-          "NF node: %s does already exist in DoV. Skip adding..." % nf)
+           "NF node: %s does already exist in DoV. Skip adding..." % nf)
 
     # Copy SAPs
     for sap_id in [s.id for s in nffg.saps]:
@@ -604,13 +604,13 @@ class DomainVirtualizer(AbstractVirtualizer):
                                                             data=True)]
         if len(b_links) < 1:
           log.warning(
-            "SAP is not connected to any node! Maybe you forget to call "
-            "duplicate_static_links?")
+             "SAP is not connected to any node! Maybe you forget to call "
+             "duplicate_static_links?")
           return
         if 2 < len(b_links):
           log.warning(
-            "Inter-domain SAP should have one and only one connection to the "
-            "domain! Using only the first connection.")
+             "Inter-domain SAP should have one and only one connection to the "
+             "domain! Using only the first connection.")
           continue
 
         # Get inter-domain port in self._global_nffg NFFG
@@ -622,13 +622,13 @@ class DomainVirtualizer(AbstractVirtualizer):
 
         if len(n_links) < 1:
           log.warning(
-            "SAP is not connected to any node! Maybe you forget to call "
-            "duplicate_static_links?")
+             "SAP is not connected to any node! Maybe you forget to call "
+             "duplicate_static_links?")
           return
         if 2 < len(n_links):
           log.warning(
-            "Inter-domain SAP should have one and only one connection to the "
-            "domain! Using only the first connection.")
+             "Inter-domain SAP should have one and only one connection to the "
+             "domain! Using only the first connection.")
           continue
 
         # Get port and Infra id's in nffg NFFG
@@ -643,13 +643,13 @@ class DomainVirtualizer(AbstractVirtualizer):
         if len(domain_port_nffg.properties) > 0:
           domain_port_dov.add_property(domain_port_nffg.properties)
           log.debug(
-            "Copy inter-domain port properties: %s" %
-            domain_port_dov.properties)
+             "Copy inter-domain port properties: %s" %
+             domain_port_dov.properties)
         elif len(domain_port_dov.properties) > 0:
           domain_port_nffg.add_property(domain_port_dov.properties)
           log.debug(
-            "Copy inter-domain port properties: %s" %
-            domain_port_nffg.properties)
+             "Copy inter-domain port properties: %s" %
+             domain_port_nffg.properties)
         else:
           domain_port_dov.add_property("sap:%s" % sap_id)
           domain_port_nffg.add_property("sap:%s" % sap_id)
@@ -662,8 +662,8 @@ class DomainVirtualizer(AbstractVirtualizer):
         self._global_nffg.del_node(sap_id)
         nffg.del_node(sap_id)
         log.debug(
-          "Add inter-domain connection with delay: %s, bandwidth: %s" % (
-            b_links[0].delay, b_links[0].bandwidth))
+           "Add inter-domain connection with delay: %s, bandwidth: %s" % (
+             b_links[0].delay, b_links[0].bandwidth))
 
         # Add the inter-domain links for both ways
         self._global_nffg.add_undirected_link(port1=domain_port_dov,
@@ -674,7 +674,7 @@ class DomainVirtualizer(AbstractVirtualizer):
       else:
         # Normal SAP --> copy SAP
         c_sap = self._global_nffg.add_sap(
-          sap=deepcopy(nffg.network.node[sap_id]))
+           sap=deepcopy(nffg.network.node[sap_id]))
         log.debug("Copy SAP: %s" % c_sap)
 
     # Copy remaining links which should be valid
@@ -761,7 +761,7 @@ class DomainResourceManager(object):
       else:
         # No other domain detected, set NFFG as the whole global view
         log.debug(
-          "DoV is empty! Add new domain: %s as the global view!" % domain)
+           "DoV is empty! Add new domain: %s as the global view!" % domain)
         self._dov.set_domain_as_global_view(domain, nffg)
       # Add detected domain to cached domains
       self._tracked_domains.add(domain)

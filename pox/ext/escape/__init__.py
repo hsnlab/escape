@@ -116,8 +116,12 @@ cfg = {
   "adaptation":  # Controller Adaptation Sublayer
     {
       # Default managers need to start at init
-      "MANAGERS": ["REMOTE-ESCAPE", "SDN", "OPENSTACK", "UN"],
-      # "MANAGERS": [],
+      "MANAGERS": [
+        "REMOTE-ESCAPE",
+        "SDN",
+        "OPENSTACK",
+        "UN"
+      ],
       # Specific Domain Managers
       "INTERNAL":
         {
@@ -271,7 +275,7 @@ def add_dependencies ():
     if not os.path.isdir(abs_sub_folder):
       continue
     if not (sub_folder.startswith('.') or sub_folder.upper().startswith(
-         'PYTHON')) and sub_folder not in SKIPPED:
+       'PYTHON')) and sub_folder not in SKIPPED:
       if abs_sub_folder not in sys.path:
         core.getLogger().debug("Add dependency: %s" % abs_sub_folder)
         sys.path.insert(0, abs_sub_folder)
