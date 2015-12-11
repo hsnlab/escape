@@ -185,8 +185,11 @@ For doc generations:
 
 .. code-block:: bash
 
+    # html
     $ sudo apt-get install graphviz
     $ sudo pip install sphinx
+    # latex
+    $ sudo apt-get install texlive-latex-extra
 
 For domain emulation scripts:
 
@@ -282,7 +285,7 @@ An another solution is to define a system user for the netconfd. To create a use
 
     $ sudo adduser --system --shell /bin/bash --no-create-home mininet
     $ sudo addgroup mininet sudo
-    $ sudo passwd mininet	# password: mininet also
+    $ sudo passwd mininet	# password: mininet
 
 For security reasons it's highly recommended to limit the SSH connections for the
 `mininet` user only to localhost.

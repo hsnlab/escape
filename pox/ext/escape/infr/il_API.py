@@ -14,7 +14,7 @@
 """
 Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet.
 """
-from escape import CONFIG, ESCAPEConfig
+from escape import CONFIG
 from escape.infr import LAYER_NAME
 from escape.infr import log as log  # Infrastructure layer logger
 from escape.infr.topology import ESCAPENetworkBuilder
@@ -93,8 +93,14 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     # Check if our POX controller is up
     # ESCAPEConfig follows Singleton design pattern
-    if event.name == "INTERNAL-POX" and isinstance(event.component,
-                                                   OpenFlow_01_Task):
+    internal_adapters = CONFIG.get_component_params(component="INTERNAL")[
+      'adapters']
+    # print internal_adapters
+    internal_controller = CONFIG.get_component(component="CONTROLLER",
+                                               parent=internal_adapters)
+    # print internal_controller
+    if event.name == internal_controller.name and isinstance(event.component,
+                                                             OpenFlow_01_Task):
       if self.topology is not None:
         log.info("Internal domain controller is up! Initiate network emulation "
                  "now...")
@@ -119,5 +125,5 @@ class InfrastructureLayerAPI(AbstractAPI):
     # TODO - implement static deployment
     # TODO - probably will not be supported in the future
     log.getChild('API').info(
-      "NF-FG: %s deployment has been finished successfully!" % event.nffg_part)
+       "NF-FG: %s deployment has been finished successfully!" % event.nffg_part)
     self.raiseEventNoErrors(DeploymentFinishedEvent, True)

@@ -41,7 +41,7 @@ setup(
     keywords='networking emulator protocol Internet OpenFlow SDN',
     license='BSD',
     install_requires=[
-        'setuptools', 'jinja2'
+        'setuptools', 'jinja2', 'ncclient'
     ],
     scripts=scripts,
 )
