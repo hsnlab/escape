@@ -917,6 +917,26 @@ this configurations structure.
                     }
                 }
             },
+            "SDN": {
+                "module": "escape.adapt.managers",
+                "class": "SDNDomainManager",
+                "poll": false,
+                "adapters": {
+                    "CONTROLLER": {
+                        "module": "escape.adapt.adapters",
+                        "class": "SDNDomainPOXAdapter",
+                        "name": null,
+                        "address": "0.0.0.0",
+                        "port": 6633,
+                        "keepalive": false
+                    },
+                    "TOPOLOGY": {
+                        "module": "escape.adapt.adapters",
+                        "class": "SDNDomainTopoAdapter",
+                        "path": "examples/sdn-topo.nffg"
+                    }
+                }
+            },
             "REMOTE-ESCAPE": {
                 "module": "escape.adapt.managers",
                 "class": "RemoteESCAPEDomainManager",
@@ -950,26 +970,6 @@ this configurations structure.
                         "module": "escape.adapt.adapters",
                         "class": "UniversalNodeRESTAdapter",
                         "url": "http://localhost:8082"
-                    }
-                }
-            },
-            "SDN": {
-                "module": "escape.adapt.managers",
-                "class": "SDNDomainManager",
-                "poll": false,
-                "adapters": {
-                    "CONTROLLER": {
-                        "module": "escape.adapt.adapters",
-                        "class": "SDNDomainPOXAdapter",
-                        "name": null,
-                        "address": "0.0.0.0",
-                        "port": 6633,
-                        "keepalive": false
-                    },
-                    "TOPOLOGY": {
-                        "module": "escape.adapt.adapters",
-                        "class": "SDNDomainTopoAdapter",
-                        "path": "examples/sdn-topo.nffg"
                     }
                 }
             },
