@@ -16,6 +16,7 @@ Implement the supporting classes for domain adapters.
 import time
 import urlparse
 from requests import Session, ConnectionError, HTTPError, Timeout
+
 import pox.openflow.libopenflow_01 as of
 from escape import __version__
 from escape.adapt import log
@@ -83,16 +84,20 @@ class AbstractDomainManager(EventMixin):
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
-  # Domain name
+  # DomainManager name
   name = "UNDEFINED"
+  # Default domain name
+  DEFAULT_DOMAIN_NAME = "UNDEFINED"
   # Polling interval
   POLL_INTERVAL = 3
 
-  def __init__ (self, adapters=None, **kwargs):
+  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, adapters=None, **kwargs):
     """
     Init.
     """
     super(AbstractDomainManager, self).__init__()
+    # Name of the domain
+    self.domain_name = domain_name
     # Timer for polling function
     self._timer = None
     self._detected = None  # Actual domain is detected or not
@@ -104,6 +109,9 @@ class AbstractDomainManager(EventMixin):
       self._poll = kwargs['poll']
     else:
       self._poll = False
+
+  def __str__ (self):
+    return "DomainManager(name: %s, domain: %s)" % (self.name, self.domain_name)
 
   ##############################################################################
   # Abstract functions for component control
@@ -119,14 +127,41 @@ class AbstractDomainManager(EventMixin):
     :type kwargs: dict
     :return: None
     """
+    if not self._adapters_cfg:
+      log.fatal(
+         "Missing Adapter configurations from DomainManager: %s" %
+         self.domain_name)
+      raise ConfigurationError(
+         "Missing configuration for %s" % self.domain_name)
+    log.debug(
+       "Init Adapters for domain: %s - adapters: %s" % (
+         self.domain_name,
+         [a['class'] for a in self._adapters_cfg.itervalues()]))
+    # Update Adapters's config with domain name
+    # self._adapters_cfg['domain_name'] = self.domain_name
+    for adapter in self._adapters_cfg.itervalues():
+      adapter['domain_name'] = self.domain_name
+    # Initiate Adapters
+    self.initiate_adapters(configurator)
     # Skip to start polling is it's set
     if not self._poll:
       # Try to request/parse/update Mininet topology
       if not self._detect_topology():
-        log.warning("%s domain not confirmed during init!" % self.name)
+        log.warning("%s domain not confirmed during init!" % self.domain_name)
     else:
-      log.debug("Start polling %s domain..." % self.name)
+      log.debug("Start polling %s domain..." % self.domain_name)
       self.start_polling(self.POLL_INTERVAL)
+
+  def initiate_adapters (self, configurator):
+    """
+    Initiate Adapters for DomainManager.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :return: None
+    """
+    raise NotImplementedError(
+       "Managers must override this function to initiate Adapters!")
 
   def run (self):
     """
@@ -228,11 +263,12 @@ class AbstractDomainManager(EventMixin):
     # Not returned before --> got error
     if self._detected is None:
       # detected = None -> First try
-      log.warning("%s agent is not detected! Keep trying..." % self.name)
+      log.warning("%s agent is not detected! Keep trying..." % self.domain_name)
       self._detected = False
     elif self._detected:
       # Detected before -> lost connection = big Problem
-      log.warning("Lost connection with %s agent! Go slow poll..." % self.name)
+      log.warning(
+         "Lost connection with %s agent! Go slow poll..." % self.domain_name)
       self._detected = False
       self.restart_polling()
     else:
@@ -251,9 +287,10 @@ class AbstractDomainManager(EventMixin):
     :rtype: bool
     """
     if self.topoAdapter.check_domain_reachable():
-      log.info(">>> %s domain confirmed!" % self.name)
+      log.info(">>> %s domain confirmed!" % self.domain_name)
       self._detected = True
-      log.info("Requesting resource information from %s domain..." % self.name)
+      log.info(
+         "Requesting resource information from %s domain..." % self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
       # print topo_nffg.dump()
       if topo_nffg:
@@ -262,7 +299,7 @@ class AbstractDomainManager(EventMixin):
         self.update_local_resource_info(topo_nffg)
         # Notify all components for topology change --> this event causes
         # the DoV updating
-        self.raiseEventNoErrors(DomainChangedEvent, domain=self.name,
+        self.raiseEventNoErrors(DomainChangedEvent, domain=self.domain_name,
                                 cause=DomainChangedEvent.TYPE.NETWORK_UP,
                                 data=topo_nffg)
       else:
@@ -330,12 +367,30 @@ class AbstractESCAPEAdapter(EventMixin):
   TYPE_MANAGEMENT = "MANAGEMENT"
   TYPE_REMOTE = "REMOTE"
 
-  def __init__ (self, *args, **kwargs):
+  def __init__ (self, domain_name='UNDEFINED', *args, **kwargs):
     """
     Init.
     """
     super(AbstractESCAPEAdapter, self).__init__()
+    self.domain_name = domain_name
     self._timer = None
+
+  def rewrite_domain (self, nffg):
+    """
+    Rewrite the DOMAIN information in nodes of the given :any:`NFFG`.
+
+    :param nffg: topology description
+    :type nffg: :any:`NFFG`
+    :return: the rewritten description
+    :rtype: :any:`NFFG`
+    """
+    if self.domain_name == "UNDEFINED":
+      log.warning(
+         "Domain name is not set for Adapter(name: %s)! Skip domain rewrite "
+         "for %s..." % (self.name, nffg))
+    for infra in nffg.infras:
+      infra.domain = self.domain_name
+    return nffg
 
   def start_polling (self, wait=1):
     """
@@ -411,7 +466,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
   }
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
-                keepalive=False):
+                keepalive=False, *args, **kwargs):
     """
     Initialize attributes, register specific connection Arbiter if needed and
     set up listening of OpenFlow events.
@@ -424,7 +479,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     :type port: int
     """
     name = name if name is not None else self.name
-    super(AbstractOFControllerAdapter, self).__init__()
+    super(AbstractOFControllerAdapter, self).__init__(*args, **kwargs)
     # Set an OpenFlow nexus as a source of OpenFlow events
     self.openflow = OpenFlowBridge()
     self.controller_address = (address, port)
@@ -435,8 +490,8 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     # Launch OpenFlow connection handler if not started before with given name
     # launch() return the registered openflow module which is a coop Task
     log.debug(
-      "Setup OF interface and initiate handler object for connection: (%s, "
-      "%i)" % (address, port))
+       "Setup OF interface and initiate handler object for connection: (%s, "
+       "%i)" % (address, port))
     from pox.openflow.of_01 import launch
 
     of = launch(name=name, address=address, port=port)
@@ -496,7 +551,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     dpid = self.infra_to_dpid[id]
     con = self.openflow.getConnection(dpid)
     log.debug(
-      "Delete flow entries from INFRA %s on connection: %s ..." % (id, con))
+       "Delete flow entries from INFRA %s on connection: %s ..." % (id, con))
 
     msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
     con.send(msg)
@@ -518,7 +573,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     dpid = self.infra_to_dpid[id]
     con = self.openflow.getConnection(dpid)
     log.debug(
-      "Install flow entry into INFRA %s on connection: %s ..." % (id, con))
+       "Install flow entry into INFRA %s on connection: %s ..." % (id, con))
 
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
@@ -531,7 +586,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     try:
       vid = action['vlan_push']
       msg.actions.append(
-        of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
+         of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
       # msg.actions.append(of.ofp_action_vlan_vid())
     except KeyError:
       pass
@@ -761,7 +816,7 @@ class AbstractRESTAdapter(Session):
   GET = "GET"
   POST = "POST"
 
-  def __init__ (self, base_url, auth=None):
+  def __init__ (self, base_url, auth=None, *args, **kwargs):
     super(AbstractRESTAdapter, self).__init__()
     self._base_url = base_url
     self.auth = auth
@@ -848,20 +903,20 @@ class AbstractRESTAdapter(Session):
       return self._response.text if self._response is not None else None
     except ConnectionError:
       log.error(
-        "Remote agent(domain: %s, url: %s) is not reachable!" % (
-          self.name, self._base_url))
+         "Remote agent(adapter: %s, url: %s) is not reachable!" % (
+           self.name, self._base_url))
       return None
     except HTTPError as e:
       log.error(
-        "Remote agent(domain: %s, url: %s) responded with an error: %s" % (
-          self.name, self._base_url, e.message))
+         "Remote agent(adapter: %s, url: %s) responded with an error: %s" % (
+           self.name, self._base_url, e.message))
       return None
     except Timeout:
-      log.error("Remote agent(domain: %s, url: %s) not responding!" % (
+      log.error("Remote agent(adapter: %s, url: %s) not responding!" % (
         self.name, self._base_url))
       return None
     except KeyboardInterrupt:
       log.warning(
-        "Request to remote agent(domain: %s, url: %s) is interrupted by "
-        "user!" % (self.name, self._base_url))
+         "Request to remote agent(adapter: %s, url: %s) is interrupted by "
+         "user!" % (self.name, self._base_url))
       return None

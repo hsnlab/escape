@@ -117,10 +117,11 @@ cfg = {
     {
       # Default managers need to start at init
       "MANAGERS": [
-        "REMOTE-ESCAPE",
-        "SDN",
-        "OPENSTACK",
-        "UN"
+        # "REMOTE-ESCAPE",
+        # "REMOTE-ESCAPE2",
+        # "SDN",
+        # "OPENSTACK",
+        # "UN"
       ],
       # Specific Domain Managers
       "INTERNAL":
@@ -157,6 +158,29 @@ cfg = {
               }
           }
         },
+      "SDN": {
+        "module": "escape.adapt.managers",
+        "class": "SDNDomainManager",
+        "poll": False,
+        # "domain_name": "SDN-MICROTIK",
+        "adapters": {
+          "CONTROLLER":
+            {
+              "module": "escape.adapt.adapters",
+              "class": "SDNDomainPOXAdapter",
+              "name": None,
+              "address": "0.0.0.0",
+              "port": 6633,
+              "keepalive": False
+            },
+          "TOPOLOGY":
+            {
+              "module": "escape.adapt.adapters",
+              "class": "SDNDomainTopoAdapter",
+              "path": "examples/sdn-topo.nffg"  # relative to project root
+            }
+        }
+      },
       "REMOTE-ESCAPE":
         {
           "module": "escape.adapt.managers",
@@ -168,6 +192,21 @@ cfg = {
                 "module": "escape.adapt.adapters",
                 "class": "RemoteESCAPEv2RESTAdapter",
                 "url": "http://localhost:8083"
+              }
+          }
+        },
+      "REMOTE-ESCAPE2":
+        {
+          "module": "escape.adapt.managers",
+          "class": "RemoteESCAPEDomainManager",
+          "domain_name": "extESCAPE",
+          "poll": False,
+          "adapters": {
+            "REMOTE":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "RemoteESCAPEv2RESTAdapter",
+                "url": "http://localhost:8085"
               }
           }
         },
@@ -199,28 +238,6 @@ cfg = {
               }
           }
         },
-      "SDN": {
-        "module": "escape.adapt.managers",
-        "class": "SDNDomainManager",
-        "poll": False,
-        "adapters": {
-          "CONTROLLER":
-            {
-              "module": "escape.adapt.adapters",
-              "class": "SDNDomainPOXAdapter",
-              "name": None,
-              "address": "0.0.0.0",
-              "port": 6633,
-              "keepalive": False
-            },
-          "TOPOLOGY":
-            {
-              "module": "escape.adapt.adapters",
-              "class": "SDNDomainTopoAdapter",
-              "path": "examples/sdn-topo.nffg"  # relative to project root
-            }
-        }
-      },
       "DOCKER":
         {
           "module": "escape.adapt.managers",

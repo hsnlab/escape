@@ -761,13 +761,7 @@ class NodeInfra(Node):
   TYPE_STATIC_EE = "STATIC"  # Static EE probably will never use
   TYPE_SDN_SWITCH = "SDN-SWITCH"  # Common OVS switch - can't run NF
   # Defined domain type
-  DOMAIN_VIRTUAL = "VIRTUAL"
-  DOMAIN_INTERNAL = "INTERNAL"
-  DOMAIN_REMOTE = "REMOTE"
-  DOMAIN_OS = "OPENSTACK"
-  DOMAIN_UN = "UNIVERSAL_NODE"
-  DOMAIN_SDN = "SDN"
-  DOMAIN_DOCKER = "DOCKER"
+  DEFAULT_DOMAIN = "VIRTUAL"
 
   def __init__ (self, id=None, name=None, domain=None, infra_type=None,
                 supported=None, res=None):
@@ -785,7 +779,7 @@ class NodeInfra(Node):
     :return: None
     """
     super(NodeInfra, self).__init__(id=id, type=Node.INFRA, name=name)
-    self.domain = domain if domain is not None else self.DOMAIN_VIRTUAL
+    self.domain = domain if domain is not None else self.DEFAULT_DOMAIN
     self.infra_type = infra_type if infra_type is not None else \
       self.TYPE_BISBIS
     # Set supported types according to given param type
@@ -865,7 +859,7 @@ class NodeInfra(Node):
       infra_port = self.add_port(id=port['id'], properties=port.get('property'))
       for flowrule in port.get('flowrules', ()):
         infra_port.flowrules.append(Flowrule.parse(flowrule))
-    self.domain = data.get('domain', self.DOMAIN_VIRTUAL)  # optional
+    self.domain = data.get('domain', self.DEFAULT_DOMAIN)  # optional
     self.infra_type = data['type']
     if 'supported' in data:
       self.supported = data['supported']

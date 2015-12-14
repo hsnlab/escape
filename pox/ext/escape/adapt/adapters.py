@@ -68,7 +68,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
   }
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
-                keepalive=False):
+                keepalive=False, *args, **kwargs):
     """
     Initialize attributes, register specific connection Arbiter if needed and
     set up listening of OpenFlow events.
@@ -83,7 +83,8 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     log.debug("Init %s - type: %s, address %s:%s, optional name: %s" % (
       self.__class__.__name__, self.type, address, port, name))
     super(InternalPOXAdapter, self).__init__(name=name, address=address,
-                                             port=port, keepalive=keepalive)
+                                             port=port, keepalive=keepalive,
+                                             *args, **kwargs)
     self.topoAdapter = None
 
   def check_domain_reachable (self):
@@ -134,7 +135,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
           del self.infra_to_dpid[k]
           break
       log.debug("DPID: %s removed from infra-dpid assignments" % dpid_to_str(
-        event.dpid))
+         event.dpid))
 
     event = DomainChangedEvent(domain=self.name,
                                cause=DomainChangedEvent.TYPE.NODE_DOWN,
@@ -193,9 +194,11 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
     0x14c5e0c376fc6: 'MT2',
   }
 
-  def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False):
+  def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False,
+                *args, **kwargs):
     super(SDNDomainPOXAdapter, self).__init__(name=name, address=address,
-                                              port=port, keepalive=keepalive)
+                                              port=port, keepalive=keepalive,
+                                              *args, **kwargs)
     # Currently static initialization from a config file
     # TODO: discover SDN topology and create the NFFG
     self.topo = None  # SDN domain topology stored in NFFG
@@ -219,7 +222,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
   name = "MININET"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
-  def __init__ (self, net=None):
+  def __init__ (self, net=None, *args, **kwargs):
     """
     Init.
 
@@ -229,10 +232,9 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     log.debug("Init InternalMininetAdapter - type: %s, initial network: %s" % (
       self.type, net))
     # Call base constructors directly to avoid super() and MRO traps
-    AbstractESCAPEAdapter.__init__(self)
+    AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     if not net:
       from pox import core
-
       if core.core.hasComponent(InfrastructureLayerAPI._core_name):
         # reference to MN --> ESCAPENetworkBridge
         self.__IL_topo_ref = core.core.components[
@@ -268,7 +270,8 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :rtype: :any:`NFFG`
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
-    return self.__IL_topo_ref.topo_desc if self.__IL_topo_ref.started else None
+    return self.rewrite_domain(
+       self.__IL_topo_ref.topo_desc) if self.__IL_topo_ref.started else None
 
   def get_agent_connection_params (self, ee_name):
     """
@@ -297,10 +300,10 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
   name = "SDN-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
-  def __init__ (self, path=None):
+  def __init__ (self, path=None, *args, **kwargs):
     log.debug("Init SDNDomainTopoAdapter - type: %s, optional path: %s" % (
       self.type, path))
-    super(SDNDomainTopoAdapter, self).__init__()
+    super(SDNDomainTopoAdapter, self).__init__(*args, **kwargs)
     self.topo = None
     try:
       self.__init_from_CONFIG(path=path)
@@ -343,14 +346,14 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
       try:
         with open(path, 'r') as f:
           log.info("Load SDN topology from file: %s" % path)
-          self.topo = NFFG.parse(f.read())
+          self.topo = self.rewrite_domain(NFFG.parse(f.read()))
           self.topo.duplicate_static_links()
           # print self.topo.dump()
       except IOError:
         log.warning("SDN topology file not found: %s" % path)
       except ValueError as e:
         log.error(
-          "An error occurred when load topology from file: %s" % e.message)
+           "An error occurred when load topology from file: %s" % e.message)
         raise TopologyLoadException("File parsing error!")
 
 
@@ -373,7 +376,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
 
   # RPC namespace
   # Adapter name used in CONFIG and ControllerAdapter class
-  def __init__ (self, **kwargs):
+  def __init__ (self, *args, **kwargs):
     """
     Init.
 
@@ -390,10 +393,10 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return:
     """
     # Call base constructors directly to avoid super() and MRO traps
-    AbstractNETCONFAdapter.__init__(self, **kwargs)
-    AbstractESCAPEAdapter.__init__(self)
+    AbstractNETCONFAdapter.__init__(self, *args, **kwargs)
+    AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     log.debug(
-      "Init VNFStarterAdapter - type: %s, params: %s" % (self.type, kwargs))
+       "Init VNFStarterAdapter - type: %s, params: %s" % (self.type, kwargs))
 
   def check_domain_reachable (self):
     """
@@ -597,7 +600,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :raises: RPCError, OperationError, TransportError
     """
     log.debug(
-      "Call getVNFInfo - VNF: %s" % vnf_id if vnf_id is not None else "all")
+       "Call getVNFInfo - VNF: %s" % vnf_id if vnf_id is not None else "all")
     return self.call_RPC('getVNFInfo', vnf_id=vnf_id)
 
   ##############################################################################
@@ -646,11 +649,11 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         raise
       except KeyError as e:
         log.warning(
-          "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
-          "VNF initiation." % e.args[0])
+           "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
+           "VNF initiation." % e.args[0])
       except (TransportError, OperationError) as e:
         log.error(
-          "Failed to deploy NF due to a connection error! Cause: %s" % e)
+           "Failed to deploy NF due to a connection error! Cause: %s" % e)
 
   def removeNF (self, vnf_id):
     """
@@ -668,11 +671,11 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         raise
       except KeyError as e:
         log.warning(
-          "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
-          "VNF initiation." % e.args[0])
+           "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
+           "VNF initiation." % e.args[0])
       except (TransportError, OperationError) as e:
         log.error(
-          "Failed to remove NF due to a connection error! Cause: %s" % e)
+           "Failed to remove NF due to a connection error! Cause: %s" % e)
 
 
 class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
@@ -684,7 +687,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   name = "ESCAPE-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url):
+  def __init__ (self, url, *args, **kwargs):
     """
     Init.
 
@@ -692,10 +695,10 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type url: str
     """
     log.debug(
-      "Init RemoteESCAPEv2RESTAdapter - type: %s, URL: %s" % (self.type, url))
+       "Init RemoteESCAPEv2RESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url)
-    log.debug("RemoteESCAPEv2 base URL is set to %s" % self._base_url)
-    AbstractESCAPEAdapter.__init__(self)
+    log.debug("base URL is set to %s" % self._base_url)
+    AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     self._original_nffg = None
 
   def ping (self):
@@ -709,9 +712,8 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.info("Parse and load received data...")
       log.debug("Converting to NFFG format...")
       nffg = NFFG.parse(data)
-      log.debug("Set Domain type to %s" % NFFG.DOMAIN_REMOTE)
-      for infra in nffg.infras:
-        infra.domain = NFFG.DOMAIN_REMOTE
+      log.debug("Set domain to %s" % self.domain_name)
+      self.rewrite_domain(nffg)
       # Store original config for domain resetting
       if self._original_nffg is None:
         log.debug("Store %s as the original domain config..." % nffg)
@@ -741,7 +743,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   name = "OpenStack-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url):
+  def __init__ (self, url, *args, **kwargs):
     """
     Init.
 
@@ -749,12 +751,12 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type url: str
     """
     log.debug(
-      "Init OpenStackRESTAdapter - type: %s, URL: %s" % (self.type, url))
+       "Init OpenStackRESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url)
-    log.debug("OpenStack base URL is set to %s" % url)
-    AbstractESCAPEAdapter.__init__(self)
+    log.debug("base URL is set to %s" % url)
+    AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     # Converter object
-    self.converter = NFFGConverter(domain=NFFG.DOMAIN_OS, logger=log)
+    self.converter = NFFGConverter(domain=self.domain_name, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None
@@ -772,9 +774,9 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       self.virtualizer = virt
       if self._original_virtualizer is None:
         log.debug(
-          "Store Virtualizer(id: %s, name: %s) as the original domain "
-          "config..." % (
-            virt.id.get_as_text(), virt.name.get_as_text()))
+           "Store Virtualizer(id: %s, name: %s) as the original domain "
+           "config..." % (
+             virt.id.get_as_text(), virt.name.get_as_text()))
         self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
@@ -784,7 +786,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.virtualizer, nffg=data)
+         virtualizer=self.virtualizer, nffg=data)
       # virt_data.bind(relative=True)
       data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
@@ -808,7 +810,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   name = "UN-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url):
+  def __init__ (self, url, *args, **kwargs):
     """
     Init.
 
@@ -816,12 +818,12 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type url: str
     """
     log.debug(
-      "Init UniversalNodeRESTAdapter - type: %s, URL: %s" % (self.type, url))
+       "Init UniversalNodeRESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url)
-    log.debug("Universal Node base URL is set to %s" % url)
-    AbstractESCAPEAdapter.__init__(self)
+    log.debug("base URL is set to %s" % url)
+    AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     # Converter object
-    self.converter = NFFGConverter(domain=NFFG.DOMAIN_UN, logger=log)
+    self.converter = NFFGConverter(domain=self.domain_name, logger=log)
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None
@@ -840,9 +842,9 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       self.virtualizer = virt
       if self._original_virtualizer is None:
         log.debug(
-          "Store Virtualizer(id: %s, name: %s) as the original domain "
-          "config..." % (
-            virt.id.get_as_text(), virt.name.get_as_text()))
+           "Store Virtualizer(id: %s, name: %s) as the original domain "
+           "config..." % (
+             virt.id.get_as_text(), virt.name.get_as_text()))
         self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
@@ -852,7 +854,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.virtualizer, nffg=data)
+         virtualizer=self.virtualizer, nffg=data)
       # virt_data.bind(relative=True)
       data = virt_data.xml()
     elif not isinstance(data, (str, unicode)):
