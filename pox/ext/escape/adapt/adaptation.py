@@ -62,39 +62,39 @@ class ComponentConfigurator(object):
 
   # General DomainManager handling functions: create/start/stop/get
 
-  def get_mgr (self, domain_name):
+  def get_mgr (self, name):
     """
     Return the DomainManager with given name and create+start if needed.
 
-    :param domain_name: name of domain manager
-    :type domain_name: str
+    :param name: name of domain manager
+    :type name: str
     :return: None
     """
     try:
-      return self.__repository[domain_name]
+      return self.__repository[name]
     except KeyError:
       if self._lazy_load:
-        return self.start_mgr(domain_name)
+        return self.start_mgr(name)
       else:
         raise AttributeError(
-           "No component is registered with the name: %s" % domain_name)
+           "No component is registered with the name: %s" % name)
 
-  def start_mgr (self, domain_name, autostart=True):
+  def start_mgr (self, name, autostart=True):
     """
     Create, initialize and start a DomainManager with given name and start
     the manager by default.
 
-    :param domain_name: name of domain manager
-    :type domain_name: str
+    :param name: name of domain manager
+    :type name: str
     :param autostart: also start the domain manager (default: True)
     :type autostart: bool
     :return: domain manager
     :rtype: :any:`AbstractDomainManager`
     """
     # If not started
-    if not self.is_started(domain_name):
+    if not self.is_started(name):
       # Load from CONFIG
-      mgr = self.load_component(domain_name)
+      mgr = self.load_component(name)
       if mgr is not None:
         # Call init - give self for the DomainManager to initiate the
         # necessary DomainAdapters itself
@@ -103,42 +103,42 @@ class ComponentConfigurator(object):
         if autostart:
           mgr.run()
           # Save into repository
-        self.__repository[domain_name] = mgr
+        self.__repository[name] = mgr
     else:
       log.warning("%s domain component has been already started! Skip "
-                  "reinitialization..." % domain_name)
+                  "reinitialization..." % name)
     # Return with manager
-    return self.__repository[domain_name]
+    return self.__repository[name]
 
-  def stop_mgr (self, domain_name):
+  def stop_mgr (self, name):
     """
     Stop and derefer a DomainManager with given name and remove from the
     repository also.
 
-    :param domain_name: name of domain manager
-    :type domain_name: str
+    :param name: name of domain manager
+    :type name: str
     :return: None
     """
     # If started
-    if self.is_started(domain_name):
+    if self.is_started(name):
       # Call finalize
-      self.__repository[domain_name].finit()
+      self.__repository[name].finit()
       # Remove from repository
       # del self.__repository[domain_name]
     else:
       log.warning(
-         "Missing domain component: %s! Skipping stop task..." % domain_name)
+         "Missing domain component: %s! Skipping stop task..." % name)
 
-  def is_started (self, domain_name):
+  def is_started (self, name):
     """
     Return with the value the given domain manager is started or not.
 
-    :param domain_name: name of domain manager
-    :type domain_name: str
+    :param name: name of domain manager
+    :type name: str
     :return: is loaded or not
     :rtype: bool
     """
-    return domain_name in self.__repository
+    return name in self.__repository
 
   @property
   def components (self):
@@ -151,12 +151,36 @@ class ComponentConfigurator(object):
     return self.__repository
 
   @property
+  def domains (self):
+    """
+    Return the list of domain_names which have been managed by DomainManagers.
+
+    :return: list of already managed domains
+    :rtype: list
+    """
+    return [mgr.domain_name for mgr in self.__repository.itervalues()]
+
+  @property
   def initiated (self):
     return self.__repository.iterkeys()
 
+  def get_component_by_domain (self, domain_name):
+    """
+    Return with the initiated Domain Manager configured with the given
+    domain_name.
+
+    :param domain_name: name of the domain used in :any:`NFFG` descriptions
+    :type domain_name: str
+    :return: the initiated domain Manager
+    :rtype: any:`AbstractDomainManager`
+    """
+    for component in self.__repository.itervalues():
+      if component.domain_name == domain_name:
+        return component
+
   def __iter__ (self):
     """
-    Return with an iterator over the (domain_name, DomainManager) items.
+    Return with an iterator over the (name, DomainManager) items.
     """
     return self.__repository.iteritems()
 
@@ -224,10 +248,22 @@ class ComponentConfigurator(object):
 
     :return: None
     """
+    log.info("Initialize DomainManagers from config...")
     # very dummy initialization
-    for mgr in CONFIG.get_managers():
-      log.debug("Init DomainManager for domain: %s" % mgr)
-      self.start_mgr(domain_name=mgr)
+    mgrs = CONFIG.get_managers()
+    if not mgrs:
+      log.info("No DomainManager has been configured!")
+      return
+    for mgr_name in mgrs:
+      mgr_cfg = CONFIG.get_component_params(component=mgr_name)
+      if 'domain_name' in mgr_cfg and mgr_cfg['domain_name'] in self.domains:
+        log.warning(
+           "Domain name collision: Domain Manager: %s has already initiated "
+           "with the domain name: %s" % (
+             self.get_component_by_domain(domain_name=mgr_cfg['domain_name']),
+             mgr_cfg['domain_name']))
+      log.debug("Init DomainManager based on config: %s" % mgr_name)
+      self.start_mgr(name=mgr_name)
 
   def load_internal_mgr (self):
     """
@@ -236,8 +272,10 @@ class ComponentConfigurator(object):
     :return: None
     """
     log.debug(
-      "Init DomainManager for domain: %s" % mgrs.InternalDomainManager.name)
-    self.start_mgr(mgrs.InternalDomainManager.name)
+       "Init DomainManager for internally emulated network based on config: "
+       "%s" % mgrs.InternalDomainManager.name)
+    # Internal domain is hard coded with the name: INTERNAL
+    self.start_mgr(name=mgrs.InternalDomainManager.name)
 
   def clear_initiated_mgrs (self):
     """
@@ -262,7 +300,7 @@ class ComponentConfigurator(object):
     for name, mgr in self:
       log.debug("Shutdown %s DomainManager..." % name)
       try:
-        self.stop_mgr(domain_name=name)
+        self.stop_mgr(name=name)
       except:
         log.error("Got exception during domain resetting!")
         traceback.print_exc()
@@ -274,14 +312,6 @@ class ControllerAdapter(object):
   """
   Higher-level class for :any:`NFFG` adaptation between multiple domains.
   """
-  # DomainManager <-> NFFG domain name mapping
-  DOMAIN_MAPPING = {
-    NFFG.DOMAIN_INTERNAL: mgrs.InternalDomainManager.name,
-    NFFG.DOMAIN_OS: mgrs.OpenStackDomainManager.name,
-    NFFG.DOMAIN_UN: mgrs.UniversalNodeDomainManager.name,
-    NFFG.DOMAIN_SDN: mgrs.SDNDomainManager.name,
-    NFFG.DOMAIN_REMOTE: mgrs.RemoteESCAPEDomainManager.name
-  }
 
   def __init__ (self, layer_API, with_infr=False):
     """
@@ -307,7 +337,6 @@ class ControllerAdapter(object):
         # Init internal domain manager if Infrastructure Layer is started
         self.domains.load_internal_mgr()
       # Init default domain managers
-      log.info("Initializing DomainManagers...")
       self.domains.load_default_mgrs()
     except (ImportError, AttributeError, ConfigurationError) as e:
       from escape.util.misc import quit_with_error
@@ -325,62 +354,6 @@ class ControllerAdapter(object):
       self.domains.clear_initiated_mgrs()
     # Stop initiated DomainManagers
     self.domains.stop_initiated_mgrs()
-
-  def install_nffg (self, mapped_nffg):
-    """
-    Start NF-FG installation.
-
-    Process given :any:`NFFG`, slice information self.__global_nffg on
-    domains an invoke
-    DomainManagers to install domain specific parts.
-
-    :param mapped_nffg: mapped NF-FG instance which need to be installed
-    :type mapped_nffg: NFFG
-    :return: None or internal domain NFFG part
-    """
-    log.debug("Invoke %s to install NF-FG(%s)" % (
-      self.__class__.__name__, mapped_nffg.name))
-    slices = self._split_into_domains(mapped_nffg)
-    if slices is None:
-      log.warning(
-         "Given mapped NFFG: %s can not be sliced! Skip domain notification "
-         "steps" % mapped_nffg)
-      return
-    log.debug(
-       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
-    mapping_result = True
-    for domain, part in slices:
-      domain_mgr = self.DOMAIN_MAPPING[domain]
-      if domain_mgr in self.domains.initiated:
-        log.debug("Delegate splitted part: %s to %s DomainManager..." % (
-          part, domain_mgr))
-        # Invoke DomainAdapter's install
-        res = self.domains[domain_mgr].install_nffg(part)
-        # Note result according to others before
-        mapping_result = mapping_result and res
-      else:
-        log.warning(
-           "Domain manager associated to domain: %s is not initiated! Skip "
-           "install domain part..." % domain_mgr)
-    log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
-    # FIXME - hardcoded, you can do it better
-    if mapping_result:
-      log.info("All installation process has been finished with success! ")
-      log.debug(
-         "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
-      # Update global view (DoV) with the installed components
-      self.domainResManager.get_global_view().update_global_view(mapped_nffg)
-      # print self.domainResManager.get_global_view().get_resource_info().dump()
-
-  def _handle_DomainChangedEvent (self, event):
-    """
-    Handle DomainChangedEvents, process changes and store relevant information
-    in DomainResourceManager.
-    """
-    log.info("Received DomainChange event from domain: %s, cause: %s" % (
-      event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
-    if event.data is not None and isinstance(event.data, NFFG):
-      self.domainResManager.update_domain_resource(event.domain, event.data)
 
   def _split_into_domains (self, nffg):
     """
@@ -489,6 +462,61 @@ class ControllerAdapter(object):
     #   print s[0], s[1].dump()
     return splitted_parts
 
+  def install_nffg (self, mapped_nffg):
+    """
+    Start NF-FG installation.
+
+    Process given :any:`NFFG`, slice information self.__global_nffg on
+    domains an invoke
+    DomainManagers to install domain specific parts.
+
+    :param mapped_nffg: mapped NF-FG instance which need to be installed
+    :type mapped_nffg: NFFG
+    :return: None or internal domain NFFG part
+    """
+    log.debug("Invoke %s to install NF-FG(%s)" % (
+      self.__class__.__name__, mapped_nffg.name))
+    slices = self._split_into_domains(nffg=mapped_nffg)
+    if slices is None:
+      log.warning(
+         "Given mapped NFFG: %s can not be sliced! Skip domain notification "
+         "steps" % mapped_nffg)
+      return
+    log.debug(
+       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
+    mapping_result = True
+    for domain, part in slices:
+      domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
+      if domain_mgr is None:
+        log.warning(
+           "No DomainManager has been initialized for domain: %s! Skip install "
+           "domain part..." % domain)
+        continue
+      log.debug("Delegate splitted part: %s to %s" % (part, domain_mgr))
+      # Invoke DomainAdapter's install
+      res = domain_mgr.install_nffg(part)
+      # Note result according to others before
+      mapping_result = mapping_result and res
+    log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
+    # FIXME - hardcoded, you can do it better
+    if mapping_result:
+      log.info("All installation process has been finished with success! ")
+      log.debug(
+         "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
+      # Update global view (DoV) with the installed components
+      self.domainResManager.get_global_view().update_global_view(mapped_nffg)
+      # print self.domainResManager.get_global_view().get_resource_info().dump()
+
+  def _handle_DomainChangedEvent (self, event):
+    """
+    Handle DomainChangedEvents, process changes and store relevant information
+    in DomainResourceManager.
+    """
+    log.info("Received DomainChange event from domain: %s, cause: %s" % (
+      event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
+    if event.data is not None and isinstance(event.data, NFFG):
+      self.domainResManager.update_domain_resource(event.domain, event.data)
+
   def update_dov (self, nffg_part):
     """
     Update the global view with installed Nfs/Flowrules.
@@ -527,7 +555,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.domainResManager = weakref.proxy(domainResManager)
     self._global_nffg = None
     if global_res is not None:
-      self.set_domain_as_global_view(domain=NFFG.DOMAIN_VIRTUAL,
+      self.set_domain_as_global_view(domain=NFFG.DEFAULT_DOMAIN,
                                      nffg=global_res)
 
   @property

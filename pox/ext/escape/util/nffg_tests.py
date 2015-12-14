@@ -71,9 +71,9 @@ def generate_mn_topo ():
                        delay=0.9, bandwidth=5000)
   # Add supported types
   ee1.add_supported_type(
-    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   ee2.add_supported_type(
-    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
@@ -151,7 +151,7 @@ def generate_static_fallback_topo ():
 def generate_one_bisbis ():
   nffg = NFFG(id="1BiSBiS", name="One-BiSBiS-View")
   bb = nffg.add_infra(id="1bisbis", name="One-BiSBiS",
-                      domain=NFFG.DOMAIN_VIRTUAL,
+                      domain=NFFG.DEFAULT_DOMAIN,
                       infra_type=NFFG.TYPE_INFRA_BISBIS)
   # FIXME - very basic heuristic for virtual resource definition
   # bb.resources.cpu = min((infra.resources.cpu for infra in
@@ -378,9 +378,9 @@ def generate_dov ():
                        delay=0.9, bandwidth=5000)
   # Add supported types
   ee1.add_supported_type(
-    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   ee2.add_supported_type(
-    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
@@ -580,10 +580,10 @@ def test_conversion ():
 
   with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
     os_nffg, os_virt = NFFGConverter(
-      domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(f.read())
+       domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(f.read())
   with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
     un_nffg, un_virt = NFFGConverter(
-      domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(f.read())
+       domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(f.read())
   with open("/home/czentye/escape/src/escape_v2/pox/escape-mn-topo.nffg") as f:
     internal = NFFG.parse(f.read())
     internal.duplicate_static_links()
@@ -656,7 +656,7 @@ def generate_simple_test_topo ():
                        delay=0.9, bandwidth=5000)
   # Add supported types
   ee1.add_supported_type(
-    ('headerCompressor', 'headerDecompressor', 'simpleForwarder', 'ovs'))
+     ('headerCompressor', 'headerDecompressor', 'simpleForwarder', 'ovs'))
   # Add SAPs
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")

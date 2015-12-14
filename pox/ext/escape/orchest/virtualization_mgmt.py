@@ -41,6 +41,9 @@ class AbstractVirtualizer(object):
   Follows the Proxy design pattern.
   """
   __metaclass__ = PolicyEnforcementMetaClass
+  # Default domain type for Virtualizers
+  DEFAULT_DOMAIN = "VIRTUAL"
+
 
   def __init__ (self, id):
     """
@@ -178,7 +181,7 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
       return
     # Create the single BiSBiS infra
     sbb = nffg.add_infra(id="SingleBiSbiS", name="Single-BiSBiS",
-                         domain=NFFG.DOMAIN_VIRTUAL,
+                         domain=NFFG.DEFAULT_DOMAIN,
                          infra_type=NFFG.TYPE_INFRA_BISBIS)
     log.debug("Add Infra BiSBiS: %s" % sbb)
 

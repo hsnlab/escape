@@ -148,15 +148,8 @@ class NFFG(AbstractNFFG):
   """
   Internal NFFG representation based on networkx.
   """
-  # Some pre-define constant to avoid NFFGModel related class imports
-  # Infra domains
-  DOMAIN_INTERNAL = NodeInfra.DOMAIN_INTERNAL
-  DOMAIN_REMOTE = NodeInfra.DOMAIN_REMOTE
-  DOMAIN_VIRTUAL = NodeInfra.DOMAIN_VIRTUAL
-  DOMAIN_OS = NodeInfra.DOMAIN_OS
-  DOMAIN_UN = NodeInfra.DOMAIN_UN
-  DOMAIN_SDN = NodeInfra.DOMAIN_SDN
-  DOMAIN_DOCKER = NodeInfra.DOMAIN_DOCKER
+  # Default domain value
+  DEFAULT_DOMAIN = NodeInfra.DEFAULT_DOMAIN
   # Infra types
   TYPE_INFRA_SDN_SW = NodeInfra.TYPE_SDN_SWITCH
   TYPE_INFRA_EE = NodeInfra.TYPE_EE
