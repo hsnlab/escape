@@ -119,9 +119,9 @@ cfg = {
       "MANAGERS": [
         # "REMOTE-ESCAPE",
         # "REMOTE-ESCAPE2",
-        # "SDN",
-        # "OPENSTACK",
-        # "UN"
+        "SDN",
+        "OPENSTACK",
+        "UN"
       ],
       # Specific Domain Managers
       "INTERNAL":
@@ -219,7 +219,7 @@ cfg = {
             "REMOTE":
               {
                 "module": "escape.adapt.adapters",
-                "class": "OpenStackRESTAdapter",
+                "class": "UnifyRESTAdapter",
                 "url": "http://localhost:8081"
               }
           }
@@ -233,7 +233,7 @@ cfg = {
             "REMOTE":
               {
                 "module": "escape.adapt.adapters",
-                "class": "UniversalNodeRESTAdapter",
+                "class": "UnifyRESTAdapter",
                 "url": "http://localhost:8082"
               }
           }
