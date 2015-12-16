@@ -80,11 +80,13 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     :param port: socket port (default: 6633)
     :type port: int
     """
-    log.debug("Init %s - type: %s, address %s:%s, optional name: %s" % (
-      self.__class__.__name__, self.type, address, port, name))
     super(InternalPOXAdapter, self).__init__(name=name, address=address,
                                              port=port, keepalive=keepalive,
                                              *args, **kwargs)
+    log.debug(
+       "Init %s - type: %s, address %s:%s, domain: %s, optional name: %s" % (
+         self.__class__.__name__, self.type, address, port, self.domain_name,
+         name))
     self.topoAdapter = None
 
   def check_domain_reachable (self):
@@ -229,10 +231,11 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :param net: set pre-defined network (optional)
     :type net: :class:`ESCAPENetworkBridge`
     """
-    log.debug("Init InternalMininetAdapter - type: %s, initial network: %s" % (
-      self.type, net))
     # Call base constructors directly to avoid super() and MRO traps
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
+    log.debug(
+       "Init InternalMininetAdapter - type: %s, domain: %s, initial network: "
+       "%s" % (self.type, self.domain_name, net))
     if not net:
       from pox import core
       if core.core.hasComponent(InfrastructureLayerAPI._core_name):
@@ -301,9 +304,10 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
   def __init__ (self, path=None, *args, **kwargs):
-    log.debug("Init SDNDomainTopoAdapter - type: %s, optional path: %s" % (
-      self.type, path))
     super(SDNDomainTopoAdapter, self).__init__(*args, **kwargs)
+    log.debug(
+       "Init SDNDomainTopoAdapter - type: %s, domain: %s, optional path: %s" % (
+         self.type, self.domain_name, path))
     self.topo = None
     try:
       self.__init_from_CONFIG(path=path)
@@ -694,11 +698,11 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param url: remote ESCAPEv2 RESTful API URL
     :type url: str
     """
-    log.debug(
-       "Init RemoteESCAPEv2RESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url)
-    log.debug("base URL is set to %s" % self._base_url)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
+    log.debug(
+       "Init RemoteESCAPEv2RESTAdapter - type: %s, domain: %s, URL: %s" % (
+         self.type, self.domain_name, url))
     self._original_nffg = None
 
   def ping (self):
@@ -751,11 +755,11 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param url: url of RESTful API
     :type url: str
     """
-    log.debug(
-       "Init UNIFYRESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url)
-    log.debug("base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
+    log.debug(
+       "Init UNIFYRESTAdapter - type: %s, domain: %s, URL: %s" % (
+         self.type, self.domain_name, url))
     # Converter object
     self.converter = NFFGConverter(domain=self.domain_name, logger=log)
     # Cache for parsed virtualizer

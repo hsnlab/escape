@@ -935,7 +935,7 @@ class UnifyDomainManager(AbstractDomainManager):
       log.debug("%s" % traceback.print_exc())
       return False
 
-  def clear_domain(self):
+  def clear_domain (self):
     """
     Reset remote domain based on the original (first response) topology.
 
@@ -953,14 +953,11 @@ class UnifyDomainManager(AbstractDomainManager):
     return self.topoAdapter.edit_config(data=empty_cfg.xml())
 
 
-class OpenStackDomainManager(AbstractDomainManager):
+class OpenStackDomainManager(UnifyDomainManager):
   """
   Manager class to handle communication with OpenStack domain.
-
-  .. note::
-    Uses :class:`OpenStackRESTAdapter` for communicate with the remote domain.
   """
-  # Domain name
+  # DomainManager name
   name = "OPENSTACK"
   # Default domain name
   DEFAULT_DOMAIN_NAME = "OPENSTACK"
@@ -974,86 +971,12 @@ class OpenStackDomainManager(AbstractDomainManager):
     log.debug(
        "Init OpenStackDomainManager with domain name: %s" % self.domain_name)
 
-  def init (self, configurator, **kwargs):
-    """
-    Initialize OpenStack domain manager.
 
-    :param configurator: component configurator for configuring adapters
-    :type configurator: :any:`ComponentConfigurator`
-    :param kwargs: optional parameters
-    :type kwargs: dict
-    :return: None
-    """
-    # Call abstract init to execute common operations
-    super(OpenStackDomainManager, self).init(configurator, **kwargs)
-
-  def initiate_adapters (self, configurator):
-    """
-    Init Adapters.
-
-    :param configurator: component configurator for configuring adapters
-    :type configurator: :any:`ComponentConfigurator`
-    :return: None
-    """
-    self.topoAdapter = configurator.load_component(
-       component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
-       parent=self._adapters_cfg)
-
-  def finit (self):
-    """
-    Stop polling and release dependent components.
-
-    :return: None
-    """
-    super(OpenStackDomainManager, self).finit()
-
-  def install_nffg (self, nffg_part):
-    log.info("Install %s domain part..." % self.domain_name)
-    # TODO - implement just convert NFFG to appropriate format and send out
-    # FIXME - SIGCOMM
-    # config = nffg_part.dump()
-    # with open('pox/global-mapped-os-nffg.xml', 'r') as f:
-    #   nffg_part = f.read()
-    try:
-      status_code = self.topoAdapter.edit_config(nffg_part)
-      if status_code is not None:
-        return True
-      else:
-        return False
-    except:
-      log.error(
-         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-           self.domain_name, sys.exc_info()))
-      log.debug("%s" % traceback.print_exc())
-      return False
-
-  def clear_domain (self):
-    """
-    Reset remote domain based on the original (first response) topology.
-
-    :return: None
-    """
-    empty_cfg = self.topoAdapter._original_virtualizer
-    if empty_cfg is None:
-      log.warning(
-         "Missing original topology in %s domain! Skip domain resetting..." %
-         self.domain_name)
-      return
-    log.debug(
-       "Reset %s domain config based on stored empty config..." %
-       self.domain_name)
-    self.topoAdapter.edit_config(data=empty_cfg.xml())
-
-
-class UniversalNodeDomainManager(AbstractDomainManager):
+class UniversalNodeDomainManager(UnifyDomainManager):
   """
   Manager class to handle communication with Universal Node (UN) domain.
-
-  .. note::
-    Uses :class:`UniversalNodeRESTAdapter` for communicate with the remote
-    domain.
   """
-  # Domain name
+  # DomainManager name
   name = "UN"
   # Default domain name
   DEFAULT_DOMAIN_NAME = "UNIVERSAL_NODE"
@@ -1067,75 +990,6 @@ class UniversalNodeDomainManager(AbstractDomainManager):
     log.debug(
        "Init UniversalNodeDomainManager with domain name: %s" %
        self.domain_name)
-
-  def init (self, configurator, **kwargs):
-    """
-    Initialize OpenStack domain manager.
-
-    :param configurator: component configurator for configuring adapters
-    :type configurator: :any:`ComponentConfigurator`
-    :param kwargs: optional parameters
-    :type kwargs: dict
-    :return: None
-    """
-    # Call abstract init to execute common operations
-    super(UniversalNodeDomainManager, self).init(configurator, **kwargs)
-
-  def initiate_adapters (self, configurator):
-    """
-    Init Adapters.
-
-    :param configurator: component configurator for configuring adapters
-    :type configurator: :any:`ComponentConfigurator`
-    :return: None
-    """
-    self.topoAdapter = configurator.load_component(
-       component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
-       parent=self._adapters_cfg)
-
-  def finit (self):
-    """
-    Stop polling and release dependent components.
-
-    :return: None
-    """
-    super(UniversalNodeDomainManager, self).finit()
-
-  def install_nffg (self, nffg_part):
-    log.info("Install %s domain part..." % self.domain_name)
-    # TODO - implement just convert NFFG to appropriate format and send out
-    # FIXME - SIGCOMM
-    # print nffg_part.dump()
-    # with open('pox/global-mapped-un.nffg', 'r') as f:
-    #   nffg_part = f.read()
-    try:
-      status_code = self.topoAdapter.edit_config(nffg_part)
-      if status_code is not None:
-        return True
-      else:
-        return False
-    except:
-      log.error(
-         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-           self.domain_name, sys.exc_info()))
-      log.debug("%s" % traceback.print_exc())
-      return False
-
-  def clear_domain (self):
-    """
-    Reset remote domain based on the original (first response) topology.
-
-    :return: None
-    """
-    empty_cfg = self.topoAdapter._original_virtualizer
-    if empty_cfg is None:
-      log.warning(
-         "Missing original topology in %s domain! Skip domain resetting..." %
-         self.domain_name)
-      return
-    log.debug(
-       "Reset %s domain config based on stored empty config" % self.domain_name)
-    self.topoAdapter.edit_config(data=empty_cfg.xml())
 
 
 class DockerDomainManager(AbstractDomainManager):
