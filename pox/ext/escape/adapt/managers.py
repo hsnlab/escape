@@ -767,7 +767,6 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
                                                     *args, **kwargs)
     log.debug(
        "Init RemoteESCAPEDomainManager with domain name: %s" % self.domain_name)
-    self.topoAdapter = None
 
   def init (self, configurator, **kwargs):
     """
@@ -862,6 +861,98 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     self.topoAdapter.edit_config(data=empty_cfg)
 
 
+class UnifyDomainManager(AbstractDomainManager):
+  """
+  Manager class for unified handling of different domains.
+
+  The communication between ESCAPEv2 and domain agent relies on pre-defined
+  REST-API functions and the Virtualizer format.
+
+  .. note::
+    Uses :class:`UnifyDomainAdapter` for communicate with the remote domain.
+  """
+  # DomainManager name
+  name = "UNIFY"
+  # Default domain name - Must override child classes to define the domain
+  DEFAULT_DOMAIN_NAME = "UNIFY"
+
+  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
+    """
+    Init.
+    """
+    super(UnifyDomainManager, self).__init__(domain_name=domain_name, *args,
+                                             **kwargs)
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize the DomainManager.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :param kwargs: optional parameters
+    :type kwargs: dict
+    :return: None
+    """
+    super(UnifyDomainManager, self).init(configurator, **kwargs)
+
+  def initiate_adapters (self, configurator):
+    """
+    Init Adapters.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :return: None
+    """
+    self.topoAdapter = configurator.load_component(
+       component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
+       parent=self._adapters_cfg)
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(UnifyDomainManager, self).finit()
+
+  def install_nffg (self, nffg_part):
+    """
+    Install :any:`NFFG` part into the domain using the specific REST-API
+    function and Virtualizer format.
+    :param nffg_part: domain related part of the mapped :any:`NFFG`
+    :type nffg_part: :any:`NFFG`
+    :return: status if the installation was success
+    :rtype: bool
+    """
+    log.info("Install %s domain part..." % self.domain_name)
+    try:
+      status_code = self.topoAdapter.edit_config(nffg_part)
+      return True if status_code is not None else False
+    except:
+      log.error(
+         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+           self.domain_name, sys.exc_info()))
+      log.debug("%s" % traceback.print_exc())
+      return False
+
+  def clear_domain(self):
+    """
+    Reset remote domain based on the original (first response) topology.
+
+    :return: None
+    """
+    empty_cfg = self.topoAdapter._original_virtualizer
+    if empty_cfg is None:
+      log.warning(
+         "Missing original topology in %s domain! Skip domain resetting..." %
+         self.domain_name)
+      return
+    log.debug(
+       "Reset %s domain config based on stored empty config..." %
+       self.domain_name)
+    return self.topoAdapter.edit_config(data=empty_cfg.xml())
+
+
 class OpenStackDomainManager(AbstractDomainManager):
   """
   Manager class to handle communication with OpenStack domain.
@@ -882,7 +973,6 @@ class OpenStackDomainManager(AbstractDomainManager):
                                                  *args, **kwargs)
     log.debug(
        "Init OpenStackDomainManager with domain name: %s" % self.domain_name)
-    self.topoAdapter = None
 
   def init (self, configurator, **kwargs):
     """
@@ -977,7 +1067,6 @@ class UniversalNodeDomainManager(AbstractDomainManager):
     log.debug(
        "Init UniversalNodeDomainManager with domain name: %s" %
        self.domain_name)
-    self.topoAdapter = None
 
   def init (self, configurator, **kwargs):
     """
@@ -1069,7 +1158,6 @@ class DockerDomainManager(AbstractDomainManager):
                                               **kwargs)
     log.debug(
        "Init DockerDomainManager with domain name: %s" % self.domain_name)
-    self.topoAdapter = None
 
   def initiate_adapters (self, configurator):
     pass
