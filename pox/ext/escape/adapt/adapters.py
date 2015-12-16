@@ -733,6 +733,91 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.get_config()
 
 
+class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
+                       DefaultUnifyDomainRESTAPI):
+  """
+  Implement the unified way to communicate with "Unify" domains which are
+  using REST-API and the "Virtualizer" XML-based format.
+  """
+  # Adapter name used in CONFIG and ControllerAdapter class
+  name = "UNIFY-REST"
+  # type of the Adapter class - use this name for searching Adapter config
+  type = AbstractESCAPEAdapter.TYPE_REMOTE
+
+  def __init__ (self, url, *args, **kwargs):
+    """
+    Init.
+
+    :param url: url of RESTful API
+    :type url: str
+    """
+    log.debug(
+       "Init UNIFYRESTAdapter - type: %s, URL: %s" % (self.type, url))
+    AbstractRESTAdapter.__init__(self, base_url=url)
+    log.debug("base URL is set to %s" % url)
+    AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
+    # Converter object
+    self.converter = NFFGConverter(domain=self.domain_name, logger=log)
+    # Cache for parsed virtualizer
+    self.virtualizer = None
+    self._original_virtualizer = None
+
+  def ping (self):
+    return self.send_no_error(self.GET, 'ping')
+
+  def get_config (self):
+    """
+    Queries the infrastructure view with a netconf-like "get-config" command.
+
+    :return: infrastructure view as an :any:`NFFG`
+    :rtype: :any::`NFFG`
+    """
+    data = self.send_no_error(self.POST, 'get-config')
+    log.debug("Received config from remote %s domain agent at %s" % (
+      self.domain_name, self._base_url))
+    if data:
+      log.info("Parse and load received data...")
+      # Covert from XML-based Virtualizer to NFFG
+      nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
+      # Cache virtualizer
+      self.virtualizer = virt
+      if self._original_virtualizer is None:
+        log.debug(
+           "Store Virtualizer(id: %s, name: %s) as the original domain "
+           "config..." % (
+             virt.id.get_as_text(), virt.name.get_as_text()))
+        self._original_virtualizer = deepcopy(virt)
+      return nffg
+
+  def edit_config (self, data):
+    """
+    Send the requested configuration with a netconf-like "edit-config" command.
+
+    :param data: whole domain view
+    :type data: :any::`NFFG`
+    :return: status code
+    :rtype: str
+    """
+    if isinstance(data, NFFG):
+      # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
+      # data = self.converter.unescape_output_hack(str(virtualizer))
+      virt_data = self.converter.adapt_mapping_into_Virtualizer(
+         virtualizer=self.virtualizer, nffg=data)
+      # virt_data.bind(relative=True)
+      data = virt_data.xml()
+    elif not isinstance(data, (str, unicode)):
+      raise RuntimeError("Not supported config format for 'edit-config'!")
+    log.debug("Send NFFG to %s domain agent at %s..." % (
+      self.domain_name, self._base_url))
+    return self.send_no_error(self.POST, 'edit-config', data)
+
+  def check_domain_reachable (self):
+    return self.ping()
+
+  def get_topology_resource (self):
+    return self.get_config()
+
+
 class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                            OpenStackAPI):
   """

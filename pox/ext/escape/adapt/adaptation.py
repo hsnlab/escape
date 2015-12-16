@@ -203,7 +203,7 @@ class ComponentConfigurator(object):
     Initiate the given component class, pass the additional attributes,
     register the event listeners and return with the newly created object.
 
-    :param component_name: component's name
+    :param component_name: component's config name
     :type component_name: str
     :param parent: define the parent of the actual component's configuration
     :type parent: dict

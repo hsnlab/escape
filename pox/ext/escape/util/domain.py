@@ -84,7 +84,7 @@ class AbstractDomainManager(EventMixin):
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
-  # DomainManager name
+  # DomainManager name- used more or less the type of the manager
   name = "UNDEFINED"
   # Default domain name
   DEFAULT_DOMAIN_NAME = "UNDEFINED"
@@ -155,6 +155,9 @@ class AbstractDomainManager(EventMixin):
   def initiate_adapters (self, configurator):
     """
     Initiate Adapters for DomainManager.
+
+    Must override in inherited classes.
+    Follows the Factory Method design pattern.
 
     :param configurator: component configurator for configuring adapters
     :type configurator: :any:`ComponentConfigurator`
@@ -330,7 +333,8 @@ class AbstractDomainManager(EventMixin):
 
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
-    :return: None
+    :return: status if the install process was success
+    :rtype: bool
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -731,7 +735,7 @@ class VNFStarterAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class DefaultDomainRESTAPI(object):
+class DefaultUnifyDomainRESTAPI(object):
   """
   Define unified interface for managing UNIFY domains with REST-API.
 
@@ -742,7 +746,7 @@ class DefaultDomainRESTAPI(object):
     """
     Queries the infrastructure view with a netconf-like "get-config" command.
 
-    :return: infrastructure view
+    :return: infrastructure view as an :any:`NFFG`
     :rtype: :any::`NFFG`
     """
     raise NotImplementedError("Not implemented yet!")
@@ -768,7 +772,7 @@ class DefaultDomainRESTAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class OpenStackAPI(DefaultDomainRESTAPI):
+class OpenStackAPI(DefaultUnifyDomainRESTAPI):
   """
   Define interface for managing OpenStack domain.
 
@@ -779,7 +783,7 @@ class OpenStackAPI(DefaultDomainRESTAPI):
   """
 
 
-class UniversalNodeAPI(DefaultDomainRESTAPI):
+class UniversalNodeAPI(DefaultUnifyDomainRESTAPI):
   """
   Define interface for managing Universal Node domain.
 
@@ -790,7 +794,7 @@ class UniversalNodeAPI(DefaultDomainRESTAPI):
   """
 
 
-class RemoteESCAPEv2API(DefaultDomainRESTAPI):
+class RemoteESCAPEv2API(DefaultUnifyDomainRESTAPI):
   """
   Define interface for managing remote ESCAPEv2 domain.
 
