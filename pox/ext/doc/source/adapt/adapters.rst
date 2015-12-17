@@ -15,6 +15,7 @@ details for the connections between ESCAPEv2 and other different domains.
    escape.adapt.adapters.RemoteESCAPEv2RESTAdapter
    escape.adapt.adapters.OpenStackRESTAdapter
    escape.adapt.adapters.UniversalNodeRESTAdapter
+   escape.adapt.adapters.UnifyRESTAdapter
    :parts: 1
 
 :any:`InternalPOXAdapter` implements the OF controller functionality for the
@@ -39,6 +40,10 @@ functions.
 
 :any:`UniversalNodeRESTAdapter` is a wrapper class for REST-like communication
 with the Universal Node domain.
+
+:any:`UnifyRESTAdapter` is a wrapper class for the unified, REST-like
+communication with the "Unify" domain which using pre-defined REST-API functions
+and the "Virtualizer" XML-based format.
 
 Module contents
 ---------------
