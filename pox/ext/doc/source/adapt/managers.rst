@@ -14,6 +14,7 @@ the particular domain.
    escape.adapt.managers.UniversalNodeDomainManager
    escape.adapt.managers.DockerDomainManager
    escape.adapt.managers.SDNDomainManager
+   escape.adapt.managers.UnifyDomainManager
    :parts: 1
 
 :any:`InternalDomainManager` represent the top class for interacting with the
@@ -22,18 +23,20 @@ emulated infrastructure.
 :any:`RemoteESCAPEDomainManager` ensures the connection with a different ESCAPE
 instance started in agent mode.
 
+:any:`UnifyDomainManager` is a common parent class for DomainManagers
+supervising "Unify" domains.
+
 :any:`OpenStackDomainManager` implements the related functionality for managing
 the OpenStack-based domain.
 
 :any:`UniversalNodeDomainManager` implements the related functionality for
 managing the domain based on the Universal Node conception.
 
-:any:`DockerDomainManager` is a placeholder class for managing Docker-based
-network entities.
-
 :any:`SDNDomainManager` interacts and handles legacy OpenFlow 1.0 switches
 aggregated into a separate domain.
 
+:any:`DockerDomainManager` is a placeholder class for managing Docker-based
+network entities.
 
 Module contents
 ---------------

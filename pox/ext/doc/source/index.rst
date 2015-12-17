@@ -135,10 +135,10 @@ available arguments of the top starting script check the help menu:
 
 .. important::
 
-    If you want to initiate more then 15 node (switch and Execution Environment
-    too) in the Mininet-based Infrastructure layer zou should recompile the
-    OpenSSH server from source to increase the number of possible listening ports
-    up to 256. In this case you can use the following commands:
+    If you want to initiate more then 15 node (including switches and also Execution
+    Environments) in the Mininet-based Infrastructure layer you should recompile
+    the OpenSSH server from source to increase the number of possible listening
+    ports up to 256. In this case you can use the following commands:
 
      .. code-block:: bash
 
@@ -956,7 +956,7 @@ this configurations structure.
                 "adapters": {
                     "REMOTE": {
                         "module": "escape.adapt.adapters",
-                        "class": "OpenStackRESTAdapter",
+                        "class": "UnifyRESTAdapter",
                         "url": "http://localhost:8081"
                     }
                 }
@@ -968,7 +968,7 @@ this configurations structure.
                 "adapters": {
                     "REMOTE": {
                         "module": "escape.adapt.adapters",
-                        "class": "UniversalNodeRESTAdapter",
+                        "class": "UnifyRESTAdapter",
                         "url": "http://localhost:8082"
                     }
                 }
