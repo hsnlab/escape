@@ -81,7 +81,7 @@ class AbstractMappingDataProcessor(object):
 
     If there is a return value considering True (e.g. True, not-empty
     container, collection, an object reference etc.) or a kind of specific
-    ValidationError is thrown in the function the mapping process will be
+    :any:`ProcessorError' is thrown in the function the mapping process will be
     skipped and the orchestration process will be aborted.
 
     The Validator instance is created during the initialization of ESCAPEv2
@@ -106,8 +106,8 @@ class AbstractMappingDataProcessor(object):
 
     If there is a return value considering True (e.g. True, not-empty
     container, collection, an object reference etc.) or a kind of specific
-    ValidationError is thrown in the function the orchestration process will
-    be aborted.
+    :any:`ProcessorError` is thrown in the function the orchestration process
+    will be aborted.
 
     :param input_graph: graph representation which need to be mapped
     :type input_graph: :any:`NFFG`
@@ -233,7 +233,7 @@ class AbstractMapper(EventMixin):
     self._layer_name = layer_name
     # Set threaded
     self._threaded = threaded if threaded is not None else CONFIG.get_threaded(
-      layer_name)
+       layer_name)
     # Set strategy
     if strategy is None:
       # Use the Strategy in CONFIG
@@ -304,7 +304,7 @@ class AbstractMapper(EventMixin):
         resource_graph = resource_view.get_resource_info()
         # Preform pre-mapping validation
         if self.processor.pre_mapping_exec(
-             input_graph=input_graph, resource_graph=resource_graph):
+           input_graph=input_graph, resource_graph=resource_graph):
           raise ProcessorError("Pre mapping validation is failed!")
         # Raise event for external POX modules
         if core.hasComponent(self._layer_name):
@@ -362,7 +362,7 @@ class AbstractMapper(EventMixin):
 
     def run ():
       core.getLogger("worker").info(
-        "Schedule mapping algorithm: %s" % self.strategy.__name__)
+         "Schedule mapping algorithm: %s" % self.strategy.__name__)
       nffg = self.strategy.map(graph=graph, resource=resource)
       # Must use call_as_coop_task because we want to call a function in a
       # coop microtask environment from a separate thread
