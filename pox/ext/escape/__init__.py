@@ -191,7 +191,8 @@ cfg = {
               {
                 "module": "escape.adapt.adapters",
                 "class": "RemoteESCAPEv2RESTAdapter",
-                "url": "http://localhost:8083"
+                "url": "http://localhost:8083",
+                "unify_interface": False
               }
           }
         },
@@ -206,7 +207,8 @@ cfg = {
               {
                 "module": "escape.adapt.adapters",
                 "class": "RemoteESCAPEv2RESTAdapter",
-                "url": "http://localhost:8085"
+                "url": "http://localhost:8085",
+                "unify_interface": False
               }
           }
         },

@@ -477,6 +477,18 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
+  def get_ros_virtualizer_format(self):
+    """
+    Return the REST API format for agent request handler.
+
+    :return: Virtualizer format is enabled or not
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ORCHEST]["Sl-Or"]['unify_interface']
+    except KeyError:
+      return False
+
   def get_cfor_api_class (self):
     """
     Return with the request handler class of Cf-Or REST API.

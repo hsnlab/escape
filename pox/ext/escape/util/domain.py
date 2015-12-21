@@ -813,7 +813,9 @@ class AbstractRESTAdapter(Session):
   Follows Adapter design pattern.
   """
   # Set custom header
-  custom_headers = {'User-Agent': "ESCAPE/" + __version__}
+  custom_headers = {
+    'User-Agent': "ESCAPE/" + __version__,
+  }
   # Connection timeout (sec)
   CONNECTION_TIMEOUT = 5
   # HTTP methods
@@ -874,6 +876,8 @@ class AbstractRESTAdapter(Session):
         # if given body is an NFFG
         body = body.dump()
         kwargs['headers']['Content-Type'] = "application/json"
+      elif isinstance(body, str) and body.startswith("<?xml version="):
+        kwargs['headers']['Content-Type'] = "application/xml"
     # Setup parameters - URL
     if url is not None:
       if not url.startswith('http'):

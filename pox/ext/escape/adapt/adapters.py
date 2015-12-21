@@ -21,7 +21,7 @@ from ncclient.operations import OperationError
 from ncclient.operations.rpc import RPCError
 from ncclient.transport import TransportError
 
-from escape import CONFIG
+from escape import CONFIG, __version__
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
@@ -691,7 +691,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   name = "ESCAPE-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url, *args, **kwargs):
+  def __init__ (self, url, unify_interface=False, *args, **kwargs):
     """
     Init.
 
@@ -704,6 +704,14 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
        "Init RemoteESCAPEv2RESTAdapter - type: %s, domain: %s, URL: %s" % (
          self.type, self.domain_name, url))
     self._original_nffg = None
+    self._unify_interface = unify_interface
+    self.converter = None
+    # Cache for parsed virtualizer
+    self.virtualizer = None
+    self._original_virtualizer = None
+    if self._unify_interface:
+      log.info("Setup ESCAPEv2 adapter as a Unify interface!")
+      self.converter = NFFGConverter(domain=self.domain_name, logger=log)
 
   def ping (self):
     return self.send_no_error(self.GET, 'ping')
@@ -714,19 +722,39 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if data:
       # Convert raw data to NFFG
       log.info("Parse and load received data...")
-      log.debug("Converting to NFFG format...")
-      nffg = NFFG.parse(data)
+      if self._unify_interface:
+        if not data.startswith("<?xml version="):
+          log.error("Received data is not in XML format!")
+          return
+        log.debug("Converting from XML/Virtualizer to NFFG format...")
+        # Covert from XML-based Virtualizer to NFFG
+        nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
+        # Cache virtualizer
+        self.virtualizer = virt
+        if self._original_virtualizer is None:
+          log.debug(
+             "Store Virtualizer(id: %s, name: %s) as the original domain "
+             "config..." % (virt.id.get_as_text(), virt.name.get_as_text()))
+          self._original_virtualizer = deepcopy(virt)
+      else:
+        log.debug("Converting to NFFG format...")
+        nffg = NFFG.parse(data)
+        # Store original config for domain resetting
+        if self._original_nffg is None:
+          log.debug("Store %s as the original domain config..." % nffg)
+          self._original_nffg = nffg.copy()
       log.debug("Set domain to %s" % self.domain_name)
       self.rewrite_domain(nffg)
-      # Store original config for domain resetting
-      if self._original_nffg is None:
-        log.debug("Store %s as the original domain config..." % nffg)
-        self._original_nffg = nffg.copy()
       return nffg
 
   def edit_config (self, data):
     if not isinstance(data, (str, unicode, NFFG)):
       raise RuntimeError("Not supported config format for 'edit-config'!")
+    if self._unify_interface:
+      log.debug("Convert NFFG to XML/Virtualizer format...")
+      virt_data = self.converter.adapt_mapping_into_Virtualizer(
+         virtualizer=self.virtualizer, nffg=data)
+      data = virt_data.xml()
     log.debug("Send NFFG to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
@@ -743,6 +771,12 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   Implement the unified way to communicate with "Unify" domains which are
   using REST-API and the "Virtualizer" XML-based format.
   """
+  # Set custom header
+  custom_headers = {
+    'User-Agent': "ESCAPE/" + __version__,
+    # XML-based Virtualizer format
+    'Accept': "application/xml"
+  }
   # Adapter name used in CONFIG and ControllerAdapter class
   name = "UNIFY-REST"
   # type of the Adapter class - use this name for searching Adapter config
@@ -781,6 +815,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       self.domain_name, self._base_url))
     if data:
       log.info("Parse and load received data...")
+      if not data.startswith("<?xml version="):
+        log.error("Received data is not in XML format!")
+        return
       # Covert from XML-based Virtualizer to NFFG
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
@@ -803,6 +840,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :rtype: str
     """
     if isinstance(data, NFFG):
+      log.debug("Convert NFFG to XML/Virtualizer format...")
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
@@ -828,6 +866,12 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   This class is devoted to provide REST specific functions for OpenStack
   domain.
   """
+  # Set custom header
+  custom_headers = {
+    'User-Agent': "ESCAPE/" + __version__,
+    # XML-based Virtualizer format
+    'Accept': "application/xml"
+  }
   # Adapter name used in CONFIG and ControllerAdapter class
   name = "OpenStack-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
@@ -857,6 +901,9 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     data = self.send_no_error(self.POST, 'get-config')
     if data:
       log.info("Parse and load received data...")
+      if not data.startswith("<?xml version="):
+        log.error("Received data is not in XML!")
+        return
       # Covert from XML-based Virtualizer to NFFG
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
@@ -872,6 +919,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def edit_config (self, data):
     if isinstance(data, NFFG):
+      log.debug("Convert NFFG to XML/Virtualizer format...")
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
@@ -895,6 +943,12 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   """
   This class is devoted to provide REST specific functions for UN domain.
   """
+  # Set custom header
+  custom_headers = {
+    'User-Agent': "ESCAPE/" + __version__,
+    # XML-based Virtualizer format
+    'Accept': "application/xml"
+  }
   # Adapter name used in CONFIG and ControllerAdapter class
   name = "UN-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
@@ -925,6 +979,9 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("Received config from remote agent at %s" % self._base_url)
     if data:
       log.info("Parse and load received data...")
+      if not data.startswith("<?xml version="):
+        log.error("Received data is not in XML!")
+        return
       # Covert from XML-based Virtualizer to NFFG
       nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data)
       # Cache virtualizer
@@ -940,6 +997,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def edit_config (self, data):
     if isinstance(data, NFFG):
+      log.debug("Convert NFFG to XML/Virtualizer format...")
       # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
       # data = self.converter.unescape_output_hack(str(virtualizer))
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
