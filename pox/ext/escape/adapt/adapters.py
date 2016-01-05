@@ -717,13 +717,24 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.send_no_error(self.GET, 'ping')
 
   def get_config (self):
+    # Get topology from remote agent handling every exception
     data = self.send_no_error(self.POST, 'get-config')
-    log.debug("Received config from remote agent at %s" % self._base_url)
     if data:
-      # Convert raw data to NFFG
+      # Got data
+      log.debug("Received config from remote agent at %s" % self._base_url)
+      log.debug("Detected response format: %s" %
+                self.get_last_response_headers().get("Content-Type", "None"))
+      # Convert raw data to appropriate format
       log.info("Parse and load received data...")
+      # If API is set as UNIFY-based interface use XML-based Virtualizer format
       if self._unify_interface:
-        if not data.startswith("<?xml version="):
+        # If content-type is set
+        if self.get_last_response_headers().get("Content-Type",
+                                                "") != "application/xml":
+          log.error(
+             "Content type of response message is not 'application/xml'!")
+          return
+        elif not data.startswith("<?xml version="):
           log.error("Received data is not in XML format!")
           return
         log.debug("Converting from XML/Virtualizer to NFFG format...")
@@ -737,7 +748,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
              "config..." % (virt.id.get_as_text(), virt.name.get_as_text()))
           self._original_virtualizer = deepcopy(virt)
       else:
-        log.debug("Converting to NFFG format...")
+        log.debug("Converting to internal NFFG format...")
         nffg = NFFG.parse(data)
         # Store original config for domain resetting
         if self._original_nffg is None:
@@ -746,6 +757,9 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.debug("Set domain to %s" % self.domain_name)
       self.rewrite_domain(nffg)
       return nffg
+    else:
+      log.error("No data is received from remote agent!")
+      return
 
   def edit_config (self, data):
     if not isinstance(data, (str, unicode, NFFG)):

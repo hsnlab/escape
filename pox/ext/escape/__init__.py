@@ -67,7 +67,8 @@ cfg = {
           "class": "ServiceRequestHandler",
           "prefix": "escape",
           "address": "0.0.0.0",
-          "port": 8008
+          "port": 8008,
+          "unify_interface": False
         }
     },
   "orchestration":  # Resource Orchestration Sublayer
@@ -101,7 +102,8 @@ cfg = {
           "prefix": "escape",
           "address": "0.0.0.0",
           "port": 8888,
-          "virtualizer_type": "GLOBAL"
+          "virtualizer_type": "GLOBAL",
+          "unify_interface": True
         },
       "Cf-Or":
         {

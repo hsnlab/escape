@@ -163,7 +163,7 @@ class AbstractAPI(EventMixin):
     pass
 
   @staticmethod
-  def _read_json_from_file (graph_file):
+  def _read_data_from_file (graph_file):
     """
     Read the given file and return a string formatted as JSON.
 

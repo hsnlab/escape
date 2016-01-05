@@ -20,6 +20,16 @@
                 <mem>16 GB</mem>
                 <storage>5 TB</storage>
             </resources>
+            <links>
+                <link>
+                    <id>test1link</id>
+                    <src>/virtualizer/nodes/node[id=UUID11]/ports/port[id=1]</src>
+                    <dst>/virtualizer/nodes/node[id=UUID11]/ports/port[id=1]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                    </resources>
+                </link>
+            </links>
             <capabilities>
                 <supported_NFs>
                     <node>

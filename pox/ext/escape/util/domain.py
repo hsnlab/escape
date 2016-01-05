@@ -835,7 +835,8 @@ class AbstractRESTAdapter(Session):
   def URL (self):
     return self._base_url
 
-  def __suppress_requests_logging (self, level=None):
+  @staticmethod
+  def __suppress_requests_logging (level=None):
     """
     Suppress annoying and detailed logging of `requests` and `urllib3` packages.
 
@@ -928,3 +929,31 @@ class AbstractRESTAdapter(Session):
          "Request to remote agent(adapter: %s, url: %s) is interrupted by "
          "user!" % (self.name, self._base_url))
       return None
+
+  def get_last_response_body (self):
+    """
+    Return with the body of the last response.
+    Wrapper function to hide requests library.
+
+    :return: raw response body
+    :rtype: str
+    """
+    return self._response.text if self._response is not None else None
+
+  def get_last_response_status (self):
+    """
+    Return the status of the last response.
+
+    :return: response status
+    :rtype: int
+    """
+    return self._response.status_code if self._response is not None else None
+
+  def get_last_response_headers (self):
+    """
+    Return with the headers of the last response.
+
+    :return: response headers
+    :rtype: dict
+    """
+    return self._response.headers if self._response is not None else None
