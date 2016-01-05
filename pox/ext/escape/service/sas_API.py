@@ -23,6 +23,7 @@ from escape.service import log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
+from escape.util.conversion import NFFGConverter
 from escape.util.mapping import PreMapEvent, PostMapEvent
 from escape.util.misc import schedule_delayed_as_coop_task, \
   schedule_as_coop_task
@@ -86,8 +87,14 @@ class ServiceRequestHandler(AbstractRequestHandler):
   bounded_layer = 'service'
   # Logger. Must define.
   log = log.getChild("[U-Sl]")
+  # Use Virtualizer format
+  virtualizer_format_enabled = False
 
-  # REST API call --> UNIFY U-Sl call
+  def __init__ (self, request, client_address, server):
+    """
+    Init.
+    """
+    AbstractRequestHandler.__init__(self, request, client_address, server)
 
   def result (self):
     """
@@ -101,34 +108,71 @@ class ServiceRequestHandler(AbstractRequestHandler):
     res = self._proceed_API_call('get_result', id)
     self._send_json_response({'id': id, 'result': res})
 
-  def sg (self):
-    """
-    Main API function for Service Graph initiation
-
-    Bounded to POST HTTP verb
-    """
-    self.log.debug("Called REST-API function: sg")
-    body = self._get_body()
-    # log.getChild("REST-API").debug("Request body:\n%s" % body)
-    service_nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    self.log.debug("Parsed service request: %s" % service_nffg)
-    self._proceed_API_call('api_sas_sg_request', service_nffg)
-    self.send_acknowledge()
-
   def topology (self):
     """
     Provide internal topology description
+
+    Same functionality as "get-config" in UNIFY interface.
+
+    :return: None
     """
     self.log.info("Call REST-API function: topology")
+    # Forward call to main layer class
     topology = self._proceed_API_call('api_sas_get_topology')
     if topology is None:
       self.send_error(404, message="Resource info is missing!")
       return
+    # Setup OK status for HTTP response
     self.send_response(200)
-    self.send_header('Content-Type', 'application/json')
-    self.send_header('Content-Length', len(topology))
+    if self.virtualizer_format_enabled:
+      converter = NFFGConverter(domain=None, logger=log)
+      # Dump to plain text format
+      data = converter.dump_to_Virtualizer3(nffg=topology).xml()
+      # Setup HTTP response format
+      self.send_header('Content-Type', 'application/xml')
+    else:
+      data = topology.dump()
+      self.send_header('Content-Type', 'application/json')
+    # Setup length for HTTP response
+    self.send_header('Content-Length', len(data))
+
     self.end_headers()
-    self.wfile.write(topology)
+    self.wfile.write(data)
+
+  def sg (self):
+    """
+    Main API function for Service Graph initiation.
+
+    Same functionality as "get-config" in UNIFY interface.
+
+    Bounded to POST HTTP verb
+
+    :return: None
+    """
+    self.log.debug("Called REST-API function: sg")
+    # Obtain NFFG from request body
+    log.debug("Detected response format: %s" %
+              self.headers.get("Content-Type", ""))
+    body = self._get_body()
+    # log.getChild("REST-API").debug("Request body:\n%s" % body)
+    # Expect XML format --> need to convert first
+    if self.virtualizer_format_enabled:
+      if self.headers.get("Content-Type", "") != "application/xml" or \
+         not body.startswith("<?xml version="):
+        log.error(
+           "Received data is not in XML format despite of the UNIFY "
+           "interface is enabled!")
+        self.send_error(415)
+        return
+      # Convert response's body to NFFG
+      nffg = NFFGConverter(domain="INTERNAL",
+                           logger=log).parse_from_Virtualizer3(xml_data=body)
+    else:
+      nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    self.log.debug("Parsed service request: %s" % nffg)
+    self._proceed_API_call('api_sas_sg_request', nffg)
+
+    self.send_acknowledge()
 
 
 class ServiceLayerAPI(AbstractAPI):
@@ -173,15 +217,21 @@ class ServiceLayerAPI(AbstractAPI):
     # Read input from file if it's given and initiate SG
     if self._sg_file:
       try:
-        service_request = self._read_json_from_file(self._sg_file)
+        service_request = self._read_data_from_file(self._sg_file)
         log.info("Graph representation is loaded successfully!")
-        service_request = NFFG.parse(service_request)
-        log.debug("Converted to NFFG...")
+        if service_request.startswith('{'):
+          log.debug("Detected format: JSON - Parsing from NFFG format...")
+          nffg = NFFG.parse(raw_data=service_request)
+        elif service_request.startswith('<'):
+          log.debug("Detected format: XML - Parsing from Virtualizer format...")
+          converter = NFFGConverter(domain="INTERNAL", logger=log)
+          nffg, virt = converter.parse_from_Virtualizer3(
+            xml_data=service_request)
         log.info("Schedule service request delayed by 3 seconds...")
-        self.api_sas_sg_request_delayed(service_nffg=service_request)
+        self.api_sas_sg_request_delayed(service_nffg=nffg)
       except (ValueError, IOError, TypeError) as e:
         log.error(
-          "Can't load service request from file because of: " + str(e))
+           "Can't load service request from file because of: " + str(e))
     else:
       # Init REST-API if no input file is given
       self._initiate_rest_api()
@@ -210,17 +260,18 @@ class ServiceLayerAPI(AbstractAPI):
     handler = CONFIG.get_sas_api_class()
     handler.bounded_layer = self._core_name
     handler.prefix = CONFIG.get_sas_api_prefix()
+    handler.virtualizer_format_enabled = CONFIG.get_sas_virtualizer_format()
     address = CONFIG.get_sas_api_address()
     self.rest_api = RESTServer(handler, *address)
     handler.log.debug(
-      "Init REST-API [U-Sl] on %s:%s!" % (address[0], address[1]))
+       "Init REST-API [U-Sl] on %s:%s!" % (address[0], address[1]))
     self.rest_api.start()
 
   def _initiate_gui (self):
     """
     Initiate and set up GUI.
     """
-    # TODO - set up and initiate MiniEdit here
+    # TODO - set up and initiate MiniEdit here???
     log.info("GUI has been initiated!")
 
   def _handle_SGMappingFinishedEvent (self, event):
@@ -275,16 +326,16 @@ class ServiceLayerAPI(AbstractAPI):
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
       self.__class__.__name__, service_nffg))
     service_nffg = self.service_orchestrator.initiate_service_graph(
-      service_nffg)
+       service_nffg)
     log.getChild('API').debug(
-      "Invoked request_service on %s is finished" % self.__class__.__name__)
+       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
     if service_nffg is not None:
       self._instantiate_NFFG(service_nffg)
     else:
       log.warning(
-        "Something went wrong in service request initiation: mapped service "
-        "request is missing!")
+         "Something went wrong in service request initiation: mapped service "
+         "request is missing!")
     self.last_sg = service_nffg
 
   def api_sas_get_topology (self):
@@ -297,7 +348,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Get or if not available then request the layer's Virtualizer
     sas_virtualizer = self.service_orchestrator.virtResManager.virtual_view
     # return with the virtual view as an NFFG
-    return sas_virtualizer.get_resource_info().dump()
+    return sas_virtualizer.get_resource_info()
 
   def get_result (self, id):
     """
@@ -325,7 +376,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
     log.getChild('API').info(
-      "Generated NF-FG: %s has been sent to Orchestration..." % nffg)
+       "Generated NF-FG: %s has been sent to Orchestration..." % nffg)
 
   ##############################################################################
   # UNIFY Sl - Or API functions starts here
@@ -344,8 +395,8 @@ class ServiceLayerAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Send <Virtual View> request(with layer ID: %s) to Orchestration "
-      "layer..." % self.__sid)
+       "Send <Virtual View> request(with layer ID: %s) to Orchestration "
+       "layer..." % self.__sid)
     self.raiseEventNoErrors(GetVirtResInfoEvent, self.__sid)
 
   def _handle_VirtResInfoEvent (self, event):
@@ -368,8 +419,8 @@ class ServiceLayerAPI(AbstractAPI):
       self.rest_api.request_cache.set_result(id=event.id, result=event.result)
     if event.result:
       log.getChild('API').info(
-        "Service request(id=%s) has been finished successfully!" % event.id)
+         "Service request(id=%s) has been finished successfully!" % event.id)
     else:
       log.getChild('API').info(
-        "Service request(id=%s) has been finished with error: %s" % (
-          event.id, event.error))
+         "Service request(id=%s) has been finished with error: %s" % (
+           event.id, event.error))

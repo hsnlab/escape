@@ -118,12 +118,18 @@ class NFFGConverter(object):
 
       # Iterate over links to summarize bw value for infra node
       # Default value: None
-      _bandwidth = reduce(min, (link.resources.bandwidth.get_value() for link in
-                                inode.links))
+      _bandwidth = [
+        float(link.resources.bandwidth.get_value()) for link in inode.links if
+        link.resources.is_initialized() and
+        link.resources.bandwidth.is_initialized()]
+      _bandwidth = min(_bandwidth) if _bandwidth else None
       # Iterate over links to summarize delay value for infra node
       # Default value: None
-      _delay = reduce(max, (float(link.resources.delay.get_value()) for link in
-                            inode.links), None)
+      _delay = [
+        float(link.resources.delay.get_value()) for link in inode.links if
+        link.resources.is_initialized() and
+        link.resources.delay.is_initialized()]
+      _delay = max(_delay) if _delay else None
 
       # Add Infra Node
       infra = nffg.add_infra(id=_id, name=_name, domain=_domain,
@@ -140,7 +146,7 @@ class NFFGConverter(object):
       for port in inode.ports:
         # If it is a port connected to a SAP
         if port.port_type.get_value() == self.TYPE_VIRTUALIZER_PORT_SAP:
-          # Inter-domain SAP
+          # If inter-domain SAP
           if port.sap.is_initialized():
             # Use unique SAP tag as the id of the SAP
             s_id = port.sap.get_value()
@@ -164,9 +170,9 @@ class NFFGConverter(object):
           # Add port properties as metadata to SAP port
           if port.name.is_initialized():
             sap_port.add_property("name:%s" % port.name.get_value())
-          sap_port.add_property("port_type:%s" % port.port_type.get_value())
           if port.sap.is_initialized():
             sap_port.add_property("sap:%s" % port.sap.get_value())
+            # sap_port.add_property("type:%s" % port.sap.get_value())
             self.log.debug("Add SAP port: %s" % sap_port)
 
           # Create and add the opposite Infra port
@@ -177,7 +183,7 @@ class NFFGConverter(object):
           infra_port = infra.add_port(id=infra_port_id)
           # Add port properties as metadata to Infra port too
           infra_port.add_property("name:%s" % port.name.get_value())
-          infra_port.add_property("port_type:%s" % port.port_type.get_value())
+          # infra_port.add_property("port_type:%s" % port.port_type.get_value())
           if port.sap.is_initialized():
             infra_port.add_property("sap:%s" % port.sap.get_value())
 
@@ -206,7 +212,10 @@ class NFFGConverter(object):
           infra_port = infra.add_port(id=infra_port_id)
           if port.name.is_initialized():
             infra_port.add_property("name:%s" % port.name.get_value())
-          # infra_port.add_property("port_type:%s" % port.port_type.get_value())
+          # If sap is set and port_type is port-abstract -> this port
+          # connected  to an inter-domain SAP before -> save this metadata
+          if port.sap.is_initialized():
+            infra_port.add_property("sap:%s" % port.sap.get_value())
           if port.capability.is_initialized():
             infra_port.add_property(
                "capability:%s" % port.capability.get_value())
@@ -290,9 +299,9 @@ class NFFGConverter(object):
       params['p1p2id'] = link.id.get_value()
       params['p2p1id'] = link.id.get_as_text() + "-back"
       if link.resources.is_initialized():
-        params['delay'] = link.resources.delay.get_value() if \
+        params['delay'] = float(link.resources.delay.get_value()) if \
           link.resources.delay.is_initialized() else None
-        params['bandwidth'] = link.resources.bandwidth.get_value() if \
+        params['bandwidth'] = float(link.resources.bandwidth.get_value()) if \
           link.resources.bandwidth.is_initialized() else None
       nffg.add_undirected_link(
          port1=nffg[src_node].ports[src_port],
@@ -322,13 +331,12 @@ class NFFGConverter(object):
                                     type=str(infra.infra_type))
 
       # Add resources nodes/node/resources
-      _cpu = str(infra.resources.cpu) if infra.resources.cpu else None
-      _mem = str(infra.resources.mem) if infra.resources.mem else None
-      _storage = str(
-         infra.resources.storage) if infra.resources.storage else None
-      infra_node.resources.cpu.set_value(_cpu)
-      infra_node.resources.mem.set_value(_mem)
-      infra_node.resources.storage.set_value(_storage)
+      if infra.resources.cpu:
+        infra_node.resources.cpu.set_value(str(infra.resources.cpu))
+      if infra.resources.mem:
+        infra_node.resources.mem.set_value(str(infra.resources.mem))
+      if infra.resources.storage:
+        infra_node.resources.storage.set_value(str(infra.resources.storage))
 
       # Add ports to infra
       for port in infra.ports:
@@ -345,12 +353,15 @@ class NFFGConverter(object):
           _port.name.set_value(port.get_property("name"))
         if port.get_property("capability"):
           _port.capability.set_value(port.get_property("capability"))
-        if port.get_property("port_type"):
-          _port.port_type.set_value(port.get_property("port_type"))
-        else:
-          # Set default port-type to port-abstract
-          # during SAP detection the SAP<->Node port-type will be overridden
-          _port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_ABSTRACT)
+        # If SAP property is exist: this port connected to a SAP
+        if port.get_property("sap"):
+          _port.sap.set_value(port.get_property("sap"))
+        # Set default port-type to port-abstract
+        # during SAP detection the SAP<->Node port-type will be overridden
+        _port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_ABSTRACT)
+        # port_type: port-abstract & sap: -    -->  regular port
+        # port_type: port-abstract & sap: <SAP...>    -->  was connected to
+        # an inter-domain port - set this data in Virtualizer
         infra_node.ports.add(_port)
 
       # Add minimalistic Node for supported NFs based on supported list of NFFG
@@ -361,44 +372,53 @@ class NFFGConverter(object):
       # Add infra to virtualizer
       virt.nodes.add(infra_node)
 
-      # Define full-mesh intra-links for nodes to set bandwidth and delay values
-      from itertools import combinations
-      # Detect the number of ports
-      port_num = len(infra_node.ports.port._data)
-      if port_num > 1:
-        # There are valid port-pairs
-        for port_pair in combinations(
-           (p.id.get_value() for p in infra_node.ports), 2):
-          # Create link
+      if infra.resources.delay is not None or infra.resources.bandwidth is \
+         not None:
+        # Define full-mesh intra-links for nodes to set bandwidth and delay
+        # values
+        from itertools import combinations
+        # Detect the number of ports
+        port_num = len(infra_node.ports.port._data)
+        if port_num > 1:
+          # There are valid port-pairs
+          for port_pair in combinations(
+             (p.id.get_value() for p in infra_node.ports), 2):
+            # Create link
+            _link = virt3.Link(
+               src=infra_node.ports[port_pair[0]],
+               dst=infra_node.ports[port_pair[1]],
+               resources=virt3.Link_resource(
+                  delay=str(
+                     infra.resources.delay) if infra.resources.delay else None,
+                  bandwidth=str(
+                     infra.resources.bandwidth) if infra.resources.bandwidth
+                  else None
+               )
+            )
+            # Call bind to resolve src,dst references to workaround a bug
+            _link.bind()
+            infra_node.links.add(_link)
+        elif port_num == 1:
+          # Only one port in infra - create loop-edge
+          _src = _dst = iter(infra_node.ports).next()
           _link = virt3.Link(
-             src=infra_node.ports[port_pair[0]],
-             dst=infra_node.ports[port_pair[1]],
+             src=_src,
+             dst=_dst,
              resources=virt3.Link_resource(
-                delay=str(infra.resources.delay),
-                bandwidth=str(infra.resources.bandwidth)
+                delay=str(
+                   infra.resources.delay) if infra.resources.delay else None,
+                bandwidth=str(
+                   infra.resources.bandwidth) if infra.resources.bandwidth
+                else None
              )
-          )
-          # Call bind to resolve src,dst references to workaround a bug
+          )  # Call bind to resolve src,dst references to workaround a bug
           _link.bind()
           infra_node.links.add(_link)
-      elif port_num == 1:
-        # Only one port in infra - create loop-edge
-        _src = _dst = iter(infra_node.ports).next()
-        _link = virt3.Link(
-           src=_src,
-           dst=_dst,
-           resources=virt3.Link_resource(
-              delay=str(infra.resources.delay),
-              bandwidth=str(infra.resources.bandwidth)
-           )
-        )  # Call bind to resolve src,dst references to workaround a bug
-        _link.bind()
-        infra_node.links.add(_link)
-      else:
-        # No port in Infra - unusual but acceptable
-        self.log.warning(
-           "No port has been detected in %s. Can not store internal "
-           "bandwidth/delay value!" % infra)
+        else:
+          # No port in Infra - unusual but acceptable
+          self.log.warning(
+             "No port has been detected in %s. Can not store internal "
+             "bandwidth/delay value!" % infra)
 
     # Rewrite SAP - Node ports to add SAP to Virtualizer
     for sap in nffg.saps:
@@ -412,12 +432,13 @@ class NFFGConverter(object):
         else:
           _name = str(sap.name) if sap.name else str(sap.id)
         virt.nodes[n].ports[str(link.dst.id)].name.set_value(_name)
-        self.log.debug("Setup SAP as port: %s for infra: %s" % (link.dst.id, n))
+        self.log.debug(
+           "Convert SAP to port: %s in infra: %s" % (link.dst.id, n))
         # Check if the SAP is an inter-domain SAP
         if nffg[s].domain is not None:
           virt.nodes[n].ports[str(link.dst.id)].sap.set_value(s)
           self.log.debug(
-             "Setup inter-domain SAP as port: %s for infra: %s" % (
+             "Convert inter-domain SAP to port: %s in infra: %s" % (
                link.dst.id, n))
 
     # Add link to Virtualizer
@@ -1235,14 +1256,21 @@ if __name__ == "__main__":
   # out = out.replace("&lt;", "<").replace("&gt;", ">")
   # print out
 
+  # with open(
+  #    "../../../../examples/escape-mn-topo.nffg") as f:
+  #   nffg = NFFG.parse(raw_data=f.read())
+  #   nffg.duplicate_static_links()
+  # print "Parsed NFFG: %s" % nffg
+  # virt = c.dump_to_Virtualizer3(nffg=nffg)
+  # print "Converted:"
+  # print virt.xml()
+  # print "Reconvert to NFFG:"
+  # nffg, v = c.parse_from_Virtualizer3(xml_data=virt.xml())
+  # print nffg.dump()
+
   with open(
-     "../../../../examples/escape-mn-topo.nffg") as f:
-    nffg = NFFG.parse(raw_data=f.read())
-    nffg.duplicate_static_links()
-  print "Parsed NFFG: %s" % nffg
-  virt = c.dump_to_Virtualizer3(nffg=nffg)
-  print "Converted:"
-  print virt.xml()
-  print "Reconvert to NFFG:"
-  nffg, v = c.parse_from_Virtualizer3(xml_data=virt.xml())
+     "../../../../examples/escape-mn-dov.xml") as f:
+    tree = tree = ET.ElementTree(ET.fromstring(f.read()))
+    dov = virt3.Virtualizer().parse(root=tree.getroot())
+  nffg, v = c.parse_from_Virtualizer3(xml_data=dov.xml())
   print nffg.dump()

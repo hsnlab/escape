@@ -434,6 +434,18 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
+  def get_sas_virtualizer_format (self):
+    """
+    Return the REST API format for service request handler.
+
+    :return: Virtualizer format is enabled or not
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[SERVICE]["REST-API"]['unify_interface']
+    except KeyError:
+      return False
+
   ##############################################################################
   # ORCHESTRATION layer getters
   ##############################################################################
@@ -477,7 +489,7 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
-  def get_ros_virtualizer_format(self):
+  def get_ros_virtualizer_format (self):
     """
     Return the REST API format for agent request handler.
 

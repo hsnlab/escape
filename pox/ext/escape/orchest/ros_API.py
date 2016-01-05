@@ -127,10 +127,11 @@ class CfOrRequestHandler(AbstractRequestHandler):
       self.send_error(404, message="Resource info is missing!")
       return
     self.send_response(200)
+    data = config.dump()
     self.send_header('Content-Type', 'application/json')
-    self.send_header('Content-Length', len(config))
+    self.send_header('Content-Length', len(data))
     self.end_headers()
-    self.wfile.write(config)
+    self.wfile.write(data)
 
   def edit_config (self):
     """
@@ -173,7 +174,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   # Logger. Must define.
   log = log.getChild("[Sl-Or]")
   # Use Virtualizer format
-  enable_virtualizer_format = False
+  virtualizer_format_enabled = False
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
@@ -189,56 +190,65 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   def get_config (self):
     """
     Response configuration.
+
+    :return: None
     """
     log.info("Call REST-API function: get-config")
+    # Forward call to main layer class
     config = self._proceed_API_call('api_ros_get_config')
     if config is None:
       self.send_error(404, message="Resource info is missing!")
       return
+    # Setup OK status for HTTP response
     self.send_response(200)
-    if self.enable_virtualizer_format:
-      converter = NFFGConverter(domain="REMOTE", logger=log)
-      config = converter.dump_to_Virtualizer3(nffg=config).xml()
+    # Convert required NFFG if needed
+    if self.virtualizer_format_enabled:
+      converter = NFFGConverter(domain=None, logger=log)
+      # Dump to plain text format
+      data = converter.dump_to_Virtualizer3(nffg=config).xml()
+      # Setup HTTP response format
       self.send_header('Content-Type', 'application/xml')
     else:
+      data = config.dump()
       self.send_header('Content-Type', 'application/json')
-    self.send_header('Content-Length', len(config))
+    # Setup length for HTTP response
+    self.send_header('Content-Length', len(data))
+
     self.end_headers()
-    self.wfile.write(config)
+    self.wfile.write(data)
 
   def edit_config (self):
     """
     Receive configuration and initiate orchestration.
+
+    :return: None
     """
     log.info("Call REST-API function: edit-config")
+    # Obtain NFFG from request body
+    log.debug("Detected response format: %s" %
+              self.headers.get("Content-Type", ""))
     body = self._get_body()
-    # TODO: check if received data in XML -> http header or startswidth <?xml ...
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
-    nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    # Expect XML format --> need to convert first
+    if self.virtualizer_format_enabled:
+      if self.headers.get("Content-Type", "") != "application/xml" or \
+         not body.startswith("<?xml version="):
+        log.error(
+           "Received data is not in XML format despite of the UNIFY "
+           "interface is enabled!")
+        self.send_error(415)
+        return
+      # Convert response's body to NFFG
+      nffg = NFFGConverter(domain="REMOTE", logger=log).parse_from_Virtualizer3(
+         xml_data=body)
+    else:
+      nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     # Rewrite domain name to INTERNAL
     # nffg = self._update_REMOTE_ESCAPE_domain(nffg_part=nffg)
     log.debug("Parsed NFFG install request: %s" % nffg)
     self._proceed_API_call('api_ros_edit_config', nffg)
+
     self.send_acknowledge()
-
-  def _update_REMOTE_ESCAPE_domain (self, nffg_part):
-    """
-    Update domain descriptor of infras: REMOTE -> INTERNAL
-
-    :param nffg_part: NF-FG need to be updated
-    :type nffg_part: :any:`NFFG`
-    :return: updated NFFG
-    :rtype: :any:`NFFG`
-    """
-    log.debug("Rewrite domain name of incoming NFFG to INTERNAL...")
-    for infra in nffg_part.infras:
-      if infra.infra_type not in (
-         NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-         NFFG.TYPE_INFRA_SDN_SW):
-        continue
-      if infra.domain == 'REMOTE':
-        infra.domain = 'INTERNAL'
-    return nffg_part
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -275,7 +285,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.resource_orchestrator = ResourceOrchestrator(self)
     if self._nffg_file:
       try:
-        service_request = self._read_json_from_file(self._nffg_file)
+        service_request = self._read_data_from_file(self._nffg_file)
         service_request = NFFG.parse(service_request)
         self.__proceed_instantiation(nffg=service_request)
       except (ValueError, IOError, TypeError) as e:
@@ -318,8 +328,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.bounded_layer = self._core_name
     # can override from global config
     handler.prefix = CONFIG.get_ros_agent_prefix()
+    handler.virtualizer_format_enabled = CONFIG.get_ros_virtualizer_format()
     address = CONFIG.get_ros_agent_address()
-    handler.enable_virtualizer_format = CONFIG.get_ros_virtualizer_format()
     self.ros_api = RESTServer(handler, *address)
     # Virtualizer ID of the Sl-Or interface
     self.ros_api.api_id = "Sl-Or"
@@ -400,11 +410,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if self._agent:
       # ESCAPE serves as a local orchestrator, probably with infrastructure
       # layer --> rewrite domain
-      nffg = self.__update_nffg(nffg_part=nffg)
+      nffg = self.__update_nffg_domain(nffg_part=nffg)
     # ESCAPE serves as a global or proxy orchestrator
     self.__proceed_instantiation(nffg=nffg)
 
-  def __update_nffg (self, nffg_part):
+  @staticmethod
+  def __update_nffg_domain (nffg_part, domain_name='INTERNAL'):
     """
     Update domain descriptor of infras: REMOTE -> INTERNAL
 
@@ -420,9 +431,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
          NFFG.TYPE_INFRA_SDN_SW):
         continue
-      if infra.domain == 'REMOTE':
-        infra.domain = 'INTERNAL'
-        rewritten.append(infra.id)
+      # if infra.domain == 'REMOTE':
+      #   infra.domain = 'INTERNAL'
+      infra.domain = domain_name
+      rewritten.append(infra.id)
     log.debug("Rewritten infrastructure nodes: %s" % rewritten)
     return nffg_part
 
@@ -443,7 +455,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if virt is not None:
       log.getChild('Cf-Or').info("Generate topo description...")
       res = virt.get_resource_info()
-      return res.dump() if res is not None else None
+      return res if res is not None else None
     else:
       log.error(
          "Virtualizer(id=%s) assigned to REST-API is not found!" %

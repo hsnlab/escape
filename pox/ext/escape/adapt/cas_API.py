@@ -104,7 +104,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     self.controller_adapter = ControllerAdapter(self, with_infr=self._with_infr)
     if self._mapped_nffg:
       try:
-        mapped_request = self._read_json_from_file(self._mapped_nffg)
+        mapped_request = self._read_data_from_file(self._mapped_nffg)
         mapped_request = NFFG.parse(mapped_request)
         self.__proceed_installation(mapped_nffg=mapped_request)
       except (ValueError, IOError, TypeError) as e:
