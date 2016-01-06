@@ -15,6 +15,16 @@
       ]
     },
     {
+      "id": "SAP14",
+      "name": "SAP14",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "domain": "eth0"
+    },
+    {
       "id": "SAP3",
       "name": "SAP3",
       "ports": [
@@ -37,6 +47,9 @@
         },
         {
           "id": 3
+        },
+        {
+          "id": 4
         }
       ],
       "domain": "INTERNAL",
@@ -120,6 +133,15 @@
       "src_node": "SW14",
       "src_port": 3,
       "dst_node": "SAP4",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10
+    },
+    {
+      "id": "mn-link16",
+      "src_node": "SW14",
+      "src_port": 4,
+      "dst_node": "SAP14",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
