@@ -603,13 +603,15 @@ class ESCAPEConfig(object):
     :return: local manager class
     :rtype: :any:`AbstractDomainManager`
     """
-    for name, item in self.__configuration[ADAPT].iteritems():
+    for item in self.__configuration[ADAPT].itervalues():
       if 'module' in item and 'class' in item:
         try:
           mgr_class = getattr(importlib.import_module(item['module']),
                               item['class'])
           if mgr_class.IS_LOCAL_MANAGER:
-            return name
+            return item[
+              'domain_name'] if "domain_name" in item else \
+              mgr_class.DEFAULT_DOMAIN_NAME
         except:
           return None
     return None
