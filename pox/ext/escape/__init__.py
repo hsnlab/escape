@@ -103,7 +103,7 @@ cfg = {
           "address": "0.0.0.0",
           "port": 8888,
           "virtualizer_type": "GLOBAL",
-          "unify_interface": True
+          "unify_interface": False
         },
       "Cf-Or":
         {
@@ -119,8 +119,8 @@ cfg = {
     {
       # Default managers need to start at init
       "MANAGERS": [
-        # "REMOTE-ESCAPE",
-        # "REMOTE-ESCAPE2",
+        "REMOTE-ESCAPE",
+        "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
         # "UN"
@@ -193,12 +193,13 @@ cfg = {
               {
                 "module": "escape.adapt.adapters",
                 "class": "RemoteESCAPEv2RESTAdapter",
-                "url": "http://localhost:8083",
-                "unify_interface": False
+                "url": "http://172.16.138.129:8888",
+                "prefix": "escape",
+                "unify_interface": True
               }
           }
         },
-      "REMOTE-ESCAPE2":
+      "REMOTE-ESCAPE-ext":
         {
           "module": "escape.adapt.managers",
           "class": "RemoteESCAPEDomainManager",
@@ -209,8 +210,9 @@ cfg = {
               {
                 "module": "escape.adapt.adapters",
                 "class": "RemoteESCAPEv2RESTAdapter",
-                "url": "http://localhost:8085",
-                "unify_interface": False
+                "url": "http://172.16.138.128:8888",
+                "prefix": "escape",
+                "unify_interface": True
               }
           }
         },

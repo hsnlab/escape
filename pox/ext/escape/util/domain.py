@@ -825,9 +825,12 @@ class AbstractRESTAdapter(Session):
   GET = "GET"
   POST = "POST"
 
-  def __init__ (self, base_url, auth=None, *args, **kwargs):
+  def __init__ (self, base_url, prefix="", auth=None, *args, **kwargs):
     super(AbstractRESTAdapter, self).__init__()
-    self._base_url = base_url
+    if base_url.endswith('/'):
+      self._base_url = urlparse.urljoin(base_url, prefix + "/")
+    else:
+      self._base_url = urlparse.urljoin(base_url + '/', prefix + "/")
     self.auth = auth
     # Store the last request
     self._response = None

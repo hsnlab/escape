@@ -127,6 +127,8 @@ def generate_mn_topo2 ():
   # Add SAPs
   sap1 = nffg.add_sap(id="SAP3", name="SAP3")
   sap2 = nffg.add_sap(id="SAP4", name="SAP4")
+  sap14 = nffg.add_sap(id="SAP14", name="SAP14")
+  sap14.domain = "eth0"
 
   # Add links
   link_res = {'delay': 1.5, 'bandwidth': 10}
@@ -135,6 +137,7 @@ def generate_mn_topo2 ():
   nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="mn-link13", **link_res)
   nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="mn-link14", **link_res)
   nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="mn-link15", **link_res)
+  nffg.add_link(sw4.add_port(4), sap14.add_port(1), id="mn-link16", **link_res)
   # nffg.duplicate_static_links()
   return nffg
 
@@ -764,7 +767,7 @@ if __name__ == "__main__":
   # nffg = generate_simple_test_topo()
   # nffg = generate_simple_test_req()
   nffg = generate_mn_topo2()
-  nffg = generate_mn_test_req2()
+  # nffg = generate_mn_test_req2()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()

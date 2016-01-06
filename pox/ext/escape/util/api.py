@@ -459,7 +459,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
         else:
           self.send_error(501)
       else:
-        self.send_error(404)
+        self.send_error(404, "URL path is not valid or misconfigured")
     except RESTError as e:
       # Handle all the errors
       if e.code:

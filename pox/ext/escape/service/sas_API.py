@@ -227,6 +227,9 @@ class ServiceLayerAPI(AbstractAPI):
           converter = NFFGConverter(domain="INTERNAL", logger=log)
           nffg, virt = converter.parse_from_Virtualizer3(
             xml_data=service_request)
+        else:
+          log.warning("Detected unexpected format...")
+          return
         log.info("Schedule service request delayed by 3 seconds...")
         self.api_sas_sg_request_delayed(service_nffg=nffg)
       except (ValueError, IOError, TypeError) as e:
