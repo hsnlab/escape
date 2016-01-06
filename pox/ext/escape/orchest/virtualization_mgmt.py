@@ -44,7 +44,6 @@ class AbstractVirtualizer(object):
   # Default domain type for Virtualizers
   DEFAULT_DOMAIN = "VIRTUAL"
 
-
   def __init__ (self, id):
     """
     Init.
@@ -167,13 +166,13 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     :rtype: :any:`NFFG`
     """
     log.debug(
-      "Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
+       "Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
     # Create Single BiSBiS NFFG
     nffg = NFFG(id="SingleBiSBiS-NFFG", name="Single-BiSBiS-View")
     if self.global_view is None:
       log.error(
-        "Missing global view from %s. Skip OneBiSBiS generation!" %
-        self.__class__.__name__)
+         "Missing global view from %s. Skip OneBiSBiS generation!" %
+         self.__class__.__name__)
       return
     dov = self.global_view.get_resource_info()
     if dov is None:
@@ -187,29 +186,29 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
 
     # Compute and add resources
     sbb.resources.cpu = sum(
-      # Sum of available CPU
-      (n.resources.cpu for n in dov.infras if
-       n.resources.cpu is not None))
+       # Sum of available CPU
+       (n.resources.cpu for n in dov.infras if
+        n.resources.cpu is not None))
     sbb.resources.mem = sum(
-      # Sum of available memory
-      (n.resources.mem for n in dov.infras if
-       n.resources.mem is not None))
+       # Sum of available memory
+       (n.resources.mem for n in dov.infras if
+        n.resources.mem is not None))
     sbb.resources.storage = sum(
-      # Sum of available storage
-      (n.resources.storage for n in dov.infras if
-       n.resources.storage is not None))
+       # Sum of available storage
+       (n.resources.storage for n in dov.infras if
+        n.resources.storage is not None))
     sbb.resources.delay = min(
-      # Minimal available delay value of infras in DoV
-      min((n.resources.delay for n in dov.infras if
-           n.resources.delay is not None)),
-      # Minimal available delay value of inter-infra links
-      min((l.delay for l in dov.links if l.delay is not None)))
+       # Minimal available delay value of infras in DoV
+       min((n.resources.delay for n in dov.infras if
+            n.resources.delay is not None)),
+       # Minimal available delay value of inter-infra links
+       min((l.delay for l in dov.links if l.delay is not None)))
     max_bw = max(
-      # Maximum available bandwidth value of infras in DoV
-      max((n.resources.bandwidth for n in dov.infras if
-           n.resources.bandwidth is not None)),
-      # Maximum available bandwidth value of inter-infra links
-      max(l.bandwidth for l in dov.links if l.bandwidth is not None))
+       # Maximum available bandwidth value of infras in DoV
+       max((n.resources.bandwidth for n in dov.infras if
+            n.resources.bandwidth is not None)),
+       # Maximum available bandwidth value of inter-infra links
+       max(l.bandwidth for l in dov.links if l.bandwidth is not None))
     infra_count = reduce(lambda a, b: a + 1, dov.infras, 0)
     link_count = reduce(lambda a, b: a + 1, dov.links, 0)
 
@@ -256,7 +255,7 @@ class VirtualizerManager(EventMixin):
   TYPES = {
     "GLOBAL": GlobalViewVirtualizer,
     "SINGLE": SingleBiSBiSVirtualizer
-    }
+  }
 
   def __init__ (self):
     """
@@ -281,14 +280,14 @@ class VirtualizerManager(EventMixin):
     :rtype: :any:`DomainVirtualizer`
     """
     log.debug(
-      "Invoke %s to get <Global Resource View>" % self.__class__.__name__)
+       "Invoke %s to get <Global Resource View>" % self.__class__.__name__)
     # If DoV is not set up, need to request from Adaptation layer
     if DoV not in self._virtualizers:
       log.debug("Missing <Global Resource View>! Requesting the View now...")
       self.raiseEventNoErrors(MissingGlobalViewEvent)
       if DoV in self._virtualizers and self._virtualizers[DoV] is not None:
         log.debug(
-          "Got requested <Global Resource View>: %s" % self._virtualizers[DoV])
+           "Got requested <Global Resource View>: %s" % self._virtualizers[DoV])
     # Return with resource info as a DomainVirtualizer
     return self._virtualizers.get(DoV, None)
 
@@ -344,8 +343,9 @@ class VirtualizerManager(EventMixin):
       # If a specific AbstractVirtualizer type was given
       elif cls is not None:
         log.debug(
-          "Generating Virtualizer type: %s with id: %s" % (cls.__name__, id))
-        self._virtualizers[id] = cls(self.dov, id)
+           "Generating Virtualizer type: %s with id: %s" % (
+             cls.__name__, virtualizer_id))
+        self._virtualizers[virtualizer_id] = cls(self.dov, virtualizer_id)
       # Generate a Single BiS-BiS Virtualizer by default
       else:
         # Virtualizer type is not defined: Use SingleBiSBiSVirtualizer by
@@ -365,11 +365,11 @@ class VirtualizerManager(EventMixin):
     """
     if id in self._virtualizers:
       log.warning(
-        "Requested Virtualizer with ID: %s is already exist! "
-        "Virtualizer creation skipped..." % id)
+         "Requested Virtualizer with ID: %s is already exist! "
+         "Virtualizer creation skipped..." % id)
     else:
       log.debug(
-        "Generating Single BiSBiS Virtualizer with id: %s" % id)
+         "Generating Single BiSBiS Virtualizer with id: %s" % id)
       self._virtualizers[id] = SingleBiSBiSVirtualizer(self.dov, id)
     return self._virtualizers[id]
 
@@ -384,10 +384,10 @@ class VirtualizerManager(EventMixin):
     """
     if id in self._virtualizers:
       log.warning(
-        "Requested Virtualizer with ID: %s is already exist! "
-        "Virtualizer creation skipped..." % id)
+         "Requested Virtualizer with ID: %s is already exist! "
+         "Virtualizer creation skipped..." % id)
     else:
       log.debug(
-        "Generating Global View Virtualizer with id: %s" % id)
+         "Generating Global View Virtualizer with id: %s" % id)
       self._virtualizers[id] = GlobalViewVirtualizer(self.dov, id)
     return self._virtualizers[id]

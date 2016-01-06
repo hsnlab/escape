@@ -691,14 +691,14 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   name = "ESCAPE-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url, unify_interface=False, *args, **kwargs):
+  def __init__ (self, url, prefix="", unify_interface=False, *args, **kwargs):
     """
     Init.
 
     :param url: remote ESCAPEv2 RESTful API URL
     :type url: str
     """
-    AbstractRESTAdapter.__init__(self, base_url=url)
+    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     log.debug(
        "Init RemoteESCAPEv2RESTAdapter - type: %s, domain: %s, URL: %s" % (
@@ -735,7 +735,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
              "Content type of response message is not 'application/xml'!")
           return
         elif not data.startswith("<?xml version="):
-          log.error("Received data is not in XML format!")
+          log.error("Received data is not started with XML declaration!")
           return
         log.debug("Converting from XML/Virtualizer to NFFG format...")
         # Covert from XML-based Virtualizer to NFFG
@@ -796,14 +796,14 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   # type of the Adapter class - use this name for searching Adapter config
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url, *args, **kwargs):
+  def __init__ (self, url, prefix="", *args, **kwargs):
     """
     Init.
 
     :param url: url of RESTful API
     :type url: str
     """
-    AbstractRESTAdapter.__init__(self, base_url=url)
+    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     log.debug(
        "Init UNIFYRESTAdapter - type: %s, domain: %s, URL: %s" % (
@@ -890,7 +890,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   name = "OpenStack-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url, *args, **kwargs):
+  def __init__ (self, url, prefix="", *args, **kwargs):
     """
     Init.
 
@@ -899,7 +899,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     log.debug(
        "Init OpenStackRESTAdapter - type: %s, URL: %s" % (self.type, url))
-    AbstractRESTAdapter.__init__(self, base_url=url)
+    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix)
     log.debug("base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     # Converter object
@@ -967,7 +967,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   name = "UN-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url, *args, **kwargs):
+  def __init__ (self, url, prefix="", *args, **kwargs):
     """
     Init.
 
@@ -976,7 +976,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     log.debug(
        "Init UniversalNodeRESTAdapter - type: %s, URL: %s" % (self.type, url))
-    AbstractRESTAdapter.__init__(self, base_url=url)
+    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix)
     log.debug("base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     # Converter object

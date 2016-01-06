@@ -300,6 +300,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if self._cfor:
       self._initiate_cfor_api()
     log.info("Resource Orchestration Sublayer has been initialized!")
+    if self._agent:
+      log.warning("In AGENT mode Service Layer is not going to be initialized!")
 
   def shutdown (self, event):
     """
