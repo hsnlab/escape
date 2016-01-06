@@ -6,6 +6,9 @@ from pprint import pprint
 
 from nffg import *
 
+DOMAIN_INTERNAL = "INTERNAL"
+DOMAIN_SDN = "SDN"
+
 
 def test_NFFG ():
   # Add nodes
@@ -63,10 +66,10 @@ def generate_mn_topo ():
   # Create NFFG
   nffg = NFFG(id="INTERNAL", name="Internal-Mininet-Topology")
   # Add environments
-  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=NFFG.DOMAIN_INTERNAL,
+  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
-  ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain=NFFG.DOMAIN_INTERNAL,
+  ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   # Add supported types
@@ -75,10 +78,10 @@ def generate_mn_topo ():
   ee2.add_supported_type(
      ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   # Add OVS switches
-  sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
+  sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                        bandwidth=10000)
-  sw4 = nffg.add_infra(id="SW4", name="switch-4", domain=NFFG.DOMAIN_INTERNAL,
+  sw4 = nffg.add_infra(id="SW4", name="switch-4", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                        bandwidth=10000)
   # Add SAPs
@@ -99,20 +102,57 @@ def generate_mn_topo ():
   return nffg
 
 
-def generate_dynamic_fallback_nffg ():
-  nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
-  nc1 = nffg.add_infra(id="nc1", name="NC1", domain=NFFG.DOMAIN_INTERNAL,
+def generate_mn_topo2 ():
+  # Create NFFG
+  nffg = NFFG(id="INTERNAL2", name="Internal-Mininet-Topology2")
+  # Add environments
+  ee1 = nffg.add_infra(id="EE11", name="ee-infra-11", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
-  nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
+  ee2 = nffg.add_infra(id="EE12", name="ee-infra-12", domain=DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  # Add supported types
+  ee1.add_supported_type(
+     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+  ee2.add_supported_type(
+     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+  # Add OVS switches
+  sw3 = nffg.add_infra(id="SW13", name="switch-13", domain=DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
+  sw4 = nffg.add_infra(id="SW14", name="switch-14", domain=DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
+  # Add SAPs
+  sap1 = nffg.add_sap(id="SAP3", name="SAP3")
+  sap2 = nffg.add_sap(id="SAP4", name="SAP4")
+
+  # Add links
+  link_res = {'delay': 1.5, 'bandwidth': 10}
+  nffg.add_link(ee1.add_port(1), sw3.add_port(1), id="mn-link11", **link_res)
+  nffg.add_link(ee2.add_port(1), sw4.add_port(1), id="mn-link12", **link_res)
+  nffg.add_link(sw3.add_port(2), sw4.add_port(2), id="mn-link13", **link_res)
+  nffg.add_link(sw3.add_port(3), sap1.add_port(1), id="mn-link14", **link_res)
+  nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="mn-link15", **link_res)
+  # nffg.duplicate_static_links()
+  return nffg
+
+
+def generate_dynamic_fallback_nffg ():
+  nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
+  nc1 = nffg.add_infra(id="nc1", name="NC1", domain=DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                       delay=0.9, bandwidth=5000)
+  nc2 = nffg.add_infra(id="nc2", name="NC2", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   nc1.add_supported_type(['A', 'B'])
   nc2.add_supported_type(['A', 'C'])
-  s3 = nffg.add_infra(id="s3", name="S3", domain=NFFG.DOMAIN_INTERNAL,
+  s3 = nffg.add_infra(id="s3", name="S3", domain=DOMAIN_INTERNAL,
                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                       bandwidth=10000)
-  s4 = nffg.add_infra(id="s4", name="S4", domain=NFFG.DOMAIN_INTERNAL,
+  s4 = nffg.add_infra(id="s4", name="S4", domain=DOMAIN_INTERNAL,
                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                       bandwidth=10000)
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
@@ -129,13 +169,13 @@ def generate_dynamic_fallback_nffg ():
 
 def generate_static_fallback_topo ():
   nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
-  s1 = nffg.add_infra(id="s1", name="S1", domain=NFFG.DOMAIN_INTERNAL,
+  s1 = nffg.add_infra(id="s1", name="S1", domain=DOMAIN_INTERNAL,
                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
-  s2 = nffg.add_infra(id="s2", name="S2", domain=NFFG.DOMAIN_INTERNAL,
+  s2 = nffg.add_infra(id="s2", name="S2", domain=DOMAIN_INTERNAL,
                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
-  s3 = nffg.add_infra(id="s3", name="S3", domain=NFFG.DOMAIN_INTERNAL,
+  s3 = nffg.add_infra(id="s3", name="S3", domain=DOMAIN_INTERNAL,
                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
-  s4 = nffg.add_infra(id="s4", name="S4", domain=NFFG.DOMAIN_INTERNAL,
+  s4 = nffg.add_infra(id="s4", name="S4", domain=DOMAIN_INTERNAL,
                       infra_type=NFFG.TYPE_INFRA_SDN_SW)
   sap1 = nffg.add_sap(id="sap1", name="SAP1")
   sap2 = nffg.add_sap(id="sap2", name="SAP2")
@@ -200,14 +240,37 @@ def generate_mn_test_req ():
   return test
 
 
+def generate_mn_test_req2 ():
+  test = NFFG(id="SG-decomp", name="SG-name")
+  sap1 = test.add_sap(name="SAP3", id="sap3")
+  sap2 = test.add_sap(name="SAP4", id="sap4")
+  comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  fwd = test.add_nf(id="fwd", name="FORWARDER", func_type="simpleForwarder",
+                    cpu=1, mem=1, storage=0)
+  test.add_sglink(sap1.add_port(1), comp.add_port(1), id=1)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=2)
+  test.add_sglink(decomp.ports[1], sap2.add_port(1), id=3)
+  test.add_sglink(sap2.ports[1], fwd.add_port(1), id=4)
+  test.add_sglink(fwd.ports[1], sap1.ports[1], id=5)
+
+  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20,
+               sg_path=(1, 2, 3))
+  test.add_req(sap2.ports[1], sap1.ports[1], bandwidth=4, delay=20,
+               sg_path=(4, 5))
+  return test
+
+
 def gen ():
   nffg = NFFG(id="SG-decomp", name="SG-name")
   sap1 = nffg.add_sap(name="SAP1", id="sap1")
   sap2 = nffg.add_sap(name="SAP2", id="sap2")
-  nc1 = nffg.add_infra(id="nc1", name="NC1", domain=NFFG.DOMAIN_INTERNAL,
+  nc1 = nffg.add_infra(id="nc1", name="NC1", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
-  nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
+  nc2 = nffg.add_infra(id="nc2", name="NC2", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   comp = nffg.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
@@ -244,9 +307,9 @@ def generate_sdn_topo ():
   # Create NFFG
   nffg = NFFG(id="SDN", name="SDN-Topology")
   # Add MikroTik OF switches
-  mt1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=NFFG.DOMAIN_SDN,
+  mt1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=DOMAIN_SDN,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
-  mt2 = nffg.add_infra(id="MT2", name="MikroTik-SW-2", domain=NFFG.DOMAIN_SDN,
+  mt2 = nffg.add_infra(id="MT2", name="MikroTik-SW-2", domain=DOMAIN_SDN,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
   mt1.resources.delay = 0.2
   mt1.resources.bandwidth = 4000
@@ -279,7 +342,7 @@ def generate_sdn_topo2 ():
   # Create NFFG
   nffg = NFFG(id="SDN", name="SDN-Topology")
   # Add MikroTik OF switches
-  mt1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=NFFG.DOMAIN_SDN,
+  mt1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=DOMAIN_SDN,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
   mt1.resources.delay = 0.2
   mt1.resources.bandwidth = 4000
@@ -370,10 +433,10 @@ def generate_dov ():
   # Create NFFG
   nffg = NFFG(id="INTERNAL", name="SIGCOMM")
   # Add environments
-  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=NFFG.DOMAIN_INTERNAL,
+  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
-  ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain=NFFG.DOMAIN_INTERNAL,
+  ee2 = nffg.add_infra(id="EE2", name="ee-infra-2", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   # Add supported types
@@ -382,10 +445,10 @@ def generate_dov ():
   ee2.add_supported_type(
      ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   # Add OVS switches
-  sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=NFFG.DOMAIN_INTERNAL,
+  sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                        bandwidth=10000)
-  sw4 = nffg.add_infra(id="SW4", name="switch-4", domain=NFFG.DOMAIN_INTERNAL,
+  sw4 = nffg.add_infra(id="SW4", name="switch-4", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                        bandwidth=10000)
   # Add SAPs
@@ -400,9 +463,9 @@ def generate_dov ():
   nffg.add_link(sw4.add_port(3), sap2.add_port(1), id="link5", **link_res)
 
   # Add MikroTik OF switches
-  mt1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=NFFG.DOMAIN_SDN,
+  mt1 = nffg.add_infra(id="MT1", name="MikroTik-SW-1", domain=DOMAIN_SDN,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
-  mt2 = nffg.add_infra(id="MT2", name="MikroTik-SW-2", domain=NFFG.DOMAIN_SDN,
+  mt2 = nffg.add_infra(id="MT2", name="MikroTik-SW-2", domain=DOMAIN_SDN,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW)
   mt1.resources.delay = 0.2
   mt1.resources.bandwidth = 4000
@@ -651,7 +714,7 @@ def generate_simple_test_topo ():
   # Create NFFG
   nffg = NFFG(id="TEST", name="Simple-Test-Topology")
   # Add environments
-  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=NFFG.DOMAIN_INTERNAL,
+  ee1 = nffg.add_infra(id="EE1", name="ee-infra-1", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                        delay=0.9, bandwidth=5000)
   # Add supported types
@@ -699,7 +762,9 @@ if __name__ == "__main__":
   # nffg = generate_global_req()
   # nffg = generate_ewsdn_req3()
   # nffg = generate_simple_test_topo()
-  nffg = generate_simple_test_req()
+  # nffg = generate_simple_test_req()
+  nffg = generate_mn_topo2()
+  nffg = generate_mn_test_req2()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
