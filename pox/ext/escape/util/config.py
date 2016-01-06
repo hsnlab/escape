@@ -592,6 +592,28 @@ class ESCAPEConfig(object):
     except KeyError:
       return ()
 
+  def get_local_manager (self):
+    """
+    Return with the Manager class which is detected as the Manager of the
+    locally emulated Mininet-based network.
+
+    Based on the IS_LOCAL_MANAGER attribute of the defined DomainManager
+    classes in the global config.
+
+    :return: local manager class
+    :rtype: :any:`AbstractDomainManager`
+    """
+    for name, item in self.__configuration[ADAPT].iteritems():
+      if 'module' in item and 'class' in item:
+        try:
+          mgr_class = getattr(importlib.import_module(item['module']),
+                              item['class'])
+          if mgr_class.IS_LOCAL_MANAGER:
+            return name
+        except:
+          return None
+    return None
+
   def reset_domains_after_shutdown (self):
     """
     Return with the shutdown strategy to reset domain or not.
