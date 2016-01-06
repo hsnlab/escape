@@ -415,7 +415,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.__proceed_instantiation(nffg=nffg)
 
   @staticmethod
-  def __update_nffg_domain (nffg_part, domain_name='INTERNAL'):
+  def __update_nffg_domain (nffg_part, domain_name=None):
     """
     Update domain descriptor of infras: REMOTE -> INTERNAL
 
@@ -426,6 +426,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.debug("Rewrite received NFFG domain to INTERNAL...")
     rewritten = []
+    if not domain_name:
+      domain_name = CONFIG.get_local_manager()
     for infra in nffg_part.infras:
       if infra.infra_type not in (
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,

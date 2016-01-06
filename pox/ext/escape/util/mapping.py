@@ -44,12 +44,12 @@ class AbstractMappingStrategy(object):
       Derived class have to override this function
 
     :param graph: Input graph which need to be mapped
-    :type graph: NFFG
+    :type graph: :any:`NFFG`
     :param resource: resource info
-    :type resource: NFFG
+    :type resource: :any:`NFFG`
     :raise: NotImplementedError
     :return: mapped graph
-    :rtype: NFFG
+    :rtype: :any:`NFFG`
     """
     raise NotImplementedError("Derived class must override this function!")
 
@@ -79,13 +79,13 @@ class AbstractMappingDataProcessor(object):
     The given attributes are direct reference to the :any:`NFFG` objects
     which are forwarded to the algorithm.
 
-    If there is a return value considering True (e.g. True, not-empty
-    container, collection, an object reference etc.) or a kind of specific
-    :any:`ProcessorError' is thrown in the function the mapping process will be
+    If there is a return value considering True (True, not-empty container,
+    collection, an object reference etc.) or a kind of specific
+    :any:`ProcessorError` is thrown in the function the mapping process will be
     skipped and the orchestration process will be aborted.
 
     The Validator instance is created during the initialization of ESCAPEv2
-    and used the same instance before/after every mapping process to provide
+    and used the same instance before or after every mapping process to provide
     a persistent way to cache data between validations.
 
     :param input_graph: graph representation which need to be mapped
