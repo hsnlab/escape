@@ -121,9 +121,9 @@ cfg = {
       "MANAGERS": [
         # "REMOTE-ESCAPE",
         # "REMOTE-ESCAPE2",
-        "SDN",
-        "OPENSTACK",
-        "UN"
+        # "SDN",
+        # "OPENSTACK",
+        # "UN"
       ],
       # Specific Domain Managers
       "INTERNAL":
