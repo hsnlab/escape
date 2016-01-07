@@ -980,7 +980,7 @@ class NFFGConverter(object):
     http://openvswitch.org/support/dist-docs/ovs-ofctl.8.txt
 
     :param action: flowrule action field
-    :type :str
+    :type action: str
     :return: converted data
     :rtype: str
     """

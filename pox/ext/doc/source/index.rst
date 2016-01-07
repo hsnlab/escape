@@ -2,8 +2,6 @@
 Welcome to ESCAPEv2's documentation!
 ####################################
 
-.. Welcome! This is the API documentation for **ESCAPEv2**.
-
 Overview
 ========
 
@@ -403,8 +401,8 @@ Usage:
         -v, --version         show program's version number and exit
 
       ESCAPEv2 arguments:
-        -a, --agent           run in agent mode: start the ROS REST-API (without the
-                              Service sublayer (SAS))
+        -a, --agent           run in AGENT mode: start the infrastructure layer with
+                              the ROS REST-API (without the Service sublayer (SAS))
         -c path, --config path
                               override default config filename
         -d, --debug           run the ESCAPE in debug mode
@@ -431,6 +429,14 @@ by default) and start the Infrastructure layer with the Mininet-based emulation.
 
 If the request is in a file it's more convenient to give it with the ``--service``
 initial parameter and not bother with the REST-API.
+
+If you want to initiate the Mininet-based infrastructure layer and use ESCAPE as
+the local orchestrator you can use the ``--agent`` flag.
+
+With ``--agent`` flag ESCAPEv2 will initiate the ROS API for communication with
+upper layers instead of initiate the upper Service Layer.
+Note to mention that this flag also effects on different parts of the ESCAPEv2's
+operation therefore it is not equivalent with the pair of ``--full --rosapi``!
 
 An additional configuration file can be given with the ``--config`` flag. The
 configuration file is loaded during initialization and ESCAPEv2 only updates
