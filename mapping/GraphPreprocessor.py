@@ -406,7 +406,18 @@ class GraphPreprocessorClass(object):
         raise uet.BadInputException(
           "After removing the infras, only the service graph should remain.",
           "Link %s between nodes %s and %s is a %s link" % (k, i, j, d.type))
-
+        
+    vnf_cnt = 0
+    for vnf in self.req_graph.nfs:
+      vnf_cnt += 1
+      if vnf_cnt > 50000:
+        raise uet.BadInputException("Generator for VNF-s in Request Graph should"
+              " be finite", "Already exceeded 50000 iterations, infinite VNF"
+                                    " generator?")
+    if vnf_cnt == 0:
+      raise uet.MappingException("The Request Graph does not contain any VNF,"
+                                 " there is nothing to map!", False)
+    
     # SAPs are already reachained by the manager, based on their names.
     for vnf, data in self.req_graph.network.nodes_iter(data=True):
       if data.type == 'SAP':
@@ -419,12 +430,21 @@ class GraphPreprocessorClass(object):
           "request graph.", "Node %s, type: %s is still in the graph" % (
             vnf, data.type))
 
-    self.max_chain_id = max(c['id'] for c in self.chains)
-    self.manager.setMaxInputChainId(self.max_chain_id)
+    if len(self.chains) == 0:
+      # TODO: be able to map request links which are not contained by any 
+      # subchain. Special case: no SC-s given, all links are still mapped.
+      raise uet.BadInputException("Every link should be contained by at least "
+                                  "one service chain", "No service chains were"
+                                  "given!")
+    else:
+      self.max_chain_id = max(c['id'] for c in self.chains)
+      self.manager.setMaxInputChainId(self.max_chain_id)
 
-    """Placement criteria is a list of physical nodes, where the VNF
+    """
+    Placement criteria is a list of physical nodes, where the VNF
     can be placed. It can be also specified by the upper layer, and the
-    preprocessing procedure"""
+    preprocessing procedure
+    """
     for vnf in self.req_graph.network.nodes_iter():
       if not hasattr(self.req_graph.network.node[vnf], 'placement_criteria'):
         setattr(self.req_graph.network.node[vnf], 'placement_criteria', [])
@@ -447,8 +467,10 @@ class GraphPreprocessorClass(object):
         subg = self._findSubgraphForChain(chain)
         e2e_chains_with_graphs.append((chain, subg))
       else:
-        '''not SAP-SAP chains will be mapped to some (intersections of)
-        subgraphs found to e2e chains'''
+        """
+        not SAP-SAP chains will be mapped to some (intersections of)
+        subgraphs found to e2e chains
+        """
         not_e2e_chains.append(chain)
       self.log.info("Chain %s preprocessed" % chain)
     if len(e2e_chains_with_graphs) == 0:
@@ -459,14 +481,18 @@ class GraphPreprocessorClass(object):
     # determine the smallest subgraph for efficient intersection calculation
     self.smallest = min(map(lambda b: b[1], e2e_chains_with_graphs),
                         key=lambda a: a.size())
-    '''These chains are disjoint on the set of links, each has a subgraph
-    which it should be mapped to.'''
+    """
+    These chains are disjoint on the set of links, each has a subgraph
+    which it should be mapped to.
+    """
     divided_chains_with_graphs = self._divideIntoDisjointSubchains(
       e2e_chains_with_graphs, not_e2e_chains)
 
-    '''After the request graph is divided, the latency and bw reqs of the
+    """
+    After the request graph is divided, the latency and bw reqs of the
     divided chains are not valid! because those corresponds to the e2e
-    chains. Handling this correctly is done by the MappingManager.'''
+    chains. Handling this correctly is done by the MappingManager.
+    """
 
     return self.req_graph, divided_chains_with_graphs
 
