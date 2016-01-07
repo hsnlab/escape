@@ -15,9 +15,8 @@
 Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
-import xml.etree.ElementTree as ET
-
 import networkx
+import xml.etree.ElementTree as ET
 from networkx.exception import NetworkXError
 
 from nffg_elements import *
@@ -26,6 +25,8 @@ try:
   import virtualizer3 as virt3
 except ImportError:
   pass
+
+__version__ = "1.0"
 
 
 class AbstractNFFG(object):
@@ -170,7 +171,9 @@ class NFFG(AbstractNFFG):
   OPERATION_MOD = Element.MOD
   OPERATION_MOV = Element.MOV
 
-  def __init__ (self, id=None, name=None, version="1.0"):
+  version = __version__
+
+  def __init__ (self, id=None, name=None, version=__version__):
     """
     Init
 
@@ -383,7 +386,7 @@ class NFFG(AbstractNFFG):
     if nf is None:
       res = NodeResource(cpu=cpu, mem=mem, storage=storage, delay=delay,
                          bandwidth=bandwidth) if any(
-        i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
+         i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
       nf = NodeNF(id=id, name=name, func_type=func_type, dep_type=dep_type,
                   res=res)
     self.add_node(nf)
@@ -439,7 +442,7 @@ class NFFG(AbstractNFFG):
     if infra is None:
       res = NodeResource(cpu=cpu, mem=mem, storage=storage, bandwidth=bandwidth,
                          delay=delay) if any(
-        i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
+         i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
       infra = NodeInfra(id=id, name=name, domain=domain, infra_type=infra_type,
                         res=res)
     self.add_node(infra)
@@ -612,7 +615,7 @@ class NFFG(AbstractNFFG):
     # Load Links
     for link in model.edge_links:
       if link.src.node.type == NFFG.TYPE_NF or link.dst.node.type == \
-           NFFG.TYPE_NF:
+         NFFG.TYPE_NF:
         link.type = str(NFFG.TYPE_LINK_DYNAMIC)
       nffg.add_edge(link.src.node, link.dst.node, link)
     # Load SG next hops
@@ -701,8 +704,8 @@ class NFFG(AbstractNFFG):
     :return: None
     """
     return self.network.remove_edges_from(
-      [(u, v, link.id) for u, v, link in self.network.edges_iter(data=True) if
-       link.type == link_type])
+       [(u, v, link.id) for u, v, link in self.network.edges_iter(data=True) if
+        link.type == link_type])
 
   def clear_nodes (self, node_type):
     """
@@ -712,8 +715,8 @@ class NFFG(AbstractNFFG):
     :return: None
     """
     return self.network.remove_nodes_from(
-      [id for id, node in self.network.nodes_iter(data=True) if
-       node.type == node_type])
+       [id for id, node in self.network.nodes_iter(data=True) if
+        node.type == node_type])
 
   def copy (self):
     """
@@ -859,7 +862,7 @@ class NFFGToolBox(object):
         for u, v, link in nffg.network.out_edges_iter([infra.id], data=True):
           # Skip Requirement and SG links
           if link.type != NFFG.TYPE_LINK_STATIC and link.type != \
-               NFFG.TYPE_LINK_DYNAMIC:
+             NFFG.TYPE_LINK_DYNAMIC:
             continue
           if nffg.network.node[v].type == NFFG.TYPE_NF or nffg.network.node[
             v].type == NFFG.TYPE_SAP:
@@ -941,7 +944,7 @@ class NFFGToolBox(object):
           v_nf_cpu = str(nf.resources.cpu) if nf.resources.cpu else None
           v_nf_mem = str(nf.resources.mem) if nf.resources.mem else None
           v_nf_storage = str(
-            nf.resources.storage) if nf.resources.storage else None
+             nf.resources.storage) if nf.resources.storage else None
           # Create Node object for NF
           v_nf = virt3.Node(id=str(nf.id), name=str(nf.name),
                             type=str(nf.functional_type),
@@ -985,7 +988,7 @@ class NFFGToolBox(object):
             nf_port = [l.dst for u, v, l in
                        nffg.network.out_edges_iter([infra.id], data=True) if
                        l.type == NFFG.TYPE_LINK_DYNAMIC and str(
-                         l.src.id) == in_port]
+                          l.src.id) == in_port]
             # There should be only one link between infra and NF
             if len(nf_port) < 1:
               print "NF port is not found for dynamic Infra port: %s defined " \
@@ -1000,16 +1003,16 @@ class NFFGToolBox(object):
           if len(fr) > 1:
             if fr[1].split('=')[0] == "TAG":
               vlan = int(fr[1].split('=')[1].split('-')[-1])
-              if infra.domain == NFFG.DOMAIN_OS:
+              if infra.domain == "OPENSTACK":
                 match = r"dl_vlan=%s" % format(vlan, '#06x')
-              elif infra.domain == NFFG.DOMAIN_UN:
+              elif infra.domain == "UN":
                 match = ET.Element('match')
                 vlan_id = ET.SubElement(match, 'vlan_id')
                 vlan_id.text = str(vlan)
             elif fr[1].split('=')[0] == "UNTAG":
-              if infra.domain == NFFG.DOMAIN_OS:
+              if infra.domain == "OPENSTACK":
                 match = r"strip_vlan"
-              elif infra.domain == NFFG.DOMAIN_UN:
+              elif infra.domain == "UN":
                 match = ET.Element('match')
                 ET.SubElement(ET.SubElement(match, 'vlan'), "pop")
 
@@ -1030,7 +1033,7 @@ class NFFGToolBox(object):
             nf_port = [l.dst for u, v, l in
                        nffg.network.out_edges_iter([infra.id], data=True) if
                        l.type == NFFG.TYPE_LINK_DYNAMIC and str(
-                         l.src.id) == out_port]
+                          l.src.id) == out_port]
             if len(nf_port) < 1:
               print "NF port is not found for dynamic Infra port: %s defined " \
                     "in action field!" % port
@@ -1044,24 +1047,24 @@ class NFFGToolBox(object):
           if len(fr) > 1:
             if fr[1].split('=')[0] == "TAG":
               vlan = int(fr[1].split('=')[1].split('-')[-1])
-              if infra.domain == NFFG.DOMAIN_OS:
+              if infra.domain == "OPENSTACK":
                 action = r"mod_vlan_vid:%s" % format(vlan, '#06x')
-              elif infra.domain == NFFG.DOMAIN_UN:
+              elif infra.domain == "UN":
                 action = ET.Element('match')
                 vlan_id = ET.SubElement(action, 'vlan_id')
                 vlan_id.text = str(vlan)
             elif fr[1].split('=')[0] == "UNTAG":
-              if infra.domain == NFFG.DOMAIN_OS:
+              if infra.domain == "OPENSTACK":
                 action = r"strip_vlan"
-              elif infra.domain == NFFG.DOMAIN_UN:
+              elif infra.domain == "UN":
                 action = ET.Element('match')
                 ET.SubElement(ET.SubElement(action, 'vlan'), "pop")
 
           # Add Flowentry to Virtualizer
           print "Add flowentry: %s" % flowrule
           virtualizer.nodes[str(infra.id)].flowtable.add(
-            virt3.Flowentry(id=fr_id, priority=fr_pri, port=in_port,
-                            match=match, action=action, out=out_port))
+             virt3.Flowentry(id=fr_id, priority=fr_pri, port=in_port,
+                             match=match, action=action, out=out_port))
 
     # Return with modified Virtualizer
     return virtualizer
@@ -1156,12 +1159,12 @@ class NFFGToolBox(object):
         edge_list.append(first_link)
     # if first link is None, it means the flow starts from a DYNAMIC port.
     first_out_port, bandwidth = NFFGToolBox._get_output_port_of_TAG_action(
-      TAG, starting_port)
+       TAG, starting_port)
     # if the TAG action couldn't be found in 'starting_port' maybe this link
     # is collocated on this Infra.
     if first_out_port is None:
       if nffg.network.has_edge(vnf1, starting_port.node.id) and \
-           nffg.network.has_edge(vnf2, starting_port.node.id):
+         nffg.network.has_edge(vnf2, starting_port.node.id):
         for fr in starting_port.flowrules:
           for action in fr.action.split(";"):
             command, param = action.split("=")
@@ -1181,7 +1184,7 @@ class NFFGToolBox(object):
                 pass
               # SGHops should be still in the NFFG
               if nfid == vnf2 and nffg.network[vnf1][vnf2][reqlinkid] \
-                   .dst.id == nfportid:
+                 .dst.id == nfportid:
                 # WARNING!! IF 'starting_port' has 2 flowrules leading to the
                 #  same
                 # port of 'vnf2', we can't make difference between the 2 
