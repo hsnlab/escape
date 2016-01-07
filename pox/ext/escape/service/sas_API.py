@@ -225,8 +225,7 @@ class ServiceLayerAPI(AbstractAPI):
         elif service_request.startswith('<'):
           log.debug("Detected format: XML - Parsing from Virtualizer format...")
           converter = NFFGConverter(domain="INTERNAL", logger=log)
-          nffg, virt = converter.parse_from_Virtualizer3(
-            xml_data=service_request)
+          nffg = converter.parse_from_Virtualizer3(xml_data=service_request)
         else:
           log.warning("Detected unexpected format...")
           return
