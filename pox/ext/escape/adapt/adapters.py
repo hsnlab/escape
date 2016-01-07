@@ -703,11 +703,13 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug(
        "Init RemoteESCAPEv2RESTAdapter - type: %s, domain: %s, URL: %s" % (
          self.type, self.domain_name, url))
-    self._original_nffg = None
-    self._unify_interface = unify_interface
+    # Converter for the Adapter
     self.converter = None
+    self._unify_interface = unify_interface
     # Cache for parsed virtualizer
     self.virtualizer = None
+    # Empty data structures for domain deletions
+    self._original_nffg = None
     self._original_virtualizer = None
     if self._unify_interface:
       log.info("Setup ESCAPEv2 adapter as a Unify interface!")
@@ -746,14 +748,18 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         if self._original_virtualizer is None:
           log.debug(
              "Store Virtualizer(id: %s, name: %s) as the original domain "
-             "config..." % (virt.id.get_as_text(), virt.name.get_as_text()))
+             "config for domain: %s..." % (
+               virt.id.get_as_text(), virt.name.get_as_text(),
+               self.domain_name))
           self._original_virtualizer = deepcopy(virt)
       else:
         log.debug("Converting to internal NFFG format...")
         nffg = NFFG.parse(data)
         # Store original config for domain resetting
         if self._original_nffg is None:
-          log.debug("Store %s as the original domain config..." % nffg)
+          log.debug(
+             "Store %s as the original domain config for domain: %s..." % (
+               nffg, self.domain_name))
           self._original_nffg = nffg.copy()
       log.debug("Set domain to %s" % self.domain_name)
       self.rewrite_domain(nffg)
