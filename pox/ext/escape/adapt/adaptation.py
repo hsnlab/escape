@@ -497,7 +497,7 @@ class ControllerAdapter(object):
       res = domain_mgr.install_nffg(part)
       if not res:
         log.warning(
-          "Installation of %s in %d was unsuccessful!" % (part, domain))
+          "Installation of %s in %s was unsuccessful!" % (part, domain))
       # Note result according to others before
       mapping_result = mapping_result and res
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)

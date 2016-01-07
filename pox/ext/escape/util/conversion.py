@@ -314,7 +314,7 @@ class NFFGConverter(object):
          **params
       )
 
-    return nffg, virtualizer if with_virt else nffg
+    return (nffg, virtualizer) if with_virt else nffg
 
   def dump_to_Virtualizer3 (self, nffg):
     """
