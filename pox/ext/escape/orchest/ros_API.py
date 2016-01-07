@@ -239,8 +239,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         self.send_error(415)
         return
       # Convert response's body to NFFG
-      nffg = NFFGConverter(domain="REMOTE", logger=log).parse_from_Virtualizer3(
-         xml_data=body)
+      nffg = NFFGConverter(domain="REMOTE",
+                           logger=log).parse_from_Virtualizer3(xml_data=body)
     else:
       nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     # Rewrite domain name to INTERNAL

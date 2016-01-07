@@ -495,6 +495,9 @@ class ControllerAdapter(object):
       log.debug("Delegate splitted part: %s to %s" % (part, domain_mgr))
       # Invoke DomainAdapter's install
       res = domain_mgr.install_nffg(part)
+      if not res:
+        log.warning(
+          "Installation of %s in %d was unsuccessful!" % (part, domain))
       # Note result according to others before
       mapping_result = mapping_result and res
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
@@ -506,6 +509,9 @@ class ControllerAdapter(object):
       # Update global view (DoV) with the installed components
       self.domainResManager.get_global_view().update_global_view(mapped_nffg)
       # print self.domainResManager.get_global_view().get_resource_info().dump()
+    else:
+      log.warning("%s installation was not successful!" % mapped_nffg)
+    return mapping_result
 
   def _handle_DomainChangedEvent (self, event):
     """

@@ -57,12 +57,14 @@ class NFFGConverter(object):
     self.domain = domain
     self.log = logger if logger is not None else logging.getLogger(__name__)
 
-  def parse_from_Virtualizer3 (self, xml_data):
+  def parse_from_Virtualizer3 (self, xml_data, with_virt=False):
     """
     Convert Virtualizer3-based XML str --> NFFGModel based NFFG object
 
     :param xml_data: XML plain data formatted with Virtualizer
     :type: xml_data: str
+    :param with_virt: return with the virtualizer too (default: False)
+    :type with_virt: bool
     :return: created NF-FG
     :rtype: :any:`NFFG`
     """
@@ -141,6 +143,9 @@ class NFFGConverter(object):
       # Add supported types shrinked from the supported NF list
       for sup_nf in inode.capabilities.supported_NFs:
         infra.add_supported_type(sup_nf.type.get_value())
+
+      # Define default bw,delay value for SAP<->Infra links
+      _bandwidth = _delay = None
 
       # Add ports to Infra Node
       for port in inode.ports:
@@ -309,7 +314,7 @@ class NFFGConverter(object):
          **params
       )
 
-    return nffg, virtualizer
+    return nffg, virtualizer if with_virt else nffg
 
   def dump_to_Virtualizer3 (self, nffg):
     """
@@ -763,8 +768,7 @@ class NFFGConverter(object):
               in_port.id.get_as_text()))
 
           # Process match field
-          match = self.__convert_flowrule_match(domain=self.domain,
-                                                match=flowrule.match)
+          match = self.__convert_flowrule_match_unified(flowrule.match)
 
           # Check if action starts with outport
           fe = flowrule.action.split(';')
@@ -806,8 +810,7 @@ class NFFGConverter(object):
               out_port.id.get_as_text()))
 
           # Process action field
-          action = self.__convert_flowrule_action(domain=self.domain,
-                                                  action=flowrule.action)
+          action = self.__convert_flowrule_action_unified(flowrule.action)
 
           # Add Flowentry with converted params
           virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
@@ -818,7 +821,7 @@ class NFFGConverter(object):
             infra.id].flowtable.add(virt_fe))
 
     self.log.debug("NFFG adaptation is finished.")
-    virtualizer.bind(relative=True)
+    virtualizer.bind()
     # Return with modified Virtualizer
     return virtualizer
 
@@ -827,11 +830,12 @@ class NFFGConverter(object):
     Convert Flowrule match field from NFFG format to Virtualizer according to
     domain.
 
-    :param domain: domain name
     :param match: flowrule match field
+    :type match: str
     :return: converted data
+    :rtype: str
     """
-    # E.g.:  "match": "in_port=1;TAG=sap1-comp-55"
+    # E.g.:  "match": "in_port=1;TAG=SAP1|comp|1"
     if len(match.split(';')) < 2:
       return
 
@@ -840,7 +844,7 @@ class NFFGConverter(object):
       self.log.warning("Unsupported match operand: %s" % op[0])
       return
 
-    if domain == NFFG.DOMAIN_OS:
+    if domain == "OPENSTACK":
       if op[0] == "TAG":
         # E.g.: <match>dl_vlan=0x0037</match>
         try:
@@ -851,7 +855,7 @@ class NFFGConverter(object):
              "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
           return
 
-    elif domain == NFFG.DOMAIN_UN:
+    elif domain == "UN":
       if op[0] == "TAG":
         # E.g.: <match><vlan_id>55</vlan_id></match>
         try:
@@ -918,6 +922,80 @@ class NFFGConverter(object):
         xml = ET.Element('action')
         ET.SubElement(ET.SubElement(xml, 'vlan'), "pop")
         return xml
+
+  def __convert_flowrule_match_unified (self, match):
+    """
+    Convert Flowrule match field from NFFG format to a unified format used by
+    the Virtualizer.
+
+    Based on Open vSwitch syntax:
+    http://openvswitch.org/support/dist-docs/ovs-ofctl.8.txt
+
+    :param match: flowrule match field
+    :type match: str
+    :return: converted data
+    :rtype: str
+    """
+    # E.g.:  "match": "in_port=1;TAG=SAP1|comp|1" -->
+    # E.g.:  "match": "in_port=SAP2|fwd|1;TAG=SAP1|comp|1" -->
+    # <match>(in_port=1)dl_tag=1</match>
+    match_part = match.split(';')
+    if len(match_part) < 2:
+      if not match_part[0].startswith("in_port"):
+        self.log.warning("Unrecognizable match field: %s" % match)
+      return
+
+    op = match_part[1].split('=')
+    if op[0] not in ('TAG',):
+      self.log.warning("Unsupported match operand: %s" % op[0])
+      return
+
+    if op[0] == "TAG":
+      try:
+        vlan_tag = int(op[1].split('|')[-1])
+        return r"dl_tag=%s" % format(vlan_tag, '#06x')
+      except ValueError:
+        self.log.warning(
+           "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+        return
+
+  def __convert_flowrule_action_unified (self, action):
+    """
+    Convert Flowrule action field from NFFG format to a unified format used by
+    the Virtualizer.
+
+    Based on Open vSwitch syntax:
+    http://openvswitch.org/support/dist-docs/ovs-ofctl.8.txt
+
+    :param action: flowrule action field
+    :type :str
+    :return: converted data
+    :rtype: str
+    """
+    # E.g.:  "action": "output=2;UNTAG"
+    action_part = action.split(';')
+    if len(action_part) < 2:
+      if not action_part[0].startswith("output"):
+        self.log.warning("Unrecognizable action field: %s" % action)
+      return
+
+    op = action_part[1].split('=')
+    if op[0] not in ('TAG', 'UNTAG'):
+      self.log.warning("Unsupported action operand: %s" % op[0])
+      return
+
+    if op[0] == "TAG":
+      # E.g.: <action>push_tag:0x0037</action>
+      try:
+        vlan = int(op[1].split('|')[-1])
+        return r"push_tag:%s" % format(vlan, '#06x')
+      except ValueError:
+        self.log.warning(
+           "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+        return
+    elif op[0] == "UNTAG":
+      # E.g.: <action>strip_vlan</action>
+      return r"strip_vlan"
 
 
 def test_xml_based_builder ():
@@ -1272,5 +1350,5 @@ if __name__ == "__main__":
      "../../../../examples/escape-mn-dov.xml") as f:
     tree = tree = ET.ElementTree(ET.fromstring(f.read()))
     dov = virt3.Virtualizer().parse(root=tree.getroot())
-  nffg, v = c.parse_from_Virtualizer3(xml_data=dov.xml())
+  nffg = c.parse_from_Virtualizer3(xml_data=dov.xml())
   print nffg.dump()

@@ -487,7 +487,7 @@ def generate_dov ():
   l12.bandwidth = 1000
 
   os_bb = nffg.add_infra(id="UUID-01", name="Single BiSBiS in OS Domain",
-                         domain=NFFG.DOMAIN_OS,
+                         domain="OPENSTACK",
                          infra_type=NFFG.TYPE_INFRA_BISBIS, cpu=10, mem=32,
                          storage=5, delay=0, bandwidth=100000)
   # Add supported types
@@ -498,7 +498,7 @@ def generate_dov ():
   l21.bandwidth = 1000
 
   un_bb = nffg.add_infra(id="UUID11", name="Universal Node",
-                         domain=NFFG.DOMAIN_UN,
+                         domain="UN",
                          infra_type=NFFG.TYPE_INFRA_BISBIS, cpu=5, mem=16,
                          storage=5, delay=0, bandwidth=100000)
   # Add supported types
@@ -646,10 +646,10 @@ def test_conversion ():
 
   with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
     os_nffg, os_virt = NFFGConverter(
-       domain=NFFG.DOMAIN_OS).parse_from_Virtualizer3(f.read())
+       domain="OPENSTACK").parse_from_Virtualizer3(f.read(), with_virt=True)
   with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
     un_nffg, un_virt = NFFGConverter(
-       domain=NFFG.DOMAIN_UN).parse_from_Virtualizer3(f.read())
+       domain="UN").parse_from_Virtualizer3(f.read(), with_virt=True)
   with open("/home/czentye/escape/src/escape_v2/pox/escape-mn-topo.nffg") as f:
     internal = NFFG.parse(f.read())
     internal.duplicate_static_links()
@@ -675,7 +675,7 @@ def test_conversion ():
   print
   print str(os_virt)
   os_splitted = [n for d, n in splitted if d == "OPENSTACK"][0]
-  os_splitted['UUID-01'].domain = NFFG.DOMAIN_UN
+  os_splitted['UUID-01'].domain = "UN"
   os_splitted['UUID-01'].ports[0].add_flowrule(match="in_port=0;TAG=42",
                                                action="output=3;UNTAG")
   os_splitted['UUID-01'].ports[2].add_flowrule(match="in_port=2;UNTAG",
