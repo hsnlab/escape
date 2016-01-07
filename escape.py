@@ -23,15 +23,16 @@ import os
 def main ():
   # Implement parser options
   parser = argparse.ArgumentParser(
-    description="ESCAPEv2: Extensible Service ChAin Prototyping Environment "
-                "using Mininet, Click, NETCONF and POX",
-    add_help=True,
-    version="2.0.0")
+     description="ESCAPEv2: Extensible Service ChAin Prototyping Environment "
+                 "using Mininet, Click, NETCONF and POX",
+     add_help=True,
+     version="2.0.0")
   # Optional arguments
   escape = parser.add_argument_group("ESCAPEv2 arguments")
   escape.add_argument("-a", "--agent", action="store_true", default=False,
-                      help="run in agent mode: start the ROS REST-API ("
-                           "without the Service sublayer (SAS))")
+                      help="run in AGENT mode: start the infrastructure layer "
+                           "with the ROS REST-API (without the Service "
+                           "sublayer (SAS))")
   escape.add_argument("-c", "--config", metavar="path", type=str,
                       # default="pox/escape.config",
                       help="override default config filename")
@@ -106,6 +107,9 @@ def main ():
   # Skip the Service Layer initiation and start the ROS agent REST-API
   if args.agent:
     cmd = "%s --agent" % cmd
+    # AGENT mode is only useful with --full -> initiate infrastructure if needed
+    if not args.full:
+      cmd = "sudo %s --full" % cmd
 
   # Start the REST-API for the ROS layer
   if args.rosapi:
