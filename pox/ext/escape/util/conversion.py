@@ -68,6 +68,9 @@ class NFFGConverter(object):
     :return: created NF-FG
     :rtype: :any:`NFFG`
     """
+    self.log.debug(
+       "START conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
+         3, NFFG.version))
     try:
       self.log.debug("Converting data to graph-based NFFG structure...")
       # Parse given str to XML structure
@@ -313,7 +316,9 @@ class NFFGConverter(object):
          port2=nffg[dst_node].ports[dst_port],
          **params
       )
-
+    self.log.debug(
+       "END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
+         3, NFFG.version))
     return (nffg, virtualizer) if with_virt else nffg
 
   def dump_to_Virtualizer3 (self, nffg):
@@ -324,6 +329,9 @@ class NFFGConverter(object):
     :type nffg: :any:`NFFG`
     :return: topology in Virtualizer3 format
     """
+    self.log.debug(
+       "START conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
+         NFFG.version, 3))
     self.log.debug("Converting data to XML-based Virtualizer structure...")
     # Create empty Virtualizer
     virt = virt3.Virtualizer(id=str(nffg.id), name=str(nffg.name))
@@ -467,9 +475,11 @@ class NFFGConverter(object):
       # Call bind to resolve src,dst references to workaround a bug
       _link.bind()
       virt.links.add(_link)
-
     # explicitly call bind to resolve relative paths for safety reason
     virt.bind()
+    self.log.debug(
+       "END conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
+         NFFG.version, 3))
     # Return with created Virtualizer
     return virt
 
@@ -656,8 +666,8 @@ class NFFGConverter(object):
     :return: modified Virtualizer object
     """
     self.log.debug(
-       "Adapt modification from %s into Virtualizer(id=%s, name=%s)" % (
-         nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
+       "START adapting modifications from %s into Virtualizer(id=%s, name=%s)"
+       % (nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
     self.log.debug("Check up on mapped NFs...")
     # Check every infra Node
     for infra in nffg.infras:
@@ -819,9 +829,11 @@ class NFFGConverter(object):
           # virt_fe.bind(relative=True)
           self.log.debug("Generated Flowentry:\n%s" % virtualizer.nodes[
             infra.id].flowtable.add(virt_fe))
-
-    self.log.debug("NFFG adaptation is finished.")
+    # explicitly call bind to resolve relative paths for safety reason
     virtualizer.bind()
+    self.log.debug(
+       "END adapting modifications from %s into Virtualizer(id=%s, name=%s)"
+       % (nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
     # Return with modified Virtualizer
     return virtualizer
 
