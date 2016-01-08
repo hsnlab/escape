@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <virtualizer>
 	<id>DoV</id>
-	<name>dov-139850177449232</name>
+	<name>dov-139864274901584</name>
 	<nodes>
 		<node>
 			<id>EE1</id>
@@ -86,12 +86,18 @@
 					<match>dl_vlan=0x0001</match>
 					<action>strip_vlan</action>
 					<out>/virtualizer/nodes/node[id=EE1]/NF_instances/node[id=comp]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 				<flowentry>
 					<id>ESCAPE-flowentry1</id>
 					<priority>100</priority>
 					<port>/virtualizer/nodes/node[id=EE1]/NF_instances/node[id=comp]/ports/port[id=1]</port>
 					<out>/virtualizer/nodes/node[id=EE1]/NF_instances/node[id=decomp]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 				<flowentry>
 					<id>ESCAPE-flowentry2</id>
@@ -99,6 +105,9 @@
 					<port>/virtualizer/nodes/node[id=EE1]/NF_instances/node[id=decomp]/ports/port[id=1]</port>
 					<action>push_vlan:0x0003</action>
 					<out>/virtualizer/nodes/node[id=EE1]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 			</flowtable>
 		</node>
@@ -169,6 +178,9 @@
 					<match>dl_vlan=0x0004</match>
 					<action>strip_vlan</action>
 					<out>/virtualizer/nodes/node[id=EE2]/NF_instances/node[id=fwd]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 				<flowentry>
 					<id>ESCAPE-flowentry1</id>
@@ -176,6 +188,9 @@
 					<port>/virtualizer/nodes/node[id=EE2]/NF_instances/node[id=fwd]/ports/port[id=1]</port>
 					<action>push_vlan:0x0005</action>
 					<out>/virtualizer/nodes/node[id=EE2]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 			</flowtable>
 		</node>
@@ -231,6 +246,9 @@
 					<port>/virtualizer/nodes/node[id=SW1]/ports/port[id=1]</port>
 					<match>dl_vlan=0x0003</match>
 					<out>/virtualizer/nodes/node[id=SW1]/ports/port[id=2]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 				<flowentry>
 					<id>ESCAPE-flowentry1</id>
@@ -239,6 +257,9 @@
 					<match>dl_vlan=0x0005</match>
 					<action>strip_vlan</action>
 					<out>/virtualizer/nodes/node[id=SW1]/ports/port[id=3]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 				<flowentry>
 					<id>ESCAPE-flowentry2</id>
@@ -246,6 +267,9 @@
 					<port>/virtualizer/nodes/node[id=SW1]/ports/port[id=3]</port>
 					<action>push_vlan:0x0001</action>
 					<out>/virtualizer/nodes/node[id=SW1]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 			</flowtable>
 		</node>
@@ -331,6 +355,9 @@
 					<port>/virtualizer/nodes/node[id=SW2]/ports/port[id=1]</port>
 					<match>dl_vlan=0x0005</match>
 					<out>/virtualizer/nodes/node[id=SW2]/ports/port[id=2]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 				<flowentry>
 					<id>ESCAPE-flowentry1</id>
@@ -339,6 +366,9 @@
 					<match>dl_vlan=0x0003</match>
 					<action>strip_vlan</action>
 					<out>/virtualizer/nodes/node[id=SW2]/ports/port[id=3]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 				<flowentry>
 					<id>ESCAPE-flowentry2</id>
@@ -346,6 +376,9 @@
 					<port>/virtualizer/nodes/node[id=SW2]/ports/port[id=3]</port>
 					<action>push_vlan:0x0004</action>
 					<out>/virtualizer/nodes/node[id=SW2]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>4</bandwidth>
+					</resources>
 				</flowentry>
 			</flowtable>
 		</node>
