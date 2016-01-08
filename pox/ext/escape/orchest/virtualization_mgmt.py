@@ -331,6 +331,7 @@ class VirtualizerManager(EventMixin):
     if virtualizer_id not in self._virtualizers:
       if type is not None:
         # SINGLE: generate a trivial Single BiS-BiS virtualizer
+        log.debug("Requested virtualizer type: %s" % type)
         if type == "SINGLE":
           self._generate_single_view(id=virtualizer_id)
         # GLOBAL: generate a non-filtering Global View Virtualizer

@@ -209,7 +209,14 @@ class ServiceLayerAPI(AbstractAPI):
       :func:`AbstractAPI.initialize() <escape.util.api.AbstractAPI.initialize>`
     """
     log.debug("Initializing Service Layer...")
-    self.__sid = self.LAYER_ID
+    self.__sid = CONFIG.get_service_layer_id()
+    if self.__sid is not None:
+      log.debug("Setup ID for Service Layer: %s" % self.__sid)
+    else:
+      self.__sid = self.LAYER_ID
+      log.error(
+        "Missing ID of Service Layer from config. Using default value: %s" %
+        self.__sid)
     # Set element manager
     self.elementManager = ClickManager()
     # Init central object of Service layer
@@ -262,7 +269,7 @@ class ServiceLayerAPI(AbstractAPI):
     handler = CONFIG.get_sas_api_class()
     handler.bounded_layer = self._core_name
     handler.prefix = CONFIG.get_sas_api_prefix()
-    handler.virtualizer_format_enabled = CONFIG.get_sas_virtualizer_format()
+    handler.virtualizer_format_enabled = CONFIG.get_sas_api_virtualizer_format()
     address = CONFIG.get_sas_api_address()
     self.rest_api = RESTServer(handler, *address)
     handler.log.debug(

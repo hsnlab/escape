@@ -395,6 +395,19 @@ class ESCAPEConfig(object):
   # SERVICE layer getters
   ##############################################################################
 
+  def get_service_layer_id(self):
+    """
+    Return with the identifications value of the Service Layer.
+
+    :return: service id
+    :rtype: str
+    """
+    try:
+      return self.__configuration[SERVICE]["SERVICE-LAYER-ID"]
+    except KeyError:
+      return None
+
+
   def get_sas_api_class (self):
     """
     Return with the request handler class of Service Layer REST API.
@@ -434,7 +447,7 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
-  def get_sas_virtualizer_format (self):
+  def get_sas_api_virtualizer_format (self):
     """
     Return the REST API format for service request handler.
 
@@ -489,7 +502,21 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
-  def get_ros_virtualizer_format (self):
+  def get_ros_virtualizer_type (self, component):
+    """
+    Return the Virtualizer type of the given Virtualizer config.
+
+    :param component: name of the ROS config part
+    :type component: str
+    :return: Virtualizer type (SINGLE or GLOBAL)
+    :rtype: str
+    """
+    try:
+      return self.__configuration[ORCHEST][component]['virtualizer_type']
+    except KeyError:
+      return None
+
+  def get_ros_api_virtualizer_format (self):
     """
     Return the REST API format for agent request handler.
 
