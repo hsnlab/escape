@@ -39,6 +39,8 @@ __status__ = "prototype"
 cfg = {
   "service":  # Service Adaptation Sublayer
     {
+      "SERVICE-LAYER-ID": "ESCAPE-SERVICE",
+      # Mapping configuration
       "MAPPER":
         {
           "module": "escape.service.sas_mapping",
@@ -61,6 +63,7 @@ cfg = {
           "class": "ProcessorSkipper",
           "enabled": False
         },
+      # Interface / Upper layer related configuration
       "REST-API":
         {
           "module": "escape.service.sas_API",
@@ -73,6 +76,7 @@ cfg = {
     },
   "orchestration":  # Resource Orchestration Sublayer
     {
+      # Mapping configuration
       "MAPPER":
         {
           "module": "escape.orchest.ros_mapping",
@@ -95,6 +99,11 @@ cfg = {
           "class": "ProcessorSkipper",
           "enabled": True
         },
+      # Interface / Upper layer related configuration
+      "ESCAPE-SERVICE":
+        {
+          "virtualizer_type": "SINGLE"
+        },
       "Sl-Or":
         {
           "module": "escape.orchest.ros_API",
@@ -103,7 +112,7 @@ cfg = {
           "address": "0.0.0.0",
           "port": 8888,
           "virtualizer_type": "GLOBAL",
-          "unify_interface": False
+          "unify_interface": True
         },
       "Cf-Or":
         {
@@ -119,8 +128,8 @@ cfg = {
     {
       # Default managers need to start at init
       "MANAGERS": [
-        "REMOTE-ESCAPE",
-        "REMOTE-ESCAPE-ext",
+        # "REMOTE-ESCAPE",
+        # "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
         # "UN"

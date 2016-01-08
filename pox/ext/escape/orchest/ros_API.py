@@ -330,7 +330,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.bounded_layer = self._core_name
     # can override from global config
     handler.prefix = CONFIG.get_ros_agent_prefix()
-    handler.virtualizer_format_enabled = CONFIG.get_ros_virtualizer_format()
+    handler.virtualizer_format_enabled = CONFIG.get_ros_api_virtualizer_format()
     address = CONFIG.get_ros_agent_address()
     self.ros_api = RESTServer(handler, *address)
     # Virtualizer ID of the Sl-Or interface
@@ -544,8 +544,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
        "Received <Virtual View> request from %s layer" % str(
           event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
+    virtualizer_type = CONFIG.get_ros_virtualizer_type(component=event.sid)
     v = self.resource_orchestrator.virtualizerManager.get_virtual_view(
-       event.sid)
+       event.sid, type=virtualizer_type)
     log.getChild('API').debug("Sending back <Virtual View>: %s..." % v)
     self.raiseEventNoErrors(VirtResInfoEvent, v)
 
