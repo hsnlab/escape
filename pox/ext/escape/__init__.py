@@ -112,7 +112,7 @@ cfg = {
           "address": "0.0.0.0",
           "port": 8888,
           "virtualizer_type": "GLOBAL",
-          "unify_interface": True
+          "unify_interface": False
         },
       "Cf-Or":
         {
@@ -128,12 +128,14 @@ cfg = {
     {
       # Default managers need to start at init
       "MANAGERS": [
-        # "REMOTE-ESCAPE",
-        # "REMOTE-ESCAPE-ext",
+        "REMOTE-ESCAPE",
+        "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
         # "UN"
       ],
+      "RESET-DOMAINS-BEFORE-INSTALL": True,
+      "CLEAR-DOMAINS-AFTER-SHUTDOWN": True,  # Shutdown strategy config
       # Specific Domain Managers
       "INTERNAL":
         {
@@ -258,8 +260,7 @@ cfg = {
           "module": "escape.adapt.managers",
           "class": "DockerDomainManager",
           "poll": False
-        },
-      "RESET-DOMAINS-AFTER-SHUTDOWN": True  # Shutdown strategy config
+        }
     },
   "infrastructure":  # Infrastructure Layer
     {
