@@ -93,7 +93,8 @@ class CoreAlgorithm(object):
   def _preproc (self, net0, req0, chains0, shortest_paths):
     self.log.info("Preprocessing:")
     
-    self.manager = helper.MappingManager(net0, req0, chains0)
+    # 100 000ms is considered to be infinite latency
+    self.manager = helper.MappingManager(net0, req0, chains0, 100000)
 
     self.preprocessor = GraphPreprocessor.GraphPreprocessorClass(net0, req0,
                                                                  chains0,

@@ -124,8 +124,8 @@ class GraphPreprocessorClass(object):
     #  common graph.
     subg = self.net.network.subgraph(visited)
     # self.log.debug("Subgraph returned: %s" % subg.edges(keys=True))
-    return subg
-
+    return subg  
+    
   def _colorLinksAndVNFs (self, e2e_w_graph, not_e2e):
     """Those VNFs/links have the same color which are involved in the
     same set of chains.
@@ -154,14 +154,6 @@ class GraphPreprocessorClass(object):
     for i, j, k in colored_req.edges_iter(keys=True):
       colored_req[i][j][k]['color'] = frozenset(colored_req[i][j][k]['color'])
 
-    for i, j, k, d in colored_req.edges_iter(data=True, keys=True):
-      if len(d['color']) == 0:
-        # TODO: proper handling of these links and not E2E chains
-        # not contained by E2E chains.
-        raise uet.BadInputException(
-          "All request edges should be included in some E2E chains - at least "
-          "in this version", "Request link %s, %s, id: %s is not in any SAP-SAP "
-          "chain" % (i, j, k))
     self.log.info("Request graph coloring finished!")
     return colored_req
 
@@ -288,6 +280,59 @@ class GraphPreprocessorClass(object):
     else:
       return 0
 
+  def _extractBestEffortSubchains(self, best_effort_graph):
+    """
+    Removes all uncolored edges from the input and divides the best effort 
+    links into subchains. Creates a common "fake" E2E chain for all the best 
+    effort links so they could be handled transparently in the core process.
+    Returns the ordered list of best effort subchains.
+    """
+    subchains = []
+    while best_effort_graph.number_of_edges() != 0:
+      for vnf in best_effort_graph.nodes():
+        if self.rechained[vnf] and best_effort_graph.out_degree(vnf) > 0:
+          subc = {}
+          link_ids = []
+          subc_path = [vnf]
+          last_vnf = vnf
+          for i,j in nx.dfs_edges(best_effort_graph, vnf):
+            if last_vnf == i:
+              # no matter which link did the DFS take if there was multiple edges
+              # left between i and j in the best_effort_graph
+              linkid = next(best_effort_graph[i][j].iterkeys())
+              if len(best_effort_graph[i][j][linkid]['color']) != 0:
+                raise uet.InternalAlgorithmException("There should not be "
+                      "colored edges left in the helper request graph after "
+                      "rechaining all not best effor links!")
+              link_ids.append(linkid)
+              subc_path.append(j)
+              last_vnf = j
+              if not self.rechained[j]:
+                self.rechained[j] = True
+              else:
+                break
+            else:
+              break
+          for i, j, k in zip(subc_path[:-1], subc_path[1:], link_ids):
+            self.link_rechained.add_edge(i, j, key=k)
+            try:
+              best_effort_graph.remove_edge(i, j, k)
+            except nx.NetworkXError as e:
+                raise uet.InternalAlgorithmException(
+                  "Mistake in  colored request graph maintenance, error: %s" % e)
+          subc['chain'] = subc_path
+          subc['link_ids'] = link_ids
+          self.max_chain_id += 1
+          subc['id'] = self.max_chain_id
+          # the empty color means that this link is best effort.
+          self.manager.addChain_SubChainDependency(subc['id'], [], subc_path, 
+                                                   link_ids)
+          subchains.append((subc, self.net.network))
+        elif best_effort_graph.out_degree(vnf) == 0 and \
+             best_effort_graph.in_degree(vnf) == 0:
+          best_effort_graph.remove_node(vnf)
+    return subchains
+    
   def _divideIntoDisjointSubchains (self, e2e_w_graph, not_e2e):
     """e2e is a list of tuples of SAP-SAP chains and corresponding subgraphs.
     not_e2e is a list of chains. Returns (subchain, subgraph) list of tuples,
@@ -303,7 +348,9 @@ class GraphPreprocessorClass(object):
 
     rechaining_cycles = 0
     self.log.info("Creating subchains...")
-    while colored_req.number_of_edges() != 0:
+    # work only on the colored edges
+    while len(filter(lambda tup: len(tup[2]['color'])>0, 
+                     colored_req.edges_iter(data=True))) != 0:
       e2e = e2e_sorted[rechaining_cycles % len(e2e_sorted)]
       vnfs_sorted_by_degree = sorted(
         [tup for tup in colored_req.out_degree_iter() if tup[1] != 0],
@@ -341,10 +388,10 @@ class GraphPreprocessorClass(object):
                 "Mistake in  colored request graph maintenance, error: %s" % e)
           break
 
-    '''TODO: Zero edges in colored_req doesn`t mean all links are mapped!!
-    WHY? WHY SO SLOW??
-    - is this still a problem? (isn`t it resolved by the possible multiple
-    iterations on the e2e_sorted?)'''
+    # by this time, only uncolored (best effort) links should be left in 
+    # the colored_req graph.
+    best_effort_subchains = self._extractBestEffortSubchains(colored_req)
+
     if not reduce(lambda a, b: a and b, self.rechained.values()):
       self.log.critical("There is a VNF, which is not in any subchain!!")
       raise uet.InternalAlgorithmException(
@@ -378,6 +425,9 @@ class GraphPreprocessorClass(object):
       sorted_output.extend(
         sorted(next_subchains, cmp=self._compareSubchainSubgraphTuples))
 
+    # map best effort subchains only after all of the chains are mapped entirely
+    sorted_output.extend(best_effort_subchains)
+      
     return sorted_output
 
   def processRequest (self, preprocessed_network):
@@ -406,6 +456,8 @@ class GraphPreprocessorClass(object):
         raise uet.BadInputException(
           "After removing the infras, only the service graph should remain.",
           "Link %s between nodes %s and %s is a %s link" % (k, i, j, d.type))
+      elif not hasattr(d, 'bandwidth'):
+        setattr(d, 'bandwidth', 0)
 
     # SAPs are already reachained by the manager, based on their names.
     for vnf, data in self.req_graph.network.nodes_iter(data=True):
@@ -418,8 +470,14 @@ class GraphPreprocessorClass(object):
           "After preprocessing stage, only SAPs or VNFs should be in the "
           "request graph.", "Node %s, type: %s is still in the graph" % (
             vnf, data.type))
-
-    self.max_chain_id = max(c['id'] for c in self.chains)
+    
+    # Give a spare chain ID for all the best effort subchains, so connect all
+    # the subchains to this (self.max_input_chainid) chain in the helper graph
+    if len(self.chains) == 0:
+      # set max_input_chainid to arbitrary value, if no chains were given
+      self.max_chain_id = 1
+    else:
+      self.max_chain_id = max(c['id'] for c in self.chains) + 1
     self.manager.setMaxInputChainId(self.max_chain_id)
 
     """Placement criteria is a list of physical nodes, where the VNF
@@ -435,11 +493,7 @@ class GraphPreprocessorClass(object):
 
       # Bandwidth of the chains are summed up on the links.
       for i, j, k in zip(node_path[:-1], node_path[1:], link_ids):
-        if hasattr(self.req_graph.network[i][j][k], 'bandwidth'):
-          self.req_graph.network[i][j][k].bandwidth += chain['bandwidth']
-        else:
-          setattr(self.req_graph.network[i][j][k], 'bandwidth',
-                  chain['bandwidth'])
+        self.req_graph.network[i][j][k].bandwidth += chain['bandwidth']
 
       # Find separate subgraph only for e2e chains from the upper layer.
       if self.req_graph.network.node[node_path[0]].type == 'SAP' and \
@@ -452,13 +506,13 @@ class GraphPreprocessorClass(object):
         not_e2e_chains.append(chain)
       self.log.info("Chain %s preprocessed" % chain)
     if len(e2e_chains_with_graphs) == 0:
-      self.log.error("No SAP - SAP chain was given!")
-      raise uet.BadInputException(
-        "Request with SAP-to-SAP chains.", "Service chains do not contain any "
-        "SAP-to-SAP chain")
-    # determine the smallest subgraph for efficient intersection calculation
-    self.smallest = min(map(lambda b: b[1], e2e_chains_with_graphs),
-                        key=lambda a: a.size())
+      self.log.warn("No SAP - SAP chain was given! All request links will be "
+                    "mapped as best effort links!")
+      self.smallest = self.net.network
+    else:
+      # determine the smallest subgraph for efficient intersection calculation
+      self.smallest = min(map(lambda b: b[1], e2e_chains_with_graphs),
+                          key=lambda a: a.size())
     '''These chains are disjoint on the set of links, each has a subgraph
     which it should be mapped to.'''
     divided_chains_with_graphs = self._divideIntoDisjointSubchains(
