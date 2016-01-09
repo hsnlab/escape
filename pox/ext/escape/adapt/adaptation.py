@@ -510,7 +510,7 @@ class ControllerAdapter(object):
       self.domainResManager.get_global_view().update_global_view(mapped_nffg)
       # print self.domainResManager.get_global_view().get_resource_info().dump()
     else:
-      log.warning("%s installation was not successful!" % mapped_nffg)
+      log.error("%s installation was not successful!" % mapped_nffg)
     return mapping_result
 
   def _handle_DomainChangedEvent (self, event):
