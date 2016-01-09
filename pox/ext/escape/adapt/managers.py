@@ -346,6 +346,9 @@ class InternalDomainManager(AbstractDomainManager):
                 'status'] == VNFStarterAPI.VNFStatus.s_UP_AND_RUNNING:
           log.info("NF: %s initiation has been verified on Node: %s" % (
             nf.short_name, infra.short_name))
+          log.debug("VNF id: %s, PID: %s, status: %s" % (
+            vnf['initiated_vnfs']['vnf_id'], vnf['initiated_vnfs']['pid'],
+            vnf['initiated_vnfs']['status']))
         else:
           log.error(
              "Initiated NF: %s is not verified. Initiation was unsuccessful!"
