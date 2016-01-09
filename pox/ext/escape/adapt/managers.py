@@ -512,6 +512,7 @@ class InternalDomainManager(AbstractDomainManager):
           # # else:
           # #   # single element in match field
           # #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
+          # import re
           # match['in_port'] = port.id
           # # Check match fields - currently only vlan_id
           # # TODO: add further match fields
@@ -534,7 +535,7 @@ class InternalDomainManager(AbstractDomainManager):
           #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
           #     action['vlan_push'] = push_tag
 
-          def splitter (data):
+          def splitter (data, field):
             ret = {}
             parts = data.split(';')
             if len(parts) < 1:
@@ -543,17 +544,26 @@ class InternalDomainManager(AbstractDomainManager):
             for part in parts:
               kv = part.split('=')
               if len(kv) != 2:
-                if kv[0] == 'UNTAG':
+                if kv[0] == 'UNTAG' and field == 'ACTION':
                   ret['vlan_pop'] = True
                   continue
                 else:
                   raise RuntimeError("Not a key-value pair: %s" % part)
               if kv[0] == 'in_port':
-                ret['in_port'] = kv[1]
-                pass
+                try:
+                  ret['in_port'] = int(kv[1])
+                except ValueError:
+                  log.warning(
+                     "in_port is not a valid port number: %s! Skip "
+                     "converting..." % kv[1])
+                  ret['in_port'] = kv[1]
               elif kv[0] == 'TAG':
-                ret['vlan_push'] = kv[1].split('|')[-1]
-                ret['vlan_id'] = int(kv[1].split('|')[-1], base=0)
+                if field == "MATCH":
+                  ret['vlan_id'] = kv[1].split('|')[-1]
+                elif field == "ACTION":
+                  ret['vlan_push'] = kv[1].split('|')[-1]
+                else:
+                  raise RuntimeError('Not supported field type: %s!' % field)
               elif kv[0] == 'output':
                 ret['out'] = kv[1]
               else:
@@ -561,13 +571,13 @@ class InternalDomainManager(AbstractDomainManager):
             return ret
 
           try:
-            match = splitter(flowrule.match)
+            match = splitter(flowrule.match, field="MATCH")
             if "in_port" not in match:
               log.warning(
-                "Missing in_port field from match field! Using container port "
-                "number...")
+                 "Missing in_port field from match field! Using container port "
+                 "number...")
               match["in_port"] = port.id
-            action = splitter(flowrule.action)
+            action = splitter(flowrule.action, field="ACTION")
           except RuntimeError as e:
             log.warning("Wrong format in match/action field: %s" % e)
             continue
@@ -576,8 +586,7 @@ class InternalDomainManager(AbstractDomainManager):
           print match
           print action
 
-          self.controlAdapter.install_flowrule(infra.id, match=match,
-                                               action=action)
+          self.controlAdapter.install_flowrule(infra.id, match, action)
 
 
 class SDNDomainManager(AbstractDomainManager):
