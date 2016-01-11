@@ -1,7 +1,7 @@
 {
   "parameters": {
-    "id": "NFV-SDN-demo-req", 
-    "name": "NFV-SDN-demo-req", 
+    "id": "SG-decomp", 
+    "name": "SG-name", 
     "version": "1.0"
   }, 
   "node_nfs": [
@@ -33,8 +33,8 @@
       "functional_type": "headerCompressor", 
       "specification": {
         "resources": {
-          "cpu": 8, 
-          "mem": 10000, 
+          "cpu": 1, 
+          "mem": 1, 
           "storage": 0
         }
       }
@@ -50,8 +50,8 @@
       "functional_type": "headerDecompressor", 
       "specification": {
         "resources": {
-          "cpu": 8, 
-          "mem": 20000, 
+          "cpu": 1, 
+          "mem": 1, 
           "storage": 0
         }
       }
@@ -60,7 +60,7 @@
   "node_saps": [
     {
       "id": "sap1", 
-      "name": "sap1", 
+      "name": "SAP1", 
       "ports": [
         {
           "id": 1
@@ -69,7 +69,7 @@
     }, 
     {
       "id": "sap2", 
-      "name": "sap2", 
+      "name": "SAP2", 
       "ports": [
         {
           "id": 1
@@ -112,35 +112,6 @@
       "src_port": 1, 
       "dst_node": "fwd", 
       "dst_port": 1
-    }
-  ], 
-  "edge_reqs": [
-    {
-      "id": 29745296, 
-      "src_node": "sap1", 
-      "src_port": 1, 
-      "dst_node": "sap2", 
-      "dst_port": 1, 
-      "delay": 40, 
-      "bandwidth": 4, 
-      "sg_path": [
-        1, 
-        2, 
-        3
-      ]
-    }, 
-    {
-      "id": 29745360, 
-      "src_node": "sap2", 
-      "src_port": 1, 
-      "dst_node": "sap1", 
-      "dst_port": 1, 
-      "delay": 40, 
-      "bandwidth": 4, 
-      "sg_path": [
-        4, 
-        5
-      ]
     }
   ]
 }

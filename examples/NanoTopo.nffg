@@ -6,8 +6,8 @@
   }, 
   "node_saps": [
     {
-      "id": "sap16", 
-      "name": "sap16", 
+      "id": "sap0", 
+      "name": "sap0", 
       "ports": [
         {
           "id": 1
@@ -15,8 +15,8 @@
       ]
     }, 
     {
-      "id": "sap15", 
-      "name": "sap15", 
+      "id": "sap1", 
+      "name": "sap1", 
       "ports": [
         {
           "id": 1
@@ -24,8 +24,8 @@
       ]
     }, 
     {
-      "id": "sap10", 
-      "name": "sap10", 
+      "id": "sap2", 
+      "name": "sap2", 
       "ports": [
         {
           "id": 1
@@ -33,8 +33,8 @@
       ]
     }, 
     {
-      "id": "sap11", 
-      "name": "sap11", 
+      "id": "sap3", 
+      "name": "sap3", 
       "ports": [
         {
           "id": 1
@@ -44,392 +44,8 @@
   ], 
   "node_infras": [
     {
-      "id": "fe29", 
-      "name": "fe29", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }, 
-        {
-          "id": 4
-        }, 
-        {
-          "id": 5
-        }, 
-        {
-          "id": 6
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "dn13", 
-      "name": "dn13", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "fe22", 
-      "name": "fe22", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }, 
-        {
-          "id": 4
-        }, 
-        {
-          "id": 5
-        }, 
-        {
-          "id": 6
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "dn17", 
-      "name": "dn17", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "fe28", 
-      "name": "fe28", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }, 
-        {
-          "id": 4
-        }, 
-        {
-          "id": 5
-        }, 
-        {
-          "id": 6
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "dn18", 
-      "name": "dn18", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "fi19", 
-      "name": "fi19", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }, 
-        {
-          "id": 4
-        }, 
-        {
-          "id": 5
-        }, 
-        {
-          "id": 6
-        }, 
-        {
-          "id": 7
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "host26", 
-      "name": "host26", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "EE", 
-      "supported": [
-        "headerDecompressor", 
-        "headerCompressor"
-      ], 
-      "resources": {
-        "cpu": 8, 
-        "mem": 32000, 
-        "storage": 150, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "host27", 
-      "name": "host27", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "EE", 
-      "supported": [
-        "simpleForwarder", 
-        "headerCompressor"
-      ], 
-      "resources": {
-        "cpu": 8, 
-        "mem": 64000, 
-        "storage": 150, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "host24", 
-      "name": "host24", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "EE", 
-      "supported": [
-        "headerDecompressor"
-      ], 
-      "resources": {
-        "cpu": 16, 
-        "mem": 64000, 
-        "storage": 150, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "host25", 
-      "name": "host25", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "EE", 
-      "supported": [
-        "simpleForwarder", 
-        "headerCompressor"
-      ], 
-      "resources": {
-        "cpu": 12, 
-        "mem": 64000, 
-        "storage": 150, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "an5", 
-      "name": "an5", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }, 
-        {
-          "id": 4
-        }, 
-        {
-          "id": 5
-        }, 
-        {
-          "id": 6
-        }, 
-        {
-          "id": 7
-        }, 
-        {
-          "id": 8
-        }, 
-        {
-          "id": 9
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "an6", 
-      "name": "an6", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }, 
-        {
-          "id": 4
-        }, 
-        {
-          "id": 5
-        }, 
-        {
-          "id": 6
-        }, 
-        {
-          "id": 7
-        }, 
-        {
-          "id": 8
-        }, 
-        {
-          "id": 9
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "san21", 
-      "name": "san21", 
+      "id": "san0", 
+      "name": "san0", 
       "ports": [
         {
           "id": 1
@@ -449,8 +65,413 @@
       }
     }, 
     {
-      "id": "fi20", 
-      "name": "fi20", 
+      "id": "host7", 
+      "name": "host7", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "EE", 
+      "supported": [
+        "simpleForwarder"
+      ], 
+      "resources": {
+        "cpu": 8, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "host6", 
+      "name": "host6", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "EE", 
+      "supported": [
+        "headerDecompressor"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "host5", 
+      "name": "host5", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "EE", 
+      "supported": [
+        "simpleForwarder"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "host4", 
+      "name": "host4", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "EE", 
+      "supported": [
+        "headerDecompressor", 
+        "simpleForwarder", 
+        "headerCompressor"
+      ], 
+      "resources": {
+        "cpu": 8, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "host3", 
+      "name": "host3", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "EE", 
+      "supported": [
+        "simpleForwarder", 
+        "headerCompressor"
+      ], 
+      "resources": {
+        "cpu": 8, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "host2", 
+      "name": "host2", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "EE", 
+      "supported": [
+        "headerDecompressor", 
+        "headerCompressor"
+      ], 
+      "resources": {
+        "cpu": 8, 
+        "mem": 32000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "host1", 
+      "name": "host1", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "EE", 
+      "supported": [
+        "simpleForwarder", 
+        "headerCompressor"
+      ], 
+      "resources": {
+        "cpu": 12, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "host0", 
+      "name": "host0", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "EE", 
+      "supported": [
+        "headerDecompressor", 
+        "headerCompressor"
+      ], 
+      "resources": {
+        "cpu": 16, 
+        "mem": 64000, 
+        "storage": 150, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "fe2", 
+      "name": "fe2", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }, 
+        {
+          "id": 5
+        }, 
+        {
+          "id": 6
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "fe3", 
+      "name": "fe3", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }, 
+        {
+          "id": 5
+        }, 
+        {
+          "id": 6
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "dn3", 
+      "name": "dn3", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "fe1", 
+      "name": "fe1", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }, 
+        {
+          "id": 5
+        }, 
+        {
+          "id": 6
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "an0", 
+      "name": "an0", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }, 
+        {
+          "id": 5
+        }, 
+        {
+          "id": 6
+        }, 
+        {
+          "id": 7
+        }, 
+        {
+          "id": 8
+        }, 
+        {
+          "id": 9
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "an1", 
+      "name": "an1", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }, 
+        {
+          "id": 5
+        }, 
+        {
+          "id": 6
+        }, 
+        {
+          "id": 7
+        }, 
+        {
+          "id": 8
+        }, 
+        {
+          "id": 9
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "fi0", 
+      "name": "fi0", 
       "ports": [
         {
           "id": 1
@@ -485,99 +506,37 @@
       }
     }, 
     {
-      "id": "host31", 
-      "name": "host31", 
+      "id": "fi1", 
+      "name": "fi1", 
       "ports": [
         {
           "id": 1
         }, 
         {
           "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "EE", 
-      "supported": [
-        "simpleForwarder"
-      ], 
-      "resources": {
-        "cpu": 12, 
-        "mem": 32000, 
-        "storage": 150, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "host30", 
-      "name": "host30", 
-      "ports": [
-        {
-          "id": 1
         }, 
         {
-          "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "EE", 
-      "supported": [
-        "headerDecompressor", 
-        "simpleForwarder", 
-        "headerCompressor"
-      ], 
-      "resources": {
-        "cpu": 8, 
-        "mem": 64000, 
-        "storage": 150, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "host33", 
-      "name": "host33", 
-      "ports": [
-        {
-          "id": 1
+          "id": 3
         }, 
         {
-          "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "EE", 
-      "supported": [
-        "simpleForwarder"
-      ], 
-      "resources": {
-        "cpu": 8, 
-        "mem": 32000, 
-        "storage": 150, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "host32", 
-      "name": "host32", 
-      "ports": [
-        {
-          "id": 1
+          "id": 4
         }, 
         {
-          "id": 2
+          "id": 5
+        }, 
+        {
+          "id": 6
+        }, 
+        {
+          "id": 7
         }
       ], 
       "domain": "INTERNAL", 
-      "type": "EE", 
-      "supported": [
-        "headerDecompressor"
-      ], 
+      "type": "SDN-SWITCH", 
       "resources": {
-        "cpu": 12, 
-        "mem": 64000, 
-        "storage": 150, 
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
         "delay": 0.5, 
         "bandwidth": 1000
       }
@@ -612,9 +571,6 @@
         }, 
         {
           "id": 2
-        }, 
-        {
-          "id": 3
         }
       ], 
       "domain": "INTERNAL", 
@@ -652,8 +608,176 @@
       }
     }, 
     {
-      "id": "fe23", 
-      "name": "fe23", 
+      "id": "bn0", 
+      "name": "bn0", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "pe0", 
+      "name": "pe0", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100
+      }
+    }, 
+    {
+      "id": "bnas0", 
+      "name": "bnas0", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }, 
+        {
+          "id": 4
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 100
+      }
+    }, 
+    {
+      "id": "dn5", 
+      "name": "dn5", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "dn4", 
+      "name": "dn4", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "dn1", 
+      "name": "dn1", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "dn0", 
+      "name": "dn0", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }
+      ], 
+      "domain": "INTERNAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 1000
+      }
+    }, 
+    {
+      "id": "fe0", 
+      "name": "fe0", 
       "ports": [
         {
           "id": 1
@@ -685,131 +809,8 @@
       }
     }, 
     {
-      "id": "bn4", 
-      "name": "bn4", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "dn7", 
-      "name": "dn7", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "dn12", 
-      "name": "dn12", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 1000
-      }
-    }, 
-    {
-      "id": "bnas9", 
-      "name": "bnas9", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }, 
-        {
-          "id": 4
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 100
-      }
-    }, 
-    {
-      "id": "pe14", 
-      "name": "pe14", 
-      "ports": [
-        {
-          "id": 1
-        }, 
-        {
-          "id": 2
-        }, 
-        {
-          "id": 3
-        }, 
-        {
-          "id": 4
-        }
-      ], 
-      "domain": "INTERNAL", 
-      "type": "SDN-SWITCH", 
-      "resources": {
-        "cpu": 0, 
-        "mem": 0, 
-        "storage": 0, 
-        "delay": 0.5, 
-        "bandwidth": 100
-      }
-    }, 
-    {
-      "id": "dn8", 
-      "name": "dn8", 
+      "id": "dn2", 
+      "name": "dn2", 
       "ports": [
         {
           "id": 1
@@ -834,125 +835,278 @@
   ], 
   "edge_links": [
     {
-      "id": 140312718263068, 
-      "src_node": "dn13", 
+      "id": 139745331067666, 
+      "src_node": "san0", 
+      "src_port": 1, 
+      "dst_node": "fi0", 
+      "dst_port": 3, 
+      "delay": 0.1, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": 139745331217294, 
+      "src_node": "san0", 
+      "src_port": 2, 
+      "dst_node": "fi1", 
+      "dst_port": 3, 
+      "delay": 0.1, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": 139745331007737, 
+      "src_node": "host7", 
+      "src_port": 1, 
+      "dst_node": "fe2", 
+      "dst_port": 6, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330706936, 
+      "src_node": "host7", 
+      "src_port": 2, 
+      "dst_node": "fe3", 
+      "dst_port": 6, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330530187, 
+      "src_node": "host6", 
+      "src_port": 1, 
+      "dst_node": "fe2", 
+      "dst_port": 5, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745331062686, 
+      "src_node": "host6", 
+      "src_port": 2, 
+      "dst_node": "fe3", 
+      "dst_port": 5, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330590047, 
+      "src_node": "host5", 
+      "src_port": 1, 
+      "dst_node": "fe2", 
+      "dst_port": 4, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330977309, 
+      "src_node": "host5", 
+      "src_port": 2, 
+      "dst_node": "fe3", 
+      "dst_port": 4, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745331290455, 
+      "src_node": "host4", 
+      "src_port": 1, 
+      "dst_node": "fe2", 
+      "dst_port": 3, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330453575, 
+      "src_node": "host4", 
+      "src_port": 2, 
+      "dst_node": "fe3", 
+      "dst_port": 3, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330622920, 
+      "src_node": "host3", 
+      "src_port": 1, 
+      "dst_node": "fe0", 
+      "dst_port": 6, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330391247, 
+      "src_node": "host3", 
+      "src_port": 2, 
+      "dst_node": "fe1", 
+      "dst_port": 6, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330372052, 
+      "src_node": "host2", 
+      "src_port": 1, 
+      "dst_node": "fe0", 
+      "dst_port": 5, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330776380, 
+      "src_node": "host2", 
+      "src_port": 2, 
+      "dst_node": "fe1", 
+      "dst_port": 5, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745331138461, 
+      "src_node": "host1", 
+      "src_port": 1, 
+      "dst_node": "fe0", 
+      "dst_port": 4, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330879033, 
+      "src_node": "host1", 
+      "src_port": 2, 
+      "dst_node": "fe1", 
+      "dst_port": 4, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745331165042, 
+      "src_node": "host0", 
+      "src_port": 1, 
+      "dst_node": "fe0", 
+      "dst_port": 3, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745331130988, 
+      "src_node": "host0", 
+      "src_port": 2, 
+      "dst_node": "fe1", 
+      "dst_port": 3, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745331028892, 
+      "src_node": "dn3", 
       "src_port": 3, 
-      "dst_node": "pe14", 
+      "dst_node": "pe0", 
       "dst_port": 2, 
       "delay": 0.2, 
       "bandwidth": 100
     }, 
     {
-      "id": 140312718100657, 
-      "src_node": "fi19", 
-      "src_port": 4, 
-      "dst_node": "fe22", 
+      "id": 139745330332429, 
+      "src_node": "an0", 
+      "src_port": 8, 
+      "dst_node": "fi0", 
       "dst_port": 1, 
       "delay": 0.2, 
-      "bandwidth": 1000.0
+      "bandwidth": 1000
     }, 
     {
-      "id": 140312718089203, 
-      "src_node": "fi19", 
-      "src_port": 5, 
-      "dst_node": "fe22", 
-      "dst_port": 2, 
+      "id": 139745330760180, 
+      "src_node": "an0", 
+      "src_port": 9, 
+      "dst_node": "fi1", 
+      "dst_port": 1, 
       "delay": 0.2, 
-      "bandwidth": 1000.0
+      "bandwidth": 1000
     }, 
     {
-      "id": 140312718088901, 
-      "src_node": "fi19", 
+      "id": 139745330638404, 
+      "src_node": "an0", 
+      "src_port": 1, 
+      "dst_node": "bn0", 
+      "dst_port": 3, 
+      "delay": 0.1, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": 139745330441835, 
+      "src_node": "an0", 
       "src_port": 7, 
-      "dst_node": "fe28", 
-      "dst_port": 2, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0
-    }, 
-    {
-      "id": 140312718251862, 
-      "src_node": "fi19", 
-      "src_port": 6, 
-      "dst_node": "fe28", 
+      "dst_node": "dn5", 
       "dst_port": 1, 
       "delay": 0.2, 
-      "bandwidth": 1000.0
+      "bandwidth": 1000
     }, 
     {
-      "id": 140312718002364, 
-      "src_node": "host26", 
+      "id": 139745330575716, 
+      "src_node": "an0", 
+      "src_port": 6, 
+      "dst_node": "dn4", 
+      "dst_port": 1, 
+      "delay": 0.2, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": 139745330781328, 
+      "src_node": "an0", 
+      "src_port": 3, 
+      "dst_node": "dn1", 
+      "dst_port": 1, 
+      "delay": 0.2, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": 139745330444541, 
+      "src_node": "an0", 
       "src_port": 2, 
-      "dst_node": "fe23", 
-      "dst_port": 5, 
+      "dst_node": "dn0", 
+      "dst_port": 1, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000
     }, 
     {
-      "id": 140312717598036, 
-      "src_node": "host26", 
-      "src_port": 1, 
-      "dst_node": "fe22", 
-      "dst_port": 5, 
+      "id": 139745330679777, 
+      "src_node": "an0", 
+      "src_port": 5, 
+      "dst_node": "dn3", 
+      "dst_port": 1, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000
     }, 
     {
-      "id": 140312717617231, 
-      "src_node": "host27", 
-      "src_port": 2, 
-      "dst_node": "fe23", 
-      "dst_port": 6, 
+      "id": 139745331115523, 
+      "src_node": "an0", 
+      "src_port": 4, 
+      "dst_node": "dn2", 
+      "dst_port": 1, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000
     }, 
     {
-      "id": 140312717848904, 
-      "src_node": "host27", 
-      "src_port": 1, 
-      "dst_node": "fe22", 
-      "dst_port": 6, 
+      "id": 139745330361553, 
+      "src_node": "an1", 
+      "src_port": 8, 
+      "dst_node": "fi0", 
+      "dst_port": 2, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000
     }, 
     {
-      "id": 140312718356972, 
-      "src_node": "host24", 
-      "src_port": 2, 
-      "dst_node": "fe23", 
-      "dst_port": 3, 
+      "id": 139745330959313, 
+      "src_node": "an1", 
+      "src_port": 9, 
+      "dst_node": "fi1", 
+      "dst_port": 2, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000
     }, 
     {
-      "id": 140312718391026, 
-      "src_node": "host24", 
-      "src_port": 1, 
-      "dst_node": "fe22", 
-      "dst_port": 3, 
-      "delay": 0.2, 
-      "bandwidth": 100
-    }, 
-    {
-      "id": 140312718105017, 
-      "src_node": "host25", 
-      "src_port": 2, 
-      "dst_node": "fe23", 
-      "dst_port": 4, 
-      "delay": 0.2, 
-      "bandwidth": 100
-    }, 
-    {
-      "id": 140312718364445, 
-      "src_node": "host25", 
-      "src_port": 1, 
-      "dst_node": "fe22", 
-      "dst_port": 4, 
-      "delay": 0.2, 
-      "bandwidth": 100
-    }, 
-    {
-      "id": 140312717868484, 
-      "src_node": "an5", 
+      "id": 139745331070176, 
+      "src_node": "an1", 
       "src_port": 1, 
       "dst_node": "bn1", 
       "dst_port": 3, 
@@ -960,295 +1114,142 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140312717674621, 
-      "src_node": "an5", 
-      "src_port": 2, 
-      "dst_node": "dn7", 
-      "dst_port": 1, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312717558413, 
-      "src_node": "an5", 
-      "src_port": 8, 
-      "dst_node": "fi19", 
-      "dst_port": 1, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312717913953, 
-      "src_node": "an5", 
-      "src_port": 5, 
-      "dst_node": "dn13", 
-      "dst_port": 1, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312718349699, 
-      "src_node": "an5", 
-      "src_port": 4, 
-      "dst_node": "dn12", 
-      "dst_port": 1, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312717801700, 
-      "src_node": "an5", 
-      "src_port": 6, 
-      "dst_node": "dn17", 
-      "dst_port": 1, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312717667819, 
-      "src_node": "an5", 
+      "id": 139745331054459, 
+      "src_node": "an1", 
       "src_port": 7, 
-      "dst_node": "dn18", 
-      "dst_port": 1, 
+      "dst_node": "dn5", 
+      "dst_port": 2, 
       "delay": 0.2, 
       "bandwidth": 1000
     }, 
     {
-      "id": 140312717986164, 
-      "src_node": "an5", 
-      "src_port": 9, 
-      "dst_node": "fi20", 
-      "dst_port": 1, 
+      "id": 139745330489639, 
+      "src_node": "an1", 
+      "src_port": 6, 
+      "dst_node": "dn4", 
+      "dst_port": 2, 
       "delay": 0.2, 
       "bandwidth": 1000
     }, 
     {
-      "id": 140312718011408, 
-      "src_node": "an5", 
+      "id": 139745330973689, 
+      "src_node": "an1", 
       "src_port": 3, 
-      "dst_node": "dn8", 
-      "dst_port": 1, 
+      "dst_node": "dn1", 
+      "dst_port": 2, 
       "delay": 0.2, 
       "bandwidth": 1000
     }, 
     {
-      "id": 140312718300256, 
-      "src_node": "an6", 
-      "src_port": 1, 
-      "dst_node": "bn2", 
-      "dst_port": 3, 
-      "delay": 0.1, 
+      "id": 139745331072962, 
+      "src_node": "an1", 
+      "src_port": 2, 
+      "dst_node": "dn0", 
+      "dst_port": 2, 
+      "delay": 0.2, 
       "bandwidth": 1000
     }, 
     {
-      "id": 140312717986155, 
-      "src_node": "an6", 
+      "id": 139745330751979, 
+      "src_node": "an1", 
       "src_port": 5, 
-      "dst_node": "dn13", 
+      "dst_node": "dn3", 
       "dst_port": 2, 
       "delay": 0.2, 
       "bandwidth": 1000
     }, 
     {
-      "id": 140312717587537, 
-      "src_node": "an6", 
-      "src_port": 8, 
-      "dst_node": "fi19", 
-      "dst_port": 2, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312718303042, 
-      "src_node": "an6", 
-      "src_port": 2, 
-      "dst_node": "dn7", 
-      "dst_port": 2, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312717697692, 
-      "src_node": "an6", 
+      "id": 139745330463516, 
+      "src_node": "an1", 
       "src_port": 4, 
-      "dst_node": "dn12", 
+      "dst_node": "dn2", 
       "dst_port": 2, 
       "delay": 0.2, 
       "bandwidth": 1000
     }, 
     {
-      "id": 140312717715623, 
-      "src_node": "an6", 
-      "src_port": 6, 
-      "dst_node": "dn17", 
-      "dst_port": 2, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312718280443, 
-      "src_node": "an6", 
-      "src_port": 7, 
-      "dst_node": "dn18", 
-      "dst_port": 2, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312718185297, 
-      "src_node": "an6", 
-      "src_port": 9, 
-      "dst_node": "fi20", 
-      "dst_port": 2, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312718203769, 
-      "src_node": "an6", 
-      "src_port": 3, 
-      "dst_node": "dn8", 
-      "dst_port": 2, 
-      "delay": 0.2, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312718293650, 
-      "src_node": "san21", 
-      "src_port": 1, 
-      "dst_node": "fi19", 
-      "dst_port": 3, 
-      "delay": 0.1, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312718443278, 
-      "src_node": "san21", 
-      "src_port": 2, 
-      "dst_node": "fi20", 
-      "dst_port": 3, 
-      "delay": 0.1, 
-      "bandwidth": 1000
-    }, 
-    {
-      "id": 140312717581656, 
-      "src_node": "fi20", 
-      "src_port": 7, 
-      "dst_node": "fe29", 
-      "dst_port": 2, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0
-    }, 
-    {
-      "id": 140312718128314, 
-      "src_node": "fi20", 
-      "src_port": 6, 
-      "dst_node": "fe29", 
+      "id": 139745330874673, 
+      "src_node": "fi0", 
+      "src_port": 4, 
+      "dst_node": "fe0", 
       "dst_port": 1, 
       "delay": 0.2, 
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140312718109582, 
-      "src_node": "fi20", 
-      "src_port": 4, 
-      "dst_node": "fe23", 
-      "dst_port": 1, 
-      "delay": 0.2, 
-      "bandwidth": 1000.0
-    }, 
-    {
-      "id": 140312717703199, 
-      "src_node": "fi20", 
+      "id": 139745330863219, 
+      "src_node": "fi0", 
       "src_port": 5, 
-      "dst_node": "fe23", 
+      "dst_node": "fe0", 
       "dst_port": 2, 
       "delay": 0.2, 
       "bandwidth": 1000.0
     }, 
     {
-      "id": 140312718203293, 
-      "src_node": "host31", 
-      "src_port": 2, 
-      "dst_node": "fe29", 
-      "dst_port": 4, 
+      "id": 139745330862917, 
+      "src_node": "fi0", 
+      "src_port": 7, 
+      "dst_node": "fe2", 
+      "dst_port": 2, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000.0
     }, 
     {
-      "id": 140312717816031, 
-      "src_node": "host31", 
-      "src_port": 1, 
-      "dst_node": "fe28", 
-      "dst_port": 4, 
+      "id": 139745331025878, 
+      "src_node": "fi0", 
+      "src_port": 6, 
+      "dst_node": "fe2", 
+      "dst_port": 1, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000.0
     }, 
     {
-      "id": 140312717679559, 
-      "src_node": "host30", 
-      "src_port": 2, 
-      "dst_node": "fe29", 
-      "dst_port": 3, 
+      "id": 139745330355672, 
+      "src_node": "fi1", 
+      "src_port": 7, 
+      "dst_node": "fe3", 
+      "dst_port": 2, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000.0
     }, 
     {
-      "id": 140312718516439, 
-      "src_node": "host30", 
-      "src_port": 1, 
-      "dst_node": "fe28", 
-      "dst_port": 3, 
+      "id": 139745330902330, 
+      "src_node": "fi1", 
+      "src_port": 6, 
+      "dst_node": "fe3", 
+      "dst_port": 1, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000.0
     }, 
     {
-      "id": 140312717932920, 
-      "src_node": "host33", 
-      "src_port": 2, 
-      "dst_node": "fe29", 
-      "dst_port": 6, 
+      "id": 139745330883598, 
+      "src_node": "fi1", 
+      "src_port": 4, 
+      "dst_node": "fe1", 
+      "dst_port": 1, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000.0
     }, 
     {
-      "id": 140312718233721, 
-      "src_node": "host33", 
-      "src_port": 1, 
-      "dst_node": "fe28", 
-      "dst_port": 6, 
+      "id": 139745330477215, 
+      "src_node": "fi1", 
+      "src_port": 5, 
+      "dst_node": "fe1", 
+      "dst_port": 2, 
       "delay": 0.2, 
-      "bandwidth": 100
+      "bandwidth": 1000.0
     }, 
     {
-      "id": 140312718288670, 
-      "src_node": "host32", 
-      "src_port": 2, 
-      "dst_node": "fe29", 
-      "dst_port": 5, 
-      "delay": 0.2, 
-      "bandwidth": 100
-    }, 
-    {
-      "id": 140312717756171, 
-      "src_node": "host32", 
-      "src_port": 1, 
-      "dst_node": "fe28", 
-      "dst_port": 5, 
-      "delay": 0.2, 
-      "bandwidth": 100
-    }, 
-    {
-      "id": 140312717902202, 
+      "id": 139745330944902, 
       "src_node": "bn3", 
       "src_port": 2, 
-      "dst_node": "bn4", 
-      "dst_port": 1, 
+      "dst_node": "bn0", 
+      "dst_port": 2, 
       "delay": 10, 
       "bandwidth": 1000
     }, 
     {
-      "id": 140312717811243, 
+      "id": 139745330672122, 
       "src_node": "bn2", 
       "src_port": 2, 
       "dst_node": "bn3", 
@@ -1257,83 +1258,83 @@
       "bandwidth": 1000
     }, 
     {
-      "id": 140312718234837, 
+      "id": 139745330581163, 
       "src_node": "bn1", 
-      "src_port": 1, 
+      "src_port": 2, 
       "dst_node": "bn2", 
       "dst_port": 1, 
       "delay": 10, 
       "bandwidth": 1000
     }, 
     {
-      "id": 140312718174982, 
-      "src_node": "bn4", 
-      "src_port": 2, 
+      "id": 139745331004757, 
+      "src_node": "bn0", 
+      "src_port": 1, 
       "dst_node": "bn1", 
-      "dst_port": 2, 
+      "dst_port": 1, 
       "delay": 10, 
       "bandwidth": 1000
     }, 
     {
-      "id": 140312717745235, 
-      "src_node": "dn7", 
-      "src_port": 3, 
-      "dst_node": "bnas9", 
-      "dst_port": 1, 
-      "delay": 0.2, 
-      "bandwidth": 100
-    }, 
-    {
-      "id": 140312718157672, 
-      "src_node": "dn12", 
-      "src_port": 3, 
-      "dst_node": "pe14", 
-      "dst_port": 1, 
-      "delay": 0.2, 
-      "bandwidth": 100
-    }, 
-    {
-      "id": 140312717907934, 
-      "src_node": "bnas9", 
-      "src_port": 3, 
-      "dst_node": "sap10", 
-      "dst_port": 1, 
-      "delay": 0.5, 
-      "bandwidth": 10
-    }, 
-    {
-      "id": 140312717870347, 
-      "src_node": "bnas9", 
+      "id": 139745331117602, 
+      "src_node": "pe0", 
       "src_port": 4, 
-      "dst_node": "sap11", 
+      "dst_node": "sap3", 
       "dst_port": 1, 
       "delay": 0.5, 
       "bandwidth": 10
     }, 
     {
-      "id": 140312717439814, 
-      "src_node": "pe14", 
+      "id": 139745330205638, 
+      "src_node": "pe0", 
       "src_port": 3, 
-      "dst_node": "sap15", 
+      "dst_node": "sap2", 
       "dst_port": 1, 
       "delay": 0.5, 
       "bandwidth": 10
     }, 
     {
-      "id": 140312718343586, 
-      "src_node": "pe14", 
+      "id": 139745330673758, 
+      "src_node": "bnas0", 
+      "src_port": 3, 
+      "dst_node": "sap0", 
+      "dst_port": 1, 
+      "delay": 0.5, 
+      "bandwidth": 10
+    }, 
+    {
+      "id": 139745330636171, 
+      "src_node": "bnas0", 
       "src_port": 4, 
-      "dst_node": "sap16", 
+      "dst_node": "sap1", 
       "dst_port": 1, 
       "delay": 0.5, 
       "bandwidth": 10
     }, 
     {
-      "id": 140312718334182, 
-      "src_node": "dn8", 
+      "id": 139745331100006, 
+      "src_node": "dn1", 
       "src_port": 3, 
-      "dst_node": "bnas9", 
+      "dst_node": "bnas0", 
       "dst_port": 2, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330511059, 
+      "src_node": "dn0", 
+      "src_port": 3, 
+      "dst_node": "bnas0", 
+      "dst_port": 1, 
+      "delay": 0.2, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": 139745330923496, 
+      "src_node": "dn2", 
+      "src_port": 3, 
+      "dst_node": "pe0", 
+      "dst_port": 1, 
       "delay": 0.2, 
       "bandwidth": 100
     }
