@@ -141,6 +141,17 @@
         4, 
         5
       ]
+    },
+    {
+      "id": 21456787654, 
+      "src_node": "comp", 
+      "src_port": 1, 
+      "dst_node": "decomp", 
+      "dst_port": 1, 
+      "delay": 0.6, 
+      "sg_path": [
+        2
+      ]
     }
   ]
 }

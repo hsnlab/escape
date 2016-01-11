@@ -16,8 +16,8 @@
       "functional_type": "simpleForwarder", 
       "specification": {
         "resources": {
-          "cpu": 1, 
-          "mem": 1, 
+          "cpu": 6, 
+          "mem": 6, 
           "storage": 0
         }
       }
@@ -55,6 +55,40 @@
           "storage": 0
         }
       }
+    },
+    {
+      "id": "fwd2", 
+      "name": "FORWARDER", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "simpleForwarder", 
+      "specification": {
+        "resources": {
+          "cpu": 6, 
+          "mem": 6, 
+          "storage": 0
+        }
+      }
+    },
+    {
+      "id": "fwd3", 
+      "name": "FORWARDER", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "simpleForwarder", 
+      "specification": {
+        "resources": {
+          "cpu": 6, 
+          "mem": 6, 
+          "storage": 0
+        }
+      }
     }
   ], 
   "node_saps": [
@@ -70,6 +104,24 @@
     {
       "id": "sap2", 
       "name": "sap2", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "sap0", 
+      "name": "sap0", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "sap3", 
+      "name": "sap3", 
       "ports": [
         {
           "id": 1
@@ -112,6 +164,34 @@
       "src_port": 1, 
       "dst_node": "fwd", 
       "dst_port": 1
+    },
+    {
+      "id": 6, 
+      "src_node": "sap0", 
+      "src_port": 1, 
+      "dst_node": "fwd3", 
+      "dst_port": 1
+    },
+    {
+      "id": 7, 
+      "src_node": "fwd3", 
+      "src_port": 1, 
+      "dst_node": "sap3", 
+      "dst_port": 1
+    },
+    {
+      "id": 8, 
+      "src_node": "sap3", 
+      "src_port": 1, 
+      "dst_node": "fwd2", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 9, 
+      "src_node": "fwd2", 
+      "src_port": 1, 
+      "dst_node": "sap0", 
+      "dst_port": 1
     }
   ], 
   "edge_reqs": [
@@ -140,6 +220,32 @@
       "sg_path": [
         4, 
         5
+      ]
+    },
+    {
+      "id": 987654, 
+      "src_node": "sap0", 
+      "src_port": 1, 
+      "dst_node": "sap3", 
+      "dst_port": 1, 
+      "delay": 40, 
+      "bandwidth": 4, 
+      "sg_path": [
+        6,
+	7
+      ]
+    }, 
+    {
+      "id": 876545, 
+      "src_node": "sap3", 
+      "src_port": 1, 
+      "dst_node": "sap0", 
+      "dst_port": 1, 
+      "delay": 40, 
+      "bandwidth": 4, 
+      "sg_path": [
+        8,
+        9
       ]
     }
   ]
