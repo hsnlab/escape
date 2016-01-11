@@ -128,13 +128,13 @@ cfg = {
     {
       # Default managers need to start at init
       "MANAGERS": [
-        "REMOTE-ESCAPE",
-        "REMOTE-ESCAPE-ext",
+        # "REMOTE-ESCAPE",
+        # "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
         # "UN"
       ],
-      "RESET-DOMAINS-BEFORE-INSTALL": True,
+      "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": True,  # Shutdown strategy config
       # Specific Domain Managers
       "INTERNAL":
