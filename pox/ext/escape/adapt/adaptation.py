@@ -350,7 +350,7 @@ class ControllerAdapter(object):
     :return: None
     """
     # Clear DomainManagers config if needed
-    if CONFIG.reset_domains_after_shutdown() is True:
+    if CONFIG.clear_domains_after_shutdown() is True:
       self.domains.clear_initiated_mgrs()
     # Stop initiated DomainManagers
     self.domains.stop_initiated_mgrs()
@@ -493,11 +493,18 @@ class ControllerAdapter(object):
            "domain part..." % domain)
         continue
       log.debug("Delegate splitted part: %s to %s" % (part, domain_mgr))
+      # Check if need to reset domain before install
+      reset = CONFIG.reset_domains_before_install()
+      if reset:
+        log.info(
+           "Reset %s domain before deploying mapped NFFG..." %
+           domain_mgr.domain_name)
+        domain_mgr.clear_domain()
       # Invoke DomainAdapter's install
       res = domain_mgr.install_nffg(part)
       if not res:
         log.warning(
-          "Installation of %s in %s was unsuccessful!" % (part, domain))
+           "Installation of %s in %s was unsuccessful!" % (part, domain))
       # Note result according to others before
       mapping_result = mapping_result and res
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)

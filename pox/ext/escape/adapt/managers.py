@@ -181,7 +181,7 @@ class InternalDomainManager(AbstractDomainManager):
     """
     try:
       log.info(">>> Install %s domain part..." % self.domain_name)
-      self._delete_nfs()
+      # self._delete_nfs()
       self._deploy_nfs(nffg_part=nffg_part)
       log.info("Perform traffic steering according to mapped tunnels/labels...")
       self._delete_flowrules(nffg_part=nffg_part)
@@ -202,7 +202,13 @@ class InternalDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    log.debug("Mininet domain has already been cleared!")
+    if not self.topoAdapter.check_domain_reachable():
+      # This would be the normal behaviour if ESCAPEv2 is shutting down -->
+      # Infrastructure layer has been cleared.
+      log.debug("%s domain has already been cleared!" % self.domain_name)
+      return
+    self._delete_nfs()
+    self._delete_flowrules(nffg_part=self.topoAdapter.get_topology_resource())
 
   def _delete_nfs (self):
     """
@@ -210,12 +216,13 @@ class InternalDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    # print self.topoAdapter.get_topology_resource().dump()
-    log.debug("Reset domain and remove deployed NFs...")
-    # for nf in self.topoAdapter.get_topology_resource().nfs:
-    #   print "NF: " + str(nf)
-
     topo = self.topoAdapter.get_topology_resource()
+    if topo is None:
+      log.warning(
+         "Missing topology description from %s domain! Skip deleting NFs..." %
+         self.domain_name)
+      return
+    log.debug("Remove deployed NFs...")
     for infra in topo.infras:
       if infra.infra_type not in (
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
@@ -269,6 +276,11 @@ class InternalDomainManager(AbstractDomainManager):
     nffg_part.clear_links(NFFG.TYPE_LINK_REQUIREMENT)
     # Get physical topology description from Mininet
     mn_topo = self.topoAdapter.get_topology_resource()
+    if mn_topo is None:
+      log.warning(
+         "Missing topology description from %s domain! Skip deploying NFs..." %
+         self.domain_name)
+      return
     # Iter through the container INFRAs in the given mapped NFFG part
     # print mn_topo.dump()
     for infra in nffg_part.infras:
@@ -431,6 +443,11 @@ class InternalDomainManager(AbstractDomainManager):
     """
     log.debug("Reset domain steering and delete installed flowrules...")
     topo = self.topoAdapter.get_topology_resource()
+    if topo is None:
+      log.warning(
+         "Missing topology description from %s domain! Skip flowrule "
+         "deletions..." % self.domain_name)
+      return
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
       if infra.infra_type not in (
@@ -476,7 +493,11 @@ class InternalDomainManager(AbstractDomainManager):
     # # Get physical topology description from POX adapter
     # topo = self.controlAdapter.get_topology_resource()
     topo = self.topoAdapter.get_topology_resource()
-
+    if topo is None:
+      log.warning(
+         "Missing topology description from %s domain! Skip deploying "
+         "flowrules..." % self.domain_name)
+      return
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
       if infra.infra_type not in (
@@ -723,6 +744,11 @@ class SDNDomainManager(AbstractDomainManager):
     nffg_part.clear_links(NFFG.TYPE_LINK_REQUIREMENT)
     # Get physical topology description from POX adapter
     topo = self.topoAdapter.get_topology_resource()
+    if topo is None:
+      log.warning(
+         "Missing topology description from %s domain! Skip deploying "
+         "flowrules..." % self.domain_name)
+      return
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
       if infra.infra_type not in (

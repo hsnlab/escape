@@ -643,14 +643,29 @@ class ESCAPEConfig(object):
           return None
     return None
 
-  def reset_domains_after_shutdown (self):
+  def clear_domains_after_shutdown (self):
     """
     Return with the shutdown strategy to reset domain or not.
+
+    :return: clear domain after shutdown or not (default: True)
+    :rtype: bool
     """
     try:
-      return self.__configuration[ADAPT]['RESET-DOMAINS-AFTER-SHUTDOWN']
+      return self.__configuration[ADAPT]['CLEAR-DOMAINS-AFTER-SHUTDOWN']
     except KeyError:
       return True
+
+  def reset_domains_before_install (self):
+    """
+    Return with the pre-deploy strategy to reset domain or not.
+
+    :return: reset domain before install or not (default: False)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT]['RESET-DOMAINS-BEFORE-INSTALL']
+    except KeyError:
+      return False
 
   def get_sdn_topology (self):
     """
