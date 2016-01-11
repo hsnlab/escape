@@ -59,11 +59,22 @@ def add_port(obj, increment_port_ids=False):
       port = obj.add_port(id=1)
   return port
 
-max_nodeid = 0
+def getGenForName(prefix):
+   number = 0
+   while True:
+     yield prefix+str(number)
+     number += 1
+ 
+prefixes = {}
 def getName(prefix):
-  global max_nodeid
-  max_nodeid += 1
-  return prefix+str(max_nodeid)
+  # WARNING! this function is not thread safe!!
+  global prefixes
+  while True:
+    if prefix in prefixes:
+      return prefixes[prefix].next()
+    else:
+      prefixes[prefix] = getGenForName(prefix)
+      return prefixes[prefix].next()
 
 def addRedundantPairedConnection(nffg, an0, an1, bn0, bn1, p, linkres):
   """
