@@ -48,7 +48,7 @@ import Alg1_Helper as helper
 alg = None
 
 
-def MAP (request, network, full_remap = False, 
+def MAP (request, network, full_remap = False,
          enable_shortest_path_cache = False,
          bw_factor=1, res_factor=1, lat_factor=1,
          shortest_paths=None, return_dist=False):
@@ -69,7 +69,7 @@ def MAP (request, network, full_remap = False,
     # retrieve the SGHops from the TAG values of the flow rules, in case they
     # are cannot be found in the request graph and can only be deduced from the 
     # flows
-    helper.log.info("No SGHops were given in the Service Graph, retrieving them"
+    helper.log.warn("No SGHops were given in the Service Graph, retrieving them"
                    " based on the flowrules...")
     sg_hops_given = False
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(request)
@@ -80,14 +80,14 @@ def MAP (request, network, full_remap = False,
     for k, v in sg_hop_info.iteritems():
       # VNF ports are given to the function
       request.add_sglink(v[0], v[1], id=k[2])
-  
+
   chainlist = []
   cid = 1
   edgereqlist = []
   for req in request.reqs:
     edgereqlist.append(req)
     request.del_edge(req.src, req.dst, req.id)
-    
+
   if len(edgereqlist) != 0 and not sg_hops_given:
     raise uet.BadInputException("","SGHops was not given explicitly, they have "
           "been retrieved based on the flowrules, but at least one EdgeReq was "
@@ -114,7 +114,7 @@ def MAP (request, network, full_remap = False,
                                   "SGHop path was given to %s EdgeReq!"%req.id)
     else:
       try:
-        chain = {'id': cid, 'link_ids': req.sg_path, 
+        chain = {'id': cid, 'link_ids': req.sg_path,
                  'bandwidth': req.bandwidth if req.bandwidth is not None else 0,
                  'delay': req.delay}
       except AttributeError:
@@ -196,7 +196,7 @@ def MAP (request, network, full_remap = False,
   # create the class of the algorithm
   alg = CoreAlgorithm(network, request, chainlist, full_remap,
                       enable_shortest_path_cache,
-                      bw_factor=bw_factor, res_factor=res_factor, 
+                      bw_factor=bw_factor, res_factor=res_factor,
                       lat_factor=lat_factor, shortest_paths=shortest_paths)
   mappedNFFG = alg.start()
 
@@ -301,7 +301,7 @@ def _onlySAPsRequest():
 
   nffg.add_req(sap1.ports[0], sap2.ports[0], bandwidth=1000, delay=24)
   nffg.add_req(sap1.ports[0], sap2.ports[0], bandwidth=1000, delay=24)
-  
+
   return nffg
 
 
@@ -402,11 +402,11 @@ def _testNetworkForBacktrack():
 
   infra0.add_supported_type(['A'])
   infra1.add_supported_type(['A'])
-  
+
   unilinkres = {'delay': 0.0, 'bandwidth': 2000}
-  nffg.add_undirected_link(sap1.add_port(0), infra0.add_port(0), 
+  nffg.add_undirected_link(sap1.add_port(0), infra0.add_port(0),
                            **unilinkres)
-  nffg.add_undirected_link(sap2.add_port(0), infra1.add_port(0), 
+  nffg.add_undirected_link(sap2.add_port(0), infra1.add_port(0),
                            **unilinkres)
   rightlink = {'delay': 10.0, 'bandwidth': 2000}
   leftlink = {'delay': 0.01, 'bandwidth': 5000}
@@ -414,14 +414,14 @@ def _testNetworkForBacktrack():
   nffg.add_link(sw.add_port(1), infra1.add_port(1), id="swn1", **rightlink)
   nffg.add_link(sw.ports[0], infra0.ports[1], id="swn0", **leftlink)
   nffg.add_link(infra1.ports[1], sw.ports[1], id="n1sw", **leftlink)
-  
+
   return nffg
-  
+
 def _testRequestForBacktrack():
   nffg = NFFG(id="backtracktest-req", name="btreq")
   sap1 = nffg.add_sap(name="SAP1", id="sap1req")
   sap2 = nffg.add_sap(name="SAP2", id="sap2req")
-  
+
   a = nffg.add_nf(id="a", name="NetFunc0", func_type='A', cpu=3, mem=3,
                     storage=3)
   b = nffg.add_nf(id="b", name="NetFunc1", func_type='A', cpu=3, mem=3,
@@ -437,9 +437,9 @@ def _testRequestForBacktrack():
   nffg.add_req(a.ports[0], b.ports[1], delay=1.0, sg_path=["ab"])
   nffg.add_req(b.ports[0], c.ports[1], delay=1.0, sg_path=["bc"])
   nffg.add_req(c.ports[0], sap2.ports[0], delay=1.0, sg_path=["cs"])
-  nffg.add_req(sap1.ports[0], sap2.ports[0], delay=50, bandwidth=10, 
+  nffg.add_req(sap1.ports[0], sap2.ports[0], delay=50, bandwidth=10,
                sg_path=["sa", "ab", "bc", "cs"])
-  
+
   return nffg
 
 
