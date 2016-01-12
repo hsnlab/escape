@@ -470,6 +470,12 @@ class GraphPreprocessorClass(object):
       raise uet.MappingException("The Request Graph does not contain any VNF,"
                                  " there is nothing to map!", False)
 
+    # there can only be SGHops left in the graph, if there are no edges then
+    # the req graph has no SGHops!
+    if self.req_graph.network.number_of_edges() == 0:
+      raise uet.BadInputException("VNFs in the request graph should be "
+            "connected", "There are no SGHops in the request graph!")
+
     # SAPs are already reachained by the manager, based on their names.
     for vnf, data in self.req_graph.network.nodes_iter(data=True):
       if data.type == 'SAP':
