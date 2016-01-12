@@ -178,10 +178,13 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     if dov is None:
       log.error("Missing resource info from DoV. Skip OneBisBis generation!")
       return
+    import random
     # Create the single BiSBiS infra
-    sbb = nffg.add_infra(id="SingleBiSbiS", name="Single-BiSBiS",
-                         domain=NFFG.DEFAULT_DOMAIN,
-                         infra_type=NFFG.TYPE_INFRA_BISBIS)
+    sbb = nffg.add_infra(
+       id="SingleBiSbiS-%s" % id(self) + random.randint(0, 1000),
+       name="Single-BiSBiS",
+       domain=NFFG.DEFAULT_DOMAIN,
+       infra_type=NFFG.TYPE_INFRA_BISBIS)
     log.debug("Add Infra BiSBiS: %s" % sbb)
 
     # Compute and add resources
@@ -233,7 +236,7 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
       for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
         link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
                                                 port2=sbb.add_port(
-                                                  "port-%s" % c_sap.id),
+                                                   "port-%s" % c_sap.id),
                                                 p1p2id=l.id,
                                                 delay=l.delay,
                                                 bandwidth=l.bandwidth)
