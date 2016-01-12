@@ -232,7 +232,8 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
       # Discover and add SAP connections
       for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
         link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
-                                                port2=sbb.add_port(),
+                                                port2=sbb.add_port(
+                                                  "port-%s" % c_sap.id),
                                                 p1p2id=l.id,
                                                 delay=l.delay,
                                                 bandwidth=l.bandwidth)
