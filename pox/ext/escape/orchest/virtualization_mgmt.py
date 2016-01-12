@@ -191,27 +191,27 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     sbb.resources.cpu = sum(
        # Sum of available CPU
        (n.resources.cpu for n in dov.infras if
-        n.resources.cpu is not None))
+        n.resources.cpu is not None) or [None])
     sbb.resources.mem = sum(
        # Sum of available memory
        (n.resources.mem for n in dov.infras if
-        n.resources.mem is not None))
+        n.resources.mem is not None) or [None])
     sbb.resources.storage = sum(
        # Sum of available storage
        (n.resources.storage for n in dov.infras if
-        n.resources.storage is not None))
+        n.resources.storage is not None) or [None])
     sbb.resources.delay = min(
        # Minimal available delay value of infras in DoV
        min((n.resources.delay for n in dov.infras if
-            n.resources.delay is not None)),
+            n.resources.delay is not None) or [None]),
        # Minimal available delay value of inter-infra links
-       min((l.delay for l in dov.links if l.delay is not None)))
+       min((l.delay for l in dov.links if l.delay is not None) or [None]))
     max_bw = max(
        # Maximum available bandwidth value of infras in DoV
        max((n.resources.bandwidth for n in dov.infras if
-            n.resources.bandwidth is not None)),
+            n.resources.bandwidth is not None) or [None]),
        # Maximum available bandwidth value of inter-infra links
-       max(l.bandwidth for l in dov.links if l.bandwidth is not None))
+       max(l.bandwidth for l in dov.links if l.bandwidth is not None) or [None])
     infra_count = reduce(lambda a, b: a + 1, dov.infras, 0)
     link_count = reduce(lambda a, b: a + 1, dov.links, 0)
 
