@@ -645,7 +645,7 @@ class DomainVirtualizer(AbstractVirtualizer):
                                                             data=True)]
         if len(b_links) < 1:
           log.warning(
-             "SAP is not connected to any node! Maybe you forget to call "
+             "SAP is not connected to any node! Maybe you forgot to call "
              "duplicate_static_links?")
           return
         if 2 < len(b_links):
@@ -663,7 +663,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
         if len(n_links) < 1:
           log.warning(
-             "SAP is not connected to any node! Maybe you forget to call "
+             "SAP is not connected to any node! Maybe you forgot to call "
              "duplicate_static_links?")
           return
         if 2 < len(n_links):
