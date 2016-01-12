@@ -15,6 +15,8 @@
 Contains classes which implement :any:`NFFG` mapping functionality.
 """
 import sys
+import traceback
+
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import MappingException, BadInputException, \
   InternalAlgorithmException
@@ -64,12 +66,12 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-ros-mapped"
       log.debug(
-        "Mapping algorithm: %s is finished on NF-FG: %s" % (
-          cls.__name__, graph))
+         "Mapping algorithm: %s is finished on NF-FG: %s" % (
+           cls.__name__, graph))
       return mapped_nffg
     except MappingException as e:
       log.error(
-        "Mapping algorithm unable to map given request! Cause:\n%s" % e.msg)
+         "Mapping algorithm unable to map given request! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except BadInputException as e:
@@ -78,14 +80,13 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       return
     except InternalAlgorithmException as e:
       log.critical(
-        "Mapping algorithm fails due to implementation error or conceptual "
-        "error! Cause:\n%s" % e.msg)
+         "Mapping algorithm fails due to implementation error or conceptual "
+         "error! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       raise
     except:
-      log.error("Got unexpected error during mapping process! Cause:")
-      for e in sys.exc_info():
-        log.error(str(e))
+      log.error("Got unexpected error during mapping process! Cause: ")
+      traceback.print_exception(*sys.exc_info())
 
 
 class NFFGMappingFinishedEvent(Event):
@@ -143,8 +144,8 @@ class ResourceOrchestrationMapper(AbstractMapper):
     # Check if the mapping algorithm is enabled
     if not CONFIG.get_mapping_enabled(LAYER_NAME):
       log.warning(
-        "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
-        "return service request to lower layer..." % LAYER_NAME)
+         "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
+         "return service request to lower layer..." % LAYER_NAME)
       # virt_resource.id = input_graph.id
       # return virt_resource
       # Send request forward (probably to Remote ESCAPE)
@@ -153,8 +154,8 @@ class ResourceOrchestrationMapper(AbstractMapper):
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread
       log.info(
-        "Schedule mapping algorithm: %s in a worker thread" %
-        self.strategy.__name__)
+         "Schedule mapping algorithm: %s in a worker thread" %
+         self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
       log.info("NF-FG: %s orchestration is finished by %s" % (
@@ -181,5 +182,5 @@ class ResourceOrchestrationMapper(AbstractMapper):
       log.error("Mapping process is failed! Abort orchestration process.")
     else:
       log.debug(
-        "Inform actual layer API that NFFG mapping has been finished...")
+         "Inform actual layer API that NFFG mapping has been finished...")
       self.raiseEventNoErrors(NFFGMappingFinishedEvent, nffg)
