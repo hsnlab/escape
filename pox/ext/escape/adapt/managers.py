@@ -16,6 +16,7 @@ Contains Manager classes which contains the higher-level logic for complete
 domain management. Uses Adapter classes for ensuring protocol-specific
 connections with entities in the particular domain.
 """
+import re
 import sys
 import traceback
 
@@ -373,6 +374,8 @@ class InternalDomainManager(AbstractDomainManager):
         deployed_nf = nf.copy()
         deployed_nf.ports.clear()
         mn_topo.add_nf(nf=deployed_nf)
+
+        log.debug("Add deployed NFs to topology...")
         # Add Link between actual NF and INFRA
         for nf_id, infra_id, link in nffg_part.network.out_edges_iter((nf.id,),
                                                                       data=True):
@@ -417,6 +420,8 @@ class InternalDomainManager(AbstractDomainManager):
 
         log.debug("%s topology description is updated with NF: %s" % (
           self.domain_name, deployed_nf.name))
+
+    log.debug("Rewrite dynamically generated port numbers in flowrules...")
     # Update port numbers in flowrules
     for infra in nffg_part.infras:
       if infra.infra_type not in (
@@ -428,12 +433,21 @@ class InternalDomainManager(AbstractDomainManager):
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
+          _match = flowrule.match.split(';')
+          if not _match[0].startswith("in_port="):
+            log.warning(
+               "Missing 'in_port' from match field: %s" % flowrule.match)
+            continue
+          _action = flowrule.action.split(';')
+          if not _action[0].startswith("output="):
+            log.warning(
+               "Missing 'output' from action field: %s" % flowrule.action)
+            continue
           for dyn, phy in self.portmap.iteritems():
-            flowrule.match = flowrule.match.replace("in_port=" + str(dyn),
-                                                    "in_port=" + str(phy))
-            flowrule.action = flowrule.action.replace("output=" + str(dyn),
-                                                      "output=" + str(phy))
-
+            _match[0] = _match[0].replace(str(dyn), str(phy))
+            _action[0] = _action[0].replace(str(dyn), str(phy))
+          flowrule.match = ";".join(_match)
+          flowrule.action = ";".join(_action)
     log.info(
        "Initiation of NFs in NFFG part: %s has been finished!" % nffg_part)
 
@@ -529,87 +543,86 @@ class InternalDomainManager(AbstractDomainManager):
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
-          # match = {}
-          # action = {}
-          # # if re.search(r';', flowrule.match):
-          # #   # multiple elements in match field
-          # #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
-          # # else:
-          # #   # single element in match field
-          # #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
-          # import re
-          # match['in_port'] = port.id
-          # # Check match fields - currently only vlan_id
-          # # TODO: add further match fields
-          # if re.search(r'TAG', flowrule.match):
-          #   tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
-          #   match['vlan_id'] = tag
-          #
-          # if re.search(r';', flowrule.action):
-          #   # multiple elements in action field
-          #   out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
+          match = {}
+          action = {}
+          # if re.search(r';', flowrule.match):
+          #   # multiple elements in match field
+          #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
           # else:
-          #   # single element in action field
-          #   out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
-          # action['out'] = out
+          #   # single element in match field
+          #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
+          match['in_port'] = port.id
+          # Check match fields - currently only vlan_id
+          # TODO: add further match fields
+          if re.search(r'TAG', flowrule.match):
+            tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
+            match['vlan_id'] = tag
+
+          if re.search(r';', flowrule.action):
+            # multiple elements in action field
+            out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
+          else:
+            # single element in action field
+            out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
+          action['out'] = out
+
+          if re.search(r'TAG', flowrule.action):
+            if re.search(r'UNTAG', flowrule.action):
+              action['vlan_pop'] = True
+            else:
+              push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
+              action['vlan_push'] = push_tag
+
+          # def splitter (data, field):
+          #   ret = {}
+          #   parts = data.split(';')
+          #   if len(parts) < 1:
+          #     raise RuntimeError(
+          #        "Wrong format: %s! Separator (;) not found!" % data)
+          #   for part in parts:
+          #     kv = part.split('=')
+          #     if len(kv) != 2:
+          #       if kv[0] == 'UNTAG' and field == 'ACTION':
+          #         ret['vlan_pop'] = True
+          #         continue
+          #       else:
+          #         raise RuntimeError("Not a key-value pair: %s" % part)
+          #     if kv[0] == 'in_port':
+          #       try:
+          #         ret['in_port'] = int(kv[1])
+          #       except ValueError:
+          #         log.warning(
+          #            "in_port is not a valid port number: %s! Skip "
+          #            "converting..." % kv[1])
+          #         ret['in_port'] = kv[1]
+          #     elif kv[0] == 'TAG':
+          #       if field == "MATCH":
+          #         ret['vlan_id'] = kv[1].split('|')[-1]
+          #       elif field == "ACTION":
+          #         ret['vlan_push'] = kv[1].split('|')[-1]
+          #       else:
+          #         raise RuntimeError('Not supported field type: %s!' % field)
+          #     elif kv[0] == 'output':
+          #       ret['out'] = kv[1]
+          #     else:
+          #       raise RuntimeError("Unrecognizable key: %s" % kv[0])
+          #   return ret
           #
-          # if re.search(r'TAG', flowrule.action):
-          #   if re.search(r'UNTAG', flowrule.action):
-          #     action['vlan_pop'] = True
-          #   else:
-          #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
-          #     action['vlan_push'] = push_tag
-
-          def splitter (data, field):
-            ret = {}
-            parts = data.split(';')
-            if len(parts) < 1:
-              raise RuntimeError(
-                 "Wrong format: %s! Separator (;) not found!" % data)
-            for part in parts:
-              kv = part.split('=')
-              if len(kv) != 2:
-                if kv[0] == 'UNTAG' and field == 'ACTION':
-                  ret['vlan_pop'] = True
-                  continue
-                else:
-                  raise RuntimeError("Not a key-value pair: %s" % part)
-              if kv[0] == 'in_port':
-                try:
-                  ret['in_port'] = int(kv[1])
-                except ValueError:
-                  log.warning(
-                     "in_port is not a valid port number: %s! Skip "
-                     "converting..." % kv[1])
-                  ret['in_port'] = kv[1]
-              elif kv[0] == 'TAG':
-                if field == "MATCH":
-                  ret['vlan_id'] = kv[1].split('|')[-1]
-                elif field == "ACTION":
-                  ret['vlan_push'] = kv[1].split('|')[-1]
-                else:
-                  raise RuntimeError('Not supported field type: %s!' % field)
-              elif kv[0] == 'output':
-                ret['out'] = kv[1]
-              else:
-                raise RuntimeError("Unrecognizable key: %s" % kv[0])
-            return ret
-
-          try:
-            match = splitter(flowrule.match, field="MATCH")
-            if "in_port" not in match:
-              log.warning(
-                 "Missing in_port field from match field! Using container port "
-                 "number...")
-              match["in_port"] = port.id
-            action = splitter(flowrule.action, field="ACTION")
-          except RuntimeError as e:
-            log.warning("Wrong format in match/action field: %s" % e)
-            continue
-
-          print flowrule
-          print match
-          print action
+          # try:
+          #   match = splitter(flowrule.match, field="MATCH")
+          #   if "in_port" not in match:
+          #     log.warning(
+          #        "Missing in_port field from match field! Using container "
+          #        "port number...")
+          #     match["in_port"] = port.id
+          #   action = splitter(flowrule.action, field="ACTION")
+          # except RuntimeError as e:
+          #   log.warning("Wrong format in match/action field: %s" % e)
+          #   continue
+          #
+          # print flowrule
+          # print match
+          # print action
 
           self.controlAdapter.install_flowrule(infra.id, match, action)
 
@@ -779,82 +792,83 @@ class SDNDomainManager(AbstractDomainManager):
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
-          # match = {}
-          # action = {}
-          # # if re.search(r';', flowrule.match):
-          # #   # multiple elements in match field
-          # #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
-          # # else:
-          # #   # single element in match field
-          # #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
-          # match['in_port'] = port.id
-          # # Check match fields - currently only vlan_id
-          # # TODO: add further match fields
-          # if re.search(r'TAG', flowrule.match):
-          #   tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
-          #   match['vlan_id'] = tag
-          #
-          # if re.search(r';', flowrule.action):
-          #   # multiple elements in action field
-          #   out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
+          match = {}
+          action = {}
+          # if re.search(r';', flowrule.match):
+          #   # multiple elements in match field
+          #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
           # else:
-          #   # single element in action field
-          #   out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
-          # action['out'] = out
+          #   # single element in match field
+          #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
+          match['in_port'] = port.id
+          # Check match fields - currently only vlan_id
+          # TODO: add further match fields
+          if re.search(r'TAG', flowrule.match):
+            tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
+            match['vlan_id'] = tag
+
+          if re.search(r';', flowrule.action):
+            # multiple elements in action field
+            out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
+          else:
+            # single element in action field
+            out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
+          action['out'] = out
+
+          if re.search(r'TAG', flowrule.action):
+            if re.search(r'UNTAG', flowrule.action):
+              action['vlan_pop'] = True
+            else:
+              push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
+              action['vlan_push'] = push_tag
+
+          # def splitter (data, field):
+          #   ret = {}
+          #   parts = data.split(';')
+          #   if len(parts) < 1:
+          #     raise RuntimeError(
+          #        "Wrong format: %s! Separator (;) not found!" % data)
+          #   for part in parts:
+          #     kv = part.split('=')
+          #     if len(kv) != 2:
+          #       if kv[0] == 'UNTAG' and field == 'ACTION':
+          #         ret['vlan_pop'] = True
+          #         continue
+          #       else:
+          #         raise RuntimeError("Not a key-value pair: %s" % part)
+          #     if kv[0] == 'in_port':
+          #       try:
+          #         ret['in_port'] = int(kv[1])
+          #       except ValueError:
+          #         log.warning(
+          #            "in_port is not a valid port number: %s! Skip "
+          #            "converting..." % kv[1])
+          #         ret['in_port'] = kv[1]
+          #     elif kv[0] == 'TAG':
+          #       if field == "MATCH":
+          #         ret['vlan_id'] = kv[1].split('|')[-1]
+          #       elif field == "ACTION":
+          #         ret['vlan_push'] = kv[1].split('|')[-1]
+          #       else:
+          #         raise RuntimeError('Not supported field type: %s!' % field)
+          #     elif kv[0] == 'output':
+          #       ret['out'] = kv[1]
+          #     else:
+          #       raise RuntimeError("Unrecognizable key: %s" % kv[0])
+          #   return ret
           #
-          # if re.search(r'TAG', flowrule.action):
-          #   if re.search(r'UNTAG', flowrule.action):
-          #     action['vlan_pop'] = True
-          #   else:
-          #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
-          #     action['vlan_push'] = push_tag
-
-          def splitter (data, field):
-            ret = {}
-            parts = data.split(';')
-            if len(parts) < 1:
-              raise RuntimeError(
-                 "Wrong format: %s! Separator (;) not found!" % data)
-            for part in parts:
-              kv = part.split('=')
-              if len(kv) != 2:
-                if kv[0] == 'UNTAG' and field == 'ACTION':
-                  ret['vlan_pop'] = True
-                  continue
-                else:
-                  raise RuntimeError("Not a key-value pair: %s" % part)
-              if kv[0] == 'in_port':
-                try:
-                  ret['in_port'] = int(kv[1])
-                except ValueError:
-                  log.warning(
-                     "in_port is not a valid port number: %s! Skip "
-                     "converting..." % kv[1])
-                  ret['in_port'] = kv[1]
-              elif kv[0] == 'TAG':
-                if field == "MATCH":
-                  ret['vlan_id'] = kv[1].split('|')[-1]
-                elif field == "ACTION":
-                  ret['vlan_push'] = kv[1].split('|')[-1]
-                else:
-                  raise RuntimeError('Not supported field type: %s!' % field)
-              elif kv[0] == 'output':
-                ret['out'] = kv[1]
-              else:
-                raise RuntimeError("Unrecognizable key: %s" % kv[0])
-            return ret
-
-          try:
-            match = splitter(flowrule.match, field="MATCH")
-            if "in_port" not in match:
-              log.warning(
-                 "Missing in_port field from match field! Using container port "
-                 "number...")
-              match["in_port"] = port.id
-            action = splitter(flowrule.action, field="ACTION")
-          except RuntimeError as e:
-            log.warning("Wrong format in match/action field: %s" % e)
-            continue
+          # try:
+          #   match = splitter(flowrule.match, field="MATCH")
+          #   if "in_port" not in match:
+          #     log.warning(
+          #        "Missing in_port field from match field! Using container
+          # port "
+          #        "number...")
+          #     match["in_port"] = port.id
+          #   action = splitter(flowrule.action, field="ACTION")
+          # except RuntimeError as e:
+          #   log.warning("Wrong format in match/action field: %s" % e)
+          #   continue
 
           self.controlAdapter.install_flowrule(infra.id, match=match,
                                                action=action)
