@@ -275,6 +275,9 @@ class ServiceLayerAPI(AbstractAPI):
     handler.log.debug(
        "Init REST-API [U-Sl] on %s:%s!" % (address[0], address[1]))
     self.rest_api.start()
+    handler.log.debug(
+       "Configured communication format: %s!" %
+       handler.virtualizer_format_enabled)
 
   def _initiate_gui (self):
     """
