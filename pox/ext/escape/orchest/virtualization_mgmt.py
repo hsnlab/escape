@@ -181,7 +181,7 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     import random
     # Create the single BiSBiS infra
     sbb = nffg.add_infra(
-       id="SingleBiSbiS-%s" % id(self) + random.randint(0, 1000),
+       id="SingleBiSbiS-%s" % (id(self) + random.randint(0, 1000)),
        name="Single-BiSBiS",
        domain=NFFG.DEFAULT_DOMAIN,
        infra_type=NFFG.TYPE_INFRA_BISBIS)
