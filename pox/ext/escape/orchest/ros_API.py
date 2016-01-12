@@ -338,9 +338,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Virtualizer type for Sl-Or API
     self.ros_api.virtualizer_type = CONFIG.get_api_virtualizer(
        layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
-    handler.log.debug(
+    handler.log.info(
        "Init REST-API [Sl-Or] on %s:%s!" % (address[0], address[1]))
     self.ros_api.start()
+    handler.log.debug(
+       "Configured Virtualizer type: %s!" % self.ros_api.virtualizer_type)
+    handler.log.debug(
+       "Configured communication format: %s!" %
+       handler.virtualizer_format_enabled)
     if self._agent:
       log.info("REST-API is set in AGENT mode")
 
@@ -365,6 +370,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.log.debug(
        "Init REST-API [Cf-Or] on %s:%s!" % (address[0], address[1]))
     self.cfor_api.start()
+    handler.log.debug(
+       "Configured Virtualizer type: %s!" % self.cfor_api.virtualizer_type)
 
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
