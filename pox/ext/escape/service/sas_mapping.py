@@ -15,6 +15,8 @@
 Contains classes which implement SG mapping functionality.
 """
 import sys
+import traceback
+
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import MappingException, BadInputException, \
   InternalAlgorithmException
@@ -73,17 +75,16 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       return
     except InternalAlgorithmException as e:
       log.critical(
-        "Mapping algorithm fails due to implementation error or conceptual "
-        "error! Cause:\n%s" % e.msg)
+         "Mapping algorithm fails due to implementation error or conceptual "
+         "error! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except:
-      log.error("Got unexpected error during mapping process! Cause:")
-      for e in sys.exc_info():
-        log.error(str(e))
+      log.error("Got unexpected error during mapping process! Cause: ")
+      traceback.print_exception(*sys.exc_info())
       return
     log.debug(
-      "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
+       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
     return mapped_nffg
 
 
@@ -142,15 +143,15 @@ class ServiceGraphMapper(AbstractMapper):
     # Check if the mapping algorithm is enabled
     if not CONFIG.get_mapping_enabled(LAYER_NAME):
       log.warning(
-        "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
-        "forward service request to lower layer..." % LAYER_NAME)
+         "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
+         "forward service request to lower layer..." % LAYER_NAME)
       return input_graph
     # Run actual mapping algorithm
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread
       log.info(
-        "Schedule mapping algorithm: %s in a worker thread" %
-        self.strategy.__name__)
+         "Schedule mapping algorithm: %s in a worker thread" %
+         self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
       log.info("SG: %s orchestration is finished by %s" % (
