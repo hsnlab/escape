@@ -31,7 +31,7 @@ import networkx as nx
 from pprint import pformat
 
 try:
-  from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg
+  from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg, NFFGToolBox
 except ImportError:
   import sys, os, inspect
 
@@ -39,7 +39,7 @@ except ImportError:
     os.path.abspath(
       os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
                                   "pox/ext/escape/util/"))
-  from nffg import NFFG
+  from nffg import NFFG, NFFGToolBox
   from nffg_tests import generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
@@ -61,10 +61,26 @@ def MAP (request, network, full_remap = False,
   NFFG be subtracted and deleted or just deleted from the resource NFFG 
   before mapping.
   """
-  # EdgeReqs don`t specify exactly on which paths the requirement should hold
-  # suppose we need it on all paths.
-  # IF the EdgeReq link is parallel to an SGLink, the request applies to the
-  # link (and possibly other directed paths between the two VNFs)
+  sg_hops_given = True
+  try:
+    # if there is at least ONE SGHop in the graph, we don't do SGHop retrieval.
+    next(request.sg_hops)
+  except StopIteration:
+    # retrieve the SGHops from the TAG values of the flow rules, in case they
+    # are cannot be found in the request graph and can only be deduced from the 
+    # flows
+    helper.log.info("No SGHops were given in the Service Graph, retrieving them"
+                   " based on the flowrules...")
+    sg_hops_given = False
+    sg_hop_info = NFFGToolBox.retrieve_all_SGHops(request)
+    if len(sg_hop_info) == 0:
+      raise uet.BadInputException("If SGHops are not given, flowrules should be"
+            " in the NFFG", "No SGHop could be retrieved based on the "
+                                  "flowrules of the NFFG.")
+    for k, v in sg_hop_info.iteritems():
+      # VNF ports are given to the function
+      request.add_sglink(v[0], v[1], id=k[2])
+  
   chainlist = []
   cid = 1
   edgereqlist = []
@@ -72,6 +88,12 @@ def MAP (request, network, full_remap = False,
     edgereqlist.append(req)
     request.del_edge(req.src, req.dst, req.id)
     
+  if len(edgereqlist) != 0 and not sg_hops_given:
+    raise uet.BadInputException("","SGHops was not given explicitly, they have "
+          "been retrieved based on the flowrules, but at least one EdgeReq was "
+          "given, which refers to SGHop ID-s, and SGHop ID-s can't be retrieved"
+                                " if from flowrules, if they were collocated.")
+
   # construct chains fron EdgeReqs
   for req in edgereqlist:
 
@@ -86,6 +108,10 @@ def MAP (request, network, full_remap = False,
         setattr(reqlink, 'delay', req.delay)
       if req.bandwidth is not  None:
         setattr(reqlink, 'bandwidth', req.bandwidth)
+    elif len(sg_path) == 0:
+      raise uet.BadInputException("If EdgeReq is given, it should specify "
+                                  "which SGHop path does it apply to", "Empty "
+                                  "SGHop path was given to %s EdgeReq!"%req.id)
     else:
       try:
         chain = {'id': cid, 'link_ids': req.sg_path, 
@@ -430,11 +456,11 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../examples/ReqForNanoTopo.nffg', "r") as f:
+    with open('../examples/escape-mn-mapped-topo.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('../examples/NanoTopo.nffg', "r") as g:
+    with open('../examples/escape-mn-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
-      # net.duplicate_static_links()
+      net.duplicate_static_links()
     mapped = MAP(req, net, full_remap = False)
     print mapped.dump()
   except uet.UnifyException as ue:
