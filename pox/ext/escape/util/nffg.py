@@ -377,9 +377,9 @@ class NFFG(AbstractNFFG):
     :param storage: storage resource
     :type storage: str or int
     :param delay: delay property of the Node
-    :type delay: float
+    :type delay: float or int
     :param bandwidth: bandwidth property of the Node
-    :type bandwidth: float
+    :type bandwidth: float or int
     :return: newly created node
     :rtype: :any:`NodeNF`
     """
@@ -433,9 +433,9 @@ class NFFG(AbstractNFFG):
     :param storage: storage resource
     :type storage: str or int
     :param delay: delay property of the Node
-    :type delay: float
+    :type delay: float or int
     :param bandwidth: bandwidth property of the Node
-    :type bandwidth: float
+    :type bandwidth: float or int
     :return: newly created node
     :rtype: :any:`NodeInfra`
     """
@@ -464,11 +464,11 @@ class NFFG(AbstractNFFG):
     :param backward: the link is a backward link compared to an another Link
     :type backward: bool
     :param delay: delay resource
-    :type delay: str or int
+    :type delay: float or int
     :param dynamic: set the link dynamic (default: False)
     :type dynamic: bool
     :param bandwidth: bandwidth resource
-    :type bandwidth: str or int
+    :type bandwidth: float or int
     :return: newly created edge
     :rtype: :any:`EdgeLink`
     """
@@ -493,11 +493,11 @@ class NFFG(AbstractNFFG):
     :param p2p1id: optional link id from port2 to port1
     :type p2p1id: str or int
     :param delay: delay resource of both links
-    :type delay: str or int
+    :type delay: float or int
     :param dynamic: set the link dynamic (default: False)
     :type dynamic: bool
     :param bandwidth: bandwidth resource of both links
-    :type bandwidth: str or int
+    :type bandwidth: float or int
     :return: newly created edge tuple in (p1->p2, p2->p1)
     :rtype: :any:(`EdgeLink`, `EdgeLink`)
     """
@@ -543,9 +543,9 @@ class NFFG(AbstractNFFG):
     :param id: optional link id
     :type id: str or int
     :param delay: delay resource
-    :type delay: str or int or float
+    :type delay: int or float
     :param bandwidth: bandwidth resource
-    :type bandwidth: str or int or float
+    :type bandwidth: int or float
     :param sg_path: list of ids of sg_links represents end-to-end requirement
     :type sg_path: list or tuple
     :return: newly created edge
