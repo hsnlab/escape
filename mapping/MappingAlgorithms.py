@@ -27,7 +27,6 @@ TODO: map best-effort links (not part of any subchain).
 
 import traceback
 
-import networkx as nx
 from pprint import pformat
 
 try:
@@ -36,20 +35,21 @@ except ImportError:
   import sys, os, inspect
 
   sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
-    os.path.abspath(
-      os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
+     os.path.abspath(
+        os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
                                   "pox/ext/escape/util/"))
   from nffg import NFFG, NFFGToolBox
   from nffg_tests import generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
 import Alg1_Helper as helper
+
 # object for the algorithm instance
 alg = None
 
 
-def MAP (request, network, full_remap = False,
-         enable_shortest_path_cache = False,
+def MAP (request, network, full_remap=False,
+         enable_shortest_path_cache=False,
          bw_factor=1, res_factor=1, lat_factor=1,
          shortest_paths=None, return_dist=False):
   """
@@ -70,12 +70,13 @@ def MAP (request, network, full_remap = False,
     # are cannot be found in the request graph and can only be deduced from the 
     # flows
     helper.log.warn("No SGHops were given in the Service Graph, retrieving them"
-                   " based on the flowrules...")
+                    " based on the flowrules...")
     sg_hops_given = False
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(request)
     if len(sg_hop_info) == 0:
       raise uet.BadInputException("If SGHops are not given, flowrules should be"
-            " in the NFFG", "No SGHop could be retrieved based on the "
+                                  " in the NFFG",
+                                  "No SGHop could be retrieved based on the "
                                   "flowrules of the NFFG.")
     for k, v in sg_hop_info.iteritems():
       # VNF ports are given to the function
@@ -89,38 +90,41 @@ def MAP (request, network, full_remap = False,
     request.del_edge(req.src, req.dst, req.id)
 
   if len(edgereqlist) != 0 and not sg_hops_given:
-    raise uet.BadInputException("","SGHops was not given explicitly, they have "
-          "been retrieved based on the flowrules, but at least one EdgeReq was "
-          "given, which refers to SGHop ID-s, and SGHop ID-s can't be retrieved"
-                                " if from flowrules, if they were collocated.")
+    raise uet.BadInputException("",
+                                "SGHops was not given explicitly, they have "
+                                "been retrieved based on the flowrules, "
+                                "but at least one EdgeReq was given, "
+                                "which refers to SGHop ID-s, and SGHop ID-s "
+                                "can't be retrieved if from flowrules, "
+                                "if they were collocated.")
 
-  # construct chains fron EdgeReqs
+  # construct chains from EdgeReqs
   for req in edgereqlist:
 
     if len(req.sg_path) == 1:
-      # then add it as linklocal req insead of E2E req
+      # then add it as linklocal req instead of E2E req
       reqlink = None
       for sg_link in request.sg_hops:
         if sg_link.id == req.sg_path[0]:
           reqlink = sg_link
           break
-      if req.delay is not  None:
+      if req.delay is not None:
         setattr(reqlink, 'delay', req.delay)
-      if req.bandwidth is not  None:
+      if req.bandwidth is not None:
         setattr(reqlink, 'bandwidth', req.bandwidth)
-    elif len(sg_path) == 0:
-      raise uet.BadInputException("If EdgeReq is given, it should specify "
-                                  "which SGHop path does it apply to", "Empty "
-                                  "SGHop path was given to %s EdgeReq!"%req.id)
+    elif len(req.sg_path) == 0:
+      raise uet.BadInputException(
+         "If EdgeReq is given, it should specify which SGHop path does it "
+         "apply to", "Empty SGHop path was given to %s EdgeReq!" % req.id)
     else:
       try:
         chain = {'id': cid, 'link_ids': req.sg_path,
                  'bandwidth': req.bandwidth if req.bandwidth is not None else 0,
                  'delay': req.delay}
       except AttributeError:
-        raise uet.BadInputException("EdgeReq attributes are: sg_path, bandwidth,"
-                                    " delay",
-                                    "Missing attribute of EdgeReq")
+        raise uet.BadInputException(
+           "EdgeReq attributes are: sg_path, bandwidth, delay",
+           "Missing attribute of EdgeReq")
       # reconstruct NF path from EdgeSGLink path
       nf_chain = []
       for reqlinkid in req.sg_path:
@@ -132,66 +136,62 @@ def MAP (request, network, full_remap = False,
             reqlink = sg_link
             break
         else:
-          raise uet.BadInputException("Elements of EdgeReq.sg_path should be "
-                                      "EdgeSGLink.id-s.",
-                                      "SG link %s couldn't be found in input "
-                                      "request NFFG"%reqlinkid)
-        # add the srouce node id of the EdgeSGLink to NF path
+          raise uet.BadInputException(
+             "Elements of EdgeReq.sg_path should be EdgeSGLink.id-s.",
+             "SG link %s couldn't be found in input request NFFG" % reqlinkid)
+        # add the source node id of the EdgeSGLink to NF path
         nf_chain.append(reqlink.src.node.id)
         # add the destination node id of the last EdgeSGLink to NF path
         if reqlinkid == req.sg_path[-1]:
           if reqlink.dst.node.id != req.dst.node.id:
             raise uet.BadInputException(
-              "EdgeReq.sg_path should select a path between its two "
-              "ends", "Last NF (%s) of EdgeReq.sg_path and "
-              "destination of EdgeReq (%s) are not the same!"
-              %(reqlink.dst.node.id, req.dst.node.id))
+               "EdgeReq.sg_path should select a path between its two ends",
+               "Last NF (%s) of EdgeReq.sg_path and destination of EdgeReq ("
+               "%s) are not the same!" % (reqlink.dst.node.id, req.dst.node.id))
           nf_chain.append(reqlink.dst.node.id)
         # validate EdgeReq ends.
         if reqlinkid == req.sg_path[0] and \
-           reqlink.src.node.id != req.src.node.id:
+              reqlink.src.node.id != req.src.node.id:
           raise uet.BadInputException(
-            "EdgeReq.sg_path should select a path between its two ends",
-            "First NF (%s) of EdgeReq.sg_path and "
-            "source of EdgeReq (%s) are not the same!"
-            %(reqlink.src.node.id, req.src.node.id))
+             "EdgeReq.sg_path should select a path between its two ends",
+             "First NF (%s) of EdgeReq.sg_path and source of EdgeReq (%s) are "
+             "not the same!" % (reqlink.src.node.id, req.src.node.id))
         chain['chain'] = nf_chain
       cid += 1
       chainlist.append(chain)
 
-  # temorary workaround: If resource parameter is not given (None) set it the 
+  # temporary workaround: If resource parameter is not given (None) set it the
   # average of the appropriate given parameters (Thus those links will not be 
-  # overly prioratized)
+  # overly prioritized)
   for respar in ('cpu', 'mem', 'storage', 'delay', 'bandwidth'):
     avgs = 0.0
     cnt = 0
     for n in network.infras:
       if n.infra_type != NFFG.TYPE_INFRA_SDN_SW:
-        if n.resources[respar] != None:
+        if n.resources[respar] is not None:
           cnt += 1
           avgs += n.resources[respar]
     if cnt > 0:
       avgs = float(avgs) / cnt
     for n in network.infras:
       if n.infra_type != NFFG.TYPE_INFRA_SDN_SW:
-        if n.resources[respar] == None:
+        if n.resources[respar] is None:
           n.resources[respar] = avgs
   # do the same with link data
   for par in ('bandwidth', 'delay'):
     avgs = 0.0
     cnt = 0
-    for i,j,d in network.network.edges_iter(data=True):
+    for i, j, d in network.network.edges_iter(data=True):
       if d.type == 'STATIC':
-        if getattr(d, par, None) != None:
+        if getattr(d, par, None) is not None:
           cnt += 1
           avgs += getattr(d, par)
     if cnt > 0:
       avgs = float(avgs) / cnt
-    for i,j,d in network.network.edges_iter(data=True):
+    for i, j, d in network.network.edges_iter(data=True):
       if d.type == 'STATIC':
-        if getattr(d, par, None) == None:
+        if getattr(d, par, None) is None:
           setattr(d, par, avgs)
-
 
   # create the class of the algorithm
   alg = CoreAlgorithm(network, request, chainlist, full_remap,
@@ -224,9 +224,9 @@ def MAP (request, network, full_remap = False,
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
-  helper.log.info("The VNF mappings are (vnf_id, node_id): \n%s"%pformat(
+  helper.log.info("The VNF mappings are (vnf_id, node_id): \n%s" % pformat(
      alg.manager.vnf_mapping))
-  helper.log.info("The link mappings are: \n%s"%pformat(
+  helper.log.info("The link mappings are: \n%s" % pformat(
      alg.manager.link_mapping.edges(data=True, keys=True)))
 
   if return_dist:
@@ -257,7 +257,7 @@ def _constructExampleRequest ():
                     storage=0, bandwidth=500)
 
   # directed SG links
-  # flowclass defaul: None, meaning: match all traffic
+  # flowclass default: None, meaning: match all traffic
   # some agreement on flowclass format is required.
   nffg.add_sglink(sap0.add_port(0), nf0.add_port(0))
   nffg.add_sglink(nf0.add_port(1), nf1.add_port(0), flowclass="HTTP")
@@ -291,7 +291,8 @@ def _constructExampleRequest ():
 
   return nffg
 
-def _onlySAPsRequest():
+
+def _onlySAPsRequest ():
   nffg = NFFG(id="BME-req-001")
   sap1 = nffg.add_sap(name="SAP1", id="sap1")
   sap2 = nffg.add_sap(name="SAP2", id="sap2")
@@ -385,7 +386,8 @@ def _example_request_for_fallback ():
 
   return nffg
 
-def _testNetworkForBacktrack():
+
+def _testNetworkForBacktrack ():
   nffg = NFFG(id="backtracktest", name="backtrack")
   sap1 = nffg.add_sap(name="SAP1", id="sap1")
   sap2 = nffg.add_sap(name="SAP2", id="sap2")
@@ -393,11 +395,11 @@ def _testNetworkForBacktrack():
   uniformnoderes = {'cpu': 5, 'mem': 5, 'storage': 5, 'delay': 0.4,
                     'bandwidth': 5500}
   infra0 = nffg.add_infra(id="node0", name="INFRA0", **uniformnoderes)
-  uniformnoderes2 = {'cpu':9, 'mem': 9, 'storage': 9, 'delay': 0.4,
-                    'bandwidth': 5500}
+  uniformnoderes2 = {'cpu': 9, 'mem': 9, 'storage': 9, 'delay': 0.4,
+                     'bandwidth': 5500}
   infra1 = nffg.add_infra(id="node1", name="INFRA1", **uniformnoderes2)
   swres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.0,
-                    'bandwidth': 10000}
+           'bandwidth': 10000}
   sw = nffg.add_infra(id="sw", name="sw1", **swres)
 
   infra0.add_supported_type(['A'])
@@ -417,17 +419,18 @@ def _testNetworkForBacktrack():
 
   return nffg
 
-def _testRequestForBacktrack():
+
+def _testRequestForBacktrack ():
   nffg = NFFG(id="backtracktest-req", name="btreq")
   sap1 = nffg.add_sap(name="SAP1", id="sap1req")
   sap2 = nffg.add_sap(name="SAP2", id="sap2req")
 
   a = nffg.add_nf(id="a", name="NetFunc0", func_type='A', cpu=3, mem=3,
-                    storage=3)
+                  storage=3)
   b = nffg.add_nf(id="b", name="NetFunc1", func_type='A', cpu=3, mem=3,
-                    storage=3)
+                  storage=3)
   c = nffg.add_nf(id="c", name="NetFunc2", func_type='A', cpu=3, mem=3,
-                    storage=3)
+                  storage=3)
 
   nffg.add_sglink(sap1.add_port(0), a.add_port(0), id="sa")
   nffg.add_sglink(a.add_port(1), b.add_port(0), id="ab")
@@ -461,7 +464,7 @@ if __name__ == '__main__':
     with open('../examples/escape-mn-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
       net.duplicate_static_links()
-    mapped = MAP(req, net, full_remap = False)
+    mapped = MAP(req, net, full_remap=False)
     print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
