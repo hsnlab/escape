@@ -395,7 +395,7 @@ class ESCAPEConfig(object):
   # SERVICE layer getters
   ##############################################################################
 
-  def get_service_layer_id(self):
+  def get_service_layer_id (self):
     """
     Return with the identifications value of the Service Layer.
 
@@ -406,7 +406,6 @@ class ESCAPEConfig(object):
       return self.__configuration[SERVICE]["SERVICE-LAYER-ID"]
     except KeyError:
       return None
-
 
   def get_sas_api_class (self):
     """
@@ -631,7 +630,7 @@ class ESCAPEConfig(object):
     :rtype: :any:`AbstractDomainManager`
     """
     for item in self.__configuration[ADAPT].itervalues():
-      if 'module' in item and 'class' in item:
+      if isinstance(item, dict) and 'module' in item and 'class' in item:
         try:
           mgr_class = getattr(importlib.import_module(item['module']),
                               item['class'])
@@ -639,7 +638,7 @@ class ESCAPEConfig(object):
             return item[
               'domain_name'] if "domain_name" in item else \
               mgr_class.DEFAULT_DOMAIN_NAME
-        except:
+        except (KeyError, AttributeError, TypeError):
           return None
     return None
 
