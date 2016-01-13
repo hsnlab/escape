@@ -120,7 +120,7 @@ def MAP (request, network, full_remap=False,
       try:
         chain = {'id': cid, 'link_ids': req.sg_path,
                  'bandwidth': req.bandwidth if req.bandwidth is not None else 0,
-                 'delay': req.delay}
+                 'delay': req.delay if req.delay is not None else float("inf")}
       except AttributeError:
         raise uet.BadInputException(
            "EdgeReq attributes are: sg_path, bandwidth, delay",
@@ -160,38 +160,30 @@ def MAP (request, network, full_remap=False,
       cid += 1
       chainlist.append(chain)
 
-  # temporary workaround: If resource parameter is not given (None) set it the
-  # average of the appropriate given parameters (Thus those links will not be 
-  # overly prioritized)
+  # if some resource value is not set (is None) then be permissive and set it
+  # to a comportable value.
   for respar in ('cpu', 'mem', 'storage', 'delay', 'bandwidth'):
-    avgs = 0.0
-    cnt = 0
     for n in network.infras:
-      if n.infra_type != NFFG.TYPE_INFRA_SDN_SW:
-        if n.resources[respar] is not None:
-          cnt += 1
-          avgs += n.resources[respar]
-    if cnt > 0:
-      avgs = float(avgs) / cnt
-    for n in network.infras:
-      if n.infra_type != NFFG.TYPE_INFRA_SDN_SW:
-        if n.resources[respar] is None:
-          n.resources[respar] = avgs
+      if n.resources[respar] is None:
+        if respar == 'delay':
+          helper.log.warn("Resource parameter %s is not given in %s, "
+                          "substituting with 0!"%(respar, n.id))
+          n.resources[respar] = 0
+        else:
+          helper.log.warn("Resource parameter %s is not given in %s, "
+                          "substituting with infinity!"%(respar, n.id))
+          n.resources[respar] = float("inf")
   # do the same with link data
-  for par in ('bandwidth', 'delay'):
-    avgs = 0.0
-    cnt = 0
-    for i, j, d in network.network.edges_iter(data=True):
-      if d.type == 'STATIC':
-        if getattr(d, par, None) is not None:
-          cnt += 1
-          avgs += getattr(d, par)
-    if cnt > 0:
-      avgs = float(avgs) / cnt
-    for i, j, d in network.network.edges_iter(data=True):
-      if d.type == 'STATIC':
-        if getattr(d, par, None) is None:
-          setattr(d, par, avgs)
+  for i, j, d in network.network.edges_iter(data=True):
+    if d.type == 'STATIC':
+      if getattr(d, 'delay', None) is None:
+        helper.log.warn("Resource parameter delay is not given in link %s "
+                        "substituting with zero!"%d.id)
+        setattr(d, 'delay', 0)
+      if getattr(d, 'bandwidth', None) is None:
+        helper.log.warn("Resource parameter bandwidth is not given in link %s "
+                        "substituting with infinity!"%d.id)
+        setattr(d, 'bandwidth', float("inf"))
 
   # create the class of the algorithm
   alg = CoreAlgorithm(network, request, chainlist, full_remap,

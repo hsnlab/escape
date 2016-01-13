@@ -27,9 +27,9 @@ from itertools import count
 
 log = logging.getLogger("mapping")
 # log.setLevel(logging.DEBUG)
-if not log.getEffectiveLevel():
-  logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
-  log.setLevel(logging.DEBUG)
+# if not log.getEffectiveLevel():
+logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
+log.setLevel(logging.DEBUG)
 
 
 def subtractNodeRes (current, substrahend, maximal, link_count=1):
@@ -326,7 +326,7 @@ class MappingManager(object):
     This function should only be called on SG links.
     """
     # if there is latency requirement on a request link
-    link_maxlat = sys.float_info.max
+    link_maxlat = float("inf")
     if vnf1 is not None and vnf2 is not None and linkid is not None:
       if self.req.network[vnf1][vnf2][linkid].type != 'SG':
         raise uet.InternalAlgorithmException(
@@ -335,7 +335,7 @@ class MappingManager(object):
         link_maxlat = self.req.network[vnf1][vnf2][linkid].delay
     try:
       # find the strictest chain latency which applies to this link
-      chain_maxlat = sys.float_info.max
+      chain_maxlat = float("inf")
       for c in self.chain_subchain.neighbors_iter(subchain_id):
         if c > self.max_input_chainid:
           raise uet.InternalAlgorithmException(
@@ -358,7 +358,7 @@ class MappingManager(object):
     Mapping vnf2 to n2 shouldn`t be further from n1 (vnf1`s host) than
     the strictest latency requirement of all the links between vnf1 and vnf2
     """
-    max_permitted_vnf_dist = sys.float_info.max
+    max_permitted_vnf_dist = float("inf")
     for i, j, linkid, d in self.req.network.edges_iter([vnf1], data=True,
                                                        keys=True):
       if self.req.network[i][j][linkid].type != 'SG':
