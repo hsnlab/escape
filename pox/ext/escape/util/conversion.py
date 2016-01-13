@@ -272,9 +272,13 @@ class NFFGConverter(object):
         _bandwidth = _delay = None
         # Create NF ports
         for nf_inst_port in nf_inst.ports:
-
+          # Add VNF port port
+          try:
+            nf_port_id = int(nf_inst_port.id.get_value())
+          except ValueError:
+            nf_port_id = nf_inst_port.id.get_value()
           # Create and Add port
-          nf_port = nf.add_port(id=nf_inst_port.id.get_value())
+          nf_port = nf.add_port(id=nf_port_id)
 
           # Add port properties as metadata to NF port
           if nf_inst_port.capability.is_initialized():
@@ -294,7 +298,7 @@ class NFFGConverter(object):
           dyn_port = '|'.join((node_id, nf_id, nf_inst_port.id.get_as_text()))
           # Add Infra-side port
           infra_port = infra.add_port(id=dyn_port)
-          self.log.debug("Add port for NF -> %s" % infra_port)
+          self.log.debug("Add dynamic port for NF -> %s" % infra_port)
 
           # NF-Infra is dynamic link --> create special undirected link
           l1, l2 = nffg.add_undirected_link(port1=nf_port, port2=infra_port,
@@ -401,8 +405,8 @@ class NFFGConverter(object):
             _vnf_id = _port.get_parent().get_parent().id.get_value()
             _dyn_port = [l.dst.id for vnf, infra, l in
                          nffg.network.edges_iter([_vnf_id], data=True) if
-                         l.type == NFFG.TYPE_LINK_DYNAMIC and l.src.id ==
-                         port_id]
+                         l.type == NFFG.TYPE_LINK_DYNAMIC and str(l.src.id) ==
+                         str(port_id)]
             if len(_dyn_port) > 1:
               self.log.warning(
                  "Multiple dynamic link detected for NF(id: %s) Use first "
