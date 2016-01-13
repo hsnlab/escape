@@ -683,7 +683,10 @@ class GraphPreprocessorClass(object):
     # calculate the link weights.
     for i, j, k, d in net.network.edges_iter(data=True, keys=True):
       if d.type == 'STATIC':
-        setattr(net.network[i][j][k], 'weight', 1.0 / d.availbandwidth)
+        if d.availbandwidth > 0:
+          setattr(net.network[i][j][k], 'weight', 1.0 / d.availbandwidth)
+        else:
+          setattr(net.network[i][j][k], 'weight', sys.float_info.max)
         self.log.debug("Weight for link %s, %s, %s: %f" % (
           i, j, k, net.network[i][j][k].weight))
     self.log.info("Link and node weights calculated")
@@ -726,8 +729,8 @@ class GraphPreprocessorClass(object):
     if self.shortest_paths is None:
       self.log.info("Calculating shortest paths measured in latency...")
       self.shortest_paths = helper.shortestPathsInLatency(net.network,
-                                                          enable_shortest_path_cache=cache_shortest_path,
-                                                          enable_network_cutting=False)
+           enable_shortest_path_cache=cache_shortest_path,
+           enable_network_cutting=False)
     else:
       self.log.info("Shortest paths are received from previous run!")
     self.manager.addShortestRoutesInLatency(self.shortest_paths)
