@@ -1007,7 +1007,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
 
 class UnifyDomainManager(AbstractDomainManager):
   """
-  Manager class for unified handling of different domains.
+  Manager class for unified handling of different domains using the Unify
+  domain.
 
   The communication between ESCAPEv2 and domain agent relies on pre-defined
   REST-API functions and the Virtualizer format.
