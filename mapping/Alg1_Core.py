@@ -121,6 +121,8 @@ class CoreAlgorithm(object):
             i, self.net.node[i].availres['bandwidth'], bw_req))
         return -1, None
       else:
+        if self.net.node[i].resources['bandwidth'] == float("inf"):
+          return 0, 0
         util_of_host = float(self.net.node[i].resources['bandwidth'] - (
           self.net.node[i].availres['bandwidth'] - bw_req)) / \
                        self.net.node[i].resources['bandwidth']
@@ -153,9 +155,10 @@ class CoreAlgorithm(object):
               i, j, self.net[i][j][k].availbandwidth, bw_req))
           return -1
         else:
-          sum_w += float(self.net[i][j][k].bandwidth - (
-            self.net[i][j][k].availbandwidth - bw_req)) / self.net[i][j][
-                     k].bandwidth
+          if not self.net[i][j][k].bandwidth == float("inf"):
+            sum_w += float(self.net[i][j][k].bandwidth - (
+              self.net[i][j][k].availbandwidth - bw_req)) / self.net[i][j][
+                k].bandwidth
         # either only steers the traffic through a host or at the
         # beginning of the path, steers out from the VNF
         is_it_sap, util = self._checkBandwidthUtilOnHost(i, bw_req)
@@ -262,14 +265,15 @@ class CoreAlgorithm(object):
       avg_link_util = self._calculateAvgLinkUtil(path_to_map, linkids, bw_req,
                                                  vnf_id)
       if avg_link_util == -1:
-        return -1, sys.float_info.max
+        return -1, float("inf")
       sum_latency = self._sumLatencyOnPath(path_to_map, linkids)
       local_latreq = self.manager.getLocalAllowedLatency(cid, prev_vnf_id,
                                                          vnf_id, reqlinkid)
       if sum_latency == -1 or sum_latency > local_latreq or not \
            self.manager.isVNFMappingDistanceGood(
-        prev_vnf_id, vnf_id, path_to_map[0], path_to_map[-1]):
-        return -1, sys.float_info.max
+        prev_vnf_id, vnf_id, path_to_map[0], path_to_map[-1]) or \
+           local_latreq == 0:
+        return -1, float("inf")
 
       '''Here we know that node_id have enough resource and the path
       leading there satisfies the bandwidth req of the potentially
@@ -277,9 +281,12 @@ class CoreAlgorithm(object):
       max_rescomponent_value = 0
       for attr, res_w in zip(['cpu', 'mem', 'storage'],
                              self.resource_priorities):
-        sum_res += res_w * self._preferenceValueOfUtilization(
-          float(maxres[attr] - (available[attr] - requested[attr])) / maxres[
-            attr], attr)
+        if maxres[attr] == float("inf"):
+          sum_res += self._preferenceValueOfUtilization(0.0, attr)
+        else:
+          sum_res += res_w * self._preferenceValueOfUtilization(
+            float(maxres[attr] - (available[attr] - requested[attr])) / maxres[
+              attr], attr)
         max_rescomponent_value += self.pref_params[attr]['e'] * res_w
 
       # Scale them to the same interval
@@ -343,7 +350,7 @@ class CoreAlgorithm(object):
                                        " below zero or exceeded maximal value!")
         elif new_bw == 0:
           self.net.node[
-            path[0]].weight = sys.float_info.max  # maybe use float("inf")?
+            path[0]].weight = float("inf")
         else:
           self.net.node[path[0]].weight = 1.0 / new_bw
       if len(path) > 1:
@@ -354,7 +361,7 @@ class CoreAlgorithm(object):
             raise uet.InternalAlgorithmException("The bandwidth resource of "
                       "link %s got below zero, or exceeded maximal value!"%k)
           elif new_bw == 0:
-            self.net[i][j][k].weight = sys.float_info.max
+            self.net[i][j][k].weight = float("inf")
           else:
             self.net[i][j][k].weight = 1.0 / new_bw
           # update node bandwidth resources on the path
@@ -366,7 +373,7 @@ class CoreAlgorithm(object):
               raise uet.InternalAlgorithmException("The bandwidth resource"
               " of node %s got below zero, or exceeded the maximal value!"%j)
             elif new_bw_innode == 0:
-              self.net.node[j].weight = sys.float_info.max
+              self.net.node[j].weight = float("inf")
             else:
               self.net.node[j].weight = 1.0 / new_bw_innode
     self.log.debug("Available network resources are updated: redo: %s, vnf: "

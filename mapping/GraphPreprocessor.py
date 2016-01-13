@@ -674,7 +674,7 @@ class GraphPreprocessorClass(object):
            "On node %s internal bandwidth would get below zero!" % d.id)
       else:
         setattr(d, 'weight', 1.0 / d.availres.bandwidth if \
-          d.availres.bandwidth > 0 else sys.float_info.max)
+                d.availres.bandwidth > 0 else float("inf"))
         self.log.debug("Weight for node %s: %f" % (d.id, d.weight))
         self.log.debug("Supported types of node %s: %s" % (d.id, d.supported))
 
@@ -686,7 +686,7 @@ class GraphPreprocessorClass(object):
         if d.availbandwidth > 0:
           setattr(net.network[i][j][k], 'weight', 1.0 / d.availbandwidth)
         else:
-          setattr(net.network[i][j][k], 'weight', sys.float_info.max)
+          setattr(net.network[i][j][k], 'weight', float("inf"))
         self.log.debug("Weight for link %s, %s, %s: %f" % (
           i, j, k, net.network[i][j][k].weight))
     self.log.info("Link and node weights calculated")
