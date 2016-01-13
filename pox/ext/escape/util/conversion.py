@@ -298,8 +298,8 @@ class NFFGConverter(object):
 
           # NF-Infra is dynamic link --> create special undirected link
           l1, l2 = nffg.add_undirected_link(port1=nf_port, port2=infra_port,
-                                            dynamic=True, delay=_delay,
-                                            bandwidth=_bandwidth)
+                                            bandwidth=_bandwidth, delay=_delay,
+                                            dynamic=True)
           self.log.debug("Add dynamic connection: %s" % l1)
           self.log.debug("Add dynamic connection: %s" % l2)
 
@@ -384,6 +384,7 @@ class NFFGConverter(object):
             self.log.warning(
                "Not recognizable action operation in:\n%s" % flowentry)
             continue
+
         # Get the src (port where fr need to store) and dst port id
         try:
           port_id = int(_port.id.get_value())
@@ -392,10 +393,27 @@ class NFFGConverter(object):
 
         # Get port from NFFG in which need to store the fr
         try:
-          port = nffg[node_id].ports[port_id]
+          # If the port is an Infra port
+          if "NF_instances" not in flowentry.port.get_as_text():
+            port = nffg[node_id].ports[port_id]
+          # If the port is a VNF port -> get the dynamic port in the Infra
+          else:
+            _vnf_id = _port.get_parent().get_parent().id.get_value()
+            _dyn_port = [l.dst.id for vnf, infra, l in
+                         nffg.network.edges_iter([_vnf_id], data=True) if
+                         l.type == NFFG.TYPE_LINK_DYNAMIC and l.src.id ==
+                         port_id]
+            if len(_dyn_port) > 1:
+              self.log.warning(
+                 "Multiple dynamic link detected for NF(id: %s) Use first "
+                 "link ..." % _vnf_id)
+            elif len(_dyn_port) < 1:
+              raise RuntimeError()
+            # Get dynamic port from infra
+            port = nffg[node_id].ports[_dyn_port[0]]
         except:
           self.log.warning(
-             "Port: %s from %s is not found in the NFFG!" % (
+             "Port: %s is not found in the NFFG from the flowrule:\n%s" % (
                port_id, flowentry))
           continue
 
