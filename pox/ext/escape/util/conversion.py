@@ -395,7 +395,8 @@ class NFFGConverter(object):
           port = nffg[node_id].ports[port_id]
         except:
           self.log.warning(
-             "Port: %s from Flowrule is not found in the NFFG!" % port_id)
+             "Port: %s from %s is not found in the NFFG!" % (
+               port_id, flowentry))
           continue
 
         if flowentry.resources.is_initialized() and \
