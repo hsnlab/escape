@@ -1349,7 +1349,7 @@ class NFFGToolBox(object):
                          link.src.node.id == p.node.id:
                         sg_map_value[1] = link.dst
                         break
-                    # WARNING: SGHop indentifier is lost if it is collocated!!
+                    # WARNING: SGHop identifier is lost if it is collocated!!
                     sg_map[(sg_map_value[0].node.id, sg_map_value[1].node.id, 
                             None)] = sg_map_value
                     break
