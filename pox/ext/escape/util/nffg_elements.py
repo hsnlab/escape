@@ -360,15 +360,15 @@ class NodeResource(Persistable):
     Init.
 
     :param cpu: CPU resource
-    :type cpu: float
+    :type cpu: float or int
     :param mem: memory resource
-    :type mem: float
+    :type mem: float or int
     :param storage: storage resource
-    :type storage: float
+    :type storage: float or int
     :param delay: delay property of the Node
-    :type delay: float
+    :type delay: float or int
     :param bandwidth: bandwidth property of the Node
-    :type bandwidth: float
+    :type bandwidth: float or int
     :return: None
     """
     super(NodeResource, self).__init__()
@@ -612,7 +612,7 @@ class InfraPort(Port):
     :param action: forwarding action
     :type action: str
     :param bandwidth: bandwidth value
-    :type bandwidth: int
+    :type bandwidth: float or int
     :param id: specific id of the flowrule
     :type id: str or int
     :return: newly created and stored flowrule
@@ -903,9 +903,9 @@ class EdgeLink(Link):
     :param backward: the link is a backward link compared to an another Link
     :type backward: bool
     :param delay: delay resource
-    :type delay: float
+    :type delay: float or int
     :param bandwidth: bandwidth resource
-    :type bandwidth: float
+    :type bandwidth: float or int
     :return: None
     """
     type = type if type is not None else Link.STATIC
@@ -1013,9 +1013,9 @@ class EdgeReq(Link):
     :param id: optional id
     :type id: str or int
     :param delay: delay resource
-    :type delay: float
+    :type delay: float or int
     :param bandwidth: bandwidth resource
-    :type bandwidth: float
+    :type bandwidth: float or int
     :param sg_path: list of ids of sg_links represents end-to-end requirement
     :type sg_path: list ot tuple
     :return: None
