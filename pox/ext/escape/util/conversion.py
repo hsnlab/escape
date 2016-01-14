@@ -59,6 +59,8 @@ class NFFGConverter(object):
   MATCH_VLAN_TAG = r"dl_vlan"
   ACTION_PUSH_VLAN = r"push_vlan"
   ACTION_STRIP_VLAN = r"strip_vlan"
+  # Operand separator
+  LABEL_SEPARATOR = '|'
 
   def __init__ (self, domain, logger=None):
     self.domain = domain
@@ -295,7 +297,9 @@ class NFFGConverter(object):
           # Get the smallest available port for the Infra Node
           # dyn_port = max(max({p.id for p in infra.ports}) + 1,
           #                 len(infra.ports))
-          dyn_port = '|'.join((node_id, nf_id, nf_inst_port.id.get_as_text()))
+          dyn_port = self.LABEL_SEPARATOR.join((node_id,
+                                                nf_id,
+                                                nf_inst_port.id.get_as_text()))
           # Add Infra-side port
           infra_port = infra.add_port(id=dyn_port)
           self.log.debug("Add dynamic port for NF -> %s" % infra_port)
@@ -319,9 +323,9 @@ class NFFGConverter(object):
           _src_node = _src_nf.get_parent().get_parent()
           # match += '|'.join(
           #    {i.id.get_value() for i in (_src_node, _src_nf, _port)})
-          match += '|'.join((_src_node.id.get_as_text(),
-                             _src_nf.id.get_as_text(),
-                             _port.id.get_as_text()))
+          match += self.LABEL_SEPARATOR.join((_src_node.id.get_as_text(),
+                                              _src_nf.id.get_as_text(),
+                                              _port.id.get_as_text()))
         # Else just Infra port --> add only the port number
         else:
           match += _port.id.get_as_text()
@@ -331,9 +335,9 @@ class NFFGConverter(object):
         if "NF_instances" in flowentry.out.get_as_text():
           _dst_nf = _out.get_parent().get_parent()
           _dst_node = _dst_nf.get_parent().get_parent()
-          action += '|'.join((_dst_node.id.get_as_text(),
-                              _dst_nf.id.get_as_text(),
-                              _port.id.get_as_text()))
+          action += self.LABEL_SEPARATOR.join((_dst_node.id.get_as_text(),
+                                               _dst_nf.id.get_as_text(),
+                                               _out.id.get_as_text()))
         # Else just Infra port --> add only the port number
         else:
           action += _out.id.get_as_text()
@@ -355,7 +359,9 @@ class NFFGConverter(object):
             # e.g. <match>dl_tag=0x0004</match> --> in_port=1;TAG=SAP2|fwd|4
             # Convert from int/hex to int
             _tag = int(flowentry.match.get_as_text().split('=')[1], base=0)
-            match += "|".join((str(_src_name), str(_dst_name), str(_tag)))
+            match += self.LABEL_SEPARATOR.join((str(_src_name),
+                                                str(_dst_name),
+                                                str(_tag)))
           else:
             self.log.warning(
                "Not recognizable match operation in:\n%s" % flowentry)
@@ -383,12 +389,13 @@ class NFFGConverter(object):
             # output=1;TAG=decomp|SAP2|3
             # Convert from int/hex to int
             _tag = int(flowentry.action.get_as_text().split(':')[1], base=0)
-            action += "|".join((_src_name, _dst_name, str(_tag)))
+            action += self.LABEL_SEPARATOR.join((_src_name,
+                                                 _dst_name,
+                                                 str(_tag)))
           else:
             self.log.warning(
                "Not recognizable action operation in:\n%s" % flowentry)
             continue
-
         # Get the src (port where fr need to store) and dst port id
         try:
           port_id = int(_port.id.get_value())
@@ -453,8 +460,7 @@ class NFFGConverter(object):
       l1, l2 = nffg.add_undirected_link(
          port1=nffg[src_node].ports[src_port],
          port2=nffg[dst_node].ports[dst_port],
-         **params
-      )
+         **params)
       self.log.debug("Add static connection: %s" % l1)
       self.log.debug("Add static connection: %s" % l2)
     self.log.debug(

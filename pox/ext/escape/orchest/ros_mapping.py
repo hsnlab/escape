@@ -59,6 +59,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       log.error("Missing resource NFFG! Abort mapping process...")
       return
     try:
+      # print graph.dump()
       mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
       mapped_nffg = MAP(request=graph.copy(), network=resource.copy(),
                         **mapper_params)
@@ -68,6 +69,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       log.debug(
          "Mapping algorithm: %s is finished on NF-FG: %s" % (
            cls.__name__, graph))
+      # print mapped_nffg.dump()
       return mapped_nffg
     except MappingException as e:
       log.error(
