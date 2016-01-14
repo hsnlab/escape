@@ -1302,7 +1302,12 @@ class NFFGToolBox(object):
                   if sghop_info in sg_map:
                     sg_map[sghop_info][1] = ending_port
                   else:
-                    sg_map[sghop_info] = [None, ending_port]
+                    # the 3rd element is the port object which is used if the 
+                    # flowrules sequence of this TAG value only consists of this
+                    # flowrule, and there is no starting flowrule for it, so the
+                    # other end of the link (finishing in 'p') is the port where
+                    # the SGHop was originating
+                    sg_map[sghop_info] = [None, ending_port, p]
             # TAG and UNTAG action cannot coexsist in the same flowrule
             elif command_param[0] == "TAG":
               # it means this fr is starting an SGHop path
@@ -1317,7 +1322,19 @@ class NFFGToolBox(object):
               if sghop_info in sg_map:
                 sg_map[sghop_info][0] = starting_port
               else:
-                sg_map[sghop_info] = [starting_port, None]
+                # the 3rd element means similar to the one before, but the 
+                # destination port object can be reached from it similarly.
+                for a in actions:
+                  c_p = a.split("=")
+                  if c_p[0] == "output":
+                    out_port = c_p[1]
+                    try:
+                      out_port = int(c_p[1])
+                    except ValueError:
+                      pass
+                    sg_map[sghop_info] = [starting_port, None, 
+                                          d.ports[out_port]]
+                    break
             else:
               for match in fr.match.split(";"):
                 field, mparam = match.split("=")
@@ -1356,4 +1373,20 @@ class NFFGToolBox(object):
                 else:
                   raise RuntimeError("No 'output' command found in collocation "
                                      "flowrule!")
+    # after all flowrules have been processed we have to check if there is 
+    # still a None prt object (meaning that flowrule sequence for that TAG 
+    # consisted of only one NON-COLLOCATION flowrule)
+    for sghop_info in sg_map:
+      if sg_map[sghop_info][0] is None and len(sg_map[sghop_info]) == 3:
+        # the originating portobject of the th SGHop is missing
+        portobj = sg_map[sghop_info][2]
+        for link in nffg.links:
+          if link.dst.id == portobj.id and link.dst.node.id == portobj.node.id:
+            sg_map[sghop_info][0] = link.src
+      if sg_map[sghop_info][1] is None and len(sg_map[sghop_info]) == 3:
+        # the destination port object of the SGHop is missing
+        portobj = sg_map[sghop_info][2]
+        for link in nffg.links:
+          if link.src.id == portobj.id and link.src.node.id == portobj.node.id:
+            sg_map[sghop_info][1] = link.dst
     return sg_map
