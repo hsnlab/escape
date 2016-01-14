@@ -27,9 +27,9 @@ from itertools import count
 
 log = logging.getLogger("mapping")
 # log.setLevel(logging.DEBUG)
-# if not log.getEffectiveLevel():
-logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
-log.setLevel(logging.DEBUG)
+if not log.getEffectiveLevel():
+  logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
+  log.setLevel(logging.DEBUG)
 
 
 def subtractNodeRes (current, substrahend, maximal, link_count=1):
