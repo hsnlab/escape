@@ -430,7 +430,10 @@ class NFFGConverter(object):
 
         if flowentry.resources.is_initialized() and \
            flowentry.resources.bandwidth.is_initialized():
-          _fr_bw = flowentry.resources.bandwidth.get_value()
+          try:
+            _fr_bw = float(flowentry.resources.bandwidth.get_value())
+          except ValueError:
+            _fr_bw = flowentry.resources.bandwidth.get_value()
         else:
           _fr_bw = None
 
@@ -814,22 +817,27 @@ class NFFGConverter(object):
           # Process action field
           action = self.__convert_flowrule_action_unified(flowrule.action)
 
+          if flowrule.bandwidth is not None:
+            _resources = virt3.Link_resource(bandwidth=str(flowrule.bandwidth))
+          else:
+            _resources = None
+
           # Add Flowentry with converted params
           virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
                               match=match, action=action, out=out_port,
-                              resources=virt3.Link_resource(
-                                 bandwidth=str(flowrule.bandwidth)
-                              ))
+                              resources=_resources)
           # virt_fe.bind()
           self.log.debug("Generated Flowentry:\n%s" % virtualizer.nodes[
             infra.id].flowtable.add(virt_fe))
-    # explicitly call bind to resolve relative paths for safety reason
-    virtualizer.bind()
-    self.log.debug(
-       "END adapting modifications from %s into Virtualizer(id=%s, name=%s)"
-       % (nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
-    # Return with modified Virtualizer
-    return virtualizer
+          # explicitly call bind to resolve relative paths for safety reason
+          virtualizer.bind()
+          self.log.debug(
+             "END adapting modifications from %s into Virtualizer(id=%s, "
+             "name=%s)"
+             % (nffg, virtualizer.id.get_as_text(),
+                virtualizer.name.get_as_text()))
+      # Return with modified Virtualizer
+      return virtualizer
 
   def __convert_flowrule_match (self, domain, match):
     """
