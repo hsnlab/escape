@@ -168,7 +168,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
         log.error("Mapping process is failed! Abort orchestration process.")
       else:
         # Steps after mapping (optional)
-        log.info("NF-FG: %s orchestration is finished by %s" % (
+        log.info("NF-FG: %s orchestration is finished by %s successfully!" % (
           input_graph, self.__class__.__name__))
       return mapped_nffg
 

@@ -440,6 +440,8 @@ class Flowrule(Element):
     :type match: str
     :param action: forwarding action
     :type action: str
+    :param bandwidth: bandwidth
+    :type bandwidth: float or int
     :return: None
     """
     super(Flowrule, self).__init__(id=id, type="FLOWRULE")
