@@ -303,7 +303,7 @@ class CoreAlgorithm(object):
       return self.bw_factor * scaled_bw_comp + self.res_factor * \
              scaled_res_comp + self.lat_factor * scaled_lat_comp, sum_latency
     else:
-      return -1, sys.float_info.max
+      return -1, float("inf")
 
   def _updateGraphResources (self, bw_req, path, linkids, vnf=None, node=None, 
                              redo=False):
