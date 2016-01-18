@@ -47,6 +47,33 @@ import Alg1_Helper as helper
 # object for the algorithm instance
 alg = None
 
+def _purgeNFFGFromInfinityValues(nffg):
+  """
+  Before running the algorithm None values for resources were replaced by 
+  Infinity value to ensure seamless mapping, in case of missing parameters.
+  These values should be set back to None to cooperate with surrounding layers.
+  (zero values do not cause errors, and they can't be placed back unabiguously)
+  """
+  purge = False
+  for respar in ('cpu', 'mem', 'storage', 'bandwidth'):
+    for n in nffg.infras:
+      if hasattr(n.resources, respar):
+        if n.resources[respar] == float("inf"):
+          n.resources[respar] = None
+          purge = True
+  if purge:
+    helper.log.info("Purging node resource data of output NFFG from Infinity "
+                    "values was required.")
+  purge = False
+  for i, j, d in nffg.network.edges_iter(data=True):
+    if d.type == 'STATIC':
+      if hasattr(d, 'bandwidth'):
+        if d.bandwidth == float("inf"):
+          d.bandwidth = None
+          purge = True
+  if purge:
+    helper.log.info("Purging link resource of output NFFG from Infinity values"
+                    " was required.")
 
 def MAP (request, network, full_remap=False,
          enable_shortest_path_cache=False,
@@ -89,13 +116,16 @@ def MAP (request, network, full_remap=False,
     edgereqlist.append(req)
     request.del_edge(req.src, req.dst, req.id)
 
+  # this error message could be removed, because of the SGHop filed in the 
+  # flowrules BUT in this case the EdgeReqs will refer to SGHop ID-s which can 
+  # only be calculated from flowrules.
   if len(edgereqlist) != 0 and not sg_hops_given:
     raise uet.BadInputException("",
                                 "SGHops was not given explicitly, they have "
                                 "been retrieved based on the flowrules, "
                                 "but at least one EdgeReq was given, "
                                 "which refers to SGHop ID-s, and SGHop ID-s "
-                                "can't be retrieved if from flowrules, "
+                                "can't be retrieved from flowrules, "
                                 "if they were collocated.")
 
   # construct chains from EdgeReqs
@@ -103,6 +133,8 @@ def MAP (request, network, full_remap=False,
 
     if len(req.sg_path) == 1:
       # then add it as linklocal req instead of E2E req
+      helper.log.info("Interpreting one SGHop long EdgeReq (id: %s) as link "
+                      "requirement on SGHop: %s."%(req.id, req.sg_path[0]))
       reqlink = None
       for sg_link in request.sg_hops:
         if sg_link.id == req.sg_path[0]:
@@ -173,7 +205,7 @@ def MAP (request, network, full_remap=False,
           helper.log.warn("Resource parameter %s is not given in %s, "
                           "substituting with infinity!"%(respar, n.id))
           n.resources[respar] = float("inf")
-  # do the same with link data
+  # If link res is None or doesn't exist, replace it with a neutral value.
   for i, j, d in network.network.edges_iter(data=True):
     if d.type == 'STATIC':
       if getattr(d, 'delay', None) is None:
@@ -212,7 +244,9 @@ def MAP (request, network, full_remap=False,
     mappedNFFG.add_req(srcnode.ports[srcportid], dstnode.ports[dstportid],
                        id=req.id, delay=req.delay, bandwidth=req.bandwidth,
                        sg_path=req.sg_path)
-
+  
+  # replace Infinity values
+  _purgeNFFGFromInfinityValues(mappedNFFG)
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
@@ -451,7 +485,7 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../examples/escape-mn-mapped-topo.nffg', "r") as f:
+    with open('untracked/escape-mn-mapped-sghopmatch.nffg', "r") as f:
       req = NFFG.parse(f.read())
     with open('../examples/escape-mn-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
