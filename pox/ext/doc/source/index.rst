@@ -252,8 +252,7 @@ However you can install the Open vSwitch packages manually:
 
 .. code-block:: bash
 
-    $ sudo apt-get install openvswitch-common openvswitch-switch \
-        openvswitch-testcontroller
+    $ sudo apt-get install openvswitch-common openvswitch-switch
 
 If the command complains about the Open vSwitch not installed then you have to
 install it from source. See more on `<http://openvswitch.org/download/>`_. On the
