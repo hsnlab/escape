@@ -113,29 +113,36 @@ class BacktrackHandler(object):
       raise uet.InternalAlgorithmException("Backtrack structure maintenance"
       "error: current_subchain_level is ambiguous during addBacktrackLevel!")
       
+  def _handleOneLinkLongSubchainFromSAP(self, link_mapping_rec):
+    self.currently_mapped.append((self.subchains_with_subgraphs[\
+                                  self.current_subchain_level][0],
+                                  None,
+                                  link_mapping_rec,
+                                  self.current_subchain_level))
+
   def addFreshlyMappedBacktrackRecord(self, bt_record, link_mapping_rec):
     """
     Handles a queue of currently mapped BacktrackRecords, these should be
     added back to the network resources when stepping back.
     """
     if bt_record is None:
-      tmp = self.currently_mapped.pop()
-      # it there is not already a link mapping record here
-      if tmp[2] is None:
-        self.currently_mapped.append((self.subchains_with_subgraphs[\
-                                      self.current_subchain_level][0],
-                                      tmp[1], 
-                                      link_mapping_rec,
-                                      self.current_subchain_level))
+      if len(self.currently_mapped) == 0:
+        self._handleOneLinkLongSubchainFromSAP(link_mapping_rec)
       else:
-        # this can be the case when we are at a subchain which consists of only
-        # one link and starts from a SAP.
-        self.currently_mapped.append(tmp)
-        self.currently_mapped.append((self.subchains_with_subgraphs[\
-                                      self.current_subchain_level][0],
-                                      None,
-                                      link_mapping_rec,
-                                      self.current_subchain_level))
+        tmp = self.currently_mapped.pop()
+        # it there is not already a link mapping record here
+        if tmp[2] is None:
+          self.currently_mapped.append((self.subchains_with_subgraphs[\
+                                        self.current_subchain_level][0],
+                                        tmp[1], 
+                                        link_mapping_rec,
+                                        self.current_subchain_level))
+        else:
+          # this can be the case when we are at a subchain which consists of only
+          # one link and starts from a SAP.
+          self.currently_mapped.append(tmp)
+          self._handleOneLinkLongSubchainFromSAP(link_mapping_rec)
+        
     else:
       self.currently_mapped.append((self.subchains_with_subgraphs[\
                                     self.current_subchain_level][0],
