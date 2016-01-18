@@ -52,15 +52,18 @@ class NFFGConverter(object):
   TYPE_VIRTUALIZER_PORT_ABSTRACT = "port-abstract"
   TYPE_VIRTUALIZER_PORT_SAP = "port-sap"
   # General option names in mapped NFFG assembled by the Mapping algorithm
-  OPERATION_TAG = 'TAG'
-  OPERATION_UNTAG = 'UNTAG'
-  GENERAL_OPERATIONS = (OPERATION_TAG, OPERATION_UNTAG)
+  OP_TAG = 'TAG'
+  OP_UNTAG = 'UNTAG'
+  OP_SGHOP = 'SGHop'
+  OP_INPORT = 'in_port'
+  GENERAL_OPERATIONS = (OP_INPORT, OP_TAG, OP_UNTAG, OP_SGHOP)
   # Operation formats in Virtualizer
   MATCH_VLAN_TAG = r"dl_vlan"
   ACTION_PUSH_VLAN = r"push_vlan"
   ACTION_STRIP_VLAN = r"strip_vlan"
   # Operand separator
   LABEL_SEPARATOR = '|'
+  OP_SEPARATOR = ';'
 
   def __init__ (self, domain, logger=None):
     self.domain = domain
@@ -344,24 +347,26 @@ class NFFGConverter(object):
 
         # Check if there is a matching operation -> currently just TAG is used
         if flowentry.match.is_initialized() and flowentry.match.get_value():
-          if flowentry.match.get_as_text().startswith(self.MATCH_VLAN_TAG):
-            match += ";%s=" % self.OPERATION_TAG
-            # if src or dst was a SAP: SAP.id == port.name
-            # if scr or dst is a VNF port name of parent of port
-            if _port.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
-              _src_name = _port.name.get_as_text()
-            else:
-              _src_name = _port.get_parent().get_parent().id.get_as_text()
-            if _out.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
-              _dst_name = _out.name.get_as_text()
-            else:
-              _dst_name = _out.get_parent().get_parent().id.get_as_text()
-            # e.g. <match>dl_tag=0x0004</match> --> in_port=1;TAG=SAP2|fwd|4
-            # Convert from int/hex to int
-            _tag = int(flowentry.match.get_as_text().split('=')[1], base=0)
-            match += self.LABEL_SEPARATOR.join((str(_src_name),
-                                                str(_dst_name),
-                                                str(_tag)))
+          for op in flowentry.match.get_as_text().split(self.OP_SEPARATOR):
+            if op.startswith(self.MATCH_VLAN_TAG):
+              # if src or dst was a SAP: SAP.id == port.name
+              # if scr or dst is a VNF port name of parent of port
+              if _port.port_type.get_as_text() == \
+                 self.TYPE_VIRTUALIZER_PORT_SAP:
+                _src_name = _port.name.get_as_text()
+              else:
+                _src_name = _port.get_parent().get_parent().id.get_as_text()
+              if _out.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
+                _dst_name = _out.name.get_as_text()
+              else:
+                _dst_name = _out.get_parent().get_parent().id.get_as_text()
+              # e.g. <match>dl_tag=0x0004</match> --> in_port=1;TAG=SAP2|fwd|4
+              # Convert from int/hex to int
+              _tag = int(op.split('=')[1], base=0)
+              match += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
+                 (str(_src_name), str(_dst_name), str(_tag))))
+            elif op.startswith(self.OP_SGHOP):
+              match += ";%s" % op
           else:
             self.log.warning(
                "Not recognizable match operation in:\n%s" % flowentry)
@@ -369,29 +374,29 @@ class NFFGConverter(object):
 
         # Check if there is an action operation
         if flowentry.action.is_initialized() and flowentry.action.get_value():
-          if flowentry.action.get_as_text() == self.ACTION_STRIP_VLAN:
-            # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
-            action += ";%s" % self.OPERATION_UNTAG
-          elif flowentry.action.get_as_text().startswith(self.ACTION_PUSH_VLAN):
-            action += ";%s=" % self.OPERATION_TAG
-            # tag: src element name | dst element name | tag
-            # if src or dst was a SAP: SAP.id == port.name
-            # if scr or dst is a VNF port name of parent of port
-            if _port.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
-              _src_name = _port.name.get_as_text()
-            else:
-              _src_name = _port.get_parent().get_parent().id.get_as_text()
-            if _out.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
-              _dst_name = _out.name.get_as_text()
-            else:
-              _dst_name = _out.get_parent().get_parent().id.get_as_text()
-            # e.g. <action>push_tag:0x0003</action> -->
-            # output=1;TAG=decomp|SAP2|3
-            # Convert from int/hex to int
-            _tag = int(flowentry.action.get_as_text().split(':')[1], base=0)
-            action += self.LABEL_SEPARATOR.join((_src_name,
-                                                 _dst_name,
-                                                 str(_tag)))
+          for op in flowentry.action.get_as_text().split(self.OP_SEPARATOR):
+            if op.startswith(self.ACTION_PUSH_VLAN):
+              # tag: src element name | dst element name | tag
+              # if src or dst was a SAP: SAP.id == port.name
+              # if scr or dst is a VNF port name of parent of port
+              if _port.port_type.get_as_text() == \
+                 self.TYPE_VIRTUALIZER_PORT_SAP:
+                _src_name = _port.name.get_as_text()
+              else:
+                _src_name = _port.get_parent().get_parent().id.get_as_text()
+              if _out.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
+                _dst_name = _out.name.get_as_text()
+              else:
+                _dst_name = _out.get_parent().get_parent().id.get_as_text()
+              # e.g. <action>push_tag:0x0003</action> -->
+              # output=1;TAG=decomp|SAP2|3
+              # Convert from int/hex to int
+              _tag = int(op.split(':')[1], base=0)
+              action += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
+                 (_src_name, _dst_name, str(_tag))))
+            elif op.startswith(self.ACTION_STRIP_VLAN):
+              # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
+              action += ";%s" % self.OP_UNTAG
           else:
             self.log.warning(
                "Not recognizable action operation in:\n%s" % flowentry)
@@ -854,7 +859,7 @@ class NFFGConverter(object):
       return
 
     op = match.split(';')[1].split('=')
-    if op[0] not in ('TAG',):
+    if op[0] not in ('TAG', 'SGHop'):
       self.log.warning("Unsupported match operand: %s" % op[0])
       return
 
@@ -953,25 +958,28 @@ class NFFGConverter(object):
     # E.g.:  "match": "in_port=1;TAG=SAP1|comp|1" -->
     # E.g.:  "match": "in_port=SAP2|fwd|1;TAG=SAP1|comp|1" -->
     # <match>(in_port=1)dl_tag=1</match>
+    ret = []
     match_part = match.split(';')
     if len(match_part) < 2:
       if not match_part[0].startswith("in_port"):
-        self.log.warning("Unrecognizable match field: %s" % match)
+        self.log.warning("Invalid match field: %s" % match)
       return
-
-    op = match_part[1].split('=')
-    if op[0] not in self.GENERAL_OPERATIONS:
-      self.log.warning("Unsupported match operand: %s" % op[0])
-      return
-
-    if op[0] == self.OPERATION_TAG:
-      try:
-        vlan_tag = int(op[1].split('|')[-1])
-        return "%s=%s" % (self.MATCH_VLAN_TAG, format(vlan_tag, '#06x'))
-      except ValueError:
-        self.log.warning(
-           "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
-        return
+    for kv in match_part:
+      op = kv.split('=')
+      if op[0] not in self.GENERAL_OPERATIONS:
+        self.log.warning("Unsupported match operand: %s" % op[0])
+        continue
+      if op[0] == self.OP_TAG:
+        try:
+          vlan_tag = int(op[1].split('|')[-1])
+          ret.append("%s=%s" % (self.MATCH_VLAN_TAG, format(vlan_tag, '#06x')))
+        except ValueError:
+          self.log.warning(
+             "Wrong VLAN format: %s!" % op[1])
+          continue
+      elif op[0] == self.OP_SGHOP:
+        ret.append(kv)
+    return self.OP_SEPARATOR.join(ret)
 
   def __convert_flowrule_action_unified (self, action):
     """
@@ -987,29 +995,30 @@ class NFFGConverter(object):
     :rtype: str
     """
     # E.g.:  "action": "output=2;UNTAG"
+    ret = []
     action_part = action.split(';')
     if len(action_part) < 2:
       if not action_part[0].startswith("output"):
-        self.log.warning("Unrecognizable action field: %s" % action)
+        self.log.warning("Invalid action field: %s" % action)
       return
-
-    op = action_part[1].split('=')
-    if op[0] not in self.GENERAL_OPERATIONS:
-      self.log.warning("Unsupported action operand: %s" % op[0])
-      return
-
-    if op[0] == self.OPERATION_TAG:
-      # E.g.: <action>push_tag:0x0037</action>
-      try:
-        vlan = int(op[1].split('|')[-1])
-        return "%s:%s" % (self.ACTION_PUSH_VLAN, format(vlan, '#06x'))
-      except ValueError:
-        self.log.warning(
-           "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+    for kv in action_part:
+      op = kv.split('=')
+      if op[0] not in self.GENERAL_OPERATIONS:
+        self.log.warning("Unsupported action operand: %s" % op[0])
         return
-    elif op[0] == self.OPERATION_UNTAG:
-      # E.g.: <action>strip_vlan</action>
-      return self.ACTION_STRIP_VLAN
+      if op[0] == self.OP_TAG:
+        # E.g.: <action>push_tag:0x0037</action>
+        try:
+          vlan = int(op[1].split('|')[-1])
+          ret.append("%s:%s" % (self.ACTION_PUSH_VLAN, format(vlan, '#06x')))
+        except ValueError:
+          self.log.warning(
+             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+          continue
+      elif op[0] == self.OP_UNTAG:
+        # E.g.: <action>strip_vlan</action>
+        ret.append(self.ACTION_STRIP_VLAN)
+    return self.OP_SEPARATOR.join(ret)
 
 
 def test_xml_based_builder ():
