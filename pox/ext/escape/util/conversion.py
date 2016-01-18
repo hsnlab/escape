@@ -56,7 +56,8 @@ class NFFGConverter(object):
   OP_UNTAG = 'UNTAG'
   OP_SGHOP = 'SGHop'
   OP_INPORT = 'in_port'
-  GENERAL_OPERATIONS = (OP_INPORT, OP_TAG, OP_UNTAG, OP_SGHOP)
+  OP_OUTPUT = 'output'
+  GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG, OP_SGHOP)
   # Operation formats in Virtualizer
   MATCH_VLAN_TAG = r"dl_vlan"
   ACTION_PUSH_VLAN = r"push_vlan"
@@ -367,10 +368,6 @@ class NFFGConverter(object):
                  (str(_src_name), str(_dst_name), str(_tag))))
             elif op.startswith(self.OP_SGHOP):
               match += ";%s" % op
-          else:
-            self.log.warning(
-               "Not recognizable match operation in:\n%s" % flowentry)
-            continue
 
         # Check if there is an action operation
         if flowentry.action.is_initialized() and flowentry.action.get_value():
@@ -397,10 +394,7 @@ class NFFGConverter(object):
             elif op.startswith(self.ACTION_STRIP_VLAN):
               # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
               action += ";%s" % self.OP_UNTAG
-          else:
-            self.log.warning(
-               "Not recognizable action operation in:\n%s" % flowentry)
-            continue
+
         # Get the src (port where fr need to store) and dst port id
         try:
           port_id = int(_port.id.get_value())
