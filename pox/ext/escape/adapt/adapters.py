@@ -794,7 +794,8 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       raise RuntimeError(
          "Not supported config format: %s for 'edit-config'!" % type(data))
-    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    log.debug(
+       "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
@@ -979,7 +980,8 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       raise RuntimeError(
          "Not supported config format: %s for 'edit-config'!" % type(data))
-    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    log.debug(
+       "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
@@ -1058,7 +1060,8 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       raise RuntimeError(
          "Not supported config format: %s for 'edit-config'!" % type(data))
-    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    log.debug(
+      "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
