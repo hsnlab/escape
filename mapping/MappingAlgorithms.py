@@ -116,13 +116,16 @@ def MAP (request, network, full_remap=False,
     edgereqlist.append(req)
     request.del_edge(req.src, req.dst, req.id)
 
+  # this error message could be removed, because of the SGHop filed in the 
+  # flowrules BUT in this case the EdgeReqs will refer to SGHop ID-s which can 
+  # only be calculated from flowrules.
   if len(edgereqlist) != 0 and not sg_hops_given:
     raise uet.BadInputException("",
                                 "SGHops was not given explicitly, they have "
                                 "been retrieved based on the flowrules, "
                                 "but at least one EdgeReq was given, "
                                 "which refers to SGHop ID-s, and SGHop ID-s "
-                                "can't be retrieved if from flowrules, "
+                                "can't be retrieved from flowrules, "
                                 "if they were collocated.")
 
   # construct chains from EdgeReqs
@@ -482,7 +485,7 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../examples/escape-mn-req.nffg', "r") as f:
+    with open('untracked/escape-mn-mapped-sghopmatch.nffg', "r") as f:
       req = NFFG.parse(f.read())
     with open('../examples/escape-mn-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
