@@ -130,6 +130,8 @@ def MAP (request, network, full_remap=False,
 
     if len(req.sg_path) == 1:
       # then add it as linklocal req instead of E2E req
+      helper.log.info("Interpreting one SGHop long EdgeReq (id: %s) as link "
+                      "requirement on SGHop: %s."%(req.id, req.sg_path[0]))
       reqlink = None
       for sg_link in request.sg_hops:
         if sg_link.id == req.sg_path[0]:
@@ -480,7 +482,7 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../examples/escape-mn-mapped-topo.nffg', "r") as f:
+    with open('../examples/escape-mn-req.nffg', "r") as f:
       req = NFFG.parse(f.read())
     with open('../examples/escape-mn-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
