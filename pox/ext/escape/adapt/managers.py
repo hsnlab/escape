@@ -995,7 +995,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    empty_cfg = self.topoAdapter._original_nffg
+    empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
       log.warning(
          "Missing original topology in %s domain! Skip domain resetting..." %
