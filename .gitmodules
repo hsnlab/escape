@@ -1,3 +1,4 @@
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
-	url = https://github.com/Ericsson/unify-virtualizer.git
+	url = git@gitlab.fp7-unify.eu:Robert.Szabo/virtualizer.git	
+	branch = v4beta
