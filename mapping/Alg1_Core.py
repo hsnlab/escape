@@ -645,7 +645,6 @@ class CoreAlgorithm(object):
       v2 = self.manager.getIdOfChainEnd_fromNetwork(v2)
     # The action and match are the same format
     tag = "TAG=%s|%s|%s" % (v1, v2, reqlid)
-    sghop_id = "SGHop=%s"%reqlid
     if len(path) == 1:
       # collocation happened, none of helperlink`s port refs should be None
       match_str = "in_port="
@@ -657,10 +656,9 @@ class CoreAlgorithm(object):
       if reqlink.flowclass is not None:
         match_str += ";flowclass=%s" % reqlink.flowclass
       action_str += str(flowdst.id)
-      match_str += ";" + sghop_id
       self.log.debug("Collocated flowrule %s => %s added to Port %s of %s" % (
         match_str, action_str, flowsrc.id, path[0]))
-      flowsrc.add_flowrule(match_str, action_str, bw)
+      flowsrc.add_flowrule(match_str, action_str, bw, hop_id = reqlid)
     else:
       # set the flowrules for the transit Infra nodes
       for i, j, k, lidij, lidjk in zip(path[:-2], path[1:-1], path[2:],
@@ -672,14 +670,14 @@ class CoreAlgorithm(object):
           match_str += ";flowclass=%s" % reqlink.flowclass
         action_str += str(self.net[j][k][lidjk].src.id)
         # Transit SAPs would mess it up pretty much, but it is not allowed.
-        if self.net.node[i].type == 'SAP':
+        if self.net.node[i].type == 'SAP' and self.net.node[k].type != 'SAP':
           action_str += ";" + tag
-        else:
+        elif self.net.node[k].type != 'SAP':
           match_str += ";" + tag
-        match_str += ";" + sghop_id
         self.log.debug("Transit flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str, self.net[i][j][lidij].dst.id, j))
-        nffg.network[i][j][lidij].dst.add_flowrule(match_str, action_str, bw)
+        nffg.network[i][j][lidij].dst.add_flowrule(match_str, action_str, bw, 
+                                                   hop_id = reqlid)
 
       # set flowrule for the first element if that is not a SAP
       if nffg.network.node[path[0]].type != 'SAP':
@@ -693,10 +691,9 @@ class CoreAlgorithm(object):
           match_str += ";flowclass=%s" % reqlink.flowclass
         action_str += str(nffg.network[path[0]][path[1]][linkids[0]].src.id)
         action_str += ";" + tag
-        match_str += ";" + sghop_id
         self.log.debug("Starting flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str, flowsrc.id, path[0]))
-        flowsrc.add_flowrule(match_str, action_str, bw)
+        flowsrc.add_flowrule(match_str, action_str, bw, hop_id = reqlid)
 
       # set flowrule for the last element if that is not a SAP
       if nffg.network.node[path[-1]].type != 'SAP':
@@ -710,12 +707,11 @@ class CoreAlgorithm(object):
           raise uet.InternalAlgorithmException(
             "No InfraPort found for a dynamic link which finishes a path")
         action_str += str(flowdst.id) + ";UNTAG"
-        match_str += ";" + sghop_id
         self.log.debug("Finishing flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str,
           self.net[path[-2]][path[-1]][linkids[-1]].dst.id, path[-1]))
         nffg.network[path[-2]][path[-1]][linkids[-1]].dst.add_flowrule(
-          match_str, action_str, bw)
+          match_str, action_str, bw, hop_id = reqlid)
 
   def _retrieveOrAddVNF (self, nffg, vnfid):
     if vnfid not in nffg.network:
