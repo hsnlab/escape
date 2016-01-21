@@ -641,7 +641,7 @@ class NFFGConverter(object):
     # Virtualizer
     virt = self.adapt_mapping_into_Virtualizer(virtualizer=virt, nffg=nffg)
     # explicitly call bind to resolve relative paths for safety reason
-    virt.bind()
+    virt.bind(relative=True)
     self.log.debug(
        "END conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
          NFFG.version, 3))
