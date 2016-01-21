@@ -977,7 +977,8 @@ class EdgeSGLink(Link):
   Represent an edge between SG elements.
   """
 
-  def __init__ (self, src=None, dst=None, id=None, flowclass=None):
+  def __init__ (self, src=None, dst=None, id=None, flowclass=None,
+                tag_info=None):
     """
     Init.
 
@@ -989,15 +990,20 @@ class EdgeSGLink(Link):
     :type id: str or int
     :param flowclass: flowclass of SG next hop link a.k.a a match
     :type flowclass: str
+    :param tag_info: tag info
+    :type tag_info: str
     :return: None
     """
     super(EdgeSGLink, self).__init__(src=src, dst=dst, type=Link.SG, id=id)
     self.flowclass = flowclass  # flowrule without action
+    self.tag_info = tag_info
 
   def persist (self):
     link = super(EdgeSGLink, self).persist()
     if self.flowclass is not None:
       link["flowclass"] = self.flowclass
+    if self.tag_info is not None:
+      link["tag_info"] = self.tag_info
     return link
 
   def load (self, data, container=None, *args, **kwargs):
@@ -1010,6 +1016,7 @@ class EdgeSGLink(Link):
            "ID conflict during EdgeSGLink loading: %s" % link.id)
     super(EdgeSGLink, self).load(data=data, container=container)
     self.flowclass = data.get('flowclass')
+    self.tag_info = data.get('tag_info')
     return self
 
 
