@@ -1069,7 +1069,7 @@ class UnifyDomainManager(AbstractDomainManager):
     log.debug(
        "Reset %s domain config based on stored empty config..." %
        self.domain_name)
-    return self.topoAdapter.edit_config(data=empty_cfg.xml())
+    return self.topoAdapter.edit_config(data=empty_cfg)
 
 
 class OpenStackDomainManager(UnifyDomainManager):
