@@ -31,8 +31,8 @@ except ImportError:
 
 try:
   # Import for ESCAPEv2
-  import virtualizer3 as virt3
-  from virtualizer3 import Flowentry
+  import virtualizer4 as virt4
+  from virtualizer4 import Flowentry
 except ImportError:
   import os, inspect
 
@@ -40,8 +40,8 @@ except ImportError:
      os.path.join(os.path.dirname(__file__), "../../../..")),
      "unify_virtualizer"))
   # Import for standalone running
-  import virtualizer3 as virt3
-  from virtualizer3 import Flowentry
+  import virtualizer4 as virt4
+  from virtualizer4 import Flowentry
 
 
 class NFFGConverter(object):
@@ -90,7 +90,7 @@ class NFFGConverter(object):
       tree = ET.ElementTree(ET.fromstring(xml_data))
       # Parse Virtualizer structure
       self.log.debug("Parsing XML data to Virtualizer format...")
-      virtualizer = virt3.Virtualizer().parse(root=tree.getroot())
+      virtualizer = virt4.Virtualizer().parse(root=tree.getroot())
     except ET.ParseError as e:
       raise RuntimeError('ParseError: %s' % e.message)
 
@@ -483,13 +483,13 @@ class NFFGConverter(object):
          NFFG.version, 3))
     self.log.debug("Converting data to XML-based Virtualizer structure...")
     # Create empty Virtualizer
-    virt = virt3.Virtualizer(id=str(nffg.id), name=str(nffg.name))
+    virt = virt4.Virtualizer(id=str(nffg.id), name=str(nffg.name))
     self.log.debug("Creating Virtualizer based on %s" % nffg)
 
     for infra in nffg.infras:
       self.log.debug("Converting %s" % infra)
       # Create infra node with basic params - nodes/node/{id,name,type}
-      infra_node = virt3.Infra_node(id=str(infra.id), name=str(infra.name),
+      infra_node = virt4.Infra_node(id=str(infra.id), name=str(infra.name),
                                     type=str(infra.infra_type))
 
       # Add resources nodes/node/resources
@@ -511,7 +511,7 @@ class NFFGConverter(object):
           # port is not a number
           if '|' in str(port.id):
             continue
-        _port = virt3.Port(id=str(port.id))
+        _port = virt4.Port(id=str(port.id))
         # Detect Port properties
         if port.get_property("name"):
           _port.name.set_value(port.get_property("name"))
@@ -532,7 +532,7 @@ class NFFGConverter(object):
       # Add minimalistic Node for supported NFs based on supported list of NFFG
       for sup in infra.supported:
         infra_node.capabilities.supported_NFs.add(
-           virt3.Node(id=str(sup), type=str(sup)))
+           virt4.Node(id=str(sup), type=str(sup)))
 
       # Add infra to virtualizer
       virt.nodes.add(infra_node)
@@ -546,13 +546,14 @@ class NFFGConverter(object):
         port_num = len(infra_node.ports.port._data)
         if port_num > 1:
           # There are valid port-pairs
-          for port_pair in combinations(
-             (p.id.get_value() for p in infra_node.ports), 2):
+          for i, port_pair in enumerate(combinations(
+             (p.id.get_value() for p in infra_node.ports), 2)):
             # Create link
-            _link = virt3.Link(
+            _link = virt4.Link(
+               id="resource-link%s" % i,
                src=infra_node.ports[port_pair[0]],
                dst=infra_node.ports[port_pair[1]],
-               resources=virt3.Link_resource(
+               resources=virt4.Link_resource(
                   delay=str(
                      infra.resources.delay) if infra.resources.delay else None,
                   bandwidth=str(
@@ -566,10 +567,11 @@ class NFFGConverter(object):
         elif port_num == 1:
           # Only one port in infra - create loop-edge
           _src = _dst = iter(infra_node.ports).next()
-          _link = virt3.Link(
+          _link = virt4.Link(
+             id="resource-link",
              src=_src,
              dst=_dst,
-             resources=virt3.Link_resource(
+             resources=virt4.Link_resource(
                 delay=str(
                    infra.resources.delay) if infra.resources.delay else None,
                 bandwidth=str(
@@ -611,22 +613,23 @@ class NFFGConverter(object):
              "Convert inter-domain SAP to port: %s in infra: %s" % (
                link.dst.id, n))
 
-    # Add link to Virtualizer
+    # Add edge-link to Virtualizer
     for link in nffg.links:
-      if link.type != NFFG.TYPE_LINK_STATIC:
+      # Skip backward and non-static link conversion <-- Virtualizer links
+      # are bidirectional
+      if link.type != NFFG.TYPE_LINK_STATIC or link.backward is True:
         continue
       # SAP - Infra links are not stored in Virtualizer format
-      # Skip backward link conversion <-- Virtualizer links are bidirectional
-      if link.src.node.type == NFFG.TYPE_SAP or \
-            link.dst.node.type == NFFG.TYPE_SAP or link.backward is True:
+      if link.src.node.type == NFFG.TYPE_SAP \
+         or link.dst.node.type == NFFG.TYPE_SAP:
         continue
       self.log.debug("Add link: Node: %s, port: %s <--> Node: %s, port: %s" % (
         link.src.node.id, link.src.id, link.dst.node.id, link.dst.id))
-      _link = virt3.Link(
+      _link = virt4.Link(
          id=str(link.id),
          src=virt.nodes[str(link.src.node.id)].ports[str(link.src.id)],
          dst=virt.nodes[str(link.dst.node.id)].ports[str(link.dst.id)],
-         resources=virt3.Link_resource(
+         resources=virt4.Link_resource(
             delay=str(link.delay),
             bandwidth=str(link.bandwidth)
          )
@@ -693,10 +696,10 @@ class NFFGConverter(object):
              nf.resources.storage) if nf.resources.storage is not None else \
             None
           # Create Node object for NF
-          v_nf = virt3.Node(
+          v_nf = virt4.Node(
              id=str(nf.id), name=str(nf.name),
              type=str(nf.functional_type),
-             resources=virt3.Software_resource(
+             resources=virt4.Software_resource(
                 cpu=v_nf_cpu,
                 mem=v_nf_mem,
                 storage=v_nf_storage))
@@ -713,7 +716,7 @@ class NFFGConverter(object):
           for port in nffg[v].ports:
             self.log.debug(
                "Add Port: %s to NF node: %s" % (port, v_nf.id.get_as_text()))
-            nf_port = virt3.Port(id=str(port.id), port_type="port-abstract")
+            nf_port = virt4.Port(id=str(port.id), port_type="port-abstract")
             virtualizer.nodes[str(u)].NF_instances[str(v)].ports.add(nf_port)
         else:
           self.log.debug("%s is already exist in the Virtualizer(id=%s, "
@@ -817,7 +820,7 @@ class NFFGConverter(object):
           action = self.__convert_flowrule_action_unified(flowrule.action)
 
           if flowrule.bandwidth is not None:
-            _resources = virt3.Link_resource(bandwidth=str(flowrule.bandwidth))
+            _resources = virt4.Link_resource(bandwidth=str(flowrule.bandwidth))
           else:
             _resources = None
 
@@ -825,11 +828,10 @@ class NFFGConverter(object):
           virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
                               match=match, action=action, out=out_port,
                               resources=_resources)
-          # virt_fe.bind()
           self.log.debug("Generated Flowentry:\n%s" % virtualizer.nodes[
             infra.id].flowtable.add(virt_fe))
-          # explicitly call bind to resolve relative paths for safety reason
-          virtualizer.bind()
+          # explicitly call bind to resolve absolute paths for safety reason
+          virtualizer.bind(relative=True)
           self.log.debug(
              "END adapting modifications from %s into Virtualizer(id=%s, "
              "name=%s)"
@@ -1321,6 +1323,7 @@ def test_topo_os ():
 
 if __name__ == "__main__":
   import logging
+  import time
 
   logging.basicConfig(level=logging.DEBUG)
   log = logging.getLogger(__name__)
@@ -1350,20 +1353,29 @@ if __name__ == "__main__":
   # print out
 
   # with open(
-  #    "../../../../examples/escape-mn-topo.nffg") as f:
+  #    "../../../../examples/escape-mn-mapped-topo.nffg") as f:
   #   nffg = NFFG.parse(raw_data=f.read())
-  #   nffg.duplicate_static_links()
+  #   # nffg.duplicate_static_links()
   # print "Parsed NFFG: %s" % nffg
   # virt = c.dump_to_Virtualizer3(nffg=nffg)
   # print "Converted:"
   # print virt.xml()
   # print "Reconvert to NFFG:"
-  # nffg, v = c.parse_from_Virtualizer3(xml_data=virt.xml())
+  # nffg = c.parse_from_Virtualizer3(xml_data=virt.xml())
   # print nffg.dump()
 
   with open(
-     "../../../../examples/escape-mn-dov.xml") as f:
+     # "../../../../examples/OS_report1.xml") as f:
+     "../../../../examples/from_Escape_test.xml") as f:
     tree = tree = ET.ElementTree(ET.fromstring(f.read()))
-    dov = virt3.Virtualizer().parse(root=tree.getroot())
+    dov = virt4.Virtualizer.parse(root=tree.getroot())
+    dov.bind()
+    print dov
   nffg = c.parse_from_Virtualizer3(xml_data=dov.xml())
+  time.sleep(1)
   print nffg.dump()
+  virt = c.dump_to_Virtualizer3(nffg=nffg)
+  # virt.bind()
+  time.sleep(1)
+  print "Reconverted Virtualizer:"
+  print virt.xml()
