@@ -433,7 +433,8 @@ class Flowrule(Element):
   Class for storing a flowrule.
   """
 
-  def __init__ (self, id=None, match="", action="", bandwidth=None, delay=None):
+  def __init__ (self, id=None, match="", action="", bandwidth=None, delay=None,
+                hop_id=None):
     """
     Init.
 
@@ -441,6 +442,8 @@ class Flowrule(Element):
     :type match: str
     :param action: forwarding action
     :type action: str
+    :param hop_id: related SG hop
+    :type hop_id: str
     :param bandwidth: bandwidth
     :type bandwidth: float or int
     :param delay: delay
@@ -450,6 +453,7 @@ class Flowrule(Element):
     super(Flowrule, self).__init__(id=id, type="FLOWRULE")
     self.match = match  # mandatory
     self.action = action  # mandatory
+    self.hop_id = hop_id  # mandatory
     self.bandwidth = bandwidth
     self.delay = delay
 
@@ -457,7 +461,10 @@ class Flowrule(Element):
     flowrule = super(Flowrule, self).persist()
     if self.match:
       flowrule['match'] = self.match
-    flowrule['action'] = self.action
+    if self.action:
+      flowrule['action'] = self.action
+    if self.hop_id:
+      flowrule['hop_id'] = self.hop_id
     if self.bandwidth:
       flowrule['bandwidth'] = self.bandwidth
     if self.delay:
@@ -466,21 +473,22 @@ class Flowrule(Element):
 
   def load (self, data, *args, **kwargs):
     super(Flowrule, self).load(data=data)
-    self.match = data.get('match', "")
-    self.action = data.get('action', "")
+    self.match = data.get('match')
+    self.action = data.get('action')
+    self.hop_id = data.get('hop_id')
     self.bandwidth = data.get('bandwidth')
     self.delay = data.get('delay')
     return self
 
   def __repr__ (self):
-    return "Flowrule object:\nmatch: %s \naction: %s \nbandwidth: %s " \
+    return "Flowrule object:\nmatch: %s \naction: %s \nhop: %s \nbw: %s " \
            "\nbandwidth: %s" % (
-             self.match, self.action, self.bandwidth, self.delay)
+             self.match, self.action, self.hop_id, self.bandwidth, self.delay)
 
   def __str__ (self):
-    return "%s(match: %s, action: %s, bw: %s, delay: %s)" % (
-      self.__class__.__name__, self.match, self.action, self.bandwidth,
-      self.delay)
+    return "%s(match: %s, action: %s, hop: %s, bw: %s, delay: %s)" % (
+      self.__class__.__name__, self.match, self.action, self.hop_id,
+      self.bandwidth, self.delay)
 
 
 class Port(Element):
