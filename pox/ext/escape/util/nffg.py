@@ -377,9 +377,9 @@ class NFFG(AbstractNFFG):
     :param storage: storage resource
     :type storage: str or int
     :param delay: delay property of the Node
-    :type delay: float
+    :type delay: float or int
     :param bandwidth: bandwidth property of the Node
-    :type bandwidth: float
+    :type bandwidth: float or int
     :return: newly created node
     :rtype: :any:`NodeNF`
     """
@@ -433,9 +433,9 @@ class NFFG(AbstractNFFG):
     :param storage: storage resource
     :type storage: str or int
     :param delay: delay property of the Node
-    :type delay: float
+    :type delay: float or int
     :param bandwidth: bandwidth property of the Node
-    :type bandwidth: float
+    :type bandwidth: float or int
     :return: newly created node
     :rtype: :any:`NodeInfra`
     """
@@ -464,11 +464,11 @@ class NFFG(AbstractNFFG):
     :param backward: the link is a backward link compared to an another Link
     :type backward: bool
     :param delay: delay resource
-    :type delay: str or int
+    :type delay: float or int
     :param dynamic: set the link dynamic (default: False)
     :type dynamic: bool
     :param bandwidth: bandwidth resource
-    :type bandwidth: str or int
+    :type bandwidth: float or int
     :return: newly created edge
     :rtype: :any:`EdgeLink`
     """
@@ -493,11 +493,11 @@ class NFFG(AbstractNFFG):
     :param p2p1id: optional link id from port2 to port1
     :type p2p1id: str or int
     :param delay: delay resource of both links
-    :type delay: str or int
+    :type delay: float or int
     :param dynamic: set the link dynamic (default: False)
     :type dynamic: bool
     :param bandwidth: bandwidth resource of both links
-    :type bandwidth: str or int
+    :type bandwidth: float or int
     :return: newly created edge tuple in (p1->p2, p2->p1)
     :rtype: :any:(`EdgeLink`, `EdgeLink`)
     """
@@ -507,7 +507,8 @@ class NFFG(AbstractNFFG):
                              backward=True, delay=delay, bandwidth=bandwidth)
     return p1p2Link, p2p1Link
 
-  def add_sglink (self, src_port, dst_port, hop=None, id=None, flowclass=None):
+  def add_sglink (self, src_port, dst_port, hop=None, id=None, flowclass=None,
+                  tag_info=None):
     """
     Add a SD next hop edge to the structure.
 
@@ -521,11 +522,14 @@ class NFFG(AbstractNFFG):
     :type id: str or int
     :param flowclass: flowclass of SG next hop link
     :type flowclass: str
+    :param tag_info: tag info
+    :type tag_info: str
     :return: newly created edge
     :rtype: :any:`EdgeSGLink`
     """
     if hop is None:
-      hop = EdgeSGLink(src=src_port, dst=dst_port, id=id, flowclass=flowclass)
+      hop = EdgeSGLink(src=src_port, dst=dst_port, id=id, flowclass=flowclass,
+                       tag_info=tag_info)
     self.add_edge(src_port.node, dst_port.node, hop)
     return hop
 
@@ -543,9 +547,9 @@ class NFFG(AbstractNFFG):
     :param id: optional link id
     :type id: str or int
     :param delay: delay resource
-    :type delay: str or int or float
+    :type delay: int or float
     :param bandwidth: bandwidth resource
-    :type bandwidth: str or int or float
+    :type bandwidth: int or float
     :param sg_path: list of ids of sg_links represents end-to-end requirement
     :type sg_path: list or tuple
     :return: newly created edge
@@ -1283,7 +1287,8 @@ class NFFGToolBox(object):
             if command_param[0] == "output" and "UNTAG" in actions:
               # it means this fr is finishing an SGHop path
               ending_port = None
-              # let's find which VNF/SAP port object should the SGHop connect to.
+              # let's find which VNF/SAP port object should the SGHop connect
+              #  to.
               act_port_id = command_param[1]
               try:
                 act_port_id = int(command_param[1])
@@ -1332,7 +1337,7 @@ class NFFGToolBox(object):
                       out_port = int(c_p[1])
                     except ValueError:
                       pass
-                    sg_map[sghop_info] = [starting_port, None, 
+                    sg_map[sghop_info] = [starting_port, None,
                                           d.ports[out_port]]
                     break
             else:
@@ -1363,10 +1368,10 @@ class NFFGToolBox(object):
                       pass
                     for link in nffg.links:
                       if link.src.id == out_port_id and \
-                         link.src.node.id == p.node.id:
+                            link.src.node.id == p.node.id:
                         sg_map_value[1] = link.dst
                         break
-                    # as the last resort for retrieving the SGHop identifier 
+                    # as the last resort for retrieving the SGHop identifier
                     # check for SGHop field in the match part of the flowrule
                     sghop_id = None
                     for match in fr.match.split(";"):
@@ -1377,7 +1382,7 @@ class NFFGToolBox(object):
                         except ValueError:
                           sghop_id = mparam
                         break
-                    sg_map[(sg_map_value[0].node.id, sg_map_value[1].node.id, 
+                    sg_map[(sg_map_value[0].node.id, sg_map_value[1].node.id,
                             sghop_id)] = sg_map_value
                     break
                 else:

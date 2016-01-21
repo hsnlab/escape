@@ -1,0 +1,87 @@
+<?xml version="1.0" ?>
+<virtualizer>
+    <id>UUID-ETH-001</id>
+    <name>ETH OpenStack-OpenDaylight domain</name>
+    <nodes>
+        <node>
+            <id>UUID-01</id>
+            <name>single Bis-Bis node representing the whole OS domain</name>
+            <type>BisBis</type>
+            <ports>
+                <port>
+                    <id>0</id>
+                    <name>SAP14</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP14</sap>
+                    <metadata>
+                        <key>example_key_1</key>
+                        <value>example_value_1</value>
+                    </metadata>
+                </port>
+            </ports>
+            <resources>
+                <cpu>20</cpu>
+                <mem>51200</mem>
+                <storage>1024</storage>
+            </resources>
+            <metadata>
+                <key>example_key_2</key>
+                <value>example_value_2</value>
+            </metadata>
+            <metadata>
+                <key>example_key_3</key>
+                <value>example_value_3</value>
+            </metadata>
+            <capabilities>
+                <supported_NFs>
+                    <node>
+                        <id>dpi</id>
+                        <name>dpi</name>
+                        <type>dpi</type>
+                        <ports>
+                            <port>
+                                <id>1</id>
+                                <name>input</name>
+                                <port_type>port-abstract</port_type>
+                            </port>
+                            <port>
+                                <id>2</id>
+                                <name>output</name>
+                                <port_type>port-abstract</port_type>
+                            </port>
+                        </ports>
+                        <resources>
+                            <cpu>1</cpu>
+                            <mem>128</mem>
+                            <storage>1</storage>
+                        </resources>
+                    </node>
+                    <node>
+                        <id>webserver</id>
+                        <name>webserver</name>
+                        <type>webserver</type>
+                        <ports>
+                            <port>
+                                <id>0</id>
+                                <name>input</name>
+                                <port_type>port-abstract</port_type>
+                            </port>
+                            <port>
+                                <id>1</id>
+                                <name>output</name>
+                                <port_type>port-abstract</port_type>
+                            </port>
+                        </ports>
+                        <resources>
+                            <cpu>1</cpu>
+                            <mem>128</mem>
+                            <storage>1</storage>
+                        </resources>
+                    </node>
+                </supported_NFs>
+            </capabilities>
+        </node>
+    </nodes>
+</virtualizer>
+
+

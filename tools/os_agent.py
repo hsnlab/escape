@@ -43,15 +43,15 @@ class VirtualizationService(RequestHandler):
       self.write('OK')
     else:
       self.write('usage:\n')
-      self.write('get http://hostip:8888/virtualizer - this help message\n')
+      self.write('get http://hostip:8081/virtualizer - this help message\n')
       self.write(
-        'get http://hostip:8888/virtualizer/ping - test webserver aliveness\n')
+        'get http://hostip:8081/virtualizer/ping - test webserver aliveness\n')
       self.write(
-        'post http://hostip:8888/virtualizer/ping - test webserver aliveness\n')
+        'post http://hostip:8081/virtualizer/ping - test webserver aliveness\n')
       self.write(
-        'post http://hostip:8888/virtualizer/get-config - query nf-fg\n')
+        'post http://hostip:8081/virtualizer/get-config - query nf-fg\n')
       self.write(
-        'post http://hostip:8888/virtualizer/edit-config - send nf-fg request '
+        'post http://hostip:8081/virtualizer/edit-config - send nf-fg request '
         'in the post body')
 
   # HTTP POST method on http://hostip:8080/rpc_name will trigger this

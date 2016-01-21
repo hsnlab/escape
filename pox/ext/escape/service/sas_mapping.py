@@ -162,7 +162,7 @@ class ServiceGraphMapper(AbstractMapper):
       if nffg is None:
         log.error("Mapping process is failed! Abort orchestration process.")
       else:
-        log.info("SG: %s orchestration is finished by %s" % (
+        log.info("SG: %s orchestration is finished by %s successfully!" % (
           input_graph, self.__class__.__name__))
       return nffg
 

@@ -27,6 +27,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.lib.util import dpid_to_str
+from virtualizer4 import Virtualizer
 
 
 class TopologyLoadException(Exception):
@@ -769,14 +770,32 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return
 
   def edit_config (self, data):
-    if not isinstance(data, (str, unicode, NFFG)):
-      raise RuntimeError("Not supported config format for 'edit-config'!")
-    if self._unify_interface:
-      log.debug("Convert NFFG to XML/Virtualizer format...")
-      virt_data = self.converter.adapt_mapping_into_Virtualizer(
-         virtualizer=self.virtualizer, nffg=data)
-      data = virt_data.xml()
-    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    if isinstance(data, NFFG):
+      # convert NFFG --> Virtualizer
+      if self._unify_interface:
+        log.debug("Convert NFFG to XML/Virtualizer format...")
+        virt_data = self.converter.adapt_mapping_into_Virtualizer(
+           virtualizer=self.virtualizer, nffg=data)
+        data = virt_data.xml()
+      # non-UNIFY interface --> no conversion
+      else:
+        data = data.dump()
+    elif isinstance(data, Virtualizer):
+      # already in Virtualizer format
+      if self._unify_interface:
+        data = data.xml()
+      # Unexpected case, try to convert anyway
+      else:
+        log.warning(
+           "Unexpected case: convert Virtualizer data for a non-UNIFY "
+           "interface!")
+        converted = self.converter.parse_from_Virtualizer3(xml_data=data.xml())
+        data = converted.dump()
+    else:
+      raise RuntimeError(
+         "Not supported config format: %s for 'edit-config'!" % type(data))
+    log.debug(
+       "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
@@ -784,6 +803,16 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def get_topology_resource (self):
     return self.get_config()
+
+  def get_original_topology (self):
+    """
+    Return the original according to the Unify interface is enabled or not.
+
+    :return: the original topology
+    :rtype: :any:`NFFG` or Virtualizer
+    """
+    return self._original_virtualizer if self._unify_interface else \
+      self._original_nffg
 
 
 class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
@@ -863,14 +892,14 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
-      # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
-      # data = self.converter.unescape_output_hack(str(virtualizer))
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
          virtualizer=self.virtualizer, nffg=data)
-      # virt_data.bind(relative=True)
       data = virt_data.xml()
-    elif not isinstance(data, (str, unicode)):
-      raise RuntimeError("Not supported config format for 'edit-config'!")
+    elif isinstance(data, Virtualizer):
+      data = data.xml()
+    else:
+      raise RuntimeError(
+         "Not supported config format: %s for 'edit-config'!" % type(data))
     log.debug("Send NFFG to %s domain agent at %s..." % (
       self.domain_name, self._base_url))
     return self.send_no_error(self.POST, 'edit-config', data)
@@ -943,15 +972,16 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   def edit_config (self, data):
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
-      # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
-      # data = self.converter.unescape_output_hack(str(virtualizer))
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
          virtualizer=self.virtualizer, nffg=data)
-      # virt_data.bind(relative=True)
       data = virt_data.xml()
-    elif not isinstance(data, (str, unicode)):
-      raise RuntimeError("Not supported config format for 'edit-config'!")
-    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    elif isinstance(data, Virtualizer):
+      data = data.xml()
+    else:
+      raise RuntimeError(
+         "Not supported config format: %s for 'edit-config'!" % type(data))
+    log.debug(
+       "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
@@ -1022,15 +1052,16 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   def edit_config (self, data):
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
-      # virtualizer, nffg = self.converter.dump_to_Virtualizer3(nffg=data)
-      # data = self.converter.unescape_output_hack(str(virtualizer))
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
          virtualizer=self.virtualizer, nffg=data)
-      # virt_data.bind(relative=True)
       data = virt_data.xml()
-    elif not isinstance(data, (str, unicode)):
-      raise RuntimeError("Not supported config format for 'edit-config'!")
-    log.debug("Send NFFG to domain agent at %s..." % self._base_url)
+    elif isinstance(data, Virtualizer):
+      data = data.xml()
+    else:
+      raise RuntimeError(
+         "Not supported config format: %s for 'edit-config'!" % type(data))
+    log.debug(
+      "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):

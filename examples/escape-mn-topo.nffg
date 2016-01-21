@@ -78,6 +78,9 @@
       "domain": "INTERNAL",
       "type": "SDN-SWITCH",
       "resources": {
+        "cpu": 0,
+        "mem": 0,
+        "storage": 0,
         "delay": 0.2,
         "bandwidth": 10000
       }
@@ -99,6 +102,9 @@
       "domain": "INTERNAL",
       "type": "SDN-SWITCH",
       "resources": {
+        "cpu": 0,
+        "mem": 0,
+        "storage": 0,
         "delay": 0.2,
         "bandwidth": 10000
       }

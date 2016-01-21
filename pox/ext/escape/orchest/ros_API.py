@@ -433,15 +433,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: updated NFFG
     :rtype: :any:`NFFG`
     """
-    log.debug("Rewrite received NFFG domain to INTERNAL...")
     rewritten = []
-    if not domain_name:
+    if domain_name is None:
       domain_name = CONFIG.get_local_manager()
+    log.debug("Rewrite received NFFG domain to %s..." % domain_name)
     for infra in nffg_part.infras:
-      if infra.infra_type not in (
-         NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-         NFFG.TYPE_INFRA_SDN_SW):
-        continue
+      # if infra.infra_type not in (
+      #    NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+      #    NFFG.TYPE_INFRA_SDN_SW, NFFG.TYPE_INFRA):
+      #   continue
       # if infra.domain == 'REMOTE':
       #   infra.domain = 'INTERNAL'
       infra.domain = domain_name
