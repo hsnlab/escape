@@ -546,10 +546,11 @@ class NFFGConverter(object):
         port_num = len(infra_node.ports.port._data)
         if port_num > 1:
           # There are valid port-pairs
-          for port_pair in combinations(
-             (p.id.get_value() for p in infra_node.ports), 2):
+          for i, port_pair in enumerate(combinations(
+             (p.id.get_value() for p in infra_node.ports), 2)):
             # Create link
             _link = virt4.Link(
+               id="resource-link%s" % i,
                src=infra_node.ports[port_pair[0]],
                dst=infra_node.ports[port_pair[1]],
                resources=virt4.Link_resource(
@@ -567,6 +568,7 @@ class NFFGConverter(object):
           # Only one port in infra - create loop-edge
           _src = _dst = iter(infra_node.ports).next()
           _link = virt4.Link(
+             id="resource-link",
              src=_src,
              dst=_dst,
              resources=virt4.Link_resource(
@@ -611,14 +613,15 @@ class NFFGConverter(object):
              "Convert inter-domain SAP to port: %s in infra: %s" % (
                link.dst.id, n))
 
-    # Add link to Virtualizer
+    # Add edge-link to Virtualizer
     for link in nffg.links:
-      if link.type != NFFG.TYPE_LINK_STATIC:
+      # Skip backward and non-static link conversion <-- Virtualizer links
+      # are bidirectional
+      if link.type != NFFG.TYPE_LINK_STATIC or link.backward is True:
         continue
       # SAP - Infra links are not stored in Virtualizer format
-      # Skip backward link conversion <-- Virtualizer links are bidirectional
-      if link.src.node.type == NFFG.TYPE_SAP or \
-            link.dst.node.type == NFFG.TYPE_SAP or link.backward is True:
+      if link.src.node.type == NFFG.TYPE_SAP \
+         or link.dst.node.type == NFFG.TYPE_SAP:
         continue
       self.log.debug("Add link: Node: %s, port: %s <--> Node: %s, port: %s" % (
         link.src.node.id, link.src.id, link.dst.node.id, link.dst.id))
@@ -825,11 +828,10 @@ class NFFGConverter(object):
           virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
                               match=match, action=action, out=out_port,
                               resources=_resources)
-          # virt_fe.bind()
           self.log.debug("Generated Flowentry:\n%s" % virtualizer.nodes[
             infra.id].flowtable.add(virt_fe))
-          # explicitly call bind to resolve relative paths for safety reason
-          virtualizer.bind()
+          # explicitly call bind to resolve absolute paths for safety reason
+          virtualizer.bind(relative=True)
           self.log.debug(
              "END adapting modifications from %s into Virtualizer(id=%s, "
              "name=%s)"
