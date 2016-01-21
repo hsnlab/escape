@@ -27,7 +27,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.lib.util import dpid_to_str
-from virtualizer3 import Virtualizer
+from virtualizer4 import Virtualizer
 
 
 class TopologyLoadException(Exception):
