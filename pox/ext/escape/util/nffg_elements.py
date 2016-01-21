@@ -622,7 +622,8 @@ class InfraPort(Port):
     super(InfraPort, self).__init__(node=node, id=id, properties=properties)
     self.flowrules = []
 
-  def add_flowrule (self, match, action, bandwidth=None, id=None):
+  def add_flowrule (self, match, action, bandwidth=None, delay=None,
+                    hop_id=None, id=None):
     """
     Add a flowrule with the given params to the port of an Infrastructure Node.
 
@@ -630,14 +631,19 @@ class InfraPort(Port):
     :type match: str
     :param action: forwarding action
     :type action: str
-    :param bandwidth: bandwidth value
+    :param hop_id: related SG hop
+    :type hop_id: str
+    :param bandwidth: bandwidth
     :type bandwidth: float or int
+    :param delay: delay
+    :type delay: float or int
     :param id: specific id of the flowrule
     :type id: str or int
     :return: newly created and stored flowrule
     :rtype: :any:`Flowrule`
     """
-    flowrule = Flowrule(id=id, match=match, action=action, bandwidth=bandwidth)
+    flowrule = Flowrule(id=id, match=match, action=action, bandwidth=bandwidth,
+                        delay=delay, hop_id=hop_id)
     self.flowrules.append(flowrule)
     return flowrule
 
@@ -682,7 +688,10 @@ class InfraPort(Port):
     super(InfraPort, self).load(data=data)
     for flowrule in data('flowrules', ()):
       self.add_flowrule(match=flowrule.get('match'),
-                        action=flowrule.get('action'))
+                        action=flowrule.get('action'),
+                        delay=flowrule.get('delay'),
+                        bandwidth=flowrule.get('bandwidth'),
+                        hop_id=flowrule.get('hop_id'))
 
 
 ################################################################################
