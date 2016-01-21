@@ -507,7 +507,8 @@ class NFFG(AbstractNFFG):
                              backward=True, delay=delay, bandwidth=bandwidth)
     return p1p2Link, p2p1Link
 
-  def add_sglink (self, src_port, dst_port, hop=None, id=None, flowclass=None):
+  def add_sglink (self, src_port, dst_port, hop=None, id=None, flowclass=None,
+                  tag_info=None):
     """
     Add a SD next hop edge to the structure.
 
@@ -521,11 +522,14 @@ class NFFG(AbstractNFFG):
     :type id: str or int
     :param flowclass: flowclass of SG next hop link
     :type flowclass: str
+    :param tag_info: tag info
+    :type tag_info: str
     :return: newly created edge
     :rtype: :any:`EdgeSGLink`
     """
     if hop is None:
-      hop = EdgeSGLink(src=src_port, dst=dst_port, id=id, flowclass=flowclass)
+      hop = EdgeSGLink(src=src_port, dst=dst_port, id=id, flowclass=flowclass,
+                       tag_info=tag_info)
     self.add_edge(src_port.node, dst_port.node, hop)
     return hop
 
@@ -1283,7 +1287,8 @@ class NFFGToolBox(object):
             if command_param[0] == "output" and "UNTAG" in actions:
               # it means this fr is finishing an SGHop path
               ending_port = None
-              # let's find which VNF/SAP port object should the SGHop connect to.
+              # let's find which VNF/SAP port object should the SGHop connect
+              #  to.
               act_port_id = command_param[1]
               try:
                 act_port_id = int(command_param[1])
@@ -1332,7 +1337,7 @@ class NFFGToolBox(object):
                       out_port = int(c_p[1])
                     except ValueError:
                       pass
-                    sg_map[sghop_info] = [starting_port, None, 
+                    sg_map[sghop_info] = [starting_port, None,
                                           d.ports[out_port]]
                     break
             else:
@@ -1363,7 +1368,7 @@ class NFFGToolBox(object):
                       pass
                     for link in nffg.links:
                       if link.src.id == out_port_id and \
-                         link.src.node.id == p.node.id:
+                            link.src.node.id == p.node.id:
                         sg_map_value[1] = link.dst
                         break
                     # as the last resort for retrieving the SGHop identifier
@@ -1377,7 +1382,7 @@ class NFFGToolBox(object):
                         except ValueError:
                           sghop_id = mparam
                         break
-                    sg_map[(sg_map_value[0].node.id, sg_map_value[1].node.id, 
+                    sg_map[(sg_map_value[0].node.id, sg_map_value[1].node.id,
                             sghop_id)] = sg_map_value
                     break
                 else:
