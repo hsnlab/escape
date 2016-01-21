@@ -1372,18 +1372,9 @@ class NFFGToolBox(object):
                         sg_map_value[1] = link.dst
                         break
                     # as the last resort for retrieving the SGHop identifier
-                    # check for SGHop field in the match part of the flowrule
-                    sghop_id = None
-                    for match in fr.match.split(";"):
-                      field, mparam = match.split("=")
-                      if field == "SGHop":
-                        try:
-                          sghop_id = int(mparam)
-                        except ValueError:
-                          sghop_id = mparam
-                        break
+                    # check for SGHop field in flowrule object
                     sg_map[(sg_map_value[0].node.id, sg_map_value[1].node.id,
-                            sghop_id)] = sg_map_value
+                            fr.hop_id)] = sg_map_value
                     break
                 else:
                   raise RuntimeError("No 'output' command found in collocation "
