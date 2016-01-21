@@ -672,16 +672,10 @@ class CoreAlgorithm(object):
           match_str += ";flowclass=%s" % reqlink.flowclass
         action_str += str(self.net[j][k][lidjk].src.id)
         # Transit SAPs would mess it up pretty much, but it is not allowed.
-        if (self.net.node[i].type == 'SAP') != (self.net.node[k].type == 'SAP'):
-          # (i is SAP) xor (k is SAP) - we enter here only if only one is SAP
-          if self.net.node[i].type == 'SAP':
-            action_str += ";" + tag
-          else:
-            match_str += ";" + tag
-          if self.net.node[k].type == 'SAP':
-            # remove TAG in the last port where flowrules are stored 
-            # if the next node is a SAP
-            action_str += ";UNTAG"
+        if self.net.node[i].type == 'SAP':
+          action_str += ";" + tag
+        else:
+          match_str += ";" + tag
         match_str += ";" + sghop_id
         self.log.debug("Transit flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str, self.net[i][j][lidij].dst.id, j))
