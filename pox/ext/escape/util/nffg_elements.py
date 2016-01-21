@@ -15,9 +15,10 @@
 Classes for handling the elements of the NF-FG data structure
 """
 import json
-from __builtin__ import id as generate
 import random
+from __builtin__ import id as generate
 from collections import Iterable, OrderedDict
+
 
 ################################################################################
 # ---------- BASE classes of NFFG elements -------------------
@@ -85,7 +86,7 @@ class Element(Persistable):
     """
     super(Element, self).__init__()
     self.id = id if id is not None else generate(self) \
-              + random.randint(0,999999)
+                                        + random.randint(0, 999999)
     self.type = type
     self.operation = operation
 
@@ -114,14 +115,14 @@ class Element(Persistable):
       return getattr(self, item)
     else:
       raise KeyError(
-        "%s object has no key: %s" % (self.__class__.__name__, item))
+         "%s object has no key: %s" % (self.__class__.__name__, item))
 
   def __setitem__ (self, key, value):
     if hasattr(self, key):
       return setattr(self, key, value)
     else:
       raise KeyError(
-        "%s object has no key: %s" % (self.__class__.__name__, key))
+         "%s object has no key: %s" % (self.__class__.__name__, key))
 
   def __contains__ (self, item):
     return hasattr(self, item)
@@ -141,8 +142,8 @@ class Element(Persistable):
 
   def update (self, dict2):
     raise RuntimeError(
-      "This standard dict functions is not supported by NFFG! self:%s dict2: "
-      "%s" % (self, dict2))
+       "This standard dict functions is not supported by NFFG! self:%s dict2: "
+       "%s" % (self, dict2))
 
 
 class PortContainer(object):
@@ -311,7 +312,7 @@ class Link(Element):
     """
     super(Link, self).__init__(id=id, type=type)
     if (src is not None and not isinstance(src, Port)) or (
-             dst is not None and not isinstance(dst, Port)):
+           dst is not None and not isinstance(dst, Port)):
       raise RuntimeError("Src and dst must be Port objects!")
     # Reference to src Port object
     self.src = src  # mandatory
@@ -329,7 +330,7 @@ class Link(Element):
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
-        "Container reference is not given for edge endpoint lookup!")
+         "Container reference is not given for edge endpoint lookup!")
     super(Link, self).load(data=data)
     self.src = container.get_port(data['src_node'], data['src_port'])
     self.dst = container.get_port(data['dst_node'], data['dst_port'])
@@ -407,14 +408,14 @@ class NodeResource(Persistable):
       return getattr(self, item)
     else:
       raise KeyError(
-        "%s object has no key: %s" % (self.__class__.__name__, item))
+         "%s object has no key: %s" % (self.__class__.__name__, item))
 
   def __setitem__ (self, key, value):
     if hasattr(self, key):
       return setattr(self, key, value)
     else:
       raise KeyError(
-        "%s object has no key: %s" % (self.__class__.__name__, key))
+         "%s object has no key: %s" % (self.__class__.__name__, key))
 
   def __repr__ (self):
     return "Resources of %s:\ncpu: %s\nmem: %s\nstorage: %s\nbandwidth: " \
@@ -432,7 +433,7 @@ class Flowrule(Element):
   Class for storing a flowrule.
   """
 
-  def __init__ (self, id=None, match="", action="", bandwidth=None):
+  def __init__ (self, id=None, match="", action="", bandwidth=None, delay=None):
     """
     Init.
 
@@ -442,12 +443,15 @@ class Flowrule(Element):
     :type action: str
     :param bandwidth: bandwidth
     :type bandwidth: float or int
+    :param delay: delay
+    :type delay: float or int
     :return: None
     """
     super(Flowrule, self).__init__(id=id, type="FLOWRULE")
     self.match = match  # mandatory
     self.action = action  # mandatory
     self.bandwidth = bandwidth
+    self.delay = delay
 
   def persist (self):
     flowrule = super(Flowrule, self).persist()
@@ -456,6 +460,8 @@ class Flowrule(Element):
     flowrule['action'] = self.action
     if self.bandwidth:
       flowrule['bandwidth'] = self.bandwidth
+    if self.delay:
+      flowrule['delay'] = self.delay
     return flowrule
 
   def load (self, data, *args, **kwargs):
@@ -463,15 +469,18 @@ class Flowrule(Element):
     self.match = data.get('match', "")
     self.action = data.get('action', "")
     self.bandwidth = data.get('bandwidth')
+    self.delay = data.get('delay')
     return self
 
   def __repr__ (self):
-    return "Flowrule object:\nmatch: %s \naction: %s \nbandwidth: %s" % (
-      self.match, self.action, self.bandwidth)
+    return "Flowrule object:\nmatch: %s \naction: %s \nbandwidth: %s " \
+           "\nbandwidth: %s" % (
+             self.match, self.action, self.bandwidth, self.delay)
 
   def __str__ (self):
-    return "%s(match: %s, action: %s, bw: %s)" % (
-      self.__class__.__name__, self.match, self.action, self.bandwidth)
+    return "%s(match: %s, action: %s, bw: %s, delay: %s)" % (
+      self.__class__.__name__, self.match, self.action, self.bandwidth,
+      self.delay)
 
 
 class Port(Element):
@@ -509,7 +518,7 @@ class Port(Element):
       self.properties = []
     else:
       raise RuntimeError(
-        "Port's properties attribute must be iterable or a string!")
+         "Port's properties attribute must be iterable or a string!")
 
   @property
   def node (self):
@@ -931,7 +940,7 @@ class EdgeLink(Link):
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
-        "Container reference is not given for edge endpoint lookup!")
+         "Container reference is not given for edge endpoint lookup!")
     for link in container.edge_links:
       if link.id == data['id']:
         raise RuntimeError("ID conflict during EdgeLink loading: %s" % link.id)
@@ -986,11 +995,11 @@ class EdgeSGLink(Link):
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
-        "Container reference is not given for edge endpoint lookup!")
+         "Container reference is not given for edge endpoint lookup!")
     for link in container.edge_sg_nexthops:
       if link.id == data['id']:
         raise RuntimeError(
-          "ID conflict during EdgeSGLink loading: %s" % link.id)
+           "ID conflict during EdgeSGLink loading: %s" % link.id)
     super(EdgeSGLink, self).load(data=data, container=container)
     self.flowclass = data.get('flowclass')
     return self
@@ -1048,7 +1057,7 @@ class EdgeReq(Link):
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
-        "Container reference is not given for edge endpoint lookup!")
+         "Container reference is not given for edge endpoint lookup!")
     for link in container.edge_reqs:
       if link.id == data['id']:
         raise RuntimeError("ID conflict during EdgeReq loading: %s" % link.id)
@@ -1162,7 +1171,7 @@ class NFFGModel(Element):
     for node in self.node_nfs:
       if node.id == nf.id:
         raise RuntimeError(
-          "NodeNF with id: %s already exist in the container!" % node.id)
+           "NodeNF with id: %s already exist in the container!" % node.id)
     self.node_nfs.append(nf)
     return nf
 
@@ -1191,7 +1200,7 @@ class NFFGModel(Element):
     for node in self.node_saps:
       if node.id == sap.id:
         raise RuntimeError(
-          "NodeNF with id: %s already exist in the container!" % node.id)
+           "NodeNF with id: %s already exist in the container!" % node.id)
     self.node_saps.append(sap)
     return sap
 
@@ -1220,7 +1229,7 @@ class NFFGModel(Element):
     for node in self.node_infras:
       if node.id == infra.id:
         raise RuntimeError(
-          "NodeNF with id: %s already exist in the container!" % node.id)
+           "NodeNF with id: %s already exist in the container!" % node.id)
     self.node_infras.append(infra)
     return infra
 
@@ -1253,8 +1262,8 @@ class NFFGModel(Element):
     for edge in self.edge_links:
       if edge.src.id == src.id and edge.dst.id == dst.id:
         raise RuntimeError(
-          "EdgeLink with src(%s) and dst(%s) endpoints already exist in the "
-          "container!" % (src.id, dst.id))
+           "EdgeLink with src(%s) and dst(%s) endpoints already exist in the "
+           "container!" % (src.id, dst.id))
     self.edge_links.append(link)
     return link
 
@@ -1289,8 +1298,8 @@ class NFFGModel(Element):
     for edge in self.edge_sg_nexthops:
       if edge.src.id == src.id and edge.dst.id == dst.id:
         raise RuntimeError(
-          "EdgeSGLink with src(%s) and dst(%s) endpoints already exist in the "
-          "container!" % (src.id, dst.id))
+           "EdgeSGLink with src(%s) and dst(%s) endpoints already exist in the "
+           "container!" % (src.id, dst.id))
     self.edge_sg_nexthops.append(hop)
     return hop
 
@@ -1325,8 +1334,8 @@ class NFFGModel(Element):
     for edge in self.edge_reqs:
       if edge.src.id == src.id and edge.dst.id == dst.id:
         raise RuntimeError(
-          "EdgeReq with src(%s) and dst(%s) endpoints already exist in the "
-          "container!" % (src.id, dst.id))
+           "EdgeReq with src(%s) and dst(%s) endpoints already exist in the "
+           "container!" % (src.id, dst.id))
     self.edge_sg_nexthops.append(req)
     return req
 
@@ -1380,8 +1389,8 @@ class NFFGModel(Element):
     def unicode_to_str (input):
       if isinstance(input, dict):
         return OrderedDict(
-          [(unicode_to_str(key), unicode_to_str(value)) for key, value in
-           input.iteritems()])
+           [(unicode_to_str(key), unicode_to_str(value)) for key, value in
+            input.iteritems()])
       elif isinstance(input, list):
         return [unicode_to_str(element) for element in input]
       elif isinstance(input, unicode):
@@ -1409,7 +1418,7 @@ class NFFGModel(Element):
         container.edge_links.append(EdgeLink.parse(data=e, container=container))
       for e in data.get('edge_sg_nexthops', ()):
         container.edge_sg_nexthops.append(
-          EdgeSGLink().parse(data=e, container=container))
+           EdgeSGLink().parse(data=e, container=container))
       for e in data.get('edge_reqs', ()):
         container.edge_reqs.append(EdgeReq.parse(data=e, container=container))
     except KeyError as e:
