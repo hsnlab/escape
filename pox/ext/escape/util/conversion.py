@@ -31,8 +31,8 @@ except ImportError:
 
 try:
   # Import for ESCAPEv2
-  import virtualizer3 as virt3
-  from virtualizer3 import Flowentry
+  import virtualizer4 as virt4
+  from virtualizer4 import Flowentry
 except ImportError:
   import os, inspect
 
@@ -40,8 +40,8 @@ except ImportError:
      os.path.join(os.path.dirname(__file__), "../../../..")),
      "unify_virtualizer"))
   # Import for standalone running
-  import virtualizer3 as virt3
-  from virtualizer3 import Flowentry
+  import virtualizer4 as virt4
+  from virtualizer4 import Flowentry
 
 
 class NFFGConverter(object):
@@ -52,13 +52,19 @@ class NFFGConverter(object):
   TYPE_VIRTUALIZER_PORT_ABSTRACT = "port-abstract"
   TYPE_VIRTUALIZER_PORT_SAP = "port-sap"
   # General option names in mapped NFFG assembled by the Mapping algorithm
-  OPERATION_TAG = 'TAG'
-  OPERATION_UNTAG = 'UNTAG'
-  GENERAL_OPERATIONS = (OPERATION_TAG, OPERATION_UNTAG)
+  OP_TAG = 'TAG'
+  OP_UNTAG = 'UNTAG'
+  OP_SGHOP = 'SGHop'
+  OP_INPORT = 'in_port'
+  OP_OUTPUT = 'output'
+  GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG, OP_SGHOP)
   # Operation formats in Virtualizer
   MATCH_VLAN_TAG = r"dl_vlan"
   ACTION_PUSH_VLAN = r"push_vlan"
   ACTION_STRIP_VLAN = r"strip_vlan"
+  # Operand separator
+  LABEL_SEPARATOR = '|'
+  OP_SEPARATOR = ';'
 
   def __init__ (self, domain, logger=None):
     self.domain = domain
@@ -84,7 +90,7 @@ class NFFGConverter(object):
       tree = ET.ElementTree(ET.fromstring(xml_data))
       # Parse Virtualizer structure
       self.log.debug("Parsing XML data to Virtualizer format...")
-      virtualizer = virt3.Virtualizer().parse(root=tree.getroot())
+      virtualizer = virt4.Virtualizer().parse(root=tree.getroot())
     except ET.ParseError as e:
       raise RuntimeError('ParseError: %s' % e.message)
 
@@ -272,9 +278,13 @@ class NFFGConverter(object):
         _bandwidth = _delay = None
         # Create NF ports
         for nf_inst_port in nf_inst.ports:
-
+          # Add VNF port port
+          try:
+            nf_port_id = int(nf_inst_port.id.get_value())
+          except ValueError:
+            nf_port_id = nf_inst_port.id.get_value()
           # Create and Add port
-          nf_port = nf.add_port(id=nf_inst_port.id.get_value())
+          nf_port = nf.add_port(id=nf_port_id)
 
           # Add port properties as metadata to NF port
           if nf_inst_port.capability.is_initialized():
@@ -291,15 +301,17 @@ class NFFGConverter(object):
           # Get the smallest available port for the Infra Node
           # dyn_port = max(max({p.id for p in infra.ports}) + 1,
           #                 len(infra.ports))
-          dyn_port = '|'.join((node_id, nf_id, nf_inst_port.id.get_as_text()))
+          dyn_port = self.LABEL_SEPARATOR.join((node_id,
+                                                nf_id,
+                                                nf_inst_port.id.get_as_text()))
           # Add Infra-side port
           infra_port = infra.add_port(id=dyn_port)
-          self.log.debug("Add port for NF -> %s" % infra_port)
+          self.log.debug("Add dynamic port for NF -> %s" % infra_port)
 
           # NF-Infra is dynamic link --> create special undirected link
           l1, l2 = nffg.add_undirected_link(port1=nf_port, port2=infra_port,
-                                            dynamic=True, delay=_delay,
-                                            bandwidth=_bandwidth)
+                                            bandwidth=_bandwidth, delay=_delay,
+                                            dynamic=True)
           self.log.debug("Add dynamic connection: %s" % l1)
           self.log.debug("Add dynamic connection: %s" % l2)
 
@@ -315,9 +327,9 @@ class NFFGConverter(object):
           _src_node = _src_nf.get_parent().get_parent()
           # match += '|'.join(
           #    {i.id.get_value() for i in (_src_node, _src_nf, _port)})
-          match += '|'.join((_src_node.id.get_as_text(),
-                             _src_nf.id.get_as_text(),
-                             _port.id.get_as_text()))
+          match += self.LABEL_SEPARATOR.join((_src_node.id.get_as_text(),
+                                              _src_nf.id.get_as_text(),
+                                              _port.id.get_as_text()))
         # Else just Infra port --> add only the port number
         else:
           match += _port.id.get_as_text()
@@ -327,63 +339,62 @@ class NFFGConverter(object):
         if "NF_instances" in flowentry.out.get_as_text():
           _dst_nf = _out.get_parent().get_parent()
           _dst_node = _dst_nf.get_parent().get_parent()
-          action += '|'.join((_dst_node.id.get_as_text(),
-                              _dst_nf.id.get_as_text(),
-                              _port.id.get_as_text()))
+          action += self.LABEL_SEPARATOR.join((_dst_node.id.get_as_text(),
+                                               _dst_nf.id.get_as_text(),
+                                               _out.id.get_as_text()))
         # Else just Infra port --> add only the port number
         else:
           action += _out.id.get_as_text()
 
         # Check if there is a matching operation -> currently just TAG is used
         if flowentry.match.is_initialized() and flowentry.match.get_value():
-          if flowentry.match.get_as_text().startswith(self.MATCH_VLAN_TAG):
-            match += ";%s=" % self.OPERATION_TAG
-            # if src or dst was a SAP: SAP.id == port.name
-            # if scr or dst is a VNF port name of parent of port
-            if _port.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
-              _src_name = _port.name.get_as_text()
-            else:
-              _src_name = _port.get_parent().get_parent().id.get_as_text()
-            if _out.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
-              _dst_name = _out.name.get_as_text()
-            else:
-              _dst_name = _out.get_parent().get_parent().id.get_as_text()
-            # e.g. <match>dl_tag=0x0004</match> --> in_port=1;TAG=SAP2|fwd|4
-            # Convert from int/hex to int
-            _tag = int(flowentry.match.get_as_text().split('=')[1], base=0)
-            match += "|".join((str(_src_name), str(_dst_name), str(_tag)))
-          else:
-            self.log.warning(
-               "Not recognizable match operation in:\n%s" % flowentry)
-            continue
+          for op in flowentry.match.get_as_text().split(self.OP_SEPARATOR):
+            if op.startswith(self.MATCH_VLAN_TAG):
+              # if src or dst was a SAP: SAP.id == port.name
+              # if scr or dst is a VNF port name of parent of port
+              if _port.port_type.get_as_text() == \
+                 self.TYPE_VIRTUALIZER_PORT_SAP:
+                _src_name = _port.name.get_as_text()
+              else:
+                _src_name = _port.get_parent().get_parent().id.get_as_text()
+              if _out.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
+                _dst_name = _out.name.get_as_text()
+              else:
+                _dst_name = _out.get_parent().get_parent().id.get_as_text()
+              # e.g. <match>dl_tag=0x0004</match> --> in_port=1;TAG=SAP2|fwd|4
+              # Convert from int/hex to int
+              _tag = int(op.split('=')[1], base=0)
+              match += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
+                 (str(_src_name), str(_dst_name), str(_tag))))
+            elif op.startswith(self.OP_SGHOP):
+              match += ";%s" % op
 
         # Check if there is an action operation
         if flowentry.action.is_initialized() and flowentry.action.get_value():
-          if flowentry.action.get_as_text() == self.ACTION_STRIP_VLAN:
-            # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
-            action += ";%s" % self.OPERATION_UNTAG
-          elif flowentry.action.get_as_text().startswith(self.ACTION_PUSH_VLAN):
-            action += ";%s=" % self.OPERATION_TAG
-            # tag: src element name | dst element name | tag
-            # if src or dst was a SAP: SAP.id == port.name
-            # if scr or dst is a VNF port name of parent of port
-            if _port.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
-              _src_name = _port.name.get_as_text()
-            else:
-              _src_name = _port.get_parent().get_parent().id.get_as_text()
-            if _out.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
-              _dst_name = _out.name.get_as_text()
-            else:
-              _dst_name = _out.get_parent().get_parent().id.get_as_text()
-            # e.g. <action>push_tag:0x0003</action> -->
-            # output=1;TAG=decomp|SAP2|3
-            # Convert from int/hex to int
-            _tag = int(flowentry.action.get_as_text().split(':')[1], base=0)
-            action += "|".join((_src_name, _dst_name, str(_tag)))
-          else:
-            self.log.warning(
-               "Not recognizable action operation in:\n%s" % flowentry)
-            continue
+          for op in flowentry.action.get_as_text().split(self.OP_SEPARATOR):
+            if op.startswith(self.ACTION_PUSH_VLAN):
+              # tag: src element name | dst element name | tag
+              # if src or dst was a SAP: SAP.id == port.name
+              # if scr or dst is a VNF port name of parent of port
+              if _port.port_type.get_as_text() == \
+                 self.TYPE_VIRTUALIZER_PORT_SAP:
+                _src_name = _port.name.get_as_text()
+              else:
+                _src_name = _port.get_parent().get_parent().id.get_as_text()
+              if _out.port_type.get_as_text() == self.TYPE_VIRTUALIZER_PORT_SAP:
+                _dst_name = _out.name.get_as_text()
+              else:
+                _dst_name = _out.get_parent().get_parent().id.get_as_text()
+              # e.g. <action>push_tag:0x0003</action> -->
+              # output=1;TAG=decomp|SAP2|3
+              # Convert from int/hex to int
+              _tag = int(op.split(':')[1], base=0)
+              action += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
+                 (_src_name, _dst_name, str(_tag))))
+            elif op.startswith(self.ACTION_STRIP_VLAN):
+              # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
+              action += ";%s" % self.OP_UNTAG
+
         # Get the src (port where fr need to store) and dst port id
         try:
           port_id = int(_port.id.get_value())
@@ -392,15 +403,36 @@ class NFFGConverter(object):
 
         # Get port from NFFG in which need to store the fr
         try:
-          port = nffg[node_id].ports[port_id]
+          # If the port is an Infra port
+          if "NF_instances" not in flowentry.port.get_as_text():
+            port = nffg[node_id].ports[port_id]
+          # If the port is a VNF port -> get the dynamic port in the Infra
+          else:
+            _vnf_id = _port.get_parent().get_parent().id.get_value()
+            _dyn_port = [l.dst.id for vnf, infra, l in
+                         nffg.network.edges_iter([_vnf_id], data=True) if
+                         l.type == NFFG.TYPE_LINK_DYNAMIC and str(l.src.id) ==
+                         str(port_id)]
+            if len(_dyn_port) > 1:
+              self.log.warning(
+                 "Multiple dynamic link detected for NF(id: %s) Use first "
+                 "link ..." % _vnf_id)
+            elif len(_dyn_port) < 1:
+              raise RuntimeError()
+            # Get dynamic port from infra
+            port = nffg[node_id].ports[_dyn_port[0]]
         except:
           self.log.warning(
-             "Port: %s from Flowrule is not found in the NFFG!" % port_id)
+             "Port: %s is not found in the NFFG from the flowrule:\n%s" % (
+               port_id, flowentry))
           continue
 
         if flowentry.resources.is_initialized() and \
            flowentry.resources.bandwidth.is_initialized():
-          _fr_bw = flowentry.resources.bandwidth.get_value()
+          try:
+            _fr_bw = float(flowentry.resources.bandwidth.get_value())
+          except ValueError:
+            _fr_bw = flowentry.resources.bandwidth.get_value()
         else:
           _fr_bw = None
 
@@ -430,8 +462,7 @@ class NFFGConverter(object):
       l1, l2 = nffg.add_undirected_link(
          port1=nffg[src_node].ports[src_port],
          port2=nffg[dst_node].ports[dst_port],
-         **params
-      )
+         **params)
       self.log.debug("Add static connection: %s" % l1)
       self.log.debug("Add static connection: %s" % l2)
     self.log.debug(
@@ -452,13 +483,13 @@ class NFFGConverter(object):
          NFFG.version, 3))
     self.log.debug("Converting data to XML-based Virtualizer structure...")
     # Create empty Virtualizer
-    virt = virt3.Virtualizer(id=str(nffg.id), name=str(nffg.name))
+    virt = virt4.Virtualizer(id=str(nffg.id), name=str(nffg.name))
     self.log.debug("Creating Virtualizer based on %s" % nffg)
 
     for infra in nffg.infras:
       self.log.debug("Converting %s" % infra)
       # Create infra node with basic params - nodes/node/{id,name,type}
-      infra_node = virt3.Infra_node(id=str(infra.id), name=str(infra.name),
+      infra_node = virt4.Infra_node(id=str(infra.id), name=str(infra.name),
                                     type=str(infra.infra_type))
 
       # Add resources nodes/node/resources
@@ -480,7 +511,7 @@ class NFFGConverter(object):
           # port is not a number
           if '|' in str(port.id):
             continue
-        _port = virt3.Port(id=str(port.id))
+        _port = virt4.Port(id=str(port.id))
         # Detect Port properties
         if port.get_property("name"):
           _port.name.set_value(port.get_property("name"))
@@ -501,7 +532,7 @@ class NFFGConverter(object):
       # Add minimalistic Node for supported NFs based on supported list of NFFG
       for sup in infra.supported:
         infra_node.capabilities.supported_NFs.add(
-           virt3.Node(id=str(sup), type=str(sup)))
+           virt4.Node(id=str(sup), type=str(sup)))
 
       # Add infra to virtualizer
       virt.nodes.add(infra_node)
@@ -515,13 +546,14 @@ class NFFGConverter(object):
         port_num = len(infra_node.ports.port._data)
         if port_num > 1:
           # There are valid port-pairs
-          for port_pair in combinations(
-             (p.id.get_value() for p in infra_node.ports), 2):
+          for i, port_pair in enumerate(combinations(
+             (p.id.get_value() for p in infra_node.ports), 2)):
             # Create link
-            _link = virt3.Link(
+            _link = virt4.Link(
+               id="resource-link%s" % i,
                src=infra_node.ports[port_pair[0]],
                dst=infra_node.ports[port_pair[1]],
-               resources=virt3.Link_resource(
+               resources=virt4.Link_resource(
                   delay=str(
                      infra.resources.delay) if infra.resources.delay else None,
                   bandwidth=str(
@@ -535,10 +567,11 @@ class NFFGConverter(object):
         elif port_num == 1:
           # Only one port in infra - create loop-edge
           _src = _dst = iter(infra_node.ports).next()
-          _link = virt3.Link(
+          _link = virt4.Link(
+             id="resource-link",
              src=_src,
              dst=_dst,
-             resources=virt3.Link_resource(
+             resources=virt4.Link_resource(
                 delay=str(
                    infra.resources.delay) if infra.resources.delay else None,
                 bandwidth=str(
@@ -580,22 +613,23 @@ class NFFGConverter(object):
              "Convert inter-domain SAP to port: %s in infra: %s" % (
                link.dst.id, n))
 
-    # Add link to Virtualizer
+    # Add edge-link to Virtualizer
     for link in nffg.links:
-      if link.type != NFFG.TYPE_LINK_STATIC:
+      # Skip backward and non-static link conversion <-- Virtualizer links
+      # are bidirectional
+      if link.type != NFFG.TYPE_LINK_STATIC or link.backward is True:
         continue
       # SAP - Infra links are not stored in Virtualizer format
-      # Skip backward link conversion <-- Virtualizer links are bidirectional
-      if link.src.node.type == NFFG.TYPE_SAP or \
-            link.dst.node.type == NFFG.TYPE_SAP or link.backward is True:
+      if link.src.node.type == NFFG.TYPE_SAP \
+         or link.dst.node.type == NFFG.TYPE_SAP:
         continue
       self.log.debug("Add link: Node: %s, port: %s <--> Node: %s, port: %s" % (
         link.src.node.id, link.src.id, link.dst.node.id, link.dst.id))
-      _link = virt3.Link(
+      _link = virt4.Link(
          id=str(link.id),
          src=virt.nodes[str(link.src.node.id)].ports[str(link.src.id)],
          dst=virt.nodes[str(link.dst.node.id)].ports[str(link.dst.id)],
-         resources=virt3.Link_resource(
+         resources=virt4.Link_resource(
             delay=str(link.delay),
             bandwidth=str(link.bandwidth)
          )
@@ -607,7 +641,7 @@ class NFFGConverter(object):
     # Virtualizer
     virt = self.adapt_mapping_into_Virtualizer(virtualizer=virt, nffg=nffg)
     # explicitly call bind to resolve relative paths for safety reason
-    virt.bind()
+    virt.bind(relative=True)
     self.log.debug(
        "END conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
          NFFG.version, 3))
@@ -662,10 +696,10 @@ class NFFGConverter(object):
              nf.resources.storage) if nf.resources.storage is not None else \
             None
           # Create Node object for NF
-          v_nf = virt3.Node(
+          v_nf = virt4.Node(
              id=str(nf.id), name=str(nf.name),
              type=str(nf.functional_type),
-             resources=virt3.Software_resource(
+             resources=virt4.Software_resource(
                 cpu=v_nf_cpu,
                 mem=v_nf_mem,
                 storage=v_nf_storage))
@@ -682,7 +716,7 @@ class NFFGConverter(object):
           for port in nffg[v].ports:
             self.log.debug(
                "Add Port: %s to NF node: %s" % (port, v_nf.id.get_as_text()))
-            nf_port = virt3.Port(id=str(port.id), port_type="port-abstract")
+            nf_port = virt4.Port(id=str(port.id), port_type="port-abstract")
             virtualizer.nodes[str(u)].NF_instances[str(v)].ports.add(nf_port)
         else:
           self.log.debug("%s is already exist in the Virtualizer(id=%s, "
@@ -785,22 +819,26 @@ class NFFGConverter(object):
           # Process action field
           action = self.__convert_flowrule_action_unified(flowrule.action)
 
+          if flowrule.bandwidth is not None:
+            _resources = virt4.Link_resource(bandwidth=str(flowrule.bandwidth))
+          else:
+            _resources = None
+
           # Add Flowentry with converted params
           virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
                               match=match, action=action, out=out_port,
-                              resources=virt3.Link_resource(
-                                 bandwidth=str(flowrule.bandwidth)
-                              ))
-          # virt_fe.bind()
+                              resources=_resources)
           self.log.debug("Generated Flowentry:\n%s" % virtualizer.nodes[
             infra.id].flowtable.add(virt_fe))
-    # explicitly call bind to resolve relative paths for safety reason
-    virtualizer.bind()
-    self.log.debug(
-       "END adapting modifications from %s into Virtualizer(id=%s, name=%s)"
-       % (nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
-    # Return with modified Virtualizer
-    return virtualizer
+          # explicitly call bind to resolve absolute paths for safety reason
+          virtualizer.bind(relative=True)
+          self.log.debug(
+             "END adapting modifications from %s into Virtualizer(id=%s, "
+             "name=%s)"
+             % (nffg, virtualizer.id.get_as_text(),
+                virtualizer.name.get_as_text()))
+      # Return with modified Virtualizer
+      return virtualizer
 
   def __convert_flowrule_match (self, domain, match):
     """
@@ -817,7 +855,7 @@ class NFFGConverter(object):
       return
 
     op = match.split(';')[1].split('=')
-    if op[0] not in ('TAG',):
+    if op[0] not in ('TAG', 'SGHop'):
       self.log.warning("Unsupported match operand: %s" % op[0])
       return
 
@@ -916,25 +954,28 @@ class NFFGConverter(object):
     # E.g.:  "match": "in_port=1;TAG=SAP1|comp|1" -->
     # E.g.:  "match": "in_port=SAP2|fwd|1;TAG=SAP1|comp|1" -->
     # <match>(in_port=1)dl_tag=1</match>
+    ret = []
     match_part = match.split(';')
     if len(match_part) < 2:
       if not match_part[0].startswith("in_port"):
-        self.log.warning("Unrecognizable match field: %s" % match)
+        self.log.warning("Invalid match field: %s" % match)
       return
-
-    op = match_part[1].split('=')
-    if op[0] not in self.GENERAL_OPERATIONS:
-      self.log.warning("Unsupported match operand: %s" % op[0])
-      return
-
-    if op[0] == self.OPERATION_TAG:
-      try:
-        vlan_tag = int(op[1].split('|')[-1])
-        return "%s=%s" % (self.MATCH_VLAN_TAG, format(vlan_tag, '#06x'))
-      except ValueError:
-        self.log.warning(
-           "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
-        return
+    for kv in match_part:
+      op = kv.split('=')
+      if op[0] not in self.GENERAL_OPERATIONS:
+        self.log.warning("Unsupported match operand: %s" % op[0])
+        continue
+      if op[0] == self.OP_TAG:
+        try:
+          vlan_tag = int(op[1].split('|')[-1])
+          ret.append("%s=%s" % (self.MATCH_VLAN_TAG, format(vlan_tag, '#06x')))
+        except ValueError:
+          self.log.warning(
+             "Wrong VLAN format: %s!" % op[1])
+          continue
+      elif op[0] == self.OP_SGHOP:
+        ret.append(kv)
+    return self.OP_SEPARATOR.join(ret)
 
   def __convert_flowrule_action_unified (self, action):
     """
@@ -950,29 +991,30 @@ class NFFGConverter(object):
     :rtype: str
     """
     # E.g.:  "action": "output=2;UNTAG"
+    ret = []
     action_part = action.split(';')
     if len(action_part) < 2:
       if not action_part[0].startswith("output"):
-        self.log.warning("Unrecognizable action field: %s" % action)
+        self.log.warning("Invalid action field: %s" % action)
       return
-
-    op = action_part[1].split('=')
-    if op[0] not in self.GENERAL_OPERATIONS:
-      self.log.warning("Unsupported action operand: %s" % op[0])
-      return
-
-    if op[0] == self.OPERATION_TAG:
-      # E.g.: <action>push_tag:0x0037</action>
-      try:
-        vlan = int(op[1].split('|')[-1])
-        return "%s:%s" % (self.ACTION_PUSH_VLAN, format(vlan, '#06x'))
-      except ValueError:
-        self.log.warning(
-           "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+    for kv in action_part:
+      op = kv.split('=')
+      if op[0] not in self.GENERAL_OPERATIONS:
+        self.log.warning("Unsupported action operand: %s" % op[0])
         return
-    elif op[0] == self.OPERATION_UNTAG:
-      # E.g.: <action>strip_vlan</action>
-      return self.ACTION_STRIP_VLAN
+      if op[0] == self.OP_TAG:
+        # E.g.: <action>push_tag:0x0037</action>
+        try:
+          vlan = int(op[1].split('|')[-1])
+          ret.append("%s:%s" % (self.ACTION_PUSH_VLAN, format(vlan, '#06x')))
+        except ValueError:
+          self.log.warning(
+             "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
+          continue
+      elif op[0] == self.OP_UNTAG:
+        # E.g.: <action>strip_vlan</action>
+        ret.append(self.ACTION_STRIP_VLAN)
+    return self.OP_SEPARATOR.join(ret)
 
 
 def test_xml_based_builder ():
@@ -1281,6 +1323,7 @@ def test_topo_os ():
 
 if __name__ == "__main__":
   import logging
+  import time
 
   logging.basicConfig(level=logging.DEBUG)
   log = logging.getLogger(__name__)
@@ -1310,20 +1353,29 @@ if __name__ == "__main__":
   # print out
 
   # with open(
-  #    "../../../../examples/escape-mn-topo.nffg") as f:
+  #    "../../../../examples/escape-mn-mapped-topo.nffg") as f:
   #   nffg = NFFG.parse(raw_data=f.read())
-  #   nffg.duplicate_static_links()
+  #   # nffg.duplicate_static_links()
   # print "Parsed NFFG: %s" % nffg
   # virt = c.dump_to_Virtualizer3(nffg=nffg)
   # print "Converted:"
   # print virt.xml()
   # print "Reconvert to NFFG:"
-  # nffg, v = c.parse_from_Virtualizer3(xml_data=virt.xml())
+  # nffg = c.parse_from_Virtualizer3(xml_data=virt.xml())
   # print nffg.dump()
 
   with open(
-     "../../../../examples/escape-mn-dov.xml") as f:
+     # "../../../../examples/OS_report1.xml") as f:
+     "../../../../examples/from_Escape_test.xml") as f:
     tree = tree = ET.ElementTree(ET.fromstring(f.read()))
-    dov = virt3.Virtualizer().parse(root=tree.getroot())
+    dov = virt4.Virtualizer.parse(root=tree.getroot())
+    dov.bind()
+    print dov
   nffg = c.parse_from_Virtualizer3(xml_data=dov.xml())
+  time.sleep(1)
   print nffg.dump()
+  virt = c.dump_to_Virtualizer3(nffg=nffg)
+  # virt.bind()
+  time.sleep(1)
+  print "Reconverted Virtualizer:"
+  print virt.xml()
