@@ -1321,6 +1321,7 @@ def test_topo_os ():
 
 if __name__ == "__main__":
   import logging
+  import time
 
   logging.basicConfig(level=logging.DEBUG)
   log = logging.getLogger(__name__)
@@ -1349,21 +1350,30 @@ if __name__ == "__main__":
   # out = out.replace("&lt;", "<").replace("&gt;", ">")
   # print out
 
-  with open(
-     "../../../../examples/escape-mn-mapped-topo.nffg") as f:
-    nffg = NFFG.parse(raw_data=f.read())
-    # nffg.duplicate_static_links()
-  print "Parsed NFFG: %s" % nffg
-  virt = c.dump_to_Virtualizer3(nffg=nffg)
-  print "Converted:"
-  print virt.xml()
-  print "Reconvert to NFFG:"
-  nffg = c.parse_from_Virtualizer3(xml_data=virt.xml())
-  print nffg.dump()
-
   # with open(
-  #    "../../../../examples/escape-mn-dov.xml") as f:
-  #   tree = tree = ET.ElementTree(ET.fromstring(f.read()))
-  #   dov = virt3.Virtualizer().parse(root=tree.getroot())
-  # nffg = c.parse_from_Virtualizer3(xml_data=dov.xml())
+  #    "../../../../examples/escape-mn-mapped-topo.nffg") as f:
+  #   nffg = NFFG.parse(raw_data=f.read())
+  #   # nffg.duplicate_static_links()
+  # print "Parsed NFFG: %s" % nffg
+  # virt = c.dump_to_Virtualizer3(nffg=nffg)
+  # print "Converted:"
+  # print virt.xml()
+  # print "Reconvert to NFFG:"
+  # nffg = c.parse_from_Virtualizer3(xml_data=virt.xml())
   # print nffg.dump()
+
+  with open(
+     # "../../../../examples/OS_report1.xml") as f:
+     "../../../../examples/from_Escape_test.xml") as f:
+    tree = tree = ET.ElementTree(ET.fromstring(f.read()))
+    dov = virt4.Virtualizer.parse(root=tree.getroot())
+    dov.bind()
+    print dov
+  nffg = c.parse_from_Virtualizer3(xml_data=dov.xml())
+  time.sleep(1)
+  print nffg.dump()
+  virt = c.dump_to_Virtualizer3(nffg=nffg)
+  # virt.bind()
+  time.sleep(1)
+  print "Reconverted Virtualizer:"
+  print virt.xml()
