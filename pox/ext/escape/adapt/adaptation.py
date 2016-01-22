@@ -533,6 +533,9 @@ class ControllerAdapter(object):
   def update_dov (self, nffg_part):
     """
     Update the global view with installed Nfs/Flowrules.
+
+    :param nffg_part: nffg part need to be updated with
+    :type: :any:`NFFG`
     """
     pass
 
@@ -599,6 +602,8 @@ class DomainVirtualizer(AbstractVirtualizer):
 
     :param nffg: NFFG instance intended to use as the global view
     :type nffg: :any:`NFFG`
+    :param domain: name of the merging domain
+    :type domain: str
     :return: None
     """
     log.debug("Set domain: %s as the global view!" % domain)
@@ -606,11 +611,18 @@ class DomainVirtualizer(AbstractVirtualizer):
     self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
     self._global_nffg.id = DoV
 
-  def merge_domain_into_dov (self, domain, nffg):
+  def merge_domain_into_dov (self, nffg, domain):
     """
     Add a newly detected domain to DoV.
 
     Based on the feature: escape.util.nffg.NFFGToolBox#merge_domains
+
+    :param nffg: NFFG object need to be merged into DoV
+    :type nffg: :any:`NFFG`
+    :param domain: name of the merging domain
+    :type domain: str
+    :return: Dov
+    :rtype: :any:`NFFG`
     """
     from copy import deepcopy
 
@@ -751,6 +763,11 @@ class DomainVirtualizer(AbstractVirtualizer):
   def update_domain_view (self, domain, nffg):
     """
     Update the existing domain in the merged Global view.
+
+    :param nffg: NFFG object need to be updated with
+    :type nffg: :any:`NFFG`
+    :param domain: name of the merging domain
+    :type domain: str
     """
     # TODO
     pass

@@ -73,7 +73,8 @@ class AbstractNETCONFAdapter(object):
     # Suppress low level logging
     self.__suppress_ncclient_logging()
 
-  def __suppress_ncclient_logging (self, level=None):
+  @staticmethod
+  def __suppress_ncclient_logging (level=None):
     """
     Suppress annoying and detailed logging of `ncclient` package.
 
@@ -264,7 +265,8 @@ class AbstractNETCONFAdapter(object):
       # need to handle???
       raise
 
-  def __remove_namespace (self, xml_element, namespace=None):
+  @staticmethod
+  def __remove_namespace (xml_element, namespace=None):
     """
     Own function to remove the ncclient's namespace prefix, because it causes
     "definition not found error" if OWN modules and RPCs are being used.
@@ -283,7 +285,8 @@ class AbstractNETCONFAdapter(object):
           elem.tag = elem.tag[len(ns):]
     return xml_element
 
-  def __parse_rpc_params (self, rpc_request, params):
+  @staticmethod
+  def __parse_rpc_params (rpc_request, params):
     """
     Parse given keyword arguments and generate RPC body in proper XML format.
     The key value is used as the XML tag name. If the value is another

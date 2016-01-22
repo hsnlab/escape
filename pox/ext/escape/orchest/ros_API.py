@@ -279,6 +279,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.info("Starting Resource Orchestration Sublayer...")
     # Mandatory super() call
     super(ResourceOrchestrationAPI, self).__init__(standalone, **kwargs)
+    self.resource_orchestrator = None
 
   def initialize (self):
     """
@@ -311,6 +312,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     .. seealso::
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
+
+    :param event: event object
     """
     log.info("Resource Orchestration Sublayer is going down...")
     if self._agent or self._rosapi:

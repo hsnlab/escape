@@ -52,6 +52,7 @@ def launch (nffg_file='', standalone=False, agent=False, rosapi=False,
   :type agent: bool
   :param agent: start a REST API for the Cf-Or interface
   :type agent: bool
+
   :return: None
   """
   global init_param

@@ -631,7 +631,6 @@ class VNFStarterAPI(object):
   VNF_HEADER_DECOMP = "headerDecompressor"
   VNF_FORWARDER = "simpleForwarder"
 
-
   class VNFStatus(object):
     """
     Helper class for define VNF status code constants.
@@ -645,7 +644,6 @@ class VNFStarterAPI(object):
     UP_AND_RUNNING = 1
     s_UP_AND_RUNNING = "UP_AND_RUNNING"
 
-
   class ConnectedStatus(object):
     """
     Helper class for define VNF connection code constants.
@@ -656,7 +654,6 @@ class VNFStarterAPI(object):
     s_DISCONNECTED = "DISCONNECTED"
     CONNECTED = 1
     s_CONNECTED = "CONNECTED"
-
 
   def __init__ (self):
     super(VNFStarterAPI, self).__init__()
