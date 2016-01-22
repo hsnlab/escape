@@ -66,8 +66,6 @@ def field_splitter (data, field):
         raise RuntimeError('Not supported field type: %s!' % field)
     elif kv[0] == 'output':
       ret['out'] = kv[1]
-    elif kv[0] == "SGHop":
-      pass
     else:
       raise RuntimeError("Unrecognizable key: %s" % kv[0])
   return ret
