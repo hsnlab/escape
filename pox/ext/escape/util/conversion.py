@@ -64,6 +64,7 @@ class NFFGConverter(object):
   # Operand separator
   LABEL_SEPARATOR = '|'
   OP_SEPARATOR = ';'
+  KV_SEPARATOR = '='
   # Field types
   TYPE_MATCH = "MATCH"
   TYPE_ACTION = "ACTION"
@@ -114,19 +115,20 @@ class NFFGConverter(object):
     #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
     #     action['vlan_push'] = push_tag
     ret = {}
-    parts = field.split(';')
+    parts = field.split(cls.OP_SEPARATOR)
     if len(parts) < 1:
       raise RuntimeError(
-         "Wrong format: %s! Separator (;) not found!" % field)
+         "Wrong format: %s! Separator (%s) not found!" % (
+           field, cls.OP_SEPARATOR))
     for part in parts:
-      kv = part.split('=')
+      kv = part.split(cls.KV_SEPARATOR)
       if len(kv) != 2:
-        if kv[0] == 'UNTAG' and type.upper() == 'ACTION':
+        if kv[0] == cls.OP_UNTAG and type.upper() == cls.TYPE_ACTION:
           ret['vlan_pop'] = True
           continue
         else:
           raise RuntimeError("Not a key-value pair: %s" % part)
-      if kv[0] == 'in_port':
+      if kv[0] == cls.OP_INPORT:
         try:
           ret['in_port'] = int(kv[1])
         except ValueError:
@@ -134,14 +136,14 @@ class NFFGConverter(object):
              "in_port is not a valid port number: %s! Skip "
              "converting..." % kv[1])
           ret['in_port'] = kv[1]
-      elif kv[0] == 'TAG':
-        if type.upper() == "MATCH":
-          ret['vlan_id'] = kv[1].split('|')[-1]
-        elif type.upper() == "ACTION":
-          ret['vlan_push'] = kv[1].split('|')[-1]
+      elif kv[0] == cls.OP_TAG:
+        if type.upper() == cls.TYPE_MATCH:
+          ret['vlan_id'] = kv[1].split(cls.LABEL_SEPARATOR)[-1]
+        elif type.upper() == cls.TYPE_ACTION:
+          ret['vlan_push'] = kv[1].split(cls.LABEL_SEPARATOR)[-1]
         else:
           raise RuntimeError('Not supported field type: %s!' % type)
-      elif kv[0] == 'output':
+      elif kv[0] == cls.OP_OUTPUT:
         ret['out'] = kv[1]
       else:
         raise RuntimeError("Unrecognizable key: %s" % kv[0])
