@@ -103,8 +103,8 @@ class CfOrRequestHandler(AbstractRequestHandler):
   # Need to be set by container class
   bounded_layer = 'orchestration'
   static_prefix = "cfor"
-  # Logger. Must define.
-  log = log.getChild("[Cf-Or]")
+  # Logger name
+  LOGGER_NAME = "Cf-Or"
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
@@ -121,7 +121,7 @@ class CfOrRequestHandler(AbstractRequestHandler):
     """
     Response configuration.
     """
-    log.info("Call Cf-Or function: get-config")
+    log.info("Call %s function: get-config" % self.LOGGER_NAME)
     config = self._proceed_API_call('api_cfor_get_config')
     if config is None:
       self.send_error(404, message="Resource info is missing!")
@@ -131,19 +131,22 @@ class CfOrRequestHandler(AbstractRequestHandler):
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(data))
     self.end_headers()
+    log.debug("Send back topology description...")
     self.wfile.write(data)
+    log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
 
   def edit_config (self):
     """
     Receive configuration and initiate orchestration.
     """
-    log.info("Call Cf-Or function: edit-config")
+    log.info("Call %s function: edit-config" % self.LOGGER_NAME)
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     log.debug("Parsed NFFG request: %s" % nffg)
     self._proceed_API_call('api_cfor_edit_config', nffg)
     self.send_acknowledge()
+    log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
 
 class ROSAgentRequestHandler(AbstractRequestHandler):
@@ -171,8 +174,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   bounded_layer = 'orchestration'
   # Set special prefix to imitate OpenStack agent API
   static_prefix = "escape"
-  # Logger. Must define.
-  log = log.getChild("[Sl-Or]")
+  # Logger name
+  LOGGER_NAME = "Sl-Or"
   # Use Virtualizer format
   virtualizer_format_enabled = False
   # Name mapper to avoid Python naming constraint
@@ -193,7 +196,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    log.info("Call REST-API function: get-config")
+    log.info("Call %s function: get-config" % self.LOGGER_NAME)
     # Forward call to main layer class
     config = self._proceed_API_call('api_ros_get_config')
     if config is None:
@@ -213,9 +216,10 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       self.send_header('Content-Type', 'application/json')
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
-
     self.end_headers()
+    log.debug("Send back topology description...")
     self.wfile.write(data)
+    log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
 
   def edit_config (self):
     """
@@ -223,7 +227,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    log.info("Call REST-API function: edit-config")
+    log.info("Call %s function: edit-config" % self.LOGGER_NAME)
     # Obtain NFFG from request body
     log.debug("Detected response format: %s" %
               self.headers.get("Content-Type", ""))
@@ -247,8 +251,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     # nffg = self._update_REMOTE_ESCAPE_domain(nffg_part=nffg)
     log.debug("Parsed NFFG install request: %s" % nffg)
     self._proceed_API_call('api_ros_edit_config', nffg)
-
     self.send_acknowledge()
+    log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
