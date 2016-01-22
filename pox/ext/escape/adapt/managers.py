@@ -635,7 +635,7 @@ class InternalDomainManager(AbstractDomainManager):
           except RuntimeError as e:
             log.warning("Wrong format in match/action field: %s" % e)
             continue
-          # print flowrule
+          log.debug("Parse %s" % flowrule)
           # print match
           # print action
           self.controlAdapter.install_flowrule(infra.id, match, action)
