@@ -844,6 +844,11 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug(
        "Init UNIFYRESTAdapter - type: %s, domain: %s, URL: %s" % (
          self.type, self.domain_name, url))
+    if "timeout" in kwargs:
+      self.CONNECTION_TIMEOUT = kwargs['timeout']
+      log.debug(
+         "Setup explicit timeout for REST responses: %ss" %
+         self.CONNECTION_TIMEOUT)
     # Converter object
     self.converter = NFFGConverter(domain=self.domain_name, logger=log)
     # Cache for parsed virtualizer
@@ -1061,7 +1066,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       raise RuntimeError(
          "Not supported config format: %s for 'edit-config'!" % type(data))
     log.debug(
-      "Send topology description to domain agent at %s..." % self._base_url)
+       "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
