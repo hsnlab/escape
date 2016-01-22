@@ -761,7 +761,7 @@ class NFFGToolBox(object):
     :type nffg: :any:`NFFG`
     :type domain: domain
     :param log: specific logger
-    :type log: :any:`Logger`
+    :type log: :any:`logging.Logger`
     :return: the update base NFFG
     :rtype: :any:`NFFG`
     """
