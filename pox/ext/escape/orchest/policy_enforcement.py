@@ -17,8 +17,8 @@ Contains functionality related to policy enforcement.
 import repr
 from functools import wraps
 
-import escape.orchest.virtualization_mgmt
 from escape.orchest import log as log
+from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 
 
 class PolicyEnforcementError(RuntimeError):
@@ -98,8 +98,7 @@ class PolicyEnforcementMetaClass(type):
       Wrapper function which call policy checking functions if they exist.
       """
       if len(args) > 0:
-        if isinstance(args[0],
-                      escape.orchest.virtualization_mgmt.AbstractVirtualizer):
+        if isinstance(args[0], AbstractVirtualizer):
           # Call Policy checking function before original
           if hooks[0]:
             log.debug("Invoke Policy checking function: [PRE] %s" % (
@@ -115,8 +114,8 @@ class PolicyEnforcementMetaClass(type):
           return ret_value
         else:
           log.warning(
-            "Binder class of policy checker function is not a subclass of "
-            "AbstractVirtualizer!")
+             "Binder class of policy checker function is not a subclass of "
+             "AbstractVirtualizer!")
       else:
         log.warning("Something went wrong during binding Policy checker!")
       log.error("Abort policy enforcement checking!")

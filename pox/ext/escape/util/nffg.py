@@ -23,7 +23,7 @@ from networkx.exception import NetworkXError
 from nffg_elements import *
 
 try:
-  import virtualizer3 as virt3
+  import virtualizer4 as virt4
 except ImportError:
   pass
 
@@ -1006,9 +1006,9 @@ class NFFGToolBox(object):
           v_nf_storage = str(
              nf.resources.storage) if nf.resources.storage else None
           # Create Node object for NF
-          v_nf = virt3.Node(id=str(nf.id), name=str(nf.name),
+          v_nf = virt4.Node(id=str(nf.id), name=str(nf.name),
                             type=str(nf.functional_type),
-                            resources=virt3.Software_resource(cpu=v_nf_cpu,
+                            resources=virt4.Software_resource(cpu=v_nf_cpu,
                                                               mem=v_nf_mem,
                                                               storage=v_nf_storage))
           # Add NF to Infra object
@@ -1016,7 +1016,7 @@ class NFFGToolBox(object):
           # Add NF ports
           for port in nffg[v].ports:
             print "Add %s to %s" % (port, nf)
-            nf_port = virt3.Port(id=str(port.id), port_type="port-abstract")
+            nf_port = virt4.Port(id=str(port.id), port_type="port-abstract")
             virtualizer.nodes[str(u)].NF_instances[str(v)].ports.add(nf_port)
 
       # Add flowrules to Virtualizer
@@ -1123,7 +1123,7 @@ class NFFGToolBox(object):
           # Add Flowentry to Virtualizer
           print "Add flowentry: %s" % flowrule
           virtualizer.nodes[str(infra.id)].flowtable.add(
-             virt3.Flowentry(id=fr_id, priority=fr_pri, port=in_port,
+             virt4.Flowentry(id=fr_id, priority=fr_pri, port=in_port,
                              match=match, action=action, out=out_port))
 
     # Return with modified Virtualizer

@@ -257,6 +257,8 @@ class ServiceLayerAPI(AbstractAPI):
     """
     .. seealso::
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
+
+    :param event: event object
     """
     log.info("Service Layer is going down...")
     if hasattr(self, 'rest_api') and self.rest_api:

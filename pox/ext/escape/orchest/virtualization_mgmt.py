@@ -15,16 +15,16 @@
 Contains components relevant to virtualization of resources and views.
 """
 
+from escape.orchest import log as log
+from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
 from escape.util.nffg import NFFG
+from pox.lib.revent.revent import EventMixin, Event
 
 if 'DoV' not in globals():
   try:
     from escape.adapt.adaptation import DoV
   except ImportError:
     DoV = "DoV"
-from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
-from escape.orchest import log as log
-from pox.lib.revent.revent import EventMixin, Event
 
 
 class MissingGlobalViewEvent(Event):

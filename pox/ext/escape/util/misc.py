@@ -185,6 +185,8 @@ def quit_with_error (msg, logger=None, exception=False):
   :type msg: str
   :param logger: logger name or logger object (default: core)
   :type logger: str or :any:`logging.Logger`
+  :param exception: print stacktrace befor quit (default: False)
+  :type exception: bool
   :return: None
   """
   from pox.core import core
@@ -272,6 +274,8 @@ def deprecated (func):
   """
   This is a decorator which can be used to mark functions as deprecated. It
   will result in a warning being emitted when the function is used.
+
+  :param func: original function
   """
 
   def newFunc (*args, **kwargs):

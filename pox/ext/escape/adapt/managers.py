@@ -436,6 +436,11 @@ class InternalDomainManager(AbstractDomainManager):
           def get_sw_port (vnf):
             """
             Return the switch port parsed from result of getVNFInfo
+
+            :param vnf: VNF description returned by NETCONF server
+            :type vnf: dict
+            :return: port id
+            :rtype: int
             """
             if isinstance(vnf['initiated_vnfs']['link'], list):
               for _link in vnf['initiated_vnfs']['link']:

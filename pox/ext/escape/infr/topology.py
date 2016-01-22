@@ -57,6 +57,8 @@ class AbstractTopology(Topo):
   def construct (self, builder=None):
     """
     Base class for construct the topology.
+
+    :param builder: builder object
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -130,13 +132,13 @@ class FallbackStaticTopology(AbstractTopology):
     # Create NFFG
     nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
     # Add switches
-    sw1 = nffg.add_infra(id="sw1", name="SW1", domain=NFFG.DOMAIN_INTERNAL,
+    sw1 = nffg.add_infra(id="sw1", name="SW1", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW)
-    sw2 = nffg.add_infra(id="sw2", name="SW2", domain=NFFG.DOMAIN_INTERNAL,
+    sw2 = nffg.add_infra(id="sw2", name="SW2", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW)
-    sw3 = nffg.add_infra(id="sw3", name="SW3", domain=NFFG.DOMAIN_INTERNAL,
+    sw3 = nffg.add_infra(id="sw3", name="SW3", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW)
-    sw4 = nffg.add_infra(id="sw4", name="SW4", domain=NFFG.DOMAIN_INTERNAL,
+    sw4 = nffg.add_infra(id="sw4", name="SW4", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW)
     # Add SAPs
     sap1 = nffg.add_sap(id="sap1", name="SAP1")
@@ -185,6 +187,7 @@ class FallbackDynamicTopology(AbstractTopology):
     """
     Set a topology with NETCONF capability for mostly testing.
 
+    :param builder: builder object
     :return: None
     """
     log.info("Start dynamic topology creation...")
@@ -207,19 +210,19 @@ class FallbackDynamicTopology(AbstractTopology):
     # Create NFFG
     nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
     # Add NETCONF capable containers a.k.a. Execution Environments
-    nc1 = nffg.add_infra(id="nc1", name="NC1", domain=NFFG.DOMAIN_INTERNAL,
+    nc1 = nffg.add_infra(id="nc1", name="NC1", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                          delay=0.9, bandwidth=5000)
-    nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
+    nc2 = nffg.add_infra(id="nc2", name="NC2", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                          delay=0.9, bandwidth=5000)
     nc1.add_supported_type(['A', 'B'])
     nc2.add_supported_type(['A', 'C'])
     # Add inter-EE switches
-    sw3 = nffg.add_infra(id="sw3", name="SW3", domain=NFFG.DOMAIN_INTERNAL,
+    sw3 = nffg.add_infra(id="sw3", name="SW3", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                          bandwidth=10000)
-    sw4 = nffg.add_infra(id="sw4", name="SW4", domain=NFFG.DOMAIN_INTERNAL,
+    sw4 = nffg.add_infra(id="sw4", name="SW4", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                          bandwidth=10000)
     # Add SAPs
@@ -592,7 +595,7 @@ class ESCAPENetworkBuilder(object):
                               bw=edge.bandwidth, delay=str(edge.delay) + 'ms')
       created_mn_links[edge.id] = link
 
-    ## Set port properties of SAP nodes.
+    # Set port properties of SAP nodes.
     #  A possible excerpt from a escape-mn-topo.nffg file:
     #  "ports": [{ "id": 1,
     #              "property": ["ip:10.0.10.1/24"] }]
