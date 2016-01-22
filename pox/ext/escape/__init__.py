@@ -113,7 +113,7 @@ cfg = {
           "port": 8888,
           # "virtualizer_type": "SINGLE",
           "virtualizer_type": "GLOBAL",
-          "unify_interface": False
+          "unify_interface": True
         },
       "Cf-Or":
         {

@@ -348,8 +348,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.log.debug(
        "Configured Virtualizer type: %s!" % self.ros_api.virtualizer_type)
     handler.log.debug(
-       "Configured communication format: %s!" %
-       handler.virtualizer_format_enabled)
+       "Configured communication format: %s!" % "UNIFY" if
+       handler.virtualizer_format_enabled else "Internal-NFFG")
     if self._agent:
       log.info("REST-API is set in AGENT mode")
 
