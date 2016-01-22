@@ -1340,8 +1340,9 @@ class NFFGToolBox(object):
           actions = fr.action.split(";")
           for action in actions:
             command_param = action.split("=")
-            if command_param[0] == "output" and "UNTAG" in actions:
-              # it means this fr is finishing an SGHop path
+            if "TAG=" in fr.match and command_param[0] == "output":
+              # it there is also an UNTAG action or the next node is a SAP 
+              # then it is an ending flowrule
               ending_port = None
               # let's find which VNF/SAP port object should the SGHop connect
               #  to.
@@ -1350,11 +1351,20 @@ class NFFGToolBox(object):
                 act_port_id = int(command_param[1])
               except ValueError:
                 pass
+              transit_fr = True
               for link in nffg.links:
                 # iterates on STATIC or DYNAMIC links
                 if link.src.id == act_port_id and link.src.node.id == p.node.id:
-                  ending_port = link.dst
-                  break
+                  if "UNTAG" in actions or link.dst.node.type == 'SAP' :
+                    ending_port = link.dst
+                    transit_fr = False
+                    break
+                  else:
+                    # It means this is a transit flowrule, we don't need it at 
+                    # all, break from the whole action iteration!
+                    break
+              if transit_fr:
+                break
               for match in fr.match.split(";"):
                 # match is always like: <<field=value>>
                 field, mparam = match.split("=")
@@ -1368,17 +1378,24 @@ class NFFGToolBox(object):
                     # flowrule, and there is no starting flowrule for it, so the
                     # other end of the link (finishing in 'p') is the port where
                     # the SGHop was originating
-                    sg_map[sghop_info] = [None, ending_port, p]
-            # TAG and UNTAG action cannot coexsist in the same flowrule
-            elif command_param[0] == "TAG":
-              # it means this fr is starting an SGHop path
+                    sg_map[sghop_info] = [None, ending_port, p] # KELL MEG????
+            # TAG action and match cannot coexsist in the same flowrule
+            elif command_param[0] == "TAG" or "TAG=" in fr.match:
               starting_port = None
               # let's find which SAP/VNF port object does the SGHop 
               # originates from
+              transit_fr = True
               for link in nffg.links:
                 if link.dst.id == p.id and p.node.id == link.dst.node.id:
-                  starting_port = link.src
-                  break
+                  if ("TAG=" in fr.match and link.src.node.type == 'SAP') or \
+                     command_param[0] == "TAG":
+                    starting_port = link.src
+                    transit_fr = False
+                    break
+                  else:
+                    break
+              if transit_fr:
+                break
               sghop_info = tuple(command_param[1].split("|"))
               if sghop_info in sg_map:
                 sg_map[sghop_info][0] = starting_port
@@ -1394,55 +1411,44 @@ class NFFGToolBox(object):
                     except ValueError:
                       pass
                     sg_map[sghop_info] = [starting_port, None,
-                                          d.ports[out_port]]
+                                          d.ports[out_port]] # KELL MEG???
                     break
-            else:
-              for match in fr.match.split(";"):
-                field, mparam = match.split("=")
-                if field == "TAG" or "TAG" in fr.action:
-                  # also finishes the current iteration of the outer 'for loop'
-                  # in this case this is a forwarding flowrule.
+            elif "UNTAG" not in actions and "TAG=" not in fr.action and \
+                 "TAG=" not in fr.match:
+              # we know here: action != TAG and  "TAG=" not in fr.match
+              # All required SGHop info can be gathered at once from this
+              # flowrule. It is either a SAP-SAP flowrule or a collocated.
+              from_sap = False
+              sg_map_value = [None, None]
+              for link in nffg.links:
+                # p.id is surely in the right format as link.dst.id (they 
+                # would reach the same string instance...)
+                if link.dst.id == p.id and link.dst.node.id == p.node.id:
+                  sg_map_value[0] = link.src
+                  break
+              for action in actions:
+                output_comm_param = action.split("=")
+                if output_comm_param[0] == "output":
+                  out_port_id = output_comm_param[1]
+                  try:
+                    out_port_id = int(output_comm_param[1])
+                  except ValueError:
+                    pass
+                  for link in nffg.links:
+                    if link.src.id == out_port_id and \
+                          link.src.node.id == p.node.id:
+                      sg_map_value[1] = link.dst
+                      break
+                  # as the last resort for retrieving the SGHop identifier
+                  # check for SGHop field in flowrule object
+                  if fr.hop_id is None:
+                    raise RuntimeError("SGHop id couldn't be retrieved from "
+                                       "Flowrule object!")
+                  sg_map[(sg_map_value[0].node.id, sg_map_value[1].node.id,
+                          fr.hop_id)] = sg_map_value
                   break
               else:
-                # if no TAG field was found in the match field list, then it 
-                # is a collocated fr. All required SGHop info can be gathered 
-                # at once from this flowrule.
-                sg_map_value = [None, None]
-                for link in nffg.links:
-                  # p.id is surely in the right format as link.dst.id (they 
-                  # would reach the same string instance...)
-                  if link.dst.id == p.id and link.dst.node.id == p.node.id:
-                    sg_map_value[0] = link.src
-                    break
-                for action in actions:
-                  output_comm_param = action.split("=")
-                  if output_comm_param[0] == "output":
-                    out_port_id = output_comm_param[1]
-                    try:
-                      out_port_id = int(output_comm_param[1])
-                    except ValueError:
-                      pass
-                    for link in nffg.links:
-                      if link.src.id == out_port_id and \
-                            link.src.node.id == p.node.id:
-                        sg_map_value[1] = link.dst
-                        break
-                    # as the last resort for retrieving the SGHop identifier
-                    # check for SGHop field in the match part of the flowrule
-                    sghop_id = None
-                    for match in fr.match.split(";"):
-                      field, mparam = match.split("=")
-                      if field == "SGHop":
-                        try:
-                          sghop_id = int(mparam)
-                        except ValueError:
-                          sghop_id = mparam
-                        break
-                    sg_map[(sg_map_value[0].node.id, sg_map_value[1].node.id,
-                            sghop_id)] = sg_map_value
-                    break
-                else:
-                  raise RuntimeError("No 'output' command found in collocation "
+                raise RuntimeError("No 'output' command found in collocation "
                                      "flowrule!")
     # after all flowrules have been processed we have to check if there is 
     # still a None prt object (meaning that flowrule sequence for that TAG 
