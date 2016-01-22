@@ -580,7 +580,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     dpid = self.infra_to_dpid[id]
     con = self.openflow.getConnection(dpid)
     log.debug(
-       "Install flow entry into INFRA %s on connection: %s ..." % (id, con))
+       "Install flow entry into INFRA: %s on connection: %s ..." % (id, con))
 
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
