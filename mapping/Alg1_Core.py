@@ -669,10 +669,14 @@ class CoreAlgorithm(object):
         if reqlink.flowclass is not None:
           match_str += ";flowclass=%s" % reqlink.flowclass
         action_str += str(self.net[j][k][lidjk].src.id)
+        if self.net.node[i].type == 'SAP' and self.net.node[k].type == 'SAP' \
+           and len(path) == 3:
+          # if traffic is just going through, we dont have to TAG at all.
+          break
         # Transit SAPs would mess it up pretty much, but it is not allowed.
         if self.net.node[i].type == 'SAP' and self.net.node[k].type != 'SAP':
           action_str += ";" + tag
-        elif self.net.node[k].type != 'SAP':
+        else:
           match_str += ";" + tag
         self.log.debug("Transit flowrule %s => %s added to Port %s of %s" % (
           match_str, action_str, self.net[i][j][lidij].dst.id, j))
