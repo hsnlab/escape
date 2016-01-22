@@ -129,8 +129,8 @@ cfg = {
     {
       # Default managers need to start at init
       "MANAGERS": [
-        "REMOTE-ESCAPE",
-        "REMOTE-ESCAPE-ext",
+        # "REMOTE-ESCAPE",
+        # "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
         # "UN"
