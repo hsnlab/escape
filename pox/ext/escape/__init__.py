@@ -238,7 +238,8 @@ cfg = {
               {
                 "module": "escape.adapt.adapters",
                 "class": "UnifyRESTAdapter",
-                "url": "http://localhost:8081"
+                "url": "http://localhost:8081",
+                "timeout": 10
               }
           }
         },
