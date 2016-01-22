@@ -548,18 +548,21 @@ class InternalDomainManager(AbstractDomainManager):
       for port in infra.ports:
         for flowrule in port.flowrules:
           try:
-            match = NFFGConverter.field_splitter(type="MATCH",
-                                                 field=flowrule.match)
+            match = NFFGConverter.field_splitter(
+               type=NFFGConverter.TYPE_MATCH,
+               field=flowrule.match)
             if "in_port" not in match:
               log.warning(
                  "Missing in_port field from match field! Using container "
                  "port number...")
               match["in_port"] = port.id
-            action = NFFGConverter.field_splitter(type="ACTION",
-                                                  field=flowrule.action)
+            action = NFFGConverter.field_splitter(
+               type=NFFGConverter.TYPE_ACTION,
+               field=flowrule.action)
           except RuntimeError as e:
             log.warning("Wrong format in match/action field: %s" % e)
             continue
+
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match, action)
 

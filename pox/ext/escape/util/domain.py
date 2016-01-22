@@ -584,25 +584,25 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
 
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
-    try:
+    if 'vlan_id' in match:
       vid = match['vlan_id']
       msg.match.dl_vlan = int(vid)
-    except KeyError:
-      pass
 
-    try:
+    if 'vlan_push' in action:
       vid = action['vlan_push']
       msg.actions.append(
          of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
       # msg.actions.append(of.ofp_action_vlan_vid())
-    except KeyError:
-      pass
-    try:
-      if action['vlan_pop']:
-        msg.actions.append(of.ofp_action_strip_vlan())
-    except KeyError:
-      pass
     out = action['out']
+    # If out is in the detected saps --> always remove the VLAN tags
+    if 'vlan_pop' in action:
+      msg.actions.append(of.ofp_action_strip_vlan())
+    else:
+      try:
+        if out in self.saps[id]:
+          msg.actions.append(of.ofp_action_strip_vlan())
+      except KeyError:
+        pass
     try:
       if out in self.saps[id]:
         dl_dst = self.saps[id][str(out)]['dl_dst']
@@ -613,7 +613,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       pass
     msg.actions.append(of.ofp_action_output(port=int(action['out'])))
 
-    log.debug("Send flow entry:\n%s" % msg)
+    log.debug("Send OpenFlow flowrule:\n%s" % msg)
     con.send(msg)
 
 
