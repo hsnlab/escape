@@ -200,12 +200,12 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.info("Starting Service Layer...")
     # Mandatory super() call
-    super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
     self.last_sg = NFFG(id=0, name='empty')
     # Set element manager
     self.__sid = None
     self.elementManager = None
     self.service_orchestrator = None
+    super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
     """
