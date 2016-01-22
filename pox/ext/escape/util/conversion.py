@@ -54,10 +54,9 @@ class NFFGConverter(object):
   # General option names in mapped NFFG assembled by the Mapping algorithm
   OP_TAG = 'TAG'
   OP_UNTAG = 'UNTAG'
-  OP_SGHOP = 'SGHop'
   OP_INPORT = 'in_port'
   OP_OUTPUT = 'output'
-  GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG, OP_SGHOP)
+  GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG)
   # Operation formats in Virtualizer
   MATCH_VLAN_TAG = r"dl_vlan"
   ACTION_PUSH_VLAN = r"push_vlan"
@@ -217,8 +216,13 @@ class NFFGConverter(object):
 
           # Add connection between infra - SAP
           # SAP-Infra is static link --> create link for both direction
-          l1, l2 = nffg.add_undirected_link(port1=sap_port, port2=infra_port,
-                                            delay=_delay, bandwidth=_bandwidth)
+          l1, l2 = nffg.add_undirected_link(
+            p1p2id="%s-%s-link" % (s_id, node_id),
+            p2p1id="%s-%s-link-back" % (s_id, node_id),
+            port1=sap_port,
+            port2=infra_port,
+            delay=_delay,
+            bandwidth=_bandwidth)
           self.log.debug("Add connection: %s" % l1)
           self.log.debug("Add connection: %s" % l2)
 
@@ -366,8 +370,8 @@ class NFFGConverter(object):
               _tag = int(op.split('=')[1], base=0)
               match += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
                  (str(_src_name), str(_dst_name), str(_tag))))
-            elif op.startswith(self.OP_SGHOP):
-              match += ";%s" % op
+              # elif op.startswith(self.OP_SGHOP):
+              #   match += ";%s" % op
 
         # Check if there is an action operation
         if flowentry.action.is_initialized() and flowentry.action.get_value():
@@ -427,17 +431,27 @@ class NFFGConverter(object):
                port_id, flowentry))
           continue
 
-        if flowentry.resources.is_initialized() and \
-           flowentry.resources.bandwidth.is_initialized():
-          try:
-            _fr_bw = float(flowentry.resources.bandwidth.get_value())
-          except ValueError:
-            _fr_bw = flowentry.resources.bandwidth.get_value()
-        else:
-          _fr_bw = None
+        # Get resource values
+        _fr_bw = None
+        _fr_delay = None
+        if flowentry.resources.is_initialized():
+          if flowentry.resources.bandwidth.is_initialized():
+            try:
+              _fr_bw = float(flowentry.resources.bandwidth.get_value())
+            except ValueError:
+              _fr_bw = flowentry.resources.bandwidth.get_value()
+          if flowentry.resources.delay.is_initialized():
+            try:
+              _fr_delay = float(flowentry.resources.delay.get_value())
+            except ValueError:
+              _fr_delay = flowentry.resources.delay.get_value()
+
+        # Get hop_id
+        _name = flowentry.name.get_as_text().partition(':')[1] \
+          if flowentry.name.is_initialized() else None
 
         fr = port.add_flowrule(id=fe_id, match=match, action=action,
-                               bandwidth=_fr_bw)
+                               bandwidth=_fr_bw, delay=_fr_delay, hop_id=_name)
         self.log.debug("Add %s" % fr)
 
     # Add links connecting infras
@@ -630,8 +644,9 @@ class NFFGConverter(object):
          src=virt.nodes[str(link.src.node.id)].ports[str(link.src.id)],
          dst=virt.nodes[str(link.dst.node.id)].ports[str(link.dst.id)],
          resources=virt4.Link_resource(
-            delay=str(link.delay),
-            bandwidth=str(link.bandwidth)
+            delay=str(link.delay) if link.delay is not None else None,
+            bandwidth=str(
+               link.bandwidth) if link.bandwidth is not None else None
          )
       )
       # Call bind to resolve src,dst references to workaround a bug
@@ -819,15 +834,20 @@ class NFFGConverter(object):
           # Process action field
           action = self.__convert_flowrule_action_unified(flowrule.action)
 
-          if flowrule.bandwidth is not None:
-            _resources = virt4.Link_resource(bandwidth=str(flowrule.bandwidth))
-          else:
-            _resources = None
+          # Process resource fields
+          _resources = virt4.Link_resource(
+             delay=str(flowrule.delay) if flowrule.delay is not None else None,
+             bandwidth=str(
+                flowrule.bandwidth) if flowrule.bandwidth is not None else None)
+
+          # Process hop_id field
+          _name = "sg_hop:%s" % flowrule.hop_id if flowrule.hop_id is not \
+                                                   None else None
 
           # Add Flowentry with converted params
           virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
                               match=match, action=action, out=out_port,
-                              resources=_resources)
+                              resources=_resources, name=_name)
           self.log.debug("Generated Flowentry:\n%s" % virtualizer.nodes[
             infra.id].flowtable.add(virt_fe))
           # explicitly call bind to resolve absolute paths for safety reason
@@ -973,8 +993,8 @@ class NFFGConverter(object):
           self.log.warning(
              "Wrong VLAN format: %s!" % op[1])
           continue
-      elif op[0] == self.OP_SGHOP:
-        ret.append(kv)
+          # elif op[0] == self.OP_SGHOP:
+          #   ret.append(kv)
     return self.OP_SEPARATOR.join(ret)
 
   def __convert_flowrule_action_unified (self, action):
@@ -1323,7 +1343,6 @@ def test_topo_os ():
 
 if __name__ == "__main__":
   import logging
-  import time
 
   logging.basicConfig(level=logging.DEBUG)
   log = logging.getLogger(__name__)
@@ -1369,13 +1388,11 @@ if __name__ == "__main__":
      "../../../../examples/from_Escape_test.xml") as f:
     tree = tree = ET.ElementTree(ET.fromstring(f.read()))
     dov = virt4.Virtualizer.parse(root=tree.getroot())
-    dov.bind()
+    dov.bind(relative=True)
     print dov
   nffg = c.parse_from_Virtualizer3(xml_data=dov.xml())
-  time.sleep(1)
   print nffg.dump()
   virt = c.dump_to_Virtualizer3(nffg=nffg)
   # virt.bind()
-  time.sleep(1)
   print "Reconverted Virtualizer:"
   print virt.xml()

@@ -707,11 +707,13 @@ class DomainVirtualizer(AbstractVirtualizer):
              b_links[0].delay, b_links[0].bandwidth))
 
         # Add the inter-domain links for both ways
-        self._global_nffg.add_undirected_link(port1=domain_port_dov,
-                                              port2=domain_port_nffg,
-                                              delay=b_links[0].delay,
-                                              bandwidth=b_links[0].bandwidth)
-
+        self._global_nffg.add_undirected_link(
+           p1p2id="inter-domain-link-%s" % sap_id,
+           p2p1id="inter-domain-link-%s-back" % sap_id,
+           port1=domain_port_dov,
+           port2=domain_port_nffg,
+           delay=b_links[0].delay,
+           bandwidth=b_links[0].bandwidth)
       else:
         # Normal SAP --> copy SAP
         c_sap = self._global_nffg.add_sap(
