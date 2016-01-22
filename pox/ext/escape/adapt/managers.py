@@ -21,54 +21,9 @@ import traceback
 
 from ncclient.operations import RPCError
 
+from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from pox.lib.util import dpid_to_str
-
-
-def field_splitter (data, field):
-  """
-  Split the match/action field into a dict-based format for flowrule creation.
-
-  :param data: field data
-  :type data: str
-  :param field: the name of the field ('MATCH' or 'ACTION')
-  :type field: str
-  :return: splitted data structure
-  :rtype: dict
-  """
-  ret = {}
-  parts = data.split(';')
-  if len(parts) < 1:
-    raise RuntimeError(
-       "Wrong format: %s! Separator (;) not found!" % data)
-  for part in parts:
-    kv = part.split('=')
-    if len(kv) != 2:
-      if kv[0] == 'UNTAG' and field.upper() == 'ACTION':
-        ret['vlan_pop'] = True
-        continue
-      else:
-        raise RuntimeError("Not a key-value pair: %s" % part)
-    if kv[0] == 'in_port':
-      try:
-        ret['in_port'] = int(kv[1])
-      except ValueError:
-        log.warning(
-           "in_port is not a valid port number: %s! Skip "
-           "converting..." % kv[1])
-        ret['in_port'] = kv[1]
-    elif kv[0] == 'TAG':
-      if field.upper() == "MATCH":
-        ret['vlan_id'] = kv[1].split('|')[-1]
-      elif field.upper() == "ACTION":
-        ret['vlan_push'] = kv[1].split('|')[-1]
-      else:
-        raise RuntimeError('Not supported field type: %s!' % field)
-    elif kv[0] == 'output':
-      ret['out'] = kv[1]
-    else:
-      raise RuntimeError("Unrecognizable key: %s" % kv[0])
-  return ret
 
 
 class InternalDomainManager(AbstractDomainManager):
@@ -148,7 +103,6 @@ class InternalDomainManager(AbstractDomainManager):
 
     :return: None
     """
-
     super(InternalDomainManager, self).finit()
     del self.controlAdapter
     del self.remoteAdapter
@@ -404,7 +358,7 @@ class InternalDomainManager(AbstractDomainManager):
                 'status'] == VNFStarterAPI.VNFStatus.s_UP_AND_RUNNING:
           log.info("NF: %s initiation has been verified on Node: %s" % (
             nf.short_name, infra.short_name))
-          log.debug("VNF id: %s, PID: %s, status: %s" % (
+          log.debug("Initiated VNF id: %s, PID: %s, status: %s" % (
             vnf['initiated_vnfs']['vnf_id'], vnf['initiated_vnfs']['pid'],
             vnf['initiated_vnfs']['status']))
         else:
@@ -593,49 +547,20 @@ class InternalDomainManager(AbstractDomainManager):
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
-          # match = {}
-          # action = {}
-          # # if re.search(r';', flowrule.match):
-          # #   # multiple elements in match field
-          # #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
-          # # else:
-          # #   # single element in match field
-          # #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
-          # match['in_port'] = port.id
-          # # Check match fields - currently only vlan_id
-          # # TODO: add further match fields
-          # if re.search(r'TAG', flowrule.match):
-          #   tag = re.sub(r'.*TAG=.*\|(.*);.*?', r'\1', flowrule.match)
-          #   match['vlan_id'] = tag
-          #
-          # if re.search(r';', flowrule.action):
-          #   # multiple elements in action field
-          #   out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
-          # else:
-          #   # single element in action field
-          #   out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
-          # action['out'] = out
-          #
-          # if re.search(r'TAG', flowrule.action):
-          #   if re.search(r'UNTAG', flowrule.action):
-          #     action['vlan_pop'] = True
-          #   else:
-          #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
-          #     action['vlan_push'] = push_tag
           try:
-            match = field_splitter(flowrule.match, field="MATCH")
+            match = NFFGConverter.field_splitter(type="MATCH",
+                                                 field=flowrule.match)
             if "in_port" not in match:
               log.warning(
                  "Missing in_port field from match field! Using container "
                  "port number...")
               match["in_port"] = port.id
-            action = field_splitter(flowrule.action, field="ACTION")
+            action = NFFGConverter.field_splitter(type="ACTION",
+                                                  field=flowrule.action)
           except RuntimeError as e:
             log.warning("Wrong format in match/action field: %s" % e)
             continue
-          log.debug("Parse %s" % flowrule)
-          # print match
-          # print action
+          log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match, action)
 
 
@@ -804,49 +729,20 @@ class SDNDomainManager(AbstractDomainManager):
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
-          # match = {}
-          # action = {}
-          # # if re.search(r';', flowrule.match):
-          # #   # multiple elements in match field
-          # #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
-          # # else:
-          # #   # single element in match field
-          # #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
-          # match['in_port'] = port.id
-          # # Check match fields - currently only vlan_id
-          # # TODO: add further match fields
-          # if re.search(r'TAG', flowrule.match):
-          #   tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
-          #   match['vlan_id'] = tag
-          #
-          # if re.search(r';', flowrule.action):
-          #   # multiple elements in action field
-          #   out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
-          # else:
-          #   # single element in action field
-          #   out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
-          # action['out'] = out
-          #
-          # if re.search(r'TAG', flowrule.action):
-          #   if re.search(r'UNTAG', flowrule.action):
-          #     action['vlan_pop'] = True
-          #   else:
-          #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
-          #     action['vlan_push'] = push_tag
           try:
-            match = field_splitter(flowrule.match, field="MATCH")
+            match = NFFGConverter.field_splitter(type="MATCH",
+                                                 field=flowrule.match)
             if "in_port" not in match:
               log.warning(
                  "Missing in_port field from match field! Using container "
                  "port number...")
               match["in_port"] = port.id
-            action = field_splitter(flowrule.action, field="ACTION")
+            action = NFFGConverter.field_splitter(type="ACTION",
+                                                  field=flowrule.action)
           except RuntimeError as e:
             log.warning("Wrong format in match/action field: %s" % e)
             continue
-          # print flowrule
-          # print match
-          # print action
+          log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match=match,
                                                action=action)
 

@@ -64,10 +64,88 @@ class NFFGConverter(object):
   # Operand separator
   LABEL_SEPARATOR = '|'
   OP_SEPARATOR = ';'
+  # Field types
+  TYPE_MATCH = "MATCH"
+  TYPE_ACTION = "ACTION"
 
   def __init__ (self, domain, logger=None):
     self.domain = domain
     self.log = logger if logger is not None else logging.getLogger(__name__)
+
+  @classmethod
+  def field_splitter (cls, type, field):
+    """
+    Split the match/action field into a dict-based format for flowrule creation.
+
+    :param type: the name of the field ('MATCH' or 'ACTION')
+    :type type: str
+    :param field: field data
+    :type field: str
+    :return: splitted data structure
+    :rtype: dict
+    """
+    # match = {}
+    # action = {}
+    # # if re.search(r';', flowrule.match):
+    # #   # multiple elements in match field
+    # #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
+    # # else:
+    # #   # single element in match field
+    # #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
+    # match['in_port'] = port.id
+    # # Check match fields - currently only vlan_id
+    # # TODO: add further match fields
+    # if re.search(r'TAG', flowrule.match):
+    #   tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
+    #   match['vlan_id'] = tag
+    #
+    # if re.search(r';', flowrule.action):
+    #   # multiple elements in action field
+    #   out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
+    # else:
+    #   # single element in action field
+    #   out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
+    # action['out'] = out
+    #
+    # if re.search(r'TAG', flowrule.action):
+    #   if re.search(r'UNTAG', flowrule.action):
+    #     action['vlan_pop'] = True
+    #   else:
+    #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
+    #     action['vlan_push'] = push_tag
+    ret = {}
+    parts = field.split(';')
+    if len(parts) < 1:
+      raise RuntimeError(
+         "Wrong format: %s! Separator (;) not found!" % field)
+    for part in parts:
+      kv = part.split('=')
+      if len(kv) != 2:
+        if kv[0] == 'UNTAG' and type.upper() == 'ACTION':
+          ret['vlan_pop'] = True
+          continue
+        else:
+          raise RuntimeError("Not a key-value pair: %s" % part)
+      if kv[0] == 'in_port':
+        try:
+          ret['in_port'] = int(kv[1])
+        except ValueError:
+          log.warning(
+             "in_port is not a valid port number: %s! Skip "
+             "converting..." % kv[1])
+          ret['in_port'] = kv[1]
+      elif kv[0] == 'TAG':
+        if type.upper() == "MATCH":
+          ret['vlan_id'] = kv[1].split('|')[-1]
+        elif type.upper() == "ACTION":
+          ret['vlan_push'] = kv[1].split('|')[-1]
+        else:
+          raise RuntimeError('Not supported field type: %s!' % type)
+      elif kv[0] == 'output':
+        ret['out'] = kv[1]
+      else:
+        raise RuntimeError("Unrecognizable key: %s" % kv[0])
+    return ret
 
   def parse_from_Virtualizer3 (self, xml_data, with_virt=False):
     """
@@ -217,12 +295,12 @@ class NFFGConverter(object):
           # Add connection between infra - SAP
           # SAP-Infra is static link --> create link for both direction
           l1, l2 = nffg.add_undirected_link(
-            p1p2id="%s-%s-link" % (s_id, node_id),
-            p2p1id="%s-%s-link-back" % (s_id, node_id),
-            port1=sap_port,
-            port2=infra_port,
-            delay=_delay,
-            bandwidth=_bandwidth)
+             p1p2id="%s-%s-link" % (s_id, node_id),
+             p2p1id="%s-%s-link-back" % (s_id, node_id),
+             port1=sap_port,
+             port2=infra_port,
+             delay=_delay,
+             bandwidth=_bandwidth)
           self.log.debug("Add connection: %s" % l1)
           self.log.debug("Add connection: %s" % l2)
 
@@ -1037,339 +1115,12 @@ class NFFGConverter(object):
     return self.OP_SEPARATOR.join(ret)
 
 
-def test_xml_based_builder ():
-  # builder = NFFGtoXMLBuilder()
-  # infra = builder.add_infra()
-  # port = builder.add_node_port(infra, NFFGtoXMLBuilder.PORT_ABSTRACT)
-  # res = builder.add_node_resource(infra, "10 VCPU", "32 GB", "5 TB")
-  # link = builder.add_inter_infra_link(port, port, delay="5ms",
-  #                                     bandwidth="10Gbps")
-  # nf_inst = builder.add_nf_instance(infra)
-  # nf_port = builder.add_node_port(nf_inst,
-  # NFFGtoXMLBuilder.PORT_ABSTRACT)
-  # sup_nf = builder.add_supported_nf(infra)
-  # res_sup = builder.add_node_resource(sup_nf, 10, 10, 10)
-  # builder.add_node_port(sup_nf, NFFGtoXMLBuilder.PORT_ABSTRACT)
-  # builder.add_flow_entry(infra, port, nf_port,
-  #                        action="mod_dl_src=12:34:56:78:90:12", delay="5ms",
-  #                        bandwidth="10Gbps")
-
-  # Generate same output as Agent_http.py
-  # builder = XMLBasedNFFGBuilder()
-  # builder.id = "UUID-ETH-001"
-  # builder.name = "ETH OpenStack-OpenDaylight domain"
-  # infra = builder.add_infra(
-  #   name="single Bis-Bis node representing the whole domain")
-  # infra_port0 = builder.add_node_port(infra, name="OVS-north external port")
-  # infra_port1 = builder.add_node_port(infra, name="OVS-south external port")
-  # builder.add_node_resource(infra, cpu="10 VCPU", mem="32 GB", storage="5 TB")
-  # nf1 = builder.add_nf_instance(infra, id="NF1", name="example NF")
-  # nf1port0 = builder.add_node_port(nf1, name="Example NF input port")
-  # nf1port1 = builder.add_node_port(nf1, name="Example NF output port")
-  # sup_nf = builder.add_supported_nf(infra, id="nf_a",
-  #                                   name="tcp header compressor")
-  # builder.add_node_port(sup_nf, name="in", param="...")
-  # builder.add_node_port(sup_nf, name="out", param="...")
-  # builder.add_flow_entry(infra, in_port=infra_port0, out_port=nf1port0)
-  # builder.add_flow_entry(infra, in_port=nf1port1, out_port=infra_port1,
-  #                        action="mod_dl_src=12:34:56:78:90:12")
-  # print builder
-  pass
-
-
-def test_topo_un ():
-  topo = """
-<virtualizer>
-    <name>Single node</name>
-    <nodes>
-        <node>
-            <NF_instances>
-                <node>
-                    <name>DPI NF</name>
-                    <ports>
-                        <port>
-                            <name>NF input port</name>
-                            <port_type>port-abstract</port_type>
-                            <id>1</id>
-                        </port>
-                        <port>
-                            <name>NF output port</name>
-                            <port_type>port-abstract</port_type>
-                            <id>2</id>
-                        </port>
-                    </ports>
-                    <type>dpi</type>
-                    <id>NF1</id>
-                </node>
-            </NF_instances>
-            <flowtable>
-                <flowentry>
-                    <port>../../../ports/port[id=1]</port>
-                    <priority>100</priority>
-                    <action>
-                        <vlan>
-                            <pop/>
-                        </vlan>
-                    </action>
-                    <id>1</id>
-                    <match>
-                        <vlan_id>2</vlan_id>
-                    </match>
-                    <out>../../../NF_instances/node[id=NF1]/ports/port[id=1]
-                    </out>
-                </flowentry>
-                <flowentry>
-                    <port>../../../NF_instances/node[id=NF1]/ports/port[id=2]
-                    </port>
-                    <action>
-                        <vlan>
-                            <push>3</push>
-                        </vlan>
-                    </action>
-                    <id>2</id>
-                    <out>../../../ports/port[id=1]</out>
-                </flowentry>
-            </flowtable>
-            <capabilities>
-                <supported_NFs>
-                    <node>
-                        <name>DPI based on libpcre</name>
-                        <ports>
-                            <port>
-                                <name>VNF port 1</name>
-                                <port_type>port-abstract</port_type>
-                                <id>1</id>
-                            </port>
-                            <port>
-                                <name>VNF port 2</name>
-                                <port_type>port-abstract</port_type>
-                                <id>2</id>
-                            </port>
-                        </ports>
-                        <type>dpi</type>
-                        <id>NF1</id>
-                    </node>
-                    <node>
-                        <name>iptables based firewall</name>
-                        <ports>
-                            <port>
-                                <name>VNF port 1</name>
-                                <port_type>port-abstract</port_type>
-                                <id>1</id>
-                            </port>
-                            <port>
-                                <name>VNF port 2</name>
-                                <port_type>port-abstract</port_type>
-                                <id>2</id>
-                            </port>
-                        </ports>
-                        <type>firewall</type>
-                        <id>NF2</id>
-                    </node>
-                    <node>
-                        <name>NAT based on iptables</name>
-                        <ports>
-                            <port>
-                                <name>VNF port 1</name>
-                                <port_type>port-abstract</port_type>
-                                <id>1</id>
-                            </port>
-                            <port>
-                                <name>VNF port 2</name>
-                                <port_type>port-abstract</port_type>
-                                <id>2</id>
-                            </port>
-                        </ports>
-                        <type>nat</type>
-                        <id>NF3</id>
-                    </node>
-                    <node>
-                        <name>ntop monitor</name>
-                        <ports>
-                            <port>
-                                <name>VNF port 1</name>
-                                <port_type>port-abstract</port_type>
-                                <id>1</id>
-                            </port>
-                            <port>
-                                <name>VNF port 2</name>
-                                <port_type>port-abstract</port_type>
-                                <id>2</id>
-                            </port>
-                        </ports>
-                        <type>monitor</type>
-                        <id>NF4</id>
-                    </node>
-                    <node>
-                        <name>example VNF with several implementations</name>
-                        <ports>
-                            <port>
-                                <name>VNF port 1</name>
-                                <port_type>port-abstract</port_type>
-                                <id>1</id>
-                            </port>
-                            <port>
-                                <name>VNF port 2</name>
-                                <port_type>port-abstract</port_type>
-                                <id>2</id>
-                            </port>
-                        </ports>
-                        <type>example</type>
-                        <id>NF5</id>
-                    </node>
-                </supported_NFs>
-            </capabilities>
-            <ports>
-                <port>
-                    <name>OVS-north external port</name>
-                    <port_type>port-sap</port_type>
-                    <id>1</id>
-                    <sap>SAP34</sap>
-                </port>
-            </ports>
-            <type>BisBis</type>
-            <id>UUID11</id>
-            <resources>
-                <mem>32 GB</mem>
-                <storage>5 TB</storage>
-                <cpu>10 VCPU</cpu>
-            </resources>
-            <name>Universal Node</name>
-        </node>
-    </nodes>
-    <id>UUID001</id>
-</virtualizer>
-  """
-  return topo
-
-
-def test_topo_os ():
-  topo = """
-<virtualizer>
-    <name>ETH OpenStack-OpenDaylight domain with request</name>
-    <nodes>
-        <node>
-            <NF_instances>
-                <node>
-                    <name>Parental control B.4</name>
-                    <ports>
-                        <port>
-                            <name>in</name>
-                            <capability>...</capability>
-                            <port_type>port-abstract</port_type>
-                            <id>NF1_in</id>
-                        </port>
-                    </ports>
-                    <type>1</type>
-                    <id>NF1</id>
-                    <resources>
-                        <mem>1024</mem>
-                    </resources>
-                </node>
-            </NF_instances>
-            <flowtable>
-                <flowentry>
-                    <port>../../../ports/port[id=0]</port>
-                    <action>strip_vlan</action>
-                    <id>f1</id>
-                    <match>dl_vlan=1</match>
-                    <out>
-                        ../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]
-                    </out>
-                </flowentry>
-                <flowentry>
-                    <port>
-                        ../../../NF_instances/node[id=NF1]/ports/port[id=NF1_in]
-                    </port>
-                    <action>mod_vlan_vid:2</action>
-                    <id>f2</id>
-                    <out>../../../ports/port[id=0]</out>
-                </flowentry>
-            </flowtable>
-            <capabilities>
-                <supported_NFs>
-                    <node>
-                        <name>image0</name>
-                        <ports>
-                            <port>
-                                <name>input port</name>
-                                <port_type>port-abstract</port_type>
-                                <id>0</id>
-                            </port>
-                        </ports>
-                        <type>0</type>
-                        <id>NF0</id>
-                    </node>
-                    <node>
-                        <name>image1</name>
-                        <ports>
-                            <port>
-                                <name>input port</name>
-                                <port_type>port-abstract</port_type>
-                                <id>0</id>
-                            </port>
-                        </ports>
-                        <type>1</type>
-                        <id>NF1</id>
-                        <resources>
-                            <mem>1024</mem>
-                        </resources>
-                    </node>
-                </supported_NFs>
-            </capabilities>
-            <ports>
-                <port>
-                    <name>OVS-north external port</name>
-                    <port_type>port-sap</port_type>
-                    <id>0</id>
-                    <sap>SAP24</sap>
-                </port>
-            </ports>
-            <type>BisBis</type>
-            <id>UUID-01</id>
-            <resources>
-                <mem>32 GB</mem>
-                <storage>5 TB</storage>
-                <cpu>10 VCPU</cpu>
-            </resources>
-            <name>single Bis-Bis node representing the whole domain</name>
-        </node>
-    </nodes>
-    <id>UUID-ETH-001-req1</id>
-</virtualizer>
-"""
-  return topo
-
-
 if __name__ == "__main__":
   import logging
 
   logging.basicConfig(level=logging.DEBUG)
   log = logging.getLogger(__name__)
   c = NFFGConverter(domain="OPENSTACK", logger=log)
-  # nffg, vv = c.parse_from_Virtualizer3(xml_data=txt)
-  # # UN
-  # nffg.network.node['UUID11'].ports[1].add_flowrule(
-  #   match="in_port=1;TAG=sap1-comp-42", action="output=2;UNTAG")
-  # OS
-  # nffg.network.node['UUID-01'].ports[1].add_flowrule(
-  #   match="in_port=1;TAG=sap1-comp-42", action="output=0;UNTAG")
-  # nffg.network.node['UUID-01'].ports[1].add_flowrule(
-  #   match="in_port=1;TAG=sap1-comp-42", action="output=0;UNTAG")
-  # from pprint import pprint
-  #
-  # pprint(nffg.network.__dict__)
-  # print nffg.dump()
-
-  # from nffg import gen
-  #
-  # nffg = gen()
-  # print nffg.dump()
-  # v = c.dump_to_Virtualizer3(nffg, virtualizer=vv)
-  # v, nffg = c.dump_to_Virtualizer3(nffg)
-  # out = str(v)
-  # out = out.replace("&lt;", "<").replace("&gt;", ">")
-  # print out
 
   # with open(
   #    "../../../../examples/escape-mn-mapped-topo.nffg") as f:

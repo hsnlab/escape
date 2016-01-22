@@ -85,8 +85,9 @@ class ServiceRequestHandler(AbstractRequestHandler):
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'service'
-  # Logger. Must define.
-  log = log.getChild("[U-Sl]")
+  # Logger name
+  LOGGER_NAME = "U-Sl"
+  log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
 
@@ -262,7 +263,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.info("Service Layer is going down...")
     if hasattr(self, 'rest_api') and self.rest_api:
-      log.debug("REST-API [U-Sl] is shutting down...")
+      log.debug("REST-API: %s is shutting down..." % self.rest_api.api_id)
       # self.rest_api.stop()
 
   def _initiate_rest_api (self):
@@ -274,15 +275,20 @@ class ServiceLayerAPI(AbstractAPI):
     # set bounded layer name here to avoid circular dependency problem
     handler = CONFIG.get_sas_api_class()
     handler.bounded_layer = self._core_name
+    # can override from global config
     handler.prefix = CONFIG.get_sas_api_prefix()
     handler.virtualizer_format_enabled = CONFIG.get_sas_api_virtualizer_format()
     address = CONFIG.get_sas_api_address()
     self.rest_api = RESTServer(handler, *address)
+    self.rest_api.api_id = handler.LOGGER_NAME = "U-Sl"
     handler.log.debug(
-       "Init REST-API [U-Sl] on %s:%s!" % (address[0], address[1]))
+       "Init REST-API for %s on %s:%s!" % (
+         self.rest_api.api_id, address[0], address[1]))
     self.rest_api.start()
     handler.log.debug(
-       "Configured communication format: %s!" % "UNIFY" if
+       "Configured Virtualizer type: %s" % self.rest_api.virtualizer_type)
+    handler.log.debug(
+       "Configured communication format: %s" % "UNIFY" if
        handler.virtualizer_format_enabled else "Internal-NFFG")
 
   def _initiate_gui (self):

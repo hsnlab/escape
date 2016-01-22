@@ -105,6 +105,7 @@ class CfOrRequestHandler(AbstractRequestHandler):
   static_prefix = "cfor"
   # Logger name
   LOGGER_NAME = "Cf-Or"
+  log = log.getChild("[%s]" % LOGGER_NAME)
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
@@ -176,6 +177,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   static_prefix = "escape"
   # Logger name
   LOGGER_NAME = "Sl-Or"
+  log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
   # Name mapper to avoid Python naming constraint
@@ -317,10 +319,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.info("Resource Orchestration Sublayer is going down...")
     if self._agent or self._rosapi:
-      log.debug("REST-API [Sl-Or] is shutting down...")
+      log.debug("REST-API: %s is shutting down..." % self.ros_api.api_id)
       # self.ros_api.stop()
     if self._cfor:
-      log.debug("REST-API [Cf-Or] is shutting down...")
+      log.debug("REST-API: %s is shutting down..." % self.cfor_api.api_id)
       # self.cfor_api.stop()
 
   def _initiate_ros_api (self):
@@ -339,19 +341,20 @@ class ResourceOrchestrationAPI(AbstractAPI):
     handler.prefix = CONFIG.get_ros_agent_prefix()
     handler.virtualizer_format_enabled = CONFIG.get_ros_api_virtualizer_format()
     address = CONFIG.get_ros_agent_address()
-    self.ros_api = RESTServer(handler, *address)
     # Virtualizer ID of the Sl-Or interface
-    self.ros_api.api_id = "Sl-Or"
+    self.ros_api = RESTServer(handler, *address)
+    self.ros_api.api_id = handler.LOGGER_NAME = "Sl-Or"
     # Virtualizer type for Sl-Or API
     self.ros_api.virtualizer_type = CONFIG.get_api_virtualizer(
        layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
     handler.log.info(
-       "Init REST-API [Sl-Or] on %s:%s!" % (address[0], address[1]))
+       "Init REST-API for %s on %s:%s!" % (
+         self.ros_api.api_id, address[0], address[1]))
     self.ros_api.start()
     handler.log.debug(
-       "Configured Virtualizer type: %s!" % self.ros_api.virtualizer_type)
+       "Configured Virtualizer type: %s" % self.ros_api.virtualizer_type)
     handler.log.debug(
-       "Configured communication format: %s!" % "UNIFY" if
+       "Configured communication format: %s" % "UNIFY" if
        handler.virtualizer_format_enabled else "Internal-NFFG")
     if self._agent:
       log.info("REST-API is set in AGENT mode")
@@ -370,15 +373,19 @@ class ResourceOrchestrationAPI(AbstractAPI):
     address = CONFIG.get_cfor_api_address()
     self.cfor_api = RESTServer(handler, *address)
     # Virtualizer ID of the Cf-Or interface
-    self.cfor_api.api_id = "Cf-Or"
+    self.cfor_api.api_id = handler.LOGGER_NAME = "Cf-Or"
     # Virtualizer type for Cf-Or API
     self.cfor_api.virtualizer_type = CONFIG.get_api_virtualizer(
        layer_name=LAYER_NAME, api_name=self.cfor_api.api_id)
     handler.log.debug(
-       "Init REST-API [Cf-Or] on %s:%s!" % (address[0], address[1]))
+       "Init REST-API for %s on %s:%s!" % (
+         self.cfor_api.api_id, address[0], address[1]))
     self.cfor_api.start()
     handler.log.debug(
-       "Configured Virtualizer type: %s!" % self.cfor_api.virtualizer_type)
+       "Configured Virtualizer type: %s" % self.cfor_api.virtualizer_type)
+    handler.log.debug(
+       "Configured communication format: %s" % "UNIFY" if
+       handler.virtualizer_format_enabled else "Internal-NFFG")
 
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
