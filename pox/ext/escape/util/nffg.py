@@ -15,6 +15,7 @@
 Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
+import logging
 import networkx
 import xml.etree.ElementTree as ET
 from networkx.exception import NetworkXError
@@ -750,7 +751,7 @@ class NFFGToolBox(object):
   """
 
   @staticmethod
-  def merge_domains (base, nffg):
+  def merge_domains (base, nffg, domain, log=logging.getLogger("MERGING")):
     """
     Merge the given ``nffg`` into the base NFFG.
 
@@ -758,68 +759,118 @@ class NFFGToolBox(object):
     :type base: :any:`NFFG`
     :param nffg: updating information
     :type nffg: :any:`NFFG`
+    :type domain: domain
+    :param log: specific logger
+    :type log: :any:`Logger`
     :return: the update base NFFG
     :rtype: :any:`NFFG`
     """
     from copy import deepcopy
+
     # Copy infras
-    print "Merge %s into %s" % (nffg, base)
+    log.debug("Merge domain: %s resource info into DoV..." % domain)
+
     for infra in nffg.infras:
-      c_infra = base.add_infra(infra=deepcopy(infra))
-      print "Copy infra: %s" % c_infra
+      if infra.id not in base:
+        c_infra = base.add_infra(infra=deepcopy(infra))
+        log.debug("Copy infra node: %s" % c_infra)
+      else:
+        log.warning(
+           "Infra node: %s does already exist in DoV. Skip adding..." % infra)
+
     # Copy NFs
     for nf in nffg.nfs:
-      c_nf = base.add_nf(nf=deepcopy(nf))
-      print "Copy nf: %s" % c_nf
+      if nf.id not in base:
+        c_nf = base.add_nf(nf=deepcopy(nf))
+        log.debug("Copy NF node: %s" % c_nf)
+      else:
+        log.warning(
+           "NF node: %s does already exist in DoV. Skip adding..." % nf)
+
     # Copy SAPs
     for sap_id in [s.id for s in nffg.saps]:
       if sap_id in [s.id for s in base.saps]:
         # Found inter-domain SAP
-        print "Found Inter-domain SAP: %s" % sap_id
+        log.debug("Found Inter-domain SAP: %s" % sap_id)
         # Search outgoing links from SAP, should be only one
         b_links = [l for u, v, l in
-                   base.network.out_edges_iter([sap_id], data=True)]
+                   base.network.out_edges_iter([sap_id],
+                                               data=True)]
         if len(b_links) < 1:
-          print "SAP is not connected to any node! Maybe you forget to call " \
-                "duplicate_static_links?"
+          log.warning(
+             "SAP is not connected to any node! Maybe you forgot to call "
+             "duplicate_static_links?")
           return
         if 2 < len(b_links):
-          print "Inter-domain SAP should have one and only one connection to " \
-                "the domain! Using only the first connection."
+          log.warning(
+             "Inter-domain SAP should have one and only one connection to the "
+             "domain! Using only the first connection.")
           continue
+
         # Get inter-domain port in base NFFG
-        domain_port_base = b_links[0].dst
-        print "Found inter-domain port: %s" % domain_port_base
+        domain_port_dov = b_links[0].dst
+        log.debug("Found inter-domain port: %s" % domain_port_dov)
         # Search outgoing links from SAP, should be only one
         n_links = [l for u, v, l in
                    nffg.network.out_edges_iter([sap_id], data=True)]
+
         if len(n_links) < 1:
-          print "SAP is not connected to any node! Maybe you forget to call " \
-                "duplicate_static_links?"
+          log.warning(
+             "SAP is not connected to any node! Maybe you forgot to call "
+             "duplicate_static_links?")
           return
         if 2 < len(n_links):
-          print "Inter-domain SAP should have one and only one connection to " \
-                "the domain! Using only the first connection."
+          log.warning(
+             "Inter-domain SAP should have one and only one connection to the "
+             "domain! Using only the first connection.")
           continue
+
         # Get port and Infra id's in nffg NFFG
         p_id = n_links[0].dst.id
         n_id = n_links[0].dst.node.id
         # Get the inter-domain port from already copied Infra
         domain_port_nffg = base.network.node[n_id].ports[p_id]
-        print "Found inter-domain port: %s" % domain_port_nffg
+        log.debug("Found inter-domain port: %s" % domain_port_nffg)
+
+        # Copy inter-domain port properties for redundant storing
+        # FIXME - do it better
+        if len(domain_port_nffg.properties) > 0:
+          domain_port_dov.add_property(domain_port_nffg.properties)
+          log.debug(
+             "Copy inter-domain port properties: %s" %
+             domain_port_dov.properties)
+        elif len(domain_port_dov.properties) > 0:
+          domain_port_nffg.add_property(domain_port_dov.properties)
+          log.debug(
+             "Copy inter-domain port properties: %s" %
+             domain_port_nffg.properties)
+        else:
+          domain_port_dov.add_property("sap:%s" % sap_id)
+          domain_port_nffg.add_property("sap:%s" % sap_id)
+
+        # Signal Inter-domain port
+        domain_port_dov.add_property("type:inter-domain")
+        domain_port_nffg.add_property("type:inter-domain")
+
         # Delete both inter-domain SAP and links connected to them
         base.del_node(sap_id)
         nffg.del_node(sap_id)
-        print "Add inter-domain connection with delay: %s, bandwidth: %s" % (
-          b_links[0].delay, b_links[0].bandwidth)
+        log.debug(
+           "Add inter-domain connection with delay: %s, bandwidth: %s" % (
+             b_links[0].delay, b_links[0].bandwidth))
+
         # Add the inter-domain links for both ways
-        base.add_undirected_link(port1=domain_port_base, port2=domain_port_nffg,
+        base.add_undirected_link(port1=domain_port_dov,
+                                 port2=domain_port_nffg,
                                  delay=b_links[0].delay,
                                  bandwidth=b_links[0].bandwidth)
+
       else:
         # Normal SAP --> copy SAP
-        c_sap = base.add_sap(sap=deepcopy(nffg.network.node[sap_id]))
-        print "Copy SAP: %s" % c_sap
+        c_sap = base.add_sap(
+           sap=deepcopy(nffg.network.node[sap_id]))
+        log.debug("Copy SAP: %s" % c_sap)
+
     # Copy remaining links which should be valid
     for u, v, link in nffg.network.edges_iter(data=True):
       src_port = base.network.node[u].ports[link.src.id]
@@ -827,8 +878,13 @@ class NFFGToolBox(object):
       c_link = deepcopy(link)
       c_link.src = src_port
       c_link.dst = dst_port
-      base.add_link(src_port=src_port, dst_port=dst_port, link=c_link)
-      print "Copy Link: %s" % c_link
+      base.add_link(src_port=src_port, dst_port=dst_port,
+                    link=c_link)
+      log.debug("Copy Link: %s" % c_link)
+    # print base.dump()
+    # from pprint import pprint
+    # pprint(base.network.__dict__)
+
     # Return the updated NFFG
     return base
 
