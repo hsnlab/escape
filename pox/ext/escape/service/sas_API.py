@@ -202,6 +202,10 @@ class ServiceLayerAPI(AbstractAPI):
     # Mandatory super() call
     super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
     self.last_sg = NFFG(id=0, name='empty')
+    # Set element manager
+    self.__sid = None
+    self.elementManager = None
+    self.service_orchestrator = None
 
   def initialize (self):
     """
@@ -215,8 +219,8 @@ class ServiceLayerAPI(AbstractAPI):
     else:
       self.__sid = self.LAYER_ID
       log.error(
-        "Missing ID of Service Layer from config. Using default value: %s" %
-        self.__sid)
+         "Missing ID of Service Layer from config. Using default value: %s" %
+         self.__sid)
     # Set element manager
     self.elementManager = ClickManager()
     # Init central object of Service layer
@@ -276,8 +280,8 @@ class ServiceLayerAPI(AbstractAPI):
        "Init REST-API [U-Sl] on %s:%s!" % (address[0], address[1]))
     self.rest_api.start()
     handler.log.debug(
-       "Configured communication format: %s!" %
-       handler.virtualizer_format_enabled)
+       "Configured communication format: %s!" % "UNIFY" if
+       handler.virtualizer_format_enabled else "Internal-NFFG")
 
   def _initiate_gui (self):
     """
