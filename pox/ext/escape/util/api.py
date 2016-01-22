@@ -363,8 +363,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   bounded_layer = None
   # Name mapper to avoid Python naming constraint (dict: rpc-name: mapped name)
   rpc_mapper = None
+  # Logger name
+  LOGGER_NAME = "REST-API"
   # Logger. Should be overrided in child classes
-  log = core.getLogger("REST-API")
+  log = core.getLogger("[%s]" % LOGGER_NAME)
 
   def do_GET (self):
     """
