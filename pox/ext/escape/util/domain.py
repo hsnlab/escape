@@ -912,6 +912,33 @@ class AbstractRESTAdapter(Session):
     :rtype: str
     """
     try:
+      self.send_with_timeout(method, url, body, **kwargs)
+    except Timeout:
+      log.warning(
+         "Remote agent(adapter: %s, url: %s) reached timeout limit!" % (
+           self.name, self._base_url))
+      return None
+
+  def send_with_timeout (self, method, url=None, body=None, timeout=None,
+                         **kwargs):
+    """
+    Send REST request with handling exceptions except the TimeoutError.
+
+    :param method: HTTP method
+    :type method: str
+    :param url: valid URL or relevant part follows ``self.base_url``
+    :type url: str
+    :param body: request body
+    :type body: :any:`NFFG` or dict or bytes or str
+    :param timeout: optional timeout param can be given also here
+    :type timeout: int
+    :raises: :any:`Timeout`
+    :return: raw response data
+    :rtype: str
+    """
+    try:
+      if timeout is not None:
+        kwargs['timeout'] = timeout
       self.send_request(method, url, body, **kwargs)
       # return self._response.status_code if self._response is not None else
       # None
@@ -925,10 +952,6 @@ class AbstractRESTAdapter(Session):
       log.error(
          "Remote agent(adapter: %s, url: %s) responded with an error: %s" % (
            self.name, self._base_url, e.message))
-      return None
-    except Timeout:
-      log.error("Remote agent(adapter: %s, url: %s) not responding!" % (
-        self.name, self._base_url))
       return None
     except KeyboardInterrupt:
       log.warning(

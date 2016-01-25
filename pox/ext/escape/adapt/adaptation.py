@@ -484,6 +484,8 @@ class ControllerAdapter(object):
       return
     log.debug(
        "Notify initiated domains: %s" % [d for d in self.domains.initiated])
+    # TODO - end-to-end requirement recreation
+    # TODO - abstract/inter-domain tag rewrite
     mapping_result = True
     for domain, part in slices:
       domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
