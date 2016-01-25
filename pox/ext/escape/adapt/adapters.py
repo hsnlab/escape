@@ -796,7 +796,10 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
          "Not supported config format: %s for 'edit-config'!" % type(data))
     log.debug(
        "Send topology description to domain agent at %s..." % self._base_url)
-    return self.send_no_error(self.POST, 'edit-config', data)
+    try:
+      return self.send_with_timeout(self.POST, 'edit-config', data)
+    except Timeout:
+      return True
 
   def check_domain_reachable (self):
     return self.ping()

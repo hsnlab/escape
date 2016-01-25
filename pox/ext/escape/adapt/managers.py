@@ -181,6 +181,7 @@ class InternalDomainManager(AbstractDomainManager):
     """
     try:
       log.info(">>> Install %s domain part..." % self.domain_name)
+      # print nffg_part.dump()
       # self._delete_nfs()
       self._deploy_nfs(nffg_part=nffg_part)
       log.info("Perform traffic steering according to mapped tunnels/labels...")
@@ -833,8 +834,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     # nffg_part = self._update_nffg(nffg_part.copy())
     log.info("Install %s domain part..." % self.domain_name)
     try:
-      status_code = self.topoAdapter.edit_config(nffg_part)
-      if status_code is not None:
+      status = self.topoAdapter.edit_config(nffg_part)
+      if status is not None:
         return True
       else:
         return False
@@ -947,8 +948,8 @@ class UnifyDomainManager(AbstractDomainManager):
     """
     log.info("Install %s domain part..." % self.domain_name)
     try:
-      status_code = self.topoAdapter.edit_config(nffg_part)
-      return True if status_code is not None else False
+      status = self.topoAdapter.edit_config(nffg_part)
+      return True if status is not None else False
     except:
       log.error(
          "Got exception during NFFG installation into: %s. Cause:\n%s" % (
