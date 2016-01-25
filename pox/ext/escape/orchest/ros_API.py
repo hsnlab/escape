@@ -210,7 +210,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     if self.virtualizer_format_enabled:
       converter = NFFGConverter(domain=None, logger=log)
       # Dump to plain text format
-      data = converter.dump_to_Virtualizer3(nffg=config).xml()
+      data = converter.dump_to_Virtualizer(nffg=config).xml()
       # Setup HTTP response format
       self.send_header('Content-Type', 'application/xml')
     else:
@@ -246,7 +246,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         return
       # Convert response's body to NFFG
       nffg = NFFGConverter(domain="REMOTE",
-                           logger=log).parse_from_Virtualizer3(xml_data=body)
+                           logger=log).parse_from_Virtualizer(xml_data=body)
     else:
       nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     # Rewrite domain name to INTERNAL

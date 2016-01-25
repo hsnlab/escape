@@ -17,6 +17,8 @@ Contains helper classes for conversion between different NF-FG representations.
 import sys
 import xml.etree.ElementTree as ET
 
+from baseclasses import __version__ as V_VERSION
+
 try:
   # Import for ESCAPEv2
   from escape.util.nffg import AbstractNFFG, NFFG
@@ -57,6 +59,8 @@ class NFFGConverter(object):
   OP_INPORT = 'in_port'
   OP_OUTPUT = 'output'
   GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG)
+  # Specific tags
+  TAG_SG_HOP = "sg_hop"
   # Operation formats in Virtualizer
   MATCH_VLAN_TAG = r"dl_vlan"
   ACTION_PUSH_VLAN = r"push_vlan"
@@ -149,7 +153,7 @@ class NFFGConverter(object):
         raise RuntimeError("Unrecognizable key: %s" % kv[0])
     return ret
 
-  def parse_from_Virtualizer3 (self, xml_data, with_virt=False):
+  def parse_from_Virtualizer (self, xml_data, with_virt=False):
     """
     Convert Virtualizer3-based XML str --> NFFGModel based NFFG object
 
@@ -188,7 +192,7 @@ class NFFGConverter(object):
     for inode in virtualizer.nodes:
       # Node params
       node_id = inode.id.get_value()
-      _name = inode.name.get_value() if inode.name.is_initialized() else \
+      _hop_id = inode.name.get_value() if inode.name.is_initialized() else \
         "name-" + node_id
       # Set domain as the domain of the Converter
       _domain = self.domain
@@ -229,7 +233,7 @@ class NFFGConverter(object):
       _delay = max(_delay) if _delay else None
 
       # Add Infra Node
-      infra = nffg.add_infra(id=node_id, name=_name, domain=_domain,
+      infra = nffg.add_infra(id=node_id, name=_hop_id, domain=_domain,
                              infra_type=_infra_type, cpu=_cpu, mem=_mem,
                              storage=_storage, delay=_delay,
                              bandwidth=_bandwidth)
@@ -527,11 +531,17 @@ class NFFGConverter(object):
               _fr_delay = flowentry.resources.delay.get_value()
 
         # Get hop_id
-        _name = flowentry.name.get_as_text().partition(':')[1] \
-          if flowentry.name.is_initialized() else None
+        if not flowentry.name.get_as_text().startswith(self.TAG_SG_HOP):
+          log.warning(
+             "Flowrule's name: %s is not following the SG hop naming "
+             "convention! SG hop for %s is undefined...") % (
+            flowentry.name.get_as_text(), flowentry)
+          _hop_id = flowentry.name.get_as_text().split(':')[1] \
+            if flowentry.name.is_initialized() else None
 
         fr = port.add_flowrule(id=fe_id, match=match, action=action,
-                               bandwidth=_fr_bw, delay=_fr_delay, hop_id=_name)
+                               bandwidth=_fr_bw, delay=_fr_delay,
+                               hop_id=_hop_id)
         self.log.debug("Add %s" % fr)
 
     # Add links connecting infras
@@ -564,7 +574,7 @@ class NFFGConverter(object):
          3, NFFG.version))
     return (nffg, virtualizer) if with_virt else nffg
 
-  def dump_to_Virtualizer3 (self, nffg):
+  def dump_to_Virtualizer (self, nffg):
     """
     Convert given :any:`NFFG` to Virtualizer3 format.
 
@@ -574,7 +584,7 @@ class NFFGConverter(object):
     """
     self.log.debug(
        "START conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
-         NFFG.version, 3))
+         NFFG.version, V_VERSION))
     self.log.debug("Converting data to XML-based Virtualizer structure...")
     # Create empty Virtualizer
     virt = virt4.Virtualizer(id=str(nffg.id), name=str(nffg.name))
@@ -921,8 +931,8 @@ class NFFGConverter(object):
                 flowrule.bandwidth) if flowrule.bandwidth is not None else None)
 
           # Process hop_id field
-          _name = "sg_hop:%s" % flowrule.hop_id if flowrule.hop_id is not \
-                                                   None else None
+          _name = "%s:%s" % (self.TAG_SG_HOP, flowrule.hop_id) \
+            if flowrule.hop_id is not None else None
 
           # Add Flowentry with converted params
           virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
@@ -1143,9 +1153,9 @@ if __name__ == "__main__":
     dov = virt4.Virtualizer.parse(root=tree.getroot())
     dov.bind(relative=True)
     print dov
-  nffg = c.parse_from_Virtualizer3(xml_data=dov.xml())
+  nffg = c.parse_from_Virtualizer(xml_data=dov.xml())
   print nffg.dump()
-  virt = c.dump_to_Virtualizer3(nffg=nffg)
+  virt = c.dump_to_Virtualizer(nffg=nffg)
   # virt.bind()
   print "Reconverted Virtualizer:"
   print virt.xml()

@@ -646,10 +646,10 @@ def test_conversion ():
 
   with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
     os_nffg, os_virt = NFFGConverter(
-       domain="OPENSTACK").parse_from_Virtualizer3(f.read(), with_virt=True)
+       domain="OPENSTACK").parse_from_Virtualizer(f.read(), with_virt=True)
   with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
     un_nffg, un_virt = NFFGConverter(
-       domain="UN").parse_from_Virtualizer3(f.read(), with_virt=True)
+       domain="UN").parse_from_Virtualizer(f.read(), with_virt=True)
   with open("/home/czentye/escape/src/escape_v2/pox/escape-mn-topo.nffg") as f:
     internal = NFFG.parse(f.read())
     internal.duplicate_static_links()

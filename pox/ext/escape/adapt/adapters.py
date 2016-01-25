@@ -742,8 +742,8 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
           return
         log.debug("Converting from XML/Virtualizer to NFFG format...")
         # Covert from XML-based Virtualizer to NFFG
-        nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data,
-                                                            with_virt=True)
+        nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+                                                           with_virt=True)
         # Cache virtualizer
         self.virtualizer = virt
         if self._original_virtualizer is None:
@@ -789,7 +789,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.warning(
            "Unexpected case: convert Virtualizer data for a non-UNIFY "
            "interface!")
-        converted = self.converter.parse_from_Virtualizer3(xml_data=data.xml())
+        converted = self.converter.parse_from_Virtualizer(xml_data=data.xml())
         data = converted.dump()
     else:
       raise RuntimeError(
@@ -874,8 +874,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.error("Received data is not in XML format!")
         return
       # Covert from XML-based Virtualizer to NFFG
-      nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data,
-                                                          with_virt=True)
+      nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+                                                         with_virt=True)
       # Cache virtualizer
       self.virtualizer = virt
       if self._original_virtualizer is None:
@@ -961,8 +961,8 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.error("Received data is not in XML!")
         return
       # Covert from XML-based Virtualizer to NFFG
-      nffg, virt = self.converter.parse_from_Virtualizer3(data,
-                                                          with_virt=True)
+      nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+                                                         with_virt=True)
       # Cache virtualizer
       self.virtualizer = virt
       if self._original_virtualizer is None:
@@ -1041,8 +1041,8 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.error("Received data is not in XML!")
         return
       # Covert from XML-based Virtualizer to NFFG
-      nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data,
-                                                          with_virt=True)
+      nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+                                                         with_virt=True)
       # Cache virtualizer
       self.virtualizer = virt
       if self._original_virtualizer is None:
