@@ -127,7 +127,7 @@ def main ():
 
   # Add topology file if --full is set
   if args.topo:
-    if args.full:
+    if args.full or args.agent:
       cmd = "%s --topo=%s" % (cmd, os.path.abspath(args.topo))
     else:
       parser.error(message="-t/--topo can be used only with -f/--full!")
