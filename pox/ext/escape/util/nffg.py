@@ -1385,10 +1385,20 @@ class NFFGToolBox(object):
               # let's find which SAP/VNF port object does the SGHop 
               # originates from
               transit_fr = True
+              tag_info = None
               for link in nffg.links:
                 if link.dst.id == p.id and p.node.id == link.dst.node.id:
                   if ("TAG=" in fr.match and link.src.node.type == 'SAP') or \
                      command_param[0] == "TAG":
+                    if command_param[0] == "TAG":
+                      tag_info = command_param[1]
+                    else:
+                      # there must be a TAG field in match
+                      for match in fr.match.split(";"):
+                        field, mparam = match.split("=")
+                        if field == "TAG":
+                          tag_info = mparam
+                          break
                     starting_port = link.src
                     transit_fr = False
                     break
@@ -1396,7 +1406,7 @@ class NFFGToolBox(object):
                     break
               if transit_fr:
                 break
-              sghop_info = tuple(command_param[1].split("|"))
+              sghop_info = tuple(tag_info.split("|"))
               if sghop_info in sg_map:
                 sg_map[sghop_info][0] = starting_port
               else:
