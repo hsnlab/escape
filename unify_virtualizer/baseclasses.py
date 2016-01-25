@@ -1344,7 +1344,7 @@ class ListedYang(Yang):
         """
         key_values = self.keys()
         if key_values is None:
-            raise KeyError("List entry without key value: " + self.get_as_text)
+            raise KeyError("List entry without key value: " + self.get_as_text())
         key_tags = self.get_key_tags()
         if type(key_tags) is tuple:
             s = ', '.join('%s=%s' % t for t in zip(key_tags, key_values))
