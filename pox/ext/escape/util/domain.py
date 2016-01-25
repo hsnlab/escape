@@ -599,6 +599,8 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       msg.actions.append(of.ofp_action_strip_vlan())
     else:
       try:
+        # If next node is a SAP we need to setup the MAC addresses and
+        # strip VLAN from the frame explicitly
         if out in self.saps[id]:
           msg.actions.append(of.ofp_action_strip_vlan())
       except KeyError:

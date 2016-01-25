@@ -219,7 +219,8 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
 
     # Maximum usable/reducible amount of bw to avoid false negative mapping
     # errors
-    sbb.resources.bandwidth = max_bw * (infra_count + link_count)
+    sbb.resources.bandwidth = max_bw * (
+      infra_count + link_count) if max_bw is not None else None
     log.debug("Set infra's resources: %s" % sbb.resources)
 
     # Add supported types
