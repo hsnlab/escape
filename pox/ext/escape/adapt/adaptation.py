@@ -528,7 +528,8 @@ class ControllerAdapter(object):
     log.info("Received DomainChange event from domain: %s, cause: %s" % (
       event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     if event.data is not None and isinstance(event.data, NFFG):
-      self.domainResManager.update_domain_resource(event.domain, event.data)
+      self.domainResManager.update_domain_resource(nffg=event.data,
+                                                   domain=event.domain)
 
   def update_dov (self, nffg_part):
     """
@@ -817,18 +818,18 @@ class DomainResourceManager(object):
       log.info("Append %s domain to <Global Resource View> (DoV)..." % domain)
       if self._tracked_domains:
         # Merge domain topo into global view
-        self._dov.merge_domain_into_dov(domain, nffg)
+        self._dov.merge_domain_into_dov(nffg=nffg, domain=domain)
       else:
         # No other domain detected, set NFFG as the whole global view
         log.debug(
            "DoV is empty! Add new domain: %s as the global view!" % domain)
-        self._dov.set_domain_as_global_view(domain, nffg)
+        self._dov.set_domain_as_global_view(domain=domain, nffg=nffg)
       # Add detected domain to cached domains
       self._tracked_domains.add(domain)
     else:
       log.info("Updating <Global Resource View> from %s domain..." % domain)
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
-        self._dov.update_domain_view(domain, nffg)
+        self._dov.update_domain_view(domain=domain, nffg=nffg)
         # FIXME - SIGCOMM
         # print self.__dov.get_resource_info().dump()
