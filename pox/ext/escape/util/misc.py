@@ -252,8 +252,8 @@ class SimpleStandaloneHelper(object):
     """
     from pox.core import core
     core.getLogger("StandaloneHelper").getChild(self._cover_name).info(
-      "Got event: %s from %s Layer" % (
-        event.__class__.__name__, str(event.source._core_name).title()))
+       "Got event: %s from %s Layer" % (
+         event.__class__.__name__, str(event.source._core_name).title()))
 
 
 class Singleton(type):
@@ -328,3 +328,32 @@ def get_ifaces ():
   """
   return [iface.split(' ', 1)[0] for iface in os.popen('ifconfig -a -s') if
           not iface.startswith('Iface')]
+
+
+def get_escape_name_version ():
+  """
+  Return the initiation message for the current ESCAPE version.
+  Acquiring information from escape package.
+  :return:
+  """
+  import escape
+  return escape.__project__, escape.__version__
+
+
+def visualizations_notify (data, url=None, **kwargs):
+  """
+  Send the given data to a remote visualization server.
+  If url is given use this address to send instead of the url defined in the
+  global config.
+
+  :param data: data need to send
+  :type data: str
+  :param url: additional URL (acquired from config by default)
+  :param kwargs: optional parameters for request lib
+  :type: dict
+  :return: response
+  :rtype: str
+  """
+  from pox.core import core
+  if core.hasComponent('visualizer'):
+    return core.visualizer.send_notification(data=data, url=url, **kwargs)
