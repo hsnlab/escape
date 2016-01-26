@@ -289,7 +289,10 @@ cfg = {
       "SAP-xterms": True,
       "SHUTDOWN-CLEAN": True
     },
-  "additional-config-file": "escape.config"  # relative to project root
+  "additional-config-file": "escape.config",  # relative to project root
+  "visualization": {
+    "url": "http://localhost:8081/edit-config",
+  }
 }
 
 
