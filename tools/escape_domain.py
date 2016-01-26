@@ -83,6 +83,7 @@ def start ():
   LOG.debug('Start tornado server')
   app = Application([url(r"/(.*)", VirtualizationService)])
   app.listen(8083)
+  LOG.debug("Listening port: %s" % 8083)
   IOLoop.current().start()
 
 
