@@ -600,8 +600,8 @@ class ESCAPEConfig(object):
     :return: initial params
     :rtype: dict
     """
-    params = self.__configuration[ADAPT][
-      component].copy() if parent is None else parent[component].copy()
+    params = self.__configuration[ADAPT][component].copy() \
+      if parent is None else parent[component].copy()
     del params['module']
     del params['class']
     return params

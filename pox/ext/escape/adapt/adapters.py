@@ -162,8 +162,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     # Generate the list of port names from OF Feature Reply msg
     ports = [port.name for port in connection.features.ports]
     # Remove inter-domain SAP ports (starting with 'eth')
-    inter_domain_ports = [p for p in ports if p.startswith('eth')]
-    for p in inter_domain_ports:
+    for p in [p for p in ports if p.startswith('eth')]:
       ports.remove(p)
     # Mininet naming convention for port in OVS:
     # <bridge_name> (internal), <bridge_name>-eth<num>, ...
@@ -187,30 +186,51 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   name = "SDN-POX"
   type = AbstractESCAPEAdapter.TYPE_CONTROLLER
 
-  # Static mapping of infra IDs and DPIDs
+  # Static mapping of infra IDs and DPIDs - overridden at init time based on
+  #  the SDNAdapter configuration
   infra_to_dpid = {
-    'MT1': 0x14c5e0c376e24,
-    'MT2': 0x14c5e0c376fc6,
-  }
-  dpid_to_infra = {
-    0x14c5e0c376e24: 'MT1',
-    0x14c5e0c376fc6: 'MT2',
+    # 'MT1': 0x14c5e0c376e24,
+    # 'MT2': 0x14c5e0c376fc6,
   }
 
   def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False,
-                *args, **kwargs):
+                binding=None, *args, **kwargs):
     super(SDNDomainPOXAdapter, self).__init__(name=name, address=address,
                                               port=port, keepalive=keepalive,
                                               *args, **kwargs)
     # Currently static initialization from a config file
     # TODO: discover SDN topology and create the NFFG
     self.topo = None  # SDN domain topology stored in NFFG
+    if not binding:
+      log.warning(
+         "No Infra-DPID binding are defined in the configuration! Using empty "
+         "data structure...")
+      self.binding = {}
+    elif isinstance(binding, dict):
+      self.infra_to_dpid = binding.copy()
+    else:
+      log.warning(
+         "Wrong type: %s for binding in %s. Using empty data structure..." % (
+           type(binding), self))
+      self.binding = {}
 
   def get_topology_resource (self):
     super(SDNDomainPOXAdapter, self).get_topology_resource()
 
   def check_domain_reachable (self):
     super(SDNDomainPOXAdapter, self).check_domain_reachable()
+
+  def _identify_ovs_device (self, connection):
+    """
+    Currently we can not detect the Connection - InfraNode bindings because
+    the only available infos are the connection parameters: DPID, ports, etc.
+    Skip this step for the SDN domain, the assignments are statically defined.
+
+    :param connection: inner Connection class of POX
+    :type connection: :class:`pox.openflow.of_01.Connection`
+    :return: None
+    """
+    pass
 
 
 class InternalMininetAdapter(AbstractESCAPEAdapter):
