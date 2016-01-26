@@ -56,6 +56,10 @@ fi
 info "=== Set sshd configuration ==="
 cat <<EOF | sudo tee -a /etc/ssh/sshd_config
 # --- ESCAPEv2 ---
+# Only 8 Port can be used as a listening port for SSH daemon.
+# The default Port 22 has already reserved one port.
+# To overcome this limitation the openssh-server needs to be
+# modified and recompiled from source.
 Port 830
 Port 831
 Port 832
@@ -63,9 +67,6 @@ Port 833
 Port 834
 Port 835
 Port 836
-Port 837
-Port 838
-Port 839
 Subsystem netconf /usr/sbin/netconf-subsystem
 # --- ESCAPEv2 END ---
 EOF
