@@ -112,4 +112,7 @@ sudo sed -i s/dbms\.security\.auth_enabled=true/dbms\.security\.auth_enabled=fal
     /etc/neo4j/neo4j-server.properties
 sudo service neo4j-service restart
 
+# Remove ESCAPEv2 config file from index in git to untrack changes
+git update-index --assume-unchanged escape.config
+
 info "=== Done ==="
