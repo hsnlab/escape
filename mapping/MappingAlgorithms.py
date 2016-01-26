@@ -107,7 +107,7 @@ def MAP (request, network, full_remap=False,
                                   "flowrules of the NFFG.")
     for k, v in sg_hop_info.iteritems():
       # VNF ports are given to the function
-      request.add_sglink(v[0], v[1], id=k[2])
+      request.add_sglink(v[0], v[1], id=k[2], flowclass=v[2])
 
   chainlist = []
   cid = 1
@@ -485,7 +485,7 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('untracked/escape-mn-mapped-sghopmatch.nffg', "r") as f:
+    with open('untracked/escape-mn-taginfo-testreq.nffg', "r") as f:
       req = NFFG.parse(f.read())
     with open('../examples/escape-mn-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())

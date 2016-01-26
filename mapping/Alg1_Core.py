@@ -591,25 +591,6 @@ class CoreAlgorithm(object):
                                         -1*bt_record['used_latency'],
                                         bt_record['last_used_node'])
 
-
-  def _addSAPandLinkToFromIt (self, netportid, bis_id, nffg, nodenf, reqportid,
-       fc, toSAP=True):
-    """
-    Checks if there is a SAP for this portid in the currently
-    under-construction NFFG. Adds the link to/from this SAP.
-    """
-    sapname_and_id = "%s-%s" % (bis_id, netportid)
-    if sapname_and_id not in nffg.network:
-      sap = nffg.add_sap(name=sapname_and_id, id=sapname_and_id)
-    else:
-      sap = nffg.network.node[sapname_and_id]
-      # The VNFs port should be called the same as before,
-      # SAP port id is not important.
-    if toSAP:
-      nffg.add_sglink(nodenf.ports[reqportid], sap.add_port(), flowclass=fc)
-    else:
-      nffg.add_sglink(sap.add_port(), nodenf.ports[reqportid], flowclass=fc)
-
   def _addFlowrulesToNFFGDerivatedFromReqLinks (self, v1, v2, reqlid, nffg):
     """
     Adds the flow rules of the path of the request link (v1,v2,reqlid)
@@ -843,22 +824,22 @@ class CoreAlgorithm(object):
                  self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
                             nffg.network.node[sapendid].ports[
                  self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)], 
-                            id=d.id, flowclass=d.flowclass)
+                            id=d.id, flowclass=d.flowclass, tag_info=d.tag_info)
           else:
             nffg.add_sglink(nffg.network.node[sapstartid].ports[
                  self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
                             nffg.network.node[j].ports[d.dst.id], id=d.id,
-                            flowclass=d.flowclass)
+                            flowclass=d.flowclass, tag_info=d.tag_info)
         elif self.req.node[j].type == 'SAP':
           sapendid = self.manager.getIdOfChainEnd_fromNetwork(j)
           nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
                           nffg.network.node[sapendid].ports[
                             self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)],
-                          id=d.id, flowclass=d.flowclass)
+                          id=d.id, flowclass=d.flowclass, tag_info=d.tag_info)
         else:
           nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
                           nffg.network.node[j].ports[d.dst.id], id=d.id,
-                          flowclass=d.flowclass)
+                          flowclass=d.flowclass, tag_info=d.tag_info)
     except RuntimeError as re:
       raise uet.InternalAlgorithmException("RuntimeError catched during SGLink"
           " addition to the output NFFG. Not Yet Implemented feature: keeping "
