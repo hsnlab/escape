@@ -1274,8 +1274,6 @@ class NFFGToolBox(object):
     values are kept string, no matter if they could be converted to int, it is 
     only used internally), data is [PortObjsrc, PortObjdst] list of port 
     objects. It is based exclusively on flowrules.
-    TODO: 'flowclass' field of SGHops/flowrules is not retrieved (currently it 
-    has no meaning anyway, but it can have later.)
     """
     sg_map = {}
     for d in nffg.infras:
@@ -1322,7 +1320,7 @@ class NFFGToolBox(object):
                     # flowrule, and there is no starting flowrule for it, so the
                     # other end of the link (finishing in 'p') is the port where
                     # the SGHop was originating
-                    sg_map[sghop_info] = [None, ending_port, p] # KELL MEG????
+                    sg_map[sghop_info] = [None, ending_port, fr.flowclass, p]
             # TAG action and match cannot coexsist in the same flowrule
             elif command_param[0] == "TAG" or "TAG=" in fr.match:
               starting_port = None
@@ -1364,8 +1362,8 @@ class NFFGToolBox(object):
                       out_port = int(c_p[1])
                     except ValueError:
                       pass
-                    sg_map[sghop_info] = [starting_port, None,
-                                          d.ports[out_port]] # KELL MEG???
+                    sg_map[sghop_info] = [starting_port, None, fr.flowclass, 
+                                          d.ports[out_port]]
                     break
             elif "UNTAG" not in actions and "TAG=" not in fr.action and \
                  "TAG=" not in fr.match:
@@ -1373,7 +1371,7 @@ class NFFGToolBox(object):
               # All required SGHop info can be gathered at once from this
               # flowrule. It is either a SAP-SAP flowrule or a collocated.
               from_sap = False
-              sg_map_value = [None, None]
+              sg_map_value = [None, None, fr.flowclass]
               for link in nffg.links:
                 # p.id is surely in the right format as link.dst.id (they 
                 # would reach the same string instance...)
@@ -1408,15 +1406,15 @@ class NFFGToolBox(object):
     # still a None prt object (meaning that flowrule sequence for that TAG 
     # consisted of only one NON-COLLOCATION flowrule)
     for sghop_info in sg_map:
-      if sg_map[sghop_info][0] is None and len(sg_map[sghop_info]) == 3:
+      if sg_map[sghop_info][0] is None and len(sg_map[sghop_info]) == 4:
         # the originating portobject of the th SGHop is missing
-        portobj = sg_map[sghop_info][2]
+        portobj = sg_map[sghop_info][3]
         for link in nffg.links:
           if link.dst.id == portobj.id and link.dst.node.id == portobj.node.id:
             sg_map[sghop_info][0] = link.src
-      if sg_map[sghop_info][1] is None and len(sg_map[sghop_info]) == 3:
+      if sg_map[sghop_info][1] is None and len(sg_map[sghop_info]) == 4:
         # the destination port object of the SGHop is missing
-        portobj = sg_map[sghop_info][2]
+        portobj = sg_map[sghop_info][3]
         for link in nffg.links:
           if link.src.id == portobj.id and link.src.node.id == portobj.node.id:
             sg_map[sghop_info][1] = link.dst
