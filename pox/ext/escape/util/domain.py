@@ -932,7 +932,7 @@ class AbstractRESTAdapter(Session):
     :type body: :any:`NFFG` or dict or bytes or str
     :param timeout: optional timeout param can be given also here
     :type timeout: int
-    :raises: :any:`Timeout`
+    :raises: :any:`requests.exceptions.Timeout`
     :return: raw response data
     :rtype: str
     """

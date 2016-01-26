@@ -185,7 +185,11 @@ cfg = {
               "name": None,
               "address": "0.0.0.0",
               "port": 6633,
-              "keepalive": False
+              "keepalive": False,
+              "binding": {
+                'MT1': 0x14c5e0c376e24,
+                'MT2': 0x14c5e0c376fc6,
+              }
             },
           "TOPOLOGY":
             {
