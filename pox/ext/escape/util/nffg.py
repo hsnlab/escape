@@ -1280,6 +1280,7 @@ class NFFGToolBox(object):
       for p in d.ports:
         for fr in p.flowrules:
           actions = fr.action.split(";")
+          matches = fr.match.split(";")
           for action in actions:
             command_param = action.split("=")
             if "TAG=" in fr.match and command_param[0] == "output":
@@ -1307,7 +1308,15 @@ class NFFGToolBox(object):
                     break
               if transit_fr:
                 break
-              for match in fr.match.split(";"):
+              # we must (surely) encounter flowclass before adding and we don't 
+              # want to mess up inclusion testing in sg_map
+              flowclass = None
+              for match in matches:
+                field, mparam = match.split("=")
+                if field == "flowclass":
+                  flowclass = mparam
+                  break
+              for match in matches:
                 # match is always like: <<field=value>>
                 field, mparam = match.split("=")
                 if field == "TAG":
@@ -1320,7 +1329,7 @@ class NFFGToolBox(object):
                     # flowrule, and there is no starting flowrule for it, so the
                     # other end of the link (finishing in 'p') is the port where
                     # the SGHop was originating
-                    sg_map[sghop_info] = [None, ending_port, fr.flowclass, p]
+                    sg_map[sghop_info] = [None, ending_port, flowclass, p]
             # TAG action and match cannot coexsist in the same flowrule
             elif command_param[0] == "TAG" or "TAG=" in fr.match:
               starting_port = None
@@ -1336,7 +1345,7 @@ class NFFGToolBox(object):
                       tag_info = command_param[1]
                     else:
                       # there must be a TAG field in match
-                      for match in fr.match.split(";"):
+                      for match in matches:
                         field, mparam = match.split("=")
                         if field == "TAG":
                           tag_info = mparam
@@ -1349,6 +1358,12 @@ class NFFGToolBox(object):
               if transit_fr:
                 break
               sghop_info = tuple(tag_info.split("|"))
+              flowclass = None
+              for match in matches:
+                field, mparam = match.split("=")
+                if field == "flowclass":
+                  flowclass = mparam
+                  break
               if sghop_info in sg_map:
                 sg_map[sghop_info][0] = starting_port
               else:
@@ -1362,7 +1377,7 @@ class NFFGToolBox(object):
                       out_port = int(c_p[1])
                     except ValueError:
                       pass
-                    sg_map[sghop_info] = [starting_port, None, fr.flowclass, 
+                    sg_map[sghop_info] = [starting_port, None, flowclass, 
                                           d.ports[out_port]]
                     break
             elif "UNTAG" not in actions and "TAG=" not in fr.action and \
@@ -1371,7 +1386,13 @@ class NFFGToolBox(object):
               # All required SGHop info can be gathered at once from this
               # flowrule. It is either a SAP-SAP flowrule or a collocated.
               from_sap = False
-              sg_map_value = [None, None, fr.flowclass]
+              flowclass = None
+              for match in matches:
+                field, mparam = match.split("=")
+                if field == "flowclass":
+                  flowclass = mparam
+                  break
+              sg_map_value = [None, None, flowclass]
               for link in nffg.links:
                 # p.id is surely in the right format as link.dst.id (they 
                 # would reach the same string instance...)
