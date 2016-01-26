@@ -819,3 +819,31 @@ class ESCAPEConfig(object):
       return cfg if cfg is not None else {}
     except (KeyError, AttributeError, TypeError):
       return {}
+
+  ##############################################################################
+  # Visualizations layer getters
+  ##############################################################################
+
+  def get_visualization_url (self):
+    """
+    Return the url of the remote Visualization server.
+
+    :return: url
+    :rtype: str
+    """
+    try:
+      return self.__configuration["visualization"]['url']
+    except KeyError:
+      return None
+
+  def get_visualization_rpc (self):
+    """
+    Return the url of the remote Visualization server.
+
+    :return: url
+    :rtype: str
+    """
+    try:
+      return self.__configuration["visualization"]['url']
+    except KeyError:
+      return None

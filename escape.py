@@ -56,6 +56,8 @@ def main ():
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
+  escape.add_argument("-V", "--visualization", action="store_true",
+                      default=False, help="run the visualization module")
   escape.add_argument("-4", "--cfor", action="store_true", default=False,
                       help="start the REST-API for the Cf-Or interface")
   # Remaining arguments
@@ -125,12 +127,18 @@ def main ():
     # Disable debug mode in normal mode
     cmd = "%s --debug=False" % cmd
 
+  # Enable Visualization
+  if args.visualization:
+    cmd = "%s --visualization" % cmd
+
   # Add topology file if --full is set
   if args.topo:
     if args.full or args.agent:
       cmd = "%s --topo=%s" % (cmd, os.path.abspath(args.topo))
     else:
-      parser.error(message="-t/--topo can be used only with -f/--full!")
+      parser.error(
+         message="-t/--topo can be used only with infrastructure layer! "
+                 "(with -f/--full or -a/--agent flag)")
 
   # Add the interactive shell if needed
   if args.interactive:
@@ -163,7 +171,7 @@ def main ():
         break
 
   # Starting ESCAPEv2 (as a POX module)
-  print "Starting ESCAPEv2..."
+  print "Starting..."
   if args.debug:
     print "Command: %s" % cmd
   os.system(cmd)
