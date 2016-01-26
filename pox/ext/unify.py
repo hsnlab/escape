@@ -19,6 +19,8 @@ Initiate appropriate APIs
 
 Follows POX module conventions
 """
+import logging
+
 import pox.lib.util as poxutil
 from pox.core import core
 
@@ -59,7 +61,7 @@ def _start_components (event):
 
 @poxutil.eval_args
 def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
-            full=False, debug=True, cfor=False, topo=None):
+            full=False, debug=True, cfor=False, visualization=False, topo=None):
   """
   Launch function called by POX core when core is up.
 
@@ -78,24 +80,34 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   :type debug: bool
   :param cfor: start Cf-Or REST API (optional)
   :type cfor: bool
+  :param visualization: send NFFGs to remote visualization server (optional)
+  :type visualization: bool
   :param topo: Path of the initial topology graph (optional)
   :type topo: str
   :return: None
   """
   global init_param
+  log = core.getLogger("core")
   init_param.update(locals())
-  # Run POX with DEBUG logging level
+  # Run POX with DEBUG logging level if needed
   from pox.log.level import launch
-
   launch(DEBUG=debug)
   # Import colourful logging
   from pox.samples.pretty_log import launch
-
   launch()
+  log.info(
+     "Setup logger - formatter: %s, level: %s" % (
+       "pretty_log", logging.getLevelName(log.getEffectiveLevel())))
   # Save additional config file name into POX's core as an attribute to avoid to
   # confuse with POX's modules
   if config:
     setattr(core, "config_file_name", config)
+  from escape.util.misc import get_escape_name_version
+  log.info("Starting %s(version: %s) components..." % get_escape_name_version())
+
+  if visualization:
+    log.debug("Enable remote visualization...")
+    from escape.util.visualization import RemoteVisualizer
+    core.register(RemoteVisualizer._core_name, RemoteVisualizer())
   # Register _start_components() to be called when POX is up
   core.addListenerByName("GoingUpEvent", _start_components)
-  core.getLogger().info("Starting ESCAPEv2 components...")
