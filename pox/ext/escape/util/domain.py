@@ -912,7 +912,7 @@ class AbstractRESTAdapter(Session):
     :rtype: str
     """
     try:
-      self.send_with_timeout(method, url, body, **kwargs)
+      return self.send_with_timeout(method, url, body, **kwargs)
     except Timeout:
       log.warning(
          "Remote agent(adapter: %s, url: %s) reached timeout limit!" % (
