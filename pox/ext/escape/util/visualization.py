@@ -34,7 +34,16 @@ class RemoteVisualizer(Session):
   # name form POXCore
   _core_name = "visualizer"
 
-  def __init__ (self, url=None, prefix=""):
+  def __init__ (self, url=None, rpc=""):
+    """
+    Init.
+
+    :param url: URL of the remote server
+    :type url: str
+    :param rpc: RPC name
+    :type rpc: str
+    :return: None
+    """
     super(RemoteVisualizer, self).__init__()
     self.log = core.getLogger("visualizer")
     if url is None:
@@ -72,8 +81,11 @@ class RemoteVisualizer(Session):
     Convert given NFFG into Virtualizer format if needed.
 
     :param data: topology description need to send
-    :param kwargs:
-    :return:
+    :type data: :any:`NFFG` or Virtualizer
+    :param kwargs: additional params to request
+    :type kwargs: dict
+    :return: response text
+    :rtype: str
     """
     try:
       if isinstance(data, NFFG):
