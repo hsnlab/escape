@@ -45,7 +45,7 @@ class RemoteVisualizer(Session):
     ADAPT: "ESCAPE-ADAPTATION"
   }
 
-  def __init__ (self, url=None, rpc=""):
+  def __init__ (self, url=None, rpc=None):
     """
     Init.
 
@@ -59,11 +59,9 @@ class RemoteVisualizer(Session):
     self.log = core.getLogger("visualizer")
     if url is None:
       url = CONFIG.get_visualization_url()
+    if rpc is None:
       rpc = CONFIG.get_visualization_rpc()
-      if url.endswith('/'):
-        self._url = urlparse.urljoin(url, rpc)
-      else:
-        self._url = urlparse.urljoin(url + '/', rpc)
+    self._url = urlparse.urljoin(url, rpc)
     if self._url is None:
       raise RuntimeError("Missing URL from %s" % self.__class__.__name__)
     self.log.info("Setup remote Visualizer with URL: %s" % self._url)
@@ -104,6 +102,9 @@ class RemoteVisualizer(Session):
     """
     if url is None:
       url = self._url
+    if url is None:
+      self.log.error("Missing URL for remote visualizer! Skip notification...")
+      return
     self.log.debug("Send visualization notification to %s" % self._url)
     try:
       if isinstance(data, NFFG):
