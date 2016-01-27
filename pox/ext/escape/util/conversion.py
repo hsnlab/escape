@@ -62,9 +62,9 @@ class NFFGConverter(object):
   # Specific tags
   TAG_SG_HOP = "sg_hop"
   # Operation formats in Virtualizer
-  MATCH_VLAN_TAG = r"dl_vlan"
-  ACTION_PUSH_VLAN = r"push_vlan"
-  ACTION_STRIP_VLAN = r"strip_vlan"
+  MATCH_TAG = r"dl_tag"
+  ACTION_PUSH_TAG = r"push_tag"
+  ACTION_POP_TAG = r"pop_tag"
   # Operand separator
   LABEL_SEPARATOR = '|'
   OP_SEPARATOR = ';'
@@ -437,7 +437,7 @@ class NFFGConverter(object):
         # Check if there is a matching operation -> currently just TAG is used
         if flowentry.match.is_initialized() and flowentry.match.get_value():
           for op in flowentry.match.get_as_text().split(self.OP_SEPARATOR):
-            if op.startswith(self.MATCH_VLAN_TAG):
+            if op.startswith(self.MATCH_TAG):
               # if src or dst was a SAP: SAP.id == port.name
               # if scr or dst is a VNF port name of parent of port
               if _port.port_type.get_as_text() == \
@@ -460,7 +460,7 @@ class NFFGConverter(object):
         # Check if there is an action operation
         if flowentry.action.is_initialized() and flowentry.action.get_value():
           for op in flowentry.action.get_as_text().split(self.OP_SEPARATOR):
-            if op.startswith(self.ACTION_PUSH_VLAN):
+            if op.startswith(self.ACTION_PUSH_TAG):
               # tag: src element name | dst element name | tag
               # if src or dst was a SAP: SAP.id == port.name
               # if scr or dst is a VNF port name of parent of port
@@ -479,7 +479,7 @@ class NFFGConverter(object):
               _tag = int(op.split(':')[1], base=0)
               action += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
                  (_src_name, _dst_name, str(_tag))))
-            elif op.startswith(self.ACTION_STRIP_VLAN):
+            elif op.startswith(self.ACTION_POP_TAG):
               # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
               action += ";%s" % self.OP_UNTAG
 
@@ -1078,7 +1078,7 @@ class NFFGConverter(object):
       if op[0] == self.OP_TAG:
         try:
           vlan_tag = int(op[1].split('|')[-1])
-          ret.append("%s=%s" % (self.MATCH_VLAN_TAG, format(vlan_tag, '#06x')))
+          ret.append("%s=%s" % (self.MATCH_TAG, format(vlan_tag, '#06x')))
         except ValueError:
           self.log.warning(
              "Wrong VLAN format: %s!" % op[1])
@@ -1116,14 +1116,14 @@ class NFFGConverter(object):
         # E.g.: <action>push_tag:0x0037</action>
         try:
           vlan = int(op[1].split('|')[-1])
-          ret.append("%s:%s" % (self.ACTION_PUSH_VLAN, format(vlan, '#06x')))
+          ret.append("%s:%s" % (self.ACTION_PUSH_TAG, format(vlan, '#06x')))
         except ValueError:
           self.log.warning(
              "Wrong VLAN format: %s! Skip flowrule conversion..." % op[1])
           continue
       elif op[0] == self.OP_UNTAG:
         # E.g.: <action>strip_vlan</action>
-        ret.append(self.ACTION_STRIP_VLAN)
+        ret.append(self.ACTION_POP_TAG)
     return self.OP_SEPARATOR.join(ret)
 
 
