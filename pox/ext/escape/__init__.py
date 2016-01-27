@@ -49,7 +49,7 @@ cfg = {
             {
               "full_remap": True
             },
-          "mapping-enabled": False
+          "mapping-enabled": True
         },
       "STRATEGY":
         {
@@ -187,8 +187,8 @@ cfg = {
               "port": 6633,
               "keepalive": False,
               "binding": {
-                'MT1': 0x14c5e0c376e24,
-                'MT2': 0x14c5e0c376fc6,
+                "MT1": 0x14c5e0c376e24,
+                "MT2": 0x14c5e0c376fc6,
               }
             },
           "TOPOLOGY":
@@ -292,7 +292,8 @@ cfg = {
   "additional-config-file": "escape.config",  # relative to project root
   "visualization":
     {
-      "url": "http://localhost:8081/edit-config",
+      "url": "http://localhost:8081",
+      "rpc": "edit-config"
     }
 }
 

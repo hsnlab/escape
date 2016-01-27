@@ -57,7 +57,9 @@ def main ():
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
   escape.add_argument("-V", "--visualization", action="store_true",
-                      default=False, help="run the visualization module")
+                      default=False,
+                      help="run the visualization module to send data to a "
+                           "remote server")
   escape.add_argument("-4", "--cfor", action="store_true", default=False,
                       help="start the REST-API for the Cf-Or interface")
   # Remaining arguments
