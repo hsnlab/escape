@@ -205,14 +205,12 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
       log.warning(
          "No Infra-DPID binding are defined in the configuration! Using empty "
          "data structure...")
-      self.binding = {}
     elif isinstance(binding, dict):
-      self.infra_to_dpid = binding.copy()
+      self.infra_to_dpid = {k: int(v) for k, v in binding}
     else:
       log.warning(
          "Wrong type: %s for binding in %s. Using empty data structure..." % (
            type(binding), self))
-      self.binding = {}
 
   def get_topology_resource (self):
     super(SDNDomainPOXAdapter, self).get_topology_resource()
