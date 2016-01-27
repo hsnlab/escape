@@ -343,6 +343,7 @@ class GraphPreprocessorClass(object):
     in the order those should be mapped."""
 
     colored_req = self._colorLinksAndVNFs(e2e_w_graph, not_e2e)
+    self.manager.addReqLink_ChainMapping(colored_req)
     output = []
 
     '''It is important to start with a chain with the most strict
@@ -499,7 +500,7 @@ class GraphPreprocessorClass(object):
         raise uet.BadInputException(
            "After removing the infras, only the service graph should remain.",
            "Link %s between nodes %s and %s is a %s link" % (k, i, j, d.type))
-      elif not hasattr(d, 'bandwidth'):
+      elif not hasattr(d, 'bandwidth') or getattr(d, 'bandwidth', 0) is None:
         setattr(d, 'bandwidth', 0)
 
     # there can only be SGHops left in the graph, if there are no edges then
