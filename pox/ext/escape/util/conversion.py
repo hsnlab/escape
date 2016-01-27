@@ -556,19 +556,23 @@ class NFFGConverter(object):
       except ValueError as e:
         self.log.warning("Port id is not a valid number: %s" % e)
       params = dict()
-      params['p1p2id'] = link.id.get_value()
-      params['p2p1id'] = link.id.get_as_text() + "-back"
+      params['id'] = link.id.get_value()
+      # params['p1p2id'] = link.id.get_value()
+      # params['p2p1id'] = link.id.get_as_text() + "-back"
       if link.resources.is_initialized():
         params['delay'] = float(link.resources.delay.get_value()) if \
           link.resources.delay.is_initialized() else None
         params['bandwidth'] = float(link.resources.bandwidth.get_value()) if \
           link.resources.bandwidth.is_initialized() else None
-      l1, l2 = nffg.add_undirected_link(
-         port1=nffg[src_node].ports[src_port],
-         port2=nffg[dst_node].ports[dst_port],
-         **params)
+      # l1, l2 = nffg.add_undirected_link(
+      #    port1=nffg[src_node].ports[src_port],
+      #    port2=nffg[dst_node].ports[dst_port],
+      #    **params)
+      l1 = nffg.add_link(src_port=nffg[src_node].ports[src_port],
+                         dst_port=nffg[dst_node].ports[dst_port],
+                         **params)
       self.log.debug("Add static connection: %s" % l1)
-      self.log.debug("Add static connection: %s" % l2)
+      # self.log.debug("Add static connection: %s" % l2)
     self.log.debug(
        "END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
          3, NFFG.version))
@@ -721,7 +725,7 @@ class NFFGConverter(object):
     for link in nffg.links:
       # Skip backward and non-static link conversion <-- Virtualizer links
       # are bidirectional
-      if link.type != NFFG.TYPE_LINK_STATIC or link.backward is True:
+      if link.type != NFFG.TYPE_LINK_STATIC:
         continue
       # SAP - Infra links are not stored in Virtualizer format
       if link.src.node.type == NFFG.TYPE_SAP \
