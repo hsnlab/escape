@@ -832,7 +832,7 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     try:
-      return self.__configuration["visualization"]['url']
+      return self.__configuration["visualization"]["url"]
     except KeyError:
       return None
 
@@ -843,7 +843,8 @@ class ESCAPEConfig(object):
     :return: url
     :rtype: str
     """
-    try:
-      return self.__configuration["visualization"]['url']
-    except KeyError:
-      return None
+    # try:
+    #   return self.__configuration["visualization"]["rpc"]
+    # except KeyError:
+    #   return None
+    return self.__configuration["visualization"]["rpc"]
