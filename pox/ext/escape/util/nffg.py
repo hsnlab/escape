@@ -508,7 +508,7 @@ class NFFG(AbstractNFFG):
     return p1p2Link, p2p1Link
 
   def add_sglink (self, src_port, dst_port, hop=None, id=None, flowclass=None,
-                  tag_info=None):
+                  tag_info=None, delay=None, bandwidth=None):
     """
     Add a SD next hop edge to the structure.
 
@@ -524,12 +524,16 @@ class NFFG(AbstractNFFG):
     :type flowclass: str
     :param tag_info: tag info
     :type tag_info: str
+    :param delay: delay requested on link
+    :type delay: float
+    :param bandwidth: bandwidth requested on link
+    :type bandwidth: float
     :return: newly created edge
     :rtype: :any:`EdgeSGLink`
     """
     if hop is None:
       hop = EdgeSGLink(src=src_port, dst=dst_port, id=id, flowclass=flowclass,
-                       tag_info=tag_info)
+                       tag_info=tag_info, bandwidth=bandwidth, delay=delay)
     self.add_edge(src_port.node, dst_port.node, hop)
     return hop
 
@@ -1118,6 +1122,8 @@ class NFFGToolBox(object):
 
   @staticmethod
   def _is_port_finishing_flow (TAG, port):
+    if port.node.type == 'SAP':
+      return True
     for fr in port.flowrules:
       matches = fr.match.split(";")
       for match in matches:
@@ -1151,11 +1157,7 @@ class NFFGToolBox(object):
     tag_list = TAG.split("|")
     vnf1 = tag_list[0]
     vnf2 = tag_list[1]
-    reqlinkid = tag_list[2]
-    try:
-      reqlinkid = int(reqlinkid)
-    except ValueError:
-      pass
+    reqlinkid = NFFGToolBox.try_to_convert(tag_list[2])
     first_link = NFFGToolBox._find_static_link(nffg, starting_port,
                                                outbound=False)
     if first_link is not None:
@@ -1231,6 +1233,8 @@ class NFFGToolBox(object):
                            % TAG)
     # curr_port is a flow finishing port, let's check whether the next node 
     # would be a SAP
+    """
+    THIS IS NOT NEEDED CUZ NOW WE ALSO FIND THE LAST LINK IN PREV ITERATION BLOCK
     if nffg.network.node[vnf2].type == 'SAP':
       # we only need to find the last link separately if 'vnf2' is a SAP
       last_link_found = False
@@ -1259,7 +1263,7 @@ class NFFGToolBox(object):
             break
         if last_link_found:
           break
-
+    """
     return edge_list, bandwidth
 
   @staticmethod
@@ -1268,12 +1272,23 @@ class NFFGToolBox(object):
       yield "|".join((sg.src.node.id, sg.dst.node.id, sg.id))
 
   @staticmethod
+  def try_to_convert (id):
+    converted = id
+    try:
+      converted = int(id)
+    except ValueError:
+      pass
+    return converted
+
+  @staticmethod
   def retrieve_all_SGHops (nffg):
     """
     Returns a dictionary keyed by (VNFsrc, VNFdst, reqlinkid) tuples (all 3 key
     values are kept string, no matter if they could be converted to int, it is 
     only used internally), data is [PortObjsrc, PortObjdst] list of port 
     objects. It is based exclusively on flowrules.
+    # TODO: retrieve bandwidth and latency (these should be the same for a given
+    flowrule sequence, because they all represent the same SGHop)
     """
     sg_map = {}
     for d in nffg.infras:
@@ -1289,11 +1304,7 @@ class NFFGToolBox(object):
               ending_port = None
               # let's find which VNF/SAP port object should the SGHop connect
               #  to.
-              act_port_id = command_param[1]
-              try:
-                act_port_id = int(command_param[1])
-              except ValueError:
-                pass
+              act_port_id = NFFGToolBox.try_to_convert(command_param[1])
               transit_fr = True
               for link in nffg.links:
                 # iterates on STATIC or DYNAMIC links
@@ -1320,7 +1331,9 @@ class NFFGToolBox(object):
                 # match is always like: <<field=value>>
                 field, mparam = match.split("=")
                 if field == "TAG":
-                  sghop_info = tuple(mparam.split("|"))
+                  splitted_tag = mparam.split("|")
+                  splitted_tag[2] = NFFGToolBox.try_to_convert(splitted_tag[2])
+                  sghop_info = tuple(splitted_tag)
                   if sghop_info in sg_map:
                     sg_map[sghop_info][1] = ending_port
                   else:
@@ -1329,7 +1342,8 @@ class NFFGToolBox(object):
                     # flowrule, and there is no starting flowrule for it, so the
                     # other end of the link (finishing in 'p') is the port where
                     # the SGHop was originating
-                    sg_map[sghop_info] = [None, ending_port, flowclass, p]
+                    sg_map[sghop_info] = [None, ending_port, flowclass, 
+                                          fr.bandwidth, fr.delay, p]
             # TAG action and match cannot coexsist in the same flowrule
             elif command_param[0] == "TAG" or "TAG=" in fr.match:
               starting_port = None
@@ -1357,7 +1371,9 @@ class NFFGToolBox(object):
                     break
               if transit_fr:
                 break
-              sghop_info = tuple(tag_info.split("|"))
+              splitted_tag = tag_info.split("|")
+              splitted_tag[2] = NFFGToolBox.try_to_convert(splitted_tag[2])
+              sghop_info = tuple(splitted_tag)
               flowclass = None
               for match in matches:
                 field, mparam = match.split("=")
@@ -1372,12 +1388,9 @@ class NFFGToolBox(object):
                 for a in actions:
                   c_p = a.split("=")
                   if c_p[0] == "output":
-                    out_port = c_p[1]
-                    try:
-                      out_port = int(c_p[1])
-                    except ValueError:
-                      pass
+                    out_port = NFFGToolBox.try_to_convert(c_p[1])
                     sg_map[sghop_info] = [starting_port, None, flowclass, 
+                                          fr.bandwidth, fr.delay,
                                           d.ports[out_port]]
                     break
             elif "UNTAG" not in actions and "TAG=" not in fr.action and \
@@ -1392,7 +1405,7 @@ class NFFGToolBox(object):
                 if field == "flowclass":
                   flowclass = mparam
                   break
-              sg_map_value = [None, None, flowclass]
+              sg_map_value = [None, None, flowclass, fr.bandwidth, fr.delay]
               for link in nffg.links:
                 # p.id is surely in the right format as link.dst.id (they 
                 # would reach the same string instance...)
@@ -1402,11 +1415,7 @@ class NFFGToolBox(object):
               for action in actions:
                 output_comm_param = action.split("=")
                 if output_comm_param[0] == "output":
-                  out_port_id = output_comm_param[1]
-                  try:
-                    out_port_id = int(output_comm_param[1])
-                  except ValueError:
-                    pass
+                  out_port_id = NFFGToolBox.try_to_convert(output_comm_param[1])
                   for link in nffg.links:
                     if link.src.id == out_port_id and \
                           link.src.node.id == p.node.id:
@@ -1418,7 +1427,7 @@ class NFFGToolBox(object):
                     raise RuntimeError("SGHop id couldn't be retrieved from "
                                        "Flowrule object!")
                   sg_map[(sg_map_value[0].node.id, sg_map_value[1].node.id,
-                          fr.hop_id)] = sg_map_value
+                          NFFGToolBox.try_to_convert(fr.hop_id))] = sg_map_value
                   break
               else:
                 raise RuntimeError("No 'output' command found in collocation "
@@ -1427,15 +1436,15 @@ class NFFGToolBox(object):
     # still a None prt object (meaning that flowrule sequence for that TAG 
     # consisted of only one NON-COLLOCATION flowrule)
     for sghop_info in sg_map:
-      if sg_map[sghop_info][0] is None and len(sg_map[sghop_info]) == 4:
+      if sg_map[sghop_info][0] is None and len(sg_map[sghop_info]) == 6:
         # the originating portobject of the th SGHop is missing
-        portobj = sg_map[sghop_info][3]
+        portobj = sg_map[sghop_info][5]
         for link in nffg.links:
           if link.dst.id == portobj.id and link.dst.node.id == portobj.node.id:
             sg_map[sghop_info][0] = link.src
-      if sg_map[sghop_info][1] is None and len(sg_map[sghop_info]) == 4:
+      if sg_map[sghop_info][1] is None and len(sg_map[sghop_info]) == 6:
         # the destination port object of the SGHop is missing
-        portobj = sg_map[sghop_info][3]
+        portobj = sg_map[sghop_info][5]
         for link in nffg.links:
           if link.src.id == portobj.id and link.src.node.id == portobj.node.id:
             sg_map[sghop_info][1] = link.dst

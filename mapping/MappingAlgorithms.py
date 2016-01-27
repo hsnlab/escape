@@ -107,7 +107,8 @@ def MAP (request, network, full_remap=False,
                                   "flowrules of the NFFG.")
     for k, v in sg_hop_info.iteritems():
       # VNF ports are given to the function
-      request.add_sglink(v[0], v[1], id=k[2], flowclass=v[2])
+      request.add_sglink(v[0], v[1], flowclass=v[2], bandwidth=v[3], delay=v[4],
+                         id=k[2])
 
   chainlist = []
   cid = 1
@@ -116,10 +117,8 @@ def MAP (request, network, full_remap=False,
     edgereqlist.append(req)
     request.del_edge(req.src, req.dst, req.id)
 
-  # this error message could be removed, because of the SGHop filed in the 
-  # flowrules BUT in this case the EdgeReqs will refer to SGHop ID-s which can 
-  # only be calculated from flowrules.
   if len(edgereqlist) != 0 and not sg_hops_given:
+    """
     raise uet.BadInputException("",
                                 "SGHops was not given explicitly, they have "
                                 "been retrieved based on the flowrules, "
@@ -127,6 +126,11 @@ def MAP (request, network, full_remap=False,
                                 "which refers to SGHop ID-s, and SGHop ID-s "
                                 "can't be retrieved from flowrules, "
                                 "if they were collocated.")
+    """
+    helper.log.warn("EdgeReqs were given, but the SGHops (which the EdgeReqs "
+                    "refer to by id) are retrieved based on the flowrules of "
+                    "infrastructure. This can cause error later if the "
+                    "flowrules was malformed...")
 
   # construct chains from EdgeReqs
   for req in edgereqlist:
@@ -228,6 +232,8 @@ def MAP (request, network, full_remap=False,
   # (NFFG splitting is omitted for now, lower layer gets the full NFFG)
   # port adding is necessary, because SAPs can be with different ID in the
   # two NFFGs and add_edge() uses the ID of the port`s parent.
+  """
+  THIS IS NOT REQUIRED BECAUSE EDGEREQ SPLITTING IS DONE, NEW REQS ARE CALCULATED
   for req in edgereqlist:
     srcnode = req.src.node
     dstnode = req.dst.node
@@ -244,6 +250,7 @@ def MAP (request, network, full_remap=False,
     mappedNFFG.add_req(srcnode.ports[srcportid], dstnode.ports[dstportid],
                        id=req.id, delay=req.delay, bandwidth=req.bandwidth,
                        sg_path=req.sg_path)
+  """
   
   # replace Infinity values
   _purgeNFFGFromInfinityValues(mappedNFFG)
@@ -485,11 +492,11 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('untracked/escape-mn-taginfo-testreq.nffg', "r") as f:
+    with open('untracked/escape-mn-divedgereq.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('../examples/escape-mn-topo.nffg', "r") as g:
+    with open('untracked/escape-mn-divedgereq.nffg', "r") as g:
       net = NFFG.parse(g.read())
-      net.duplicate_static_links()
+      # net.duplicate_static_links()
     mapped = MAP(req, net, full_remap=False)
     print mapped.dump()
   except uet.UnifyException as ue:

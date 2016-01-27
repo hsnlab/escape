@@ -332,7 +332,8 @@ class MappingManager(object):
         raise uet.InternalAlgorithmException(
           "getLocalAllowedLatency  function should only be called on SG links!")
       if hasattr(self.req.network[vnf1][vnf2][linkid], 'delay'):
-        link_maxlat = self.req.network[vnf1][vnf2][linkid].delay
+        if self.req.network[vnf1][vnf2][linkid].delay is not None:
+          link_maxlat = self.req.network[vnf1][vnf2][linkid].delay
     try:
       # find the strictest chain latency which applies to this link
       chain_maxlat = float("inf")
@@ -371,6 +372,7 @@ class MappingManager(object):
         for c, chdata in self.chain_subchain.nodes_iter(data=True):
           if 'subchain' in chdata.keys():
             if (vnf1, vnf2, linkid) in chdata['subchain']:
+              # TODO: The colored_req is saved now!!!!!!!!!!!
               # there is only one subchain which contains this
               # reqlink. (link -> chain mapping is not necessary
               # anywhere else, a structure only for realizing this
@@ -416,3 +418,109 @@ class MappingManager(object):
     self.chain_subchain.add_node(self.max_input_chainid, 
                                 {'avail_latency': self.overall_highest_delay, 
                                 'permitted_latency': self.overall_highest_delay})
+    # we can't use the same ID-s for the output chains, because they will be 
+    # splitted into pieces.
+    self.max_output_chainid = self.max_input_chainid + 1
+
+  def addReqLink_ChainMapping (self, colored_req):
+    """
+    SGHop -> E2E chain mapping is required to calculate the splitted EdgeReqs 
+    for the lower layer orchestration algorithm. The graph should be deepcopied
+    because the preprocessor changes it!
+    """
+    self.colored_req = copy.deepcopy(colored_req)
+
+  def getSGHopOfChainMappedHere (self, cid, infra):
+    """
+    Returns an SGHop ID which is part of 'cid' chain and its path traverses 
+    'infra'. Should be used when this infra is only used as forwarding infra, 
+    but not as for hosting VNF for 'cid' (if not used like this, returns a random
+    SGHop of the many, meeting the input criteria).
+    """
+    for c in self.chains:
+      if cid == c['id']:
+        for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:], 
+                                   c['link_ids']):
+          if infra in self.link_mapping[vnf1][vnf2][lid]['mapped_to']:
+            return lid
+
+  def genPathOfChains (self, nffg):
+    """
+    Returns a generator of the mapped stucture starting from the beginning of 
+    chains and finding which Infra nodes are used during the mapping. Generates
+    (chain_id, infra_id) tuples, and iterates on all chains. 
+    Returns also SAPs on the path!
+    """
+    for c in self.chains:
+      prev_infra_of_path = None
+      for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:], 
+                                 c['link_ids']):
+        # iterate on 'mapped_to' attribute of vnf1,vnf2,lid link of 
+        # link_mapping structure
+        for forwarding_infra in \
+            self.link_mapping[vnf1][vnf2][lid]['mapped_to']:
+          if forwarding_infra is None or \
+             forwarding_infra != prev_infra_of_path:
+            prev_infra_of_path = forwarding_infra
+            yield c['id'], forwarding_infra
+      # VNF2 is handled by the iteration on link mapping structure (because 
+      # 'mapped_to' contains the hosting infra of vnf1 and vnf2 as well)
+
+  def getNextOutputChainId (self):
+    self.max_input_chainid += 1
+    return self.max_input_chainid
+
+  def getChainPiecesOfReqSubgraph (self, cid, subgraph):
+    """
+    Iterates on all the "inbound" SGHops of this subgraph (these are not part 
+    of the subgraph, they were the bordering edges in the request graph) and 
+    finds the parts of the given chain (cid) which has any part mapped here. 
+    We don't need the BiSBiS directly but all the VNF-s of subgraph should be 
+    mapped to the same BiSBiS.
+    """
+    # A structure for storing SGHop
+    # store list, there can be multiple disjoint chain parts mapped
+    # here (if an internal VNF is mapped elsewhere)
+    chain_pieces = []
+    for i,j,k,d in self.colored_req.edges_iter(data=True, keys=True):
+      if i not in subgraph.nodes_iter() and j in subgraph.nodes_iter():
+        # i,j,k is an inbound SGHop from the (implicitly) given BiSBiS
+        if cid in d['color']:
+          for c in self.chains:
+            if cid == c['id']:
+              found_beginnig = False
+              # i is not mapped to this Infra, but to the previous Infra.
+              chain_piece = [i]
+              link_ids_piece = [k]
+              # find which part of the chain is mapped here
+              for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:], 
+                                         c['link_ids']):
+                if not subgraph.has_edge(vnf1, vnf2, key=lid) and \
+                   not found_beginnig:
+                  continue
+                elif not found_beginnig:
+                  found_beginnig = True
+                  if vnf1 != j:
+                    raise uet.InternalAlgorithmException("Problem in chain "
+                      "piece finding procedure for E2E requirement division.")
+                if found_beginnig:
+                  if subgraph.has_edge(vnf1, vnf2, key=lid):
+                    chain_piece.append(vnf1)
+                    link_ids_piece.append(lid)
+                    continue
+                  else:
+                    break
+              # vnf2 is mapped to the next Infra
+              # the subgraph CAN'T have SAP-s, so vnf2 can be a SAP if 
+              # this infra is the last to host a VNF for this chain
+              chain_piece.append(vnf2)
+              link_ids_piece.append(lid)
+              chain_pieces.append((chain_piece, link_ids_piece))
+              break
+    return chain_pieces 
+
+  def getRemainingE2ELatency (self, chain_id):
+    """
+    Returns the remaining latency of a given E2E chain.
+    """
+    return self.chain_subchain.node[chain_id]['avail_latency']
