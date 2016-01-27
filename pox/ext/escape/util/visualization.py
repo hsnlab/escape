@@ -18,7 +18,11 @@ import logging
 import urlparse
 from requests import Session, ConnectionError, HTTPError, Timeout
 
+import virtualizer4 as Virtualizer
 from escape import CONFIG
+from escape.adapt import LAYER_NAME as ADAPT
+from escape.orchest import LAYER_NAME as ORCHEST
+from escape.service import LAYER_NAME as SERVICE
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import Singleton
 from escape.util.nffg import NFFG
@@ -33,6 +37,13 @@ class RemoteVisualizer(Session):
   __metaclass__ = Singleton
   # name form POXCore
   _core_name = "visualizer"
+
+  # Bindings of Layer IDs
+  ID_MAPPER = {
+    SERVICE: "ESCAPE-SERVICE",
+    ORCHEST: "ESCAPE-ORCHESTRATION",
+    ADAPT: "ESCAPE-ADAPTATION"
+  }
 
   def __init__ (self, url=None, rpc=""):
     """
@@ -75,13 +86,17 @@ class RemoteVisualizer(Session):
     logging.getLogger("requests").setLevel(level)
     logging.getLogger("urllib3").setLevel(level)
 
-  def send_notification (self, data, url=None, **kwargs):
+  def send_notification (self, data, id, url=None, **kwargs):
     """
     Send given data to a remote server for visualization.
     Convert given NFFG into Virtualizer format if needed.
 
     :param data: topology description need to send
     :type data: :any:`NFFG` or Virtualizer
+    :param id: id of the data, needs for the remote server
+    :type id: str
+    :param url: additional URL (optional)
+    :type url: str
     :param kwargs: additional params to request
     :type kwargs: dict
     :return: response text
@@ -90,6 +105,11 @@ class RemoteVisualizer(Session):
     try:
       if isinstance(data, NFFG):
         data = self.converter.dump_to_Virtualizer(nffg=data)
+      elif not isinstance(data, Virtualizer.Virtualizer):
+        self.log.warning(
+           "Unsupported data type: %s! Skip notification..." % type(data))
+        return
+      data.id.set_value(self.ID_MAPPER.get(id, default="UNDEFINED"))
       if url is None:
         url = self._url
       self.log.debug("Send visualization notification to %s" % self._url)

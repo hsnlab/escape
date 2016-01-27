@@ -24,6 +24,7 @@ from escape.adapt import log as log
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent
+from escape.util.misc import notify_remote_visualizer
 from escape.util.nffg import NFFG
 
 
@@ -342,6 +343,9 @@ class ControllerAdapter(object):
       from escape.util.misc import quit_with_error
       quit_with_error(msg="Shutting down ESCAPEv2! Cause: %s" % e,
                       logger=log)
+    # Here every domainManager is up and running
+    notify_remote_visualizer(data=self.domainResManager.get_global_view(),
+                             name="")
 
   def shutdown (self):
     """
@@ -355,7 +359,8 @@ class ControllerAdapter(object):
     # Stop initiated DomainManagers
     self.domains.stop_initiated_mgrs()
 
-  def _split_into_domains (self, nffg):
+  @staticmethod
+  def _split_into_domains (nffg):
     """
     Split given :any:`NFFG` into separate parts self._global_nffg on
     original domains.
