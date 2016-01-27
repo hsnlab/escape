@@ -340,16 +340,16 @@ def get_escape_name_version ():
   return escape.__project__, escape.__version__
 
 
-def notify_remote_visualizer (data, name, url=None, **kwargs):
+def notify_remote_visualizer (data, id, url=None, **kwargs):
   """
   Send the given data to a remote visualization server.
   If url is given use this address to send instead of the url defined in the
   global config.
 
   :param data: data need to send
-  :type data: str
-  :param name: id of the data, needs for the remote server
-  :type name: str
+  :type data: :any:`NFFG` or Virtualizer
+  :param id: id of the data, needs for the remote server
+  :type id: str
   :param url: additional URL (acquired from config by default)
   :type url: str
   :param kwargs: optional parameters for request lib
@@ -359,5 +359,5 @@ def notify_remote_visualizer (data, name, url=None, **kwargs):
   """
   from pox.core import core
   if core.hasComponent('visualizer'):
-    return core.visualizer.send_notification(data=data, nameű=name, url=url,
+    return core.visualizer.send_notification(data=data, id=id, url=url,
                                              **kwargs)

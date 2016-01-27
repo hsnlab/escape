@@ -947,8 +947,8 @@ class NFFGConverter(object):
              "name=%s)"
              % (nffg, virtualizer.id.get_as_text(),
                 virtualizer.name.get_as_text()))
-      # Return with modified Virtualizer
-      return virtualizer
+    # Return with modified Virtualizer
+    return virtualizer
 
   def __convert_flowrule_match (self, domain, match):
     """

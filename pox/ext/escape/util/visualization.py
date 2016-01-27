@@ -102,6 +102,9 @@ class RemoteVisualizer(Session):
     :return: response text
     :rtype: str
     """
+    if url is None:
+      url = self._url
+    self.log.debug("Send visualization notification to %s" % self._url)
     try:
       if isinstance(data, NFFG):
         data = self.converter.dump_to_Virtualizer(nffg=data)
@@ -109,10 +112,7 @@ class RemoteVisualizer(Session):
         self.log.warning(
            "Unsupported data type: %s! Skip notification..." % type(data))
         return
-      data.id.set_value(self.ID_MAPPER.get(id, default="UNDEFINED"))
-      if url is None:
-        url = self._url
-      self.log.debug("Send visualization notification to %s" % self._url)
+      data.id.set_value(self.ID_MAPPER.get(id, "UNDEFINED"))
       self._response = self.request(method='POST', url=url, data=data.xml(),
                                     **kwargs)
       self._response.raise_for_status()

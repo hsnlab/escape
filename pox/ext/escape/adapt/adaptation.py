@@ -20,7 +20,7 @@ import weakref
 
 import escape.adapt.managers as mgrs
 from escape import CONFIG
-from escape.adapt import log as log
+from escape.adapt import log as log, LAYER_NAME
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent
@@ -344,8 +344,10 @@ class ControllerAdapter(object):
       quit_with_error(msg="Shutting down ESCAPEv2! Cause: %s" % e,
                       logger=log)
     # Here every domainManager is up and running
-    notify_remote_visualizer(data=self.domainResManager.get_global_view(),
-                             name="")
+    # Notify the remote visualizer about collected data if it's needed
+    notify_remote_visualizer(
+       data=self.domainResManager.get_global_view().get_resource_info(),
+       id=LAYER_NAME)
 
   def shutdown (self):
     """
@@ -481,6 +483,8 @@ class ControllerAdapter(object):
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
+    # # Notify remote visualizer about the deployable NFFG if it's needed
+    # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     slices = self._split_into_domains(nffg=mapped_nffg)
     if slices is None:
       log.warning(
@@ -522,7 +526,10 @@ class ControllerAdapter(object):
          "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
       # Update global view (DoV) with the installed components
       self.domainResManager.get_global_view().update_global_view(mapped_nffg)
-      # print self.domainResManager.get_global_view().get_resource_info().dump()
+      # Notify remote visualizer about the installation result if it's needed
+      notify_remote_visualizer(
+         data=self.domainResManager.get_global_view().get_resource_info(),
+         id=LAYER_NAME)
     else:
       log.error("%s installation was not successful!" % mapped_nffg)
     return mapping_result

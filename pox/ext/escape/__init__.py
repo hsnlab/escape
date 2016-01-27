@@ -45,11 +45,11 @@ cfg = {
         {
           "module": "escape.service.sas_mapping",
           "class": "ServiceGraphMapper",
-          "mapping-enabled": False,
           "mapping-config":
             {
               "full_remap": True
-            }
+            },
+          "mapping-enabled": False
         },
       "STRATEGY":
         {
@@ -81,11 +81,11 @@ cfg = {
         {
           "module": "escape.orchest.ros_mapping",
           "class": "ResourceOrchestrationMapper",
-          "mapping-enabled": True,
           "mapping-config":
             {
               "full_remap": True
-            }
+            },
+          "mapping-enabled": True
         },
       "STRATEGY":
         {
@@ -129,8 +129,8 @@ cfg = {
     {
       # Default managers need to start at init
       "MANAGERS": [
-        "REMOTE-ESCAPE",
-        "REMOTE-ESCAPE-ext",
+        # "REMOTE-ESCAPE",
+        # "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
         # "UN"
@@ -290,9 +290,10 @@ cfg = {
       "SHUTDOWN-CLEAN": True
     },
   "additional-config-file": "escape.config",  # relative to project root
-  "visualization": {
-    "url": "http://localhost:8081/edit-config",
-  }
+  "visualization":
+    {
+      "url": "http://localhost:8081/edit-config",
+    }
 }
 
 
