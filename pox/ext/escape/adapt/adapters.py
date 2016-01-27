@@ -206,7 +206,7 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
          "No Infra-DPID binding are defined in the configuration! Using empty "
          "data structure...")
     elif isinstance(binding, dict):
-      self.infra_to_dpid = {k: int(v) for k, v in binding}
+      self.infra_to_dpid = {k: int(v, base=0) for k, v in binding}
     else:
       log.warning(
          "Wrong type: %s for binding in %s. Using empty data structure..." % (
