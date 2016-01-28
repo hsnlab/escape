@@ -980,7 +980,7 @@ class ESCAPENetworkBuilder(object):
       elif isinstance(topo, NFFG):
         log.info("Get Topology description from given NFFG...")
         self.__init_from_NFFG(nffg=topo)
-      elif isinstance(topo, str) and topo.startswith('/'):
+      elif isinstance(topo, basestring) and topo.startswith('/'):
         log.info("Get Topology description from given file...")
         self.__init_from_file(path=topo)
       elif isinstance(topo, AbstractTopology):
