@@ -190,7 +190,10 @@ class CoreAlgorithm(object):
       max_bw = self.net.node[path_to_map[0]].resources['bandwidth']
       # sum of the two bw reqs are subtracted from guaranteed bw between
       # all (static and dynamic) ports of the host (BiS-BiS)
-      sum_w = float(max_bw - (act_bw - bw_req - internal_bw_req)) / max_bw
+      if max_bw < float("inf"):
+        sum_w = float(max_bw - (act_bw - bw_req - internal_bw_req)) / max_bw
+      else:
+        sum_w = 0.0
       if act_bw < bw_req + internal_bw_req:
         self.log.debug(
           "Node %s don`t have %f Mbps capacity for mapping a link." % (
@@ -821,11 +824,12 @@ class CoreAlgorithm(object):
       sum_of_latency_pieces = sum((er.delay for er in e2e_chainpieces[cid]))
       # divide the remaining E2E latency weighted by the least necessary latency
       # and add this to the propagated latency as extra.
-      for er in e2e_chainpieces[cid]:
-        er.delay += float(er.delay) / sum_of_latency_pieces * \
-                    self.manager.getRemainingE2ELatency(cid)
-        self.log.debug("Output latency requirement increased to %s in %s for "
-                       "path %s"%(er.delay, er.src.node.id, er.sg_path))
+      if sum_of_latency_pieces > 0:
+        for er in e2e_chainpieces[cid]:
+          er.delay += float(er.delay) / sum_of_latency_pieces * \
+                      self.manager.getRemainingE2ELatency(cid)
+          self.log.debug("Output latency requirement increased to %s in %s for "
+                         "path %s"%(er.delay, er.src.node.id, er.sg_path))
 
   def constructOutputNFFG (self):
     # use the unchanged input from the lower layer (deepcopied in the
