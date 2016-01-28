@@ -49,7 +49,7 @@ cfg = {
             {
               "full_remap": True
             },
-          "mapping-enabled": True
+          "mapping-enabled": False
         },
       "STRATEGY":
         {
