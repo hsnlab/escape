@@ -288,6 +288,16 @@ class Node(Element):
     else:
       return self.metadata.pop(name, None)
 
+  def get_metadata (self, name):
+    """
+    Return the value of metadata.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: metadata value
+    """
+    return self.metadata.get(name)
+
   def persist (self):
     node = super(Node, self).persist()
     if self.name is not None:
