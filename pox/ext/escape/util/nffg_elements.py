@@ -208,7 +208,7 @@ class Node(Element):
   # Network Function (NF) node --> abstract node represents a virtual function
   NF = "NF"
 
-  def __init__ (self, type, id=None, name=None):
+  def __init__ (self, type, id=None, name=None, metadata=None):
     """
     Init.
 
@@ -218,11 +218,14 @@ class Node(Element):
     :type id: str or int
     :param name: optional name
     :type name: str
+    :param metadata: metadata related to None
+    :type metadata: dict
     :return: None
     """
     super(Node, self).__init__(id=id, type=type)
     self.name = name if name is not None else str(id)  # optional
     self.ports = PortContainer()  # list of Ports
+    self.metadata = metadata if metadata is not None else OrderedDict()
 
   @property
   def short_name (self):
@@ -265,6 +268,8 @@ class Node(Element):
     ports = [port.persist() for port in self.ports]
     if ports:
       node["ports"] = ports
+    if self.metadata:
+      node["metadata"] = self.metadata.copy()
     return node
 
   def load (self, data, *args, **kwargs):
@@ -272,7 +277,35 @@ class Node(Element):
     self.name = data.get('name')  # optional
     for port in data.get('ports', ()):
       self.add_port(id=port['id'], properties=port.get('property'))
+    self.metadata = data.get("metadata", OrderedDict())
     return self
+
+  def add_metadata (self, name, value):
+    """
+    Add metadata with the given key.
+
+    :param name: metadata name
+    :type name: str
+    :param value: metadata value
+    :type value: str
+    :return: the :any:`Node` object to allow function chaining
+    :rtype: :any:`Node`
+    """
+    self.metadata[name] = value
+    return self
+
+  def del_metadata (self, name=None):
+    """
+    Remove the metadata from the :any:`Node`. If no metadata is given all the
+    metadata will be removed.
+
+    :param name:
+    :return:
+    """
+    if name is None:
+      self.metadata.clear()
+    else:
+      return self.metadata.pop(name, None)
 
   def __repr__ (self):
     return "<|ID: %s, Type: %s --> %s|>" % (
@@ -539,7 +572,7 @@ class Port(Element):
 
   def add_property (self, property, value=None):
     """
-    Add a property or list of properties to the port.
+    Add a property or list of properties to the :any:`Port`.
     If value is not None, then property is used as a key.
 
     :param property: property
@@ -560,8 +593,8 @@ class Port(Element):
 
   def del_property (self, property=None):
     """
-    Remove the property from the Port. If no property is given remove all the
-    properties from the Port.
+    Remove the property from the :any:`Port`. If no property is given all the
+    properties will be removed from the :any:`Port`.
 
     :param property: property
     :type property: str
@@ -574,7 +607,7 @@ class Port(Element):
 
   def get_property (self, property):
     """
-    Return the value of property
+    Return the value of property.
 
     :param property: property
     :type property: str
@@ -880,9 +913,11 @@ class NodeInfra(Node):
     return node
 
   def load (self, data, *args, **kwargs):
+    # super(NodeInfra, self).load(data=data)
     self.id = data['id']
     self.operation = data.get("operation")  # optional
     self.name = data.get('name')  # optional
+    self.metadata = data.get("metadata", OrderedDict())  # optional
     for port in data.get('ports', ()):
       infra_port = self.add_port(id=port['id'], properties=port.get('property'))
       for flowrule in port.get('flowrules', ()):
@@ -1500,6 +1535,8 @@ def test_parse_load ():
   infra.resources.mem = "2"
   infra.resources.storage = "20"
   infra.resources.bandwidth = "4"
+  infra.add_metadata("meta1", "lorem")
+  infra.add_metadata("meta2", "ipsum")
   # infra.add_supported_type("functype1")
   infra.add_supported_type(("functype1", "functype2", "functype3"))
   # infra.resources.delay = "4"
@@ -1537,16 +1574,6 @@ def test_parse_load ():
   print "\nParsed NF-FG:"
   print nffg2.dump()
   return nffg
-
-
-def test_networkx_mod ():
-  nf = NodeNF()
-  print nf["id"]
-  nf["id"] = "nf1"
-  print nf["id"]
-  print "get check"
-  print "id: %s" % nf.get("id")
-  print "lorem: %s" % nf.get("lorem", "ipsum")
 
 
 if __name__ == "__main__":
