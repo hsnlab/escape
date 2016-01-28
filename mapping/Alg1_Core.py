@@ -763,6 +763,9 @@ class CoreAlgorithm(object):
     SGHop path where it should be satisfied, divides the E2E latency weighted by
     the offered latency of the affected BiSBiS-es.
     """
+    # remove if there are any EdgeReqs in the graph
+    for req in [r for r in nffg.reqs]:
+      nffg.del_edge(req.src, req.dst, req.id)
     e2e_chainpieces = {}
     for cid, infra in self.manager.genPathOfChains(nffg):
       if nffg.network.node[infra].type == 'INFRA':
@@ -809,15 +812,20 @@ class CoreAlgorithm(object):
                 e2e_chainpieces[cid].append(outedgereq)
               else:
                 e2e_chainpieces[cid] = [outedgereq]
+          self.log.debug("Requirement chain added to BiSBiS %s with path %s and"
+                         " latency %s."%(infra, outedgereq.sg_path, 
+                                         outedgereq.delay))
     # now iterate on the chain pieces
     for cid in e2e_chainpieces:
-      # this is NOT equal to permitted - remaining!
+      # this is NOT equal to permitted minus remaining!
       sum_of_latency_pieces = sum((er.delay for er in e2e_chainpieces[cid]))
       # divide the remaining E2E latency weighted by the least necessary latency
       # and add this to the propagated latency as extra.
       for er in e2e_chainpieces[cid]:
         er.delay += float(er.delay) / sum_of_latency_pieces * \
                     self.manager.getRemainingE2ELatency(cid)
+        self.log.debug("Output latency requirement increased to %s in %s for "
+                       "path %s"%(er.delay, er.src.node.id, er.sg_path))
 
   def constructOutputNFFG (self):
     # use the unchanged input from the lower layer (deepcopied in the
@@ -1014,6 +1022,34 @@ class CoreAlgorithm(object):
 
     # construct output NFFG with the mapping of VNFs and links
     return self.constructOutputNFFG()
+
+  def setBacktrackParameters(self, bt_limit=5, bt_branching_factor=4):
+    """
+    Sets the depth and maximal branching factor for the backtracking process on
+    nodes. bt_limit determines how many request graph nodes should be remembered
+    for backtracking purpose. bt_branching_factor determines how many possible 
+    host-path pairs should be remembered at most for one VNF.
+    """
+    if bt_branching_factor < 1 or "." in str(bt_branching_factor) or \
+       bt_limit < 1 or "." in str(bt_limit):
+      raise uet.BadInputException("Branching factor and backtrack limit should "
+                                  "be at least 1, integer values", 
+                                  "%s and %s were given."\
+                                  %(bt_limit, bt_branching_factor))
+    self.bt_branching_factor = bt_branching_factor
+    self.bt_limit = bt_limit
+    
+  def setResourcePrioritiesOnNodes(self, cpu=0.3333, mem=0.3333, 
+                                   storage=0.3333):
+    """
+    Sets what weights should be used for adding up the preference values of 
+    resource utilization on nodes.
+    """
+    sumw = cpu + mem + storage 
+    if abs(sumw - 1) > 0.0000001:
+      raise uet.BadInputException("The sum of resource priorities should be 1.0",
+                                  "the sum of resource priorities are %s"%sumw)
+    self.resource_priorities = [cpu, mem, storage]
 
   def reset (self):
     """Resets the CoreAlgorithm instance to its initial (after preprocessor) 
