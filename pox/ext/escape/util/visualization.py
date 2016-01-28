@@ -19,7 +19,7 @@ import urlparse
 from requests import Session, ConnectionError, HTTPError, Timeout
 
 import virtualizer4 as Virtualizer
-from escape import CONFIG
+from escape import CONFIG, __version__
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
@@ -44,6 +44,11 @@ class RemoteVisualizer(Session):
     ORCHEST: "ESCAPE-ORCHESTRATION",
     ADAPT: "ESCAPE-ADAPTATION"
   }
+
+  # Basic HTTP headers
+  basic_headers = {
+    'User-Agent': "ESCAPE/" + __version__,
+    'Content-Type': "application/xml"}
 
   def __init__ (self, url=None, rpc=None):
     """
@@ -114,6 +119,11 @@ class RemoteVisualizer(Session):
            "Unsupported data type: %s! Skip notification..." % type(data))
         return
       data.id.set_value(self.ID_MAPPER.get(id, "UNDEFINED"))
+      # If additional params is not empty dict -> override the basic params
+      if 'headers' not in kwargs:
+        kwargs['headers'] = self.basic_headers
+      else:
+        kwargs['headers'] = self.basic_headers.copy().update(kwargs['headers'])
       self._response = self.request(method='POST', url=url, data=data.xml(),
                                     **kwargs)
       self._response.raise_for_status()
