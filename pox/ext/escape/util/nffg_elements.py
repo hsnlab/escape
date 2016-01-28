@@ -987,7 +987,7 @@ class EdgeSGLink(Link):
   """
 
   def __init__ (self, src=None, dst=None, id=None, flowclass=None,
-                tag_info=None):
+                tag_info=None, delay=None, bandwidth=None):
     """
     Init.
 
@@ -1001,11 +1001,17 @@ class EdgeSGLink(Link):
     :type flowclass: str
     :param tag_info: tag info
     :type tag_info: str
+    :param delay: requested delay on the SG next hop
+    :type delay: float
+    :param bandwidth: requested bandwidth on the SG next hop
+    :type bandwidth: float
     :return: None
     """
     super(EdgeSGLink, self).__init__(src=src, dst=dst, type=Link.SG, id=id)
     self.flowclass = flowclass  # flowrule without action
     self.tag_info = tag_info
+    self.delay = delay
+    self.bandwidth = bandwidth
 
   def persist (self):
     link = super(EdgeSGLink, self).persist()
@@ -1013,6 +1019,10 @@ class EdgeSGLink(Link):
       link["flowclass"] = self.flowclass
     if self.tag_info is not None:
       link["tag_info"] = self.tag_info
+    if self.delay is not None:
+      link["delay"] = self.delay
+    if self.bandwidth is not None:
+      link["bandwidth"] = self.bandwidth
     return link
 
   def load (self, data, container=None, *args, **kwargs):
@@ -1026,6 +1036,8 @@ class EdgeSGLink(Link):
     super(EdgeSGLink, self).load(data=data, container=container)
     self.flowclass = data.get('flowclass')
     self.tag_info = data.get('tag_info')
+    self.delay = data.get('delay')
+    self.bandwidth = data.get('bandwidth')
     return self
 
 

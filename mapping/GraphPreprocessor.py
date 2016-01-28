@@ -343,6 +343,7 @@ class GraphPreprocessorClass(object):
     in the order those should be mapped."""
 
     colored_req = self._colorLinksAndVNFs(e2e_w_graph, not_e2e)
+    self.manager.addReqLink_ChainMapping(colored_req)
     output = []
 
     '''It is important to start with a chain with the most strict
@@ -447,8 +448,47 @@ class GraphPreprocessorClass(object):
     # must be the same that processNetwork() returned.
     self.net = preprocessed_network
 
-    # we want only the service graph
+    for n in self.req_graph.infras:
+      for p in n.ports:
+        for fr in p.flowrules:
+          if "dl_vlan=" in fr.action:
+            # it means this flowrule is starting a sequence which should 
+            # lead to an interdomain SAP.
+            for act in fr.action.split(";"):
+              if "dl_vlan=" in act:
+                for sghop in self.req_graph.sg_hops:
+                  if sghop.id == fr.hop_id:
+                    # tag_info indicates action in SGHop
+                    if sghop.dst.node.type != 'SAP':
+                      raise uet.BadInputException("dl_vlan tag action should be"
+                            " only in flow sequences leading to a SAP", 
+                            "SGHop %s does'nt end in SAP!"%sghop.id)
+                    sghop.tag_info = act
+    # we need to have different all-flowrule iteration, otherwise we couldn't
+    # identify whether a "dl_vlan=" field in match would belong to outbound or 
+    # inbound flowrule sequence
     for n in [node for node in self.req_graph.infras]:
+      # we have to go through the iterator, because we want to delete from it,
+      # cuz we want only the service graph (after interdomain tag_info has been 
+      # gathered)
+      for p in n.ports:
+        for fr in p.flowrules:
+          if "dl_vlan=" in fr.match:
+            # it means this flowrule can be a part of a flow sequence towards 
+            # a SAP ***OR*** can originate from a SAP
+            for mat in fr.match.split(";"):
+              if "dl_vlan=" in mat:
+                for sghop in self.req_graph.sg_hops:
+                  if sghop.id == fr.hop_id and sghop.tag_info is None:
+                    # it means we haven't found this tag_info while searching in
+                    # ACTION fields of Flowrules previously!
+                    if sghop.src.node.type != 'SAP':
+                      raise uet.BadInputException("dl_vlan matches without a "
+                      "starting dl_vlan action in a flowrule sequence should "
+                      "originate from a SAP", "SGHop %s doesn't originate from"
+                                                  " a SAP"%sghop.id)
+                    # tag_info indicates match in SGHop
+                    sghop.tag_info = mat
       # DYNAMIC and STATIC links should be removed by this.
       # SG links should be already processed to chains, and link reqs.
       # WARNING: the ports of the VNFs which were connecting to the
@@ -460,7 +500,7 @@ class GraphPreprocessorClass(object):
         raise uet.BadInputException(
            "After removing the infras, only the service graph should remain.",
            "Link %s between nodes %s and %s is a %s link" % (k, i, j, d.type))
-      elif not hasattr(d, 'bandwidth'):
+      elif not hasattr(d, 'bandwidth') or getattr(d, 'bandwidth', 0) is None:
         setattr(d, 'bandwidth', 0)
 
     # there can only be SGHops left in the graph, if there are no edges then
