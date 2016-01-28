@@ -551,7 +551,7 @@ class Port(Element):
     # self.__node = weakref.ref(node)
     self.__node = node
     # Set properties list according to given param type
-    if isinstance(properties, (str, unicode)):
+    if isinstance(properties, basestring):
       self.properties = [str(properties), ]
     elif isinstance(properties, Iterable):
       self.properties = [p for p in properties]
@@ -582,7 +582,7 @@ class Port(Element):
     :return: the Port object to allow function chaining
     :rtype: :any:`Port`
     """
-    if isinstance(property, str):
+    if isinstance(property, basestring):
       if value is not None:
         # wouldn't it be better to store properties as key-value pairs?
         property = property + ':' + value
@@ -844,7 +844,7 @@ class NodeInfra(Node):
     self.infra_type = infra_type if infra_type is not None else \
       self.TYPE_BISBIS
     # Set supported types according to given param type
-    if isinstance(supported, (str, unicode)):
+    if isinstance(supported, basestring):
       self.supported = [str(supported), ]
     elif isinstance(supported, Iterable):
       self.supported = [sup for sup in supported]
@@ -877,7 +877,7 @@ class NodeInfra(Node):
     :return: the Node object to allow function chaining
     :rtype: :any:`NodeInfra`
     """
-    if isinstance(functional_type, str):
+    if isinstance(functional_type, basestring):
       self.supported.append(functional_type)
     elif isinstance(functional_type, Iterable):
       self.supported.extend(functional_type)
@@ -1106,7 +1106,7 @@ class EdgeReq(Link):
     self.delay = delay  # optional
     self.bandwidth = bandwidth  # optional
     # Set sg_path types according to given param type
-    if isinstance(sg_path, (str, unicode)):
+    if isinstance(sg_path, basestring):
       self.sg_path = [str(sg_path), ]
     elif isinstance(sg_path, Iterable):
       self.sg_path = [p for p in sg_path]

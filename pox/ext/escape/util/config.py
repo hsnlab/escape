@@ -236,7 +236,7 @@ class ESCAPEConfig(object):
     :return: layer config
     :rtype: dict
     """
-    if not isinstance(item, str):
+    if not isinstance(item, basestring):
       raise TypeError("Unsupported operand type: Layer name must be str")
     elif item not in self.LAYERS:
       raise KeyError("No layer is defined with the name: %s" % item)

@@ -882,7 +882,7 @@ class AbstractRESTAdapter(Session):
         # if given body is an NFFG
         body = body.dump()
         kwargs['headers']['Content-Type'] = "application/json"
-      elif isinstance(body, (str, unicode)) and body.startswith(
+      elif isinstance(body, basestring) and body.startswith(
          "<?xml version="):
         kwargs['headers']['Content-Type'] = "application/xml"
     # Setup parameters - URL
