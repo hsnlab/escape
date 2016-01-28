@@ -261,25 +261,6 @@ class Node(Element):
         return self.ports.remove(port)
     return False
 
-  def persist (self):
-    node = super(Node, self).persist()
-    if self.name is not None:
-      node["name"] = self.name
-    ports = [port.persist() for port in self.ports]
-    if ports:
-      node["ports"] = ports
-    if self.metadata:
-      node["metadata"] = self.metadata.copy()
-    return node
-
-  def load (self, data, *args, **kwargs):
-    super(Node, self).load(data=data)
-    self.name = data.get('name')  # optional
-    for port in data.get('ports', ()):
-      self.add_port(id=port['id'], properties=port.get('property'))
-    self.metadata = data.get("metadata", OrderedDict())
-    return self
-
   def add_metadata (self, name, value):
     """
     Add metadata with the given key.
@@ -306,6 +287,25 @@ class Node(Element):
       self.metadata.clear()
     else:
       return self.metadata.pop(name, None)
+
+  def persist (self):
+    node = super(Node, self).persist()
+    if self.name is not None:
+      node["name"] = self.name
+    ports = [port.persist() for port in self.ports]
+    if ports:
+      node["ports"] = ports
+    if self.metadata:
+      node["metadata"] = self.metadata.copy()
+    return node
+
+  def load (self, data, *args, **kwargs):
+    super(Node, self).load(data=data)
+    self.name = data.get('name')  # optional
+    for port in data.get('ports', ()):
+      self.add_port(id=port['id'], properties=port.get('property'))
+    self.metadata = data.get("metadata", OrderedDict())
+    return self
 
   def __repr__ (self):
     return "<|ID: %s, Type: %s --> %s|>" % (
@@ -913,15 +913,14 @@ class NodeInfra(Node):
     return node
 
   def load (self, data, *args, **kwargs):
-    # super(NodeInfra, self).load(data=data)
-    self.id = data['id']
-    self.operation = data.get("operation")  # optional
-    self.name = data.get('name')  # optional
-    self.metadata = data.get("metadata", OrderedDict())  # optional
+    super(NodeInfra, self).load(data=data)
+    # self.id = data['id']
+    # self.operation = data.get("operation")  # optional
+    # self.name = data.get('name')  # optional
+    # self.metadata = data.get("metadata", OrderedDict())  # optional
     for port in data.get('ports', ()):
-      infra_port = self.add_port(id=port['id'], properties=port.get('property'))
       for flowrule in port.get('flowrules', ()):
-        infra_port.flowrules.append(Flowrule.parse(flowrule))
+        self.ports[port['id']].flowrules.append(Flowrule.parse(flowrule))
     self.domain = data.get('domain', self.DEFAULT_DOMAIN)  # optional
     self.infra_type = data['type']
     if 'supported' in data:
