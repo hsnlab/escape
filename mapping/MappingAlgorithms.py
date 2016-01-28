@@ -118,15 +118,6 @@ def MAP (request, network, full_remap=False,
     request.del_edge(req.src, req.dst, req.id)
 
   if len(edgereqlist) != 0 and not sg_hops_given:
-    """
-    raise uet.BadInputException("",
-                                "SGHops was not given explicitly, they have "
-                                "been retrieved based on the flowrules, "
-                                "but at least one EdgeReq was given, "
-                                "which refers to SGHop ID-s, and SGHop ID-s "
-                                "can't be retrieved from flowrules, "
-                                "if they were collocated.")
-    """
     helper.log.warn("EdgeReqs were given, but the SGHops (which the EdgeReqs "
                     "refer to by id) are retrieved based on the flowrules of "
                     "infrastructure. This can cause error later if the "
@@ -228,30 +219,6 @@ def MAP (request, network, full_remap=False,
                       lat_factor=lat_factor, shortest_paths=shortest_paths)
   mappedNFFG = alg.start()
 
-  # put the EdgeReqs back to the mappedNFFG for the lower layer
-  # (NFFG splitting is omitted for now, lower layer gets the full NFFG)
-  # port adding is necessary, because SAPs can be with different ID in the
-  # two NFFGs and add_edge() uses the ID of the port`s parent.
-  """
-  THIS IS NOT REQUIRED BECAUSE EDGEREQ SPLITTING IS DONE, NEW REQS ARE CALCULATED
-  for req in edgereqlist:
-    srcnode = req.src.node
-    dstnode = req.dst.node
-    srcportid = req.src.id
-    dstportid = req.dst.id
-    if srcnode.type == 'SAP':
-      srcnode = mappedNFFG.network.node[
-        alg.manager.getIdOfChainEnd_fromNetwork(req.src.node.id)]
-      srcportid = alg._addSAPportIfNeeded(mappedNFFG, srcnode.id, srcportid)
-    if dstnode.type == 'SAP':
-      dstnode = mappedNFFG.network.node[
-        alg.manager.getIdOfChainEnd_fromNetwork(req.dst.node.id)]
-      dstportid = alg._addSAPportIfNeeded(mappedNFFG, dstnode.id, dstportid)
-    mappedNFFG.add_req(srcnode.ports[srcportid], dstnode.ports[dstportid],
-                       id=req.id, delay=req.delay, bandwidth=req.bandwidth,
-                       sg_path=req.sg_path)
-  """
-  
   # replace Infinity values
   _purgeNFFGFromInfinityValues(mappedNFFG)
   # print mappedNFFG.dump()
