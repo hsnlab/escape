@@ -546,6 +546,8 @@ class NFFGConverter(object):
 
     # Add links connecting infras
     for link in virtualizer.links:
+      # Store added link in a separate structure for simplicity and speed
+      added_links = []
       src_port = link.src.get_target().id.get_value()
       src_node = link.src.get_target().get_parent().get_parent().id.get_value()
       dst_port = link.dst.get_target().id.get_value()
@@ -568,10 +570,19 @@ class NFFGConverter(object):
       #    port1=nffg[src_node].ports[src_port],
       #    port2=nffg[dst_node].ports[dst_port],
       #    **params)
+      # Check the link is a possible backward link
+      possible_backward = ("%s:%s" % (dst_node, dst_port),
+                           "%s:%s" % (src_node, src_port))
+      if possible_backward in added_links:
+        params['backward'] = True
+      # Add unidirectional link
       l1 = nffg.add_link(src_port=nffg[src_node].ports[src_port],
                          dst_port=nffg[dst_node].ports[dst_port],
                          **params)
       self.log.debug("Add static connection: %s" % l1)
+      # Register the added link
+      added_links.append(("%s:%s" % (src_node, src_port),
+                          "%s:%s" % (dst_node, dst_port)))
       # self.log.debug("Add static connection: %s" % l2)
     self.log.debug(
        "END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
