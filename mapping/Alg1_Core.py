@@ -591,25 +591,6 @@ class CoreAlgorithm(object):
                                         -1*bt_record['used_latency'],
                                         bt_record['last_used_node'])
 
-
-  def _addSAPandLinkToFromIt (self, netportid, bis_id, nffg, nodenf, reqportid,
-       fc, toSAP=True):
-    """
-    Checks if there is a SAP for this portid in the currently
-    under-construction NFFG. Adds the link to/from this SAP.
-    """
-    sapname_and_id = "%s-%s" % (bis_id, netportid)
-    if sapname_and_id not in nffg.network:
-      sap = nffg.add_sap(name=sapname_and_id, id=sapname_and_id)
-    else:
-      sap = nffg.network.node[sapname_and_id]
-      # The VNFs port should be called the same as before,
-      # SAP port id is not important.
-    if toSAP:
-      nffg.add_sglink(nodenf.ports[reqportid], sap.add_port(), flowclass=fc)
-    else:
-      nffg.add_sglink(sap.add_port(), nodenf.ports[reqportid], flowclass=fc)
-
   def _addFlowrulesToNFFGDerivatedFromReqLinks (self, v1, v2, reqlid, nffg):
     """
     Adds the flow rules of the path of the request link (v1,v2,reqlid)
@@ -733,17 +714,118 @@ class CoreAlgorithm(object):
       return portid
     else:
       return nffg.network.node[sapid].add_port(portid).id
+
+  def _getSrcDstPortsOfOutputEdgeReq(self, nffg, sghop_id, infra, src=True, dst=True):
+    """
+    Retrieve the ending and starting infra port, where EdgeReq 
+    should be connected. Raises exception if either of the is not found.
+    If one of the ports is not requested, it remains None.
+    NOTE: we can be sure there is only one flowrule with 'sghop_id' in this infra
+    because we map SGHops based on shortest path algorithm and it would cut 
+    loops from the shortest path (because there are only positive edge weights)
+    """
+    start_port_for_req = None
+    end_port_for_req = None
+    found = False
+    for p in nffg.network.node[infra].ports:
+      for fr in p.flowrules:
+        if fr.hop_id == sghop_id:
+          if src:
+            start_port_for_req = p
+            if not dst:
+              found = True
+              break
+          if dst:
+            for action in fr.action.split(";"):
+              comm_param = action.split("=")
+              if comm_param[0] == "output":
+                end_port_id = comm_param[1]
+                try:
+                  end_port_id = int(comm_param[1])
+                except ValueError: 
+                  pass
+                end_port_for_req = nffg.network.node[infra].ports[end_port_id]
+                found = True
+                break
+        if found:
+          break
+      if found:
+        break
+    else:
+      raise uet.InternalAlgorithmException("One of the ports was not "
+            "found for output EdgeReq!")
+    return start_port_for_req, end_port_for_req
   
-  # def _divideEndToEndRequirements(self, nffg):
+  def _divideEndToEndRequirements(self, nffg):
     """
     Splits the E2E latency requirement between all BiSBiS nodes, which were used
     during the mapping procedure. Draws EdgeReqs into the output NFFG, saves the
     SGHop path where it should be satisfied, divides the E2E latency weighted by
     the offered latency of the affected BiSBiS-es.
     """
-    #for i in nffg.infras:
-      # mapped_nfs = [vnf for vnf.id in i.running_nfs]
-      # mapped_req = self.req.subgraph(mapped_nfs)
+    # remove if there are any EdgeReqs in the graph
+    for req in [r for r in nffg.reqs]:
+      nffg.del_edge(req.src, req.dst, req.id)
+    e2e_chainpieces = {}
+    for cid, infra in self.manager.genPathOfChains(nffg):
+      if nffg.network.node[infra].type == 'INFRA':
+        if nffg.network.node[infra].infra_type == NFFG.TYPE_INFRA_BISBIS:
+          mapped_req = self.req.subgraph((vnf.id for vnf in \
+                                          nffg.running_nfs(infra)))
+          outedgereq = None
+          delay_of_infra = self._sumLatencyOnPath([infra], [])
+          if len(mapped_req) == 0:
+            # we know that 'cid' traverses 'infra', but if this chain has no 
+            # mapped node here, then it olny uses this infra in its path
+            sghop_id = self.manager.getSGHopOfChainMappedHere(cid, infra)
+            src, dst = self._getSrcDstPortsOfOutputEdgeReq(nffg,
+                                                           sghop_id, infra)
+            # this is as much latency as we used for the mapping
+            # 0 bandwith should be forwarded, because they are already taken into
+            # account in SGHop bandwith
+            outedgereq = nffg.add_req(src, dst, delay=delay_of_infra,
+                                      bandwidth=0,
+                                      id=self.manager.getNextOutputChainId(), 
+                                      sg_path=[sghop_id])
+            if cid in e2e_chainpieces:
+              e2e_chainpieces[cid].append(outedgereq)
+            else:
+              e2e_chainpieces[cid] = [outedgereq]
+          else:
+            chain_pieces_of_infra = self.manager.\
+                                    getChainPiecesOfReqSubgraph(cid, mapped_req)
+            for chain_piece, link_ids_piece in chain_pieces_of_infra:
+              src, _ = self._getSrcDstPortsOfOutputEdgeReq(nffg, 
+                                                           link_ids_piece[0], 
+                                                           infra, dst=False)
+              _, dst = self._getSrcDstPortsOfOutputEdgeReq(nffg,
+                                                           link_ids_piece[-1],
+                                                           infra, src=False)
+              # a chain part spends one time of delay_of_infra for every link 
+              # mapped here, becuase it is valid between all the port pairs only.
+              outedgereq = nffg.add_req(src, dst, 
+                                        delay=len(link_ids_piece)*delay_of_infra, 
+                                        bandwidth=0,
+                                        id=self.manager.getNextOutputChainId(),
+                                        sg_path=link_ids_piece)
+              if cid in e2e_chainpieces:
+                e2e_chainpieces[cid].append(outedgereq)
+              else:
+                e2e_chainpieces[cid] = [outedgereq]
+          self.log.debug("Requirement chain added to BiSBiS %s with path %s and"
+                         " latency %s."%(infra, outedgereq.sg_path, 
+                                         outedgereq.delay))
+    # now iterate on the chain pieces
+    for cid in e2e_chainpieces:
+      # this is NOT equal to permitted minus remaining!
+      sum_of_latency_pieces = sum((er.delay for er in e2e_chainpieces[cid]))
+      # divide the remaining E2E latency weighted by the least necessary latency
+      # and add this to the propagated latency as extra.
+      for er in e2e_chainpieces[cid]:
+        er.delay += float(er.delay) / sum_of_latency_pieces * \
+                    self.manager.getRemainingE2ELatency(cid)
+        self.log.debug("Output latency requirement increased to %s in %s for "
+                       "path %s"%(er.delay, er.src.node.id, er.sg_path))
 
   def constructOutputNFFG (self):
     # use the unchanged input from the lower layer (deepcopied in the
@@ -843,22 +925,26 @@ class CoreAlgorithm(object):
                  self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
                             nffg.network.node[sapendid].ports[
                  self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)], 
-                            id=d.id, flowclass=d.flowclass)
+                            id=d.id, flowclass=d.flowclass, tag_info=d.tag_info,
+                            delay=d.delay, bandwidth=d.bandwidth)
           else:
             nffg.add_sglink(nffg.network.node[sapstartid].ports[
                  self._addSAPportIfNeeded(nffg, sapstartid, d.src.id)],
                             nffg.network.node[j].ports[d.dst.id], id=d.id,
-                            flowclass=d.flowclass)
+                            flowclass=d.flowclass, tag_info=d.tag_info,
+                            delay=d.delay, bandwidth=d.bandwidth)
         elif self.req.node[j].type == 'SAP':
           sapendid = self.manager.getIdOfChainEnd_fromNetwork(j)
           nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
                           nffg.network.node[sapendid].ports[
                             self._addSAPportIfNeeded(nffg, sapendid, d.dst.id)],
-                          id=d.id, flowclass=d.flowclass)
+                          id=d.id, flowclass=d.flowclass, tag_info=d.tag_info,
+                          delay=d.delay, bandwidth=d.bandwidth)
         else:
           nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
                           nffg.network.node[j].ports[d.dst.id], id=d.id,
-                          flowclass=d.flowclass)
+                          flowclass=d.flowclass, tag_info=d.tag_info,
+                          delay=d.delay, bandwidth=d.bandwidth)
     except RuntimeError as re:
       raise uet.InternalAlgorithmException("RuntimeError catched during SGLink"
           " addition to the output NFFG. Not Yet Implemented feature: keeping "
@@ -866,7 +952,7 @@ class CoreAlgorithm(object):
           "ID in current request and a previous request?")
     
     # Add EdgeReqs to propagate E2E latency reqs.
-    # self._divideEndToEndRequirements(nffg)
+    self._divideEndToEndRequirements(nffg)
 
     return nffg
 
@@ -936,6 +1022,34 @@ class CoreAlgorithm(object):
 
     # construct output NFFG with the mapping of VNFs and links
     return self.constructOutputNFFG()
+
+  def setBacktrackParameters(self, bt_limit=5, bt_branching_factor=4):
+    """
+    Sets the depth and maximal branching factor for the backtracking process on
+    nodes. bt_limit determines how many request graph nodes should be remembered
+    for backtracking purpose. bt_branching_factor determines how many possible 
+    host-path pairs should be remembered at most for one VNF.
+    """
+    if bt_branching_factor < 1 or "." in str(bt_branching_factor) or \
+       bt_limit < 1 or "." in str(bt_limit):
+      raise uet.BadInputException("Branching factor and backtrack limit should "
+                                  "be at least 1, integer values", 
+                                  "%s and %s were given."\
+                                  %(bt_limit, bt_branching_factor))
+    self.bt_branching_factor = bt_branching_factor
+    self.bt_limit = bt_limit
+    
+  def setResourcePrioritiesOnNodes(self, cpu=0.3333, mem=0.3333, 
+                                   storage=0.3333):
+    """
+    Sets what weights should be used for adding up the preference values of 
+    resource utilization on nodes.
+    """
+    sumw = cpu + mem + storage 
+    if abs(sumw - 1) > 0.0000001:
+      raise uet.BadInputException("The sum of resource priorities should be 1.0",
+                                  "the sum of resource priorities are %s"%sumw)
+    self.resource_priorities = [cpu, mem, storage]
 
   def reset (self):
     """Resets the CoreAlgorithm instance to its initial (after preprocessor) 

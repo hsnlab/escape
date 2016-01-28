@@ -107,7 +107,8 @@ def MAP (request, network, full_remap=False,
                                   "flowrules of the NFFG.")
     for k, v in sg_hop_info.iteritems():
       # VNF ports are given to the function
-      request.add_sglink(v[0], v[1], id=k[2])
+      request.add_sglink(v[0], v[1], flowclass=v[2], bandwidth=v[3], delay=v[4],
+                         id=k[2])
 
   chainlist = []
   cid = 1
@@ -116,17 +117,11 @@ def MAP (request, network, full_remap=False,
     edgereqlist.append(req)
     request.del_edge(req.src, req.dst, req.id)
 
-  # this error message could be removed, because of the SGHop filed in the 
-  # flowrules BUT in this case the EdgeReqs will refer to SGHop ID-s which can 
-  # only be calculated from flowrules.
   if len(edgereqlist) != 0 and not sg_hops_given:
-    raise uet.BadInputException("",
-                                "SGHops was not given explicitly, they have "
-                                "been retrieved based on the flowrules, "
-                                "but at least one EdgeReq was given, "
-                                "which refers to SGHop ID-s, and SGHop ID-s "
-                                "can't be retrieved from flowrules, "
-                                "if they were collocated.")
+    helper.log.warn("EdgeReqs were given, but the SGHops (which the EdgeReqs "
+                    "refer to by id) are retrieved based on the flowrules of "
+                    "infrastructure. This can cause error later if the "
+                    "flowrules was malformed...")
 
   # construct chains from EdgeReqs
   for req in edgereqlist:
@@ -224,27 +219,6 @@ def MAP (request, network, full_remap=False,
                       lat_factor=lat_factor, shortest_paths=shortest_paths)
   mappedNFFG = alg.start()
 
-  # put the EdgeReqs back to the mappedNFFG for the lower layer
-  # (NFFG splitting is omitted for now, lower layer gets the full NFFG)
-  # port adding is necessary, because SAPs can be with different ID in the
-  # two NFFGs and add_edge() uses the ID of the port`s parent.
-  for req in edgereqlist:
-    srcnode = req.src.node
-    dstnode = req.dst.node
-    srcportid = req.src.id
-    dstportid = req.dst.id
-    if srcnode.type == 'SAP':
-      srcnode = mappedNFFG.network.node[
-        alg.manager.getIdOfChainEnd_fromNetwork(req.src.node.id)]
-      srcportid = alg._addSAPportIfNeeded(mappedNFFG, srcnode.id, srcportid)
-    if dstnode.type == 'SAP':
-      dstnode = mappedNFFG.network.node[
-        alg.manager.getIdOfChainEnd_fromNetwork(req.dst.node.id)]
-      dstportid = alg._addSAPportIfNeeded(mappedNFFG, dstnode.id, dstportid)
-    mappedNFFG.add_req(srcnode.ports[srcportid], dstnode.ports[dstportid],
-                       id=req.id, delay=req.delay, bandwidth=req.bandwidth,
-                       sg_path=req.sg_path)
-  
   # replace Infinity values
   _purgeNFFGFromInfinityValues(mappedNFFG)
   # print mappedNFFG.dump()
@@ -485,11 +459,11 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('untracked/escape-mn-mapped-sghopmatch.nffg', "r") as f:
+    with open('untracked/escape-mn-divedgereq.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('../examples/escape-mn-topo.nffg', "r") as g:
+    with open('untracked/escape-mn-divedgereq.nffg', "r") as g:
       net = NFFG.parse(g.read())
-      net.duplicate_static_links()
+      # net.duplicate_static_links()
     mapped = MAP(req, net, full_remap=False)
     print mapped.dump()
   except uet.UnifyException as ue:
