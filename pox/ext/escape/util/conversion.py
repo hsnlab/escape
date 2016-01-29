@@ -274,9 +274,9 @@ class NFFGConverter(object):
           sap_port = sap.add_port(id=sap_port_id)
           # Add port properties as metadata to SAP port
           if port.name.is_initialized():
-            sap_port.add_property("name:%s" % port.name.get_value())
+            sap_port.add_property("name", port.name.get_value())
           if port.sap.is_initialized():
-            sap_port.add_property("sap:%s" % port.sap.get_value())
+            sap_port.add_property("sap", port.sap.get_value())
             # sap_port.add_property("type:%s" % port.sap.get_value())
             self.log.debug("Add SAP port: %s" % sap_port)
 
@@ -287,15 +287,15 @@ class NFFGConverter(object):
             infra_port_id = port.id.get_value()
           infra_port = infra.add_port(id=infra_port_id)
           # Add port properties as metadata to Infra port too
-          infra_port.add_property("name:%s" % port.name.get_value())
+          infra_port.add_property("name", port.name.get_value())
           # infra_port.add_property("port_type:%s" % port.port_type.get_value())
           if port.sap.is_initialized():
-            infra_port.add_property("sap:%s" % port.sap.get_value())
+            infra_port.add_property("sap", port.sap.get_value())
 
           # Add infra port capabilities
           if port.capability.is_initialized():
             infra_port.add_property(
-               "capability:%s" % port.capability.get_value())
+               "capability", port.capability.get_value())
           self.log.debug("Add port for SAP -> %s" % infra_port)
 
           # Add connection between infra - SAP
@@ -321,14 +321,14 @@ class NFFGConverter(object):
           # Add port properties as metadata to Infra port
           infra_port = infra.add_port(id=infra_port_id)
           if port.name.is_initialized():
-            infra_port.add_property("name:%s" % port.name.get_value())
+            infra_port.add_property("name", port.name.get_value())
           # If sap is set and port_type is port-abstract -> this port
           # connected  to an inter-domain SAP before -> save this metadata
           if port.sap.is_initialized():
-            infra_port.add_property("sap:%s" % port.sap.get_value())
+            infra_port.add_property("sap", port.sap.get_value())
           if port.capability.is_initialized():
             infra_port.add_property(
-               "capability:%s" % port.capability.get_value())
+               "capability", port.capability.get_value())
           self.log.debug("Add static %s" % infra_port)
         else:
           raise RuntimeError(
@@ -377,9 +377,9 @@ class NFFGConverter(object):
           # Add port properties as metadata to NF port
           if nf_inst_port.capability.is_initialized():
             nf_port.add_property(
-               "capability:%s" % nf_inst_port.capability.get_value())
+               "capability", nf_inst_port.capability.get_value())
           if nf_inst_port.name.is_initialized():
-            nf_port.add_property("name:%s" % nf_inst_port.name.get_value())
+            nf_port.add_property("name", nf_inst_port.name.get_value())
           # VNF port can not be a SAP port -> skip <port_type> saving
           # VNF port can not be a SAP port -> skip <sap> saving
           self.log.debug("Add NF port: %s" % nf_port)
@@ -536,8 +536,8 @@ class NFFGConverter(object):
              "Flowrule's name: %s is not following the SG hop naming "
              "convention! SG hop for %s is undefined...") % (
             flowentry.name.get_as_text(), flowentry)
-          _hop_id = flowentry.name.get_as_text().split(':')[1] \
-            if flowentry.name.is_initialized() else None
+        _hop_id = flowentry.name.get_as_text().split(':')[1] \
+          if flowentry.name.is_initialized() else None
 
         fr = port.add_flowrule(id=fe_id, match=match, action=action,
                                bandwidth=_fr_bw, delay=_fr_delay,
@@ -573,7 +573,6 @@ class NFFGConverter(object):
       # Check the link is a possible backward link
       possible_backward = (
         "%s:%s-%s:%s" % (dst_node, dst_port, src_node, src_port))
-      print "possible_backward: " + possible_backward
       if possible_backward in added_links:
         params['backward'] = True
       # Add unidirectional link
@@ -585,7 +584,6 @@ class NFFGConverter(object):
       # Register the added link
       added_links.append(
          "%s:%s-%s:%s" % (src_node, src_port, dst_node, dst_port))
-      print "%s" % added_links
       # self.log.debug("Add static connection: %s" % l2)
     self.log.debug(
        "END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (

@@ -131,7 +131,7 @@ cfg = {
       "MANAGERS": [
         # "REMOTE-ESCAPE",
         # "REMOTE-ESCAPE-ext",
-        # "SDN",
+        "SDN",
         # "OPENSTACK",
         # "UN"
       ],
