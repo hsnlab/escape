@@ -131,12 +131,12 @@ cfg = {
       "MANAGERS": [
         # "REMOTE-ESCAPE",
         # "REMOTE-ESCAPE-ext",
-        "SDN",
+        # "SDN",
         # "OPENSTACK",
         # "UN"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
-      "CLEAR-DOMAINS-AFTER-SHUTDOWN": True,  # Shutdown strategy config
+      "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
       # Specific Domain Managers
       "INTERNAL":
         {
