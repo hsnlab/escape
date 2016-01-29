@@ -293,7 +293,8 @@ cfg = {
   "visualization":
     {
       "url": "http://localhost:8081",
-      "rpc": "edit-config"
+      "rpc": "edit-config",
+      "instance_id": None
     }
 }
 

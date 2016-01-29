@@ -847,4 +847,23 @@ class ESCAPEConfig(object):
     #   return self.__configuration["visualization"]["rpc"]
     # except KeyError:
     #   return None
-    return self.__configuration["visualization"]["rpc"]
+    try:
+      return self.__configuration["visualization"]["rpc"]
+    except KeyError:
+      return None
+
+  def get_visualization_instance_id (self):
+    """
+    Return the instance id of the current ESCAPEv2.
+
+    :return: url
+    :rtype: str
+    """
+    # try:
+    #   return self.__configuration["visualization"]["rpc"]
+    # except KeyError:
+    #   return None
+    try:
+      return self.__configuration["visualization"]["instance_id"]
+    except KeyError:
+      return None
