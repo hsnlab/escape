@@ -50,7 +50,7 @@ class RemoteVisualizer(Session):
     'User-Agent': "ESCAPE/" + __version__,
     'Content-Type': "application/xml"}
 
-  def __init__ (self, url=None, rpc=None):
+  def __init__ (self, url=None, rpc=None, instance_id=None):
     """
     Init.
 
@@ -58,6 +58,8 @@ class RemoteVisualizer(Session):
     :type url: str
     :param rpc: RPC name
     :type rpc: str
+    :param instance_id: additional id to join to the end of the id
+    :type instance_id: str
     :return: None
     """
     super(RemoteVisualizer, self).__init__()
@@ -69,6 +71,8 @@ class RemoteVisualizer(Session):
     self._url = urlparse.urljoin(url, rpc)
     if self._url is None:
       raise RuntimeError("Missing URL from %s" % self.__class__.__name__)
+    if instance_id is None:
+      self.instance_id = CONFIG.get_visualization_instance_id()
     self.log.info("Setup remote Visualizer with URL: %s" % self._url)
     # Store the last request
     self._response = None
@@ -118,7 +122,10 @@ class RemoteVisualizer(Session):
         self.log.warning(
            "Unsupported data type: %s! Skip notification..." % type(data))
         return
-      data.id.set_value(self.ID_MAPPER.get(id, "UNDEFINED"))
+      _id = self.ID_MAPPER.get(id, "UNDEFINED")
+      if self.instance_id is not None:
+        _id += "-%s" % self.instance_id
+      data.id.set_value(_id)
       # If additional params is not empty dict -> override the basic params
       if 'headers' not in kwargs:
         kwargs['headers'] = self.basic_headers
