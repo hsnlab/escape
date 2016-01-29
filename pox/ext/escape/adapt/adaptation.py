@@ -432,7 +432,7 @@ class ControllerAdapter(object):
       for infra in nffg_part.infras:
         for port in infra.ports:
           # Check ports of remained Infra's for SAP ports
-          if "type:inter-domain" in port.properties:
+          if port.properties.get("type", "") == "inter-domain":
             # Found inter-domain SAP port
             log.debug("Found inter-domain SAP port: %s" % port)
             # Create default SAP object attributes
