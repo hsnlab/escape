@@ -280,8 +280,10 @@ class Node(Element):
     Remove the metadata from the :any:`Node`. If no metadata is given all the
     metadata will be removed.
 
-    :param name:
-    :return:
+    :param name: name of the metadata
+    :type name: str
+    :return: removed metadata or None
+    :rtype: str or None
     """
     if name is None:
       self.metadata.clear()
@@ -295,6 +297,7 @@ class Node(Element):
     :param name: name of the metadata
     :type name: str
     :return: metadata value
+    :rtype: str
     """
     return self.metadata.get(name)
 
@@ -314,7 +317,7 @@ class Node(Element):
     self.name = data.get('name')  # optional
     for port in data.get('ports', ()):
       self.add_port(id=port['id'], properties=port.get('property'))
-    self.metadata = data.get("metadata", OrderedDict())
+    self.metadata = data.get('metadata', OrderedDict())
     return self
 
   def __repr__ (self):
@@ -561,15 +564,7 @@ class Port(Element):
     # self.__node = weakref.ref(node)
     self.__node = node
     # Set properties list according to given param type
-    if isinstance(properties, basestring):
-      self.properties = [str(properties), ]
-    elif isinstance(properties, Iterable):
-      self.properties = [p for p in properties]
-    elif properties is None:
-      self.properties = []
-    else:
-      raise RuntimeError(
-         "Port's properties attribute must be iterable or a string!")
+    self.properties = properties if properties is not None else OrderedDict()
 
   @property
   def node (self):
@@ -580,25 +575,18 @@ class Port(Element):
   def node (self):
     del self.__node
 
-  def add_property (self, property, value=None):
+  def add_property (self, property, value):
     """
-    Add a property or list of properties to the :any:`Port`.
-    If value is not None, then property is used as a key.
+    Add a property to the :any:`Port`.
 
     :param property: property
-    :type property: str or list or tuple
-    :param value: optional property value
+    :type property: str
+    :param value: property value
     :type value: str
     :return: the Port object to allow function chaining
     :rtype: :any:`Port`
     """
-    if isinstance(property, basestring):
-      if value is not None:
-        # wouldn't it be better to store properties as key-value pairs?
-        property = property + ':' + value
-      self.properties.append(property)
-    elif isinstance(property, Iterable):
-      self.properties.extend(property)
+    self.properties[property] = value
     return self
 
   def del_property (self, property=None):
@@ -606,14 +594,15 @@ class Port(Element):
     Remove the property from the :any:`Port`. If no property is given all the
     properties will be removed from the :any:`Port`.
 
-    :param property: property
+    :param property: property name
     :type property: str
-    :return: None
+    :return: removed property or None
+    :rtype: str or None
     """
     if property is None:
-      self.properties[:] = []
+      self.properties.clear()
     else:
-      self.properties.remove(property)
+      return self.properties.pop(property, None)
 
   def get_property (self, property):
     """
@@ -624,21 +613,17 @@ class Port(Element):
     :return: the value of the property
     :rtype: str
     """
-    for prop in self.properties:
-      if prop.startswith(property + ":"):
-        return prop.split(":", 1)[1]
+    return self.properties.get(property)
 
   def persist (self):
     port = super(Port, self).persist()
-    property = [property for property in self.properties]
-    if property:
-      port["property"] = property
+    if self.properties:
+      port["property"] = self.properties.copy()
     return port
 
   def load (self, data, *args, **kwargs):
     super(Port, self).load(data=data)
-    for property in data.get('property', ()):
-      self.properties.append(property)
+    self.properties = data.get('property', OrderedDict())
 
   def __repr__ (self):
     return "%s(node: %s, id: %s)" % (
@@ -1528,7 +1513,8 @@ def test_parse_load ():
   nf.resources.bandwidth = "2"
   nf.resources.delay = "2"
   # nf.add_port("port_nf1", "port1", "virtual", "vlan:1025")
-  p1 = nf.add_port(id="port_nf1", properties=("port1", "virtual", "vlan:1025"))
+  p1 = nf.add_port(id="port_nf1",
+                   properties={"port1": 42, "virtual": 24, "vlan": 1025})
   # SAP
   sap = NodeSAP()
   sap.id = "sap1"

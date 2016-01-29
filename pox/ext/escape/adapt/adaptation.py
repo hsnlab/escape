@@ -485,6 +485,7 @@ class ControllerAdapter(object):
       self.__class__.__name__, mapped_nffg.name))
     # # Notify remote visualizer about the deployable NFFG if it's needed
     # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
+    print mapped_nffg.dump()
     slices = self._split_into_domains(nffg=mapped_nffg)
     if slices is None:
       log.warning(
@@ -709,22 +710,22 @@ class DomainVirtualizer(AbstractVirtualizer):
         # Copy inter-domain port properties for redundant storing
         # FIXME - do it better
         if len(domain_port_nffg.properties) > 0:
-          domain_port_dov.add_property(domain_port_nffg.properties)
+          domain_port_dov.properties.update(domain_port_nffg.properties)
           log.debug(
              "Copy inter-domain port properties: %s" %
              domain_port_dov.properties)
         elif len(domain_port_dov.properties) > 0:
-          domain_port_nffg.add_property(domain_port_dov.properties)
+          domain_port_nffg.properties.update(domain_port_dov.properties)
           log.debug(
              "Copy inter-domain port properties: %s" %
              domain_port_nffg.properties)
         else:
-          domain_port_dov.add_property("sap:%s" % sap_id)
-          domain_port_nffg.add_property("sap:%s" % sap_id)
+          domain_port_dov.add_property("sap", sap_id)
+          domain_port_nffg.add_property("sap", sap_id)
 
         # Signal Inter-domain port
-        domain_port_dov.add_property("type:inter-domain")
-        domain_port_nffg.add_property("type:inter-domain")
+        domain_port_dov.add_property("type", "inter-domain")
+        domain_port_nffg.add_property("type", "inter-domain")
 
         # Delete both inter-domain SAP and links connected to them
         self._global_nffg.del_node(sap_id)

@@ -839,22 +839,22 @@ class NFFGToolBox(object):
         # Copy inter-domain port properties for redundant storing
         # FIXME - do it better
         if len(domain_port_nffg.properties) > 0:
-          domain_port_dov.add_property(domain_port_nffg.properties)
+          domain_port_dov.properties.update(domain_port_nffg.properties)
           log.debug(
              "Copy inter-domain port properties: %s" %
              domain_port_dov.properties)
         elif len(domain_port_dov.properties) > 0:
-          domain_port_nffg.add_property(domain_port_dov.properties)
+          domain_port_nffg.properties.update(domain_port_dov.properties)
           log.debug(
              "Copy inter-domain port properties: %s" %
              domain_port_nffg.properties)
         else:
-          domain_port_dov.add_property("sap:%s" % sap_id)
-          domain_port_nffg.add_property("sap:%s" % sap_id)
+          domain_port_dov.add_property("sap", sap_id)
+          domain_port_nffg.add_property("sap", sap_id)
 
         # Signal Inter-domain port
-        domain_port_dov.add_property("type:inter-domain")
-        domain_port_nffg.add_property("type:inter-domain")
+        domain_port_dov.add_property("type", "inter-domain")
+        domain_port_nffg.add_property("type", "inter-domain")
 
         # Delete both inter-domain SAP and links connected to them
         base.del_node(sap_id)
@@ -1290,7 +1290,8 @@ class NFFGToolBox(object):
     # curr_port is a flow finishing port, let's check whether the next node 
     # would be a SAP
     """
-    THIS IS NOT NEEDED CUZ NOW WE ALSO FIND THE LAST LINK IN PREV ITERATION BLOCK
+    THIS IS NOT NEEDED CUZ NOW WE ALSO FIND THE LAST LINK IN PREV ITERATION
+    BLOCK
     if nffg.network.node[vnf2].type == 'SAP':
       # we only need to find the last link separately if 'vnf2' is a SAP
       last_link_found = False
@@ -1365,7 +1366,7 @@ class NFFGToolBox(object):
               for link in nffg.links:
                 # iterates on STATIC or DYNAMIC links
                 if link.src.id == act_port_id and link.src.node.id == p.node.id:
-                  if "UNTAG" in actions or link.dst.node.type == 'SAP' :
+                  if "UNTAG" in actions or link.dst.node.type == 'SAP':
                     ending_port = link.dst
                     transit_fr = False
                     break
@@ -1398,7 +1399,7 @@ class NFFGToolBox(object):
                     # flowrule, and there is no starting flowrule for it, so the
                     # other end of the link (finishing in 'p') is the port where
                     # the SGHop was originating
-                    sg_map[sghop_info] = [None, ending_port, flowclass, 
+                    sg_map[sghop_info] = [None, ending_port, flowclass,
                                           fr.bandwidth, fr.delay, p]
             # TAG action and match cannot coexsist in the same flowrule
             elif command_param[0] == "TAG" or "TAG=" in fr.match:
@@ -1410,7 +1411,7 @@ class NFFGToolBox(object):
               for link in nffg.links:
                 if link.dst.id == p.id and p.node.id == link.dst.node.id:
                   if ("TAG=" in fr.match and link.src.node.type == 'SAP') or \
-                     command_param[0] == "TAG":
+                        command_param[0] == "TAG":
                     if command_param[0] == "TAG":
                       tag_info = command_param[1]
                     else:
@@ -1445,12 +1446,12 @@ class NFFGToolBox(object):
                   c_p = a.split("=")
                   if c_p[0] == "output":
                     out_port = NFFGToolBox.try_to_convert(c_p[1])
-                    sg_map[sghop_info] = [starting_port, None, flowclass, 
+                    sg_map[sghop_info] = [starting_port, None, flowclass,
                                           fr.bandwidth, fr.delay,
                                           d.ports[out_port]]
                     break
             elif "UNTAG" not in actions and "TAG=" not in fr.action and \
-                 "TAG=" not in fr.match:
+                  "TAG=" not in fr.match:
               # we know here: action != TAG and  "TAG=" not in fr.match
               # All required SGHop info can be gathered at once from this
               # flowrule. It is either a SAP-SAP flowrule or a collocated.
@@ -1487,7 +1488,7 @@ class NFFGToolBox(object):
                   break
               else:
                 raise RuntimeError("No 'output' command found in collocation "
-                                     "flowrule!")
+                                   "flowrule!")
     # after all flowrules have been processed we have to check if there is 
     # still a None prt object (meaning that flowrule sequence for that TAG 
     # consisted of only one NON-COLLOCATION flowrule)
