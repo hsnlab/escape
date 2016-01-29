@@ -432,17 +432,13 @@ class ControllerAdapter(object):
       for infra in nffg_part.infras:
         for port in infra.ports:
           # Check ports of remained Infra's for SAP ports
-          if port.properties.get("type", "") == "inter-domain":
+          if port.get_property("type") == "inter-domain":
             # Found inter-domain SAP port
             log.debug("Found inter-domain SAP port: %s" % port)
             # Create default SAP object attributes
-            sap_id, sap_name = None, None
             # Copy optional SAP metadata as special id or name
-            for property in port.properties:
-              if str(property).startswith("sap:"):
-                sap_id = property.split(":", 1)[1]
-              if str(property).startswith("name:"):
-                sap_name = property.split(":", 1)[1]
+            sap_id = port.get_property("sap")
+            sap_name = port.get_property("name")
             # Add SAP to splitted NFFG
             if sap_id in nffg_part:
               log.warning("%s is already in the splitted NFFG. Skip adding..." %
@@ -450,7 +446,8 @@ class ControllerAdapter(object):
               continue
             sap = nffg_part.add_sap(id=sap_id, name=sap_name)
             # Add port to SAP port number(id) is identical with the Infra's port
-            sap_port = sap.add_port(id=port.id, properties=port.properties[:])
+            sap_port = sap.add_port(id=port.id,
+                                    properties=port.properties.copy())
             # Connect SAP to Infra
             nffg_part.add_undirected_link(port1=port, port2=sap_port)
             log.debug(
