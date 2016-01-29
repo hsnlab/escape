@@ -136,9 +136,9 @@ class NFFGConverter(object):
         try:
           ret['in_port'] = int(kv[1])
         except ValueError:
-          log.warning(
-             "in_port is not a valid port number: %s! Skip "
-             "converting..." % kv[1])
+          # log.warning(
+          #    "in_port is not a valid port number: %s! Skip "
+          #    "converting..." % kv[1])
           ret['in_port'] = kv[1]
       elif kv[0] == cls.OP_TAG:
         if type.upper() == cls.TYPE_MATCH:
@@ -957,13 +957,13 @@ class NFFGConverter(object):
                               resources=_resources, name=_name)
           self.log.debug("Generated Flowentry:\n%s" % virtualizer.nodes[
             infra.id].flowtable.add(virt_fe))
-          # explicitly call bind to resolve absolute paths for safety reason
-          virtualizer.bind(relative=True)
-          self.log.debug(
-             "END adapting modifications from %s into Virtualizer(id=%s, "
-             "name=%s)"
-             % (nffg, virtualizer.id.get_as_text(),
-                virtualizer.name.get_as_text()))
+    # explicitly call bind to resolve absolute paths for safety reason
+    virtualizer.bind(relative=True)
+    self.log.debug(
+       "END adapting modifications from %s into Virtualizer(id=%s, "
+       "name=%s)"
+       % (nffg, virtualizer.id.get_as_text(),
+          virtualizer.name.get_as_text()))
     # Return with modified Virtualizer
     return virtualizer
 
