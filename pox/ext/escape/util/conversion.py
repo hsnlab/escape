@@ -531,13 +531,14 @@ class NFFGConverter(object):
               _fr_delay = flowentry.resources.delay.get_value()
 
         # Get hop_id
-        if not flowentry.name.get_as_text().startswith(self.TAG_SG_HOP):
-          log.warning(
-             "Flowrule's name: %s is not following the SG hop naming "
-             "convention! SG hop for %s is undefined...") % (
-            flowentry.name.get_as_text(), flowentry)
-        _hop_id = flowentry.name.get_as_text().split(':')[1] \
-          if flowentry.name.is_initialized() else None
+        _hop_id = None
+        if flowentry.name.is_initialized():
+          if not flowentry.name.get_as_text().startswith(self.TAG_SG_HOP):
+            log.warning(
+               "Flowrule's name: %s is not following the SG hop naming "
+               "convention! SG hop for %s is undefined...") % (
+              flowentry.name.get_as_text(), flowentry)
+          _hop_id = flowentry.name.get_as_text().split(':')[1]
 
         fr = port.add_flowrule(id=fe_id, match=match, action=action,
                                bandwidth=_fr_bw, delay=_fr_delay,
