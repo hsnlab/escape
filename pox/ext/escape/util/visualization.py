@@ -124,6 +124,7 @@ class RemoteVisualizer(Session):
         kwargs['headers'] = self.basic_headers
       else:
         kwargs['headers'] = self.basic_headers.copy().update(kwargs['headers'])
+      self.log.debug("Sending visualization notification...")
       self._response = self.request(method='POST', url=url, data=data.xml(),
                                     **kwargs)
       self._response.raise_for_status()
