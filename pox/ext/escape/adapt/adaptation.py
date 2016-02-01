@@ -460,7 +460,6 @@ class ControllerAdapter(object):
         log.warning("Found orphaned node: %s! Remove from sliced part." %
                     nffg_part.network.node[node_id])
         nffg_part.network.remove_node(node_id)
-
     # Return with the splitted parts
     # for s in splitted_parts:
     #   print s[0], s[1].dump()
