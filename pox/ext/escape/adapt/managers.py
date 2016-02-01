@@ -257,6 +257,7 @@ class InternalDomainManager(AbstractDomainManager):
              "initiation..." % nf.name)
           continue
           # print self.topoAdapter.get_topology_resource().dump()
+    log.debug("Deletion of deployed NFs has been ended!")
 
   def _deploy_nfs (self, nffg_part):
     """
@@ -661,6 +662,7 @@ class SDNDomainManager(AbstractDomainManager):
 
     :return: None
     """
+    log.debug("Removing flowrules...")
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
       if infra.infra_type not in (
@@ -679,7 +681,6 @@ class SDNDomainManager(AbstractDomainManager):
            "Skipping DELETE flowrules! Cause: connection for %s - DPID: %s is "
            "not found!" % (infra, dpid_to_str(dpid)))
         continue
-
       self.controlAdapter.delete_flowrules(infra.id)
 
   def _deploy_flowrules (self, nffg_part):
