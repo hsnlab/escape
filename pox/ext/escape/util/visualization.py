@@ -50,7 +50,11 @@ class RemoteVisualizer(Session):
     'User-Agent': "ESCAPE/" + __version__,
     'Content-Type': "application/xml"}
 
-  def __init__ (self, url=None, rpc=None, instance_id=None):
+  # Default timeout value in sec
+  DEFAULT_TIMEOUT = 3
+
+  def __init__ (self, url=None, rpc=None, timeout=DEFAULT_TIMEOUT,
+                instance_id=None):
     """
     Init.
 
@@ -58,6 +62,8 @@ class RemoteVisualizer(Session):
     :type url: str
     :param rpc: RPC name
     :type rpc: str
+    :param timeout: connections timeout
+    :type timeout: int
     :param instance_id: additional id to join to the end of the id
     :type instance_id: str
     :return: None
@@ -71,6 +77,7 @@ class RemoteVisualizer(Session):
     self._url = urlparse.urljoin(url, rpc)
     if self._url is None:
       raise RuntimeError("Missing URL from %s" % self.__class__.__name__)
+    self._timeout = timeout
     if instance_id is None:
       self.instance_id = CONFIG.get_visualization_instance_id()
     self.log.info("Setup remote Visualizer with URL: %s" % self._url)
@@ -114,13 +121,15 @@ class RemoteVisualizer(Session):
     if url is None:
       self.log.error("Missing URL for remote visualizer! Skip notification...")
       return
+    if 'timeout' not in kwargs:
+      kwargs['timeout'] = self._timeout
     self.log.debug("Send visualization notification to %s" % self._url)
     try:
       if isinstance(data, NFFG):
         data = self.converter.dump_to_Virtualizer(nffg=data)
       elif not isinstance(data, Virtualizer.Virtualizer):
         self.log.warning(
-           "Unsupported data type: %s! Skip notification..." % type(data))
+          "Unsupported data type: %s! Skip notification..." % type(data))
         return
       _id = self.ID_MAPPER.get(id, "UNDEFINED")
       if self.instance_id is not None:
@@ -136,6 +145,11 @@ class RemoteVisualizer(Session):
                                     **kwargs)
       self._response.raise_for_status()
       return self._response.text
-    except (ConnectionError, HTTPError, Timeout, KeyboardInterrupt) as e:
+    except (ConnectionError, HTTPError, KeyboardInterrupt) as e:
       self.log.error(
-         "Got exception during notifying remote Visualizer: %s!" % e)
+        "Got exception during notifying remote Visualizer: %s!" % e)
+      return False
+    except Timeout:
+      self.log.warning(
+        "Got timeout(%ss) during notify remote Visualizer!" % kwargs['timeout'])
+      return True
