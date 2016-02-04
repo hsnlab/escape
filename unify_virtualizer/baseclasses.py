@@ -202,7 +202,7 @@ class Yang(object):
         output.close()
         return html
 
-    def write_to_file(self, outfilename, format="html"):
+    def write_to_file(self, outfilename, format="html", ordered=True):
         """
         Writes Yang tree to a file; path is created on demand
         :param outfilename: string
@@ -211,11 +211,11 @@ class Yang(object):
         """
         if not os.path.exists(os.path.dirname(outfilename)):
             os.makedirs(os.path.dirname(outfilename))
-        text = self.html()
+        text = self.html(ordered=ordered)
         if format=="text":
-            text= self.get_as_text()
+            text= self.get_as_text(ordered=ordered)
         elif format=="xml":
-            text= self.xml()
+            text= self.xml(ordered=ordered)
         with open(outfilename, 'w') as outfile:
             outfile.writelines(text)
 

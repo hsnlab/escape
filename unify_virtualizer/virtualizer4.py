@@ -1,4 +1,4 @@
-#    Filename: virtualizer4.py		 Created: 2015-12-27  14:25:10
+#    Filename: virtualizer4.py		 Created: 2016-01-28  15:42:54
 #    This file was automatically created by a pyang plugin (PNC) developed at Ericsson Hungary Ltd., 2015
 #    Authors: Robert Szabo, Balazs Miriszlai, Akos Recse, Raphael Vicente Rosa
 #    Credits: Robert Szabo, Raphael Vicente Rosa, David Jocha, Janos Elek, Balazs Miriszlai, Akos Recse
@@ -9,8 +9,8 @@
 #    Prefix: virtualizer
 #    Organization: ETH
 #    Contact: Robert Szabo <robert.szabo@ericsson.com>
-#    Revision: 2015-12-18
-#    Description: Virtualizer's revised data model based on virtualizer3; changes: link key is set to id
+#    Revision: 2016-01-28
+#    Description: Metadata added to infra_node and virtualizer level; Virtualizer's revised data model based on virtualizer3; changes: link key is set to id
 
 __copyright__ = "Copyright 2015, Ericsson Hungary Ltd."
 __license__ = "Apache License, Version 2.0"
