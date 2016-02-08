@@ -1210,7 +1210,7 @@ class NFFGModel(Element):
   # Container type
   TYPE = "NFFG"
 
-  def __init__ (self, id=None, name=None, version=None):
+  def __init__ (self, id=None, name=None, version=None, metadata=None):
     """
     Init
 
@@ -1225,6 +1225,7 @@ class NFFGModel(Element):
     super(NFFGModel, self).__init__(id=id, type=self.TYPE)
     self.name = name
     self.version = version if version is not None else self.VERSION
+    self.metadata = OrderedDict(metadata if metadata else ())
     self.node_nfs = []
     self.node_saps = []
     self.node_infras = []
@@ -1478,6 +1479,8 @@ class NFFGModel(Element):
     if self.name is not None:
       nffg["parameters"]["name"] = self.name
     nffg["parameters"]["version"] = self.version
+    if self.metadata:
+      nffg["parameters"]["metadata"] = self.metadata
     if self.node_nfs:
       nffg["node_nfs"] = [nf.persist() for nf in self.node_nfs]
     if self.node_saps:
@@ -1519,12 +1522,12 @@ class NFFGModel(Element):
     try:
       # Load from plain text
       data = json.loads(raw_data, object_hook=unicode_to_str)
-      # Create container
-      container = NFFGModel()
-      # Fill container fields
-      container.id = data['parameters']['id']  # mandatory
-      container.name = data['parameters'].get('name')  # can be None
-      container.version = data['parameters']['version']  # mandatory
+      # Create container and fill container fields
+      container = NFFGModel(
+        id=data['parameters'].get('id'),  # mandatory
+        name=data['parameters'].get('name'),  # can be None
+        metadata=data['parameters'].get('metadata'),
+        version=data['parameters'].get('version'))  # mandatory
       # Fill Container lists
       for n in data.get('node_nfs', ()):
         container.node_nfs.append(NodeNF.parse(data=n))
@@ -1609,6 +1612,7 @@ def test_parse_load ():
   # Generate
   nffg = NFFGModel()
   nffg.name = "NFFG1"
+  nffg.metadata['lorem'] = 'ipsum'
   nffg.node_infras.append(infra)
   nffg.node_nfs.append(nf)
   nffg.node_saps.append(sap)
