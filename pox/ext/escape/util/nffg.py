@@ -365,7 +365,7 @@ class NFFG(AbstractNFFG):
     :param nf: add this explicit NF object instead of create one
     :type nf: :any:`NodeNF`
     :param id: optional id
-    :type id: str or int
+    :type id: str or ints
     :param name: optional name
     :type name: str
     :param func_type: functional type (default: "None")
@@ -386,9 +386,11 @@ class NFFG(AbstractNFFG):
     :rtype: :any:`NodeNF`
     """
     if nf is None:
-      res = NodeResource(cpu=cpu, mem=mem, storage=storage, delay=delay,
-                         bandwidth=bandwidth) if any(
-        i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
+      if any(i is not None for i in (cpu, mem, storage, delay, bandwidth)):
+        res = NodeResource(cpu=cpu, mem=mem, storage=storage, delay=delay,
+                           bandwidth=bandwidth)
+      else:
+        res = None
       nf = NodeNF(id=id, name=name, func_type=func_type, dep_type=dep_type,
                   res=res)
     self.add_node(nf)
@@ -442,9 +444,11 @@ class NFFG(AbstractNFFG):
     :rtype: :any:`NodeInfra`
     """
     if infra is None:
-      res = NodeResource(cpu=cpu, mem=mem, storage=storage, bandwidth=bandwidth,
-                         delay=delay) if any(
-        i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
+      if any(i is not None for i in (cpu, mem, storage, delay, bandwidth)):
+        res = NodeResource(cpu=cpu, mem=mem, storage=storage,
+                           bandwidth=bandwidth, delay=delay)
+      else:
+        res = None
       infra = NodeInfra(id=id, name=name, domain=domain, infra_type=infra_type,
                         res=res)
     self.add_node(infra)

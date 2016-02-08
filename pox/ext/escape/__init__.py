@@ -137,6 +137,7 @@ cfg = {
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
+      # "ENSURE-UNIQUE-ID": True,  # ID conversion strategy for nodes
       # Specific Domain Managers
       "INTERNAL":
         {

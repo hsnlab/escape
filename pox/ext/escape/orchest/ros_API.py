@@ -122,7 +122,7 @@ class CfOrRequestHandler(AbstractRequestHandler):
     """
     Response configuration.
     """
-    log.info("Call %s function: get-config" % self.LOGGER_NAME)
+    self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
     config = self._proceed_API_call('api_cfor_get_config')
     if config is None:
       self.send_error(404, message="Resource info is missing!")
@@ -132,22 +132,22 @@ class CfOrRequestHandler(AbstractRequestHandler):
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(data))
     self.end_headers()
-    log.debug("Send back topology description...")
+    self.log.debug("Send back topology description...")
     self.wfile.write(data)
-    log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
+    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
 
   def edit_config (self):
     """
     Receive configuration and initiate orchestration.
     """
-    log.info("Call %s function: edit-config" % self.LOGGER_NAME)
+    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    log.debug("Parsed NFFG request: %s" % nffg)
+    self.log.debug("Parsed NFFG request: %s" % nffg)
     self._proceed_API_call('api_cfor_edit_config', nffg)
     self.send_acknowledge()
-    log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
+    self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
 
 class ROSAgentRequestHandler(AbstractRequestHandler):
@@ -198,7 +198,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    log.info("Call %s function: get-config" % self.LOGGER_NAME)
+    self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
     # Forward call to main layer class
     config = self._proceed_API_call('api_ros_get_config')
     if config is None:
@@ -219,9 +219,9 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
-    log.debug("Send back topology description...")
+    self.log.debug("Send back topology description...")
     self.wfile.write(data)
-    log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
+    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
 
   def edit_config (self):
     """
@@ -229,9 +229,9 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    log.info("Call %s function: edit-config" % self.LOGGER_NAME)
+    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
     # Obtain NFFG from request body
-    log.debug("Detected response format: %s" %
+    self.log.debug("Detected response format: %s" %
               self.headers.get("Content-Type", ""))
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
@@ -239,22 +239,22 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type", "") != "application/xml" or \
          not body.startswith("<?xml version="):
-        log.error(
-           "Received data is not in XML format despite of the UNIFY "
-           "interface is enabled!")
+        self.log.error(
+          "Received data is not in XML format despite of the UNIFY "
+          "interface is enabled!")
         self.send_error(415)
         return
       # Convert response's body to NFFG
-      nffg = NFFGConverter(domain="REMOTE",
-                           logger=log).parse_from_Virtualizer(xml_data=body)
+      converter = NFFGConverter(domain="REMOTE", logger=log)
+      nffg = converter.parse_from_Virtualizer(xml_data=body)
     else:
       nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     # Rewrite domain name to INTERNAL
     # nffg = self._update_REMOTE_ESCAPE_domain(nffg_part=nffg)
-    log.debug("Parsed NFFG install request: %s" % nffg)
+    self.log.debug("Parsed NFFG install request: %s" % nffg)
     self._proceed_API_call('api_ros_edit_config', nffg)
     self.send_acknowledge()
-    log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
+    self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -297,7 +297,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
         self.__proceed_instantiation(nffg=service_request)
       except (ValueError, IOError, TypeError) as e:
         log.error(
-           "Can't load service request from file because of: " + str(e))
+          "Can't load service request from file because of: " + str(e))
       else:
         log.info("Graph representation is loaded successfully!")
     # Initiate ROS REST-API if needed
@@ -346,16 +346,16 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.ros_api.api_id = handler.LOGGER_NAME = "Sl-Or"
     # Virtualizer type for Sl-Or API
     self.ros_api.virtualizer_type = CONFIG.get_api_virtualizer(
-       layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
+      layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
     handler.log.info(
-       "Init REST-API for %s on %s:%s!" % (
-         self.ros_api.api_id, address[0], address[1]))
+      "Init REST-API for %s on %s:%s!" % (
+        self.ros_api.api_id, address[0], address[1]))
     self.ros_api.start()
     handler.log.debug(
-       "Configured Virtualizer type: %s" % self.ros_api.virtualizer_type)
+      "Configured Virtualizer type: %s" % self.ros_api.virtualizer_type)
     handler.log.debug(
-       "Configured communication format: %s" % "UNIFY" if
-       handler.virtualizer_format_enabled else "Internal-NFFG")
+      "Configured communication format: %s" % "UNIFY" if
+      handler.virtualizer_format_enabled else "Internal-NFFG")
     if self._agent:
       log.info("REST-API is set in AGENT mode")
 
@@ -376,16 +376,16 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.cfor_api.api_id = handler.LOGGER_NAME = "Cf-Or"
     # Virtualizer type for Cf-Or API
     self.cfor_api.virtualizer_type = CONFIG.get_api_virtualizer(
-       layer_name=LAYER_NAME, api_name=self.cfor_api.api_id)
+      layer_name=LAYER_NAME, api_name=self.cfor_api.api_id)
     handler.log.debug(
-       "Init REST-API for %s on %s:%s!" % (
-         self.cfor_api.api_id, address[0], address[1]))
+      "Init REST-API for %s on %s:%s!" % (
+        self.cfor_api.api_id, address[0], address[1]))
     self.cfor_api.start()
     handler.log.debug(
-       "Configured Virtualizer type: %s" % self.cfor_api.virtualizer_type)
+      "Configured Virtualizer type: %s" % self.cfor_api.virtualizer_type)
     handler.log.debug(
-       "Configured communication format: %s" % "UNIFY" if
-       handler.virtualizer_format_enabled else "Internal-NFFG")
+      "Configured communication format: %s" % "UNIFY" if
+      handler.virtualizer_format_enabled else "Internal-NFFG")
 
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
@@ -409,17 +409,17 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of global view (DoV)
     :rtype: str
     """
-    log.getChild('Sl-Or').info("Requesting Virtualizer for REST-API")
+    log.getChild('[Sl-Or]').info("Requesting Virtualizer for REST-API")
     virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
-       virtualizer_id=self.ros_api.api_id, type=self.ros_api.virtualizer_type)
+      virtualizer_id=self.ros_api.api_id, type=self.ros_api.virtualizer_type)
     if virt is not None:
-      log.getChild('Sl-Or').info("Generate topo description...")
+      log.getChild('[Sl-Or]').info("Generate topo description...")
       res = virt.get_resource_info()
       return res
     else:
       log.error(
-         "Virtualizer(id=%s) assigned to REST-API is not found!" %
-         self.ros_api.api_id)
+        "Virtualizer(id=%s) assigned to REST-API is not found!" %
+        self.ros_api.api_id)
 
   def api_ros_edit_config (self, nffg):
     """
@@ -428,7 +428,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :param nffg: NFFG need to deploy
     :type nffg: :any:`NFFG`
     """
-    log.getChild('Sl-Or').info("Invoke install_nffg on %s with SG: %s " % (
+    log.getChild('[Sl-Or]').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
     if self._agent:
       # ESCAPE serves as a local orchestrator, probably with infrastructure
@@ -474,17 +474,17 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of a single BiSBiS view based on DoV
     :rtype: str
     """
-    log.getChild('Cf-Or').info("Requesting Virtualizer for REST-API")
+    log.getChild('[Cf-Or]').info("Requesting Virtualizer for REST-API")
     virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
-       virtualizer_id=self.cfor_api.api_id, type=self.cfor_api.virtualizer_type)
+      virtualizer_id=self.cfor_api.api_id, type=self.cfor_api.virtualizer_type)
     if virt is not None:
-      log.getChild('Cf-Or').info("Generate topo description...")
+      log.getChild('[Cf-Or]').info("Generate topo description...")
       res = virt.get_resource_info()
       return res if res is not None else None
     else:
       log.error(
-         "Virtualizer(id=%s) assigned to REST-API is not found!" %
-         self.cfor_api.api_id)
+        "Virtualizer(id=%s) assigned to REST-API is not found!" %
+        self.cfor_api.api_id)
 
   def api_cfor_edit_config (self, nffg):
     """
@@ -493,7 +493,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :param nffg: NFFG need to deploy
     :type nffg: :any:`NFFG`
     """
-    log.getChild('Cf-Or').info("Invoke install_nffg on %s with SG: %s " % (
+    log.getChild('[Cf-Or]').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
     self.__proceed_instantiation(nffg=nffg)
 
@@ -526,15 +526,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
       self.__class__.__name__, nffg.name))
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
     log.getChild('API').debug(
-       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
+      "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
     if mapped_nffg is not None:
       self._install_NFFG(mapped_nffg=mapped_nffg)
     else:
       log.warning(
-         "Something went wrong in service request instantiation: mapped "
-         "service "
-         "request is missing!")
+        "Something went wrong in service request instantiation: mapped "
+        "service "
+        "request is missing!")
 
   def _install_NFFG (self, mapped_nffg):
     """
@@ -551,7 +551,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
     log.getChild('API').info(
-       "Mapped NF-FG: %s has been sent to Adaptation..." % mapped_nffg)
+      "Mapped NF-FG: %s has been sent to Adaptation..." % mapped_nffg)
 
   def _handle_GetVirtResInfoEvent (self, event):
     """
@@ -562,12 +562,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-       "Received <Virtual View> request from %s layer" % str(
-          event.source._core_name).title())
+      "Received <Virtual View> request from %s layer" % str(
+        event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
     virtualizer_type = CONFIG.get_ros_virtualizer_type(component=event.sid)
     v = self.resource_orchestrator.virtualizerManager.get_virtual_view(
-       event.sid, type=virtualizer_type)
+      event.sid, type=virtualizer_type)
     log.getChild('API').debug("Sending back <Virtual View>: %s..." % v)
     self.raiseEventNoErrors(VirtResInfoEvent, v)
 
@@ -586,7 +586,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-       "Send <Global Resource View> request to Adaptation layer...")
+      "Send <Global Resource View> request to Adaptation layer...")
     self.raiseEventNoErrors(GetGlobalResInfoEvent)
 
   def _handle_GlobalResInfoEvent (self, event):
@@ -598,8 +598,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-       "Received <Global Resource View> from %s Layer" % str(
-          event.source._core_name).title())
+      "Received <Global Resource View> from %s Layer" % str(
+        event.source._core_name).title())
     self.resource_orchestrator.virtualizerManager.dov = event.dov
 
   def _handle_InstallationFinishedEvent (self, event):
@@ -612,9 +612,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     if event.result:
       log.getChild('API').info(
-         "NF-FG instantiation has been finished successfully!")
+        "NF-FG instantiation has been finished successfully!")
     else:
       log.getChild('API').info(
-         "NF-FG instantiation has been finished with error: %s" % event.error)
+        "NF-FG instantiation has been finished with error: %s" % event.error)
     self.raiseEventNoErrors(InstantiationFinishedEvent, id=event.id,
                             result=event.result)
