@@ -225,7 +225,7 @@ class Node(Element):
     super(Node, self).__init__(id=id, type=type)
     self.name = name if name is not None else str(id)  # optional
     self.ports = PortContainer()  # list of Ports
-    self.metadata = metadata if metadata is not None else OrderedDict()
+    self.metadata = OrderedDict(metadata if metadata else ())
 
   @property
   def short_name (self):
@@ -342,7 +342,7 @@ class Node(Element):
     self.name = data.get('name')  # optional
     for port in data.get('ports', ()):
       self.add_port(id=port['id'], properties=port.get('property'))
-    self.metadata = data.get('metadata', OrderedDict())
+    self.metadata = OrderedDict(data.get('metadata', ()))
     return self
 
   def __repr__ (self):
@@ -589,7 +589,7 @@ class Port(Element):
     # self.__node = weakref.ref(node)
     self.__node = node
     # Set properties list according to given param type
-    self.properties = properties if properties is not None else OrderedDict()
+    self.properties = OrderedDict(properties if properties else ())
 
   @property
   def node (self):
@@ -659,7 +659,7 @@ class Port(Element):
 
   def load (self, data, *args, **kwargs):
     super(Port, self).load(data=data)
-    self.properties = data.get('property', OrderedDict())
+    self.properties = OrderedDict(data.get('property', ()))
 
   def __repr__ (self):
     return "%s(node: %s, id: %s)" % (
