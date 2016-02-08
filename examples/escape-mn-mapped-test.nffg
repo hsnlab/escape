@@ -2,7 +2,10 @@
   "parameters": {
     "id": "SG-decomp",
     "name": "SG-name-ros-mapped",
-    "version": "1.0"
+    "version": "1.0",
+    "metadata": {
+      "purpose": "testing"
+    }
   },
   "node_nfs": [
     {
@@ -18,12 +21,14 @@
         "resources": {
           "cpu": 1,
           "mem": 1,
-          "storage": 0
-        },
-        "metadata": {
-          "nf_key1": "lorem",
-          "nf_key2": "ipsum"
+          "storage": 0,
+          "delay": 0.1,
+          "bandwidth": 12
         }
+      },
+      "metadata": {
+        "key1": "lorem",
+        "key2": "ipsum"
       }
     },
     {
@@ -39,7 +44,8 @@
         "resources": {
           "cpu": 1,
           "mem": 1,
-          "storage": 0
+          "storage": 0,
+          "delay": 1
         }
       }
     },
@@ -56,32 +62,51 @@
       ],
       "functional_type": "headerDecompressor",
       "specification": {
+        "deployment_type": "test42",
         "resources": {
           "cpu": 1,
           "mem": 1,
           "storage": 0
-        },
-        "metadata": {
-          "nf_key3": "dolor sit amet"
         }
       }
     }
   ],
   "node_saps": [
     {
-      "id": "SAP14",
-      "name": "SAP14",
+      "id": "SAP4",
+      "name": "SAP4",
       "ports": [
         {
-          "id": 1
+          "id": "port-SAP4",
+          "property": {
+            "name": "SAP4"
+          }
         }
-      ],
-      "domain": "eth0"
+      ]
+    },
+    {
+      "id": "SAP3",
+      "name": "SAP3",
+      "ports": [
+        {
+          "id": "port-SAP3",
+          "property": {
+            "name": "SAP3",
+            "ip": "10.0.0.1"
+          }
+        }
+      ]
     },
     {
       "id": "SAP1",
       "name": "SAP1",
       "ports": [
+        {
+          "id": "port-SAP1",
+          "property": {
+            "name": "SAP1"
+          }
+        },
         {
           "id": 1
         }
@@ -92,6 +117,12 @@
       "name": "SAP2",
       "ports": [
         {
+          "id": "port-SAP2",
+          "property": {
+            "name": "SAP2"
+          }
+        },
+        {
           "id": 1
         }
       ]
@@ -99,369 +130,306 @@
   ],
   "node_infras": [
     {
-      "id": "EE1",
-      "name": "ee-infra-1",
+      "id": "SingleBiSbiS-140076603761337",
+      "name": "Single-BiSBiS",
       "ports": [
         {
-          "id": 1,
+          "id": "port-SAP14",
+          "property": {
+            "name": "SAP14",
+            "sap": "SAP14",
+            "type": "inter-domain"
+          },
           "flowrules": [
             {
-              "id": 140516410351315,
-              "match": "in_port=1;TAG=SAP1|comp|1",
-              "action": "output=EE1|comp|1;UNTAG",
+              "id": 139892726692670,
+              "match": "in_port=port-SAP14;TAG=SAP2|fwd|4",
+              "action": "output=SingleBiSbiS-140076603761337|fwd|1;UNTAG",
+              "hop_id": 4,
+              "bandwidth": 4,
+              "delay": 1
+            },
+            {
+              "id": 139892726960679,
+              "match": "in_port=port-SAP14;TAG=SAP1|comp|1",
+              "action": "output=SingleBiSbiS-140076603761337|comp|1;UNTAG",
               "hop_id": 1,
               "bandwidth": 4
             }
           ]
         },
         {
-          "id": "EE1|comp|1",
+          "id": "port-SAP3",
+          "property": {
+            "name": "SAP3"
+          }
+        },
+        {
+          "id": "port-SAP4",
+          "property": {
+            "name": "SAP4"
+          }
+        },
+        {
+          "id": "SingleBiSbiS-140076603761337|fwd|1",
           "flowrules": [
             {
-              "id": 140516410324574,
-              "match": "in_port=EE1|comp|1",
-              "action": "output=EE1|decomp|1",
+              "id": 139892727419835,
+              "match": "in_port=SingleBiSbiS-140076603761337|fwd|1",
+              "action": "output=port-SAP14;TAG=fwd|SAP1|5",
+              "hop_id": 5,
+              "bandwidth": 4
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSbiS-140076603761337|comp|1",
+          "flowrules": [
+            {
+              "id": 139892727140122,
+              "match": "in_port=SingleBiSbiS-140076603761337|comp|1",
+              "action": "output=SingleBiSbiS-140076603761337|decomp|1",
               "hop_id": 2,
               "bandwidth": 4
             }
           ]
         },
         {
-          "id": "EE1|decomp|1",
+          "id": "SingleBiSbiS-140076603761337|decomp|1",
           "flowrules": [
             {
-              "id": 140516411529600,
-              "match": "in_port=EE1|decomp|1",
-              "action": "output=1;TAG=decomp|SAP2|3",
+              "id": 139892727449958,
+              "match": "in_port=SingleBiSbiS-140076603761337|decomp|1",
+              "action": "output=port-SAP14;TAG=decomp|SAP2|3",
               "hop_id": 3,
               "bandwidth": 4
             }
           ]
         }
       ],
-      "domain": "INTERNAL",
-      "type": "EE",
+      "domain": "extESCAPE",
+      "type": "BiSBiS",
       "supported": [
         "headerCompressor",
         "headerDecompressor",
         "simpleForwarder"
       ],
       "resources": {
-        "cpu": 5,
-        "mem": 5,
-        "storage": 5,
-        "delay": 0.9,
-        "bandwidth": 5000
+        "cpu": 10.0,
+        "mem": 10.0,
+        "storage": 10.0,
+        "delay": 0,
+        "bandwidth": 160000.0
       }
     },
     {
-      "id": "EE2",
-      "name": "ee-infra-2",
+      "id": "SingleBiSbiS-140268266529870",
+      "name": "Single-BiSBiS",
       "ports": [
         {
-          "id": 1,
+          "id": "port-SAP1",
+          "property": {
+            "name": "SAP1"
+          },
           "flowrules": [
             {
-              "id": 140516410753623,
-              "match": "in_port=1;TAG=SAP2|fwd|4",
-              "action": "output=EE2|fwd|1;UNTAG",
-              "hop_id": 4,
-              "bandwidth": 4
-            }
-          ]
-        },
-        {
-          "id": "EE2|fwd|1",
-          "flowrules": [
-            {
-              "id": 140516410547206,
-              "match": "in_port=EE2|fwd|1",
-              "action": "output=1;TAG=fwd|SAP1|5",
-              "hop_id": 5,
-              "bandwidth": 4
-            }
-          ]
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "EE",
-      "supported": [
-        "headerCompressor",
-        "headerDecompressor",
-        "simpleForwarder"
-      ],
-      "resources": {
-        "cpu": 5,
-        "mem": 5,
-        "storage": 5,
-        "delay": 0.9,
-        "bandwidth": 5000
-      }
-    },
-    {
-      "id": "SW1",
-      "name": "switch-1",
-      "ports": [
-        {
-          "id": 1,
-          "flowrules": [
-            {
-              "id": 140516410960920,
-              "match": "in_port=1;TAG=decomp|SAP2|3",
-              "action": "output=2",
-              "hop_id": 3,
-              "bandwidth": 4
-            }
-          ]
-        },
-        {
-          "id": 2,
-          "flowrules": [
-            {
-              "id": 140516410886807,
-              "match": "in_port=2;TAG=fwd|SAP1|5",
-              "action": "output=3",
-              "hop_id": 5,
-              "bandwidth": 4
-            }
-          ]
-        },
-        {
-          "id": 3,
-          "flowrules": [
-            {
-              "id": 140516410296010,
-              "match": "in_port=3",
-              "action": "output=1;TAG=SAP1|comp|1",
+              "id": 139892726523563,
+              "match": "in_port=port-SAP1",
+              "action": "output=port-SAP14;TAG=SAP1|comp|1",
               "hop_id": 1,
               "bandwidth": 4
             }
           ]
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "SDN-SWITCH",
-      "resources": {
-        "cpu": 0,
-        "mem": 0,
-        "storage": 0,
-        "delay": 0.2,
-        "bandwidth": 10000
-      }
-    },
-    {
-      "id": "SW2",
-      "name": "switch-2",
-      "ports": [
-        {
-          "id": 1,
-          "flowrules": [
-            {
-              "id": 140516410541607,
-              "match": "in_port=1;TAG=fwd|SAP1|5",
-              "action": "output=2",
-              "hop_id": 5,
-              "bandwidth": 4
-            }
-          ]
         },
         {
-          "id": 2,
+          "id": "port-SAP14",
+          "property": {
+            "name": "SAP14",
+            "sap": "SAP14",
+            "type": "inter-domain"
+          },
           "flowrules": [
             {
-              "id": 140516411147693,
-              "match": "in_port=2;TAG=decomp|SAP2|3",
-              "action": "output=3",
+              "id": 139892726539510,
+              "match": "in_port=port-SAP14;TAG=fwd|SAP1|5",
+              "action": "output=port-SAP1",
+              "hop_id": 5,
+              "bandwidth": 4
+            },
+            {
+              "id": 139892727018371,
+              "match": "in_port=port-SAP14;TAG=decomp|SAP2|3",
+              "action": "output=port-SAP2",
               "hop_id": 3,
               "bandwidth": 4
             }
           ]
         },
         {
-          "id": 3,
+          "id": "port-SAP2",
+          "property": {
+            "name": "SAP2"
+          },
           "flowrules": [
             {
-              "id": 140516410738411,
-              "match": "in_port=3",
-              "action": "output=1;TAG=SAP2|fwd|4",
+              "id": 139892727140995,
+              "match": "in_port=port-SAP2",
+              "action": "output=port-SAP14;TAG=SAP2|fwd|4",
               "hop_id": 4,
               "bandwidth": 4
             }
           ]
-        },
-        {
-          "id": 4
         }
       ],
-      "domain": "INTERNAL",
-      "type": "SDN-SWITCH",
+      "domain": "REMOTE",
+      "type": "BiSBiS",
+      "supported": [
+        "headerCompressor",
+        "headerDecompressor",
+        "simpleForwarder"
+      ],
       "resources": {
-        "cpu": 0,
-        "mem": 0,
-        "storage": 0,
-        "delay": 0.2,
-        "bandwidth": 10000
+        "cpu": 10.0,
+        "mem": 10.0,
+        "storage": 10.0,
+        "delay": 0,
+        "bandwidth": 160000.0
+      },
+      "metadata": {
+        "meta1": "xyz",
+        "meta2": 42
       }
     }
   ],
   "edge_links": [
     {
-      "id": 140516410241855,
-      "src_node": "fwd",
-      "src_port": 1,
-      "dst_node": "EE2",
-      "dst_port": "EE2|fwd|1",
-      "backward": true
-    },
-    {
-      "id": 140516411137881,
-      "src_node": "comp",
-      "src_port": 1,
-      "dst_node": "EE1",
-      "dst_port": "EE1|comp|1",
-      "backward": true
-    },
-    {
-      "id": "mn-link1",
-      "src_node": "EE1",
-      "src_port": 1,
-      "dst_node": "SW1",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10
-    },
-    {
-      "id": 140516410456241,
-      "src_node": "EE1",
-      "src_port": "EE1|comp|1",
-      "dst_node": "comp",
-      "dst_port": 1
-    },
-    {
-      "id": 140516410917032,
-      "src_node": "EE1",
-      "src_port": "EE1|decomp|1",
-      "dst_node": "decomp",
-      "dst_port": 1
-    },
-    {
-      "id": 140516410731788,
-      "src_node": "EE2",
-      "src_port": "EE2|fwd|1",
+      "id": 139892727394027,
+      "src_node": "SingleBiSbiS-140076603761337",
+      "src_port": "SingleBiSbiS-140076603761337|fwd|1",
       "dst_node": "fwd",
       "dst_port": 1
     },
     {
-      "id": "mn-link2",
-      "src_node": "EE2",
-      "src_port": 1,
-      "dst_node": "SW2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10
+      "id": 139892726779106,
+      "src_node": "SingleBiSbiS-140076603761337",
+      "src_port": "SingleBiSbiS-140076603761337|comp|1",
+      "dst_node": "comp",
+      "dst_port": 1
     },
     {
-      "id": 140516410458914,
+      "id": "SAP4-SingleBiSbiS-140076603761337-link-back",
+      "src_node": "SingleBiSbiS-140076603761337",
+      "src_port": "port-SAP4",
+      "dst_node": "SAP4",
+      "dst_port": "port-SAP4",
+      "delay": 0,
+      "backward": true
+    },
+    {
+      "id": "SAP3-SingleBiSbiS-140076603761337-link-back",
+      "src_node": "SingleBiSbiS-140076603761337",
+      "src_port": "port-SAP3",
+      "dst_node": "SAP3",
+      "dst_port": "port-SAP3",
+      "delay": 0,
+      "backward": true
+    },
+    {
+      "id": 139892727378099,
+      "src_node": "SingleBiSbiS-140076603761337",
+      "src_port": "SingleBiSbiS-140076603761337|decomp|1",
+      "dst_node": "decomp",
+      "dst_port": 1
+    },
+    {
+      "id": "inter-domain-link-SAP14-back",
+      "src_node": "SingleBiSbiS-140076603761337",
+      "src_port": "port-SAP14",
+      "dst_node": "SingleBiSbiS-140268266529870",
+      "dst_port": "port-SAP14",
+      "delay": 0,
+      "backward": true
+    },
+    {
+      "id": 139892726574566,
+      "src_node": "fwd",
+      "src_port": 1,
+      "dst_node": "SingleBiSbiS-140076603761337",
+      "dst_port": "SingleBiSbiS-140076603761337|fwd|1",
+      "backward": true
+    },
+    {
+      "id": 139892727399396,
+      "src_node": "comp",
+      "src_port": 1,
+      "dst_node": "SingleBiSbiS-140076603761337",
+      "dst_port": "SingleBiSbiS-140076603761337|comp|1",
+      "backward": true
+    },
+    {
+      "id": 139892727164159,
       "src_node": "decomp",
       "src_port": 1,
-      "dst_node": "EE1",
-      "dst_port": "EE1|decomp|1",
+      "dst_node": "SingleBiSbiS-140076603761337",
+      "dst_port": "SingleBiSbiS-140076603761337|decomp|1",
       "backward": true
     },
     {
-      "id": "mn-link3",
-      "src_node": "SW1",
-      "src_port": 2,
-      "dst_node": "SW2",
-      "dst_port": 2,
-      "delay": 1.5,
-      "bandwidth": 10
+      "id": "SAP4-SingleBiSbiS-140076603761337-link",
+      "src_node": "SAP4",
+      "src_port": "port-SAP4",
+      "dst_node": "SingleBiSbiS-140076603761337",
+      "dst_port": "port-SAP4",
+      "delay": 0
     },
     {
-      "id": "mn-link1-back",
-      "src_node": "SW1",
-      "src_port": 1,
-      "dst_node": "EE1",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10,
-      "backward": true
+      "id": "SAP3-SingleBiSbiS-140076603761337-link",
+      "src_node": "SAP3",
+      "src_port": "port-SAP3",
+      "dst_node": "SingleBiSbiS-140076603761337",
+      "dst_port": "port-SAP3",
+      "delay": 0
     },
     {
-      "id": "mn-link4",
-      "src_node": "SW1",
-      "src_port": 3,
-      "dst_node": "SAP1",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10
-    },
-    {
-      "id": "mn-link6-back",
-      "src_node": "SAP14",
-      "src_port": 1,
-      "dst_node": "SW2",
-      "dst_port": 4,
-      "delay": 1.5,
-      "bandwidth": 10,
-      "backward": true
-    },
-    {
-      "id": "mn-link3-back",
-      "src_node": "SW2",
-      "src_port": 2,
-      "dst_node": "SW1",
-      "dst_port": 2,
-      "delay": 1.5,
-      "bandwidth": 10,
-      "backward": true
-    },
-    {
-      "id": "mn-link6",
-      "src_node": "SW2",
-      "src_port": 4,
-      "dst_node": "SAP14",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10
-    },
-    {
-      "id": "mn-link5",
-      "src_node": "SW2",
-      "src_port": 3,
-      "dst_node": "SAP2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10
-    },
-    {
-      "id": "mn-link2-back",
-      "src_node": "SW2",
-      "src_port": 1,
-      "dst_node": "EE2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10,
-      "backward": true
-    },
-    {
-      "id": "mn-link4-back",
+      "id": "SAP1-SingleBiSbiS-140268266529870-link",
       "src_node": "SAP1",
-      "src_port": 1,
-      "dst_node": "SW1",
-      "dst_port": 3,
-      "delay": 1.5,
-      "bandwidth": 10,
+      "src_port": "port-SAP1",
+      "dst_node": "SingleBiSbiS-140268266529870",
+      "dst_port": "port-SAP1",
+      "delay": 0
+    },
+    {
+      "id": "SAP2-SingleBiSbiS-140268266529870-link",
+      "src_node": "SAP2",
+      "src_port": "port-SAP2",
+      "dst_node": "SingleBiSbiS-140268266529870",
+      "dst_port": "port-SAP2",
+      "delay": 0
+    },
+    {
+      "id": "inter-domain-link-SAP14",
+      "src_node": "SingleBiSbiS-140268266529870",
+      "src_port": "port-SAP14",
+      "dst_node": "SingleBiSbiS-140076603761337",
+      "dst_port": "port-SAP14",
+      "delay": 0
+    },
+    {
+      "id": "SAP1-SingleBiSbiS-140268266529870-link-back",
+      "src_node": "SingleBiSbiS-140268266529870",
+      "src_port": "port-SAP1",
+      "dst_node": "SAP1",
+      "dst_port": "port-SAP1",
+      "delay": 0,
       "backward": true
     },
     {
-      "id": "mn-link5-back",
-      "src_node": "SAP2",
-      "src_port": 1,
-      "dst_node": "SW2",
-      "dst_port": 3,
-      "delay": 1.5,
-      "bandwidth": 10,
+      "id": "SAP2-SingleBiSbiS-140268266529870-link-back",
+      "src_node": "SingleBiSbiS-140268266529870",
+      "src_port": "port-SAP2",
+      "dst_node": "SAP2",
+      "dst_port": "port-SAP2",
+      "delay": 0,
       "backward": true
     }
   ],
@@ -505,6 +473,83 @@
       "dst_node": "fwd",
       "dst_port": 1,
       "bandwidth": 4
+    }
+  ],
+  "edge_reqs": [
+    {
+      "id": 8,
+      "src_node": "SingleBiSbiS-140076603761337",
+      "src_port": "port-SAP14",
+      "dst_node": "SingleBiSbiS-140076603761337",
+      "dst_port": "port-SAP14",
+      "delay": 0,
+      "bandwidth": 0,
+      "sg_path": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": 5,
+      "src_node": "SingleBiSbiS-140076603761337",
+      "src_port": "port-SAP14",
+      "dst_node": "SingleBiSbiS-140076603761337",
+      "dst_port": "port-SAP14",
+      "delay": 0,
+      "bandwidth": 0,
+      "sg_path": [
+        4,
+        5
+      ]
+    },
+    {
+      "id": 9,
+      "src_node": "SingleBiSbiS-140268266529870",
+      "src_port": "port-SAP1",
+      "dst_node": "SingleBiSbiS-140268266529870",
+      "dst_port": "port-SAP14",
+      "delay": 0,
+      "bandwidth": 0,
+      "sg_path": [
+        1
+      ]
+    },
+    {
+      "id": 4,
+      "src_node": "SingleBiSbiS-140268266529870",
+      "src_port": "port-SAP2",
+      "dst_node": "SingleBiSbiS-140268266529870",
+      "dst_port": "port-SAP14",
+      "delay": 0,
+      "bandwidth": 0,
+      "sg_path": [
+        4
+      ]
+    },
+    {
+      "id": 6,
+      "src_node": "SingleBiSbiS-140268266529870",
+      "src_port": "port-SAP2",
+      "dst_node": "SingleBiSbiS-140268266529870",
+      "dst_port": "port-SAP14",
+      "delay": 0,
+      "bandwidth": 0,
+      "sg_path": [
+        4
+      ]
+    },
+    {
+      "id": 7,
+      "src_node": "SingleBiSbiS-140268266529870",
+      "src_port": "port-SAP1",
+      "dst_node": "SingleBiSbiS-140268266529870",
+      "dst_port": "port-SAP14",
+      "delay": 0,
+      "bandwidth": 0,
+      "sg_path": [
+        1
+      ]
     }
   ]
 }
