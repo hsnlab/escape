@@ -768,7 +768,8 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self._original_virtualizer = None
     if self._unify_interface:
       log.info("Setup ESCAPEv2 adapter as a Unify interface!")
-      self.converter = NFFGConverter(domain=self.domain_name, logger=log)
+      self.converter = NFFGConverter(domain=self.domain_name, logger=log,
+                                     ensure_unique_id=CONFIG.ensure_unique_id())
 
   def ping (self):
     log.debug("Send ping request to remote agent: %s" % self._base_url)
@@ -910,7 +911,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       "Init UNIFYRESTAdapter - type: %s, domain: %s, URL: %s" % (
         self.type, self.domain_name, url))
     # Converter object
-    self.converter = NFFGConverter(domain=self.domain_name, logger=log)
+    self.converter = NFFGConverter(domain=self.domain_name, logger=log,
+                                   ensure_unique_id=CONFIG.ensure_unique_id())
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None
@@ -1029,7 +1031,8 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     # Converter object
-    self.converter = NFFGConverter(domain=self.domain_name, logger=log)
+    self.converter = NFFGConverter(domain=self.domain_name, logger=log,
+                                   ensure_unique_id=CONFIG.ensure_unique_id())
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None
@@ -1112,7 +1115,8 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     # Converter object
-    self.converter = NFFGConverter(domain=self.domain_name, logger=log)
+    self.converter = NFFGConverter(domain=self.domain_name, logger=log,
+                                   ensure_unique_id=CONFIG.ensure_unique_id())
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None

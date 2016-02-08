@@ -48,7 +48,7 @@ class InternalDomainManager(AbstractDomainManager):
     super(InternalDomainManager, self).__init__(domain_name=domain_name,
                                                 *args, **kwargs)
     log.debug(
-       "Init InternalDomainManager with domain name: %s" % self.domain_name)
+      "Init InternalDomainManager with domain name: %s" % self.domain_name)
     self.controlAdapter = None  # DomainAdapter for POX-InternalPOXAdapter
     self.topoAdapter = None  # DomainAdapter for Mininet-InternalMininetAdapter
     self.remoteAdapter = None  # NETCONF communication - VNFStarterAdapter
@@ -83,19 +83,19 @@ class InternalDomainManager(AbstractDomainManager):
     """
     # Initiate Adapters
     self.topoAdapter = configurator.load_component(
-       component_name=AbstractESCAPEAdapter.TYPE_TOPOLOGY,
-       parent=self._adapters_cfg)
+      component_name=AbstractESCAPEAdapter.TYPE_TOPOLOGY,
+      parent=self._adapters_cfg)
     # Init adapter for internal controller: POX
     self.controlAdapter = configurator.load_component(
-       component_name=AbstractESCAPEAdapter.TYPE_CONTROLLER,
-       parent=self._adapters_cfg)
+      component_name=AbstractESCAPEAdapter.TYPE_CONTROLLER,
+      parent=self._adapters_cfg)
     log.debug("Set %s as the topology Adapter for %s" % (
       self.topoAdapter.__class__.__name__,
       self.controlAdapter.__class__.__name__))
     # Init default NETCONF adapter
     self.remoteAdapter = configurator.load_component(
-       component_name=AbstractESCAPEAdapter.TYPE_MANAGEMENT,
-       parent=self._adapters_cfg)
+      component_name=AbstractESCAPEAdapter.TYPE_MANAGEMENT,
+      parent=self._adapters_cfg)
 
   def finit (self):
     """
@@ -129,8 +129,8 @@ class InternalDomainManager(AbstractDomainManager):
     with open('/etc/hosts', 'a') as f:
       f.write(hosts)
     log.debug("Setup SAP hostnames: %s" % "; ".join(
-       ["%s --> %s" % (sap, info['nw_dst']) for sap, info in
-        self.sapinfos.iteritems()]))
+      ["%s --> %s" % (sap, info['nw_dst']) for sap, info in
+       self.sapinfos.iteritems()]))
 
   def _collect_SAP_infos (self):
     """
@@ -143,8 +143,8 @@ class InternalDomainManager(AbstractDomainManager):
     topo = self.topoAdapter.get_topology_resource()
     if topo is None or mn is None:
       log.error(
-         "Missing topology description from topology Adapter! Skip SAP data "
-         "discovery.")
+        "Missing topology description from topology Adapter! Skip SAP data "
+        "discovery.")
     for sap in topo.saps:
       # skip inter-domain SAPs
       if sap.domain is not None:
@@ -158,9 +158,9 @@ class InternalDomainManager(AbstractDomainManager):
         mac = mn.getNodeByName(sap.id).MAC()
         ip = mn.getNodeByName(sap.id).IP()
         log.debug(
-           "Detected IP(%s) | MAC(%s) for %s connected to Node(%s) on port: "
-           "%s" %
-           (ip, mac, sap, node[0], node[1]))
+          "Detected IP(%s) | MAC(%s) for %s connected to Node(%s) on port: "
+          "%s" %
+          (ip, mac, sap, node[0], node[1]))
         if node[0] not in self.controlAdapter.saps:
           self.controlAdapter.saps[node[0]] = {}
         sapinfo = {
@@ -186,12 +186,26 @@ class InternalDomainManager(AbstractDomainManager):
       self._deploy_nfs(nffg_part=nffg_part)
       log.info("Perform traffic steering according to mapped tunnels/labels...")
       self._delete_flowrules(nffg_part=nffg_part)
+
+      # def _deploy_flowrules_forever (interval=3):
+      #   from pox.lib.recoco import Timer
+      #
+      #   def _callback (counter={'cntr': 1}):
+      #     self._delete_flowrules(nffg_part=nffg_part)
+      #     self._deploy_flowrules(nffg_part=nffg_part)
+      #     log.debug("Deploy flowrules counter: %s" % counter['cntr'])
+      #     counter['cntr'] += 1
+      #
+      #   Timer(timeToWake=interval, callback=_callback, recurring=True,
+      #         selfStoppable=False)
+
       self._deploy_flowrules(nffg_part=nffg_part)
+      # _deploy_flowrules_forever()
       return True
     except:
       log.error(
-         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-           self.domain_name, sys.exc_info()))
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.domain_name, sys.exc_info()))
       log.debug("%s" % traceback.print_exc())
       return False
 
@@ -220,8 +234,8 @@ class InternalDomainManager(AbstractDomainManager):
     topo = self.topoAdapter.get_topology_resource()
     if topo is None:
       log.warning(
-         "Missing topology description from %s domain! Skip deleting NFs..." %
-         self.domain_name)
+        "Missing topology description from %s domain! Skip deleting NFs..." %
+        self.domain_name)
       return
     log.debug("Remove deployed NFs...")
     for infra in topo.infras:
@@ -231,13 +245,13 @@ class InternalDomainManager(AbstractDomainManager):
       for nf in [n for n in topo.running_nfs(infra.id)]:
         # Create connection Adapter to EE agent
         connection_params = self.topoAdapter.get_agent_connection_params(
-           infra.id)
+          infra.id)
         if connection_params is None:
           log.error(
-             "Missing connection params for communication with the agent of "
-             "Node: %s" % infra.short_name)
+            "Missing connection params for communication with the agent of "
+            "Node: %s" % infra.short_name)
         updated = self.remoteAdapter.update_connection_params(
-           **connection_params)
+          **connection_params)
         try:
           vnf_id = self.deployed_vnfs[(infra.id, nf.id)]['vnf_id']
           reply = self.remoteAdapter.removeNF(vnf_id=vnf_id)
@@ -250,11 +264,11 @@ class InternalDomainManager(AbstractDomainManager):
           log.debug("Removed NF: %s" % nf)
         except KeyError:
           log.error(
-             "Deployed VNF data for NF: %s is not found! Skip deletion..." % nf)
+            "Deployed VNF data for NF: %s is not found! Skip deletion..." % nf)
         except RPCError:
           log.error(
-             "Got RPC communication error during NF: %s initiation! Skip "
-             "initiation..." % nf.name)
+            "Got RPC communication error during NF: %s initiation! Skip "
+            "initiation..." % nf.name)
           continue
           # print self.topoAdapter.get_topology_resource().dump()
     log.debug("Deletion of deployed NFs has been ended!")
@@ -280,8 +294,8 @@ class InternalDomainManager(AbstractDomainManager):
     mn_topo = self.topoAdapter.get_topology_resource()
     if mn_topo is None:
       log.warning(
-         "Missing topology description from %s domain! Skip deploying NFs..." %
-         self.domain_name)
+        "Missing topology description from %s domain! Skip deploying NFs..." %
+        self.domain_name)
       return
     # Iter through the container INFRAs in the given mapped NFFG part
     # print mn_topo.dump()
@@ -289,16 +303,16 @@ class InternalDomainManager(AbstractDomainManager):
       if infra.infra_type not in (
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
         log.debug(
-           "Infrastructure Node: %s (type: %s) is not Container type! Continue "
-           "to next Node..." % (infra.short_name, infra.infra_type))
+          "Infrastructure Node: %s (type: %s) is not Container type! Continue "
+          "to next Node..." % (infra.short_name, infra.infra_type))
         continue
       else:
         log.debug("Check NFs mapped on Node: %s" % infra.short_name)
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in self.internal_topo.infras):
         log.error(
-           "Infrastructure Node: %s is not found in the %s domain! Skip NF "
-           "initiation on this Node..." % (infra.short_name, self.domain_name))
+          "Infrastructure Node: %s is not found in the %s domain! Skip NF "
+          "initiation on this Node..." % (infra.short_name, self.domain_name))
         continue
       # Iter over the NFs connected the actual INFRA
       for nf in nffg_part.running_nfs(infra.id):
@@ -306,8 +320,8 @@ class InternalDomainManager(AbstractDomainManager):
         # static and continue
         if nf.id in (nf.id for nf in self.internal_topo.nfs):
           log.debug(
-             "NF: %s has already been initiated. Continue to next NF..." %
-             nf.short_name)
+            "NF: %s has already been initiated. Continue to next NF..." %
+            nf.short_name)
           for u, v, link in nffg_part.network.out_edges_iter([nf.id],
                                                              data=True):
             dyn_port = nffg_part[v].ports[link.dst.id]
@@ -329,19 +343,19 @@ class InternalDomainManager(AbstractDomainManager):
         # Check if every param is not None or empty
         if not all(params.values()):
           log.error(
-             "Missing arguments for initiation of NF: %s. Extracted params: "
-             "%s" % (nf.short_name, params))
+            "Missing arguments for initiation of NF: %s. Extracted params: "
+            "%s" % (nf.short_name, params))
         # Create connection Adapter to EE agent
         connection_params = self.topoAdapter.get_agent_connection_params(
-           infra.id)
+          infra.id)
         if connection_params is None:
           log.error(
-             "Missing connection params for communication with the agent of "
-             "Node: %s" % infra.short_name)
+            "Missing connection params for communication with the agent of "
+            "Node: %s" % infra.short_name)
         # Save last used adapter --> and last RPC result
         log.debug("Initiating NF: %s with params: %s" % (nf.short_name, params))
         updated = self.remoteAdapter.update_connection_params(
-           **connection_params)
+          **connection_params)
         if updated:
           log.debug("Update connection params in %s: %s" % (
             self.remoteAdapter.__class__.__name__, updated))
@@ -351,8 +365,8 @@ class InternalDomainManager(AbstractDomainManager):
           # pprint(vnf)
         except RPCError:
           log.error(
-             "Got RPC communication error during NF: %s initiation! Skip "
-             "initiation..." % nf.name)
+            "Got RPC communication error during NF: %s initiation! Skip "
+            "initiation..." % nf.name)
           continue
         # Check if NETCONF communication was OK
         if vnf is not None and vnf['initiated_vnfs']['pid'] and \
@@ -365,8 +379,8 @@ class InternalDomainManager(AbstractDomainManager):
             vnf['initiated_vnfs']['status']))
         else:
           log.error(
-             "Initiated NF: %s is not verified. Initiation was unsuccessful!"
-             % nf.short_name)
+            "Initiated NF: %s is not verified. Initiation was unsuccessful!"
+            % nf.short_name)
           continue
         # Store NETCONF related info of deployed NF
         self.deployed_vnfs[(infra.id, nf.id)] = vnf['initiated_vnfs']
@@ -407,11 +421,11 @@ class InternalDomainManager(AbstractDomainManager):
           infra_port_num = get_sw_port(vnf)
           if infra_port_num is None:
             log.warning(
-               "Can't get Container port from RPC result! Set generated port "
-               "number...")
+              "Can't get Container port from RPC result! Set generated port "
+              "number...")
           # Create INFRA side Port
           infra_port = mn_topo.network.node[infra_id].add_port(
-             id=infra_port_num)
+            id=infra_port_num)
           log.debug("%s - detected physical %s" % (deployed_nf, infra_port))
           # Add Links to mn topo
           l1, l2 = mn_topo.add_undirected_link(port1=nf_port, port2=infra_port,
@@ -442,12 +456,12 @@ class InternalDomainManager(AbstractDomainManager):
           _match = flowrule.match.split(';')
           if not _match[0].startswith("in_port="):
             log.warning(
-               "Missing 'in_port' from match field: %s" % flowrule.match)
+              "Missing 'in_port' from match field: %s" % flowrule.match)
             continue
           _action = flowrule.action.split(';')
           if not _action[0].startswith("output="):
             log.warning(
-               "Missing 'output' from action field: %s" % flowrule.action)
+              "Missing 'output' from action field: %s" % flowrule.action)
             continue
           for dyn, phy in self.portmap.iteritems():
             _match[0] = _match[0].replace(str(dyn), str(phy))
@@ -455,7 +469,7 @@ class InternalDomainManager(AbstractDomainManager):
           flowrule.match = ";".join(_match)
           flowrule.action = ";".join(_action)
     log.info(
-       "Initiation of NFs in NFFG part: %s has been finished!" % nffg_part)
+      "Initiation of NFs in NFFG part: %s has been finished!" % nffg_part)
 
   def _delete_flowrules (self, nffg_part):
     """
@@ -465,8 +479,8 @@ class InternalDomainManager(AbstractDomainManager):
     topo = self.topoAdapter.get_topology_resource()
     if topo is None:
       log.warning(
-         "Missing topology description from %s domain! Skip flowrule "
-         "deletions..." % self.domain_name)
+        "Missing topology description from %s domain! Skip flowrule "
+        "deletions..." % self.domain_name)
       return
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
@@ -484,13 +498,13 @@ class InternalDomainManager(AbstractDomainManager):
         dpid = self.controlAdapter.infra_to_dpid[infra.id]
       except KeyError as e:
         log.warning(
-           "Missing DPID for Infra(id: %s)! Skip deletion of flowrules" % e)
+          "Missing DPID for Infra(id: %s)! Skip deletion of flowrules" % e)
         continue
       # Check the OF connection is alive
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-           "Skipping DELETE flowrules! Cause: connection for %s - DPID: %s is "
-           "not found!" % (infra, dpid_to_str(dpid)))
+          "Skipping DELETE flowrules! Cause: connection for %s - DPID: %s is "
+          "not found!" % (infra, dpid_to_str(dpid)))
         continue
       self.controlAdapter.delete_flowrules(infra.id)
 
@@ -515,8 +529,8 @@ class InternalDomainManager(AbstractDomainManager):
     topo = self.topoAdapter.get_topology_resource()
     if topo is None:
       log.warning(
-         "Missing topology description from %s domain! Skip deploying "
-         "flowrules..." % self.domain_name)
+        "Missing topology description from %s domain! Skip deploying "
+        "flowrules..." % self.domain_name)
       return
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
@@ -524,9 +538,9 @@ class InternalDomainManager(AbstractDomainManager):
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
          NFFG.TYPE_INFRA_SDN_SW):
         log.debug(
-           "Infrastructure Node: %s (type: %s) is not Switch or Container "
-           "type! "
-           "Continue to next Node..." % (infra.short_name, infra.infra_type))
+          "Infrastructure Node: %s (type: %s) is not Switch or Container "
+          "type! "
+          "Continue to next Node..." % (infra.short_name, infra.infra_type))
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in topo.infras):
@@ -538,29 +552,29 @@ class InternalDomainManager(AbstractDomainManager):
         dpid = self.controlAdapter.infra_to_dpid[infra.id]
       except KeyError as e:
         log.warning(
-           "Missing DPID for Infra(id: %s)! Skip deploying flowrules for "
-           "Infra" % e)
+          "Missing DPID for Infra(id: %s)! Skip deploying flowrules for "
+          "Infra" % e)
         continue
       # Check the OF connection is alive
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-           "Skipping INSTALL flowrule! Cause: connection for %s - DPID: %s is "
-           "not found!" % (infra, dpid_to_str(dpid)))
+          "Skipping INSTALL flowrule! Cause: connection for %s - DPID: %s is "
+          "not found!" % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
           try:
             match = NFFGConverter.field_splitter(
-               type=NFFGConverter.TYPE_MATCH,
-               field=flowrule.match)
+              type=NFFGConverter.TYPE_MATCH,
+              field=flowrule.match)
             if "in_port" not in match:
               log.warning(
-                 "Missing in_port field from match field! Using container "
-                 "port number...")
+                "Missing in_port field from match field! Using container "
+                "port number...")
               match["in_port"] = port.id
             action = NFFGConverter.field_splitter(
-               type=NFFGConverter.TYPE_ACTION,
-               field=flowrule.action)
+              type=NFFGConverter.TYPE_ACTION,
+              field=flowrule.action)
           except RuntimeError as e:
             log.warning("Wrong format in match/action field: %s" % e)
             continue
@@ -614,12 +628,12 @@ class SDNDomainManager(AbstractDomainManager):
     """
     # Initiate adapters
     self.controlAdapter = configurator.load_component(
-       component_name=AbstractESCAPEAdapter.TYPE_CONTROLLER,
-       parent=self._adapters_cfg)
+      component_name=AbstractESCAPEAdapter.TYPE_CONTROLLER,
+      parent=self._adapters_cfg)
     # Init adapter for static domain topology
     self.topoAdapter = configurator.load_component(
-       component_name=AbstractESCAPEAdapter.TYPE_TOPOLOGY,
-       parent=self._adapters_cfg)
+      component_name=AbstractESCAPEAdapter.TYPE_TOPOLOGY,
+      parent=self._adapters_cfg)
 
   def finit (self):
     """
@@ -647,12 +661,25 @@ class SDNDomainManager(AbstractDomainManager):
       # log.info("NFFG:\n%s" % nffg_part.dump())
       log.info("NFFG: %s" % nffg_part)
       self._delete_flowrules(nffg_part=nffg_part)
+      #
+      # def _deploy_flowrules_forever (interval=3):
+      #   from pox.lib.recoco import Timer
+      #
+      #   def _callback (counter={'cntr': 1}):
+      #     self._delete_flowrules(nffg_part=nffg_part)
+      #     self._deploy_flowrules(nffg_part=nffg_part)
+      #     log.debug("Deploy flowrules counter: %s" % counter['cntr'])
+      #     counter['cntr'] += 1
+      #
+      #   Timer(timeToWake=interval, callback=_callback, recurring=True,
+      #         selfStoppable=False)
       self._deploy_flowrules(nffg_part=nffg_part)
+      # _deploy_flowrules_forever()
       return True
     except:
       log.error(
-         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-           self.domain_name, sys.exc_info()))
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.domain_name, sys.exc_info()))
       log.debug("%s" % traceback.print_exc())
       return False
 
@@ -674,12 +701,12 @@ class SDNDomainManager(AbstractDomainManager):
         dpid = self.controlAdapter.infra_to_dpid[infra.id]
       except KeyError as e:
         log.warning(
-           "Missing DPID for Infra(id: %s)! Skip deletion of flowrules" % e)
+          "Missing DPID for Infra(id: %s)! Skip deletion of flowrules" % e)
         continue
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-           "Skipping DELETE flowrules! Cause: connection for %s - DPID: %s is "
-           "not found!" % (infra, dpid_to_str(dpid)))
+          "Skipping DELETE flowrules! Cause: connection for %s - DPID: %s is "
+          "not found!" % (infra, dpid_to_str(dpid)))
         continue
       self.controlAdapter.delete_flowrules(infra.id)
 
@@ -701,8 +728,8 @@ class SDNDomainManager(AbstractDomainManager):
     topo = self.topoAdapter.get_topology_resource()
     if topo is None:
       log.warning(
-         "Missing topology description from %s domain! Skip deploying "
-         "flowrules..." % self.domain_name)
+        "Missing topology description from %s domain! Skip deploying "
+        "flowrules..." % self.domain_name)
       return
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
@@ -710,8 +737,8 @@ class SDNDomainManager(AbstractDomainManager):
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
          NFFG.TYPE_INFRA_SDN_SW):
         log.debug(
-           "Infrastructure Node: %s (type: %s) is not Switch or Container type!"
-           " Continue to next Node..." % (infra.short_name, infra.infra_type))
+          "Infrastructure Node: %s (type: %s) is not Switch or Container type!"
+          " Continue to next Node..." % (infra.short_name, infra.infra_type))
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in topo.infras):
@@ -724,13 +751,13 @@ class SDNDomainManager(AbstractDomainManager):
         dpid = self.controlAdapter.infra_to_dpid[infra.id]
       except KeyError as e:
         log.warning(
-           "Missing DPID for Infra(id: %s)! Skip deploying flowrules for "
-           "Infra" % e)
+          "Missing DPID for Infra(id: %s)! Skip deploying flowrules for "
+          "Infra" % e)
         continue
       if self.controlAdapter.openflow.getConnection(dpid) is None:
         log.warning(
-           "Skipping INSTALL flowrule! Cause: connection for %s - DPID: %s is "
-           "not found!" % (infra, dpid_to_str(dpid)))
+          "Skipping INSTALL flowrule! Cause: connection for %s - DPID: %s is "
+          "not found!" % (infra, dpid_to_str(dpid)))
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
@@ -739,8 +766,8 @@ class SDNDomainManager(AbstractDomainManager):
                                                  field=flowrule.match)
             if "in_port" not in match:
               log.warning(
-                 "Missing in_port field from match field! Using container "
-                 "port number...")
+                "Missing in_port field from match field! Using container "
+                "port number...")
               match["in_port"] = port.id
             action = NFFGConverter.field_splitter(type="ACTION",
                                                   field=flowrule.action)
@@ -788,7 +815,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     super(RemoteESCAPEDomainManager, self).__init__(domain_name=domain_name,
                                                     *args, **kwargs)
     log.debug(
-       "Init RemoteESCAPEDomainManager with domain name: %s" % self.domain_name)
+      "Init RemoteESCAPEDomainManager with domain name: %s" % self.domain_name)
 
   def init (self, configurator, **kwargs):
     """
@@ -813,8 +840,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     """
     # Init adapter for remote ESCAPEv2 domain
     self.topoAdapter = configurator.load_component(
-       component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
-       parent=self._adapters_cfg)
+      component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
+      parent=self._adapters_cfg)
 
   def finit (self):
     """
@@ -842,8 +869,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
         return False
     except:
       log.error(
-         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-           self.domain_name, sys.exc_info()))
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.domain_name, sys.exc_info()))
       log.debug("%s" % traceback.print_exc())
       return False
 
@@ -874,12 +901,12 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
       log.warning(
-         "Missing original topology in %s domain! Skip domain resetting..." %
-         self.domain_name)
+        "Missing original topology in %s domain! Skip domain resetting..." %
+        self.domain_name)
       return
     log.debug(
-       "Reset %s domain based to original topology description..." %
-       self.domain_name)
+      "Reset %s domain based to original topology description..." %
+      self.domain_name)
     self.topoAdapter.edit_config(data=empty_cfg)
 
 
@@ -927,8 +954,8 @@ class UnifyDomainManager(AbstractDomainManager):
     :return: None
     """
     self.topoAdapter = configurator.load_component(
-       component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
-       parent=self._adapters_cfg)
+      component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
+      parent=self._adapters_cfg)
 
   def finit (self):
     """
@@ -953,8 +980,8 @@ class UnifyDomainManager(AbstractDomainManager):
       return True if status is not None else False
     except:
       log.error(
-         "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-           self.domain_name, sys.exc_info()))
+        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
+          self.domain_name, sys.exc_info()))
       log.debug("%s" % traceback.print_exc())
       return False
 
@@ -967,12 +994,12 @@ class UnifyDomainManager(AbstractDomainManager):
     empty_cfg = self.topoAdapter._original_virtualizer
     if empty_cfg is None:
       log.warning(
-         "Missing original topology in %s domain! Skip domain resetting..." %
-         self.domain_name)
+        "Missing original topology in %s domain! Skip domain resetting..." %
+        self.domain_name)
       return
     log.debug(
-       "Reset %s domain config based on stored empty config..." %
-       self.domain_name)
+      "Reset %s domain config based on stored empty config..." %
+      self.domain_name)
     return self.topoAdapter.edit_config(data=empty_cfg)
 
 
@@ -992,7 +1019,7 @@ class OpenStackDomainManager(UnifyDomainManager):
     super(OpenStackDomainManager, self).__init__(domain_name=domain_name,
                                                  *args, **kwargs)
     log.debug(
-       "Init OpenStackDomainManager with domain name: %s" % self.domain_name)
+      "Init OpenStackDomainManager with domain name: %s" % self.domain_name)
 
 
 class UniversalNodeDomainManager(UnifyDomainManager):
@@ -1011,8 +1038,8 @@ class UniversalNodeDomainManager(UnifyDomainManager):
     super(UniversalNodeDomainManager, self).__init__(domain_name=domain_name,
                                                      *args, **kwargs)
     log.debug(
-       "Init UniversalNodeDomainManager with domain name: %s" %
-       self.domain_name)
+      "Init UniversalNodeDomainManager with domain name: %s" %
+      self.domain_name)
 
 
 class DockerDomainManager(AbstractDomainManager):
@@ -1034,7 +1061,7 @@ class DockerDomainManager(AbstractDomainManager):
     super(DockerDomainManager, self).__init__(domain_name=domain_name, *args,
                                               **kwargs)
     log.debug(
-       "Init DockerDomainManager with domain name: %s" % self.domain_name)
+      "Init DockerDomainManager with domain name: %s" % self.domain_name)
 
   def initiate_adapters (self, configurator):
     pass

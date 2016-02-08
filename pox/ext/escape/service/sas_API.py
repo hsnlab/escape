@@ -161,8 +161,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
       if self.headers.get("Content-Type", "") != "application/xml" or \
          not body.startswith("<?xml version="):
         log.error(
-           "Received data is not in XML format despite of the UNIFY "
-           "interface is enabled!")
+          "Received data is not in XML format despite of the UNIFY "
+          "interface is enabled!")
         self.send_error(415)
         return
       # Convert response's body to NFFG
@@ -220,8 +220,8 @@ class ServiceLayerAPI(AbstractAPI):
     else:
       self.__sid = self.LAYER_ID
       log.error(
-         "Missing ID of Service Layer from config. Using default value: %s" %
-         self.__sid)
+        "Missing ID of Service Layer from config. Using default value: %s" %
+        self.__sid)
     # Set element manager
     self.elementManager = ClickManager()
     # Init central object of Service layer
@@ -245,7 +245,7 @@ class ServiceLayerAPI(AbstractAPI):
         self.api_sas_sg_request_delayed(service_nffg=nffg)
       except (ValueError, IOError, TypeError) as e:
         log.error(
-           "Can't load service request from file because of: " + str(e))
+          "Can't load service request from file because of: " + str(e))
     else:
       # Init REST-API if no input file is given
       self._initiate_rest_api()
@@ -282,14 +282,14 @@ class ServiceLayerAPI(AbstractAPI):
     self.rest_api = RESTServer(handler, *address)
     self.rest_api.api_id = handler.LOGGER_NAME = "U-Sl"
     handler.log.debug(
-       "Init REST-API for %s on %s:%s!" % (
-         self.rest_api.api_id, address[0], address[1]))
+      "Init REST-API for %s on %s:%s!" % (
+        self.rest_api.api_id, address[0], address[1]))
     self.rest_api.start()
     handler.log.debug(
-       "Configured Virtualizer type: %s" % self.rest_api.virtualizer_type)
+      "Configured Virtualizer type: %s" % self.rest_api.virtualizer_type)
     handler.log.debug(
-       "Configured communication format: %s" % "UNIFY" if
-       handler.virtualizer_format_enabled else "Internal-NFFG")
+      "Configured communication format: %s" % "UNIFY" if
+      handler.virtualizer_format_enabled else "Internal-NFFG")
 
   def _initiate_gui (self):
     """
@@ -350,16 +350,16 @@ class ServiceLayerAPI(AbstractAPI):
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
       self.__class__.__name__, service_nffg))
     service_nffg = self.service_orchestrator.initiate_service_graph(
-       service_nffg)
+      service_nffg)
     log.getChild('API').debug(
-       "Invoked request_service on %s is finished" % self.__class__.__name__)
+      "Invoked request_service on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
     if service_nffg is not None:
       self._instantiate_NFFG(service_nffg)
     else:
       log.warning(
-         "Something went wrong in service request initiation: mapped service "
-         "request is missing!")
+        "Something went wrong in service request initiation: mapped service "
+        "request is missing!")
     self.last_sg = service_nffg
 
   def api_sas_get_topology (self):
@@ -400,7 +400,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
     log.getChild('API').info(
-       "Generated NF-FG: %s has been sent to Orchestration..." % nffg)
+      "Generated NF-FG: %s has been sent to Orchestration..." % nffg)
 
   ##############################################################################
   # UNIFY Sl - Or API functions starts here
@@ -419,8 +419,8 @@ class ServiceLayerAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-       "Send <Virtual View> request(with layer ID: %s) to Orchestration "
-       "layer..." % self.__sid)
+      "Send <Virtual View> request(with layer ID: %s) to Orchestration "
+      "layer..." % self.__sid)
     self.raiseEventNoErrors(GetVirtResInfoEvent, self.__sid)
 
   def _handle_VirtResInfoEvent (self, event):
@@ -443,8 +443,8 @@ class ServiceLayerAPI(AbstractAPI):
       self.rest_api.request_cache.set_result(id=event.id, result=event.result)
     if event.result:
       log.getChild('API').info(
-         "Service request(id=%s) has been finished successfully!" % event.id)
+        "Service request(id=%s) has been finished successfully!" % event.id)
     else:
       log.getChild('API').info(
-         "Service request(id=%s) has been finished with error: %s" % (
-           event.id, event.error))
+        "Service request(id=%s) has been finished with error: %s" % (
+          event.id, event.error))
