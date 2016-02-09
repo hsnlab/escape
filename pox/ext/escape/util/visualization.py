@@ -51,7 +51,7 @@ class RemoteVisualizer(Session):
     'Content-Type': "application/xml"}
 
   # Default timeout value in sec
-  DEFAULT_TIMEOUT = 3
+  DEFAULT_TIMEOUT = 1
 
   def __init__ (self, url=None, rpc=None, timeout=DEFAULT_TIMEOUT,
                 instance_id=None):
