@@ -371,6 +371,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   LOGGER_NAME = "REST-API"
   # Logger. Should be overrided in child classes
   log = core.getLogger("[%s]" % LOGGER_NAME)
+  # Use Virtualizer format
+  virtualizer_format_enabled = False
 
   def do_GET (self):
     """
