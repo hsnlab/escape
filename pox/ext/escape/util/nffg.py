@@ -1283,9 +1283,8 @@ class NFFGToolBox(object):
   @staticmethod
   def retrieve_all_SGHops (nffg):
     """
-    Returns a dictionary keyed by (VNFsrc, VNFdst, reqlinkid) tuples (all 3 key
-    values are kept string, no matter if they could be converted to int, it is 
-    only used internally), data is [PortObjsrc, PortObjdst] list of port 
+    Returns a dictionary keyed by (VNFsrc, VNFdst, reqlinkid) tuples
+    , data is [PortObjsrc, PortObjdst] list of port 
     objects. It is based exclusively on flowrules.
     # TODO: retrieve bandwidth and latency (these should be the same for a given
     flowrule sequence, because they all represent the same SGHop)
