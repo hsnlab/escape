@@ -106,6 +106,8 @@ class CfOrRequestHandler(AbstractRequestHandler):
   # Logger name
   LOGGER_NAME = "Cf-Or"
   log = log.getChild("[%s]" % LOGGER_NAME)
+  # Use Virtualizer format
+  virtualizer_format_enabled = False
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
