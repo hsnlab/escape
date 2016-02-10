@@ -64,7 +64,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
     :rtype: :any:`NFFG`
     """
     log.debug(
-       "Invoke %s to initiate SG(id=%s)" % (self.__class__.__name__, sg.id))
+      "Invoke %s to initiate SG(id=%s)" % (self.__class__.__name__, sg.id))
     # Store newly created SG
     self.sgManager.save(sg)
     # Get virtual resource info as a Virtualizer
@@ -83,7 +83,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
           return nffg
         except ProcessorError as e:
           log.warning(
-             "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
+            "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
       else:
         log.warning("Virtual view is not subclass of AbstractVirtualizer!")
     else:

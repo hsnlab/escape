@@ -234,7 +234,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
     # Obtain NFFG from request body
     self.log.debug("Detected response format: %s" %
-              self.headers.get("Content-Type", ""))
+                   self.headers.get("Content-Type", ""))
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     # Expect XML format --> need to convert first

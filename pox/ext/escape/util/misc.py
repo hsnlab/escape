@@ -252,8 +252,8 @@ class SimpleStandaloneHelper(object):
     """
     from pox.core import core
     core.getLogger("StandaloneHelper").getChild(self._cover_name).info(
-       "Got event: %s from %s Layer" % (
-         event.__class__.__name__, str(event.source._core_name).title()))
+      "Got event: %s from %s Layer" % (
+        event.__class__.__name__, str(event.source._core_name).title()))
 
 
 class Singleton(type):

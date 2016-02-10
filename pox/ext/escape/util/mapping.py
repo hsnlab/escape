@@ -233,7 +233,7 @@ class AbstractMapper(EventMixin):
     self._layer_name = layer_name
     # Set threaded
     self._threaded = threaded if threaded is not None else CONFIG.get_threaded(
-       layer_name)
+      layer_name)
     # Set strategy
     if strategy is None:
       # Use the Strategy in CONFIG
@@ -309,9 +309,9 @@ class AbstractMapper(EventMixin):
         # Raise event for external POX modules
         if core.hasComponent(self._layer_name):
           core.components[self._layer_name].raiseEvent(
-             PreMapEvent,
-             input_graph=input_graph,
-             resource_graph=resource_graph)
+            PreMapEvent,
+            input_graph=input_graph,
+            resource_graph=resource_graph)
         # Invoke mapping algorithm
         mapping_result = self._perform_mapping(input_graph=input_graph,
                                                resource_view=resource_view)
@@ -326,10 +326,10 @@ class AbstractMapper(EventMixin):
         # Raise event for external POX modules
         if core.hasComponent(self._layer_name):
           core.components[self._layer_name].raiseEvent(
-             PostMapEvent,
-             input_graph=input_graph,
-             resource_graph=resource_graph,
-             result_graph=mapping_result)
+            PostMapEvent,
+            input_graph=input_graph,
+            resource_graph=resource_graph,
+            result_graph=mapping_result)
         return mapping_result
     else:
       # Invoke only the mapping algorithm
@@ -338,19 +338,19 @@ class AbstractMapper(EventMixin):
       # Raise event for external POX modules
       if core.hasComponent(self._layer_name):
         core.components[self._layer_name].raiseEvent(
-           PreMapEvent,
-           input_graph=input_graph,
-           resource_graph=resource_graph)
+          PreMapEvent,
+          input_graph=input_graph,
+          resource_graph=resource_graph)
       # Invoke mapping algorithm
       mapping_result = self._perform_mapping(input_graph=input_graph,
                                              resource_view=resource_view)
       # Raise event for external POX modules
       if core.hasComponent(self._layer_name):
         core.components[self._layer_name].raiseEvent(
-           PostMapEvent,
-           input_graph=input_graph,
-           resource_graph=resource_graph,
-           result_graph=mapping_result)
+          PostMapEvent,
+          input_graph=input_graph,
+          resource_graph=resource_graph,
+          result_graph=mapping_result)
       return mapping_result
 
   def _start_mapping (self, graph, resource):
@@ -366,7 +366,7 @@ class AbstractMapper(EventMixin):
 
     def run ():
       core.getLogger("worker").info(
-         "Schedule mapping algorithm: %s" % self.strategy.__name__)
+        "Schedule mapping algorithm: %s" % self.strategy.__name__)
       nffg = self.strategy.map(graph=graph, resource=resource)
       # Must use call_as_coop_task because we want to call a function in a
       # coop microtask environment from a separate thread

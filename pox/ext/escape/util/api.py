@@ -191,8 +191,8 @@ class AbstractAPI(EventMixin):
     import pprint
 
     return pprint.pformat(
-       [(f, type(getattr(self, f))) for f in dir(self) if
-        not f.startswith('_')])
+      [(f, type(getattr(self, f))) for f in dir(self) if
+       not f.startswith('_')])
 
 
 class RequestCache(object):
@@ -535,8 +535,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     try:
       if self.func_name:
         self.send_header('Allow', ','.join(
-           [str(verbs) for verbs, f in self.request_perm.iteritems() if
-            self.func_name in f]))
+          [str(verbs) for verbs, f in self.request_perm.iteritems() if
+           self.func_name in f]))
     except KeyError:
       pass
 
@@ -658,9 +658,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       else:
         # raise NotImplementedError
         self.log.warning(
-           'Mistyped or not implemented API function call: %s ' % function)
+          'Mistyped or not implemented API function call: %s ' % function)
         raise RESTError(
-           msg='Mistyped or not implemented API function call: %s ' % function)
+          msg='Mistyped or not implemented API function call: %s ' % function)
     else:
       self.log.error('Error: No component has registered with the name: %s, '
                      'ABORT function call!' % self.bounded_layer)
