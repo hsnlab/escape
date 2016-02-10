@@ -14,6 +14,7 @@
 """
 Contains components relevant to virtualization of resources and views.
 """
+from itertools import chain
 
 from escape.orchest import log as log
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
@@ -200,13 +201,16 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
       # Sum of available storage
       (n.resources.storage for n in dov.infras if
        n.resources.storage is not None) or [None])
-    sbb.resources.delay = min(
-      # Minimal available delay value of infras in DoV
-      reduce(min, (n.resources.delay for n in dov.infras if
-                   n.resources.delay is not None), None),
-      # Minimal available delay value of inter-infra links
-      reduce(min, (l.delay for l in dov.links if
-                   l.delay is not None), None))
+    try:
+      sbb.resources.delay = min(chain(
+        # Minimal available delay value of infras in DoV
+        (n.resources.delay for n in dov.infras if
+         n.resources.delay is not None),
+        # Minimal available delay value of inter-infra links
+        (l.delay for l in dov.links if l.delay is not None)))
+    except ValueError:
+      sbb.resources.delay = None
+
     max_bw = max(
       # Maximum available bandwidth value of infras in DoV
       reduce(max, (n.resources.bandwidth for n in dov.infras if
@@ -234,17 +238,17 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     from copy import deepcopy
     for sap in dov.saps:
       c_sap = nffg.add_sap(sap=deepcopy(sap))
-      log.debug("Add SAP: %s" % c_sap)
-      # Discover and add SAP connections
-      for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
-        link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
-                                                port2=sbb.add_port(
-                                                  "port-%s" % c_sap.id),
-                                                p1p2id=l.id,
-                                                delay=l.delay,
-                                                bandwidth=l.bandwidth)
-        log.debug("Add connection: %s" % link1)
-        log.debug("Add connection: %s" % link2)
+    log.debug("Add SAP: %s" % c_sap)
+    # Discover and add SAP connections
+    for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
+      link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
+                                              port2=sbb.add_port(
+                                                "port-%s" % c_sap.id),
+                                              p1p2id=l.id,
+                                              delay=l.delay,
+                                              bandwidth=l.bandwidth)
+    log.debug("Add connection: %s" % link1)
+    log.debug("Add connection: %s" % link2)
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return nffg
