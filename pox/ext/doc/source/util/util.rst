@@ -25,3 +25,4 @@ Submodules
     nffg
     nffg_elements
     pox_extension
+    visualization

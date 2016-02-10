@@ -78,6 +78,8 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     .. seealso::
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
+
+    :param event: event object
     """
     log.info("Infrastructure Layer is going down...")
     if self.topology:

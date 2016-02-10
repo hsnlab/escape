@@ -14,7 +14,6 @@
 """
 Wrapper module for handling emulated test topology based on Mininet.
 """
-
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.util.misc import quit_with_error, get_ifaces
@@ -57,6 +56,8 @@ class AbstractTopology(Topo):
   def construct (self, builder=None):
     """
     Base class for construct the topology.
+
+    :param builder: builder object
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -130,13 +131,13 @@ class FallbackStaticTopology(AbstractTopology):
     # Create NFFG
     nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
     # Add switches
-    sw1 = nffg.add_infra(id="sw1", name="SW1", domain=NFFG.DOMAIN_INTERNAL,
+    sw1 = nffg.add_infra(id="sw1", name="SW1", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW)
-    sw2 = nffg.add_infra(id="sw2", name="SW2", domain=NFFG.DOMAIN_INTERNAL,
+    sw2 = nffg.add_infra(id="sw2", name="SW2", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW)
-    sw3 = nffg.add_infra(id="sw3", name="SW3", domain=NFFG.DOMAIN_INTERNAL,
+    sw3 = nffg.add_infra(id="sw3", name="SW3", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW)
-    sw4 = nffg.add_infra(id="sw4", name="SW4", domain=NFFG.DOMAIN_INTERNAL,
+    sw4 = nffg.add_infra(id="sw4", name="SW4", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW)
     # Add SAPs
     sap1 = nffg.add_sap(id="sap1", name="SAP1")
@@ -185,6 +186,7 @@ class FallbackDynamicTopology(AbstractTopology):
     """
     Set a topology with NETCONF capability for mostly testing.
 
+    :param builder: builder object
     :return: None
     """
     log.info("Start dynamic topology creation...")
@@ -207,19 +209,19 @@ class FallbackDynamicTopology(AbstractTopology):
     # Create NFFG
     nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
     # Add NETCONF capable containers a.k.a. Execution Environments
-    nc1 = nffg.add_infra(id="nc1", name="NC1", domain=NFFG.DOMAIN_INTERNAL,
+    nc1 = nffg.add_infra(id="nc1", name="NC1", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                          delay=0.9, bandwidth=5000)
-    nc2 = nffg.add_infra(id="nc2", name="NC2", domain=NFFG.DOMAIN_INTERNAL,
+    nc2 = nffg.add_infra(id="nc2", name="NC2", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
                          delay=0.9, bandwidth=5000)
     nc1.add_supported_type(['A', 'B'])
     nc2.add_supported_type(['A', 'C'])
     # Add inter-EE switches
-    sw3 = nffg.add_infra(id="sw3", name="SW3", domain=NFFG.DOMAIN_INTERNAL,
+    sw3 = nffg.add_infra(id="sw3", name="SW3", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                          bandwidth=10000)
-    sw4 = nffg.add_infra(id="sw4", name="SW4", domain=NFFG.DOMAIN_INTERNAL,
+    sw4 = nffg.add_infra(id="sw4", name="SW4", domain="INTERNAL",
                          infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
                          bandwidth=10000)
     # Add SAPs
@@ -267,8 +269,8 @@ class InternalControllerProxy(RemoteController):
     listening = self.cmd("echo A | telnet -e A %s %d" % (self.ip, self.port))
     if 'Connected' not in listening:
       log.debug(
-        "Unable to contact with internal controller at %s:%d. Waiting..." % (
-          self.ip, self.port))
+         "Unable to contact with internal controller at %s:%d. Waiting..." % (
+           self.ip, self.port))
 
 
 class ESCAPENetworkBridge(object):
@@ -302,15 +304,15 @@ class ESCAPENetworkBridge(object):
       self.__mininet = network
     else:
       log.warning(
-        "Network implementation object is missing! Use Builder class instead "
-        "of direct initialization. Creating bare Mininet object anyway...")
+         "Network implementation object is missing! Use Builder class instead "
+         "of direct initialization. Creating bare Mininet object anyway...")
       self.__mininet = MininetWithControlNet()
     # Topology description which is emulated by the Mininet
     self.topo_desc = topo_desc
     # Duplicate static links for ensure undirected neighbour relationship
     if self.topo_desc is not None:
       log.debug(
-        "Duplicate STATIC links to ensure undirected relationship for mapping")
+         "Duplicate STATIC links to ensure undirected relationship for mapping")
       self.topo_desc.duplicate_static_links()
     # Need to clean after shutdown
     self._need_clean = None
@@ -359,7 +361,7 @@ class ESCAPENetworkBridge(object):
         self.runXTerms()
       else:
         log.warning(
-          "Mininet network has already started! Skipping start task...")
+           "Mininet network has already started! Skipping start task...")
     else:
       log.error("Missing topology! Skipping emulation...")
 
@@ -387,7 +389,7 @@ class ESCAPENetworkBridge(object):
     """
     if self.started:
       log.warning(
-        "Mininet network is not stopped yet! Skipping cleanup task...")
+         "Mininet network is not stopped yet! Skipping cleanup task...")
     else:
       log.info("Schedule cleanup task after Mininet emulation...")
       # Kill remained xterms
@@ -489,7 +491,7 @@ class ESCAPENetworkBuilder(object):
         self.mn = net
       else:
         raise RuntimeError(
-          "Network object's type must be a derived class of Mininet!")
+           "Network object's type must be a derived class of Mininet!")
     else:
       # self.mn = Mininet(**self.opts)
       self.mn = MininetWithControlNet(**self.opts)
@@ -551,8 +553,10 @@ class ESCAPENetworkBuilder(object):
         static_ee = self.create_static_EE(name=infra.id)
         created_mn_nodes[infra.id] = static_ee
       else:
-        raise RuntimeError("Building of %s is not supported by %s!" % (
-          infra.infra_type, self.__class__.__name__))
+        quit_with_error(
+           msg="Type: %s in %s is not supported by the topology creation "
+               "process in %s!" % (
+                 infra.infra_type, infra, self.__class__.__name__), logger=log)
     # Create SAPs - skip the temporary, inter-domain SAPs
     for sap in {s for s in nffg.saps if not s.domain}:
       # Create SAP
@@ -566,33 +570,33 @@ class ESCAPENetworkBuilder(object):
       # Skip initiation of links which connected to an inter-domain SAP
       if (edge.src.node.type == NFFG.TYPE_SAP and
               edge.src.node.domain is not None) or (
-               edge.dst.node.type == NFFG.TYPE_SAP and
-               edge.dst.node.domain is not None):
+             edge.dst.node.type == NFFG.TYPE_SAP and
+             edge.dst.node.domain is not None):
         continue
       # Create Links
       mn_src_node = created_mn_nodes.get(edge.src.node.id)
       mn_dst_node = created_mn_nodes.get(edge.dst.node.id)
       if mn_src_node is None or mn_dst_node is None:
         raise RuntimeError(
-          "Created topology node is missing! Something really went wrong!")
+           "Created topology node is missing! Something really went wrong!")
       src_port = int(edge.src.id) if int(edge.src.id) < 65535 else None
       if src_port is None:
         log.warning(
-          "Source port id of Link: %s is generated dynamically! Using "
-          "automatic port assignment based on internal Mininet "
-          "implementation!" % edge)
+           "Source port id of Link: %s is generated dynamically! Using "
+           "automatic port assignment based on internal Mininet "
+           "implementation!" % edge)
       dst_port = int(edge.dst.id) if int(edge.dst.id) < 65535 else None
       if dst_port is None:
         log.warning(
-          "Destination port id of Link: %s is generated dynamically! Using "
-          "automatic port assignment based on internal Mininet "
-          "implementation!" % edge)
+           "Destination port id of Link: %s is generated dynamically! Using "
+           "automatic port assignment based on internal Mininet "
+           "implementation!" % edge)
       link = self.create_Link(src=mn_src_node, src_port=src_port,
                               dst=mn_dst_node, dst_port=dst_port,
                               bw=edge.bandwidth, delay=str(edge.delay) + 'ms')
       created_mn_links[edge.id] = link
 
-    ## Set port properties of SAP nodes.
+    # Set port properties of SAP nodes.
     #  A possible excerpt from a escape-mn-topo.nffg file:
     #  "ports": [{ "id": 1,
     #              "property": ["ip:10.0.10.1/24"] }]
@@ -680,7 +684,7 @@ class ESCAPENetworkBuilder(object):
       raise TopologyBuilderException("Missing topology file!")
     except ValueError as e:
       log.error(
-        "An error occurred when load topology from file: %s" % e.message)
+         "An error occurred when load topology from file: %s" % e.message)
       raise TopologyBuilderException("File parsing error!")
 
   def get_network (self):
@@ -891,8 +895,8 @@ class ESCAPENetworkBuilder(object):
           border_node = sap_switch_links[0][0]
       except IndexError:
         log.error(
-          "Link for inter-domain SAP: %s is not found. Skip SAP creation..."
-          % sap)
+           "Link for inter-domain SAP: %s is not found. Skip SAP creation..."
+           % sap)
         continue
       log.debug("Detected inter-domain SAP: %s connected to border Node: %s" % (
         sap, border_node))
@@ -902,8 +906,8 @@ class ESCAPENetworkBuilder(object):
         if sw.name == sw_name:
           if sap.domain not in get_ifaces():
             log.warning(
-              "Physical interface: %s is not found! Skip binding..."
-              % sap.domain)
+               "Physical interface: %s is not found! Skip binding..."
+               % sap.domain)
             continue
           log.debug("Add physical port as inter-domain SAP: %s -> %s" %
                     (sap.domain, sap.id))
@@ -976,7 +980,7 @@ class ESCAPENetworkBuilder(object):
       elif isinstance(topo, NFFG):
         log.info("Get Topology description from given NFFG...")
         self.__init_from_NFFG(nffg=topo)
-      elif isinstance(topo, str) and topo.startswith('/'):
+      elif isinstance(topo, basestring) and topo.startswith('/'):
         log.info("Get Topology description from given file...")
         self.__init_from_file(path=topo)
       elif isinstance(topo, AbstractTopology):
@@ -984,7 +988,7 @@ class ESCAPENetworkBuilder(object):
         self.__init_from_AbstractTopology(topo_class=topo)
       else:
         raise RuntimeError(
-          "Unsupported topology format: %s - %s" % (type(topo), topo))
+           "Unsupported topology format: %s - %s" % (type(topo), topo))
       return self.get_network()
     except SystemExit as e:
       quit_with_error(msg="Mininet exited unexpectedly! Cause: %s" % e.message)

@@ -185,6 +185,8 @@ def quit_with_error (msg, logger=None, exception=False):
   :type msg: str
   :param logger: logger name or logger object (default: core)
   :type logger: str or :any:`logging.Logger`
+  :param exception: print stacktrace befor quit (default: False)
+  :type exception: bool
   :return: None
   """
   from pox.core import core
@@ -250,8 +252,8 @@ class SimpleStandaloneHelper(object):
     """
     from pox.core import core
     core.getLogger("StandaloneHelper").getChild(self._cover_name).info(
-      "Got event: %s from %s Layer" % (
-        event.__class__.__name__, str(event.source._core_name).title()))
+       "Got event: %s from %s Layer" % (
+         event.__class__.__name__, str(event.source._core_name).title()))
 
 
 class Singleton(type):
@@ -272,6 +274,8 @@ def deprecated (func):
   """
   This is a decorator which can be used to mark functions as deprecated. It
   will result in a warning being emitted when the function is used.
+
+  :param func: original function
   """
 
   def newFunc (*args, **kwargs):
@@ -324,3 +328,36 @@ def get_ifaces ():
   """
   return [iface.split(' ', 1)[0] for iface in os.popen('ifconfig -a -s') if
           not iface.startswith('Iface')]
+
+
+def get_escape_name_version ():
+  """
+  Return the initiation message for the current ESCAPE version.
+  Acquiring information from escape package.
+  :return:
+  """
+  import escape
+  return escape.__project__, escape.__version__
+
+
+def notify_remote_visualizer (data, id, url=None, **kwargs):
+  """
+  Send the given data to a remote visualization server.
+  If url is given use this address to send instead of the url defined in the
+  global config.
+
+  :param data: data need to send
+  :type data: :any:`NFFG` or Virtualizer
+  :param id: id of the data, needs for the remote server
+  :type id: str
+  :param url: additional URL (acquired from config by default)
+  :type url: str
+  :param kwargs: optional parameters for request lib
+  :type kwargs: dict
+  :return: response
+  :rtype: str
+  """
+  from pox.core import core
+  if core.hasComponent('visualizer'):
+    return core.visualizer.send_notification(data=data, id=id, url=url,
+                                             **kwargs)

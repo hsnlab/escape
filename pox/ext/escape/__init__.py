@@ -45,11 +45,11 @@ cfg = {
         {
           "module": "escape.service.sas_mapping",
           "class": "ServiceGraphMapper",
-          "mapping-enabled": False,
           "mapping-config":
             {
               "full_remap": True
-            }
+            },
+          "mapping-enabled": False
         },
       "STRATEGY":
         {
@@ -81,11 +81,11 @@ cfg = {
         {
           "module": "escape.orchest.ros_mapping",
           "class": "ResourceOrchestrationMapper",
-          "mapping-enabled": True,
           "mapping-config":
             {
               "full_remap": True
-            }
+            },
+          "mapping-enabled": True
         },
       "STRATEGY":
         {
@@ -113,7 +113,7 @@ cfg = {
           "port": 8888,
           # "virtualizer_type": "SINGLE",
           "virtualizer_type": "GLOBAL",
-          "unify_interface": False
+          "unify_interface": True
         },
       "Cf-Or":
         {
@@ -129,14 +129,15 @@ cfg = {
     {
       # Default managers need to start at init
       "MANAGERS": [
-        "REMOTE-ESCAPE",
-        "REMOTE-ESCAPE-ext",
+        # "REMOTE-ESCAPE",
+        # "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
         # "UN"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
-      "CLEAR-DOMAINS-AFTER-SHUTDOWN": True,  # Shutdown strategy config
+      "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
+      # "ENSURE-UNIQUE-ID": True,  # ID conversion strategy for nodes
       # Specific Domain Managers
       "INTERNAL":
         {
@@ -185,7 +186,11 @@ cfg = {
               "name": None,
               "address": "0.0.0.0",
               "port": 6633,
-              "keepalive": False
+              "keepalive": False,
+              "binding": {
+                "MT1": 0x14c5e0c376e24,
+                "MT2": 0x14c5e0c376fc6,
+              }
             },
           "TOPOLOGY":
             {
@@ -238,7 +243,8 @@ cfg = {
               {
                 "module": "escape.adapt.adapters",
                 "class": "UnifyRESTAdapter",
-                "url": "http://localhost:8081"
+                "url": "http://localhost:8081",
+                "timeout": 10
               }
           }
         },
@@ -284,7 +290,13 @@ cfg = {
       "SAP-xterms": True,
       "SHUTDOWN-CLEAN": True
     },
-  "additional-config-file": "escape.config"  # relative to project root
+  "additional-config-file": "escape.config",  # relative to project root
+  "visualization":
+    {
+      "url": "http://localhost:8081",
+      "rpc": "edit-config",
+      "instance_id": None
+    }
 }
 
 

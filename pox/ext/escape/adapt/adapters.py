@@ -85,9 +85,9 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
                                              port=port, keepalive=keepalive,
                                              *args, **kwargs)
     log.debug(
-       "Init %s - type: %s, address %s:%s, domain: %s, optional name: %s" % (
-         self.__class__.__name__, self.type, address, port, self.domain_name,
-         name))
+      "Init %s - type: %s, address %s:%s, domain: %s, optional name: %s" % (
+        self.__class__.__name__, self.type, address, port, self.domain_name,
+        name))
     self.topoAdapter = None
 
   def check_domain_reachable (self):
@@ -138,7 +138,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
           del self.infra_to_dpid[k]
           break
       log.debug("DPID: %s removed from infra-dpid assignments" % dpid_to_str(
-         event.dpid))
+        event.dpid))
 
     event = DomainChangedEvent(domain=self.name,
                                cause=DomainChangedEvent.TYPE.NODE_DOWN,
@@ -162,8 +162,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     # Generate the list of port names from OF Feature Reply msg
     ports = [port.name for port in connection.features.ports]
     # Remove inter-domain SAP ports (starting with 'eth')
-    inter_domain_ports = [p for p in ports if p.startswith('eth')]
-    for p in inter_domain_ports:
+    for p in [p for p in ports if p.startswith('eth')]:
       ports.remove(p)
     # Mininet naming convention for port in OVS:
     # <bridge_name> (internal), <bridge_name>-eth<num>, ...
@@ -187,30 +186,51 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
   name = "SDN-POX"
   type = AbstractESCAPEAdapter.TYPE_CONTROLLER
 
-  # Static mapping of infra IDs and DPIDs
+  # Static mapping of infra IDs and DPIDs - overridden at init time based on
+  # the SDNAdapter configuration
   infra_to_dpid = {
-    'MT1': 0x14c5e0c376e24,
-    'MT2': 0x14c5e0c376fc6,
-  }
-  dpid_to_infra = {
-    0x14c5e0c376e24: 'MT1',
-    0x14c5e0c376fc6: 'MT2',
+    # 'MT1': 0x14c5e0c376e24,
+    # 'MT2': 0x14c5e0c376fc6,
   }
 
   def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False,
-                *args, **kwargs):
+                binding=None, *args, **kwargs):
     super(SDNDomainPOXAdapter, self).__init__(name=name, address=address,
                                               port=port, keepalive=keepalive,
                                               *args, **kwargs)
     # Currently static initialization from a config file
     # TODO: discover SDN topology and create the NFFG
     self.topo = None  # SDN domain topology stored in NFFG
+    if not binding:
+      log.warning(
+        "No Infra-DPID binding are defined in the configuration! Using empty "
+        "data structure...")
+    elif isinstance(binding, dict):
+      self.infra_to_dpid = {
+        infra: int(dpid, base=0) if not isinstance(dpid, int) else dpid for
+        infra, dpid in binding.iteritems()}
+    else:
+      log.warning(
+        "Wrong type: %s for binding in %s. Using empty data structure..." % (
+          type(binding), self))
 
   def get_topology_resource (self):
     super(SDNDomainPOXAdapter, self).get_topology_resource()
 
   def check_domain_reachable (self):
     super(SDNDomainPOXAdapter, self).check_domain_reachable()
+
+  def _identify_ovs_device (self, connection):
+    """
+    Currently we can not detect the Connection - InfraNode bindings because
+    the only available infos are the connection parameters: DPID, ports, etc.
+    Skip this step for the SDN domain, the assignments are statically defined.
+
+    :param connection: inner Connection class of POX
+    :type connection: :class:`pox.openflow.of_01.Connection`
+    :return: None
+    """
+    pass
 
 
 class InternalMininetAdapter(AbstractESCAPEAdapter):
@@ -235,8 +255,8 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     # Call base constructors directly to avoid super() and MRO traps
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     log.debug(
-       "Init InternalMininetAdapter - type: %s, domain: %s, initial network: "
-       "%s" % (self.type, self.domain_name, net))
+      "Init InternalMininetAdapter - type: %s, domain: %s, initial network: "
+      "%s" % (self.type, self.domain_name, net))
     if not net:
       from pox import core
       if core.core.hasComponent(InfrastructureLayerAPI._core_name):
@@ -275,7 +295,7 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
     return self.rewrite_domain(
-       self.__IL_topo_ref.topo_desc) if self.__IL_topo_ref.started else None
+      self.__IL_topo_ref.topo_desc) if self.__IL_topo_ref.started else None
 
   def get_agent_connection_params (self, ee_name):
     """
@@ -307,8 +327,8 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
   def __init__ (self, path=None, *args, **kwargs):
     super(SDNDomainTopoAdapter, self).__init__(*args, **kwargs)
     log.debug(
-       "Init SDNDomainTopoAdapter - type: %s, domain: %s, optional path: %s" % (
-         self.type, self.domain_name, path))
+      "Init SDNDomainTopoAdapter - type: %s, domain: %s, optional path: %s" % (
+        self.type, self.domain_name, path))
     self.topo = None
     try:
       self.__init_from_CONFIG(path=path)
@@ -358,7 +378,7 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
         log.warning("SDN topology file not found: %s" % path)
       except ValueError as e:
         log.error(
-           "An error occurred when load topology from file: %s" % e.message)
+          "An error occurred when load topology from file: %s" % e.message)
         raise TopologyLoadException("File parsing error!")
 
 
@@ -401,7 +421,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     AbstractNETCONFAdapter.__init__(self, *args, **kwargs)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     log.debug(
-       "Init VNFStarterAdapter - type: %s, params: %s" % (self.type, kwargs))
+      "Init VNFStarterAdapter - type: %s, params: %s" % (self.type, kwargs))
 
   def check_domain_reachable (self):
     """
@@ -464,12 +484,19 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     1. set its arguments (control port, control ip, and VNF type/command)
     2. returns the connection data, which from the vnf_id is the most important
 
-    .. raw:: json
+    Reply structure:
 
-      Reply: {"access_info": {"vnf_id": <mandatory>,
-                              "control_ip": <optional>,
-                              "control_port": <optional>},
-              "other": <optional>}
+    .. code-block:: json
+
+      {
+        "access_info":
+        {
+          "vnf_id": "<mandatory>",
+          "control_ip": "<optional>",
+          "control_port": "<optional>"
+        },
+      "other": "<optional>"
+      }
 
     :param vnf_type: pre-defined VNF type (see in vnf_starter/available_vnfs)
     :type vnf_type: str
@@ -493,10 +520,14 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     0. create virtualEthernet pair(s)
     1. connect either end of it (them) to the given switch(es)
 
-    .. raw:: json
+    Reply structure:
 
-      Reply: {"port": <mandatory>,  # Currently just got RPC OK
-              "other": <optional>}
+    .. code-block:: json
+
+      {
+        "port": "<mandatory>  # Currently just got RPC OK",
+        "other": "<optional>"
+      }
 
     This RPC is also used for reconnecting a VNF. In this case, however,
     if the input fields are not correctly set an error occurs
@@ -523,9 +554,13 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     1. ip link set uny_1 down
     2. (if more ports) repeat 1. and 2. with the corresponding data
 
-    .. raw:: json
+    Reply structure:
 
-      Reply: {"other": <optional>}  # Currently just got RPC OK
+    .. code-block:: json
+
+      {
+        "other": "<optional>  # Currently just got RPC OK"
+      }
 
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
@@ -541,9 +576,13 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     """
     This RPC will actually start the VNF/CLICK instance.
 
-    .. raw:: json
+    Reply structure:
 
-      Reply: {"other": <optional>}  # Currently just got RPC OK
+    .. code-block:: json
+
+      {
+        "other": "<optional>  # Currently just got RPC OK"
+      }
 
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
@@ -557,14 +596,18 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     """
     This RPC will gracefully shut down the VNF/CLICK instance.
 
-    .. raw:: json
-
-      Reply: {"other": <optional>}  # Currently just got RPC OK
-
     0. if disconnect() was not called before, we call it
     1. delete virtual ethernet pairs
     2. stop (kill) click
     3. remove vnf's data from the data structure
+
+    Reply structure:
+
+    .. code-block:: json
+
+      {
+        "other": "<optional>  # Currently just got RPC OK"
+      }
 
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
@@ -582,22 +625,33 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     however 'status' is useful for indicating to upper layers whether a VNF
     is UP_AND_RUNNING.
 
-    .. raw:: json
+    Reply structure:
 
-      Reply: {"initiated_vnfs": {"vnf_id": <initiated_vnfs key>,
-                                "pid": <VNF PID>,
-                                "control_ip": <cntr IP>,
-                                "control_port": <cntr port>,
-                                "command": <VNF init command>
-                                "link": ["vnf_port": <port of VNF end>,
-                                         "vnf_dev": <VNF end intf>,
-                                         "vnf_dev_mac": <VNF end MAC address>,
-                                         "sw_dev": <switch/EE end intf>,
-                                         "sw_id": <switch/EE end id>,
-                                         "sw_port": <switch/EE end port>,
-                                         "connected": <conn status>
-                                          ],
-                                "other": <optional>}}
+    .. code-block:: json
+
+      {
+        "initiated_vnfs":
+        {
+          "vnf_id": "<initiated_vnfs key>",
+          "pid": "<VNF PID>",
+          "control_ip": "<cntr IP>",
+          "control_port": "<cntr port>",
+          "command": "<VNF init command>",
+          "link":
+          [
+            {
+              "vnf_port": "<port of VNF end>",
+              "vnf_dev": "<VNF end intf>",
+              "vnf_dev_mac": "<VNF end MAC address>",
+              "sw_dev": "<switch/EE end intf>",
+              "sw_id": "<switch/EE end id>",
+              "sw_port": "<switch/EE end port>",
+              "connected": "<conn status>"
+            }
+          ],
+        "other": "<optional>"
+        }
+      }
 
     :param vnf_id: VNF ID  (default: list info about all VNF)
     :type vnf_id: str
@@ -605,7 +659,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :raises: RPCError, OperationError, TransportError
     """
     log.debug(
-       "Call getVNFInfo - VNF: %s" % vnf_id if vnf_id is not None else "all")
+      "Call getVNFInfo - VNF: %s" % vnf_id if vnf_id is not None else "all")
     return self.call_RPC('getVNFInfo', vnf_id=vnf_id)
 
   ##############################################################################
@@ -654,11 +708,11 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         raise
       except KeyError as e:
         log.warning(
-           "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
-           "VNF initiation." % e.args[0])
+          "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
+          "VNF initiation." % e.args[0])
       except (TransportError, OperationError) as e:
         log.error(
-           "Failed to deploy NF due to a connection error! Cause: %s" % e)
+          "Failed to deploy NF due to a connection error! Cause: %s" % e)
 
   def removeNF (self, vnf_id):
     """
@@ -676,11 +730,11 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         raise
       except KeyError as e:
         log.warning(
-           "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
-           "VNF initiation." % e.args[0])
+          "Missing required attribute from NETCONF-based RPC reply: %s! Skip "
+          "VNF initiation." % e.args[0])
       except (TransportError, OperationError) as e:
         log.error(
-           "Failed to remove NF due to a connection error! Cause: %s" % e)
+          "Failed to remove NF due to a connection error! Cause: %s" % e)
 
 
 class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
@@ -692,18 +746,18 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   name = "ESCAPE-REST"
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url, prefix="", unify_interface=False, *args, **kwargs):
+  def __init__ (self, url, prefix="", unify_interface=False, **kwargs):
     """
     Init.
 
     :param url: remote ESCAPEv2 RESTful API URL
     :type url: str
     """
-    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix)
-    AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
+    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
+    AbstractESCAPEAdapter.__init__(self, **kwargs)
     log.debug(
-       "Init RemoteESCAPEv2RESTAdapter - type: %s, domain: %s, URL: %s" % (
-         self.type, self.domain_name, url))
+      "Init RemoteESCAPEv2RESTAdapter - type: %s, domain: %s, URL: %s" % (
+        self.type, self.domain_name, url))
     # Converter for the Adapter
     self.converter = None
     self._unify_interface = unify_interface
@@ -714,12 +768,15 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self._original_virtualizer = None
     if self._unify_interface:
       log.info("Setup ESCAPEv2 adapter as a Unify interface!")
-      self.converter = NFFGConverter(domain=self.domain_name, logger=log)
+      self.converter = NFFGConverter(domain=self.domain_name, logger=log,
+                                     ensure_unique_id=CONFIG.ensure_unique_id())
 
   def ping (self):
+    log.debug("Send ping request to remote agent: %s" % self._base_url)
     return self.send_no_error(self.GET, 'ping')
 
   def get_config (self):
+    log.debug("Send get-config request to remote agent: %s" % self._base_url)
     # Get topology from remote agent handling every exception
     data = self.send_no_error(self.POST, 'get-config')
     if data:
@@ -735,23 +792,23 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         if self.get_last_response_headers().get("Content-Type",
                                                 "") != "application/xml":
           log.error(
-             "Content type of response message is not 'application/xml'!")
+            "Content type of response message is not 'application/xml'!")
           return
         elif not data.startswith("<?xml version="):
           log.error("Received data is not started with XML declaration!")
           return
         log.debug("Converting from XML/Virtualizer to NFFG format...")
         # Covert from XML-based Virtualizer to NFFG
-        nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data,
-                                                            with_virt=True)
+        nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+                                                           with_virt=True)
         # Cache virtualizer
         self.virtualizer = virt
         if self._original_virtualizer is None:
           log.debug(
-             "Store Virtualizer(id: %s, name: %s) as the original domain "
-             "config for domain: %s..." % (
-               virt.id.get_as_text(), virt.name.get_as_text(),
-               self.domain_name))
+            "Store Virtualizer(id: %s, name: %s) as the original domain "
+            "config for domain: %s..." % (
+              virt.id.get_as_text(), virt.name.get_as_text(),
+              self.domain_name))
           self._original_virtualizer = deepcopy(virt)
       else:
         log.debug("Converting to internal NFFG format...")
@@ -759,23 +816,25 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         # Store original config for domain resetting
         if self._original_nffg is None:
           log.debug(
-             "Store %s as the original domain config for domain: %s..." % (
-               nffg, self.domain_name))
+            "Store %s as the original domain config for domain: %s..." % (
+              nffg, self.domain_name))
           self._original_nffg = nffg.copy()
       log.debug("Set domain to %s" % self.domain_name)
       self.rewrite_domain(nffg)
       return nffg
     else:
-      log.error("No data is received from remote agent!")
+      log.error("No data is received from remote agent at %s!" % self._base_url)
       return
 
   def edit_config (self, data):
+    log.debug(
+      "Prepare edit-config request for remote agent at: %s" % self._base_url)
     if isinstance(data, NFFG):
       # convert NFFG --> Virtualizer
       if self._unify_interface:
         log.debug("Convert NFFG to XML/Virtualizer format...")
         virt_data = self.converter.adapt_mapping_into_Virtualizer(
-           virtualizer=self.virtualizer, nffg=data)
+          virtualizer=self.virtualizer, nffg=data)
         data = virt_data.xml()
       # non-UNIFY interface --> no conversion
       else:
@@ -787,16 +846,23 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # Unexpected case, try to convert anyway
       else:
         log.warning(
-           "Unexpected case: convert Virtualizer data for a non-UNIFY "
-           "interface!")
-        converted = self.converter.parse_from_Virtualizer3(xml_data=data.xml())
+          "Unexpected case: convert Virtualizer data for a non-UNIFY "
+          "interface!")
+        converted = self.converter.parse_from_Virtualizer(xml_data=data.xml())
         data = converted.dump()
     else:
       raise RuntimeError(
-         "Not supported config format: %s for 'edit-config'!" % type(data))
+        "Not supported config format: %s for 'edit-config'!" % type(data))
     log.debug(
-       "Send topology description to domain agent at %s..." % self._base_url)
-    return self.send_no_error(self.POST, 'edit-config', data)
+      "Send topology description to domain agent at %s..." % self._base_url)
+    try:
+      return self.send_with_timeout(self.POST, 'edit-config', data)
+    except Timeout:
+      log.warning(
+        "Reached timeout(%ss) while waiting for edit-config response! Ignore "
+        "exception..." % self.CONNECTION_TIMEOUT)
+      # Ignore exception - assume the request was successful -> return True
+      return True
 
   def check_domain_reachable (self):
     return self.ping()
@@ -839,18 +905,20 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param url: url of RESTful API
     :type url: str
     """
-    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix)
-    AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
+    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
+    AbstractESCAPEAdapter.__init__(self, **kwargs)
     log.debug(
-       "Init UNIFYRESTAdapter - type: %s, domain: %s, URL: %s" % (
-         self.type, self.domain_name, url))
+      "Init UNIFYRESTAdapter - type: %s, domain: %s, URL: %s" % (
+        self.type, self.domain_name, url))
     # Converter object
-    self.converter = NFFGConverter(domain=self.domain_name, logger=log)
+    self.converter = NFFGConverter(domain=self.domain_name, logger=log,
+                                   ensure_unique_id=CONFIG.ensure_unique_id())
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None
 
   def ping (self):
+    log.debug("Send ping request to remote agent: %s" % self._base_url)
     return self.send_no_error(self.GET, 'ping')
 
   def get_config (self):
@@ -860,26 +928,35 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: infrastructure view as an :any:`NFFG`
     :rtype: :any::`NFFG`
     """
+    log.debug("Send get-config request to remote agent: %s" % self._base_url)
+    # Get topology from remote agent handling every exception
     data = self.send_no_error(self.POST, 'get-config')
-    log.debug("Received config from remote %s domain agent at %s" % (
-      self.domain_name, self._base_url))
     if data:
+      # Got data
+      log.debug("Received config from remote %s domain agent at %s" % (
+        self.domain_name, self._base_url))
+      log.debug("Detected response format: %s" %
+                self.get_last_response_headers().get("Content-Type", "None"))
       log.info("Parse and load received data...")
       if not data.startswith("<?xml version="):
         log.error("Received data is not in XML format!")
         return
       # Covert from XML-based Virtualizer to NFFG
-      nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data,
-                                                          with_virt=True)
+      nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+                                                         with_virt=True)
       # Cache virtualizer
       self.virtualizer = virt
       if self._original_virtualizer is None:
         log.debug(
-           "Store Virtualizer(id: %s, name: %s) as the original domain "
-           "config..." % (
-             virt.id.get_as_text(), virt.name.get_as_text()))
+          "Store Virtualizer(id: %s, name: %s) as the original domain "
+          "config..." % (
+            virt.id.get_as_text(), virt.name.get_as_text()))
         self._original_virtualizer = deepcopy(virt)
+      log.debug("Used domain for conversion: %s" % self.domain_name)
       return nffg
+    else:
+      log.error("No data is received from remote agent at %s!" % self._base_url)
+      return
 
   def edit_config (self, data):
     """
@@ -890,19 +967,28 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: status code
     :rtype: str
     """
+    log.debug(
+      "Prepare edit-config request for remote agent at: %s" % self._base_url)
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
-         virtualizer=self.virtualizer, nffg=data)
+        virtualizer=self.virtualizer, nffg=data)
       data = virt_data.xml()
     elif isinstance(data, Virtualizer):
       data = data.xml()
     else:
       raise RuntimeError(
-         "Not supported config format: %s for 'edit-config'!" % type(data))
+        "Not supported config format: %s for 'edit-config'!" % type(data))
     log.debug("Send NFFG to %s domain agent at %s..." % (
       self.domain_name, self._base_url))
-    return self.send_no_error(self.POST, 'edit-config', data)
+    try:
+      return self.send_with_timeout(self.POST, 'edit-config', data)
+    except Timeout:
+      log.warning(
+        "Reached timeout(%ss) while waiting for edit-config response! Ignore "
+        "exception..." % self.CONNECTION_TIMEOUT)
+      # Ignore exception - assume the request was successful -> return True
+      return True
 
   def check_domain_reachable (self):
     return self.ping()
@@ -916,6 +1002,11 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   """
   This class is devoted to provide REST specific functions for OpenStack
   domain.
+
+  .. warning::
+    Not maintained anymore! Use general :any:`UnifyRESTAdapter` instead of
+    this class.
+
   """
   # Set custom header
   custom_headers = {
@@ -935,12 +1026,13 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type url: str
     """
     log.debug(
-       "Init OpenStackRESTAdapter - type: %s, URL: %s" % (self.type, url))
+      "Init OpenStackRESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix)
     log.debug("base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     # Converter object
-    self.converter = NFFGConverter(domain=self.domain_name, logger=log)
+    self.converter = NFFGConverter(domain=self.domain_name, logger=log,
+                                   ensure_unique_id=CONFIG.ensure_unique_id())
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None
@@ -956,15 +1048,15 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.error("Received data is not in XML!")
         return
       # Covert from XML-based Virtualizer to NFFG
-      nffg, virt = self.converter.parse_from_Virtualizer3(data,
-                                                          with_virt=True)
+      nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+                                                         with_virt=True)
       # Cache virtualizer
       self.virtualizer = virt
       if self._original_virtualizer is None:
         log.debug(
-           "Store Virtualizer(id: %s, name: %s) as the original domain "
-           "config..." % (
-             virt.id.get_as_text(), virt.name.get_as_text()))
+          "Store Virtualizer(id: %s, name: %s) as the original domain "
+          "config..." % (
+            virt.id.get_as_text(), virt.name.get_as_text()))
         self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
@@ -973,15 +1065,15 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
-         virtualizer=self.virtualizer, nffg=data)
+        virtualizer=self.virtualizer, nffg=data)
       data = virt_data.xml()
     elif isinstance(data, Virtualizer):
       data = data.xml()
     else:
       raise RuntimeError(
-         "Not supported config format: %s for 'edit-config'!" % type(data))
+        "Not supported config format: %s for 'edit-config'!" % type(data))
     log.debug(
-       "Send topology description to domain agent at %s..." % self._base_url)
+      "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
@@ -995,6 +1087,10 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                                UniversalNodeAPI):
   """
   This class is devoted to provide REST specific functions for UN domain.
+
+  .. warning::
+    Not maintained anymore! Use general :any:`UnifyRESTAdapter` instead of
+    this class.
   """
   # Set custom header
   custom_headers = {
@@ -1014,12 +1110,13 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type url: str
     """
     log.debug(
-       "Init UniversalNodeRESTAdapter - type: %s, URL: %s" % (self.type, url))
+      "Init UniversalNodeRESTAdapter - type: %s, URL: %s" % (self.type, url))
     AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix)
     log.debug("base URL is set to %s" % url)
     AbstractESCAPEAdapter.__init__(self, *args, **kwargs)
     # Converter object
-    self.converter = NFFGConverter(domain=self.domain_name, logger=log)
+    self.converter = NFFGConverter(domain=self.domain_name, logger=log,
+                                   ensure_unique_id=CONFIG.ensure_unique_id())
     # Cache for parsed virtualizer
     self.virtualizer = None
     self._original_virtualizer = None
@@ -1036,15 +1133,15 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.error("Received data is not in XML!")
         return
       # Covert from XML-based Virtualizer to NFFG
-      nffg, virt = self.converter.parse_from_Virtualizer3(xml_data=data,
-                                                          with_virt=True)
+      nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+                                                         with_virt=True)
       # Cache virtualizer
       self.virtualizer = virt
       if self._original_virtualizer is None:
         log.debug(
-           "Store Virtualizer(id: %s, name: %s) as the original domain "
-           "config..." % (
-             virt.id.get_as_text(), virt.name.get_as_text()))
+          "Store Virtualizer(id: %s, name: %s) as the original domain "
+          "config..." % (
+            virt.id.get_as_text(), virt.name.get_as_text()))
         self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
@@ -1053,13 +1150,13 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
-         virtualizer=self.virtualizer, nffg=data)
+        virtualizer=self.virtualizer, nffg=data)
       data = virt_data.xml()
     elif isinstance(data, Virtualizer):
       data = data.xml()
     else:
       raise RuntimeError(
-         "Not supported config format: %s for 'edit-config'!" % type(data))
+        "Not supported config format: %s for 'edit-config'!" % type(data))
     log.debug(
       "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
