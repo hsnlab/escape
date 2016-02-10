@@ -1336,7 +1336,7 @@ class NFFGToolBox(object):
                   if sghop_info in sg_map:
                     sg_map[sghop_info][1] = ending_port
                   else:
-                    # the 3rd element is the port object which is used if the 
+                    # the last element is the port object which is used if the 
                     # flowrules sequence of this TAG value only consists of this
                     # flowrule, and there is no starting flowrule for it, so the
                     # other end of the link (finishing in 'p') is the port where
@@ -1382,7 +1382,7 @@ class NFFGToolBox(object):
               if sghop_info in sg_map:
                 sg_map[sghop_info][0] = starting_port
               else:
-                # the 3rd element means similar to the one before, but the 
+                # the last element means similar to the one before, but the 
                 # destination port object can be reached from it similarly.
                 for a in actions:
                   c_p = a.split("=")
