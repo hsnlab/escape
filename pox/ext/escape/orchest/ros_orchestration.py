@@ -74,13 +74,13 @@ class ResourceOrchestrator(AbstractOrchestrator):
         try:
           mapped_nffg = self.mapper.orchestrate(nffg, global_view)
           log.debug(
-             "NF-FG instantiation is finished by %s" % self.__class__.__name__)
+            "NF-FG instantiation is finished by %s" % self.__class__.__name__)
           # Notify remote visualizer about the mapping result if it's needed
           notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
           return mapped_nffg
         except ProcessorError as e:
           log.warning(
-             "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
+            "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
       else:
         log.warning("Global view is not subclass of AbstractVirtualizer!")
     else:

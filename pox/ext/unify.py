@@ -96,8 +96,8 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   from pox.samples.pretty_log import launch
   launch()
   log.info(
-     "Setup logger - formatter: %s, level: %s" % (
-       "pretty_log", logging.getLevelName(log.getEffectiveLevel())))
+    "Setup logger - formatter: %s, level: %s" % (
+      "pretty_log", logging.getLevelName(log.getEffectiveLevel())))
   # Save additional config file name into POX's core as an attribute to avoid to
   # confuse with POX's modules
   if config:

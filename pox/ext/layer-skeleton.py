@@ -14,10 +14,9 @@
 """
 ESCAPEv2 layer skeleton
 """
-from escape.util.api import AbstractAPI
-
-from pox.core import core
 import pox.lib.util as poxutil
+from escape.util.api import AbstractAPI
+from pox.core import core
 
 # Initial parameters
 init_param = {}
