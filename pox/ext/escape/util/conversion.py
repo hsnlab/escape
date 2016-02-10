@@ -682,6 +682,11 @@ class NFFGConverter(object):
           vlink.resources.bandwidth.is_initialized()]
         # Default value: None
         node_bw = min(node_bw) if node_bw else None
+        try:
+          node_bw = float(node_bw)
+        except ValueError as e:
+          self.log.warning(
+            "Resource bandwidth value is not valid number: %s" % e)
       if 'delay' in vnode.metadata:
         # Converted to float in Infra constructor
         node_delay = vnode.metadata['delay'].value.get_value()
@@ -693,6 +698,10 @@ class NFFGConverter(object):
           vlink.resources.delay.is_initialized()]
         # Default value: None
         node_delay = max(node_delay) if node_delay else None
+        try:
+          node_bw = float(node_bw)
+        except ValueError as e:
+          self.log.warning("Resource delay value is not valid number: %s" % e)
       # Add Infra Node to NFFG
       infra = nffg.add_infra(id=node_id, name=node_name, domain=node_domain,
                              infra_type=node_type, cpu=node_cpu, mem=node_mem,
