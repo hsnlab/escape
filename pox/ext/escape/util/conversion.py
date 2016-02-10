@@ -290,9 +290,8 @@ class NFFGConverter(object):
 
         # Add metadata from infra port metadata to sap metadata
         for key in vport.metadata:  # Optional - port.metadata
-          if key not in ('l_bw', 'l_delay'):
-            sap.add_metadata(name=key,
-                             value=vport.metadata[key].value.get_value())
+          sap.add_metadata(name=key,
+                           value=vport.metadata[key].value.get_value())
 
         # Create and add the port of the opposite Infra node
         try:
@@ -312,25 +311,13 @@ class NFFGConverter(object):
 
         self.log.debug("Added port for SAP -> %s" % infra_port)
 
-        # Get SAP-Infra link resources from metadata if these are stored
-        # Default value: None
-        if 'l_bw' in vport.metadata.keys():
-          sap_infra_link_bw = vport.metadata['l_bw'].value.get_value()
-        else:
-          sap_infra_link_bw = None
-        if 'l_delay' in vport.metadata.keys():
-          sap_infra_link_delay = vport.metadata['l_delay'].value.get_value()
-        else:
-          sap_infra_link_delay = None
         # Add connection between infra - SAP
         # SAP-Infra is static link --> create link for both direction
         l1, l2 = nffg.add_undirected_link(
           p1p2id="%s-%s-link" % (sap_id, infra.id),
           p2p1id="%s-%s-link-back" % (sap_id, infra.id),
           port1=sap_port,
-          port2=infra_port,
-          delay=sap_infra_link_delay,
-          bandwidth=sap_infra_link_bw)
+          port2=infra_port)
 
         self.log.debug("Added SAP-Infra connection: %s" % l1)
         self.log.debug("Added Infra-SAP connection: %s" % l2)
@@ -861,7 +848,7 @@ class NFFGConverter(object):
     self._parse_virtualizer_links(nffg=nffg, virtualizer=virtualizer)
 
     # Parse Metadata from Virtualizer
-    # self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
+    self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
 
     self.log.debug(
       "END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
@@ -900,8 +887,10 @@ class NFFGConverter(object):
 
       # Migrate metadata
       for key, value in infra.metadata.iteritems():
+        meta_key = str(key)
+        meta_value = str(value) if value is not None else None
         v_node.metadata.add(
-          virt_lib.MetadataMetadata(key=str(key), value=str(value)))
+          virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
 
       # Add remained NFFG-related information into metadata
       if infra.resources.delay is not None:
@@ -940,8 +929,10 @@ class NFFGConverter(object):
         # Migrate port metadata
         for property, value in port.properties.iteritems():
           if property not in ('name', 'capability', 'sap', 'type'):
+            meta_key = str(property)
+            meta_value = str(value) if value is not None else None
             v_port.metadata.add(
-              virt_lib.MetadataMetadata(key=str(property), value=str(value)))
+              virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
         # port_type: port-abstract & sap: -    -->  regular port
         # port_type: port-abstract & sap: <SAP...>    -->  was connected to
         # an inter-domain port - set this data in Virtualizer
@@ -965,12 +956,12 @@ class NFFGConverter(object):
         # There are valid port-pairs
         for i, port_pair in enumerate(combinations(
            (p.id.get_value() for p in v_node.ports), 2)):
-          if infra.resources.delay:
-            v_link_delay = infra.resources.delay
+          if infra.resources.delay is not None:
+            v_link_delay = str(infra.resources.delay)
           else:
             v_link_delay = None
-          if infra.resources.bandwidth:
-            v_link_bw = infra.resources.bandwidth
+          if infra.resources.bandwidth is not None:
+            v_link_bw = str(infra.resources.bandwidth)
           else:
             v_link_bw = None
           # Create link
@@ -978,8 +969,8 @@ class NFFGConverter(object):
                                  src=v_node.ports[port_pair[0]],
                                  dst=v_node.ports[port_pair[1]],
                                  resources=virt_lib.Link_resource(
-                                   delay=str(v_link_delay),
-                                   bandwidth=str(v_link_bw)))
+                                   delay=v_link_delay,
+                                   bandwidth=v_link_bw))
           # Call bind to resolve src,dst references to workaround a bug
           v_link.bind()
           v_node.links.add(v_link)
@@ -1044,13 +1035,6 @@ class NFFGConverter(object):
           self.log.debug(
             "Convert inter-domain SAP to port: %s in infra: %s" % (
               link.dst.id, n))
-        # Add SAP-Infra link resources as metadata in virtualizer.node.port
-        if link.delay is not None:
-          v_sap_port.metadata.add(
-            virt_lib.MetadataMetadata(key="l_delay", value=str(link.delay)))
-        if link.bandwidth is not None:
-          v_sap_port.metadata.add(
-            virt_lib.MetadataMetadata(key="l_bw", value=str(link.bandwidth)))
 
   def _convert_nffg_edges (self, nffg, virtualizer):
     """
@@ -1083,14 +1067,14 @@ class NFFGConverter(object):
       else:
         src_node_id = str(link.src.node.id)
         dst_node_id = str(link.dst.node.id)
+      v_link_delay = str(link.delay) if link.delay is not None else None
+      v_link_bw = str(link.bandwidth) if link.bandwidth is not None else None
       v_link = virt_lib.Link(
         id=str(link.id),
         src=virtualizer.nodes[src_node_id].ports[str(link.src.id)],
         dst=virtualizer.nodes[dst_node_id].ports[str(link.dst.id)],
-        resources=virt_lib.Link_resource(
-          delay=str(link.delay) if link.delay is not None else None,
-          bandwidth=str(
-            link.bandwidth) if link.bandwidth is not None else None))
+        resources=virt_lib.Link_resource(delay=v_link_delay,
+                                         bandwidth=v_link_bw))
       # Call bind to resolve src,dst references to workaround a bug
       v_link.bind()
       virtualizer.links.add(v_link)
@@ -1109,12 +1093,18 @@ class NFFGConverter(object):
         NFFG.version, V_VERSION))
 
     self.log.debug("Converting data to XML-based Virtualizer structure...")
-    # Create empty Virtualizer
+    # Create Virtualizer with default id,name
     v_id = str(nffg.id)
     v_name = str(nffg.name) if nffg.name else None
     virtualizer = virt_lib.Virtualizer(id=v_id, name=v_name)
     self.log.debug("Creating Virtualizer based on %s" % nffg)
 
+    # Convert metadata
+    for key, value in nffg.metadata.iteritems():
+      meta_key = str(key)
+      meta_value = str(value) if value is not None else None
+      virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
+                                                              value=meta_value))
     # Convert Infras
     self._convert_nffg_infras(nffg=nffg, virtualizer=virtualizer)
 
@@ -1216,8 +1206,10 @@ class NFFGConverter(object):
           # Migrate metadata
           for key, value in nf.metadata.iteritems():
             if key not in ('deployment_type', 'delay', 'bandwidth'):
+              meta_key = str(key)
+              meta_value = str(value) if value is not None else None
               v_nf.metadata.add(
-                virt_lib.MetadataMetadata(key=str(key), value=str(value)))
+                virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
           # Add NF to Infra object
           v_node.NF_instances.add(v_nf)
           # Cache discovered NF
@@ -1236,8 +1228,10 @@ class NFFGConverter(object):
             v_node.NF_instances[str(v)].ports.add(v_nf_port)
             # Migrate metadata
             for property, value in port.properties.iteritems():
+              meta_key = str(property)
+              meta_value = str(value) if value is not None else None
               v_nf_port.metadata.add(
-                virt_lib.MetadataMetadata(key=str(property), value=str(value)))
+                virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
 
             self.log.debug(
               "Added Port: %s to NF node: %s" % (port, v_nf.id.get_as_text()))
