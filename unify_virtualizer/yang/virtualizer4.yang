@@ -211,6 +211,7 @@ module virtualizer4 {
       }
     }
     uses links; // infra links
+    uses metadata;
   }
-  uses metadata;
+
 }
