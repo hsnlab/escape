@@ -238,17 +238,17 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     from copy import deepcopy
     for sap in dov.saps:
       c_sap = nffg.add_sap(sap=deepcopy(sap))
-    log.debug("Add SAP: %s" % c_sap)
-    # Discover and add SAP connections
-    for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
-      link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
-                                              port2=sbb.add_port(
-                                                "port-%s" % c_sap.id),
-                                              p1p2id=l.id,
-                                              delay=l.delay,
-                                              bandwidth=l.bandwidth)
-    log.debug("Add connection: %s" % link1)
-    log.debug("Add connection: %s" % link2)
+      log.debug("Add SAP: %s" % c_sap)
+      # Discover and add SAP connections
+      for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
+        link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
+                                                port2=sbb.add_port(
+                                                  "port-%s" % c_sap.id),
+                                                p1p2id=l.id,
+                                                delay=l.delay,
+                                                bandwidth=l.bandwidth)
+        log.debug("Add connection: %s" % link1)
+        log.debug("Add connection: %s" % link2)
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return nffg
