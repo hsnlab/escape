@@ -339,7 +339,7 @@ class Yang(object):
                 self.__dict__[l].set_parent(self)
             return getattr(self, l).create_path(source, path="/".join(p), target_copy_type=target_copy_type)
 
-    def walk_path(self, path):
+    def walk_path(self, path, reference=None):
         """
         Follows the specified path to return the instance the path points to (handles relative and absolute paths)
         :param path: string
@@ -350,15 +350,23 @@ class Yang(object):
 
         p = path.split("/")
         l = p.pop(0)
-        if path[0] == "/": # absolute path
+        if path[0] == "/":  # absolute path
             if self.get_parent() is not None:
-                return self.get_parent().walk_path(path)
+                return self.get_parent().walk_path(path, reference)
             elif self.get_tag() == p[0]:
                 p.pop(0)
-                return self.walk_path("/".join(p))
+                return self.walk_path("/".join(p), reference)
+            # entry not in the current tree, let's try the reference tree
+            elif reference is not None:
+                try:
+                    yng = reference.walk_path(self.get_path(), reference=None)
+                    return yng.walk_path("/".join(p), reference=None)
+                except:
+                    # path does not exist in the reference tree raise exception
+                    raise ValueError("in walk_path(): Root tag not found neither in the current nor in the reference tree")
             raise ValueError("Root tag not found in walk_path()")
         if l == "..":
-            return self.get_parent().walk_path("/".join(p))
+            return self.get_parent().walk_path("/".join(p), reference)
         else:
             if (l.find("[") > 0) and (l.find("]") > 0):
                 attrib = l[0: l.find("[")]
@@ -370,12 +378,19 @@ class Yang(object):
                     key.append(v[1])
                 if len(key) == 1:
                     if key[0] in self.__dict__[attrib].keys():
-                        return getattr(self, attrib)[key[0]].walk_path("/".join(p))
+                        return getattr(self, attrib)[key[0]].walk_path("/".join(p), reference)
+                    elif reference is not None:
+                        yng = reference.walk_path(self.get_path(), reference=None)
+                        return yng.walk_path("/".join(p), reference=None)
                 elif key in self.__dict__[attrib].keys():
-                   return getattr(self, attrib)[key].walk_path("/".join(p))
+                   return getattr(self, attrib)[key].walk_path("/".join(p), reference)
             else:
                 if (l in self.__dict__.keys()) and (getattr(self, l) is not None):
-                    return getattr(self, l).walk_path("/".join(p))
+                    return getattr(self, l).walk_path("/".join(p), reference)
+                elif reference is not None:
+                    path = self.get_path()
+                    yng = reference.walk_path(path, reference=None)
+                    return yng.walk_path(l+"/"+"/".join(p), reference=None)
         raise ValueError("Path does not exist from {f} to {t}; yang tree={y}".format(f=self.get_path(), t=l+"/"+"/".join(p), y=self.html()))
 
     def get_rel_path(self, target):
@@ -1258,14 +1273,15 @@ class Leafref(StringLeaf):
         else:
             raise ReferenceError("Leafref get_as_text() is called but neither data nor target exists.")
 
-    def get_target(self):
+    def get_target(self, reference=None):
         """
         Returns get path to target if data is initialized
         :param: -
         :return: string
         """
         if self.target is None:
-            self.bind() # sets the target
+            return self.walk_path(self.data, reference=reference)
+            # self.bind() # sets the target
         return self.target
         # if self.data is not None:
         #     return self.walk_path(self.data)

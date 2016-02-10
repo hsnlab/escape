@@ -1,4 +1,4 @@
-#    Filename: virtualizer4.py		 Created: 2016-01-28  15:42:54
+#    Filename: virtualizer4.py		 Created: 2016-02-10  09:24:43
 #    This file was automatically created by a pyang plugin (PNC) developed at Ericsson Hungary Ltd., 2015
 #    Authors: Robert Szabo, Balazs Miriszlai, Akos Recse, Raphael Vicente Rosa
 #    Credits: Robert Szabo, Raphael Vicente Rosa, David Jocha, Janos Elek, Balazs Miriszlai, Akos Recse
@@ -423,12 +423,13 @@ class Infra_nodeCapabilities(Yang):
 
 
 # YANG construct: container virtualizer
-class Virtualizer(GroupingId_name, GroupingLinks):
+class Virtualizer(GroupingId_name, GroupingLinks, GroupingMetadata):
     """Container for a single virtualizer"""
     def __init__(self, tag="virtualizer", parent=None, id=None, name=None, nodes=None, links=None):
         GroupingId_name.__init__(self, tag, parent, id, name)
         GroupingLinks.__init__(self, tag, parent, links)
-        self._sorted_children = ["id", "name", "nodes", "links"]
+        GroupingMetadata.__init__(self, tag, parent)
+        self._sorted_children = ["id", "name", "nodes", "links", "metadata"]
         # yang construct: container
         self.nodes = None
         """:type: VirtualizerNodes"""
