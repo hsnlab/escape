@@ -1,6 +1,6 @@
 {
   "parameters": {
-    "id": "SG-decomp", 
+    "id": "SG-request",
     "name": "SG-name", 
     "version": "1.0"
   }, 
