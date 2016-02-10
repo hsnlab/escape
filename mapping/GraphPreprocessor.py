@@ -300,9 +300,8 @@ class GraphPreprocessorClass(object):
           last_vnf = vnf
           for i, j in nx.dfs_edges(best_effort_graph, vnf):
             if last_vnf == i:
-              # no matter which link did the DFS take if there was multiple
-              # edges
-              # left between i and j in the best_effort_graph
+              # no matter which link did the DFS take if there were multiple
+              # edges left between i and j in the best_effort_graph
               linkid = next(best_effort_graph[i][j].iterkeys())
               if len(best_effort_graph[i][j][linkid]['color']) != 0:
                 raise uet.InternalAlgorithmException(
@@ -316,6 +315,7 @@ class GraphPreprocessorClass(object):
               else:
                 break
             else:
+              # don't go further if the DFS would change path
               break
           for i, j, k in zip(subc_path[:-1], subc_path[1:], link_ids):
             self.link_rechained.add_edge(i, j, key=k)
@@ -447,45 +447,48 @@ class GraphPreprocessorClass(object):
     # calling processReq and processNet
     # must be the same that processNetwork() returned.
     self.net = preprocessed_network
+    specific_tag_format = "dl_vlan="
 
     for n in self.req_graph.infras:
       for p in n.ports:
         for fr in p.flowrules:
-          if "dl_vlan=" in fr.action:
+          if specific_tag_format in fr.action:
             # it means this flowrule is starting a sequence which should 
             # lead to an interdomain SAP.
             for act in fr.action.split(";"):
-              if "dl_vlan=" in act:
+              if specific_tag_format in act:
                 for sghop in self.req_graph.sg_hops:
                   if sghop.id == fr.hop_id:
                     # tag_info indicates action in SGHop
                     if sghop.dst.node.type != 'SAP':
-                      raise uet.BadInputException("dl_vlan tag action should be"
-                            " only in flow sequences leading to a SAP", 
-                            "SGHop %s does'nt end in SAP!"%sghop.id)
+                      raise uet.BadInputException("%s tag action should be"
+                            " only in flow sequences leading to a SAP"\
+                                                  %specific_tag_format, 
+                            "SGHop %s doesn't end in SAP!"%sghop.id)
                     sghop.tag_info = act
     # we need to have different all-flowrule iteration, otherwise we couldn't
-    # identify whether a "dl_vlan=" field in match would belong to outbound or 
-    # inbound flowrule sequence
+    # identify whether a specific_tag_format field in match would belong to 
+    # outbound or inbound flowrule sequence
     for n in [node for node in self.req_graph.infras]:
       # we have to go through the iterator, because we want to delete from it,
       # cuz we want only the service graph (after interdomain tag_info has been 
       # gathered)
       for p in n.ports:
         for fr in p.flowrules:
-          if "dl_vlan=" in fr.match:
+          if specific_tag_format in fr.match:
             # it means this flowrule can be a part of a flow sequence towards 
             # a SAP ***OR*** can originate from a SAP
             for mat in fr.match.split(";"):
-              if "dl_vlan=" in mat:
+              if specific_tag_format in mat:
                 for sghop in self.req_graph.sg_hops:
                   if sghop.id == fr.hop_id and sghop.tag_info is None:
                     # it means we haven't found this tag_info while searching in
                     # ACTION fields of Flowrules previously!
                     if sghop.src.node.type != 'SAP':
-                      raise uet.BadInputException("dl_vlan matches without a "
-                      "starting dl_vlan action in a flowrule sequence should "
-                      "originate from a SAP", "SGHop %s doesn't originate from"
+                      raise uet.BadInputException("%s matches without a "
+                      "starting %s action in a flowrule sequence should "
+                      "originate from a SAP"%(specific_tag_format, 
+                       specific_tag_format), "SGHop %s doesn't originate from"
                                                   " a SAP"%sghop.id)
                     # tag_info indicates match in SGHop
                     sghop.tag_info = mat
@@ -662,12 +665,19 @@ class GraphPreprocessorClass(object):
     # in case of full_remap there is nothing to do with the flowrules, they 
     # will be deleted...
     if not full_remap:
+      sg_hop_ids_in_req = {sg.id for sg in self.req_graph.sg_hops}
       # find all the flowrules with starting TAG and retrieve the paths, 
       # and subtract the reserved link and internal (inside Infras) bandwidth
       for d in net.infras:
         reserved_internal_bw = 0
         for p in d.ports:
           for fr in p.flowrules:
+            if fr.hop_id in sg_hop_ids_in_req:
+              raise uet.BadInputException("SGHops in request graph shouldn't be"
+                    " mapped already to the substrate graph. SGHop ID-s shold be"
+                    " different, otherwise they are considered the same!", 
+                    "Flowrule %s in Infra node %s is a part of the (earlier) "
+                    "mapped path of SGHop %s."%(fr.id, d.id, fr.hop_id))
             if fr.bandwidth is not None:
               reserved_internal_bw += fr.bandwidth
           for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
@@ -741,14 +751,19 @@ class GraphPreprocessorClass(object):
           for f in deletable:
             p.flowrules.remove(f)
 
+    edges_to_delete = []
     for i, j, k in net.network.edges_iter(keys=True):
       if net.network[i][j][k].type != 'STATIC':
         # meaning there is a Dynamic, SG or Requirement link left
-        raise uet.BadInputException(
-           "After removing the NodeNFs from the substrate NFFG, "
-           "there shouldn`t be DYNAMIC, SG or REQUIREMENT links left in "
-           "the network.", "Link %s between nodes %s and %s is  a %s link" % (
-             k, i, j, net.network[i][j][k].type))
+        if net.network[i][j][k].type == 'REQUIREMENT':
+          if net.network[i][j][k].dst.node.id != net.network[i][j][k].src.node.id:
+            self.log.warn("Unexpected EdgeReq found between %s and %s nodes! "
+                 "They should only occour as loop links in BiS-BiS type "
+                 "Infras..."%(i,j))
+        edges_to_delete.append(net.network[i][j][k])
+    self.log.debug("Removing unnecessary non-STATIC links...")
+    for e in edges_to_delete:
+      net.del_edge(e.src, e.dst, e.id)
     for n in net.nfs:
       raise uet.BadInputException(
          "NodeNF %s couldn`t be removed from the NFFG" % net.network.node[n].id,
