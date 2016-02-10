@@ -132,14 +132,14 @@ class AbstractDomainManager(EventMixin):
     """
     if not self._adapters_cfg:
       log.fatal(
-         "Missing Adapter configurations from DomainManager: %s" %
-         self.domain_name)
+        "Missing Adapter configurations from DomainManager: %s" %
+        self.domain_name)
       raise ConfigurationError(
-         "Missing configuration for %s" % self.domain_name)
+        "Missing configuration for %s" % self.domain_name)
     log.debug(
-       "Init Adapters for domain: %s - adapters: %s" % (
-         self.domain_name,
-         [a['class'] for a in self._adapters_cfg.itervalues()]))
+      "Init Adapters for domain: %s - adapters: %s" % (
+        self.domain_name,
+        [a['class'] for a in self._adapters_cfg.itervalues()]))
     # Update Adapters's config with domain name
     # self._adapters_cfg['domain_name'] = self.domain_name
     for adapter in self._adapters_cfg.itervalues():
@@ -167,7 +167,7 @@ class AbstractDomainManager(EventMixin):
     :return: None
     """
     raise NotImplementedError(
-       "Managers must override this function to initiate Adapters!")
+      "Managers must override this function to initiate Adapters!")
 
   def run (self):
     """
@@ -274,7 +274,8 @@ class AbstractDomainManager(EventMixin):
     elif self._detected:
       # Detected before -> lost connection = big Problem
       log.warning(
-         "Lost connection with %s agent! Go slow poll..." % self.domain_name)
+        "Lost connection with %s agent! Going to slow poll..." %
+        self.domain_name)
       self._detected = False
       self.restart_polling()
     else:
@@ -296,7 +297,7 @@ class AbstractDomainManager(EventMixin):
       log.info(">>> %s domain confirmed!" % self.domain_name)
       self._detected = True
       log.info(
-         "Requesting resource information from %s domain..." % self.domain_name)
+        "Requesting resource information from %s domain..." % self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
       # print topo_nffg.dump()
       if topo_nffg:
@@ -374,7 +375,7 @@ class AbstractESCAPEAdapter(EventMixin):
   TYPE_MANAGEMENT = "MANAGEMENT"
   TYPE_REMOTE = "REMOTE"
 
-  def __init__ (self, domain_name='UNDEFINED', *args, **kwargs):
+  def __init__ (self, domain_name='UNDEFINED', **kwargs):
     """
     Init.
     """
@@ -393,8 +394,8 @@ class AbstractESCAPEAdapter(EventMixin):
     """
     if self.domain_name == "UNDEFINED":
       log.warning(
-         "Domain name is not set for Adapter(name: %s)! Skip domain rewrite "
-         "for %s..." % (self.name, nffg))
+        "Domain name is not set for Adapter(name: %s)! Skip domain rewrite "
+        "for %s..." % (self.name, nffg))
     for infra in nffg.infras:
       infra.domain = self.domain_name
     return nffg
@@ -446,7 +447,7 @@ class AbstractESCAPEAdapter(EventMixin):
 
 class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
   """
-  Abstract class for different domain adapters wich need SDN/OF controller
+  Abstract class for different domain adapters which need SDN/OF controller
   capability.
   """
   # Keepalive constants
@@ -497,10 +498,9 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     # Launch OpenFlow connection handler if not started before with given name
     # launch() return the registered openflow module which is a coop Task
     log.debug(
-       "Setup OF interface and initiate handler object for connection: (%s, "
-       "%i)" % (address, port))
+      "Setup OF interface and initiate handler object for connection: (%s, "
+      "%i)" % (address, port))
     from pox.openflow.of_01 import launch
-
     of = launch(name=name, address=address, port=port)
     # Start listening for OpenFlow connections
     of.start()
@@ -508,9 +508,13 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     of.name = self.task_name
     # register OpenFlow event listeners
     self.openflow.addListeners(self)
-    log.debug("%s adapter: Start listening connections..." % self.name)
+    log.debug(
+      "%s adapter: Start listening incoming OF connections..." % self.name)
     # initiate keepalive if needed
     if keepalive:
+      log.debug(
+        "Initiate keepalive functionality - Echo Request interval: %ss, "
+        "timeout: %ss" % (self._interval, self._switch_timeout))
       Timer(self._interval, self._handle_keepalive_handler, recurring=True,
             args=(self.openflow,))
 
@@ -520,13 +524,14 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     er = of.ofp_echo_request().pack()
     t = time.time()
     dead = []
-    for dpid, con in ofnexus.connections.iteritems():
-      if t - con.idle_time > (cls._interval + cls._switch_timeout):
-        dead.append(con)
+    for dpid, conn in ofnexus.connections.iteritems():
+      if t - conn.idle_time > (cls._interval + cls._switch_timeout):
+        dead.append(conn)
         continue
-      con.send(er)
-    for con in dead:
-      con.disconnect("Timeout")
+      conn.send(er)
+    for conn in dead:
+      conn.disconnect(
+        "Connection: %s has reached timeout: %s!" % (conn, cls._switch_timeout))
 
   def filter_connections (self, event):
     """
@@ -555,13 +560,16 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     :type id: str
     :return: None
     """
-    dpid = self.infra_to_dpid[id]
-    con = self.openflow.getConnection(dpid)
+    conn = self.openflow.getConnection(dpid=self.infra_to_dpid[id])
+    if not conn:
+      log.warning(
+        "Missing connection for node element: %s! Skip deletion of flowrules..."
+        % id)
+      return
     log.debug(
-       "Delete flow entries from INFRA %s on connection: %s ..." % (id, con))
-
+      "Delete flow entries from INFRA %s on connection: %s ..." % (id, conn))
     msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
-    con.send(msg)
+    conn.send(msg)
 
   def install_flowrule (self, id, match, action):
     """
@@ -575,34 +583,37 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     :type action: dict
     :return: None
     """
-    # print match
-    # print action
-    dpid = self.infra_to_dpid[id]
-    con = self.openflow.getConnection(dpid)
+    conn = self.openflow.getConnection(dpid=self.infra_to_dpid[id])
+    if not conn:
+      log.warning(
+        "Missing connection for node element: %s! Skip flowruel "
+        "installation..." % id)
     log.debug(
-       "Install flow entry into INFRA %s on connection: %s ..." % (id, con))
+      "Install flow entry into INFRA: %s on connection: %s ..." % (id, conn))
 
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
-    try:
+    if 'vlan_id' in match:
       vid = match['vlan_id']
       msg.match.dl_vlan = int(vid)
-    except KeyError:
-      pass
 
-    try:
+    if 'vlan_push' in action:
       vid = action['vlan_push']
       msg.actions.append(
-         of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
+        of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
       # msg.actions.append(of.ofp_action_vlan_vid())
-    except KeyError:
-      pass
-    try:
-      if action['vlan_pop']:
-        msg.actions.append(of.ofp_action_strip_vlan())
-    except KeyError:
-      pass
     out = action['out']
+    # If out is in the detected saps --> always remove the VLAN tags
+    if 'vlan_pop' in action:
+      msg.actions.append(of.ofp_action_strip_vlan())
+    else:
+      try:
+        # If next node is a SAP we need to setup the MAC addresses and
+        # strip VLAN from the frame explicitly
+        if out in self.saps[id]:
+          msg.actions.append(of.ofp_action_strip_vlan())
+      except KeyError:
+        pass
     try:
       if out in self.saps[id]:
         dl_dst = self.saps[id][str(out)]['dl_dst']
@@ -613,8 +624,8 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       pass
     msg.actions.append(of.ofp_action_output(port=int(action['out'])))
 
-    log.debug("Send flow entry:\n%s" % msg)
-    con.send(msg)
+    log.debug("Send OpenFlow flowrule:\n%s" % msg)
+    conn.send(msg)
 
 
 class VNFStarterAPI(object):
@@ -631,7 +642,6 @@ class VNFStarterAPI(object):
   VNF_HEADER_DECOMP = "headerDecompressor"
   VNF_FORWARDER = "simpleForwarder"
 
-
   class VNFStatus(object):
     """
     Helper class for define VNF status code constants.
@@ -645,7 +655,6 @@ class VNFStarterAPI(object):
     UP_AND_RUNNING = 1
     s_UP_AND_RUNNING = "UP_AND_RUNNING"
 
-
   class ConnectedStatus(object):
     """
     Helper class for define VNF connection code constants.
@@ -656,7 +665,6 @@ class VNFStarterAPI(object):
     s_DISCONNECTED = "DISCONNECTED"
     CONNECTED = 1
     s_CONNECTED = "CONNECTED"
-
 
   def __init__ (self):
     super(VNFStarterAPI, self).__init__()
@@ -825,7 +833,7 @@ class AbstractRESTAdapter(Session):
   GET = "GET"
   POST = "POST"
 
-  def __init__ (self, base_url, prefix="", auth=None, *args, **kwargs):
+  def __init__ (self, base_url, prefix="", auth=None, **kwargs):
     super(AbstractRESTAdapter, self).__init__()
     if base_url.endswith('/'):
       self._base_url = urlparse.urljoin(base_url, prefix + "/")
@@ -834,6 +842,11 @@ class AbstractRESTAdapter(Session):
     self.auth = auth
     # Store the last request
     self._response = None
+    if "timeout" in kwargs:
+      self.CONNECTION_TIMEOUT = kwargs['timeout']
+      log.debug(
+        "Setup explicit timeout for REST responses: %ss" %
+        self.CONNECTION_TIMEOUT)
     # Suppress low level logging
     self.__suppress_requests_logging()
 
@@ -883,7 +896,7 @@ class AbstractRESTAdapter(Session):
         # if given body is an NFFG
         body = body.dump()
         kwargs['headers']['Content-Type'] = "application/json"
-      elif isinstance(body, (str, unicode)) and body.startswith(
+      elif isinstance(body, basestring) and body.startswith(
          "<?xml version="):
         kwargs['headers']['Content-Type'] = "application/xml"
     # Setup parameters - URL
@@ -913,28 +926,51 @@ class AbstractRESTAdapter(Session):
     :rtype: str
     """
     try:
+      return self.send_with_timeout(method, url, body, **kwargs)
+    except Timeout:
+      log.warning(
+        "Remote agent(adapter: %s, url: %s) reached timeout limit!" % (
+          self.name, self._base_url))
+      return None
+
+  def send_with_timeout (self, method, url=None, body=None, timeout=None,
+                         **kwargs):
+    """
+    Send REST request with handling exceptions except the TimeoutError.
+
+    :param method: HTTP method
+    :type method: str
+    :param url: valid URL or relevant part follows ``self.base_url``
+    :type url: str
+    :param body: request body
+    :type body: :any:`NFFG` or dict or bytes or str
+    :param timeout: optional timeout param can be given also here
+    :type timeout: int
+    :raises: :any:`requests.exceptions.Timeout`
+    :return: raw response data
+    :rtype: str
+    """
+    try:
+      if timeout is not None:
+        kwargs['timeout'] = timeout
       self.send_request(method, url, body, **kwargs)
       # return self._response.status_code if self._response is not None else
       # None
       return self._response.text if self._response is not None else None
     except ConnectionError:
       log.error(
-         "Remote agent(adapter: %s, url: %s) is not reachable!" % (
-           self.name, self._base_url))
+        "Remote agent(adapter: %s, url: %s) is not reachable!" % (
+          self.name, self._base_url))
       return None
     except HTTPError as e:
       log.error(
-         "Remote agent(adapter: %s, url: %s) responded with an error: %s" % (
-           self.name, self._base_url, e.message))
-      return None
-    except Timeout:
-      log.error("Remote agent(adapter: %s, url: %s) not responding!" % (
-        self.name, self._base_url))
+        "Remote agent(adapter: %s, url: %s) responded with an error: %s" % (
+          self.name, self._base_url, e.message))
       return None
     except KeyboardInterrupt:
       log.warning(
-         "Request to remote agent(adapter: %s, url: %s) is interrupted by "
-         "user!" % (self.name, self._base_url))
+        "Request to remote agent(adapter: %s, url: %s) is interrupted by "
+        "user!" % (self.name, self._base_url))
       return None
 
   def get_last_response_body (self):

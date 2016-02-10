@@ -5,19 +5,19 @@ __copyright__ = 'Copyright Ericsson Hungary Ltd 2015'
 __maintainer__ = 'David Jocha', 'Janos czentye'
 __email__ = 'david.jocha@ericsson.com'
 
+import inspect
 import logging
-import xml.etree.ElementTree as ET
 import os
 import sys
-import inspect
+import xml.etree.ElementTree as ET
 
-from tornado.web import RequestHandler
-from tornado.web import Application, url
 from tornado.ioloop import IOLoop
+from tornado.web import Application, url
+from tornado.web import RequestHandler
 
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
-  os.path.abspath(
-    os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
+   os.path.abspath(
+      os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
                                 "unify_virtualizer"))
 import virtualizer3
 
@@ -45,14 +45,15 @@ class VirtualizationService(RequestHandler):
       self.write('usage:\n')
       self.write('get http://hostip:8082/virtualizer - this help message\n')
       self.write(
-        'get http://hostip:8082/virtualizer/ping - test webserver aliveness\n')
+         'get http://hostip:8082/virtualizer/ping - test webserver aliveness\n')
       self.write(
-        'post http://hostip:8082/virtualizer/ping - test webserver aliveness\n')
+         'post http://hostip:8082/virtualizer/ping - test webserver '
+         'aliveness\n')
       self.write(
-        'post http://hostip:8082/virtualizer/get-config - query nf-fg\n')
+         'post http://hostip:8082/virtualizer/get-config - query nf-fg\n')
       self.write(
-        'post http://hostip:8082/virtualizer/edit-config - send nf-fg request '
-        'in the post body')
+         'post http://hostip:8082/virtualizer/edit-config - send nf-fg request '
+         'in the post body')
 
   # HTTP POST method on http://hostip:8080/rpc_name will trigger this
   # function with rpc=rpc_name
@@ -132,6 +133,7 @@ def start ():
   LOG.debug('Start tornado server')
   app = Application([url(r"/(.*)", VirtualizationService)])
   app.listen(8082)
+  LOG.debug("Listening port: %s" % 8082)
   IOLoop.current().start()
 
 

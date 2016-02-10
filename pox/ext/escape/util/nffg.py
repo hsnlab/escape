@@ -15,6 +15,7 @@
 Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
+import logging
 import networkx
 import xml.etree.ElementTree as ET
 from networkx.exception import NetworkXError
@@ -22,7 +23,7 @@ from networkx.exception import NetworkXError
 from nffg_elements import *
 
 try:
-  import virtualizer3 as virt3
+  import virtualizer4 as virt4
 except ImportError:
   pass
 
@@ -173,7 +174,7 @@ class NFFG(AbstractNFFG):
 
   version = __version__
 
-  def __init__ (self, id=None, name=None, version=__version__):
+  def __init__ (self, id=None, name=None, metadata=None, version=__version__):
     """
     Init
 
@@ -190,6 +191,7 @@ class NFFG(AbstractNFFG):
     """:type: networkx.MultiDiGraph"""
     self.id = str(id) if id is not None else str(generate(self))
     self.name = name if name is not None else "NFFG-" + str(self.id)
+    self.metadata = OrderedDict(metadata if metadata else ())
     self.version = version
 
   @property
@@ -363,7 +365,7 @@ class NFFG(AbstractNFFG):
     :param nf: add this explicit NF object instead of create one
     :type nf: :any:`NodeNF`
     :param id: optional id
-    :type id: str or int
+    :type id: str or ints
     :param name: optional name
     :type name: str
     :param func_type: functional type (default: "None")
@@ -384,9 +386,11 @@ class NFFG(AbstractNFFG):
     :rtype: :any:`NodeNF`
     """
     if nf is None:
-      res = NodeResource(cpu=cpu, mem=mem, storage=storage, delay=delay,
-                         bandwidth=bandwidth) if any(
-         i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
+      if any(i is not None for i in (cpu, mem, storage, delay, bandwidth)):
+        res = NodeResource(cpu=cpu, mem=mem, storage=storage, delay=delay,
+                           bandwidth=bandwidth)
+      else:
+        res = None
       nf = NodeNF(id=id, name=name, func_type=func_type, dep_type=dep_type,
                   res=res)
     self.add_node(nf)
@@ -440,9 +444,11 @@ class NFFG(AbstractNFFG):
     :rtype: :any:`NodeInfra`
     """
     if infra is None:
-      res = NodeResource(cpu=cpu, mem=mem, storage=storage, bandwidth=bandwidth,
-                         delay=delay) if any(
-         i is not None for i in (cpu, mem, storage, delay, bandwidth)) else None
+      if any(i is not None for i in (cpu, mem, storage, delay, bandwidth)):
+        res = NodeResource(cpu=cpu, mem=mem, storage=storage,
+                           bandwidth=bandwidth, delay=delay)
+      else:
+        res = None
       infra = NodeInfra(id=id, name=name, domain=domain, infra_type=infra_type,
                         res=res)
     self.add_node(infra)
@@ -565,6 +571,46 @@ class NFFG(AbstractNFFG):
     self.add_edge(src_port.node, dst_port.node, req)
     return req
 
+  def add_metadata (self, name, value):
+    """
+    Add metadata with the given `name`.
+
+    :param name: metadata name
+    :type name: str
+    :param value: metadata value
+    :type value: str
+    :return: the :any:`NFFG` object to allow function chaining
+    :rtype: :any:`NFFG`
+    """
+    self.metadata[name] = value
+    return self
+
+  def get_metadata (self, name):
+    """
+    Return the value of metadata.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: metadata value
+    :rtype: str
+    """
+    return self.metadata.get(name)
+
+  def del_metadata (self, name):
+    """
+    Remove the metadata from the :any:`NFFG`. If no metadata is given all the
+    metadata will be removed.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: removed metadata or None
+    :rtype: str or None
+    """
+    if name is None:
+      self.metadata.clear()
+    else:
+      return self.metadata.pop(name, None)
+
   def dump (self):
     """
     Convert the NF-FG structure to a NFFGModel format and return the plain
@@ -574,7 +620,8 @@ class NFFG(AbstractNFFG):
     :rtype: str
     """
     # Create the model
-    nffg = NFFGModel(id=self.id, name=self.name, version=self.version)
+    nffg = NFFGModel(id=self.id, name=self.name, version=self.version,
+                     metadata=self.metadata)
     # Load Infras
     for infra in self.infras:
       nffg.node_infras.append(infra)
@@ -610,7 +657,8 @@ class NFFG(AbstractNFFG):
     # Parse text
     model = NFFGModel.parse(raw_data)
     # Create new NFFG
-    nffg = NFFG(id=model.id, name=model.name, version=model.version)
+    nffg = NFFG(id=model.id, name=model.name, version=model.version,
+                metadata=model.metadata)
     # Load Infras
     for infra in model.node_infras:
       nffg.add_node(infra)
@@ -622,8 +670,8 @@ class NFFG(AbstractNFFG):
       nffg.add_node(nf)
     # Load Links
     for link in model.edge_links:
-      if link.src.node.type == NFFG.TYPE_NF or link.dst.node.type == \
-         NFFG.TYPE_NF:
+      if link.src.node.type == NFFG.TYPE_NF or \
+            link.dst.node.type == NFFG.TYPE_NF:
         link.type = str(NFFG.TYPE_LINK_DYNAMIC)
       nffg.add_edge(link.src.node, link.dst.node, link)
     # Load SG next hops
@@ -712,8 +760,8 @@ class NFFG(AbstractNFFG):
     :return: None
     """
     return self.network.remove_edges_from(
-       [(u, v, link.id) for u, v, link in self.network.edges_iter(data=True) if
-        link.type == link_type])
+      [(u, v, link.id) for u, v, link in self.network.edges_iter(data=True) if
+       link.type == link_type])
 
   def clear_nodes (self, node_type):
     """
@@ -723,8 +771,8 @@ class NFFG(AbstractNFFG):
     :return: None
     """
     return self.network.remove_nodes_from(
-       [id for id, node in self.network.nodes_iter(data=True) if
-        node.type == node_type])
+      [id for id, node in self.network.nodes_iter(data=True) if
+       node.type == node_type])
 
   def copy (self):
     """
@@ -754,7 +802,7 @@ class NFFGToolBox(object):
   """
 
   @staticmethod
-  def merge_domains (base, nffg):
+  def merge_domains (base, nffg, domain, log=logging.getLogger("MERGING")):
     """
     Merge the given ``nffg`` into the base NFFG.
 
@@ -762,68 +810,118 @@ class NFFGToolBox(object):
     :type base: :any:`NFFG`
     :param nffg: updating information
     :type nffg: :any:`NFFG`
+    :type domain: domain
+    :param log: specific logger
+    :type log: :any:`logging.Logger`
     :return: the update base NFFG
     :rtype: :any:`NFFG`
     """
     from copy import deepcopy
+
     # Copy infras
-    print "Merge %s into %s" % (nffg, base)
+    log.debug("Merge domain: %s resource info into DoV..." % domain)
+
     for infra in nffg.infras:
-      c_infra = base.add_infra(infra=deepcopy(infra))
-      print "Copy infra: %s" % c_infra
+      if infra.id not in base:
+        c_infra = base.add_infra(infra=deepcopy(infra))
+        log.debug("Copy infra node: %s" % c_infra)
+      else:
+        log.warning(
+          "Infra node: %s does already exist in DoV. Skip adding..." % infra)
+
     # Copy NFs
     for nf in nffg.nfs:
-      c_nf = base.add_nf(nf=deepcopy(nf))
-      print "Copy nf: %s" % c_nf
+      if nf.id not in base:
+        c_nf = base.add_nf(nf=deepcopy(nf))
+        log.debug("Copy NF node: %s" % c_nf)
+      else:
+        log.warning(
+          "NF node: %s does already exist in DoV. Skip adding..." % nf)
+
     # Copy SAPs
     for sap_id in [s.id for s in nffg.saps]:
       if sap_id in [s.id for s in base.saps]:
         # Found inter-domain SAP
-        print "Found Inter-domain SAP: %s" % sap_id
+        log.debug("Found Inter-domain SAP: %s" % sap_id)
         # Search outgoing links from SAP, should be only one
         b_links = [l for u, v, l in
-                   base.network.out_edges_iter([sap_id], data=True)]
+                   base.network.out_edges_iter([sap_id],
+                                               data=True)]
         if len(b_links) < 1:
-          print "SAP is not connected to any node! Maybe you forget to call " \
-                "duplicate_static_links?"
+          log.warning(
+            "SAP is not connected to any node! Maybe you forgot to call "
+            "duplicate_static_links?")
           return
         if 2 < len(b_links):
-          print "Inter-domain SAP should have one and only one connection to " \
-                "the domain! Using only the first connection."
+          log.warning(
+            "Inter-domain SAP should have one and only one connection to the "
+            "domain! Using only the first connection.")
           continue
+
         # Get inter-domain port in base NFFG
-        domain_port_base = b_links[0].dst
-        print "Found inter-domain port: %s" % domain_port_base
+        domain_port_dov = b_links[0].dst
+        log.debug("Found inter-domain port: %s" % domain_port_dov)
         # Search outgoing links from SAP, should be only one
         n_links = [l for u, v, l in
                    nffg.network.out_edges_iter([sap_id], data=True)]
+
         if len(n_links) < 1:
-          print "SAP is not connected to any node! Maybe you forget to call " \
-                "duplicate_static_links?"
+          log.warning(
+            "SAP is not connected to any node! Maybe you forgot to call "
+            "duplicate_static_links?")
           return
         if 2 < len(n_links):
-          print "Inter-domain SAP should have one and only one connection to " \
-                "the domain! Using only the first connection."
+          log.warning(
+            "Inter-domain SAP should have one and only one connection to the "
+            "domain! Using only the first connection.")
           continue
+
         # Get port and Infra id's in nffg NFFG
         p_id = n_links[0].dst.id
         n_id = n_links[0].dst.node.id
         # Get the inter-domain port from already copied Infra
         domain_port_nffg = base.network.node[n_id].ports[p_id]
-        print "Found inter-domain port: %s" % domain_port_nffg
+        log.debug("Found inter-domain port: %s" % domain_port_nffg)
+
+        # Copy inter-domain port properties for redundant storing
+        # FIXME - do it better
+        if len(domain_port_nffg.properties) > 0:
+          domain_port_dov.properties.update(domain_port_nffg.properties)
+          log.debug(
+            "Copy inter-domain port properties: %s" %
+            domain_port_dov.properties)
+        elif len(domain_port_dov.properties) > 0:
+          domain_port_nffg.properties.update(domain_port_dov.properties)
+          log.debug(
+            "Copy inter-domain port properties: %s" %
+            domain_port_nffg.properties)
+        else:
+          domain_port_dov.add_property("sap", sap_id)
+          domain_port_nffg.add_property("sap", sap_id)
+
+        # Signal Inter-domain port
+        domain_port_dov.add_property("type", "inter-domain")
+        domain_port_nffg.add_property("type", "inter-domain")
+
         # Delete both inter-domain SAP and links connected to them
         base.del_node(sap_id)
         nffg.del_node(sap_id)
-        print "Add inter-domain connection with delay: %s, bandwidth: %s" % (
-          b_links[0].delay, b_links[0].bandwidth)
+        log.debug(
+          "Add inter-domain connection with delay: %s, bandwidth: %s" % (
+            b_links[0].delay, b_links[0].bandwidth))
+
         # Add the inter-domain links for both ways
-        base.add_undirected_link(port1=domain_port_base, port2=domain_port_nffg,
+        base.add_undirected_link(port1=domain_port_dov,
+                                 port2=domain_port_nffg,
                                  delay=b_links[0].delay,
                                  bandwidth=b_links[0].bandwidth)
+
       else:
         # Normal SAP --> copy SAP
-        c_sap = base.add_sap(sap=deepcopy(nffg.network.node[sap_id]))
-        print "Copy SAP: %s" % c_sap
+        c_sap = base.add_sap(
+          sap=deepcopy(nffg.network.node[sap_id]))
+        log.debug("Copy SAP: %s" % c_sap)
+
     # Copy remaining links which should be valid
     for u, v, link in nffg.network.edges_iter(data=True):
       src_port = base.network.node[u].ports[link.src.id]
@@ -831,8 +929,13 @@ class NFFGToolBox(object):
       c_link = deepcopy(link)
       c_link.src = src_port
       c_link.dst = dst_port
-      base.add_link(src_port=src_port, dst_port=dst_port, link=c_link)
-      print "Copy Link: %s" % c_link
+      base.add_link(src_port=src_port, dst_port=dst_port,
+                    link=c_link)
+      log.debug("Copy Link: %s" % c_link)
+    # print base.dump()
+    # from pprint import pprint
+    # pprint(base.network.__dict__)
+
     # Return the updated NFFG
     return base
 
@@ -952,11 +1055,11 @@ class NFFGToolBox(object):
           v_nf_cpu = str(nf.resources.cpu) if nf.resources.cpu else None
           v_nf_mem = str(nf.resources.mem) if nf.resources.mem else None
           v_nf_storage = str(
-             nf.resources.storage) if nf.resources.storage else None
+            nf.resources.storage) if nf.resources.storage else None
           # Create Node object for NF
-          v_nf = virt3.Node(id=str(nf.id), name=str(nf.name),
+          v_nf = virt4.Node(id=str(nf.id), name=str(nf.name),
                             type=str(nf.functional_type),
-                            resources=virt3.Software_resource(cpu=v_nf_cpu,
+                            resources=virt4.Software_resource(cpu=v_nf_cpu,
                                                               mem=v_nf_mem,
                                                               storage=v_nf_storage))
           # Add NF to Infra object
@@ -964,7 +1067,7 @@ class NFFGToolBox(object):
           # Add NF ports
           for port in nffg[v].ports:
             print "Add %s to %s" % (port, nf)
-            nf_port = virt3.Port(id=str(port.id), port_type="port-abstract")
+            nf_port = virt4.Port(id=str(port.id), port_type="port-abstract")
             virtualizer.nodes[str(u)].NF_instances[str(v)].ports.add(nf_port)
 
       # Add flowrules to Virtualizer
@@ -996,7 +1099,7 @@ class NFFGToolBox(object):
             nf_port = [l.dst for u, v, l in
                        nffg.network.out_edges_iter([infra.id], data=True) if
                        l.type == NFFG.TYPE_LINK_DYNAMIC and str(
-                          l.src.id) == in_port]
+                         l.src.id) == in_port]
             # There should be only one link between infra and NF
             if len(nf_port) < 1:
               print "NF port is not found for dynamic Infra port: %s defined " \
@@ -1041,7 +1144,7 @@ class NFFGToolBox(object):
             nf_port = [l.dst for u, v, l in
                        nffg.network.out_edges_iter([infra.id], data=True) if
                        l.type == NFFG.TYPE_LINK_DYNAMIC and str(
-                          l.src.id) == out_port]
+                         l.src.id) == out_port]
             if len(nf_port) < 1:
               print "NF port is not found for dynamic Infra port: %s defined " \
                     "in action field!" % port
@@ -1071,8 +1174,8 @@ class NFFGToolBox(object):
           # Add Flowentry to Virtualizer
           print "Add flowentry: %s" % flowrule
           virtualizer.nodes[str(infra.id)].flowtable.add(
-             virt3.Flowentry(id=fr_id, priority=fr_pri, port=in_port,
-                             match=match, action=action, out=out_port))
+            virt4.Flowentry(id=fr_id, priority=fr_pri, port=in_port,
+                            match=match, action=action, out=out_port))
 
     # Return with modified Virtualizer
     return virtualizer
@@ -1165,7 +1268,7 @@ class NFFGToolBox(object):
         edge_list.append(first_link)
     # if first link is None, it means the flow starts from a DYNAMIC port.
     first_out_port, bandwidth = NFFGToolBox._get_output_port_of_TAG_action(
-       TAG, starting_port)
+      TAG, starting_port)
     # if the TAG action couldn't be found in 'starting_port' maybe this link
     # is collocated on this Infra.
     if first_out_port is None:
@@ -1234,7 +1337,8 @@ class NFFGToolBox(object):
     # curr_port is a flow finishing port, let's check whether the next node 
     # would be a SAP
     """
-    THIS IS NOT NEEDED CUZ NOW WE ALSO FIND THE LAST LINK IN PREV ITERATION BLOCK
+    THIS IS NOT NEEDED CUZ NOW WE ALSO FIND THE LAST LINK IN PREV ITERATION
+    BLOCK
     if nffg.network.node[vnf2].type == 'SAP':
       # we only need to find the last link separately if 'vnf2' is a SAP
       last_link_found = False
@@ -1308,7 +1412,7 @@ class NFFGToolBox(object):
               for link in nffg.links:
                 # iterates on STATIC or DYNAMIC links
                 if link.src.id == act_port_id and link.src.node.id == p.node.id:
-                  if "UNTAG" in actions or link.dst.node.type == 'SAP' :
+                  if "UNTAG" in actions or link.dst.node.type == 'SAP':
                     ending_port = link.dst
                     transit_fr = False
                     break
@@ -1341,7 +1445,7 @@ class NFFGToolBox(object):
                     # flowrule, and there is no starting flowrule for it, so the
                     # other end of the link (finishing in 'p') is the port where
                     # the SGHop was originating
-                    sg_map[sghop_info] = [None, ending_port, flowclass, 
+                    sg_map[sghop_info] = [None, ending_port, flowclass,
                                           fr.bandwidth, fr.delay, p]
             # TAG action and match cannot coexsist in the same flowrule
             elif command_param[0] == "TAG" or "TAG=" in fr.match:
@@ -1353,7 +1457,7 @@ class NFFGToolBox(object):
               for link in nffg.links:
                 if link.dst.id == p.id and p.node.id == link.dst.node.id:
                   if ("TAG=" in fr.match and link.src.node.type == 'SAP') or \
-                     command_param[0] == "TAG":
+                        command_param[0] == "TAG":
                     if command_param[0] == "TAG":
                       tag_info = command_param[1]
                     else:
@@ -1388,12 +1492,12 @@ class NFFGToolBox(object):
                   c_p = a.split("=")
                   if c_p[0] == "output":
                     out_port = NFFGToolBox.try_to_convert(c_p[1])
-                    sg_map[sghop_info] = [starting_port, None, flowclass, 
+                    sg_map[sghop_info] = [starting_port, None, flowclass,
                                           fr.bandwidth, fr.delay,
                                           d.ports[out_port]]
                     break
             elif "UNTAG" not in actions and "TAG=" not in fr.action and \
-                 "TAG=" not in fr.match:
+                  "TAG=" not in fr.match:
               # we know here: action != TAG and  "TAG=" not in fr.match
               # All required SGHop info can be gathered at once from this
               # flowrule. It is either a SAP-SAP flowrule or a collocated.
@@ -1430,7 +1534,7 @@ class NFFGToolBox(object):
                   break
               else:
                 raise RuntimeError("No 'output' command found in collocation "
-                                     "flowrule!")
+                                   "flowrule!")
     # after all flowrules have been processed we have to check if there is 
     # still a None prt object (meaning that flowrule sequence for that TAG 
     # consisted of only one NON-COLLOCATION flowrule)

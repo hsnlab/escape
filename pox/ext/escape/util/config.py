@@ -96,23 +96,23 @@ class ESCAPEConfig(object):
     if config:
       # Config is set directly
       log.info(
-         "Load explicitly given config file: %s" % os.path.basename(config))
+        "Load explicitly given config file: %s" % os.path.basename(config))
     elif hasattr(core, "config_file_name"):
       # Config is set through POX's core object by a topmost module (unify)
       config = getattr(core, "config_file_name")
       log.info(
-         "Load explicitly given config file: %s" % os.path.basename(config))
+        "Load explicitly given config file: %s" % os.path.basename(config))
     else:
       # Detect default config
       try:
         # util/escape/ext/pox/root
         config = os.path.abspath(
-           os.path.dirname(__file__) + "../../../../../" + self.__configuration[
-             self.DEFAULT_CFG])
+          os.path.dirname(__file__) + "../../../../../" + self.__configuration[
+            self.DEFAULT_CFG])
         log.debug("Load default config file: %s" % os.path.basename(config))
       except KeyError:
         log.error(
-           "Additional config file is not found! Skip configuration update")
+          "Additional config file is not found! Skip configuration update")
         self.__initiated = True
         return self
     try:
@@ -127,7 +127,7 @@ class ESCAPEConfig(object):
             changed = True
         else:
           log.warning(
-             "Unidentified layer name in loaded configuration: %s" % layer)
+            "Unidentified layer name in loaded configuration: %s" % layer)
       if changed:
         log.info("Running configuration has been updated from file!")
         return self
@@ -236,7 +236,7 @@ class ESCAPEConfig(object):
     :return: layer config
     :rtype: dict
     """
-    if not isinstance(item, str):
+    if not isinstance(item, basestring):
       raise TypeError("Unsupported operand type: Layer name must be str")
     elif item not in self.LAYERS:
       raise KeyError("No layer is defined with the name: %s" % item)
@@ -264,7 +264,7 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     return os.path.abspath(
-       os.path.join(os.path.dirname(__file__), "../../../.."))
+      os.path.join(os.path.dirname(__file__), "../../../.."))
 
   ##############################################################################
   # Mapping related getters
@@ -309,8 +309,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-         self.__configuration[layer]['STRATEGY']['module']),
-         self.__configuration[layer]['STRATEGY']['class'], None)
+        self.__configuration[layer]['STRATEGY']['module']),
+        self.__configuration[layer]['STRATEGY']['class'], None)
     except (KeyError, AttributeError, TypeError):
       return None
 
@@ -325,8 +325,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-         self.__configuration[layer]['MAPPER']['module']),
-         self.__configuration[layer]['MAPPER']['class'], None)
+        self.__configuration[layer]['MAPPER']['module']),
+        self.__configuration[layer]['MAPPER']['class'], None)
     except (KeyError, AttributeError, TypeError):
       return None
 
@@ -341,8 +341,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-         self.__configuration[layer]['PROCESSOR']['module']),
-         self.__configuration[layer]['PROCESSOR']['class'], None)
+        self.__configuration[layer]['PROCESSOR']['module']),
+        self.__configuration[layer]['PROCESSOR']['class'], None)
     except (KeyError, AttributeError, TypeError):
       return None
 
@@ -416,8 +416,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-         self.__configuration[SERVICE]["REST-API"]['module']),
-         self.__configuration[SERVICE]["REST-API"]['class'], None)
+        self.__configuration[SERVICE]["REST-API"]['module']),
+        self.__configuration[SERVICE]["REST-API"]['class'], None)
     except KeyError:
       return None
 
@@ -471,8 +471,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-         self.__configuration[ORCHEST]["Sl-Or"]['module']),
-         self.__configuration[ORCHEST]["Sl-Or"]['class'], None)
+        self.__configuration[ORCHEST]["Sl-Or"]['module']),
+        self.__configuration[ORCHEST]["Sl-Or"]['class'], None)
     except KeyError:
       return None
 
@@ -536,8 +536,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-         self.__configuration[ORCHEST]["Cf-Or"]['module']),
-         self.__configuration[ORCHEST]["Cf-Or"]['class'], None)
+        self.__configuration[ORCHEST]["Cf-Or"]['module']),
+        self.__configuration[ORCHEST]["Cf-Or"]['class'], None)
     except KeyError:
       return None
 
@@ -600,8 +600,8 @@ class ESCAPEConfig(object):
     :return: initial params
     :rtype: dict
     """
-    params = self.__configuration[ADAPT][
-      component].copy() if parent is None else parent[component].copy()
+    params = self.__configuration[ADAPT][component].copy() \
+      if parent is None else parent[component].copy()
     del params['module']
     del params['class']
     return params
@@ -666,6 +666,20 @@ class ESCAPEConfig(object):
     except KeyError:
       return False
 
+  def ensure_unique_id (self):
+    """
+    Return with the ID generations strategy for nodes.
+    If it is set, id of nodes will be generated with the domain name as a
+    prefix to ensure unique id globally.
+
+    :return: id generation strategy (default: False)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT]['ENSURE-UNIQUE-ID']
+    except KeyError:
+      return False
+
   def get_sdn_topology (self):
     """
     Return the path of the SDN topology config file.
@@ -677,8 +691,8 @@ class ESCAPEConfig(object):
       # Project root dir relative to this module which is/must be under root
       # util/escape/ext/pox/root
       return os.path.abspath(
-         os.path.join(self.get_project_root_dir(),
-                      self.__configuration[ADAPT]["SDN"]["TOPOLOGY"]["path"]))
+        os.path.join(self.get_project_root_dir(),
+                     self.__configuration[ADAPT]["SDN"]["TOPOLOGY"]["path"]))
     except KeyError:
       return None
 
@@ -721,8 +735,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-         self.__configuration[INFR]["FALLBACK-TOPO"]['module']),
-         self.__configuration[INFR]["FALLBACK-TOPO"]['class'], None)
+        self.__configuration[INFR]["FALLBACK-TOPO"]['module']),
+        self.__configuration[INFR]["FALLBACK-TOPO"]['class'], None)
     except KeyError:
       return None
 
@@ -819,3 +833,51 @@ class ESCAPEConfig(object):
       return cfg if cfg is not None else {}
     except (KeyError, AttributeError, TypeError):
       return {}
+
+  ##############################################################################
+  # Visualizations layer getters
+  ##############################################################################
+
+  def get_visualization_url (self):
+    """
+    Return the url of the remote Visualization server.
+
+    :return: url
+    :rtype: str
+    """
+    try:
+      return self.__configuration["visualization"]["url"]
+    except KeyError:
+      return None
+
+  def get_visualization_rpc (self):
+    """
+    Return the url of the remote Visualization server.
+
+    :return: url
+    :rtype: str
+    """
+    # try:
+    #   return self.__configuration["visualization"]["rpc"]
+    # except KeyError:
+    #   return None
+    try:
+      return self.__configuration["visualization"]["rpc"]
+    except KeyError:
+      return None
+
+  def get_visualization_instance_id (self):
+    """
+    Return the instance id of the current ESCAPEv2.
+
+    :return: url
+    :rtype: str
+    """
+    # try:
+    #   return self.__configuration["visualization"]["rpc"]
+    # except KeyError:
+    #   return None
+    try:
+      return self.__configuration["visualization"]["instance_id"]
+    except KeyError:
+      return None

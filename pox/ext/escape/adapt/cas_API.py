@@ -117,6 +117,8 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     .. seealso::
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
+
+    :param event: event object
     """
     log.info("Controller Adaptation Sublayer is going down...")
     self.controller_adapter.shutdown()

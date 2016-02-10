@@ -115,14 +115,14 @@ class Element(Persistable):
       return getattr(self, item)
     else:
       raise KeyError(
-         "%s object has no key: %s" % (self.__class__.__name__, item))
+        "%s object has no key: %s" % (self.__class__.__name__, item))
 
   def __setitem__ (self, key, value):
     if hasattr(self, key):
       return setattr(self, key, value)
     else:
       raise KeyError(
-         "%s object has no key: %s" % (self.__class__.__name__, key))
+        "%s object has no key: %s" % (self.__class__.__name__, key))
 
   def __contains__ (self, item):
     return hasattr(self, item)
@@ -142,8 +142,8 @@ class Element(Persistable):
 
   def update (self, dict2):
     raise RuntimeError(
-       "This standard dict functions is not supported by NFFG! self:%s dict2: "
-       "%s" % (self, dict2))
+      "This standard dict functions is not supported by NFFG! self:%s dict2: "
+      "%s" % (self, dict2))
 
 
 class PortContainer(object):
@@ -151,9 +151,9 @@ class PortContainer(object):
   Basic container class for ports.
 
   Implements a Container-like behavior for getting a Port with id:
-    cont = PortContainer()
-    ...
-    cont["port_id"]
+    >>> cont = PortContainer()
+    >>> ...
+    >>> cont["port_id"]
   """
 
   def __init__ (self, container=None):
@@ -208,7 +208,7 @@ class Node(Element):
   # Network Function (NF) node --> abstract node represents a virtual function
   NF = "NF"
 
-  def __init__ (self, type, id=None, name=None):
+  def __init__ (self, type, id=None, name=None, metadata=None):
     """
     Init.
 
@@ -218,11 +218,14 @@ class Node(Element):
     :type id: str or int
     :param name: optional name
     :type name: str
+    :param metadata: metadata related to Node
+    :type metadata: dict
     :return: None
     """
     super(Node, self).__init__(id=id, type=type)
     self.name = name if name is not None else str(id)  # optional
     self.ports = PortContainer()  # list of Ports
+    self.metadata = OrderedDict(metadata if metadata else ())
 
   @property
   def short_name (self):
@@ -230,7 +233,7 @@ class Node(Element):
 
   def add_port (self, id=None, properties=None):
     """
-    Add a port with the given params to the Node.
+    Add a port with the given params to the :any:`Node`.
 
     :param id: optional id
     :type id: str or int
@@ -258,6 +261,71 @@ class Node(Element):
         return self.ports.remove(port)
     return False
 
+  def has_port (self, id):
+    """
+    Return True if the :any:`Node` has a port with the given `id`.
+
+    :param id: optional id
+    :type id: str or int
+    :return: has port with given id or not
+    :rtype: bool
+    """
+    for p in self.ports:
+      if p.id == id:
+        return True
+    return False
+
+  def add_metadata (self, name, value):
+    """
+    Add metadata with the given `name`.
+
+    :param name: metadata name
+    :type name: str
+    :param value: metadata value
+    :type value: str
+    :return: the :any:`Node` object to allow function chaining
+    :rtype: :any:`Node`
+    """
+    self.metadata[name] = value
+    return self
+
+  def has_metadata (self, name):
+    """
+    Return True if the :any:`Node` has a metadata with the given `name`.
+
+    :param name: metadata name
+    :type name: str
+    :return: has metadata with given name or not
+    :rtype: bool
+    """
+    return self.metadata.has_key(name)
+
+  def del_metadata (self, name=None):
+    """
+    Remove the metadata from the :any:`Node`. If no metadata is given all the
+    metadata will be removed.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: removed metadata or None
+    :rtype: str or None
+    """
+    if name is None:
+      self.metadata.clear()
+    else:
+      return self.metadata.pop(name, None)
+
+  def get_metadata (self, name):
+    """
+    Return the value of metadata.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: metadata value
+    :rtype: str
+    """
+    return self.metadata.get(name)
+
   def persist (self):
     node = super(Node, self).persist()
     if self.name is not None:
@@ -265,6 +333,8 @@ class Node(Element):
     ports = [port.persist() for port in self.ports]
     if ports:
       node["ports"] = ports
+    if self.metadata:
+      node["metadata"] = self.metadata.copy()
     return node
 
   def load (self, data, *args, **kwargs):
@@ -272,6 +342,7 @@ class Node(Element):
     self.name = data.get('name')  # optional
     for port in data.get('ports', ()):
       self.add_port(id=port['id'], properties=port.get('property'))
+    self.metadata = OrderedDict(data.get('metadata', ()))
     return self
 
   def __repr__ (self):
@@ -330,7 +401,7 @@ class Link(Element):
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
-         "Container reference is not given for edge endpoint lookup!")
+        "Container reference is not given for edge endpoint lookup!")
     super(Link, self).load(data=data)
     self.src = container.get_port(data['src_node'], data['src_port'])
     self.dst = container.get_port(data['dst_node'], data['dst_port'])
@@ -361,15 +432,15 @@ class NodeResource(Persistable):
     Init.
 
     :param cpu: CPU resource
-    :type cpu: float or int
+    :type cpu: float
     :param mem: memory resource
-    :type mem: float or int
+    :type mem: float
     :param storage: storage resource
-    :type storage: float or int
+    :type storage: float
     :param delay: delay property of the Node
-    :type delay: float or int
+    :type delay: float
     :param bandwidth: bandwidth property of the Node
-    :type bandwidth: float or int
+    :type bandwidth: float
     :return: None
     """
     super(NodeResource, self).__init__()
@@ -396,11 +467,11 @@ class NodeResource(Persistable):
     return res
 
   def load (self, data, *args, **kwargs):
-    self.cpu = data.get('cpu')
-    self.mem = data.get('mem')
-    self.storage = data.get('storage')
-    self.delay = data.get('delay')
-    self.bandwidth = data.get('bandwidth')
+    self.cpu = float(data['cpu']) if 'cpu' in data else None
+    self.mem = float(data['mem']) if 'mem' in data else None
+    self.storage = float(data['storage']) if 'storage' in data else None
+    self.delay = float(data['delay']) if 'delay' in data else None
+    self.bandwidth = float(data['bandwidth']) if 'bandwidth' in data else None
     return self
 
   def __getitem__ (self, item):
@@ -408,14 +479,14 @@ class NodeResource(Persistable):
       return getattr(self, item)
     else:
       raise KeyError(
-         "%s object has no key: %s" % (self.__class__.__name__, item))
+        "%s object has no key: %s" % (self.__class__.__name__, item))
 
   def __setitem__ (self, key, value):
     if hasattr(self, key):
       return setattr(self, key, value)
     else:
       raise KeyError(
-         "%s object has no key: %s" % (self.__class__.__name__, key))
+        "%s object has no key: %s" % (self.__class__.__name__, key))
 
   def __repr__ (self):
     return "Resources of %s:\ncpu: %s\nmem: %s\nstorage: %s\nbandwidth: " \
@@ -445,9 +516,9 @@ class Flowrule(Element):
     :param hop_id: related SG hop
     :type hop_id: str
     :param bandwidth: bandwidth
-    :type bandwidth: float or int
+    :type bandwidth: float
     :param delay: delay
-    :type delay: float or int
+    :type delay: float
     :return: None
     """
     super(Flowrule, self).__init__(id=id, type="FLOWRULE")
@@ -476,8 +547,8 @@ class Flowrule(Element):
     self.match = data.get('match')
     self.action = data.get('action')
     self.hop_id = data.get('hop_id')
-    self.bandwidth = data.get('bandwidth')
-    self.delay = data.get('delay')
+    self.bandwidth = float(data['bandwidth']) if 'bandwidth' in data else None
+    self.delay = float(data['delay']) if 'delay' in data else None
     return self
 
   def __repr__ (self):
@@ -518,15 +589,7 @@ class Port(Element):
     # self.__node = weakref.ref(node)
     self.__node = node
     # Set properties list according to given param type
-    if isinstance(properties, (str, unicode)):
-      self.properties = [str(properties), ]
-    elif isinstance(properties, Iterable):
-      self.properties = [p for p in properties]
-    elif properties is None:
-      self.properties = []
-    else:
-      raise RuntimeError(
-         "Port's properties attribute must be iterable or a string!")
+    self.properties = OrderedDict(properties if properties else ())
 
   @property
   def node (self):
@@ -537,65 +600,66 @@ class Port(Element):
   def node (self):
     del self.__node
 
-  def add_property (self, property, value=None):
+  def add_property (self, property, value):
     """
-    Add a property or list of properties to the port.
-    If value is not None, then property is used as a key.
+    Add a property to the :any:`Port`.
 
     :param property: property
-    :type property: str or list or tuple
-    :param value: optional property value
+    :type property: str
+    :param value: property value
     :type value: str
     :return: the Port object to allow function chaining
     :rtype: :any:`Port`
     """
-    if isinstance(property, str):
-      if value is not None:
-        # wouldn't it be better to store properties as key-value pairs?
-        property = property + ':' + value
-      self.properties.append(property)
-    elif isinstance(property, Iterable):
-      self.properties.extend(property)
+    self.properties[property] = value
     return self
 
-  def del_property (self, property=None):
+  def has_property (self, property):
     """
-    Remove the property from the Port. If no property is given remove all the
-    properties from the Port.
+    Return True if :any:`Port` has a property with given `property`.
 
     :param property: property
     :type property: str
-    :return: None
+    :return: has a property with given name or not
+    :rtype: bool
+    """
+    return self.properties.has_key(property)
+
+  def del_property (self, property=None):
+    """
+    Remove the property from the :any:`Port`. If no property is given all the
+    properties will be removed from the :any:`Port`.
+
+    :param property: property name
+    :type property: str
+    :return: removed property or None
+    :rtype: str or None
     """
     if property is None:
-      self.properties[:] = []
+      self.properties.clear()
     else:
-      self.properties.remove(property)
+      return self.properties.pop(property, None)
 
   def get_property (self, property):
     """
-    Return the value of property
+    Return the value of property.
 
     :param property: property
     :type property: str
     :return: the value of the property
     :rtype: str
     """
-    for prop in self.properties:
-      if prop.startswith(property + ":"):
-        return prop.split(":", 1)[1]
+    return self.properties.get(property)
 
   def persist (self):
     port = super(Port, self).persist()
-    property = [property for property in self.properties]
-    if property:
-      port["property"] = property
+    if self.properties:
+      port["property"] = self.properties.copy()
     return port
 
   def load (self, data, *args, **kwargs):
     super(Port, self).load(data=data)
-    for property in data.get('property', ()):
-      self.properties.append(property)
+    self.properties = OrderedDict(data.get('property', ()))
 
   def __repr__ (self):
     return "%s(node: %s, id: %s)" % (
@@ -634,9 +698,9 @@ class InfraPort(Port):
     :param hop_id: related SG hop
     :type hop_id: str
     :param bandwidth: bandwidth
-    :type bandwidth: float or int
+    :type bandwidth: float
     :param delay: delay
-    :type delay: float or int
+    :type delay: float
     :param id: specific id of the flowrule
     :type id: str or int
     :return: newly created and stored flowrule
@@ -687,11 +751,12 @@ class InfraPort(Port):
   def load (self, data, *args, **kwargs):
     super(InfraPort, self).load(data=data)
     for flowrule in data('flowrules', ()):
-      self.add_flowrule(match=flowrule.get('match'),
-                        action=flowrule.get('action'),
-                        delay=flowrule.get('delay'),
-                        bandwidth=flowrule.get('bandwidth'),
-                        hop_id=flowrule.get('hop_id'))
+      self.add_flowrule(
+        match=flowrule.get('match'),
+        action=flowrule.get('action'),
+        delay=float(flowrule['delay']) if 'delay' in data else None,
+        bandwidth=float(flowrule['bandwidth']) if 'bandwidth' in data else None,
+        hop_id=flowrule.get('hop_id'))
 
 
 ################################################################################
@@ -811,7 +876,7 @@ class NodeInfra(Node):
     self.infra_type = infra_type if infra_type is not None else \
       self.TYPE_BISBIS
     # Set supported types according to given param type
-    if isinstance(supported, (str, unicode)):
+    if isinstance(supported, basestring):
       self.supported = [str(supported), ]
     elif isinstance(supported, Iterable):
       self.supported = [sup for sup in supported]
@@ -823,6 +888,8 @@ class NodeInfra(Node):
   def add_port (self, id=None, properties=None):
     """
     Add a port with the given params to the Infrastructure Node.
+
+    Override the basic ``add_port()`` to use :any:`InfraPort` objects.
 
     :param id: optional id
     :type id: str or int
@@ -844,13 +911,27 @@ class NodeInfra(Node):
     :return: the Node object to allow function chaining
     :rtype: :any:`NodeInfra`
     """
-    if isinstance(functional_type, str):
+    if isinstance(functional_type, basestring):
       self.supported.append(functional_type)
     elif isinstance(functional_type, Iterable):
       self.supported.extend(functional_type)
     else:
       raise RuntimeError("Not supported parameter type!")
     return self
+
+  def has_supported_type (self, functional_type):
+    """
+    Return true if :any:`InfraPort` object has the given `functional_type`.
+
+    :param functional_type: functional type name
+    :type functional_type: str
+    :return: has the given functional type or not
+    :rtype: bool
+    """
+    for ft in self.supported:
+      if ft == functional_type:
+        return True
+    return False
 
   def del_supported_type (self, functional_type=None):
     """
@@ -880,13 +961,14 @@ class NodeInfra(Node):
     return node
 
   def load (self, data, *args, **kwargs):
-    self.id = data['id']
-    self.operation = data.get("operation")  # optional
-    self.name = data.get('name')  # optional
+    super(NodeInfra, self).load(data=data)
+    # self.id = data['id']
+    # self.operation = data.get("operation")  # optional
+    # self.name = data.get('name')  # optional
+    # self.metadata = data.get("metadata", OrderedDict())  # optional
     for port in data.get('ports', ()):
-      infra_port = self.add_port(id=port['id'], properties=port.get('property'))
       for flowrule in port.get('flowrules', ()):
-        infra_port.flowrules.append(Flowrule.parse(flowrule))
+        self.ports[port['id']].flowrules.append(Flowrule.parse(flowrule))
     self.domain = data.get('domain', self.DEFAULT_DOMAIN)  # optional
     self.infra_type = data['type']
     if 'supported' in data:
@@ -931,9 +1013,9 @@ class EdgeLink(Link):
     :param backward: the link is a backward link compared to an another Link
     :type backward: bool
     :param delay: delay resource
-    :type delay: float or int
+    :type delay: float
     :param bandwidth: bandwidth resource
-    :type bandwidth: float or int
+    :type bandwidth: float
     :return: None
     """
     type = type if type is not None else Link.STATIC
@@ -957,13 +1039,13 @@ class EdgeLink(Link):
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
-         "Container reference is not given for edge endpoint lookup!")
+        "Container reference is not given for edge endpoint lookup!")
     for link in container.edge_links:
       if link.id == data['id']:
         raise RuntimeError("ID conflict during EdgeLink loading: %s" % link.id)
     super(EdgeLink, self).load(data=data, container=container)
     self.delay = data.get('delay')
-    self.bandwidth = data.get('bandwidth')
+    self.bandwidth = float(data['bandwidth']) if 'bandwidth' in data else None
     self.backward = data.get('backward', False)
     return self
 
@@ -1028,16 +1110,16 @@ class EdgeSGLink(Link):
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
-         "Container reference is not given for edge endpoint lookup!")
+        "Container reference is not given for edge endpoint lookup!")
     for link in container.edge_sg_nexthops:
       if link.id == data['id']:
         raise RuntimeError(
-           "ID conflict during EdgeSGLink loading: %s" % link.id)
+          "ID conflict during EdgeSGLink loading: %s" % link.id)
     super(EdgeSGLink, self).load(data=data, container=container)
     self.flowclass = data.get('flowclass')
     self.tag_info = data.get('tag_info')
-    self.delay = data.get('delay')
-    self.bandwidth = data.get('bandwidth')
+    self.delay = float(data['delay']) if 'delay' in data else None
+    self.bandwidth = float(data['bandwidth']) if 'bandwidth' in data else None
     return self
 
 
@@ -1060,9 +1142,9 @@ class EdgeReq(Link):
     :param id: optional id
     :type id: str or int
     :param delay: delay resource
-    :type delay: float or int
+    :type delay: float
     :param bandwidth: bandwidth resource
-    :type bandwidth: float or int
+    :type bandwidth: float
     :param sg_path: list of ids of sg_links represents end-to-end requirement
     :type sg_path: list ot tuple
     :return: None
@@ -1072,7 +1154,7 @@ class EdgeReq(Link):
     self.delay = delay  # optional
     self.bandwidth = bandwidth  # optional
     # Set sg_path types according to given param type
-    if isinstance(sg_path, (str, unicode)):
+    if isinstance(sg_path, basestring):
       self.sg_path = [str(sg_path), ]
     elif isinstance(sg_path, Iterable):
       self.sg_path = [p for p in sg_path]
@@ -1093,13 +1175,13 @@ class EdgeReq(Link):
   def load (self, data, container=None, *args, **kwargs):
     if container is None:
       raise RuntimeError(
-         "Container reference is not given for edge endpoint lookup!")
+        "Container reference is not given for edge endpoint lookup!")
     for link in container.edge_reqs:
       if link.id == data['id']:
         raise RuntimeError("ID conflict during EdgeReq loading: %s" % link.id)
     super(EdgeReq, self).load(data=data, container=container)
-    self.delay = data.get('delay')
-    self.bandwidth = data.get('bandwidth')
+    self.delay = float(data['delay']) if 'delay' in data else None
+    self.bandwidth = float(data['bandwidth']) if 'bandwidth' in data else None
     if 'sg_path' in data:
       self.sg_path = data['sg_path']
     return self
@@ -1128,7 +1210,7 @@ class NFFGModel(Element):
   # Container type
   TYPE = "NFFG"
 
-  def __init__ (self, id=None, name=None, version=None):
+  def __init__ (self, id=None, name=None, version=None, metadata=None):
     """
     Init
 
@@ -1143,6 +1225,7 @@ class NFFGModel(Element):
     super(NFFGModel, self).__init__(id=id, type=self.TYPE)
     self.name = name
     self.version = version if version is not None else self.VERSION
+    self.metadata = OrderedDict(metadata if metadata else ())
     self.node_nfs = []
     self.node_saps = []
     self.node_infras = []
@@ -1207,7 +1290,7 @@ class NFFGModel(Element):
     for node in self.node_nfs:
       if node.id == nf.id:
         raise RuntimeError(
-           "NodeNF with id: %s already exist in the container!" % node.id)
+          "NodeNF with id: %s already exist in the container!" % node.id)
     self.node_nfs.append(nf)
     return nf
 
@@ -1236,7 +1319,7 @@ class NFFGModel(Element):
     for node in self.node_saps:
       if node.id == sap.id:
         raise RuntimeError(
-           "NodeNF with id: %s already exist in the container!" % node.id)
+          "NodeNF with id: %s already exist in the container!" % node.id)
     self.node_saps.append(sap)
     return sap
 
@@ -1265,7 +1348,7 @@ class NFFGModel(Element):
     for node in self.node_infras:
       if node.id == infra.id:
         raise RuntimeError(
-           "NodeNF with id: %s already exist in the container!" % node.id)
+          "NodeNF with id: %s already exist in the container!" % node.id)
     self.node_infras.append(infra)
     return infra
 
@@ -1298,8 +1381,8 @@ class NFFGModel(Element):
     for edge in self.edge_links:
       if edge.src.id == src.id and edge.dst.id == dst.id:
         raise RuntimeError(
-           "EdgeLink with src(%s) and dst(%s) endpoints already exist in the "
-           "container!" % (src.id, dst.id))
+          "EdgeLink with src(%s) and dst(%s) endpoints already exist in the "
+          "container!" % (src.id, dst.id))
     self.edge_links.append(link)
     return link
 
@@ -1334,8 +1417,8 @@ class NFFGModel(Element):
     for edge in self.edge_sg_nexthops:
       if edge.src.id == src.id and edge.dst.id == dst.id:
         raise RuntimeError(
-           "EdgeSGLink with src(%s) and dst(%s) endpoints already exist in the "
-           "container!" % (src.id, dst.id))
+          "EdgeSGLink with src(%s) and dst(%s) endpoints already exist in the "
+          "container!" % (src.id, dst.id))
     self.edge_sg_nexthops.append(hop)
     return hop
 
@@ -1370,8 +1453,8 @@ class NFFGModel(Element):
     for edge in self.edge_reqs:
       if edge.src.id == src.id and edge.dst.id == dst.id:
         raise RuntimeError(
-           "EdgeReq with src(%s) and dst(%s) endpoints already exist in the "
-           "container!" % (src.id, dst.id))
+          "EdgeReq with src(%s) and dst(%s) endpoints already exist in the "
+          "container!" % (src.id, dst.id))
     self.edge_sg_nexthops.append(req)
     return req
 
@@ -1396,6 +1479,8 @@ class NFFGModel(Element):
     if self.name is not None:
       nffg["parameters"]["name"] = self.name
     nffg["parameters"]["version"] = self.version
+    if self.metadata:
+      nffg["parameters"]["metadata"] = self.metadata
     if self.node_nfs:
       nffg["node_nfs"] = [nf.persist() for nf in self.node_nfs]
     if self.node_saps:
@@ -1425,8 +1510,8 @@ class NFFGModel(Element):
     def unicode_to_str (input):
       if isinstance(input, dict):
         return OrderedDict(
-           [(unicode_to_str(key), unicode_to_str(value)) for key, value in
-            input.iteritems()])
+          [(unicode_to_str(key), unicode_to_str(value)) for key, value in
+           input.iteritems()])
       elif isinstance(input, list):
         return [unicode_to_str(element) for element in input]
       elif isinstance(input, unicode):
@@ -1437,12 +1522,12 @@ class NFFGModel(Element):
     try:
       # Load from plain text
       data = json.loads(raw_data, object_hook=unicode_to_str)
-      # Create container
-      container = NFFGModel()
-      # Fill container fields
-      container.id = data['parameters']['id']  # mandatory
-      container.name = data['parameters'].get('name')  # can be None
-      container.version = data['parameters']['version']  # mandatory
+      # Create container and fill container fields
+      container = NFFGModel(
+        id=data['parameters'].get('id'),  # mandatory
+        name=data['parameters'].get('name'),  # can be None
+        metadata=data['parameters'].get('metadata'),
+        version=data['parameters'].get('version'))  # mandatory
       # Fill Container lists
       for n in data.get('node_nfs', ()):
         container.node_nfs.append(NodeNF.parse(data=n))
@@ -1454,7 +1539,7 @@ class NFFGModel(Element):
         container.edge_links.append(EdgeLink.parse(data=e, container=container))
       for e in data.get('edge_sg_nexthops', ()):
         container.edge_sg_nexthops.append(
-           EdgeSGLink().parse(data=e, container=container))
+          EdgeSGLink().parse(data=e, container=container))
       for e in data.get('edge_reqs', ()):
         container.edge_reqs.append(EdgeReq.parse(data=e, container=container))
     except KeyError as e:
@@ -1484,7 +1569,8 @@ def test_parse_load ():
   nf.resources.bandwidth = "2"
   nf.resources.delay = "2"
   # nf.add_port("port_nf1", "port1", "virtual", "vlan:1025")
-  p1 = nf.add_port(id="port_nf1", properties=("port1", "virtual", "vlan:1025"))
+  p1 = nf.add_port(id="port_nf1",
+                   properties={"port1": 42, "virtual": 24, "vlan": 1025})
   # SAP
   sap = NodeSAP()
   sap.id = "sap1"
@@ -1500,6 +1586,8 @@ def test_parse_load ():
   infra.resources.mem = "2"
   infra.resources.storage = "20"
   infra.resources.bandwidth = "4"
+  infra.add_metadata("meta1", "lorem")
+  infra.add_metadata("meta2", "ipsum")
   # infra.add_supported_type("functype1")
   infra.add_supported_type(("functype1", "functype2", "functype3"))
   # infra.resources.delay = "4"
@@ -1524,6 +1612,7 @@ def test_parse_load ():
   # Generate
   nffg = NFFGModel()
   nffg.name = "NFFG1"
+  nffg.metadata['lorem'] = 'ipsum'
   nffg.node_infras.append(infra)
   nffg.node_nfs.append(nf)
   nffg.node_saps.append(sap)
@@ -1537,16 +1626,6 @@ def test_parse_load ():
   print "\nParsed NF-FG:"
   print nffg2.dump()
   return nffg
-
-
-def test_networkx_mod ():
-  nf = NodeNF()
-  print nf["id"]
-  nf["id"] = "nf1"
-  print nf["id"]
-  print "get check"
-  print "id: %s" % nf.get("id")
-  print "lorem: %s" % nf.get("lorem", "ipsum")
 
 
 if __name__ == "__main__":

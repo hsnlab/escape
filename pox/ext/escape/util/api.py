@@ -191,7 +191,8 @@ class AbstractAPI(EventMixin):
     import pprint
 
     return pprint.pformat(
-      [(f, type(getattr(self, f))) for f in dir(self) if not f.startswith('_')])
+       [(f, type(getattr(self, f))) for f in dir(self) if
+        not f.startswith('_')])
 
 
 class RequestCache(object):
@@ -246,6 +247,10 @@ class RequestCache(object):
 
   def get_result (self, id):
     """
+    Return the requested result.
+
+    :param id: request id
+    :type id: str or int
     """
     try:
       return self.cache[id]
@@ -357,14 +362,15 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {
     'GET': ('ping', 'version', 'operations'),
-    'POST': ('ping',)
-    }
+    'POST': ('ping',)}
   # Name of the layer API to which the server bounded
   bounded_layer = None
   # Name mapper to avoid Python naming constraint (dict: rpc-name: mapped name)
   rpc_mapper = None
+  # Logger name
+  LOGGER_NAME = "REST-API"
   # Logger. Should be overrided in child classes
-  log = core.getLogger("REST-API")
+  log = core.getLogger("[%s]" % LOGGER_NAME)
 
   def do_GET (self):
     """
@@ -527,8 +533,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     try:
       if self.func_name:
         self.send_header('Allow', ','.join(
-          [str(verbs) for verbs, f in self.request_perm.iteritems() if
-           self.func_name in f]))
+           [str(verbs) for verbs, f in self.request_perm.iteritems() if
+            self.func_name in f]))
     except KeyError:
       pass
 
@@ -573,6 +579,11 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     """
     Override original function to send back allowed HTTP verbs and set format
     to JSON.
+
+    :param code: error code
+    :type code: int
+    :param message: error message
+    :type message: str
     """
     try:
       short, long = self.responses[code]
@@ -587,7 +598,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     content = {
       "title": "Error response", 'Error code': code,
       'Message': message, 'Explanation': explain
-      }
+    }
     self.send_response(code, message)
     self.send_header("Content-Type", self.error_content_type)
     self.send_header('Connection', 'close')
@@ -599,6 +610,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   def log_error (self, mformat, *args):
     """
     Overwritten to use POX logging mechanism.
+
+    :param mformat: message format
     """
     self.log.warning("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
@@ -606,12 +619,16 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   def log_message (self, mformat, *args):
     """
     Disable logging of incoming messages.
+
+    :param mformat: message format
     """
     pass
 
   def log_full_message (self, mformat, *args):
     """
     Overwritten to use POX logging mechanism.
+
+    :param mformat: message format
     """
     self.log.debug("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
@@ -639,9 +656,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       else:
         # raise NotImplementedError
         self.log.warning(
-          'Mistyped or not implemented API function call: %s ' % function)
+           'Mistyped or not implemented API function call: %s ' % function)
         raise RESTError(
-          msg='Mistyped or not implemented API function call: %s ' % function)
+           msg='Mistyped or not implemented API function call: %s ' % function)
     else:
       self.log.error('Error: No component has registered with the name: %s, '
                      'ABORT function call!' % self.bounded_layer)

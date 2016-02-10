@@ -20,10 +20,11 @@ import weakref
 
 import escape.adapt.managers as mgrs
 from escape import CONFIG
-from escape.adapt import log as log
+from escape.adapt import log as log, LAYER_NAME
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent
+from escape.util.misc import notify_remote_visualizer
 from escape.util.nffg import NFFG
 
 
@@ -342,6 +343,11 @@ class ControllerAdapter(object):
       from escape.util.misc import quit_with_error
       quit_with_error(msg="Shutting down ESCAPEv2! Cause: %s" % e,
                       logger=log)
+    # Here every domainManager is up and running
+    # Notify the remote visualizer about collected data if it's needed
+    notify_remote_visualizer(
+       data=self.domainResManager.get_global_view().get_resource_info(),
+       id=LAYER_NAME)
 
   def shutdown (self):
     """
@@ -355,7 +361,8 @@ class ControllerAdapter(object):
     # Stop initiated DomainManagers
     self.domains.stop_initiated_mgrs()
 
-  def _split_into_domains (self, nffg):
+  @staticmethod
+  def _split_into_domains (nffg):
     """
     Split given :any:`NFFG` into separate parts self._global_nffg on
     original domains.
@@ -425,17 +432,13 @@ class ControllerAdapter(object):
       for infra in nffg_part.infras:
         for port in infra.ports:
           # Check ports of remained Infra's for SAP ports
-          if "type:inter-domain" in port.properties:
+          if port.get_property("type") == "inter-domain":
             # Found inter-domain SAP port
             log.debug("Found inter-domain SAP port: %s" % port)
             # Create default SAP object attributes
-            sap_id, sap_name = None, None
             # Copy optional SAP metadata as special id or name
-            for property in port.properties:
-              if str(property).startswith("sap:"):
-                sap_id = property.split(":", 1)[1]
-              if str(property).startswith("name:"):
-                sap_name = property.split(":", 1)[1]
+            sap_id = port.get_property("sap")
+            sap_name = port.get_property("name")
             # Add SAP to splitted NFFG
             if sap_id in nffg_part:
               log.warning("%s is already in the splitted NFFG. Skip adding..." %
@@ -443,7 +446,8 @@ class ControllerAdapter(object):
               continue
             sap = nffg_part.add_sap(id=sap_id, name=sap_name)
             # Add port to SAP port number(id) is identical with the Infra's port
-            sap_port = sap.add_port(id=port.id, properties=port.properties[:])
+            sap_port = sap.add_port(id=port.id,
+                                    properties=port.properties.copy())
             # Connect SAP to Infra
             nffg_part.add_undirected_link(port1=port, port2=sap_port)
             log.debug(
@@ -456,7 +460,6 @@ class ControllerAdapter(object):
         log.warning("Found orphaned node: %s! Remove from sliced part." %
                     nffg_part.network.node[node_id])
         nffg_part.network.remove_node(node_id)
-
     # Return with the splitted parts
     # for s in splitted_parts:
     #   print s[0], s[1].dump()
@@ -476,6 +479,9 @@ class ControllerAdapter(object):
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
+    # # Notify remote visualizer about the deployable NFFG if it's needed
+    # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
+    print mapped_nffg.dump()
     slices = self._split_into_domains(nffg=mapped_nffg)
     if slices is None:
       log.warning(
@@ -484,6 +490,8 @@ class ControllerAdapter(object):
       return
     log.debug(
        "Notify initiated domains: %s" % [d for d in self.domains.initiated])
+    # TODO - end-to-end requirement recreation
+    # TODO - abstract/inter-domain tag rewrite
     mapping_result = True
     for domain, part in slices:
       domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
@@ -515,7 +523,10 @@ class ControllerAdapter(object):
          "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
       # Update global view (DoV) with the installed components
       self.domainResManager.get_global_view().update_global_view(mapped_nffg)
-      # print self.domainResManager.get_global_view().get_resource_info().dump()
+      # Notify remote visualizer about the installation result if it's needed
+      notify_remote_visualizer(
+         data=self.domainResManager.get_global_view().get_resource_info(),
+         id=LAYER_NAME)
     else:
       log.error("%s installation was not successful!" % mapped_nffg)
     return mapping_result
@@ -528,11 +539,15 @@ class ControllerAdapter(object):
     log.info("Received DomainChange event from domain: %s, cause: %s" % (
       event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     if event.data is not None and isinstance(event.data, NFFG):
-      self.domainResManager.update_domain_resource(event.domain, event.data)
+      self.domainResManager.update_domain_resource(nffg=event.data,
+                                                   domain=event.domain)
 
   def update_dov (self, nffg_part):
     """
     Update the global view with installed Nfs/Flowrules.
+
+    :param nffg_part: nffg part need to be updated with
+    :type: :any:`NFFG`
     """
     pass
 
@@ -599,6 +614,8 @@ class DomainVirtualizer(AbstractVirtualizer):
 
     :param nffg: NFFG instance intended to use as the global view
     :type nffg: :any:`NFFG`
+    :param domain: name of the merging domain
+    :type domain: str
     :return: None
     """
     log.debug("Set domain: %s as the global view!" % domain)
@@ -606,11 +623,18 @@ class DomainVirtualizer(AbstractVirtualizer):
     self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
     self._global_nffg.id = DoV
 
-  def merge_domain_into_dov (self, domain, nffg):
+  def merge_domain_into_dov (self, nffg, domain):
     """
     Add a newly detected domain to DoV.
 
     Based on the feature: escape.util.nffg.NFFGToolBox#merge_domains
+
+    :param nffg: NFFG object need to be merged into DoV
+    :type nffg: :any:`NFFG`
+    :param domain: name of the merging domain
+    :type domain: str
+    :return: Dov
+    :rtype: :any:`NFFG`
     """
     from copy import deepcopy
 
@@ -682,22 +706,22 @@ class DomainVirtualizer(AbstractVirtualizer):
         # Copy inter-domain port properties for redundant storing
         # FIXME - do it better
         if len(domain_port_nffg.properties) > 0:
-          domain_port_dov.add_property(domain_port_nffg.properties)
+          domain_port_dov.properties.update(domain_port_nffg.properties)
           log.debug(
              "Copy inter-domain port properties: %s" %
              domain_port_dov.properties)
         elif len(domain_port_dov.properties) > 0:
-          domain_port_nffg.add_property(domain_port_dov.properties)
+          domain_port_nffg.properties.update(domain_port_dov.properties)
           log.debug(
              "Copy inter-domain port properties: %s" %
              domain_port_nffg.properties)
         else:
-          domain_port_dov.add_property("sap:%s" % sap_id)
-          domain_port_nffg.add_property("sap:%s" % sap_id)
+          domain_port_dov.add_property("sap", sap_id)
+          domain_port_nffg.add_property("sap", sap_id)
 
         # Signal Inter-domain port
-        domain_port_dov.add_property("type:inter-domain")
-        domain_port_nffg.add_property("type:inter-domain")
+        domain_port_dov.add_property("type", "inter-domain")
+        domain_port_nffg.add_property("type", "inter-domain")
 
         # Delete both inter-domain SAP and links connected to them
         self._global_nffg.del_node(sap_id)
@@ -707,11 +731,13 @@ class DomainVirtualizer(AbstractVirtualizer):
              b_links[0].delay, b_links[0].bandwidth))
 
         # Add the inter-domain links for both ways
-        self._global_nffg.add_undirected_link(port1=domain_port_dov,
-                                              port2=domain_port_nffg,
-                                              delay=b_links[0].delay,
-                                              bandwidth=b_links[0].bandwidth)
-
+        self._global_nffg.add_undirected_link(
+           p1p2id="inter-domain-link-%s" % sap_id,
+           p2p1id="inter-domain-link-%s-back" % sap_id,
+           port1=domain_port_dov,
+           port2=domain_port_nffg,
+           delay=b_links[0].delay,
+           bandwidth=b_links[0].bandwidth)
       else:
         # Normal SAP --> copy SAP
         c_sap = self._global_nffg.add_sap(
@@ -749,6 +775,11 @@ class DomainVirtualizer(AbstractVirtualizer):
   def update_domain_view (self, domain, nffg):
     """
     Update the existing domain in the merged Global view.
+
+    :param nffg: NFFG object need to be updated with
+    :type nffg: :any:`NFFG`
+    :param domain: name of the merging domain
+    :type domain: str
     """
     # TODO
     pass
@@ -798,18 +829,18 @@ class DomainResourceManager(object):
       log.info("Append %s domain to <Global Resource View> (DoV)..." % domain)
       if self._tracked_domains:
         # Merge domain topo into global view
-        self._dov.merge_domain_into_dov(domain, nffg)
+        self._dov.merge_domain_into_dov(nffg=nffg, domain=domain)
       else:
         # No other domain detected, set NFFG as the whole global view
         log.debug(
            "DoV is empty! Add new domain: %s as the global view!" % domain)
-        self._dov.set_domain_as_global_view(domain, nffg)
+        self._dov.set_domain_as_global_view(domain=domain, nffg=nffg)
       # Add detected domain to cached domains
       self._tracked_domains.add(domain)
     else:
       log.info("Updating <Global Resource View> from %s domain..." % domain)
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
-        self._dov.update_domain_view(domain, nffg)
+        self._dov.update_domain_view(domain=domain, nffg=nffg)
         # FIXME - SIGCOMM
         # print self.__dov.get_resource_info().dump()

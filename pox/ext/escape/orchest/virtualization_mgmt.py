@@ -15,16 +15,16 @@
 Contains components relevant to virtualization of resources and views.
 """
 
+from escape.orchest import log as log
+from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
 from escape.util.nffg import NFFG
+from pox.lib.revent.revent import EventMixin, Event
 
 if 'DoV' not in globals():
   try:
     from escape.adapt.adaptation import DoV
   except ImportError:
     DoV = "DoV"
-from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
-from escape.orchest import log as log
-from pox.lib.revent.revent import EventMixin, Event
 
 
 class MissingGlobalViewEvent(Event):
@@ -219,7 +219,8 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
 
     # Maximum usable/reducible amount of bw to avoid false negative mapping
     # errors
-    sbb.resources.bandwidth = max_bw * (infra_count + link_count)
+    sbb.resources.bandwidth = max_bw * (
+      infra_count + link_count) if max_bw is not None else None
     log.debug("Set infra's resources: %s" % sbb.resources)
 
     # Add supported types

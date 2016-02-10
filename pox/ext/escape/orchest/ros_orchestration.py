@@ -14,12 +14,13 @@
 """
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
-from escape.orchest import log as log
+from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer, \
   VirtualizerManager
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
+from escape.util.misc import notify_remote_visualizer
 
 
 class ResourceOrchestrator(AbstractOrchestrator):
@@ -63,17 +64,23 @@ class ResourceOrchestrator(AbstractOrchestrator):
     self.nffgManager.save(nffg)
     # Get Domain Virtualizer to acquire global domain view
     global_view = self.virtualizerManager.dov
+    # Notify remote visualizer about resource view of this layer if it's needed
+    notify_remote_visualizer(data=global_view.get_resource_info(),
+                             id=LAYER_NAME)
+    # Start Orchestrator layer mapping
     if global_view is not None:
       if isinstance(global_view, AbstractVirtualizer):
         # Run Nf-FG mapping orchestration
         try:
           mapped_nffg = self.mapper.orchestrate(nffg, global_view)
           log.debug(
-            "NF-FG instantiation is finished by %s" % self.__class__.__name__)
+             "NF-FG instantiation is finished by %s" % self.__class__.__name__)
+          # Notify remote visualizer about the mapping result if it's needed
+          notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
           return mapped_nffg
         except ProcessorError as e:
           log.warning(
-            "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
+             "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
       else:
         log.warning("Global view is not subclass of AbstractVirtualizer!")
     else:
