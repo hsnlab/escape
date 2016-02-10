@@ -665,12 +665,19 @@ class GraphPreprocessorClass(object):
     # in case of full_remap there is nothing to do with the flowrules, they 
     # will be deleted...
     if not full_remap:
+      sg_hop_ids_in_req = {sg.id for sg in self.req_graph.sg_hops}
       # find all the flowrules with starting TAG and retrieve the paths, 
       # and subtract the reserved link and internal (inside Infras) bandwidth
       for d in net.infras:
         reserved_internal_bw = 0
         for p in d.ports:
           for fr in p.flowrules:
+            if fr.hop_id in sg_hop_ids_in_req:
+              raise uet.BadInputException("SGHops in request graph shouldn't be"
+                    " mapped already to the substrate graph. SGHop ID-s shold be"
+                    " different, otherwise they are considered the same!", 
+                    "Flowrule %s in Infra node %s is a part of the (earlier) "
+                    "mapped path of SGHop %s."%(fr.id, d.id, fr.hop_id))
             if fr.bandwidth is not None:
               reserved_internal_bw += fr.bandwidth
           for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
@@ -744,14 +751,19 @@ class GraphPreprocessorClass(object):
           for f in deletable:
             p.flowrules.remove(f)
 
+    edges_to_delete = []
     for i, j, k in net.network.edges_iter(keys=True):
       if net.network[i][j][k].type != 'STATIC':
         # meaning there is a Dynamic, SG or Requirement link left
-        raise uet.BadInputException(
-           "After removing the NodeNFs from the substrate NFFG, "
-           "there shouldn`t be DYNAMIC, SG or REQUIREMENT links left in "
-           "the network.", "Link %s between nodes %s and %s is  a %s link" % (
-             k, i, j, net.network[i][j][k].type))
+        if net.network[i][j][k].type == 'REQUIREMENT':
+          if net.network[i][j][k].dst.node.id != net.network[i][j][k].src.node.id:
+            self.log.warn("Unexpected EdgeReq found between %s and %s nodes! "
+                 "They should only occour as loop links in BiS-BiS type "
+                 "Infras..."%(i,j))
+        edges_to_delete.append(net.network[i][j][k])
+    self.log.debug("Removing unnecessary non-STATIC links...")
+    for e in edges_to_delete:
+      net.del_edge(e.src, e.dst, e.id)
     for n in net.nfs:
       raise uet.BadInputException(
          "NodeNF %s couldn`t be removed from the NFFG" % net.network.node[n].id,
