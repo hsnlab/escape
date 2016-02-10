@@ -204,12 +204,14 @@ def MAP (request, network, full_remap=False,
   for i, j, d in network.network.edges_iter(data=True):
     if d.type == 'STATIC':
       if getattr(d, 'delay', None) is None:
-        helper.log.warn("Resource parameter delay is not given in link %s "
-                        "substituting with zero!"%d.id)
+        if d.src.node.type != 'SAP' and d.dst.node.type != 'SAP':
+          helper.log.warn("Resource parameter delay is not given in link %s "
+                          "substituting with zero!"%d.id)
         setattr(d, 'delay', 0)
       if getattr(d, 'bandwidth', None) is None:
-        helper.log.warn("Resource parameter bandwidth is not given in link %s "
-                        "substituting with infinity!"%d.id)
+        if d.src.node.type != 'SAP' and d.dst.node.type != 'SAP':
+          helper.log.warn("Resource parameter bandwidth is not given in link %s "
+                          "substituting with infinity!"%d.id)
         setattr(d, 'bandwidth', float("inf"))
 
   # create the class of the algorithm
