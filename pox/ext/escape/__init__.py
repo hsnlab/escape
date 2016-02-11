@@ -122,22 +122,23 @@ cfg = {
           "prefix": "cfor",
           "address": "0.0.0.0",
           "port": 8889,
-          "virtualizer_type": "GLOBAL"
+          "virtualizer_type": "GLOBAL",
+          "unify_interface": True
         }
     },
   "adaptation":  # Controller Adaptation Sublayer
     {
       # Default managers need to start at init
       "MANAGERS": [
-        # "REMOTE-ESCAPE",
-        # "REMOTE-ESCAPE-ext",
+        "REMOTE-ESCAPE",
+        "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
         # "UN"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
-      # "ENSURE-UNIQUE-ID": True,  # ID conversion strategy for nodes
+      "ENSURE-UNIQUE-ID": True,  # ID conversion strategy for nodes
       # Specific Domain Managers
       "INTERNAL":
         {
@@ -177,7 +178,7 @@ cfg = {
         "module": "escape.adapt.managers",
         "class": "SDNDomainManager",
         "poll": False,
-        # "domain_name": "SDN-MICROTIK",
+        "domain_name": "SDN-MICROTIK",
         "adapters": {
           "CONTROLLER":
             {
@@ -244,7 +245,7 @@ cfg = {
                 "module": "escape.adapt.adapters",
                 "class": "UnifyRESTAdapter",
                 "url": "http://localhost:8081",
-                "timeout": 10
+                "timeout": 5
               }
           }
         },

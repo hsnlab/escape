@@ -18,6 +18,7 @@ Sublayer.
 import json
 
 from escape import CONFIG
+from escape.nffg_lib.nffg import NFFG
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
@@ -27,7 +28,6 @@ from escape.util.conversion import NFFGConverter
 from escape.util.mapping import PreMapEvent, PostMapEvent
 from escape.util.misc import schedule_delayed_as_coop_task, \
   schedule_as_coop_task
-from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
 
@@ -146,7 +146,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     Same functionality as "get-config" in UNIFY interface.
 
-    Bounded to POST HTTP verb
+    Bounded to POST HTTP verb.
 
     :return: None
     """

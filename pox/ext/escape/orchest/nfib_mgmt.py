@@ -23,8 +23,8 @@ import py2neo
 from py2neo import Graph, Relationship
 from py2neo.packages.httpstream.http import SocketError
 
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log
-from escape.util.nffg import NFFG
 
 
 class NFIBManager(object):

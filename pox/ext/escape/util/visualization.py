@@ -21,11 +21,11 @@ from requests import Session, ConnectionError, HTTPError, Timeout
 import virtualizer4 as Virtualizer
 from escape import CONFIG, __version__
 from escape.adapt import LAYER_NAME as ADAPT
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import Singleton
-from escape.util.nffg import NFFG
 from pox.core import core
 
 

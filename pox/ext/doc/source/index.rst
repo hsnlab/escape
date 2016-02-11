@@ -25,7 +25,7 @@ resources.
 
    * Balázs Sonkoly, Robert Szabo, Dávid Jocha, János Czentye, Mario
      Kind, and Fritz-Joachim Westphal, *UNIFYing Cloud and Carrier
-     Network Resources: An Architectural View*, in Proc. IEEE Global
+     Network Resources: An Architectural View*, In Proceedings of IEEE Global
      Telecommunications Conference (GLOBECOM), 2015.
 
    **ESCAPE as a multi-domain orchestrator:**
@@ -325,7 +325,7 @@ This script does the following steps:
 
 Usage:
 
-.. code-block:: bash
+.. code-block:: text
 
     $ ./set_virtualenv.sh -h
       Usage: ./set_virtualenv.sh [-p python_version] [-h]
@@ -388,8 +388,8 @@ Usage:
 .. code-block:: bash
 
     $ ./escape.py -h
-        usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-i] [-r] [-s file]
-                         [-t file] [-x] [-V] [-4]
+        usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-i] [-p] [-r]
+                         [-s file] [-t file] [-x] [-V] [-4]
                          ...
 
       ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet,
@@ -408,6 +408,9 @@ Usage:
         -e, --environment     run ESCAPEv2 in the pre-defined virtualenv environment
         -f, --full            run the infrastructure layer also
         -i, --interactive     run an interactive shell for observing internal states
+        -p, --POXlike         start ESCAPEv2 in the actual interpreter using ./pox
+                              as working directory instead of using a separate shell
+                              process with POX's own PYTHON env
         -r, --rosapi          start the REST-API for the Resource Orchestration
                               sublayer (ROS)
         -s file, --service file
@@ -908,7 +911,8 @@ this configurations structure.
               "prefix": "cfor",
               "address": "0.0.0.0",
               "port": 8889,
-              "virtualizer_type": "GLOBAL"
+              "virtualizer_type": "GLOBAL",
+              "unify_interface": true
             }
         },
       "adaptation":
@@ -917,6 +921,7 @@ this configurations structure.
           ],
           "RESET-DOMAINS-BEFORE-INSTALL": false,
           "CLEAR-DOMAINS-AFTER-SHUTDOWN": true,
+          "ENSURE-UNIQUE-ID": true,
           "INTERNAL":
             {
               "module": "escape.adapt.managers",
@@ -1021,7 +1026,7 @@ this configurations structure.
                     "module": "escape.adapt.adapters",
                     "class": "UnifyRESTAdapter",
                     "url": "http://localhost:8081",
-                    "timeout": 10
+                    "timeout": 5
                   }
               }
             },
@@ -1071,7 +1076,8 @@ this configurations structure.
       "visualization":
         {
           "url": "http://localhost:8081",
-          "rpc": "edit-config"
+          "rpc": "edit-config",
+          "instance_id": null
         }
     }
 

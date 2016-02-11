@@ -19,9 +19,9 @@ from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
 from escape.adapt.adaptation import ControllerAdapter
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
+from escape.nffg_lib.nffg import NFFG
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
-from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
 

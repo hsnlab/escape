@@ -1,7 +1,7 @@
-*escape.util* package
-=====================
+*escape.nffg_lib* package
+=========================
 
-.. automodule:: escape.util
+.. automodule:: escape.nffg_lib
    :members:
    :private-members:
    :special-members:
@@ -15,12 +15,5 @@ Submodules
 .. toctree::
     :titlesonly:
 
-    api
-    config
-    conversion
-    domain
-    mapping
-    misc
-    netconf
-    pox_extension
-    visualization
+    nffg
+    nffg_elements

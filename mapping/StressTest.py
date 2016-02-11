@@ -18,20 +18,26 @@ Generates increasingly bigger/more Service Chain requirements for a
 network topology, reports how well the algorithm performed.
 """
 
+import getopt
+import logging
+import math
+import random
+import sys
+import traceback
+
 import CarrierTopoBuilder
 import MappingAlgorithms
 import UnifyExceptionTypes as uet
-import random, math, traceback, sys, logging, getopt
 
 try:
-  from escape.util.nffg import NFFG
+  from escape.nffg_lib.nffg import NFFG
 except ImportError:
   import sys, os, inspect
 
   sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
     os.path.abspath(
       os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
-                                  "pox/ext/escape/util/"))
+                                  "pox/ext/escape/nffg_lib/"))
   from nffg import NFFG
 
 def gen_seq():
