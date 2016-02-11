@@ -228,7 +228,7 @@ class RequestCache(object):
     """
     try:
       self.cache[id] = self.IN_PROGRESS
-    except:
+    except KeyError:
       pass
 
   def set_result (self, id, result):
@@ -242,7 +242,7 @@ class RequestCache(object):
     """
     try:
       self.cache[id] = self.SUCCESS if result else self.ERROR
-    except:
+    except KeyError:
       pass
 
   def get_result (self, id):
@@ -254,7 +254,7 @@ class RequestCache(object):
     """
     try:
       return self.cache[id]
-    except:
+    except KeyError:
       return self.UNKNOWN
 
 
@@ -309,7 +309,7 @@ class RESTServer(ThreadingMixIn, HTTPServer):
     # print "start"
     try:
       self.serve_forever()
-    except:
+    except Exception:
       pass
       # print "stop"
       # self.RequestHandlerClass.log.debug(

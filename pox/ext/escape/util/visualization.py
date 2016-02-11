@@ -146,7 +146,7 @@ class RemoteVisualizer(Session):
       self._response.raise_for_status()
       return self._response.text
     except (ConnectionError, HTTPError, KeyboardInterrupt) as e:
-      self.log.error(
+      self.log.warning(
         "Got exception during notifying remote Visualizer: %s!" % e)
       return False
     except Timeout:

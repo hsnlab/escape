@@ -470,7 +470,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     try:
       super(VNFStarterAdapter, self)._invoke_rpc(request_data)
     except (RPCError, TransportError, OperationError) as e:
-      log.error("Failed to invoke NETCONF based RPC! Cause: %s", e)
+      log.exception("Failed to invoke NETCONF based RPC! Cause: %s", e)
 
   ##############################################################################
   # RPC calls starts here
@@ -703,8 +703,6 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         return adapter.getVNFInfo(vnf_id=vnf_id)
       except RPCError as e:
         log.error("Got Error during deployVNF through NETCONF:")
-        # from pprint import pprint
-        # pprint(e.to_dict())
         raise
       except KeyError as e:
         log.warning(

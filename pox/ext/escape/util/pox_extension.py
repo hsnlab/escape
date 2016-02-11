@@ -51,7 +51,7 @@ class ExtendedOFConnectionArbiter(OpenFlowConnectionArbiter):
     try:
       # Set original OpenFlow nexus as a last resort
       self._fallback = core.openflow
-    except:
+    except Exception:
       # for safety reason
       core.getLogger().warning(
         "No default OpenFlow nexus is registered. Registering now...")

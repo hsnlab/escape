@@ -203,10 +203,8 @@ class InternalDomainManager(AbstractDomainManager):
       # _deploy_flowrules_forever()
       return True
     except:
-      log.error(
-        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.domain_name, sys.exc_info()))
-      log.debug("%s" % traceback.print_exc())
+      log.exception(
+        "Got exception during NFFG installation into: %s." % self.domain_name)
       return False
 
   def clear_domain (self):
@@ -677,10 +675,8 @@ class SDNDomainManager(AbstractDomainManager):
       # _deploy_flowrules_forever()
       return True
     except:
-      log.error(
-        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.domain_name, sys.exc_info()))
-      log.debug("%s" % traceback.print_exc())
+      log.exception(
+        "Got exception during NFFG installation into: %s." % self.domain_name)
       return False
 
   def _delete_flowrules (self, nffg_part):
@@ -868,10 +864,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
       else:
         return False
     except:
-      log.error(
-        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.domain_name, sys.exc_info()))
-      log.debug("%s" % traceback.print_exc())
+      log.exception(
+        "Got exception during NFFG installation into: %s." % self.domain_name)
       return False
 
   # def __update_nffg (self, nffg_part):
@@ -979,10 +973,8 @@ class UnifyDomainManager(AbstractDomainManager):
       status = self.topoAdapter.edit_config(nffg_part)
       return True if status is not None else False
     except:
-      log.error(
-        "Got exception during NFFG installation into: %s. Cause:\n%s" % (
-          self.domain_name, sys.exc_info()))
-      log.debug("%s" % traceback.print_exc())
+      log.exception(
+        "Got exception during NFFG installation into: %s." % self.domain_name)
       return False
 
   def clear_domain (self):

@@ -79,8 +79,7 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except:
-      log.error("Got unexpected error during mapping process! Cause: ")
-      traceback.print_exception(*sys.exc_info())
+      log.exception("Got unexpected error during mapping process!")
       return
     log.debug(
       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))

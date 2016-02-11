@@ -692,8 +692,5 @@ class NFIBManager(object):
     except SocketError as e:
       log.error(
         "NFIB is not reachable due to failed neo4j service! Cause: " + str(e))
-      raise
     except:
-      log.error("Got unexpected error during NFIB initialization! Cause:")
-      log.error(reduce(lambda x, y: str(x) + " " + str(y), sys.exc_info()))
-      raise
+      log.exception("Got unexpected error during NFIB initialization!")

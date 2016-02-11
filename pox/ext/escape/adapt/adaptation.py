@@ -289,8 +289,7 @@ class ComponentConfigurator(object):
       try:
         mgr.clear_domain()
       except:
-        log.error("Got exception during domain resetting!")
-        traceback.print_exc()
+        log.exception("Got exception during domain resetting!")
 
   def stop_initiated_mgrs (self):
     """
@@ -303,8 +302,7 @@ class ComponentConfigurator(object):
       try:
         self.stop_mgr(name=name)
       except:
-        log.error("Got exception during domain resetting!")
-        traceback.print_exc()
+        log.exception("Got exception during domain resetting!")
     # Do not del mgr in for loop because of the iterator use
     self.__repository.clear()
 
