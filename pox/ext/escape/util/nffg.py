@@ -17,15 +17,9 @@ as building, parsing, processing NF-FG, helper functions, etc.
 """
 import logging
 import networkx
-import xml.etree.ElementTree as ET
 from networkx.exception import NetworkXError
 
 from nffg_elements import *
-
-try:
-  import virtualizer4 as virt4
-except ImportError:
-  pass
 
 __version__ = "1.0"
 
@@ -811,7 +805,7 @@ class NFFGToolBox(object):
     :param nffg: updating information
     :type nffg: :any:`NFFG`
     :type domain: domain
-    :param log: specific logger
+    :param log: additional logger
     :type log: :any:`logging.Logger`
     :return: the update base NFFG
     :rtype: :any:`NFFG`
@@ -940,13 +934,15 @@ class NFFGToolBox(object):
     return base
 
   @staticmethod
-  def split_into_domains (nffg, log=logging.getLogger('SPLIT')):
+  def split_into_domains (nffg, log=logging.getLogger("SPLIT")):
     """
     Split given :any:`NFFG` into separate parts self._global_nffg on
     original domains.
 
     :param nffg: mapped NFFG object
     :type nffg: NFFG
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
     :return: sliced parts as a list of (domain_name, nffg_part) tuples
     :rtype: list
     """
@@ -1036,160 +1032,84 @@ class NFFGToolBox(object):
     return splitted_parts
 
   @staticmethod
-  def install_domain (virtualizer, nffg):
+  def rebind_e2e_req_links (nffg, log=logging.getLogger("REBIND")):
     """
-    Install NFFG part or complete NFFG into given Virtualizer.
+    Search for splitted requirement links in the NFFG. If a link connects
+    inter-domain SAPs rebind the link as an e2e requirement link.
 
-    :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
-    :param nffg: splitted NFFG (not necessarily in valid syntax)
-    :return: modified Virtualizer object
+    :param nffg: splitted NFFG object
+    :type nffg: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: rebounded NFFG
+    :rtype: :any:`NFFG`
     """
-    print "Adapt modification from %s into %s" % (nffg, repr(virtualizer))
-    # Check every infra Node
-    for infra in nffg.infras:
-      # Check in infra is exist in the Virtualizer
-      if str(infra.id) not in virtualizer.nodes.node.getKeys():
-        print "InfraNode: %s is not in the domain: %s! Skip related " \
-              "initiations..."
+    log.info(
+      "Search for requirement link fragments to rebind as e2e requirement...")
+    req_cache = []
+
+    def __detect_connected_sap (port):
+      """
+      Detect if the given port is connected to a SAP.
+
+      :param port: port object
+      :type port: :any:`Port`
+      :return: SAP port or None
+      :rtype: :any:`Port`
+      """
+      connected_port = [l.dst for u, v, l in
+                        nffg.network.out_edges_iter([port.node.id], data=True)
+                        if l.type == NFFG.TYPE_LINK_STATIC and
+                        str(l.src.id) == str(port.id)]
+      # If the number of detected nodes is unexpected continue to the next req
+      if len(connected_port) == 0:
+        log.warning(
+          "Skip edge rebinding: No connected node is detected for port: %s" %
+          port)
+        return None
+      elif len(connected_port) > 1:
+        log.warning(
+          "Skip edge rebinding: Multiple connected nodes are detected for %s: "
+          "%s!" % (port, connected_port))
+        return None
+      elif connected_port[0].node.type == NFFG.TYPE_SAP:
+        return connected_port[0]
+      else:
+        return None
+
+    for req in nffg.reqs:
+      if req.src.node.type == NFFG.TYPE_SAP and \
+            req.dst.node.type == NFFG.TYPE_SAP:
+        log.debug(
+          "Skip rebinding: Detected %s is already an end-to-end link!" % req)
+        # Detect the node connected to the src port of req link
+      src_sap_port = __detect_connected_sap(port=req.src)
+      if src_sap_port:
+        log.debug("Detected src SAP node: %s" % src_sap_port)
+      else:
         continue
-      # Check every outgoing edge
-      for u, v, link in nffg.network.out_edges_iter([infra.id], data=True):
-        # Observe only the NF neighbours
-        if link.dst.node.type != NFFG.TYPE_NF:
-          continue
-        # Check if the NF is exist in the InfraNode
-        if str(v) not in virtualizer.nodes[str(u)].NF_instances.node.getKeys():
-          # Create NF object
-          nf = link.dst.node
-          print "Initiate %s on %s" % (nf, infra)
-          # Convert Resources to str for XML conversion
-          v_nf_cpu = str(nf.resources.cpu) if nf.resources.cpu else None
-          v_nf_mem = str(nf.resources.mem) if nf.resources.mem else None
-          v_nf_storage = str(
-            nf.resources.storage) if nf.resources.storage else None
-          # Create Node object for NF
-          v_nf = virt4.Node(id=str(nf.id), name=str(nf.name),
-                            type=str(nf.functional_type),
-                            resources=virt4.Software_resource(cpu=v_nf_cpu,
-                                                              mem=v_nf_mem,
-                                                              storage=v_nf_storage))
-          # Add NF to Infra object
-          virtualizer.nodes[str(u)].NF_instances.add(v_nf)
-          # Add NF ports
-          for port in nffg[v].ports:
-            print "Add %s to %s" % (port, nf)
-            nf_port = virt4.Port(id=str(port.id), port_type="port-abstract")
-            virtualizer.nodes[str(u)].NF_instances[str(v)].ports.add(nf_port)
+      # Detect the node connected to the dst port of req link
+      dst_sap_port = __detect_connected_sap(port=req.dst)
+      if dst_sap_port:
+        log.debug("Detected dst SAP node: %s" % dst_sap_port)
+      else:
+        continue
+      # Create e2e req link and store for rebinding
+      e2e_req = req.copy()
+      e2e_req.src = src_sap_port
+      e2e_req.dst = dst_sap_port
+      req_cache.append((req.src.node.id, req.dst.node.id, req.id, e2e_req))
 
-      # Add flowrules to Virtualizer
-      fr_cntr = 0
-      # traverse every point in the Infra node
-      for port in infra.ports:
-        # Check every flowrule
-        for flowrule in port.flowrules:
+    # Rebind marked Requirement links
+    if not req_cache:
+      log.debug("No requirement link has been rebounded!")
+    else:
+      for src, dst, id, e2e in req_cache:
+        nffg.del_edge(src=src, dst=dst, id=id)
+        nffg.add_edge(src=e2e.src, dst=e2e.dst, link=e2e)
+        log.debug("Rebounded requirement link: %s" % e2e)
 
-          # Define metadata
-          fr_id = "fr" + str(fr_cntr)
-          fr_cntr += 1
-          fr_pri = str(100)
-
-          # Check if match starts with in_port
-          fr = flowrule.match.split(';')
-          if fr[0].split('=')[0] != "in_port":
-            print "Missing 'in_port' from match. Skip flowrule conversion..."
-            continue
-
-          # Check if the src port is a physical or virtual port
-          in_port = fr[0].split('=')[1]
-          if str(port.id) in virtualizer.nodes[
-            str(infra.id)].ports.port.getKeys():
-            # Flowrule in_port is a phy port in Infra Node
-            in_port = virtualizer.nodes[str(infra.id)].ports[str(port.id)]
-          else:
-            # in_port is a dynamic port --> search for connected NF's port
-            nf_port = [l.dst for u, v, l in
-                       nffg.network.out_edges_iter([infra.id], data=True) if
-                       l.type == NFFG.TYPE_LINK_DYNAMIC and str(
-                         l.src.id) == in_port]
-            # There should be only one link between infra and NF
-            if len(nf_port) < 1:
-              print "NF port is not found for dynamic Infra port: %s defined " \
-                    "in match field!" % port
-              continue
-            nf_port = nf_port[0]
-            in_port = virtualizer.nodes[str(infra.id)].NF_instances[
-              str(nf_port.node.id)].ports[str(nf_port.id)]
-
-          # Process match field
-          match = None
-          if len(fr) > 1:
-            if fr[1].split('=')[0] == "TAG":
-              vlan = int(fr[1].split('=')[1].split('-')[-1])
-              if infra.domain == "OPENSTACK":
-                match = r"dl_vlan=%s" % format(vlan, '#06x')
-              elif infra.domain == "UN":
-                match = ET.Element('match')
-                vlan_id = ET.SubElement(match, 'vlan_id')
-                vlan_id.text = str(vlan)
-            elif fr[1].split('=')[0] == "UNTAG":
-              if infra.domain == "OPENSTACK":
-                match = r"strip_vlan"
-              elif infra.domain == "UN":
-                match = ET.Element('match')
-                ET.SubElement(ET.SubElement(match, 'vlan'), "pop")
-
-          # Check if action starts with outport
-          fr = flowrule.action.split(';')
-          if fr[0].split('=')[0] != "output":
-            print "Missing 'output' from match. Skip flowrule conversion..."
-            continue
-
-          # Check if the dst port is a physical or virtual port
-          out_port = fr[0].split('=')[1]
-          if str(out_port) in virtualizer.nodes[
-            str(infra.id)].ports.port.getKeys():
-            # Flowrule output is a phy port in Infra Node
-            out_port = virtualizer.nodes[str(infra.id)].ports[str(out_port)]
-          else:
-            # out_port is a dynamic port --> search for connected NF's port
-            nf_port = [l.dst for u, v, l in
-                       nffg.network.out_edges_iter([infra.id], data=True) if
-                       l.type == NFFG.TYPE_LINK_DYNAMIC and str(
-                         l.src.id) == out_port]
-            if len(nf_port) < 1:
-              print "NF port is not found for dynamic Infra port: %s defined " \
-                    "in action field!" % port
-              continue
-            nf_port = nf_port[0]
-            out_port = virtualizer.nodes[str(infra.id)].NF_instances[
-              str(nf_port.node.id)].ports[str(nf_port.id)]
-
-          # Process action field
-          action = None
-          if len(fr) > 1:
-            if fr[1].split('=')[0] == "TAG":
-              vlan = int(fr[1].split('=')[1].split('-')[-1])
-              if infra.domain == "OPENSTACK":
-                action = r"mod_vlan_vid:%s" % format(vlan, '#06x')
-              elif infra.domain == "UN":
-                action = ET.Element('match')
-                vlan_id = ET.SubElement(action, 'vlan_id')
-                vlan_id.text = str(vlan)
-            elif fr[1].split('=')[0] == "UNTAG":
-              if infra.domain == "OPENSTACK":
-                action = r"strip_vlan"
-              elif infra.domain == "UN":
-                action = ET.Element('match')
-                ET.SubElement(ET.SubElement(action, 'vlan'), "pop")
-
-          # Add Flowentry to Virtualizer
-          print "Add flowentry: %s" % flowrule
-          virtualizer.nodes[str(infra.id)].flowtable.add(
-            virt4.Flowentry(id=fr_id, priority=fr_pri, port=in_port,
-                            match=match, action=action, out=out_port))
-
-    # Return with modified Virtualizer
-    return virtualizer
+    return nffg
 
   @staticmethod
   def _get_output_port_of_TAG_action (TAG, port):
@@ -1563,3 +1483,12 @@ class NFFGToolBox(object):
           if link.src.id == portobj.id and link.src.node.id == portobj.node.id:
             sg_map[sghop_info][1] = link.dst
     return sg_map
+
+
+if __name__ == "__main__":
+  logging.basicConfig(level=logging.DEBUG)
+  with open("../../../../examples/escape-mn-mapped-topo.nffg") as f:
+    nffg = NFFG.parse(f.read())
+    for domain, part in NFFGToolBox.split_into_domains(nffg):
+      rebounded = NFFGToolBox.rebind_e2e_req_links(part)
+      logging.info(domain + "\n" + rebounded.dump())
