@@ -1050,10 +1050,10 @@ class EdgeLink(Link):
     return self
 
   def __str__ (self):
-    return "Link(id: %s, src: %s[%s], dst: %s[%s], type: %s, delay:%s, " \
-           "bandwidth: %s)" % (
+    return "EdgeLink(id: %s, src: %s[%s], dst: %s[%s], type: %s, backward: " \
+           "%s, delay:%s, bandwidth: %s)" % (
              self.id, self.src.node.id, self.src.id, self.dst.node.id,
-             self.dst.id, self.type, self.delay, self.bandwidth)
+             self.dst.id, self.type, self.backward, self.delay, self.bandwidth)
 
   def __repr__ (self):
     return "<|ID: %s, Type: %s, Back: %s, src: %s[%s], dst: %s[%s] --> %s|>" % (
@@ -1122,6 +1122,12 @@ class EdgeSGLink(Link):
     self.bandwidth = float(data['bandwidth']) if 'bandwidth' in data else None
     return self
 
+  def __str__ (self):
+    return "SGLink(id: %s, src: %s[%s], dst: %s[%s], tag: %s, delay:%s, " \
+           "bandwidth: %s)" % (
+             self.id, self.src.node.id, self.src.id, self.dst.node.id,
+             self.dst.id, self.tag_info, self.delay, self.bandwidth)
+
 
 class EdgeReq(Link):
   """
@@ -1185,6 +1191,12 @@ class EdgeReq(Link):
     if 'sg_path' in data:
       self.sg_path = data['sg_path']
     return self
+
+  def __str__ (self):
+    return "ReqLink(id: %s, src: %s[%s], dst: %s[%s], path: %s, delay:%s, " \
+           "bandwidth: %s)" % (
+             self.id, self.src.node.id, self.src.id, self.dst.node.id,
+             self.dst.id, self.sg_path, self.delay, self.bandwidth)
 
 
 ################################################################################
