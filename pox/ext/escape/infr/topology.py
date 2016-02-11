@@ -16,9 +16,9 @@ Wrapper module for handling emulated test topology based on Mininet.
 """
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
+from escape.nffg_lib.nffg import NFFG
+from escape.nffg_lib.nffg_elements import NodeInfra
 from escape.util.misc import quit_with_error, get_ifaces
-from escape.util.nffg import NFFG
-from escape.util.nffg_elements import NodeInfra
 from mininet.link import TCLink, Intf
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch

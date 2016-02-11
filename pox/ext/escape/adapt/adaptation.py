@@ -21,11 +21,11 @@ import weakref
 import escape.adapt.managers as mgrs
 from escape import CONFIG
 from escape.adapt import log as log, LAYER_NAME
+from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent
 from escape.util.misc import notify_remote_visualizer
-from escape.util.nffg import NFFG, NFFGToolBox
 
 
 class ComponentConfigurator(object):
@@ -41,7 +41,7 @@ class ComponentConfigurator(object):
     For domain adapters the configurator checks the CONFIG first.
 
     .. warning::
-      Adapter classes must be subclass of AbstractESCAPEAdapter
+      Adapter classes must be subclass of AbstractESCAPEAdapter!
 
     .. note::
       Arbitrary domain adapters is searched in
@@ -366,8 +366,7 @@ class ControllerAdapter(object):
     Start NF-FG installation.
 
     Process given :any:`NFFG`, slice information self.__global_nffg on
-    domains an invoke
-    DomainManagers to install domain specific parts.
+    domains and invoke DomainManagers to install domain specific parts.
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: NFFG
@@ -386,12 +385,12 @@ class ControllerAdapter(object):
       return
     log.debug(
       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
-    # TODO - end-to-end requirement recreation
-    # for domain, part in slices:
-    #   self.rebind_e2e_req_links(nffg=part)
     # TODO - abstract/inter-domain tag rewrite
     mapping_result = True
     for domain, part in slices:
+      # Rebind requirement link fragments as e2e reqs
+      part = NFFGToolBox.rebind_e2e_req_links(nffg=part, log=log)
+      # Get Domain Manager
       domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
       if domain_mgr is None:
         log.warning(

@@ -291,17 +291,23 @@ class AbstractNETCONFAdapter(object):
     Parse given keyword arguments and generate RPC body in proper XML format.
     The key value is used as the XML tag name. If the value is another
     dictionary the XML structure follows the hierarchy. The param values can
-    be only simple types and dictionary for simplicity. Conversation example::
+    be only simple types and dictionary for simplicity.
+
+    Conversation example:
+
+    .. code-block:: json
 
       {
-        'vnf_type': 'headerDecompressor',
-        'options': {
-                    'name': 'ip',
-                    'value': 127.0.0.1
+        "vnf_type": "headerDecompressor",
+        "options": {
+                    "name": "ip",
+                    "value": "127.0.0.1"
                     }
       }
 
-    will be generated into::
+    will be generated into
+
+    .. code-block:: xml
 
       <rpc-call-name>
         <vnf_type>headerDecompressor</vnf_type>
@@ -406,10 +412,10 @@ class AbstractNETCONFAdapter(object):
     """
     Context manager setup action.
 
-    Usage::
+    Usage:
 
-      with AbstractNETCONFAdapter() as adapter:
-        ...
+    >>> with AbstractNETCONFAdapter() as adapter:
+    >>>  ...
     """
     if not self.connected:
       self.connect()

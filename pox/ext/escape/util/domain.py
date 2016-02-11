@@ -20,9 +20,9 @@ from requests import Session, ConnectionError, HTTPError, Timeout
 import pox.openflow.libopenflow_01 as of
 from escape import __version__
 from escape.adapt import log
+from escape.nffg_lib.nffg import NFFG
 from escape.util.config import ConfigurationError
 from escape.util.misc import enum
-from escape.util.nffg import NFFG
 from escape.util.pox_extension import OpenFlowBridge, \
   ExtendedOFConnectionArbiter
 from pox.lib.addresses import EthAddr

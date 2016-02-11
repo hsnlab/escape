@@ -15,15 +15,14 @@
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
-
 from escape import CONFIG
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import LAYER_NAME
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import schedule_as_coop_task
-from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
 

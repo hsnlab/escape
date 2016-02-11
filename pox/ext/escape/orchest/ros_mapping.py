@@ -18,8 +18,7 @@ import sys
 import traceback
 
 from MappingAlgorithms import MAP
-from UnifyExceptionTypes import MappingException, BadInputException, \
-  InternalAlgorithmException
+from UnifyExceptionTypes import *
 from escape import CONFIG
 from escape.orchest import log as log, LAYER_NAME
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy

@@ -46,9 +46,11 @@ ESCAPE instance started in agent mode.
 :any:`AbstractRESTAdapter` contains the general functions for communication
 through an HTTP/RESTful API.
 
-Requirements::
+Requirements:
 
-  sudo pip install requests
+.. code-block:: bash
+
+   $ sudo pip install requests
 
 Module contents
 ---------------

@@ -16,9 +16,9 @@ Contains components relevant to virtualization of resources and views.
 """
 from itertools import chain
 
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
-from escape.util.nffg import NFFG
 from pox.lib.revent.revent import EventMixin, Event
 
 if 'DoV' not in globals():
@@ -67,7 +67,7 @@ class AbstractVirtualizer(object):
     :any:`NFFG`.
 
     .. warning::
-      Derived class have to override this function
+      Derived class have to override this function!
 
     :raise: NotImplementedError
     :return: resource info

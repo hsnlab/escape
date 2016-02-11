@@ -49,9 +49,9 @@ class AbstractAPI(EventMixin):
 
     Handle core registration along with :func:`_all_dependencies_met()`.
 
-    Set given parameters (standalone parameter is mandatory) automatically as::
+    Set given parameters (standalone parameter is mandatory) automatically as:
 
-      self._<param_name> = <param_value>
+      >>> self._<param_name> = <param_value>
 
     Base constructor functions have to be called as the last step in derived
     classes. Same situation with :func:`_all_dependencies_met()` respectively.
@@ -59,13 +59,13 @@ class AbstractAPI(EventMixin):
     init steps. Actual API classes must only call :func:`super()` in their
     constructor with the form::
 
-      super(<API Class name>, self).__init__(standalone=standalone, **kwargs)
+      >>> super(<API Classname>, self).__init__(standalone=standalone, **kwargs)
 
     .. warning::
       Do not use prefixes in the name of event handlers, because of automatic
       dependency discovery considers that as a dependent component and this
       situation cause a dead lock (component will be waiting to each other to
-      set up)
+      set up)!
 
     :param standalone: started in standalone mode or not
     :type standalone: bool
@@ -354,7 +354,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     relevant helper function of core object: :func:`callLater()`/
     :func:`raiseLater()` or use :func:`schedule_as_coop_task()
     <escape.util.misc.schedule_as_coop_task>` decorator defined in
-    :mod:`escape.util.misc` on the called function
+    :mod:`escape.util.misc` on the called function!
   """
   # For HTTP Response messages
   server_version = "ESCAPE/" + __version__

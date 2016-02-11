@@ -46,9 +46,9 @@ class PolicyEnforcementMetaClass(type):
     If policy checking fails a :class:`PolicyEnforcementError` should be
     raised and handled in a higher layer..
 
-  To use policy checking set the following class attribute::
+  To use policy checking set the following class attribute:
 
-    __metaclass__ = PolicyEnforcementMetaClass
+    >>> __metaclass__ = PolicyEnforcementMetaClass
   """
 
   def __new__ (mcs, name, bases, attrs):
@@ -139,17 +139,17 @@ class PolicyEnforcement(object):
     Every PRE policy checking function is classmethod and need to have two
     parameter for nameless (args) and named(kwargs) params:
 
-  Example::
+  Example:
 
-    def pre_sanity_check (cls, args, kwargs):
+    >>> def pre_sanity_check (cls, args, kwargs):
 
   .. warning::
     Every POST policy checking function is classmethod and need to have three
     parameter for nameless (args), named (kwargs) params and return value:
 
-  Example::
+  Example:
 
-    def post_sanity_check (cls, args, kwargs, ret_value):
+    >>> def post_sanity_check (cls, args, kwargs, ret_value):
 
   .. note::
     The first element of args is the supervised Virtualizer ('self' param in the

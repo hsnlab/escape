@@ -21,15 +21,15 @@ from baseclasses import __version__ as V_VERSION
 
 try:
   # Import for ESCAPEv2
-  from escape.util.nffg import AbstractNFFG, NFFG
+  from escape.nffg_lib.nffg import AbstractNFFG, NFFG
 except ImportError:
   import os, inspect
 
   sys.path.insert(0, os.path.join(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../../../..")),
-    "pox/ext/escape/util/"))
+    "pox/ext/escape/nffg_lib/"))
   # Import for standalone running
-  from nffg import AbstractNFFG, NFFG
+  from escape.nffg_lib.nffg import AbstractNFFG, NFFG
 
 try:
   # Import for ESCAPEv2
