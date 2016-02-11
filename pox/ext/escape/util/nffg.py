@@ -802,7 +802,7 @@ class NFFGToolBox(object):
   """
 
   @staticmethod
-  def merge_domains (base, nffg, domain, log=logging.getLogger("MERGING")):
+  def merge_domains (base, nffg, domain, log=logging.getLogger("MERGE")):
     """
     Merge the given ``nffg`` into the base NFFG.
 
@@ -940,25 +940,32 @@ class NFFGToolBox(object):
     return base
 
   @staticmethod
-  def split_domains (nffg):
+  def split_into_domains (nffg, log=logging.getLogger('SPLIT')):
     """
-    Split NFFG object into separate parts based on DOMAIN attribute.
+    Split given :any:`NFFG` into separate parts self._global_nffg on
+    original domains.
 
-    :param nffg: global resource view (DoV)
-    :type nffg: :any:`NFFG`
-    :return: splitted parts as list ov domain name, domain part tuples
-    :rtype: tuple
+    :param nffg: mapped NFFG object
+    :type nffg: NFFG
+    :return: sliced parts as a list of (domain_name, nffg_part) tuples
+    :rtype: list
     """
-    print "Splitting given NFFG: %s" % nffg
+    splitted_parts = []
+
+    log.info("Splitting mapped NFFG: %s according to detected domains" % nffg)
     # Define DOMAIN names
     domains = set()
     for infra in nffg.infras:
       domains.add(infra.domain)
-    print "Detected domains: %s" % domains
+    log.debug("Detected domains for splitting: %s" % domains)
 
-    splitted_parts = []
+    if len(domains) == 0:
+      log.warning("No domain has been detected!")
+      return
+
     # Checks every domain
     for domain in domains:
+      log.info("Create slice for domain: %s" % domain)
       # Collect every node which not in the domain
       deletable = set()
       for infra in nffg.infras:
@@ -978,50 +985,54 @@ class NFFGToolBox(object):
           if nffg.network.node[v].type == NFFG.TYPE_NF or nffg.network.node[
             v].type == NFFG.TYPE_SAP:
             deletable.add(v)
+      log.debug("Nodes marked for deletion: %s" % deletable)
+
+      log.debug("Clone NFFG...")
       # Copy the NFFG
       nffg_part = nffg.copy()
       # Set metadata
       nffg_part.id = domain
       nffg_part.name = domain + "-splitted"
       # Delete needless nodes --> and as a side effect the connected links too
+      log.debug("Delete marked nodes...")
       nffg_part.network.remove_nodes_from(deletable)
+      log.debug("Remained nodes: %s" % [n for n in nffg_part])
       splitted_parts.append((domain, nffg_part))
 
+      log.debug(
+        "Search for inter-domain SAP ports and recreate associated SAPs...")
       # Recreate inter-domain SAP
       for infra in nffg_part.infras:
         for port in infra.ports:
           # Check ports of remained Infra's for SAP ports
-          if "port_type:port-sap" in port.properties:
+          if port.get_property("type") == "inter-domain":
             # Found inter-domain SAP port
-            print "Found inter-domain SAP port: %s" % port
+            log.debug("Found inter-domain SAP port: %s" % port)
             # Create default SAP object attributes
-            sap_id, sap_name = None, None
             # Copy optional SAP metadata as special id or name
-            for property in port.properties:
-              if str(property).startswith("sap:"):
-                sap_id = property.split(":", 1)[1]
-              if str(property).startswith("name:"):
-                sap_name = property.split(":", 1)[1]
+            sap_id = port.get_property("sap")
+            sap_name = port.get_property("name")
             # Add SAP to splitted NFFG
             if sap_id in nffg_part:
-              print "%s is already in the splitted NFFG. Skip adding..." % \
-                    nffg_part[sap_id]
+              log.warning("%s is already in the splitted NFFG. Skip adding..." %
+                          nffg_part[sap_id])
               continue
             sap = nffg_part.add_sap(id=sap_id, name=sap_name)
             # Add port to SAP port number(id) is identical with the Infra's port
-            sap_port = sap.add_port(id=port.id, properties=port.properties[:])
+            sap_port = sap.add_port(id=port.id,
+                                    properties=port.properties.copy())
             # Connect SAP to Infra
             nffg_part.add_undirected_link(port1=port, port2=sap_port)
-            print "Create inter-domain SAP: %s" % sap
+            log.debug(
+              "Add inter-domain SAP: %s with port: %s" % (sap, sap_port))
 
       # Check orphaned or not connected nodes and remove them
       for node_id in nffg_part.network.nodes():
         if len(nffg_part.network.neighbors(node_id)) > 0:
           continue
-        print "Found orphaned node: %s! Remove from sliced part." % \
-              nffg_part.network.node[node_id]
+        log.warning("Found orphaned node: %s! Remove from sliced part." %
+                    nffg_part.network.node[node_id])
         nffg_part.network.remove_node(node_id)
-    # Return with the splitted parts
     return splitted_parts
 
   @staticmethod
