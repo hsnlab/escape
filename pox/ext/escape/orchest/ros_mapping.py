@@ -14,8 +14,6 @@
 """
 Contains classes which implement :any:`NFFG` mapping functionality.
 """
-import sys
-import traceback
 
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import *
@@ -86,8 +84,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       log.warning("Mapping algorithm on %s aborted!" % graph)
       raise
     except:
-      log.error("Got unexpected error during mapping process! Cause: ")
-      traceback.print_exception(*sys.exc_info())
+      log.exception("Got unexpected error during mapping process!")
 
 
 class NFFGMappingFinishedEvent(Event):

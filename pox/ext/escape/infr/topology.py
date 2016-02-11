@@ -991,7 +991,7 @@ class ESCAPENetworkBuilder(object):
           "Unsupported topology format: %s - %s" % (type(topo), topo))
       return self.get_network()
     except SystemExit as e:
-      quit_with_error(msg="Mininet exited unexpectedly! Cause: %s" % e.message)
+      quit_with_error(msg="Mininet exited unexpectedly!", exception=True)
     except TopologyBuilderException:
       if self.fallback:
         # Search for fallback topology
