@@ -25,7 +25,7 @@ from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent
 from escape.util.misc import notify_remote_visualizer
-from escape.util.nffg import NFFG
+from escape.util.nffg import NFFG, NFFGToolBox
 
 
 class ComponentConfigurator(object):
@@ -361,110 +361,6 @@ class ControllerAdapter(object):
     # Stop initiated DomainManagers
     self.domains.stop_initiated_mgrs()
 
-  @staticmethod
-  def _split_into_domains (nffg):
-    """
-    Split given :any:`NFFG` into separate parts self._global_nffg on
-    original domains.
-
-    .. warning::
-      Not implemented yet!
-
-    :param nffg: mapped NFFG object
-    :type nffg: NFFG
-    :return: sliced parts as a list of (domain_name, nffg_part) tuples
-    :rtype: list
-    """
-    # with open('pox/merged-global.nffg', 'r') as f:
-    #   nffg = NFFG.parse(f.read())
-    splitted_parts = []
-
-    log.info("Splitting mapped NFFG: %s according to detected domains" % nffg)
-    # Define DOMAIN names
-    domains = set()
-    for infra in nffg.infras:
-      domains.add(infra.domain)
-    log.debug("Detected domains for splitting: %s" % domains)
-
-    if len(domains) == 0:
-      log.warning("No domain has been detected!")
-      return
-
-    # Checks every domain
-    for domain in domains:
-      log.info("Create slice for domain: %s" % domain)
-      # Collect every node which not in the domain
-      deletable = set()
-      for infra in nffg.infras:
-        # Domains representations based on infras
-        if infra.domain == domain:
-          # Skip current domains infra
-          continue
-        # Mark the infra as deletable
-        deletable.add(infra.id)
-        # Look for orphan NF ans SAP nodes which connected to this deletable
-        # infra
-        for u, v, link in nffg.network.out_edges_iter([infra.id], data=True):
-          # Skip Requirement and SG links
-          if link.type != NFFG.TYPE_LINK_STATIC and link.type != \
-             NFFG.TYPE_LINK_DYNAMIC:
-            continue
-          if nffg.network.node[v].type == NFFG.TYPE_NF or nffg.network.node[
-            v].type == NFFG.TYPE_SAP:
-            deletable.add(v)
-      log.debug("Nodes marked for deletion: %s" % deletable)
-
-      log.debug("Clone NFFG...")
-      # Copy the NFFG
-      nffg_part = nffg.copy()
-      # Set metadata
-      nffg_part.id = domain
-      nffg_part.name = domain + "-splitted"
-      # Delete needless nodes --> and as a side effect the connected links too
-      log.debug("Delete marked nodes...")
-      nffg_part.network.remove_nodes_from(deletable)
-      log.debug("Remained nodes: %s" % [n for n in nffg_part])
-      splitted_parts.append((domain, nffg_part))
-
-      log.debug(
-        "Search for inter-domain SAP ports and recreate associated SAPs...")
-      # Recreate inter-domain SAP
-      for infra in nffg_part.infras:
-        for port in infra.ports:
-          # Check ports of remained Infra's for SAP ports
-          if port.get_property("type") == "inter-domain":
-            # Found inter-domain SAP port
-            log.debug("Found inter-domain SAP port: %s" % port)
-            # Create default SAP object attributes
-            # Copy optional SAP metadata as special id or name
-            sap_id = port.get_property("sap")
-            sap_name = port.get_property("name")
-            # Add SAP to splitted NFFG
-            if sap_id in nffg_part:
-              log.warning("%s is already in the splitted NFFG. Skip adding..." %
-                          nffg_part[sap_id])
-              continue
-            sap = nffg_part.add_sap(id=sap_id, name=sap_name)
-            # Add port to SAP port number(id) is identical with the Infra's port
-            sap_port = sap.add_port(id=port.id,
-                                    properties=port.properties.copy())
-            # Connect SAP to Infra
-            nffg_part.add_undirected_link(port1=port, port2=sap_port)
-            log.debug(
-              "Add inter-domain SAP: %s with port: %s" % (sap, sap_port))
-
-      # Check orphaned or not connected nodes and remove them
-      for node_id in nffg_part.network.nodes():
-        if len(nffg_part.network.neighbors(node_id)) > 0:
-          continue
-        log.warning("Found orphaned node: %s! Remove from sliced part." %
-                    nffg_part.network.node[node_id])
-        nffg_part.network.remove_node(node_id)
-    # Return with the splitted parts
-    # for s in splitted_parts:
-    #   print s[0], s[1].dump()
-    return splitted_parts
-
   def install_nffg (self, mapped_nffg):
     """
     Start NF-FG installation.
@@ -482,7 +378,7 @@ class ControllerAdapter(object):
     # # Notify remote visualizer about the deployable NFFG if it's needed
     # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     print mapped_nffg.dump()
-    slices = self._split_into_domains(nffg=mapped_nffg)
+    slices = NFFGToolBox.split_into_domains(nffg=mapped_nffg, log=log)
     if slices is None:
       log.warning(
         "Given mapped NFFG: %s can not be sliced! Skip domain notification "
@@ -491,6 +387,8 @@ class ControllerAdapter(object):
     log.debug(
       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
     # TODO - end-to-end requirement recreation
+    # for domain, part in slices:
+    #   self.rebind_e2e_req_links(nffg=part)
     # TODO - abstract/inter-domain tag rewrite
     mapping_result = True
     for domain, part in slices:
