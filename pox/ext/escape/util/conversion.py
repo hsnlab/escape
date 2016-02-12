@@ -14,6 +14,7 @@
 """
 Contains helper classes for conversion between different NF-FG representations.
 """
+import json
 import sys
 import xml.etree.ElementTree as ET
 
@@ -29,7 +30,7 @@ except ImportError:
     os.path.join(os.path.dirname(__file__), "../../../..")),
     "pox/ext/escape/nffg_lib/"))
   # Import for standalone running
-  from escape.nffg_lib.nffg import AbstractNFFG, NFFG
+  from nffg import AbstractNFFG, NFFG
 
 try:
   # Import for ESCAPEv2
@@ -72,6 +73,8 @@ class NFFGConverter(object):
   # Field types
   TYPE_MATCH = "MATCH"
   TYPE_ACTION = "ACTION"
+  # Hard-coded constants
+  REQUIREMENT_PREFIX = "REQ"
 
   def __init__ (self, domain=None, logger=None, ensure_unique_id=None):
     # Save domain name for define domain attribute in infras
@@ -802,8 +805,23 @@ class NFFGConverter(object):
     :return: None
     """
     for key in virtualizer.metadata:
-      nffg.add_metadata(name=key,
-                        value=virtualizer.metadata[key].value.get_value())
+      # If it is a compressed Requirement links
+      if key.startswith(self.REQUIREMENT_PREFIX):
+        req_id = key.split(':')[1]
+        values = json.loads(virtualizer.metadata[key].value.get_value())
+        req = nffg.add_req(
+          id=req_id,
+          src_port=nffg[values['snode']].ports[values['sport']],
+          dst_port=nffg[values['dnode']].ports[values['dport']],
+          delay=values['delay'],
+          bandwidth=values['bw'],
+          sg_path=values['sg_path']
+        )
+        self.log.debug("Parsed Requirement link: %s" % req)
+      # If it is just a metadata
+      else:
+        nffg.add_metadata(name=key,
+                          value=virtualizer.metadata[key].value.get_value())
 
   def parse_from_Virtualizer (self, xml_data, with_virt=False):
     """
@@ -857,7 +875,7 @@ class NFFGConverter(object):
     # Parse Infrastructure links from Virtualizer
     self._parse_virtualizer_links(nffg=nffg, virtualizer=virtualizer)
 
-    # Parse Metadata from Virtualizer
+    # Parse Metadata and Requirement links from Virtualizer
     self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
 
     self.log.debug(
@@ -1050,8 +1068,6 @@ class NFFGConverter(object):
     """
     Convert edge links in the given :any:`NFFG` into the given Virtualizer.
 
-    :param nffg:
-    :param virtualizer:
     :param nffg: NFFG object
     :type nffg: :any:`NFFG`
     :param virtualizer: Virtualizer object
@@ -1089,6 +1105,39 @@ class NFFGConverter(object):
       v_link.bind()
       virtualizer.links.add(v_link)
 
+  def _convert_nffg_reqs (self, nffg, virtualizer):
+    """
+    Convert requirement links in the given :any:`NFFG` into given Virtualizer
+    using topmost metadata list.
+
+    :param nffg: NFFG object
+    :type nffg: :any:`NFFG`
+    :param virtualizer: Virtualizer object
+    :type virtualizer: Virtualizer
+    :return: None
+    """
+    for req in nffg.reqs:
+      meta_key = "%s:%s" % (self.REQUIREMENT_PREFIX, req.id)
+      # meta_value = "src:%s:%s|dst:%s:%s|delay:%s|bw:%s|path:%s" % (
+      #   req.src.node.id,  # src node
+      #   req.src.id,  # src port
+      #   req.dst.node.id,  # dst node
+      #   req.dst.id,  # dst port
+      #   req.delay,  # delay
+      #   req.bandwidth,  # bandwidth
+      #   json.dumps(req.sg_path))  # sg hop list
+      meta_value = json.dumps({
+        "snode": req.src.node.id,
+        "sport": req.src.id,
+        "dnode": req.dst.node.id,
+        "dport": req.dst.id,
+        "delay": "%.3f" % req.delay,
+        "bw": "%.3f" % req.bandwidth,
+        "sg_path": req.sg_path})
+      virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
+                                                              value=meta_value))
+      self.log.debug('Converted requirement link: %s' % req)
+
   def dump_to_Virtualizer (self, nffg):
     """
     Convert given :any:`NFFG` to Virtualizer format.
@@ -1123,6 +1172,9 @@ class NFFGConverter(object):
 
     # Convert edge links
     self._convert_nffg_edges(nffg=nffg, virtualizer=virtualizer)
+
+    # Convert requirement links as metadata
+    self._convert_nffg_reqs(nffg=nffg, virtualizer=virtualizer)
 
     # Call our adaptation function to convert VNfs and Flowrules into
     # Virtualizer
