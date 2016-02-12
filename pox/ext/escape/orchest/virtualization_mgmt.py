@@ -14,7 +14,7 @@
 """
 Contains components relevant to virtualization of resources and views.
 """
-from itertools import chain
+import itertools
 
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log
@@ -44,16 +44,23 @@ class AbstractVirtualizer(object):
   __metaclass__ = PolicyEnforcementMetaClass
   # Default domain type for Virtualizers
   DEFAULT_DOMAIN = "VIRTUAL"
+  # Trivial Virtualizer types
+  DOMAIN_VIRTUALIZER = "DOV"
+  SINGLE_VIRTUALIZER = "SINGLE"
+  GLOBAL_VIRTUALIZER = "GLOBAL"
 
-  def __init__ (self, id):
+  def __init__ (self, id, type):
     """
     Init.
 
     :param id: id of the assigned entity
     :type: id: str
+    :param type: Virtualizer type
+    :type type: str
     """
     super(AbstractVirtualizer, self).__init__()
     self.id = id
+    self.type = type
 
   def __str__ (self):
     return "%s(assigned=%s)" % (self.__class__.__name__, self.id)
@@ -104,7 +111,8 @@ class GlobalViewVirtualizer(AbstractVirtualizer):
     :type: id: str
     """
     log.debug("Initiate unfiltered/global <Virtual View>")
-    super(GlobalViewVirtualizer, self).__init__(id=id)
+    super(GlobalViewVirtualizer, self).__init__(id=id,
+                                                type=self.GLOBAL_VIRTUALIZER)
     # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
     self.global_view = global_view
 
@@ -139,7 +147,8 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     :type: id: str
     """
     log.debug("Initiate default SingleBiSBiS <Virtual View>")
-    super(SingleBiSBiSVirtualizer, self).__init__(id=id)
+    super(SingleBiSBiSVirtualizer, self).__init__(id=id,
+                                                  type=self.SINGLE_VIRTUALIZER)
     # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
     self.global_view = global_view
     self.__resource_cache = None
@@ -189,43 +198,53 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     log.debug("Add Infra BiSBiS: %s" % sbb)
 
     # Compute and add resources
-    sbb.resources.cpu = sum(
-      # Sum of available CPU
-      (n.resources.cpu for n in dov.infras if
-       n.resources.cpu is not None) or [None])
-    sbb.resources.mem = sum(
-      # Sum of available memory
-      (n.resources.mem for n in dov.infras if
-       n.resources.mem is not None) or [None])
-    sbb.resources.storage = sum(
-      # Sum of available storage
-      (n.resources.storage for n in dov.infras if
-       n.resources.storage is not None) or [None])
+    # Sum of available CPU
     try:
-      sbb.resources.delay = min(chain(
-        # Minimal available delay value of infras in DoV
+      sbb.resources.cpu = sum(
+        # If iterator is empty, sum got None --> TypeError thrown by sum
+        (n.resources.cpu for n in dov.infras if
+         n.resources.cpu is not None) or None)
+    except TypeError:
+      sbb.resources.cpu = None
+    # Sum of available memory
+    try:
+      sbb.resources.mem = sum(
+        # If iterator is empty, sum got None --> TypeError thrown by sum
+        (n.resources.mem for n in dov.infras if
+         n.resources.mem is not None) or None)
+    except TypeError:
+      sbb.resources.mem = None
+    # Sum of available storage
+    try:
+      sbb.resources.storage = sum(
+        # If iterator is empty, sum got None --> TypeError thrown by sum
+        (n.resources.storage for n in dov.infras if
+         n.resources.storage is not None) or None)
+    except TypeError:
+      sbb.resources.storage = None
+    # Minimal available delay value of infras and links in DoV
+    try:
+      # Get the minimum delay in Dov to avoid false negative mapping result
+      sbb.resources.delay = min(itertools.chain(
+        # If the chained iterators is empty --> ValueError thrown by sum
         (n.resources.delay for n in dov.infras if
          n.resources.delay is not None),
-        # Minimal available delay value of inter-infra links
         (l.delay for l in dov.links if l.delay is not None)))
     except ValueError:
       sbb.resources.delay = None
-
-    max_bw = max(
-      # Maximum available bandwidth value of infras in DoV
-      reduce(max, (n.resources.bandwidth for n in dov.infras if
-                   n.resources.bandwidth is not None), None),
-      # Maximum available bandwidth value of inter-infra links
-      reduce(max, (l.bandwidth for l in dov.links if
-                   l.bandwidth is not None), None))
-    infra_count = reduce(lambda a, b: a + 1, dov.infras, 0)
-    link_count = reduce(lambda a, b: a + 1, dov.links, 0)
-
-    # Maximum usable/reducible amount of bw to avoid false negative mapping
-    # errors
-    sbb.resources.bandwidth = max_bw * (
-      infra_count + link_count) if max_bw is not None else None
-    log.debug("Set infra's resources: %s" % sbb.resources)
+    # Maximum available bandwidth value of infras and links in DoV
+    try:
+      max_bw = max(itertools.chain(
+        (n.resources.bandwidth for n in dov.infras if
+         n.resources.bandwidth is not None),
+        (l.bandwidth for l in dov.links if l.bandwidth is not None)))
+      # Number of infras and links in DoV
+      sum_infra_link = sum(1 for _ in itertools.chain(dov.infras, dov.links))
+      # Overestimate switching capacity to avoid false positive mapping result
+      sbb.resources.bandwidth = max_bw * sum_infra_link
+    except ValueError:
+      sbb.resources.bandwidth = None
+    log.debug("Computed SingleBiBBiS resources: %s" % sbb.resources)
 
     # Add supported types
     s_types = set()
@@ -262,11 +281,6 @@ class VirtualizerManager(EventMixin):
   """
   # Events raised by this class
   _eventMixin_events = {MissingGlobalViewEvent}
-
-  TYPES = {
-    "GLOBAL": GlobalViewVirtualizer,
-    "SINGLE": SingleBiSBiSVirtualizer
-  }
 
   def __init__ (self):
     """
@@ -343,10 +357,10 @@ class VirtualizerManager(EventMixin):
       if type is not None:
         # SINGLE: generate a trivial Single BiS-BiS virtualizer
         log.debug("Requested virtualizer type: %s" % type)
-        if type == "SINGLE":
+        if type == AbstractVirtualizer.SINGLE_VIRTUALIZER:
           self._generate_single_view(id=virtualizer_id)
         # GLOBAL: generate a non-filtering Global View Virtualizer
-        elif type == "GLOBAL":
+        elif type == AbstractVirtualizer.GLOBAL_VIRTUALIZER:
           self._generate_global_view(id=virtualizer_id)
         # Not supported format
         else:
