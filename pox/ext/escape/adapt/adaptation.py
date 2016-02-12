@@ -15,7 +15,6 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
 """
-import traceback
 import weakref
 
 import escape.adapt.managers as mgrs
@@ -471,7 +470,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     :type global_res: :any:`NFFG`
     :return: None
     """
-    super(DomainVirtualizer, self).__init__(id=None)
+    super(DomainVirtualizer, self).__init__(id=None,
+                                            type=self.DOMAIN_VIRTUALIZER)
     log.debug("Init DomainVirtualizer with name: %s - initial resource: %s" % (
       DoV, global_res))
     # Garbage-collector safe
