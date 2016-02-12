@@ -14,10 +14,12 @@
 """
 Contains miscellaneous helper functions.
 """
+import cProfile
+import io
 import logging
 import os
+import pstats
 import re
-import traceback
 import warnings
 import weakref
 from functools import wraps
@@ -360,3 +362,33 @@ def notify_remote_visualizer (data, id, url=None, **kwargs):
   if core.hasComponent('visualizer'):
     return core.visualizer.send_notification(data=data, id=id, url=url,
                                              **kwargs)
+
+
+def do_profile (func):
+  """
+  Decorator to profile a function.
+
+  :param func: decorated function
+  :return: result of the decorated function
+  """
+
+  def decorator_func (*args, **kwargs):
+    """
+    Decorator function.
+
+    :return: tuple of the result of decorated function and statistics as str
+    :rtype: tuple
+    """
+    profile = cProfile.Profile(builtins=False)
+    profile.enable()
+    try:
+      result = func(*args, **kwargs)
+    finally:
+      profile.disable()
+    profile.create_stats()
+    with io.BytesIO() as stat:
+      pstats.Stats(profile, stream=stat).sort_stats('cumulative').print_stats()
+      ret = stat.getvalue()
+    return result, ret
+
+  return decorator_func
