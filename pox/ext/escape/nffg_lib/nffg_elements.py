@@ -28,6 +28,11 @@ from collections import Iterable, OrderedDict
 class Persistable(object):
   """
   Define general persist function for the whole NFFG structure.
+
+  .. important::
+
+    This class is an abstract class containing common attributes and
+    functions for other element. Should not be instantiated!
   """
 
   def persist (self):
@@ -67,6 +72,11 @@ class Element(Persistable):
   Main base class for NF-FG elements with unique id.
 
   Contains the common functionality.
+
+  .. important::
+
+    This class is an abstract class containing common attributes and
+    functions for other element. Should not be instantiated!
   """
   # Operation constants
   ADD = "ADD"
@@ -175,8 +185,8 @@ class PortContainer(object):
     # this type checking is important because with Port ID input the function
     # would silently return False!
     if not isinstance(item, Port):
-      raise RuntimeError("PortContainer's operator \"in\" works only with Port"
-                         " objects (and not Port ID-s!)")
+      raise RuntimeError("PortContainer's operator \"in\" works only with Port "
+                         "objects (and not Port ID-s!)")
     return item in self.container
 
   def append (self, item):
@@ -199,6 +209,11 @@ class PortContainer(object):
 class Node(Element):
   """
   Base class for different types of nodes in the NF-FG.
+
+  .. important::
+
+    This class is an abstract class containing common attributes and
+    functions for other element. Should not be instantiated!
   """
   # Node type constants:
   # Infrastructure node --> abstract node represents one or more physical node
@@ -489,13 +504,13 @@ class NodeResource(Persistable):
         "%s object has no key: %s" % (self.__class__.__name__, key))
 
   def __repr__ (self):
-    return "Resources of %s:\ncpu: %s\nmem: %s\nstorage: %s\nbandwidth: " \
-           "%s\ndelay: %s" % (
+    return "Resources of %s:\ncpu: %.3f\nmem: %.3f\nstorage: %.3f\nbandwidth:" \
+           " %.3f\ndelay: %.3f" % (
              self.__class__.__name__, self.cpu, self.mem, self.storage,
              self.bandwidth, self.delay)
 
   def __str__ (self):
-    return "cpu: %s mem: %s storage: %s bandwidth: %s delay: %s" % (
+    return "cpu: %.3f mem: %.3f storage: %.3f bandwidth: %.3f delay: %.3f" % (
       self.cpu, self.mem, self.storage, self.bandwidth, self.delay)
 
 
@@ -552,12 +567,12 @@ class Flowrule(Element):
     return self
 
   def __repr__ (self):
-    return "Flowrule object:\nmatch: %s \naction: %s \nhop: %s \nbw: %s " \
-           "\nbandwidth: %s" % (
+    return "Flowrule object:\nmatch: %s \naction: %s \nhop: %s \nbw: %.3f " \
+           "\ndelay: %.3f" % (
              self.match, self.action, self.hop_id, self.bandwidth, self.delay)
 
   def __str__ (self):
-    return "%s(match: %s, action: %s, hop: %s, bw: %s, delay: %s)" % (
+    return "%s(match: %s, action: %s, hop: %s, bw: %.3f, delay: %.3f)" % (
       self.__class__.__name__, self.match, self.action, self.hop_id,
       self.bandwidth, self.delay)
 
@@ -1051,7 +1066,7 @@ class EdgeLink(Link):
 
   def __str__ (self):
     return "EdgeLink(id: %s, src: %s[%s], dst: %s[%s], type: %s, backward: " \
-           "%s, delay:%s, bandwidth: %s)" % (
+           "%s, delay:%.3f, bandwidth: %.3f)" % (
              self.id, self.src.node.id, self.src.id, self.dst.node.id,
              self.dst.id, self.type, self.backward, self.delay, self.bandwidth)
 
@@ -1123,8 +1138,8 @@ class EdgeSGLink(Link):
     return self
 
   def __str__ (self):
-    return "SGLink(id: %s, src: %s[%s], dst: %s[%s], tag: %s, delay:%s, " \
-           "bandwidth: %s)" % (
+    return "SGLink(id: %s, src: %s[%s], dst: %s[%s], tag: %s, delay:%.3f, " \
+           "bandwidth: %.3f)" % (
              self.id, self.src.node.id, self.src.id, self.dst.node.id,
              self.dst.id, self.tag_info, self.delay, self.bandwidth)
 
@@ -1193,8 +1208,8 @@ class EdgeReq(Link):
     return self
 
   def __str__ (self):
-    return "ReqLink(id: %s, src: %s[%s], dst: %s[%s], path: %s, delay:%s, " \
-           "bandwidth: %s)" % (
+    return "ReqLink(id: %s, src: %s[%s], dst: %s[%s], path: %s, delay:%.3f, " \
+           "bandwidth: %.3f)" % (
              self.id, self.src.node.id, self.src.id, self.dst.node.id,
              self.dst.id, self.sg_path, self.delay, self.bandwidth)
 
@@ -1575,11 +1590,11 @@ def test_parse_load ():
   nf.name = "NetworkFunction1"
   nf.functional_type = "functype1"
   nf.deployment_type = "virtual"
-  nf.resources.cpu = "10"
-  nf.resources.mem = "1"
-  nf.resources.storage = "10"
-  nf.resources.bandwidth = "2"
-  nf.resources.delay = "2"
+  nf.resources.cpu = 10
+  nf.resources.mem = 1
+  nf.resources.storage = 10
+  nf.resources.bandwidth = 2
+  nf.resources.delay = 2
   # nf.add_port("port_nf1", "port1", "virtual", "vlan:1025")
   p1 = nf.add_port(id="port_nf1",
                    properties={"port1": 42, "virtual": 24, "vlan": 1025})
@@ -1594,10 +1609,10 @@ def test_parse_load ():
   infra.operation = Element.ADD
   infra.name = "BisBis1"
   infra.domain = "virtual"
-  infra.resources.cpu = "20"
-  infra.resources.mem = "2"
-  infra.resources.storage = "20"
-  infra.resources.bandwidth = "4"
+  infra.resources.cpu = 20
+  infra.resources.mem = 2
+  infra.resources.storage = 20
+  infra.resources.bandwidth = 4
   infra.add_metadata("meta1", "lorem")
   infra.add_metadata("meta2", "ipsum")
   # infra.add_supported_type("functype1")
@@ -1607,8 +1622,8 @@ def test_parse_load ():
   port_infra.add_flowrule("match123", "action456")
   # Edge link
   edge_link = EdgeLink(p2, p3, id="link3")
-  edge_link.bandwidth = "100"
-  edge_link.delay = "5"
+  edge_link.bandwidth = 100
+  edge_link.delay = 5
   edge_link.backward = True
   edge_link.operation = Element.DEL
   # Edge SG next hop
@@ -1617,8 +1632,8 @@ def test_parse_load ():
   # Edge requirement
   edge_req = EdgeReq(p2, p3)
   edge_req.id = "link2"
-  edge_req.bandwidth = "100"
-  edge_req.delay = "5"
+  edge_req.bandwidth = 100
+  edge_req.delay = 5
   edge_req.sg_path.append(edge_sg.id)
   edge_req.sg_path.append(edge_link.id)
   # Generate
