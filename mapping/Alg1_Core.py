@@ -79,6 +79,13 @@ class CoreAlgorithm(object):
     self.pref_params = dict(cpu=dict(c=0.4, e=2.5), mem=dict(c=0.4, e=2.5),
                             storage=dict(c=0.4, e=2.5),
                             bandwidth=dict(c=0.1, e=10.0))
+    """
+    Functions to give the prefence values of a given ratio of resource 
+    utilization. All fucntions should map every number between [0,1] to [0,1]
+    real intervals and should be monotonic!
+    """
+    self.pref_funcs = dict(cpu=self._pref_noderes, mem=self._pref_noderes, 
+                           storage=self._pref_noderes, bandwidth=self._pref_bw)
 
     # we need to store the original preprocessed NFFG too. with remove VNF-s 
     # and not STATIC links
@@ -241,6 +248,7 @@ class CoreAlgorithm(object):
       raise uet.BadInputException(" node/edge data: %s data not found." % e)
     return sum_lat
 
+  # UNUSED NOW
   def _preferenceValueOfUtilization (self, x, attr):
     c = self.pref_params[attr]['c']
     e = self.pref_params[attr]['e']
@@ -248,6 +256,19 @@ class CoreAlgorithm(object):
       return 0.0
     else:
       return (e + 1) ** float((x - c) / (1 - c)) - 1
+
+  def _pref_noderes(self, x):
+    if x < 0.2:
+      return 0.0
+    else:
+      return 1.25 * x - 0.25
+    
+  def _pref_bw(self, x):
+    if x < 0.2:
+      return 0.0
+    else:
+      return -1.5625 * ((x-1) ** 2) + 1
+      
 
   def _objectiveFunction (self, cid, node_id, prev_vnf_id, vnf_id, reqlinkid,
        path_to_map, linkids):
@@ -285,18 +306,18 @@ class CoreAlgorithm(object):
       for attr, res_w in zip(['cpu', 'mem', 'storage'],
                              self.resource_priorities):
         if maxres[attr] == float("inf"):
-          sum_res += self._preferenceValueOfUtilization(0.0, attr)
+          sum_res += self.pref_funcs[attr](0.0)
         else:
-          sum_res += res_w * self._preferenceValueOfUtilization(
+          sum_res += res_w * self.pref_funcs[attr](
             float(maxres[attr] - (available[attr] - requested[attr])) / maxres[
-              attr], attr)
-        max_rescomponent_value += self.pref_params[attr]['e'] * res_w
+              attr])
+        max_rescomponent_value += self.pref_funcs[attr](1.0) * res_w
 
       # Scale them to the same interval
       scaled_res_comp = 10 * float(sum_res) / max_rescomponent_value
       scaled_bw_comp = 10 * float(
-        self._preferenceValueOfUtilization(avg_link_util, 'bandwidth')) / \
-                       self.pref_params['bandwidth']['e']
+        self.pref_funcs['bandwidth'](avg_link_util)) / \
+        self.pref_funcs['bandwidth'](1.0)
       scaled_lat_comp = 10 * float(sum_latency) / local_latreq
 
       self.log.debug("avglinkutil pref value: %f, sum res: %f, sumlat: %f" % (
