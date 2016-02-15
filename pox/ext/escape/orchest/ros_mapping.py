@@ -158,6 +158,8 @@ class ResourceOrchestrationMapper(AbstractMapper):
                         resource=virt_resource)
       log.info("NF-FG: %s orchestration is finished by %s" % (
         input_graph, self.__class__.__name__))
+      # Return with None
+      return None
     else:
       mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
       if mapped_nffg is None:
@@ -168,17 +170,19 @@ class ResourceOrchestrationMapper(AbstractMapper):
           input_graph, self.__class__.__name__))
       return mapped_nffg
 
-  def _mapping_finished (self, nffg):
+  def _mapping_finished (self, mapped_nffg):
     """
     Called from a separate thread when the mapping process is finished.
 
-    :param nffg: mapped NF-FG
-    :type nffg: :any:`NFFG`
+    :param mapped_nffg: mapped NF-FG
+    :type mapped_nffg: :any:`NFFG`
     :return: None
     """
-    if nffg is None:
+    # TODO - rethink threaded/non-threaded function call paths to call port
+    # mapping functions in a joint way only once
+    if mapped_nffg is None:
       log.error("Mapping process is failed! Abort orchestration process.")
-    else:
-      log.debug(
-        "Inform actual layer API that NFFG mapping has been finished...")
-      self.raiseEventNoErrors(NFFGMappingFinishedEvent, nffg)
+      return None
+    # Steps after mapping (optional) if the mapping was threaded
+    log.debug("Inform actual layer API that NFFG mapping has been finished...")
+    self.raiseEventNoErrors(NFFGMappingFinishedEvent, mapped_nffg)

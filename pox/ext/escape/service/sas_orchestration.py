@@ -14,7 +14,6 @@
 """
 Contains classes relevant to Service Adaptation Sublayer functionality.
 """
-from escape.nffg_lib.nffg import NFFGToolBox
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.service import log as log, LAYER_NAME
 from escape.service.sas_mapping import ServiceGraphMapper
@@ -79,11 +78,6 @@ class ServiceOrchestrator(AbstractOrchestrator):
           # Run orchestration before service mapping algorithm
           mapped_nffg = self.mapper.orchestrate(sg, virtual_view)
           log.debug("SG initiation is finished by %s" % self.__class__.__name__)
-          # Rebind requirement link fragments for lower layer mapping
-          mapped_nffg = NFFGToolBox.rebind_e2e_req_links(nffg=mapped_nffg,
-                                                         log=log)
-          # Notify remote visualizer about the mapping result if it's needed
-          notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
           return mapped_nffg
         except ProcessorError as e:
           log.warning(
