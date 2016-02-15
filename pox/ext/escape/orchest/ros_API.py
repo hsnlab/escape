@@ -552,8 +552,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type mapped_nffg: :any:`NFFG`
     :return: None
     """
-    # Rebind requirement link fragments for lower layer mapping
-    mapped_nffg = NFFGToolBox.rebind_e2e_req_links(nffg=mapped_nffg, log=log)
+    # Non need to rebind req links --> it will be done in Adaptation layer
     # Notify remote visualizer about the mapping result if it's needed
     notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending NF-FG to Adaptation layer as an Event
