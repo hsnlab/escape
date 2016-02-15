@@ -798,6 +798,8 @@ class NFFGConverter(object):
     """
     Parse metadata from Virtualizer.
 
+    Optionally can parse requirement links if they are stored in metadata.
+
     :param nffg: Container NFFG
     :type nffg: :any:`NFFG`
     :param virtualizer: Virtualizer object
@@ -811,14 +813,23 @@ class NFFGConverter(object):
         # Replace pre-converted ' to " to get valid JSON
         raw = virtualizer.metadata[key].value.get_value().replace("'", '"')
         values = json.loads(raw)
+        try:
+          values['bw'] = float(values['bw'])
+        except ValueError:
+          self.log.warning("Bandwidth in requirement metadata: %s is not a "
+                           "valid float value!" % values['bw'])
+        try:
+          values['delay'] = float(values['delay'])
+        except ValueError:
+          self.log.warning("Delay in requirement metadata: %s is not a "
+                           "valid float value!" % values['delay'])
         req = nffg.add_req(
           id=req_id,
           src_port=nffg[values['snode']].ports[values['sport']],
           dst_port=nffg[values['dnode']].ports[values['dport']],
           delay=values['delay'],
           bandwidth=values['bw'],
-          sg_path=values['sg_path']
-        )
+          sg_path=values['sg_path'])
         self.log.debug("Parsed Requirement link: %s" % req)
       # If it is just a metadata
       else:

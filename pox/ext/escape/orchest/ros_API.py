@@ -535,8 +535,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     else:
       log.warning(
         "Something went wrong in service request instantiation: mapped "
-        "service "
-        "request is missing!")
+        "service request is missing!")
 
   def _proceed_to_install_NFFG (self, mapped_nffg):
     """
