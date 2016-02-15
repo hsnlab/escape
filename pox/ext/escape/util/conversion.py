@@ -808,7 +808,9 @@ class NFFGConverter(object):
       # If it is a compressed Requirement links
       if key.startswith(self.REQUIREMENT_PREFIX):
         req_id = key.split(':')[1]
-        values = json.loads(virtualizer.metadata[key].value.get_value())
+        # Replace pre-converted ' to " to get valid JSON
+        raw = virtualizer.metadata[key].value.get_value().replace("'", '"')
+        values = json.loads(raw)
         req = nffg.add_req(
           id=req_id,
           src_port=nffg[values['snode']].ports[values['sport']],
@@ -1133,7 +1135,8 @@ class NFFGConverter(object):
         "dport": req.dst.id,
         "delay": "%.3f" % req.delay,
         "bw": "%.3f" % req.bandwidth,
-        "sg_path": req.sg_path})
+        "sg_path": req.sg_path}
+      ).replace('"', "'")  # Replace " with ' to avoid ugly HTTP escaping
       virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
                                                               value=meta_value))
       self.log.debug('Converted requirement link: %s' % req)
