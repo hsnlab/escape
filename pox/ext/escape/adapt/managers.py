@@ -253,7 +253,7 @@ class InternalDomainManager(AbstractDomainManager):
         try:
           vnf_id = self.deployed_vnfs[(infra.id, nf.id)]['vnf_id']
           reply = self.remoteAdapter.removeNF(vnf_id=vnf_id)
-          print reply
+          # print reply
           # Delete infra ports connected to the deletable NF
           for u, v, link in topo.network.out_edges([nf.id], data=True):
             topo[v].del_port(id=link.dst.id)
