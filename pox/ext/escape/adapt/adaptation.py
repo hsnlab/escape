@@ -373,7 +373,7 @@ class ControllerAdapter(object):
       self.__class__.__name__, mapped_nffg.name))
     # # Notify remote visualizer about the deployable NFFG if it's needed
     # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
-    print mapped_nffg.dump()
+    # print mapped_nffg.dump()
     slices = NFFGToolBox.split_into_domains(nffg=mapped_nffg, log=log)
     if slices is None:
       log.warning(
