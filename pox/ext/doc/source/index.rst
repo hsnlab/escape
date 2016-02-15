@@ -385,7 +385,7 @@ Run ESCAPEv2 with the Mininet-based Infrastructure layer and debug logging mode:
 
 Usage:
 
-.. code-block:: text
+.. code-block:: bash
 
     $ ./escape.py -h
         usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-i] [-p] [-r]
