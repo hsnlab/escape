@@ -14,15 +14,14 @@
 """
 Contains classes which implement SG mapping functionality.
 """
-import sys
-import traceback
 
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import *
 from escape import CONFIG
+from escape.nffg_lib.nffg import NFFGToolBox
 from escape.service import log as log, LAYER_NAME
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
-from escape.util.misc import call_as_coop_task
+from escape.util.misc import call_as_coop_task, notify_remote_visualizer
 from pox.lib.revent.revent import Event
 
 
@@ -154,26 +153,31 @@ class ServiceGraphMapper(AbstractMapper):
                         resource=virt_resource)
       log.info("SG: %s orchestration is finished by %s" % (
         input_graph, self.__class__.__name__))
+      # Return with None
+      return None
     else:
-      nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
-      # Steps after mapping (optional)
-      if nffg is None:
+      mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
+      # Steps after mapping (optional) if the mapping was not threaded
+      if mapped_nffg is None:
         log.error("Mapping process is failed! Abort orchestration process.")
       else:
         log.info("SG: %s orchestration is finished by %s successfully!" % (
           input_graph, self.__class__.__name__))
-      return nffg
+      return mapped_nffg
 
-  def _mapping_finished (self, nffg):
+  def _mapping_finished (self, mapped_nffg):
     """
     Called from a separate thread when the mapping process is finished.
 
-    :param nffg: generated NF-FG
-    :type nffg: :any:`NFFG`
+    :param mapped_nffg: generated NF-FG
+    :type mapped_nffg: :any:`NFFG`
     :return: None
     """
-    if nffg is None:
+    # TODO - rethink threaded/non-threaded function call paths to call port
+    # mapping functions in a joint way only once
+    if mapped_nffg is None:
       log.error("Mapping process is failed! Abort orchestration process.")
-    else:
-      log.debug("Inform SAS layer API that SG mapping has been finished...")
-      self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
+      return None
+    # Steps after mapping (optional) if the mapping was threaded
+    log.debug("Inform SAS layer API that SG mapping has been finished...")
+    self.raiseEventNoErrors(SGMappingFinishedEvent, mapped_nffg)

@@ -1082,6 +1082,7 @@ class NFFGToolBox(object):
             req.dst.node.type == NFFG.TYPE_SAP:
         log.debug(
           "Skip rebinding: Detected %s is already an end-to-end link!" % req)
+        return nffg
         # Detect the node connected to the src port of req link
       src_sap_port = __detect_connected_sap(port=req.src)
       if src_sap_port:
@@ -1108,7 +1109,7 @@ class NFFGToolBox(object):
         nffg.del_edge(src=src, dst=dst, id=id)
         nffg.add_edge(src=e2e.src, dst=e2e.dst, link=e2e)
         log.debug("Rebounded requirement link: %s" % e2e)
-
+    # Return the rebounded NFFG
     return nffg
 
   @staticmethod

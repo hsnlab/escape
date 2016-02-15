@@ -75,8 +75,6 @@ class ResourceOrchestrator(AbstractOrchestrator):
           mapped_nffg = self.mapper.orchestrate(nffg, global_view)
           log.debug(
             "NF-FG instantiation is finished by %s" % self.__class__.__name__)
-          # Notify remote visualizer about the mapping result if it's needed
-          notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
           return mapped_nffg
         except ProcessorError as e:
           log.warning(

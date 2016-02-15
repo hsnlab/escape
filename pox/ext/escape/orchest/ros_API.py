@@ -16,13 +16,13 @@ Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
 from escape import CONFIG
-from escape.nffg_lib.nffg import NFFG
+from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest import LAYER_NAME
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
-from escape.util.misc import schedule_as_coop_task
+from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer
 from pox.lib.revent.revent import Event
 
 
@@ -397,7 +397,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`NFFGMappingFinishedEvent`
     :return: None
     """
-    self._install_NFFG(event.nffg)
+    self._proceed_to_install_NFFG(event.nffg)
 
   ##############################################################################
   # Agent API functions starts here
@@ -529,25 +529,33 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.getChild('API').debug(
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
-    if mapped_nffg is not None:
-      self._install_NFFG(mapped_nffg=mapped_nffg)
+    if mapped_nffg is not None and not \
+       self.resource_orchestrator.mapper.threaded:
+      self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg)
     else:
       log.warning(
         "Something went wrong in service request instantiation: mapped "
         "service "
         "request is missing!")
 
-  def _install_NFFG (self, mapped_nffg):
+  def _proceed_to_install_NFFG (self, mapped_nffg):
     """
     Send mapped :any:`NFFG` to Controller Adaptation Sublayer in an
     implementation-specific way.
 
     General function which is used from microtask and Python thread also.
 
+    This function contains the last steps before the mapped NFFG will be sent
+    to the next layer.
+
     :param mapped_nffg: mapped NF-FG
     :type mapped_nffg: :any:`NFFG`
     :return: None
     """
+    # Rebind requirement link fragments for lower layer mapping
+    mapped_nffg = NFFGToolBox.rebind_e2e_req_links(nffg=mapped_nffg, log=log)
+    # Notify remote visualizer about the mapping result if it's needed
+    notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending NF-FG to Adaptation layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)

@@ -18,7 +18,7 @@ Sublayer.
 import json
 
 from escape import CONFIG
-from escape.nffg_lib.nffg import NFFG
+from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.service import LAYER_NAME
 from escape.service import log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
@@ -27,7 +27,7 @@ from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
 from escape.util.mapping import PreMapEvent, PostMapEvent
 from escape.util.misc import schedule_delayed_as_coop_task, \
-  schedule_as_coop_task
+  schedule_as_coop_task, notify_remote_visualizer
 from pox.lib.revent.revent import Event
 
 
@@ -307,7 +307,7 @@ class ServiceLayerAPI(AbstractAPI):
     :type event: :any:`SGMappingFinishedEvent`
     :return: None
     """
-    self._instantiate_NFFG(event.nffg)
+    self._proceed_to_instantiate_NFFG(event.nffg)
 
   ##############################################################################
   # UNIFY U - Sl API functions starts here
@@ -354,8 +354,9 @@ class ServiceLayerAPI(AbstractAPI):
     log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
-    if service_nffg is not None:
-      self._instantiate_NFFG(service_nffg)
+    if service_nffg is not None and not \
+       self.service_orchestrator.mapper.threaded:
+      self._proceed_to_instantiate_NFFG(service_nffg)
     else:
       log.warning(
         "Something went wrong in service request initiation: mapped service "
@@ -385,22 +386,29 @@ class ServiceLayerAPI(AbstractAPI):
     """
     return self.rest_api.request_cache.get_result(id=id)
 
-  def _instantiate_NFFG (self, nffg):
+  def _proceed_to_instantiate_NFFG (self, mapped_nffg):
     """
     Send NFFG to Resource Orchestration Sublayer in an implementation-specific
     way.
 
     General function which is used from microtask and Python thread also.
 
-    :param nffg: mapped Service Graph
-    :type nffg: :any:`NFFG`
+    This function contains the last steps before the mapped NFFG will be sent
+    to the next layer.
+
+    :param mapped_nffg: mapped Service Graph
+    :type mapped_nffg: :any:`NFFG`
     :return: None
     """
+    # Rebind requirement link fragments for lower layer mapping
+    mapped_nffg = NFFGToolBox.rebind_e2e_req_links(nffg=mapped_nffg, log=log)
+    # Notify remote visualizer about the mapping result if it's needed
+    notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending mapped SG / NF-FG to Orchestration layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
-    self.raiseEventNoErrors(InstantiateNFFGEvent, nffg)
+    self.raiseEventNoErrors(InstantiateNFFGEvent, mapped_nffg)
     log.getChild('API').info(
-      "Generated NF-FG: %s has been sent to Orchestration..." % nffg)
+      "Generated NF-FG: %s has been sent to Orchestration..." % mapped_nffg)
 
   ##############################################################################
   # UNIFY Sl - Or API functions starts here
