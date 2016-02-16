@@ -25,6 +25,9 @@ import weakref
 from functools import wraps
 from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
 
+# Log level constant for additional VERBOSE level
+VERBOSE = 5
+
 
 def schedule_as_coop_task (func):
   """
