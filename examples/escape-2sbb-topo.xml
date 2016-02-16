@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <virtualizer>
     <id>DoV</id>
-    <name>dov-140283238407184</name>
+    <name>dov-139935251544976</name>
     <nodes>
         <node>
-            <id>SingleBiSbiS-139656700422552</id>
+            <id>SingleBiSbiS-139941199947314@REMOTE</id>
             <name>Single-BiSBiS</name>
             <type>BiSBiS</type>
             <ports>
@@ -31,6 +31,7 @@
                     <src>../../../ports/port[id=port-SAP1]</src>
                     <dst>../../../ports/port[id=port-SAP14]</dst>
                     <resources>
+                        <delay>0.2</delay>
                         <bandwidth>160000.0</bandwidth>
                     </resources>
                 </link>
@@ -39,6 +40,7 @@
                     <src>../../../ports/port[id=port-SAP1]</src>
                     <dst>../../../ports/port[id=port-SAP2]</dst>
                     <resources>
+                        <delay>0.2</delay>
                         <bandwidth>160000.0</bandwidth>
                     </resources>
                 </link>
@@ -47,15 +49,24 @@
                     <src>../../../ports/port[id=port-SAP14]</src>
                     <dst>../../../ports/port[id=port-SAP2]</dst>
                     <resources>
+                        <delay>0.2</delay>
                         <bandwidth>160000.0</bandwidth>
                     </resources>
                 </link>
             </links>
             <resources>
-                <cpu>10</cpu>
-                <mem>10</mem>
-                <storage>10</storage>
+                <cpu>10.0</cpu>
+                <mem>10.0</mem>
+                <storage>10.0</storage>
             </resources>
+            <metadata>
+                <key>bandwidth</key>
+                <value>160000.0</value>
+            </metadata>
+            <metadata>
+                <key>delay</key>
+                <value>0.2</value>
+            </metadata>
             <capabilities>
                 <supported_NFs>
                     <node>
@@ -74,7 +85,7 @@
             </capabilities>
         </node>
         <node>
-            <id>SingleBiSbiS-139916632174416</id>
+            <id>SingleBiSbiS-140684388112330@extESCAPE</id>
             <name>Single-BiSBiS</name>
             <type>BiSBiS</type>
             <ports>
@@ -101,6 +112,7 @@
                     <src>../../../ports/port[id=port-SAP14]</src>
                     <dst>../../../ports/port[id=port-SAP3]</dst>
                     <resources>
+                        <delay>0.2</delay>
                         <bandwidth>160000.0</bandwidth>
                     </resources>
                 </link>
@@ -109,6 +121,7 @@
                     <src>../../../ports/port[id=port-SAP14]</src>
                     <dst>../../../ports/port[id=port-SAP4]</dst>
                     <resources>
+                        <delay>0.2</delay>
                         <bandwidth>160000.0</bandwidth>
                     </resources>
                 </link>
@@ -117,15 +130,24 @@
                     <src>../../../ports/port[id=port-SAP3]</src>
                     <dst>../../../ports/port[id=port-SAP4]</dst>
                     <resources>
+                        <delay>0.2</delay>
                         <bandwidth>160000.0</bandwidth>
                     </resources>
                 </link>
             </links>
             <resources>
-                <cpu>10</cpu>
-                <mem>10</mem>
-                <storage>10</storage>
+                <cpu>10.0</cpu>
+                <mem>10.0</mem>
+                <storage>10.0</storage>
             </resources>
+            <metadata>
+                <key>bandwidth</key>
+                <value>160000.0</value>
+            </metadata>
+            <metadata>
+                <key>delay</key>
+                <value>0.2</value>
+            </metadata>
             <capabilities>
                 <supported_NFs>
                     <node>
@@ -147,12 +169,13 @@
     <links>
         <link>
             <id>inter-domain-link-SAP14</id>
-            <src>
-                ../../../nodes/node[id=SingleBiSbiS-139916632174416]/ports/port[id=port-SAP14]
-            </src>
-            <dst>
-                ../../../nodes/node[id=SingleBiSbiS-139656700422552]/ports/port[id=port-SAP14]
-            </dst>
+            <src>../../../nodes/node[id=SingleBiSbiS-139941199947314@REMOTE]/ports/port[id=port-SAP14]</src>
+            <dst>../../../nodes/node[id=SingleBiSbiS-140684388112330@extESCAPE]/ports/port[id=port-SAP14]</dst>
+        </link>
+        <link>
+            <id>inter-domain-link-SAP14-back</id>
+            <src>../../../nodes/node[id=SingleBiSbiS-140684388112330@extESCAPE]/ports/port[id=port-SAP14]</src>
+            <dst>../../../nodes/node[id=SingleBiSbiS-139941199947314@REMOTE]/ports/port[id=port-SAP14]</dst>
         </link>
     </links>
 </virtualizer>
