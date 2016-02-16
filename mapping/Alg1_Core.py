@@ -797,9 +797,14 @@ class CoreAlgorithm(object):
                                           nffg.running_nfs(infra)))
           outedgereq = None
           delay_of_infra = self._sumLatencyOnPath([infra], [])
-          if len(mapped_req) == 0:
+          if len(mapped_req) == 0 or \
+             not self.manager.isAnyVNFInChain(cid, mapped_req):
             # we know that 'cid' traverses 'infra', but if this chain has no 
             # mapped node here, then it olny uses this infra in its path
+            # OR              
+            # This can happen when this BiSBiS is only forwarding the traffic 
+            # of this service chain, BUT only VNFs from another service chains 
+            # has been mapped here
             sghop_id = self.manager.getSGHopOfChainMappedHere(cid, infra)
             src, dst = self._getSrcDstPortsOfOutputEdgeReq(nffg,
                                                            sghop_id, infra)
