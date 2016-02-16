@@ -1460,7 +1460,8 @@ if __name__ == "__main__":
                     logger=log)
 
   with open(
-     "../../../../examples/escape-mn-mapped-test.nffg") as f:
+     # "../../../../examples/escape-mn-mapped-test.nffg") as f:
+     "../../../../examples/escape-2sbb-mapped.nffg") as f:
     nffg = NFFG.parse(raw_data=f.read())
     # nffg.duplicate_static_links()
   log.debug("Parsed NFFG:\n%s" % nffg.dump())
@@ -1473,7 +1474,8 @@ if __name__ == "__main__":
 
   # with open(
   #    # "../../../../examples/OS_report1.xml") as f:
-  #    "../../../../examples/escape-mn-dov-test.xml") as f:
+  #    # "../../../../examples/escape-mn-dov-test.xml") as f:
+  #    "../../../../examples/escape-2sbb-mapped.xml") as f:
   #   tree = tree = ET.ElementTree(ET.fromstring(f.read()))
   #   dov = virt_lib.Virtualizer.parse(root=tree.getroot())
   #   dov.bind(relative=True)
