@@ -470,6 +470,16 @@ class MappingManager(object):
     self.max_input_chainid += 1
     return self.max_input_chainid
 
+  def isAnyVNFInChain (self, cid, subgraph):
+    """
+    Checks whether any VNF of subgraph is a part of the given cid.
+    """
+    for vnf in subgraph.nodes_iter():
+      for c in self.chains:
+        if cid == c['id'] and vnf in c['chain']:
+          return True
+    return False
+
   def getChainPiecesOfReqSubgraph (self, cid, subgraph):
     """
     Iterates on all the "inbound" SGHops of this subgraph (these are not part 
@@ -490,7 +500,7 @@ class MappingManager(object):
             if cid == c['id']:
               found_beginnig = False
               # i is not mapped to this Infra, but to the previous Infra.
-              chain_piece = [i]
+              chain_piece = [i,j]
               link_ids_piece = [k]
               # find which part of the chain is mapped here
               for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:], 
@@ -505,7 +515,7 @@ class MappingManager(object):
                       "piece finding procedure for E2E requirement division.")
                 if found_beginnig:
                   if subgraph.has_edge(vnf1, vnf2, key=lid):
-                    chain_piece.append(vnf1)
+                    chain_piece.append(vnf2)
                     link_ids_piece.append(lid)
                     continue
                   else:
