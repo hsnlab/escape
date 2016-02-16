@@ -36,8 +36,9 @@ def main ():
   escape.add_argument("-c", "--config", metavar="path", type=str,
                       # default="pox/escape.config",
                       help="override default config filename")
-  escape.add_argument("-d", "--debug", action="store_true", default=False,
-                      help="run the ESCAPE in debug mode")
+  escape.add_argument("-d", "--debug", action="count", default=0,
+                      help="run the ESCAPE in debug mode (can use multiple "
+                           "times for more verbose logging)")
   escape.add_argument("-e", "--environment", action="store_true", default=False,
                       help="run ESCAPEv2 in the pre-defined virtualenv")
   escape.add_argument("-f", "--full", action="store_true", default=False,
@@ -126,12 +127,15 @@ def main ():
   # Start an REST-API for the Cf-Or interface
   if args.cfor:
     cmd.append("--cfor")
-  if args.debug:
-    # Nothing to do
-    pass
+  if args.debug == 1:
+    # Set logging level to DEBUG
+    cmd.append("--loglevel=DEBUG")
+  elif args.debug > 1:
+    # Setup logging level to specific VERBOSE
+    cmd.append("--loglevel=VERBOSE")
   else:
-    # Disable debug mode in normal mode
-    cmd.append("--debug=False")
+    # Use default loglevel: INFO
+    pass
 
   # Enable Visualization
   if args.visualization:

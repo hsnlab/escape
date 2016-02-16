@@ -798,7 +798,7 @@ class NFFGToolBox(object):
   @staticmethod
   def merge_domains (base, nffg, domain, log=logging.getLogger("MERGE")):
     """
-    Merge the given ``nffg`` into the base NFFG.
+    Merge the given ``nffg`` into the base NFFG using the given domain name.
 
     :param base: base NFFG object
     :type base: :any:`NFFG`
@@ -811,10 +811,10 @@ class NFFGToolBox(object):
     :rtype: :any:`NFFG`
     """
     from copy import deepcopy
-
     # Copy infras
-    log.debug("Merge domain: %s resource info into DoV..." % domain)
 
+    log.debug("Merge domain: %s resource info into DoV..." % domain)
+    # Check if the infra with given id is already exist in the base NFFG
     for infra in nffg.infras:
       if infra.id not in base:
         c_infra = base.add_infra(infra=deepcopy(infra))

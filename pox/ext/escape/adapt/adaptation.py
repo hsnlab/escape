@@ -416,7 +416,8 @@ class ControllerAdapter(object):
       log.debug(
         "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
       # Update global view (DoV) with the installed components
-      self.domainResManager.get_global_view().update_global_view(mapped_nffg)
+      self.domainResManager.get_global_view().update_full_global_view(
+        mapped_nffg)
       # Notify remote visualizer about the installation result if it's needed
       notify_remote_visualizer(
         data=self.domainResManager.get_global_view().get_resource_info(),
@@ -518,7 +519,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
     self._global_nffg.id = DoV
 
-  def merge_domain_into_dov (self, nffg, domain):
+  def merge_new_domain_into_dov (self, nffg, domain):
     """
     Add a newly detected domain to DoV.
 
@@ -656,7 +657,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     # Return the updated NFFG
     return self._global_nffg
 
-  def update_global_view (self, global_nffg):
+  def update_full_global_view (self, global_nffg):
     """
     Update the merged Global view with the given probably modified global view.
 
@@ -724,7 +725,7 @@ class DomainResourceManager(object):
       log.info("Append %s domain to <Global Resource View> (DoV)..." % domain)
       if self._tracked_domains:
         # Merge domain topo into global view
-        self._dov.merge_domain_into_dov(nffg=nffg, domain=domain)
+        self._dov.merge_new_domain_into_dov(nffg=nffg, domain=domain)
       else:
         # No other domain detected, set NFFG as the whole global view
         log.debug(
