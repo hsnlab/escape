@@ -16,7 +16,6 @@ Contains helper classes for conversion between different NF-FG representations.
 """
 import json
 import sys
-import xml.etree.ElementTree as ET
 
 from baseclasses import __version__ as V_VERSION
 
@@ -857,12 +856,8 @@ class NFFGConverter(object):
     elif isinstance(xml_data, basestring):
       try:
         self.log.debug("Converting data to graph-based NFFG structure...")
-        # Parse given str to XML structure
-        tree = ET.ElementTree(ET.fromstring(xml_data))
-        # Parse Virtualizer structure
-        self.log.debug("Parsing XML data to Virtualizer format...")
-        virtualizer = virt_lib.Virtualizer().parse(root=tree.getroot())
-      except ET.ParseError as e:
+        virtualizer = virt_lib.Virtualizer().parse_from_text(text=xml_data)
+      except Exception as e:
         self.log.error("Got ParseError during XML->Virtualizer conversion!")
         raise RuntimeError('ParseError: %s' % e.message)
     else:
