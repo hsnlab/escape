@@ -211,11 +211,12 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     self.send_response(200)
     # Convert required NFFG if needed
     if self.virtualizer_format_enabled:
-      self.log.debug("Convert and cache internal NFFG...")
+      self.log.debug("Convert internal NFFG...")
       converter = NFFGConverter(domain=None, logger=log)
       v_topology = converter.dump_to_Virtualizer(nffg=config)
       # Cache converted data for edit-config patching
       self.server.last_response = v_topology
+      self.log.debug("Cache converted topology...")
       # Dump to plain text format
       data = v_topology.xml()
       # Setup HTTP response format
