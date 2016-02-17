@@ -25,6 +25,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
   VERBOSE
 from pox.lib.revent.revent import Event
+from virtualizer4 import Virtualizer
 
 
 class InstallNFFGEvent(Event):
@@ -210,12 +211,17 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     self.send_response(200)
     # Convert required NFFG if needed
     if self.virtualizer_format_enabled:
+      self.log.debug("Convert and cache internal NFFG...")
       converter = NFFGConverter(domain=None, logger=log)
+      v_topology = converter.dump_to_Virtualizer(nffg=config)
+      # Cache converted data for edit-config patching
+      self.server.last_response = v_topology
       # Dump to plain text format
-      data = converter.dump_to_Virtualizer(nffg=config).xml()
+      data = v_topology.xml()
       # Setup HTTP response format
       self.send_header('Content-Type', 'application/xml')
     else:
+      self.server.last_response = config
       data = config.dump()
       self.send_header('Content-Type', 'application/json')
     # Setup length for HTTP response
@@ -235,22 +241,30 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     # Obtain NFFG from request body
     self.log.debug("Detected response format: %s" %
                    self.headers.get("Content-Type", ""))
-    body = self._get_body()
+    raw_body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     # Expect XML format --> need to convert first
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type", "") != "application/xml" or \
-         not body.startswith("<?xml version="):
+         not raw_body.startswith("<?xml version="):
         self.log.error(
           "Received data is not in XML format despite of the UNIFY "
           "interface is enabled!")
         self.send_error(415)
         return
+      # Get received Virtualizer
+      received_diff = Virtualizer.parse_from_text(text=raw_body)
+      # Adapt changes on the local config
+      if not isinstance(self.server.last_response, Virtualizer):
+        self.log.warning("Missing cached Virtualizer!")
+        self.send_error(500)
+        return
+      full_config = self.server.last_response.patch(source=received_diff)
       # Convert response's body to NFFG
       converter = NFFGConverter(domain="REMOTE", logger=log)
-      nffg = converter.parse_from_Virtualizer(xml_data=body)
+      nffg = converter.parse_from_Virtualizer(vdata=full_config)
     else:
-      nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+      nffg = NFFG.parse(raw_body)  # Initialize NFFG from JSON representation
     # Rewrite domain name to INTERNAL
     # nffg = self._update_REMOTE_ESCAPE_domain(nffg_part=nffg)
     self.log.debug("Parsed NFFG install request: %s" % nffg)

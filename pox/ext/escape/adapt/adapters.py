@@ -797,7 +797,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
           return
         log.debug("Converting from XML/Virtualizer to NFFG format...")
         # Covert from XML-based Virtualizer to NFFG
-        nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+        nffg, virt = self.converter.parse_from_Virtualizer(vdata=data,
                                                            with_virt=True)
         # Cache virtualizer
         self.virtualizer = virt
@@ -846,7 +846,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.warning(
           "Unexpected case: convert Virtualizer data for a non-UNIFY "
           "interface!")
-        converted = self.converter.parse_from_Virtualizer(xml_data=data.xml())
+        converted = self.converter.parse_from_Virtualizer(vdata=data.xml())
         data = converted.dump()
     else:
       raise RuntimeError(
@@ -912,7 +912,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.converter = NFFGConverter(domain=self.domain_name, logger=log,
                                    ensure_unique_id=CONFIG.ensure_unique_id())
     # Cache for parsed virtualizer
-    self.virtualizer = None
+    self.last_virtualizer = None
     self._original_virtualizer = None
 
   def ping (self):
@@ -922,6 +922,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   def get_config (self):
     """
     Queries the infrastructure view with a netconf-like "get-config" command.
+
+    Remote domains always send full-config.
 
     :return: infrastructure view as an :any:`NFFG`
     :rtype: :any::`NFFG`
@@ -940,15 +942,14 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.error("Received data is not in XML format!")
         return
       # Covert from XML-based Virtualizer to NFFG
-      nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+      nffg, virt = self.converter.parse_from_Virtualizer(vdata=data,
                                                          with_virt=True)
       # Cache virtualizer
-      self.virtualizer = virt
+      self.last_virtualizer = virt
       if self._original_virtualizer is None:
         log.debug(
           "Store Virtualizer(id: %s, name: %s) as the original domain "
-          "config..." % (
-            virt.id.get_as_text(), virt.name.get_as_text()))
+          "config..." % (virt.id.get_value(), virt.name.get_value()))
         self._original_virtualizer = deepcopy(virt)
       log.debug("Used domain for conversion: %s" % self.domain_name)
       return nffg
@@ -960,6 +961,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 
+    Remote domains always expect diff of mapping changes.
+
     :param data: whole domain view
     :type data: :any::`NFFG`
     :return: status code
@@ -969,18 +972,20 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       "Prepare edit-config request for remote agent at: %s" % self._base_url)
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
-      virt_data = self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.virtualizer, nffg=data)
-      data = virt_data.xml()
+      vdata = self.converter.adapt_mapping_into_Virtualizer(
+        virtualizer=self.last_virtualizer, nffg=data)
     elif isinstance(data, Virtualizer):
-      data = data.xml()
+      # Nothing to do
+      vdata = data
     else:
       raise RuntimeError(
         "Not supported config format: %s for 'edit-config'!" % type(data))
+    log.info("Generating diff of mapping changes...")
+    diff = self.last_virtualizer.diff(target=vdata)
     log.debug("Send NFFG to %s domain agent at %s..." % (
       self.domain_name, self._base_url))
     try:
-      return self.send_with_timeout(self.POST, 'edit-config', data)
+      return self.send_with_timeout(self.POST, 'edit-config', diff.xml())
     except Timeout:
       log.warning(
         "Reached timeout(%ss) while waiting for edit-config response! Ignore "
@@ -1046,7 +1051,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.error("Received data is not in XML!")
         return
       # Covert from XML-based Virtualizer to NFFG
-      nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+      nffg, virt = self.converter.parse_from_Virtualizer(vdata=data,
                                                          with_virt=True)
       # Cache virtualizer
       self.virtualizer = virt
@@ -1131,7 +1136,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.error("Received data is not in XML!")
         return
       # Covert from XML-based Virtualizer to NFFG
-      nffg, virt = self.converter.parse_from_Virtualizer(xml_data=data,
+      nffg, virt = self.converter.parse_from_Virtualizer(vdata=data,
                                                          with_virt=True)
       # Cache virtualizer
       self.virtualizer = virt

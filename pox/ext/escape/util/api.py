@@ -286,6 +286,8 @@ class RESTServer(ThreadingMixIn, HTTPServer):
     self.request_cache = RequestCache()
     self.api_id = None
     self.virtualizer_type = None
+    # Cache for the last response to avoid topo recreation
+    self.last_response = None
 
   def start (self):
     """

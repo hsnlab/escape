@@ -835,12 +835,12 @@ class NFFGConverter(object):
         nffg.add_metadata(name=key,
                           value=virtualizer.metadata[key].value.get_value())
 
-  def parse_from_Virtualizer (self, xml_data, with_virt=False):
+  def parse_from_Virtualizer (self, vdata, with_virt=False):
     """
     Convert Virtualizer3-based XML str --> NFFGModel based NFFG object
 
-    :param xml_data: XML plain data or Virtualizer object
-    :type: xml_data: str or Virtualizer
+    :param vdata: XML plain data or Virtualizer object
+    :type: vdata: str or Virtualizer
     :param with_virt: return with the Virtualizer object too (default: False)
     :type with_virt: bool
     :return: created NF-FG
@@ -850,18 +850,18 @@ class NFFGConverter(object):
       "START conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
         3, NFFG.version))
     # Already in Virtualizer format
-    if isinstance(xml_data, virt_lib.Virtualizer):
-      virtualizer = xml_data
+    if isinstance(vdata, virt_lib.Virtualizer):
+      virtualizer = vdata
     # Plain XML string
-    elif isinstance(xml_data, basestring):
+    elif isinstance(vdata, basestring):
       try:
         self.log.debug("Converting data to graph-based NFFG structure...")
-        virtualizer = virt_lib.Virtualizer().parse_from_text(text=xml_data)
+        virtualizer = virt_lib.Virtualizer().parse_from_text(text=vdata)
       except Exception as e:
         self.log.error("Got ParseError during XML->Virtualizer conversion!")
         raise RuntimeError('ParseError: %s' % e.message)
     else:
-      log.error("Not supported type for xml_data: %s" % type(xml_data))
+      log.error("Not supported type for xml_data: %s" % type(vdata))
       return
     # Get NFFG init params
     nffg_id = virtualizer.id.get_value()  # Mandatory - virtualizer.id
@@ -1464,7 +1464,7 @@ if __name__ == "__main__":
   log.debug("Converted:")
   log.debug(virt.xml())
   log.debug("Reconvert to NFFG:")
-  nffg = c.parse_from_Virtualizer(xml_data=virt.xml())
+  nffg = c.parse_from_Virtualizer(vdata=virt.xml())
   log.debug(nffg.dump())
 
   # with open(
