@@ -16,13 +16,14 @@ Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
 from escape import CONFIG
-from escape.nffg_lib.nffg import NFFG, NFFGToolBox
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import LAYER_NAME
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
-from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer
+from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
+  VERBOSE
 from pox.lib.revent.revent import Event
 
 
@@ -525,6 +526,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, nffg.name))
+    # Initiate request mapping
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
     log.getChild('API').debug(
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
@@ -552,6 +554,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     # Non need to rebind req links --> it will be done in Adaptation layer
+    # Log verbose mapping result in unified way (threaded/non-threaded)
+    log.log(VERBOSE,
+            "Mapping result of Orchestration Layer:\n%s" % mapped_nffg.dump())
     # Notify remote visualizer about the mapping result if it's needed
     notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending NF-FG to Adaptation layer as an Event

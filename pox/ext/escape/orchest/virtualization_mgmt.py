@@ -170,24 +170,25 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
 
   def _generate_one_bisbis (self):
     """
-    Generate trivial virtual topology a.k.a 1 BisBis.
+    Generate trivial virtual topology a.k.a one BisBis with cumulated
+    resources and transferred SAP nodes.
 
-    :return: 1 Bisbis topo
+    :return: one Bisbis topo
     :rtype: :any:`NFFG`
     """
-    log.debug(
-      "Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
-    # Create Single BiSBiS NFFG
     nffg = NFFG(id="SingleBiSBiS-NFFG", name="Single-BiSBiS-View")
     if self.global_view is None:
       log.error(
         "Missing global view from %s. Skip OneBiSBiS generation!" %
         self.__class__.__name__)
-      return
+      return None
     dov = self.global_view.get_resource_info()
     if dov is None:
       log.error("Missing resource info from DoV. Skip OneBisBis generation!")
-      return
+      return None
+    # Create Single BiSBiS NFFG
+    log.debug(
+      "Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
     import random
     # Create the single BiSBiS infra
     sbb = nffg.add_infra(

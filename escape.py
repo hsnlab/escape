@@ -27,7 +27,7 @@ def main ():
                 "using Mininet, Click, NETCONF and POX",
     add_help=True,
     version="2.0.0")
-  # Optional arguments
+  # Add optional arguments
   escape = parser.add_argument_group("ESCAPEv2 arguments")
   escape.add_argument("-a", "--agent", action="store_true", default=False,
                       help="run in AGENT mode: start the infrastructure layer "
@@ -67,7 +67,7 @@ def main ():
                            "remote server")
   escape.add_argument("-4", "--cfor", action="store_true", default=False,
                       help="start the REST-API for the Cf-Or interface")
-  # Remaining arguments
+  # Add remaining POX modules
   escape.add_argument("modules", metavar="...", nargs=argparse.REMAINDER,
                       help="optional POX modules")
   # Parsing arguments
