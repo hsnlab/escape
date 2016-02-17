@@ -359,6 +359,8 @@ class MappingManager(object):
     Mapping vnf2 to n2 shouldn`t be further from n1 (vnf1`s host) than
     the strictest latency requirement of all the links between vnf1 and vnf2
     """
+    # this equals to the min of all latency requirements (req link local OR 
+    # remaining E2E) that is given for any SGHop between vnf1 and vnf2.
     max_permitted_vnf_dist = float("inf")
     for i, j, linkid, d in self.req.network.edges_iter([vnf1], data=True,
                                                        keys=True):
@@ -378,10 +380,24 @@ class MappingManager(object):
               # anywhere else, a structure only for realizing this
               # checking effectively seems not useful enough)
               lal = self.getLocalAllowedLatency(c, vnf1, vnf2, linkid)
+              subcend = self.\
+                        getIdOfChainEnd_fromNetwork(chdata['subchain'][-1][1])
+              if self.shortest_paths_lengths[n2][subcend] > \
+                 self.getLocalAllowedLatency(c):
+                # NOTE: we compare to remaining E2E latency to the minimal path
+                # length required until only subchain end, which is less strict 
+                # than the actual E2E chain end in general. And used latency
+                # between n1 and n2 is further omitted. But still some bad cases
+                # can be filtered here.
+                self.log.debug("Potential node mapping was too far from chain "
+                         "end because of remaining E2E latency requirement")
+                return False
               if lal < max_permitted_vnf_dist:
                 max_permitted_vnf_dist = lal
               break
     if self.shortest_paths_lengths[n1][n2] > max_permitted_vnf_dist:
+      self.log.debug("Potential node mapping was too far from last host because"
+                     " of link or remaining E2E latency requirement!")
       return False
     else:
       return True
