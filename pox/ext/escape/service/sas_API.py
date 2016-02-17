@@ -167,7 +167,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
         return
       # Convert response's body to NFFG
       nffg = NFFGConverter(domain="INTERNAL",
-                           logger=log).parse_from_Virtualizer(xml_data=body)
+                           logger=log).parse_from_Virtualizer(vdata=body)
     else:
       nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     self.log.debug("Parsed service request: %s" % nffg)
@@ -237,7 +237,7 @@ class ServiceLayerAPI(AbstractAPI):
         elif service_request.startswith('<'):
           log.debug("Detected format: XML - Parsing from Virtualizer format...")
           converter = NFFGConverter(domain="INTERNAL", logger=log)
-          nffg = converter.parse_from_Virtualizer(xml_data=service_request)
+          nffg = converter.parse_from_Virtualizer(vdata=service_request)
         else:
           log.warning("Detected unexpected format...")
           return
