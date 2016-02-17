@@ -861,7 +861,7 @@ class NFFGConverter(object):
         self.log.error("Got ParseError during XML->Virtualizer conversion!")
         raise RuntimeError('ParseError: %s' % e.message)
     else:
-      log.error("Not supported type for xml_data: %s" % type(vdata))
+      self.log.error("Not supported type for xml_data: %s" % type(vdata))
       return
     # Get NFFG init params
     nffg_id = virtualizer.id.get_value()  # Mandatory - virtualizer.id
