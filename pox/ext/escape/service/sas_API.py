@@ -27,7 +27,7 @@ from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
 from escape.util.mapping import PreMapEvent, PostMapEvent
 from escape.util.misc import schedule_delayed_as_coop_task, \
-  schedule_as_coop_task, notify_remote_visualizer
+  schedule_as_coop_task, notify_remote_visualizer, VERBOSE
 from pox.lib.revent.revent import Event
 
 
@@ -349,19 +349,20 @@ class ServiceLayerAPI(AbstractAPI):
       self.rest_api.request_cache.set_in_progress(id=service_nffg.id)
     log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
       self.__class__.__name__, service_nffg))
-    service_nffg = self.service_orchestrator.initiate_service_graph(
+    # Initiate service request mapping
+    mapped_nffg = self.service_orchestrator.initiate_service_graph(
       service_nffg)
     log.getChild('API').debug(
       "Invoked request_service on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
-    if service_nffg is not None and not \
+    if mapped_nffg is not None and not \
        self.service_orchestrator.mapper.threaded:
-      self._proceed_to_instantiate_NFFG(service_nffg)
+      self._proceed_to_instantiate_NFFG(mapped_nffg)
+      self.last_sg = mapped_nffg
     else:
       log.warning(
         "Something went wrong in service request initiation: mapped service "
-        "request is missing!")
-    self.last_sg = service_nffg
+        "data is missing!")
 
   def api_sas_get_topology (self):
     """
@@ -402,6 +403,9 @@ class ServiceLayerAPI(AbstractAPI):
     """
     # Rebind requirement link fragments for lower layer mapping
     mapped_nffg = NFFGToolBox.rebind_e2e_req_links(nffg=mapped_nffg, log=log)
+    # Log verbose mapping result in unified way (threaded/non-threaded)
+    log.log(VERBOSE,
+            "Mapping result of Service Layer:\n%s" % mapped_nffg.dump())
     # Notify remote visualizer about the mapping result if it's needed
     notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending mapped SG / NF-FG to Orchestration layer as an Event

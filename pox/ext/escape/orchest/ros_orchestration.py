@@ -20,7 +20,7 @@ from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer, \
   VirtualizerManager
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
-from escape.util.misc import notify_remote_visualizer
+from escape.util.misc import notify_remote_visualizer, VERBOSE
 
 
 class ResourceOrchestrator(AbstractOrchestrator):
@@ -67,6 +67,8 @@ class ResourceOrchestrator(AbstractOrchestrator):
     # Notify remote visualizer about resource view of this layer if it's needed
     notify_remote_visualizer(data=global_view.get_resource_info(),
                              id=LAYER_NAME)
+    # Log verbose mapping request
+    log.log(VERBOSE, "Orchestration Layer request graph:\n%s" % nffg.dump())
     # Start Orchestrator layer mapping
     if global_view is not None:
       if isinstance(global_view, AbstractVirtualizer):

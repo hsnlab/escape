@@ -125,7 +125,10 @@ class RemoteVisualizer(Session):
       kwargs['timeout'] = self._timeout
     self.log.debug("Send visualization notification to %s" % self._url)
     try:
-      if isinstance(data, NFFG):
+      if data is None:
+        self.log.warning("Missing data! Skip notifying remote visualizer.")
+        return False
+      elif isinstance(data, NFFG):
         data = self.converter.dump_to_Virtualizer(nffg=data)
       elif not isinstance(data, Virtualizer.Virtualizer):
         self.log.warning(

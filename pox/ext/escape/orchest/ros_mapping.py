@@ -20,7 +20,7 @@ from UnifyExceptionTypes import *
 from escape import CONFIG
 from escape.orchest import log as log, LAYER_NAME
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
-from escape.util.misc import call_as_coop_task
+from escape.util.misc import call_as_coop_task, VERBOSE
 from pox.lib.revent.revent import Event
 
 
@@ -134,11 +134,20 @@ class ResourceOrchestrationMapper(AbstractMapper):
     :return: mapped Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
+    if input_graph is None:
+      log.error("Missing mapping request information! Abort mapping process!")
+      return None
     log.debug("Request %s to launch orchestration on NF-FG: %s with View: "
               "%s" % (self.__class__.__name__, input_graph, resource_view))
     # Steps before mapping (optional)
     log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
+    if virt_resource is None:
+      log.error("Missing resource information! Abort mapping process!")
+      return None
+    # Log verbose resource view if it is exist
+    log.log(VERBOSE,
+            "Orchestration Layer resource graph:\n%s" % virt_resource.dump())
     # Check if the mapping algorithm is enabled
     if not CONFIG.get_mapping_enabled(LAYER_NAME):
       log.warning(

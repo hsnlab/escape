@@ -22,7 +22,7 @@ from escape import __version__
 from escape.adapt import log
 from escape.nffg_lib.nffg import NFFG
 from escape.util.config import ConfigurationError
-from escape.util.misc import enum
+from escape.util.misc import enum, VERBOSE
 from escape.util.pox_extension import OpenFlowBridge, \
   ExtendedOFConnectionArbiter
 from pox.lib.addresses import EthAddr
@@ -588,8 +588,6 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       log.warning(
         "Missing connection for node element: %s! Skip flowruel "
         "installation..." % id)
-    log.debug(
-      "Install flow entry into INFRA: %s on connection: %s ..." % (id, conn))
 
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
@@ -623,9 +621,10 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     except KeyError:
       pass
     msg.actions.append(of.ofp_action_output(port=int(action['out'])))
-
-    log.debug("Send OpenFlow flowrule:\n%s" % msg)
+    log.debug(
+      "Install flow entry into INFRA: %s on connection: %s ..." % (id, conn))
     conn.send(msg)
+    log.log(VERBOSE, "Sent OpenFlow flowrule:\n%s" % msg)
 
 
 class VNFStarterAPI(object):

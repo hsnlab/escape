@@ -18,10 +18,9 @@ Contains classes which implement SG mapping functionality.
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import *
 from escape import CONFIG
-from escape.nffg_lib.nffg import NFFGToolBox
 from escape.service import log as log, LAYER_NAME
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
-from escape.util.misc import call_as_coop_task, notify_remote_visualizer
+from escape.util.misc import call_as_coop_task, VERBOSE
 from pox.lib.revent.revent import Event
 
 
@@ -131,11 +130,19 @@ class ServiceGraphMapper(AbstractMapper):
     :return: Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
+    if input_graph is None:
+      log.error("Missing service request information! Abort mapping process!")
+      return None
     log.debug("Request %s to launch orchestration on SG: %s with View: %s" % (
       self.__class__.__name__, input_graph, resource_view))
     # Steps before mapping (optional)
     log.debug("Request resource info from layer virtualizer...")
     virt_resource = resource_view.get_resource_info()
+    if virt_resource is None:
+      log.error("Missing resource information! Abort mapping process!")
+      return None
+    # Log verbose resource view if it is exist
+    log.log(VERBOSE, "Service layer resource graph:\n%s" % virt_resource.dump())
     # resource_view.sanity_check(input_graph)
     # Check if the mapping algorithm is enabled
     if not CONFIG.get_mapping_enabled(LAYER_NAME):

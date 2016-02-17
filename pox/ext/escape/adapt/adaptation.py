@@ -24,7 +24,7 @@ from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent
-from escape.util.misc import notify_remote_visualizer
+from escape.util.misc import notify_remote_visualizer, VERBOSE
 
 
 class ComponentConfigurator(object):
@@ -394,6 +394,8 @@ class ControllerAdapter(object):
           "No DomainManager has been initialized for domain: %s! Skip install "
           "domain part..." % domain)
         continue
+      log.log(VERBOSE,
+              "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       log.debug("Delegate splitted part: %s to %s" % (part, domain_mgr))
       # Check if need to reset domain before install
       reset = CONFIG.reset_domains_before_install()
