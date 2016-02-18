@@ -510,6 +510,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     Set the copy of given NFFG as the global view of DoV.
 
+    Add the specific :attr:`DoV` id and generated name to the global view.
+
     :param nffg: NFFG instance intended to use as the global view
     :type nffg: :any:`NFFG`
     :param domain: name of the merging domain
@@ -518,10 +520,23 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     log.debug("Set domain: %s as the global view!" % domain)
     self._global_nffg = nffg.copy()
-    self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
     self._global_nffg.id = DoV
+    self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
 
-  def merge_new_domain_into_dov (self, nffg, domain):
+  def update_full_global_view (self, nffg):
+    """
+    Update the merged Global view with the given probably modified global view.
+
+    Reserve id, name values of the global view.
+
+    :param nffg: updated global view which replace the stored one
+    :type nffg: :any:`NFFG`
+    """
+    id, name = self._global_nffg.id, self._global_nffg.name
+    self._global_nffg = nffg.copy()
+    self._global_nffg.id, self._global_nffg.name = id, name
+
+  def merge_new_domain_into_dov (self, nffg):
     """
     Add a newly detected domain to DoV.
 
@@ -529,146 +544,14 @@ class DomainVirtualizer(AbstractVirtualizer):
 
     :param nffg: NFFG object need to be merged into DoV
     :type nffg: :any:`NFFG`
-    :param domain: name of the merging domain
-    :type domain: str
     :return: Dov
     :rtype: :any:`NFFG`
     """
-    from copy import deepcopy
-
-    # Copy infras
-    log.debug("Merge domain: %s resource info into DoV..." % domain)
-
-    for infra in nffg.infras:
-      if infra.id not in self._global_nffg:
-        c_infra = self._global_nffg.add_infra(infra=deepcopy(infra))
-        log.debug("Copy infra node: %s" % c_infra)
-      else:
-        log.warning(
-          "Infra node: %s does already exist in DoV. Skip adding..." % infra)
-
-    # Copy NFs
-    for nf in nffg.nfs:
-      if nf.id not in self._global_nffg:
-        c_nf = self._global_nffg.add_nf(nf=deepcopy(nf))
-        log.debug("Copy NF node: %s" % c_nf)
-      else:
-        log.warning(
-          "NF node: %s does already exist in DoV. Skip adding..." % nf)
-
-    # Copy SAPs
-    for sap_id in [s.id for s in nffg.saps]:
-      if sap_id in [s.id for s in self._global_nffg.saps]:
-        # Found inter-domain SAP
-        log.debug("Found Inter-domain SAP: %s" % sap_id)
-        # Search outgoing links from SAP, should be only one
-        b_links = [l for u, v, l in
-                   self._global_nffg.network.out_edges_iter([sap_id],
-                                                            data=True)]
-        if len(b_links) < 1:
-          log.warning(
-            "SAP is not connected to any node! Maybe you forgot to call "
-            "duplicate_static_links?")
-          return
-        if 2 < len(b_links):
-          log.warning(
-            "Inter-domain SAP should have one and only one connection to the "
-            "domain! Using only the first connection.")
-          continue
-
-        # Get inter-domain port in self._global_nffg NFFG
-        domain_port_dov = b_links[0].dst
-        log.debug("Found inter-domain port: %s" % domain_port_dov)
-        # Search outgoing links from SAP, should be only one
-        n_links = [l for u, v, l in
-                   nffg.network.out_edges_iter([sap_id], data=True)]
-
-        if len(n_links) < 1:
-          log.warning(
-            "SAP is not connected to any node! Maybe you forgot to call "
-            "duplicate_static_links?")
-          return
-        if 2 < len(n_links):
-          log.warning(
-            "Inter-domain SAP should have one and only one connection to the "
-            "domain! Using only the first connection.")
-          continue
-
-        # Get port and Infra id's in nffg NFFG
-        p_id = n_links[0].dst.id
-        n_id = n_links[0].dst.node.id
-        # Get the inter-domain port from already copied Infra
-        domain_port_nffg = self._global_nffg.network.node[n_id].ports[p_id]
-        log.debug("Found inter-domain port: %s" % domain_port_nffg)
-
-        # Copy inter-domain port properties for redundant storing
-        # FIXME - do it better
-        if len(domain_port_nffg.properties) > 0:
-          domain_port_dov.properties.update(domain_port_nffg.properties)
-          log.debug(
-            "Copy inter-domain port properties: %s" %
-            domain_port_dov.properties)
-        elif len(domain_port_dov.properties) > 0:
-          domain_port_nffg.properties.update(domain_port_dov.properties)
-          log.debug(
-            "Copy inter-domain port properties: %s" %
-            domain_port_nffg.properties)
-        else:
-          domain_port_dov.add_property("sap", sap_id)
-          domain_port_nffg.add_property("sap", sap_id)
-
-        # Signal Inter-domain port
-        domain_port_dov.add_property("type", "inter-domain")
-        domain_port_nffg.add_property("type", "inter-domain")
-
-        # Delete both inter-domain SAP and links connected to them
-        self._global_nffg.del_node(sap_id)
-        nffg.del_node(sap_id)
-        log.debug(
-          "Add inter-domain connection with delay: %s, bandwidth: %s" % (
-            b_links[0].delay, b_links[0].bandwidth))
-
-        # Add the inter-domain links for both ways
-        self._global_nffg.add_undirected_link(
-          p1p2id="inter-domain-link-%s" % sap_id,
-          p2p1id="inter-domain-link-%s-back" % sap_id,
-          port1=domain_port_dov,
-          port2=domain_port_nffg,
-          delay=b_links[0].delay,
-          bandwidth=b_links[0].bandwidth)
-      else:
-        # Normal SAP --> copy SAP
-        c_sap = self._global_nffg.add_sap(
-          sap=deepcopy(nffg.network.node[sap_id]))
-        log.debug("Copy SAP: %s" % c_sap)
-
-    # Copy remaining links which should be valid
-    for u, v, link in nffg.network.edges_iter(data=True):
-      src_port = self._global_nffg.network.node[u].ports[link.src.id]
-      dst_port = self._global_nffg.network.node[v].ports[link.dst.id]
-      c_link = deepcopy(link)
-      c_link.src = src_port
-      c_link.dst = dst_port
-      self._global_nffg.add_link(src_port=src_port, dst_port=dst_port,
-                                 link=c_link)
-      log.debug("Copy Link: %s" % c_link)
-    # print self._global_nffg.dump()
-    # from pprint import pprint
-    # pprint(self._global_nffg.network.__dict__)
-
-    # Return the updated NFFG
-    return self._global_nffg
-
-  def update_full_global_view (self, global_nffg):
-    """
-    Update the merged Global view with the given probably modified global view.
-
-    :param global_nffg: updated global view which replace the stored one
-    :type global_nffg: :any:`NFFG`
-    """
-    self._global_nffg = global_nffg.copy()
-    self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
-    self._global_nffg.id = DoV
+    # Using general merging function from NFFGToolBox and return the updated
+    # NFFG
+    return NFFGToolBox.merge_new_domain(base=self._global_nffg,
+                                        nffg=nffg,
+                                        log=log)
 
   def update_domain_view (self, domain, nffg):
     """

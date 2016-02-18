@@ -660,8 +660,8 @@ def test_conversion ():
   # print
   # pprint(internal.network.__dict__)
 
-  merged = NFFGToolBox.merge_domains(internal, os_nffg)
-  merged = NFFGToolBox.merge_domains(merged, un_nffg)
+  merged = NFFGToolBox.merge_new_domain(internal, os_nffg)
+  merged = NFFGToolBox.merge_new_domain(merged, un_nffg)
 
   # pprint(merged.network.__dict__)
   print
