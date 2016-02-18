@@ -231,7 +231,12 @@ class NFFG(AbstractNFFG):
 
   def __contains__ (self, item):
     """
-    Return True if n is a node, False otherwise.
+    Return True if item exist in the NFFG, False otherwise.
+
+    :param item: node object or id
+    :type item: :any:`Node` or str
+    :return: item is in the NFFG
+    :rtype: bool
     """
     if isinstance(item, Node):
       item = item.id
@@ -250,6 +255,9 @@ class NFFG(AbstractNFFG):
   def __len__ (self):
     """
     Return the number of nodes.
+
+    :return: number of nodes
+    :rtype: int
     """
     return len(self.network)
 

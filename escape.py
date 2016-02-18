@@ -99,6 +99,17 @@ def main ():
   # basic command
   cmd = [os.path.join(base_dir, "pox/pox.py"), "unify"]
 
+  # Run ESCAPE in VERBOSE logging level if it is needed
+  if args.debug == 1:
+    # Set logging level to DEBUG
+    cmd.append("--loglevel=DEBUG")
+  elif args.debug > 1:
+    # Setup logging level to specific VERBOSE
+    cmd.append("--loglevel=VERBOSE")
+  else:
+    # Use default loglevel: INFO
+    pass
+
   # Run the Infrastructure Layer with the required root privilege
   if args.full:
     cmd.insert(0, "sudo")
@@ -127,15 +138,6 @@ def main ():
   # Start an REST-API for the Cf-Or interface
   if args.cfor:
     cmd.append("--cfor")
-  if args.debug == 1:
-    # Set logging level to DEBUG
-    cmd.append("--loglevel=DEBUG")
-  elif args.debug > 1:
-    # Setup logging level to specific VERBOSE
-    cmd.append("--loglevel=VERBOSE")
-  else:
-    # Use default loglevel: INFO
-    pass
 
   # Enable Visualization
   if args.visualization:

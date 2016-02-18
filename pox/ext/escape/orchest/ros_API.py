@@ -263,7 +263,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       full_config = self.server.last_response.patch(source=received_diff)
       # Convert response's body to NFFG
       converter = NFFGConverter(domain="REMOTE", logger=log)
-      nffg = converter.parse_from_Virtualizer(vdata=full_config)
+      # nffg = converter.parse_from_Virtualizer(vdata=full_config)
+      nffg = converter.parse_from_Virtualizer(vdata=received_diff)
     else:
       nffg = NFFG.parse(raw_body)  # Initialize NFFG from JSON representation
     # Rewrite domain name to INTERNAL
