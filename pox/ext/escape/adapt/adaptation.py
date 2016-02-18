@@ -610,7 +610,7 @@ class DomainResourceManager(object):
       log.info("Append %s domain to <Global Resource View> (DoV)..." % domain)
       if self._tracked_domains:
         # Merge domain topo into global view
-        self._dov.merge_new_domain_into_dov(nffg=nffg, domain=domain)
+        self._dov.merge_new_domain_into_dov(nffg=nffg)
       else:
         # No other domain detected, set NFFG as the whole global view
         log.debug(
