@@ -792,28 +792,49 @@ class NFFG(AbstractNFFG):
 
 class NFFGToolBox(object):
   """
-  Helper functions for NFFG handling.
+  Helper functions for NFFG handling operations, etc.
   """
 
+  ##############################################################################
+  # ----------------------- High level NFFG operations ------------------------
+  ##############################################################################
+
   @staticmethod
-  def merge_domains (base, nffg, domain, log=logging.getLogger("MERGE")):
+  def detect_domains (nffg):
     """
-    Merge the given ``nffg`` into the base NFFG using the given domain name.
+    Return with the set of detected domains in the given ``nffg``.
+
+    :param nffg: observed NFFG
+    :type nffg: :any:`NFFG`
+    :return: set of the detected domains
+    :rtype: set
+    """
+    return {infra.domain for infra in nffg.infras}
+
+  @staticmethod
+  def merge_new_domain (base, nffg, log=logging.getLogger("MERGE")):
+    """
+    Merge the given ``nffg`` into the ``base`` NFFG using the given domain name.
 
     :param base: base NFFG object
     :type base: :any:`NFFG`
     :param nffg: updating information
     :type nffg: :any:`NFFG`
-    :type domain: domain
     :param log: additional logger
     :type log: :any:`logging.Logger`
     :return: the update base NFFG
     :rtype: :any:`NFFG`
     """
     from copy import deepcopy
+    # Get new domain name
+    domain = NFFGToolBox.detect_domains(nffg=nffg)
+    if len(domain) == 0:
+      log.error("No domain detected in new %s!" % nffg)
+    if len(domain) > 1:
+      log.warning("Multiple domain name detected in new %s!" % nffg)
     # Copy infras
-
-    log.debug("Merge domain: %s resource info into DoV..." % domain)
+    log.debug("Merge domain: %s resource info into %s..." % (domain.pop(),
+                                                             base.id))
     # Check if the infra with given id is already exist in the base NFFG
     for infra in nffg.infras:
       if infra.id not in base:
@@ -821,8 +842,8 @@ class NFFGToolBox(object):
         log.debug("Copy infra node: %s" % c_infra)
       else:
         log.warning(
-          "Infra node: %s does already exist in DoV. Skip adding..." % infra)
-
+          "Infra node: %s does already exist in %s. Skip adding..." % (
+            infra, base))
     # Copy NFs
     for nf in nffg.nfs:
       if nf.id not in base:
@@ -830,17 +851,15 @@ class NFFGToolBox(object):
         log.debug("Copy NF node: %s" % c_nf)
       else:
         log.warning(
-          "NF node: %s does already exist in DoV. Skip adding..." % nf)
-
+          "NF node: %s does already exist in %s. Skip adding..." % (nf, base))
     # Copy SAPs
     for sap_id in [s.id for s in nffg.saps]:
       if sap_id in [s.id for s in base.saps]:
         # Found inter-domain SAP
         log.debug("Found Inter-domain SAP: %s" % sap_id)
         # Search outgoing links from SAP, should be only one
-        b_links = [l for u, v, l in
-                   base.network.out_edges_iter([sap_id],
-                                               data=True)]
+        b_links = [l for u, v, l in base.network.out_edges_iter([sap_id],
+                                                                data=True)]
         if len(b_links) < 1:
           log.warning(
             "SAP is not connected to any node! Maybe you forgot to call "
@@ -851,14 +870,12 @@ class NFFGToolBox(object):
             "Inter-domain SAP should have one and only one connection to the "
             "domain! Using only the first connection.")
           continue
-
         # Get inter-domain port in base NFFG
         domain_port_dov = b_links[0].dst
         log.debug("Found inter-domain port: %s" % domain_port_dov)
         # Search outgoing links from SAP, should be only one
-        n_links = [l for u, v, l in
-                   nffg.network.out_edges_iter([sap_id], data=True)]
-
+        n_links = [l for u, v, l in nffg.network.out_edges_iter([sap_id],
+                                                                data=True)]
         if len(n_links) < 1:
           log.warning(
             "SAP is not connected to any node! Maybe you forgot to call "
@@ -869,14 +886,12 @@ class NFFGToolBox(object):
             "Inter-domain SAP should have one and only one connection to the "
             "domain! Using only the first connection.")
           continue
-
         # Get port and Infra id's in nffg NFFG
         p_id = n_links[0].dst.id
         n_id = n_links[0].dst.node.id
         # Get the inter-domain port from already copied Infra
         domain_port_nffg = base.network.node[n_id].ports[p_id]
         log.debug("Found inter-domain port: %s" % domain_port_nffg)
-
         # Copy inter-domain port properties for redundant storing
         # FIXME - do it better
         if len(domain_port_nffg.properties) > 0:
@@ -892,30 +907,27 @@ class NFFGToolBox(object):
         else:
           domain_port_dov.add_property("sap", sap_id)
           domain_port_nffg.add_property("sap", sap_id)
-
         # Signal Inter-domain port
         domain_port_dov.add_property("type", "inter-domain")
         domain_port_nffg.add_property("type", "inter-domain")
-
         # Delete both inter-domain SAP and links connected to them
         base.del_node(sap_id)
         nffg.del_node(sap_id)
         log.debug(
           "Add inter-domain connection with delay: %s, bandwidth: %s" % (
             b_links[0].delay, b_links[0].bandwidth))
-
         # Add the inter-domain links for both ways
-        base.add_undirected_link(port1=domain_port_dov,
+        base.add_undirected_link(p1p2id="inter-domain-link-%s" % sap_id,
+                                 p2p1id="inter-domain-link-%s-back" % sap_id,
+                                 port1=domain_port_dov,
                                  port2=domain_port_nffg,
                                  delay=b_links[0].delay,
                                  bandwidth=b_links[0].bandwidth)
-
       else:
         # Normal SAP --> copy SAP
         c_sap = base.add_sap(
           sap=deepcopy(nffg.network.node[sap_id]))
         log.debug("Copy SAP: %s" % c_sap)
-
     # Copy remaining links which should be valid
     for u, v, link in nffg.network.edges_iter(data=True):
       src_port = base.network.node[u].ports[link.src.id]
@@ -926,10 +938,6 @@ class NFFGToolBox(object):
       base.add_link(src_port=src_port, dst_port=dst_port,
                     link=c_link)
       log.debug("Copy Link: %s" % c_link)
-    # print base.dump()
-    # from pprint import pprint
-    # pprint(base.network.__dict__)
-
     # Return the updated NFFG
     return base
 
@@ -950,9 +958,7 @@ class NFFGToolBox(object):
 
     log.info("Splitting mapped NFFG: %s according to detected domains" % nffg)
     # Define DOMAIN names
-    domains = set()
-    for infra in nffg.infras:
-      domains.add(infra.domain)
+    domains = NFFGToolBox.detect_domains(nffg=nffg)
     log.debug("Detected domains for splitting: %s" % domains)
 
     if len(domains) == 0:
@@ -1111,6 +1117,10 @@ class NFFGToolBox(object):
         log.debug("Rebounded requirement link: %s" % e2e)
     # Return the rebounded NFFG
     return nffg
+
+  ##############################################################################
+  # --------------------- Mapping-related NFFG operations ----------------------
+  ##############################################################################
 
   @staticmethod
   def _get_output_port_of_TAG_action (TAG, port):
