@@ -16,8 +16,7 @@ Contains Manager classes which contains the higher-level logic for complete
 domain management. Uses Adapter classes for ensuring protocol-specific
 connections with entities in the particular domain.
 """
-import sys
-import traceback
+import pprint
 
 from ncclient.operations import RPCError
 
@@ -181,26 +180,17 @@ class InternalDomainManager(AbstractDomainManager):
     """
     try:
       log.info(">>> Install %s domain part..." % self.domain_name)
-      # print nffg_part.dump()
-      # self._delete_nfs()
-      self._deploy_nfs(nffg_part=nffg_part)
+      # Mininet domain does not support NF migration directly -->
+      # Remove unnecessary and moved NFs first
+      self._delete_running_nfs(nffg=nffg_part)
+      # then (re)initiate mapped NFs
+      self._deploy_new_nfs(nffg=nffg_part)
       log.info("Perform traffic steering according to mapped tunnels/labels...")
-      self._delete_flowrules(nffg_part=nffg_part)
-
-      # def _deploy_flowrules_forever (interval=3):
-      #   from pox.lib.recoco import Timer
-      #
-      #   def _callback (counter={'cntr': 1}):
-      #     self._delete_flowrules(nffg_part=nffg_part)
-      #     self._deploy_flowrules(nffg_part=nffg_part)
-      #     log.debug("Deploy flowrules counter: %s" % counter['cntr'])
-      #     counter['cntr'] += 1
-      #
-      #   Timer(timeToWake=interval, callback=_callback, recurring=True,
-      #         selfStoppable=False)
-
+      # OpenFlow flowrule deletion/addition is fairly cheap operations
+      # The most robust solution is to delete every flowrule
+      self._delete_flowrules(nffg=nffg_part)
+      # and (re)add the new ones
       self._deploy_flowrules(nffg_part=nffg_part)
-      # _deploy_flowrules_forever()
       return True
     except:
       log.exception(
@@ -220,13 +210,23 @@ class InternalDomainManager(AbstractDomainManager):
       # Infrastructure layer has been cleared.
       log.debug("%s domain has already been cleared!" % self.domain_name)
       return
-    self._delete_nfs()
-    self._delete_flowrules(nffg_part=self.topoAdapter.get_topology_resource())
+    self._delete_running_nfs()
+    self._delete_flowrules(nffg=self.topoAdapter.get_topology_resource())
 
-  def _delete_nfs (self):
+  def _delete_running_nfs (self, nffg=None):
     """
-    Stop and delete deployed NFs.
+    Stop and delete deployed NFs which are not existed the new mapped request.
+    Mininet domain does not support NF migration and assume stateless network
+    functions.
 
+    Detect if an NF was moved during the previous mapping and
+    remove that gracefully.
+
+    If the ``nffg`` parameter is not given, skip the NF migration detection
+    and remove all non-existent NF by default.
+
+    :param nffg: the last mapped request
+    :type nffg: :any:`NFFG`
     :return: None
     """
     topo = self.topoAdapter.get_topology_resource()
@@ -235,59 +235,82 @@ class InternalDomainManager(AbstractDomainManager):
         "Missing topology description from %s domain! Skip deleting NFs..." %
         self.domain_name)
       return
-    log.debug("Remove deployed NFs...")
-    for infra in topo.infras:
-      if infra.infra_type not in (
-         NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
-        continue
-      for nf in [n for n in topo.running_nfs(infra.id)]:
+    log.debug("Check for removable NFs...")
+    # Skip non-execution environments
+    infras = [i.id for i in topo.infras if
+              i.infra_type in (NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE)]
+    for infra_id in infras:
+      # Generate list of newly mapped NF on the infra
+      old_running_nfs = [n.id for n in topo.running_nfs(infra_id)]
+      # Detect non-moved NF if new mapping was given and skip deletion
+      for nf_id in old_running_nfs:
+        # If NF exist in the new mapping
+        if nffg is not None and nf_id in nffg:
+          new_running_nfs = [n.id for n in nffg.running_nfs(infra_id)]
+          # And connected to the same infra
+          if nf_id in new_running_nfs:
+            # NF was not moved, Skip deletion
+            log.debug('Unchanged NF: %s' % nf_id)
+            continue
+          # If the NF exists in the new mapping, but moved to another infra
+          else:
+            log.info("Found moved NF: %s")
+            log.debug(
+              "NF migration is not supported! Stop and remove already "
+              "deployed NF and reinitiate later...")
+        else:
+          log.debug("Found removable NF: %s" % nf_id)
         # Create connection Adapter to EE agent
         connection_params = self.topoAdapter.get_agent_connection_params(
-          infra.id)
+          infra_id)
         if connection_params is None:
           log.error(
             "Missing connection params for communication with the agent of "
-            "Node: %s" % infra.short_name)
+            "Node: %s" % infra_id)
         updated = self.remoteAdapter.update_connection_params(
           **connection_params)
+        if updated:
+          log.debug("Update connection params in %s: %s" % (
+            self.remoteAdapter.__class__.__name__, updated))
+        log.debug("Stop deployed NF: %s" % nf_id)
         try:
-          vnf_id = self.deployed_vnfs[(infra.id, nf.id)]['vnf_id']
+          vnf_id = self.deployed_vnfs[(infra_id, nf_id)]['vnf_id']
           reply = self.remoteAdapter.removeNF(vnf_id=vnf_id)
-          # print reply
+          log.log(VERBOSE, "Removed NF status:\n%s" % pprint.pformat(reply))
+          # Remove NF from deployed cache
+          del self.deployed_vnfs[(infra_id, nf_id)]
           # Delete infra ports connected to the deletable NF
-          for u, v, link in topo.network.out_edges([nf.id], data=True):
+          for u, v, link in topo.network.out_edges([nf_id], data=True):
             topo[v].del_port(id=link.dst.id)
           # Delete NF
-          topo.del_node(nf.id)
-          log.debug("Removed NF: %s" % nf)
+          topo.del_node(nf_id)
         except KeyError:
           log.error(
-            "Deployed VNF data for NF: %s is not found! Skip deletion..." % nf)
+            "Deployed VNF data for NF: %s is not found! Skip deletion..." %
+            nf_id)
         except RPCError:
           log.error(
             "Got RPC communication error during NF: %s initiation! Skip "
-            "initiation..." % nf.name)
+            "deletion..." % nf_id)
           continue
-          # print self.topoAdapter.get_topology_resource().dump()
-    log.debug("Deletion of deployed NFs has been ended!")
 
-  def _deploy_nfs (self, nffg_part):
+  def _deploy_new_nfs (self, nffg):
     """
     Install the NFs mapped in the given NFFG.
 
     If an NF is already defined in the topology and it's state is up and
     running then the actual NF's initiation will be skipped!
 
-    :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
+    :param nffg: NF-FG need to be deployed
+    :type nffg: :any:`NFFG`
     :return: None
     """
     log.info("Deploy mapped NFs into the domain: %s..." % self.domain_name)
     self.portmap.clear()
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
-    nffg_part.clear_links(NFFG.TYPE_LINK_SG)
-    nffg_part.clear_links(NFFG.TYPE_LINK_REQUIREMENT)
+    nffg.clear_links(NFFG.TYPE_LINK_SG)
+    nffg.clear_links(NFFG.TYPE_LINK_REQUIREMENT)
     # Get physical topology description from Mininet
     mn_topo = self.topoAdapter.get_topology_resource()
     if mn_topo is None:
@@ -297,7 +320,7 @@ class InternalDomainManager(AbstractDomainManager):
       return
     # Iter through the container INFRAs in the given mapped NFFG part
     # print mn_topo.dump()
-    for infra in nffg_part.infras:
+    for infra in nffg.infras:
       if infra.infra_type not in (
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
         log.debug(
@@ -313,16 +336,16 @@ class InternalDomainManager(AbstractDomainManager):
           "initiation on this Node..." % (infra.short_name, self.domain_name))
         continue
       # Iter over the NFs connected the actual INFRA
-      for nf in nffg_part.running_nfs(infra.id):
+      for nf in nffg.running_nfs(infra.id):
         # NF with id is already deployed --> change the dynamic port to
         # static and continue
         if nf.id in (nf.id for nf in self.internal_topo.nfs):
           log.debug(
             "NF: %s has already been initiated. Continue to next NF..." %
             nf.short_name)
-          for u, v, link in nffg_part.network.out_edges_iter([nf.id],
-                                                             data=True):
-            dyn_port = nffg_part[v].ports[link.dst.id]
+          for u, v, link in nffg.network.out_edges_iter([nf.id],
+                                                        data=True):
+            dyn_port = nffg[v].ports[link.dst.id]
             for x, y, l in mn_topo.network.out_edges_iter([nf.id],
                                                           data=True):
               if l.src.id == link.src.id:
@@ -331,13 +354,11 @@ class InternalDomainManager(AbstractDomainManager):
                 break
           continue
         # Extract the initiation params
-        params = {
-          'nf_type': nf.functional_type,
-          'nf_ports': [link.src.id for u, v, link in
-                       nffg_part.network.out_edges_iter((nf.id,),
-                                                        data=True)],
-          'infra_id': infra.id
-        }
+        params = {'nf_type': nf.functional_type,
+                  'nf_ports': [link.src.id for u, v, link in
+                               nffg.network.out_edges_iter((nf.id,),
+                                                           data=True)],
+                  'infra_id': infra.id}
         # Check if every param is not None or empty
         if not all(params.values()):
           log.error(
@@ -359,13 +380,12 @@ class InternalDomainManager(AbstractDomainManager):
             self.remoteAdapter.__class__.__name__, updated))
         try:
           vnf = self.remoteAdapter.deployNF(**params)
-          # from pprint import pprint
-          # pprint(vnf)
         except RPCError:
           log.error(
             "Got RPC communication error during NF: %s initiation! Skip "
             "initiation..." % nf.name)
           continue
+        log.log(VERBOSE, "Initiated VNF:\n%s" % pprint.pformat(vnf))
         # Check if NETCONF communication was OK
         if vnf is not None and vnf['initiated_vnfs']['pid'] and \
               vnf['initiated_vnfs'][
@@ -390,13 +410,9 @@ class InternalDomainManager(AbstractDomainManager):
 
         log.debug("Add deployed NFs to topology...")
         # Add Link between actual NF and INFRA
-        for nf_id, infra_id, link in nffg_part.network.out_edges_iter((nf.id,),
-                                                                      data=True):
+        for nf_id, infra_id, link in nffg.network.out_edges_iter((nf.id,),
+                                                                 data=True):
           # Get Link's src ref to new NF's port
-          # nf_port = deployed_nf.ports[link.src.id]
-          # Create new Port for new NF
-          # print nf.__dict__
-          # print link
           nf_port = deployed_nf.ports.append(nf.ports[link.src.id].copy())
 
           def get_sw_port (vnf):
@@ -430,10 +446,10 @@ class InternalDomainManager(AbstractDomainManager):
                                                dynamic=True, delay=link.delay,
                                                bandwidth=link.bandwidth)
           # Port mapping
-          dynamic_port = nffg_part.network.node[infra_id].ports[link.dst.id].id
+          dynamic_port = nffg.network.node[infra_id].ports[link.dst.id].id
           self.portmap[dynamic_port] = infra_port_num
           # Update port in nffg_part
-          nffg_part.network.node[infra_id].ports[
+          nffg.network.node[infra_id].ports[
             link.dst.id].id = infra_port_num
 
         log.debug("%s topology description is updated with NF: %s" % (
@@ -441,7 +457,7 @@ class InternalDomainManager(AbstractDomainManager):
 
     log.debug("Rewrite dynamically generated port numbers in flowrules...")
     # Update port numbers in flowrules
-    for infra in nffg_part.infras:
+    for infra in nffg.infras:
       if infra.infra_type not in (
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
          NFFG.TYPE_INFRA_SDN_SW):
@@ -467,9 +483,9 @@ class InternalDomainManager(AbstractDomainManager):
           flowrule.match = ";".join(_match)
           flowrule.action = ";".join(_action)
     log.info(
-      "Initiation of NFs in NFFG part: %s has been finished!" % nffg_part)
+      "Initiation of NFs in NFFG part: %s has been finished!" % nffg)
 
-  def _delete_flowrules (self, nffg_part):
+  def _delete_flowrules (self, nffg):
     """
     Delete all flowrules from the first (default) table of all infras.
     """
@@ -481,7 +497,7 @@ class InternalDomainManager(AbstractDomainManager):
         "deletions..." % self.domain_name)
       return
     # Iter through the container INFRAs in the given mapped NFFG part
-    for infra in nffg_part.infras:
+    for infra in nffg.infras:
       if infra.infra_type not in (
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
          NFFG.TYPE_INFRA_SDN_SW):

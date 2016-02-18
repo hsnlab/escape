@@ -541,7 +541,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: Returns the connected port(s) with the corresponding switch(es).
     :raises: RPCError, OperationError, TransportError
     """
-    log.debug("Call connectVNF - VNF: %s port: %s --> node: %s" % (
+    log.debug("Call connectVNF - VNF id: %s port: %s --> node: %s" % (
       vnf_id, vnf_port, switch_id))
     return self.call_RPC("connectVNF", vnf_id=vnf_id, vnf_port=vnf_port,
                          switch_id=switch_id)
@@ -569,7 +569,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    log.debug("Call disconnectVNF - VNF: %s port: %s" % (vnf_id, vnf_port))
+    log.debug("Call disconnectVNF - VNF id: %s port: %s" % (vnf_id, vnf_port))
     return self.call_RPC("disconnectVNF", vnf_id=vnf_id, vnf_port=vnf_port)
 
   def startVNF (self, vnf_id):
@@ -589,7 +589,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    log.debug("Call startVNF - VNF: %s" % vnf_id)
+    log.debug("Call startVNF - VNF id: %s" % vnf_id)
     return self.call_RPC("startVNF", vnf_id=vnf_id)
 
   def stopVNF (self, vnf_id):
@@ -614,7 +614,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: reply data
     :raises: RPCError, OperationError, TransportError
     """
-    log.debug("Call stopVNF...")
+    log.debug("Call stopVNF - VNF id: %s" % vnf_id)
     return self.call_RPC("stopVNF", vnf_id=vnf_id)
 
   def getVNFInfo (self, vnf_id=None):
@@ -659,7 +659,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :raises: RPCError, OperationError, TransportError
     """
     log.debug(
-      "Call getVNFInfo - VNF: %s" % vnf_id if vnf_id is not None else "all")
+      "Call getVNFInfo - VNF id: %s" % vnf_id if vnf_id is not None else "all")
     return self.call_RPC('getVNFInfo', vnf_id=vnf_id)
 
   ##############################################################################
@@ -718,11 +718,8 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     """
     with self as adapter:
       try:
-        # return adapter.stopVNF(vnf_id=vnf_id)
-        reply = adapter.stopVNF(vnf_id=vnf_id)
-        from pprint import pprint
-        pprint(adapter.getVNFInfo())
-        return reply
+        # Stop and remove VNF
+        return adapter.stopVNF(vnf_id=vnf_id)
       except RPCError as e:
         log.error("Got Error during removeVNF through NETCONF:")
         raise
@@ -980,12 +977,13 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       raise RuntimeError(
         "Not supported config format: %s for 'edit-config'!" % type(data))
-    log.info("Generating diff of mapping changes...")
-    diff = self.last_virtualizer.diff(target=vdata)
+    # log.info("Generating diff of mapping changes...")
+    # diff = self.last_virtualizer.diff(target=vdata)
     log.debug("Send NFFG to %s domain agent at %s..." % (
       self.domain_name, self._base_url))
     try:
-      return self.send_with_timeout(self.POST, 'edit-config', diff.xml())
+      # return self.send_with_timeout(self.POST, 'edit-config', diff.xml())
+      return self.send_with_timeout(self.POST, 'edit-config', vdata.xml())
     except Timeout:
       log.warning(
         "Reached timeout(%ss) while waiting for edit-config response! Ignore "
