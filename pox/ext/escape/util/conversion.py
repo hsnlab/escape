@@ -861,7 +861,7 @@ class NFFGConverter(object):
         self.log.error("Got ParseError during XML->Virtualizer conversion!")
         raise RuntimeError('ParseError: %s' % e.message)
     else:
-      self.log.error("Not supported type for xml_data: %s" % type(vdata))
+      self.log.error("Not supported type for vdata: %s" % type(vdata))
       return
     # Get NFFG init params
     nffg_id = virtualizer.id.get_value()  # Mandatory - virtualizer.id
@@ -1454,18 +1454,18 @@ if __name__ == "__main__":
                     # ensure_unique_id=True,
                     logger=log)
 
-  with open(
-     # "../../../../examples/escape-mn-mapped-test.nffg") as f:
-     "../../../../examples/escape-2sbb-mapped.nffg") as f:
-    nffg = NFFG.parse(raw_data=f.read())
-    # nffg.duplicate_static_links()
-  log.debug("Parsed NFFG:\n%s" % nffg.dump())
-  virt = c.dump_to_Virtualizer(nffg=nffg)
-  log.debug("Converted:")
-  log.debug(virt.xml())
-  log.debug("Reconvert to NFFG:")
-  nffg = c.parse_from_Virtualizer(vdata=virt.xml())
-  log.debug(nffg.dump())
+  # with open(
+  #    # "../../../../examples/escape-mn-mapped-test.nffg") as f:
+  #    "../../../../examples/escape-2sbb-mapped.nffg") as f:
+  #   nffg = NFFG.parse(raw_data=f.read())
+  #   # nffg.duplicate_static_links()
+  # log.debug("Parsed NFFG:\n%s" % nffg.dump())
+  # virt = c.dump_to_Virtualizer(nffg=nffg)
+  # log.debug("Converted:")
+  # log.debug(virt.xml())
+  # log.debug("Reconvert to NFFG:")
+  # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
+  # log.debug(nffg.dump())
 
   # with open(
   #    # "../../../../examples/OS_report1.xml") as f:
@@ -1483,3 +1483,507 @@ if __name__ == "__main__":
   # # virt.bind()
   # log.info("Reconverted Virtualizer:")
   # log.info("%s" % virt.xml())
+
+  txt = """
+{
+  "parameters": {
+    "id": "SG-request",
+    "name": "SG-name-ros-mapped",
+    "version": "1.0"
+  },
+  "node_nfs": [
+    {
+      "id": "fwd",
+      "name": "FORWARDER",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "functional_type": "simpleForwarder",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0
+        }
+      }
+    },
+    {
+      "id": "comp",
+      "name": "COMPRESSOR",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "functional_type": "headerCompressor",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0
+        }
+      }
+    },
+    {
+      "id": "decomp",
+      "name": "DECOMPRESSOR",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "functional_type": "headerDecompressor",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "SAP14",
+      "name": "SAP14",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "domain": "eth0"
+    },
+    {
+      "id": "SAP1",
+      "name": "SAP1",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    {
+      "id": "SAP2",
+      "name": "SAP2",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "EE1",
+      "name": "ee-infra-1",
+      "ports": [
+        {
+          "id": 1,
+          "flowrules": [
+            {
+              "id": 139719272116084,
+              "match": "in_port=1;TAG=SAP1|comp|1",
+              "action": "output=EE1|comp|1;UNTAG",
+              "hop_id": 1,
+              "bandwidth": 4.0
+            }
+          ]
+        },
+        {
+          "id": "EE1|comp|1",
+          "flowrules": [
+            {
+              "id": 139719272236714,
+              "match": "in_port=EE1|comp|1",
+              "action": "output=EE1|decomp|1",
+              "hop_id": 2,
+              "bandwidth": 4.0
+            }
+          ]
+        },
+        {
+          "id": "EE1|decomp|1",
+          "flowrules": [
+            {
+              "id": 139719271958600,
+              "match": "in_port=EE1|decomp|1",
+              "action": "output=1;TAG=decomp|SAP2|3",
+              "hop_id": 3,
+              "bandwidth": 4.0
+            }
+          ]
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "headerCompressor",
+        "headerDecompressor",
+        "simpleForwarder"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 5.0,
+        "storage": 5.0,
+        "delay": 0.9,
+        "bandwidth": 5000.0
+      }
+    },
+    {
+      "id": "EE2",
+      "name": "ee-infra-2",
+      "ports": [
+        {
+          "id": 1,
+          "flowrules": [
+            {
+              "id": 139719272526363,
+              "match": "in_port=1;TAG=SAP2|fwd|4",
+              "action": "output=EE2|fwd|1;UNTAG",
+              "hop_id": 4,
+              "bandwidth": 4.0
+            }
+          ]
+        },
+        {
+          "id": "EE2|fwd|1",
+          "flowrules": [
+            {
+              "id": 139719272598858,
+              "match": "in_port=EE2|fwd|1",
+              "action": "output=1;TAG=fwd|SAP1|5",
+              "hop_id": 5,
+              "bandwidth": 4.0
+            }
+          ]
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "headerCompressor",
+        "headerDecompressor",
+        "simpleForwarder"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 5.0,
+        "storage": 5.0,
+        "delay": 0.9,
+        "bandwidth": 5000.0
+      }
+    },
+    {
+      "id": "SW1",
+      "name": "switch-1",
+      "ports": [
+        {
+          "id": 1,
+          "flowrules": [
+            {
+              "id": 139719272020246,
+              "match": "in_port=1;TAG=decomp|SAP2|3",
+              "action": "output=2",
+              "hop_id": 3,
+              "bandwidth": 4.0
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "flowrules": [
+            {
+              "id": 139719272686775,
+              "match": "in_port=2;TAG=fwd|SAP1|5",
+              "action": "output=3",
+              "hop_id": 5,
+              "bandwidth": 4.0
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "flowrules": [
+            {
+              "id": 139719272804326,
+              "match": "in_port=3",
+              "action": "output=1;TAG=SAP1|comp|1",
+              "hop_id": 1,
+              "bandwidth": 4.0
+            }
+          ]
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.2,
+        "bandwidth": 10000.0
+      }
+    },
+    {
+      "id": "SW2",
+      "name": "switch-2",
+      "ports": [
+        {
+          "id": 1,
+          "flowrules": [
+            {
+              "id": 139719272005688,
+              "match": "in_port=1;TAG=fwd|SAP1|5",
+              "action": "output=2",
+              "hop_id": 5,
+              "bandwidth": 4.0
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "flowrules": [
+            {
+              "id": 139719272584676,
+              "match": "in_port=2;TAG=decomp|SAP2|3",
+              "action": "output=3",
+              "hop_id": 3,
+              "bandwidth": 4.0
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "flowrules": [
+            {
+              "id": 139719272175205,
+              "match": "in_port=3",
+              "action": "output=1;TAG=SAP2|fwd|4",
+              "hop_id": 4,
+              "bandwidth": 4.0
+            }
+          ]
+        },
+        {
+          "id": 4
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.2,
+        "bandwidth": 10000.0
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": 139719272248434,
+      "src_node": "fwd",
+      "src_port": 1,
+      "dst_node": "EE2",
+      "dst_port": "EE2|fwd|1",
+      "backward": true
+    },
+    {
+      "id": 139719272717696,
+      "src_node": "comp",
+      "src_port": 1,
+      "dst_node": "EE1",
+      "dst_port": "EE1|comp|1",
+      "backward": true
+    },
+    {
+      "id": "mn-link1",
+      "src_node": "EE1",
+      "src_port": 1,
+      "dst_node": "SW1",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": 139719272000959,
+      "src_node": "EE1",
+      "src_port": "EE1|comp|1",
+      "dst_node": "comp",
+      "dst_port": 1
+    },
+    {
+      "id": 139719272768706,
+      "src_node": "EE1",
+      "src_port": "EE1|decomp|1",
+      "dst_node": "decomp",
+      "dst_port": 1
+    },
+    {
+      "id": 139719272483558,
+      "src_node": "EE2",
+      "src_port": "EE2|fwd|1",
+      "dst_node": "fwd",
+      "dst_port": 1
+    },
+    {
+      "id": "mn-link2",
+      "src_node": "EE2",
+      "src_port": 1,
+      "dst_node": "SW2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": 139719272452792,
+      "src_node": "decomp",
+      "src_port": 1,
+      "dst_node": "EE1",
+      "dst_port": "EE1|decomp|1",
+      "backward": true
+    },
+    {
+      "id": "mn-link3",
+      "src_node": "SW1",
+      "src_port": 2,
+      "dst_node": "SW2",
+      "dst_port": 2,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link1-back",
+      "src_node": "SW1",
+      "src_port": 1,
+      "dst_node": "EE1",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link4",
+      "src_node": "SW1",
+      "src_port": 3,
+      "dst_node": "SAP1",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link6-back",
+      "src_node": "SAP14",
+      "src_port": 1,
+      "dst_node": "SW2",
+      "dst_port": 4,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link3-back",
+      "src_node": "SW2",
+      "src_port": 2,
+      "dst_node": "SW1",
+      "dst_port": 2,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link6",
+      "src_node": "SW2",
+      "src_port": 4,
+      "dst_node": "SAP14",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link5",
+      "src_node": "SW2",
+      "src_port": 3,
+      "dst_node": "SAP2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link2-back",
+      "src_node": "SW2",
+      "src_port": 1,
+      "dst_node": "EE2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link4-back",
+      "src_node": "SAP1",
+      "src_port": 1,
+      "dst_node": "SW1",
+      "dst_port": 3,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link5-back",
+      "src_node": "SAP2",
+      "src_port": 1,
+      "dst_node": "SW2",
+      "dst_port": 3,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": 5,
+      "src_node": "fwd",
+      "src_port": 1,
+      "dst_node": "SAP1",
+      "dst_port": 1,
+      "bandwidth": 4.0
+    },
+    {
+      "id": 2,
+      "src_node": "comp",
+      "src_port": 1,
+      "dst_node": "decomp",
+      "dst_port": 1,
+      "bandwidth": 4.0
+    },
+    {
+      "id": 3,
+      "src_node": "decomp",
+      "src_port": 1,
+      "dst_node": "SAP2",
+      "dst_port": 1,
+      "bandwidth": 4.0
+    },
+    {
+      "id": 1,
+      "src_node": "SAP1",
+      "src_port": 1,
+      "dst_node": "comp",
+      "dst_port": 1,
+      "bandwidth": 4.0
+    },
+    {
+      "id": 4,
+      "src_node": "SAP2",
+      "src_port": 1,
+      "dst_node": "fwd",
+      "dst_port": 1,
+      "bandwidth": 4.0
+    }
+  ]
+}
+"""
+  print c.dump_to_Virtualizer(NFFG.parse(txt))
