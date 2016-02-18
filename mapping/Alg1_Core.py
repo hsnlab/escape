@@ -742,7 +742,7 @@ class CoreAlgorithm(object):
   def _getSrcDstPortsOfOutputEdgeReq(self, nffg, sghop_id, infra, src=True, dst=True):
     """
     Retrieve the ending and starting infra port, where EdgeReq 
-    should be connected. Raises exception if either of the is not found.
+    should be connected. Raises exception if either of them is not found.
     If one of the ports is not requested, it remains None.
     NOTE: we can be sure there is only one flowrule with 'sghop_id' in this infra
     because we map SGHops based on shortest path algorithm and it would cut 
@@ -780,6 +780,19 @@ class CoreAlgorithm(object):
             "found for output EdgeReq!")
     return start_port_for_req, end_port_for_req
   
+  def _addEdgeReqToChainPieceStruct(self, e2e_chainpieces, cid, outedgereq):
+    """
+    Handles the structure for output EdgeReqs. Logs, helps avoiding code 
+    duplication.
+    """
+    if cid in e2e_chainpieces:
+      e2e_chainpieces[cid].append(outedgereq)
+    else:
+      e2e_chainpieces[cid] = [outedgereq]
+    self.log.debug("Requirement chain added to BiSBiS %s with path %s and"
+                   " latency %s."%(outedgereq.src.node.id, outedgereq.sg_path, 
+                                   outedgereq.delay))
+
   def _divideEndToEndRequirements(self, nffg):
     """
     Splits the E2E latency requirement between all BiSBiS nodes, which were used
@@ -791,7 +804,8 @@ class CoreAlgorithm(object):
     for req in [r for r in nffg.reqs]:
       nffg.del_edge(req.src, req.dst, req.id)
     e2e_chainpieces = {}
-    for cid, infra in self.manager.genPathOfChains(nffg):
+    last_sghop_id = None
+    for cid, first_vnf, infra in self.manager.genPathOfChains(nffg):
       if nffg.network.node[infra].type == 'INFRA':
         if nffg.network.node[infra].infra_type == NFFG.TYPE_INFRA_BISBIS:
           mapped_req = self.req.subgraph((vnf.id for vnf in \
@@ -799,14 +813,19 @@ class CoreAlgorithm(object):
           outedgereq = None
           delay_of_infra = self._sumLatencyOnPath([infra], [])
           if len(mapped_req) == 0 or \
-             not self.manager.isAnyVNFInChain(cid, mapped_req):
+             not self.manager.isAnyVNFInChain(cid, mapped_req) or \
+             first_vnf is None:
             # we know that 'cid' traverses 'infra', but if this chain has no 
             # mapped node here, then it olny uses this infra in its path
             # OR              
             # This can happen when this BiSBiS is only forwarding the traffic 
             # of this service chain, BUT only VNFs from another service chains 
             # has been mapped here
-            sghop_id = self.manager.getSGHopOfChainMappedHere(cid, infra)
+            # OR 
+            # there is some VNF of 'cid' mapped here, but now we traverse this
+            # infra as transit
+            sghop_id = self.manager.getSGHopOfChainMappedHere(cid, infra, 
+                                                              last_sghop_id)
             src, dst = self._getSrcDstPortsOfOutputEdgeReq(nffg,
                                                            sghop_id, infra)
             # this is as much latency as we used for the mapping
@@ -816,10 +835,7 @@ class CoreAlgorithm(object):
                                       bandwidth=0,
                                       id=self.manager.getNextOutputChainId(), 
                                       sg_path=[sghop_id])
-            if cid in e2e_chainpieces:
-              e2e_chainpieces[cid].append(outedgereq)
-            else:
-              e2e_chainpieces[cid] = [outedgereq]
+            self._addEdgeReqToChainPieceStruct(e2e_chainpieces, cid, outedgereq)
           else:
             chain_pieces_of_infra = self.manager.\
                                     getChainPiecesOfReqSubgraph(cid, mapped_req)
@@ -837,13 +853,10 @@ class CoreAlgorithm(object):
                                         bandwidth=0,
                                         id=self.manager.getNextOutputChainId(),
                                         sg_path=link_ids_piece)
-              if cid in e2e_chainpieces:
-                e2e_chainpieces[cid].append(outedgereq)
-              else:
-                e2e_chainpieces[cid] = [outedgereq]
-          self.log.debug("Requirement chain added to BiSBiS %s with path %s and"
-                         " latency %s."%(infra, outedgereq.sg_path, 
-                                         outedgereq.delay))
+              self._addEdgeReqToChainPieceStruct(e2e_chainpieces, cid, 
+                                                 outedgereq)
+          last_sghop_id = outedgereq.sg_path[-1]
+            
     # now iterate on the chain pieces
     for cid in e2e_chainpieces:
       # this is NOT equal to permitted minus remaining!
