@@ -278,7 +278,6 @@ class RESTServer(ThreadingMixIn, HTTPServer):
       :type port: int
       """
     HTTPServer.__init__(self, (address, port), RequestHandlerClass)
-    # self._server = Server((address, port), RequestHandlerClass)
     self._thread = threading.Thread(target=self.run,
                                     name="REST-%s:%s" % (address, port))
     self._thread.daemon = True
@@ -476,6 +475,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
         self.send_error(e.code, e.msg)
       else:
         self.send_error(500, e.msg)
+    except Exception:
+      # Got unexpected exception
+      self.send_error(500)
+      raise
     finally:
       self.func_name = None
       self.wfile.flush()
