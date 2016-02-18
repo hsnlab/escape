@@ -359,6 +359,8 @@ class MappingManager(object):
     Mapping vnf2 to n2 shouldn`t be further from n1 (vnf1`s host) than
     the strictest latency requirement of all the links between vnf1 and vnf2
     """
+    # this equals to the min of all latency requirements (req link local OR 
+    # remaining E2E) that is given for any SGHop between vnf1 and vnf2.
     max_permitted_vnf_dist = float("inf")
     for i, j, linkid, d in self.req.network.edges_iter([vnf1], data=True,
                                                        keys=True):
@@ -378,10 +380,24 @@ class MappingManager(object):
               # anywhere else, a structure only for realizing this
               # checking effectively seems not useful enough)
               lal = self.getLocalAllowedLatency(c, vnf1, vnf2, linkid)
+              subcend = self.\
+                        getIdOfChainEnd_fromNetwork(chdata['subchain'][-1][1])
+              if self.shortest_paths_lengths[n2][subcend] > \
+                 self.getLocalAllowedLatency(c):
+                # NOTE: we compare to remaining E2E latency to the minimal path
+                # length required until only subchain end, which is less strict 
+                # than the actual E2E chain end in general. And used latency
+                # between n1 and n2 is further omitted. But still some bad cases
+                # can be filtered here.
+                self.log.debug("Potential node mapping was too far from chain "
+                         "end because of remaining E2E latency requirement")
+                return False
               if lal < max_permitted_vnf_dist:
                 max_permitted_vnf_dist = lal
               break
     if self.shortest_paths_lengths[n1][n2] > max_permitted_vnf_dist:
+      self.log.debug("Potential node mapping was too far from last host because"
+                     " of link or remaining E2E latency requirement!")
       return False
     else:
       return True
@@ -430,25 +446,34 @@ class MappingManager(object):
     """
     self.colored_req = copy.deepcopy(colored_req)
 
-  def getSGHopOfChainMappedHere (self, cid, infra):
+  def getSGHopOfChainMappedHere (self, cid, infra, last_sghop_id):
     """
     Returns an SGHop ID which is part of 'cid' chain and its path traverses 
     'infra'. Should be used when this infra is only used as forwarding infra, 
-    but not as for hosting VNF for 'cid' (if not used like this, returns a random
-    SGHop of the many, meeting the input criteria).
+    but not as for hosting VNF for 'cid'. last_sghop_id indicates where is the
+    requirement division process in the chain.
     """
     for c in self.chains:
       if cid == c['id']:
         for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:], 
                                    c['link_ids']):
           if infra in self.link_mapping[vnf1][vnf2][lid]['mapped_to']:
-            return lid
+            if last_sghop_id in c['link_ids']:
+              if lid == last_sghop_id:
+                return lid
+            else:
+              return lid
+    else:
+      raise uet.InternalAlgorithmException("SGHop for chain %s couldn't be "
+                                           "found in infra %s"%(cid, infra))
 
   def genPathOfChains (self, nffg):
     """
     Returns a generator of the mapped stucture starting from the beginning of 
     chains and finding which Infra nodes are used during the mapping. Generates
-    (chain_id, infra_id) tuples, and iterates on all chains. 
+    (chain_id, entering_sghop_id, infra_id) tuples, and iterates on all chains. 
+    The 2nd item is the ID of the first VNF of the chain path part which is 
+    mapped to this infra OR None if no VNF is mapped here (just transit infra).
     Returns also SAPs on the path!
     """
     for c in self.chains:
@@ -457,12 +482,15 @@ class MappingManager(object):
                                  c['link_ids']):
         # iterate on 'mapped_to' attribute of vnf1,vnf2,lid link of 
         # link_mapping structure
-        for forwarding_infra in \
-            self.link_mapping[vnf1][vnf2][lid]['mapped_to']:
-          if forwarding_infra is None or \
+        path_of_lid = self.link_mapping[vnf1][vnf2][lid]['mapped_to']
+        for forwarding_infra in path_of_lid:
+          if prev_infra_of_path is None or \
              forwarding_infra != prev_infra_of_path:
             prev_infra_of_path = forwarding_infra
-            yield c['id'], forwarding_infra
+            yield c['id'], vnf2 if \
+              self.getIdOfChainEnd_fromNetwork(vnf2) == forwarding_infra or \
+              self.getIdOfChainEnd_fromNetwork(vnf1) == forwarding_infra else None,\
+              forwarding_infra
       # VNF2 is handled by the iteration on link mapping structure (because 
       # 'mapped_to' contains the hosting infra of vnf1 and vnf2 as well)
 
@@ -497,7 +525,7 @@ class MappingManager(object):
         # i,j,k is an inbound SGHop from the (implicitly) given BiSBiS
         if cid in d['color']:
           for c in self.chains:
-            if cid == c['id']:
+            if cid == c['id'] and j in c['chain']:
               found_beginnig = False
               # i is not mapped to this Infra, but to the previous Infra.
               chain_piece = [i,j]
@@ -505,14 +533,10 @@ class MappingManager(object):
               # find which part of the chain is mapped here
               for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:], 
                                          c['link_ids']):
-                if not subgraph.has_edge(vnf1, vnf2, key=lid) and \
-                   not found_beginnig:
+                if vnf1 != j  and not found_beginnig:
                   continue
                 elif not found_beginnig:
                   found_beginnig = True
-                  if vnf1 != j:
-                    raise uet.InternalAlgorithmException("Problem in chain "
-                      "piece finding procedure for E2E requirement division.")
                 if found_beginnig:
                   if subgraph.has_edge(vnf1, vnf2, key=lid):
                     chain_piece.append(vnf2)
