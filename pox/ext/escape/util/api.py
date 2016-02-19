@@ -51,15 +51,15 @@ class AbstractAPI(EventMixin):
 
     Set given parameters (standalone parameter is mandatory) automatically as:
 
-      >>> self._<param_name> = <param_value>
+    >>> self._param_name = param_value
 
     Base constructor functions have to be called as the last step in derived
     classes. Same situation with :func:`_all_dependencies_met()` respectively.
     Must not override these function, just use :func:`initialize()` for
     init steps. Actual API classes must only call :func:`super()` in their
-    constructor with the form::
+    constructor with the form:
 
-      >>> super(<API Classname>, self).__init__(standalone=standalone, **kwargs)
+    >>> super(SpecificAPI, self).__init__(standalone=standalone, **kwargs)
 
     .. warning::
       Do not use prefixes in the name of event handlers, because of automatic

@@ -432,12 +432,16 @@ class ControllerAdapter(object):
     """
     Handle DomainChangedEvents, process changes and store relevant information
     in DomainResourceManager.
+
+    :param event: event object
+    :type event: :any:`DomainChangedEvent`
+    :return: None
     """
     log.info("Received DomainChange event from domain: %s, cause: %s" % (
       event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     if event.data is not None and isinstance(event.data, NFFG):
-      self.domainResManager.update_domain_resource(nffg=event.data,
-                                                   domain=event.domain)
+      self.domainResManager.update_domain_virtualizer(nffg=event.data,
+                                                      domain=event.domain)
 
   def update_dov (self, nffg_part):
     """
@@ -577,11 +581,7 @@ class DomainResourceManager(object):
     """
     super(DomainResourceManager, self).__init__()
     log.debug("Init DomainResourceManager")
-    # FIXME - SIGCOMM
     self._dov = DomainVirtualizer(self)  # Domain Virtualizer
-    # with open('pox/dov.nffg', 'r') as f:
-    #   nffg = NFFG.parse(f.read())
-    # self._dov = DomainVirtualizer(self, global_res=nffg)  # Domain Virtualizer
     self._tracked_domains = set()  # Cache for detected and stored domains
 
   def get_global_view (self):
@@ -593,7 +593,7 @@ class DomainResourceManager(object):
     """
     return self._dov
 
-  def update_domain_resource (self, domain, nffg):
+  def update_domain_virtualizer (self, domain, nffg):
     """
     Update the global view data with the specific domain info.
 
@@ -623,5 +623,3 @@ class DomainResourceManager(object):
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
         self._dov.update_domain_view(domain=domain, nffg=nffg)
-        # FIXME - SIGCOMM
-        # print self.__dov.get_resource_info().dump()

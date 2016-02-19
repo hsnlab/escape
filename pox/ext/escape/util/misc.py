@@ -161,14 +161,12 @@ def enum (*sequential, **named):
   """
   Helper function to define enumeration. E.g.:
 
-  .. code-block:: python
-
-    Numbers = enum(ONE=1, TWO=2, THREE='three')
-    Numbers = enum('ZERO', 'ONE', 'TWO')
-    Numbers.ONE
-    1
-    Numbers.reversed[2]
-    'TWO'
+  >>>Numbers = enum(ONE=1, TWO=2, THREE='three')
+  >>>Numbers = enum('ZERO', 'ONE', 'TWO')
+  >>>Numbers.ONE
+  1
+  >>>Numbers.reversed[2]
+  'TWO'
 
   :param sequential: support automatic enumeration
   :type sequential: list
