@@ -65,10 +65,12 @@ class NFFGConverter(object):
   MATCH_TAG = r"dl_tag"
   ACTION_PUSH_TAG = r"push_tag"
   ACTION_POP_TAG = r"pop_tag"
-  # Operand separator
-  LABEL_SEPARATOR = '|'
-  OP_SEPARATOR = ';'
-  KV_SEPARATOR = '='
+  # Operand delimiters
+  LABEL_DELIMITER = '|'
+  OP_DELIMITER = ';'
+  KV_DELIMITER = '='
+  # Other delimiters
+  UNIQUE_ID_DELIMITER = '@'
   # Field types
   TYPE_MATCH = "MATCH"
   TYPE_ACTION = "ACTION"
@@ -124,13 +126,13 @@ class NFFGConverter(object):
     #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
     #     action['vlan_push'] = push_tag
     ret = {}
-    parts = field.split(cls.OP_SEPARATOR)
+    parts = field.split(cls.OP_DELIMITER)
     if len(parts) < 1:
       raise RuntimeError(
         "Wrong format: %s! Separator (%s) not found!" % (
-          field, cls.OP_SEPARATOR))
+          field, cls.OP_DELIMITER))
     for part in parts:
-      kv = part.split(cls.KV_SEPARATOR)
+      kv = part.split(cls.KV_DELIMITER)
       if len(kv) != 2:
         if kv[0] == cls.OP_UNTAG and type.upper() == cls.TYPE_ACTION:
           ret['vlan_pop'] = True
@@ -147,9 +149,9 @@ class NFFGConverter(object):
           ret['in_port'] = kv[1]
       elif kv[0] == cls.OP_TAG:
         if type.upper() == cls.TYPE_MATCH:
-          ret['vlan_id'] = kv[1].split(cls.LABEL_SEPARATOR)[-1]
+          ret['vlan_id'] = kv[1].split(cls.LABEL_DELIMITER)[-1]
         elif type.upper() == cls.TYPE_ACTION:
-          ret['vlan_push'] = kv[1].split(cls.LABEL_SEPARATOR)[-1]
+          ret['vlan_push'] = kv[1].split(cls.LABEL_DELIMITER)[-1]
         else:
           raise RuntimeError('Not supported field type: %s!' % type)
       elif kv[0] == cls.OP_OUTPUT:
@@ -195,7 +197,7 @@ class NFFGConverter(object):
           continue
           # elif op[0] == self.OP_SGHOP:
           #   ret.append(kv)
-    return self.OP_SEPARATOR.join(ret)
+    return self.OP_DELIMITER.join(ret)
 
   def _convert_flowrule_action (self, action):
     """
@@ -234,7 +236,7 @@ class NFFGConverter(object):
       elif op[0] == self.OP_UNTAG:
         # E.g.: <action>strip_vlan</action>
         ret.append(self.ACTION_POP_TAG)
-    return self.OP_SEPARATOR.join(ret)
+    return self.OP_DELIMITER.join(ret)
 
   def _parse_virtualizer_node_ports (self, nffg, infra, vnode):
     """
@@ -444,7 +446,7 @@ class NFFGConverter(object):
 
         # Add connection between Infra - NF
         # Infra - NF port on Infra side is always a dynamically generated port
-        dyn_port = self.LABEL_SEPARATOR.join((infra.id,
+        dyn_port = self.LABEL_DELIMITER.join((infra.id,
                                               nf_id,
                                               vport.id.get_as_text()))
         # Add Infra-side port
@@ -482,10 +484,12 @@ class NFFGConverter(object):
         v_src_node = v_src_nf.get_parent().get_parent()
         # Add domain name to the node id if unique_id is set
         if self.ensure_unique_id:
-          src_node = "%s@%s" % (v_src_node.id.get_value(), self.domain)
+          src_node = "%s%s%s" % (v_src_node.id.get_value(),
+                                 self.UNIQUE_ID_DELIMITER,
+                                 self.domain)
         else:
           src_node = v_src_node.id.get_as_text()
-        fr_match += self.LABEL_SEPARATOR.join((src_node,
+        fr_match += self.LABEL_DELIMITER.join((src_node,
                                                v_src_nf.id.get_as_text(),
                                                v_fe_port.id.get_as_text()))
       else:
@@ -499,10 +503,12 @@ class NFFGConverter(object):
         v_dst_nf = v_fe_out.get_parent().get_parent()
         v_dst_node = v_dst_nf.get_parent().get_parent()
         if self.ensure_unique_id:
-          dst_node = "%s@%s" % (v_dst_node.id.get_value(), self.domain)
+          dst_node = "%s%s%s" % (v_dst_node.id.get_value(),
+                                 self.UNIQUE_ID_DELIMITER,
+                                 self.domain)
         else:
           dst_node = v_dst_node.id.get_as_text()
-        fr_action += self.LABEL_SEPARATOR.join((dst_node,
+        fr_action += self.LABEL_DELIMITER.join((dst_node,
                                                 v_dst_nf.id.get_as_text(),
                                                 v_fe_out.id.get_as_text()))
       else:
@@ -511,7 +517,7 @@ class NFFGConverter(object):
 
       # Check if there is a matching operation -> currently just TAG is used
       if flowentry.match.is_initialized() and flowentry.match.get_value():
-        for op in flowentry.match.get_as_text().split(self.OP_SEPARATOR):
+        for op in flowentry.match.get_as_text().split(self.OP_DELIMITER):
           # e.g. <match>dl_tag=0x0004</match> --> in_port=1;TAG=SAP2|fwd|4
           if op.startswith(self.MATCH_TAG):
             # if src or dst was a SAP: SAP.id == port.name
@@ -528,12 +534,12 @@ class NFFGConverter(object):
               _dst_name = v_fe_out.get_parent().get_parent().id.get_as_text()
             # Convert from int/hex to int
             _tag = int(op.split('=')[1], base=0)
-            fr_match += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
+            fr_match += ";%s=%s" % (self.OP_TAG, self.LABEL_DELIMITER.join(
               (str(_src_name), str(_dst_name), str(_tag))))
 
       # Check if there is an action operation
       if flowentry.action.is_initialized() and flowentry.action.get_value():
-        for op in flowentry.action.get_as_text().split(self.OP_SEPARATOR):
+        for op in flowentry.action.get_as_text().split(self.OP_DELIMITER):
           # e.g. <action>push_tag:0x0003</action> -->
           # output=1;TAG=decomp|SAP2|3
           if op.startswith(self.ACTION_PUSH_TAG):
@@ -552,7 +558,7 @@ class NFFGConverter(object):
               _dst_name = v_fe_out.get_parent().get_parent().id.get_as_text()
             # Convert from int/hex to int
             _tag = int(op.split(':')[1], base=0)
-            fr_action += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
+            fr_action += ";%s=%s" % (self.OP_TAG, self.LABEL_DELIMITER.join(
               (_src_name, _dst_name, str(_tag))))
           # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
           elif op.startswith(self.ACTION_POP_TAG):
@@ -642,7 +648,9 @@ class NFFGConverter(object):
       # Node params
       if self.ensure_unique_id:
         # Add domain name to the node id if unique_id is set
-        node_id = "%s@%s" % (vnode.id.get_value(), self.domain)
+        node_id = "%s%s%s" % (vnode.id.get_value(),
+                              self.UNIQUE_ID_DELIMITER,
+                              self.domain)
       else:
         node_id = vnode.id.get_value()  # Mandatory - node.id
       if vnode.name.is_initialized():  # Optional - node.name
@@ -751,14 +759,18 @@ class NFFGConverter(object):
       src_node = src_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       if self.ensure_unique_id:
-        src_node_id = "%s@%s" % (src_node.id.get_value(), self.domain)
+        src_node_id = "%s%s%s" % (src_node.id.get_value(),
+                                  self.UNIQUE_ID_DELIMITER,
+                                  self.domain)
       else:
         src_node_id = src_node.id.get_value()
       dst_port = vlink.dst.get_target()
       dst_node = dst_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       if self.ensure_unique_id:
-        dst_node_id = "%s@%s" % (dst_node.id.get_value(), self.domain)
+        dst_node_id = "%s%s%s" % (dst_node.id.get_value(),
+                                  self.UNIQUE_ID_DELIMITER,
+                                  self.domain)
       else:
         dst_node_id = dst_node.id.get_value()
       try:
@@ -897,7 +909,7 @@ class NFFGConverter(object):
     for infra in nffg.infras:
       # Check in it's needed to remove domain from the end of id
       if self.ensure_unique_id:
-        v_node_id = str(infra.id).split('@')[0]
+        v_node_id = str(infra.id).split(self.UNIQUE_ID_DELIMITER)[0]
       else:
         v_node_id = str(infra.id)
       v_node_name = str(infra.name) if infra.name else None  # optional
@@ -1046,7 +1058,10 @@ class NFFGConverter(object):
         if link.type != NFFG.TYPE_LINK_STATIC:
           continue
         # Rewrite port-type to port-sap
-        infra_id = str(n).split('@')[0] if self.ensure_unique_id else str(n)
+        if self.ensure_unique_id:
+          infra_id = str(n).split(self.UNIQUE_ID_DELIMITER)[0]
+        else:
+          infra_id = str(n)
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
         v_sap_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
         # Add SAP.name as name to port or use sap.id
@@ -1091,8 +1106,8 @@ class NFFGConverter(object):
         "Added link: Node: %s, port: %s <--> Node: %s, port: %s" % (
           link.src.node.id, link.src.id, link.dst.node.id, link.dst.id))
       if self.ensure_unique_id:
-        src_node_id = str(link.src.node.id).split('@')[0]
-        dst_node_id = str(link.dst.node.id).split('@')[0]
+        src_node_id = str(link.src.node.id).split(self.UNIQUE_ID_DELIMITER)[0]
+        dst_node_id = str(link.dst.node.id).split(self.UNIQUE_ID_DELIMITER)[0]
       else:
         src_node_id = str(link.src.node.id)
         dst_node_id = str(link.dst.node.id)
@@ -1160,7 +1175,7 @@ class NFFGConverter(object):
       discovered_nfs = []
       # Recreate the original Node id
       if self.ensure_unique_id:
-        v_node_id = str(infra.id).split('@')[0]
+        v_node_id = str(infra.id).split(self.UNIQUE_ID_DELIMITER)[0]
       else:
         v_node_id = str(infra.id)
       # Check in Infra exists in the Virtualizer
@@ -1261,7 +1276,7 @@ class NFFGConverter(object):
     for infra in nffg.infras:
       # Recreate the original Node id
       if self.ensure_unique_id:
-        v_node_id = str(infra.id).split('@')[0]
+        v_node_id = str(infra.id).split(self.UNIQUE_ID_DELIMITER)[0]
       else:
         v_node_id = str(infra.id)
       # Check in Infra exists in the Virtualizer
@@ -1467,523 +1482,15 @@ if __name__ == "__main__":
   # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
   # log.debug(nffg.dump())
 
-  # with open(
-  #    # "../../../../examples/OS_report1.xml") as f:
-  #    # "../../../../examples/escape-mn-dov-test.xml") as f:
-  #    "../../../../examples/escape-2sbb-mapped.xml") as f:
-  #   tree = tree = ET.ElementTree(ET.fromstring(f.read()))
-  #   dov = virt_lib.Virtualizer.parse(root=tree.getroot())
-  #   dov.bind(relative=True)
-  # log.info("Parsed XML:")
-  # log.info("%s" % dov)
-  # nffg = c.parse_from_Virtualizer(xml_data=dov.xml())
-  # log.info("Reconverted Virtualizer:")
-  # log.info("%s" % nffg.dump())
-  # virt = c.dump_to_Virtualizer(nffg=nffg)
-  # # virt.bind()
-  # log.info("Reconverted Virtualizer:")
-  # log.info("%s" % virt.xml())
-
-  txt = """
-{
-  "parameters": {
-    "id": "SG-request",
-    "name": "SG-name-ros-mapped",
-    "version": "1.0"
-  },
-  "node_nfs": [
-    {
-      "id": "fwd",
-      "name": "FORWARDER",
-      "ports": [
-        {
-          "id": 1
-        }
-      ],
-      "functional_type": "simpleForwarder",
-      "specification": {
-        "resources": {
-          "cpu": 1.0,
-          "mem": 1.0,
-          "storage": 0.0
-        }
-      }
-    },
-    {
-      "id": "comp",
-      "name": "COMPRESSOR",
-      "ports": [
-        {
-          "id": 1
-        }
-      ],
-      "functional_type": "headerCompressor",
-      "specification": {
-        "resources": {
-          "cpu": 1.0,
-          "mem": 1.0,
-          "storage": 0.0
-        }
-      }
-    },
-    {
-      "id": "decomp",
-      "name": "DECOMPRESSOR",
-      "ports": [
-        {
-          "id": 1
-        }
-      ],
-      "functional_type": "headerDecompressor",
-      "specification": {
-        "resources": {
-          "cpu": 1.0,
-          "mem": 1.0,
-          "storage": 0.0
-        }
-      }
-    }
-  ],
-  "node_saps": [
-    {
-      "id": "SAP14",
-      "name": "SAP14",
-      "ports": [
-        {
-          "id": 1
-        }
-      ],
-      "domain": "eth0"
-    },
-    {
-      "id": "SAP1",
-      "name": "SAP1",
-      "ports": [
-        {
-          "id": 1
-        }
-      ]
-    },
-    {
-      "id": "SAP2",
-      "name": "SAP2",
-      "ports": [
-        {
-          "id": 1
-        }
-      ]
-    }
-  ],
-  "node_infras": [
-    {
-      "id": "EE1",
-      "name": "ee-infra-1",
-      "ports": [
-        {
-          "id": 1,
-          "flowrules": [
-            {
-              "id": 139719272116084,
-              "match": "in_port=1;TAG=SAP1|comp|1",
-              "action": "output=EE1|comp|1;UNTAG",
-              "hop_id": 1,
-              "bandwidth": 4.0
-            }
-          ]
-        },
-        {
-          "id": "EE1|comp|1",
-          "flowrules": [
-            {
-              "id": 139719272236714,
-              "match": "in_port=EE1|comp|1",
-              "action": "output=EE1|decomp|1",
-              "hop_id": 2,
-              "bandwidth": 4.0
-            }
-          ]
-        },
-        {
-          "id": "EE1|decomp|1",
-          "flowrules": [
-            {
-              "id": 139719271958600,
-              "match": "in_port=EE1|decomp|1",
-              "action": "output=1;TAG=decomp|SAP2|3",
-              "hop_id": 3,
-              "bandwidth": 4.0
-            }
-          ]
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "EE",
-      "supported": [
-        "headerCompressor",
-        "headerDecompressor",
-        "simpleForwarder"
-      ],
-      "resources": {
-        "cpu": 5.0,
-        "mem": 5.0,
-        "storage": 5.0,
-        "delay": 0.9,
-        "bandwidth": 5000.0
-      }
-    },
-    {
-      "id": "EE2",
-      "name": "ee-infra-2",
-      "ports": [
-        {
-          "id": 1,
-          "flowrules": [
-            {
-              "id": 139719272526363,
-              "match": "in_port=1;TAG=SAP2|fwd|4",
-              "action": "output=EE2|fwd|1;UNTAG",
-              "hop_id": 4,
-              "bandwidth": 4.0
-            }
-          ]
-        },
-        {
-          "id": "EE2|fwd|1",
-          "flowrules": [
-            {
-              "id": 139719272598858,
-              "match": "in_port=EE2|fwd|1",
-              "action": "output=1;TAG=fwd|SAP1|5",
-              "hop_id": 5,
-              "bandwidth": 4.0
-            }
-          ]
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "EE",
-      "supported": [
-        "headerCompressor",
-        "headerDecompressor",
-        "simpleForwarder"
-      ],
-      "resources": {
-        "cpu": 5.0,
-        "mem": 5.0,
-        "storage": 5.0,
-        "delay": 0.9,
-        "bandwidth": 5000.0
-      }
-    },
-    {
-      "id": "SW1",
-      "name": "switch-1",
-      "ports": [
-        {
-          "id": 1,
-          "flowrules": [
-            {
-              "id": 139719272020246,
-              "match": "in_port=1;TAG=decomp|SAP2|3",
-              "action": "output=2",
-              "hop_id": 3,
-              "bandwidth": 4.0
-            }
-          ]
-        },
-        {
-          "id": 2,
-          "flowrules": [
-            {
-              "id": 139719272686775,
-              "match": "in_port=2;TAG=fwd|SAP1|5",
-              "action": "output=3",
-              "hop_id": 5,
-              "bandwidth": 4.0
-            }
-          ]
-        },
-        {
-          "id": 3,
-          "flowrules": [
-            {
-              "id": 139719272804326,
-              "match": "in_port=3",
-              "action": "output=1;TAG=SAP1|comp|1",
-              "hop_id": 1,
-              "bandwidth": 4.0
-            }
-          ]
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "SDN-SWITCH",
-      "resources": {
-        "cpu": 0.0,
-        "mem": 0.0,
-        "storage": 0.0,
-        "delay": 0.2,
-        "bandwidth": 10000.0
-      }
-    },
-    {
-      "id": "SW2",
-      "name": "switch-2",
-      "ports": [
-        {
-          "id": 1,
-          "flowrules": [
-            {
-              "id": 139719272005688,
-              "match": "in_port=1;TAG=fwd|SAP1|5",
-              "action": "output=2",
-              "hop_id": 5,
-              "bandwidth": 4.0
-            }
-          ]
-        },
-        {
-          "id": 2,
-          "flowrules": [
-            {
-              "id": 139719272584676,
-              "match": "in_port=2;TAG=decomp|SAP2|3",
-              "action": "output=3",
-              "hop_id": 3,
-              "bandwidth": 4.0
-            }
-          ]
-        },
-        {
-          "id": 3,
-          "flowrules": [
-            {
-              "id": 139719272175205,
-              "match": "in_port=3",
-              "action": "output=1;TAG=SAP2|fwd|4",
-              "hop_id": 4,
-              "bandwidth": 4.0
-            }
-          ]
-        },
-        {
-          "id": 4
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "SDN-SWITCH",
-      "resources": {
-        "cpu": 0.0,
-        "mem": 0.0,
-        "storage": 0.0,
-        "delay": 0.2,
-        "bandwidth": 10000.0
-      }
-    }
-  ],
-  "edge_links": [
-    {
-      "id": 139719272248434,
-      "src_node": "fwd",
-      "src_port": 1,
-      "dst_node": "EE2",
-      "dst_port": "EE2|fwd|1",
-      "backward": true
-    },
-    {
-      "id": 139719272717696,
-      "src_node": "comp",
-      "src_port": 1,
-      "dst_node": "EE1",
-      "dst_port": "EE1|comp|1",
-      "backward": true
-    },
-    {
-      "id": "mn-link1",
-      "src_node": "EE1",
-      "src_port": 1,
-      "dst_node": "SW1",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10.0
-    },
-    {
-      "id": 139719272000959,
-      "src_node": "EE1",
-      "src_port": "EE1|comp|1",
-      "dst_node": "comp",
-      "dst_port": 1
-    },
-    {
-      "id": 139719272768706,
-      "src_node": "EE1",
-      "src_port": "EE1|decomp|1",
-      "dst_node": "decomp",
-      "dst_port": 1
-    },
-    {
-      "id": 139719272483558,
-      "src_node": "EE2",
-      "src_port": "EE2|fwd|1",
-      "dst_node": "fwd",
-      "dst_port": 1
-    },
-    {
-      "id": "mn-link2",
-      "src_node": "EE2",
-      "src_port": 1,
-      "dst_node": "SW2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10.0
-    },
-    {
-      "id": 139719272452792,
-      "src_node": "decomp",
-      "src_port": 1,
-      "dst_node": "EE1",
-      "dst_port": "EE1|decomp|1",
-      "backward": true
-    },
-    {
-      "id": "mn-link3",
-      "src_node": "SW1",
-      "src_port": 2,
-      "dst_node": "SW2",
-      "dst_port": 2,
-      "delay": 1.5,
-      "bandwidth": 10.0
-    },
-    {
-      "id": "mn-link1-back",
-      "src_node": "SW1",
-      "src_port": 1,
-      "dst_node": "EE1",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10.0,
-      "backward": true
-    },
-    {
-      "id": "mn-link4",
-      "src_node": "SW1",
-      "src_port": 3,
-      "dst_node": "SAP1",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10.0
-    },
-    {
-      "id": "mn-link6-back",
-      "src_node": "SAP14",
-      "src_port": 1,
-      "dst_node": "SW2",
-      "dst_port": 4,
-      "delay": 1.5,
-      "bandwidth": 10.0,
-      "backward": true
-    },
-    {
-      "id": "mn-link3-back",
-      "src_node": "SW2",
-      "src_port": 2,
-      "dst_node": "SW1",
-      "dst_port": 2,
-      "delay": 1.5,
-      "bandwidth": 10.0,
-      "backward": true
-    },
-    {
-      "id": "mn-link6",
-      "src_node": "SW2",
-      "src_port": 4,
-      "dst_node": "SAP14",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10.0
-    },
-    {
-      "id": "mn-link5",
-      "src_node": "SW2",
-      "src_port": 3,
-      "dst_node": "SAP2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10.0
-    },
-    {
-      "id": "mn-link2-back",
-      "src_node": "SW2",
-      "src_port": 1,
-      "dst_node": "EE2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10.0,
-      "backward": true
-    },
-    {
-      "id": "mn-link4-back",
-      "src_node": "SAP1",
-      "src_port": 1,
-      "dst_node": "SW1",
-      "dst_port": 3,
-      "delay": 1.5,
-      "bandwidth": 10.0,
-      "backward": true
-    },
-    {
-      "id": "mn-link5-back",
-      "src_node": "SAP2",
-      "src_port": 1,
-      "dst_node": "SW2",
-      "dst_port": 3,
-      "delay": 1.5,
-      "bandwidth": 10.0,
-      "backward": true
-    }
-  ],
-  "edge_sg_nexthops": [
-    {
-      "id": 5,
-      "src_node": "fwd",
-      "src_port": 1,
-      "dst_node": "SAP1",
-      "dst_port": 1,
-      "bandwidth": 4.0
-    },
-    {
-      "id": 2,
-      "src_node": "comp",
-      "src_port": 1,
-      "dst_node": "decomp",
-      "dst_port": 1,
-      "bandwidth": 4.0
-    },
-    {
-      "id": 3,
-      "src_node": "decomp",
-      "src_port": 1,
-      "dst_node": "SAP2",
-      "dst_port": 1,
-      "bandwidth": 4.0
-    },
-    {
-      "id": 1,
-      "src_node": "SAP1",
-      "src_port": 1,
-      "dst_node": "comp",
-      "dst_port": 1,
-      "bandwidth": 4.0
-    },
-    {
-      "id": 4,
-      "src_node": "SAP2",
-      "src_port": 1,
-      "dst_node": "fwd",
-      "dst_port": 1,
-      "bandwidth": 4.0
-    }
-  ]
-}
-"""
-  print c.dump_to_Virtualizer(NFFG.parse(txt))
+  dov = virt_lib.Virtualizer.parse_from_file(
+    "../../../../examples/escape-2sbb-mapped.xml")
+  dov.bind(relative=True)
+  log.info("Parsed XML:")
+  log.info("%s" % dov)
+  nffg = c.parse_from_Virtualizer(vdata=dov.xml())
+  log.info("Reconverted Virtualizer:")
+  log.info("%s" % nffg.dump())
+  virt = c.dump_to_Virtualizer(nffg=nffg)
+  # virt.bind()
+  log.info("Reconverted Virtualizer:")
+  log.info("%s" % virt.xml())

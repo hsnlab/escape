@@ -109,7 +109,7 @@ class AbstractDomainManager(EventMixin):
     # description, request it, and install mapped NFs from internal NFFG
     self._adapters_cfg = adapters
     if 'poll' in kwargs:
-      self._poll = kwargs['poll']
+      self._poll = bool(kwargs['poll'])
     else:
       self._poll = False
 
@@ -141,12 +141,11 @@ class AbstractDomainManager(EventMixin):
         self.domain_name,
         [a['class'] for a in self._adapters_cfg.itervalues()]))
     # Update Adapters's config with domain name
-    # self._adapters_cfg['domain_name'] = self.domain_name
     for adapter in self._adapters_cfg.itervalues():
       adapter['domain_name'] = self.domain_name
     # Initiate Adapters
     self.initiate_adapters(configurator)
-    # Skip to start polling is it's set
+    # Skip to start polling if it's set
     if not self._poll:
       # Try to request/parse/update Mininet topology
       if not self._detect_topology():
@@ -220,28 +219,29 @@ class AbstractDomainManager(EventMixin):
   # Common functions for polling
   ##############################################################################
 
-  def start_polling (self, wait=1):
+  def start_polling (self, interval=1):
     """
     Initialize and start a Timer co-op task for polling.
 
-    :param wait: polling period (default: 1)
-    :type wait: int
+    :param interval: polling period (default: 1)
+    :type interval: int
     """
     if self._timer:
       # Already timing
       return
-    self._timer = Timer(wait, self.poll, recurring=True, started=True,
+    self._timer = Timer(interval, self.poll, recurring=True, started=True,
                         selfStoppable=True)
 
-  def restart_polling (self, wait=POLL_INTERVAL):
+  def restart_polling (self, interval=POLL_INTERVAL):
     """
     Reinitialize and start a Timer co-op task for polling.
 
-    :param wait: polling period (default: 3)
-    :type wait: int
+    :param interval: polling period (default: 3)
+    :type interval: int
     """
-    self._timer.cancel()
-    self._timer = Timer(wait, self.poll, recurring=True, started=True,
+    if self._timer:
+      self._timer.cancel()
+    self._timer = Timer(interval, self.poll, recurring=True, started=True,
                         selfStoppable=True)
 
   def stop_polling (self):
@@ -257,18 +257,24 @@ class AbstractDomainManager(EventMixin):
     Poll the defined domain agent. Handle different connection errors and go
     to slow/rapid poll. When an agent is (re)detected update the current
     resource information.
+
+    :return: None
     """
+    # If domain is not detected
     if not self._detected:
+      # Check the topology is reachable
       if self._detect_topology():
-        # detected
+        # Domain is detected and topology is updated -> restart domain polling
         self.restart_polling()
         return
+    # If domain has already detected
     else:
+      # Check the domain is still reachable
       if self.topoAdapter.check_domain_reachable():
         return
-    # Not returned before --> got error
+      # TODO - not just check domain but also get the topology and update
+    # If this is the first call of poll()
     if self._detected is None:
-      # detected = None -> First try
       log.warning("%s agent is not detected! Keep trying..." % self.domain_name)
       self._detected = False
     elif self._detected:
@@ -299,7 +305,6 @@ class AbstractDomainManager(EventMixin):
       log.info(
         "Requesting resource information from %s domain..." % self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
-      # print topo_nffg.dump()
       if topo_nffg:
         log.debug("Save received NF-FG: %s..." % topo_nffg)
         # Cache the requested topo
@@ -361,9 +366,9 @@ class AbstractESCAPEAdapter(EventMixin):
 
   Follows the MixIn design pattern approach to support general adapter
   functionality for manager classes mostly.
+
+  Polling mechanism of separate domains has moved to Manager classes.
   """
-  # Events raised by this class
-  _eventMixin_events = {DomainChangedEvent}
   # Adapter name used in POX's core or CONFIG, etc.
   name = None
   # Adapter type used in CONFIG under the specific DomainManager
@@ -400,32 +405,6 @@ class AbstractESCAPEAdapter(EventMixin):
       infra.domain = self.domain_name
     return nffg
 
-  def start_polling (self, wait=1):
-    """
-    Initialize and start a Timer co-op task for polling.
-
-    :param wait: polling period (default: 1)
-    :type wait: int
-    """
-    if self._timer:
-      # Already timing
-      return
-    self._timer = Timer(wait, self.poll, recurring=True, started=True,
-                        selfStoppable=True)
-
-  def stop_polling (self):
-    """
-    Stop timer.
-    """
-    self._timer.cancel()
-
-  def poll (self):
-    """
-    Template function to poll domain state. Called by a Timer co-op multitask.
-    If the function return with False the timer will be cancelled.
-    """
-    pass
-
   def check_domain_reachable (self):
     """
     Checker function for domain polling.
@@ -450,6 +429,8 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
   Abstract class for different domain adapters which need SDN/OF controller
   capability.
   """
+  # Events raised by this class
+  _eventMixin_events = {DomainChangedEvent}
   # Keepalive constants
   _interval = 20
   _switch_timeout = 5
