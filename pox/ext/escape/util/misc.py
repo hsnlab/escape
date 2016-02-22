@@ -180,7 +180,7 @@ def enum (*sequential, **named):
   return type('enum', (), enums)
 
 
-def quit_with_error (msg, logger=None, exception=False):
+def quit_with_error (msg, logger=None, exception=None):
   """
   Helper function for quitting in case of an error.
 
@@ -188,8 +188,8 @@ def quit_with_error (msg, logger=None, exception=False):
   :type msg: str
   :param logger: logger name or logger object (default: core)
   :type logger: str or :any:`logging.Logger`
-  :param exception: print stacktrace befor quit (default: False)
-  :type exception: bool
+  :param exception: print stacktrace before quit (default: None)
+  :type exception: :any:`Exception`
   :return: None
   """
   from pox.core import core
@@ -199,7 +199,7 @@ def quit_with_error (msg, logger=None, exception=False):
     logger = core.getLogger("core")
   logger.fatal(msg)
   if exception:
-    logger.exception("Caught exception:")
+    logger.exception("Caught exception:%s" % exception)
   core.quit()
   os._exit(1)
 

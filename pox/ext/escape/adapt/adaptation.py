@@ -338,8 +338,8 @@ class ControllerAdapter(object):
       self.domains.load_default_mgrs()
     except (ImportError, AttributeError, ConfigurationError) as e:
       from escape.util.misc import quit_with_error
-      quit_with_error(msg="Shutting down ESCAPEv2! Cause: %s" % e,
-                      logger=log)
+      quit_with_error(msg="Shutting down ESCAPEv2 due to an unexpected error!",
+                      logger=log, exception=e)
     # Here every domainManager is up and running
     # Notify the remote visualizer about collected data if it's needed
     notify_remote_visualizer(

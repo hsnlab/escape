@@ -134,8 +134,12 @@ class AbstractAPI(EventMixin):
       core.core.register(self._core_name, self)
       # Set "running" config for convenience purposes
       CONFIG.set_layer_loaded(self._core_name)
+    except KeyboardInterrupt:
+      quit_with_error(
+        msg="Initialization of %s was interrrupted by user!" %
+            self.__class__.__name__)
     except:
-      quit_with_error(msg="Abort ESCAPEv2 initialization...", exception=True)
+      quit_with_error(msg="Abort ESCAPEv2 initialization...", exception=e)
 
   def initialize (self):
     """
@@ -475,7 +479,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
         self.send_error(e.code, e.msg)
       else:
         self.send_error(500, e.msg)
-    except Exception:
+    except:
       # Got unexpected exception
       self.send_error(500)
       raise
