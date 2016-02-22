@@ -138,7 +138,7 @@ class AbstractAPI(EventMixin):
       quit_with_error(
         msg="Initialization of %s was interrrupted by user!" %
             self.__class__.__name__)
-    except:
+    except Exception as e:
       quit_with_error(msg="Abort ESCAPEv2 initialization...", exception=e)
 
   def initialize (self):
@@ -378,6 +378,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   log = core.getLogger("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
+  # Default communication approach
+  format = "FULL"
 
   def do_GET (self):
     """

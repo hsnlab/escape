@@ -275,21 +275,23 @@ class ServiceLayerAPI(AbstractAPI):
     # set bounded layer name here to avoid circular dependency problem
     handler = CONFIG.get_sas_api_class()
     handler.bounded_layer = self._core_name
+    params = CONFIG.get_sas_agent_params()
     # can override from global config
-    handler.prefix = CONFIG.get_sas_api_prefix()
-    handler.virtualizer_format_enabled = CONFIG.get_sas_api_virtualizer_format()
-    address = CONFIG.get_sas_api_address()
+    if 'prefix' in params:
+      handler.prefix = params['prefix']
+    if 'unify_interface' in params:
+      handler.virtualizer_format_enabled = params['unify_interface']
+    address = (params.get('address'), params.get('port'))
+    print address
     self.rest_api = RESTServer(handler, *address)
     self.rest_api.api_id = handler.LOGGER_NAME = "U-Sl"
-    handler.log.debug(
-      "Init REST-API for %s on %s:%s!" % (
-        self.rest_api.api_id, address[0], address[1]))
+    handler.log.debug("Init REST-API for %s on %s:%s!" % (
+      self.rest_api.api_id, address[0], address[1]))
     self.rest_api.start()
     handler.log.debug(
-      "Configured Virtualizer type: %s" % self.rest_api.virtualizer_type)
-    handler.log.debug(
-      "Configured communication format: %s" % "UNIFY" if
-      handler.virtualizer_format_enabled else "Internal-NFFG")
+      "Enforced configuration for %s: interface: %s" % (
+        self.rest_api.api_id,
+        "UNIFY" if handler.virtualizer_format_enabled else"Internal-NFFG"))
 
   def _initiate_gui (self):
     """

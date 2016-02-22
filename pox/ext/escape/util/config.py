@@ -421,42 +421,20 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
-  def get_sas_api_prefix (self):
+  def get_sas_agent_params (self):
     """
-    Return the REST API prefix for Service Layer request handler.
+    Return the Cf-Or API params for agent request handler.
 
-    :return: prefix
-    :rtype: str
+    :return: params
+    :rtype: dict
     """
     try:
-      return self.__configuration[SERVICE]["REST-API"]['prefix']
+      params = self.__configuration[SERVICE]["REST-API"].copy()
+      del params['module']
+      del params['class']
+      return params
     except KeyError:
-      return None
-
-  def get_sas_api_address (self):
-    """
-    Return the REST API (address, port) for Service Layer REST server.
-
-    :return: address and port
-    :rtype: tuple
-    """
-    try:
-      return (self.__configuration[SERVICE]["REST-API"]['address'],
-              self.__configuration[SERVICE]["REST-API"]['port'])
-    except KeyError:
-      return None
-
-  def get_sas_api_virtualizer_format (self):
-    """
-    Return the REST API format for service request handler.
-
-    :return: Virtualizer format is enabled or not
-    :rtype: bool
-    """
-    try:
-      return self.__configuration[SERVICE]["REST-API"]['unify_interface']
-    except KeyError:
-      return False
+      return {}
 
   ##############################################################################
   # ORCHESTRATION layer getters
@@ -505,30 +483,20 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
-  def get_cfor_api_prefix (self):
+  def get_cfor_agent_params (self):
     """
-    Return the REST API prefix for Cf-Or request handler.
+    Return the Cf-Or API params for agent request handler.
 
-    :return: prefix
-    :rtype: str
+    :return: params
+    :rtype: dict
     """
     try:
-      return self.__configuration[ORCHEST]["Cf-Or"]['prefix']
+      params = self.__configuration[ORCHEST]["Cf-Or"].copy()
+      del params['module']
+      del params['class']
+      return params
     except KeyError:
-      return None
-
-  def get_cfor_api_address (self):
-    """
-    Return the REST API (address, port) for Cf-Or REST server.
-
-    :return: address and port
-    :rtype: tuple
-    """
-    try:
-      return (self.__configuration[ORCHEST]["Cf-Or"]['address'],
-              self.__configuration[ORCHEST]["Cf-Or"]['port'])
-    except KeyError:
-      return None
+      return {}
 
   ##############################################################################
   # ADAPTATION layer getters
