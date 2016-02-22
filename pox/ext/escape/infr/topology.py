@@ -356,6 +356,10 @@ class ESCAPENetworkBridge(object):
         except SystemExit:
           quit_with_error(msg="Mininet emulation requires root privileges!",
                           logger=LAYER_NAME)
+        except KeyboardInterrupt:
+          quit_with_error(
+            msg="Initiation of Mininet network was interrupted by user!",
+            logger=log)
         self.started = True
         log.debug("Mininet network has been started!")
         self.runXTerms()
@@ -494,7 +498,12 @@ class ESCAPENetworkBuilder(object):
           "Network object's type must be a derived class of Mininet!")
     else:
       # self.mn = Mininet(**self.opts)
-      self.mn = MininetWithControlNet(**self.opts)
+      try:
+        self.mn = MininetWithControlNet(**self.opts)
+      except KeyboardInterrupt:
+        quit_with_error(
+          msg="Assembly of Mininet network was interrupted by user!",
+          logger=log)
     # Basically a wrapper for mn to offer helping functions
     self.mn_bridge = None
     # Cache of the topology description as an NFFG which is parsed during
@@ -991,7 +1000,8 @@ class ESCAPENetworkBuilder(object):
           "Unsupported topology format: %s - %s" % (type(topo), topo))
       return self.get_network()
     except SystemExit as e:
-      quit_with_error(msg="Mininet exited unexpectedly!", exception=True)
+      quit_with_error(msg="Mininet exited unexpectedly!", logger=log,
+                      exception=e)
     except TopologyBuilderException:
       if self.fallback:
         # Search for fallback topology
@@ -1008,3 +1018,7 @@ class ESCAPENetworkBuilder(object):
       else:
         # Re-raise the exception
         raise
+    except KeyboardInterrupt:
+      quit_with_error(
+        msg="Assembly of Mininet network was interrupted by user!",
+        logger=log)
