@@ -16,7 +16,6 @@ Contains the class for managing NFIB.
 """
 import networkx
 import os
-import sys
 from collections import deque
 
 import py2neo
@@ -44,7 +43,8 @@ class NFIBManager(object):
     self.__suppress_neo4j_logging()
     self.graph_db = Graph()
 
-  def __suppress_neo4j_logging (self, level=None):
+  @staticmethod
+  def __suppress_neo4j_logging (level=None):
     """
     Suppress annoying and detailed logging of `py2neo` and `httpstream`
     packages.
@@ -692,5 +692,7 @@ class NFIBManager(object):
     except SocketError as e:
       log.error(
         "NFIB is not reachable due to failed neo4j service! Cause: " + str(e))
+    except KeyboardInterrupt:
+      log.warning("NFIB was interrupted by user!")
     except:
       log.exception("Got unexpected error during NFIB initialization!")
