@@ -672,23 +672,9 @@ class SDNDomainManager(AbstractDomainManager):
     """
     try:
       log.info("Install %s domain part..." % self.domain_name)
-      # log.info("NFFG:\n%s" % nffg_part.dump())
       log.info("NFFG: %s" % nffg_part)
       self._delete_flowrules(nffg_part=nffg_part)
-      #
-      # def _deploy_flowrules_forever (interval=3):
-      #   from pox.lib.recoco import Timer
-      #
-      #   def _callback (counter={'cntr': 1}):
-      #     self._delete_flowrules(nffg_part=nffg_part)
-      #     self._deploy_flowrules(nffg_part=nffg_part)
-      #     log.debug("Deploy flowrules counter: %s" % counter['cntr'])
-      #     counter['cntr'] += 1
-      #
-      #   Timer(timeToWake=interval, callback=_callback, recurring=True,
-      #         selfStoppable=False)
       self._deploy_flowrules(nffg_part=nffg_part)
-      # _deploy_flowrules_forever()
       return True
     except:
       log.exception(
@@ -824,10 +810,10 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     """
     Init
     """
+    log.debug(
+      "Init RemoteESCAPEDomainManager with domain name: %s" % domain_name)
     super(RemoteESCAPEDomainManager, self).__init__(domain_name=domain_name,
                                                     *args, **kwargs)
-    log.debug(
-      "Init RemoteESCAPEDomainManager with domain name: %s" % self.domain_name)
 
   def init (self, configurator, **kwargs):
     """
@@ -874,7 +860,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     # nffg_part = self._update_nffg(nffg_part.copy())
     log.info("Install %s domain part..." % self.domain_name)
     try:
-      status = self.topoAdapter.edit_config(nffg_part)
+      status = self.topoAdapter.edit_config(nffg_part, diff=self._format)
       if status is not None:
         return True
       else:
@@ -883,24 +869,6 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
       log.exception(
         "Got exception during NFFG installation into: %s." % self.domain_name)
       return False
-
-  # def __update_nffg (self, nffg_part):
-  #   """
-  #   Update domain descriptor of infras: REMOTE -> INTERNAL
-  #
-  #   :param nffg_part: NF-FG need to be updated
-  #   :type nffg_part: :any:`NFFG`
-  #   :return: updated NFFG
-  #   :rtype: :any:`NFFG`
-  #   """
-  #   for infra in nffg_part.infras:
-  #     if infra.infra_type not in (
-  #          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-  #          NFFG.TYPE_INFRA_SDN_SW):
-  #       continue
-  #     if infra.domain == 'REMOTE':
-  #       infra.domain = 'INTERNAL'
-  #   return nffg_part
 
   def clear_domain (self):
     """
@@ -917,7 +885,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     log.debug(
       "Reset %s domain based to original topology description..." %
       self.domain_name)
-    self.topoAdapter.edit_config(data=empty_cfg)
+    self.topoAdapter.edit_config(data=empty_cfg, diff=self._format)
 
 
 class UnifyDomainManager(AbstractDomainManager):
@@ -940,6 +908,8 @@ class UnifyDomainManager(AbstractDomainManager):
     """
     Init.
     """
+    log.debug(
+      "Init UnifyDomainManager with domain name: %s" % domain_name)
     super(UnifyDomainManager, self).__init__(domain_name=domain_name, *args,
                                              **kwargs)
 
@@ -986,7 +956,7 @@ class UnifyDomainManager(AbstractDomainManager):
     """
     log.info("Install %s domain part..." % self.domain_name)
     try:
-      status = self.topoAdapter.edit_config(nffg_part)
+      status = self.topoAdapter.edit_config(nffg_part, diff=self._format)
       return True if status is not None else False
     except:
       log.exception(
@@ -1008,7 +978,7 @@ class UnifyDomainManager(AbstractDomainManager):
     log.debug(
       "Reset %s domain config based on stored empty config..." %
       self.domain_name)
-    return self.topoAdapter.edit_config(data=empty_cfg)
+    return self.topoAdapter.edit_config(data=empty_cfg, diff=self._format)
 
 
 class OpenStackDomainManager(UnifyDomainManager):
@@ -1024,10 +994,10 @@ class OpenStackDomainManager(UnifyDomainManager):
     """
     Init.
     """
+    log.debug(
+      "Init OpenStackDomainManager wrapper for domain: %s" % self.domain_name)
     super(OpenStackDomainManager, self).__init__(domain_name=domain_name,
                                                  *args, **kwargs)
-    log.debug(
-      "Init OpenStackDomainManager with domain name: %s" % self.domain_name)
 
 
 class UniversalNodeDomainManager(UnifyDomainManager):
@@ -1043,11 +1013,11 @@ class UniversalNodeDomainManager(UnifyDomainManager):
     """
     Init.
     """
+    log.debug(
+      "Init UniversalNodeDomainManager wrapper for domain: %s" %
+      self.domain_name)
     super(UniversalNodeDomainManager, self).__init__(domain_name=domain_name,
                                                      *args, **kwargs)
-    log.debug(
-      "Init UniversalNodeDomainManager with domain name: %s" %
-      self.domain_name)
 
 
 class DockerDomainManager(AbstractDomainManager):
@@ -1066,10 +1036,10 @@ class DockerDomainManager(AbstractDomainManager):
     """
     Init
     """
-    super(DockerDomainManager, self).__init__(domain_name=domain_name, *args,
-                                              **kwargs)
     log.debug(
       "Init DockerDomainManager with domain name: %s" % self.domain_name)
+    super(DockerDomainManager, self).__init__(domain_name=domain_name, *args,
+                                              **kwargs)
 
   def initiate_adapters (self, configurator):
     pass

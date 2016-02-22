@@ -93,6 +93,9 @@ class AbstractDomainManager(EventMixin):
   IS_LOCAL_MANAGER = False
   # Polling interval
   POLL_INTERVAL = 3
+  # Request formats
+  FORMAT_DIFF = "DIFF"
+  FORMAT_FULL = "FULL"
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, adapters=None, **kwargs):
     """
@@ -112,6 +115,17 @@ class AbstractDomainManager(EventMixin):
       self._poll = bool(kwargs['poll'])
     else:
       self._poll = False
+    if 'format' in kwargs:
+      if str(kwargs['format']).upper() in (self.FORMAT_DIFF, self.FORMAT_FULL):
+        self._format = str(kwargs['format']).upper()
+      else:
+        log.warning(
+          "Wrong 'format' type for %s! Using 'FULL' by default..." %
+          self.__class__.__name__)
+    else:
+      self._format = self.FORMAT_FULL
+    log.debug("Enforced configuration for %s: poll: %s, format: %s" % (
+      self.__class__.__name__, self._poll, self._format))
 
   def __str__ (self):
     return "DomainManager(name: %s, domain: %s)" % (self.name, self.domain_name)
@@ -272,7 +286,7 @@ class AbstractDomainManager(EventMixin):
       # Check the domain is still reachable
       if self.topoAdapter.check_domain_reachable():
         return
-      # TODO - not just check domain but also get the topology and update
+        # TODO - not just check domain but also get the topology and update
     # If this is the first call of poll()
     if self._detected is None:
       log.warning("%s agent is not detected! Keep trying..." % self.domain_name)
@@ -726,28 +740,32 @@ class VNFStarterAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class DefaultUnifyDomainRESTAPI(object):
+class DefaultUnifyDomainAPI(object):
   """
   Define unified interface for managing UNIFY domains with REST-API.
 
   Follows the MixIn design pattern approach to support OpenStack functionality.
   """
 
-  def get_config (self):
+  def get_config (self, filter=None):
     """
     Queries the infrastructure view with a netconf-like "get-config" command.
 
+    :param filter: request a filtered description instead of full
+    :type filter: str
     :return: infrastructure view as an :any:`NFFG`
     :rtype: :any::`NFFG`
     """
     raise NotImplementedError("Not implemented yet!")
 
-  def edit_config (self, data):
+  def edit_config (self, data, diff=False):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 
     :param data: whole domain view
     :type data: :any::`NFFG`
+    :param diff: send the diff of the mapping request (default: False)
+    :param diff: bool
     :return: status code
     :rtype: str
     """
@@ -763,7 +781,7 @@ class DefaultUnifyDomainRESTAPI(object):
     raise NotImplementedError("Not implemented yet!")
 
 
-class OpenStackAPI(DefaultUnifyDomainRESTAPI):
+class OpenStackAPI(DefaultUnifyDomainAPI):
   """
   Define interface for managing OpenStack domain.
 
@@ -774,7 +792,7 @@ class OpenStackAPI(DefaultUnifyDomainRESTAPI):
   """
 
 
-class UniversalNodeAPI(DefaultUnifyDomainRESTAPI):
+class UniversalNodeAPI(DefaultUnifyDomainAPI):
   """
   Define interface for managing Universal Node domain.
 
@@ -785,7 +803,7 @@ class UniversalNodeAPI(DefaultUnifyDomainRESTAPI):
   """
 
 
-class RemoteESCAPEv2API(DefaultUnifyDomainRESTAPI):
+class RemoteESCAPEv2API(DefaultUnifyDomainAPI):
   """
   Define interface for managing remote ESCAPEv2 domain.
 
@@ -822,7 +840,7 @@ class AbstractRESTAdapter(Session):
     self.auth = auth
     # Store the last request
     self._response = None
-    if "timeout" in kwargs:
+    if 'timeout' in kwargs:
       self.CONNECTION_TIMEOUT = kwargs['timeout']
       log.debug(
         "Setup explicit timeout for REST responses: %ss" %

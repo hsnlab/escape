@@ -183,6 +183,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
+  # Communication format
+  format = "FULL"
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
@@ -254,17 +256,20 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         self.send_error(415)
         return
       # Get received Virtualizer
-      received_diff = Virtualizer.parse_from_text(text=raw_body)
+      received_cfg = Virtualizer.parse_from_text(text=raw_body)
       # Adapt changes on the local config
       if not isinstance(self.server.last_response, Virtualizer):
         self.log.warning("Missing cached Virtualizer!")
         self.send_error(500)
         return
-      full_config = self.server.last_response.patch(source=received_diff)
+      if self.format == "DIFF":
+        full_cfg = self.server.last_response.copy()
+        full_cfg.patch(source=received_cfg)
+      else:
+        full_cfg = received_cfg
       # Convert response's body to NFFG
       converter = NFFGConverter(domain="REMOTE", logger=log)
-      # nffg = converter.parse_from_Virtualizer(vdata=full_config)
-      nffg = converter.parse_from_Virtualizer(vdata=received_diff)
+      nffg = converter.parse_from_Virtualizer(vdata=full_cfg)
     else:
       nffg = NFFG.parse(raw_body)  # Initialize NFFG from JSON representation
     # Rewrite domain name to INTERNAL
@@ -355,10 +360,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # set bounded layer name here to avoid circular dependency problem
     handler = CONFIG.get_ros_agent_class()
     handler.bounded_layer = self._core_name
+    params = CONFIG.get_ros_agent_params()
     # can override from global config
-    handler.prefix = CONFIG.get_ros_agent_prefix()
-    handler.virtualizer_format_enabled = CONFIG.get_ros_api_virtualizer_format()
-    address = CONFIG.get_ros_agent_address()
+    if 'prefix' in params:
+      handler.prefix = params['prefix']
+    if 'unify_interface' in params:
+      handler.virtualizer_format_enabled = params['unify_interface']
+    if 'format' in params:
+      handler.format = params['format']
+    address = (params.get('address'), params.get('port'))
     # Virtualizer ID of the Sl-Or interface
     self.ros_api = RESTServer(handler, *address)
     self.ros_api.api_id = handler.LOGGER_NAME = "Sl-Or"
@@ -370,10 +380,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
         self.ros_api.api_id, address[0], address[1]))
     self.ros_api.start()
     handler.log.debug(
-      "Configured Virtualizer type: %s" % self.ros_api.virtualizer_type)
-    handler.log.debug(
-      "Configured communication format: %s" % "UNIFY" if
-      handler.virtualizer_format_enabled else "Internal-NFFG")
+      "Enforced configuration for %s: virtualizer type: %s, interface : %s, "
+      "format: %s" % (self.__class__.__name__, self.ros_api.virtualizer_type,
+                      "UNIFY" if handler.virtualizer_format_enabled else
+                      "Internal-NFFG", handler.format))
     if self._agent:
       log.info("REST-API is set in AGENT mode")
 
@@ -593,7 +603,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
       "Received <Virtual View> request from %s layer" % str(
         event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
-    virtualizer_type = CONFIG.get_ros_virtualizer_type(component=event.sid)
+    # Virtualizer type for Sl-Or API
+    virtualizer_type = CONFIG.get_api_virtualizer(layer_name=LAYER_NAME,
+                                                  api_name=event.sid)
     v = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid, type=virtualizer_type)
     log.getChild('API').debug("Sending back <Virtual View>: %s..." % v)

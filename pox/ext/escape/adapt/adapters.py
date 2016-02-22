@@ -770,7 +770,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("Send ping request to remote agent: %s" % self._base_url)
     return self.send_no_error(self.GET, 'ping')
 
-  def get_config (self):
+  def get_config (self, filter=None):
     log.debug("Send get-config request to remote agent: %s" % self._base_url)
     # Get topology from remote agent handling every exception
     data = self.send_no_error(self.POST, 'get-config')
@@ -821,7 +821,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.error("No data is received from remote agent at %s!" % self._base_url)
       return
 
-  def edit_config (self, data):
+  def edit_config (self, data, diff=False):
     log.debug(
       "Prepare edit-config request for remote agent at: %s" % self._base_url)
     if isinstance(data, NFFG):
@@ -830,6 +830,11 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         log.debug("Convert NFFG to XML/Virtualizer format...")
         virt_data = self.converter.adapt_mapping_into_Virtualizer(
           virtualizer=self.virtualizer, nffg=data)
+        if diff:
+          log.debug("Generating diff of mapping changes...")
+          virt_data = self.virtualizer.diff(target=virt_data)
+        else:
+          log.debug("Using the full Virtualizer as mapping request")
         data = virt_data.xml()
       # non-UNIFY interface --> no conversion
       else:
@@ -837,6 +842,11 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     elif isinstance(data, Virtualizer):
       # already in Virtualizer format
       if self._unify_interface:
+        if diff:
+          log.debug("Generating diff of mapping changes...")
+          data = self.virtualizer.diff(target=data)
+        else:
+          log.debug("Using the full Virtualizer as mapping request")
         data = data.xml()
       # Unexpected case, try to convert anyway
       else:
@@ -877,7 +887,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
 
 class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
-                       DefaultUnifyDomainRESTAPI):
+                       DefaultUnifyDomainAPI):
   """
   Implement the unified way to communicate with "Unify" domains which are
   using REST-API and the "Virtualizer" XML-based format.
@@ -902,9 +912,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
     AbstractESCAPEAdapter.__init__(self, **kwargs)
-    log.debug(
-      "Init UNIFYRESTAdapter - type: %s, domain: %s, URL: %s" % (
-        self.type, self.domain_name, url))
+    log.debug("Init UNIFYRESTAdapter - type: %s, domain: %s, URL: %s" % (
+      self.type, self.domain_name, url))
     # Converter object
     self.converter = NFFGConverter(domain=self.domain_name, logger=log,
                                    ensure_unique_id=CONFIG.ensure_unique_id())
@@ -916,12 +925,14 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("Send ping request to remote agent: %s" % self._base_url)
     return self.send_no_error(self.GET, 'ping')
 
-  def get_config (self):
+  def get_config (self, filter=None):
     """
     Queries the infrastructure view with a netconf-like "get-config" command.
 
-    Remote domains always send full-config.
+    Remote domains always send full-config if ``filter`` is not set.
 
+    :param filter: request a filtered description instead of full
+    :type filter: str
     :return: infrastructure view as an :any:`NFFG`
     :rtype: :any::`NFFG`
     """
@@ -954,7 +965,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.error("No data is received from remote agent at %s!" % self._base_url)
       return
 
-  def edit_config (self, data):
+  def edit_config (self, data, diff=False):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 
@@ -962,6 +973,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
     :param data: whole domain view
     :type data: :any::`NFFG`
+    :param diff: send the diff of the mapping request (default: False)
+    :param diff: bool
     :return: status code
     :rtype: str
     """
@@ -977,12 +990,14 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       raise RuntimeError(
         "Not supported config format: %s for 'edit-config'!" % type(data))
-    # log.info("Generating diff of mapping changes...")
-    # diff = self.last_virtualizer.diff(target=vdata)
+    if diff:
+      log.debug("Generating diff of mapping changes...")
+      vdata = self.last_virtualizer.diff(target=vdata)
+    else:
+      log.debug("Using the full Virtualizer as mapping request")
     log.debug("Send NFFG to %s domain agent at %s..." % (
       self.domain_name, self._base_url))
     try:
-      # return self.send_with_timeout(self.POST, 'edit-config', diff.xml())
       return self.send_with_timeout(self.POST, 'edit-config', vdata.xml())
     except Timeout:
       log.warning(
@@ -1041,7 +1056,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   def ping (self):
     return self.send_no_error(self.GET, 'ping')
 
-  def get_config (self):
+  def get_config (self, filter=None):
     data = self.send_no_error(self.POST, 'get-config')
     if data:
       log.info("Parse and load received data...")
@@ -1062,14 +1077,14 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # print nffg.dump()
       return nffg
 
-  def edit_config (self, data):
+  def edit_config (self, data, diff=False):
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
         virtualizer=self.virtualizer, nffg=data)
-      data = virt_data.xml()
+      data = self.virtualizer.diff(virt_data).xml()
     elif isinstance(data, Virtualizer):
-      data = data.xml()
+      data = self.virtualizer.diff(data).xml()
     else:
       raise RuntimeError(
         "Not supported config format: %s for 'edit-config'!" % type(data))
@@ -1125,7 +1140,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   def ping (self):
     return self.send_no_error(self.GET, 'ping')
 
-  def get_config (self):
+  def get_config (self, filter=None):
     data = self.send_no_error(self.POST, 'get-config')
     log.debug("Received config from remote agent at %s" % self._base_url)
     if data:
@@ -1147,14 +1162,14 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # print nffg.dump()
       return nffg
 
-  def edit_config (self, data):
+  def edit_config (self, data, diff=False):
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
       virt_data = self.converter.adapt_mapping_into_Virtualizer(
         virtualizer=self.virtualizer, nffg=data)
-      data = virt_data.xml()
+      data = self.virtualizer.diff(virt_data).xml()
     elif isinstance(data, Virtualizer):
-      data = data.xml()
+      data = self.virtualizer.diff(data).xml()
     else:
       raise RuntimeError(
         "Not supported config format: %s for 'edit-config'!" % type(data))
