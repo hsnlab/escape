@@ -476,56 +476,20 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
-  def get_ros_agent_prefix (self):
+  def get_ros_agent_params (self):
     """
-    Return the REST API prefix for agent request handler.
+    Return the REST API params for agent request handler.
 
-    :return: prefix
-    :rtype: str
+    :return: params
+    :rtype: dict
     """
     try:
-      return self.__configuration[ORCHEST]["Sl-Or"]['prefix']
+      params = self.__configuration[ORCHEST]["Sl-Or"].copy()
+      del params['module']
+      del params['class']
+      return params
     except KeyError:
-      return None
-
-  def get_ros_agent_address (self):
-    """
-    Return the REST API (address, port) for agent REST server.
-
-    :return: address and port
-    :rtype: tuple
-    """
-    try:
-      return (self.__configuration[ORCHEST]["Sl-Or"]['address'],
-              self.__configuration[ORCHEST]["Sl-Or"]['port'])
-    except KeyError:
-      return None
-
-  def get_ros_virtualizer_type (self, component):
-    """
-    Return the Virtualizer type of the given Virtualizer config.
-
-    :param component: name of the ROS config part
-    :type component: str
-    :return: Virtualizer type (SINGLE or GLOBAL)
-    :rtype: str
-    """
-    try:
-      return self.__configuration[ORCHEST][component]['virtualizer_type']
-    except KeyError:
-      return None
-
-  def get_ros_api_virtualizer_format (self):
-    """
-    Return the REST API format for agent request handler.
-
-    :return: Virtualizer format is enabled or not
-    :rtype: bool
-    """
-    try:
-      return self.__configuration[ORCHEST]["Sl-Or"]['unify_interface']
-    except KeyError:
-      return False
+      return {}
 
   def get_cfor_api_class (self):
     """

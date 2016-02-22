@@ -113,7 +113,8 @@ cfg = {
           "port": 8888,
           # "virtualizer_type": "SINGLE",
           "virtualizer_type": "GLOBAL",
-          "unify_interface": True
+          "unify_interface": True,
+          "format": "DIFF"
         },
       "Cf-Or":
         {
@@ -206,6 +207,7 @@ cfg = {
           "module": "escape.adapt.managers",
           "class": "RemoteESCAPEDomainManager",
           "poll": False,
+          "format": "DIFF",
           "adapters": {
             "REMOTE":
               {
@@ -223,6 +225,7 @@ cfg = {
           "class": "RemoteESCAPEDomainManager",
           "domain_name": "extESCAPE",
           "poll": False,
+          "format": "DIFF",
           "adapters": {
             "REMOTE":
               {
