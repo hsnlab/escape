@@ -199,7 +199,7 @@ def quit_with_error (msg, logger=None, exception=None):
     logger = core.getLogger("core")
   logger.fatal(msg)
   if exception:
-    logger.exception("Caught exception:%s" % exception)
+    logger.exception("Caught exception: %s" % exception)
   core.quit()
   os._exit(1)
 

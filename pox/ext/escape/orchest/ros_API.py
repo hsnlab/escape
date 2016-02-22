@@ -109,6 +109,8 @@ class CfOrRequestHandler(AbstractRequestHandler):
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
+  # Default communication approach
+  format = "FULL"
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
@@ -183,7 +185,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
-  # Communication format
+  # Default communication approach
   format = "FULL"
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
@@ -375,13 +377,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Virtualizer type for Sl-Or API
     self.ros_api.virtualizer_type = CONFIG.get_api_virtualizer(
       layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
-    handler.log.info(
-      "Init REST-API for %s on %s:%s!" % (
-        self.ros_api.api_id, address[0], address[1]))
+    handler.log.info("Init REST-API for %s on %s:%s!" % (
+      self.ros_api.api_id, address[0], address[1]))
     self.ros_api.start()
     handler.log.debug(
-      "Enforced configuration for %s: virtualizer type: %s, interface : %s, "
-      "format: %s" % (self.__class__.__name__, self.ros_api.virtualizer_type,
+      "Enforced configuration for %s: virtualizer type: %s, interface: %s, "
+      "format: %s" % (self.ros_api.api_id, self.ros_api.virtualizer_type,
                       "UNIFY" if handler.virtualizer_format_enabled else
                       "Internal-NFFG", handler.format))
     if self._agent:
@@ -396,24 +397,29 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # set bounded layer name here to avoid circular dependency problem
     handler = CONFIG.get_cfor_api_class()
     handler.bounded_layer = self._core_name
+    params = CONFIG.get_cfor_agent_params()
     # can override from global config
-    handler.prefix = CONFIG.get_cfor_api_prefix()
-    address = CONFIG.get_cfor_api_address()
+    if 'prefix' in params:
+      handler.prefix = params['prefix']
+    if 'unify_interface' in params:
+      handler.virtualizer_format_enabled = params['unify_interface']
+    if 'format' in params:
+      handler.format = params['format']
+    address = (params.get('address'), params.get('port'))
     self.cfor_api = RESTServer(handler, *address)
     # Virtualizer ID of the Cf-Or interface
     self.cfor_api.api_id = handler.LOGGER_NAME = "Cf-Or"
     # Virtualizer type for Cf-Or API
     self.cfor_api.virtualizer_type = CONFIG.get_api_virtualizer(
       layer_name=LAYER_NAME, api_name=self.cfor_api.api_id)
-    handler.log.debug(
-      "Init REST-API for %s on %s:%s!" % (
-        self.cfor_api.api_id, address[0], address[1]))
+    handler.log.info("Init REST-API for %s on %s:%s!" % (
+      self.cfor_api.api_id, address[0], address[1]))
     self.cfor_api.start()
     handler.log.debug(
-      "Configured Virtualizer type: %s" % self.cfor_api.virtualizer_type)
-    handler.log.debug(
-      "Configured communication format: %s" % "UNIFY" if
-      handler.virtualizer_format_enabled else "Internal-NFFG")
+      "Enforced configuration for %s: virtualizer type: %s, interface: %s, "
+      "format: %s" % (self.cfor_api.api_id, self.cfor_api.virtualizer_type,
+                      "UNIFY" if handler.virtualizer_format_enabled else
+                      "Internal-NFFG", handler.format))
 
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
