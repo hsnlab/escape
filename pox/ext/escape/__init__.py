@@ -131,8 +131,8 @@ cfg = {
     {
       # Default managers need to start at init
       "MANAGERS": [
-        # "REMOTE-ESCAPE",
-        # "REMOTE-ESCAPE-ext",
+        "REMOTE-ESCAPE",
+        "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
         # "UN"
@@ -206,7 +206,7 @@ cfg = {
         {
           "module": "escape.adapt.managers",
           "class": "RemoteESCAPEDomainManager",
-          "poll": False,
+          "poll": True,
           "format": "DIFF",
           "adapters": {
             "REMOTE":
@@ -224,7 +224,7 @@ cfg = {
           "module": "escape.adapt.managers",
           "class": "RemoteESCAPEDomainManager",
           "domain_name": "extESCAPE",
-          "poll": False,
+          "poll": True,
           "format": "DIFF",
           "adapters": {
             "REMOTE":
@@ -241,7 +241,7 @@ cfg = {
         {
           "module": "escape.adapt.managers",
           "class": "OpenStackDomainManager",
-          "poll": False,
+          "poll": True,
           "adapters": {
             "REMOTE":
               {
