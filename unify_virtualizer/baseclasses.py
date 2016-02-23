@@ -554,6 +554,28 @@ class Yang(object):
                 if isinstance(v, Yang) and k is not "_parent":
                     v.set_operation(operation, recursive=recursive, force=force)
 
+    def replace_operation(self, fromop, toop, recursive=True):
+        """
+        Replaces operation for instance
+        :param fromop: string
+        :param toop: string
+        :param recursive: boolean, default is True; determines if children operations are also set or not
+        :return: -
+        """
+        if fromop not in ( __EDIT_OPERATION_TYPE_ENUMERATION__):
+            raise ValueError("Illegal operation value: operation={operation} at {yang}".format(operation=operation,
+                                                                                               yang=self.get_as_text()))
+        if toop not in ( __EDIT_OPERATION_TYPE_ENUMERATION__):
+            raise ValueError("Illegal operation value: operation={operation} at {yang}".format(operation=operation,
+                                                                                               yang=self.get_as_text()))
+        if self._operation == fromop:
+            self._operation = toop
+        if recursive:
+            for k, v in self.__dict__.items():
+                if isinstance(v, Yang) and k is not "_parent":
+                    v.replace_operation(fromop, toop, recursive=recursive)
+
+
     def is_initialized(self):
         """
         Check if any of the attributes of instance are initialized, returns True if yes
@@ -762,8 +784,24 @@ class Yang(object):
         :param target: Yang
         :return: Yang
         """
-        diff = copy.deepcopy(target)
-        diff.reduce(self)
+        empty = copy.deepcopy(self)
+        empty.reduce(empty)
+        add = copy.deepcopy(target)
+        add.reduce(self)
+        remove = copy.deepcopy(self)
+        remove.reduce(target)
+        remove.replace_operation('create', 'delete', recursive=True)
+        if add.xml() == empty.xml():
+            if remove.xml() == empty.xml():
+                diff= empty
+            else:
+                diff= remove
+        else:
+            if remove.xml() == empty.xml():
+                diff= add
+            else:
+                diff= add
+                diff.merge(remove)
         return diff
 
 
@@ -1727,6 +1765,19 @@ class ListYang(Yang):  # FIXME: to inherit from OrderedDict()
         # super(ListYang, self).set_operation(operation, recursive=recursive, force=force)
         for key in self._data.keys():
             self._data[key].set_operation(operation, recursive=recursive, force=force)
+
+    def replace_operation(self, fromop, toop, recursive=True):
+        """
+        Replace operation for all items in ListYang dict`
+        :param fromop: string
+        :param toop: string
+        :param recursive: boolean, default is True; determines if children operations are also set or not
+        :return: -
+        """
+        # super(ListYang, self).set_operation(operation, recursive=recursive, force=force)
+        for key in self._data.keys():
+            self._data[key].replace_operation(fromop, toop, recursive=recursive)
+
 
     def bind(self, relative=False, reference=None):
         for v in self.values():
