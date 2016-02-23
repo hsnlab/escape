@@ -4,8 +4,11 @@ module virtualizer4 {
   organization "ETH";
   contact "Robert Szabo <robert.szabo@ericsson.com>";
 
-  revision 2016-01-28
-  {
+  revision "2016-02-19" {
+    description "Added port/control (for Cf-Or interface); port/resources; link-resources/cost and sofware-resource/cost for administrative metric; clarifications for port/capability";
+  }
+
+  revision "2016-01-28" {
     description "Metadata added to infra_node and virtualizer level; Virtualizer's revised data model based on virtualizer3; changes: link key is set to id";
   }
 
@@ -31,28 +34,15 @@ module virtualizer4 {
       key key;
       leaf key{
         type string;
-	    mandatory true;
-	  }
-	  leaf value{
+        mandatory true;
+      }
+      leaf value{
         type string;
-	     mandatory false;
+        mandatory false;
       }
     }
   } 
 
-  // ------------ PORTS -------
-  grouping port {
-    uses id-name;
-    // uses port-type;
-    leaf port_type {
-        description "sap - meaning the use of metadata for further specifics; unify - for the abstract port handling";
-    	 type string;}
-    leaf capability { type string;}
-    leaf sap {type string;}
-    uses metadata;
-  }
-
-  // ------------ FLOW CONTROLS -------
   grouping link-resource {
     leaf delay {
       type string;
@@ -62,14 +52,54 @@ module virtualizer4 {
       type string;
       mandatory false;
     }
+    leaf cost {
+      description "Administrative metric.";
+      type string;
+      mandatory false;
+    }
   }
+
+  // ------------ PORTS -------
+  grouping port {
+    uses id-name;
+    leaf port_type {
+      description "{port-abstract, port-sap} port-sap is to represent UNIFY domain boundary; port-abstract is to represent UNIFY native port. Technology specific attributes of a SAP is in the metadata.";
+      type string;
+    }
+    leaf capability {
+      description "To describe match and action capabilities associated with the port, e.g., match=port,tag,ip,tcp,udp,mpls,of1.0, where port: based forwarding; tag: unify abstract tagging; ip: ip address matching etc.";
+      type string;
+    }
+    leaf sap {
+      description "Used to defin interdomain connection identifier.";
+      type string;
+    }
+    container control {
+      description "Used to connect this port to a UNIFY orchestrator's Cf-Or reference point. Support controller - orchestrator or orchestrator - controller connection establishment.";
+      leaf controller{
+        description "URI of the local controller service at this NF, e.g., http://*:8080/cf-or/";
+        type string;
+      }
+      leaf orchestrator{
+        description "URI of the scoped orchestration service offered to this NF specifically, e.g., http://192.168.1.100:8080/cf-or/";
+        type string;
+      }
+    }
+    container resources{
+      description "Only used for domain boundary ports (port-sap type), where this is used to derive interconnection link characteristics.";
+      uses link-resource;
+    }
+    uses metadata;
+  }
+
+  // ------------ FLOW CONTROLS -------
 
   grouping flowentry {
     description "The flowentry syntax will follow ovs-ofctrl string format. The UNIFY general tagging mechanism will be use like 'mpls'-> 'tag', i.e., push_tag:tag; pop_tag:tag...";
     uses id-name;
     leaf priority {
       type string;
-      }
+    }
     leaf port {
       type leafref {
         path "";
@@ -150,6 +180,11 @@ module virtualizer4 {
       type string;
       mandatory true;
     }
+    leaf cost {
+      description "Administrative metric.";
+      type string;
+      mandatory false;
+    }
   }
 
   grouping node {
@@ -177,9 +212,9 @@ module virtualizer4 {
   
   grouping infra-node { // they can contain other nodes (as NFs)
     uses node {
-        refine type {
-            mandatory true;
-        }
+      refine type {
+        mandatory true;
+      }
     }
     container NF_instances {
       uses nodes;
@@ -200,7 +235,7 @@ module virtualizer4 {
     description "Container for a single virtualizer";
     uses id-name {
       refine id {
-         mandatory true;
+        mandatory true;
       }
     }
 
