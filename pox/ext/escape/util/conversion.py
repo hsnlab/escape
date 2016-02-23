@@ -15,9 +15,11 @@
 Contains helper classes for conversion between different NF-FG representations.
 """
 import json
+import string
 import sys
 
 from baseclasses import __version__ as V_VERSION
+from escape.util.misc import VERBOSE
 
 try:
   # Import for ESCAPEv2
@@ -1137,14 +1139,6 @@ class NFFGConverter(object):
     self.log.info("Converting requirements...")
     for req in nffg.reqs:
       meta_key = "%s:%s" % (self.REQUIREMENT_PREFIX, req.id)
-      # meta_value = "src:%s:%s|dst:%s:%s|delay:%s|bw:%s|path:%s" % (
-      #   req.src.node.id,  # src node
-      #   req.src.id,  # src port
-      #   req.dst.node.id,  # dst node
-      #   req.dst.id,  # dst port
-      #   req.delay,  # delay
-      #   req.bandwidth,  # bandwidth
-      #   json.dumps(req.sg_path))  # sg hop list
       meta_value = json.dumps({
         "snode": req.src.node.id,
         "sport": req.src.id,
@@ -1153,8 +1147,8 @@ class NFFGConverter(object):
         "delay": "%.3f" % req.delay,
         "bw": "%.3f" % req.bandwidth,
         "sg_path": req.sg_path}
-        # Replace " with ' to avoid ugly HTTP escaping
-      ).replace('"', "'").replace(' ', '')
+        # Replace " with ' to avoid ugly HTTP escaping and remove whitespaces
+      ).translate(string.maketrans('"', "'"), string.whitespace)
       virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
                                                               value=meta_value))
       self.log.debug('Converted requirement link: %s' % req)
@@ -1385,8 +1379,9 @@ class NFFGConverter(object):
           virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
                               match=match, action=action, out=out_port,
                               resources=_resources, name=v_fe_name)
-          self.log.debug(
-            "Generated Flowentry:\n%s" % v_node.flowtable.add(virt_fe))
+          self.log.log(VERBOSE,
+                       "Generated Flowentry:\n%s" % v_node.flowtable.add(
+                         virt_fe))
 
   def dump_to_Virtualizer (self, nffg):
     """
@@ -1435,12 +1430,14 @@ class NFFGConverter(object):
 
   def adapt_mapping_into_Virtualizer (self, virtualizer, nffg):
     """
-    Install the mapping related modification into a Virtualizer.
+    Install the mapping related modification into a Virtualizer and return
+    with the new Virtualizer object.
 
     :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
     :param nffg: splitted NFFG (not necessarily in valid syntax)
     :return: modified Virtualizer object
     """
+    virtualizer = virtualizer.copy()
     self.log.debug(
       "START adapting modifications from %s into Virtualizer(id=%s, name=%s)"
       % (nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
