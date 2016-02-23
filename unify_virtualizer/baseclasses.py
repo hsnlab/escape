@@ -3,7 +3,7 @@
 #    Authors: Robert Szabo, Balazs Miriszlai, Akos Recse, Raphael Vicente Rosa
 #    Credits: Robert Szabo, Raphael Vicente Rosa, David Jocha, Janos Elek, Balazs Miriszlai, Akos Recse
 #    Contact: Robert Szabo <robert.szabo@ericsson.com>
-        
+
 #    Yang file info:
 #    Namespace: urn:unify:virtualizer
 #    Prefix: virtualizer
@@ -32,11 +32,11 @@ __version__ = "v4beta"
 from xml.dom.minidom import parseString
 import xml.etree.ElementTree as ET
 import copy
-# from types import *
 from decimal import *
 from collections import OrderedDict, Iterable
 import StringIO
 import os
+import string
 
 __EDIT_OPERATION_TYPE_ENUMERATION__ = (  # see https://tools.ietf.org/html/rfc6241#section-7.2
     "merge",  # default operation
@@ -46,10 +46,12 @@ __EDIT_OPERATION_TYPE_ENUMERATION__ = (  # see https://tools.ietf.org/html/rfc62
     "remove"
 )
 
+
 class Yang(object):
     """
     Class defining the root attributes and methods for all Virtualizer classes
     """
+
     def __init__(self, tag, parent=None):
         self._parent = parent
         self._tag = tag
@@ -65,10 +67,11 @@ class Yang(object):
         :param value: value of arbitrary type
         :return: -
         """
-        if (value is not None) and (key in self.__dict__) and issubclass(type(self.__dict__[key]), Leaf) and not issubclass(type(value), Yang):
+        if (value is not None) and (key in self.__dict__) and issubclass(type(self.__dict__[key]),
+                                                                         Leaf) and not issubclass(type(value), Yang):
             self.__dict__[key].set_value(value)
         else:
-            self.__dict__[key]= value
+            self.__dict__[key] = value
 
     def get_next(self, children=None, operation=None):
         """
@@ -78,7 +81,7 @@ class Yang(object):
         """
         i = 0
         if operation is None:
-            operation = (None, ) + __EDIT_OPERATION_TYPE_ENUMERATION__
+            operation = (None,) + __EDIT_OPERATION_TYPE_ENUMERATION__
         if len(self._sorted_children) > 0:
             if children is None:
                 while i < len(self._sorted_children):
@@ -92,7 +95,7 @@ class Yang(object):
             else:
                 while i < len(self._sorted_children):
                     i += 1
-                    if self.__dict__[self._sorted_children[i-1]] == children:
+                    if self.__dict__[self._sorted_children[i - 1]] == children:
                         break
                 while i < len(self._sorted_children):
                     if (self.__dict__[self._sorted_children[i]] is not None) and \
@@ -114,8 +117,7 @@ class Yang(object):
             if hasattr(_v, attrib):
                 return _v.__dict__[attrib]
         raise ValueError("Attrib={attrib} cannot be found in self={self} and other={v}".format(
-                self=self.get_as_text(),v=v.get_as_text()))
-
+                self=self.get_as_text(), v=v.get_as_text()))
 
     def get_parent(self):
         """
@@ -147,18 +149,19 @@ class Yang(object):
         """
         self._tag = tag
 
+    def et(self):
+        return self._et(None, False, True)
+
     def xml(self, ordered=True):
         """
         Dump the class subtree as XML string
+        :param ordered: boolean -- defines alaphabetic ordering (True) or the one that was read
         :return: string
         """
         root = self._et(None, False, ordered)
         xmlstr = ET.tostring(root, encoding="utf8", method="xml")
         dom = parseString(xmlstr)
         return dom.toprettyxml()
-
-    def et(self):
-        return self._et(None, False, True)
 
     def get_as_text(self, ordered=True):
         """
@@ -173,15 +176,16 @@ class Yang(object):
         Dump the class subtree as HTML pretty formatted string
         :return: string
         """
+
         def indent(elem, level=0):
-            i = "\n" + level*"  "
+            i = "\n" + level * "  "
             if len(elem):
                 if not elem.text or not elem.text.strip():
                     elem.text = i + "  "
                 if not elem.tail or not elem.tail.strip():
                     elem.tail = i
                 for elem in elem:
-                    indent(elem, level+1)
+                    indent(elem, level + 1)
                 if not elem.tail or not elem.tail.strip():
                     elem.tail = i
             else:
@@ -212,13 +216,12 @@ class Yang(object):
         if not os.path.exists(os.path.dirname(outfilename)):
             os.makedirs(os.path.dirname(outfilename))
         text = self.html(ordered=ordered)
-        if format=="text":
-            text= self.get_as_text(ordered=ordered)
-        elif format=="xml":
-            text= self.xml(ordered=ordered)
+        if format == "text":
+            text = self.get_as_text(ordered=ordered)
+        elif format == "xml":
+            text = self.xml(ordered=ordered)
         with open(outfilename, 'w') as outfile:
             outfile.writelines(text)
-
 
     def _parse(self, parent, root):
         """
@@ -308,7 +311,7 @@ class Yang(object):
         if len(p) == 1:
             _copy_type = "full"
         l = p.pop(0)
-        if path[0] == "/": # absolute path
+        if path[0] == "/":  # absolute path
             if self.get_parent() is not None:
                 return self.get_parent().create_path(source, path=path, target_copy_type=target_copy_type)
             elif self.get_tag() == p[0]:
@@ -335,7 +338,7 @@ class Yang(object):
         else:
             if (not (l in self.__dict__.keys())) or (getattr(self, l) is None):
                 _yang = getattr(source.walk_path(self.get_path()), l)
-                self.__dict__[l]= _yang.copy(_copy_type)
+                self.__dict__[l] = _yang.copy(_copy_type)
                 self.__dict__[l].set_parent(self)
             return getattr(self, l).create_path(source, path="/".join(p), target_copy_type=target_copy_type)
 
@@ -438,10 +441,10 @@ class Yang(object):
 
     @classmethod
     def parse_from_text(cls, text):
-         try:
-             tree = ET.ElementTree(ET.fromstring(text))
-             return cls.parse(root=tree.getroot())
-         except ET.ParseError as e:
+        try:
+            tree = ET.ElementTree(ET.fromstring(text))
+            return cls.parse(root=tree.getroot())
+        except ET.ParseError as e:
             raise Exception('XML Text ParseError: %s' % e.message)
             return None
 
@@ -500,7 +503,8 @@ class Yang(object):
         if isinstance(operation, (tuple, list, set)):
             for op in operation:
                 if (op is not None) and (op not in __EDIT_OPERATION_TYPE_ENUMERATION__):
-                    raise ValueError("has_operation(): Illegal operation value={op} out of {operation}".format(op=op, operation=operation))
+                    raise ValueError("has_operation(): Illegal operation value={op} out of {operation}".format(op=op,
+                                                                                                               operation=operation))
             if self._operation in operation:
                 return True
             return False
@@ -509,7 +513,6 @@ class Yang(object):
         if self._operation == operation:
             return True
         return False
-
 
     def contains_operation(self, operation="delete"):  # FIXME: rename has_operation()
         """
@@ -542,7 +545,8 @@ class Yang(object):
         :return: -
         """
         if operation not in ((None,) + __EDIT_OPERATION_TYPE_ENUMERATION__):
-            raise ValueError("Illegal operation value: operation={operation} at {yang}".format(operation=operation, yang=self.get_as_text()))
+            raise ValueError("Illegal operation value: operation={operation} at {yang}".format(operation=operation,
+                                                                                               yang=self.get_as_text()))
         if force or (self._operation is None):
             self._operation = operation
         if recursive:
@@ -613,14 +617,14 @@ class Yang(object):
         for k, v in source.__dict__.items():
             if k is not "_parent":
                 if k not in self.__dict__.keys():
-                        self.__dict__[k] = copy.deepcopy(v)
-                        if isinstance(v, Yang):
-                            self.__dict__[k].set_parent(self)
+                    self.__dict__[k] = copy.deepcopy(v)
+                    if isinstance(v, Yang):
+                        self.__dict__[k].set_parent(self)
                 else:
                     if isinstance(v, Yang):
                         self.__dict__[k].__merge__(v, execute)
                     else:
-                        if v != self.__dict__[k]:
+                        if (v != self.__dict__[k]) and (v is not None):
                             self.__dict__[k] = copy.deepcopy(v)
 
     def merge(self, source):
@@ -647,7 +651,6 @@ class Yang(object):
             return self.full_copy()
         else:
             return self.empty_copy()
-
 
     def empty_copy(self):
         """
@@ -689,7 +692,8 @@ class Yang(object):
             if isinstance(self, ListedYang):
                 self.get_parent().remove(self)
             else:
-                self.get_parent().__dict__[self.get_tag()] = None  # FIXME: tag is not necessarily Python naming conform!
+                self.get_parent().__dict__[
+                    self.get_tag()] = None  # FIXME: tag is not necessarily Python naming conform!
 
     def set_referred(self, leaf_ref):
         """
@@ -712,8 +716,8 @@ class Yang(object):
     def bind(self, relative=False, reference=None):
         """
         Binds all elements of self attributes
-        :param: relative: Boolean
-        :param: source: Yang tree, to copy missing referals if needed
+        :param relative: Boolean
+        :param reference: Yang tree, to copy missing referals if needed
         :return: -
         """
         if len(self._sorted_children) > 0:
@@ -767,6 +771,7 @@ class Leaf(Yang):
     """
     Class defining Leaf basis with attributes and methods
     """
+
     def __init__(self, tag, parent=None):
         super(Leaf, self).__init__(tag, parent)
         self.data = None
@@ -789,7 +794,6 @@ class Leaf(Yang):
         :return: string
         """
         return str(self.data)
-
 
     def set_value(self, value):
         """
@@ -932,26 +936,29 @@ class Leaf(Yang):
                 eq = eq and (hasattr(other, k)) and (v == other.__dict__[k])
         return eq
 
-    # def patch(self, candidate):
-    #     # not sure if all attributes have to be overwritten, or just self.data
-    #      for k, v in self.__dict__.items():
-    #         if k is not "_parent":
-    #             for k_, v_ in candidate.__dict__.items():
-    #                 if k == k_:
-    #                     self.__dict__[k] = candidate.__dict__[k]
-    #                     break
+        # def patch(self, candidate):
+        #     # not sure if all attributes have to be overwritten, or just self.data
+        #      for k, v in self.__dict__.items():
+        #         if k is not "_parent":
+        #             for k_, v_ in candidate.__dict__.items():
+        #                 if k == k_:
+        #                     self.__dict__[k] = candidate.__dict__[k]
+        #                     break
+
 
 class StringLeaf(Leaf):
     """
     Class defining Leaf with string extensions
     """
-    def __init__(self, tag, parent=None, value=None, units="", mandatory=False): # FIXME: why having units for StringLeaf?
+
+    def __init__(self, tag, parent=None, value=None, units="",
+                 mandatory=False):  # FIXME: why having units for StringLeaf?
         super(StringLeaf, self).__init__(tag, parent=parent)
         self.set_value(value)
         """:type: string"""
         self.set_units(units)
         """:type: string"""
-        self.set_mandatory(mandatory) # FIXME: Mandatory should be handled in the Leaf class!
+        self.set_mandatory(mandatory)  # FIXME: Mandatory should be handled in the Leaf class!
         """:type: boolean"""
 
     def parse(self, root):
@@ -995,12 +1002,14 @@ class StringLeaf(Leaf):
             else:
                 self.data = str(value)
         else:
-            self.data= value
+            self.data = value
+
 
 class IntLeaf(Leaf):
     """
     Class defining Leaf with integer extensions (e.g., range)
     """
+
     def __init__(self, tag, parent=None, value=None, int_range=[], units="", mandatory=False):
         super(IntLeaf, self).__init__(tag, parent=parent)
         self.int_range = int_range
@@ -1019,6 +1028,7 @@ class IntLeaf(Leaf):
         :param root: ElementTree
         :return: -
         """
+
         def check_int(s):
             if s[0] in ('-', '+'):
                 return s[1:].isdigit()
@@ -1034,7 +1044,7 @@ class IntLeaf(Leaf):
             else:
                 if self.units != "":
                     for c in range(0, len(e_data.text)):
-                        v = len(e_data.text)-c
+                        v = len(e_data.text) - c
                         st = e_data.text[:v]
                         if check_int(st):
                             self.set_value(st)
@@ -1092,6 +1102,7 @@ class Decimal64Leaf(Leaf):
     """
     Class defining Leaf with decimal extensions (e.g., dec_range)
     """
+
     def __init__(self, tag, parent=None, value=None, dec_range=[], fraction_digits=1, units="", mandatory=False):
         super(Decimal64Leaf, self).__init__(tag, parent=parent)
         self.dec_range = dec_range
@@ -1122,7 +1133,6 @@ class Decimal64Leaf(Leaf):
                 self.set_value(e_data.text)
             root.remove(e_data)
             self.initialized = True
-
 
     def set_value(self, value):
         """
@@ -1155,10 +1165,12 @@ class Decimal64Leaf(Leaf):
                     return True
         return False
 
+
 class BooleanLeaf(Leaf):
     """
     Class defining Leaf with boolean extensions (e.g., True or False)
     """
+
     def __init__(self, tag, parent=None, value=None, units="", mandatory=False):
         super(BooleanLeaf, self).__init__(tag, parent=parent)
         self.data = None
@@ -1196,7 +1208,6 @@ class BooleanLeaf(Leaf):
         """
         return str(self.data).lower()
 
-
     def set_value(self, value):
         """
         Sets data value as decimal
@@ -1215,8 +1226,9 @@ class Leafref(StringLeaf):
     """
     Class defining Leaf extensions for stringleaf when its data references other instances
     """
+
     def __init__(self, tag, parent=None, value=None, units="", mandatory=False):
-        self.target = None # must be before the super call as set_value() is overidden
+        self.target = None  # must be before the super call as set_value() is overidden
         """:type: Yang"""
         # super call calls set_value()
         super(Leafref, self).__init__(tag, parent=parent, value=value, mandatory=mandatory)
@@ -1233,11 +1245,12 @@ class Leafref(StringLeaf):
             self.target = None
             return
         if type(value) is str:
+            value = value.translate(None,string.whitespace)  # removing whitespaces or newlines from path
             if self.data != value:
                 self.unbind()
                 self.target = None
                 self.data = value
-                # self.bind()
+                # self.bind() # cannot call bind due to text parsing (destination may not be parsed yet)
         elif issubclass(type(value), Yang):
             if self.target != value:
                 self.unbind()
@@ -1289,7 +1302,8 @@ class Leafref(StringLeaf):
     def bind(self, relative=False, reference=None):
         """
         Binds the target and add the referee to the referende list in the target. The path is updated to relative or absolut based on the parameter
-        :param: relative: Boolean
+        :param relative: Boolean - Create relative paths if True; absolute path is False
+        :param reference: Yang tree to copy missing objects from
         :return: -
         """
         if self.target is not None:
@@ -1318,6 +1332,7 @@ class ListedYang(Yang):
     """
     Class defined for Virtualizer classes inherit when modeled as list
     """
+
     def __init__(self, tag, keys, parent=None):
         super(ListedYang, self).__init__(tag, parent)
         self._key_attributes = keys
@@ -1406,6 +1421,7 @@ class ListYang(Yang):  # FIXME: to inherit from OrderedDict()
     """
     Class to express list as dictionary 
     """
+
     def __init__(self, tag, parent=None, type=None):
         super(ListYang, self).__init__(tag, parent)
         self._data = OrderedDict()
@@ -1418,7 +1434,7 @@ class ListYang(Yang):  # FIXME: to inherit from OrderedDict()
         :return: Yang
         """
         if operation is None:
-            operation = (None, ) + __EDIT_OPERATION_TYPE_ENUMERATION__
+            operation = (None,) + __EDIT_OPERATION_TYPE_ENUMERATION__
         if children is None:
             # return first key
             for key in self._data:
@@ -1446,12 +1462,12 @@ class ListYang(Yang):  # FIXME: to inherit from OrderedDict()
             else:
                 return None
 
-            # if next is self._data._OrderedDict__root:
-            #     if self._parent is not None:
-            #         return self._parent.get_next(self, operation)
-            #     else:
-            #         return None
-            # return self._data[next[2]]
+                # if next is self._data._OrderedDict__root:
+                #     if self._parent is not None:
+                #         return self._parent.get_next(self, operation)
+                #     else:
+                #         return None
+                # return self._data[next[2]]
 
     def get_type(self):
         """
@@ -1668,7 +1684,7 @@ class ListYang(Yang):  # FIXME: to inherit from OrderedDict()
         return _reduce
 
     def __merge__(self, source, execute=False):
-
+        #FIXME: handle operation delete/remove
         for item in source.keys():
             if item not in self.keys():
                 self.add(copy.deepcopy(source[item]))  # it should be a full_copy()
@@ -1733,7 +1749,7 @@ class FilterYang(Yang):
         return self.result
 
     def walk_yang(self, filter, target, result):
-        if target._tag == filter.tag: # probably double check
+        if target._tag == filter.tag:  # probably double check
             if isinstance(target, Iterable):
 
                 if len(filter) > 0:
@@ -1750,7 +1766,7 @@ class FilterYang(Yang):
             else:
                 if len(filter) > 0:
                     result = target.empty_copy()
-                    for filter_child in filter: # probably double check
+                    for filter_child in filter:  # probably double check
                         if filter_child.tag in target.__dict__:
                             result.__dict__[filter_child.tag] = self.walk_yang(filter_child,
                                                                                target.__dict__[filter_child.tag],
@@ -1762,7 +1778,7 @@ class FilterYang(Yang):
     def __str__(self):
         return ET.tostring(self.filter_xml)
 
-    def xml(self): #FIXME have to remove!
+    def xml(self):  # FIXME have to remove!
         return self.filter_xml
 
     def set_filter(self, filter):
