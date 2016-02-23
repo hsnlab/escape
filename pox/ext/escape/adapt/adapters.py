@@ -796,6 +796,10 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         # Covert from XML-based Virtualizer to NFFG
         nffg, virt = self.converter.parse_from_Virtualizer(vdata=data,
                                                            with_virt=True)
+        log.log(VERBOSE,
+                "Received message to 'get-config' request:\n%s" % virt.xml())
+        log.log(VERBOSE,
+                "Converted NFFG of 'get-config' response:\n%s" % nffg.dump())
         # Cache virtualizer
         self.virtualizer = virt
         if self._original_virtualizer is None:
@@ -860,8 +864,12 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         "Not supported config format: %s for 'edit-config'!" % type(data))
     log.debug(
       "Send topology description to domain agent at %s..." % self._base_url)
+    log.log(VERBOSE, "Generated Virtualizer for domain: %s:\n%s" % (
+      data, self.domain_name))
     try:
-      return self.send_with_timeout(self.POST, 'edit-config', data)
+      result = self.send_with_timeout(self.POST, 'edit-config', data)
+      log.info("Topology description has been sent!")
+      return result
     except Timeout:
       log.warning(
         "Reached timeout(%ss) while waiting for edit-config response! Ignore "
@@ -952,6 +960,10 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # Covert from XML-based Virtualizer to NFFG
       nffg, virt = self.converter.parse_from_Virtualizer(vdata=data,
                                                          with_virt=True)
+      log.log(VERBOSE,
+              "Received message to 'get-config' request:\n%s" % virt.xml())
+      log.log(VERBOSE,
+              "Converted NFFG of 'get-config' response:\n%s" % nffg.dump())
       # Cache virtualizer
       self.last_virtualizer = virt
       if self._original_virtualizer is None:
@@ -995,10 +1007,16 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       vdata = self.last_virtualizer.diff(target=vdata)
     else:
       log.debug("Using the full Virtualizer as mapping request")
+    plain_data = vdata.xml()
     log.debug("Send NFFG to %s domain agent at %s..." % (
       self.domain_name, self._base_url))
+    log.debug(
+      "Send topology description to domain agent at %s..." % self._base_url)
+    log.log(VERBOSE, "Generated Virtualizer:\n%s" % plain_data)
     try:
-      return self.send_with_timeout(self.POST, 'edit-config', vdata.xml())
+      result = self.send_with_timeout(self.POST, 'edit-config', plain_data)
+      log.info("Topology description has been sent!")
+      return result
     except Timeout:
       log.warning(
         "Reached timeout(%ss) while waiting for edit-config response! Ignore "
@@ -1088,8 +1106,6 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       raise RuntimeError(
         "Not supported config format: %s for 'edit-config'!" % type(data))
-    log.debug(
-      "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
@@ -1173,8 +1189,6 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       raise RuntimeError(
         "Not supported config format: %s for 'edit-config'!" % type(data))
-    log.debug(
-      "Send topology description to domain agent at %s..." % self._base_url)
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):

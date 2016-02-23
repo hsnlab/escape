@@ -282,7 +282,6 @@ class ServiceLayerAPI(AbstractAPI):
     if 'unify_interface' in params:
       handler.virtualizer_format_enabled = params['unify_interface']
     address = (params.get('address'), params.get('port'))
-    print address
     self.rest_api = RESTServer(handler, *address)
     self.rest_api.api_id = handler.LOGGER_NAME = "U-Sl"
     handler.log.debug("Init REST-API for %s on %s:%s!" % (
