@@ -385,15 +385,15 @@ class NFFGConverter(object):
         nf_mem = v_vnf.resources.mem.get_as_text().split(' ')[0]
         nf_storage = v_vnf.resources.storage.get_as_text().split(' ')[0]
         try:
-          nf_cpu = float(nf_cpu)
+          nf_cpu = float(nf_cpu) if nf_cpu is not None else None
         except ValueError as e:
           self.log.warning("Resource cpu value is not valid number: %s" % e)
         try:
-          nf_mem = float(nf_mem)
+          nf_mem = float(nf_mem) if nf_mem is not None else None
         except ValueError as e:
           self.log.warning("Resource mem value is not valid number: %s" % e)
         try:
-          nf_storage = float(nf_storage)
+          nf_storage = float(nf_storage) if nf_storage is not None else None
         except ValueError as e:
           self.log.warning(
             "Resource storage value is not valid number: %s" % e)
@@ -668,15 +668,16 @@ class NFFGConverter(object):
         node_mem = vnode.resources.mem.get_as_text().split(' ')[0]
         node_storage = vnode.resources.storage.get_as_text().split(' ')[0]
         try:
-          node_cpu = float(node_cpu)
+          node_cpu = float(node_cpu) if node_cpu is not None else None
         except ValueError as e:
           self.log.warning("Resource cpu value is not valid number: %s" % e)
         try:
-          node_mem = float(node_mem)
+          node_mem = float(node_mem) if node_mem is not None else None
         except ValueError as e:
           self.log.warning("Resource mem value is not valid number: %s" % e)
         try:
-          node_storage = float(node_storage)
+          node_storage = float(
+            node_storage) if node_storage is not None else None
         except ValueError as e:
           self.log.warning("Resource storage value is not valid number: %s" % e)
       else:
@@ -695,7 +696,8 @@ class NFFGConverter(object):
         # Default value: None
         node_bw = min(node_bw) if node_bw else None
       try:
-        node_bw = float(node_bw)
+        if node_bw is not None:
+          node_bw = float(node_bw)
       except ValueError as e:
         self.log.warning(
           "Resource bandwidth value is not valid number: %s" % e)
@@ -711,7 +713,8 @@ class NFFGConverter(object):
         # Default value: None
         node_delay = max(node_delay) if node_delay else None
       try:
-        node_delay = float(node_delay)
+        if node_delay is not None:
+          node_delay = float(node_delay)
       except ValueError as e:
         self.log.warning("Resource delay value is not valid number: %s" % e)
       # Add Infra Node to NFFG
@@ -827,12 +830,13 @@ class NFFGConverter(object):
         raw = virtualizer.metadata[key].value.get_value().replace("'", '"')
         values = json.loads(raw)
         try:
-          values['bw'] = float(values['bw'])
+          values['bw'] = float(values['bw']) if 'bw' in values else None
         except ValueError:
           self.log.warning("Bandwidth in requirement metadata: %s is not a "
                            "valid float value!" % values['bw'])
         try:
-          values['delay'] = float(values['delay'])
+          values['delay'] = float(
+            values['delay']) if 'delay' in values else None
         except ValueError:
           self.log.warning("Delay in requirement metadata: %s is not a "
                            "valid float value!" % values['delay'])
