@@ -383,7 +383,7 @@ class ESCAPEConfig(object):
     :type layer_name: str
     :param api_name: name of the REST-API in the global config.
     :type api_name: str
-    :return: type of the Virtualizer as in :any:`VirtualizerManager.TYPES`
+    :return: type of the Virtualizer as in :any:`VirtualizerManager`
     :rtype: str
     """
     try:

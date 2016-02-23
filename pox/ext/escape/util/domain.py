@@ -15,7 +15,8 @@ Implement the supporting classes for domain adapters.
 """
 import time
 import urlparse
-from requests import Session, ConnectionError, HTTPError, Timeout
+from requests import Session, ConnectionError, HTTPError, Timeout, \
+  RequestException
 
 import pox.openflow.libopenflow_01 as of
 from escape import __version__
@@ -40,7 +41,7 @@ class DomainChangedEvent(Event):
   """
   # Causes of possible changes
   TYPE = enum('NETWORK_UP', 'NETWORK_DOWN', 'NODE_UP', 'NODE_DOWN',
-              'CONNECTION_UP', 'CONNECTION_DOWN')
+              'CONNECTION_UP', 'CONNECTION_DOWN', "CHANGED")
 
   def __init__ (self, domain, cause, data=None):
     """
@@ -165,7 +166,7 @@ class AbstractDomainManager(EventMixin):
       if not self._detect_topology():
         log.warning("%s domain not confirmed during init!" % self.domain_name)
     else:
-      log.debug("Start polling %s domain..." % self.domain_name)
+      log.info("Start polling %s domain..." % self.domain_name)
       self.start_polling(self.POLL_INTERVAL)
 
   def initiate_adapters (self, configurator):
@@ -284,9 +285,24 @@ class AbstractDomainManager(EventMixin):
     # If domain has already detected
     else:
       # Check the domain is still reachable
-      if self.topoAdapter.check_domain_reachable():
+      changed = self.topoAdapter.check_topology_changed()
+      if changed is False:
+        # Nothing to do
+        log.log(VERBOSE,
+                "Remote domain: %s has not changed!" % self.domain_name)
         return
-        # TODO - not just check domain but also get the topology and update
+      elif changed is True:
+        log.info(
+          "Remote domain: %s has changed. Update global domain view..." %
+          self.domain_name)
+        # Notify all components for topology change --> this event causes
+        # the DoV updating
+        self.raiseEventNoErrors(DomainChangedEvent, domain=self.domain_name,
+                                cause=DomainChangedEvent.TYPE.CHANGED)
+        return
+    # If changed is None Something went wrong, probably remote domain is not
+    # reachable
+    # Step to the other half of the function to handling this situation
     # If this is the first call of poll()
     if self._detected is None:
       log.warning("%s agent is not detected! Keep trying..." % self.domain_name)
@@ -400,7 +416,6 @@ class AbstractESCAPEAdapter(EventMixin):
     """
     super(AbstractESCAPEAdapter, self).__init__()
     self.domain_name = domain_name
-    self._timer = None
 
   def rewrite_domain (self, nffg):
     """
@@ -421,9 +436,10 @@ class AbstractESCAPEAdapter(EventMixin):
 
   def check_domain_reachable (self):
     """
-    Checker function for domain polling.
+    Checker function for domain polling. Check the remote domain agent is
+    reachable.
 
-    :return: the domain is detected or not
+    :return: the remote domain is detected or not
     :rtype: bool
     """
     raise NotImplementedError("Not implemented yet!")
@@ -432,8 +448,17 @@ class AbstractESCAPEAdapter(EventMixin):
     """
     Return with the topology description as an :any:`NFFG`.
 
-    :return: the emulated topology description
+    :return: the topology description
     :rtype: :any:`NFFG`
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def check_topology_changed (self):
+    """
+    Return if the remote domain is changed.
+
+    :return: the received topology is different from cached one
+    :rtype: bool or None
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -545,6 +570,9 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     raise NotImplementedError("Not implemented yet!")
 
   def check_domain_reachable (self):
+    raise NotImplementedError("Not implemented yet!")
+
+  def check_topology_changed (self):
     raise NotImplementedError("Not implemented yet!")
 
   def delete_flowrules (self, id):
@@ -751,10 +779,13 @@ class DefaultUnifyDomainAPI(object):
     """
     Queries the infrastructure view with a netconf-like "get-config" command.
 
+    Remote domains always send full-config if ``filter`` is not set.
+
+    Return topology description in the original format.
+
     :param filter: request a filtered description instead of full
     :type filter: str
-    :return: infrastructure view as an :any:`NFFG`
-    :rtype: :any::`NFFG`
+    :return: infrastructure view in the original format
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -944,7 +975,7 @@ class AbstractRESTAdapter(Session):
     :type body: :any:`NFFG` or dict or bytes or str
     :param timeout: optional timeout param can be given also here
     :type timeout: int
-    :raises: :any:`requests.exceptions.Timeout`
+    :raises: :any:`requests.Timeout`
     :return: raw response data
     :rtype: str
     """
@@ -964,6 +995,11 @@ class AbstractRESTAdapter(Session):
       log.error(
         "Remote agent(adapter: %s, url: %s) responded with an error: %s" % (
           self.name, self._base_url, e.message))
+      return None
+    except Timeout:
+      raise
+    except RequestException as e:
+      log.errer("Got unexpected exception: %s" % e)
       return None
     except KeyboardInterrupt:
       log.warning(
