@@ -44,10 +44,10 @@ class InternalDomainManager(AbstractDomainManager):
     """
     Init
     """
+    log.debug(
+      "Init InternalDomainManager with domain name: %s" % domain_name)
     super(InternalDomainManager, self).__init__(domain_name=domain_name,
                                                 *args, **kwargs)
-    log.debug(
-      "Init InternalDomainManager with domain name: %s" % self.domain_name)
     self.controlAdapter = None  # DomainAdapter for POX-InternalPOXAdapter
     self.topoAdapter = None  # DomainAdapter for Mininet-InternalMininetAdapter
     self.remoteAdapter = None  # NETCONF communication - VNFStarterAdapter
@@ -613,9 +613,9 @@ class SDNDomainManager(AbstractDomainManager):
     """
     Init
     """
+    log.debug("Init SDNDomainManager with domain name: %s" % domain_name)
     super(SDNDomainManager, self).__init__(domain_name=domain_name, *args,
                                            **kwargs)
-    log.debug("Init SDNDomainManager with domain name: %s" % self.domain_name)
     self.controlAdapter = None  # DomainAdapter for POX - InternalPOXAdapter
     self.topoAdapter = None  # SDN topology adapter - SDNDomainTopoAdapter
 
@@ -995,7 +995,7 @@ class OpenStackDomainManager(UnifyDomainManager):
     Init.
     """
     log.debug(
-      "Init OpenStackDomainManager wrapper for domain: %s" % self.domain_name)
+      "Init OpenStackDomainManager wrapper for domain: %s" % domain_name)
     super(OpenStackDomainManager, self).__init__(domain_name=domain_name,
                                                  *args, **kwargs)
 
@@ -1014,8 +1014,7 @@ class UniversalNodeDomainManager(UnifyDomainManager):
     Init.
     """
     log.debug(
-      "Init UniversalNodeDomainManager wrapper for domain: %s" %
-      self.domain_name)
+      "Init UniversalNodeDomainManager wrapper for domain: %s" % domain_name)
     super(UniversalNodeDomainManager, self).__init__(domain_name=domain_name,
                                                      *args, **kwargs)
 
