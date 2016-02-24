@@ -107,9 +107,6 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     :return: the emulated topology description
     :rtype: :any:`NFFG`
     """
-    # raise RuntimeError("InternalPoxController not supported this function: "
-    #                    "get_topology_resource() !")
-    # return static topology
     return None
 
   def _handle_ConnectionUp (self, event):
@@ -119,13 +116,11 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     log.debug("Handle connection by %s" % self.task_name)
     self._identify_ovs_device(connection=event.connection)
     if self.filter_connections(event):
-      event = DomainChangedEvent(domain=self.name,
-                                 cause=DomainChangedEvent.TYPE.NODE_UP,
-                                 data={
-                                   "DPID": event.dpid,
-                                   "connection": event.connection
-                                 })
-      self.raiseEventNoErrors(event)
+      self.raiseEventNoErrors(DomainChangedEvent,
+                              domain=self.name,
+                              data={"DPID": event.dpid,
+                                    "connection": event.connection},
+                              cause=DomainChangedEvent.TYPE.NODE_UP)
 
   def _handle_ConnectionDown (self, event):
     """
@@ -139,11 +134,10 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
           break
       log.debug("DPID: %s removed from infra-dpid assignments" % dpid_to_str(
         event.dpid))
-
-    event = DomainChangedEvent(domain=self.name,
-                               cause=DomainChangedEvent.TYPE.NODE_DOWN,
-                               data={"DPID": event.dpid})
-    self.raiseEventNoErrors(event)
+    self.raiseEventNoErrors(DomainChangedEvent,
+                            domain=self.name,
+                            data={"DPID": event.dpid},
+                            cause=DomainChangedEvent.TYPE.NODE_DOWN, )
 
   def _identify_ovs_device (self, connection):
     """
@@ -1164,10 +1158,15 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def check_topology_changed (self):
     """
-    Return if the remote domain is changed.
+    Check the last received topology and return ``False`` if there was no
+    changes, ``None`` if domain was unreachable and the converted topology if
+    the domain changed.
+
+    Detection of changes is based on the ``reduce()`` function of the
+    ``Virtualizer``.
 
     :return: the received topology is different from cached one
-    :rtype: bool or None
+    :rtype: bool or None or :any:`NFFG`
     """
     # Get full topology as a Virtualizer
     data = self.send_no_error(self.POST, 'get-config')
@@ -1178,22 +1177,22 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         return None
       virt = Virtualizer.parse_from_text(text=data)
     else:
-      # If no data is received or converted return with None
-      return
+      # If no data is received, exception was raised or converted return with
+      # None.
+      return None
     if self.last_virtualizer is None:
       log.warning("Missing last received Virtualizer!")
-      return
+      return None
     # Get the changes happened since the last get-config
     changes = virt.copy()
     changes.reduce(self.last_virtualizer)
     if changes.get_next() is None:
       return False
     else:
-      log.log(VERBOSE,
-              "Received message to 'get-config' request:\n%s" % virt.xml())
-      # Cache received data
-      self.last_virtualizer = virt
-      return True
+      log.log(VERBOSE, "Changed domain topology from: %s:\n%s" % (
+        self.domain_name, virt.xml()))
+      # Return with the changed topo in NFFG
+      return self.converter.parse_from_Virtualizer(vdata=self.last_virtualizer)
 
 
 class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,

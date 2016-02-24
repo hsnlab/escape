@@ -40,8 +40,13 @@ class DomainChangedEvent(Event):
   order to handle all the changes in the same function/algorithm.
   """
   # Causes of possible changes
-  TYPE = enum('NETWORK_UP', 'NETWORK_DOWN', 'NODE_UP', 'NODE_DOWN',
-              'CONNECTION_UP', 'CONNECTION_DOWN', "CHANGED")
+  TYPE = enum('DOMAIN_UP',  # new domain has detected
+              "DOMAIN_CHANGED",  # detected domain has changed
+              'DOMAIN_DOWN',  # detected domain got down
+              'NODE_UP',
+              'NODE_DOWN',
+              'CONNECTION_UP',
+              'CONNECTION_DOWN')
 
   def __init__ (self, domain, cause, data=None):
     """
@@ -106,8 +111,8 @@ class AbstractDomainManager(EventMixin):
     # Name of the domain
     self.domain_name = domain_name
     # Timer for polling function
-    self._timer = None
-    self._detected = None  # Actual domain is detected or not
+    self.__timer = None
+    self.__detected = None  # Actual domain is detected or not
     self.internal_topo = None  # Description of the domain topology as an NFFG
     self.topoAdapter = None  # Special adapter which can handle the topology
     # description, request it, and install mapped NFs from internal NFFG
@@ -131,6 +136,16 @@ class AbstractDomainManager(EventMixin):
   def __str__ (self):
     return "DomainManager(name: %s, domain: %s)" % (self.name, self.domain_name)
 
+  @property
+  def detected (self):
+    """
+    Return True if the Manager has detected the domain.
+
+    :return: domain status
+    :rtype: bool
+    """
+    return self.__detected
+
   ##############################################################################
   # Abstract functions for component control
   ##############################################################################
@@ -146,15 +161,13 @@ class AbstractDomainManager(EventMixin):
     :return: None
     """
     if not self._adapters_cfg:
-      log.fatal(
-        "Missing Adapter configurations from DomainManager: %s" %
-        self.domain_name)
-      raise ConfigurationError(
-        "Missing configuration for %s" % self.domain_name)
-    log.debug(
-      "Init Adapters for domain: %s - adapters: %s" % (
-        self.domain_name,
-        [a['class'] for a in self._adapters_cfg.itervalues()]))
+      log.fatal("Missing Adapter configurations from DomainManager: %s" %
+                self.domain_name)
+      raise ConfigurationError("Missing configuration for %s" %
+                               self.domain_name)
+    log.debug("Init Adapters for domain: %s - adapters: %s" % (
+      self.domain_name,
+      [a['class'] for a in self._adapters_cfg.itervalues()]))
     # Update Adapters's config with domain name
     for adapter in self._adapters_cfg.itervalues():
       adapter['domain_name'] = self.domain_name
@@ -163,8 +176,15 @@ class AbstractDomainManager(EventMixin):
     # Skip to start polling if it's set
     if not self._poll:
       # Try to request/parse/update Mininet topology
-      if not self._detect_topology():
+      if not self.__detect_topology():
         log.warning("%s domain not confirmed during init!" % self.domain_name)
+      else:
+        # Notify all components for topology change --> this event causes
+        # the DoV updating
+        self.raiseEventNoErrors(DomainChangedEvent,
+                                domain=self.domain_name,
+                                data=self.internal_topo,
+                                cause=DomainChangedEvent.TYPE.DOMAIN_UP)
     else:
       log.info("Start polling %s domain..." % self.domain_name)
       self.start_polling(self.POLL_INTERVAL)
@@ -241,11 +261,11 @@ class AbstractDomainManager(EventMixin):
     :param interval: polling period (default: 1)
     :type interval: int
     """
-    if self._timer:
+    if self.__timer:
       # Already timing
       return
-    self._timer = Timer(interval, self.poll, recurring=True, started=True,
-                        selfStoppable=True)
+    self.__timer = Timer(interval, self.poll, recurring=True, started=True,
+                         selfStoppable=True)
 
   def restart_polling (self, interval=POLL_INTERVAL):
     """
@@ -254,18 +274,18 @@ class AbstractDomainManager(EventMixin):
     :param interval: polling period (default: 3)
     :type interval: int
     """
-    if self._timer:
-      self._timer.cancel()
-    self._timer = Timer(interval, self.poll, recurring=True, started=True,
-                        selfStoppable=True)
+    if self.__timer:
+      self.__timer.cancel()
+    self.__timer = Timer(interval, self.poll, recurring=True, started=True,
+                         selfStoppable=True)
 
   def stop_polling (self):
     """
     Stop timer.
     """
-    if self._timer:
-      self._timer.cancel()
-    self._timer = None
+    if self.__timer:
+      self.__timer.cancel()
+    self.__timer = None
 
   def poll (self):
     """
@@ -276,43 +296,67 @@ class AbstractDomainManager(EventMixin):
     :return: None
     """
     # If domain is not detected
-    if not self._detected:
+    if not self.__detected:
       # Check the topology is reachable
-      if self._detect_topology():
+      if self.__detect_topology():
         # Domain is detected and topology is updated -> restart domain polling
         self.restart_polling()
+        # Notify all components for topology change --> this event causes
+        # the DoV updating
+        self.raiseEventNoErrors(DomainChangedEvent,
+                                domain=self.domain_name,
+                                data=self.internal_topo,
+                                cause=DomainChangedEvent.TYPE.DOMAIN_UP)
         return
     # If domain has already detected
     else:
       # Check the domain is still reachable
       changed = self.topoAdapter.check_topology_changed()
+      # No changes
       if changed is False:
         # Nothing to do
         log.log(VERBOSE,
                 "Remote domain: %s has not changed!" % self.domain_name)
         return
-      elif changed is True:
+      # Domain has changed
+      elif isinstance(changed, NFFG):
         log.info(
           "Remote domain: %s has changed. Update global domain view..." %
           self.domain_name)
+        log.debug("Save changed topology: %s" % changed)
+        # Update the received new topo
+        self.internal_topo = changed
         # Notify all components for topology change --> this event causes
         # the DoV updating
-        self.raiseEventNoErrors(DomainChangedEvent, domain=self.domain_name,
-                                cause=DomainChangedEvent.TYPE.CHANGED)
+        self.raiseEventNoErrors(DomainChangedEvent,
+                                domain=self.domain_name,
+                                data=self.internal_topo,
+                                cause=DomainChangedEvent.TYPE.DOMAIN_CHANGED)
         return
-    # If changed is None Something went wrong, probably remote domain is not
-    # reachable
-    # Step to the other half of the function to handling this situation
+      # If changed is None something went wrong, probably remote domain is not
+      # reachable. Step to the other half of the function
+      elif changed is None:
+        log.warning(
+          "Lost connection with %s agent! Going to slow poll..." %
+          self.domain_name)
+        # Clear internal topology
+        log.debug("Clear topology from domain: %s" % self.domain_name)
+        self.internal_topo = None
+        self.raiseEventNoErrors(DomainChangedEvent,
+                                domain=self.domain_name,
+                                cause=DomainChangedEvent.TYPE.DOMAIN_DOWN)
+      else:
+        log.warning(
+          "Got unexpected return value from check_topology_changed(): %s" %
+          type(changed))
+        return
     # If this is the first call of poll()
-    if self._detected is None:
+    if self.__detected is None:
       log.warning("%s agent is not detected! Keep trying..." % self.domain_name)
-      self._detected = False
-    elif self._detected:
+      self.__detected = False
+    elif self.__detected:
       # Detected before -> lost connection = big Problem
-      log.warning(
-        "Lost connection with %s agent! Going to slow poll..." %
-        self.domain_name)
-      self._detected = False
+      self.__detected = False
       self.restart_polling()
     else:
       # No success but not for the first try -> keep trying silently
@@ -322,7 +366,7 @@ class AbstractDomainManager(EventMixin):
   # ESCAPE specific functions
   ##############################################################################
 
-  def _detect_topology (self):
+  def __detect_topology (self):
     """
     Check the undetected topology is up or not.
 
@@ -331,40 +375,17 @@ class AbstractDomainManager(EventMixin):
     """
     if self.topoAdapter.check_domain_reachable():
       log.info(">>> %s domain confirmed!" % self.domain_name)
-      self._detected = True
+      self.__detected = True
       log.info(
         "Requesting resource information from %s domain..." % self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
       if topo_nffg:
-        log.debug("Save received NF-FG: %s..." % topo_nffg)
-        # Cache the requested topo
-        self.update_local_resource_info(topo_nffg)
-        # Notify all components for topology change --> this event causes
-        # the DoV updating
-        self.raiseEventNoErrors(DomainChangedEvent, domain=self.domain_name,
-                                cause=DomainChangedEvent.TYPE.NETWORK_UP,
-                                data=topo_nffg)
+        log.debug("Save detected topology: %s..." % topo_nffg)
+        # Update the received new topo
+        self.internal_topo = topo_nffg
       else:
         log.warning("Resource info is missing!")
-    return self._detected
-
-  def update_local_resource_info (self, data=None):
-    """
-    Update the resource information of this domain with the requested
-    configuration.
-
-    :param data: new data
-    :type data: :any:`NFFG`
-    :return: None
-    """
-    # Cache requested topo info
-    if not self.internal_topo:
-      self.internal_topo = data
-    else:
-      # FIXME - maybe just merge especially if we got a diff
-      self.internal_topo = data
-      # TODO - implement actual updating
-      # update DoV
+    return self.__detected
 
   def install_nffg (self, nffg_part):
     """

@@ -328,7 +328,7 @@ class ControllerAdapter(object):
     self._layer_API = weakref.proxy(layer_API)
     self._with_infr = with_infr
     # Set virtualizer-related components
-    self.domainResManager = DomainResourceManager()
+    self.DoVManager = GlobalResourceManager()
     self.domains = ComponentConfigurator(self)
     try:
       if with_infr:
@@ -343,7 +343,7 @@ class ControllerAdapter(object):
     # Here every domainManager is up and running
     # Notify the remote visualizer about collected data if it's needed
     notify_remote_visualizer(
-      data=self.domainResManager.get_global_view().get_resource_info(),
+      data=self.DoVManager.dov.get_resource_info(),
       id=LAYER_NAME)
 
   def shutdown (self):
@@ -418,11 +418,11 @@ class ControllerAdapter(object):
       log.debug(
         "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
       # Update global view (DoV) with the installed components
-      self.domainResManager.get_global_view().update_full_global_view(
+      self.DoVManager.dov.update_full_global_view(
         mapped_nffg)
       # Notify remote visualizer about the installation result if it's needed
       notify_remote_visualizer(
-        data=self.domainResManager.get_global_view().get_resource_info(),
+        data=self.DoVManager.dov.get_resource_info(),
         id=LAYER_NAME)
     else:
       log.error("%s installation was not successful!" % mapped_nffg)
@@ -439,18 +439,15 @@ class ControllerAdapter(object):
     """
     log.info("Received DomainChange event from domain: %s, cause: %s" % (
       event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
-    if event.data is not None and isinstance(event.data, NFFG):
-      self.domainResManager.update_domain_virtualizer(nffg=event.data,
-                                                      domain=event.domain)
-
-  def update_dov (self, nffg_part):
-    """
-    Update the global view with installed Nfs/Flowrules.
-
-    :param nffg_part: nffg part need to be updated with
-    :type: :any:`NFFG`
-    """
-    pass
+    # If new domain detected
+    if event.cause == DomainChangedEvent.TYPE.DOMAIN_UP:
+      self.DoVManager.add_domain(domain=event.domain,
+                                 nffg=event.data)
+    elif event.cause == DomainChangedEvent.TYPE.DOMAIN_CHANGED:
+      self.DoVManager.update_domain(domain=event.domain,
+                                    nffg=event.data)
+    elif event.cause == DomainChangedEvent.TYPE.DOMAIN_DOWN:
+      self.DoVManager.remove_domain(domain=event.domain)
 
 
 # Common reference name for the DomainVirtualizer
@@ -467,12 +464,12 @@ class DomainVirtualizer(AbstractVirtualizer):
   Use :any:`NFFG` format to store the global infrastructure info.
   """
 
-  def __init__ (self, domainResManager, global_res=None):
+  def __init__ (self, mgr, global_res=None):
     """
     Init.
 
-    :param domainResManager: domain resource manager
-    :type domainResManager: DomainResourceManager
+    :param mgr: global domain resource manager
+    :type mgr: :any:`GlobalResourceManager`
     :param global_res: initial global resource (optional)
     :type global_res: :any:`NFFG`
     :return: None
@@ -482,7 +479,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     log.debug("Init DomainVirtualizer with name: %s - initial resource: %s" % (
       DoV, global_res))
     # Garbage-collector safe
-    self.domainResManager = weakref.proxy(domainResManager)
+    self._mgr = weakref.proxy(mgr)
     self._global_nffg = None
     if global_res is not None:
       self.set_domain_as_global_view(domain=NFFG.DEFAULT_DOMAIN,
@@ -570,7 +567,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     pass
 
 
-class DomainResourceManager(object):
+class GlobalResourceManager(object):
   """
   Handle and store the global resources view.
   """
@@ -579,21 +576,32 @@ class DomainResourceManager(object):
     """
     Init.
     """
-    super(DomainResourceManager, self).__init__()
+    super(GlobalResourceManager, self).__init__()
     log.debug("Init DomainResourceManager")
-    self._dov = DomainVirtualizer(self)  # Domain Virtualizer
-    self._tracked_domains = set()  # Cache for detected and stored domains
+    self.__dov = DomainVirtualizer(self)  # Domain Virtualizer
+    self.__tracked_domains = set()  # Cache for detected and stored domains
 
-  def get_global_view (self):
+  @property
+  def dov (self):
     """
     Getter for :class:`DomainVirtualizer`.
 
     :return: global infrastructure view as the Domain Virtualizer
     :rtype: :any:`DomainVirtualizer`
     """
-    return self._dov
+    return self.__dov
 
-  def update_domain_virtualizer (self, domain, nffg):
+  @property
+  def tracked (self):
+    """
+    Getter for tuple of detected domains.
+
+    :return: detected domains
+    :rtype: tuple
+    """
+    return tuple(self.tracked)
+
+  def add_domain (self, domain, nffg):
     """
     Update the global view data with the specific domain info.
 
@@ -603,23 +611,42 @@ class DomainResourceManager(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    if domain == "INTERNAL-POX":
-      # skip POX events currently
-      pass
-    if domain not in self._tracked_domains:
-      log.info("Append %s domain to <Global Resource View> (DoV)..." % domain)
-      if self._tracked_domains:
+    if domain not in self.__tracked_domains:
+      log.info("Append %s domain to DoV..." % domain)
+      if self.__tracked_domains:
         # Merge domain topo into global view
-        self._dov.merge_new_domain_into_dov(nffg=nffg)
+        self.__dov.merge_new_domain_into_dov(nffg=nffg)
       else:
         # No other domain detected, set NFFG as the whole global view
         log.debug(
           "DoV is empty! Add new domain: %s as the global view!" % domain)
-        self._dov.set_domain_as_global_view(domain=domain, nffg=nffg)
+        self.__dov.set_domain_as_global_view(domain=domain, nffg=nffg)
       # Add detected domain to cached domains
-      self._tracked_domains.add(domain)
+      self.__tracked_domains.add(domain)
     else:
-      log.info("Updating <Global Resource View> from %s domain..." % domain)
+      log.info("Updating DoV from %s domain..." % domain)
       # FIXME - only support INTERNAL domain ---> extend & improve !!!
       if domain == 'INTERNAL':
-        self._dov.update_domain_view(domain=domain, nffg=nffg)
+        self.__dov.update_domain_view(domain=domain, nffg=nffg)
+
+  def update_domain (self, domain, nffg):
+    """
+    Update the detected domain in the global view with the given info.
+
+    :param domain: domain name
+    :type domain: str
+    :param nffg: changed infrastructure info
+    :type nffg: :any:`NFFG`
+    :return: None
+    """
+    log.info("Update domain: %s in DoV..." % domain)
+
+  def remove_domain (self, domain):
+    """
+    Remove the detected domain from the global view.
+
+    :param domain: domain name
+    :type domain: str
+    :return: None
+    """
+    log.info("Remove domain: %s from DoV..." % domain)
