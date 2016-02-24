@@ -306,14 +306,14 @@ class VirtualizerManager(EventMixin):
     :rtype: :any:`DomainVirtualizer`
     """
     log.debug(
-      "Invoke %s to get <Global Resource View>" % self.__class__.__name__)
+      "Invoke %s to get DoV" % self.__class__.__name__)
     # If DoV is not set up, need to request from Adaptation layer
     if DoV not in self._virtualizers:
-      log.debug("Missing <Global Resource View>! Requesting the View now...")
+      log.debug("Missing DoV! Requesting the View now...")
       self.raiseEventNoErrors(MissingGlobalViewEvent)
       if DoV in self._virtualizers and self._virtualizers[DoV] is not None:
         log.debug(
-          "Got requested <Global Resource View>: %s" % self._virtualizers[DoV])
+          "Got requested DoV: %s" % self._virtualizers[DoV])
     # Return with resource info as a DomainVirtualizer
     return self._virtualizers.get(DoV, None)
 

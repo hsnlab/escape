@@ -632,7 +632,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Send <Global Resource View> request to Adaptation layer...")
+      "Send DoV request to Adaptation layer...")
     self.raiseEventNoErrors(GetGlobalResInfoEvent)
 
   def _handle_GlobalResInfoEvent (self, event):
@@ -644,7 +644,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Received <Global Resource View> from %s Layer" % str(
+      "Received DoV from %s Layer" % str(
         event.source._core_name).title())
     self.resource_orchestrator.virtualizerManager.dov = event.dov
 
