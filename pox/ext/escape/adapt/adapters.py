@@ -121,6 +121,8 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
                               data={"DPID": event.dpid,
                                     "connection": event.connection},
                               cause=DomainChangedEvent.TYPE.NODE_UP)
+    # Topo is changed set dirty flag
+    self.__dirty = True
 
   def _handle_ConnectionDown (self, event):
     """
@@ -137,7 +139,9 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     self.raiseEventNoErrors(DomainChangedEvent,
                             domain=self.name,
                             data={"DPID": event.dpid},
-                            cause=DomainChangedEvent.TYPE.NODE_DOWN, )
+                            cause=DomainChangedEvent.TYPE.NODE_DOWN)
+    # Topo is changed set dirty flag
+    self.__dirty = True
 
   def _identify_ovs_device (self, connection):
     """

@@ -437,6 +437,8 @@ class AbstractESCAPEAdapter(EventMixin):
     """
     super(AbstractESCAPEAdapter, self).__init__()
     self.domain_name = domain_name
+    # Observed topology has been changed since the last query
+    self.__dirty = False
 
   def rewrite_domain (self, nffg):
     """
@@ -481,7 +483,10 @@ class AbstractESCAPEAdapter(EventMixin):
     :return: the received topology is different from cached one
     :rtype: bool or None
     """
-    raise NotImplementedError("Not implemented yet!")
+    # Implement a very simple change detection based on dirty flag
+    tmp = self.__dirty
+    self.__dirty = False
+    return tmp
 
 
 class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
@@ -591,9 +596,6 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     raise NotImplementedError("Not implemented yet!")
 
   def check_domain_reachable (self):
-    raise NotImplementedError("Not implemented yet!")
-
-  def check_topology_changed (self):
     raise NotImplementedError("Not implemented yet!")
 
   def delete_flowrules (self, id):
