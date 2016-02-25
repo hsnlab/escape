@@ -443,9 +443,11 @@ class ControllerAdapter(object):
     if event.cause == DomainChangedEvent.TYPE.DOMAIN_UP:
       self.DoVManager.add_domain(domain=event.domain,
                                  nffg=event.data)
+    # If domain has changed
     elif event.cause == DomainChangedEvent.TYPE.DOMAIN_CHANGED:
       self.DoVManager.update_domain(domain=event.domain,
                                     nffg=event.data)
+    # If domain has got down
     elif event.cause == DomainChangedEvent.TYPE.DOMAIN_DOWN:
       self.DoVManager.remove_domain(domain=event.domain)
 
@@ -517,12 +519,14 @@ class DomainVirtualizer(AbstractVirtualizer):
     :type nffg: :any:`NFFG`
     :param domain: name of the merging domain
     :type domain: str
-    :return: None
+    :return: updated Dov
+    :rtype: :any:`NFFG`
     """
     log.debug("Set domain: %s as the global view!" % domain)
     self._global_nffg = nffg.copy()
     self._global_nffg.id = DoV
     self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
+    return self._global_nffg
 
   def update_full_global_view (self, nffg):
     """
@@ -532,10 +536,13 @@ class DomainVirtualizer(AbstractVirtualizer):
 
     :param nffg: updated global view which replace the stored one
     :type nffg: :any:`NFFG`
+    :return: updated Dov
+    :rtype: :any:`NFFG`
     """
     id, name = self._global_nffg.id, self._global_nffg.name
     self._global_nffg = nffg.copy()
     self._global_nffg.id, self._global_nffg.name = id, name
+    return self._global_nffg
 
   def merge_new_domain_into_dov (self, nffg):
     """
@@ -545,7 +552,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
     :param nffg: NFFG object need to be merged into DoV
     :type nffg: :any:`NFFG`
-    :return: Dov
+    :return: updated Dov
     :rtype: :any:`NFFG`
     """
     # Using general merging function from NFFGToolBox and return the updated
@@ -554,7 +561,7 @@ class DomainVirtualizer(AbstractVirtualizer):
                                         nffg=nffg,
                                         log=log)
 
-  def update_domain_view (self, domain, nffg):
+  def update_domain_in_dov (self, domain, nffg):
     """
     Update the existing domain in the merged Global view.
 
@@ -562,9 +569,25 @@ class DomainVirtualizer(AbstractVirtualizer):
     :type nffg: :any:`NFFG`
     :param domain: name of the merging domain
     :type domain: str
+    :return: updated Dov
+    :rtype: :any:`NFFG`
     """
-    # TODO
-    pass
+    return NFFGToolBox.update(base=self._global_nffg,
+                              nffg=nffg,
+                              log=log)
+
+  def remove_domain_from_dov (self, domain):
+    """
+    Remove the nodes and edges with the given from Global view.
+
+    :param domain: domain name
+    :type domain: str
+    :return: updated Dov
+    :rtype: :any:`NFFG`
+    """
+    return NFFGToolBox.remove_domain(base=self._global_nffg,
+                                     domain=domain,
+                                     log=log)
 
 
 class GlobalResourceManager(object):
@@ -624,10 +647,11 @@ class GlobalResourceManager(object):
       # Add detected domain to cached domains
       self.__tracked_domains.add(domain)
     else:
-      log.info("Updating DoV from %s domain..." % domain)
-      # FIXME - only support INTERNAL domain ---> extend & improve !!!
-      if domain == 'INTERNAL':
-        self.__dov.update_domain_view(domain=domain, nffg=nffg)
+      log.error("New domain: %s has already tracked! Abort adding...")
+      # log.info("Updating DoV from %s domain..." % domain)
+      # # FIXME - only support INTERNAL domain ---> extend & improve !!!
+      # if domain == 'INTERNAL':
+      #   self.__dov.update_domain_view(domain=domain, nffg=nffg)
 
   def update_domain (self, domain, nffg):
     """
@@ -639,7 +663,13 @@ class GlobalResourceManager(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    log.info("Update domain: %s in DoV..." % domain)
+    if domain in self.__tracked_domains:
+      log.info("Update domain: %s in DoV..." % domain)
+      self.__dov.update_domain_in_dov(domain=domain, nffg=nffg)
+    else:
+      log.error(
+        "Detected domain: %s is not included in tracked domains! Abort "
+        "updating...")
 
   def remove_domain (self, domain):
     """
@@ -649,4 +679,11 @@ class GlobalResourceManager(object):
     :type domain: str
     :return: None
     """
-    log.info("Remove domain: %s from DoV..." % domain)
+    if domain in self.__tracked_domains:
+      log.info("Remove domain: %s from DoV..." % domain)
+      self.__dov.remove_domain_from_dov(domain=domain)
+      self.__tracked_domains.remove(domain)
+    else:
+      log.warning(
+        "Removing domain: %s is not included in tracked domains! Skip "
+        "removing...")
