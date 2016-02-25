@@ -45,7 +45,7 @@ class InternalDomainManager(AbstractDomainManager):
     Init
     """
     log.debug(
-      "Init InternalDomainManager with domain name: %s" % domain_name)
+      "Create InternalDomainManager with domain name: %s" % domain_name)
     super(InternalDomainManager, self).__init__(domain_name=domain_name,
                                                 *args, **kwargs)
     self.controlAdapter = None  # DomainAdapter for POX-InternalPOXAdapter
@@ -71,6 +71,8 @@ class InternalDomainManager(AbstractDomainManager):
     super(InternalDomainManager, self).init(configurator, **kwargs)
     self._collect_SAP_infos()
     self._setup_sap_hostnames()
+    log.info(
+      "DomainManager for %s domain has been initialized!" % self.domain_name)
 
   def initiate_adapters (self, configurator):
     """
@@ -103,8 +105,9 @@ class InternalDomainManager(AbstractDomainManager):
     :return: None
     """
     super(InternalDomainManager, self).finit()
-    del self.controlAdapter
-    del self.remoteAdapter
+    self.remoteAdapter.finit()
+    self.controlAdapter.finit()
+    self.topoAdapter.finit()
 
   @property
   def controller_name (self):
@@ -613,7 +616,7 @@ class SDNDomainManager(AbstractDomainManager):
     """
     Init
     """
-    log.debug("Init SDNDomainManager with domain name: %s" % domain_name)
+    log.debug("Create SDNDomainManager with domain name: %s" % domain_name)
     super(SDNDomainManager, self).__init__(domain_name=domain_name, *args,
                                            **kwargs)
     self.controlAdapter = None  # DomainAdapter for POX - InternalPOXAdapter
@@ -631,6 +634,8 @@ class SDNDomainManager(AbstractDomainManager):
     """
     # Call abstract init to execute common operations
     super(SDNDomainManager, self).init(configurator, **kwargs)
+    log.info(
+      "DomainManager for %s domain has been initialized!" % self.domain_name)
 
   def initiate_adapters (self, configurator):
     """
@@ -656,7 +661,8 @@ class SDNDomainManager(AbstractDomainManager):
     :return: None
     """
     super(SDNDomainManager, self).finit()
-    del self.controlAdapter
+    self.topoAdapter.finit()
+    self.controlAdapter.finit()
 
   @property
   def controller_name (self):
@@ -791,7 +797,7 @@ class SDNDomainManager(AbstractDomainManager):
       log.warning("SDN topology is missing! Skip domain resetting...")
 
 
-class RemoteESCAPEDomainManager(AbstractDomainManager):
+class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
   """
   Manager class to handle communication with other ESCAPEv2 processes started
   in agent-mode through
@@ -811,7 +817,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     Init
     """
     log.debug(
-      "Init RemoteESCAPEDomainManager with domain name: %s" % domain_name)
+      "Create RemoteESCAPEDomainManager with domain name: %s" % domain_name)
     super(RemoteESCAPEDomainManager, self).__init__(domain_name=domain_name,
                                                     *args, **kwargs)
 
@@ -827,6 +833,8 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     """
     # Call abstract init to execute common operations
     super(RemoteESCAPEDomainManager, self).init(configurator, **kwargs)
+    log.info(
+      "DomainManager for %s domain has been initialized!" % self.domain_name)
 
   def initiate_adapters (self, configurator):
     """
@@ -848,6 +856,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     :return: None
     """
     super(RemoteESCAPEDomainManager, self).finit()
+    self.topoAdapter.finit()
 
   def install_nffg (self, nffg_part):
     """
@@ -888,7 +897,7 @@ class RemoteESCAPEDomainManager(AbstractDomainManager):
     self.topoAdapter.edit_config(data=empty_cfg, diff=self._format)
 
 
-class UnifyDomainManager(AbstractDomainManager):
+class UnifyDomainManager(AbstractRemoteDomainManager):
   """
   Manager class for unified handling of different domains using the Unify
   domain.
@@ -909,7 +918,7 @@ class UnifyDomainManager(AbstractDomainManager):
     Init.
     """
     log.debug(
-      "Init UnifyDomainManager with domain name: %s" % domain_name)
+      "Create UnifyDomainManager with domain name: %s" % domain_name)
     super(UnifyDomainManager, self).__init__(domain_name=domain_name, *args,
                                              **kwargs)
 
@@ -924,6 +933,8 @@ class UnifyDomainManager(AbstractDomainManager):
     :return: None
     """
     super(UnifyDomainManager, self).init(configurator, **kwargs)
+    log.info(
+      "DomainManager for %s domain has been initialized!" % self.domain_name)
 
   def initiate_adapters (self, configurator):
     """
@@ -944,6 +955,7 @@ class UnifyDomainManager(AbstractDomainManager):
     :return: None
     """
     super(UnifyDomainManager, self).finit()
+    self.topoAdapter.finit()
 
   def install_nffg (self, nffg_part):
     """
@@ -995,7 +1007,7 @@ class OpenStackDomainManager(UnifyDomainManager):
     Init.
     """
     log.debug(
-      "Init OpenStackDomainManager wrapper for domain: %s" % domain_name)
+      "Create OpenStackDomainManager wrapper for domain: %s" % domain_name)
     super(OpenStackDomainManager, self).__init__(domain_name=domain_name,
                                                  *args, **kwargs)
 
@@ -1014,12 +1026,12 @@ class UniversalNodeDomainManager(UnifyDomainManager):
     Init.
     """
     log.debug(
-      "Init UniversalNodeDomainManager wrapper for domain: %s" % domain_name)
+      "Create UniversalNodeDomainManager wrapper for domain: %s" % domain_name)
     super(UniversalNodeDomainManager, self).__init__(domain_name=domain_name,
                                                      *args, **kwargs)
 
 
-class DockerDomainManager(AbstractDomainManager):
+class DockerDomainManager(UnifyDomainManager):
   """
   Adapter class to handle communication component in a Docker domain.
 
@@ -1036,7 +1048,7 @@ class DockerDomainManager(AbstractDomainManager):
     Init
     """
     log.debug(
-      "Init DockerDomainManager with domain name: %s" % self.domain_name)
+      "Create DockerDomainManager with domain name: %s" % self.domain_name)
     super(DockerDomainManager, self).__init__(domain_name=domain_name, *args,
                                               **kwargs)
 

@@ -7,6 +7,7 @@ Implement the supporting classes for domain adapters.
    escape.util.domain.DomainChangedEvent
    escape.util.domain.DeployEvent
    escape.util.domain.AbstractDomainManager
+   escape.util.domain.AbstractRemoteDomainManager
    escape.util.domain.AbstractESCAPEAdapter
    escape.util.domain.AbstractOFControllerAdapter
    escape.util.domain.DefaultUnifyDomainAPI
@@ -23,6 +24,9 @@ an unified way.
 :any:`DeployEvent` can send NFFG to Infrastructure layer for deploying.
 
 :any:`AbstractDomainManager` contains general logic for top domain managers.
+
+:any:`AbstractRemoteDomainManager` contains polling functionality for remote
+domains.
 
 :any:`AbstractESCAPEAdapter` contains general logic for actual Adapters.
 
