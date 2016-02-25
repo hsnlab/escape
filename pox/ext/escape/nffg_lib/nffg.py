@@ -820,7 +820,65 @@ class NFFGToolBox(object):
     return {infra.domain for infra in nffg.infras}
 
   @staticmethod
-  def merge_new_domain (base, nffg, log=logging.getLogger("MERGE")):
+  def recreate_inter_domain_SAPs (nffg, log=logging.getLogger("SAP-recreate")):
+    """
+    Search for possible inter-domain ports examining ports' metadata and
+    recreate associated SAPs.
+
+    :param nffg: observed NFFG
+    :type nffg: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: modified NFFG
+    :rtype: :any:`NFFG`
+    """
+    for infra in nffg.infras:
+      for port in infra.ports:
+        # Check ports of remained Infra's for SAP ports
+        if port.get_property("type") == "inter-domain":
+          # Found inter-domain SAP port
+          log.debug("Found inter-domain SAP port: %s" % port)
+          # Create default SAP object attributes
+          # Copy optional SAP metadata as special id or name
+          sap_id = port.get_property("sap")
+          sap_name = port.get_property("name")
+          # Add SAP to splitted NFFG
+          if sap_id in nffg:
+            log.warning("%s is already in the splitted NFFG. Skip adding..." %
+                        nffg[sap_id])
+            continue
+          sap = nffg.add_sap(id=sap_id, name=sap_name)
+          # Add port to SAP port number(id) is identical with the Infra's port
+          sap_port = sap.add_port(id=port.id,
+                                  properties=port.properties.copy())
+          # Connect SAP to Infra
+          nffg.add_undirected_link(port1=port, port2=sap_port)
+          log.debug(
+            "Add inter-domain SAP: %s with port: %s" % (sap, sap_port))
+    return nffg
+
+  @staticmethod
+  def trim_orphaned_nodes (nffg, log=logging.getLogger("TRIM")):
+    """
+    Remove orphaned nodes from given :any:`NFFG`.
+
+    :param nffg: observed NFFG
+    :type nffg: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: trimmed NFFG
+    :rtype: :any:`NFFG`
+    """
+    for node_id in nffg.network.nodes():
+      if len(nffg.network.neighbors(node_id)) > 0:
+        continue
+      log.warning("Found orphaned node: %s! Remove from sliced part." %
+                  nffg.network.node[node_id])
+      nffg.network.remove_node(node_id)
+    return nffg
+
+  @classmethod
+  def merge_new_domain (cls, base, nffg, log=logging.getLogger("MERGE")):
     """
     Merge the given ``nffg`` into the ``base`` NFFG using the given domain name.
 
@@ -835,7 +893,7 @@ class NFFGToolBox(object):
     """
     from copy import deepcopy
     # Get new domain name
-    domain = NFFGToolBox.detect_domains(nffg=nffg)
+    domain = cls.detect_domains(nffg=nffg)
     if len(domain) == 0:
       log.error("No domain detected in new %s!" % nffg)
     if len(domain) > 1:
@@ -949,8 +1007,8 @@ class NFFGToolBox(object):
     # Return the updated NFFG
     return base
 
-  @staticmethod
-  def split_into_domains (nffg, log=logging.getLogger("SPLIT")):
+  @classmethod
+  def split_into_domains (cls, nffg, log=logging.getLogger("SPLIT")):
     """
     Split given :any:`NFFG` into separate parts self._global_nffg on
     original domains.
@@ -966,7 +1024,7 @@ class NFFGToolBox(object):
 
     log.info("Splitting mapped NFFG: %s according to detected domains" % nffg)
     # Define DOMAIN names
-    domains = NFFGToolBox.detect_domains(nffg=nffg)
+    domains = cls.detect_domains(nffg=nffg)
     log.debug("Detected domains for splitting: %s" % domains)
 
     if len(domains) == 0:
@@ -987,14 +1045,9 @@ class NFFGToolBox(object):
         deletable.add(infra.id)
         # Look for orphan NF ans SAP nodes which connected to this deletable
         # infra
-        for u, v, link in nffg.network.out_edges_iter([infra.id], data=True):
-          # Skip Requirement and SG links
-          if link.type != NFFG.TYPE_LINK_STATIC and link.type != \
-             NFFG.TYPE_LINK_DYNAMIC:
-            continue
-          if nffg.network.node[v].type == NFFG.TYPE_NF or nffg.network.node[
-            v].type == NFFG.TYPE_SAP:
-            deletable.add(v)
+        for node_id in nffg.network.neighbors_iter(infra.id):
+          if nffg[node_id].type in (NFFG.TYPE_SAP, NFFG.TYPE_NF):
+            deletable.add(node_id)
       log.debug("Nodes marked for deletion: %s" % deletable)
 
       log.debug("Clone NFFG...")
@@ -1012,37 +1065,12 @@ class NFFGToolBox(object):
       log.debug(
         "Search for inter-domain SAP ports and recreate associated SAPs...")
       # Recreate inter-domain SAP
-      for infra in nffg_part.infras:
-        for port in infra.ports:
-          # Check ports of remained Infra's for SAP ports
-          if port.get_property("type") == "inter-domain":
-            # Found inter-domain SAP port
-            log.debug("Found inter-domain SAP port: %s" % port)
-            # Create default SAP object attributes
-            # Copy optional SAP metadata as special id or name
-            sap_id = port.get_property("sap")
-            sap_name = port.get_property("name")
-            # Add SAP to splitted NFFG
-            if sap_id in nffg_part:
-              log.warning("%s is already in the splitted NFFG. Skip adding..." %
-                          nffg_part[sap_id])
-              continue
-            sap = nffg_part.add_sap(id=sap_id, name=sap_name)
-            # Add port to SAP port number(id) is identical with the Infra's port
-            sap_port = sap.add_port(id=port.id,
-                                    properties=port.properties.copy())
-            # Connect SAP to Infra
-            nffg_part.add_undirected_link(port1=port, port2=sap_port)
-            log.debug(
-              "Add inter-domain SAP: %s with port: %s" % (sap, sap_port))
+      cls.recreate_inter_domain_SAPs(nffg=nffg_part, log=log)
 
       # Check orphaned or not connected nodes and remove them
-      for node_id in nffg_part.network.nodes():
-        if len(nffg_part.network.neighbors(node_id)) > 0:
-          continue
-        log.warning("Found orphaned node: %s! Remove from sliced part." %
-                    nffg_part.network.node[node_id])
-        nffg_part.network.remove_node(node_id)
+      log.debug("Trim orphaned nodes from splitted part...")
+      cls.trim_orphaned_nodes(nffg=nffg_part, log=log)
+    log.info("Splitting has been finished!")
     return splitted_parts
 
   @staticmethod
@@ -1125,6 +1153,72 @@ class NFFGToolBox(object):
         log.debug("Rebounded requirement link: %s" % e2e)
     # Return the rebounded NFFG
     return nffg
+
+  @classmethod
+  def remove_domain (cls, base, domain, log):
+    """
+    Remove elements from the given ``base`` :any:`NFFG` with given ``domain``
+    name.
+
+    :param base: base NFFG object
+    :type base: :any:`NFFG`
+    :param domain: domain name
+    :type domain: str
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    log.debug(
+      "Remove nodes and edges which part of the domain: %s from %s..." % (
+        domain, base))
+    # Check existing domains
+    base_domain = cls.detect_domains(nffg=base)
+    if domain not in base_domain:
+      log.warning(
+        "No node was found in %s with domain: %s for removing! Leave NFFG "
+        "unchanged...")
+      return base
+    deletable = set()
+    for infra in base.infras:
+      # Add deletable infras
+      if infra.domain == domain:
+        deletable.add(infra.id)
+      # Add deletable SAP/NF connected to iterated infra
+      for node_id in base.network.neighbors_iter(infra.id):
+        if base[node_id].type in (NFFG.TYPE_SAP, NFFG.TYPE_NF):
+          deletable.add(node_id)
+    log.debug("Nodes marked for deletion: %s" % deletable)
+    base.network.remove_nodes_from(deletable)
+    log.debug("Remained nodes after deletion: %s" % [n for n in base])
+    log.debug(
+      "Search for inter-domain SAP ports and recreate associated SAPs...")
+    cls.recreate_inter_domain_SAPs(nffg=base, log=log)
+    # Check orphaned or not connected nodes and remove them
+    log.debug("Trim orphaned nodes from updated NFFG...")
+    cls.trim_orphaned_nodes(nffg=base, log=log)
+    return base
+
+  @staticmethod
+  def update (base, nffg, log):
+    """
+    Update the given ``nffg`` into the ``base`` NFFG.
+
+    :param base: base NFFG object
+    :type base: :any:`NFFG`
+    :param nffg: updating information
+    :type nffg: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    # TODO 1 - if new bisbis add to base
+    # TODO 2 - if base bisbis doesnt exist remove from base
+    # TODO 3 - if new nf add to base
+    # TODO 4 - if base nf doesnt exist remove from base
+    # TODO 5 - recreate inter-domain SAPs
+    pass
 
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------
