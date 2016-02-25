@@ -97,11 +97,6 @@ class AbstractDomainManager(EventMixin):
   DEFAULT_DOMAIN_NAME = "UNDEFINED"
   # Signal that the Manager class is for the Local Mininet-based topology
   IS_LOCAL_MANAGER = False
-  # Polling interval
-  POLL_INTERVAL = 3
-  # Request formats
-  FORMAT_DIFF = "DIFF"
-  FORMAT_FULL = "FULL"
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, adapters=None, **kwargs):
     """
@@ -110,28 +105,11 @@ class AbstractDomainManager(EventMixin):
     super(AbstractDomainManager, self).__init__()
     # Name of the domain
     self.domain_name = domain_name
-    # Timer for polling function
-    self.__timer = None
     self.__detected = None  # Actual domain is detected or not
     self.internal_topo = None  # Description of the domain topology as an NFFG
     self.topoAdapter = None  # Special adapter which can handle the topology
     # description, request it, and install mapped NFs from internal NFFG
     self._adapters_cfg = adapters
-    if 'poll' in kwargs:
-      self._poll = bool(kwargs['poll'])
-    else:
-      self._poll = False
-    if 'format' in kwargs:
-      if str(kwargs['format']).upper() in (self.FORMAT_DIFF, self.FORMAT_FULL):
-        self._format = str(kwargs['format']).upper()
-      else:
-        log.warning(
-          "Wrong 'format' type for %s! Using 'FULL' by default..." %
-          self.__class__.__name__)
-    else:
-      self._format = self.FORMAT_FULL
-    log.debug("Enforced configuration for %s: poll: %s, format: %s" % (
-      self.__class__.__name__, self._poll, self._format))
 
   def __str__ (self):
     return "DomainManager(name: %s, domain: %s)" % (self.name, self.domain_name)
@@ -160,6 +138,7 @@ class AbstractDomainManager(EventMixin):
     :type kwargs: dict
     :return: None
     """
+    log.info("Init DomainManager for %s domain!" % self.domain_name)
     if not self._adapters_cfg:
       log.fatal("Missing Adapter configurations from DomainManager: %s" %
                 self.domain_name)
@@ -173,6 +152,192 @@ class AbstractDomainManager(EventMixin):
       adapter['domain_name'] = self.domain_name
     # Initiate Adapters
     self.initiate_adapters(configurator)
+    # Try to request/parse/update Mininet topology
+    if not self.__detect_topology():
+      log.warning("%s domain not confirmed during init!" % self.domain_name)
+    else:
+      # Notify all components for topology change --> this event causes
+      # the DoV updating
+      self.raiseEventNoErrors(DomainChangedEvent,
+                              domain=self.domain_name,
+                              data=self.internal_topo,
+                              cause=DomainChangedEvent.TYPE.DOMAIN_UP)
+
+  def initiate_adapters (self, configurator):
+    """
+    Initiate Adapters for DomainManager.
+
+    Must override in inherited classes.
+    Follows the Factory Method design pattern.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :return: None
+    """
+    raise NotImplementedError(
+      "Managers must override this function to initiate Adapters!")
+
+  def run (self):
+    """
+    Abstract function for starting component.
+
+    :return: None
+    """
+    log.info("Start DomainManager for %s domain!" % self.domain_name)
+
+  def finit (self):
+    """
+    Abstract function for stopping component.
+    """
+    log.info("Stop DomainManager for %s domain!" % self.domain_name)
+
+  def suspend (self):
+    """
+    Abstract class for suspending a running component.
+
+    .. note::
+      Not used currently!
+
+    :return: None
+    """
+    log.info("Suspend DomainManager for %s domain!" % self.domain_name)
+
+  def resume (self):
+    """
+    Abstract function for resuming a suspended component.
+
+    .. note::
+      Not used currently!
+
+    :return: None
+    """
+    log.info("Resume DomainManager for %s domain!" % self.domain_name)
+
+  def info (self):
+    """
+    Abstract function for requesting information about the component.
+
+    .. note::
+      Not used currently!
+
+    :return: None
+    """
+    return self.__class__.__name__
+
+  ##############################################################################
+  # ESCAPE specific functions
+  ##############################################################################
+
+  def __detect_topology (self):
+    """
+    Check the undetected topology is up or not.
+
+    If the domain is confirmed and detected, the ``internal_topo`` attribute
+    will be updated with the new topology.
+
+    .. warning::
+
+      No :any:`DomainChangedEvent` will be raised internally if the domain is
+      confirmed!
+
+    :return: detected or not
+    :rtype: bool
+    """
+    if self.topoAdapter.check_domain_reachable():
+      log.info(">>> %s domain confirmed!" % self.domain_name)
+      self.__detected = True
+      log.info(
+        "Requesting resource information from %s domain..." % self.domain_name)
+      topo_nffg = self.topoAdapter.get_topology_resource()
+      if topo_nffg:
+        log.debug("Save detected topology: %s..." % topo_nffg)
+        # Update the received new topo
+        self.internal_topo = topo_nffg
+      else:
+        log.warning("Resource info is missing!")
+    return self.__detected
+
+  def install_nffg (self, nffg_part):
+    """
+    Install an :any:`NFFG` related to the specific domain.
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: status if the install process was success
+    :rtype: bool
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def clear_domain (self):
+    """
+    Clear the Domain according to the first received config.
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+
+class AbstractRemoteDomainManager(AbstractDomainManager):
+  """
+  Abstract class for different remote domain managers.
+
+  Implement polling mechanism for remote domains.
+  """
+  # Polling interval
+  POLL_INTERVAL = 3
+  # Request formats
+  FORMAT_DIFF = "DIFF"
+  FORMAT_FULL = "FULL"
+
+  def __init__ (self, domain_name=None, adapters=None, **kwargs):
+    """
+    Init.
+    """
+    super(AbstractRemoteDomainManager, self).__init__(domain_name=domain_name,
+                                                      adapters=adapters,
+                                                      kwargs=kwargs)
+    # Timer for polling function
+    self.__timer = None
+    if 'poll' in kwargs:
+      self._poll = bool(kwargs['poll'])
+    else:
+      self._poll = False
+    if 'format' in kwargs:
+      if str(kwargs['format']).upper() in (self.FORMAT_DIFF, self.FORMAT_FULL):
+        self._format = str(kwargs['format']).upper()
+      else:
+        log.warning(
+          "Wrong 'format' type for %s! Using 'FULL' by default..." %
+          self.__class__.__name__)
+    else:
+      self._format = self.FORMAT_FULL
+    log.debug("Enforced configuration for %s: poll: %s, format: %s" % (
+      self.__class__.__name__, self._poll, self._format))
+
+  @property
+  def detected (self):
+    """
+    Return True if the Manager has detected the domain.
+
+    :return: domain status
+    :rtype: bool
+    """
+    return self.__detected
+
+  ##############################################################################
+  # Abstract functions for component control
+  ##############################################################################
+
+  def init (self, configurator, **kwargs):
+    """
+    Abstract function for component initialization.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :param kwargs: optional parameters
+    :type kwargs: dict
+    :return: None
+    """
+    super(AbstractRemoteDomainManager, self).init(configurator=configurator,
+                                                  kwargs=kwargs)
     # Skip to start polling if it's set
     if not self._poll:
       # Try to request/parse/update Mininet topology
@@ -203,52 +368,12 @@ class AbstractDomainManager(EventMixin):
     raise NotImplementedError(
       "Managers must override this function to initiate Adapters!")
 
-  def run (self):
-    """
-    Abstract function for starting component.
-
-    :return: None
-    """
-    pass
-
   def finit (self):
     """
     Abstract function for starting component.
     """
     self.stop_polling()
-
-  def suspend (self):
-    """
-    Abstract class for suspending a running component.
-
-    .. note::
-      Not used currently!
-
-    :return: None
-    """
-    pass
-
-  def resume (self):
-    """
-    Abstract function for resuming a suspended component.
-
-    .. note::
-      Not used currently!
-
-    :return: None
-    """
-    pass
-
-  def info (self):
-    """
-    Abstract function for requesting information about the component.
-
-    .. note::
-      Not used currently!
-
-    :return: None
-    """
-    return self.__class__.__name__
+    super(AbstractRemoteDomainManager, self).finit()
 
   ##############################################################################
   # Common functions for polling
@@ -366,27 +491,6 @@ class AbstractDomainManager(EventMixin):
   # ESCAPE specific functions
   ##############################################################################
 
-  def __detect_topology (self):
-    """
-    Check the undetected topology is up or not.
-
-    :return: detected or not
-    :rtype: bool
-    """
-    if self.topoAdapter.check_domain_reachable():
-      log.info(">>> %s domain confirmed!" % self.domain_name)
-      self.__detected = True
-      log.info(
-        "Requesting resource information from %s domain..." % self.domain_name)
-      topo_nffg = self.topoAdapter.get_topology_resource()
-      if topo_nffg:
-        log.debug("Save detected topology: %s..." % topo_nffg)
-        # Update the received new topo
-        self.internal_topo = topo_nffg
-      else:
-        log.warning("Resource info is missing!")
-    return self.__detected
-
   def install_nffg (self, nffg_part):
     """
     Install an :any:`NFFG` related to the specific domain.
@@ -487,6 +591,16 @@ class AbstractESCAPEAdapter(EventMixin):
     tmp = self.__dirty
     self.__dirty = False
     return tmp
+
+  def finit (self):
+    """
+    Finish the remained connections and release the reserved resources.
+
+    Called by the DomainManager.
+
+    :return: None
+    """
+    log.debug("Stop ESCAPEAdapter name: %s, type: %s" % (self.name, self.type))
 
 
 class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
