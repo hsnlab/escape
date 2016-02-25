@@ -569,7 +569,7 @@ class DomainVirtualizer(AbstractVirtualizer):
 
 class GlobalResourceManager(object):
   """
-  Handle and store the global resources view.
+  Handle and store the global resources view as known as the DoV.
   """
 
   def __init__ (self):

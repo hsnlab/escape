@@ -8,7 +8,7 @@ Adaptation Sublayer.
    escape.adapt.adaptation.ComponentConfigurator
    escape.adapt.adaptation.ControllerAdapter
    escape.adapt.adaptation.DomainVirtualizer
-   escape.adapt.adaptation.DomainResourceManager
+   escape.adapt.adaptation.GlobalResourceManager
    :parts: 1
 
 :any:`ComponentConfigurator` creates, initializes, stores and manages different
@@ -21,7 +21,7 @@ adaptation and installation of :any:`NFFG`.
 :any:`DomainVirtualizer` implements the standard virtualization/generalization
 logic of the Resource Orchestration Sublayer.
 
-:any:`DomainResourceManager` stores and manages the global Virtualizer.
+:any:`GlobalResourceManager` stores and manages the global Virtualizer.
 
 Module contents
 ---------------
