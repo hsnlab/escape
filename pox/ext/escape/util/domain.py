@@ -296,6 +296,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
                                                       kwargs=kwargs)
     # Timer for polling function
     self.__timer = None
+    # Redefine __detected attribute for this class
+    self.__detected = None  # Actual domain is detected or not
     if 'poll' in kwargs:
       self._poll = bool(kwargs['poll'])
     else:
@@ -600,7 +602,7 @@ class AbstractESCAPEAdapter(EventMixin):
 
     :return: None
     """
-    log.debug("Stop ESCAPEAdapter name: %s, type: %s" % (self.name, self.type))
+    log.debug("Finit ESCAPEAdapter name: %s, type: %s" % (self.name, self.type))
 
 
 class AbstractOFControllerAdapter(AbstractESCAPEAdapter):

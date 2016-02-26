@@ -296,8 +296,8 @@ class ComponentConfigurator(object):
 
     :return: None
     """
+    log.debug("Shutdown DomainManagers...")
     for name, mgr in self:
-      log.debug("Shutdown %s DomainManager..." % name)
       try:
         self.stop_mgr(name=name)
       except:
