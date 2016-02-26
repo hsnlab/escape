@@ -1071,7 +1071,7 @@ class NFFGToolBox(object):
       if len(nffg_part):
         log.debug("Remained nodes: %s" % [n for n in nffg_part])
       else:
-        log.warning("No node was remained after splitting! ")
+        log.debug("No node was remained after splitting!")
       splitted_parts.append((domain, nffg_part))
 
       log.debug(
@@ -1204,7 +1204,7 @@ class NFFGToolBox(object):
     if len(base):
       log.debug("Remained nodes after deletion: %s" % [n for n in base])
     else:
-      log.warning("No node was remained after splitting! ")
+      log.debug("No node was remained after splitting! ")
     log.debug(
       "Search for inter-domain SAP ports and recreate associated SAPs...")
     cls.recreate_inter_domain_SAPs(nffg=base, log=log)

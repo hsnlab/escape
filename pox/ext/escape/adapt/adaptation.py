@@ -482,7 +482,8 @@ class DomainVirtualizer(AbstractVirtualizer):
       DoV, global_res))
     # Garbage-collector safe
     self._mgr = weakref.proxy(mgr)
-    self.__global_nffg = None
+    # Define DoV az an empty NFFG by default
+    self.__global_nffg = NFFG(id=DoV, name=DoV + "-uninitialized")
     if global_res is not None:
       self.set_domain_as_global_view(domain=NFFG.DEFAULT_DOMAIN,
                                      nffg=global_res)
@@ -588,9 +589,13 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    return NFFGToolBox.update(base=self.__global_nffg,
-                              nffg=nffg,
-                              log=log)
+    ret = NFFGToolBox.update(base=self.__global_nffg,
+                             nffg=nffg,
+                             log=log)
+    if self.__global_nffg.is_empty():
+      log.warning("No Node had been remained after updating the domain part: "
+                  "%s! DoV is empty!" % domain)
+    return ret
 
   def remove_domain_from_dov (self, domain):
     """
@@ -601,9 +606,13 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    return NFFGToolBox.remove_domain(base=self.__global_nffg,
-                                     domain=domain,
-                                     log=log)
+    ret = NFFGToolBox.remove_domain(base=self.__global_nffg,
+                                    domain=domain,
+                                    log=log)
+    if self.__global_nffg.is_empty():
+      log.warning("No Node had been remained after updating the domain part: "
+                  "%s! DoV is empty!" % domain)
+    return ret
 
 
 class GlobalResourceManager(object):
