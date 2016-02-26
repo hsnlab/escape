@@ -105,7 +105,7 @@ class AbstractDomainManager(EventMixin):
     super(AbstractDomainManager, self).__init__()
     # Name of the domain
     self.domain_name = domain_name
-    self.__detected = None  # Actual domain is detected or not
+    self._detected = None  # Actual domain is detected or not
     self.internal_topo = None  # Description of the domain topology as an NFFG
     self.topoAdapter = None  # Special adapter which can handle the topology
     # description, request it, and install mapped NFs from internal NFFG
@@ -122,7 +122,7 @@ class AbstractDomainManager(EventMixin):
     :return: domain status
     :rtype: bool
     """
-    return self.__detected
+    return self._detected
 
   ##############################################################################
   # Abstract functions for component control
@@ -259,7 +259,7 @@ class AbstractDomainManager(EventMixin):
     """
     if self.topoAdapter.check_domain_reachable():
       log.info(">>> %s domain confirmed!" % self.domain_name)
-      self.__detected = True
+      self._detected = True
       log.info(
         "Requesting resource information from %s domain..." % self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
@@ -269,7 +269,7 @@ class AbstractDomainManager(EventMixin):
         self.internal_topo = topo_nffg
       else:
         log.warning("Resource info is missing!")
-    return self.__detected
+    return self._detected
 
   def install_nffg (self, nffg_part):
     """
@@ -310,8 +310,6 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
                                                       kwargs=kwargs)
     # Timer for polling function
     self.__timer = None
-    # Redefine __detected attribute for this class
-    self.__detected = None  # Actual domain is detected or not
     if 'poll' in kwargs:
       self._poll = bool(kwargs['poll'])
     else:
@@ -336,7 +334,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     :return: domain status
     :rtype: bool
     """
-    return self.__detected
+    return self._detected
 
   ##############################################################################
   # Abstract functions for component control
@@ -437,7 +435,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     :return: None
     """
     # If domain is not detected
-    if not self.__detected:
+    if not self._detected:
       # Check the topology is reachable
       if self._detect_topology():
         # Domain is detected and topology is updated -> restart domain polling
@@ -492,12 +490,14 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
           type(changed))
         return
     # If this is the first call of poll()
-    if self.__detected is None:
-      log.warning("%s agent is not detected! Keep trying..." % self.domain_name)
-      self.__detected = False
-    elif self.__detected:
+    if self._detected is None:
+      log.warning(
+        "Local agent in domain: %s is not detected! Keep trying..." %
+        self.domain_name)
+      self._detected = False
+    elif self._detected:
       # Detected before -> lost connection = big Problem
-      self.__detected = False
+      self._detected = False
       self.restart_polling()
     else:
       # No success but not for the first try -> keep trying silently

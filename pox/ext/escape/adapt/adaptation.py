@@ -430,15 +430,15 @@ class ControllerAdapter(object):
 
   def _handle_DomainChangedEvent (self, event):
     """
-    Handle DomainChangedEvents, process changes and store relevant information
-    in DomainResourceManager.
+    Handle DomainChangedEvents, dispatch event according to the cause to
+    store and enfore changes into DoV.
 
     :param event: event object
     :type event: :any:`DomainChangedEvent`
     :return: None
     """
-    log.info("Received DomainChange event from domain: %s, cause: %s" % (
-      event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
+    log.info("Received DomainChange event from domain: %s, cause: %s"
+             % (event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     # If new domain detected
     if event.cause == DomainChangedEvent.TYPE.DOMAIN_UP:
       self.DoVManager.add_domain(domain=event.domain,
@@ -482,15 +482,15 @@ class DomainVirtualizer(AbstractVirtualizer):
       DoV, global_res))
     # Garbage-collector safe
     self._mgr = weakref.proxy(mgr)
-    self._global_nffg = None
+    self.__global_nffg = None
     if global_res is not None:
       self.set_domain_as_global_view(domain=NFFG.DEFAULT_DOMAIN,
                                      nffg=global_res)
 
   @property
   def name (self):
-    if self._global_nffg is not None and hasattr(self._global_nffg, 'name'):
-      return self._global_nffg.name
+    if self.__global_nffg is not None and hasattr(self.__global_nffg, 'name'):
+      return self.__global_nffg.name
     else:
       return DoV + "-uninitialized"
 
@@ -500,6 +500,22 @@ class DomainVirtualizer(AbstractVirtualizer):
   def __repr__ (self):
     return super(DomainVirtualizer, self).__repr__()
 
+  def is_empty (self):
+    """
+    Return True if the stored topology is empty.
+
+    :return: topology is empty or not
+    :rtype: bool
+    """
+    # If Dov has not been set yet
+    if self.__global_nffg is None:
+      return True
+    # If Dov does not contain any Node
+    elif len(self.__global_nffg) == 0:
+      return True
+    else:
+      return False
+
   def get_resource_info (self):
     """
     Return the global resource info represented this class.
@@ -507,7 +523,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: global resource info
     :rtype: :any:`NFFG`
     """
-    return self._global_nffg
+    return self.__global_nffg
 
   def set_domain_as_global_view (self, domain, nffg):
     """
@@ -523,10 +539,10 @@ class DomainVirtualizer(AbstractVirtualizer):
     :rtype: :any:`NFFG`
     """
     log.debug("Set domain: %s as the global view!" % domain)
-    self._global_nffg = nffg.copy()
-    self._global_nffg.id = DoV
-    self._global_nffg.name = "dov-" + self._global_nffg.generate_id()
-    return self._global_nffg
+    self.__global_nffg = nffg.copy()
+    self.__global_nffg.id = DoV
+    self.__global_nffg.name = "dov-" + self.__global_nffg.generate_id()
+    return self.__global_nffg
 
   def update_full_global_view (self, nffg):
     """
@@ -539,10 +555,10 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    id, name = self._global_nffg.id, self._global_nffg.name
-    self._global_nffg = nffg.copy()
-    self._global_nffg.id, self._global_nffg.name = id, name
-    return self._global_nffg
+    id, name = self.__global_nffg.id, self.__global_nffg.name
+    self.__global_nffg = nffg.copy()
+    self.__global_nffg.id, self.__global_nffg.name = id, name
+    return self.__global_nffg
 
   def merge_new_domain_into_dov (self, nffg):
     """
@@ -557,7 +573,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     # Using general merging function from NFFGToolBox and return the updated
     # NFFG
-    return NFFGToolBox.merge_new_domain(base=self._global_nffg,
+    return NFFGToolBox.merge_new_domain(base=self.__global_nffg,
                                         nffg=nffg,
                                         log=log)
 
@@ -572,7 +588,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    return NFFGToolBox.update(base=self._global_nffg,
+    return NFFGToolBox.update(base=self.__global_nffg,
                               nffg=nffg,
                               log=log)
 
@@ -585,7 +601,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    return NFFGToolBox.remove_domain(base=self._global_nffg,
+    return NFFGToolBox.remove_domain(base=self.__global_nffg,
                                      domain=domain,
                                      log=log)
 
@@ -634,24 +650,23 @@ class GlobalResourceManager(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
+    # If the domain is not tracked
     if domain not in self.__tracked_domains:
       log.info("Append %s domain to DoV..." % domain)
-      if self.__tracked_domains:
+      # If DoV is empty
+      if not self.__dov.is_empty():
         # Merge domain topo into global view
         self.__dov.merge_new_domain_into_dov(nffg=nffg)
       else:
-        # No other domain detected, set NFFG as the whole global view
+        # No other domain detected, set NFFG as the whole Global view
         log.debug(
           "DoV is empty! Add new domain: %s as the global view!" % domain)
         self.__dov.set_domain_as_global_view(domain=domain, nffg=nffg)
       # Add detected domain to cached domains
       self.__tracked_domains.add(domain)
     else:
-      log.error("New domain: %s has already tracked! Abort adding...")
-      # log.info("Updating DoV from %s domain..." % domain)
-      # # FIXME - only support INTERNAL domain ---> extend & improve !!!
-      # if domain == 'INTERNAL':
-      #   self.__dov.update_domain_view(domain=domain, nffg=nffg)
+      log.error("New domain: %s has already tracked: %s! Abort adding..."
+                % (domain, self.__tracked_domains))
 
   def update_domain (self, domain, nffg):
     """
@@ -668,8 +683,8 @@ class GlobalResourceManager(object):
       self.__dov.update_domain_in_dov(domain=domain, nffg=nffg)
     else:
       log.error(
-        "Detected domain: %s is not included in tracked domains! Abort "
-        "updating...")
+        "Detected domain: %s is not included in tracked domains: %s! Abort "
+        "updating..." % (domain, self.__tracked_domains))
 
   def remove_domain (self, domain):
     """
@@ -684,6 +699,5 @@ class GlobalResourceManager(object):
       self.__dov.remove_domain_from_dov(domain=domain)
       self.__tracked_domains.remove(domain)
     else:
-      log.warning(
-        "Removing domain: %s is not included in tracked domains! Skip "
-        "removing...")
+      log.warning("Removing domain: %s is not included in tracked domains: %s! "
+                  "Skip removing..." % (domain, self.__tracked_domains))
