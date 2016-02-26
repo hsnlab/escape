@@ -128,9 +128,9 @@ class AbstractDomainManager(EventMixin):
   # Abstract functions for component control
   ##############################################################################
 
-  def init (self, configurator, **kwargs):
+  def _load_adapters (self, configurator, **kwargs):
     """
-    Abstract function for component initialization.
+    Initiate Adapters using given configurator and predefined config.
 
     :param configurator: component configurator for configuring adapters
     :type configurator: :any:`ComponentConfigurator`
@@ -152,22 +152,13 @@ class AbstractDomainManager(EventMixin):
       adapter['domain_name'] = self.domain_name
     # Initiate Adapters
     self.initiate_adapters(configurator)
-    # Try to request/parse/update Mininet topology
-    if not self.__detect_topology():
-      log.warning("%s domain not confirmed during init!" % self.domain_name)
-    else:
-      # Notify all components for topology change --> this event causes
-      # the DoV updating
-      self.raiseEventNoErrors(DomainChangedEvent,
-                              domain=self.domain_name,
-                              data=self.internal_topo,
-                              cause=DomainChangedEvent.TYPE.DOMAIN_UP)
 
   def initiate_adapters (self, configurator):
     """
     Initiate Adapters for DomainManager.
 
     Must override in inherited classes.
+
     Follows the Factory Method design pattern.
 
     :param configurator: component configurator for configuring adapters
@@ -176,6 +167,29 @@ class AbstractDomainManager(EventMixin):
     """
     raise NotImplementedError(
       "Managers must override this function to initiate Adapters!")
+
+  def init (self, configurator, **kwargs):
+    """
+    Abstract function for component initialization.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :param kwargs: optional parameters
+    :type kwargs: dict
+    :return: None
+    """
+    # Load and initiate adapters using the initiate_adapters() template func
+    self._load_adapters(configurator=configurator, kwargs=kwargs)
+    # Try to request/parse/update Mininet topology
+    if not self._detect_topology():
+      log.warning("%s domain not confirmed during init!" % self.domain_name)
+    else:
+      # Notify all components for topology change --> this event causes
+      # the DoV updating
+      self.raiseEventNoErrors(DomainChangedEvent,
+                              domain=self.domain_name,
+                              data=self.internal_topo,
+                              cause=DomainChangedEvent.TYPE.DOMAIN_UP)
 
   def run (self):
     """
@@ -228,7 +242,7 @@ class AbstractDomainManager(EventMixin):
   # ESCAPE specific functions
   ##############################################################################
 
-  def __detect_topology (self):
+  def _detect_topology (self):
     """
     Check the undetected topology is up or not.
 
@@ -338,12 +352,12 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     :type kwargs: dict
     :return: None
     """
-    super(AbstractRemoteDomainManager, self).init(configurator=configurator,
-                                                  kwargs=kwargs)
+    # Load and initiate adapters using the initiate_adapters() template func
+    self._load_adapters(configurator=configurator, kwargs=kwargs)
     # Skip to start polling if it's set
     if not self._poll:
       # Try to request/parse/update Mininet topology
-      if not self.__detect_topology():
+      if not self._detect_topology():
         log.warning("%s domain not confirmed during init!" % self.domain_name)
       else:
         # Notify all components for topology change --> this event causes
@@ -425,7 +439,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     # If domain is not detected
     if not self.__detected:
       # Check the topology is reachable
-      if self.__detect_topology():
+      if self._detect_topology():
         # Domain is detected and topology is updated -> restart domain polling
         self.restart_polling()
         # Notify all components for topology change --> this event causes
