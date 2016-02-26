@@ -218,15 +218,6 @@ class NFFG(AbstractNFFG):
     return (link for s, d, link in self.network.edges_iter(data=True) if
             link.type == Link.REQUIREMENT)
 
-  def is_empty (self):
-    """
-    Return True if the NFFG contains no Node.
-
-    :return: :any:`NFFG` object is empty or not
-    :rtype: bool
-    """
-    return len(self.network) == 0
-
   ##############################################################################
   # Magic functions mostly for dict specific behaviour
   ##############################################################################
@@ -697,6 +688,28 @@ class NFFG(AbstractNFFG):
   # Helper functions
   ##############################################################################
 
+  def is_empty (self):
+    """
+    Return True if the NFFG contains no Node.
+
+    :return: :any:`NFFG` object is empty or not
+    :rtype: bool
+    """
+    return len(self.network) == 0
+
+  def relative_neighbors_iter (self, node):
+    """
+    Return with an iterator over the id of neighbours of the given Node not
+    counting the SG and E2E requirement links.
+
+    :param node: examined :any:`Node` id
+    :type node: str or int
+    :return: iterator over the filtered neighbors
+    :rtype: iterator
+    """
+    return (v for u, v, link in self.network.out_edges_iter(node, data=True)
+            if link.type not in (Link.SG, Link.REQUIREMENT))
+
   def duplicate_static_links (self):
     """
     Extend the NFFG model with backward links for STATIC links to fit for the
@@ -1054,7 +1067,7 @@ class NFFGToolBox(object):
         deletable.add(infra.id)
         # Look for orphan NF ans SAP nodes which connected to this deletable
         # infra
-        for node_id in nffg.network.neighbors_iter(infra.id):
+        for node_id in nffg.relative_neighbors_iter(infra.id):
           if nffg[node_id].type in (NFFG.TYPE_SAP, NFFG.TYPE_NF):
             deletable.add(node_id)
       log.debug("Nodes marked for deletion: %s" % deletable)
@@ -1167,7 +1180,7 @@ class NFFGToolBox(object):
     return nffg
 
   @classmethod
-  def remove_domain (cls, base, domain, log):
+  def remove_domain (cls, base, domain, log=logging.getLogger("REMOVE")):
     """
     Remove elements from the given ``base`` :any:`NFFG` with given ``domain``
     name.
@@ -1193,10 +1206,11 @@ class NFFGToolBox(object):
     deletable = set()
     for infra in base.infras:
       # Add deletable infras
-      if infra.domain == domain:
-        deletable.add(infra.id)
+      if infra.domain != domain:
+        continue
+      deletable.add(infra.id)
       # Add deletable SAP/NF connected to iterated infra
-      for node_id in base.network.neighbors_iter(infra.id):
+      for node_id in base.relative_neighbors_iter(infra.id):
         if base[node_id].type in (NFFG.TYPE_SAP, NFFG.TYPE_NF):
           deletable.add(node_id)
     log.debug("Nodes marked for deletion: %s" % deletable)
