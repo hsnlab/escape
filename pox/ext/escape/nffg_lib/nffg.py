@@ -218,8 +218,17 @@ class NFFG(AbstractNFFG):
     return (link for s, d, link in self.network.edges_iter(data=True) if
             link.type == Link.REQUIREMENT)
 
+  def is_empty (self):
+    """
+    Return True if the NFFG contains no Node.
+
+    :return: :any:`NFFG` object is empty or not
+    :rtype: bool
+    """
+    return len(self.network) == 0
+
   ##############################################################################
-  # dict specific functions
+  # Magic functions mostly for dict specific behaviour
   ##############################################################################
 
   def __str__ (self):
@@ -1059,7 +1068,10 @@ class NFFGToolBox(object):
       # Delete needless nodes --> and as a side effect the connected links too
       log.debug("Delete marked nodes...")
       nffg_part.network.remove_nodes_from(deletable)
-      log.debug("Remained nodes: %s" % [n for n in nffg_part])
+      if len(nffg_part):
+        log.debug("Remained nodes: %s" % [n for n in nffg_part])
+      else:
+        log.warning("No node was remained after splitting! ")
       splitted_parts.append((domain, nffg_part))
 
       log.debug(
@@ -1169,9 +1181,8 @@ class NFFGToolBox(object):
     :return: the update base NFFG
     :rtype: :any:`NFFG`
     """
-    log.debug(
-      "Remove nodes and edges which part of the domain: %s from %s..." % (
-        domain, base))
+    log.debug("Remove nodes and edges which part of the domain: %s from %s..."
+              % (domain, base))
     # Check existing domains
     base_domain = cls.detect_domains(nffg=base)
     if domain not in base_domain:
@@ -1190,7 +1201,10 @@ class NFFGToolBox(object):
           deletable.add(node_id)
     log.debug("Nodes marked for deletion: %s" % deletable)
     base.network.remove_nodes_from(deletable)
-    log.debug("Remained nodes after deletion: %s" % [n for n in base])
+    if len(base):
+      log.debug("Remained nodes after deletion: %s" % [n for n in base])
+    else:
+      log.warning("No node was remained after splitting! ")
     log.debug(
       "Search for inter-domain SAP ports and recreate associated SAPs...")
     cls.recreate_inter_domain_SAPs(nffg=base, log=log)

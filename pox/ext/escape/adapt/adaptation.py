@@ -511,7 +511,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     if self.__global_nffg is None:
       return True
     # If Dov does not contain any Node
-    elif len(self.__global_nffg) == 0:
+    elif self.__global_nffg.is_empty():
       return True
     else:
       return False
