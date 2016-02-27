@@ -136,9 +136,9 @@ class ServiceRequestHandler(AbstractRequestHandler):
       self.send_header('Content-Type', 'application/json')
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
-
     self.end_headers()
     self.wfile.write(data)
+    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
 
   def sg (self):
     """
@@ -172,8 +172,8 @@ class ServiceRequestHandler(AbstractRequestHandler):
       nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
     self.log.debug("Parsed service request: %s" % nffg)
     self._proceed_API_call('api_sas_sg_request', nffg)
-
     self.send_acknowledge()
+    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
 
 
 class ServiceLayerAPI(AbstractAPI):
