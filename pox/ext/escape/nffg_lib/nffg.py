@@ -19,6 +19,8 @@ import logging
 import networkx
 from networkx.exception import NetworkXError
 
+import itertools
+
 from nffg_elements import *
 
 __version__ = "1.0"
@@ -1177,6 +1179,109 @@ class NFFGToolBox(object):
         nffg.add_edge(src=e2e.src, dst=e2e.dst, link=e2e)
         log.debug("Rebounded requirement link: %s" % e2e)
     # Return the rebounded NFFG
+    return nffg
+
+  @staticmethod
+  def generate_SBB_representation (dov, log=logging.getLogger("SBB")):
+    """
+    Generate the trivial virtual topology a.k.a one BisBis or Single BisBis
+    representation with calculated resources and transferred SAP nodes.
+
+    :param dov: global resource
+    :type dov: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: single Bisbis representation
+    :rtype: :any:`NFFG`
+    """
+    nffg = NFFG(id="SingleBiSBiS-NFFG", name="Single-BiSBiS-View")
+    if dov is None:
+      log.error("Missing global resource info! Skip OneBisBis generation!")
+      return None
+    # Create Single BiSBiS NFFG
+    log.debug(
+      "Generate trivial SingleBiSBiS NFFG based on %s:" % dov)
+    # Create the single BiSBiS infra
+    sbb = nffg.add_infra(
+      id="SingleBiSbiS-%s" % (id(dov)),
+      name="SingleBiSBiS",
+      domain=NFFG.DEFAULT_DOMAIN,
+      infra_type=NFFG.TYPE_INFRA_BISBIS)
+    log.debug("Add Infra BiSBiS: %s" % sbb)
+
+    # Compute and add resources
+    # Sum of available CPU
+    try:
+      sbb.resources.cpu = sum(
+        # If iterator is empty, sum got None --> TypeError thrown by sum
+        (n.resources.cpu for n in dov.infras if
+         n.resources.cpu is not None) or None)
+    except TypeError:
+      sbb.resources.cpu = None
+    # Sum of available memory
+    try:
+      sbb.resources.mem = sum(
+        # If iterator is empty, sum got None --> TypeError thrown by sum
+        (n.resources.mem for n in dov.infras if
+         n.resources.mem is not None) or None)
+    except TypeError:
+      sbb.resources.mem = None
+    # Sum of available storage
+    try:
+      sbb.resources.storage = sum(
+        # If iterator is empty, sum got None --> TypeError thrown by sum
+        (n.resources.storage for n in dov.infras if
+         n.resources.storage is not None) or None)
+    except TypeError:
+      sbb.resources.storage = None
+    # Minimal available delay value of infras and links in DoV
+    try:
+      # Get the minimum delay in Dov to avoid false negative mapping result
+      sbb.resources.delay = min(itertools.chain(
+        # If the chained iterators is empty --> ValueError thrown by sum
+        (n.resources.delay for n in dov.infras if
+         n.resources.delay is not None),
+        (l.delay for l in dov.links if l.delay is not None)))
+    except ValueError:
+      sbb.resources.delay = None
+    # Maximum available bandwidth value of infras and links in DoV
+    try:
+      max_bw = max(itertools.chain(
+        (n.resources.bandwidth for n in dov.infras if
+         n.resources.bandwidth is not None),
+        (l.bandwidth for l in dov.links if l.bandwidth is not None)))
+      # Number of infras and links in DoV
+      sum_infra_link = sum(1 for _ in itertools.chain(dov.infras, dov.links))
+      # Overestimate switching capacity to avoid false positive mapping result
+      sbb.resources.bandwidth = max_bw * sum_infra_link
+    except ValueError:
+      sbb.resources.bandwidth = None
+    log.debug("Computed SingleBiBBiS resources: %s" % sbb.resources)
+
+    # Add supported types
+    s_types = set()
+    for infra in dov.infras:
+      s_types = s_types.union(infra.supported)
+    sbb.add_supported_type(s_types)
+    log.debug("Add supported types: %s" % s_types)
+
+    # Add existing SAPs and their connections to the SingleBiSBiS infra
+    from copy import deepcopy
+    for sap in dov.saps:
+      c_sap = nffg.add_sap(sap=deepcopy(sap))
+      log.debug("Add SAP: %s" % c_sap)
+      # Discover and add SAP connections
+      for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
+        link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
+                                                port2=sbb.add_port(
+                                                  "port-%s" % c_sap.id),
+                                                p1p2id=l.id,
+                                                delay=l.delay,
+                                                bandwidth=l.bandwidth)
+        log.debug("Add connection: %s" % link1)
+        log.debug("Add connection: %s" % link2)
+    log.debug("SingleBiSBiS generation has been finished!")
+    # Return with Single BiSBiS infra
     return nffg
 
   @classmethod
