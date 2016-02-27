@@ -43,10 +43,10 @@ class DomainChangedEvent(Event):
   TYPE = enum('DOMAIN_UP',  # new domain has detected
               "DOMAIN_CHANGED",  # detected domain has changed
               'DOMAIN_DOWN',  # detected domain got down
-              'NODE_UP',
-              'NODE_DOWN',
-              'CONNECTION_UP',
-              'CONNECTION_DOWN')
+              'NODE_UP',  # one Node/BiSBiS gone up
+              'NODE_DOWN',  # one Node/BiSBiS got down
+              'CONNECTION_UP',  # connection gone up
+              'CONNECTION_DOWN')  # connection got down
 
   def __init__ (self, domain, cause, data=None):
     """

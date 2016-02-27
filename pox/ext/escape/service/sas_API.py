@@ -372,10 +372,17 @@ class ServiceLayerAPI(AbstractAPI):
     :return: topology description requested from the layer's Virtualizer
     :rtype: :any:`NFFG`
     """
+    log.getChild('[U-Sl]').info("Requesting Virtualizer for REST-API...")
     # Get or if not available then request the layer's Virtualizer
     sas_virtualizer = self.service_orchestrator.virtResManager.virtual_view
-    # return with the virtual view as an NFFG
-    return sas_virtualizer.get_resource_info()
+    if sas_virtualizer is not None:
+      log.getChild('[U-Sl]').info("Generate topo description...")
+      # return with the virtual view as an NFFG
+      return sas_virtualizer.get_resource_info()
+    else:
+      log.getChild('[U-Sl]').error(
+        "Virtualizer(id=%s) assigned to REST-API is not found!" %
+        self.cfor_api.api_id)
 
   def get_result (self, id):
     """

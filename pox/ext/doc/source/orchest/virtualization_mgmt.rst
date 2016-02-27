@@ -6,6 +6,8 @@ Contains components relevant to virtualization of resources and views.
 .. inheritance-diagram::
    escape.orchest.virtualization_mgmt.MissingGlobalViewEvent
    escape.orchest.virtualization_mgmt.AbstractVirtualizer
+   escape.orchest.virtualization_mgmt.AbstractFilteringVirtualizer
+   escape.adapt.adaptation.DomainVirtualizer
    escape.orchest.virtualization_mgmt.GlobalViewVirtualizer
    escape.orchest.virtualization_mgmt.SingleBiSBiSVirtualizer
    escape.orchest.virtualization_mgmt.VirtualizerManager
@@ -13,7 +15,11 @@ Contains components relevant to virtualization of resources and views.
 
 :any:`MissingGlobalViewEvent` can signal missing global view.
 
-:any:`AbstractVirtualizer` contains the central logic of Virtualizers.
+:any:`AbstractVirtualizer` contains the basic logic and defines the API of
+Virtualizers.
+
+:any:`AbstractFilteringVirtualizer` contains the main logic for observing
+global Virtualizer.
 
 :any:`GlobalViewVirtualizer` implements a non-filtering/non-virtualizing logic.
 

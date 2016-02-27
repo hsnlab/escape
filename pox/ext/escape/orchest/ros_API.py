@@ -508,13 +508,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of a single BiSBiS view based on DoV
     :rtype: str
     """
-    log.getChild('[Cf-Or]').info("Requesting Virtualizer for REST-API")
+    log.getChild('[Cf-Or]').info("Requesting Virtualizer for REST-API...")
     virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       virtualizer_id=self.cfor_api.api_id, type=self.cfor_api.virtualizer_type)
     if virt is not None:
       log.getChild('[Cf-Or]').info("Generate topo description...")
-      res = virt.get_resource_info()
-      return res if res is not None else None
+      return virt.get_resource_info()
     else:
       log.error(
         "Virtualizer(id=%s) assigned to REST-API is not found!" %
