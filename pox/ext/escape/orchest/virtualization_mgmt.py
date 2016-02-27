@@ -121,6 +121,15 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     return "%s(assigned:%s, type=%s)" % (
       self.__class__.__name__, self.id, self.type)
 
+  def is_changed (self):
+    """
+    Return True if virtual resource view has been changed.
+
+    :return: view has been changed or not
+    :rtype: bool
+    """
+    return self._dirty
+
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource info.
