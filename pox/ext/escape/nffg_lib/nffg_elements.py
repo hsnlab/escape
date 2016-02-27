@@ -146,7 +146,7 @@ class Element(Persistable):
       "%s" % (self, dict2))
 
 
-class PortContainer(object):
+class PortContainer(Persistable):
   """
   Basic container class for ports.
 
@@ -157,6 +157,12 @@ class PortContainer(object):
   """
 
   def __init__ (self, container=None):
+    """
+    Init.
+
+    :param container: use given container for init
+    :type container: :any:`collections.Container`
+    """
     self.container = container if container is not None else []
 
   def __getitem__ (self, id):
@@ -194,6 +200,12 @@ class PortContainer(object):
 
   def __repr__ (self):
     return str(self)
+
+  def persist (self):
+    return [port.persist() for port in self.container]
+
+  def load (self, data, *args, **kwargs):
+    pass
 
 
 class Node(Element):
@@ -330,7 +342,7 @@ class Node(Element):
     node = super(Node, self).persist()
     if self.name is not None:
       node["name"] = self.name
-    ports = [port.persist() for port in self.ports]
+    ports = self.ports.persist()
     if ports:
       node["ports"] = ports
     if self.metadata:
@@ -962,10 +974,6 @@ class NodeInfra(Node):
 
   def load (self, data, *args, **kwargs):
     super(NodeInfra, self).load(data=data)
-    # self.id = data['id']
-    # self.operation = data.get("operation")  # optional
-    # self.name = data.get('name')  # optional
-    # self.metadata = data.get("metadata", OrderedDict())  # optional
     for port in data.get('ports', ()):
       for flowrule in port.get('flowrules', ()):
         self.ports[port['id']].flowrules.append(Flowrule.parse(flowrule))
