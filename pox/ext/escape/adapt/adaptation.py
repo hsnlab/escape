@@ -613,9 +613,9 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    ret = NFFGToolBox.update(base=self.__global_nffg,
-                             nffg=nffg,
-                             log=log)
+    ret = NFFGToolBox.update_domain(base=self.__global_nffg,
+                                    updated=nffg,
+                                    log=log)
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
                   "%s! DoV is empty!" % domain)
