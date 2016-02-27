@@ -14,16 +14,16 @@
 """
 Contains components relevant to virtualization of resources and views.
 """
-import itertools
+import weakref
 
-from escape.nffg_lib.nffg import NFFG
+from escape.nffg_lib.nffg import NFFGToolBox
 from escape.orchest import log as log
 from escape.orchest.policy_enforcement import PolicyEnforcementMetaClass
 from pox.lib.revent.revent import EventMixin, Event
 
 if 'DoV' not in globals():
   try:
-    from escape.adapt.adaptation import DoV
+    from escape.adapt.adaptation import DoV, DoVChangedEvent
   except ImportError:
     DoV = "DoV"
 
@@ -35,7 +35,7 @@ class MissingGlobalViewEvent(Event):
   pass
 
 
-class AbstractVirtualizer(object):
+class AbstractVirtualizer(EventMixin):
   """
   Abstract class for actual Virtualizers.
 
@@ -49,24 +49,18 @@ class AbstractVirtualizer(object):
   SINGLE_VIRTUALIZER = "SINGLE"
   GLOBAL_VIRTUALIZER = "GLOBAL"
 
-  def __init__ (self, id, type):
+  def __init__ (self, type):
     """
     Init.
 
-    :param id: id of the assigned entity
-    :type: id: str
     :param type: Virtualizer type
     :type type: str
     """
     super(AbstractVirtualizer, self).__init__()
-    self.id = id
     self.type = type
 
   def __str__ (self):
-    return "%s(assigned=%s)" % (self.__class__.__name__, self.id)
-
-  def __repr__ (self):
-    return super(AbstractVirtualizer, self).__repr__()
+    return "%s(type=%s)" % (self.__class__.__name__, self.type)
 
   def get_resource_info (self):
     """
@@ -94,7 +88,92 @@ class AbstractVirtualizer(object):
     pass
 
 
-class GlobalViewVirtualizer(AbstractVirtualizer):
+class AbstractFilteringVirtualizer(AbstractVirtualizer):
+  """
+  Abstract class for Virtualizers filtering another Virtualizers.
+
+  Contains template methods, dirty flag and event mechanism to handle
+  resource changes in the observed and filtered :any:`DomainVirtualizer`.
+  """
+
+  def __init__ (self, id, global_view, type):
+    """
+    Init.
+
+    :param id: id of the assigned entity
+    :type: id: str
+    :param global_view: virtualizer instance represents the global view
+    :type global_view: :any:`DomainVirtualizer`
+    :param type: Virtualizer type
+    :type type: str
+    """
+    super(AbstractFilteringVirtualizer, self).__init__(type=type)
+    self.id = id
+    if global_view is not None:
+      # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
+      self.global_view = weakref.proxy(global_view)
+      # Subscribe DoV events
+      global_view.addListeners(self)
+    self._dirty = None  # Set None to signal domain has not changed yet
+    self._cache = None  # Cache for computed topology
+
+  def __str__ (self):
+    return "%s(assigned:%s, type=%s)" % (
+      self.__class__.__name__, self.id, self.type)
+
+  def get_resource_info (self):
+    """
+    Hides object's mechanism and return with a resource info.
+
+    :return: resource info
+    :rtype: :any:`NFFG`
+    """
+    # If topology has not changed -> return with cached resource
+    if self._dirty is False:
+      log.debug("DoV is unchanged! Return cached NFFG...")
+      return self._cache
+    # If Virtualizer dirty resource info is changed since last request or has
+    # never queried yet -> acquire resource info with template method
+    if self._dirty is True:
+      log.debug("DoV has been changed! Requesting new resource NFFG...")
+    # Acquire resource
+    resource = self._acquire_resource()
+    # Cache new resource
+    self._cache = resource
+    # Clear dirty flag
+    self._dirty = False
+    return resource
+
+  def _handle_DoVChangedEvent (self, event):
+    """
+    Handle :any:`DomainChangedEvent` raised by the observer
+    :any:`DomainVirtualizer`.
+
+    :param event: event object
+    :type event: :any:`DomainChangedEvent`
+    :return: None
+    """
+    log.debug("Received DoVChanged notification for %s! Cause: %s" % (
+      self, DoVChangedEvent.TYPE.reversed[event.cause]))
+    # Topology is changed, set dirty flag
+    self._dirty = True
+
+  def _acquire_resource (self):
+    """
+    Template method for acquiring or filtering the resource info if the
+    topology has changed.
+
+    .. warning::
+      Derived class have to override this function!
+
+    :raise: NotImplementedError
+    :return: resource info
+    :rtype: :any:`NFFG`
+    """
+    raise NotImplementedError("Derived class have to override this function")
+
+
+class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
   """
   Virtualizer class for experimenting and testing.
 
@@ -112,25 +191,30 @@ class GlobalViewVirtualizer(AbstractVirtualizer):
     """
     log.debug("Initiate unfiltered/global <Virtual View>")
     super(GlobalViewVirtualizer, self).__init__(id=id,
+                                                global_view=global_view,
                                                 type=self.GLOBAL_VIRTUALIZER)
-    # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
-    self.global_view = global_view
 
   def get_resource_info (self):
     """
-    Hides object's mechanism and return with a resource object derived from
-    :any:`NFFG`.
+    Return with the unfiltered global view.
 
-    :return: Virtual resource info as an NFFG
+    :return: Virtual resource info
     :rtype: :any:`NFFG`
     """
-    # log.debug("Request virtual resource info...")
+    # Leave the dirty mechanism operational
+    self._dirty = False
+    log.debug(
+      "No filtering in Virtualizer: %s. Return full global resource..." %
+      self.type)
     # Currently we NOT filter the global view just propagate to other layers
     # and entities intact
     return self.global_view.get_resource_info()
 
+  def _acquire_resource (self):
+    pass
 
-class SingleBiSBiSVirtualizer(AbstractVirtualizer):
+
+class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
   """
   Actual Virtualizer class for ESCAPEv2.
 
@@ -148,130 +232,27 @@ class SingleBiSBiSVirtualizer(AbstractVirtualizer):
     """
     log.debug("Initiate default SingleBiSBiS <Virtual View>")
     super(SingleBiSBiSVirtualizer, self).__init__(id=id,
+                                                  global_view=global_view,
                                                   type=self.SINGLE_VIRTUALIZER)
-    # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
-    self.global_view = global_view
-    self.__resource_cache = None
 
-  def get_resource_info (self):
+  def _acquire_resource (self):
     """
-    Hides object's mechanism and return with a resource object derived from
-    :any:`NFFG`.
+    Compute and return with the Single BiS-BiS view based on the global view.
 
-    :return: Virtual resource info as an NFFG
+    :return: single BiSBiS representation of the global view
     :rtype: :any:`NFFG`
     """
-    # log.debug("Request virtual resource info...")
-    # Currently we NOT filter the global view just propagate to other layers
-    # and entities intact
-    if self.__resource_cache is None:
-      self.__resource_cache = self._generate_one_bisbis()
-    return self.__resource_cache
-
-  def _generate_one_bisbis (self):
-    """
-    Generate trivial virtual topology a.k.a one BisBis with cumulated
-    resources and transferred SAP nodes.
-
-    :return: one Bisbis topo
-    :rtype: :any:`NFFG`
-    """
-    nffg = NFFG(id="SingleBiSBiS-NFFG", name="Single-BiSBiS-View")
-    if self.global_view is None:
-      log.error(
-        "Missing global view from %s. Skip OneBiSBiS generation!" %
-        self.__class__.__name__)
-      return None
     dov = self.global_view.get_resource_info()
-    if dov is None:
-      log.error("Missing resource info from DoV. Skip OneBisBis generation!")
-      return None
-    # Create Single BiSBiS NFFG
-    log.debug(
-      "Generate trivial SingleBiSBiS NFFG based on %s:" % self.global_view)
-    import random
-    # Create the single BiSBiS infra
-    sbb = nffg.add_infra(
-      id="SingleBiSbiS-%s" % (id(self) + random.randint(0, 1000)),
-      name="Single-BiSBiS",
-      domain=NFFG.DEFAULT_DOMAIN,
-      infra_type=NFFG.TYPE_INFRA_BISBIS)
-    log.debug("Add Infra BiSBiS: %s" % sbb)
-
-    # Compute and add resources
-    # Sum of available CPU
-    try:
-      sbb.resources.cpu = sum(
-        # If iterator is empty, sum got None --> TypeError thrown by sum
-        (n.resources.cpu for n in dov.infras if
-         n.resources.cpu is not None) or None)
-    except TypeError:
-      sbb.resources.cpu = None
-    # Sum of available memory
-    try:
-      sbb.resources.mem = sum(
-        # If iterator is empty, sum got None --> TypeError thrown by sum
-        (n.resources.mem for n in dov.infras if
-         n.resources.mem is not None) or None)
-    except TypeError:
-      sbb.resources.mem = None
-    # Sum of available storage
-    try:
-      sbb.resources.storage = sum(
-        # If iterator is empty, sum got None --> TypeError thrown by sum
-        (n.resources.storage for n in dov.infras if
-         n.resources.storage is not None) or None)
-    except TypeError:
-      sbb.resources.storage = None
-    # Minimal available delay value of infras and links in DoV
-    try:
-      # Get the minimum delay in Dov to avoid false negative mapping result
-      sbb.resources.delay = min(itertools.chain(
-        # If the chained iterators is empty --> ValueError thrown by sum
-        (n.resources.delay for n in dov.infras if
-         n.resources.delay is not None),
-        (l.delay for l in dov.links if l.delay is not None)))
-    except ValueError:
-      sbb.resources.delay = None
-    # Maximum available bandwidth value of infras and links in DoV
-    try:
-      max_bw = max(itertools.chain(
-        (n.resources.bandwidth for n in dov.infras if
-         n.resources.bandwidth is not None),
-        (l.bandwidth for l in dov.links if l.bandwidth is not None)))
-      # Number of infras and links in DoV
-      sum_infra_link = sum(1 for _ in itertools.chain(dov.infras, dov.links))
-      # Overestimate switching capacity to avoid false positive mapping result
-      sbb.resources.bandwidth = max_bw * sum_infra_link
-    except ValueError:
-      sbb.resources.bandwidth = None
-    log.debug("Computed SingleBiBBiS resources: %s" % sbb.resources)
-
-    # Add supported types
-    s_types = set()
-    for infra in dov.infras:
-      s_types = s_types.union(infra.supported)
-    sbb.add_supported_type(s_types)
-    log.debug("Add supported types: %s" % s_types)
-
-    # Add existing SAPs and their connections to the SingleBiSBiS infra
-    from copy import deepcopy
-    for sap in dov.saps:
-      c_sap = nffg.add_sap(sap=deepcopy(sap))
-      log.debug("Add SAP: %s" % c_sap)
-      # Discover and add SAP connections
-      for u, v, l in dov.network.out_edges_iter([sap.id], data=True):
-        link1, link2 = nffg.add_undirected_link(port1=c_sap.ports[l.src.id],
-                                                port2=sbb.add_port(
-                                                  "port-%s" % c_sap.id),
-                                                p1p2id=l.id,
-                                                delay=l.delay,
-                                                bandwidth=l.bandwidth)
-        log.debug("Add connection: %s" % link1)
-        log.debug("Add connection: %s" % link2)
-    log.debug("SingleBiSBiS generation has been finished!")
-    # Return with Single BiSBiS infra
-    return nffg
+    if dov.is_empty():
+      # DoV is not initialized yet! Probably only just remote Mgrs has been
+      # enabled! return with the default empty DoV
+      log.warning(
+        "Requested global resource view is empty! Return the default empty "
+        "topology!")
+      return dov
+    else:
+      # Generate the Single BiSBiS representation
+      return NFFGToolBox.generate_SBB_representation(dov=dov, log=log)
 
 
 class VirtualizerManager(EventMixin):
