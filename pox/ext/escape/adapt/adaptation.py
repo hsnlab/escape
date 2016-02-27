@@ -24,7 +24,8 @@ from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest.virtualization_mgmt import AbstractVirtualizer
 from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent
-from escape.util.misc import notify_remote_visualizer, VERBOSE
+from escape.util.misc import notify_remote_visualizer, VERBOSE, enum
+from pox.lib.revent import Event
 
 
 class ComponentConfigurator(object):
@@ -456,6 +457,21 @@ class ControllerAdapter(object):
 DoV = "DoV"
 
 
+class DoVChangedEvent(Event):
+  """
+  Event for signalling the DoV is changed.
+  """
+  # Constants for type of changes
+  TYPE = enum("CHANGED", "EMPTY")
+
+  def __init__ (self, cause):
+    """
+    Init
+    """
+    super(DoVChangedEvent, self).__init__()
+    self.cause = cause
+
+
 class DomainVirtualizer(AbstractVirtualizer):
   """
   Specific Virtualizer class for global domain virtualization.
@@ -465,6 +481,8 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   Use :any:`NFFG` format to store the global infrastructure info.
   """
+  # Events raised by this class
+  _eventMixin_events = {DoVChangedEvent}
 
   def __init__ (self, mgr, global_res=None):
     """
@@ -476,8 +494,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :type global_res: :any:`NFFG`
     :return: None
     """
-    super(DomainVirtualizer, self).__init__(id=None,
-                                            type=self.DOMAIN_VIRTUALIZER)
+    super(DomainVirtualizer, self).__init__(type=self.DOMAIN_VIRTUALIZER)
     log.debug("Init DomainVirtualizer with name: %s - initial resource: %s" % (
       DoV, global_res))
     # Garbage-collector safe
@@ -543,6 +560,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.__global_nffg = nffg.copy()
     self.__global_nffg.id = DoV
     self.__global_nffg.name = "dov-" + self.__global_nffg.generate_id()
+    # Raise event for observing Virtualizers about topology change
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
     return self.__global_nffg
 
   def update_full_global_view (self, nffg):
@@ -559,6 +578,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     id, name = self.__global_nffg.id, self.__global_nffg.name
     self.__global_nffg = nffg.copy()
     self.__global_nffg.id, self.__global_nffg.name = id, name
+    # Raise event for observing Virtualizers about topology change
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
     return self.__global_nffg
 
   def merge_new_domain_into_dov (self, nffg):
@@ -574,9 +595,12 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     # Using general merging function from NFFGToolBox and return the updated
     # NFFG
-    return NFFGToolBox.merge_new_domain(base=self.__global_nffg,
-                                        nffg=nffg,
-                                        log=log)
+    res = NFFGToolBox.merge_new_domain(base=self.__global_nffg,
+                                       nffg=nffg,
+                                       log=log)
+    # Raise event for observing Virtualizers about topology change
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
+    return res
 
   def update_domain_in_dov (self, domain, nffg):
     """
@@ -595,6 +619,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
                   "%s! DoV is empty!" % domain)
+    # Raise event for observing Virtualizers about topology change
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
     return ret
 
   def remove_domain_from_dov (self, domain):
@@ -612,6 +638,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
                   "%s! DoV is empty!" % domain)
+    # Raise event for observing Virtualizers about topology change
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
     return ret
 
 
