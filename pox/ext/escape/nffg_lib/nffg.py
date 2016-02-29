@@ -1140,6 +1140,79 @@ class NFFGToolBox(object):
     log.info("Splitting has been finished!")
     return splitted_parts
 
+  @classmethod
+  def rewrite_interdomain_tags (cls, slices):
+    """
+    Calculate and rewrite inter-domain tags.
+
+    Inter-domain connections via inter-domain SAPs are harmonized
+    here.  The abstrcat tags in flowrules are rewritten to technology
+    specific ones based on the information retreived from inter-domain
+    SAPs.
+
+    :param slices: list of mapped NF-FG instances
+    :type slice: list of NFFG structures
+    :return: list of NFFG structures with updated tags
+    """
+    log.debug("Calculating inter-domain tags...")
+
+    for nffg in slices:
+      log.debug("Processing domain %s" % nffg[0])
+      # collect SAP ports of infra nodes
+      sap_ports = []
+      for sap in nffg[1].saps:
+        sap_switch_links = [e for e in
+                            nffg[1].network.edges_iter(data=True) if sap.id in e]
+        # list of e = (u, v, data)
+        try:
+          if sap_switch_links[0][0] == sap.id:
+            sap_ports.append(sap_switch_links[0][2].dst)
+          else:
+            sap_ports.append(sap_switch_links[0][2].src)
+        except IndexError:
+          log.error(
+            "Link for SAP: %s is not found." % sap)
+          continue
+
+      for infra in nffg[1].infras:
+        log.debug("Processing infra %s" % infra)
+        for port in infra.ports:
+          # collect inbound flowrules of SAP ports
+          if port in sap_ports:
+            for flowrule in port.flowrules:
+              log.debug(
+                "Processing FLOWRULE: %s" % flowrule)
+              # collect inbound flowrules of SAP ports
+              log.debug(
+                "MATCH: %s" % flowrule.match)
+              log.debug(
+                "ACTION: %s" % flowrule.action)
+
+              if re.search(r'TAG', flowrule.match):
+                tag_field = re.sub(r'.*(TAG=.*);?', r'\1', flowrule.match)
+                # TODO:
+                # check exact tag from upper level
+
+                # generate exact tag
+                tag_id = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
+                tag_exact = tag
+
+
+          # collect outbound flowrules toward SAP ports
+          else:
+            pass
+
+      #     if sap.domain is not None:
+      #       # inter-domain saps
+      #       pass
+      #     else:
+      #       # host saps
+      #       pass
+
+      #     # collect outbound flowrules
+
+    return slices
+
   @staticmethod
   def rebind_e2e_req_links (nffg, log=logging.getLogger("REBIND")):
     """
