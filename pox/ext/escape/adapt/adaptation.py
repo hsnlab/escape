@@ -384,6 +384,7 @@ class ControllerAdapter(object):
     log.debug(
       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
     # TODO - abstract/inter-domain tag rewrite
+    # NFFGToolBox.rewrite_interdomain_tags(slices)
     mapping_result = True
     for domain, part in slices:
       # Rebind requirement link fragments as e2e reqs
