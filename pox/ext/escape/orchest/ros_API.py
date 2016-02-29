@@ -229,6 +229,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       self.server.last_response = config
       data = config.dump()
       self.send_header('Content-Type', 'application/json')
+    self.log.log(VERBOSE, "Generated config for 'get-config:\n%s" % data)
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
@@ -259,6 +260,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         return
       # Get received Virtualizer
       received_cfg = Virtualizer.parse_from_text(text=raw_body)
+      self.log.log(VERBOSE,
+                   "Received request for 'edit-config':\n%s" % raw_body)
       # Adapt changes on the local config
       if not isinstance(self.server.last_response, Virtualizer):
         self.log.warning("Missing cached Virtualizer!")

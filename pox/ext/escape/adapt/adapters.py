@@ -877,7 +877,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug(
       "Send topology description to domain agent at %s..." % self._base_url)
     log.log(VERBOSE, "Generated Virtualizer for domain: %s:\n%s" % (
-      data, self.domain_name))
+      self.domain_name, data))
     try:
       result = self.send_with_timeout(self.POST, 'edit-config', data)
       log.info("Topology description has been sent!")
