@@ -191,31 +191,67 @@ class NFFG(AbstractNFFG):
 
   @property
   def nfs (self):
+    """
+    Iterate over the NF nodes.
+
+    :return: iterator of NFs
+    :rtype: collections.Iterator
+    """
     return (node for id, node in self.network.nodes_iter(data=True) if
             node.type == Node.NF)
 
   @property
   def saps (self):
+    """
+    Iterate over the SAP nodes.
+
+    :return: iterator of SAPs
+    :rtype: collections.Iterator
+    """
     return (node for id, node in self.network.nodes_iter(data=True) if
             node.type == Node.SAP)
 
   @property
   def infras (self):
+    """
+    Iterate over the Infra nodes.
+
+    :return: iterator of Infra node
+    :rtype: collections.Iterator
+    """
     return (node for id, node in self.network.nodes_iter(data=True) if
             node.type == Node.INFRA)
 
   @property
   def links (self):
+    """
+    Iterate over the link edges.
+
+    :return: iterator of edges
+    :rtype: collections.Iterator
+    """
     return (link for src, dst, link in self.network.edges_iter(data=True) if
             link.type == Link.STATIC or link.type == Link.DYNAMIC)
 
   @property
   def sg_hops (self):
+    """
+    Iterate over the service graph hops.
+
+    :return: iterator of SG edges
+    :rtype: collections.Iterator
+    """
     return (link for s, d, link in self.network.edges_iter(data=True) if
             link.type == Link.SG)
 
   @property
   def reqs (self):
+    """
+    Iterate over the requirement edges.
+
+    :return: iterator of requirement edges
+    :rtype: collections.Iterator
+    """
     return (link for s, d, link in self.network.edges_iter(data=True) if
             link.type == Link.REQUIREMENT)
 
@@ -224,11 +260,14 @@ class NFFG(AbstractNFFG):
   ##############################################################################
 
   def __str__ (self):
+    """
+    Return the string representation.
+
+    :return: string representation
+    :rtype: str
+    """
     return "NFFG(id=%s name=%s, version=%s)" % (
       self.id, self.name, self.version)
-
-  def __repr__ (self):
-    return super(NFFG, self).__repr__()
 
   def __contains__ (self, item):
     """
@@ -1388,6 +1427,12 @@ class NFFGToolBox(object):
 
   @staticmethod
   def _get_output_port_of_TAG_action (TAG, port):
+    """
+
+    :param TAG:
+    :param port:
+    :return:
+    """
     for fr in port.flowrules:
       actions = fr.action.split(";")
       for action in actions:
@@ -1409,6 +1454,13 @@ class NFFGToolBox(object):
 
   @staticmethod
   def _find_static_link (nffg, port, outbound=True):
+    """
+
+    :param nffg:
+    :param port:
+    :param outbound:
+    :return:
+    """
     edges_func = None
     link = None
     if outbound:
@@ -1431,6 +1483,12 @@ class NFFGToolBox(object):
 
   @staticmethod
   def _is_port_finishing_flow (TAG, port):
+    """
+
+    :param TAG:
+    :param port:
+    :return:
+    """
     if port.node.type == 'SAP':
       return True
     for fr in port.flowrules:
@@ -1445,6 +1503,11 @@ class NFFGToolBox(object):
 
   @staticmethod
   def get_TAGs_of_starting_flows (port):
+    """
+
+    :param port:
+    :return:
+    """
     for fr in port.flowrules:
       for action in fr.action.split(";"):
         command_param = action.split("=")
@@ -1454,12 +1517,17 @@ class NFFGToolBox(object):
   @staticmethod
   def retrieve_mapped_path (TAG, nffg, starting_port):
     """
-    Finds the list of links, where the traffic tagged with the given TAG is 
-    routed. starting_port is the first port where the tag is put onto the 
+    Finds the list of links, where the traffic tagged with the given TAG is
+    routed. starting_port is the first port where the tag is put onto the
     traffic (the outbound dynamic port of the starting VNF of the flow).
     Returns the list of link objects and the corresponding bandwidth value.
     TODO (?): add default 'None' parameter value for starting_port
     , when the function should find where the given TAG is put on the traffic
+
+    :param TAG:
+    :param nffg:
+    :param starting_port:
+    :return:
     """
     edge_list = []
     bandwidth = None
@@ -1578,11 +1646,21 @@ class NFFGToolBox(object):
 
   @staticmethod
   def generate_all_TAGs_of_NFFG (nffg):
+    """
+
+    :param nffg:
+    :return:
+    """
     for sg in nffg.sg_links:
       yield "|".join((sg.src.node.id, sg.dst.node.id, sg.id))
 
   @staticmethod
   def try_to_convert (id):
+    """
+
+    :param id:
+    :return:
+    """
     converted = id
     try:
       converted = int(id)
@@ -1594,10 +1672,13 @@ class NFFGToolBox(object):
   def retrieve_all_SGHops (nffg):
     """
     Returns a dictionary keyed by (VNFsrc, VNFdst, reqlinkid) tuples
-    , data is [PortObjsrc, PortObjdst] list of port 
+    , data is [PortObjsrc, PortObjdst] list of port
     objects. It is based exclusively on flowrules.
     # TODO: retrieve bandwidth and latency (these should be the same for a given
     flowrule sequence, because they all represent the same SGHop)
+
+    :param nffg:
+    :return:
     """
     sg_map = {}
     for d in nffg.infras:

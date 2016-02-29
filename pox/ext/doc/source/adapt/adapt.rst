@@ -19,4 +19,6 @@ Submodules
     adapters
     cas_API
     managers
+    policy_enforcement
+    virtualization
 

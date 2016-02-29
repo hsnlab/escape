@@ -1,19 +1,23 @@
-*virtualization_mgmt.py* module
-===============================
+*virtualization.py* module
+==========================
 
 Contains components relevant to virtualization of resources and views.
 
 .. inheritance-diagram::
-   escape.orchest.virtualization_mgmt.MissingGlobalViewEvent
-   escape.orchest.virtualization_mgmt.AbstractVirtualizer
-   escape.orchest.virtualization_mgmt.AbstractFilteringVirtualizer
-   escape.adapt.adaptation.DomainVirtualizer
-   escape.orchest.virtualization_mgmt.GlobalViewVirtualizer
-   escape.orchest.virtualization_mgmt.SingleBiSBiSVirtualizer
-   escape.orchest.virtualization_mgmt.VirtualizerManager
+   escape.adapt.virtualization.MissingGlobalViewEvent
+   escape.adapt.virtualization.DoVChangedEvent
+   escape.adapt.virtualization.AbstractVirtualizer
+   escape.adapt.virtualization.AbstractFilteringVirtualizer
+   escape.adapt.virtualization.DomainVirtualizer
+   escape.adapt.virtualization.GlobalViewVirtualizer
+   escape.adapt.virtualization.SingleBiSBiSVirtualizer
+   escape.adapt.virtualization.VirtualizerManager
    :parts: 1
 
 :any:`MissingGlobalViewEvent` can signal missing global view.
+
+:any:`DoVChangedEvent` can signal for the specific Virtualizers the DOV is
+changed.
 
 :any:`AbstractVirtualizer` contains the basic logic and defines the API of
 Virtualizers.
@@ -31,7 +35,7 @@ logic of the Resource Orchestration Sublayer.
 Module contents
 ---------------
 
-.. automodule:: escape.orchest.virtualization_mgmt
+.. automodule:: escape.adapt.virtualization
    :members:
    :private-members:
    :special-members:
