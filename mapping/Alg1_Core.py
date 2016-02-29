@@ -17,26 +17,25 @@
 Core functions and classes of Algorithm1.
 """
 
-import sys
 import copy
+import networkx as nx
+import sys
 from collections import deque
 
-import networkx as nx
-
-import GraphPreprocessor
-import UnifyExceptionTypes as uet
 import Alg1_Helper as helper
 import BacktrackHandler as backtrack
+import GraphPreprocessor
+import UnifyExceptionTypes as uet
 
 try:
-  from escape.util.nffg import NFFG
+  from escape.nffg_lib.nffg import NFFG
 except ImportError:
   import sys, os, inspect
 
   sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
     os.path.abspath(
       os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
-                                  "pox/ext/escape/util/"))
+                                  "pox/ext/escape/nffg_lib/"))
   from nffg import NFFG
 
 

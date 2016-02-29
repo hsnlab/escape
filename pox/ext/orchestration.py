@@ -18,9 +18,9 @@ Initiate appropriate API class which implements Sl-Or reference point
 
 Follows POX module conventions
 """
+import pox.lib.util as poxutil
 from escape.orchest.ros_API import ResourceOrchestrationAPI
 from pox.core import core
-import pox.lib.util as poxutil
 
 # Initial parameters
 init_param = {}

@@ -16,9 +16,9 @@ Wrapper module for handling emulated test topology based on Mininet.
 """
 from escape import CONFIG
 from escape.infr import log, LAYER_NAME
+from escape.nffg_lib.nffg import NFFG
+from escape.nffg_lib.nffg_elements import NodeInfra
 from escape.util.misc import quit_with_error, get_ifaces
-from escape.util.nffg import NFFG
-from escape.util.nffg_elements import NodeInfra
 from mininet.link import TCLink, Intf
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
@@ -269,8 +269,8 @@ class InternalControllerProxy(RemoteController):
     listening = self.cmd("echo A | telnet -e A %s %d" % (self.ip, self.port))
     if 'Connected' not in listening:
       log.debug(
-         "Unable to contact with internal controller at %s:%d. Waiting..." % (
-           self.ip, self.port))
+        "Unable to contact with internal controller at %s:%d. Waiting..." % (
+          self.ip, self.port))
 
 
 class ESCAPENetworkBridge(object):
@@ -304,15 +304,15 @@ class ESCAPENetworkBridge(object):
       self.__mininet = network
     else:
       log.warning(
-         "Network implementation object is missing! Use Builder class instead "
-         "of direct initialization. Creating bare Mininet object anyway...")
+        "Network implementation object is missing! Use Builder class instead "
+        "of direct initialization. Creating bare Mininet object anyway...")
       self.__mininet = MininetWithControlNet()
     # Topology description which is emulated by the Mininet
     self.topo_desc = topo_desc
     # Duplicate static links for ensure undirected neighbour relationship
     if self.topo_desc is not None:
       log.debug(
-         "Duplicate STATIC links to ensure undirected relationship for mapping")
+        "Duplicate STATIC links to ensure undirected relationship for mapping")
       self.topo_desc.duplicate_static_links()
     # Need to clean after shutdown
     self._need_clean = None
@@ -356,12 +356,16 @@ class ESCAPENetworkBridge(object):
         except SystemExit:
           quit_with_error(msg="Mininet emulation requires root privileges!",
                           logger=LAYER_NAME)
+        except KeyboardInterrupt:
+          quit_with_error(
+            msg="Initiation of Mininet network was interrupted by user!",
+            logger=log)
         self.started = True
         log.debug("Mininet network has been started!")
         self.runXTerms()
       else:
         log.warning(
-           "Mininet network has already started! Skipping start task...")
+          "Mininet network has already started! Skipping start task...")
     else:
       log.error("Missing topology! Skipping emulation...")
 
@@ -389,7 +393,7 @@ class ESCAPENetworkBridge(object):
     """
     if self.started:
       log.warning(
-         "Mininet network is not stopped yet! Skipping cleanup task...")
+        "Mininet network is not stopped yet! Skipping cleanup task...")
     else:
       log.info("Schedule cleanup task after Mininet emulation...")
       # Kill remained xterms
@@ -491,10 +495,15 @@ class ESCAPENetworkBuilder(object):
         self.mn = net
       else:
         raise RuntimeError(
-           "Network object's type must be a derived class of Mininet!")
+          "Network object's type must be a derived class of Mininet!")
     else:
       # self.mn = Mininet(**self.opts)
-      self.mn = MininetWithControlNet(**self.opts)
+      try:
+        self.mn = MininetWithControlNet(**self.opts)
+      except KeyboardInterrupt:
+        quit_with_error(
+          msg="Assembly of Mininet network was interrupted by user!",
+          logger=log)
     # Basically a wrapper for mn to offer helping functions
     self.mn_bridge = None
     # Cache of the topology description as an NFFG which is parsed during
@@ -554,9 +563,9 @@ class ESCAPENetworkBuilder(object):
         created_mn_nodes[infra.id] = static_ee
       else:
         quit_with_error(
-           msg="Type: %s in %s is not supported by the topology creation "
-               "process in %s!" % (
-                 infra.infra_type, infra, self.__class__.__name__), logger=log)
+          msg="Type: %s in %s is not supported by the topology creation "
+              "process in %s!" % (
+                infra.infra_type, infra, self.__class__.__name__), logger=log)
     # Create SAPs - skip the temporary, inter-domain SAPs
     for sap in {s for s in nffg.saps if not s.domain}:
       # Create SAP
@@ -578,19 +587,19 @@ class ESCAPENetworkBuilder(object):
       mn_dst_node = created_mn_nodes.get(edge.dst.node.id)
       if mn_src_node is None or mn_dst_node is None:
         raise RuntimeError(
-           "Created topology node is missing! Something really went wrong!")
+          "Created topology node is missing! Something really went wrong!")
       src_port = int(edge.src.id) if int(edge.src.id) < 65535 else None
       if src_port is None:
         log.warning(
-           "Source port id of Link: %s is generated dynamically! Using "
-           "automatic port assignment based on internal Mininet "
-           "implementation!" % edge)
+          "Source port id of Link: %s is generated dynamically! Using "
+          "automatic port assignment based on internal Mininet "
+          "implementation!" % edge)
       dst_port = int(edge.dst.id) if int(edge.dst.id) < 65535 else None
       if dst_port is None:
         log.warning(
-           "Destination port id of Link: %s is generated dynamically! Using "
-           "automatic port assignment based on internal Mininet "
-           "implementation!" % edge)
+          "Destination port id of Link: %s is generated dynamically! Using "
+          "automatic port assignment based on internal Mininet "
+          "implementation!" % edge)
       link = self.create_Link(src=mn_src_node, src_port=src_port,
                               dst=mn_dst_node, dst_port=dst_port,
                               bw=edge.bandwidth, delay=str(edge.delay) + 'ms')
@@ -684,7 +693,7 @@ class ESCAPENetworkBuilder(object):
       raise TopologyBuilderException("Missing topology file!")
     except ValueError as e:
       log.error(
-         "An error occurred when load topology from file: %s" % e.message)
+        "An error occurred when load topology from file: %s" % e.message)
       raise TopologyBuilderException("File parsing error!")
 
   def get_network (self):
@@ -895,8 +904,8 @@ class ESCAPENetworkBuilder(object):
           border_node = sap_switch_links[0][0]
       except IndexError:
         log.error(
-           "Link for inter-domain SAP: %s is not found. Skip SAP creation..."
-           % sap)
+          "Link for inter-domain SAP: %s is not found. Skip SAP creation..."
+          % sap)
         continue
       log.debug("Detected inter-domain SAP: %s connected to border Node: %s" % (
         sap, border_node))
@@ -906,8 +915,8 @@ class ESCAPENetworkBuilder(object):
         if sw.name == sw_name:
           if sap.domain not in get_ifaces():
             log.warning(
-               "Physical interface: %s is not found! Skip binding..."
-               % sap.domain)
+              "Physical interface: %s is not found! Skip binding..."
+              % sap.domain)
             continue
           log.debug("Add physical port as inter-domain SAP: %s -> %s" %
                     (sap.domain, sap.id))
@@ -988,10 +997,11 @@ class ESCAPENetworkBuilder(object):
         self.__init_from_AbstractTopology(topo_class=topo)
       else:
         raise RuntimeError(
-           "Unsupported topology format: %s - %s" % (type(topo), topo))
+          "Unsupported topology format: %s - %s" % (type(topo), topo))
       return self.get_network()
     except SystemExit as e:
-      quit_with_error(msg="Mininet exited unexpectedly! Cause: %s" % e.message)
+      quit_with_error(msg="Mininet exited unexpectedly!", logger=log,
+                      exception=e)
     except TopologyBuilderException:
       if self.fallback:
         # Search for fallback topology
@@ -1008,3 +1018,7 @@ class ESCAPENetworkBuilder(object):
       else:
         # Re-raise the exception
         raise
+    except KeyboardInterrupt:
+      quit_with_error(
+        msg="Assembly of Mininet network was interrupted by user!",
+        logger=log)

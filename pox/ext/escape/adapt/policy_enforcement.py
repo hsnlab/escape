@@ -17,8 +17,7 @@ Contains functionality related to policy enforcement.
 import repr
 from functools import wraps
 
-import escape.orchest.virtualization_mgmt
-from escape.orchest import log as log
+from escape.adapt import log as log
 
 
 class PolicyEnforcementError(RuntimeError):
@@ -46,9 +45,9 @@ class PolicyEnforcementMetaClass(type):
     If policy checking fails a :class:`PolicyEnforcementError` should be
     raised and handled in a higher layer..
 
-  To use policy checking set the following class attribute::
+  To use policy checking set the following class attribute:
 
-    __metaclass__ = PolicyEnforcementMetaClass
+    >>> __metaclass__ = PolicyEnforcementMetaClass
   """
 
   def __new__ (mcs, name, bases, attrs):
@@ -98,25 +97,19 @@ class PolicyEnforcementMetaClass(type):
       Wrapper function which call policy checking functions if they exist.
       """
       if len(args) > 0:
-        if isinstance(args[0],
-                      escape.orchest.virtualization_mgmt.AbstractVirtualizer):
-          # Call Policy checking function before original
-          if hooks[0]:
-            log.debug("Invoke Policy checking function: [PRE] %s" % (
-              hooks[0].__name__.split('pre_', 1)[1]))
-            hooks[0](args, kwargs)
-          # Call original function
-          ret_value = orig_func(*args, **kwargs)
-          # Call Policy checking function after original
-          if hooks[1]:
-            log.debug("Invoke Policy checking function: [POST] %s" % (
-              hooks[1].__name__.split('post_', 1)[1]))
-            hooks[1](args, kwargs, ret_value)
-          return ret_value
-        else:
-          log.warning(
-             "Binder class of policy checker function is not a subclass of "
-             "AbstractVirtualizer!")
+        # Call Policy checking function before original
+        if hooks[0]:
+          log.debug("Invoke Policy checking function: [PRE] %s" % (
+            hooks[0].__name__.split('pre_', 1)[1]))
+          hooks[0](args, kwargs)
+        # Call original function
+        ret_value = orig_func(*args, **kwargs)
+        # Call Policy checking function after original
+        if hooks[1]:
+          log.debug("Invoke Policy checking function: [POST] %s" % (
+            hooks[1].__name__.split('post_', 1)[1]))
+          hooks[1](args, kwargs, ret_value)
+        return ret_value
       else:
         log.warning("Something went wrong during binding Policy checker!")
       log.error("Abort policy enforcement checking!")
@@ -139,17 +132,17 @@ class PolicyEnforcement(object):
     Every PRE policy checking function is classmethod and need to have two
     parameter for nameless (args) and named(kwargs) params:
 
-  Example::
+  Example:
 
-    def pre_sanity_check (cls, args, kwargs):
+    >>> def pre_sanity_check (cls, args, kwargs):
 
   .. warning::
     Every POST policy checking function is classmethod and need to have three
     parameter for nameless (args), named (kwargs) params and return value:
 
-  Example::
+  Example:
 
-    def post_sanity_check (cls, args, kwargs, ret_value):
+    >>> def post_sanity_check (cls, args, kwargs, ret_value):
 
   .. note::
     The first element of args is the supervised Virtualizer ('self' param in the

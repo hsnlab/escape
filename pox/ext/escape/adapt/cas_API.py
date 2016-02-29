@@ -19,9 +19,9 @@ from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
 from escape.adapt.adaptation import ControllerAdapter
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
+from escape.nffg_lib.nffg import NFFG
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task
-from escape.util.nffg import NFFG
 from pox.lib.revent.revent import Event
 
 
@@ -174,12 +174,12 @@ class ControllerAdaptationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Received <Global Resource View> request from %s layer" % str(
+      "Received DoV request from %s layer" % str(
         event.source._core_name).title())
     # Currently global view is a reference to the DoV to keep ESCAPE fast
-    dov = self.controller_adapter.domainResManager.get_global_view()
+    dov = self.controller_adapter.DoVManager.dov
     log.getChild('API').debug(
-      "Sending back <Global Resource View>: %s..." % dov)
+      "Sending back DoV: %s..." % dov)
     self.raiseEventNoErrors(GlobalResInfoEvent, dov)
 
   def _handle_DeployEvent (self, event):

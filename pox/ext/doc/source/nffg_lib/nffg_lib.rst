@@ -1,7 +1,7 @@
-*escape.orchest* package
-========================
+*escape.nffg_lib* package
+=========================
 
-.. automodule:: escape.orchest
+.. automodule:: escape.nffg_lib
    :members:
    :private-members:
    :special-members:
@@ -15,7 +15,5 @@ Submodules
 .. toctree::
     :titlesonly:
 
-    nfib_mgmt
-    ros_orchestration
-    ros_API
-    ros_mapping
+    nffg
+    nffg_elements

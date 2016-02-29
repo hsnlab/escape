@@ -14,14 +14,19 @@
 """
 Contains miscellaneous helper functions.
 """
+import cProfile
+import io
 import logging
 import os
+import pstats
 import re
-import traceback
 import warnings
 import weakref
 from functools import wraps
 from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
+
+# Log level constant for additional VERBOSE level
+VERBOSE = 5
 
 
 def schedule_as_coop_task (func):
@@ -156,13 +161,11 @@ def enum (*sequential, **named):
   """
   Helper function to define enumeration. E.g.:
 
-  .. code-block:: python
-
-    Numbers = enum(ONE=1, TWO=2, THREE='three')
-    Numbers = enum('ZERO', 'ONE', 'TWO')
-    Numbers.ONE
+    >>> Numbers = enum(ONE=1, TWO=2, THREE='three')
+    >>> Numbers = enum('ZERO', 'ONE', 'TWO')
+    >>> Numbers.ONE
     1
-    Numbers.reversed[2]
+    >>> Numbers.reversed[2]
     'TWO'
 
   :param sequential: support automatic enumeration
@@ -177,7 +180,7 @@ def enum (*sequential, **named):
   return type('enum', (), enums)
 
 
-def quit_with_error (msg, logger=None, exception=False):
+def quit_with_error (msg, logger=None, exception=None):
   """
   Helper function for quitting in case of an error.
 
@@ -185,8 +188,8 @@ def quit_with_error (msg, logger=None, exception=False):
   :type msg: str
   :param logger: logger name or logger object (default: core)
   :type logger: str or :any:`logging.Logger`
-  :param exception: print stacktrace befor quit (default: False)
-  :type exception: bool
+  :param exception: print stacktrace before quit (default: None)
+  :type exception: :any:`exceptions.Exception`
   :return: None
   """
   from pox.core import core
@@ -196,8 +199,7 @@ def quit_with_error (msg, logger=None, exception=False):
     logger = core.getLogger("core")
   logger.fatal(msg)
   if exception:
-    logger.fatal("Caught exception:")
-    traceback.print_exc()
+    logger.exception("Caught exception: %s" % exception)
   core.quit()
   os._exit(1)
 
@@ -252,8 +254,8 @@ class SimpleStandaloneHelper(object):
     """
     from pox.core import core
     core.getLogger("StandaloneHelper").getChild(self._cover_name).info(
-       "Got event: %s from %s Layer" % (
-         event.__class__.__name__, str(event.source._core_name).title()))
+      "Got event: %s from %s Layer" % (
+        event.__class__.__name__, str(event.source._core_name).title()))
 
 
 class Singleton(type):
@@ -361,3 +363,33 @@ def notify_remote_visualizer (data, id, url=None, **kwargs):
   if core.hasComponent('visualizer'):
     return core.visualizer.send_notification(data=data, id=id, url=url,
                                              **kwargs)
+
+
+def do_profile (func):
+  """
+  Decorator to profile a function.
+
+  :param func: decorated function
+  :return: result of the decorated function
+  """
+
+  def decorator_func (*args, **kwargs):
+    """
+    Decorator function.
+
+    :return: tuple of the result of decorated function and statistics as str
+    :rtype: tuple
+    """
+    profile = cProfile.Profile(builtins=False)
+    profile.enable()
+    try:
+      result = func(*args, **kwargs)
+    finally:
+      profile.disable()
+    profile.create_stats()
+    with io.BytesIO() as stat:
+      pstats.Stats(profile, stream=stat).sort_stats('cumulative').print_stats()
+      ret = stat.getvalue()
+    return result, ret
+
+  return decorator_func

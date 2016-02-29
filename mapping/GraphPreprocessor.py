@@ -27,14 +27,14 @@ import Alg1_Helper as helper
 import UnifyExceptionTypes as uet
 
 try:
-  from escape.util.nffg import NFFGToolBox
+  from escape.nffg_lib.nffg import NFFGToolBox
 except ImportError:
   import sys, os, inspect
 
   sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
      os.path.abspath(
         os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
-                                  "pox/ext/escape/util/"))
+                                  "pox/ext/escape/nffg_lib/"))
   from nffg import NFFGToolBox
 
 

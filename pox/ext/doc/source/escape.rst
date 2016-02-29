@@ -19,6 +19,7 @@ Submodules
     orchest/orchest
     adapt/adapt
     infr/infr
+    nffg_lib/nffg_lib
     util/util
 
 

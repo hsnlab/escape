@@ -22,7 +22,5 @@ Submodules
     mapping
     misc
     netconf
-    nffg
-    nffg_elements
     pox_extension
     visualization

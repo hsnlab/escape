@@ -115,7 +115,7 @@
   ],
   "node_infras": [
     {
-      "id": "SingleBiSbiS-140454340541842",
+      "id": "SingleBiSbiS-139824707974067@REMOTE",
       "name": "Single-BiSBiS",
       "ports": [
         {
@@ -125,9 +125,9 @@
           },
           "flowrules": [
             {
-              "id": 139774239507274,
+              "id": 140588613317600,
               "match": "in_port=port-SAP1;TAG=SAP1|comp|1",
-              "action": "output=SingleBiSbiS-140454340541842|comp|1;UNTAG",
+              "action": "output=SingleBiSbiS-139824707974067@REMOTE|comp|1;UNTAG",
               "hop_id": 1,
               "bandwidth": 4.0
             }
@@ -148,20 +148,20 @@
           },
           "flowrules": [
             {
-              "id": 139774239647785,
+              "id": 140588612440749,
               "match": "in_port=port-SAP2;TAG=SAP2|fwd|4",
-              "action": "output=SingleBiSbiS-140454340541842|fwd|1;UNTAG",
+              "action": "output=SingleBiSbiS-139824707974067@REMOTE|fwd|1;UNTAG",
               "hop_id": 4,
               "bandwidth": 4.0
             }
           ]
         },
         {
-          "id": "SingleBiSbiS-140454340541842|fwd|1",
+          "id": "SingleBiSbiS-139824707974067@REMOTE|fwd|1",
           "flowrules": [
             {
-              "id": 139774239382717,
-              "match": "in_port=SingleBiSbiS-140454340541842|fwd|1",
+              "id": 140588613037910,
+              "match": "in_port=SingleBiSbiS-139824707974067@REMOTE|fwd|1",
               "action": "output=port-SAP1;TAG=fwd|SAP1|5",
               "hop_id": 5,
               "bandwidth": 4.0
@@ -169,23 +169,23 @@
           ]
         },
         {
-          "id": "SingleBiSbiS-140454340541842|comp|1",
+          "id": "SingleBiSbiS-139824707974067@REMOTE|comp|1",
           "flowrules": [
             {
-              "id": 139774238842945,
-              "match": "in_port=SingleBiSbiS-140454340541842|comp|1",
-              "action": "output=SingleBiSbiS-140454340541842|decomp|1",
+              "id": 140588612755428,
+              "match": "in_port=SingleBiSbiS-139824707974067@REMOTE|comp|1",
+              "action": "output=SingleBiSbiS-139824707974067@REMOTE|decomp|1",
               "hop_id": 2,
               "bandwidth": 4.0
             }
           ]
         },
         {
-          "id": "SingleBiSbiS-140454340541842|decomp|1",
+          "id": "SingleBiSbiS-139824707974067@REMOTE|decomp|1",
           "flowrules": [
             {
-              "id": 139774264800704,
-              "match": "in_port=SingleBiSbiS-140454340541842|decomp|1",
+              "id": 140588612590666,
+              "match": "in_port=SingleBiSbiS-139824707974067@REMOTE|decomp|1",
               "action": "output=port-SAP2;TAG=decomp|SAP2|3",
               "hop_id": 3,
               "bandwidth": 4.0
@@ -209,7 +209,7 @@
       }
     },
     {
-      "id": "SingleBiSbiS-140144181247816",
+      "id": "SingleBiSbiS-140522828272958@extESCAPE",
       "name": "Single-BiSBiS",
       "ports": [
         {
@@ -251,46 +251,30 @@
   ],
   "edge_links": [
     {
-      "id": 139774264897187,
-      "src_node": "fwd",
-      "src_port": 1,
-      "dst_node": "SingleBiSbiS-140454340541842",
-      "dst_port": "SingleBiSbiS-140454340541842|fwd|1",
-      "backward": true
-    },
-    {
-      "id": 139774238750150,
-      "src_node": "comp",
-      "src_port": 1,
-      "dst_node": "SingleBiSbiS-140454340541842",
-      "dst_port": "SingleBiSbiS-140454340541842|comp|1",
-      "backward": true
-    },
-    {
-      "id": 139774239668160,
-      "src_node": "decomp",
-      "src_port": 1,
-      "dst_node": "SingleBiSbiS-140454340541842",
-      "dst_port": "SingleBiSbiS-140454340541842|decomp|1",
-      "backward": true
-    },
-    {
-      "id": 139774264987759,
-      "src_node": "SingleBiSbiS-140454340541842",
-      "src_port": "SingleBiSbiS-140454340541842|fwd|1",
+      "id": 140588613299042,
+      "src_node": "SingleBiSbiS-139824707974067@REMOTE",
+      "src_port": "SingleBiSbiS-139824707974067@REMOTE|fwd|1",
       "dst_node": "fwd",
       "dst_port": 1
     },
     {
-      "id": 139774238724242,
-      "src_node": "SingleBiSbiS-140454340541842",
-      "src_port": "SingleBiSbiS-140454340541842|comp|1",
+      "id": 140588612860285,
+      "src_node": "SingleBiSbiS-139824707974067@REMOTE",
+      "src_port": "SingleBiSbiS-139824707974067@REMOTE|comp|1",
       "dst_node": "comp",
       "dst_port": 1
     },
     {
-      "id": "SAP2-SingleBiSbiS-140454340541842-link-back",
-      "src_node": "SingleBiSbiS-140454340541842",
+      "id": "inter-domain-link-SAP14",
+      "src_node": "SingleBiSbiS-139824707974067@REMOTE",
+      "src_port": "port-SAP14",
+      "dst_node": "SingleBiSbiS-140522828272958@extESCAPE",
+      "dst_port": "port-SAP14",
+      "delay": 0
+    },
+    {
+      "id": "SAP2-SingleBiSbiS-139824707974067@REMOTE-link-back",
+      "src_node": "SingleBiSbiS-139824707974067@REMOTE",
       "src_port": "port-SAP2",
       "dst_node": "SAP2",
       "dst_port": "port-SAP2",
@@ -298,16 +282,8 @@
       "backward": true
     },
     {
-      "id": "inter-domain-link-SAP14",
-      "src_node": "SingleBiSbiS-140454340541842",
-      "src_port": "port-SAP14",
-      "dst_node": "SingleBiSbiS-140144181247816",
-      "dst_port": "port-SAP14",
-      "delay": 0
-    },
-    {
-      "id": "SAP1-SingleBiSbiS-140454340541842-link-back",
-      "src_node": "SingleBiSbiS-140454340541842",
+      "id": "SAP1-SingleBiSbiS-139824707974067@REMOTE-link-back",
+      "src_node": "SingleBiSbiS-139824707974067@REMOTE",
       "src_port": "port-SAP1",
       "dst_node": "SAP1",
       "dst_port": "port-SAP1",
@@ -315,23 +291,31 @@
       "backward": true
     },
     {
-      "id": 139774239540468,
-      "src_node": "SingleBiSbiS-140454340541842",
-      "src_port": "SingleBiSbiS-140454340541842|decomp|1",
+      "id": 140588612548408,
+      "src_node": "SingleBiSbiS-139824707974067@REMOTE",
+      "src_port": "SingleBiSbiS-139824707974067@REMOTE|decomp|1",
       "dst_node": "decomp",
       "dst_port": 1
     },
     {
-      "id": "SAP4-SingleBiSbiS-140144181247816-link",
-      "src_node": "SAP4",
-      "src_port": "port-SAP4",
-      "dst_node": "SingleBiSbiS-140144181247816",
-      "dst_port": "port-SAP4",
-      "delay": 0
+      "id": 140588612513624,
+      "src_node": "fwd",
+      "src_port": 1,
+      "dst_node": "SingleBiSbiS-139824707974067@REMOTE",
+      "dst_port": "SingleBiSbiS-139824707974067@REMOTE|fwd|1",
+      "backward": true
     },
     {
-      "id": "SAP4-SingleBiSbiS-140144181247816-link-back",
-      "src_node": "SingleBiSbiS-140144181247816",
+      "id": 140588613132377,
+      "src_node": "comp",
+      "src_port": 1,
+      "dst_node": "SingleBiSbiS-139824707974067@REMOTE",
+      "dst_port": "SingleBiSbiS-139824707974067@REMOTE|comp|1",
+      "backward": true
+    },
+    {
+      "id": "SAP4-SingleBiSbiS-140522828272958@extESCAPE-link-back",
+      "src_node": "SingleBiSbiS-140522828272958@extESCAPE",
       "src_port": "port-SAP4",
       "dst_node": "SAP4",
       "dst_port": "port-SAP4",
@@ -340,16 +324,16 @@
     },
     {
       "id": "inter-domain-link-SAP14-back",
-      "src_node": "SingleBiSbiS-140144181247816",
+      "src_node": "SingleBiSbiS-140522828272958@extESCAPE",
       "src_port": "port-SAP14",
-      "dst_node": "SingleBiSbiS-140454340541842",
+      "dst_node": "SingleBiSbiS-139824707974067@REMOTE",
       "dst_port": "port-SAP14",
       "delay": 0,
       "backward": true
     },
     {
-      "id": "SAP3-SingleBiSbiS-140144181247816-link-back",
-      "src_node": "SingleBiSbiS-140144181247816",
+      "id": "SAP3-SingleBiSbiS-140522828272958@extESCAPE-link-back",
+      "src_node": "SingleBiSbiS-140522828272958@extESCAPE",
       "src_port": "port-SAP3",
       "dst_node": "SAP3",
       "dst_port": "port-SAP3",
@@ -357,26 +341,42 @@
       "backward": true
     },
     {
-      "id": "SAP1-SingleBiSbiS-140454340541842-link",
+      "id": 140588612850317,
+      "src_node": "decomp",
+      "src_port": 1,
+      "dst_node": "SingleBiSbiS-139824707974067@REMOTE",
+      "dst_port": "SingleBiSbiS-139824707974067@REMOTE|decomp|1",
+      "backward": true
+    },
+    {
+      "id": "SAP4-SingleBiSbiS-140522828272958@extESCAPE-link",
+      "src_node": "SAP4",
+      "src_port": "port-SAP4",
+      "dst_node": "SingleBiSbiS-140522828272958@extESCAPE",
+      "dst_port": "port-SAP4",
+      "delay": 0
+    },
+    {
+      "id": "SAP1-SingleBiSbiS-139824707974067@REMOTE-link",
       "src_node": "SAP1",
       "src_port": "port-SAP1",
-      "dst_node": "SingleBiSbiS-140454340541842",
+      "dst_node": "SingleBiSbiS-139824707974067@REMOTE",
       "dst_port": "port-SAP1",
       "delay": 0
     },
     {
-      "id": "SAP2-SingleBiSbiS-140454340541842-link",
+      "id": "SAP2-SingleBiSbiS-139824707974067@REMOTE-link",
       "src_node": "SAP2",
       "src_port": "port-SAP2",
-      "dst_node": "SingleBiSbiS-140454340541842",
+      "dst_node": "SingleBiSbiS-139824707974067@REMOTE",
       "dst_port": "port-SAP2",
       "delay": 0
     },
     {
-      "id": "SAP3-SingleBiSbiS-140144181247816-link",
+      "id": "SAP3-SingleBiSbiS-140522828272958@extESCAPE-link",
       "src_node": "SAP3",
       "src_port": "port-SAP3",
-      "dst_node": "SingleBiSbiS-140144181247816",
+      "dst_node": "SingleBiSbiS-140522828272958@extESCAPE",
       "dst_port": "port-SAP3",
       "delay": 0
     }
@@ -426,9 +426,9 @@
   "edge_reqs": [
     {
       "id": 4,
-      "src_node": "SingleBiSbiS-140454340541842",
+      "src_node": "SingleBiSbiS-139824707974067@REMOTE",
       "src_port": "port-SAP2",
-      "dst_node": "SingleBiSbiS-140454340541842",
+      "dst_node": "SingleBiSbiS-139824707974067@REMOTE",
       "dst_port": "port-SAP1",
       "delay": 20.0,
       "bandwidth": 0,
@@ -439,9 +439,9 @@
     },
     {
       "id": 5,
-      "src_node": "SingleBiSbiS-140454340541842",
+      "src_node": "SingleBiSbiS-139824707974067@REMOTE",
       "src_port": "port-SAP1",
-      "dst_node": "SingleBiSbiS-140454340541842",
+      "dst_node": "SingleBiSbiS-139824707974067@REMOTE",
       "dst_port": "port-SAP2",
       "delay": 20.000000000000004,
       "bandwidth": 0,

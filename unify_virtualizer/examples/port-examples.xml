@@ -1,0 +1,282 @@
+<?xml version="1.0" ?>
+<virtualizer>
+    <id>001</id>
+    <name>Port examples: SAPs, Cf-Or interface, capabilities, encapsulation, metadata...</name>
+    <nodes>
+        <node>
+            <id>node1</id>
+            <name>single node</name>
+            <type>BisBis</type>
+            <ports>
+
+                <port>
+                    <id>0</id>
+                    <name>Abstract Unify</name>
+                    <port_type>port-abstract</port_type>
+                </port>
+
+                <port>
+                    <id>1a</id>
+                    <name>Simple inter-domain SAP</name>
+                    <port_type>port-sap</port_type>
+                    <!-- Interdomain connection identifier (if SAPs in different domains report the same ID, they are assumed to be directly interconnected): -->
+                    <sap>SAP14</sap>
+                </port>
+
+                <port>
+                    <id>1b</id>
+                    <name>Iner-domain SAP with resources</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP15</sap>
+                    <resources>
+                        <!-- Port resources are valid only in case of SAP ports. Upper layer orchestrator (stitching the two domains together) will convert the two SAP port resources to a link with resources between these ports -->
+                        <delay>3 ms</delay>
+                        <bandwidth>100 MB/s</bandwidth>
+                        <cost>10</cost>
+                    </resources>
+                </port>
+
+                <port>
+                    <id>2a-1</id>
+                    <name>Public IP port with a set of L4 ports to be opened (Step 1: request)</name>
+                    <port_type>port-sap</port_type>
+                    <metadata>
+                        <key>type</key>
+                        <value>public</value>
+                    </metadata>
+                    <!-- the following goes as a request down: -->
+                    <metadata>
+                        <key>public/local_ports</key>
+                        <!-- this is the list of the ports to make public: -->
+                        <value>tcp/22,tcp/80</value>
+                    </metadata>
+                </port>
+
+                <port>
+                    <id>2a-2</id>
+                    <name>Public IP port with a set of L4 ports to be opened  (Step 2: response)</name>
+                    <port_type>port-sap</port_type>
+                    <metadata>
+                        <key>type</key>
+                        <value>public</value>
+                    </metadata>
+                    <metadata>
+                        <key>public/local_ports</key>
+                        <value>tcp/22,tcp/80</value>
+                    </metadata>
+                    <!-- the following comes as a response up: -->
+                    <metadata>
+                        <key>public/port_bindings</key>
+                        <!-- this is the list of requested ports, where are they made available (in the exmple the tcp/22 port of the NF is accessible at the tcp/1000 port of 192.66.244.100): -->
+                        <value>{tcp/22: ('192.66.244.100', 1000)}</value>
+                    </metadata>
+                </port>
+
+                <port>
+                    <id>2b</id>
+                    <name>Full public IP port</name>
+                    <port_type>port-sap</port_type>
+                    <metadata>
+                        <key>type</key>
+                        <value>public</value>
+                    </metadata>
+                    <metadata>
+                        <key>public/local_ports</key>
+                        <!-- this indicated that all ports (i.e. the full address) is the to be made public: -->
+                        <value>*</value>
+                    </metadata>
+                    <metadata>
+                        <key>public/port_bindings</key>
+                        <!-- this indicates that the VM realizing the NF is accessible at 192.66.244.100 (all tcp/udp ports): -->
+                        <value>{*: ('192.66.244.100', *)}</value>
+                    </metadata>
+                </port>
+
+                <port>
+                    <id>3</id>
+                    <name>Port with a private IP</name>
+                    <port_type>port-sap</port_type>
+                    <metadata>
+                        <key>type</key>
+                        <value>private</value>
+                    </metadata>
+                    <metadata>
+                        <key>private/ip_address</key>
+                        <value>10.0.10.5</value>
+                    </metadata>
+                    <metadata>
+                        <key>private/netmask</key>
+                        <value>255.255.255.0</value>
+                    </metadata>
+                    <metadata>
+                        <key>private/gatewayeway</key>
+                        <value>10.0.10.1</value>
+                    </metadata>
+                </port>
+
+                <port>
+                    <id>4a</id>
+                    <name>Inter-domain SAP port with full protocol stack</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP24</sap>
+                    <metadata>
+                        <key>type</key>
+                         <!-- This is the protocol stack at the SAP. The last technology is used to represent the Unify-tag, the previous ones have fixed values: -->
+                        <value>IEEE802.1q/MPLS/IEEE802.1q</value>
+                    </metadata>
+                    <metadata>
+                        <!-- This is the technology specific configuration for the given layer in the protocol stack: -->
+                        <key>IEEE802.1q/vlan</key>
+                        <value>12</value>
+                    </metadata>
+                    <metadata>
+                        <!-- Note, the full preceding protocol stack is given as a scope: -->
+                        <key>IEEE802.1q/MPLS/tag</key>
+                        <value>76</value>
+                    </metadata>
+                </port>
+
+                <port>
+                    <id>4b</id>
+                    <name>Inter-domain with Unify-tag-only protocol stack</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP34</sap>
+                    <metadata>
+                        <key>type</key>
+                        <value>./IEEE802.1q</value>
+                    </metadata>
+                </port>
+
+                <port>
+                    <id>5a</id>
+                    <name>Vxlan on a public port</name>
+                    <port_type>port-sap</port_type>
+                    <metadata>
+                        <key>type</key>
+                        <!-- VXLAN on a public port. If this was a NF port, this indicates that this port may not appear in the hosting node, as a 'public' port out of Unify forwarding configuration scope -->
+                        <value>public/vxlan</value>
+                    <!-- Public IP data: -->
+                    </metadata>
+                    <metadata>
+                        <key>public/local_ports</key>
+                        <value>*</value>
+                    </metadata>
+                    <metadata>
+                        <key>public/port_bindings</key>
+                        <value>{*: ('192.66.244.100', *)}</value>
+                    </metadata>
+                    <!-- VXLAN data: -->
+                    <metadata>
+                        <key>public/vxlan/localip</key>
+                        <value>1.2.3.4</value>
+                    </metadata>
+                    <metadata>
+                        <key>public/vxlan/remoteip</key>
+                        <value>1.2.3.5</value>
+                    </metadata>
+                    <metadata>
+                        <key>public/vxlan/key</key>
+                        <value>123</value>
+                    </metadata>
+                </port>
+
+                <port>
+                    <id>5b</id>
+                    <name>Vxlan on a private IP port</name>
+                    <port_type>port-sap</port_type>
+                    <metadata>
+                        <key>type</key>
+                        <!-- VXLAN on a private IP port. (Forwarding to/from this port is fully in Unify scope) -->
+                        <value>private/vxlan</value>
+                    </metadata>
+                    <!-- Private IP data: -->
+                    <metadata>
+                        <key>private/ip_address</key>
+                        <value>10.0.10.5</value>
+                    </metadata>
+                    <metadata>
+                        <key>private/netmask</key>
+                        <value>255.255.255.0</value>
+                    </metadata>
+                    <metadata>
+                        <key>private/gatewayeway</key>
+                        <value>10.0.10.1</value>
+                    </metadata>
+                    <!-- VXLAN data: -->
+                    <metadata>
+                        <key>private/vxlan/localip</key>
+                        <value>10.0.10.5</value>
+                    </metadata>
+                    <metadata>
+                        <key>private/vxlan/remoteip</key>
+                        <value>10.0.10.100</value>
+                    </metadata>
+                    <metadata>
+                        <key>private/vxlan/key</key>
+                        <value>124</value>
+                    </metadata>
+                </port>
+
+                <port>
+                    <id>6a</id>
+                    <name>Abstract Unify port with capabilities</name>
+                    <port_type>port-abstract</port_type>
+                    <!-- To describe match and action capabilities associated with the port, e.g., match=port,tag,ip,tcp,udp,mpls,of1.0, where port: based forwarding; tag: unify abstract tagging; ip: ip address matching etc. -->
+                    <!-- OpenFlow 1.0 match and action capable port: -->
+                    <capability>of1.0</capability>
+                </port>
+
+                <port>
+                    <id>6b</id>
+                    <name>Abstract Unify port with capabilities</name>
+                    <port_type>port-abstract</port_type>
+                    <!-- Only port match/action : -->
+                    <capability>port</capability>
+                </port>
+
+                <port>
+                    <id>6c</id>
+                    <name>Abstract Unify port with capabilities</name>
+                    <port_type>port-abstract</port_type>
+                    <!-- Unify abstract tag capable port: -->
+                    <capability>tag</capability>
+                </port>
+
+                <port>
+                    <id>6d</id>
+                    <name>Abstract Unify port with capabilities</name>
+                    <port_type>port-abstract</port_type>
+                    <!-- Capabilitites listed: -->
+                    <capability>port,tag,ip,tcp,udp,mpls</capability>
+                </port>
+
+                <port>
+                    <id>7</id>
+                    <name>Public port with Cf-Or interface</name>
+                    <port_type>port-sap</port_type>
+                    <!-- Used to connect this port to a UNIFY orchestrator's Cf-Or reference point. Support controller - orchestrator or orchestrator - controller connection establishment -->
+                    <control>
+                        <!-- Which fields are filled in at the request depend on the handshake direction between the controller and the orchestrator. In the end both will be filled in -->
+                        <!-- This is the connection point at the NF (IP address is not filled in, it can be obtained from the public port): -->
+                        <controller>http://*:8080/cf-or/</controller>
+                        <!-- This is the connection point at the orchestrator: -->
+                        <orchestrator>http://192.168.1.100:8080/cf-or/</orchestrator>
+                    </control>
+                    <metadata>
+                        <key>type</key>
+                        <value>public</value>
+                    </metadata>
+                    <metadata>
+                        <key>public/local_ports</key>
+                        <value>*</value>
+                    </metadata>
+                    <metadata>
+                        <key>public/port_bindings</key>
+                        <value>{*: ('192.66.244.100', *)}</value>
+                    </metadata>
+                </port>
+
+            </ports>
+        </node>
+    </nodes>
+</virtualizer>

@@ -4,22 +4,22 @@
 Element classes for NFFG based on ``nffg.yang``.
 
 .. inheritance-diagram::
-   escape.util.nffg_elements.NFFGModel
-   escape.util.nffg_elements.Persistable
-   escape.util.nffg_elements.Element
-   escape.util.nffg_elements.PortContainer
-   escape.util.nffg_elements.Node
-   escape.util.nffg_elements.Link
-   escape.util.nffg_elements.NodeResource
-   escape.util.nffg_elements.Flowrule
-   escape.util.nffg_elements.Port
-   escape.util.nffg_elements.InfraPort
-   escape.util.nffg_elements.NodeNF
-   escape.util.nffg_elements.NodeSAP
-   escape.util.nffg_elements.NodeInfra
-   escape.util.nffg_elements.EdgeLink
-   escape.util.nffg_elements.EdgeSGLink
-   escape.util.nffg_elements.EdgeReq
+   escape.nffg_lib.nffg_elements.NFFGModel
+   escape.nffg_lib.nffg_elements.Persistable
+   escape.nffg_lib.nffg_elements.Element
+   escape.nffg_lib.nffg_elements.PortContainer
+   escape.nffg_lib.nffg_elements.Node
+   escape.nffg_lib.nffg_elements.Link
+   escape.nffg_lib.nffg_elements.NodeResource
+   escape.nffg_lib.nffg_elements.Flowrule
+   escape.nffg_lib.nffg_elements.Port
+   escape.nffg_lib.nffg_elements.InfraPort
+   escape.nffg_lib.nffg_elements.NodeNF
+   escape.nffg_lib.nffg_elements.NodeSAP
+   escape.nffg_lib.nffg_elements.NodeInfra
+   escape.nffg_lib.nffg_elements.EdgeLink
+   escape.nffg_lib.nffg_elements.EdgeSGLink
+   escape.nffg_lib.nffg_elements.EdgeReq
    :parts: 1
 
 :any:`NFFGModel` represents the main container class.
@@ -55,7 +55,7 @@ Element classes for NFFG based on ``nffg.yang``.
 Module contents
 ---------------
 
-.. automodule:: escape.util.nffg_elements
+.. automodule:: escape.nffg_lib.nffg_elements
    :members:
    :private-members:
    :special-members:

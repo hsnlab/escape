@@ -458,7 +458,6 @@ def _post_startup ():
       logging.getLogger("boot").debug("Not launching of_01")
 
 
-
 def _setup_logging ():
   # First do some basic log config...
 
@@ -470,7 +469,6 @@ def _setup_logging ():
   pox.core._default_log_handler.setFormatter(formatter)
   logging.getLogger().addHandler(pox.core._default_log_handler)
   logging.getLogger().setLevel(logging.INFO)
-
 
   # Now set up from config file if specified...
   #TODO:
@@ -538,6 +536,20 @@ def boot (argv = None):
       raise RuntimeError()
 
   except SystemExit:
+    return
+  except KeyboardInterrupt:
+    logging.getLogger("boot").warning(
+      "Initiation of POX was interrupted by user!")
+    try:
+      for _ in range(4):
+        if threading.active_count() <= thread_count:
+          # Normal exit
+          return
+        time.sleep(0.25)
+    except:
+      pass
+
+    os._exit(1)
     return
   except:
     if not quiet:

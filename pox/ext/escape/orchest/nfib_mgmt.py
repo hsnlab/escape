@@ -14,17 +14,16 @@
 """
 Contains the class for managing NFIB.
 """
+import networkx
 import os
-import sys
 from collections import deque
 
-import networkx
 import py2neo
 from py2neo import Graph, Relationship
 from py2neo.packages.httpstream.http import SocketError
 
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log
-from escape.util.nffg import NFFG
 
 
 class NFIBManager(object):
@@ -44,7 +43,8 @@ class NFIBManager(object):
     self.__suppress_neo4j_logging()
     self.graph_db = Graph()
 
-  def __suppress_neo4j_logging (self, level=None):
+  @staticmethod
+  def __suppress_neo4j_logging (level=None):
     """
     Suppress annoying and detailed logging of `py2neo` and `httpstream`
     packages.
@@ -155,7 +155,7 @@ class NFIBManager(object):
       {
         'dependency': repr(dependency), 'read_handlers': repr(read_handlers),
         'write_handlers': repr(write_handlers), 'command': str(template)
-        })
+      })
     self.addNode(nf)
 
   def addVMNF (self, nf):
@@ -321,17 +321,17 @@ class NFIBManager(object):
         dst_label = 'SAP'
 
       elif decomp.node[n]['properties']['label'] == 'NF' and \
-                decomp.node[n]['properties']['type'] == 'click':
+            decomp.node[n]['properties']['type'] == 'click':
         self.addClickNF(decomp.node[n]['properties'])
         dst_label = 'NF'
 
       elif decomp.node[n]['properties']['label'] == 'NF' and \
-                decomp.node[n]['properties']['type'] == 'VM':
+            decomp.node[n]['properties']['type'] == 'VM':
         self.addVMNF(decomp.node[n]['properties'])
         dst_label = 'NF'
 
       elif decomp.node[n]['properties']['label'] == 'NF' and \
-                decomp.node[n]['properties']['type'] == 'NA':
+            decomp.node[n]['properties']['type'] == 'NA':
         self.addNode(decomp.node[n]['properties'])
         dst_label = 'NF'
       else:
@@ -344,7 +344,7 @@ class NFIBManager(object):
         {
           'src_label': 'graph', 'dst_label': dst_label, 'src_id': decomp_id,
           'dst_id': n, 'rel_type': 'CONTAINS'
-          })
+        })
 
     for e in decomp.edges():
       temp = {
@@ -352,7 +352,7 @@ class NFIBManager(object):
         'src_id': e[0],
         'dst_label': decomp.node[e[1]]['properties']['label'],
         'dst_id': e[1], 'rel_type': 'CONNECTED'
-        }
+      }
       temp.update(decomp.edge[e[0]][e[1]]['properties'])
 
       self.addRelationship(temp)
@@ -361,7 +361,7 @@ class NFIBManager(object):
       {
         'src_label': 'NF', 'src_id': nf_id, 'dst_label': 'graph',
         'dst_id': decomp_id, 'rel_type': 'DECOMPOSED'
-        })
+      })
     return True
 
   def removeDecomp (self, decomp_id):
@@ -525,7 +525,7 @@ class NFIBManager(object):
                 if graph.node[edge[1]]['properties']['label'] == 'SAP':
 
                   if str(src_port.id) == str(
-                       graph.edge[edge[0]][edge[1]]['properties']['dst_port']):
+                     graph.edge[edge[0]][edge[1]]['properties']['dst_port']):
 
                     for e in nffg_temp.sg_hops:
                       if e.src.node.id == edge[0] and e.dst.node.id == edge[1]:
@@ -540,7 +540,7 @@ class NFIBManager(object):
                 if graph.node[edge[0]]['properties']['label'] == 'SAP':
 
                   if str(dst_port.id) == str(
-                       graph.edge[edge[0]][edge[1]]['properties']['src_port']):
+                     graph.edge[edge[0]][edge[1]]['properties']['src_port']):
                     for e in nffg_temp.sg_hops:
                       if e.src.node.id == edge[0] and e.dst.node.id == edge[1]:
                         nffg_temp.add_sglink(src_port, e.dst)
@@ -692,8 +692,7 @@ class NFIBManager(object):
     except SocketError as e:
       log.error(
         "NFIB is not reachable due to failed neo4j service! Cause: " + str(e))
-      raise
+    except KeyboardInterrupt:
+      log.warning("NFIB was interrupted by user!")
     except:
-      log.error("Got unexpected error during NFIB initialization! Cause:")
-      log.error(reduce(lambda x, y: str(x) + " " + str(y), sys.exc_info()))
-      raise
+      log.exception("Got unexpected error during NFIB initialization!")

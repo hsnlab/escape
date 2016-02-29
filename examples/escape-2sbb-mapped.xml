@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <virtualizer>
     <id>DoV</id>
-    <name>dov-139935251544976</name>
+    <name>dov-140588640546640</name>
     <nodes>
         <node>
-            <id>SingleBiSbiS-139941199947314@REMOTE</id>
+            <id>SingleBiSbiS-139824707974067@REMOTE</id>
             <name>Single-BiSBiS</name>
             <type>BiSBiS</type>
             <ports>
@@ -67,6 +67,56 @@
                 <key>delay</key>
                 <value>0.2</value>
             </metadata>
+            <NF_instances>
+                <node>
+                    <id>comp</id>
+                    <name>COMPRESSOR</name>
+                    <type>headerCompressor</type>
+                    <ports>
+                        <port>
+                            <id>1</id>
+                            <port_type>port-abstract</port_type>
+                        </port>
+                    </ports>
+                    <resources>
+                        <cpu>1.0</cpu>
+                        <mem>1.0</mem>
+                        <storage>0.0</storage>
+                    </resources>
+                </node>
+                <node>
+                    <id>decomp</id>
+                    <name>DECOMPRESSOR</name>
+                    <type>headerDecompressor</type>
+                    <ports>
+                        <port>
+                            <id>1</id>
+                            <port_type>port-abstract</port_type>
+                        </port>
+                    </ports>
+                    <resources>
+                        <cpu>1.0</cpu>
+                        <mem>1.0</mem>
+                        <storage>0.0</storage>
+                    </resources>
+                </node>
+                <node>
+                    <id>fwd</id>
+                    <name>FORWARDER</name>
+                    <type>simpleForwarder</type>
+                    <ports>
+                        <port>
+                            <id>1</id>
+                            <port_type>port-abstract</port_type>
+                        </port>
+                    </ports>
+                    <resources>
+                        <cpu>1.0</cpu>
+                        <mem>1.0</mem>
+                        <storage>0.0</storage>
+                    </resources>
+                </node>
+            </NF_instances>
             <capabilities>
                 <supported_NFs>
                     <node>
@@ -83,9 +133,67 @@
                     </node>
                 </supported_NFs>
             </capabilities>
+            <flowtable>
+                <flowentry>
+                    <id>ESCAPE-flowentry0</id>
+                    <name>sg_hop:1</name>
+                    <priority>100</priority>
+                    <port>../../../ports/port[id=port-SAP1]</port>
+                    <match>dl_tag=0x0001</match>
+                    <action>pop_tag</action>
+                    <out>../../../NF_instances/node[id=comp]/ports/port[id=1]</out>
+                    <resources>
+                        <bandwidth>4.0</bandwidth>
+                    </resources>
+                </flowentry>
+                <flowentry>
+                    <id>ESCAPE-flowentry1</id>
+                    <name>sg_hop:4</name>
+                    <priority>100</priority>
+                    <port>../../../ports/port[id=port-SAP2]</port>
+                    <match>dl_tag=0x0004</match>
+                    <action>pop_tag</action>
+                    <out>../../../NF_instances/node[id=fwd]/ports/port[id=1]</out>
+                    <resources>
+                        <bandwidth>4.0</bandwidth>
+                    </resources>
+                </flowentry>
+                <flowentry>
+                    <id>ESCAPE-flowentry2</id>
+                    <name>sg_hop:5</name>
+                    <priority>100</priority>
+                    <port>../../../NF_instances/node[id=fwd]/ports/port[id=1]</port>
+                    <action>push_tag:0x0005</action>
+                    <out>../../../ports/port[id=port-SAP1]</out>
+                    <resources>
+                        <bandwidth>4.0</bandwidth>
+                    </resources>
+                </flowentry>
+                <flowentry>
+                    <id>ESCAPE-flowentry3</id>
+                    <name>sg_hop:2</name>
+                    <priority>100</priority>
+                    <port>../../../NF_instances/node[id=comp]/ports/port[id=1]</port>
+                    <out>../../../NF_instances/node[id=decomp]/ports/port[id=1]</out>
+                    <resources>
+                        <bandwidth>4.0</bandwidth>
+                    </resources>
+                </flowentry>
+                <flowentry>
+                    <id>ESCAPE-flowentry4</id>
+                    <name>sg_hop:3</name>
+                    <priority>100</priority>
+                    <port>../../../NF_instances/node[id=decomp]/ports/port[id=1]</port>
+                    <action>push_tag:0x0003</action>
+                    <out>../../../ports/port[id=port-SAP2]</out>
+                    <resources>
+                        <bandwidth>4.0</bandwidth>
+                    </resources>
+                </flowentry>
+            </flowtable>
         </node>
         <node>
-            <id>SingleBiSbiS-140684388112330@extESCAPE</id>
+            <id>SingleBiSbiS-140522828272958@extESCAPE</id>
             <name>Single-BiSBiS</name>
             <type>BiSBiS</type>
             <ports>
@@ -169,13 +277,27 @@
     <links>
         <link>
             <id>inter-domain-link-SAP14</id>
-            <src>../../../nodes/node[id=SingleBiSbiS-139941199947314@REMOTE]/ports/port[id=port-SAP14]</src>
-            <dst>../../../nodes/node[id=SingleBiSbiS-140684388112330@extESCAPE]/ports/port[id=port-SAP14]</dst>
+            <src>../../../nodes/node[id=SingleBiSbiS-139824707974067@REMOTE]/ports/port[id=port-SAP14]</src>
+            <dst>../../../nodes/node[id=SingleBiSbiS-140522828272958@extESCAPE]/ports/port[id=port-SAP14]</dst>
+            <resources>
+                <delay>0</delay>
+            </resources>
         </link>
         <link>
             <id>inter-domain-link-SAP14-back</id>
-            <src>../../../nodes/node[id=SingleBiSbiS-140684388112330@extESCAPE]/ports/port[id=port-SAP14]</src>
-            <dst>../../../nodes/node[id=SingleBiSbiS-139941199947314@REMOTE]/ports/port[id=port-SAP14]</dst>
+            <src>../../../nodes/node[id=SingleBiSbiS-140522828272958@extESCAPE]/ports/port[id=port-SAP14]</src>
+            <dst>../../../nodes/node[id=SingleBiSbiS-139824707974067@REMOTE]/ports/port[id=port-SAP14]</dst>
+            <resources>
+                <delay>0</delay>
+            </resources>
         </link>
     </links>
+    <metadata>
+        <key>REQ:4</key>
+        <value>{'snode':'SingleBiSbiS-139824707974067@REMOTE','sg_path':[4,5],'delay':'20.000','bw':'0.000','dport':'port-SAP1','sport':'port-SAP2','dnode':'SingleBiSbiS-139824707974067@REMOTE'}</value>
+    </metadata>
+    <metadata>
+        <key>REQ:5</key>
+        <value>{'snode':'SingleBiSbiS-139824707974067@REMOTE','sg_path':[1,2,3],'delay':'20.000','bw':'0.000','dport':'port-SAP2','sport':'port-SAP1','dnode':'SingleBiSbiS-139824707974067@REMOTE'}</value>
+    </metadata>
 </virtualizer>

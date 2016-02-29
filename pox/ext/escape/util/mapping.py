@@ -233,7 +233,7 @@ class AbstractMapper(EventMixin):
     self._layer_name = layer_name
     # Set threaded
     self._threaded = threaded if threaded is not None else CONFIG.get_threaded(
-       layer_name)
+      layer_name)
     # Set strategy
     if strategy is None:
       # Use the Strategy in CONFIG
@@ -251,6 +251,16 @@ class AbstractMapper(EventMixin):
     self.processor = CONFIG.get_mapping_processor(layer_name)(layer_name)
     super(AbstractMapper, self).__init__()
 
+  @property
+  def threaded (self):
+    """
+    Return the :any:`AbstractMapper` object is configured with threaded.
+
+    :return: mapping is performed in separate thread or not
+    :rtype: bool
+    """
+    return self._threaded
+
   def _perform_mapping (self, input_graph, resource_view):
     """
     Abstract function for wrapping optional steps connected to initiate
@@ -259,7 +269,9 @@ class AbstractMapper(EventMixin):
     Implemented function call the mapping algorithm.
 
     .. warning::
-      Derived class have to override this function
+      Derived class have to override this function!
+
+    Follows the Template Method design pattern.
 
     :param input_graph: graph representation which need to be mapped
     :type input_graph: :any:`NFFG`
@@ -284,11 +296,6 @@ class AbstractMapper(EventMixin):
     After the pre/post-processor steps the relevant Mapping event will be
     raised on the main API class of the layer!
 
-    .. warning::
-      Derived class have to override this function
-
-    Follows the Template Method design pattern.
-
     :param input_graph: graph representation which need to be mapped
     :type input_graph: :any:`NFFG`
     :param resource_view: resource information
@@ -297,65 +304,46 @@ class AbstractMapper(EventMixin):
     :return: mapped graph
     :rtype: :any:`NFFG`
     """
-    # If validator is not None call the pre/post functions
+    # Get resource info
+    resource_graph = resource_view.get_resource_info()
+    # If validator is not None call the pre function
     if CONFIG.get_processor_enabled(layer=self._layer_name):
-      if self.processor is not None:
-        # Get resource info
-        resource_graph = resource_view.get_resource_info()
-        # Preform pre-mapping validation
-        if self.processor.pre_mapping_exec(
-           input_graph=input_graph, resource_graph=resource_graph):
-          raise ProcessorError("Pre mapping validation is failed!")
-        # Raise event for external POX modules
-        if core.hasComponent(self._layer_name):
-          core.components[self._layer_name].raiseEvent(
-             PreMapEvent,
-             input_graph=input_graph,
-             resource_graph=resource_graph)
-        # Invoke mapping algorithm
-        mapping_result = self._perform_mapping(input_graph=input_graph,
-                                               resource_view=resource_view)
-        # Perform post-mapping validation
-        # If the mapping is threaded skip post mapping here
-        if self._threaded:
-          return mapping_result
-        if self.processor.post_mapping_exec(input_graph=input_graph,
-                                            resource_graph=resource_graph,
-                                            result_graph=mapping_result):
+      # Preform pre-mapping validation
+      if self.processor is not None and self.processor.pre_mapping_exec(
+         input_graph=input_graph, resource_graph=resource_graph):
+        # Raise Error if processor function return with True
+        raise ProcessorError("Pre mapping validation is failed!")
+    # Raise event for external POX modules
+    if core.hasComponent(self._layer_name):
+      core.components[self._layer_name].raiseEvent(
+        PreMapEvent, input_graph=input_graph, resource_graph=resource_graph)
+    # Invoke mapping algorithm
+    mapping_result = self._perform_mapping(input_graph=input_graph,
+                                           resource_view=resource_view)
+    # Perform post-mapping validation
+    # If the mapping is threaded skip post mapping here
+    if not self._threaded:
+      # If validator is not None call the post function
+      if CONFIG.get_processor_enabled(layer=self._layer_name):
+        if self.processor is not None and self.processor.post_mapping_exec(
+           input_graph=input_graph, resource_graph=resource_graph,
+           result_graph=mapping_result):
+          # Raise Error if processor function return with True
           raise ProcessorError("Post mapping validation is failed!")
-        # Raise event for external POX modules
-        if core.hasComponent(self._layer_name):
-          core.components[self._layer_name].raiseEvent(
-             PostMapEvent,
-             input_graph=input_graph,
-             resource_graph=resource_graph,
-             result_graph=mapping_result)
-        return mapping_result
-    else:
-      # Invoke only the mapping algorithm
-      # Get resource info
-      resource_graph = resource_view.get_resource_info()
       # Raise event for external POX modules
       if core.hasComponent(self._layer_name):
         core.components[self._layer_name].raiseEvent(
-           PreMapEvent,
-           input_graph=input_graph,
-           resource_graph=resource_graph)
-      # Invoke mapping algorithm
-      mapping_result = self._perform_mapping(input_graph=input_graph,
-                                             resource_view=resource_view)
-      # Raise event for external POX modules
-      if core.hasComponent(self._layer_name):
-        core.components[self._layer_name].raiseEvent(
-           PostMapEvent,
-           input_graph=input_graph,
-           resource_graph=resource_graph,
-           result_graph=mapping_result)
-      return mapping_result
+          PostMapEvent, input_graph=input_graph, resource_graph=resource_graph,
+          result_graph=mapping_result)
+    # Return the mapped NFFG
+    return mapping_result
 
   def _start_mapping (self, graph, resource):
     """
     Run mapping algorithm in a separate Python thread.
+
+    Should be called in _perform_mapping() function to initiate mapping if
+    threaded is enabled!
 
     :param graph: Network Function Forwarding Graph
     :type graph: :any:`NFFG`
@@ -366,26 +354,26 @@ class AbstractMapper(EventMixin):
 
     def run ():
       core.getLogger("worker").info(
-         "Schedule mapping algorithm: %s" % self.strategy.__name__)
+        "Schedule mapping algorithm: %s" % self.strategy.__name__)
       nffg = self.strategy.map(graph=graph, resource=resource)
       # Must use call_as_coop_task because we want to call a function in a
       # coop microtask environment from a separate thread
-      call_as_coop_task(self._mapping_finished, nffg=nffg)
+      call_as_coop_task(self._mapping_finished, mapped_nffg=nffg)
 
     core.getLogger("worker").debug("Initialize working thread...")
     self._mapping_thread = threading.Thread(target=run)
     self._mapping_thread.daemon = True
     self._mapping_thread.start()
 
-  def _mapping_finished (self, nffg):
+  def _mapping_finished (self, mapped_nffg):
     """
     Called from a separate thread when the mapping process is finished.
 
     .. warning::
-      Derived class have to override this function
+      Derived class have to override this function!
 
-    :param nffg: generated NF-FG
-    :type nffg: :any:`NFFG`
+    :param mapped_nffg: generated NF-FG
+    :type mapped_nffg: :any:`NFFG`
     :return: None
     """
     raise NotImplementedError("Derived class must override this function!")

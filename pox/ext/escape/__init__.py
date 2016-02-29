@@ -113,7 +113,8 @@ cfg = {
           "port": 8888,
           # "virtualizer_type": "SINGLE",
           "virtualizer_type": "GLOBAL",
-          "unify_interface": True
+          "unify_interface": True,
+          "format": "DIFF"
         },
       "Cf-Or":
         {
@@ -122,7 +123,8 @@ cfg = {
           "prefix": "cfor",
           "address": "0.0.0.0",
           "port": 8889,
-          "virtualizer_type": "GLOBAL"
+          "virtualizer_type": "GLOBAL",
+          "unify_interface": True
         }
     },
   "adaptation":  # Controller Adaptation Sublayer
@@ -137,7 +139,7 @@ cfg = {
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
-      # "ENSURE-UNIQUE-ID": True,  # ID conversion strategy for nodes
+      "ENSURE-UNIQUE-ID": True,  # ID conversion strategy for nodes
       # Specific Domain Managers
       "INTERNAL":
         {
@@ -177,7 +179,7 @@ cfg = {
         "module": "escape.adapt.managers",
         "class": "SDNDomainManager",
         "poll": False,
-        # "domain_name": "SDN-MICROTIK",
+        "domain_name": "SDN-MICROTIK",
         "adapters": {
           "CONTROLLER":
             {
@@ -204,24 +206,8 @@ cfg = {
         {
           "module": "escape.adapt.managers",
           "class": "RemoteESCAPEDomainManager",
-          "poll": False,
-          "adapters": {
-            "REMOTE":
-              {
-                "module": "escape.adapt.adapters",
-                "class": "RemoteESCAPEv2RESTAdapter",
-                "url": "http://192.168.50.129:8888",
-                "prefix": "escape",
-                "unify_interface": True
-              }
-          }
-        },
-      "REMOTE-ESCAPE-ext":
-        {
-          "module": "escape.adapt.managers",
-          "class": "RemoteESCAPEDomainManager",
-          "domain_name": "extESCAPE",
-          "poll": False,
+          "poll": True,
+          "format": "DIFF",
           "adapters": {
             "REMOTE":
               {
@@ -233,18 +219,36 @@ cfg = {
               }
           }
         },
+      "REMOTE-ESCAPE-ext":
+        {
+          "module": "escape.adapt.managers",
+          "class": "RemoteESCAPEDomainManager",
+          "domain_name": "extESCAPE",
+          "poll": True,
+          "format": "DIFF",
+          "adapters": {
+            "REMOTE":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "RemoteESCAPEv2RESTAdapter",
+                "url": "http://192.168.50.129:8888",
+                "prefix": "escape",
+                "unify_interface": True
+              }
+          }
+        },
       "OPENSTACK":
         {
           "module": "escape.adapt.managers",
           "class": "OpenStackDomainManager",
-          "poll": False,
+          "poll": True,
           "adapters": {
             "REMOTE":
               {
                 "module": "escape.adapt.adapters",
                 "class": "UnifyRESTAdapter",
                 "url": "http://localhost:8081",
-                "timeout": 10
+                "timeout": 5
               }
           }
         },
