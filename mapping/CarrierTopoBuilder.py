@@ -102,8 +102,7 @@ def addRetailOrBusinessPart(nffg, an0, an1, p, popn, BNAS_PE,
   log.debug("Adding %s part for %s..."%(part, popn))
   # add Distribution Nodes (100Gbps switching capacity)
   dnres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
-           'domain': NFFG.DOMAIN_INTERNAL}
+           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   dn0 = None
   dn1 = None
   if BNAS_PE > 0:
@@ -118,8 +117,7 @@ def addRetailOrBusinessPart(nffg, an0, an1, p, popn, BNAS_PE,
   for i in range(0, BNAS_PE):
     log.debug("Adding switch %s for %s part..."%(i, part))
     bnas_pe_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-               'bandwidth': 100, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
-               'domain': NFFG.DOMAIN_INTERNAL}
+               'bandwidth': 100, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
     if part == "R":
       bnas_pe = nffg.add_infra(id=getName("bnas"), 
                                **bnas_pe_res)
@@ -152,8 +150,7 @@ def addCassis(nffg, fi0, fi1, p, cluster_id, chassis_id, popn,
   log.debug("Adding Chassis no.%s with %s Servers for Cluster no.%s of %s."%
             (chassis_id,SE,cluster_id,popn))
   fabricext_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-                   'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
-                   'domain': NFFG.DOMAIN_INTERNAL}
+                   'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   fe0 = nffg.add_infra(id=getName("fe"), **fabricext_res)
   fe1 = nffg.add_infra(id=getName("fe"), **fabricext_res)
   # add links connecting the Fabric Interconnects and Fabric Extenders
@@ -169,8 +166,7 @@ def addCassis(nffg, fi0, fi1, p, cluster_id, chassis_id, popn,
                   'mem': next(gen_params(SE_mem)), 
                   'storage': next(gen_params(SE_storage)), 
                   'delay': 0.5, 'bandwidth': 1000, 
-                  'infra_type': NFFG.TYPE_INFRA_EE,
-                  'domain': NFFG.DOMAIN_INTERNAL}
+                  'infra_type': NFFG.TYPE_INFRA_EE}
     server = nffg.add_infra(id=getName("host"),
                             **server_res)
     # add supported types
@@ -186,8 +182,7 @@ def addCloudNFVPart(nffg, an0, an1, p, popn, CL, CH, SE, SAN_bw, SAN_storage,
                     NF_types, SE_cores, SE_mem, SE_storage, CL_bw, CH_links):
   log.debug("Adding Cloud/NFV part for %s."%popn)
   dnres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
-           'domain': NFFG.DOMAIN_INTERNAL}
+           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   dn0 = nffg.add_infra(id=getName("dn"), 
                        **dnres)
   dn1 = nffg.add_infra(id=getName("dn"),
@@ -198,8 +193,7 @@ def addCloudNFVPart(nffg, an0, an1, p, popn, CL, CH, SE, SAN_bw, SAN_storage,
   for i in range(0, CL):
     log.debug("Adding Cluster no.%s to Could/NFV part of %s"%(i, popn))
     fi_res = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-              'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
-              'domain': NFFG.DOMAIN_INTERNAL}
+              'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
     fabric_interconnect0 = nffg.add_infra(id=getName("fi"), **fi_res)
     fabric_interconnect1 = nffg.add_infra(id=getName("fi"), **fi_res)
     addRedundantPairedConnection(nffg, an0, an1, fabric_interconnect0, 
@@ -208,8 +202,7 @@ def addCloudNFVPart(nffg, an0, an1, p, popn, CL, CH, SE, SAN_bw, SAN_storage,
     # NOTE: SAN can't host any VNFs now!!
     # SAN is an Infra with big storage (internal bw should be big: e.g. 1Tbps)
     san_res = {'cpu': 0, 'mem': 0, 'storage': SAN_storage, 'delay': 0.1,
-              'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_EE,
-               'domain': NFFG.DOMAIN_INTERNAL}
+              'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_EE}
     san = nffg.add_infra(id=getName("san"), **san_res)
     # connect SAN to Fabric Interconnects
     nffg.add_undirected_link(add_port(san, p), add_port(fabric_interconnect0, p), 
@@ -258,8 +251,7 @@ def addPoP(nffg, popcnt, backbonenode0, backbonenode1, p,
   log.debug("Adding PoP %s..."%popcnt)
   # add Aggregation Nodes (1Tbps switching capacity)
   anres = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
-           'domain': NFFG.DOMAIN_INTERNAL}
+           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   an0 = nffg.add_infra(id=getName("an"), **anres)
   an1 = nffg.add_infra(id=getName("an"), **anres)
   
@@ -300,8 +292,7 @@ def getCarrierTopo(params, increment_port_ids=False):
   nffg = NFFG(id="CarrierTopo")
   p = increment_port_ids
   backbone_res =  {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
-                   'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW,
-                   'domain': NFFG.DOMAIN_INTERNAL}
+                   'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   bn0 = nffg.add_infra(id=getName("bn"), **backbone_res)
   bn1 = nffg.add_infra(id=getName("bn"), **backbone_res)
   bn2 = nffg.add_infra(id=getName("bn"), **backbone_res)
