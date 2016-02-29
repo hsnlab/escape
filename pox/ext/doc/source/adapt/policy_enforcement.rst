@@ -4,9 +4,9 @@
 Contains functionality related to policy enforcement.
 
 .. inheritance-diagram::
-   escape.orchest.policy_enforcement.PolicyEnforcementError
-   escape.orchest.policy_enforcement.PolicyEnforcementMetaClass
-   escape.orchest.policy_enforcement.PolicyEnforcement
+   escape.adapt.policy_enforcement.PolicyEnforcementError
+   escape.adapt.policy_enforcement.PolicyEnforcementMetaClass
+   escape.adapt.policy_enforcement.PolicyEnforcement
    :parts: 1
 
 :any:`PolicyEnforcementError` represents a violation during the policy
@@ -20,7 +20,7 @@ handles the Virtualizers and enforce policies.
 Module contents
 ---------------
 
-.. automodule:: escape.orchest.policy_enforcement
+.. automodule:: escape.adapt.policy_enforcement
    :members:
    :private-members:
    :special-members:
