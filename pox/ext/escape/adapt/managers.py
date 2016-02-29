@@ -18,7 +18,7 @@ connections with entities in the particular domain.
 """
 import pprint
 
-from ncclient.operations import RPCError
+from ncclient import NCClientError
 
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
@@ -291,7 +291,7 @@ class InternalDomainManager(AbstractDomainManager):
           log.error(
             "Deployed VNF data for NF: %s is not found! Skip deletion..." %
             nf_id)
-        except RPCError:
+        except NCClientError:
           log.error(
             "Got RPC communication error during NF: %s initiation! Skip "
             "deletion..." % nf_id)
@@ -383,7 +383,7 @@ class InternalDomainManager(AbstractDomainManager):
             self.remoteAdapter.__class__.__name__, updated))
         try:
           vnf = self.remoteAdapter.deployNF(**params)
-        except RPCError:
+        except NCClientError:
           log.error(
             "Got RPC communication error during NF: %s initiation! Skip "
             "initiation..." % nf.name)
