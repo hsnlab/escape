@@ -267,6 +267,29 @@ def generate_mn_test_req2 ():
   return test
 
 
+def generate_mn_req_hackathon ():
+  test = NFFG(id="SG-hackathon", name="SG-name")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap3 = test.add_sap(name="SAP3", id="sap3")
+  comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  fwd = test.add_nf(id="fwd", name="FORWARDER", func_type="simpleForwarder",
+                    cpu=1, mem=1, storage=0)
+  test.add_sglink(sap1.add_port(1), comp.add_port(1), id=1)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=2)
+  test.add_sglink(decomp.ports[1], sap3.add_port(1), id=3)
+  test.add_sglink(sap3.ports[1], fwd.add_port(1), id=4)
+  test.add_sglink(fwd.ports[1], sap1.ports[1], id=5)
+
+  test.add_req(sap1.ports[1], sap3.ports[1], bandwidth=4, delay=20,
+               sg_path=(1, 2, 3))
+  test.add_req(sap3.ports[1], sap1.ports[1], bandwidth=4, delay=20,
+               sg_path=(4, 5))
+  return test
+
+
 def gen ():
   nffg = NFFG(id="SG-decomp", name="SG-name")
   sap1 = nffg.add_sap(name="SAP1", id="sap1")
@@ -765,8 +788,9 @@ if __name__ == "__main__":
   # nffg = generate_ewsdn_req3()
   # nffg = generate_simple_test_topo()
   # nffg = generate_simple_test_req()
-  nffg = generate_mn_topo2()
+  # nffg = generate_mn_topo2()
   # nffg = generate_mn_test_req2()
+  nffg = generate_mn_req_hackathon()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
