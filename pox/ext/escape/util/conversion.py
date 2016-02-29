@@ -626,7 +626,10 @@ class NFFGConverter(object):
             "Flowrule's name: %s is not following the SG hop naming "
             "convention! SG hop for %s is undefined...") % (
             flowentry.name.get_as_text(), flowentry)
-        fr_hop_id = flowentry.name.get_as_text().split(':')[1]
+        try:
+          fr_hop_id = int(flowentry.name.get_as_text().split(':')[1])
+        except ValueError:
+          fr_hop_id = flowentry.name.get_as_text().split(':')[1]
 
       # Add flowrule to port
       fr = vport.add_flowrule(id=fr_id, match=fr_match, action=fr_action,
