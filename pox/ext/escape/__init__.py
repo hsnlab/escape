@@ -114,7 +114,7 @@ cfg = {
           # "virtualizer_type": "SINGLE",
           "virtualizer_type": "GLOBAL",
           "unify_interface": True,
-          "format": "DIFF"
+          "diff": True
         },
       "Cf-Or":
         {
@@ -206,8 +206,8 @@ cfg = {
         {
           "module": "escape.adapt.managers",
           "class": "RemoteESCAPEDomainManager",
-          "poll": True,
-          "format": "DIFF",
+          "poll": False,
+          "diff": True,
           "adapters": {
             "REMOTE":
               {
@@ -224,8 +224,8 @@ cfg = {
           "module": "escape.adapt.managers",
           "class": "RemoteESCAPEDomainManager",
           "domain_name": "extESCAPE",
-          "poll": True,
-          "format": "DIFF",
+          "poll": False,
+          "diff": True,
           "adapters": {
             "REMOTE":
               {

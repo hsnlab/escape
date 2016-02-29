@@ -298,8 +298,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
   # Polling interval
   POLL_INTERVAL = 3
   # Request formats
-  FORMAT_DIFF = "DIFF"
-  FORMAT_FULL = "FULL"
+  DEFAULT_DIFF_VALUE = False
 
   def __init__ (self, domain_name=None, adapters=None, **kwargs):
     """
@@ -314,17 +313,12 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
       self._poll = bool(kwargs['poll'])
     else:
       self._poll = False
-    if 'format' in kwargs:
-      if str(kwargs['format']).upper() in (self.FORMAT_DIFF, self.FORMAT_FULL):
-        self._format = str(kwargs['format']).upper()
-      else:
-        log.warning(
-          "Wrong 'format' type for %s! Using 'FULL' by default..." %
-          self.__class__.__name__)
+    if 'diff' in kwargs:
+      self._diff = bool(kwargs['diff'])
     else:
-      self._format = self.FORMAT_FULL
-    log.debug("Enforced configuration for %s: poll: %s, format: %s" % (
-      self.__class__.__name__, self._poll, self._format))
+      self._diff = self.DEFAULT_DIFF_VALUE
+    log.debug("Enforced configuration for %s: poll: %s, diff: %s" % (
+      self.__class__.__name__, self._poll, self._diff))
 
   @property
   def detected (self):

@@ -110,7 +110,7 @@ class CfOrRequestHandler(AbstractRequestHandler):
   # Use Virtualizer format
   virtualizer_format_enabled = False
   # Default communication approach
-  format = "FULL"
+  DEFAULT_DIFF = False
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
@@ -134,6 +134,7 @@ class CfOrRequestHandler(AbstractRequestHandler):
       return
     self.send_response(200)
     data = config.dump()
+    self.log.log(VERBOSE, "Generated config for 'get-config:\n%s" % data)
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(data))
     self.end_headers()
@@ -149,7 +150,7 @@ class CfOrRequestHandler(AbstractRequestHandler):
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    self.log.debug("Parsed NFFG request: %s" % nffg)
+    self.log.log(VERBOSE, "Received request for 'edit-config':\n%s" % nffg)
     self._proceed_API_call('api_cfor_edit_config', nffg)
     self.send_acknowledge()
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
@@ -186,7 +187,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   # Use Virtualizer format
   virtualizer_format_enabled = False
   # Default communication approach
-  format = "FULL"
+  DEFAULT_DIFF = False
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
@@ -267,7 +268,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         self.log.warning("Missing cached Virtualizer!")
         self.send_error(500)
         return
-      if self.format == "DIFF":
+      if self.DEFAULT_DIFF:
+        self.log.info("Patching cached topology with received diff...")
         full_cfg = self.server.last_response.copy()
         full_cfg.patch(source=received_cfg)
       else:
@@ -371,8 +373,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
       handler.prefix = params['prefix']
     if 'unify_interface' in params:
       handler.virtualizer_format_enabled = params['unify_interface']
-    if 'format' in params:
-      handler.format = params['format']
+    if 'diff' in params:
+      handler.DEFAULT_DIFF = bool(params['diff'])
     address = (params.get('address'), params.get('port'))
     # Virtualizer ID of the Sl-Or interface
     self.ros_api = RESTServer(handler, *address)
@@ -385,9 +387,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.ros_api.start()
     handler.log.debug(
       "Enforced configuration for %s: virtualizer type: %s, interface: %s, "
-      "format: %s" % (self.ros_api.api_id, self.ros_api.virtualizer_type,
-                      "UNIFY" if handler.virtualizer_format_enabled else
-                      "Internal-NFFG", handler.format))
+      "diff: %s" % (self.ros_api.api_id, self.ros_api.virtualizer_type,
+                    "UNIFY" if handler.virtualizer_format_enabled else
+                    "Internal-NFFG", handler.DEFAULT_DIFF))
     if self._agent:
       log.info("REST-API is set in AGENT mode")
 
@@ -406,8 +408,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
       handler.prefix = params['prefix']
     if 'unify_interface' in params:
       handler.virtualizer_format_enabled = params['unify_interface']
-    if 'format' in params:
-      handler.format = params['format']
+    if 'diff' in params:
+      handler.DEFAULT_DIFF = bool(params['diff'])
     address = (params.get('address'), params.get('port'))
     self.cfor_api = RESTServer(handler, *address)
     # Virtualizer ID of the Cf-Or interface
@@ -420,9 +422,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.cfor_api.start()
     handler.log.debug(
       "Enforced configuration for %s: virtualizer type: %s, interface: %s, "
-      "format: %s" % (self.cfor_api.api_id, self.cfor_api.virtualizer_type,
-                      "UNIFY" if handler.virtualizer_format_enabled else
-                      "Internal-NFFG", handler.format))
+      "diff: %s" % (self.cfor_api.api_id, self.cfor_api.virtualizer_type,
+                    "UNIFY" if handler.virtualizer_format_enabled else
+                    "Internal-NFFG", handler.DEFAULT_DIFF))
 
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
