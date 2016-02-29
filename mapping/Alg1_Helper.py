@@ -31,39 +31,6 @@ if not log.getEffectiveLevel():
   logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
   log.setLevel(logging.DEBUG)
 
-
-def subtractNodeRes (current, substrahend, maximal, link_count=1):
-  """
-  Subtracts the subtrahend nffg_elements.NodeResource object from the current.
-  Note: only delay component is not subtracted, for now we neglect the load`s
-  influence on the delay. Link count identifies how many times the bandwidth
-  should be subtracted. Throw exception if any field of the 'current' would 
-  exceed 'maximal' or get below zero.
-  """
-  attrlist = ['cpu', 'mem', 'storage', 'bandwidth']  # delay excepted!
-  if reduce(lambda a, b: a or b, (current[attr] is None for attr in attrlist)):
-    raise uet.BadInputException(
-      "Node resource components should always be given",
-      "One of %s`s components is None" % str(current))
-  if not reduce(lambda a, b: a and b,
-            (0 <= current[attr] - substrahend[attr] <= maximal[attr] 
-             for attr in attrlist if
-             attr != 'bandwidth' and substrahend[attr] is not None)):
-    raise uet.InternalAlgorithmException("Node resource got below zero, or "
-                                         "exceeded the maximal value!")
-  if substrahend['bandwidth'] is not None:
-    if not 0 <= current['bandwidth'] - link_count * substrahend['bandwidth'] <=\
-       maximal['bandwidth']:
-      raise uet.InternalAlgorithmException("Internal bandwidth cannot get below "
-                                           "zero, or exceed the maximal value!")
-  for attr in attrlist:
-    k = 1
-    if attr == 'bandwidth':
-      k = link_count
-    if substrahend[attr] is not None:
-      current[attr] -= k * substrahend[attr]
-  return current
-
 def retrieveFullDistMtx (dist, G_full):
   # this fix access latency is used by CarrierTopoBuilder.py
   log.debug("Retrieving path lengths of SAP-s excepted because "
