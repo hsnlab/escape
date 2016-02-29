@@ -4,6 +4,7 @@ import copy
 import sys
 from pprint import pprint
 
+from escape.util.conversion import NFFGConverter
 from nffg import *
 
 DOMAIN_INTERNAL = "INTERNAL"
@@ -642,8 +643,6 @@ def generate_ewsdn_req3 ():
 
 
 def test_conversion ():
-  from conversion import NFFGConverter
-
   with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
     os_nffg, os_virt = NFFGConverter(
       domain="OPENSTACK").parse_from_Virtualizer(f.read(), with_virt=True)
@@ -665,7 +664,7 @@ def test_conversion ():
 
   # pprint(merged.network.__dict__)
   print
-  splitted = NFFGToolBox.split_domains(merged)
+  splitted = NFFGToolBox.split_into_domains(merged)
   print splitted
   # for d, p in splitted:
   #   print "\n", d

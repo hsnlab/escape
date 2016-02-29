@@ -15,11 +15,10 @@
 Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
+import itertools
 import logging
 import networkx
 from networkx.exception import NetworkXError
-
-import itertools
 
 from nffg_elements import *
 
@@ -920,8 +919,10 @@ class NFFGToolBox(object):
     domain = cls.detect_domains(nffg=nffg)
     if len(domain) == 0:
       log.error("No domain detected in new %s!" % nffg)
+      return
     if len(domain) > 1:
       log.warning("Multiple domain name detected in new %s!" % nffg)
+      return
     # Copy infras
     log.debug("Merge domain: %s resource info into %s..." % (domain.pop(),
                                                              base.id))
@@ -1332,26 +1333,54 @@ class NFFGToolBox(object):
     cls.trim_orphaned_nodes(nffg=base, log=log)
     return base
 
-  @staticmethod
-  def update (base, nffg, log):
+  @classmethod
+  def update_domain (cls, base, updated, log):
     """
     Update the given ``nffg`` into the ``base`` NFFG.
 
     :param base: base NFFG object
     :type base: :any:`NFFG`
-    :param nffg: updating information
-    :type nffg: :any:`NFFG`
+    :param updated: updating information
+    :type updated: :any:`NFFG`
     :param log: additional logger
     :type log: :any:`logging.Logger`
     :return: the update base NFFG
     :rtype: :any:`NFFG`
     """
-    # TODO 1 - if new bisbis add to base
-    # TODO 2 - if base bisbis doesnt exist remove from base
-    # TODO 3 - if new nf add to base
-    # TODO 4 - if base nf doesnt exist remove from base
-    # TODO 5 - recreate inter-domain SAPs
-    pass
+    # Get new domain name
+    domain = cls.detect_domains(nffg=updated)
+    if len(domain) == 0:
+      log.error("No domain detected in new %s!" % updated)
+      return
+    if len(domain) > 1:
+      log.warning("Multiple domain name detected in new %s!" % updated)
+      return
+    domain = domain.pop()
+    log.debug("Update elements of domain: %s in %s..." % (domain, base.id))
+    # deletable = set()
+    # # Search for removed nodes
+    # for node_id in base:
+    #   if node_id not in updated:
+    #     deletable.add(node_id)
+    # # Delete nodes
+    # base.network.remove_nodes_from(deletable)
+    # # Search for new elements
+    # for node_id in updated:
+    #   if node_id not in base:
+    #     new_node = updated[node_id].copy()
+    #
+    # # TODO 1 - if new bisbis add to base
+    # # TODO 2 - if base bisbis doesnt exist remove from base
+    # # TODO 3 - if new nf add to base
+    # # TODO 4 - if base nf doesnt exist remove from base
+    # # TODO 5 - recreate inter-domain SAPs
+    # for infra in base.infras:
+    #   if infra.domain != domain:
+    #     continue
+    #   for nf in base.running_nfs(infra.id):
+    #     if nf.id not in (id for id in updated.network.neighbors_iter(infra.id)
+    #                      if updated[id].type == Node.NF):
+    #       pass
 
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------

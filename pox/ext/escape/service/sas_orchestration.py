@@ -14,7 +14,7 @@
 """
 Contains classes relevant to Service Adaptation Sublayer functionality.
 """
-from escape.orchest.virtualization_mgmt import AbstractVirtualizer
+from escape.adapt.virtualization import AbstractVirtualizer
 from escape.service import log as log, LAYER_NAME
 from escape.service.sas_mapping import ServiceGraphMapper
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
