@@ -17,8 +17,7 @@ Contains functionality related to policy enforcement.
 import repr
 from functools import wraps
 
-import escape.orchest.virtualization_mgmt
-from escape.orchest import log as log
+from escape.adapt import log as log
 
 
 class PolicyEnforcementError(RuntimeError):
@@ -98,25 +97,19 @@ class PolicyEnforcementMetaClass(type):
       Wrapper function which call policy checking functions if they exist.
       """
       if len(args) > 0:
-        if isinstance(args[0],
-                      escape.orchest.virtualization_mgmt.AbstractVirtualizer):
-          # Call Policy checking function before original
-          if hooks[0]:
-            log.debug("Invoke Policy checking function: [PRE] %s" % (
-              hooks[0].__name__.split('pre_', 1)[1]))
-            hooks[0](args, kwargs)
-          # Call original function
-          ret_value = orig_func(*args, **kwargs)
-          # Call Policy checking function after original
-          if hooks[1]:
-            log.debug("Invoke Policy checking function: [POST] %s" % (
-              hooks[1].__name__.split('post_', 1)[1]))
-            hooks[1](args, kwargs, ret_value)
-          return ret_value
-        else:
-          log.warning(
-            "Binder class of policy checker function is not a subclass of "
-            "AbstractVirtualizer!")
+        # Call Policy checking function before original
+        if hooks[0]:
+          log.debug("Invoke Policy checking function: [PRE] %s" % (
+            hooks[0].__name__.split('pre_', 1)[1]))
+          hooks[0](args, kwargs)
+        # Call original function
+        ret_value = orig_func(*args, **kwargs)
+        # Call Policy checking function after original
+        if hooks[1]:
+          log.debug("Invoke Policy checking function: [POST] %s" % (
+            hooks[1].__name__.split('post_', 1)[1]))
+          hooks[1](args, kwargs, ret_value)
+        return ret_value
       else:
         log.warning("Something went wrong during binding Policy checker!")
       log.error("Abort policy enforcement checking!")

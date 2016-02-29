@@ -14,11 +14,10 @@
 """
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
+from escape.adapt.virtualization import AbstractVirtualizer, VirtualizerManager
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
-from escape.orchest.virtualization_mgmt import AbstractVirtualizer, \
-  VirtualizerManager
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
 from escape.util.misc import notify_remote_visualizer, VERBOSE
 
