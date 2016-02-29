@@ -14,16 +14,13 @@
 """
 Contains classes which implement SG mapping functionality.
 """
-import sys
-import traceback
 
 from MappingAlgorithms import MAP
-from UnifyExceptionTypes import MappingException, BadInputException, \
-  InternalAlgorithmException
+from UnifyExceptionTypes import *
 from escape import CONFIG
 from escape.service import log as log, LAYER_NAME
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
-from escape.util.misc import call_as_coop_task
+from escape.util.misc import call_as_coop_task, VERBOSE
 from pox.lib.revent.revent import Event
 
 
@@ -75,16 +72,15 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       return
     except InternalAlgorithmException as e:
       log.critical(
-         "Mapping algorithm fails due to implementation error or conceptual "
-         "error! Cause:\n%s" % e.msg)
+        "Mapping algorithm fails due to implementation error or conceptual "
+        "error! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s aborted!" % graph)
       return
     except:
-      log.error("Got unexpected error during mapping process! Cause: ")
-      traceback.print_exception(*sys.exc_info())
+      log.exception("Got unexpected error during mapping process!")
       return
     log.debug(
-       "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
+      "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
     return mapped_nffg
 
 
@@ -134,48 +130,61 @@ class ServiceGraphMapper(AbstractMapper):
     :return: Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
+    if input_graph is None:
+      log.error("Missing service request information! Abort mapping process!")
+      return None
     log.debug("Request %s to launch orchestration on SG: %s with View: %s" % (
       self.__class__.__name__, input_graph, resource_view))
     # Steps before mapping (optional)
     log.debug("Request resource info from layer virtualizer...")
     virt_resource = resource_view.get_resource_info()
+    if virt_resource is None:
+      log.error("Missing resource information! Abort mapping process!")
+      return None
+    # Log verbose resource view if it is exist
+    log.log(VERBOSE, "Service layer resource graph:\n%s" % virt_resource.dump())
     # resource_view.sanity_check(input_graph)
     # Check if the mapping algorithm is enabled
     if not CONFIG.get_mapping_enabled(LAYER_NAME):
       log.warning(
-         "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
-         "forward service request to lower layer..." % LAYER_NAME)
+        "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
+        "forward service request to lower layer..." % LAYER_NAME)
       return input_graph
     # Run actual mapping algorithm
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread
       log.info(
-         "Schedule mapping algorithm: %s in a worker thread" %
-         self.strategy.__name__)
+        "Schedule mapping algorithm: %s in a worker thread" %
+        self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
       log.info("SG: %s orchestration is finished by %s" % (
         input_graph, self.__class__.__name__))
+      # Return with None
+      return None
     else:
-      nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
-      # Steps after mapping (optional)
-      if nffg is None:
+      mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
+      # Steps after mapping (optional) if the mapping was not threaded
+      if mapped_nffg is None:
         log.error("Mapping process is failed! Abort orchestration process.")
       else:
         log.info("SG: %s orchestration is finished by %s successfully!" % (
           input_graph, self.__class__.__name__))
-      return nffg
+      return mapped_nffg
 
-  def _mapping_finished (self, nffg):
+  def _mapping_finished (self, mapped_nffg):
     """
     Called from a separate thread when the mapping process is finished.
 
-    :param nffg: generated NF-FG
-    :type nffg: :any:`NFFG`
+    :param mapped_nffg: generated NF-FG
+    :type mapped_nffg: :any:`NFFG`
     :return: None
     """
-    if nffg is None:
+    # TODO - rethink threaded/non-threaded function call paths to call port
+    # mapping functions in a joint way only once
+    if mapped_nffg is None:
       log.error("Mapping process is failed! Abort orchestration process.")
-    else:
-      log.debug("Inform SAS layer API that SG mapping has been finished...")
-      self.raiseEventNoErrors(SGMappingFinishedEvent, nffg)
+      return None
+    # Steps after mapping (optional) if the mapping was threaded
+    log.debug("Inform SAS layer API that SG mapping has been finished...")
+    self.raiseEventNoErrors(SGMappingFinishedEvent, mapped_nffg)

@@ -61,7 +61,8 @@ def _start_components (event):
 
 @poxutil.eval_args
 def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
-            full=False, debug=True, cfor=False, visualization=False, topo=None):
+            full=False, loglevel="INFO", cfor=False, visualization=False,
+            topo=None):
   """
   Launch function called by POX core when core is up.
 
@@ -76,8 +77,8 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   :param rosapi:
   :param full: Initiate Infrastructure Layer also
   :type full: bool
-  :param debug: run in debug mode  (optional)
-  :type debug: bool
+  :param loglevel: run on specific run level  (default: INFO)
+  :type loglevel: str
   :param cfor: start Cf-Or REST API (optional)
   :type cfor: bool
   :param visualization: send NFFGs to remote visualization server (optional)
@@ -87,17 +88,21 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   :return: None
   """
   global init_param
-  log = core.getLogger("core")
+  # Add new VERBOSE log level to root logger
+  logging.addLevelName(5, 'VERBOSE')
   init_param.update(locals())
-  # Run POX with DEBUG logging level if needed
-  from pox.log.level import launch
-  launch(DEBUG=debug)
   # Import colourful logging
   from pox.samples.pretty_log import launch
-  launch()
-  log.info(
-     "Setup logger - formatter: %s, level: %s" % (
-       "pretty_log", logging.getLevelName(log.getEffectiveLevel())))
+  if loglevel == 'VERBOSE':
+    launch()
+    # Set the Root logger level explicitly
+    logging.getLogger('').setLevel("VERBOSE")
+  else:
+    # Launch pretty logger with specific log level
+    launch(**{loglevel: True})
+  log = core.getLogger("core")
+  log.info("Setup logger - formatter: %s, level: %s" % (
+    "pretty_log", logging.getLevelName(log.getEffectiveLevel())))
   # Save additional config file name into POX's core as an attribute to avoid to
   # confuse with POX's modules
   if config:

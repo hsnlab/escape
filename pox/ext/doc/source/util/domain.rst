@@ -7,9 +7,10 @@ Implement the supporting classes for domain adapters.
    escape.util.domain.DomainChangedEvent
    escape.util.domain.DeployEvent
    escape.util.domain.AbstractDomainManager
+   escape.util.domain.AbstractRemoteDomainManager
    escape.util.domain.AbstractESCAPEAdapter
    escape.util.domain.AbstractOFControllerAdapter
-   escape.util.domain.DefaultUnifyDomainRESTAPI
+   escape.util.domain.DefaultUnifyDomainAPI
    escape.util.domain.VNFStarterAPI
    escape.util.domain.OpenStackAPI
    escape.util.domain.UniversalNodeAPI
@@ -24,12 +25,15 @@ an unified way.
 
 :any:`AbstractDomainManager` contains general logic for top domain managers.
 
+:any:`AbstractRemoteDomainManager` contains polling functionality for remote
+domains.
+
 :any:`AbstractESCAPEAdapter` contains general logic for actual Adapters.
 
 :any:`AbstractOFControllerAdapter` contains general logic for actual OF
 controller based Adapters.
 
-:any:`DefaultUnifyDomainRESTAPI` defines unified interface for domain's REST-API.
+:any:`DefaultUnifyDomainAPI` defines unified interface for domain's REST-API.
 
 :any:`VNFStarterAPI` defines the interface for VNF management based on
 VNFStarter YANG description.
@@ -46,9 +50,11 @@ ESCAPE instance started in agent mode.
 :any:`AbstractRESTAdapter` contains the general functions for communication
 through an HTTP/RESTful API.
 
-Requirements::
+Requirements:
 
-  sudo pip install requests
+.. code-block:: bash
+
+   $ sudo pip install requests
 
 Module contents
 ---------------

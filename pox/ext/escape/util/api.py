@@ -49,23 +49,23 @@ class AbstractAPI(EventMixin):
 
     Handle core registration along with :func:`_all_dependencies_met()`.
 
-    Set given parameters (standalone parameter is mandatory) automatically as::
+    Set given parameters (standalone parameter is mandatory) automatically as:
 
-      self._<param_name> = <param_value>
+    >>> self._param_name = param_value
 
     Base constructor functions have to be called as the last step in derived
     classes. Same situation with :func:`_all_dependencies_met()` respectively.
     Must not override these function, just use :func:`initialize()` for
     init steps. Actual API classes must only call :func:`super()` in their
-    constructor with the form::
+    constructor with the form:
 
-      super(<API Class name>, self).__init__(standalone=standalone, **kwargs)
+    >>> super(SpecificAPI, self).__init__(standalone=standalone, **kwargs)
 
     .. warning::
       Do not use prefixes in the name of event handlers, because of automatic
       dependency discovery considers that as a dependent component and this
       situation cause a dead lock (component will be waiting to each other to
-      set up)
+      set up)!
 
     :param standalone: started in standalone mode or not
     :type standalone: bool
@@ -134,8 +134,12 @@ class AbstractAPI(EventMixin):
       core.core.register(self._core_name, self)
       # Set "running" config for convenience purposes
       CONFIG.set_layer_loaded(self._core_name)
-    except:
-      quit_with_error(msg="Abort ESCAPEv2 initialization...", exception=True)
+    except KeyboardInterrupt:
+      quit_with_error(
+        msg="Initialization of %s was interrrupted by user!" %
+            self.__class__.__name__)
+    except Exception as e:
+      quit_with_error(msg="Abort ESCAPEv2 initialization...", exception=e)
 
   def initialize (self):
     """
@@ -191,8 +195,8 @@ class AbstractAPI(EventMixin):
     import pprint
 
     return pprint.pformat(
-       [(f, type(getattr(self, f))) for f in dir(self) if
-        not f.startswith('_')])
+      [(f, type(getattr(self, f))) for f in dir(self) if
+       not f.startswith('_')])
 
 
 class RequestCache(object):
@@ -228,7 +232,7 @@ class RequestCache(object):
     """
     try:
       self.cache[id] = self.IN_PROGRESS
-    except:
+    except KeyError:
       pass
 
   def set_result (self, id, result):
@@ -242,7 +246,7 @@ class RequestCache(object):
     """
     try:
       self.cache[id] = self.SUCCESS if result else self.ERROR
-    except:
+    except KeyError:
       pass
 
   def get_result (self, id):
@@ -254,7 +258,7 @@ class RequestCache(object):
     """
     try:
       return self.cache[id]
-    except:
+    except KeyError:
       return self.UNKNOWN
 
 
@@ -278,7 +282,6 @@ class RESTServer(ThreadingMixIn, HTTPServer):
       :type port: int
       """
     HTTPServer.__init__(self, (address, port), RequestHandlerClass)
-    # self._server = Server((address, port), RequestHandlerClass)
     self._thread = threading.Thread(target=self.run,
                                     name="REST-%s:%s" % (address, port))
     self._thread.daemon = True
@@ -286,6 +289,8 @@ class RESTServer(ThreadingMixIn, HTTPServer):
     self.request_cache = RequestCache()
     self.api_id = None
     self.virtualizer_type = None
+    # Cache for the last response to avoid topo recreation
+    self.last_response = None
 
   def start (self):
     """
@@ -309,7 +314,7 @@ class RESTServer(ThreadingMixIn, HTTPServer):
     # print "start"
     try:
       self.serve_forever()
-    except:
+    except Exception:
       pass
       # print "stop"
       # self.RequestHandlerClass.log.debug(
@@ -354,7 +359,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     relevant helper function of core object: :func:`callLater()`/
     :func:`raiseLater()` or use :func:`schedule_as_coop_task()
     <escape.util.misc.schedule_as_coop_task>` decorator defined in
-    :mod:`escape.util.misc` on the called function
+    :mod:`escape.util.misc` on the called function!
   """
   # For HTTP Response messages
   server_version = "ESCAPE/" + __version__
@@ -371,6 +376,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
   LOGGER_NAME = "REST-API"
   # Logger. Should be overrided in child classes
   log = core.getLogger("[%s]" % LOGGER_NAME)
+  # Use Virtualizer format
+  virtualizer_format_enabled = False
+  # Default communication approach
+  format = "FULL"
 
   def do_GET (self):
     """
@@ -472,6 +481,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
         self.send_error(e.code, e.msg)
       else:
         self.send_error(500, e.msg)
+    except:
+      # Got unexpected exception
+      self.send_error(500)
+      raise
     finally:
       self.func_name = None
       self.wfile.flush()
@@ -533,8 +546,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
     try:
       if self.func_name:
         self.send_header('Allow', ','.join(
-           [str(verbs) for verbs, f in self.request_perm.iteritems() if
-            self.func_name in f]))
+          [str(verbs) for verbs, f in self.request_perm.iteritems() if
+           self.func_name in f]))
     except KeyError:
       pass
 
@@ -656,9 +669,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler):
       else:
         # raise NotImplementedError
         self.log.warning(
-           'Mistyped or not implemented API function call: %s ' % function)
+          'Mistyped or not implemented API function call: %s ' % function)
         raise RESTError(
-           msg='Mistyped or not implemented API function call: %s ' % function)
+          msg='Mistyped or not implemented API function call: %s ' % function)
     else:
       self.log.error('Error: No component has registered with the name: %s, '
                      'ABORT function call!' % self.bounded_layer)

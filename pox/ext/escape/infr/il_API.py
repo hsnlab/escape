@@ -127,5 +127,5 @@ class InfrastructureLayerAPI(AbstractAPI):
     # TODO - implement static deployment
     # TODO - probably will not be supported in the future
     log.getChild('API').info(
-       "NF-FG: %s deployment has been finished successfully!" % event.nffg_part)
+      "NF-FG: %s deployment has been finished successfully!" % event.nffg_part)
     self.raiseEventNoErrors(DeploymentFinishedEvent, True)

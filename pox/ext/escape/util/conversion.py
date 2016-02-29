@@ -14,20 +14,22 @@
 """
 Contains helper classes for conversion between different NF-FG representations.
 """
+import json
+import string
 import sys
-import xml.etree.ElementTree as ET
 
 from baseclasses import __version__ as V_VERSION
+from escape.util.misc import VERBOSE
 
 try:
   # Import for ESCAPEv2
-  from escape.util.nffg import AbstractNFFG, NFFG
+  from escape.nffg_lib.nffg import AbstractNFFG, NFFG
 except ImportError:
   import os, inspect
 
   sys.path.insert(0, os.path.join(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../../../..")),
-    "pox/ext/escape/util/"))
+    "pox/ext/escape/nffg_lib/"))
   # Import for standalone running
   from nffg import AbstractNFFG, NFFG
 
@@ -65,13 +67,17 @@ class NFFGConverter(object):
   MATCH_TAG = r"dl_tag"
   ACTION_PUSH_TAG = r"push_tag"
   ACTION_POP_TAG = r"pop_tag"
-  # Operand separator
-  LABEL_SEPARATOR = '|'
-  OP_SEPARATOR = ';'
-  KV_SEPARATOR = '='
+  # Operand delimiters
+  LABEL_DELIMITER = '|'
+  OP_DELIMITER = ';'
+  KV_DELIMITER = '='
+  # Other delimiters
+  UNIQUE_ID_DELIMITER = '@'
   # Field types
   TYPE_MATCH = "MATCH"
   TYPE_ACTION = "ACTION"
+  # Hard-coded constants
+  REQUIREMENT_PREFIX = "REQ"
 
   def __init__ (self, domain=None, logger=None, ensure_unique_id=None):
     # Save domain name for define domain attribute in infras
@@ -122,13 +128,13 @@ class NFFGConverter(object):
     #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
     #     action['vlan_push'] = push_tag
     ret = {}
-    parts = field.split(cls.OP_SEPARATOR)
+    parts = field.split(cls.OP_DELIMITER)
     if len(parts) < 1:
       raise RuntimeError(
         "Wrong format: %s! Separator (%s) not found!" % (
-          field, cls.OP_SEPARATOR))
+          field, cls.OP_DELIMITER))
     for part in parts:
-      kv = part.split(cls.KV_SEPARATOR)
+      kv = part.split(cls.KV_DELIMITER)
       if len(kv) != 2:
         if kv[0] == cls.OP_UNTAG and type.upper() == cls.TYPE_ACTION:
           ret['vlan_pop'] = True
@@ -145,9 +151,9 @@ class NFFGConverter(object):
           ret['in_port'] = kv[1]
       elif kv[0] == cls.OP_TAG:
         if type.upper() == cls.TYPE_MATCH:
-          ret['vlan_id'] = kv[1].split(cls.LABEL_SEPARATOR)[-1]
+          ret['vlan_id'] = kv[1].split(cls.LABEL_DELIMITER)[-1]
         elif type.upper() == cls.TYPE_ACTION:
-          ret['vlan_push'] = kv[1].split(cls.LABEL_SEPARATOR)[-1]
+          ret['vlan_push'] = kv[1].split(cls.LABEL_DELIMITER)[-1]
         else:
           raise RuntimeError('Not supported field type: %s!' % type)
       elif kv[0] == cls.OP_OUTPUT:
@@ -193,7 +199,7 @@ class NFFGConverter(object):
           continue
           # elif op[0] == self.OP_SGHOP:
           #   ret.append(kv)
-    return self.OP_SEPARATOR.join(ret)
+    return self.OP_DELIMITER.join(ret)
 
   def _convert_flowrule_action (self, action):
     """
@@ -232,7 +238,7 @@ class NFFGConverter(object):
       elif op[0] == self.OP_UNTAG:
         # E.g.: <action>strip_vlan</action>
         ret.append(self.ACTION_POP_TAG)
-    return self.OP_SEPARATOR.join(ret)
+    return self.OP_DELIMITER.join(ret)
 
   def _parse_virtualizer_node_ports (self, nffg, infra, vnode):
     """
@@ -290,9 +296,8 @@ class NFFGConverter(object):
 
         # Add metadata from infra port metadata to sap metadata
         for key in vport.metadata:  # Optional - port.metadata
-          if key not in ('l_bw', 'l_delay'):
-            sap.add_metadata(name=key,
-                             value=vport.metadata[key].value.get_value())
+          sap.add_metadata(name=key,
+                           value=vport.metadata[key].value.get_value())
 
         # Create and add the port of the opposite Infra node
         try:
@@ -312,25 +317,13 @@ class NFFGConverter(object):
 
         self.log.debug("Added port for SAP -> %s" % infra_port)
 
-        # Get SAP-Infra link resources from metadata if these are stored
-        # Default value: None
-        if 'l_bw' in vport.metadata.keys():
-          sap_infra_link_bw = vport.metadata['l_bw'].value.get_value()
-        else:
-          sap_infra_link_bw = None
-        if 'l_delay' in vport.metadata.keys():
-          sap_infra_link_delay = vport.metadata['l_delay'].value.get_value()
-        else:
-          sap_infra_link_delay = None
         # Add connection between infra - SAP
         # SAP-Infra is static link --> create link for both direction
         l1, l2 = nffg.add_undirected_link(
           p1p2id="%s-%s-link" % (sap_id, infra.id),
           p2p1id="%s-%s-link-back" % (sap_id, infra.id),
           port1=sap_port,
-          port2=infra_port,
-          delay=sap_infra_link_delay,
-          bandwidth=sap_infra_link_bw)
+          port2=infra_port)
 
         self.log.debug("Added SAP-Infra connection: %s" % l1)
         self.log.debug("Added Infra-SAP connection: %s" % l2)
@@ -392,15 +385,15 @@ class NFFGConverter(object):
         nf_mem = v_vnf.resources.mem.get_as_text().split(' ')[0]
         nf_storage = v_vnf.resources.storage.get_as_text().split(' ')[0]
         try:
-          nf_cpu = float(nf_cpu)
+          nf_cpu = float(nf_cpu) if nf_cpu is not None else None
         except ValueError as e:
           self.log.warning("Resource cpu value is not valid number: %s" % e)
         try:
-          nf_mem = float(nf_mem)
+          nf_mem = float(nf_mem) if nf_mem is not None else None
         except ValueError as e:
           self.log.warning("Resource mem value is not valid number: %s" % e)
         try:
-          nf_storage = float(nf_storage)
+          nf_storage = float(nf_storage) if nf_storage is not None else None
         except ValueError as e:
           self.log.warning(
             "Resource storage value is not valid number: %s" % e)
@@ -455,7 +448,7 @@ class NFFGConverter(object):
 
         # Add connection between Infra - NF
         # Infra - NF port on Infra side is always a dynamically generated port
-        dyn_port = self.LABEL_SEPARATOR.join((infra.id,
+        dyn_port = self.LABEL_DELIMITER.join((infra.id,
                                               nf_id,
                                               vport.id.get_as_text()))
         # Add Infra-side port
@@ -493,10 +486,12 @@ class NFFGConverter(object):
         v_src_node = v_src_nf.get_parent().get_parent()
         # Add domain name to the node id if unique_id is set
         if self.ensure_unique_id:
-          src_node = "%s@%s" % (v_src_node.id.get_value(), self.domain)
+          src_node = "%s%s%s" % (v_src_node.id.get_value(),
+                                 self.UNIQUE_ID_DELIMITER,
+                                 self.domain)
         else:
           src_node = v_src_node.id.get_as_text()
-        fr_match += self.LABEL_SEPARATOR.join((src_node,
+        fr_match += self.LABEL_DELIMITER.join((src_node,
                                                v_src_nf.id.get_as_text(),
                                                v_fe_port.id.get_as_text()))
       else:
@@ -510,10 +505,12 @@ class NFFGConverter(object):
         v_dst_nf = v_fe_out.get_parent().get_parent()
         v_dst_node = v_dst_nf.get_parent().get_parent()
         if self.ensure_unique_id:
-          dst_node = "%s@%s" % (v_dst_node.id.get_value(), self.domain)
+          dst_node = "%s%s%s" % (v_dst_node.id.get_value(),
+                                 self.UNIQUE_ID_DELIMITER,
+                                 self.domain)
         else:
           dst_node = v_dst_node.id.get_as_text()
-        fr_action += self.LABEL_SEPARATOR.join((dst_node,
+        fr_action += self.LABEL_DELIMITER.join((dst_node,
                                                 v_dst_nf.id.get_as_text(),
                                                 v_fe_out.id.get_as_text()))
       else:
@@ -522,7 +519,7 @@ class NFFGConverter(object):
 
       # Check if there is a matching operation -> currently just TAG is used
       if flowentry.match.is_initialized() and flowentry.match.get_value():
-        for op in flowentry.match.get_as_text().split(self.OP_SEPARATOR):
+        for op in flowentry.match.get_as_text().split(self.OP_DELIMITER):
           # e.g. <match>dl_tag=0x0004</match> --> in_port=1;TAG=SAP2|fwd|4
           if op.startswith(self.MATCH_TAG):
             # if src or dst was a SAP: SAP.id == port.name
@@ -539,12 +536,12 @@ class NFFGConverter(object):
               _dst_name = v_fe_out.get_parent().get_parent().id.get_as_text()
             # Convert from int/hex to int
             _tag = int(op.split('=')[1], base=0)
-            fr_match += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
+            fr_match += ";%s=%s" % (self.OP_TAG, self.LABEL_DELIMITER.join(
               (str(_src_name), str(_dst_name), str(_tag))))
 
       # Check if there is an action operation
       if flowentry.action.is_initialized() and flowentry.action.get_value():
-        for op in flowentry.action.get_as_text().split(self.OP_SEPARATOR):
+        for op in flowentry.action.get_as_text().split(self.OP_DELIMITER):
           # e.g. <action>push_tag:0x0003</action> -->
           # output=1;TAG=decomp|SAP2|3
           if op.startswith(self.ACTION_PUSH_TAG):
@@ -563,7 +560,7 @@ class NFFGConverter(object):
               _dst_name = v_fe_out.get_parent().get_parent().id.get_as_text()
             # Convert from int/hex to int
             _tag = int(op.split(':')[1], base=0)
-            fr_action += ";%s=%s" % (self.OP_TAG, self.LABEL_SEPARATOR.join(
+            fr_action += ";%s=%s" % (self.OP_TAG, self.LABEL_DELIMITER.join(
               (_src_name, _dst_name, str(_tag))))
           # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
           elif op.startswith(self.ACTION_POP_TAG):
@@ -653,7 +650,9 @@ class NFFGConverter(object):
       # Node params
       if self.ensure_unique_id:
         # Add domain name to the node id if unique_id is set
-        node_id = "%s@%s" % (vnode.id.get_value(), self.domain)
+        node_id = "%s%s%s" % (vnode.id.get_value(),
+                              self.UNIQUE_ID_DELIMITER,
+                              self.domain)
       else:
         node_id = vnode.id.get_value()  # Mandatory - node.id
       if vnode.name.is_initialized():  # Optional - node.name
@@ -669,15 +668,16 @@ class NFFGConverter(object):
         node_mem = vnode.resources.mem.get_as_text().split(' ')[0]
         node_storage = vnode.resources.storage.get_as_text().split(' ')[0]
         try:
-          node_cpu = float(node_cpu)
+          node_cpu = float(node_cpu) if node_cpu is not None else None
         except ValueError as e:
           self.log.warning("Resource cpu value is not valid number: %s" % e)
         try:
-          node_mem = float(node_mem)
+          node_mem = float(node_mem) if node_mem is not None else None
         except ValueError as e:
           self.log.warning("Resource mem value is not valid number: %s" % e)
         try:
-          node_storage = float(node_storage)
+          node_storage = float(
+            node_storage) if node_storage is not None else None
         except ValueError as e:
           self.log.warning("Resource storage value is not valid number: %s" % e)
       else:
@@ -695,6 +695,12 @@ class NFFGConverter(object):
           vlink.resources.bandwidth.is_initialized()]
         # Default value: None
         node_bw = min(node_bw) if node_bw else None
+      try:
+        if node_bw is not None:
+          node_bw = float(node_bw)
+      except ValueError as e:
+        self.log.warning(
+          "Resource bandwidth value is not valid number: %s" % e)
       if 'delay' in vnode.metadata:
         # Converted to float in Infra constructor
         node_delay = vnode.metadata['delay'].value.get_value()
@@ -706,6 +712,11 @@ class NFFGConverter(object):
           vlink.resources.delay.is_initialized()]
         # Default value: None
         node_delay = max(node_delay) if node_delay else None
+      try:
+        if node_delay is not None:
+          node_delay = float(node_delay)
+      except ValueError as e:
+        self.log.warning("Resource delay value is not valid number: %s" % e)
       # Add Infra Node to NFFG
       infra = nffg.add_infra(id=node_id, name=node_name, domain=node_domain,
                              infra_type=node_type, cpu=node_cpu, mem=node_mem,
@@ -713,6 +724,7 @@ class NFFGConverter(object):
                              bandwidth=node_bw)
 
       self.log.debug("Created INFRA node: %s" % infra)
+      self.log.debug("Parsed resources: %s" % infra.resources)
 
       # Add supported types shrinked from the supported NF list
       for sup_nf in vnode.capabilities.supported_NFs:
@@ -752,14 +764,18 @@ class NFFGConverter(object):
       src_node = src_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       if self.ensure_unique_id:
-        src_node_id = "%s@%s" % (src_node.id.get_value(), self.domain)
+        src_node_id = "%s%s%s" % (src_node.id.get_value(),
+                                  self.UNIQUE_ID_DELIMITER,
+                                  self.domain)
       else:
         src_node_id = src_node.id.get_value()
       dst_port = vlink.dst.get_target()
       dst_node = dst_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       if self.ensure_unique_id:
-        dst_node_id = "%s@%s" % (dst_node.id.get_value(), self.domain)
+        dst_node_id = "%s%s%s" % (dst_node.id.get_value(),
+                                  self.UNIQUE_ID_DELIMITER,
+                                  self.domain)
       else:
         dst_node_id = dst_node.id.get_value()
       try:
@@ -798,6 +814,8 @@ class NFFGConverter(object):
     """
     Parse metadata from Virtualizer.
 
+    Optionally can parse requirement links if they are stored in metadata.
+
     :param nffg: Container NFFG
     :type nffg: :any:`NFFG`
     :param virtualizer: Virtualizer object
@@ -805,15 +823,42 @@ class NFFGConverter(object):
     :return: None
     """
     for key in virtualizer.metadata:
-      nffg.add_metadata(name=key,
-                        value=virtualizer.metadata[key].value.get_value())
+      # If it is a compressed Requirement links
+      if key.startswith(self.REQUIREMENT_PREFIX):
+        req_id = key.split(':')[1]
+        # Replace pre-converted ' to " to get valid JSON
+        raw = virtualizer.metadata[key].value.get_value().replace("'", '"')
+        values = json.loads(raw)
+        try:
+          values['bw'] = float(values['bw']) if 'bw' in values else None
+        except ValueError:
+          self.log.warning("Bandwidth in requirement metadata: %s is not a "
+                           "valid float value!" % values['bw'])
+        try:
+          values['delay'] = float(
+            values['delay']) if 'delay' in values else None
+        except ValueError:
+          self.log.warning("Delay in requirement metadata: %s is not a "
+                           "valid float value!" % values['delay'])
+        req = nffg.add_req(
+          id=req_id,
+          src_port=nffg[values['snode']].ports[values['sport']],
+          dst_port=nffg[values['dnode']].ports[values['dport']],
+          delay=values['delay'],
+          bandwidth=values['bw'],
+          sg_path=values['sg_path'])
+        self.log.debug("Parsed Requirement link: %s" % req)
+      # If it is just a metadata
+      else:
+        nffg.add_metadata(name=key,
+                          value=virtualizer.metadata[key].value.get_value())
 
-  def parse_from_Virtualizer (self, xml_data, with_virt=False):
+  def parse_from_Virtualizer (self, vdata, with_virt=False):
     """
     Convert Virtualizer3-based XML str --> NFFGModel based NFFG object
 
-    :param xml_data: XML plain data or Virtualizer object
-    :type: xml_data: str or Virtualizer
+    :param vdata: XML plain data or Virtualizer object
+    :type: vdata: str or Virtualizer
     :param with_virt: return with the Virtualizer object too (default: False)
     :type with_virt: bool
     :return: created NF-FG
@@ -822,26 +867,20 @@ class NFFGConverter(object):
     self.log.debug(
       "START conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
         3, NFFG.version))
-
     # Already in Virtualizer format
-    if isinstance(xml_data, virt_lib.Virtualizer):
-      virtualizer = xml_data
+    if isinstance(vdata, virt_lib.Virtualizer):
+      virtualizer = vdata
     # Plain XML string
-    elif isinstance(xml_data, basestring):
+    elif isinstance(vdata, basestring):
       try:
         self.log.debug("Converting data to graph-based NFFG structure...")
-        # Parse given str to XML structure
-        tree = ET.ElementTree(ET.fromstring(xml_data))
-        # Parse Virtualizer structure
-        self.log.debug("Parsing XML data to Virtualizer format...")
-        virtualizer = virt_lib.Virtualizer().parse(root=tree.getroot())
-      except ET.ParseError as e:
+        virtualizer = virt_lib.Virtualizer().parse_from_text(text=vdata)
+      except Exception as e:
         self.log.error("Got ParseError during XML->Virtualizer conversion!")
         raise RuntimeError('ParseError: %s' % e.message)
     else:
-      log.error("Not supported type for xml_data: %s" % type(xml_data))
+      self.log.error("Not supported type for vdata: %s" % type(vdata))
       return
-
     # Get NFFG init params
     nffg_id = virtualizer.id.get_value()  # Mandatory - virtualizer.id
     if virtualizer.name.is_initialized():  # Optional - virtualizer.name
@@ -850,22 +889,16 @@ class NFFGConverter(object):
       nffg_name = "NFFG-domain-%s" % self.domain
     self.log.debug("Construct NFFG based on Virtualizer(id=%s, name=%s)" % (
       nffg_id, nffg_name))
-
     # Create NFFG
     nffg = NFFG(id=nffg_id, name=nffg_name)
-
     # Parse Infrastructure Nodes from Virtualizer
     self._parse_virtualizer_nodes(nffg=nffg, virtualizer=virtualizer)
-
     # Parse Infrastructure links from Virtualizer
     self._parse_virtualizer_links(nffg=nffg, virtualizer=virtualizer)
-
-    # Parse Metadata from Virtualizer
-    # self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
-
-    self.log.debug(
-      "END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
-        3, NFFG.version))
+    # Parse Metadata and Requirement links from Virtualizer
+    self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
+    self.log.debug("END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
+      3, NFFG.version))
     return (nffg, virtualizer) if with_virt else nffg
 
   def _convert_nffg_infras (self, nffg, virtualizer):
@@ -878,11 +911,11 @@ class NFFGConverter(object):
     :type virtualizer: Virtualizer
     :return: None
     """
+    self.log.info("Converting infras...")
     for infra in nffg.infras:
-      self.log.debug("Converting %s" % infra)
       # Check in it's needed to remove domain from the end of id
       if self.ensure_unique_id:
-        v_node_id = str(infra.id).split('@')[0]
+        v_node_id = str(infra.id).split(self.UNIQUE_ID_DELIMITER)[0]
       else:
         v_node_id = str(infra.id)
       v_node_name = str(infra.name) if infra.name else None  # optional
@@ -900,8 +933,10 @@ class NFFGConverter(object):
 
       # Migrate metadata
       for key, value in infra.metadata.iteritems():
+        meta_key = str(key)
+        meta_value = str(value) if value is not None else None
         v_node.metadata.add(
-          virt_lib.MetadataMetadata(key=str(key), value=str(value)))
+          virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
 
       # Add remained NFFG-related information into metadata
       if infra.resources.delay is not None:
@@ -912,6 +947,7 @@ class NFFGConverter(object):
         node_bandwidth = str(infra.resources.bandwidth)
         v_node.metadata.add(
           virt_lib.MetadataMetadata(key="bandwidth", value=str(node_bandwidth)))
+      self.log.debug("Converted %s" % infra)
 
       # Add ports to infra
       for port in infra.ports:
@@ -940,8 +976,10 @@ class NFFGConverter(object):
         # Migrate port metadata
         for property, value in port.properties.iteritems():
           if property not in ('name', 'capability', 'sap', 'type'):
+            meta_key = str(property)
+            meta_value = str(value) if value is not None else None
             v_port.metadata.add(
-              virt_lib.MetadataMetadata(key=str(property), value=str(value)))
+              virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
         # port_type: port-abstract & sap: -    -->  regular port
         # port_type: port-abstract & sap: <SAP...>    -->  was connected to
         # an inter-domain port - set this data in Virtualizer
@@ -965,12 +1003,12 @@ class NFFGConverter(object):
         # There are valid port-pairs
         for i, port_pair in enumerate(combinations(
            (p.id.get_value() for p in v_node.ports), 2)):
-          if infra.resources.delay:
-            v_link_delay = infra.resources.delay
+          if infra.resources.delay is not None:
+            v_link_delay = str(infra.resources.delay)
           else:
             v_link_delay = None
-          if infra.resources.bandwidth:
-            v_link_bw = infra.resources.bandwidth
+          if infra.resources.bandwidth is not None:
+            v_link_bw = str(infra.resources.bandwidth)
           else:
             v_link_bw = None
           # Create link
@@ -978,8 +1016,8 @@ class NFFGConverter(object):
                                  src=v_node.ports[port_pair[0]],
                                  dst=v_node.ports[port_pair[1]],
                                  resources=virt_lib.Link_resource(
-                                   delay=str(v_link_delay),
-                                   bandwidth=str(v_link_bw)))
+                                   delay=v_link_delay,
+                                   bandwidth=v_link_bw))
           # Call bind to resolve src,dst references to workaround a bug
           v_link.bind()
           v_node.links.add(v_link)
@@ -1019,13 +1057,17 @@ class NFFGConverter(object):
     :type virtualizer: Virtualizer
     :return: None
     """
+    self.log.info("Converting SAPs...")
     # Rewrite SAP - Node ports to add SAP to Virtualizer
     for sap in nffg.saps:
       for s, n, link in nffg.network.edges_iter([sap.id], data=True):
         if link.type != NFFG.TYPE_LINK_STATIC:
           continue
         # Rewrite port-type to port-sap
-        infra_id = str(n).split('@')[0] if self.ensure_unique_id else str(n)
+        if self.ensure_unique_id:
+          infra_id = str(n).split(self.UNIQUE_ID_DELIMITER)[0]
+        else:
+          infra_id = str(n)
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
         v_sap_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
         # Add SAP.name as name to port or use sap.id
@@ -1044,26 +1086,18 @@ class NFFGConverter(object):
           self.log.debug(
             "Convert inter-domain SAP to port: %s in infra: %s" % (
               link.dst.id, n))
-        # Add SAP-Infra link resources as metadata in virtualizer.node.port
-        if link.delay is not None:
-          v_sap_port.metadata.add(
-            virt_lib.MetadataMetadata(key="l_delay", value=str(link.delay)))
-        if link.bandwidth is not None:
-          v_sap_port.metadata.add(
-            virt_lib.MetadataMetadata(key="l_bw", value=str(link.bandwidth)))
 
   def _convert_nffg_edges (self, nffg, virtualizer):
     """
     Convert edge links in the given :any:`NFFG` into the given Virtualizer.
 
-    :param nffg:
-    :param virtualizer:
     :param nffg: NFFG object
     :type nffg: :any:`NFFG`
     :param virtualizer: Virtualizer object
     :type virtualizer: Virtualizer
     :return: None
     """
+    self.log.info("Converting edges...")
     # Add edge-link to Virtualizer
     for link in nffg.links:
       # Skip backward and non-static link conversion <-- Virtualizer links
@@ -1078,83 +1112,60 @@ class NFFGConverter(object):
         "Added link: Node: %s, port: %s <--> Node: %s, port: %s" % (
           link.src.node.id, link.src.id, link.dst.node.id, link.dst.id))
       if self.ensure_unique_id:
-        src_node_id = str(link.src.node.id).split('@')[0]
-        dst_node_id = str(link.dst.node.id).split('@')[0]
+        src_node_id = str(link.src.node.id).split(self.UNIQUE_ID_DELIMITER)[0]
+        dst_node_id = str(link.dst.node.id).split(self.UNIQUE_ID_DELIMITER)[0]
       else:
         src_node_id = str(link.src.node.id)
         dst_node_id = str(link.dst.node.id)
+      v_link_delay = str(link.delay) if link.delay is not None else None
+      v_link_bw = str(link.bandwidth) if link.bandwidth is not None else None
       v_link = virt_lib.Link(
         id=str(link.id),
         src=virtualizer.nodes[src_node_id].ports[str(link.src.id)],
         dst=virtualizer.nodes[dst_node_id].ports[str(link.dst.id)],
-        resources=virt_lib.Link_resource(
-          delay=str(link.delay) if link.delay is not None else None,
-          bandwidth=str(
-            link.bandwidth) if link.bandwidth is not None else None))
+        resources=virt_lib.Link_resource(delay=v_link_delay,
+                                         bandwidth=v_link_bw))
       # Call bind to resolve src,dst references to workaround a bug
       v_link.bind()
       virtualizer.links.add(v_link)
 
-  def dump_to_Virtualizer (self, nffg):
+  def _convert_nffg_reqs (self, nffg, virtualizer):
     """
-    Convert given :any:`NFFG` to Virtualizer format.
+    Convert requirement links in the given :any:`NFFG` into given Virtualizer
+    using topmost metadata list.
 
-    :param nffg: topology description
+    :param nffg: NFFG object
     :type nffg: :any:`NFFG`
-    :return: topology in Virtualizer format
-    :rtype: Virtualizer
+    :param virtualizer: Virtualizer object
+    :type virtualizer: Virtualizer
+    :return: None
     """
-    self.log.debug(
-      "START conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
-        NFFG.version, V_VERSION))
+    self.log.info("Converting requirements...")
+    for req in nffg.reqs:
+      meta_key = "%s:%s" % (self.REQUIREMENT_PREFIX, req.id)
+      meta_value = json.dumps({
+        "snode": req.src.node.id,
+        "sport": req.src.id,
+        "dnode": req.dst.node.id,
+        "dport": req.dst.id,
+        "delay": "%.3f" % req.delay,
+        "bw": "%.3f" % req.bandwidth,
+        "sg_path": req.sg_path}
+        # Replace " with ' to avoid ugly HTTP escaping and remove whitespaces
+      ).translate(string.maketrans('"', "'"), string.whitespace)
+      virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
+                                                              value=meta_value))
+      self.log.debug('Converted requirement link: %s' % req)
 
-    self.log.debug("Converting data to XML-based Virtualizer structure...")
-    # Create empty Virtualizer
-    v_id = str(nffg.id)
-    v_name = str(nffg.name) if nffg.name else None
-    virtualizer = virt_lib.Virtualizer(id=v_id, name=v_name)
-    self.log.debug("Creating Virtualizer based on %s" % nffg)
-
-    # Convert Infras
-    self._convert_nffg_infras(nffg=nffg, virtualizer=virtualizer)
-
-    # Convert SAPs
-    self._convert_nffg_saps(nffg=nffg, virtualizer=virtualizer)
-
-    # Convert edge links
-    self._convert_nffg_edges(nffg=nffg, virtualizer=virtualizer)
-
-    # Call our adaptation function to convert VNfs and Flowrules into
-    # Virtualizer
-    virt = self.adapt_mapping_into_Virtualizer(virtualizer=virtualizer,
-                                               nffg=nffg)
-
-    # explicitly call bind to resolve relative paths for safety reason
-    virt.bind(relative=True)
-
-    self.log.debug(
-      "END conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
-        NFFG.version, 3))
-    # Return with created Virtualizer
-    return virt
-
-  @staticmethod
-  def unescape_output_hack (data):
-    return data.replace("&lt;", "<").replace("&gt;", ">")
-
-  def adapt_mapping_into_Virtualizer (self, virtualizer, nffg):
+  def _convert_nffg_nfs (self, virtualizer, nffg):
     """
-    Install NFFG part or complete NFFG into given Virtualizer.
+    Convert NFs in the given :any:`NFFG` into the given Virtualizer.
 
     :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
     :param nffg: splitted NFFG (not necessarily in valid syntax)
     :return: modified Virtualizer object
     """
-    self.log.debug(
-      "START adapting modifications from %s into Virtualizer(id=%s, name=%s)"
-      % (nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
-
-    self.log.debug("Check up on mapped NFs...")
+    self.log.info("Converting NFs...")
     # Check every infra Node
     for infra in nffg.infras:
       # Cache discovered NF to avoid multiple detection of NF which has more
@@ -1162,7 +1173,7 @@ class NFFGConverter(object):
       discovered_nfs = []
       # Recreate the original Node id
       if self.ensure_unique_id:
-        v_node_id = str(infra.id).split('@')[0]
+        v_node_id = str(infra.id).split(self.UNIQUE_ID_DELIMITER)[0]
       else:
         v_node_id = str(infra.id)
       # Check in Infra exists in the Virtualizer
@@ -1216,8 +1227,10 @@ class NFFGConverter(object):
           # Migrate metadata
           for key, value in nf.metadata.iteritems():
             if key not in ('deployment_type', 'delay', 'bandwidth'):
+              meta_key = str(key)
+              meta_value = str(value) if value is not None else None
               v_nf.metadata.add(
-                virt_lib.MetadataMetadata(key=str(key), value=str(value)))
+                virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
           # Add NF to Infra object
           v_node.NF_instances.add(v_nf)
           # Cache discovered NF
@@ -1236,8 +1249,10 @@ class NFFGConverter(object):
             v_node.NF_instances[str(v)].ports.add(v_nf_port)
             # Migrate metadata
             for property, value in port.properties.iteritems():
+              meta_key = str(property)
+              meta_value = str(value) if value is not None else None
               v_nf_port.metadata.add(
-                virt_lib.MetadataMetadata(key=str(property), value=str(value)))
+                virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
 
             self.log.debug(
               "Added Port: %s to NF node: %s" % (port, v_nf.id.get_as_text()))
@@ -1246,6 +1261,30 @@ class NFFGConverter(object):
                          "name=%s)" % (nf, virtualizer.id.get_as_text(),
                                        virtualizer.name.get_as_text()))
 
+  def _convert_nffg_flowrules (self, virtualizer, nffg):
+    """
+    Convert flowrules in the given :any:`NFFG` into the given Virtualizer.
+
+    :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
+    :param nffg: splitted NFFG (not necessarily in valid syntax)
+    :return: modified Virtualizer object
+    """
+    self.log.info("Converting flowrules...")
+    # Check every infra Node
+    for infra in nffg.infras:
+      # Recreate the original Node id
+      if self.ensure_unique_id:
+        v_node_id = str(infra.id).split(self.UNIQUE_ID_DELIMITER)[0]
+      else:
+        v_node_id = str(infra.id)
+      # Check in Infra exists in the Virtualizer
+      if v_node_id not in virtualizer.nodes.node.keys():
+        self.log.warning(
+          "InfraNode: %s is not in the Virtualizer(nodes: %s)! Skip related "
+          "initiations..." % (infra, virtualizer.nodes.node.keys()))
+        continue
+      # Get Infra node from Virtualizer
+      v_node = virtualizer.nodes[v_node_id]
       # Add flowrules to Virtualizer
       fe_cntr = 0
       # traverse every port in the Infra node
@@ -1253,7 +1292,6 @@ class NFFGConverter(object):
         # Check every flowrule
         for fr in port.flowrules:
           self.log.debug("Converting flowrule: %s..." % fr)
-
           # Define metadata
           fe_id = "ESCAPE-flowentry" + str(fe_cntr)
           fe_cntr += 1
@@ -1265,7 +1303,6 @@ class NFFGConverter(object):
             self.log.warning("Missing 'in_port' from match in %s. Skip "
                              "flowrule conversion..." % fr)
             continue
-
           # Check if the src port is a physical or virtual port
           in_port = fe[0].split('=')[1]
           if str(port.id) in v_node.ports.port.keys():
@@ -1294,17 +1331,14 @@ class NFFGConverter(object):
             self.log.debug("Found associated NF port: node=%s, port=%s" % (
               in_port.get_parent().get_parent().id.get_as_text(),
               in_port.id.get_as_text()))
-
           # Process match field
           match = self._convert_flowrule_match(fr.match)
-
           # Check if action starts with outport
           fe = fr.action.split(';')
           if fe[0].split('=')[0] != "output":
             self.log.warning("Missing 'output' from action in %s."
                              "Skip flowrule conversion..." % fr)
             continue
-
           # Check if the dst port is a physical or virtual port
           out_port = fe[0].split('=')[1]
           if str(out_port) in v_node.ports.port.keys():
@@ -1333,38 +1367,98 @@ class NFFGConverter(object):
               # out_port.parent.parent.parent.id.get_as_text(),
               out_port.get_parent().get_parent().id.get_as_text(),
               out_port.id.get_as_text()))
-
           # Process action field
           action = self._convert_flowrule_action(fr.action)
-
           # Process resource fields
           v_fe_delay = str(fr.delay) if fr.delay is not None else None
           v_fe_bw = str(fr.bandwidth) if fr.bandwidth is not None else None
           _resources = virt_lib.Link_resource(delay=v_fe_delay,
                                               bandwidth=v_fe_bw)
-
           # Process hop_id field
           if fr.hop_id is not None:
             v_fe_name = "%s:%s" % (self.TAG_SG_HOP, fr.hop_id)
           else:
             v_fe_name = None
-
           # Add Flowentry with converted params
           virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
                               match=match, action=action, out=out_port,
                               resources=_resources, name=v_fe_name)
-          self.log.debug(
-            "Generated Flowentry:\n%s" % v_node.flowtable.add(virt_fe))
+          self.log.log(VERBOSE,
+                       "Generated Flowentry:\n%s" % v_node.flowtable.add(
+                         virt_fe))
 
+  def dump_to_Virtualizer (self, nffg):
+    """
+    Convert given :any:`NFFG` to Virtualizer format.
+
+    :param nffg: topology description
+    :type nffg: :any:`NFFG`
+    :return: topology in Virtualizer format
+    :rtype: Virtualizer
+    """
+    self.log.debug(
+      "START conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
+        NFFG.version, V_VERSION))
+
+    self.log.debug("Converting data to XML-based Virtualizer structure...")
+    # Create Virtualizer with default id,name
+    v_id = str(nffg.id)
+    v_name = str(nffg.name) if nffg.name else None
+    virtualizer = virt_lib.Virtualizer(id=v_id, name=v_name)
+    self.log.debug("Creating Virtualizer based on %s" % nffg)
+    # Convert NFFG metadata
+    for key, value in nffg.metadata.iteritems():
+      meta_key = str(key)
+      meta_value = str(value) if value is not None else None
+      virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
+                                                              value=meta_value))
+    # Convert Infras
+    self._convert_nffg_infras(nffg=nffg, virtualizer=virtualizer)
+    # Convert SAPs
+    self._convert_nffg_saps(nffg=nffg, virtualizer=virtualizer)
+    # Convert edge links
+    self._convert_nffg_edges(nffg=nffg, virtualizer=virtualizer)
+    # Convert NFs
+    self._convert_nffg_nfs(nffg=nffg, virtualizer=virtualizer)
+    # Convert Flowrules
+    self._convert_nffg_flowrules(nffg=nffg, virtualizer=virtualizer)
+    # Convert requirement links as metadata
+    self._convert_nffg_reqs(nffg=nffg, virtualizer=virtualizer)
+    # explicitly call bind to resolve relative paths for safety reason
+    virtualizer.bind(relative=True)
+    self.log.debug(
+      "END conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
+        NFFG.version, 3))
+    # Return with created Virtualizer
+    return virtualizer
+
+  def adapt_mapping_into_Virtualizer (self, virtualizer, nffg):
+    """
+    Install the mapping related modification into a Virtualizer and return
+    with the new Virtualizer object.
+
+    :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
+    :param nffg: splitted NFFG (not necessarily in valid syntax)
+    :return: modified Virtualizer object
+    """
+    virtualizer = virtualizer.copy()
+    self.log.debug(
+      "START adapting modifications from %s into Virtualizer(id=%s, name=%s)"
+      % (nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
+    self._convert_nffg_nfs(virtualizer=virtualizer, nffg=nffg)
+    self._convert_nffg_flowrules(virtualizer=virtualizer, nffg=nffg)
+    self._convert_nffg_reqs(virtualizer=virtualizer, nffg=nffg)
     # explicitly call bind to resolve absolute paths for safety reason
     virtualizer.bind(relative=True)
-
     self.log.debug(
       "END adapting modifications from %s into Virtualizer(id=%s, name=%s)" % (
         nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
-
     # Return with modified Virtualizer
     return virtualizer
+
+  @staticmethod
+  def unescape_output_hack (data):
+    return data.replace("&lt;", "<").replace("&gt;", ">")
 
 
 if __name__ == "__main__":
@@ -1376,30 +1470,28 @@ if __name__ == "__main__":
                     # ensure_unique_id=True,
                     logger=log)
 
-  with open(
-     "../../../../examples/escape-mn-mapped-test.nffg") as f:
-    nffg = NFFG.parse(raw_data=f.read())
-    # nffg.duplicate_static_links()
-  log.debug("Parsed NFFG:\n%s" % nffg.dump())
-  virt = c.dump_to_Virtualizer(nffg=nffg)
-  log.debug("Converted:")
-  log.debug(virt.xml())
-  log.debug("Reconvert to NFFG:")
-  nffg = c.parse_from_Virtualizer(xml_data=virt.xml())
-  log.debug(nffg.dump())
-
   # with open(
-  #    # "../../../../examples/OS_report1.xml") as f:
-  #    "../../../../examples/escape-mn-dov-test.xml") as f:
-  #   tree = tree = ET.ElementTree(ET.fromstring(f.read()))
-  #   dov = virt_lib.Virtualizer.parse(root=tree.getroot())
-  #   dov.bind(relative=True)
-  # log.info("Parsed XML:")
-  # log.info("%s" % dov)
-  # nffg = c.parse_from_Virtualizer(xml_data=dov.xml())
-  # log.info("Reconverted Virtualizer:")
-  # log.info("%s" % nffg.dump())
+  #    # "../../../../examples/escape-mn-mapped-test.nffg") as f:
+  #    "../../../../examples/escape-2sbb-mapped.nffg") as f:
+  #   nffg = NFFG.parse(raw_data=f.read())
+  #   # nffg.duplicate_static_links()
+  # log.debug("Parsed NFFG:\n%s" % nffg.dump())
   # virt = c.dump_to_Virtualizer(nffg=nffg)
-  # # virt.bind()
-  # log.info("Reconverted Virtualizer:")
-  # log.info("%s" % virt.xml())
+  # log.debug("Converted:")
+  # log.debug(virt.xml())
+  # log.debug("Reconvert to NFFG:")
+  # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
+  # log.debug(nffg.dump())
+
+  dov = virt_lib.Virtualizer.parse_from_file(
+    "../../../../examples/escape-2sbb-mapped.xml")
+  dov.bind(relative=True)
+  log.info("Parsed XML:")
+  log.info("%s" % dov)
+  nffg = c.parse_from_Virtualizer(vdata=dov.xml())
+  log.info("Reconverted Virtualizer:")
+  log.info("%s" % nffg.dump())
+  virt = c.dump_to_Virtualizer(nffg=nffg)
+  # virt.bind()
+  log.info("Reconverted Virtualizer:")
+  log.info("%s" % virt.xml())

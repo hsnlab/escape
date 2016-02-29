@@ -20,10 +20,10 @@ Follows POX module conventions
 """
 import os
 
+import pox.lib.util as poxutil
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.misc import quit_with_error
 from pox.core import core
-import pox.lib.util as poxutil
 
 # Initial parameters
 init_param = {}

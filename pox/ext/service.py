@@ -18,9 +18,9 @@ Initiate appropriate API class which implements U-Sl reference point
 
 Follows POX module conventions
 """
+import pox.lib.util as poxutil
 from escape.service.sas_API import ServiceLayerAPI
 from pox.core import core
-import pox.lib.util as poxutil
 
 # Initial parameters
 init_param = {}

@@ -30,14 +30,14 @@ import traceback
 from pprint import pformat
 
 try:
-  from escape.util.nffg import NFFG, generate_dynamic_fallback_nffg, NFFGToolBox
+  from escape.nffg_lib.nffg import NFFG, generate_dynamic_fallback_nffg, NFFGToolBox
 except ImportError:
   import sys, os, inspect
 
   sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
      os.path.abspath(
         os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
-                                  "pox/ext/escape/util/"))
+                                  "pox/ext/escape/nffg_lib/"))
   from nffg import NFFG, NFFGToolBox
   from nffg_tests import generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm

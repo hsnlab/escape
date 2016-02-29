@@ -21,11 +21,11 @@ from requests import Session, ConnectionError, HTTPError, Timeout
 import virtualizer4 as Virtualizer
 from escape import CONFIG, __version__
 from escape.adapt import LAYER_NAME as ADAPT
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import Singleton
-from escape.util.nffg import NFFG
 from pox.core import core
 
 
@@ -51,7 +51,7 @@ class RemoteVisualizer(Session):
     'Content-Type': "application/xml"}
 
   # Default timeout value in sec
-  DEFAULT_TIMEOUT = 3
+  DEFAULT_TIMEOUT = 1
 
   def __init__ (self, url=None, rpc=None, timeout=DEFAULT_TIMEOUT,
                 instance_id=None):
@@ -125,7 +125,10 @@ class RemoteVisualizer(Session):
       kwargs['timeout'] = self._timeout
     self.log.debug("Send visualization notification to %s" % self._url)
     try:
-      if isinstance(data, NFFG):
+      if data is None:
+        self.log.warning("Missing data! Skip notifying remote visualizer.")
+        return False
+      elif isinstance(data, NFFG):
         data = self.converter.dump_to_Virtualizer(nffg=data)
       elif not isinstance(data, Virtualizer.Virtualizer):
         self.log.warning(
@@ -146,7 +149,7 @@ class RemoteVisualizer(Session):
       self._response.raise_for_status()
       return self._response.text
     except (ConnectionError, HTTPError, KeyboardInterrupt) as e:
-      self.log.error(
+      self.log.warning(
         "Got exception during notifying remote Visualizer: %s!" % e)
       return False
     except Timeout:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python -u
 #
 # Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
 #
@@ -23,11 +23,11 @@ import os
 def main ():
   # Implement parser options
   parser = argparse.ArgumentParser(
-     description="ESCAPEv2: Extensible Service ChAin Prototyping Environment "
-                 "using Mininet, Click, NETCONF and POX",
-     add_help=True,
-     version="2.0.0")
-  # Optional arguments
+    description="ESCAPEv2: Extensible Service ChAin Prototyping Environment "
+                "using Mininet, Click, NETCONF and POX",
+    add_help=True,
+    version="2.0.0")
+  # Add optional arguments
   escape = parser.add_argument_group("ESCAPEv2 arguments")
   escape.add_argument("-a", "--agent", action="store_true", default=False,
                       help="run in AGENT mode: start the infrastructure layer "
@@ -36,8 +36,9 @@ def main ():
   escape.add_argument("-c", "--config", metavar="path", type=str,
                       # default="pox/escape.config",
                       help="override default config filename")
-  escape.add_argument("-d", "--debug", action="store_true", default=False,
-                      help="run the ESCAPE in debug mode")
+  escape.add_argument("-d", "--debug", action="count", default=0,
+                      help="run the ESCAPE in debug mode (can use multiple "
+                           "times for more verbose logging)")
   escape.add_argument("-e", "--environment", action="store_true", default=False,
                       help="run ESCAPEv2 in the pre-defined virtualenv")
   escape.add_argument("-f", "--full", action="store_true", default=False,
@@ -45,6 +46,10 @@ def main ():
   escape.add_argument("-i", "--interactive", action="store_true", default=False,
                       help="run an interactive shell for observing internal "
                            "states")
+  escape.add_argument("-p", "--POXlike", action="store_true", default=False,
+                      help="start ESCAPEv2 in the actual interpreter using "
+                           "./pox as working directory instead of using a "
+                           "separate shell process with POX's own PYTHON env")
   escape.add_argument("-r", "--rosapi", action="store_true", default=False,
                       help="start the REST-API for the Resource Orchestration "
                            "sublayer (ROS)")
@@ -62,7 +67,7 @@ def main ():
                            "remote server")
   escape.add_argument("-4", "--cfor", action="store_true", default=False,
                       help="start the REST-API for the Cf-Or interface")
-  # Remaining arguments
+  # Add remaining POX modules
   escape.add_argument("modules", metavar="...", nargs=argparse.REMAINDER,
                       help="optional POX modules")
   # Parsing arguments
@@ -90,64 +95,70 @@ def main ():
   base_dir = os.path.abspath(os.path.dirname(__file__))
 
   # Create absolute path for the pox.py initial script
-  cmd = os.path.join(base_dir, "pox/pox.py")
-
   # Construct POX init command according to argument
   # basic command
-  cmd = "%s unify" % cmd
+  cmd = [os.path.join(base_dir, "pox/pox.py"), "unify"]
+
+  # Run ESCAPE in VERBOSE logging level if it is needed
+  if args.debug == 1:
+    # Set logging level to DEBUG
+    cmd.append("--loglevel=DEBUG")
+  elif args.debug > 1:
+    # Setup logging level to specific VERBOSE
+    cmd.append("--loglevel=VERBOSE")
+  else:
+    # Use default loglevel: INFO
+    pass
 
   # Run the Infrastructure Layer with the required root privilege
   if args.full:
-    cmd = "sudo %s --full" % cmd
+    cmd.insert(0, "sudo")
+    cmd.append("--full")
 
   # Read the service request NFFG from a file and start the mapping process
   if args.service:
-    cmd = "%s --sg_file=%s" % (cmd, os.path.abspath(args.service))
+    cmd.append("--sg_file=%s" % os.path.abspath(args.service))
 
   # Override optional external config file
   if args.config:
-    cmd = "%s --config=%s" % (cmd, os.path.abspath(args.config))
+    cmd.append("--config=%s" % os.path.abspath(args.config))
 
   # Skip the Service Layer initiation and start the ROS agent REST-API
   if args.agent:
-    cmd = "%s --agent" % cmd
+    cmd.append("--agent")
     # AGENT mode is only useful with --full -> initiate infrastructure if needed
     if not args.full:
-      cmd = "sudo %s --full" % cmd
+      cmd.insert(0, "sudo")
+      cmd.append("--full")
 
   # Start the REST-API for the ROS layer
   if args.rosapi:
-    cmd = "%s --rosapi" % cmd
+    cmd.append("--rosapi")
 
   # Start an REST-API for the Cf-Or interface
   if args.cfor:
-    cmd = "%s --cfor" % cmd
-  if args.debug:
-    # Nothing to do
-    pass
-  else:
-    # Disable debug mode in normal mode
-    cmd = "%s --debug=False" % cmd
+    cmd.append("--cfor")
 
   # Enable Visualization
   if args.visualization:
-    cmd = "%s --visualization" % cmd
+    cmd.append("--visualization")
 
   # Add topology file if --full is set
   if args.topo:
     if args.full or args.agent:
-      cmd = "%s --topo=%s" % (cmd, os.path.abspath(args.topo))
+      cmd.append("--topo=%s" % os.path.abspath(args.topo))
     else:
       parser.error(
-         message="-t/--topo can be used only with infrastructure layer! "
-                 "(with -f/--full or -a/--agent flag)")
+        message="-t/--topo can be used only with infrastructure layer! "
+                "(with -f/--full or -a/--agent flag)")
 
   # Add the interactive shell if needed
   if args.interactive:
-    cmd = "%s py --completion" % cmd
+    cmd.append("py")
+    cmd.append("--completion")
 
   # Add optional POX modules
-  cmd = "%s %s" % (cmd, " ".join(args.modules))
+  cmd.extend(args.modules)
 
   def __activate_virtualenv ():
     """
@@ -173,10 +184,27 @@ def main ():
         break
 
   # Starting ESCAPEv2 (as a POX module)
-  print "Starting..."
-  if args.debug:
-    print "Command: %s" % cmd
-  os.system(cmd)
+  print "Starting %s..." % parser.description
+
+  if args.POXlike:
+    pox_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "pox"))
+    # Change working directory
+    os.chdir(pox_base)
+    # Override first path element
+    # POX use the first element of path to add pox directories to PYTHONPATH
+    import sys
+    sys.path[0] = pox_base
+    pox_params = cmd[2:] if cmd[0] == "sudo" else cmd[1:]
+    if args.debug:
+      print "POX parameters: %s" % pox_params
+    from pox.boot import boot
+    boot(argv=pox_params)
+  else:
+    # Create command
+    cmd = " ".join(cmd)
+    if args.debug:
+      print "Command: %s" % cmd
+    os.system(cmd)
 
 
 if __name__ == '__main__':

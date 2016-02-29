@@ -4,6 +4,7 @@ import copy
 import sys
 from pprint import pprint
 
+from escape.util.conversion import NFFGConverter
 from nffg import *
 
 DOMAIN_INTERNAL = "INTERNAL"
@@ -74,9 +75,9 @@ def generate_mn_topo ():
                        delay=0.9, bandwidth=5000)
   # Add supported types
   ee1.add_supported_type(
-     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   ee2.add_supported_type(
-     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
@@ -114,9 +115,9 @@ def generate_mn_topo2 ():
                        delay=0.9, bandwidth=5000)
   # Add supported types
   ee1.add_supported_type(
-     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   ee2.add_supported_type(
-     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW13", name="switch-13", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
@@ -262,6 +263,29 @@ def generate_mn_test_req2 ():
   test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20,
                sg_path=(1, 2, 3))
   test.add_req(sap2.ports[1], sap1.ports[1], bandwidth=4, delay=20,
+               sg_path=(4, 5))
+  return test
+
+
+def generate_mn_req_hackathon ():
+  test = NFFG(id="SG-hackathon", name="SG-name")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap3 = test.add_sap(name="SAP3", id="sap3")
+  comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  fwd = test.add_nf(id="fwd", name="FORWARDER", func_type="simpleForwarder",
+                    cpu=1, mem=1, storage=0)
+  test.add_sglink(sap1.add_port(1), comp.add_port(1), id=1)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=2)
+  test.add_sglink(decomp.ports[1], sap3.add_port(1), id=3)
+  test.add_sglink(sap3.ports[1], fwd.add_port(1), id=4)
+  test.add_sglink(fwd.ports[1], sap1.ports[1], id=5)
+
+  test.add_req(sap1.ports[1], sap3.ports[1], bandwidth=4, delay=20,
+               sg_path=(1, 2, 3))
+  test.add_req(sap3.ports[1], sap1.ports[1], bandwidth=4, delay=20,
                sg_path=(4, 5))
   return test
 
@@ -444,9 +468,9 @@ def generate_dov ():
                        delay=0.9, bandwidth=5000)
   # Add supported types
   ee1.add_supported_type(
-     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   ee2.add_supported_type(
-     ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder'))
   # Add OVS switches
   sw3 = nffg.add_infra(id="SW3", name="switch-3", domain=DOMAIN_INTERNAL,
                        infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
@@ -642,14 +666,12 @@ def generate_ewsdn_req3 ():
 
 
 def test_conversion ():
-  from conversion import NFFGConverter
-
   with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
     os_nffg, os_virt = NFFGConverter(
-       domain="OPENSTACK").parse_from_Virtualizer(f.read(), with_virt=True)
+      domain="OPENSTACK").parse_from_Virtualizer(f.read(), with_virt=True)
   with open("/home/czentye/escape/src/escape_v2/tools/un_domain.xml") as f:
     un_nffg, un_virt = NFFGConverter(
-       domain="UN").parse_from_Virtualizer(f.read(), with_virt=True)
+      domain="UN").parse_from_Virtualizer(f.read(), with_virt=True)
   with open("/home/czentye/escape/src/escape_v2/pox/escape-mn-topo.nffg") as f:
     internal = NFFG.parse(f.read())
     internal.duplicate_static_links()
@@ -660,12 +682,12 @@ def test_conversion ():
   # print
   # pprint(internal.network.__dict__)
 
-  merged = NFFGToolBox.merge_domains(internal, os_nffg)
-  merged = NFFGToolBox.merge_domains(merged, un_nffg)
+  merged = NFFGToolBox.merge_new_domain(internal, os_nffg)
+  merged = NFFGToolBox.merge_new_domain(merged, un_nffg)
 
   # pprint(merged.network.__dict__)
   print
-  splitted = NFFGToolBox.split_domains(merged)
+  splitted = NFFGToolBox.split_into_domains(merged)
   print splitted
   # for d, p in splitted:
   #   print "\n", d
@@ -722,7 +744,7 @@ def generate_simple_test_topo ():
                        delay=0.9, bandwidth=5000)
   # Add supported types
   ee1.add_supported_type(
-     ('headerCompressor', 'headerDecompressor', 'simpleForwarder', 'ovs'))
+    ('headerCompressor', 'headerDecompressor', 'simpleForwarder', 'ovs'))
   # Add SAPs
   sap1 = nffg.add_sap(id="SAP1", name="SAP1")
   sap2 = nffg.add_sap(id="SAP2", name="SAP2")
@@ -766,8 +788,9 @@ if __name__ == "__main__":
   # nffg = generate_ewsdn_req3()
   # nffg = generate_simple_test_topo()
   # nffg = generate_simple_test_req()
-  nffg = generate_mn_topo2()
+  # nffg = generate_mn_topo2()
   # nffg = generate_mn_test_req2()
+  nffg = generate_mn_req_hackathon()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()

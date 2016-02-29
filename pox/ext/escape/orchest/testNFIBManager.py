@@ -15,8 +15,8 @@
 Test different interfaces of the NFIB
 """
 
+from escape.nffg_lib.nffg import *
 from escape.orchest.nfib_mgmt import NFIBManager
-from escape.util.nffg import *
 
 
 def testNFIB ():

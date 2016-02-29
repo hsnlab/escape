@@ -14,11 +14,11 @@
 """
 Contains classes relevant to Service Adaptation Sublayer functionality.
 """
-from escape.orchest.virtualization_mgmt import AbstractVirtualizer
+from escape.adapt.virtualization import AbstractVirtualizer
 from escape.service import log as log, LAYER_NAME
 from escape.service.sas_mapping import ServiceGraphMapper
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
-from escape.util.misc import notify_remote_visualizer
+from escape.util.misc import notify_remote_visualizer, VERBOSE
 from pox.lib.revent.revent import EventMixin, Event
 
 
@@ -64,7 +64,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
     :rtype: :any:`NFFG`
     """
     log.debug(
-       "Invoke %s to initiate SG(id=%s)" % (self.__class__.__name__, sg.id))
+      "Invoke %s to initiate SG(id=%s)" % (self.__class__.__name__, sg.id))
     # Store newly created SG
     self.sgManager.save(sg)
     # Get virtual resource info as a Virtualizer
@@ -72,22 +72,22 @@ class ServiceOrchestrator(AbstractOrchestrator):
     # Notify remote visualizer about resource view of this layer if it's needed
     notify_remote_visualizer(data=virtual_view.get_resource_info(),
                              id=LAYER_NAME)
-    if virtual_view is not None:
-      if isinstance(virtual_view, AbstractVirtualizer):
-        try:
-          # Run orchestration before service mapping algorithm
-          nffg = self.mapper.orchestrate(sg, virtual_view)
-          log.debug("SG initiation is finished by %s" % self.__class__.__name__)
-          # Notify remote visualizer about the mapping result if it's needed
-          notify_remote_visualizer(data=nffg, id=LAYER_NAME)
-          return nffg
-        except ProcessorError as e:
-          log.warning(
-             "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
-      else:
-        log.warning("Virtual view is not subclass of AbstractVirtualizer!")
-    else:
+    # Log verbose service request
+    log.log(VERBOSE, "Service layer request graph:\n%s" % sg.dump())
+    if virtual_view is None:
       log.warning("Virtual view is not acquired correctly!")
+      return
+    if not isinstance(virtual_view, AbstractVirtualizer):
+      log.warning("Virtual view is not subclass of AbstractVirtualizer!")
+      return
+    try:
+      # Run orchestration before service mapping algorithm
+      mapped_nffg = self.mapper.orchestrate(sg, virtual_view)
+      log.debug("SG initiation is finished by %s" % self.__class__.__name__)
+      return mapped_nffg
+    except ProcessorError as e:
+      log.warning(
+        "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
     # Only goes there if there is a problem
     log.error("Abort mapping process!")
 

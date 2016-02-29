@@ -15,16 +15,17 @@
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
-
 from escape import CONFIG
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import LAYER_NAME
 from escape.orchest import log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
-from escape.util.misc import schedule_as_coop_task
-from escape.util.nffg import NFFG
+from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
+  VERBOSE
 from pox.lib.revent.revent import Event
+from virtualizer4 import Virtualizer
 
 
 class InstallNFFGEvent(Event):
@@ -106,6 +107,10 @@ class CfOrRequestHandler(AbstractRequestHandler):
   # Logger name
   LOGGER_NAME = "Cf-Or"
   log = log.getChild("[%s]" % LOGGER_NAME)
+  # Use Virtualizer format
+  virtualizer_format_enabled = False
+  # Default communication approach
+  format = "FULL"
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
@@ -180,6 +185,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
+  # Default communication approach
+  format = "FULL"
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
@@ -208,12 +215,18 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     self.send_response(200)
     # Convert required NFFG if needed
     if self.virtualizer_format_enabled:
+      self.log.debug("Convert internal NFFG...")
       converter = NFFGConverter(domain=None, logger=log)
+      v_topology = converter.dump_to_Virtualizer(nffg=config)
+      # Cache converted data for edit-config patching
+      self.server.last_response = v_topology
+      self.log.debug("Cache converted topology...")
       # Dump to plain text format
-      data = converter.dump_to_Virtualizer(nffg=config).xml()
+      data = v_topology.xml()
       # Setup HTTP response format
       self.send_header('Content-Type', 'application/xml')
     else:
+      self.server.last_response = config
       data = config.dump()
       self.send_header('Content-Type', 'application/json')
     # Setup length for HTTP response
@@ -232,23 +245,35 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
     # Obtain NFFG from request body
     self.log.debug("Detected response format: %s" %
-              self.headers.get("Content-Type", ""))
-    body = self._get_body()
+                   self.headers.get("Content-Type", ""))
+    raw_body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     # Expect XML format --> need to convert first
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type", "") != "application/xml" or \
-         not body.startswith("<?xml version="):
+         not raw_body.startswith("<?xml version="):
         self.log.error(
           "Received data is not in XML format despite of the UNIFY "
           "interface is enabled!")
         self.send_error(415)
         return
+      # Get received Virtualizer
+      received_cfg = Virtualizer.parse_from_text(text=raw_body)
+      # Adapt changes on the local config
+      if not isinstance(self.server.last_response, Virtualizer):
+        self.log.warning("Missing cached Virtualizer!")
+        self.send_error(500)
+        return
+      if self.format == "DIFF":
+        full_cfg = self.server.last_response.copy()
+        full_cfg.patch(source=received_cfg)
+      else:
+        full_cfg = received_cfg
       # Convert response's body to NFFG
       converter = NFFGConverter(domain="REMOTE", logger=log)
-      nffg = converter.parse_from_Virtualizer(xml_data=body)
+      nffg = converter.parse_from_Virtualizer(vdata=full_cfg)
     else:
-      nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+      nffg = NFFG.parse(raw_body)  # Initialize NFFG from JSON representation
     # Rewrite domain name to INTERNAL
     # nffg = self._update_REMOTE_ESCAPE_domain(nffg_part=nffg)
     self.log.debug("Parsed NFFG install request: %s" % nffg)
@@ -337,25 +362,29 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # set bounded layer name here to avoid circular dependency problem
     handler = CONFIG.get_ros_agent_class()
     handler.bounded_layer = self._core_name
+    params = CONFIG.get_ros_agent_params()
     # can override from global config
-    handler.prefix = CONFIG.get_ros_agent_prefix()
-    handler.virtualizer_format_enabled = CONFIG.get_ros_api_virtualizer_format()
-    address = CONFIG.get_ros_agent_address()
+    if 'prefix' in params:
+      handler.prefix = params['prefix']
+    if 'unify_interface' in params:
+      handler.virtualizer_format_enabled = params['unify_interface']
+    if 'format' in params:
+      handler.format = params['format']
+    address = (params.get('address'), params.get('port'))
     # Virtualizer ID of the Sl-Or interface
     self.ros_api = RESTServer(handler, *address)
     self.ros_api.api_id = handler.LOGGER_NAME = "Sl-Or"
     # Virtualizer type for Sl-Or API
     self.ros_api.virtualizer_type = CONFIG.get_api_virtualizer(
       layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
-    handler.log.info(
-      "Init REST-API for %s on %s:%s!" % (
-        self.ros_api.api_id, address[0], address[1]))
+    handler.log.info("Init REST-API for %s on %s:%s!" % (
+      self.ros_api.api_id, address[0], address[1]))
     self.ros_api.start()
     handler.log.debug(
-      "Configured Virtualizer type: %s" % self.ros_api.virtualizer_type)
-    handler.log.debug(
-      "Configured communication format: %s" % "UNIFY" if
-      handler.virtualizer_format_enabled else "Internal-NFFG")
+      "Enforced configuration for %s: virtualizer type: %s, interface: %s, "
+      "format: %s" % (self.ros_api.api_id, self.ros_api.virtualizer_type,
+                      "UNIFY" if handler.virtualizer_format_enabled else
+                      "Internal-NFFG", handler.format))
     if self._agent:
       log.info("REST-API is set in AGENT mode")
 
@@ -368,24 +397,29 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # set bounded layer name here to avoid circular dependency problem
     handler = CONFIG.get_cfor_api_class()
     handler.bounded_layer = self._core_name
+    params = CONFIG.get_cfor_agent_params()
     # can override from global config
-    handler.prefix = CONFIG.get_cfor_api_prefix()
-    address = CONFIG.get_cfor_api_address()
+    if 'prefix' in params:
+      handler.prefix = params['prefix']
+    if 'unify_interface' in params:
+      handler.virtualizer_format_enabled = params['unify_interface']
+    if 'format' in params:
+      handler.format = params['format']
+    address = (params.get('address'), params.get('port'))
     self.cfor_api = RESTServer(handler, *address)
     # Virtualizer ID of the Cf-Or interface
     self.cfor_api.api_id = handler.LOGGER_NAME = "Cf-Or"
     # Virtualizer type for Cf-Or API
     self.cfor_api.virtualizer_type = CONFIG.get_api_virtualizer(
       layer_name=LAYER_NAME, api_name=self.cfor_api.api_id)
-    handler.log.debug(
-      "Init REST-API for %s on %s:%s!" % (
-        self.cfor_api.api_id, address[0], address[1]))
+    handler.log.info("Init REST-API for %s on %s:%s!" % (
+      self.cfor_api.api_id, address[0], address[1]))
     self.cfor_api.start()
     handler.log.debug(
-      "Configured Virtualizer type: %s" % self.cfor_api.virtualizer_type)
-    handler.log.debug(
-      "Configured communication format: %s" % "UNIFY" if
-      handler.virtualizer_format_enabled else "Internal-NFFG")
+      "Enforced configuration for %s: virtualizer type: %s, interface: %s, "
+      "format: %s" % (self.cfor_api.api_id, self.cfor_api.virtualizer_type,
+                      "UNIFY" if handler.virtualizer_format_enabled else
+                      "Internal-NFFG", handler.format))
 
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
@@ -396,7 +430,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`NFFGMappingFinishedEvent`
     :return: None
     """
-    self._install_NFFG(event.nffg)
+    self._proceed_to_install_NFFG(event.nffg)
 
   ##############################################################################
   # Agent API functions starts here
@@ -474,13 +508,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of a single BiSBiS view based on DoV
     :rtype: str
     """
-    log.getChild('[Cf-Or]').info("Requesting Virtualizer for REST-API")
+    log.getChild('[Cf-Or]').info("Requesting Virtualizer for REST-API...")
     virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       virtualizer_id=self.cfor_api.api_id, type=self.cfor_api.virtualizer_type)
     if virt is not None:
       log.getChild('[Cf-Or]').info("Generate topo description...")
-      res = virt.get_resource_info()
-      return res if res is not None else None
+      return virt.get_resource_info()
     else:
       log.error(
         "Virtualizer(id=%s) assigned to REST-API is not found!" %
@@ -524,29 +557,39 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, nffg.name))
+    # Initiate request mapping
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
     log.getChild('API').debug(
       "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
     # If mapping is not threaded and finished with OK
-    if mapped_nffg is not None:
-      self._install_NFFG(mapped_nffg=mapped_nffg)
+    if mapped_nffg is not None and not \
+       self.resource_orchestrator.mapper.threaded:
+      self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg)
     else:
       log.warning(
         "Something went wrong in service request instantiation: mapped "
-        "service "
-        "request is missing!")
+        "service request is missing!")
 
-  def _install_NFFG (self, mapped_nffg):
+  def _proceed_to_install_NFFG (self, mapped_nffg):
     """
     Send mapped :any:`NFFG` to Controller Adaptation Sublayer in an
     implementation-specific way.
 
     General function which is used from microtask and Python thread also.
 
+    This function contains the last steps before the mapped NFFG will be sent
+    to the next layer.
+
     :param mapped_nffg: mapped NF-FG
     :type mapped_nffg: :any:`NFFG`
     :return: None
     """
+    # Non need to rebind req links --> it will be done in Adaptation layer
+    # Log verbose mapping result in unified way (threaded/non-threaded)
+    log.log(VERBOSE,
+            "Mapping result of Orchestration Layer:\n%s" % mapped_nffg.dump())
+    # Notify remote visualizer about the mapping result if it's needed
+    notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending NF-FG to Adaptation layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
@@ -565,7 +608,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
       "Received <Virtual View> request from %s layer" % str(
         event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
-    virtualizer_type = CONFIG.get_ros_virtualizer_type(component=event.sid)
+    # Virtualizer type for Sl-Or API
+    virtualizer_type = CONFIG.get_api_virtualizer(layer_name=LAYER_NAME,
+                                                  api_name=event.sid)
     v = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid, type=virtualizer_type)
     log.getChild('API').debug("Sending back <Virtual View>: %s..." % v)
@@ -586,7 +631,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Send <Global Resource View> request to Adaptation layer...")
+      "Send DoV request to Adaptation layer...")
     self.raiseEventNoErrors(GetGlobalResInfoEvent)
 
   def _handle_GlobalResInfoEvent (self, event):
@@ -598,7 +643,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     log.getChild('API').debug(
-      "Received <Global Resource View> from %s Layer" % str(
+      "Received DoV from %s Layer" % str(
         event.source._core_name).title())
     self.resource_orchestrator.virtualizerManager.dov = event.dov
 
