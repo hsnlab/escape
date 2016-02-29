@@ -30,7 +30,7 @@ import traceback
 from pprint import pformat
 
 try:
-  from escape.nffg_lib.nffg import NFFG, generate_dynamic_fallback_nffg, NFFGToolBox
+  from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 except ImportError:
   import sys, os, inspect
 
@@ -39,7 +39,6 @@ except ImportError:
         os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
                                   "pox/ext/escape/nffg_lib/"))
   from nffg import NFFG, NFFGToolBox
-  from nffg_tests import generate_dynamic_fallback_nffg
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
 import Alg1_Helper as helper
@@ -115,6 +114,15 @@ def MAP (request, network, full_remap=False,
   edgereqlist = []
   for req in request.reqs:
     edgereqlist.append(req)
+    converted_sg_path = []
+    for sgid in req.sg_path:
+      newsgid = sgid
+      try:
+        newsgid = int(sgid)
+      except ValueError:
+        pass
+      converted_sg_path.append(newsgid)
+    req.sg_path = converted_sg_path
     request.del_edge(req.src, req.dst, req.id)
 
   if len(edgereqlist) != 0 and not sg_hops_given:
@@ -455,17 +463,15 @@ if __name__ == '__main__':
 
     # req = _example_request_for_fallback()
     # print req.dump()
-    # this is the dynamic fallback topology taken from nffg.py
-    # net = generate_dynamic_fallback_nffg()
     # req = _onlySAPsRequest()
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../examples/escape-mn-divide-reqs.nffg', "r") as f:
+    with open('../examples/escape-mn-req.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('../examples/escape-mn-divide-reqs.nffg', "r") as g:
+    with open('../examples/escape-mn-topo.nffg', "r") as g:
       net = NFFG.parse(g.read())
-      # net.duplicate_static_links()
+      net.duplicate_static_links()
     mapped = MAP(req, net, full_remap=False)
     print mapped.dump()
   except uet.UnifyException as ue:

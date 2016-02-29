@@ -627,29 +627,12 @@ class GraphPreprocessorClass(object):
                "mapped NF's host",
                "NF %s is already mapped outside of the currently given "
                "placement criteria." % vnf.id)
-
-    # add available res attribute to all Infras and subtract the running
-    # NFs` resources from the given max res
-    for n in net.infras:
-      setattr(net.network.node[n.id], 'availres',
-              copy.deepcopy(net.network.node[n.id].resources))
-      for vnf in net.running_nfs(n.id):
-        # if a VNF needs to be left in place, then it is still mapped by the 
-        # mapping process, but with placement criteria, so its resource 
-        # requirements will be subtracted during the greedy process.
-        if not full_remap and vnf.id not in vnf_to_be_left_in_place:
-          try:
-            newres = helper.subtractNodeRes(net.network.node[n.id].availres,
-                                            net.network.node[vnf.id].resources,
-                                            net.network.node[n.id].resources)
-          except uet.InternalAlgorithmException:
-            raise uet.BadInputException(
-               "Infra node`s resources are expected to represent its maximal "
-               "capabilities.",
-               "The NodeNF(s) running on Infra node %s, use(s)more resource "
-               "than the maximal." % n.name)
-
-          net.network.node[n.id].availres = newres
+    
+    # Add available resources to 'availres' attribute of each NodeInfra.
+    # Ignore VNF-s which are in the request graph too, because they should be 
+    # left in place, and their resource requirements will be subtracted 
+    # during the mapping process
+    net.calculate_available_node_res(vnf_to_be_left_in_place, full_remap)
 
     # REQUEST or SG links between SAPs are not removed anywhere else
     for i, j, link in net.network.edges_iter(data=True):
@@ -666,42 +649,7 @@ class GraphPreprocessorClass(object):
     # will be deleted...
     if not full_remap:
       sg_hop_ids_in_req = {sg.id for sg in self.req_graph.sg_hops}
-      # find all the flowrules with starting TAG and retrieve the paths, 
-      # and subtract the reserved link and internal (inside Infras) bandwidth
-      for d in net.infras:
-        reserved_internal_bw = 0
-        for p in d.ports:
-          for fr in p.flowrules:
-            if fr.hop_id in sg_hop_ids_in_req:
-              raise uet.BadInputException("SGHops in request graph shouldn't be"
-                    " mapped already to the substrate graph. SGHop ID-s shold be"
-                    " different, otherwise they are considered the same!", 
-                    "Flowrule %s in Infra node %s is a part of the (earlier) "
-                    "mapped path of SGHop %s."%(fr.id, d.id, fr.hop_id))
-            if fr.bandwidth is not None:
-              reserved_internal_bw += fr.bandwidth
-          for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
-            path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, net, p)
-            # collocation flowrules have not TAGs so their empty lists are not 
-            # returned by get_TAGs_of_starting_flows, but this case
-            # is also handled by the Flowrule.bandwidth summerizing 'for loop'
-            for link in path_of_TAG:
-              link.availbandwidth -= flow_bw
-              # the last infra on the path is either a SAP or the last flowrule 
-              # is subtracted when we get there with the outer loop
-              if link.id != path_of_TAG[-1].id:
-                link.dst.node.availres.bandwidth -= flow_bw
-              if link.availbandwidth < 0:
-                raise uet.BadInputException(
-                   "The bandwidth usage implied by the sum of flowrule "
-                   "bandwidths should determine the occupied capacity on "
-                   "links.",
-                   "The bandwidth capacity on link %s, %s, %s got below "
-                   "zero!" % (
-                     link.src.node.id,
-                     link.dst.node.id,
-                     link.id))
-        d.availres['bandwidth'] -= reserved_internal_bw
+      net.calculate_available_link_res(sg_hop_ids_in_req)
 
     # calculated weights for infras based on their available bandwidth capacity
     for d in net.infras:

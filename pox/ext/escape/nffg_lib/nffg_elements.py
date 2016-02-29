@@ -464,6 +464,45 @@ class NodeResource(Persistable):
     self.delay = delay
     self.bandwidth = bandwidth
 
+  def subtractNodeRes (self, substrahend, maximal, link_count=1):
+    """
+    Subtracts the subtrahend nffg_elements.NodeResource object from the current.
+    Note: only delay component is not subtracted, for now we neglect the load`s
+    influence on the delay. Link count identifies how many times the bandwidth
+    should be subtracted. Throw exception if any field of the 'current' would 
+    exceed 'maximal' or get below zero.
+
+    :param substrahend: the object to be subtracted from current
+    :type substrahend: NodeReource
+    :param maximal: The maximal value which must not be exceeded.
+    :type maximal: NodeReource
+    :param link_count: how many times the should the bandwidth component be subtracted.
+    :type link_count: int
+    """
+    attrlist = ['cpu', 'mem', 'storage', 'bandwidth']  # delay excepted!
+    if reduce(lambda a, b: a or b, (self[attr] is None for attr in attrlist)):
+      raise uet.BadInputException(
+        "Node resource components should always be given",
+        "One of %s`s components is None" % str(self))
+    if not reduce(lambda a, b: a and b,
+              (0 <= self[attr] - substrahend[attr] <= maximal[attr] 
+               for attr in attrlist if
+               attr != 'bandwidth' and substrahend[attr] is not None)):
+      raise RuntimeError("Node resource got below zero, or "
+                         "exceeded the maximal value!")
+    if substrahend['bandwidth'] is not None:
+      if not 0 <= self['bandwidth'] - link_count * substrahend['bandwidth'] <=\
+         maximal['bandwidth']:
+        raise RuntimeError("Internal bandwidth cannot get below "
+                           "zero, or exceed the maximal value!")
+    for attr in attrlist:
+      k = 1
+      if attr == 'bandwidth':
+        k = link_count
+      if substrahend[attr] is not None:
+        self[attr] -= k * substrahend[attr]
+    return self
+
   def persist (self):
     res = OrderedDict()
     if self.cpu is not None:

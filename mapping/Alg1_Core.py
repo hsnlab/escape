@@ -353,9 +353,9 @@ class CoreAlgorithm(object):
             res_to_substractoradd[attr] = -1 * res_to_substractoradd[attr]
       else:
         res_to_substractoradd = self.req.node[vnf].resources
-      newres = helper.subtractNodeRes(self.net.node[node].availres,
-                                      res_to_substractoradd,
-                                      self.net.node[node].resources)
+      newres = self.net.node[node].availres.subtractNodeRes(\
+                                   res_to_substractoradd,
+                                   self.net.node[node].resources)
       self.net.node[node].availres = newres
 
     if redo:
