@@ -250,7 +250,7 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
                   loops=loops, vnf_sharing_probabilty=vnf_sharing,
                   multiSC=multiple_scs, max_sc_count=max_sc_count)
       except uet.MappingException as me:
-        log.debug(ppid_pid+"Mapping failed: %s"%me.msg)
+        log.info(ppid_pid+"Mapping failed: %s"%me.msg)
         break
       if request is None:
         log.warn(ppid_pid+"Request generation reached its end!")
