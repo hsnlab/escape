@@ -1394,7 +1394,7 @@ class NFFGToolBox(object):
   def generate_SBB_representation (nffg, log=logging.getLogger("SBB")):
     """
     Generate the trivial virtual topology a.k.a one BisBis or Single BisBis
-    representation with calculated resources and transferred SAP nodes.
+    representation with calculated resources and transferred NF and SAP nodes.
 
     :param nffg: global resource
     :type nffg: :any:`NFFG`
@@ -1474,13 +1474,33 @@ class NFFGToolBox(object):
     sbb_infra.add_supported_type(s_types)
     log.debug("Add supported types: %s" % s_types)
 
+    # Add existing NFs
+    for nf in nffg.nfs:
+      c_nf = sbb.add_nf(nf=nf.copy())
+      log.debug("Add NF: %s" % c_nf)
+      # Discover and add NF connections
+      for u, v, l in nffg.network.out_edges_iter([nf.id], data=True):
+        if l.type != NFFG.TYPE_LINK_DYNAMIC:
+          continue
+        # Explicitly add links for both direction
+        link1, link2 = sbb.add_undirected_link(port1=c_nf.ports[l.src.id],
+                                               port2=sbb_infra.add_port(
+                                                 id=l.dst.id),
+                                               p1p2id=l.id,
+                                               delay=l.delay,
+                                               bandwidth=l.bandwidth)
+        log.debug("Add connection: %s" % link1)
+        log.debug("Add connection: %s" % link2)
+
     # Add existing SAPs and their connections to the SingleBiSBiS infra
-    from copy import deepcopy
     for sap in nffg.saps:
-      c_sap = sbb.add_sap(sap=deepcopy(sap))
+      c_sap = sbb.add_sap(sap=sap.copy())
       log.debug("Add SAP: %s" % c_sap)
       # Discover and add SAP connections
       for u, v, l in nffg.network.out_edges_iter([sap.id], data=True):
+        if l.type not in (NFFG.TYPE_LINK_STATIC, NFFG.TYPE_LINK_DYNAMIC):
+          continue
+        # Explicitly add links for both direction
         link1, link2 = sbb.add_undirected_link(port1=c_sap.ports[l.src.id],
                                                port2=sbb_infra.add_port(
                                                  "port-%s" % c_sap.id),
