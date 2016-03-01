@@ -27,7 +27,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.lib.util import dpid_to_str
-from virtualizer4 import Virtualizer
+from virtualizer import Virtualizer
 
 
 class TopologyLoadException(Exception):
@@ -789,7 +789,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param filter: request a filtered description instead of full
     :type filter: str
     :return: infrastructure view in the original format
-    :rtype: :class:`virtualizer4.Virtualizer` or :any:`NFFG`
+    :rtype: :class:`virtualizer.Virtualizer` or :any:`NFFG`
     """
     log.debug("Send get-config request to remote agent: %s" % self._base_url)
     # Get topology from remote agent handling every exception
@@ -1051,7 +1051,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param filter: request a filtered description instead of full
     :type filter: str
     :return: infrastructure view in the original format
-    :rtype: :class:`virtualizer4.Virtualizer`
+    :rtype: :class:`virtualizer.Virtualizer`
     """
     log.debug("Send get-config request to remote agent: %s" % self._base_url)
     # Get topology from remote agent handling every exception

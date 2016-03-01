@@ -18,7 +18,7 @@ import logging
 import urlparse
 from requests import Session, ConnectionError, HTTPError, Timeout
 
-import virtualizer4 as Virtualizer
+import virtualizer as Virtualizer
 from escape import CONFIG, __version__
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.nffg_lib.nffg import NFFG
