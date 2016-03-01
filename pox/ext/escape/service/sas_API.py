@@ -128,7 +128,10 @@ class ServiceRequestHandler(AbstractRequestHandler):
     if topology is False:
       self.log.info(
         "Requested resource has not changed! Respond with cached topology...")
-      data = self.server.last_response.dump()
+      if self.virtualizer_format_enabled:
+        data = self.server.last_response.xml()
+      else:
+        data = self.server.last_response.dump()
     else:
       if self.virtualizer_format_enabled:
         self.log.debug("Convert internal NFFG to Virtualizer...")
@@ -141,12 +144,14 @@ class ServiceRequestHandler(AbstractRequestHandler):
         # Dump to plain text format
         data = v_topology.xml()
         # Setup HTTP response format
-        self.send_header('Content-Type', 'application/xml')
       else:
         self.log.debug("Cache converted topology...")
         self.server.last_response = topology
         data = topology.dump()
-        self.send_header('Content-Type', 'application/json')
+    if self.virtualizer_format_enabled:
+      self.send_header('Content-Type', 'application/xml')
+    else:
+      self.send_header('Content-Type', 'application/json')
     self.log.log(VERBOSE, "Responded config for 'get-config':\n%s" % data)
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))

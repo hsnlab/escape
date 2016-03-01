@@ -234,12 +234,14 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         # Dump to plain text format
         data = v_topology.xml()
         # Setup HTTP response format
-        self.send_header('Content-Type', 'application/xml')
       else:
         self.log.debug("Cache converted topology...")
         self.server.last_response = config
         data = config.dump()
-        self.send_header('Content-Type', 'application/json')
+    if self.virtualizer_format_enabled:
+      self.send_header('Content-Type', 'application/xml')
+    else:
+      self.send_header('Content-Type', 'application/json')
     self.log.log(VERBOSE, "Responded config for 'get-config':\n%s" % data)
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
