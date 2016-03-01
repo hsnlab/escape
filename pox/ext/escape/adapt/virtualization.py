@@ -136,12 +136,13 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
 
   def is_changed (self):
     """
-    Return True if virtual resource view has been changed.
+    Return True if virtual resource view has been changed or has not set yet
+    and need to generate the virtual view.
 
     :return: view has been changed or not
     :rtype: bool
     """
-    return self._dirty
+    return self._dirty is not False
 
   def get_resource_info (self):
     """
