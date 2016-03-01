@@ -214,23 +214,33 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       return
     # Setup OK status for HTTP response
     self.send_response(200)
-    # Convert required NFFG if needed
-    if self.virtualizer_format_enabled:
-      self.log.debug("Convert internal NFFG...")
-      converter = NFFGConverter(domain=None, logger=log)
-      v_topology = converter.dump_to_Virtualizer(nffg=config)
-      # Cache converted data for edit-config patching
-      self.server.last_response = v_topology
-      self.log.debug("Cache converted topology...")
-      # Dump to plain text format
-      data = v_topology.xml()
-      # Setup HTTP response format
-      self.send_header('Content-Type', 'application/xml')
+    # Global resource has not changed -> respond with the cached topo
+    if config is False:
+      self.log.info(
+        "Global resource has not changed! Respond with cached topology...")
+      if self.virtualizer_format_enabled:
+        data = self.server.last_response.xml()
+      else:
+        data = self.server.last_response.dump()
     else:
-      self.server.last_response = config
-      data = config.dump()
-      self.send_header('Content-Type', 'application/json')
-    self.log.log(VERBOSE, "Generated config for 'get-config:\n%s" % data)
+      # Convert required NFFG if needed
+      if self.virtualizer_format_enabled:
+        self.log.debug("Convert internal NFFG to Virtualizer...")
+        converter = NFFGConverter(domain=None, logger=log)
+        v_topology = converter.dump_to_Virtualizer(nffg=config)
+        # Cache converted data for edit-config patching
+        self.log.debug("Cache converted topology...")
+        self.server.last_response = v_topology
+        # Dump to plain text format
+        data = v_topology.xml()
+        # Setup HTTP response format
+        self.send_header('Content-Type', 'application/xml')
+      else:
+        self.log.debug("Cache converted topology...")
+        self.server.last_response = config
+        data = config.dump()
+        self.send_header('Content-Type', 'application/json')
+    self.log.log(VERBOSE, "Responded config for 'get-config':\n%s" % data)
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
@@ -254,9 +264,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type", "") != "application/xml" or \
          not raw_body.startswith("<?xml version="):
-        self.log.error(
-          "Received data is not in XML format despite of the UNIFY "
-          "interface is enabled!")
+        self.log.error("Received data is not in XML format despite of the "
+                       "UNIFY interface is enabled!")
         self.send_error(415)
         return
       # Get received Virtualizer
@@ -443,22 +452,29 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def api_ros_get_config (self):
     """
-    Implementation of REST-API RPC: get-config.
+    Implementation of REST-API RPC: get-config. Return with the global
+    resource as an :any:`NFFG` if it has been changed otherwise return with
+    False.
 
-    :return: dump of global view (DoV)
-    :rtype: str
+    :return: global resource view (DoV)
+    :rtype: :any:`NFFG` or False
     """
     log.getChild('[Sl-Or]').info("Requesting Virtualizer for REST-API")
     virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       virtualizer_id=self.ros_api.api_id, type=self.ros_api.virtualizer_type)
     if virt is not None:
-      log.getChild('[Sl-Or]').info("Generate topo description...")
-      res = virt.get_resource_info()
-      return res
+      # Check if the resource is changed
+      if virt.is_changed():
+        log.getChild('[Sl-Or]').info("Generate topo description...")
+        res = virt.get_resource_info()
+        return res
+      # If resource has not been changed return False
+      # This causes to response with the cached topology
+      else:
+        return False
     else:
-      log.error(
-        "Virtualizer(id=%s) assigned to REST-API is not found!" %
-        self.ros_api.api_id)
+      log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
+                self.ros_api.api_id)
 
   def api_ros_edit_config (self, nffg):
     """
@@ -491,12 +507,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
       domain_name = CONFIG.get_local_manager()
     log.debug("Rewrite received NFFG domain to %s..." % domain_name)
     for infra in nffg_part.infras:
-      # if infra.infra_type not in (
-      #    NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-      #    NFFG.TYPE_INFRA_SDN_SW, NFFG.TYPE_INFRA):
-      #   continue
-      # if infra.domain == 'REMOTE':
-      #   infra.domain = 'INTERNAL'
       infra.domain = domain_name
       rewritten.append(infra.id)
     log.debug("Rewritten infrastructure nodes: %s" % rewritten)
@@ -609,9 +619,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`GetVirtResInfoEvent`
     :return: None
     """
-    log.getChild('API').debug(
-      "Received <Virtual View> request from %s layer" % str(
-        event.source._core_name).title())
+    log.getChild('API').debug("Received <Virtual View> request from %s layer" %
+                              str(event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
     # Virtualizer type for Sl-Or API
     virtualizer_type = CONFIG.get_api_virtualizer(layer_name=LAYER_NAME,
