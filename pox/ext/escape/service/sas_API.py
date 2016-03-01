@@ -117,7 +117,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    self.log.info("Call REST-API function: topology")
+    self.log.info("Call %s function: topology" % self.LOGGER_NAME)
     # Forward call to main layer class
     topology = self._proceed_API_call('api_sas_get_topology')
     if topology is None:
@@ -125,18 +125,33 @@ class ServiceRequestHandler(AbstractRequestHandler):
       return
     # Setup OK status for HTTP response
     self.send_response(200)
-    if self.virtualizer_format_enabled:
-      converter = NFFGConverter(domain=None, logger=log)
-      # Dump to plain text format
-      data = converter.dump_to_Virtualizer(nffg=topology).xml()
-      # Setup HTTP response format
-      self.send_header('Content-Type', 'application/xml')
+    if topology is False:
+      self.log.info(
+        "Requested resource has not changed! Respond with cached topology...")
+      data = self.server.last_response.dump()
     else:
-      data = topology.dump()
-      self.send_header('Content-Type', 'application/json')
+      if self.virtualizer_format_enabled:
+        self.log.debug("Convert internal NFFG to Virtualizer...")
+        converter = NFFGConverter(domain=None, logger=log)
+        # Dump to plain text format
+        v_topology = converter.dump_to_Virtualizer(nffg=topology)
+        # Cache converted data for edit-config patching
+        self.log.debug("Cache converted topology...")
+        self.server.last_response = v_topology
+        # Dump to plain text format
+        data = v_topology.xml()
+        # Setup HTTP response format
+        self.send_header('Content-Type', 'application/xml')
+      else:
+        self.log.debug("Cache converted topology...")
+        self.server.last_response = topology
+        data = topology.dump()
+        self.send_header('Content-Type', 'application/json')
+    self.log.log(VERBOSE, "Responded config for 'get-config':\n%s" % data)
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
+    self.log.debug("Send back topology description...")
     self.wfile.write(data)
     self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
 
