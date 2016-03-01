@@ -1,0 +1,3 @@
+[submodule "unify_virtualizer"]
+	path = unify_virtualizer
+	url = git@gitlab.fp7-unify.eu:Robert.Szabo/virtualizer.git
