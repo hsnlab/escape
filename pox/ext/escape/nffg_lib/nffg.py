@@ -15,11 +15,13 @@
 Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
+import copy
 import itertools
 import logging
 import networkx
-import copy
 from networkx.exception import NetworkXError
+
+import re
 
 from nffg_elements import *
 
@@ -868,7 +870,6 @@ class NFFG(AbstractNFFG):
     
     :param sg_hop_ids: container for the EdgeSGLink ID-s to look for
     :return: None
-    :rtype: NoneType
     """
     # set availbandwidth to the maximal value
     for i, j, k, d in self.network.edges_iter(data=True, keys=True):
@@ -883,11 +884,15 @@ class NFFG(AbstractNFFG):
         for fr in p.flowrules:
           if fr.hop_id in sg_hop_ids:
             raise RuntimeError("(BadInputException) "
-                  "SGHops in request graph shouldn't be"
-                  " mapped already to the substrate graph. SGHop ID-s shold be"
-                  " different, otherwise they are considered the same! "
-                  "Flowrule %s in Infra node %s is a part of the (earlier) "
-                  "mapped path of SGHop %s."%(fr.id, d.id, fr.hop_id))
+                               "SGHops in request graph shouldn't be"
+                               " mapped already to the substrate graph. SGHop "
+                               "ID-s shold be"
+                               " different, otherwise they are considered the "
+                               "same! "
+                               "Flowrule %s in Infra node %s is a part of the "
+                               "(earlier) "
+                               "mapped path of SGHop %s." % (
+                               fr.id, d.id, fr.hop_id))
           if fr.bandwidth is not None:
             reserved_internal_bw += fr.bandwidth
         for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
@@ -903,16 +908,19 @@ class NFFG(AbstractNFFG):
               link.dst.node.availres.bandwidth -= flow_bw
             if link.availbandwidth < 0:
               raise RuntimeError("(BadInputException) "
-                 "The bandwidth usage implied by the sum of flowrule "
-                 "bandwidths should determine the occupied capacity on links. "
-                 "The bandwidth capacity on link %s, %s, %s got below "
-                 "zero!" % (
-                   link.src.node.id,
-                   link.dst.node.id,
-                   link.id))
+                                 "The bandwidth usage implied by the sum of "
+                                 "flowrule "
+                                 "bandwidths should determine the occupied "
+                                 "capacity on links. "
+                                 "The bandwidth capacity on link %s, %s, "
+                                 "%s got below "
+                                 "zero!" % (
+                                   link.src.node.id,
+                                   link.dst.node.id,
+                                   link.id))
       d.availres['bandwidth'] -= reserved_internal_bw
 
-  def calculate_available_node_res (self, vnfs_to_be_ignored=[], 
+  def calculate_available_node_res (self, vnfs_to_be_ignored=[],
                                     full_remap=False):
     """
     Calculates available computation and networking resources of the nodes of
@@ -920,9 +928,8 @@ class NFFG(AbstractNFFG):
     available resources in the 'availres' attribute added by this fucntion.
 
     :param vnfs_to_be_ignored: NodeNF.id-s to be ignored subtraction.
-    :type vnfs_to_be_ignored: list of NodeNF.id-s
+    :type vnfs_to_be_ignored: list
     :return: None
-    :rtype: NoneType
     """
     # add available res attribute to all Infras and subtract the running
     # NFs` resources from the given max res
@@ -935,15 +942,15 @@ class NFFG(AbstractNFFG):
         # requirements will be subtracted during the greedy process.
         if not full_remap and vnf.id not in vnfs_to_be_ignored:
           try:
-            newres = self.network.node[n.id].availres.subtractNodeRes(\
-                                            self.network.node[vnf.id].resources,
-                                            self.network.node[n.id].resources)
+            newres = self.network.node[n.id].availres.subtractNodeRes(
+              self.network.node[vnf.id].resources,
+              self.network.node[n.id].resources)
           except RuntimeError:
             raise RuntimeError(
-               "Infra node`s resources are expected to represent its maximal "
-               "capabilities."
-               "The NodeNF(s) running on Infra node %s, use(s)more resource "
-               "than the maximal." % n.name)
+              "Infra node`s resources are expected to represent its maximal "
+              "capabilities."
+              "The NodeNF(s) running on Infra node %s, use(s)more resource "
+              "than the maximal." % n.name)
 
           self.network.node[n.id].availres = newres
 
@@ -1229,17 +1236,19 @@ class NFFGToolBox(object):
     return splitted_parts
 
   @classmethod
-  def rewrite_interdomain_tags (cls, slices):
+  def rewrite_interdomain_tags (cls, slices, log=logging.getLogger("TAG")):
     """
     Calculate and rewrite inter-domain tags.
 
     Inter-domain connections via inter-domain SAPs are harmonized
-    here.  The abstrcat tags in flowrules are rewritten to technology
-    specific ones based on the information retreived from inter-domain
+    here. The abstract tags in flowrules are rewritten to technology
+    specific ones based on the information retrieved from inter-domain
     SAPs.
 
-    :param slices: list of mapped NF-FG instances
-    :type slice: list of NFFG structures
+    :param slices: list of mapped :any:`NFFG` instances
+    :type slices: list
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
     :return: list of NFFG structures with updated tags
     """
     log.debug("Calculating inter-domain tags...")
@@ -1250,7 +1259,8 @@ class NFFGToolBox(object):
       sap_ports = []
       for sap in nffg[1].saps:
         sap_switch_links = [e for e in
-                            nffg[1].network.edges_iter(data=True) if sap.id in e]
+                            nffg[1].network.edges_iter(data=True) if
+                            sap.id in e]
         # list of e = (u, v, data)
         try:
           if sap_switch_links[0][0] == sap.id:
@@ -1283,21 +1293,21 @@ class NFFGToolBox(object):
 
                 # generate exact tag
                 tag_id = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
-                tag_exact = tag
+                # tag_exact = tag
 
 
           # collect outbound flowrules toward SAP ports
           else:
             pass
 
-      #     if sap.domain is not None:
-      #       # inter-domain saps
-      #       pass
-      #     else:
-      #       # host saps
-      #       pass
+            #     if sap.domain is not None:
+            #       # inter-domain saps
+            #       pass
+            #     else:
+            #       # host saps
+            #       pass
 
-      #     # collect outbound flowrules
+            #     # collect outbound flowrules
 
     return slices
 
