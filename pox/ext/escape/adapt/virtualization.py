@@ -445,7 +445,7 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
       return dov
     else:
       # Generate the Single BiSBiS representation
-      return NFFGToolBox.generate_SBB_representation(dov=dov, log=log)
+      return NFFGToolBox.generate_SBB_representation(nffg=dov, log=log)
 
 
 class VirtualizerManager(EventMixin):
