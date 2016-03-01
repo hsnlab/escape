@@ -35,8 +35,8 @@ except ImportError:
 
 try:
   # Import for ESCAPEv2
-  import virtualizer4 as virt_lib
-  from virtualizer4 import Flowentry
+  import virtualizer as virt_lib
+  from virtualizer import Flowentry
 except ImportError:
   import os, inspect
 
@@ -44,8 +44,8 @@ except ImportError:
     os.path.join(os.path.dirname(__file__), "../../../..")),
     "unify_virtualizer"))
   # Import for standalone running
-  import virtualizer4 as virt_lib
-  from virtualizer4 import Flowentry
+  import virtualizer as virt_lib
+  from virtualizer import Flowentry
 
 
 class NFFGConverter(object):

@@ -25,7 +25,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
   VERBOSE
 from pox.lib.revent.revent import Event
-from virtualizer4 import Virtualizer
+from virtualizer import Virtualizer
 
 
 class InstallNFFGEvent(Event):
