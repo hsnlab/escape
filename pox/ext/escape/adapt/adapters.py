@@ -955,10 +955,15 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def check_topology_changed (self):
     """
-    Return if the remote domain is changed.
+    Check the last received topology and return ``False`` if there was no
+    changes, ``None`` if domain was unreachable and the converted topology if
+    the domain changed.
+
+    Detection of changes is based on the ``reduce()`` function of the
+    ``Virtualizer``.
 
     :return: the received topology is different from cached one
-    :rtype: bool or None
+    :rtype: bool or None or :any:`NFFG`
     """
     if self._unify_interface:
       # Get full topology as a Virtualizer
@@ -971,10 +976,10 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         virt = Virtualizer.parse_from_text(text=data)
       else:
         # If no data is received or converted return with None
-        return
+        return None
       if self.last_virtualizer is None:
         log.warning("Missing last received Virtualizer!")
-        return
+        return None
       # Get the changes happened since the last get-config
       changes = virt.copy()
       changes.reduce(self.last_virtualizer)
@@ -983,9 +988,10 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       else:
         log.log(VERBOSE,
                 "Received message to 'get-config' request:\n%s" % virt.xml())
-        # Cache received data
+        # Cache new data
         self.last_virtualizer = virt
-        return True
+        # Return with the changed topo in NFFG
+        return self.converter.parse_from_Virtualizer(vdata=virt)
     else:
       raise NotImplementedError("Not implemented yet!")
 
@@ -1203,8 +1209,10 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       log.log(VERBOSE, "Changed domain topology from: %s:\n%s" % (
         self.domain_name, virt.xml()))
+      # Cache new topo
+      self.last_virtualizer = virt
       # Return with the changed topo in NFFG
-      return self.converter.parse_from_Virtualizer(vdata=self.last_virtualizer)
+      return self.converter.parse_from_Virtualizer(vdata=virt)
 
 
 class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
