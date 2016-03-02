@@ -802,8 +802,8 @@ class NFFG(AbstractNFFG):
     :type node_id: :any:`NodeInfra`
     :return: iterator for the list of Infra nodes
     """
-    return {self.network.node[id] for id in self.network.neighbors_iter(node_id)
-            if self.network.node[id].type == Node.INFRA}
+    return (self.network.node[id] for id in self.network.neighbors_iter(node_id)
+            if self.network.node[id].type == Node.INFRA)
 
   def running_nfs (self, infra_id):
     """
@@ -813,9 +813,9 @@ class NFFG(AbstractNFFG):
     :type infra_id: :any: `NodeInfra`
     :return: iterator for the currently running NodeNFs
     """
-    return {self.network.node[id] for id in
+    return (self.network.node[id] for id in
             self.network.neighbors_iter(infra_id) if
-            self.network.node[id].type == Node.NF}
+            self.network.node[id].type == Node.NF)
 
   def clear_links (self, link_type):
     """
@@ -1568,7 +1568,7 @@ class NFFGToolBox(object):
 
     :param base: base NFFG object
     :type base: :any:`NFFG`
-    :param updated: updating information
+    :param updated: updated domain information
     :type updated: :any:`NFFG`
     :param log: additional logger
     :type log: :any:`logging.Logger`
@@ -1585,30 +1585,30 @@ class NFFGToolBox(object):
       return
     domain = domain.pop()
     log.debug("Update elements of domain: %s in %s..." % (domain, base.id))
-    # deletable = set()
-    # # Search for removed nodes
-    # for node_id in base:
-    #   if node_id not in updated:
-    #     deletable.add(node_id)
-    # # Delete nodes
-    # base.network.remove_nodes_from(deletable)
-    # # Search for new elements
-    # for node_id in updated:
-    #   if node_id not in base:
-    #     new_node = updated[node_id].copy()
-    #
-    # # TODO 1 - if new bisbis add to base
-    # # TODO 2 - if base bisbis doesnt exist remove from base
-    # # TODO 3 - if new nf add to base
-    # # TODO 4 - if base nf doesnt exist remove from base
-    # # TODO 5 - recreate inter-domain SAPs
-    # for infra in base.infras:
-    #   if infra.domain != domain:
-    #     continue
-    #   for nf in base.running_nfs(infra.id):
-    #     if nf.id not in (id for id in updated.network.neighbors_iter(infra.id)
-    #                      if updated[id].type == Node.NF):
-    #       pass
+    base_infras = {i.id for i in base.infras if i.domain == domain}
+    if len(base_infras) == 0:
+      log.warning("No Node was found in the base %s! Use merging..." % base)
+      return cls.merge_new_domain(base=base, nffg=updated, log=log)
+    # If infra nodes were removed or added, best way is to remerge domain
+    elif base_infras != {i.id for i in updated.infras}:
+      log.warning("Major changes (different infra nodes) has been detected! "
+                  "Use remerging...")
+      cls.remove_domain(base=base, domain=domain, log=log)
+      return cls.merge_new_domain(base=base, nffg=updated, log=log)
+    # Iterate over the initiated NFs per infra first
+    deletable = []
+    for infra_id in base_infras:
+      for u, v, link in base.network.out_edges_iter([infra_id], data=True):
+        if base[v].type != NFFG.TYPE_NF:
+          continue
+        # If NF was removed, mark for remove with the dynamic port in the infra
+        if v not in updated:
+          deletable.append((v, u, link.dst.id))
+    log.debug("NFs marked for deletion: %s" % [i[0] for i in deletable])
+    for nf_id, infra_id, port_id in deletable:
+      base.del_node(nf_id)
+      base[infra_id].del_port(port_id)
+    # Add and update new NFs
 
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------
