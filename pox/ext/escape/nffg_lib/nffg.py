@@ -1411,11 +1411,10 @@ class NFFGToolBox(object):
     log.debug(
       "Generate trivial SingleBiSBiS NFFG based on %s:" % nffg)
     # Create the single BiSBiS infra
-    sbb_infra = sbb.add_infra(
-      id="SingleBiSbiS-%s" % (id(nffg)),
-      name="SingleBiSBiS",
-      domain=NFFG.DEFAULT_DOMAIN,
-      infra_type=NFFG.TYPE_INFRA_BISBIS)
+    sbb_infra = sbb.add_infra(id="SingleBiSbiS",
+                              name="SingleBiSBiS",
+                              domain=NFFG.DEFAULT_DOMAIN,
+                              infra_type=NFFG.TYPE_INFRA_BISBIS)
     log.debug("Add Infra BiSBiS: %s" % sbb_infra)
 
     # Compute and add resources
