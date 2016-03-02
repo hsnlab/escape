@@ -283,7 +283,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     log.debug("Set domain: %s as the global view!" % domain)
     self.__global_nffg = nffg.copy()
     self.__global_nffg.id = DoV
-    self.__global_nffg.name = "dov-" + self.__global_nffg.generate_id()
+    self.__global_nffg.name = DoV
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
     return self.__global_nffg
@@ -299,9 +299,10 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    id, name = self.__global_nffg.id, self.__global_nffg.name
+    dov_id = self.__global_nffg.id
+    dov_name = self.__global_nffg.name
     self.__global_nffg = nffg.copy()
-    self.__global_nffg.id, self.__global_nffg.name = id, name
+    self.__global_nffg.id, self.__global_nffg.name = dov_id, dov_name
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
     return self.__global_nffg
