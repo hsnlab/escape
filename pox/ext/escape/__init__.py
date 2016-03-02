@@ -222,7 +222,7 @@ cfg = {
       "REMOTE-ESCAPE-ext":
         {
           "module": "escape.adapt.managers",
-          "class": "RemoteESCAPEDomainManager",
+          "class": "UnifyDomainManager",
           "domain_name": "extESCAPE",
           "poll": False,
           "diff": True,
@@ -230,10 +230,9 @@ cfg = {
             "REMOTE":
               {
                 "module": "escape.adapt.adapters",
-                "class": "RemoteESCAPEv2RESTAdapter",
+                "class": "UnifyRESTAdapter",
                 "url": "http://192.168.50.129:8888",
                 "prefix": "escape",
-                "unify_interface": True
               }
           }
         },
