@@ -922,6 +922,15 @@ class DefaultUnifyDomainAPI(object):
   Follows the MixIn design pattern approach to support OpenStack functionality.
   """
 
+  def ping (self):
+    """
+    Call the ping RPC.
+
+    :return: response text (should be: 'OK')
+    :rtype: str
+    """
+    raise NotImplementedError("Not implemented yet!")
+
   def get_config (self, filter=None):
     """
     Queries the infrastructure view with a netconf-like "get-config" command.
@@ -945,15 +954,6 @@ class DefaultUnifyDomainAPI(object):
     :param diff: send the diff of the mapping request (default: False)
     :param diff: bool
     :return: status code
-    :rtype: str
-    """
-    raise NotImplementedError("Not implemented yet!")
-
-  def ping (self):
-    """
-    Call the ping RPC.
-
-    :return: response text (should be: 'OK')
     :rtype: str
     """
     raise NotImplementedError("Not implemented yet!")

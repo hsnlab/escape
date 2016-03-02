@@ -838,8 +838,8 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: status code
     :rtype: str
     """
-    log.debug(
-      "Prepare edit-config request for remote agent at: %s" % self._base_url)
+    log.debug("Prepare edit-config request for remote agent at: %s" %
+              self._base_url)
     if isinstance(data, NFFG):
       # convert NFFG --> Virtualizer
       if self._unify_interface:
@@ -866,9 +866,8 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         data = data.xml()
       # Unexpected case, try to convert anyway
       else:
-        log.warning(
-          "Unexpected case: convert Virtualizer data for a non-UNIFY "
-          "interface!")
+        log.warning("Unexpected case: convert Virtualizer data for a non-UNIFY "
+                    "interface!")
         converted = self.converter.parse_from_Virtualizer(vdata=data.xml())
         data = converted.dump()
     else:
@@ -1120,6 +1119,15 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         "exception..." % self.CONNECTION_TIMEOUT)
       # Ignore exception - assume the request was successful -> return True
       return True
+
+  def get_original_topology (self):
+    """
+    Return the original topology as a Virtualizer.
+
+    :return: the original topology
+    :rtype: Virtualizer
+    """
+    return self._original_virtualizer
 
   def check_domain_reachable (self):
     """

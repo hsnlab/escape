@@ -20,6 +20,7 @@ import pprint
 
 from ncclient import NCClientError
 
+from escape.adapt.adapters import RemoteESCAPEv2RESTAdapter
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from pox.lib.util import dpid_to_str
@@ -213,6 +214,7 @@ class InternalDomainManager(AbstractDomainManager):
       # Infrastructure layer has been cleared.
       log.debug("%s domain has already been cleared!" % self.domain_name)
       return
+    # Just for sure remove NFs and flowrules
     self._delete_running_nfs()
     self._delete_flowrules(nffg=self.topoAdapter.get_topology_resource())
 
@@ -791,10 +793,11 @@ class SDNDomainManager(AbstractDomainManager):
     log.debug("Clear all flowrules from switches registered in SDN domain...")
     # Delete all flowrules in the Infra nodes defined the topology file.
     sdn_topo = self.topoAdapter.get_topology_resource()
-    if sdn_topo is not None:
-      self._delete_flowrules(nffg_part=sdn_topo)
-    else:
+    if sdn_topo is None:
       log.warning("SDN topology is missing! Skip domain resetting...")
+      return
+    # Remove flowrules
+    self._delete_flowrules(nffg_part=sdn_topo)
 
 
 class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
@@ -891,10 +894,23 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
         "Missing original topology in %s domain! Skip domain resetting..." %
         self.domain_name)
       return
-    log.debug(
-      "Reset %s domain based to original topology description..." %
-      self.domain_name)
-    self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
+    log.debug("Reset %s domain based on original topology description..." %
+              self.domain_name)
+    # If poll is enabled then the last requested topo is most likely the most
+    # recent topo else request the topology for the most recent one and compute
+    # diff if it is necessary
+    if not self._poll and self._diff:
+      log.debug("Requesting topo from domain: %s for domain clearing..." %
+                self.domain_name)
+      if isinstance(self.topoAdapter, RemoteESCAPEv2RESTAdapter) and \
+         self.topoAdapter._unify_interface:
+        recent_topo = self.topoAdapter.get_config()
+        # log.warning("%s" % recent_topo)
+        # log.warning("%s" % empty_cfg)
+        diff = recent_topo.diff(empty_cfg)
+        self.topoAdapter.edit_config(data=diff)
+    else:
+      self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
 
 
 class UnifyDomainManager(AbstractRemoteDomainManager):
@@ -981,16 +997,25 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
 
     :return: None
     """
-    empty_cfg = self.topoAdapter._original_virtualizer
+    empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
       log.warning(
         "Missing original topology in %s domain! Skip domain resetting..." %
         self.domain_name)
       return
-    log.debug(
-      "Reset %s domain config based on stored empty config..." %
-      self.domain_name)
-    return self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
+    log.debug("Reset %s domain based on original topology description..." %
+              self.domain_name)
+    # If poll is enabled then the last requested topo is most likely the most
+    # recent topo else request the topology for the most recent one and compute
+    # diff if it is necessary
+    if not self._poll and self._diff:
+      log.debug("Requesting topo from domain: %s for domain clearing..." %
+                self.domain_name)
+      recent_topo = self.topoAdapter.get_config()
+      diff = recent_topo.diff(empty_cfg)
+      self.topoAdapter.edit_config(data=diff)
+    else:
+      self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
 
 
 class OpenStackDomainManager(UnifyDomainManager):
@@ -1051,14 +1076,3 @@ class DockerDomainManager(UnifyDomainManager):
       "Create DockerDomainManager with domain name: %s" % self.domain_name)
     super(DockerDomainManager, self).__init__(domain_name=domain_name, *args,
                                               **kwargs)
-
-  def initiate_adapters (self, configurator):
-    pass
-
-  def install_nffg (self, nffg_part):
-    log.info("Install Docker domain part...")
-    # TODO - implement
-    pass
-
-  def clear_domain (self):
-    pass

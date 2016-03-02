@@ -19,11 +19,11 @@ import string
 import sys
 
 from baseclasses import __version__ as V_VERSION
-from escape.util.misc import VERBOSE
 
 try:
   # Import for ESCAPEv2
   from escape.nffg_lib.nffg import AbstractNFFG, NFFG
+  from escape.util.misc import VERBOSE
 except ImportError:
   import os, inspect
 
@@ -1486,15 +1486,26 @@ if __name__ == "__main__":
   # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
   # log.debug(nffg.dump())
 
+  # dov = virt_lib.Virtualizer.parse_from_file(
+  #   "../../../../examples/escape-2sbb-mapped.xml")
+  # dov.bind(relative=True)
+  # log.info("Parsed XML:")
+  # log.info("%s" % dov)
+  # nffg = c.parse_from_Virtualizer(vdata=dov.xml())
+  # log.info("Reconverted Virtualizer:")
+  # log.info("%s" % nffg.dump())
+  # virt = c.dump_to_Virtualizer(nffg=nffg)
+  # # virt.bind()
+  # log.info("Reconverted Virtualizer:")
+  # log.info("%s" % virt.xml())
+
   dov = virt_lib.Virtualizer.parse_from_file(
+    "../../../../examples/escape-2sbb-topo.xml")
+  changed = virt_lib.Virtualizer.parse_from_file(
     "../../../../examples/escape-2sbb-mapped.xml")
-  dov.bind(relative=True)
-  log.info("Parsed XML:")
-  log.info("%s" % dov)
-  nffg = c.parse_from_Virtualizer(vdata=dov.xml())
-  log.info("Reconverted Virtualizer:")
-  log.info("%s" % nffg.dump())
-  virt = c.dump_to_Virtualizer(nffg=nffg)
-  # virt.bind()
-  log.info("Reconverted Virtualizer:")
-  log.info("%s" % virt.xml())
+
+  print dov.xml()
+  print changed.xml()
+  # diff = changed.diff(dov)
+  diff = dov.diff(changed)
+  print diff.xml()
