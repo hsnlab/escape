@@ -1164,6 +1164,45 @@ class NFFGToolBox(object):
     # Return the updated NFFG
     return base
 
+  @staticmethod
+  def strip_domain (nffg, domain, log=logging.getLogger("STRIP")):
+    """
+    Trim the given :any:`NFFG` and leave only the nodes belong to the given
+    ``domain``.
+
+    ..warning::
+
+    No inter-domain SAP recreation will be performed after the trim!
+
+    :param nffg: mapped NFFG object
+    :type nffg: NFFG
+    :param domain: extracted domain name
+    :type domain: str
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: stripped NFFG
+    :rtype :any:`NFFG`
+    """
+    log.info("Strip domain in %s" % nffg)
+    nffg = nffg.copy()
+    # Collect every node which not in the domain
+    deletable = set()
+    for infra in nffg.infras:
+      # Domains representations based on infras
+      if infra.domain == domain:
+        # Skip current domains infra
+        continue
+      # Mark the infra as deletable
+      deletable.add(infra.id)
+      # Look for orphan NF ans SAP nodes which connected to this deletable infra
+      for node_id in nffg.relative_neighbors_iter(infra.id):
+        if nffg[node_id].type in (NFFG.TYPE_SAP, NFFG.TYPE_NF):
+          deletable.add(node_id)
+    log.debug("Nodes marked for deletion: %s" % deletable)
+    nffg.network.remove_nodes_from(deletable)
+    log.debug("Remained nodes: %s" % [n for n in nffg])
+    return nffg
+
   @classmethod
   def split_into_domains (cls, nffg, log=logging.getLogger("SPLIT")):
     """
@@ -1179,7 +1218,7 @@ class NFFGToolBox(object):
     """
     splitted_parts = []
 
-    log.info("Splitting mapped NFFG: %s according to detected domains" % nffg)
+    log.info("Splitting NFFG: %s according to detected domains" % nffg)
     # Define DOMAIN names
     domains = cls.detect_domains(nffg=nffg)
     log.debug("Detected domains for splitting: %s" % domains)
@@ -1590,25 +1629,11 @@ class NFFGToolBox(object):
       log.warning("No Node was found in the base %s! Use merging..." % base)
       return cls.merge_new_domain(base=base, nffg=updated, log=log)
     # If infra nodes were removed or added, best way is to remerge domain
-    elif base_infras != {i.id for i in updated.infras}:
-      log.warning("Major changes (different infra nodes) has been detected! "
-                  "Use remerging...")
+    else:
+      # TODO - implement real update
+      log.debug("Use remerging to update domain: %s!" % domain)
       cls.remove_domain(base=base, domain=domain, log=log)
       return cls.merge_new_domain(base=base, nffg=updated, log=log)
-    # Iterate over the initiated NFs per infra first
-    deletable = []
-    for infra_id in base_infras:
-      for u, v, link in base.network.out_edges_iter([infra_id], data=True):
-        if base[v].type != NFFG.TYPE_NF:
-          continue
-        # If NF was removed, mark for remove with the dynamic port in the infra
-        if v not in updated:
-          deletable.append((v, u, link.dst.id))
-    log.debug("NFs marked for deletion: %s" % [i[0] for i in deletable])
-    for nf_id, infra_id, port_id in deletable:
-      base.del_node(nf_id)
-      base[infra_id].del_port(port_id)
-    # Add and update new NFs
 
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------
