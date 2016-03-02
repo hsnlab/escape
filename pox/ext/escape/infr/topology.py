@@ -550,7 +550,11 @@ class ESCAPENetworkBuilder(object):
         if infra.domain == "INTERNAL":
           ee_type = self.TYPE_EE_LOCAL
         else:
-          ee_type = self.TYPE_EE_REMOTE
+          log.warning(
+            "Detected domain of infra: %s is not INTERNAL! Remote EE creation "
+            "for domains other than INTERNAL is not supported yet!" % infra)
+          # ee_type = self.TYPE_EE_REMOTE
+          ee_type = self.TYPE_EE_LOCAL
           # FIXME - set resource info in MN EE if can - cpu,mem,delay,bandwidth?
         agt, sw = self.create_NETCONF_EE(name=infra.id, type=ee_type)
         created_mn_nodes[infra.id] = sw
