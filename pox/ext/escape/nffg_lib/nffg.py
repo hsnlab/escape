@@ -1636,9 +1636,7 @@ class NFFGToolBox(object):
     # If infra nodes were removed or added, best way is to remerge domain
     else:
       # TODO - implement real update
-      log.debug("Use remerging to update domain: %s!" % domain)
-      cls.remove_domain(base=base, domain=domain, log=log)
-      return cls.merge_new_domain(base=base, nffg=updated, log=log)
+      log.error("Domain update has not implemented yet!")
 
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------

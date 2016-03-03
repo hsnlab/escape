@@ -31,7 +31,7 @@ class DoVChangedEvent(Event):
   Event for signalling the DoV is changed.
   """
   # Constants for type of changes
-  TYPE = enum("CHANGED", "EMPTY")
+  TYPE = enum("UPDATE", "EXTEND", "CHANGE", "REDUCE", "EMPTY")
 
   def __init__ (self, cause):
     """
@@ -287,7 +287,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.__global_nffg.id = DoV
     self.__global_nffg.name = DoV
     # Raise event for observing Virtualizers about topology change
-    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.UPDATE)
     return self.__global_nffg
 
   def update_full_global_view (self, nffg):
@@ -306,7 +306,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.__global_nffg = nffg.copy()
     self.__global_nffg.id, self.__global_nffg.name = dov_id, dov_name
     # Raise event for observing Virtualizers about topology change
-    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.UPDATE)
     return self.__global_nffg
 
   def merge_new_domain_into_dov (self, nffg):
@@ -322,12 +322,29 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     # Using general merging function from NFFGToolBox and return the updated
     # NFFG
-    res = NFFGToolBox.merge_new_domain(base=self.__global_nffg,
-                                       nffg=nffg,
-                                       log=log)
+    NFFGToolBox.merge_new_domain(base=self.__global_nffg, nffg=nffg, log=log)
     # Raise event for observing Virtualizers about topology change
-    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
-    return res
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.EXTEND)
+    return self.__global_nffg
+
+  def remerge_domain_in_dov (self, domain, nffg):
+    """
+    Update the existing domain in the merged Global view with explicit domain
+    remove and re-add.
+
+    :param nffg: NFFG object need to be updated with
+    :type nffg: :any:`NFFG`
+    :param domain: name of the merging domain
+    :type domain: str
+    :return: updated Dov
+    :rtype: :any:`NFFG`
+    """
+    log.debug("Using domain re-merging to update domain: %s in DoV..." % domain)
+    NFFGToolBox.remove_domain(base=self.__global_nffg, domain=domain, log=log)
+    NFFGToolBox.merge_new_domain(base=self.__global_nffg, nffg=nffg, log=log)
+    # Raise event for observing Virtualizers about topology change
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
+    return self.__global_nffg
 
   def update_domain_in_dov (self, domain, nffg):
     """
@@ -340,15 +357,13 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    ret = NFFGToolBox.update_domain(base=self.__global_nffg,
-                                    updated=nffg,
-                                    log=log)
+    NFFGToolBox.update_domain(base=self.__global_nffg, updated=nffg, log=log)
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
                   "%s! DoV is empty!" % domain)
     # Raise event for observing Virtualizers about topology change
-    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
-    return ret
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
+    return self.__global_nffg
 
   def remove_domain_from_dov (self, domain):
     """
@@ -359,15 +374,13 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    ret = NFFGToolBox.remove_domain(base=self.__global_nffg,
-                                    domain=domain,
-                                    log=log)
+    NFFGToolBox.remove_domain(base=self.__global_nffg, domain=domain, log=log)
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
                   "%s! DoV is empty!" % domain)
     # Raise event for observing Virtualizers about topology change
-    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGED)
-    return ret
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.REDUCE)
+    return self.__global_nffg
 
 
 class GlobalViewVirtualizer(AbstractFilteringVirtualizer):

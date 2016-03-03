@@ -23,7 +23,7 @@ from escape.adapt import log as log, LAYER_NAME
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.util.config import ConfigurationError
-from escape.util.domain import DomainChangedEvent
+from escape.util.domain import DomainChangedEvent, AbstractRemoteDomainManager
 from escape.util.misc import notify_remote_visualizer, VERBOSE
 
 
@@ -59,6 +59,15 @@ class ComponentConfigurator(object):
     if not lazy_load:
       # Initiate adapters from CONFIG
       self.load_default_mgrs()
+
+  def __len__ (self):
+    """
+    Return the number of initiated components.
+
+    :return: number of initiated components:
+    :rtype: int
+    """
+    return len(self.__repository)
 
   # General DomainManager handling functions: create/start/stop/get
 
@@ -373,12 +382,10 @@ class ControllerAdapter(object):
       self.__class__.__name__, mapped_nffg.name))
     # # Notify remote visualizer about the deployable NFFG if it's needed
     # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
-    # print mapped_nffg.dump()
     slices = NFFGToolBox.split_into_domains(nffg=mapped_nffg, log=log)
     if slices is None:
-      log.warning(
-        "Given mapped NFFG: %s can not be sliced! Skip domain notification "
-        "steps" % mapped_nffg)
+      log.warning("Given mapped NFFG: %s can not be sliced! "
+                  "Skip domain notification steps" % mapped_nffg)
       return
     log.debug(
       "Notify initiated domains: %s" % [d for d in self.domains.initiated])
@@ -407,20 +414,34 @@ class ControllerAdapter(object):
         domain_mgr.clear_domain()
       # Invoke DomainAdapter's install
       res = domain_mgr.install_nffg(part)
+      # Note result according to others before
+      mapping_result = mapping_result and res
+      # Update the DoV based on the mapping result covering some corner case
       if not res:
         log.warning(
           "Installation of %s in %s was unsuccessful!" % (part, domain))
-      # Note result according to others before
-      mapping_result = mapping_result and res
+      # If installation of the domain was performed without error
+      if not res:
+        log.warning("Skip DoV update for domain: %s..." % domain)
+        continue
+      # If the domain manager does not poll the domain update here
+      # else polling takes care of domain updating
+      if isinstance(domain_mgr,
+                    AbstractRemoteDomainManager) and domain_mgr._poll:
+        log.info("Skip explicit DoV update for domain: %s. "
+                 "Cause: polling enabled!")
+        continue
+      # If the internalDM is the only initiated mgr, we can override the
+      # whole DoV
+      if len(self.domains) == 1 and domain_mgr.IS_LOCAL_MANAGER:
+        self.DoVManager.set_global_view(nffg=mapped_nffg)
+        continue
+      # Explicit domain update
+      self.DoVManager.update_domain(domain=domain, nffg=part)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
-    # FIXME - hardcoded, you can do it better
+    # Post-mapping steps
     if mapping_result:
       log.info("All installation process has been finished with success! ")
-      log.debug(
-        "Update Global view (DoV) with the mapped NFFG: %s..." % mapped_nffg)
-      # Update global view (DoV) with the installed components
-      self.DoVManager.dov.update_full_global_view(
-        mapped_nffg)
       # Notify remote visualizer about the installation result if it's needed
       notify_remote_visualizer(
         data=self.DoVManager.dov.get_resource_info(),
@@ -487,6 +508,20 @@ class GlobalResourceManager(object):
     """
     return tuple(self.tracked)
 
+  def set_global_view (self, nffg):
+    """
+    Replace the global view with the given topology.
+
+    :param nffg: new global topology
+    :type nffg: :any:`NFFG`
+    :return: None
+    """
+    log.debug(
+      "Update the whole Global view (DoV) with the NFFG: %s..." % nffg)
+    self.dov.update_full_global_view(nffg=nffg)
+    self.__tracked_domains.clear()
+    self.__tracked_domains.update(NFFGToolBox.detect_domains(nffg))
+
   def add_domain (self, domain, nffg):
     """
     Update the global view data with the specific domain info.
@@ -527,7 +562,8 @@ class GlobalResourceManager(object):
     """
     if domain in self.__tracked_domains:
       log.info("Update domain: %s in DoV..." % domain)
-      self.__dov.update_domain_in_dov(domain=domain, nffg=nffg)
+      # self.__dov.update_domain_in_dov(domain=domain, nffg=nffg)
+      self.__dov.remerge_domain_in_dov(domain=domain, nffg=nffg)
     else:
       log.error(
         "Detected domain: %s is not included in tracked domains: %s! Abort "
