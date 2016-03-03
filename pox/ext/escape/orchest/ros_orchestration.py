@@ -74,7 +74,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
         # If the request is a bare NFFG, it is probably an empty topo for domain
         # deletion --> skip mapping to avoid BadInputException and forward
         # topo to adaptation layer
-        if len([v for v in nffg.nfs()]) == 0:
+        if len([v for v in nffg.nfs]) == 0:
           log.warning(
             "No VNF has been detected in SG request! Skip orchestration in "
             "layer: %s and proceed with the bare NFFG..." % LAYER_NAME)
