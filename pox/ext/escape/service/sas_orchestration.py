@@ -74,22 +74,30 @@ class ServiceOrchestrator(AbstractOrchestrator):
                              id=LAYER_NAME)
     # Log verbose service request
     log.log(VERBOSE, "Service layer request graph:\n%s" % sg.dump())
-    if virtual_view is None:
+    if virtual_view is not None:
+      if isinstance(virtual_view, AbstractVirtualizer):
+        # If the request is a bare NFFG, it is probably an empty topo for domain
+        # deletion --> skip mapping to avoid BadInputException and forward
+        # topo to adaptation layer
+        if len([v for v in sg.vnfs()]) == 0:
+          log.warning(
+            "No VNF has been detected in SG request! Skip orchestration in "
+            "layer: %s and proceed with the bare request..." % LAYER_NAME)
+          return sg
+        try:
+          # Run orchestration before service mapping algorithm
+          mapped_nffg = self.mapper.orchestrate(sg, virtual_view)
+          log.debug("SG initiation is finished by %s" % self.__class__.__name__)
+          return mapped_nffg
+        except ProcessorError as e:
+          log.warning(
+            "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
+      else:
+        log.warning("Virtual view is not subclass of AbstractVirtualizer!")
+    else:
       log.warning("Virtual view is not acquired correctly!")
-      return
-    if not isinstance(virtual_view, AbstractVirtualizer):
-      log.warning("Virtual view is not subclass of AbstractVirtualizer!")
-      return
-    try:
-      # Run orchestration before service mapping algorithm
-      mapped_nffg = self.mapper.orchestrate(sg, virtual_view)
-      log.debug("SG initiation is finished by %s" % self.__class__.__name__)
-      return mapped_nffg
-    except ProcessorError as e:
-      log.warning(
-        "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
     # Only goes there if there is a problem
-    log.error("Abort mapping process!")
+    log.error("Abort orchestration process!")
 
 
 class SGManager(object):
@@ -117,7 +125,7 @@ class SGManager(object):
     :rtype: int
     """
     sg_id = self._generate_id(sg)
-    self._service_graphs[sg_id] = sg
+    self._service_graphs[sg_id] = sg.copy()
     log.debug("SG: %s is saved by %s with id: %s" % (
       sg, self.__class__.__name__, sg_id))
     return sg.id

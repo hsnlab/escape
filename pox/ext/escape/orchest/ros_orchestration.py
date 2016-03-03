@@ -71,8 +71,16 @@ class ResourceOrchestrator(AbstractOrchestrator):
     # Start Orchestrator layer mapping
     if global_view is not None:
       if isinstance(global_view, AbstractVirtualizer):
-        # Run Nf-FG mapping orchestration
+        # If the request is a bare NFFG, it is probably an empty topo for domain
+        # deletion --> skip mapping to avoid BadInputException and forward
+        # topo to adaptation layer
+        if len([v for v in nffg.vnfs()]) == 0:
+          log.warning(
+            "No VNF has been detected in SG request! Skip orchestration in "
+            "layer: %s and proceed with the bare NFFG..." % LAYER_NAME)
+          return nffg
         try:
+          # Run Nf-FG mapping orchestration
           mapped_nffg = self.mapper.orchestrate(nffg, global_view)
           log.debug(
             "NF-FG instantiation is finished by %s" % self.__class__.__name__)
@@ -84,7 +92,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
         log.warning("Global view is not subclass of AbstractVirtualizer!")
     else:
       log.warning("Global view is not acquired correctly!")
-    log.error("Abort mapping process!")
+    log.error("Abort orchestration process!")
 
 
 class NFFGManager(object):
