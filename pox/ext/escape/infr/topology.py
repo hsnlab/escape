@@ -311,8 +311,12 @@ class ESCAPENetworkBridge(object):
     self.topo_desc = topo_desc
     # Duplicate static links for ensure undirected neighbour relationship
     if self.topo_desc is not None:
-      log.debug(
-        "Duplicate STATIC links to ensure undirected relationship for mapping")
+      back_links = [l.id for u, v, l in
+                    self.topo_desc.network.edges_iter(data=True) if
+                    l.backward is True]
+      if len(back_links) == 0:
+        log.debug("No backward link has been detected! Duplicate STATIC links "
+                  "to ensure undirected relationship for mapping...")
       self.topo_desc.duplicate_static_links()
     # Need to clean after shutdown
     self._need_clean = None
