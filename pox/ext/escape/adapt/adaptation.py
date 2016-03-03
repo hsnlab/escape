@@ -248,7 +248,7 @@ class ComponentConfigurator(object):
 
     :return: None
     """
-    log.info("Initialize DomainManagers from config...")
+    log.info("Initialize additional DomainManagers from config...")
     # very dummy initialization
     mgrs = CONFIG.get_managers()
     if not mgrs:
