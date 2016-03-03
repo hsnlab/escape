@@ -281,6 +281,8 @@ class DomainVirtualizer(AbstractVirtualizer):
     :rtype: :any:`NFFG`
     """
     log.debug("Set domain: %s as the global view!" % domain)
+    if not self.__global_nffg.is_empty():
+      log.warning("Global view is not empty! Current state will be lost!")
     self.__global_nffg = nffg.copy()
     self.__global_nffg.id = DoV
     self.__global_nffg.name = DoV
