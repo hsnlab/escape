@@ -1024,12 +1024,17 @@ class NFFGToolBox(object):
     :return: trimmed NFFG
     :rtype: :any:`NFFG`
     """
-    for node_id in nffg.network.nodes():
-      if len(nffg.network.neighbors(node_id)) > 0:
-        continue
+    detected = set()
+    for u, v, link in nffg.network.edges_iter(data=True):
+      detected.add(link.src.node.id)
+      detected.add(link.dst.node.id)
+    orphaned = {n for n in nffg} - detected
+    for node in orphaned:
       log.warning("Found orphaned node: %s! Remove from sliced part." %
-                  nffg.network.node[node_id])
-      nffg.network.remove_node(node_id)
+                  nffg[node])
+      nffg.del_node(node)
+    if orphaned:
+      log.debug("Remained nodes: %s" % [n for n in nffg])
     return nffg
 
   @classmethod
