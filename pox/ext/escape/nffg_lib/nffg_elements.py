@@ -18,12 +18,12 @@ import json
 import random
 from __builtin__ import id as generate
 from collections import Iterable, OrderedDict
+from itertools import chain
 
 
 ################################################################################
 # ---------- BASE classes of NFFG elements -------------------
 ################################################################################
-
 
 class Persistable(object):
   """
@@ -184,6 +184,16 @@ class PortContainer(Persistable):
       raise RuntimeError("PortContainer's operator \"in\" works only with Port"
                          " objects (and not Port ID-s!)")
     return item in self.container
+
+  @property
+  def flowrules (self):
+    """
+    Return with an iterator over the flowrules sored in the ports.
+
+    :return: iterator of flowrules
+    :rtype: collections.Iterator
+    """
+    return chain(*[port.flowrules for port in self.container])
 
   def append (self, item):
     self.container.append(item)
@@ -476,7 +486,8 @@ class NodeResource(Persistable):
     :type substrahend: NodeReource
     :param maximal: The maximal value which must not be exceeded.
     :type maximal: NodeReource
-    :param link_count: how many times the should the bandwidth component be subtracted.
+    :param link_count: how many times the should the bandwidth component be
+    subtracted.
     :type link_count: int
     """
     attrlist = ['cpu', 'mem', 'storage', 'bandwidth']  # delay excepted!
@@ -485,13 +496,13 @@ class NodeResource(Persistable):
         "Node resource components should always be given",
         "One of %s`s components is None" % str(self))
     if not reduce(lambda a, b: a and b,
-              (0 <= self[attr] - substrahend[attr] <= maximal[attr] 
-               for attr in attrlist if
-               attr != 'bandwidth' and substrahend[attr] is not None)):
+                  (0 <= self[attr] - substrahend[attr] <= maximal[attr]
+                   for attr in attrlist if
+                   attr != 'bandwidth' and substrahend[attr] is not None)):
       raise RuntimeError("Node resource got below zero, or "
                          "exceeded the maximal value!")
     if substrahend['bandwidth'] is not None:
-      if not 0 <= self['bandwidth'] - link_count * substrahend['bandwidth'] <=\
+      if not 0 <= self['bandwidth'] - link_count * substrahend['bandwidth'] <= \
          maximal['bandwidth']:
         raise RuntimeError("Internal bandwidth cannot get below "
                            "zero, or exceed the maximal value!")
