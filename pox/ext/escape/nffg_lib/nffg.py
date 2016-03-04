@@ -972,7 +972,7 @@ class NFFG(AbstractNFFG):
                                    link.id))
       d.availres['bandwidth'] -= reserved_internal_bw
 
-  def calculate_available_node_res (self, vnfs_to_be_ignored=[],
+  def calculate_available_node_res (self, vnfs_to_be_ignored=(),
                                     full_remap=False):
     """
     Calculates available computation and networking resources of the nodes of
@@ -1595,6 +1595,7 @@ class NFFGToolBox(object):
                                                bandwidth=l.bandwidth)
         log.debug("Add connection: %s" % link1)
         log.debug("Add connection: %s" % link2)
+    # Recreate flowrules based on NBalazs functions
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return sbb
