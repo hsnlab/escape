@@ -190,6 +190,10 @@ class NFFG(AbstractNFFG):
     self.metadata = OrderedDict(metadata if metadata else ())
     self.version = version
 
+  ##############################################################################
+  # Element iterators
+  ##############################################################################
+
   @property
   def nfs (self):
     """
@@ -737,6 +741,43 @@ class NFFG(AbstractNFFG):
     :rtype: bool
     """
     return len(self.network) == 0
+
+  def is_SBB (self):
+    """
+    Return True if the topology detected as a trivial SingleBiSBiS view,
+    which consist of only one Infra node with type: ``BiSBiS``.
+
+    :return: SingleBiSBiS or not
+    :rtype: bool
+    """
+    itype = [i.infra_type for i in self.infras]
+    return len(itype) == 1 and itype.pop() == self.TYPE_INFRA_BISBIS
+
+  def is_bare (self):
+    """
+    Return True if the topology does not contain any NF or flowrules need to
+    install or remap.
+
+    :return: is bare topology or not
+    :rtype: bool
+    """
+    # If there is no VNF
+    if len([v for v in self.nfs]) == 0:
+      # And there is no flowrule in the ports
+      fr_sum = sum([sum(1 for fr in i.ports.flowrules) for i in self.infras])
+      return fr_sum == 0
+    else:
+      return False
+
+  def is_virtualized (self):
+    """
+    Return True if the topology contains at least one virtualized BiSBiS node.
+
+    :return: contains any NF or not
+    :rtype: bool
+    """
+    return len([i for i in self.infras if
+                i.infra_type == self.TYPE_INFRA_BISBIS]) > 0
 
   def relative_neighbors_iter (self, node):
     """
