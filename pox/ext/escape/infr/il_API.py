@@ -83,7 +83,10 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     log.info("Infrastructure Layer is going down...")
     if self.topology:
-      self.topology.stop_network()
+      try:
+        self.topology.stop_network()
+      except KeyboardInterrupt:
+        log.warning("Shutdown of Mininet network was interrupted by user!")
 
   def _handle_ComponentRegistered (self, event):
     """

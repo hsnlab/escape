@@ -264,7 +264,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     # Expect XML format --> need to convert first
     if self.virtualizer_format_enabled:
-      if self.headers.get("Content-Type", "") != "application/xml" or \
+      if self.headers.get("Content-Type", "") != "application/xml" and \
          not raw_body.startswith("<?xml version="):
         self.log.error("Received data is not in XML format despite of the "
                        "UNIFY interface is enabled!")
@@ -301,7 +301,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       if self.DEFAULT_DIFF:
         self.log.info("Patching cached topology with received diff...")
         full_cfg = self.server.last_response.copy()
-      # Adapt changes on the local config
+        # Adapt changes on the local config
         full_cfg.patch(source=received_cfg)
       else:
         full_cfg = received_cfg
@@ -310,7 +310,14 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       converter = NFFGConverter(domain="REMOTE", logger=log)
       nffg = converter.parse_from_Virtualizer(vdata=full_cfg)
     else:
-      nffg = NFFG.parse(raw_body)  # Initialize NFFG from JSON representation
+      if self.headers.get("Content-Type", "") != "application/json":
+        self.log.error("Received data is not in JSON format despite of the "
+                       "UNIFY interface is disabled!")
+        self.send_error(415)
+        return
+      # Initialize NFFG from JSON representation
+      self.log.info("Parsing request into internal NFFG format...")
+      nffg = NFFG.parse(raw_body)
     self.log.debug("Parsed NFFG install request: %s" % nffg)
     self._proceed_API_call('api_ros_edit_config', nffg)
     self.send_acknowledge()
