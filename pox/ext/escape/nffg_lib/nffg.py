@@ -779,7 +779,7 @@ class NFFG(AbstractNFFG):
     return len([i for i in self.infras if
                 i.infra_type == self.TYPE_INFRA_BISBIS]) > 0
 
-  def relative_neighbors_iter (self, node):
+  def real_neighbors_iter (self, node):
     """
     Return with an iterator over the id of neighbours of the given Node not
     counting the SG and E2E requirement links.
@@ -790,7 +790,20 @@ class NFFG(AbstractNFFG):
     :rtype: iterator
     """
     return (v for u, v, link in self.network.out_edges_iter(node, data=True)
-            if link.type not in (Link.SG, Link.REQUIREMENT))
+            if link.type in (self.TYPE_LINK_STATIC, self.TYPE_LINK_DYNAMIC))
+
+  def real_out_edges_iter (self, node):
+    """
+    Return with an iterator over the out edge data of the given Node not
+    counting the SG and E2E requirement links.
+
+    :param node: examined :any:`Node` id
+    :type node: str or int
+    :return: iterator over the filtered neighbors
+    :rtype: iterator
+    """
+    return (data for data in self.network.out_edges_iter(node, data=True)
+            if data[2].type in (self.TYPE_LINK_STATIC, self.TYPE_LINK_DYNAMIC))
 
   def duplicate_static_links (self):
     """
@@ -1127,14 +1140,13 @@ class NFFGToolBox(object):
         # Found inter-domain SAP
         log.debug("Found Inter-domain SAP: %s" % sap_id)
         # Search outgoing links from SAP, should be only one
-        b_links = [l for u, v, l in base.network.out_edges_iter([sap_id],
-                                                                data=True)]
+        b_links = [l for u, v, l in base.real_out_edges_iter(sap_id)]
         if len(b_links) < 1:
           log.warning(
             "SAP is not connected to any node! Maybe you forgot to call "
             "duplicate_static_links?")
           return
-        if 2 < len(b_links):
+        if 1 < len(b_links):
           log.warning(
             "Inter-domain SAP should have one and only one connection to the "
             "domain! Using only the first connection.")
@@ -1143,14 +1155,13 @@ class NFFGToolBox(object):
         domain_port_dov = b_links[0].dst
         log.debug("Found inter-domain port: %s" % domain_port_dov)
         # Search outgoing links from SAP, should be only one
-        n_links = [l for u, v, l in nffg.network.out_edges_iter([sap_id],
-                                                                data=True)]
+        n_links = [l for u, v, l in nffg.real_out_edges_iter(sap_id)]
         if len(n_links) < 1:
           log.warning(
             "SAP is not connected to any node! Maybe you forgot to call "
             "duplicate_static_links?")
           return
-        if 2 < len(n_links):
+        if 1 < len(n_links):
           log.warning(
             "Inter-domain SAP should have one and only one connection to the "
             "domain! Using only the first connection.")
@@ -1241,7 +1252,7 @@ class NFFGToolBox(object):
       # Mark the infra as deletable
       deletable.add(infra.id)
       # Look for orphan NF ans SAP nodes which connected to this deletable infra
-      for node_id in nffg.relative_neighbors_iter(infra.id):
+      for node_id in nffg.real_neighbors_iter(infra.id):
         if nffg[node_id].type in (NFFG.TYPE_SAP, NFFG.TYPE_NF):
           deletable.add(node_id)
     log.debug("Nodes marked for deletion: %s" % deletable)
@@ -1287,7 +1298,7 @@ class NFFGToolBox(object):
         deletable.add(infra.id)
         # Look for orphan NF ans SAP nodes which connected to this deletable
         # infra
-        for node_id in nffg.relative_neighbors_iter(infra.id):
+        for node_id in nffg.real_neighbors_iter(infra.id):
           if nffg[node_id].type in (NFFG.TYPE_SAP, NFFG.TYPE_NF):
             deletable.add(node_id)
       log.debug("Nodes marked for deletion: %s" % deletable)
@@ -1629,7 +1640,7 @@ class NFFGToolBox(object):
         continue
       deletable.add(infra.id)
       # Add deletable SAP/NF connected to iterated infra
-      for node_id in base.relative_neighbors_iter(infra.id):
+      for node_id in base.real_neighbors_iter(infra.id):
         if base[node_id].type in (NFFG.TYPE_SAP, NFFG.TYPE_NF):
           deletable.add(node_id)
     log.debug("Nodes marked for deletion: %s" % deletable)
