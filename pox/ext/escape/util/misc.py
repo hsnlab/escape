@@ -311,10 +311,11 @@ def remove_junks (log=logging.getLogger("cleanup")):
   for veth in veths[::2]:
     if veth != '':
       run_silent(r"sudo ip link del %s" % veth)
-  log.debug("Remove remained tmp files and stacked netconfd sockets...")
+  log.debug("Remove remained tmp files, xterms, stacked netconfd sockets...")
   for f in os.listdir('/tmp'):
     if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
       os.remove(os.path.join('/tmp/', f))
+  run_silent(r"sudo pkill -9 -f xterm")
   log.debug("Cleanup any Mininet-specific junk...")
   # Call Mininet's own cleanup stuff
   from mininet.clean import cleanup
