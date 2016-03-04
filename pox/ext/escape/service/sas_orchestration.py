@@ -79,11 +79,25 @@ class ServiceOrchestrator(AbstractOrchestrator):
         # If the request is a bare NFFG, it is probably an empty topo for domain
         # deletion --> skip mapping to avoid BadInputException and forward
         # topo to adaptation layer
-        if len([v for v in sg.nfs]) == 0:
-          log.warning(
-            "No VNF has been detected in SG request! Skip orchestration in "
-            "layer: %s and proceed with the bare request..." % LAYER_NAME)
-          return sg
+        if sg.is_bare():
+          log.warning("No VNF or Flowrule has been detected in SG request! "
+                      "Skip orchestration in layer: %s and proceed with the "
+                      "bare NFFG..." % LAYER_NAME)
+          if sg.is_virtualized():
+            if sg.is_SBB():
+              log.debug("Request is a bare SingleBiSBiS representation!")
+              return sg
+            else:
+              log.warning(
+                "Detected virtualized representation with multiple BiSBiS "
+                "nodes! Currently this type of virtualization is nut fully"
+                "supported!")
+              return sg
+          else:
+            log.debug("Detected full view representation!")
+            return sg
+        else:
+          log.info("Request is detected as a valid request!")
         try:
           # Run orchestration before service mapping algorithm
           mapped_nffg = self.mapper.orchestrate(sg, virtual_view)
