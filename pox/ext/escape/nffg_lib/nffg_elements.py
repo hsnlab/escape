@@ -483,11 +483,11 @@ class NodeResource(Persistable):
     exceed 'maximal' or get below zero.
 
     :param substrahend: the object to be subtracted from current
-    :type substrahend: NodeReource
+    :type substrahend: NodeResource
     :param maximal: The maximal value which must not be exceeded.
-    :type maximal: NodeReource
+    :type maximal: NodeResource
     :param link_count: how many times the should the bandwidth component be
-    subtracted.
+      subtracted.
     :type link_count: int
     """
     attrlist = ['cpu', 'mem', 'storage', 'bandwidth']  # delay excepted!

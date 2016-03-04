@@ -235,7 +235,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         data = v_topology.xml()
         # Setup HTTP response format
       else:
-        self.log.debug("Cache converted topology...")
+        self.log.debug("Cache acquired topology...")
         self.server.last_response = config
         data = config.dump()
     if self.virtualizer_format_enabled:
@@ -274,24 +274,43 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       received_cfg = Virtualizer.parse_from_text(text=raw_body)
       self.log.log(VERBOSE,
                    "Received request for 'edit-config':\n%s" % raw_body)
-      # Adapt changes on the local config
-      if not isinstance(self.server.last_response, Virtualizer):
-        self.log.warning("Missing cached Virtualizer!")
-        self.send_error(500)
-        return
+      # If there was not get-config request so far
+      if self.server.last_response is None:
+        self.log.info(
+          "Missing cached Virtualizer! Acquiring topology now...")
+        config = self._proceed_API_call('api_ros_get_config')
+        if config is None:
+          self.log.error("Requested resource info is missing!")
+          self.send_error(404, message="Resource info is missing!")
+          return
+        elif config is False:
+          self.log.warning("Requested info is unchanged but has not found!")
+          self.send_error(404, message="Resource info is missing!")
+        else:
+          # Convert required NFFG if needed
+          if self.virtualizer_format_enabled:
+            self.log.debug("Convert internal NFFG to Virtualizer...")
+            converter = NFFGConverter(domain=None, logger=log)
+            v_topology = converter.dump_to_Virtualizer(nffg=config)
+            # Cache converted data for edit-config patching
+            self.log.debug("Cache converted topology...")
+            self.server.last_response = v_topology
+          else:
+            self.log.debug("Cache acquired topology...")
+            self.server.last_response = config
       if self.DEFAULT_DIFF:
         self.log.info("Patching cached topology with received diff...")
         full_cfg = self.server.last_response.copy()
+      # Adapt changes on the local config
         full_cfg.patch(source=received_cfg)
       else:
         full_cfg = received_cfg
       # Convert response's body to NFFG
+      self.log.info("Converting full request data...")
       converter = NFFGConverter(domain="REMOTE", logger=log)
       nffg = converter.parse_from_Virtualizer(vdata=full_cfg)
     else:
       nffg = NFFG.parse(raw_body)  # Initialize NFFG from JSON representation
-    # Rewrite domain name to INTERNAL
-    # nffg = self._update_REMOTE_ESCAPE_domain(nffg_part=nffg)
     self.log.debug("Parsed NFFG install request: %s" % nffg)
     self._proceed_API_call('api_ros_edit_config', nffg)
     self.send_acknowledge()

@@ -420,15 +420,15 @@ class NFFG(AbstractNFFG):
     :param dep_type: deployment type (default: "None")
     :type dep_type: str
     :param cpu: CPU resource
-    :type cpu: str or int
+    :type cpu: float
     :param mem: memory resource
-    :type mem: str or int
+    :type mem: float
     :param storage: storage resource
-    :type storage: str or int
+    :type storage: float
     :param delay: delay property of the Node
-    :type delay: float or int
+    :type delay: float
     :param bandwidth: bandwidth property of the Node
-    :type bandwidth: float or int
+    :type bandwidth: float
     :return: newly created node
     :rtype: :any:`NodeNF`
     """
@@ -478,15 +478,15 @@ class NFFG(AbstractNFFG):
     :param infra_type: type of the Infrastructure Node (default: 0)
     :type infra_type: int or str
     :param cpu: CPU resource
-    :type cpu: str or int
+    :type cpu: float
     :param mem: memory resource
-    :type mem: str or int
+    :type mem: float
     :param storage: storage resource
-    :type storage: str or int
+    :type storage: float
     :param delay: delay property of the Node
-    :type delay: float or int
+    :type delay: float
     :param bandwidth: bandwidth property of the Node
-    :type bandwidth: float or int
+    :type bandwidth: float
     :return: newly created node
     :rtype: :any:`NodeInfra`
     """
@@ -517,11 +517,11 @@ class NFFG(AbstractNFFG):
     :param backward: the link is a backward link compared to an another Link
     :type backward: bool
     :param delay: delay resource
-    :type delay: float or int
+    :type delay: float
     :param dynamic: set the link dynamic (default: False)
     :type dynamic: bool
     :param bandwidth: bandwidth resource
-    :type bandwidth: float or int
+    :type bandwidth: float
     :return: newly created edge
     :rtype: :any:`EdgeLink`
     """
@@ -546,11 +546,11 @@ class NFFG(AbstractNFFG):
     :param p2p1id: optional link id from port2 to port1
     :type p2p1id: str or int
     :param delay: delay resource of both links
-    :type delay: float or int
+    :type delay: float
     :param dynamic: set the link dynamic (default: False)
     :type dynamic: bool
     :param bandwidth: bandwidth resource of both links
-    :type bandwidth: float or int
+    :type bandwidth: float
     :return: newly created edge tuple in (p1->p2, p2->p1)
     :rtype: :any:(`EdgeLink`, `EdgeLink`)
     """
@@ -604,9 +604,9 @@ class NFFG(AbstractNFFG):
     :param id: optional link id
     :type id: str or int
     :param delay: delay resource
-    :type delay: int or float
+    :type delay: float
     :param bandwidth: bandwidth resource
-    :type bandwidth: int or float
+    :type bandwidth: float
     :param sg_path: list of ids of sg_links represents end-to-end requirement
     :type sg_path: list or tuple
     :return: newly created edge
@@ -1224,8 +1224,7 @@ class NFFGToolBox(object):
     ``domain``.
 
     ..warning::
-
-    No inter-domain SAP recreation will be performed after the trim!
+      No inter-domain SAP recreation will be performed after the trim!
 
     :param nffg: mapped NFFG object
     :type nffg: NFFG
@@ -1234,7 +1233,7 @@ class NFFGToolBox(object):
     :param log: additional logger
     :type log: :any:`logging.Logger`
     :return: stripped NFFG
-    :rtype :any:`NFFG`
+    :rtype: :any:`NFFG`
     """
     log.info("Strip domain in %s" % nffg)
     nffg = nffg.copy()
@@ -1504,7 +1503,6 @@ class NFFGToolBox(object):
                               domain=NFFG.DEFAULT_DOMAIN,
                               infra_type=NFFG.TYPE_INFRA_BISBIS)
     log.debug("Add Infra BiSBiS: %s" % sbb_infra)
-
     # Compute and add resources
     # Sum of available CPU
     try:
@@ -1553,14 +1551,12 @@ class NFFGToolBox(object):
     except ValueError:
       sbb_infra.resources.bandwidth = None
     log.debug("Computed SingleBiBBiS resources: %s" % sbb_infra.resources)
-
     # Add supported types
     s_types = set()
     for infra in nffg.infras:
       s_types = s_types.union(infra.supported)
     sbb_infra.add_supported_type(s_types)
     log.debug("Add supported types: %s" % s_types)
-
     # Add existing NFs
     for nf in nffg.nfs:
       c_nf = sbb.add_nf(nf=nf.copy())
@@ -1579,7 +1575,6 @@ class NFFGToolBox(object):
                                                bandwidth=l.bandwidth)
         log.debug("Add connection: %s" % link1)
         log.debug("Add connection: %s" % link2)
-
     # Add existing SAPs and their connections to the SingleBiSBiS infra
     for sap in nffg.saps:
       c_sap = sbb.add_sap(sap=sap.copy())
@@ -1596,6 +1591,19 @@ class NFFGToolBox(object):
         log.debug("Add connection: %s" % link1)
         log.debug("Add connection: %s" % link2)
     # Recreate flowrules based on NBalazs functions
+    sg_hop_info = NFFGToolBox.retrieve_all_SGHops(nffg=nffg)
+    # import pprint
+    # log.log(5, pprint.pformat(sg_hop_info))
+    # for key, value in sg_hop_info.iteritems():
+    #   src_port = [l.dst for u, v, l in
+    #               sbb.network.out_edges_iter(key[0], data=True) if
+    #               str(l.src.id) == value[0].id and
+    #               str(l.src.node.id) == value[0].node.id]
+    #   src_port = src_port.pop()
+    #   src_port.add_flowrule(match="in_port=%s" % src_port.id,
+    #                         action="output=%s" % src_port.id,
+    #                         bandwidth=value[3], delay=value[4],
+    #                         hop_id=key[2], id=key[2])
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return sbb
