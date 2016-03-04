@@ -138,7 +138,7 @@ class CfOrRequestHandler(AbstractRequestHandler):
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(data))
     self.end_headers()
-    self.log.debug("Send back topology description...")
+    self.log.info("Send back topology description...")
     self.wfile.write(data)
     self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
 
@@ -246,7 +246,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
-    self.log.debug("Send back topology description...")
+    self.log.info("Send back topology description...")
     self.wfile.write(data)
     self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
 

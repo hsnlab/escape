@@ -914,7 +914,7 @@ class NFFGConverter(object):
     :type virtualizer: Virtualizer
     :return: None
     """
-    self.log.info("Converting infras...")
+    self.log.debug("Converting infras...")
     for infra in nffg.infras:
       # Check in it's needed to remove domain from the end of id
       if self.ensure_unique_id:
@@ -1060,7 +1060,7 @@ class NFFGConverter(object):
     :type virtualizer: Virtualizer
     :return: None
     """
-    self.log.info("Converting SAPs...")
+    self.log.debug("Converting SAPs...")
     # Rewrite SAP - Node ports to add SAP to Virtualizer
     for sap in nffg.saps:
       for s, n, link in nffg.network.edges_iter([sap.id], data=True):
@@ -1100,7 +1100,7 @@ class NFFGConverter(object):
     :type virtualizer: Virtualizer
     :return: None
     """
-    self.log.info("Converting edges...")
+    self.log.debug("Converting edges...")
     # Add edge-link to Virtualizer
     for link in nffg.links:
       # Skip backward and non-static link conversion <-- Virtualizer links
@@ -1143,7 +1143,7 @@ class NFFGConverter(object):
     :type virtualizer: Virtualizer
     :return: None
     """
-    self.log.info("Converting requirements...")
+    self.log.debug("Converting requirements...")
     for req in nffg.reqs:
       meta_key = "%s:%s" % (self.REQUIREMENT_PREFIX, req.id)
       meta_value = json.dumps({
@@ -1168,7 +1168,7 @@ class NFFGConverter(object):
     :param nffg: splitted NFFG (not necessarily in valid syntax)
     :return: modified Virtualizer object
     """
-    self.log.info("Converting NFs...")
+    self.log.debug("Converting NFs...")
     # Check every infra Node
     for infra in nffg.infras:
       # Cache discovered NF to avoid multiple detection of NF which has more
@@ -1187,17 +1187,13 @@ class NFFGConverter(object):
         continue
       # Get Infra node from Virtualizer
       v_node = virtualizer.nodes[v_node_id]
-      # Check every outgoing edge
-      for u, v, link in nffg.network.out_edges_iter([infra.id], data=True):
-        # Observe only the NF neighbours
-        if link.dst.node.type != NFFG.TYPE_NF:
-          continue
-        nf = link.dst.node
+      # Check every outgoing edge and observe only the NF neighbours
+      for nf in nffg.running_nfs(infra.id):
         # Skip already detected NFs
         if nf.id in discovered_nfs:
           continue
         # Check if the NF is exist in the InfraNode
-        if str(v) not in v_node.NF_instances.node.keys():
+        if str(nf.id) not in v_node.NF_instances.node.keys():
           self.log.debug("Found uninitiated NF: %s in mapped NFFG" % nf)
           # Convert Resources to str for XML conversion
           v_nf_cpu = str(
@@ -1246,10 +1242,10 @@ class NFFGConverter(object):
               v_node.type.get_as_text()))
 
           # Add NF ports
-          for port in nffg[v].ports:
+          for port in nf.ports:
             v_nf_port = virt_lib.Port(id=str(port.id),
                                       port_type="port-abstract")
-            v_node.NF_instances[str(v)].ports.add(v_nf_port)
+            v_node.NF_instances[str(nf.id)].ports.add(v_nf_port)
             # Migrate metadata
             for property, value in port.properties.iteritems():
               meta_key = str(property)
@@ -1272,7 +1268,7 @@ class NFFGConverter(object):
     :param nffg: splitted NFFG (not necessarily in valid syntax)
     :return: modified Virtualizer object
     """
-    self.log.info("Converting flowrules...")
+    self.log.debug("Converting flowrules...")
     # Check every infra Node
     for infra in nffg.infras:
       # Recreate the original Node id

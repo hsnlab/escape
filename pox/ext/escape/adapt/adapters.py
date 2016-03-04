@@ -915,7 +915,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     # If API is set as UNIFY-based interface use XML-based Virtualizer format
     if self._unify_interface:
       virt = parsed_data
-      log.debug("Converting from XML/Virtualizer to NFFG format...")
+      log.info("Converting from XML/Virtualizer to NFFG format...")
       nffg = self.converter.parse_from_Virtualizer(vdata=virt)
       # Store original config for domain resetting
       if self._original_virtualizer is None:
