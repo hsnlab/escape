@@ -153,7 +153,7 @@ class InternalDomainManager(AbstractDomainManager):
       if sap.domain is not None:
         continue
       connected_node = [(v, link.dst.id) for u, v, link in
-                        topo.network.out_edges_iter(sap.id, data=True)]
+                        topo.real_out_edges_iter(sap.id)]
       if len(connected_node) > 1:
         log.warning("%s is connection to multiple nodes (%s)!" % (
           sap, [n[0] for n in connected_node]))
@@ -348,11 +348,9 @@ class InternalDomainManager(AbstractDomainManager):
           log.debug(
             "NF: %s has already been initiated. Continue to next NF..." %
             nf.short_name)
-          for u, v, link in nffg.network.out_edges_iter([nf.id],
-                                                        data=True):
+          for u, v, link in nffg.real_out_edges_iter(nf.id):
             dyn_port = nffg[v].ports[link.dst.id]
-            for x, y, l in mn_topo.network.out_edges_iter([nf.id],
-                                                          data=True):
+            for x, y, l in mn_topo.real_out_edges_iter(nf.id):
               if l.src.id == link.src.id:
                 self.portmap[dyn_port.id] = l.dst.id
                 dyn_port.id = l.dst.id
@@ -361,8 +359,7 @@ class InternalDomainManager(AbstractDomainManager):
         # Extract the initiation params
         params = {'nf_type': nf.functional_type,
                   'nf_ports': [link.src.id for u, v, link in
-                               nffg.network.out_edges_iter((nf.id,),
-                                                           data=True)],
+                               nffg.real_out_edges_iter(nf.id)],
                   'infra_id': infra.id}
         # Check if every param is not None or empty
         if not all(params.values()):
@@ -415,8 +412,7 @@ class InternalDomainManager(AbstractDomainManager):
 
         log.debug("Add deployed NFs to topology...")
         # Add Link between actual NF and INFRA
-        for nf_id, infra_id, link in nffg.network.out_edges_iter((nf.id,),
-                                                                 data=True):
+        for nf_id, infra_id, link in nffg.real_out_edges_iter(nf.id):
           # Get Link's src ref to new NF's port
           nf_port = deployed_nf.ports.append(nf.ports[link.src.id].copy())
 

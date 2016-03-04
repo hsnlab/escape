@@ -1123,17 +1123,16 @@ class NFFGToolBox(object):
         c_infra = base.add_infra(infra=deepcopy(infra))
         log.debug("Copy infra node: %s" % c_infra)
       else:
-        log.warning(
-          "Infra node: %s does already exist in %s. Skip adding..." % (
-            infra, base))
+        log.warning("Infra node: %s does already exist in %s. Skip adding..." %
+                    (infra, base))
     # Copy NFs
     for nf in nffg.nfs:
       if nf.id not in base:
         c_nf = base.add_nf(nf=deepcopy(nf))
         log.debug("Copy NF node: %s" % c_nf)
       else:
-        log.warning(
-          "NF node: %s does already exist in %s. Skip adding..." % (nf, base))
+        log.warning("NF node: %s does already exist in %s. Skip adding..." %
+                    (nf, base))
     # Copy SAPs
     for sap_id in [s.id for s in nffg.saps]:
       if sap_id in [s.id for s in base.saps]:
@@ -1176,14 +1175,12 @@ class NFFGToolBox(object):
         # FIXME - do it better
         if len(domain_port_nffg.properties) > 0:
           domain_port_dov.properties.update(domain_port_nffg.properties)
-          log.debug(
-            "Copy inter-domain port properties: %s" %
-            domain_port_dov.properties)
+          log.debug("Copy inter-domain port properties: %s" %
+                    domain_port_dov.properties)
         elif len(domain_port_dov.properties) > 0:
           domain_port_nffg.properties.update(domain_port_dov.properties)
-          log.debug(
-            "Copy inter-domain port properties: %s" %
-            domain_port_nffg.properties)
+          log.debug("Copy inter-domain port properties: %s" %
+                    domain_port_nffg.properties)
         else:
           domain_port_dov.add_property("sap", sap_id)
           domain_port_nffg.add_property("sap", sap_id)
@@ -1205,8 +1202,7 @@ class NFFGToolBox(object):
                                  bandwidth=b_links[0].bandwidth)
       else:
         # Normal SAP --> copy SAP
-        c_sap = base.add_sap(
-          sap=deepcopy(nffg.network.node[sap_id]))
+        c_sap = base.add_sap(sap=deepcopy(nffg.network.node[sap_id]))
         log.debug("Copy SAP: %s" % c_sap)
     # Copy remaining links which should be valid
     for u, v, link in nffg.network.edges_iter(data=True):
@@ -1215,9 +1211,9 @@ class NFFGToolBox(object):
       c_link = deepcopy(link)
       c_link.src = src_port
       c_link.dst = dst_port
-      base.add_link(src_port=src_port, dst_port=dst_port,
-                    link=c_link)
+      base.add_link(src_port=src_port, dst_port=dst_port, link=c_link)
       log.debug("Copy Link: %s" % c_link)
+      log.debug("Domain merging has been finished!")
     # Return the updated NFFG
     return base
 
@@ -1432,19 +1428,16 @@ class NFFGToolBox(object):
       :rtype: :any:`Port`
       """
       connected_port = [l.dst for u, v, l in
-                        nffg.network.out_edges_iter([port.node.id], data=True)
-                        if l.type == NFFG.TYPE_LINK_STATIC and
-                        str(l.src.id) == str(port.id)]
+                        nffg.real_out_edges_iter(port.node.id)
+                        if str(l.src.id) == str(port.id)]
       # If the number of detected nodes is unexpected continue to the next req
-      if len(connected_port) == 0:
-        log.warning(
-          "Skip edge rebinding: No connected node is detected for port: %s" %
-          port)
+      if len(connected_port) < 1:
+        log.warning("Skip edge rebinding: No connected node is detected for "
+                    "port: %s" % port)
         return None
       elif len(connected_port) > 1:
-        log.warning(
-          "Skip edge rebinding: Multiple connected nodes are detected for %s: "
-          "%s!" % (port, connected_port))
+        log.warning("Skip edge rebinding: Multiple connected nodes are "
+                    "detected for %s: %s!" % (port, connected_port))
         return None
       elif connected_port[0].node.type == NFFG.TYPE_SAP:
         return connected_port[0]
@@ -1454,8 +1447,8 @@ class NFFGToolBox(object):
     for req in nffg.reqs:
       if req.src.node.type == NFFG.TYPE_SAP and \
             req.dst.node.type == NFFG.TYPE_SAP:
-        log.debug(
-          "Skip rebinding: Detected %s is already an end-to-end link!" % req)
+        log.debug("Skip rebinding: Detected %s is already an end-to-end link!" %
+                  req)
         return nffg
         # Detect the node connected to the src port of req link
       src_sap_port = __detect_connected_sap(port=req.src)
@@ -1504,8 +1497,7 @@ class NFFGToolBox(object):
       log.error("Missing global resource info! Skip OneBisBis generation!")
       return None
     # Create Single BiSBiS NFFG
-    log.debug(
-      "Generate trivial SingleBiSBiS NFFG based on %s:" % nffg)
+    log.debug("Generate trivial SingleBiSBiS NFFG based on %s:" % nffg)
     # Create the single BiSBiS infra
     sbb_infra = sbb.add_infra(id="SingleBiSbiS",
                               name="SingleBiSBiS",
@@ -1574,7 +1566,7 @@ class NFFGToolBox(object):
       c_nf = sbb.add_nf(nf=nf.copy())
       log.debug("Add NF: %s" % c_nf)
       # Discover and add NF connections
-      for u, v, l in nffg.network.out_edges_iter([nf.id], data=True):
+      for u, v, l in nffg.real_out_edges_iter(nf.id):
         if l.type != NFFG.TYPE_LINK_DYNAMIC:
           continue
         # Explicitly add links for both direction
@@ -1593,9 +1585,7 @@ class NFFGToolBox(object):
       c_sap = sbb.add_sap(sap=sap.copy())
       log.debug("Add SAP: %s" % c_sap)
       # Discover and add SAP connections
-      for u, v, l in nffg.network.out_edges_iter([sap.id], data=True):
-        if l.type not in (NFFG.TYPE_LINK_STATIC, NFFG.TYPE_LINK_DYNAMIC):
-          continue
+      for u, v, l in nffg.real_out_edges_iter(sap.id):
         # Explicitly add links for both direction
         link1, link2 = sbb.add_undirected_link(port1=c_sap.ports[l.src.id],
                                                port2=sbb_infra.add_port(
