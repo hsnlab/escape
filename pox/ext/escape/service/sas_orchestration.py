@@ -97,7 +97,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
             log.debug("Detected full view representation!")
             return sg
         else:
-          log.info("Request is detected as a valid request!")
+          log.info("Request check: detected valid content!")
         try:
           # Run orchestration before service mapping algorithm
           mapped_nffg = self.mapper.orchestrate(sg, virtual_view)

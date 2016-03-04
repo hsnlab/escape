@@ -92,7 +92,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
             log.debug("Detected full view representation!")
             return nffg
         else:
-          log.info("Request is detected as a valid request!")
+          log.info("Request check: detected valid content!")
         try:
           # Run Nf-FG mapping orchestration
           mapped_nffg = self.mapper.orchestrate(nffg, global_view)

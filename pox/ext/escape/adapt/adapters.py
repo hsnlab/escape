@@ -940,7 +940,7 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.debug("Set domain to %s" % self.domain_name)
       # Explicit rewire domain info
       self.rewrite_domain(nffg)
-    log.debug("Used domain for conversion: %s" % self.domain_name)
+    log.debug("Used domain name for conversion: %s" % self.domain_name)
     return nffg
 
   def get_original_topology (self):
@@ -1169,7 +1169,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         "Store Virtualizer(id: %s, name: %s) as the original domain "
         "config..." % (virt.id.get_value(), virt.name.get_value()))
       self._original_virtualizer = deepcopy(virt)
-    log.debug("Used domain for conversion: %s" % self.domain_name)
+    log.debug("Used domain name for conversion: %s" % self.domain_name)
     # Cache virtualizer
     self.last_virtualizer = virt
     return nffg
