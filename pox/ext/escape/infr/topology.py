@@ -346,7 +346,7 @@ class ESCAPENetworkBridge(object):
       terms = makeTerms(nodes=self.__mininet.hosts, title='SAP', term="xterm")
       self.xterms.extend(terms)
     else:
-      log.debug("Skip starting xterms on SAPS according to global config")
+      log.warning("Skip starting xterms on SAPS according to global config")
 
   def start_network (self):
     """
