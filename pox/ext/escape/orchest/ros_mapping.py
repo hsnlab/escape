@@ -145,6 +145,9 @@ class ResourceOrchestrationMapper(AbstractMapper):
     if virt_resource is None:
       log.error("Missing resource information! Abort mapping process!")
       return None
+    # log a warning if resource is empty --> possibly mapping will be failed
+    if virt_resource.is_empty():
+      log.warning("Resource information is empty!")
     # Log verbose resource view if it is exist
     log.log(VERBOSE,
             "Orchestration Layer resource graph:\n%s" % virt_resource.dump())
