@@ -19,7 +19,7 @@ import weakref
 from escape.adapt import log as log
 from escape.adapt.policy_enforcement import PolicyEnforcementMetaClass
 from escape.nffg_lib.nffg import NFFGToolBox, NFFG
-from escape.util.misc import enum
+from escape.util.misc import enum, VERBOSE
 from pox.lib.revent.revent import EventMixin, Event
 
 # Common reference name for the DomainVirtualizer
@@ -341,7 +341,9 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     log.debug("Using domain re-merging to update domain: %s in DoV..." % domain)
     NFFGToolBox.remove_domain(base=self.__global_nffg, domain=domain, log=log)
+    log.log(VERBOSE, "Shrinked Dov:\n%s" % self.__global_nffg.dump())
     NFFGToolBox.merge_new_domain(base=self.__global_nffg, nffg=nffg, log=log)
+    log.log(VERBOSE, "Re-merged DoV:\n%s" % self.__global_nffg.dump())
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
