@@ -970,12 +970,15 @@ class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       data = self.send_no_error(self.POST, 'get-config')
       if data:
         # Got data
-        if not data.startswith("<?xml version="):
+        if not self.is_content_type("xml") \
+           and not data.startswith("<?xml version="):
           log.error("Received data is not in XML format!")
           return None
         virt = Virtualizer.parse_from_text(text=data)
       else:
         # If no data is received or converted return with None
+        log.warning("No data is received or parsed into Virtualizer during "
+                    "topology change detection!")
         return None
       if self.last_virtualizer is None:
         log.warning("Missing last received Virtualizer!")
@@ -1067,8 +1070,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         self.domain_name, self._base_url))
       log.debug("Detected response format: %s" %
                 self.get_last_response_headers().get("Content-Type", "None"))
-      log.info("Parse and load received data...")
-      if not data.startswith("<?xml version="):
+      log.debug("Parse and load received data...")
+      if not self.is_content_type("xml") and \
+         not data.startswith("<?xml version="):
         log.error("Received data is not in XML format!")
         return
       virt = Virtualizer.parse_from_text(text=data)
@@ -1188,15 +1192,19 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     # Get full topology as a Virtualizer
     data = self.send_no_error(self.POST, 'get-config')
+    # Got data
     if data:
-      # Got data
-      if not data.startswith("<?xml version="):
+      # Check the content type or try to recognize the standard XML opening tag
+      if not self.is_content_type("xml") and \
+         not data.startswith("<?xml version="):
         log.error("Received data is not in XML format!")
         return None
       virt = Virtualizer.parse_from_text(text=data)
     else:
       # If no data is received, exception was raised or converted return with
       # None.
+      log.warning("No data is received or parsed into Virtualizer during "
+                  "topology change detection!")
       return None
     if self.last_virtualizer is None:
       log.warning("Missing last received Virtualizer!")

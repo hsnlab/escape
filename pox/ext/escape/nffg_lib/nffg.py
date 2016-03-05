@@ -1213,7 +1213,7 @@ class NFFGToolBox(object):
       c_link.dst = dst_port
       base.add_link(src_port=src_port, dst_port=dst_port, link=c_link)
       log.debug("Copy Link: %s" % c_link)
-      log.debug("Domain merging has been finished!")
+    log.debug("Domain merging has been finished!")
     # Return the updated NFFG
     return base
 

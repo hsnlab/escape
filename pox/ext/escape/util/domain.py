@@ -1020,9 +1020,8 @@ class AbstractRESTAdapter(Session):
     self._response = None
     if 'timeout' in kwargs:
       self.CONNECTION_TIMEOUT = kwargs['timeout']
-      log.debug(
-        "Setup explicit timeout for REST responses: %ss" %
-        self.CONNECTION_TIMEOUT)
+      log.debug("Setup explicit timeout for REST responses: %ss" %
+                self.CONNECTION_TIMEOUT)
     # Suppress low level logging
     self.__suppress_requests_logging()
 
@@ -1072,8 +1071,7 @@ class AbstractRESTAdapter(Session):
         # if given body is an NFFG
         body = body.dump()
         kwargs['headers']['Content-Type'] = "application/json"
-      elif isinstance(body, basestring) and body.startswith(
-         "<?xml version="):
+      elif isinstance(body, basestring) and body.startswith("<?xml version="):
         kwargs['headers']['Content-Type'] = "application/xml"
     # Setup parameters - URL
     if url is not None:
@@ -1104,9 +1102,8 @@ class AbstractRESTAdapter(Session):
     try:
       return self.send_with_timeout(method, url, body, **kwargs)
     except Timeout:
-      log.warning(
-        "Remote agent(adapter: %s, url: %s) reached timeout limit!" % (
-          self.name, self._base_url))
+      log.warning("Remote agent(adapter: %s, url: %s) reached timeout limit!"
+                  % (self.name, self._base_url))
       return None
 
   def send_with_timeout (self, method, url=None, body=None, timeout=None,
@@ -1134,25 +1131,38 @@ class AbstractRESTAdapter(Session):
       # None
       return self._response.text if self._response is not None else None
     except ConnectionError:
-      log.error(
-        "Remote agent(adapter: %s, url: %s) is not reachable!" % (
-          self.name, self._base_url))
+      log.error("Remote agent(adapter: %s, url: %s) is not reachable!"
+                % (self.name, self._base_url))
       return None
     except HTTPError as e:
-      log.error(
-        "Remote agent(adapter: %s, url: %s) responded with an error: %s" % (
-          self.name, self._base_url, e.message))
+      log.error("Remote agent(adapter: %s, url: %s) responded with an error: %s"
+                % (self.name, self._base_url, e.message))
       return None
     except Timeout:
       raise
     except RequestException as e:
-      log.errer("Got unexpected exception: %s" % e)
+      log.error("Got unexpected exception: %s" % e)
       return None
     except KeyboardInterrupt:
-      log.warning(
-        "Request to remote agent(adapter: %s, url: %s) is interrupted by "
-        "user!" % (self.name, self._base_url))
+      log.warning("Request to remote agent(adapter: %s, url: %s) is "
+                  "interrupted by user!" % (self.name, self._base_url))
       return None
+
+  def is_content_type (self, ctype):
+    """
+    Return True is the content type of the last request contains the given
+    type.
+
+    :param ctype: content type
+    :type ctype: str
+    :return: the content type contains the given type or not
+    :rtype: bool
+    """
+    content_type = self._response.headers['Content-Type']
+    if not content_type:
+      return False
+    else:
+      return ctype in content_type
 
   def get_last_response_body (self):
     """
@@ -1180,4 +1190,4 @@ class AbstractRESTAdapter(Session):
     :return: response headers
     :rtype: dict
     """
-    return self._response.headers if self._response is not None else None
+    return self._response.headers if self._response is not None else {}
