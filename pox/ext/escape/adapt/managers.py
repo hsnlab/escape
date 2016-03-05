@@ -868,11 +868,15 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     # nffg_part = self._update_nffg(nffg_part.copy())
     log.info("Install %s domain part..." % self.domain_name)
     try:
+      if not self._poll and self._diff:
+        log.debug(
+          "Polling is not enabled. Requesting the most recent topology from "
+          "domain: %s for installation..." % self.domain_name)
+        # Request the most recent topo, which will update the cached
+        # last_virtualizer for the diff calculation
+        self.topoAdapter.get_config()
       status = self.topoAdapter.edit_config(nffg_part, diff=self._diff)
-      if status is not None:
-        return True
-      else:
-        return False
+      return True if status is not None else False
     except:
       log.exception(
         "Got exception during NFFG installation into: %s." % self.domain_name)
@@ -896,13 +900,12 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
     if not self._poll and self._diff:
-      log.debug("Requesting topo from domain: %s for domain clearing..." %
-                self.domain_name)
+      log.debug("Polling is not enabled. Requesting the most recent topology "
+                "from domain: %s for domain clearing..." % self.domain_name)
       if isinstance(self.topoAdapter, RemoteESCAPEv2RESTAdapter) and \
          self.topoAdapter._unify_interface:
         recent_topo = self.topoAdapter.get_config()
-        # log.warning("%s" % recent_topo)
-        # log.warning("%s" % empty_cfg)
+        log.debug("Calculating diff for domain clearing...")
         diff = recent_topo.diff(empty_cfg)
         self.topoAdapter.edit_config(data=diff)
     else:
@@ -973,6 +976,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     Install :any:`NFFG` part into the domain using the specific REST-API
     function and Virtualizer format.
+
     :param nffg_part: domain related part of the mapped :any:`NFFG`
     :type nffg_part: :any:`NFFG`
     :return: status if the installation was success
@@ -980,6 +984,13 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     log.info("Install %s domain part..." % self.domain_name)
     try:
+      if not self._poll and self._diff:
+        log.debug(
+          "Polling is not enabled. Requesting the most recent topology from "
+          "domain: %s for installation..." % self.domain_name)
+        # Request the most recent topo, which will update the cached
+        # last_virtualizer for the diff calculation
+        self.topoAdapter.get_config()
       status = self.topoAdapter.edit_config(nffg_part, diff=self._diff)
       return True if status is not None else False
     except:
@@ -1005,11 +1016,12 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
     if not self._poll and self._diff:
-      log.debug("Requesting topo from domain: %s for domain clearing..." %
-                self.domain_name)
+      log.debug("Polling is not enabled. Requesting the most recent topology "
+                "from domain: %s for domain clearing..." % self.domain_name)
       recent_topo = self.topoAdapter.get_config()
+      log.debug("Calculating diff for domain clearing...")
       diff = recent_topo.diff(empty_cfg)
-      self.topoAdapter.edit_config(data=diff)
+      self.topoAdapter.edit_config(data=diff, diff=False)
     else:
       self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
 
