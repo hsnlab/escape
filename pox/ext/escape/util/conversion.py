@@ -478,7 +478,11 @@ class NFFGConverter(object):
     for flowentry in vnode.flowtable:
       fr_id = flowentry.id.get_value()  # Mandatory flowentry.id
       # e.g. in_port=1(;TAG=SAP1|comp|1)
-      v_fe_port = flowentry.port.get_target()
+      try:
+        v_fe_port = flowentry.port.get_target()
+      except:
+        log.exception(
+          "Got unexpected exception during acquisition of FlowEntry's in Port!")
       fr_match = "in_port="
       # Check if src port is a VNF port --> create the tagged port name
       if "NF_instances" in flowentry.port.get_as_text():
@@ -498,7 +502,11 @@ class NFFGConverter(object):
         # Else just Infra port --> add only the port number
         fr_match += v_fe_port.id.get_as_text()
 
-      v_fe_out = flowentry.out.get_target()
+      try:
+        v_fe_out = flowentry.out.get_target()
+      except:
+        log.exception("Got unexpected exception during acquisition of "
+                      "FlowEntry's out Port!")
       fr_action = "output="
       # Check if dst port is a VNF port --> create the tagged port name
       if "NF_instances" in flowentry.out.get_as_text():
@@ -763,7 +771,11 @@ class NFFGConverter(object):
     added_links = []
     # Add links connecting infras
     for vlink in virtualizer.links:
-      src_port = vlink.src.get_target()
+      try:
+        src_port = vlink.src.get_target()
+      except:
+        log.exception(
+          "Got unexpected exception during acquisition of link's src Port!")
       src_node = src_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       if self.ensure_unique_id:
@@ -772,7 +784,11 @@ class NFFGConverter(object):
                                   self.domain)
       else:
         src_node_id = src_node.id.get_value()
-      dst_port = vlink.dst.get_target()
+      try:
+        dst_port = vlink.dst.get_target()
+      except:
+        log.exception(
+          "Got unexpected exception during acquisition of link's dst Port!")
       dst_node = dst_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       if self.ensure_unique_id:
