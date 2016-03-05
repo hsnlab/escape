@@ -324,6 +324,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     # NFFG
     NFFGToolBox.merge_new_domain(base=self.__global_nffg, nffg=nffg, log=log)
     # Raise event for observing Virtualizers about topology change
+    log.log(VERBOSE, "Merged Dov:\n%s" % self.__global_nffg.dump())
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.EXTEND)
     return self.__global_nffg
 
@@ -339,11 +340,13 @@ class DomainVirtualizer(AbstractVirtualizer):
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
-    log.debug("Using domain re-merging to update domain: %s in DoV..." % domain)
     NFFGToolBox.remove_domain(base=self.__global_nffg, domain=domain, log=log)
-    log.log(VERBOSE, "Shrinked Dov:\n%s" % self.__global_nffg.dump())
+    log.log(VERBOSE, "Reduced Dov:\n%s" % self.__global_nffg.dump())
     NFFGToolBox.merge_new_domain(base=self.__global_nffg, nffg=nffg, log=log)
     log.log(VERBOSE, "Re-merged DoV:\n%s" % self.__global_nffg.dump())
+    if self.__global_nffg.is_empty():
+      log.warning("No Node had been remained after updating the domain part: "
+                  "%s! DoV is empty!" % domain)
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
@@ -363,6 +366,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
                   "%s! DoV is empty!" % domain)
+    log.log(VERBOSE, "Updated DoV:\n%s" % self.__global_nffg.dump())
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
@@ -380,6 +384,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
                   "%s! DoV is empty!" % domain)
+    log.log(VERBOSE, "Reduced Dov:\n%s" % self.__global_nffg.dump())
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.REDUCE)
     return self.__global_nffg
