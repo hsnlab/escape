@@ -487,6 +487,7 @@ class GlobalResourceManager(object):
     log.debug("Init DomainResourceManager")
     self.__dov = DomainVirtualizer(self)  # Domain Virtualizer
     self.__tracked_domains = set()  # Cache for detected and stored domains
+    self._remerge = CONFIG.use_remerge_update_strategy()
 
   @property
   def dov (self):
@@ -562,8 +563,12 @@ class GlobalResourceManager(object):
     """
     if domain in self.__tracked_domains:
       log.info("Update domain: %s in DoV..." % domain)
-      # self.__dov.update_domain_in_dov(domain=domain, nffg=nffg)
-      self.__dov.remerge_domain_in_dov(domain=domain, nffg=nffg)
+      if self._remerge:
+        log.debug("Using REMERGE strategy for updating DoV...")
+        self.__dov.remerge_domain_in_dov(domain=domain, nffg=nffg)
+      else:
+        log.debug("Using UPDATE strategy for updating DoV...")
+        self.__dov.update_domain_in_dov(domain=domain, nffg=nffg)
     else:
       log.error(
         "Detected domain: %s is not included in tracked domains: %s! Abort "

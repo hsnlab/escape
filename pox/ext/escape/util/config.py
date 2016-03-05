@@ -598,6 +598,19 @@ class ESCAPEConfig(object):
     except KeyError:
       return False
 
+  def use_remerge_update_strategy (self):
+    """
+    Return True if the re-merge update strategy is enabled in DoV updating
+    instead of using the straightforward step-by-step updating.
+
+    :return: re-merge strategy is enabled or not (default: True)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT]['USE-REMERGE-UPDATE-STRATEGY']
+    except KeyError:
+      return True
+
   def ensure_unique_id (self):
     """
     Return with the ID generations strategy for nodes.
