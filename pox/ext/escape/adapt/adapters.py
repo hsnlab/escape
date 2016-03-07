@@ -944,7 +944,10 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     # Get the changes happened since the last get-config
     changes = virt.copy()
     changes.reduce(self.last_virtualizer)
-    if changes.get_next() is None:
+    element = changes.get_next()
+    if element is None:
+      return False
+    elif element.get_tag() == "version" and element.get_next() is None:
       return False
     else:
       log.log(VERBOSE, "Changed domain topology from: %s:\n%s" % (
