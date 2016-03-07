@@ -730,275 +730,6 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
           "Failed to remove NF due to a connection error! Cause: %s" % e)
 
 
-class RemoteESCAPEv2RESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
-                                RemoteESCAPEv2API):
-  """
-  This class is devoted to provide REST specific functions for remote ESCAPEv2
-  domain.
-  """
-  name = "ESCAPE-REST"
-  type = AbstractESCAPEAdapter.TYPE_REMOTE
-
-  def __init__ (self, url, prefix="", unify_interface=False, **kwargs):
-    """
-    Init.
-
-    :param url: remote ESCAPEv2 RESTful API URL
-    :type url: str
-    """
-    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
-    AbstractESCAPEAdapter.__init__(self, **kwargs)
-    log.debug(
-      "Init RemoteESCAPEv2RESTAdapter - type: %s, domain: %s, URL: %s" % (
-        self.type, self.domain_name, url))
-    # Converter for the Adapter
-    self.converter = None
-    self._unify_interface = unify_interface
-    # Cache for parsed virtualizer
-    self.last_virtualizer = None
-    # Empty data structures for domain deletions
-    self._original_nffg = None
-    self._original_virtualizer = None
-    if self._unify_interface:
-      log.info("Setup ESCAPEv2 adapter as a Unify interface!")
-      self.converter = NFFGConverter(domain=self.domain_name, logger=log,
-                                     ensure_unique_id=CONFIG.ensure_unique_id())
-
-  def ping (self):
-    """
-    Call the ping RPC.
-
-    :return: response text (should be: 'OK')
-    :rtype: str
-    """
-    try:
-      log.log(VERBOSE, "Send ping request to remote agent: %s" % self._base_url)
-      return self.send_request(self.GET, 'ping')
-    except RequestException:
-      # Any exception is bad news -> return None
-      return None
-
-  def get_config (self, filter=None):
-    """
-    Queries the infrastructure view with a netconf-like "get-config" command.
-
-    Remote domains always send full-config if ``filter`` is not set.
-
-    Return topology description in the original format.
-
-    :param filter: request a filtered description instead of full
-    :type filter: str
-    :return: infrastructure view in the original format
-    :rtype: :class:`virtualizer.Virtualizer` or :any:`NFFG`
-    """
-    log.debug("Send get-config request to remote agent: %s" % self._base_url)
-    # Get topology from remote agent handling every exception
-    data = self.send_no_error(self.POST, 'get-config')
-    if data:
-      # Got data
-      log.debug("Received config from remote agent at %s" % self._base_url)
-      log.debug("Detected response format: %s" %
-                self.get_last_response_headers().get("Content-Type", "None"))
-      # Convert raw data to appropriate format
-      log.info("Parse and load received data...")
-      # If API is set as UNIFY-based interface use XML-based Virtualizer format
-      if self._unify_interface:
-        # If content-type is set
-        if self.get_last_response_headers().get("Content-Type",
-                                                "") != "application/xml":
-          log.error(
-            "Content type of response message is not 'application/xml'!")
-          return
-        elif not data.startswith("<?xml version="):
-          log.error("Received data is not started with XML declaration!")
-          return
-        virt = Virtualizer.parse_from_text(text=data)
-        log.log(VERBOSE,
-                "Received message to 'get-config' request:\n%s" % virt.xml())
-        return virt
-      else:
-        nffg = NFFG.parse(data)
-        log.log(VERBOSE,
-                "Received message to 'get-config' request:\n%s" % nffg.xml())
-      return nffg
-    else:
-      log.error("No data is received from remote agent at %s!" % self._base_url)
-      return
-
-  def edit_config (self, data, diff=False):
-    """
-    Send the requested configuration with a netconf-like "edit-config" command.
-
-    Remote domains always expect diff of mapping changes.
-
-    :param data: whole domain view
-    :type data: :any::`NFFG`
-    :param diff: send the diff of the mapping request (default: False)
-    :param diff: bool
-    :return: status code
-    :rtype: str
-    """
-    log.debug("Prepare edit-config request for remote agent at: %s" %
-              self._base_url)
-    if isinstance(data, NFFG):
-      # convert NFFG --> Virtualizer
-      if self._unify_interface:
-        log.debug("Convert NFFG to XML/Virtualizer format...")
-        virt_data = self.converter.adapt_mapping_into_Virtualizer(
-          virtualizer=self.last_virtualizer, nffg=data)
-        if diff:
-          log.debug("Generating diff of mapping changes...")
-          virt_data = self.last_virtualizer.diff(target=virt_data)
-        else:
-          log.debug("Using the full Virtualizer as mapping request")
-        data = virt_data.xml()
-      # non-UNIFY interface --> no conversion
-      else:
-        data = data.dump()
-    elif isinstance(data, Virtualizer):
-      # already in Virtualizer format
-      if self._unify_interface:
-        if diff:
-          log.debug("Generating diff of mapping changes...")
-          data = self.last_virtualizer.diff(target=data)
-        else:
-          log.debug("Using the full Virtualizer as mapping request")
-        data = data.xml()
-      # Unexpected case, try to convert anyway
-      else:
-        log.warning("Unexpected case: convert Virtualizer data for a non-UNIFY "
-                    "interface!")
-        converted = self.converter.parse_from_Virtualizer(vdata=data.xml())
-        data = converted.dump()
-    else:
-      raise RuntimeError(
-        "Not supported config format: %s for 'edit-config'!" % type(data))
-    log.debug(
-      "Send topology description to domain agent at %s..." % self._base_url)
-    log.log(VERBOSE, "Generated Virtualizer for domain: %s:\n%s" % (
-      self.domain_name, data))
-    try:
-      result = self.send_with_timeout(self.POST, 'edit-config', data)
-      log.info("Topology description has been sent!")
-      return result
-    except Timeout:
-      log.warning(
-        "Reached timeout(%ss) while waiting for edit-config response! Ignore "
-        "exception..." % self.CONNECTION_TIMEOUT)
-      # Ignore exception - assume the request was successful -> return True
-      return True
-
-  def check_domain_reachable (self):
-    """
-    Checker function for domain polling. Check the remote domain agent is
-    reachable.
-
-    Use the ping RPC call.
-
-    :return: the remote domain is detected or not
-    :rtype: bool
-    """
-    return self.ping() is not None
-
-  def get_topology_resource (self):
-    """
-    Return with the topology description as an :any:`NFFG`.
-
-    :return: the topology description of the remote domain
-    :rtype: :any:`NFFG`
-    """
-    # Get full topology as a Virtualizer
-    parsed_data = self.get_config()
-    # If not data is received or parsed return with None
-    if parsed_data is None:
-      return
-    # If API is set as UNIFY-based interface use XML-based Virtualizer format
-    if self._unify_interface:
-      virt = parsed_data
-      log.info("Converting from XML/Virtualizer to NFFG format...")
-      nffg = self.converter.parse_from_Virtualizer(vdata=virt)
-      # Store original config for domain resetting
-      if self._original_virtualizer is None:
-        log.debug(
-          "Store Virtualizer(id: %s, name: %s) as the original domain "
-          "config for domain: %s..." % (virt.id.get_as_text(),
-                                        virt.name.get_as_text(),
-                                        self.domain_name))
-        self._original_virtualizer = deepcopy(virt)
-      # Cache virtualizer
-      self.last_virtualizer = virt
-      log.log(VERBOSE,
-              "Converted NFFG of 'get-config' response:\n%s" % nffg.dump())
-    else:
-      nffg = parsed_data
-      # Store original config for domain resetting
-      if self._original_nffg is None:
-        log.debug(
-          "Store %s as the original domain config for domain: %s..." % (
-            nffg, self.domain_name))
-        self._original_nffg = nffg.copy()
-      log.debug("Set domain to %s" % self.domain_name)
-      # Explicit rewire domain info
-      self.rewrite_domain(nffg)
-    log.debug("Used domain name for conversion: %s" % self.domain_name)
-    return nffg
-
-  def get_original_topology (self):
-    """
-    Return the original according to the Unify interface is enabled or not.
-
-    :return: the original topology
-    :rtype: :any:`NFFG` or Virtualizer
-    """
-    return self._original_virtualizer if self._unify_interface else \
-      self._original_nffg
-
-  def check_topology_changed (self):
-    """
-    Check the last received topology and return ``False`` if there was no
-    changes, ``None`` if domain was unreachable and the converted topology if
-    the domain changed.
-
-    Detection of changes is based on the ``reduce()`` function of the
-    ``Virtualizer``.
-
-    :return: the received topology is different from cached one
-    :rtype: bool or None or :any:`NFFG`
-    """
-    if self._unify_interface:
-      # Get full topology as a Virtualizer
-      data = self.send_no_error(self.POST, 'get-config')
-      if data:
-        # Got data
-        if not self.is_content_type("xml") \
-           and not data.startswith("<?xml version="):
-          log.error("Received data is not in XML format!")
-          return None
-        virt = Virtualizer.parse_from_text(text=data)
-      else:
-        # If no data is received or converted return with None
-        log.warning("No data is received or parsed into Virtualizer during "
-                    "topology change detection!")
-        return None
-      if self.last_virtualizer is None:
-        log.warning("Missing last received Virtualizer!")
-        return None
-      # Get the changes happened since the last get-config
-      changes = virt.copy()
-      changes.reduce(self.last_virtualizer)
-      if changes.get_next() is None:
-        return False
-      else:
-        log.log(VERBOSE,
-                "Received message to 'get-config' request:\n%s" % virt.xml())
-        # Cache new data
-        self.last_virtualizer = virt
-        # Return with the changed topo in NFFG
-        return self.converter.parse_from_Virtualizer(vdata=virt)
-    else:
-      raise NotImplementedError("Not implemented yet!")
-
-
 class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                        DefaultUnifyDomainAPI):
   """
@@ -1016,7 +747,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   # type of the Adapter class - use this name for searching Adapter config
   type = AbstractESCAPEAdapter.TYPE_REMOTE
 
-  def __init__ (self, url, prefix="", *args, **kwargs):
+  def __init__ (self, url, prefix="", **kwargs):
     """
     Init.
 
@@ -1025,8 +756,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
     AbstractESCAPEAdapter.__init__(self, **kwargs)
-    log.debug("Init UNIFYRESTAdapter - type: %s, domain: %s, URL: %s" % (
-      self.type, self.domain_name, url))
+    log.debug("Init %s - type: %s, domain: %s, URL: %s" % (
+      self.__class__.__name__, self.type, self.domain_name, url))
     # Converter object
     self.converter = NFFGConverter(domain=self.domain_name, logger=log,
                                    ensure_unique_id=CONFIG.ensure_unique_id())
@@ -1071,6 +802,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.debug("Detected response format: %s" %
                 self.get_last_response_headers().get("Content-Type", "None"))
       log.debug("Parse and load received data...")
+      # Try to define content type from HTTP header or the first line of body
       if not self.is_content_type("xml") and \
          not data.startswith("<?xml version="):
         log.error("Received data is not in XML format!")
@@ -1096,8 +828,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: status code
     :rtype: str
     """
-    log.debug(
-      "Prepare edit-config request for remote agent at: %s" % self._base_url)
+    log.debug("Prepare edit-config request for remote agent at: %s" %
+              self._base_url)
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
       vdata = self.converter.adapt_mapping_into_Virtualizer(
@@ -1221,6 +953,179 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       self.last_virtualizer = virt
       # Return with the changed topo in NFFG
       return self.converter.parse_from_Virtualizer(vdata=virt)
+
+
+class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
+  """
+  This class is devoted to provide REST specific functions for remote ESCAPEv2
+  domain.
+  """
+  name = "ESCAPE-REST"
+
+  def __init__ (self, url, prefix="", unify_interface=False, **kwargs):
+    """
+    Init.
+
+    :param url: remote ESCAPEv2 RESTful API URL
+    :type url: str
+    """
+    super(RemoteESCAPEv2RESTAdapter, self).__init__(url=url, prefix=prefix,
+                                                    **kwargs)
+    self._unify_interface = unify_interface
+    # Empty data structures for domain resetting in case of internal format
+    self._original_nffg = None
+    if self._unify_interface:
+      log.info("Setup ESCAPEv2 adapter as a Unify interface!")
+
+  def get_config (self, filter=None):
+    """
+    Queries the infrastructure view with a netconf-like "get-config" command.
+
+    Remote domains always send full-config if ``filter`` is not set.
+
+    Return topology description in the original format.
+
+    :param filter: request a filtered description instead of full
+    :type filter: str
+    :return: infrastructure view in the original format
+    :rtype: :class:`virtualizer.Virtualizer` or :any:`NFFG`
+    """
+    # If UNIFY interface is enabled, use the super class from UNIFYAdapter
+    if self._unify_interface:
+      return super(RemoteESCAPEv2RESTAdapter, self).get_config(filter=filter)
+
+    log.debug("Send get-config request to remote agent: %s" % self._base_url)
+    # Get topology from remote agent handling every exception
+    data = self.send_no_error(self.POST, 'get-config')
+    if data:
+      # Got data
+      log.debug("Received config from remote agent at %s" % self._base_url)
+      log.debug("Detected response format: %s" %
+                self.get_last_response_headers().get("Content-Type", "None"))
+      if not self.is_content_type("json"):
+        log.error("Received data is not in JSON format!")
+        return
+      # Convert raw data to internal NFFG format
+      log.info("Parse and load received data...")
+      nffg = NFFG.parse(data)
+      log.log(VERBOSE,
+              "Received message to 'get-config' request:\n%s" % nffg.dump())
+      return nffg
+    else:
+      log.error("No data is received from remote agent at %s!" %
+                self._base_url)
+      return
+
+  def edit_config (self, data, diff=False):
+    """
+    Send the requested configuration with a netconf-like "edit-config" command.
+
+    Remote domains always expect diff of mapping changes.
+
+    :param data: whole domain view
+    :type data: :any::`NFFG`
+    :param diff: send the diff of the mapping request (default: False)
+    :param diff: bool
+    :return: status code
+    :rtype: str
+    """
+    # If UNIFY interface is enabled, use the super class from UNIFYAdapter
+    if self._unify_interface:
+      return super(RemoteESCAPEv2RESTAdapter, self).edit_config(data=data,
+                                                                diff=diff)
+    if isinstance(data, NFFG):
+      data = data.dump()
+    elif isinstance(data, Virtualizer):
+      # Unexpected case, try to convert anyway
+      log.warning("Unexpected case: convert Virtualizer data for a non-UNIFY "
+                  "interface!")
+      converted = self.converter.parse_from_Virtualizer(vdata=data.xml())
+      data = converted.dump()
+    else:
+      raise RuntimeError(
+        "Not supported config format: %s for 'edit-config'!" % type(data))
+    log.debug(
+      "Send topology description to domain agent at %s..." % self._base_url)
+    log.log(VERBOSE, "Generated NFFG for domain: %s:\n%s" % (self.domain_name,
+                                                             data))
+    try:
+      result = self.send_with_timeout(self.POST, 'edit-config', data)
+      log.info("Topology description has been sent!")
+      return result
+    except Timeout:
+      log.warning(
+        "Reached timeout(%ss) while waiting for edit-config response! Ignore "
+        "exception..." % self.CONNECTION_TIMEOUT)
+      # Ignore exception - assume the request was successful -> return True
+      return True
+
+  def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG`.
+
+    :return: the topology description of the remote domain
+    :rtype: :any:`NFFG`
+    """
+    if self._unify_interface:
+      return super(RemoteESCAPEv2RESTAdapter, self).get_topology_resource()
+    # Get full topology as a Virtualizer
+    nffg = self.get_config()
+    # If not data is received or parsed return with None
+    if nffg is None:
+      return
+    # Store original config for domain resetting
+    if self._original_nffg is None:
+      log.debug(
+        "Store %s as the original domain config for domain: %s..." % (
+          nffg, self.domain_name))
+      self._original_nffg = nffg.copy()
+    log.debug("Set domain to %s" % self.domain_name)
+    # Explicit rewrite domain info
+    self.rewrite_domain(nffg)
+    return nffg
+
+  def get_original_topology (self):
+    """
+    Return the original according to the Unify interface is enabled or not.
+
+    :return: the original topology
+    :rtype: :any:`NFFG` or Virtualizer
+    """
+    return self._original_virtualizer if self._unify_interface else \
+      self._original_nffg
+
+  def check_topology_changed (self):
+    """
+    Check the last received topology and return ``False`` if there was no
+    changes, ``None`` if domain was unreachable and the converted topology if
+    the domain changed.
+
+    Detection of changes is based on the ``reduce()`` function of the
+    ``Virtualizer``.
+
+    :return: the received topology is different from cached one
+    :rtype: bool or None or :any:`NFFG`
+    """
+    if self._unify_interface:
+      return super(RemoteESCAPEv2RESTAdapter, self).check_topology_changed()
+    log.warning("check_topology_changed is not implemented for %s" %
+                self.__class__.__name__)
+    # Get full topology
+    data = self.send_no_error(self.POST, 'get-config')
+    # Got data
+    if data:
+      # Check the content type or try to recognize the standard XML opening tag
+      if not self.is_content_type("json"):
+        log.error("Received data is not in JSON format!")
+        return None
+      else:
+        return data
+    else:
+      # If no data is received, exception was raised or converted return with
+      # None.
+      log.warning("No data is received or parsed into NFFG during topology "
+                  "change detection!")
+      return None
 
 
 class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
