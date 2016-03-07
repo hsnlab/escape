@@ -1190,9 +1190,8 @@ class NFFGToolBox(object):
         # Delete both inter-domain SAP and links connected to them
         base.del_node(sap_id)
         nffg.del_node(sap_id)
-        log.debug(
-          "Add inter-domain connection with delay: %s, bandwidth: %s" % (
-            b_links[0].delay, b_links[0].bandwidth))
+        log.debug("Add inter-domain connection with delay: %s, bandwidth: %s"
+                  % (b_links[0].delay, b_links[0].bandwidth))
         # Add the inter-domain links for both ways
         base.add_undirected_link(p1p2id="inter-domain-link-%s" % sap_id,
                                  p2p1id="inter-domain-link-%s-back" % sap_id,
@@ -1630,7 +1629,7 @@ class NFFGToolBox(object):
     if domain not in base_domain:
       log.warning(
         "No node was found in %s with domain: %s for removing! Leave NFFG "
-        "unchanged...")
+        "unchanged..." % (base, domain))
       return base
     deletable = set()
     for infra in base.infras:
