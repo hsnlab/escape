@@ -179,7 +179,7 @@ class AbstractDomainManager(EventMixin):
     :return: None
     """
     # Load and initiate adapters using the initiate_adapters() template func
-    self._load_adapters(configurator=configurator, kwargs=kwargs)
+    self._load_adapters(configurator=configurator, **kwargs)
     # Try to request/parse/update Mininet topology
     if not self._detect_topology():
       log.warning("%s domain not confirmed during init!" % self.domain_name)
@@ -306,7 +306,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     """
     super(AbstractRemoteDomainManager, self).__init__(domain_name=domain_name,
                                                       adapters=adapters,
-                                                      kwargs=kwargs)
+                                                      **kwargs)
     # Timer for polling function
     self.__timer = None
     if 'poll' in kwargs:
@@ -345,7 +345,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     :return: None
     """
     # Load and initiate adapters using the initiate_adapters() template func
-    self._load_adapters(configurator=configurator, kwargs=kwargs)
+    self._load_adapters(configurator=configurator, **kwargs)
     # Skip to start polling if it's set
     if not self._poll:
       # Try to request/parse/update Mininet topology
