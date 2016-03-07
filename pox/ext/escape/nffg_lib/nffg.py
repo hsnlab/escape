@@ -1591,18 +1591,48 @@ class NFFGToolBox(object):
         log.debug("Add connection: %s" % link2)
     # Recreate flowrules based on NBalazs functions
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(nffg=nffg)
-    # import pprint
-    # log.log(5, pprint.pformat(sg_hop_info))
-    # for key, value in sg_hop_info.iteritems():
-    #   src_port = [l.dst for u, v, l in
-    #               sbb.network.out_edges_iter(key[0], data=True) if
-    #               str(l.src.id) == value[0].id and
-    #               str(l.src.node.id) == value[0].node.id]
-    #   src_port = src_port.pop()
-    #   src_port.add_flowrule(match="in_port=%s" % src_port.id,
-    #                         action="output=%s" % src_port.id,
-    #                         bandwidth=value[3], delay=value[4],
-    #                         hop_id=key[2], id=key[2])
+    import pprint
+    log.debug(pprint.pformat(sg_hop_info))
+    for key, value in sg_hop_info.iteritems():
+      sg_src_node = key[0]
+      sg_src_port = value[0].id
+      sg_dst_node = key[1]
+      sg_dst_port = value[1].id
+      fr_bw = value[3]
+      fr_delay = value[4]
+      fr_hop = key[2]
+      sbb_src_port = [l.dst for u, v, l in
+                      sbb.network.out_edges_iter(sg_src_node, data=True) if
+                      l.src.id == sg_src_port and l.src.node.id == sg_src_node]
+      if len(sbb_src_port) < 1:
+        log.warning("No opposite Port(node: %s, id: %s) was found for SG hop: "
+                    "%s in new SingleBiSBiS node" % (
+                      sg_src_node, sg_src_port, fr_hop))
+        continue
+      if len(sbb_src_port) > 1:
+        log.warning("Too much Port(node: %s, id: %s) was found for SG hop: "
+                    "%s in new SingleBiSBiS node: %s" % (
+                      sg_src_node, sg_src_port, fr_hop, sbb_src_port))
+        continue
+      sbb_src_port = sbb_src_port.pop()
+      sbb_dst_port = [l.dst for u, v, l in
+                      sbb.network.out_edges_iter(sg_dst_node, data=True) if
+                      l.src.id == sg_dst_port and l.src.node.id == sg_dst_node]
+      if len(sbb_dst_port) < 1:
+        log.warning("No opposite Port(node: %s, id: %s) was found for SG hop: "
+                    "%s in new SingleBiSBiS node" % (
+                      sg_dst_node, sg_dst_port, fr_hop))
+        continue
+      if len(sbb_dst_port) > 1:
+        log.warning("Too much Port(node: %s, id: %s) was found for SG hop: "
+                    "%s in new SingleBiSBiS node: %s" % (
+                      sg_dst_node, sg_dst_port, fr_hop, sbb_dst_port))
+        continue
+      sbb_dst_port = sbb_dst_port.pop()
+      sbb_src_port.add_flowrule(match="in_port=%s" % sbb_src_port.id,
+                                action="output=%s" % sbb_dst_port.id,
+                                bandwidth=fr_bw, delay=fr_delay,
+                                hop_id=fr_hop, id=fr_hop)
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return sbb
