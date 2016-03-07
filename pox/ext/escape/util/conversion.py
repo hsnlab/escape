@@ -18,7 +18,7 @@ import json
 import string
 import sys
 
-from baseclasses import __version__ as V_VERSION
+from virtualizer import __version__ as V_VERSION
 
 try:
   # Import for ESCAPEv2
@@ -885,7 +885,7 @@ class NFFGConverter(object):
     """
     self.log.debug(
       "START conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
-        3, NFFG.version))
+        V_VERSION, NFFG.version))
     # Already in Virtualizer format
     if isinstance(vdata, virt_lib.Virtualizer):
       virtualizer = vdata
