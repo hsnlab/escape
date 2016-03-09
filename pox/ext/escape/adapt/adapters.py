@@ -852,15 +852,16 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       "Send topology description to domain agent at %s..." % self._base_url)
     log.log(VERBOSE, "Generated Virtualizer:\n%s" % plain_data)
     try:
-      result = self.send_with_timeout(self.POST, 'edit-config', plain_data)
-      log.info("Topology description has been sent!")
-      return result
+      status = self.send_with_timeout(self.POST, 'edit-config', plain_data)
     except Timeout:
       log.warning(
         "Reached timeout(%ss) while waiting for edit-config response! Ignore "
         "exception..." % self.CONNECTION_TIMEOUT)
       # Ignore exception - assume the request was successful -> return True
       return True
+    if status:
+      log.info("Topology description has been sent!")
+    return status
 
   def get_original_topology (self):
     """
@@ -1052,15 +1053,16 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
     log.log(VERBOSE, "Generated NFFG for domain: %s:\n%s" % (self.domain_name,
                                                              data))
     try:
-      result = self.send_with_timeout(self.POST, 'edit-config', data)
-      log.info("Topology description has been sent!")
-      return result
+      status = self.send_with_timeout(self.POST, 'edit-config', data)
     except Timeout:
       log.warning(
         "Reached timeout(%ss) while waiting for edit-config response! Ignore "
         "exception..." % self.CONNECTION_TIMEOUT)
       # Ignore exception - assume the request was successful -> return True
       return True
+    if status:
+      log.info("Topology description has been sent!")
+    return status
 
   def get_topology_resource (self):
     """

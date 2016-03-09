@@ -209,6 +209,6 @@ class ControllerAdaptationAPI(AbstractAPI):
       log.getChild('API').info(
         "NF-FG installation has been finished successfully!")
     else:
-      log.getChild('API').warning(
-        "NF-FG installation has been finished with error: " % event.error)
+      log.getChild('API').error(
+        "NF-FG installation has been finished with error!")
     self.raiseEventNoErrors(InstallationFinishedEvent, event.success)

@@ -1412,7 +1412,7 @@ class NFFGToolBox(object):
     :return: rebounded NFFG
     :rtype: :any:`NFFG`
     """
-    log.info(
+    log.debug(
       "Search for requirement link fragments to rebind as e2e requirement...")
     req_cache = []
 

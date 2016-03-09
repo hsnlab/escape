@@ -180,20 +180,23 @@ class InternalDomainManager(AbstractDomainManager):
     :rtype: bool
     """
     log.info(">>> Install %s domain part..." % self.domain_name)
-    result = True
     try:
       # Mininet domain does not support NF migration directly -->
       # Remove unnecessary and moved NFs first
-      result = result and self._delete_running_nfs(nffg=nffg_part)
-      # then (re)initiate mapped NFs
-      result = result and self._deploy_new_nfs(nffg=nffg_part)
+      result = [
+        self._delete_running_nfs(nffg=nffg_part),
+        # then (re)initiate mapped NFs
+        self._deploy_new_nfs(nffg=nffg_part)
+      ]
       log.info("Perform traffic steering according to mapped tunnels/labels...")
       # OpenFlow flowrule deletion/addition is fairly cheap operations
       # The most robust solution is to delete every flowrule
-      result = result and self._delete_flowrules(nffg=nffg_part)
-      # and (re)add the new ones
-      result = result and self._deploy_flowrules(nffg_part=nffg_part)
-      return result
+      result.extend((
+        self._delete_flowrules(nffg=nffg_part),
+        # and (re)add the new ones
+        self._deploy_flowrules(nffg_part=nffg_part))
+      )
+      return all(result)
     except:
       log.exception("Got exception during NFFG installation into: %s." %
                     self.domain_name)
@@ -213,12 +216,13 @@ class InternalDomainManager(AbstractDomainManager):
       # Infrastructure layer has been cleared.
       log.debug("%s domain has already been cleared!" % self.domain_name)
       return True
-    result = True
-    # Just for sure remove NFs and flowrules
-    result = result and self._delete_running_nfs()
-    result = result and self._delete_flowrules(
-      nffg=self.topoAdapter.get_topology_resource())
-    return result
+    result = (
+      # Just for sure remove NFs
+      self._delete_running_nfs(),
+      # and flowrules
+      self._delete_flowrules(nffg=self.topoAdapter.get_topology_resource())
+    )
+    return all(result)
 
   def _delete_running_nfs (self, nffg=None):
     """
@@ -302,7 +306,7 @@ class InternalDomainManager(AbstractDomainManager):
                     "deletion..." % nf_id)
           result = False
           continue
-    log.debug("NF deletion result: %s" % "SUCCESS" if result else "FAILURE")
+    log.debug("NF deletion result: %s" % ("SUCCESS" if result else "FAILURE"))
     return result
 
   def _deploy_new_nfs (self, nffg):
@@ -538,7 +542,7 @@ class InternalDomainManager(AbstractDomainManager):
         continue
       self.controlAdapter.delete_flowrules(infra.id)
     log.debug("Flowrule deletion result: %s" %
-              "SUCCESS" if result else "FAILURE")
+              ("SUCCESS" if result else "FAILURE"))
     return result
 
   def _deploy_flowrules (self, nffg_part):
@@ -552,7 +556,7 @@ class InternalDomainManager(AbstractDomainManager):
     :return: deploy was successful or not
     :rtype: bool
     """
-    log.info("Deploy flowrules into the domain: %s..." % self.domain_name)
+    log.debug("Deploy flowrules into the domain: %s..." % self.domain_name)
     result = True
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
@@ -615,7 +619,8 @@ class InternalDomainManager(AbstractDomainManager):
 
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match, action)
-    log.debug("Flowrule deploy result: %s" % "SUCCESS" if result else "FAILURE")
+    log.debug("Flowrule deploy result: %s" %
+              ("SUCCESS" if result else "FAILURE"))
     return result
 
 
@@ -697,12 +702,12 @@ class SDNDomainManager(AbstractDomainManager):
     :rtype: bool
     """
     log.info("Install %s domain part..." % self.domain_name)
-    result = True
     try:
-      log.info("NFFG: %s" % nffg_part)
-      result = result and self._delete_flowrules(nffg_part=nffg_part)
-      result = result and self._deploy_flowrules(nffg_part=nffg_part)
-      return result
+      result = (
+        self._delete_flowrules(nffg_part=nffg_part),
+        self._deploy_flowrules(nffg_part=nffg_part)
+      )
+      return all(result)
     except:
       log.exception(
         "Got exception during NFFG installation into: %s." % self.domain_name)
@@ -740,7 +745,7 @@ class SDNDomainManager(AbstractDomainManager):
         continue
       self.controlAdapter.delete_flowrules(infra.id)
     log.debug("Flowrule deletion result: %s" %
-              "SUCCESS" if result else "FAILURE")
+              ("SUCCESS" if result else "FAILURE"))
     return result
 
   def _deploy_flowrules (self, nffg_part):
@@ -754,7 +759,7 @@ class SDNDomainManager(AbstractDomainManager):
     :return: deploy was successful or not
     :rtype: bool
     """
-    log.info("Deploy flowrules into the domain: %s..." % self.domain_name)
+    log.debug("Deploy flowrules into the domain: %s..." % self.domain_name)
     result = True
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
@@ -813,7 +818,8 @@ class SDNDomainManager(AbstractDomainManager):
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match=match,
                                                action=action)
-    log.debug("Flowrule deploy result: %s" % "SUCCESS" if result else "FAILURE")
+    log.debug("Flowrule deploy result: %s" %
+              ("SUCCESS" if result else "FAILURE"))
     return result
 
   def clear_domain (self):
@@ -931,7 +937,7 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
                   "Skip domain resetting..." % self.domain_name)
       return
     log.info("Reset %s domain based on original topology description..." %
-              self.domain_name)
+             self.domain_name)
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
@@ -942,9 +948,14 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
             self.topoAdapter._unify_interface) or \
          isinstance(self.topoAdapter, UnifyRESTAdapter):
         recent_topo = self.topoAdapter.get_config()
-        log.debug("Explicitly calculating diff for domain clearing...")
-        diff = recent_topo.diff(empty_cfg)
-        status = self.topoAdapter.edit_config(data=diff)
+        if recent_topo is not None:
+          log.debug("Explicitly calculating diff for domain clearing...")
+          diff = recent_topo.diff(empty_cfg)
+          status = self.topoAdapter.edit_config(data=diff)
+        else:
+          log.warning("Skip domain resetting: %s! "
+                      "Requested topology is missing!" % self.domain_name)
+          return False
       else:
         status = False
     else:
@@ -1025,17 +1036,16 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     log.info("Install %s domain part..." % self.domain_name)
     try:
       if not self._poll and self._diff:
-        log.debug(
-          "Polling is not enabled. Requesting the most recent topology from "
-          "domain: %s for installation..." % self.domain_name)
+        log.debug("Polling is not enabled. Requesting the most recent topology "
+                  "from domain: %s for installation..." % self.domain_name)
         # Request the most recent topo, which will update the cached
         # last_virtualizer for the diff calculation
         self.topoAdapter.get_config()
       status = self.topoAdapter.edit_config(nffg_part, diff=self._diff)
       return True if status is not None else False
     except:
-      log.exception(
-        "Got exception during NFFG installation into: %s." % self.domain_name)
+      log.exception("Got exception during NFFG installation into: %s." %
+                    self.domain_name)
       return False
 
   def clear_domain (self):
@@ -1047,12 +1057,11 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
-      log.warning(
-        "Missing original topology in %s domain! Skip domain resetting..." %
-        self.domain_name)
+      log.warning("Missing original topology in %s domain! "
+                  "Skip domain resetting..." % self.domain_name)
       return
     log.info("Reset %s domain based on original topology description..." %
-              self.domain_name)
+             self.domain_name)
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
@@ -1060,9 +1069,14 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       log.debug("Polling is not enabled. Requesting the most recent topology "
                 "from domain: %s for domain clearing..." % self.domain_name)
       recent_topo = self.topoAdapter.get_config()
-      log.debug("Explicitly calculating diff for domain clearing...")
-      diff = recent_topo.diff(empty_cfg)
-      status = self.topoAdapter.edit_config(data=diff, diff=False)
+      if recent_topo is not None:
+        log.debug("Explicitly calculating diff for domain clearing...")
+        diff = recent_topo.diff(empty_cfg)
+        status = self.topoAdapter.edit_config(data=diff, diff=False)
+      else:
+        log.warning("Skip domain resetting: %s! "
+                    "Requested topology is missing!" % self.domain_name)
+        return False
     else:
       status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
     return True if status is not None else False
