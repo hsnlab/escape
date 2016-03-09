@@ -406,20 +406,19 @@ class ControllerAdapter(object):
               "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       log.debug("Delegate splitted part: %s to %s" % (part, domain_mgr))
       # Check if need to reset domain before install
-      reset = CONFIG.reset_domains_before_install()
-      if reset:
+      if CONFIG.reset_domains_before_install():
         log.info(
           "Reset %s domain before deploying mapped NFFG..." %
           domain_mgr.domain_name)
         domain_mgr.clear_domain()
       # Invoke DomainAdapter's install
       res = domain_mgr.install_nffg(part)
-      # Note result according to others before
-      mapping_result = mapping_result and res
       # Update the DoV based on the mapping result covering some corner case
       if not res:
         log.warning(
           "Installation of %s in %s was unsuccessful!" % (part, domain))
+      # Note result according to others before
+      mapping_result = mapping_result and res
       # If installation of the domain was performed without error
       if not res:
         log.warning("Skip DoV update for domain: %s..." % domain)
