@@ -20,7 +20,7 @@ import pprint
 
 from ncclient import NCClientError
 
-from escape.adapt.adapters import RemoteESCAPEv2RESTAdapter
+from escape.adapt.adapters import RemoteESCAPEv2RESTAdapter, UnifyRESTAdapter
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from pox.lib.util import dpid_to_str
@@ -900,38 +900,37 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
 
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
-    :return: None
+    :return: installation was success or not
+    :rtype: bool
     """
-    # nffg_part = self._update_nffg(nffg_part.copy())
     log.info("Install %s domain part..." % self.domain_name)
     try:
       if not self._poll and self._diff:
-        log.debug(
-          "Polling is not enabled. Requesting the most recent topology from "
-          "domain: %s for installation..." % self.domain_name)
+        log.debug("Polling is not enabled. Requesting the most recent topology "
+                  "from domain: %s for installation..." % self.domain_name)
         # Request the most recent topo, which will update the cached
         # last_virtualizer for the diff calculation
         self.topoAdapter.get_config()
       status = self.topoAdapter.edit_config(nffg_part, diff=self._diff)
       return True if status is not None else False
     except:
-      log.exception(
-        "Got exception during NFFG installation into: %s." % self.domain_name)
+      log.exception("Got exception during NFFG installation into: %s." %
+                    self.domain_name)
       return False
 
   def clear_domain (self):
     """
     Reset remote domain based on the original (first response) topology.
 
-    :return: None
+    :return: cleanup result
+    :rtype: bool
     """
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
-      log.warning(
-        "Missing original topology in %s domain! Skip domain resetting..." %
-        self.domain_name)
+      log.warning("Missing original topology in %s domain! "
+                  "Skip domain resetting..." % self.domain_name)
       return
-    log.debug("Reset %s domain based on original topology description..." %
+    log.info("Reset %s domain based on original topology description..." %
               self.domain_name)
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute
@@ -939,14 +938,18 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     if not self._poll and self._diff:
       log.debug("Polling is not enabled. Requesting the most recent topology "
                 "from domain: %s for domain clearing..." % self.domain_name)
-      if isinstance(self.topoAdapter, RemoteESCAPEv2RESTAdapter) and \
-         self.topoAdapter._unify_interface:
+      if (isinstance(self.topoAdapter, RemoteESCAPEv2RESTAdapter) and
+            self.topoAdapter._unify_interface) or \
+         isinstance(self.topoAdapter, UnifyRESTAdapter):
         recent_topo = self.topoAdapter.get_config()
-        log.debug("Calculating diff for domain clearing...")
+        log.debug("Explicitly calculating diff for domain clearing...")
         diff = recent_topo.diff(empty_cfg)
-        self.topoAdapter.edit_config(data=diff)
+        status = self.topoAdapter.edit_config(data=diff)
+      else:
+        status = False
     else:
-      self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
+      status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
+    return True if status is not None else False
 
 
 class UnifyDomainManager(AbstractRemoteDomainManager):
@@ -1039,7 +1042,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     Reset remote domain based on the original (first response) topology.
 
-    :return: None
+    :return: cleanup result
+    :rtype: bool
     """
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
@@ -1047,7 +1051,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         "Missing original topology in %s domain! Skip domain resetting..." %
         self.domain_name)
       return
-    log.debug("Reset %s domain based on original topology description..." %
+    log.info("Reset %s domain based on original topology description..." %
               self.domain_name)
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute
@@ -1056,11 +1060,12 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       log.debug("Polling is not enabled. Requesting the most recent topology "
                 "from domain: %s for domain clearing..." % self.domain_name)
       recent_topo = self.topoAdapter.get_config()
-      log.debug("Calculating diff for domain clearing...")
+      log.debug("Explicitly calculating diff for domain clearing...")
       diff = recent_topo.diff(empty_cfg)
-      self.topoAdapter.edit_config(data=diff, diff=False)
+      status = self.topoAdapter.edit_config(data=diff, diff=False)
     else:
-      self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
+      status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
+    return True if status is not None else False
 
 
 class OpenStackDomainManager(UnifyDomainManager):

@@ -732,12 +732,11 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     """
     conn = self.openflow.getConnection(dpid=self.infra_to_dpid[id])
     if not conn:
-      log.warning(
-        "Missing connection for node element: %s! Skip deletion of flowrules..."
-        % id)
+      log.warning("Missing connection for node element: %s! "
+                  "Skip deletion of flowrules..." % id)
       return
-    log.debug(
-      "Delete flow entries from INFRA %s on connection: %s ..." % (id, conn))
+    log.debug("Delete flow entries from INFRA %s on connection: %s ..." %
+              (id, conn))
     msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
     conn.send(msg)
 
