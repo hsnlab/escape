@@ -844,7 +844,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.debug("Generating diff of mapping changes...")
       vdata = self.last_virtualizer.diff(target=vdata)
     else:
-      log.debug("Using the full Virtualizer as mapping request")
+      log.debug("Using given Virtualizer as full mapping request")
     plain_data = vdata.xml()
     log.debug("Send NFFG to %s domain agent at %s..." % (
       self.domain_name, self._base_url))

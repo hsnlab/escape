@@ -82,7 +82,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
         if sg.is_bare():
           log.warning("No VNF or Flowrule has been detected in SG request! "
                       "Skip orchestration in layer: %s and proceed with the "
-                      "bare NFFG..." % LAYER_NAME)
+                      "bare %s..." % (LAYER_NAME, sg))
           if sg.is_virtualized():
             if sg.is_SBB():
               log.debug("Request is a bare SingleBiSBiS representation!")
