@@ -18,8 +18,6 @@ import json
 import string
 import sys
 
-from virtualizer import __version__ as V_VERSION
-
 try:
   # Import for ESCAPEv2
   from escape.nffg_lib.nffg import AbstractNFFG, NFFG
@@ -27,7 +25,7 @@ try:
 except ImportError:
   import os, inspect
 
-  sys.path.insert(0, os.path.join(os.path.abspath(
+  sys.path.append(os.path.join(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../../../..")),
     "pox/ext/escape/nffg_lib/"))
   # Import for standalone running
@@ -36,16 +34,16 @@ except ImportError:
 try:
   # Import for ESCAPEv2
   import virtualizer as virt_lib
-  from virtualizer import Flowentry
+  from virtualizer import __version__ as V_VERSION
 except ImportError:
   import os, inspect
 
-  sys.path.insert(0, os.path.join(os.path.abspath(
+  sys.path.append(os.path.join(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../../../..")),
     "unify_virtualizer"))
   # Import for standalone running
   import virtualizer as virt_lib
-  from virtualizer import Flowentry
+  from virtualizer import __version__ as V_VERSION
 
 
 class NFFGConverter(object):
@@ -1396,9 +1394,9 @@ class NFFGConverter(object):
           else:
             v_fe_name = None
           # Add Flowentry with converted params
-          virt_fe = Flowentry(id=fe_id, priority=fe_pri, port=in_port,
-                              match=match, action=action, out=out_port,
-                              resources=_resources, name=v_fe_name)
+          virt_fe = virt_lib.Flowentry(id=fe_id, priority=fe_pri, port=in_port,
+                                       match=match, action=action, out=out_port,
+                                       resources=_resources, name=v_fe_name)
           self.log.log(VERBOSE,
                        "Generated Flowentry:\n%s" % v_node.flowtable.add(
                          virt_fe))
