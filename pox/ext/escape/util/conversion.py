@@ -632,8 +632,8 @@ class NFFGConverter(object):
         if not flowentry.name.get_as_text().startswith(self.TAG_SG_HOP):
           self.log.warning(
             "Flowrule's name: %s is not following the SG hop naming "
-            "convention! SG hop for %s is undefined...") % (
-            flowentry.name.get_as_text(), flowentry)
+            "convention! SG hop for %s is undefined..." % (
+            flowentry.name.get_as_text(), flowentry))
         try:
           fr_hop_id = int(flowentry.name.get_as_text().split(':')[1])
         except ValueError:
