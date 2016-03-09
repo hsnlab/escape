@@ -2,7 +2,14 @@
 import networkx as nx
 
 import viewer_thread as vt
-import nffg as ng
+
+try:
+  from nffg import NFFG
+except ImportError:
+  import sys, os
+
+  sys.path.insert(0, os.path.abspath("../pox/ext/escape/nffg_lib"))
+  from nffg import NFFG
 
 if __name__ == '__main__':
   # creating basic network graph
@@ -20,7 +27,7 @@ if __name__ == '__main__':
     string = f.read()
     f.close()
     # print string
-    nfg = ng.NFFG.parse(string)
+    nfg = NFFG.parse(string)
 
     G = nfg.network
     G = nx.MultiDiGraph()
