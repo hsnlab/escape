@@ -236,7 +236,7 @@ def MAP (request, network, full_remap=False,
   # data is the paths (with link ID-s) where the request links are mapped.
   helper.log.info("The VNF mappings are (vnf_id, node_id): \n%s" % pformat(
      alg.manager.vnf_mapping))
-  helper.log.info("The link mappings are: \n%s" % pformat(
+  helper.log.debug("The link mappings are: \n%s" % pformat(
      alg.manager.link_mapping.edges(data=True, keys=True)))
 
   if return_dist:
