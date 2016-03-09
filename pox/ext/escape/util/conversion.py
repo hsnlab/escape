@@ -627,17 +627,18 @@ class NFFGConverter(object):
         fr_bw = fr_delay = None
 
       # Get hop_id
-      fr_hop_id = None
       if flowentry.name.is_initialized():
         if not flowentry.name.get_as_text().startswith(self.TAG_SG_HOP):
           self.log.warning(
             "Flowrule's name: %s is not following the SG hop naming "
             "convention! SG hop for %s is undefined..." % (
-            flowentry.name.get_as_text(), flowentry))
-        try:
-          fr_hop_id = int(flowentry.name.get_as_text().split(':')[1])
-        except ValueError:
-          fr_hop_id = flowentry.name.get_as_text().split(':')[1]
+              flowentry.name.get_as_text(), flowentry))
+          fr_hop_id = None
+        else:
+          try:
+            fr_hop_id = int(flowentry.name.get_as_text().split(':')[1])
+          except ValueError:
+            fr_hop_id = flowentry.name.get_as_text().split(':')[1]
 
       # Add flowrule to port
       fr = vport.add_flowrule(id=fr_id, match=fr_match, action=fr_action,
