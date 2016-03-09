@@ -376,7 +376,8 @@ class ControllerAdapter(object):
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: NFFG
-    :return: None or internal domain NFFG part
+    :return: mapping result
+    :rtype: bool
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
@@ -387,8 +388,8 @@ class ControllerAdapter(object):
       log.warning("Given mapped NFFG: %s can not be sliced! "
                   "Skip domain notification steps" % mapped_nffg)
       return
-    log.debug(
-      "Notify initiated domains: %s" % [d for d in self.domains.initiated])
+    log.debug("Notify initiated domains: %s" %
+              [d for d in self.domains.initiated])
     # TODO - abstract/inter-domain tag rewrite
     # NFFGToolBox.rewrite_interdomain_tags(slices)
     mapping_result = True
@@ -398,30 +399,28 @@ class ControllerAdapter(object):
       # Get Domain Manager
       domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
       if domain_mgr is None:
-        log.warning(
-          "No DomainManager has been initialized for domain: %s! Skip install "
-          "domain part..." % domain)
+        log.warning("No DomainManager has been initialized for domain: %s! "
+                    "Skip install domain part..." % domain)
         continue
-      log.log(VERBOSE,
-              "Splitted domain: %s part:\n%s" % (domain, part.dump()))
+      log.log(VERBOSE, "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       log.debug("Delegate splitted part: %s to %s" % (part, domain_mgr))
       # Check if need to reset domain before install
       if CONFIG.reset_domains_before_install():
-        log.info(
-          "Reset %s domain before deploying mapped NFFG..." %
-          domain_mgr.domain_name)
+        log.info("Reset %s domain before deploying mapped NFFG..." %
+                 domain_mgr.domain_name)
         domain_mgr.clear_domain()
       # Invoke DomainAdapter's install
       res = domain_mgr.install_nffg(part)
       # Update the DoV based on the mapping result covering some corner case
       if not res:
-        log.warning(
-          "Installation of %s in %s was unsuccessful!" % (part, domain))
+        log.warning("Installation of %s in %s was unsuccessful!" %
+                    (part, domain))
       # Note result according to others before
       mapping_result = mapping_result and res
       # If installation of the domain was performed without error
       if not res:
-        log.warning("Skip DoV update for domain: %s..." % domain)
+        log.warning("Skip DoV update for domain: %s! Cause: "
+                    "Installation was unsuccessful!" % domain)
         continue
       # If the domain manager does not poll the domain update here
       # else polling takes care of domain updating

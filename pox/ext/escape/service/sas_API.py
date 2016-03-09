@@ -307,10 +307,9 @@ class ServiceLayerAPI(AbstractAPI):
     handler.log.debug("Init REST-API for %s on %s:%s!" % (
       self.rest_api.api_id, address[0], address[1]))
     self.rest_api.start()
-    handler.log.debug(
-      "Enforced configuration for %s: interface: %s" % (
-        self.rest_api.api_id,
-        "UNIFY" if handler.virtualizer_format_enabled else"Internal-NFFG"))
+    handler.log.debug("Enforced configuration for %s: interface: %s" % (
+      self.rest_api.api_id,
+      "UNIFY" if handler.virtualizer_format_enabled else"Internal-NFFG"))
 
   def _initiate_gui (self):
     """

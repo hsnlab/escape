@@ -151,15 +151,15 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, mapped_nffg))
     try:
-      self.controller_adapter.install_nffg(mapped_nffg)
+      install_result = self.controller_adapter.install_nffg(mapped_nffg)
     except Exception as e:
       log.error("Something went wrong during NFFG installation!")
       self.raiseEventNoErrors(InstallationFinishedEvent, result=False, error=e)
       raise
-    log.getChild('API').debug(
-      "Invoked install_nffg on %s is finished" % self.__class__.__name__)
+    log.getChild('API').debug("Invoked install_nffg on %s is finished" %
+                              self.__class__.__name__)
     self.raiseEventNoErrors(InstallationFinishedEvent, id=mapped_nffg.id,
-                            result=True)
+                            result=install_result)
 
   ##############################################################################
   # UNIFY ( Ca - ) Co - Rm API functions starts here
