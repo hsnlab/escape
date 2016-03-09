@@ -176,7 +176,8 @@ class InternalDomainManager(AbstractDomainManager):
 
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
-    :return: None
+    :return: installation was success or not
+    :rtype: bool
     """
     log.info(">>> Install %s domain part..." % self.domain_name)
     result = True
@@ -204,16 +205,20 @@ class InternalDomainManager(AbstractDomainManager):
 
     Skip cleanup process here.
 
-    :return: None
+    :return: cleanup result
+    :rtype: bool
     """
     if not self.topoAdapter.check_domain_reachable():
       # This would be the normal behaviour if ESCAPEv2 is shutting down -->
       # Infrastructure layer has been cleared.
       log.debug("%s domain has already been cleared!" % self.domain_name)
-      return
+      return True
+    result = True
     # Just for sure remove NFs and flowrules
-    self._delete_running_nfs()
-    self._delete_flowrules(nffg=self.topoAdapter.get_topology_resource())
+    result = result and self._delete_running_nfs()
+    result = result and self._delete_flowrules(
+      nffg=self.topoAdapter.get_topology_resource())
+    return result
 
   def _delete_running_nfs (self, nffg=None):
     """
@@ -227,7 +232,7 @@ class InternalDomainManager(AbstractDomainManager):
     If the ``nffg`` parameter is not given, skip the NF migration detection
     and remove all non-existent NF by default.
 
-    :param nffg: the last mapped request
+    :param nffg: the last mapped NFFG part
     :type nffg: :any:`NFFG`
     :return: deletion was successful or not
     :rtype: bool
@@ -307,7 +312,7 @@ class InternalDomainManager(AbstractDomainManager):
     If an NF is already defined in the topology and it's state is up and
     running then the actual NF's initiation will be skipped!
 
-    :param nffg: NF-FG need to be deployed
+    :param nffg: container NF-FG part need to be deployed
     :type nffg: :any:`NFFG`
     :return: deploy was successful or not
     :rtype: bool
@@ -492,6 +497,11 @@ class InternalDomainManager(AbstractDomainManager):
   def _delete_flowrules (self, nffg):
     """
     Delete all flowrules from the first (default) table of all infras.
+
+    :param nffg: last mapped NFFG part
+    :type nffg: :any:`NFFG`
+    :return: deletion was successful or not
+    :rtype: bool
     """
     log.debug("Reset domain steering and delete installed flowrules...")
     result = True
@@ -537,9 +547,10 @@ class InternalDomainManager(AbstractDomainManager):
 
     If a flowrule is already defined it will be updated.
 
-    :param nffg_part: NF-FG need to be deployed
+    :param nffg_part: NF-FG part need to be deployed
     :type nffg_part: :any:`NFFG`
-    :return: None
+    :return: deploy was successful or not
+    :rtype: bool
     """
     log.info("Deploy flowrules into the domain: %s..." % self.domain_name)
     result = True
@@ -682,14 +693,16 @@ class SDNDomainManager(AbstractDomainManager):
 
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
-    :return: None
+    :return: installation was success or not
+    :rtype: bool
     """
+    log.info("Install %s domain part..." % self.domain_name)
+    result = True
     try:
-      log.info("Install %s domain part..." % self.domain_name)
       log.info("NFFG: %s" % nffg_part)
-      self._delete_flowrules(nffg_part=nffg_part)
-      self._deploy_flowrules(nffg_part=nffg_part)
-      return True
+      result = result and self._delete_flowrules(nffg_part=nffg_part)
+      result = result and self._deploy_flowrules(nffg_part=nffg_part)
+      return result
     except:
       log.exception(
         "Got exception during NFFG installation into: %s." % self.domain_name)
@@ -699,10 +712,14 @@ class SDNDomainManager(AbstractDomainManager):
     """
     Delete all flowrules from the first (default) table of all infras.
 
-    :return: None
+    :param nffg_part: last mapped NFFG part
+    :type nffg_part: :any:`NFFG`
+    :return: deletion was successful or not
+    :rtype: bool
     """
     log.debug("Removing flowrules...")
     # Iter through the container INFRAs in the given mapped NFFG part
+    result = True
     for infra in nffg_part.infras:
       if infra.infra_type not in (
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
@@ -712,15 +729,19 @@ class SDNDomainManager(AbstractDomainManager):
       try:
         dpid = self.controlAdapter.infra_to_dpid[infra.id]
       except KeyError as e:
-        log.warning(
-          "Missing DPID for Infra(id: %s)! Skip deletion of flowrules" % e)
+        log.warning("Missing DPID for Infra(id: %s)! Skip deletion of flowrules"
+                    % e)
+        result = False
         continue
       if self.controlAdapter.openflow.getConnection(dpid) is None:
-        log.warning(
-          "Skipping DELETE flowrules! Cause: connection for %s - DPID: %s is "
-          "not found!" % (infra, dpid_to_str(dpid)))
+        log.warning("Skipping DELETE flowrules! Cause: connection for %s - "
+                    "DPID: %s is not found!" % (infra, dpid_to_str(dpid)))
+        result = False
         continue
       self.controlAdapter.delete_flowrules(infra.id)
+    log.debug("Flowrule deletion result: %s" %
+              "SUCCESS" if result else "FAILURE")
+    return result
 
   def _deploy_flowrules (self, nffg_part):
     """
@@ -730,8 +751,11 @@ class SDNDomainManager(AbstractDomainManager):
 
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
-    :return: None
+    :return: deploy was successful or not
+    :rtype: bool
     """
+    log.info("Deploy flowrules into the domain: %s..." % self.domain_name)
+    result = True
     # Remove unnecessary SG and Requirement links to avoid mess up port
     # definition of NFs
     nffg_part.clear_links(NFFG.TYPE_LINK_SG)
@@ -739,37 +763,37 @@ class SDNDomainManager(AbstractDomainManager):
     # Get physical topology description from POX adapter
     topo = self.topoAdapter.get_topology_resource()
     if topo is None:
-      log.warning(
-        "Missing topology description from %s domain! Skip deploying "
-        "flowrules..." % self.domain_name)
-      return
+      log.warning("Missing topology description from %s domain! "
+                  "Skip deploying flowrules..." % self.domain_name)
+      return False
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg_part.infras:
       if infra.infra_type not in (
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
          NFFG.TYPE_INFRA_SDN_SW):
-        log.debug(
-          "Infrastructure Node: %s (type: %s) is not Switch or Container type!"
-          " Continue to next Node..." % (infra.short_name, infra.infra_type))
+        log.debug("Infrastructure Node: %s (type: %s) is not Switch or "
+                  "Container type! Continue to next Node..." %
+                  (infra.short_name, infra.infra_type))
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in topo.infras):
-        log.error("Infrastructure Node: %s is not found in the %s domain! Skip"
-                  " flowrule install on this Node..." % (
-                    infra.short_name, self.domain_name))
+        log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
+                  "flowrule install on this Node..." %
+                  (infra.short_name, self.domain_name))
+        result = False
         continue
       # Check the OF connection is alive
       try:
         dpid = self.controlAdapter.infra_to_dpid[infra.id]
       except KeyError as e:
-        log.warning(
-          "Missing DPID for Infra(id: %s)! Skip deploying flowrules for "
-          "Infra" % e)
+        log.warning("Missing DPID for Infra(id: %s)! "
+                    "Skip deploying flowrules for Infra" % e)
+        result = False
         continue
       if self.controlAdapter.openflow.getConnection(dpid) is None:
-        log.warning(
-          "Skipping INSTALL flowrule! Cause: connection for %s - DPID: %s is "
-          "not found!" % (infra, dpid_to_str(dpid)))
+        log.warning("Skipping INSTALL flowrule! Cause: connection for %s - "
+                    "DPID: %s is not found!" % (infra, dpid_to_str(dpid)))
+        result = False
         continue
       for port in infra.ports:
         for flowrule in port.flowrules:
@@ -777,24 +801,27 @@ class SDNDomainManager(AbstractDomainManager):
             match = NFFGConverter.field_splitter(type="MATCH",
                                                  field=flowrule.match)
             if "in_port" not in match:
-              log.warning(
-                "Missing in_port field from match field! Using container "
-                "port number...")
+              log.warning("Missing in_port field from match field! "
+                          "Using container port number...")
               match["in_port"] = port.id
             action = NFFGConverter.field_splitter(type="ACTION",
                                                   field=flowrule.action)
           except RuntimeError as e:
             log.warning("Wrong format in match/action field: %s" % e)
+            result = False
             continue
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match=match,
                                                action=action)
+    log.debug("Flowrule deploy result: %s" % "SUCCESS" if result else "FAILURE")
+    return result
 
   def clear_domain (self):
     """
     Delete all flowrule in the registered SDN/OF switches.
 
-    :return: None
+    :return: cleanup result
+    :rtype: bool
     """
     log.debug("Clear all flowrules from switches registered in SDN domain...")
     # Delete all flowrules in the Infra nodes defined the topology file.
@@ -803,7 +830,7 @@ class SDNDomainManager(AbstractDomainManager):
       log.warning("SDN topology is missing! Skip domain resetting...")
       return
     # Remove flowrules
-    self._delete_flowrules(nffg_part=sdn_topo)
+    return self._delete_flowrules(nffg_part=sdn_topo)
 
 
 class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
