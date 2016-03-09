@@ -484,6 +484,5 @@ class ServiceLayerAPI(AbstractAPI):
       log.getChild('API').info(
         "Service request(id=%s) has been finished successfully!" % event.id)
     else:
-      log.getChild('API').info(
-        "Service request(id=%s) has been finished with error: %s" % (
-          event.id, event.error))
+      log.getChild('API').error(
+        "Service request(id=%s) has been finished with error!" % event.id)

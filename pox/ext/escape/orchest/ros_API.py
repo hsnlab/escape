@@ -701,7 +701,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.getChild('API').info(
         "NF-FG instantiation has been finished successfully!")
     else:
-      log.getChild('API').info(
-        "NF-FG instantiation has been finished with error: %s" % event.error)
+      log.getChild('API').error(
+        "NF-FG instantiation has been finished with error!")
     self.raiseEventNoErrors(InstantiationFinishedEvent, id=event.id,
                             result=event.result)
