@@ -630,7 +630,7 @@ class NFFGConverter(object):
       fr_hop_id = None
       if flowentry.name.is_initialized():
         if not flowentry.name.get_as_text().startswith(self.TAG_SG_HOP):
-          log.warning(
+          self.log.warning(
             "Flowrule's name: %s is not following the SG hop naming "
             "convention! SG hop for %s is undefined...") % (
             flowentry.name.get_as_text(), flowentry)
