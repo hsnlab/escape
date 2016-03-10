@@ -35,6 +35,7 @@ if __name__ == '__main__':
     G.add_node('1')
 
   # creating thread
-  t_view = vt.ViewerThread(viewer_type="get", graph=G)
+  # t_view = vt.ViewerThread(viewer_type="get", graph=G)
+  t_view = vt.ViewerThread(viewer_type="get")
   t_view.start()
   # t_view.join()

@@ -13,11 +13,10 @@ class GetClient():
     self.__nffg = None
 
   def getNFFG (self, address=None):
-    if not address == None:
+    if address is not None:
       self.__address = address
     try:
-      if not "http://" in self.__address[:7] \
-         and not "https://" in self.__address:
+      if not ("http://" in self.__address[:7] or "https://" in self.__address):
         self.__address = 'http://' + self.__address
       scheme, netloc, path, params, query, fragment = url.urlparse(
         self.__address)
