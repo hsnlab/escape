@@ -17,12 +17,18 @@ except ImportError:
 
 from networkx_viewer import *
 
+DEFAULT_URL = "http://localhost:8888/escape/get-config"
+
 
 class SetterDialog(tkd.Dialog):
+  """
+  Setter Dialog
+  """
+
   def body (self, master):
     tk.Label(master, text="URL: ").grid(row=0)
     self.e1 = tk.Entry(master, width=40)
-    self.e1.insert(END, "http://localhost:8888/escape/get-config")
+    self.e1.insert(END, DEFAULT_URL)
     self.e1.grid(row=0, column=1)
     return self.e1
 
@@ -34,11 +40,15 @@ class SetterDialog(tkd.Dialog):
 
 
 class CustomViewerCanvas(ViewerApp):
+  """
+  Main Window
+  """
+
   def __init__ (self, graph, **kwargs):
     self.__kwargs = kwargs
     ViewerApp.__init__(self, graph, NodeTokenClass=CustomNodeToken,
                        EdgeTokenClass=CustomEdgeToken, **kwargs)
-    self.url = None
+    self.url = DEFAULT_URL
 
     # Building menu
     tools = tk.Menu(self.menubar, tearoff=0)

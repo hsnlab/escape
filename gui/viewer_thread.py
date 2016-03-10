@@ -28,21 +28,20 @@ class ViewerThread(threading.Thread):
     Takes a networkx object and launches a GUI to view the parameters
     of the network using networkx_viewer
     '''
+    self.__viewer = None
     # handling other parameters
     self.__http_client = None
     self.__timer = None
-    graph = None
     if graph is None:
       graph = nx.MultiDiGraph()
       graph.add_node(1, {'name': 'Set URL'})
       graph.add_node(2, {'name': 'to view NFFG'})
       graph.add_edge(1, 2)
-
     self.__network = graph
     if viewer_type == 'get':
-      self.__timer = threading.Timer(1, self.timerHandler)
       self.__http_client = http.GetClient()
-    self.__update = False
+      self.__timer = threading.Timer(1, self.timerHandler)
+    # self.__update = False
     self._converter = NFFGConverter(logger=logging.getLogger(__name__))
 
   def timerHandler (self):
@@ -112,17 +111,13 @@ class ViewerThread(threading.Thread):
 
   def run (self):
     # Modified Node renderer
+    self.__viewer = vCanvas.CustomViewerCanvas(self.__network)
     if self.__timer:
       self.__timer.start()
-      pass
-    self.__viewer = vCanvas.CustomViewerCanvas(self.__network)
-    should_continue = True
     try:
-      while should_continue:
-        # self.__viewer.update_idletasks()
-        # self.__viewer.update()
-        self.__viewer.mainloop()
-        break
+      # self.__viewer.update_idletasks()
+      # self.__viewer.update()
+      self.__viewer.mainloop()
     except:
       self.__timer.cancel()
     self.__timer.cancel()
