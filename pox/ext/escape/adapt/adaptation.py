@@ -427,7 +427,7 @@ class ControllerAdapter(object):
       if isinstance(domain_mgr,
                     AbstractRemoteDomainManager) and domain_mgr._poll:
         log.info("Skip explicit DoV update for domain: %s. "
-                 "Cause: polling enabled!")
+                 "Cause: polling enabled!" % domain)
         continue
       # If the internalDM is the only initiated mgr, we can override the
       # whole DoV
