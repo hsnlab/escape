@@ -420,7 +420,7 @@ class ControllerAdapter(object):
       # If installation of the domain was performed without error
       if not res:
         log.warning("Skip DoV update with domain: %s! Cause: "
-                    "Installation was unsuccessful!" % domain)
+                    "Domain installation was unsuccessful!" % domain)
         continue
       # If the domain manager does not poll the domain update here
       # else polling takes care of domain updating
@@ -515,8 +515,7 @@ class GlobalResourceManager(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    log.debug(
-      "Update the whole Global view (DoV) with the NFFG: %s..." % nffg)
+    log.debug("Update the whole Global view (DoV) with the NFFG: %s..." % nffg)
     self.dov.update_full_global_view(nffg=nffg)
     self.__tracked_domains.clear()
     self.__tracked_domains.update(NFFGToolBox.detect_domains(nffg))
@@ -562,10 +561,10 @@ class GlobalResourceManager(object):
     if domain in self.__tracked_domains:
       log.info("Update domain: %s in DoV..." % domain)
       if self._remerge:
-        log.debug("Using REMERGE strategy for updating DoV...")
+        log.debug("Using REMERGE strategy for DoV update...")
         self.__dov.remerge_domain_in_dov(domain=domain, nffg=nffg)
       else:
-        log.debug("Using UPDATE strategy for updating DoV...")
+        log.debug("Using UPDATE strategy for DoV update...")
         self.__dov.update_domain_in_dov(domain=domain, nffg=nffg)
     else:
       log.error(

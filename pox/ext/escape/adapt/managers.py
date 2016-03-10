@@ -933,8 +933,8 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     """
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
-      log.warning("Missing original topology in %s domain! "
-                  "Skip domain resetting..." % self.domain_name)
+      log.error("Missing original topology in %s domain! "
+                "Skip domain resetting..." % self.domain_name)
       return
     log.info("Reset %s domain based on original topology description..." %
              self.domain_name)
@@ -953,8 +953,8 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
           diff = recent_topo.diff(empty_cfg)
           status = self.topoAdapter.edit_config(data=diff)
         else:
-          log.warning("Skip domain resetting: %s! "
-                      "Requested topology is missing!" % self.domain_name)
+          log.error("Skip domain resetting: %s! "
+                    "Requested topology is missing!" % self.domain_name)
           return False
       else:
         status = False
@@ -1057,8 +1057,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
-      log.warning("Missing original topology in %s domain! "
-                  "Skip domain resetting..." % self.domain_name)
+      log.error("Missing original topology in %s domain! "
+                "Skip domain resetting..." % self.domain_name)
       return
     log.info("Reset %s domain based on original topology description..." %
              self.domain_name)
@@ -1074,8 +1074,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         diff = recent_topo.diff(empty_cfg)
         status = self.topoAdapter.edit_config(data=diff, diff=False)
       else:
-        log.warning("Skip domain resetting: %s! "
-                    "Requested topology is missing!" % self.domain_name)
+        log.error("Skip domain resetting: %s! "
+                  "Requested topology is missing!" % self.domain_name)
         return False
     else:
       status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
