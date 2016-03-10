@@ -8,7 +8,8 @@ try:
 except ImportError:
   import sys, os
 
-  sys.path.insert(0, os.path.abspath("../pox/ext/escape/nffg_lib"))
+  sys.path.append(os.path.abspath(os.path.dirname(__file__) +
+                                  "/../pox/ext/escape/nffg_lib/"))
   from nffg import NFFG
 
 if __name__ == '__main__':
