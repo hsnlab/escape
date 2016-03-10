@@ -114,15 +114,6 @@ def MAP (request, network, full_remap=False,
   edgereqlist = []
   for req in request.reqs:
     edgereqlist.append(req)
-    converted_sg_path = []
-    for sgid in req.sg_path:
-      newsgid = sgid
-      try:
-        newsgid = int(sgid)
-      except ValueError:
-        pass
-      converted_sg_path.append(newsgid)
-    req.sg_path = converted_sg_path
     request.del_edge(req.src, req.dst, req.id)
 
   if len(edgereqlist) != 0 and not sg_hops_given:
@@ -143,6 +134,10 @@ def MAP (request, network, full_remap=False,
         if sg_link.id == req.sg_path[0]:
           reqlink = sg_link
           break
+      if reqlink is None:
+        helper.log.warn("EdgeSGLink object not found for EdgeSGLink ID %s! "
+                        "(maybe ID-s stored in EdgeReq.sg_path are not the "
+                        "same type as EdgeSGLink ID-s?)")
       if req.delay is not None:
         setattr(reqlink, 'delay', req.delay)
       if req.bandwidth is not None:

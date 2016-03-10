@@ -298,32 +298,47 @@ class GraphPreprocessorClass(object):
           link_ids = []
           subc_path = [vnf]
           last_vnf = vnf
-          for i, j in nx.dfs_edges(best_effort_graph, vnf):
-            if last_vnf == i:
-              # no matter which link did the DFS take if there were multiple
-              # edges left between i and j in the best_effort_graph
-              linkid = next(best_effort_graph[i][j].iterkeys())
-              if len(best_effort_graph[i][j][linkid]['color']) != 0:
-                raise uet.InternalAlgorithmException(
-                   "There should not be colored edges left in the helper "
-                   "request graph after rechaining all not best effort links!")
-              link_ids.append(linkid)
-              subc_path.append(j)
-              last_vnf = j
-              if not self.rechained[j]:
-                self.rechained[j] = True
+          while True:
+            for i, j in nx.dfs_edges(best_effort_graph, vnf):
+              if last_vnf == i:
+                # no matter which link did the DFS take if there were multiple
+                # edges left between i and j in the best_effort_graph
+                linkid = next(best_effort_graph[i][j].iterkeys())
+                if len(best_effort_graph[i][j][linkid]['color']) != 0:
+                  raise uet.InternalAlgorithmException(
+                     "There should not be colored edges left in the helper "
+                     "request graph after rechaining all not best effort links!")
+                link_ids.append(linkid)
+                subc_path.append(j)
+                last_vnf = j
+                if self.rechained[j]:
+                  break
+                if subc_path.count(j) == 2:
+                  self.rechained[j] = True
+                  break
               else:
+                # don't go further if the DFS would change path
                 break
-            else:
-              # don't go further if the DFS would change path
+            for i, j, k in zip(subc_path[:-1], subc_path[1:], link_ids):
+              self.link_rechained.add_edge(i, j, key=k)
+              # it is possible we have already removed this edge in previous 
+              # DFS run of the rechaining.
+              if best_effort_graph.has_edge(i,j,k):
+                best_effort_graph.remove_edge(i, j, k)
+            if self.rechained[last_vnf]:
               break
-          for i, j, k in zip(subc_path[:-1], subc_path[1:], link_ids):
-            self.link_rechained.add_edge(i, j, key=k)
-            try:
-              best_effort_graph.remove_edge(i, j, k)
-            except nx.NetworkXError as e:
-              raise uet.InternalAlgorithmException(
-                 "Mistake in  colored request graph maintenance, error: %s" % e)
+            else:
+              # If a rechained vnf is not found for the chain end, we start a 
+              # new DFS from the end of the chain, while previously used links
+              # are removed.
+              vnf = last_vnf
+
+          if not self.rechained[subc_path[-1]]:
+            raise uet.InternalAlgorithmException("Last VNF of best-effort "
+                      "subchain is not rechained yet! It wont be mapped when"
+                      " the mapping reaches this subchain!")
+          for nf in subc_path:
+            self.rechained[nf] = True
           subc['chain'] = subc_path
           subc['link_ids'] = link_ids
           self.max_chain_id += 1
@@ -331,6 +346,7 @@ class GraphPreprocessorClass(object):
           # the empty color means that this link is best effort.
           self.manager.addChain_SubChainDependency(subc['id'], [], subc_path,
                                                    link_ids)
+          self.log.debug("Adding best-effort subchain with path %s"%subc_path)
           subchains.append((subc, self.net.network))
         elif best_effort_graph.out_degree(vnf) == 0 and \
               best_effort_graph.in_degree(vnf) == 0:
