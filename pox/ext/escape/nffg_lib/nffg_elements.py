@@ -492,9 +492,8 @@ class NodeResource(Persistable):
     """
     attrlist = ['cpu', 'mem', 'storage', 'bandwidth']  # delay excepted!
     if reduce(lambda a, b: a or b, (self[attr] is None for attr in attrlist)):
-      raise uet.BadInputException(
-        "Node resource components should always be given",
-        "One of %s`s components is None" % str(self))
+      raise RuntimeError("Node resource components should always be given",
+                         "One of %s`s components is None" % str(self))
     if not reduce(lambda a, b: a and b,
                   (0 <= self[attr] - substrahend[attr] <= maximal[attr]
                    for attr in attrlist if
