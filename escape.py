@@ -45,7 +45,7 @@ def main ():
                       help="run the infrastructure layer also")
   escape.add_argument("-g", "--gui", action="store_true", default=False,
                       help="initiate the graph-viewer GUI app which "
-                           "automatically connects to the Service layer API")
+                           "automatically connects to the ROS REST-API")
   escape.add_argument("-i", "--interactive", action="store_true", default=False,
                       help="run an interactive shell for observing internal "
                            "states")
@@ -139,7 +139,7 @@ def main ():
       cmd.append("--full")
 
   # Start the REST-API for the ROS layer
-  if args.rosapi:
+  if args.rosapi or args.gui:
     cmd.append("--rosapi")
 
   # Start an REST-API for the Cf-Or interface
