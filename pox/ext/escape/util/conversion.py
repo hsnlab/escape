@@ -25,11 +25,12 @@ try:
 except ImportError:
   import os, inspect
 
-  sys.path.append(os.path.join(os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../../..")),
-    "pox/ext/escape/nffg_lib/"))
+  for p in ("../nffg_lib/",
+            "../util/"):
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), p)))
   # Import for standalone running
   from nffg import AbstractNFFG, NFFG
+  from misc import VERBOSE
 
 try:
   # Import for ESCAPEv2
@@ -38,9 +39,8 @@ try:
 except ImportError:
   import os, inspect
 
-  sys.path.append(os.path.join(os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../../..")),
-    "unify_virtualizer"))
+  sys.path.append(os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../../../unify_virtualizer/")))
   # Import for standalone running
   import virtualizer as virt_lib
   from virtualizer import __version__ as V_VERSION
@@ -1484,18 +1484,18 @@ if __name__ == "__main__":
                     # ensure_unique_id=True,
                     logger=log)
 
-  # with open(
-  #    # "../../../../examples/escape-mn-mapped-test.nffg") as f:
-  #    "../../../../examples/escape-2sbb-mapped.nffg") as f:
-  #   nffg = NFFG.parse(raw_data=f.read())
-  #   # nffg.duplicate_static_links()
-  # log.debug("Parsed NFFG:\n%s" % nffg.dump())
-  # virt = c.dump_to_Virtualizer(nffg=nffg)
-  # log.debug("Converted:")
-  # log.debug(virt.xml())
-  # log.debug("Reconvert to NFFG:")
-  # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
-  # log.debug(nffg.dump())
+  with open(
+     # "../../../../examples/escape-mn-mapped-test.nffg") as f:
+     "../../../../examples/escape-2sbb-mapped.nffg") as f:
+    nffg = NFFG.parse(raw_data=f.read())
+    # nffg.duplicate_static_links()
+  log.debug("Parsed NFFG:\n%s" % nffg.dump())
+  virt = c.dump_to_Virtualizer(nffg=nffg)
+  log.debug("Converted:")
+  log.debug(virt.xml())
+  log.debug("Reconvert to NFFG:")
+  nffg = c.parse_from_Virtualizer(vdata=virt.xml())
+  log.debug(nffg.dump())
 
   # dov = virt_lib.Virtualizer.parse_from_file(
   #   "../../../../examples/escape-2sbb-mapped.xml")
@@ -1510,13 +1510,13 @@ if __name__ == "__main__":
   # log.info("Reconverted Virtualizer:")
   # log.info("%s" % virt.xml())
 
-  dov = virt_lib.Virtualizer.parse_from_file(
-    "../../../../examples/escape-2sbb-topo.xml")
-  changed = virt_lib.Virtualizer.parse_from_file(
-    "../../../../examples/escape-2sbb-mapped.xml")
-
-  print dov.xml()
-  print changed.xml()
-  # diff = changed.diff(dov)
-  diff = dov.diff(changed)
-  print diff.xml()
+  # dov = virt_lib.Virtualizer.parse_from_file(
+  #   "../../../../examples/escape-2sbb-topo.xml")
+  # changed = virt_lib.Virtualizer.parse_from_file(
+  #   "../../../../examples/escape-2sbb-mapped.xml")
+  #
+  # print dov.xml()
+  # print changed.xml()
+  # # diff = changed.diff(dov)
+  # diff = dov.diff(changed)
+  # print diff.xml()
