@@ -10,10 +10,10 @@ try:
 except ImportError:
   import sys, os
 
-  sys.path.extend((os.path.abspath("../pox/ext/escape/nffg_lib"),
-                   os.path.abspath("../pox/ext/escape/util"),
-                   os.path.abspath("../pox/ext/escape/unify_virtualizer"),
-                   ))
+  for p in ("/../pox/ext/escape/nffg_lib/",
+            "/../pox/ext/escape/util/",
+            "/../pox/ext/escape/unify_virtualizer/"):
+    sys.path.append(os.path.abspath(os.path.dirname(__file__) + p))
   from nffg import NFFG
   from conversion import NFFGConverter
 
