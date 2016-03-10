@@ -32,12 +32,9 @@ from pprint import pformat
 try:
   from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 except ImportError:
-  import sys, os, inspect
-
-  sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
-     os.path.abspath(
-        os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
-                                  "pox/ext/escape/nffg_lib/"))
+  import sys, os
+  sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                  "../pox/ext/escape/nffg_lib/")))
   from nffg import NFFG, NFFGToolBox
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
