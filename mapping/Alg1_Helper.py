@@ -14,7 +14,6 @@
 # along with POX. If not, see <http://www.gnu.org/licenses/>.
 
 from collections import defaultdict
-import sys
 import logging, copy
 
 import networkx as nx

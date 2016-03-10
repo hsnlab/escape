@@ -29,12 +29,9 @@ import random
 try:
   from escape.nffg_lib.nffg import NFFG
 except ImportError:
-  import sys, os, inspect
-
-  sys.path.insert(0, os.path.join(os.path.abspath(os.path.realpath(
-    os.path.abspath(
-      os.path.split(inspect.getfile(inspect.currentframe()))[0])) + "/.."),
-                                  "pox/ext/escape/nffg_lib/"))
+  import sys, os
+  sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                  "../pox/ext/escape/nffg_lib/")))
   from nffg import NFFG
 
 # Aggregation links (100Gbps) Connecting Distribution nodes to Aggregation Nodes
