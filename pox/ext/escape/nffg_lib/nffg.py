@@ -1047,8 +1047,14 @@ class NFFGToolBox(object):
         if port.get_property("type") == "inter-domain":
           # Found inter-domain SAP port
           log.debug("Found inter-domain SAP port: %s" % port)
-          # Create default SAP object attributes
+          adj_nodes = [v for u, v, l in nffg.real_out_edges_iter(infra.id)
+                       if l.src.id == port.id]
+          if len(adj_nodes) != 0:
+            log.debug("Detected port connects to other node: %s!. Skip..." %
+                      adj_nodes)
+            continue
           # Copy optional SAP metadata as special id or name
+          # Create default SAP object attributes
           sap_id = port.get_property("sap")
           sap_name = port.get_property("name")
           # Add SAP to splitted NFFG
@@ -1431,11 +1437,11 @@ class NFFGToolBox(object):
       # If the number of detected nodes is unexpected continue to the next req
       if len(connected_port) < 1:
         log.warning("Skip edge rebinding: No connected node is detected for "
-                    "port: %s" % port)
+                    "SAP port: %s" % port)
         return None
       elif len(connected_port) > 1:
         log.warning("Skip edge rebinding: Multiple connected nodes are "
-                    "detected for %s: %s!" % (port, connected_port))
+                    "detected for SAP port: %s: %s!" % (port, connected_port))
         return None
       elif connected_port[0].node.type == NFFG.TYPE_SAP:
         return connected_port[0]
@@ -1592,7 +1598,7 @@ class NFFGToolBox(object):
     # Recreate flowrules based on NBalazs functions
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(nffg=nffg)
     import pprint
-    log.debug(pprint.pformat(sg_hop_info))
+    log.debug("Detected SG hop info:\n%s" % pprint.pformat(sg_hop_info))
     for key, value in sg_hop_info.iteritems():
       sg_src_node = key[0]
       sg_src_port = value[0].id
@@ -1657,9 +1663,8 @@ class NFFGToolBox(object):
     # Check existing domains
     base_domain = cls.detect_domains(nffg=base)
     if domain not in base_domain:
-      log.warning(
-        "No node was found in %s with domain: %s for removing! Leave NFFG "
-        "unchanged..." % (base, domain))
+      log.warning("No node was found in %s with domain: %s for removing! "
+                  "Leave NFFG unchanged..." % (base, domain))
       return base
     deletable = set()
     for infra in base.infras:
@@ -1677,8 +1682,8 @@ class NFFGToolBox(object):
       log.debug("Remained nodes after deletion: %s" % [n for n in base])
     else:
       log.debug("No node was remained after splitting! ")
-    log.debug(
-      "Search for inter-domain SAP ports and recreate associated SAPs...")
+    log.debug("Search for inter-domain SAP ports and "
+              "recreate associated SAPs...")
     cls.recreate_inter_domain_SAPs(nffg=base, log=log)
     # Check orphaned or not connected nodes and remove them
     log.debug("Trim orphaned nodes from updated NFFG...")
