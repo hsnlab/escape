@@ -43,6 +43,9 @@ def main ():
                       help="run ESCAPEv2 in the pre-defined virtualenv")
   escape.add_argument("-f", "--full", action="store_true", default=False,
                       help="run the infrastructure layer also")
+  escape.add_argument("-g", "--gui", action="store_true", default=False,
+                      help="initiate the graph-viewer GUI app which "
+                           "automatically connects to the Service layer API")
   escape.add_argument("-i", "--interactive", action="store_true", default=False,
                       help="run an interactive shell for observing internal "
                            "states")
@@ -114,6 +117,10 @@ def main ():
   if args.full:
     cmd.insert(0, "sudo")
     cmd.append("--full")
+
+  # Initiate the rudimentary GUI
+  if args.gui:
+    cmd.append("--gui")
 
   # Read the service request NFFG from a file and start the mapping process
   if args.service:

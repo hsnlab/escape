@@ -16,6 +16,8 @@ Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer.
 """
 import json
+import os
+from subprocess import Popen
 
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
@@ -226,6 +228,7 @@ class ServiceLayerAPI(AbstractAPI):
     self.__sid = None
     self.elementManager = None
     self.service_orchestrator = None
+    self.gui_proc = None
     super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
@@ -285,6 +288,9 @@ class ServiceLayerAPI(AbstractAPI):
     if hasattr(self, 'rest_api') and self.rest_api:
       log.debug("REST-API: %s is shutting down..." % self.rest_api.api_id)
       # self.rest_api.stop()
+    if self.gui_proc:
+      log.debug("Shut down GUI process - PID: %s" % self.gui_proc.pid)
+      self.gui_proc.terminate()
 
   def _initiate_rest_api (self):
     """
@@ -316,6 +322,10 @@ class ServiceLayerAPI(AbstractAPI):
     Initiate and set up GUI.
     """
     # TODO - set up and initiate MiniEdit here???
+    devnull = open(os.devnull, 'r+')
+    gui_path = os.path.abspath(os.getcwd() + "/gui/gui.py")
+    self.gui_proc = Popen(gui_path, stdin=devnull, stdout=devnull,
+                          stderr=devnull, close_fds=True)
     log.info("GUI has been initiated!")
 
   def _handle_SGMappingFinishedEvent (self, event):
