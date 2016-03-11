@@ -836,9 +836,10 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if isinstance(data, NFFG):
       log.debug("Convert NFFG to XML/Virtualizer format...")
       vdata = self.converter.adapt_mapping_into_Virtualizer(
-        # virtualizer=self.last_virtualizer, nffg=data, reinstall=diff)
-        virtualizer=self.original_virtualizer, nffg=data, reinstall=diff)
+        virtualizer=self.last_virtualizer, nffg=data, reinstall=diff)
+      # virtualizer=self.original_virtualizer, nffg=data, reinstall=diff)
       # vdata = self.converter.dump_to_Virtualizer(nffg=data)
+      log.log(VERBOSE, "Adapted Virtualizer:\n%s" % vdata.xml())
     elif isinstance(data, Virtualizer):
       # Nothing to do
       vdata = data
@@ -847,13 +848,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                          type(data))
     if diff:
       log.debug("DIFF is enabled. Calculating difference of mapping changes...")
-      # base = Virtualizer.parse_from_text(text=self.last_virtualizer.xml())
-      # changed = Virtualizer.parse_from_text(text=vdata.xml())
-      # vdata = base.diff(target=changed)
-      # vdata = base.diff(target=vdata)
-      # log.log(VERBOSE, "last_virtualizer\n%s" % self.last_virtualizer)
-      # log.log(VERBOSE, "vdata\n%s" % vdata)
-      vdata = self.last_virtualizer.diff(vdata)
+      vdata = self.__calculate_diff(vdata)
     else:
       log.debug("Using given Virtualizer as full mapping request")
     plain_data = vdata.xml()
@@ -970,10 +965,10 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type data: Virtualizer
     :return: None
     """
-    # self.last_virtualizer = data.full_copy()
     # Little hack to cache the data as a completely new object structure to
     # avoid cyclic reference errors and infinite loops
-    self.last_virtualizer = Virtualizer.parse_from_text(text=data.xml())
+    # self.last_virtualizer = Virtualizer.parse_from_text(text=data.xml())
+    self.last_virtualizer = data.full_copy()
 
   def __is_changed (self, new_data):
     """
@@ -995,6 +990,25 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return False
     else:
       return True
+
+  def __calculate_diff (self, changed):
+    """
+    Calculate the difference of the given Virtualizer compared to the most
+    recent Virtualizer acquired by get-config.
+
+    :param changed: Virtualizer containing new install
+    :type changed: Virtualizer
+    :return: the difference
+    :rtype: Virtualizer
+    """
+    base = Virtualizer.parse_from_text(text=self.last_virtualizer.xml())
+    # changed = Virtualizer.parse_from_text(text=vdata.xml())
+    # vdata = base.diff(target=changed)
+    # vdata = base.diff(target=vdata)
+    # log.log(VERBOSE, "last_virtualizer\n%s" % self.last_virtualizer)
+    # log.log(VERBOSE, "vdata\n%s" % vdata)
+    diff = base.diff(changed)
+    return diff
 
 
 class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
