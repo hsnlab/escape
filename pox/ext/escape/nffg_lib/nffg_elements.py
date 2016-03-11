@@ -427,8 +427,10 @@ class Link(Element):
     super(Link, self).load(data=data)
     self.src = container.get_port(data['src_node'], data['src_port'])
     self.dst = container.get_port(data['dst_node'], data['dst_port'])
-    if self.src is None or self.dst is None:
-      raise RuntimeError("Edge not found with params: %s !" % data)
+    if self.src is None:
+      raise RuntimeError("Src not found with params: %s !" % data)
+    if self.dst is None:
+      raise RuntimeError("Dst not found with params: %s !" % data)
     return self
 
   def __repr__ (self):
