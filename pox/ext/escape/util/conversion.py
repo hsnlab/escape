@@ -1308,7 +1308,8 @@ class NFFGConverter(object):
         for fr in port.flowrules:
           self.log.debug("Converting flowrule: %s..." % fr)
           # Define metadata
-          fe_id = "ESCAPE-flowentry" + str(fe_cntr)
+          # fe_id = "ESCAPE-flowentry" + str(fe_cntr)
+          fe_id = "ESCAPE-flowentry" + str(fr.hop_id)
           fe_cntr += 1
           fe_pri = str(100)
 
