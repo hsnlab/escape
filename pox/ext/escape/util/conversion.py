@@ -76,6 +76,11 @@ class NFFGConverter(object):
   TYPE_ACTION = "ACTION"
   # Hard-coded constants
   REQUIREMENT_PREFIX = "REQ"
+  # Flowrule generation strategy constants
+  FR_ID_GEN_HOP = "HOP_ID"
+  FR_ID_GEN_GLOBAL = "GLOBAL_CNTR"
+  # Flowrule generation strategy
+  FR_ID_GEN_STRATEGY = None
 
   def __init__ (self, domain=None, logger=None, ensure_unique_id=None):
     # Save domain name for define domain attribute in infras
@@ -83,6 +88,7 @@ class NFFGConverter(object):
     # If clarify_id is True, add domain name as a prefix to the node ids
     self.ensure_unique_id = ensure_unique_id
     self.log = logger if logger is not None else logging.getLogger(__name__)
+    self.FR_ID_GEN_STRATEGY = self.FR_ID_GEN_HOP
 
   @classmethod
   def field_splitter (cls, type, field):
@@ -1276,7 +1282,7 @@ class NFFGConverter(object):
                          "name=%s)" % (nf, virtualizer.id.get_as_text(),
                                        virtualizer.name.get_as_text()))
 
-  def _convert_nffg_flowrules (self, virtualizer, nffg):
+  def _convert_nffg_flowrules (self, virtualizer, nffg, cntr=[0]):
     """
     Convert flowrules in the given :any:`NFFG` into the given Virtualizer.
 
@@ -1307,10 +1313,16 @@ class NFFGConverter(object):
         # Check every flowrule
         for fr in port.flowrules:
           self.log.debug("Converting flowrule: %s..." % fr)
-          # Define metadata
-          # fe_id = "ESCAPE-flowentry" + str(fe_cntr)
-          fe_id = "ESCAPE-flowentry" + str(fr.hop_id)
-          fe_cntr += 1
+          # Define id based on FR_ID_GEN_STRATEGY
+          if self.FR_ID_GEN_STRATEGY == self.FR_ID_GEN_HOP:
+            fe_id = "ESCAPE-flowentry" + str(fr.hop_id)
+          elif self.FR_ID_GEN_STRATEGY == self.FR_ID_GEN_GLOBAL:
+            fe_id = "ESCAPE-flowentry" + str(cntr[0])
+            cntr[0] += 1
+          else:
+            fe_id = "ESCAPE-flowentry" + str(fe_cntr)
+            fe_cntr += 1
+          # Define constant priority
           fe_pri = str(100)
 
           # Check if match starts with in_port
