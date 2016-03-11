@@ -35,7 +35,7 @@ except ImportError:
 try:
   # Import for ESCAPEv2
   import virtualizer as virt_lib
-  from virtualizer import __version__ as V_VERSION
+  from virtualizer import __version__ as V_VERSION, Virtualizer
 except ImportError:
   import os, inspect
 
@@ -625,6 +625,7 @@ class NFFGConverter(object):
         fr_bw = fr_delay = None
 
       # Get hop_id
+      fr_hop_id = None
       if flowentry.name.is_initialized():
         if not flowentry.name.get_as_text().startswith(self.TAG_SG_HOP):
           self.log.warning(
@@ -1446,29 +1447,53 @@ class NFFGConverter(object):
     # Return with created Virtualizer
     return virtualizer
 
-  def adapt_mapping_into_Virtualizer (self, virtualizer, nffg):
+  @staticmethod
+  def clear_installed_elements (virtualizer):
+    """
+    Remove NFs and flowrules from given Virtualizer.
+
+    :param virtualizer: Virtualizer object need to clear
+    :type virtualizer: Virtualizer
+    :return: cleared original virtualizer
+    :rtype: Virtualizer
+    """
+    for vnode in virtualizer.nodes:
+      vnode.NF_instances.node.clear_data()
+      vnode.flowtable.flowentry.clear_data()
+    # explicitly call bind to resolve absolute paths for safety reason
+    virtualizer.bind(relative=True)
+    return virtualizer
+
+  def adapt_mapping_into_Virtualizer (self, virtualizer, nffg, reinstall=False):
     """
     Install the mapping related modification into a Virtualizer and return
     with the new Virtualizer object.
 
     :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
     :param nffg: splitted NFFG (not necessarily in valid syntax)
+    :param reinstall: need to clear every NF/flowrules from given virtualizer
+    :type reinstall: bool
     :return: modified Virtualizer object
     """
-    virtualizer = virtualizer.copy()
+    virt = virtualizer.full_copy()
+    # Remove previously installed NFs and flowrules from Virtualizer for
+    # e.g. correct diff calculation
+    if reinstall:
+      self.log.debug("Remove pre-installed NFs/flowrules...")
+      self.clear_installed_elements(virtualizer=virt)
     self.log.debug(
       "START adapting modifications from %s into Virtualizer(id=%s, name=%s)"
-      % (nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
-    self._convert_nffg_nfs(virtualizer=virtualizer, nffg=nffg)
-    self._convert_nffg_flowrules(virtualizer=virtualizer, nffg=nffg)
-    self._convert_nffg_reqs(virtualizer=virtualizer, nffg=nffg)
+      % (nffg, virt.id.get_as_text(), virt.name.get_as_text()))
+    self._convert_nffg_nfs(virtualizer=virt, nffg=nffg)
+    self._convert_nffg_flowrules(virtualizer=virt, nffg=nffg)
+    self._convert_nffg_reqs(virtualizer=virt, nffg=nffg)
     # explicitly call bind to resolve absolute paths for safety reason
     virtualizer.bind(relative=True)
     self.log.debug(
       "END adapting modifications from %s into Virtualizer(id=%s, name=%s)" % (
-        nffg, virtualizer.id.get_as_text(), virtualizer.name.get_as_text()))
+        nffg, virt.id.get_as_text(), virt.name.get_as_text()))
     # Return with modified Virtualizer
-    return virtualizer
+    return virt
 
   @staticmethod
   def unescape_output_hack (data):
@@ -1484,18 +1509,18 @@ if __name__ == "__main__":
                     # ensure_unique_id=True,
                     logger=log)
 
-  with open(
-     # "../../../../examples/escape-mn-mapped-test.nffg") as f:
-     "../../../../examples/escape-2sbb-mapped.nffg") as f:
-    nffg = NFFG.parse(raw_data=f.read())
-    # nffg.duplicate_static_links()
-  log.debug("Parsed NFFG:\n%s" % nffg.dump())
-  virt = c.dump_to_Virtualizer(nffg=nffg)
-  log.debug("Converted:")
-  log.debug(virt.xml())
-  log.debug("Reconvert to NFFG:")
-  nffg = c.parse_from_Virtualizer(vdata=virt.xml())
-  log.debug(nffg.dump())
+  # with open(
+  #    # "../../../../examples/escape-mn-mapped-test.nffg") as f:
+  #    "../../../../examples/escape-2sbb-mapped.nffg") as f:
+  #   nffg = NFFG.parse(raw_data=f.read())
+  #   # nffg.duplicate_static_links()
+  # log.debug("Parsed NFFG:\n%s" % nffg.dump())
+  # virt = c.dump_to_Virtualizer(nffg=nffg)
+  # log.debug("Converted:")
+  # log.debug(virt.xml())
+  # log.debug("Reconvert to NFFG:")
+  # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
+  # log.debug(nffg.dump())
 
   # dov = virt_lib.Virtualizer.parse_from_file(
   #   "../../../../examples/escape-2sbb-mapped.xml")
@@ -1512,11 +1537,21 @@ if __name__ == "__main__":
 
   # dov = virt_lib.Virtualizer.parse_from_file(
   #   "../../../../examples/escape-2sbb-topo.xml")
-  # changed = virt_lib.Virtualizer.parse_from_file(
-  #   "../../../../examples/escape-2sbb-mapped.xml")
-  #
+  changed = virt_lib.Virtualizer.parse_from_file(
+    # "../../../../examples/escape-2sbb-mapped.xml")
+    "../../../../examples/escape-2sbb-test1.xml")
+  with open(
+     # "../../../../examples/escape-mn-mapped-test.nffg") as f:
+     # "../../../../examples/escape-2sbb-mapped.nffg") as f:
+     "../../../../examples/escape-2sbb-test1.nffg") as f:
+    new = NFFG.parse(raw_data=f.read())
   # print dov.xml()
-  # print changed.xml()
-  # # diff = changed.diff(dov)
-  # diff = dov.diff(changed)
-  # print diff.xml()
+  print new.dump()
+  print changed.xml()
+  # diff = changed.diff(dov)
+  base = changed.copy()
+  # changed=changed.copy()
+  new = c.adapt_mapping_into_Virtualizer(virtualizer=base, nffg=new,
+                                         reinstall=True)
+  diff = changed.diff(new)
+  print diff.xml()

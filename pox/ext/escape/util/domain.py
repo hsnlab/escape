@@ -260,8 +260,8 @@ class AbstractDomainManager(EventMixin):
     if self.topoAdapter.check_domain_reachable():
       log.info(">>> %s domain confirmed!" % self.domain_name)
       self._detected = True
-      log.info(
-        "Requesting resource information from %s domain..." % self.domain_name)
+      log.info("Requesting resource information from %s domain..." %
+               self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
       if topo_nffg:
         log.debug("Save detected topology: %s..." % topo_nffg)
@@ -453,9 +453,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
         return
       # Domain has changed
       elif isinstance(changed, NFFG):
-        log.info(
-          "Remote domain: %s has changed. Update global domain view..." %
-          self.domain_name)
+        log.info("Remote domain: %s has changed. Update global domain view..." %
+                 self.domain_name)
         log.debug("Save changed topology: %s" % changed)
         # Update the received new topo
         self.internal_topo = changed
@@ -469,9 +468,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
       # If changed is None something went wrong, probably remote domain is not
       # reachable. Step to the other half of the function
       elif changed is None:
-        log.warning(
-          "Lost connection with %s agent! Going to slow poll..." %
-          self.domain_name)
+        log.warning("Lost connection with %s agent! Going to slow poll..." %
+                    self.domain_name)
         # Clear internal topology
         log.debug("Clear topology from domain: %s" % self.domain_name)
         self.internal_topo = None
@@ -485,9 +483,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
         return
     # If this is the first call of poll()
     if self._detected is None:
-      log.warning(
-        "Local agent in domain: %s is not detected! Keep trying..." %
-        self.domain_name)
+      log.warning("Local agent in domain: %s is not detected! Keep trying..." %
+                  self.domain_name)
       self._detected = False
     elif self._detected:
       # Detected before -> lost connection = big Problem
