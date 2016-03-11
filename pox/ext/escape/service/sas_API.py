@@ -154,7 +154,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
       self.send_header('Content-Type', 'application/xml')
     else:
       self.send_header('Content-Type', 'application/json')
-    self.log.log(VERBOSE, "Responded config for 'get-config':\n%s" % data)
+    self.log.log(VERBOSE, "Responded topology for 'get-config':\n%s" % data)
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
