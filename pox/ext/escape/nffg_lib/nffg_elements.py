@@ -1614,7 +1614,7 @@ class NFFGModel(Element):
       for e in data.get('edge_reqs', ()):
         container.edge_reqs.append(EdgeReq.parse(data=e, container=container))
     except KeyError as e:
-      raise RuntimeError("Not a valid NFFGModel format!", e)
+      raise RuntimeError("Not a valid NFFGModel format!", str(e))
     return container
 
   def dump (self):

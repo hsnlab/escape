@@ -262,6 +262,10 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
                    self.headers.get("Content-Type", ""))
     raw_body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
+    if raw_body is None or not raw_body:
+      log.warning("Received data is empty!")
+      self.send_error(400, "Missing body!")
+      return
     # Expect XML format --> need to convert first
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type", "") != "application/xml" and \
