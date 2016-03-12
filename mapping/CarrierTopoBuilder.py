@@ -409,8 +409,7 @@ def getMicroTopo():
 def getNanoTopo():
   topoparams = []
   topoparams.append({'Retail': (1, 2, 10), 'Business': (1, 2, 10),
-                     'CloudNFV': (1, 2, 4,  1000, 100000, ['simpleForwarder',
-                                   'headerCompressor', 'headerDecompressor'], 
+                     'CloudNFV': (1, 2, 4,  1000, 100000, ['A', 'B', 'C'], 
                                   [8,12,16], [32000,64000], [150], 4000, 4)})
   """
   topoparams.append({'Retail': (2, 5, 0.2), 'Business': (2, 5, 0.2),
