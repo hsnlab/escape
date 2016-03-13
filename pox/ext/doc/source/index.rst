@@ -170,14 +170,12 @@ Required system and Python packages:
 
 .. code-block:: bash
 
-    $ sudo apt-get -y install libxml2-dev libxslt1-dev zlib1g-dev libsqlite3-dev \
-        python-pip python-libxml2 python-libxslt1 python-lxml python-paramiko \
-        python-dev python-networkx python-tk libxml2-dev libssh2-1-dev libgcrypt11-dev \
-        libncurses5-dev libglib2.0-dev libgtk2.0-dev gcc make automake openssh-client \
-        openssh-server ssh libssl-dev
+    $ sudo apt-get -y install python-dev python-pip libxml2-dev libxslt1-dev \
+    neo4j=2.2.7 libssh2-1-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev \
+    gcc make automake ssh
 
-    $ sudo pip install requests jinja2 ncclient lxml networkx py2neo networkx_viewer \
-        numpy
+    $ sudo pip install ncclient pycrypto ecdsa networkx jinja2 py2neo numpy \
+    networkx_viewer
 
 For doc generations:
 
@@ -235,7 +233,7 @@ installations (see the help with the ``-h`` flag):
 
 .. code-block:: bash
 
-    $ sudo mininet/util/install.sh -en
+    $ sudo mininet/util/install.sh -n
 
 But the script occasionally **NOT** works correctly, especially on newer
 distributions because the ``sudo apt-get install openvswitch-switch`` command
@@ -329,16 +327,12 @@ Usage:
 
     $ ./set_virtualenv.sh -h
       Usage: ./set_virtualenv.sh [-p python_version] [-h]
-
       Install script for ESCAPEv2 to setup virtual environment
 
       optional parameters:
-
         -p   set Python version (default: 2.7.10)
         -h   show this help message and exit
-
       Example: ./set_virtualenv.sh -p 2.7.9
-
       Based on virtualenv. More information: virtualenv -h
 
 
@@ -385,12 +379,12 @@ Run ESCAPEv2 with the Mininet-based Infrastructure layer and debug logging mode:
 
 Usage:
 
-.. code-block:: bash
+.. code-block:: text
 
     $ ./escape.py -h
-        usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-i] [-p] [-r]
-                         [-s file] [-t file] [-x] [-V] [-4]
-                         ...
+      usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-i] [-p] [-r]
+                       [-s file] [-t file] [-x] [-V] [-4]
+                       ...
 
       ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet,
       Click, NETCONF and POX
