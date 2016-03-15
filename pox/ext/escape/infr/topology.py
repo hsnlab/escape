@@ -705,8 +705,8 @@ class ESCAPENetworkBuilder(object):
       log.error("An error occurred when load topology from file: %s" %
                 e.message)
       raise TopologyBuilderException("File parsing error!")
-    except SystemExit:
-      raise TopologyBuilderException("Got exit exception from Mininet!")
+    # except SystemExit:
+    #   raise TopologyBuilderException("Got exit exception from Mininet!")
 
   def get_network (self):
     """
