@@ -64,7 +64,7 @@ function install_mn_dep {
     info "=== Compile and install 'mnexec' execution utility  ==="
     cd "$DIR/mininet"
     make mnexec
-    sudo install ${MNEXEC} ${BINDIR}
+    sudo install -v ${MNEXEC} ${BINDIR}
     if id -u ${MNUSER} >/dev/null 2>&1
     then
         info "=== User: $MNUSER already exist. Skip user addition... ==="
