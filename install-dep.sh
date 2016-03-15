@@ -52,7 +52,7 @@ function install_core {
 
 function install_mn_dep {
     BINDIR=/usr/bin
-    MNEXEC=mnexec.c
+    MNEXEC=mnexec
     MNUSER=mininet
     MNPASSWD=mininet
     info "=== Install Mininet dependencies ==="
@@ -63,7 +63,7 @@ function install_mn_dep {
     sudo apt-get install -y openvswitch-switch
     info "=== Compile and install 'mnexec' execution utility  ==="
     cd "$DIR/mininet"
-    #make mnexec
+    make mnexec
     sudo install ${MNEXEC} ${BINDIR}
     if id -u ${MNUSER} >/dev/null 2>&1
     then
@@ -147,7 +147,7 @@ EOF
 
     info "=== Install clickhelper.py ==="
     # install clickhelper.py to be available from netconfd
-    sudo ln -s "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
+    sudo ln -vs "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
 
     if [ ! -f /usr/bin/mnexec ]
     then
