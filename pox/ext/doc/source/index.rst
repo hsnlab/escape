@@ -56,13 +56,13 @@ For further information contact balazs.sonkoly@tmit.bme.hu
 Installation
 ============
 
-Because ESCAPEv2 relies on POX and written in Python there is no need for
-explicit compiling or installation. The only requirement need to be pre-installed
-is a Python interpreter.
+Because the core ESCAPEv2 relies on POX and written in Python there is no need
+for explicit compiling or installation. The only requirement need to be
+pre-installed is a Python interpreter.
 
 The recommended Python version, in which the development and mostly the testing
-are performed, is the standard CPython **2.7.9** but the 2.7.6 (pre-build
-Mininet VM) and 2.7.10 versions are also tested and supported.
+are performed, is the standard CPython **2.7.10** but the 2.7.6 (pre-build
+Mininet VM) are also tested and supported.
 
 .. warning::
 
@@ -70,6 +70,11 @@ Mininet VM) and 2.7.10 versions are also tested and supported.
 
 If you want to use a different and separated Python version check the Virtual
 Environment section below.
+
+The best choice of platform on wich ESCAPEv2 is recommended to install is the
+pre-build Mininet VM v2.1.0 (based on Ubuntu 14.04 LTS). However the install
+script also supports the standard Ubuntu flavours too (desktop and also server
+versions). Currently the Ubuntu 15.04 server is tested beside the Mininet VM.
 
 The preferred way
 -----------------
@@ -113,16 +118,34 @@ and Python packages, OpenYuma with VNFStarter module):
   .. code-block:: bash
 
     $ cd escape
-    $ ./install_dep.sh
+    $ sudo ./install_dep.sh
+
+  Usage:
+
+  .. code-block:: text
+
+    $ ./install-dep.sh -h
+    Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i]
+    Install script for ESCAPEv2
+
+    options:
+        -a:   (default) install (A)ll ESCAPEv2 components (identical with -cgi)
+        -c:   install (C)ore dependencies for Global Orchestration
+        -d:   install additional dependencies for (D)evelopment and test tools
+        -g:   install dependencies for our rudimentary (G)UI
+        -h:   print this (H)elp message
+        -i:   install components of (I)nfrastructure Layer for Local Orchestration
 
 
-  In a high level the script above does the following things:
+  In a high level the script above carries the following things:
     * Install the necessary system and Python packages
     * Compile and install the `OpenYuma <https://github.com/OpenClovis/OpenYuma>`__
       tools with our `VNF_starter` module
     * Compile and install `Click <http://read.cs.ucla.edu/click/click>`__ modular
       router and The Click GUI: `Clicky <http://read.cs.ucla.edu/click/clicky>`__
     * Install `neo4j <http://neo4j.com/>`__ graph database for NFIB
+    * If Mininet is not installed on the VM, install the ``mnexec`` utility and
+      create a system user: **mininet** for NETCONF communication
 
 5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
 available arguments of the top starting script check the help menu:
@@ -130,6 +153,25 @@ available arguments of the top starting script check the help menu:
   .. code-block:: bash
 
     $ ./escape.py --help
+
+To verify ESCAPEv2's components are installed and set up correctly you can run
+the following command and test the reachability of the initiated SAPs (``xterm``)
+with ``ping``:
+
+  .. code-block:: bash
+
+    $ ./escape.py -df -s examples/escape-mn-req.nffg
+
+    # SAP1 xterm
+    $ ping sap2
+    # SAP2 xterm
+    $ ping sap1
+
+This command start the full stack ESCAPEv2 with the default topology
+(`examples/escape-mn-topo.nffg`) and initiate a service request consists of a
+*HeaderCompressor* and a *HeaderDecompressor* VNF for one direction and a simple
+*Forwarder* VNF for the backward direction. The two initiated SAP can reach each
+other.
 
 .. important::
 
@@ -166,16 +208,30 @@ If you don't want to install the Python dependencies globally you can follow the
 hard way and setup a virtual environment. Otherwise just run the following
 command(s):
 
-Required system and Python packages:
+All required system and Python packages:
 
 .. code-block:: bash
 
     $ sudo apt-get -y install python-dev python-pip libxml2-dev libxslt1-dev \
-    neo4j=2.2.7 libssh2-1-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev \
-    gcc make automake ssh
+    libssh2-1-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev zlib1g-dev \
+    neo4j=2.2.7 gcc make automake ssh
 
     $ sudo pip install ncclient pycrypto ecdsa networkx jinja2 py2neo numpy \
     networkx_viewer
+
+For Mininet emulation tool:
+
+.. code-block:: bash
+
+    $ sudo apt-get install gcc make socat psmisc xterm ssh iperf iproute telnet \
+    python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8 \
+    openvswitch-switch
+
+For our rudimentary GUI:
+
+.. code-block:: bash
+
+    $ sudo pip install networkx_viewer numpy
 
 For doc generations:
 
@@ -200,7 +256,7 @@ On Ubuntu the newest ``neo4j`` database server (2.3.1) does not work with ESCAPE
 due to a socket Exception raised during connection initiation. The latest tested
 version is *2.2.7*.
 
-If a newer versin has been installed on the system, use the following commands to
+If a newer version has been installed on the system, use the following commands to
 downgrade. In this case the authentication bypass needs to be done again.
 
 .. code-block:: bash
@@ -219,38 +275,44 @@ referenced in entry 4. of the previous subsection.
 
 To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
 host (more precisely the **Open vSwitch** implementation and the specific
-**mnexec** utility script is also need to be installed globally).
+**mnexec** utility is only required to be installed globally).
 
-If one version of Mininet has already been installed, there should be nothing to
-do. ESCAPEv2 uses the specifically-modified Mininet files in the project folder
+If Mininet has already been installed, there should be nothing to do. ESCAPEv2
+uses the specifically-modified Mininet files in the project folder
 (*Mininet v2.1.0mod-ESCAPE*) which use the globally installed Mininet utility
 scripts (mnexec).
 
 Otherwise these assets have to be install manually which could be done from our
 Mininet folder (escape/mininet) or from the official Mininet git repository
-(`<https://github.com/mininet/mininet/>`__). Mininet has an install script for the
-installations (see the help with the ``-h`` flag):
+(`<https://github.com/mininet/mininet/>`__). Mininet has an install script for
+the installations (see the help with the ``-h`` flag):
 
 .. code-block:: bash
 
     $ sudo mininet/util/install.sh -n
 
-But the script occasionally **NOT** works correctly, especially on newer
-distributions because the ``sudo apt-get install openvswitch-switch`` command
-will not install the newest version of OVS properly due some major changes in OVS
-architecture!
-
-Run the following command to check the installation was correct:
+In this case you can run the following command to check whether the installation
+was correct or not:
 
 .. code-block:: bash
 
     $ sudo mn --test pingall
 
+But the script will install the whole Mininet package and additional dependencies.
+If you want to do a minimal install, compile the ``mnexec`` source by manual and
+copy the binary into a folder which is in your ``PATH`` system variable.
+
+.. code-block:: bash
+
+    $ cd mininet/
+    $ make mnexec
+    $ sudo install mnexec /usr/bin
+
 However you can install the Open vSwitch packages manually:
 
 .. code-block:: bash
 
-    $ sudo apt-get install openvswitch-common openvswitch-switch
+    $ sudo apt-get install openvswitch-switch
 
 If the command complains about the Open vSwitch not installed then you have to
 install it from source. See more on `<http://openvswitch.org/download/>`_. On the
@@ -280,15 +342,14 @@ An another solution is to define a system user for the netconfd. To create a use
 
     $ sudo adduser --system --shell /bin/bash --no-create-home mininet
     $ sudo addgroup mininet sudo
-    $ sudo passwd mininet	# password: mininet
+    $ echo "mininet:mininet" | sudo chpasswd
 
 For security reasons it's highly recommended to limit the SSH connections for the
 `mininet` user only to localhost.
 
 .. code-block:: bash
 
-    $ sudo echo "AllowUsers    <your_user1 user2 ...>  mininet@localhost" >> \
-        /etc/ssh/sshd_config
+    $ sudo echo "AllowUsers    <your_user1 user2 ...>  mininet@localhost" >> /etc/ssh/sshd_config
     $ sudo service ssh reload
 
 Check the created user with the following command:
@@ -473,10 +534,10 @@ and check the state of the DoV:
 
 .. code-block:: bash
 
-    $ ./escape.py -dfi -s pox/escape-mn-req.nffg
+    $ ./escape.py -dfi -s examples/escape-mn-req.nffg
     Starting ESCAPEv2...
     Command: sudo /home/czentye/escape/pox/pox.py unify --full \
-        --sg_file=/home/czentye/escape/pox/escape-mn-req.nffg py --completion
+        --sg_file=/home/czentye/escape/examples/escape-mn-req.nffg py --completion
 
     ...
 
@@ -915,6 +976,7 @@ this configurations structure.
           ],
           "RESET-DOMAINS-BEFORE-INSTALL": false,
           "CLEAR-DOMAINS-AFTER-SHUTDOWN": true,
+          "USE-REMERGE-UPDATE-STRATEGY": true,
           "ENSURE-UNIQUE-ID": true,
           "INTERNAL":
             {
