@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+# Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
 # Install Python and system-wide packages, required programs and configurations
 # for ESCAPEv2 on pre-installed Mininet VM
-# Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
+# Tested on: mininet-2.1.0p2-140718-ubuntu-14.04-server-amd64 and Ubuntu 15.04
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -25,6 +26,7 @@ function install_core {
     info "================================="
     info "==  Install core dependencies  =="
     info "================================="
+    echo "ESCAPEv2 version: 2.0.0"
     info "=== Checkout submodules ==="
     git submodule update --init --recursive
     # Remove ESCAPEv2 config file from index in git to untrack changes
@@ -37,7 +39,7 @@ function install_core {
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip libxml2-dev libxslt1-dev neo4j=2.2.7
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev neo4j=2.2.7
     sudo pip install ncclient pycrypto ecdsa networkx jinja2 py2neo
 
     info "=== Configure neo4j graph database ==="
@@ -46,6 +48,33 @@ function install_core {
     sudo service neo4j-service restart
     # Stick to version  2.2.7
     sudo apt-mark hold neo4j
+}
+
+function install_mn_dep {
+    BINDIR=/usr/bin
+    MNEXEC=mnexec.c
+    MNUSER=mininet
+    MNPASSWD=mininet
+    info "=== Install Mininet dependencies ==="
+    # Copied from /mininet/util/install.sh
+    sudo apt-get install -y gcc make socat psmisc xterm ssh iperf iproute telnet \
+    python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8
+    info "=== Install Open vSwitch ==="
+    sudo apt-get install -y openvswitch-switch
+    info "=== Compile and install 'mnexec' execution utility  ==="
+    cd "$DIR/mininet"
+    #make mnexec
+    sudo install ${MNEXEC} ${BINDIR}
+    if id -u ${MNUSER} >/dev/null 2>&1
+    then
+        info "=== User: $MNUSER already exist. Skip user addition... ==="
+    else
+        info "=== Create user: mininet passwd: mininet for communication over NETCONF ==="
+        sudo adduser --system --shell /bin/bash --no-create-home ${MNUSER}
+        sudo addgroup ${MNUSER} sudo
+        echo "$MNUSER:$MNPASSWD" | sudo chpasswd
+    fi
+    info "\nIf this installation was not performed on a VM, limit the SSH connections only to localhost due to security issues!"
 }
 
 function install_infra {
@@ -119,6 +148,12 @@ EOF
     info "=== Install clickhelper.py ==="
     # install clickhelper.py to be available from netconfd
     sudo ln -s "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
+
+    if [ ! -f /usr/bin/mnexec ]
+    then
+        info "=== Pre-installed Mininet not detected! Try to install mn dependencies... ==="
+        install_mn_dep
+    fi
 }
 
 # Install development dependencies as tornado for scripts in ./tools,
@@ -143,11 +178,11 @@ function install_gui {
     sudo pip install networkx_viewer numpy
 }
 
-# Install all component
+# Install all main component
 function all {
     install_core
-    install_infra
     install_gui
+    install_infra
     info "============"
     info "==  Done  =="
     info "============"
