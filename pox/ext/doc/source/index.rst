@@ -118,7 +118,7 @@ and Python packages, OpenYuma with VNFStarter module):
   .. code-block:: bash
 
     $ cd escape
-    $ sudo ./install_dep.sh
+    $ ./install_dep.sh
 
   Usage:
 
