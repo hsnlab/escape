@@ -751,20 +751,26 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     """
     conn = self.openflow.getConnection(dpid=self.infra_to_dpid[id])
     if not conn:
-      log.warning(
-        "Missing connection for node element: %s! Skip flowruel "
-        "installation..." % id)
-
+      log.warning("Missing connection for node element: %s! Skip flowrule "
+                  "installation..." % id)
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
     if 'vlan_id' in match:
-      vid = match['vlan_id']
-      msg.match.dl_vlan = int(vid)
-
+      try:
+        vlan_id = int(match['vlan_id'])
+      except ValueError:
+        log.warning("VLAN_ID: %s in match field is not a valid number! "
+                    "Skip flowrule installation..." % match['vlan_id'])
+        return
+      msg.match.dl_vlan = vlan_id
     if 'vlan_push' in action:
-      vid = action['vlan_push']
-      msg.actions.append(
-        of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
+      try:
+        vlan_push = int(action['vlan_push'])
+      except ValueError:
+        log.warning("VLAN_ID: %s in action field is not a valid number! "
+                    "Skip flowrule installation..." % match['vlan_id'])
+        return
+      msg.actions.append(of.ofp_action_vlan_vid(vlan_vid=vlan_push))
       # msg.actions.append(of.ofp_action_vlan_vid())
     out = action['out']
     # If out is in the detected saps --> always remove the VLAN tags
@@ -786,7 +792,13 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
         msg.actions.append(of.ofp_action_dl_addr.set_src(EthAddr(dl_src)))
     except KeyError:
       pass
-    msg.actions.append(of.ofp_action_output(port=int(action['out'])))
+    try:
+      out_port = int(action['out'])
+    except ValueError:
+      log.warning("Output port: %s is not a valid port in flowrule action: %s! "
+                  "Skip flowrule installation..." % (action['out'], action))
+      return
+    msg.actions.append(of.ofp_action_output(port=out_port))
     log.debug(
       "Install flow entry into INFRA: %s on connection: %s ..." % (id, conn))
     conn.send(msg)
