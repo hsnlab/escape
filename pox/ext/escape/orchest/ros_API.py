@@ -242,7 +242,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       self.send_header('Content-Type', 'application/xml')
     else:
       self.send_header('Content-Type', 'application/json')
-    self.log.log(VERBOSE, "Responded config for 'get-config':\n%s" % data)
+    self.log.log(VERBOSE, "Responded topology for 'get-config':\n%s" % data)
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
@@ -262,6 +262,10 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
                    self.headers.get("Content-Type", ""))
     raw_body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
+    if raw_body is None or not raw_body:
+      log.warning("Received data is empty!")
+      self.send_error(400, "Missing body!")
+      return
     # Expect XML format --> need to convert first
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type", "") != "application/xml" and \
@@ -275,36 +279,36 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       self.log.log(VERBOSE,
                    "Received request for 'edit-config':\n%s" % raw_body)
       # If there was not get-config request so far
-      if self.server.last_response is None:
-        self.log.info(
-          "Missing cached Virtualizer! Acquiring topology now...")
-        config = self._proceed_API_call('api_ros_get_config')
-        if config is None:
-          self.log.error("Requested resource info is missing!")
-          self.send_error(404, message="Resource info is missing!")
-          return
-        elif config is False:
-          self.log.warning("Requested info is unchanged but has not found!")
-          self.send_error(404, message="Resource info is missing!")
-        else:
-          # Convert required NFFG if needed
-          if self.virtualizer_format_enabled:
-            self.log.debug("Convert internal NFFG to Virtualizer...")
-            converter = NFFGConverter(domain=None, logger=log)
-            v_topology = converter.dump_to_Virtualizer(nffg=config)
-            # Cache converted data for edit-config patching
-            self.log.debug("Cache converted topology...")
-            self.server.last_response = v_topology
-          else:
-            self.log.debug("Cache acquired topology...")
-            self.server.last_response = config
       if self.DEFAULT_DIFF:
+        if self.server.last_response is None:
+          self.log.info("Missing cached Virtualizer! Acquiring topology now...")
+          config = self._proceed_API_call('api_ros_get_config')
+          if config is None:
+            self.log.error("Requested resource info is missing!")
+            self.send_error(404, message="Resource info is missing!")
+            return
+          elif config is False:
+            self.log.warning("Requested info is unchanged but has not found!")
+            self.send_error(404, message="Resource info is missing!")
+          else:
+            # Convert required NFFG if needed
+            if self.virtualizer_format_enabled:
+              self.log.debug("Convert internal NFFG to Virtualizer...")
+              converter = NFFGConverter(domain=None, logger=log)
+              v_topology = converter.dump_to_Virtualizer(nffg=config)
+              # Cache converted data for edit-config patching
+              self.log.debug("Cache converted topology...")
+              self.server.last_response = v_topology
+            else:
+              self.log.debug("Cache acquired topology...")
+              self.server.last_response = config
         self.log.info("Patching cached topology with received diff...")
         full_cfg = self.server.last_response.copy()
         # Adapt changes on the local config
         full_cfg.patch(source=received_cfg)
       else:
         full_cfg = received_cfg
+      self.log.log(VERBOSE, "Generated request:\n%s" % full_cfg.xml())
       # Convert response's body to NFFG
       self.log.info("Converting full request data...")
       converter = NFFGConverter(domain="REMOTE", logger=log)

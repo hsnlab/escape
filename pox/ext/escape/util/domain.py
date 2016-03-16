@@ -260,8 +260,8 @@ class AbstractDomainManager(EventMixin):
     if self.topoAdapter.check_domain_reachable():
       log.info(">>> %s domain confirmed!" % self.domain_name)
       self._detected = True
-      log.info(
-        "Requesting resource information from %s domain..." % self.domain_name)
+      log.info("Requesting resource information from %s domain..." %
+               self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
       if topo_nffg:
         log.debug("Save detected topology: %s..." % topo_nffg)
@@ -453,9 +453,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
         return
       # Domain has changed
       elif isinstance(changed, NFFG):
-        log.info(
-          "Remote domain: %s has changed. Update global domain view..." %
-          self.domain_name)
+        log.info("Remote domain: %s has changed. Update global domain view..." %
+                 self.domain_name)
         log.debug("Save changed topology: %s" % changed)
         # Update the received new topo
         self.internal_topo = changed
@@ -469,9 +468,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
       # If changed is None something went wrong, probably remote domain is not
       # reachable. Step to the other half of the function
       elif changed is None:
-        log.warning(
-          "Lost connection with %s agent! Going to slow poll..." %
-          self.domain_name)
+        log.warning("Lost connection with %s agent! Going to slow poll..." %
+                    self.domain_name)
         # Clear internal topology
         log.debug("Clear topology from domain: %s" % self.domain_name)
         self.internal_topo = None
@@ -485,9 +483,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
         return
     # If this is the first call of poll()
     if self._detected is None:
-      log.warning(
-        "Local agent in domain: %s is not detected! Keep trying..." %
-        self.domain_name)
+      log.warning("Local agent in domain: %s is not detected! Keep trying..." %
+                  self.domain_name)
       self._detected = False
     elif self._detected:
       # Detected before -> lost connection = big Problem
@@ -754,20 +751,26 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     """
     conn = self.openflow.getConnection(dpid=self.infra_to_dpid[id])
     if not conn:
-      log.warning(
-        "Missing connection for node element: %s! Skip flowruel "
-        "installation..." % id)
-
+      log.warning("Missing connection for node element: %s! Skip flowrule "
+                  "installation..." % id)
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
     if 'vlan_id' in match:
-      vid = match['vlan_id']
-      msg.match.dl_vlan = int(vid)
-
+      try:
+        vlan_id = int(match['vlan_id'])
+      except ValueError:
+        log.warning("VLAN_ID: %s in match field is not a valid number! "
+                    "Skip flowrule installation..." % match['vlan_id'])
+        return
+      msg.match.dl_vlan = vlan_id
     if 'vlan_push' in action:
-      vid = action['vlan_push']
-      msg.actions.append(
-        of.ofp_action_vlan_vid(vlan_vid=int(action['vlan_push'])))
+      try:
+        vlan_push = int(action['vlan_push'])
+      except ValueError:
+        log.warning("VLAN_ID: %s in action field is not a valid number! "
+                    "Skip flowrule installation..." % match['vlan_id'])
+        return
+      msg.actions.append(of.ofp_action_vlan_vid(vlan_vid=vlan_push))
       # msg.actions.append(of.ofp_action_vlan_vid())
     out = action['out']
     # If out is in the detected saps --> always remove the VLAN tags
@@ -789,7 +792,13 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
         msg.actions.append(of.ofp_action_dl_addr.set_src(EthAddr(dl_src)))
     except KeyError:
       pass
-    msg.actions.append(of.ofp_action_output(port=int(action['out'])))
+    try:
+      out_port = int(action['out'])
+    except ValueError:
+      log.warning("Output port: %s is not a valid port in flowrule action: %s! "
+                  "Skip flowrule installation..." % (action['out'], action))
+      return
+    msg.actions.append(of.ofp_action_output(port=out_port))
     log.debug(
       "Install flow entry into INFRA: %s on connection: %s ..." % (id, conn))
     conn.send(msg)

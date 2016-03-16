@@ -498,7 +498,7 @@ class ESCAPENetworkBuilder(object):
         # Initial settings - Create new Mininet object if necessary
         self.mn = net
       else:
-        raise RuntimeError(
+        raise TopologyBuilderException(
           "Network object's type must be a derived class of Mininet!")
     else:
       # self.mn = Mininet(**self.opts)
@@ -594,7 +594,7 @@ class ESCAPENetworkBuilder(object):
       mn_src_node = created_mn_nodes.get(edge.src.node.id)
       mn_dst_node = created_mn_nodes.get(edge.dst.node.id)
       if mn_src_node is None or mn_dst_node is None:
-        raise RuntimeError(
+        raise TopologyBuilderException(
           "Created topology node is missing! Something really went wrong!")
       src_port = int(edge.src.id) if int(edge.src.id) < 65535 else None
       if src_port is None:
@@ -657,7 +657,8 @@ class ESCAPENetworkBuilder(object):
       # self.mn = topo_class().construct()
       topo_class().construct(builder=self)
     else:
-      raise RuntimeError("TYPE field of the Topology class need to be set!")
+      raise TopologyBuilderException(
+        "TYPE field of the Topology class need to be set!")
     self.topo_desc = topo_class.get_topo_desc()
 
   def __init_from_CONFIG (self, format=DEFAULT_NFFG_FORMAT):
@@ -695,14 +696,17 @@ class ESCAPENetworkBuilder(object):
           log.info("Using file format: %s" % format)
           self.__init_from_NFFG(nffg=NFFG.parse(f.read()))
         else:
-          raise RuntimeError("Unsupported file format: %s!" % format)
+          raise TopologyBuilderException("Unsupported file format: %s!" %
+                                         format)
     except IOError:
       log.warning("Additional topology file not found: %s" % path)
       raise TopologyBuilderException("Missing topology file!")
     except ValueError as e:
-      log.error(
-        "An error occurred when load topology from file: %s" % e.message)
+      log.error("An error occurred when load topology from file: %s" %
+                e.message)
       raise TopologyBuilderException("File parsing error!")
+    # except SystemExit:
+    #   raise TopologyBuilderException("Got exit exception from Mininet!")
 
   def get_network (self):
     """
@@ -802,7 +806,8 @@ class ESCAPENetworkBuilder(object):
       cfg["inNamespace"] = False
       sw = self.mn.addRemoteSwitch(name, cls=None, **cfg)
     else:
-      raise RuntimeError("Unsupported NETCONF-based EE type: %s!" % type)
+      raise TopologyBuilderException(
+        "Unsupported NETCONF-based EE type: %s!" % type)
     agt = self.mn.addAgent('agt_' + name, cls=None, **cfg)
     agt.setSwitch(sw)
     return agt, sw
@@ -968,7 +973,8 @@ class ESCAPENetworkBuilder(object):
       # i2 = Intf(intfName, node=r, mac=r_mac, port=r_port, link=link)
       # i2.mac = r_mac  # mn runs 'ifconfig', which resets mac to None
       # link.intf1, link.intf2 = i1, i2
-      raise RuntimeError("Remote Link creation is not supported yet!")
+      raise TopologyBuilderException(
+        "Remote Link creation is not supported yet!")
 
   def build (self, topo=None):
     """
@@ -1004,7 +1010,7 @@ class ESCAPENetworkBuilder(object):
         log.info("Get Topology description based on Topology class...")
         self.__init_from_AbstractTopology(topo_class=topo)
       else:
-        raise RuntimeError(
+        raise TopologyBuilderException(
           "Unsupported topology format: %s - %s" % (type(topo), topo))
       return self.get_network()
     except SystemExit as e:
