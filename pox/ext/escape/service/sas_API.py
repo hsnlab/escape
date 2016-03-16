@@ -154,7 +154,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
       self.send_header('Content-Type', 'application/xml')
     else:
       self.send_header('Content-Type', 'application/json')
-    self.log.log(VERBOSE, "Responded config for 'get-config':\n%s" % data)
+    self.log.log(VERBOSE, "Responded topology for 'get-config':\n%s" % data)
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
@@ -178,13 +178,16 @@ class ServiceRequestHandler(AbstractRequestHandler):
               self.headers.get("Content-Type", ""))
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
+    if body is None or not body:
+      log.warning("Received data is empty!")
+      self.send_error(400, "Missing body!")
+      return
     # Expect XML format --> need to convert first
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type", "") != "application/xml" or \
          not body.startswith("<?xml version="):
-        log.error(
-          "Received data is not in XML format despite of the UNIFY "
-          "interface is enabled!")
+        log.error("Received data is not in XML format despite of the UNIFY "
+                  "interface is enabled!")
         self.send_error(415)
         return
       # Convert response's body to NFFG
