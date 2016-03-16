@@ -29,6 +29,8 @@ import CarrierTopoBuilder
 import MappingAlgorithms
 import UnifyExceptionTypes as uet
 
+from collections import OrderedDict
+
 try:
   from escape.nffg_lib.nffg import NFFG
 except ImportError:
@@ -68,21 +70,23 @@ helpmsg = """StressTest.py options are:
    --max_sc_count=i         Determines how many chains should one request contain
                             at most.
 
-   --batch_length    The number of Service Graphs, that should be batched and 
+   --batch_length=i  The number of Service Graphs, that should be batched and 
                      mapped together by the algorithm.
    --shareable_sg_count=i   The number of last 'i' Service Graphs which could
                             be used for sharing VNFs. Default value is unlimited.
 """
 
 def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
-  sumlen = sum([n*len(running_nfs[n]) for n in running_nfs])
-  i = 1
-  ratio = float(len(running_nfs[i])) / sumlen
+  sumlen = sum([l*i for l,i in zip([len(running_nfs[n]) for n in running_nfs], 
+                                   xrange(1,len(running_nfs)+1))])
+  i = 0
+  ratio = float(len(running_nfs.values()[i])) / sumlen
   while ratio < p:
     i += 1
-    ratio += float(i*len(running_nfs[i])) / sumlen
-  nf = random.choice(running_nfs[i])
-  if reduce(lambda a,b: a and b, [v in nfs_this_sc for v in running_nfs[i]]):
+    ratio += float((i+1)*len(running_nfs.values()[i])) / sumlen
+  nf = random.choice(running_nfs.values()[i])
+  if reduce(lambda a,b: a and b, [v in nfs_this_sc for v 
+                                  in running_nfs.values()[i]]):
     # failing to add a VNF due to this criteria infuences the provided 
     # vnf_sharing_probabilty, but it is estimated to be insignificant, 
     # otherwise the generation can run into infinite loop!
@@ -92,7 +96,7 @@ def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
     return False, None
   else:
     while nf in nfs_this_sc:
-      nf = random.choice(running_nfs[i])
+      nf = random.choice(running_nfs.values()[i])
   if nf in nffg.nfs:
     return False, nf
   else:
@@ -100,10 +104,12 @@ def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
     return True, nf
 
 
-def generateRequestForCarrierTopo(test_lvl, all_saps_beginning, all_saps_ending,
+def generateRequestForCarrierTopo(newnffg, test_lvl, all_saps_beginning, 
+                                  all_saps_ending,
                                   running_nfs, loops=False, 
                                   vnf_sharing_probabilty=0.0,
                                   vnf_sharing_same_sg=0.0,
+                                  shareable_sg_count=9999999999999999,
                                   multiSC=False, max_sc_count=2):
   """
   By default generates VNF-disjoint SC-s starting/ending only once in each SAP.
@@ -116,7 +122,7 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning, all_saps_ending,
   if multiSC:
     sc_count = random.randint(2,max_sc_count)
   while len(all_saps_ending) > sc_count and len(all_saps_beginning) > sc_count:
-    nffg = NFFG(id="Benchmark-Req-"+str(test_lvl))
+    nffg = newnffg
     # newly added NF-s of one request
     current_nfs = []
     for scid in xrange(0,sc_count):
@@ -150,7 +156,8 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning, all_saps_ending,
           vnf_added, nf = _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc,
                                                  p)
         elif multiSC and \
-             p < vnf_sharing_probabilty and len(current_nfs) > 0:
+             p < vnf_sharing_probabilty and len(current_nfs) > 0 \
+             and len(running_nfs) > 0:
           # this influences the the given VNF sharing probability...
           if reduce(lambda a,b: a and b, [v in nfs_this_sc for 
                                           v in current_nfs]):
@@ -161,16 +168,16 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning, all_saps_ending,
             while nf in nfs_this_sc:
               nf = random.choice(current_nfs)
             # the VNF is already in the subchain, we just need to add the links
-            vnf_added = True
+            # vnf_added = True
           else:
             # this happens when VNF sharing is needed but not with the actual SG
             vnf_added, nf = _shareVNFFromEarlierSG(nffg, running_nfs, 
-                                                   nfs_this_sc)
+                                                   nfs_this_sc, p)
         else:
           nf = nffg.add_nf(id="-".join(("Test",str(test_lvl),"SC",str(scid),
                                         "VNF",str(vnf))),
                            func_type=random.choice(['A','B','C']), 
-                           cpu=random.randint(1,6),
+                           cpu=random.randint(1,4),
                            mem=random.random()*1000,
                            storage=random.random()*3,
                            delay=1 + random.random()*10,
@@ -201,6 +208,7 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning, all_saps_ending,
         maxlat = 13.0 * (nfcnt + 2)
       nffg.add_req(sap1port, sap2port, delay=random.uniform(minlat,maxlat), 
                    bandwidth=random.random()*0.2, sg_path = sg_path)
+      log.info("Service Chain on NF-s added: %s"%[nf.id for nf in nfs_this_sc])
       # this prevents loops in the chains and makes new and old NF-s equally 
       # preferable in total for NF sharing
       new_nfs = [vnf for vnf in nfs_this_sc if vnf not in current_nfs]
@@ -214,7 +222,9 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning, all_saps_ending,
 
 def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count, 
                    vnf_sharing_same_sg,
-                   fullremap, bw_factor, res_factor, lat_factor, outputfile, 
+                   fullremap, 
+                   batch_length, shareable_sg_count, 
+                   bw_factor, res_factor, lat_factor, outputfile, 
                    queue=None, shortest_paths_precalc=None, filehandler=None):
   """
   If queue is given, the result will be put in that Queue object too. Meanwhile
@@ -224,18 +234,22 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
   NOTE: outputfile is only used inside the function if an exception is thrown 
   and than it is logged there.
   """
-  network, topoparams = CarrierTopoBuilder.getNanoTopo()
+  total_vnf_count = 0
+  mapped_vnf_count = 0
+  network, topoparams = CarrierTopoBuilder.getMicroTopo()
   max_test_lvl = 50000
   test_lvl = 1
   all_saps_ending = [s.id for s in network.saps]
   all_saps_beginning = [s.id for s in network.saps]
-  running_nfs = {} 
+  running_nfs = OrderedDict() 
   random.seed(0)
   random.jumpahead(seed)
   random.shuffle(all_saps_beginning)
   random.shuffle(all_saps_ending)
   shortest_paths = shortest_paths_precalc
   ppid_pid = ""
+  # log.addHandler(logging.StreamHandler())
+  log.setLevel(logging.DEBUG)
   if filehandler is not None:
     log.addHandler(filehandler)
   if shortest_paths is not None and type(shortest_paths) != dict:
@@ -250,35 +264,50 @@ def StressTestCore(seed, loops, vnf_sharing, multiple_scs, max_sc_count,
   try:
     while test_lvl < max_test_lvl:
       try:
-        log.debug(ppid_pid+"Trying mapping with test level %s..."%test_lvl)
-        request, all_saps_beginning, all_saps_ending = \
-                 generateRequestForCarrierTopo(test_lvl, all_saps_beginning, 
-                                               all_saps_ending, running_nfs,
-                  loops=loops, vnf_sharing_probabilty=vnf_sharing,
-                  vnf_sharing_same_sg=vnf_sharing_same_sg,
-                  multiSC=multiple_scs, max_sc_count=max_sc_count)
+        batch_count = 0
+        request = NFFG(id="Benchmark-Req-"+str(test_lvl))
         while request is not None:
           if test_lvl > max_test_lvl:
             break
-          running_nfs[test_lvl] = [nf for nf in request.nfs 
-                                   if nf.id.split("-")[1] == str(test_lvl)]
-          network, shortest_paths = MappingAlgorithms.MAP(request, network, 
+          if batch_count < batch_length:
+            request, all_saps_beginning, all_saps_ending = \
+                     generateRequestForCarrierTopo(request,
+                                                   test_lvl, all_saps_beginning, 
+                                                   all_saps_ending, running_nfs,
+                     loops=loops, vnf_sharing_probabilty=vnf_sharing,
+                     vnf_sharing_same_sg=vnf_sharing_same_sg,
+                     multiSC=multiple_scs, max_sc_count=max_sc_count)
+            batch_count += 1   
+            running_nfs[test_lvl] = [nf for nf in request.nfs 
+                                     if nf.id.split("-")[1] == str(test_lvl)]
+            if len(running_nfs) > shareable_sg_count:
+              # make the ordered dict function as FIFO
+              running_nfs.popitem(last=False) 
+            test_lvl += 1
+            log.debug("Batching Service Graph number %s..."%batch_count)
+          else:
+            batch_count = 0
+            total_vnf_count += len([nf for nf in request.nfs])
+            network, shortest_paths = MappingAlgorithms.MAP(request, network, 
                     full_remap=fullremap, enable_shortest_path_cache=True,
                     bw_factor=bw_factor, res_factor=res_factor,
                     lat_factor=lat_factor, shortest_paths=shortest_paths, 
                     return_dist=True)
-          log.debug(ppid_pid+"Mapping successful on test level %s!"%test_lvl)
-          test_lvl += 1
-          # needed to change from generator style due to some bug 
-          # with all_saps_ lists. Parameters needs to be modified two places!!
-          request, all_saps_beginning, all_saps_ending = \
-                   generateRequestForCarrierTopo(test_lvl, all_saps_beginning, 
-                                                 all_saps_ending, running_nfs,
-                  loops=loops, vnf_sharing_probabilty=vnf_sharing,
-                  vnf_sharing_same_sg=vnf_sharing_same_sg,
-                  multiSC=multiple_scs, max_sc_count=max_sc_count)
+            log.debug(ppid_pid+"Mapping successful on test level %s with batch"
+                      " length %s!"%(test_lvl, batch_length))
+            mapped_vnf_count += len([nf for nf in request.nfs])
+            request = NFFG(id="Benchmark-Req-"+str(test_lvl))
+
+
       except uet.MappingException as me:
         log.info(ppid_pid+"Mapping failed: %s"%me.msg)
+        if not me.backtrack_possible:
+          log.info("Peak mapped VNF count is %s in the last run."%
+                   me.peak_mapped_vnf_count)
+          mapped_vnf_count += me.peak_mapped_vnf_count
+          log.info("All-time peak mapped VNF count: %s, All-time total VNF "
+                   "count %s, Acceptance ratio: %s"%(mapped_vnf_count, 
+                   total_vnf_count, float(mapped_vnf_count)/total_vnf_count))
         break
       if request is None:
         log.warn(ppid_pid+"Request generation reached its end!")
@@ -315,7 +344,8 @@ def main(argv):
     opts, args = getopt.getopt(argv,"ho:",["loops", "fullremap", "bw_factor=",
                                "res_factor=", "lat_factor=", "request_seed=",
                                "vnf_sharing=", "multiple_scs", 
-                               "vnf_sharing_same_sg=" "max_sc_count="])
+                               "vnf_sharing_same_sg=", "max_sc_count=",
+                               "shareable_sg_count=", "batch_length="])
   except getopt.GetoptError:
     print helpmsg
     sys.exit()
@@ -330,6 +360,8 @@ def main(argv):
   outputfile = "paramsearch.out"
   multiple_scs = False
   max_sc_count = 2
+  shareable_sg_count = 99999999999999
+  batch_length = 1
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
@@ -356,6 +388,10 @@ def main(argv):
       max_sc_count = int(arg)
     elif opt == "--vnf_sharing_same_sg":
       vnf_sharing_same_sg = float(arg)
+    elif opt == "--shareable_sg_count":
+      shareable_sg_count = int(arg)
+    elif opt == "--batch_length":
+      batch_length = int(arg)
   params, args = zip(*opts)
   if "--bw_factor" not in params or "--res_factor" not in params or \
      "--lat_factor" not in params:
@@ -364,6 +400,7 @@ def main(argv):
   
   returned_test_lvl = StressTestCore(seed, loops, vnf_sharing,
            multiple_scs, max_sc_count, vnf_sharing_same_sg, fullremap, 
+           batch_length, shareable_sg_count,
            bw_factor, res_factor, lat_factor, outputfile)
   
   log.info("First unsuccessful mapping was at %s test level."%

@@ -54,8 +54,8 @@ class CoreAlgorithm(object):
     
     # parameters contolling the backtrack process
     # how many of the best possible VNF mappings should be remembered
-    self.bt_branching_factor = 4
-    self.bt_limit = 5
+    self.bt_branching_factor = 3
+    self.bt_limit = 6
 
     self._preproc(net0, req0, chains0, shortest_paths)
 
@@ -87,6 +87,10 @@ class CoreAlgorithm(object):
     # and not STATIC links
     self.bare_infrastucture_nffg = self.net
     
+    # peak number of VNFs that were mapped to resource at the same time
+    self.peak_mapped_vnf_count = 0
+    self.sap_count = len([i for i in self.req.saps])
+
     # The networkx graphs from the NFFG should be enough for the core
     # unwrap them, to save one indirection after the preprocessor has
     # finished.
@@ -412,6 +416,10 @@ class CoreAlgorithm(object):
       (step_data['vnf_id'], step_data['target_infra']))
     self.manager.vnf_mapping.append((step_data['vnf_id'], 
                                      step_data['target_infra']))
+    # maintain peak VNF count during the backtracking
+    if len(self.manager.vnf_mapping) - self.sap_count > \
+       self.peak_mapped_vnf_count:
+      self.peak_mapped_vnf_count = len(self.manager.vnf_mapping) - self.sap_count
     self.log.debug("Request Link %s, %s, %s mapped to path: %s" % (
       step_data['prev_vnf_id'], step_data['vnf_id'], step_data['reqlinkid'], 
       step_data['path']))
@@ -1044,10 +1052,18 @@ class CoreAlgorithm(object):
             if not me.backtrack_possible:
               # re-raise the exception, we have ran out of backrack 
               # possibilities.
-              raise
+              raise uet.MappingException(me.msg, False, 
+                                         peak_vnf_cnt=self.peak_mapped_vnf_count)
             else:
-              c, sub, bt_record, link_bt_rec_list = \
-                 self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph([])
+              try:
+                c, sub, bt_record, link_bt_rec_list = \
+                   self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph([])
+              except uet.MappingException as me2:
+                if not me2.backtrack_possible:
+                  raise uet.MappingException(me.msg, False, 
+                        peak_vnf_cnt=self.peak_mapped_vnf_count)
+                else:
+                  raise
               for c_prime, prev_bt_rec, link_mapping_rec in link_bt_rec_list:
                 if link_mapping_rec is not None:
                   self._resolveLinkMappingRecord(c_prime, link_mapping_rec)

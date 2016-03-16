@@ -53,7 +53,8 @@ class MappingException(UnifyException):
   upper layer. Not enough resources, no path found.
   """
 
-  def __init__(self, msg, backtrack_possible):
+  def __init__(self, msg, backtrack_possible, peak_vnf_cnt=None):
     super(MappingException, self).__init__(msg + " Backtrack available: %s"
                                            %backtrack_possible)
     self.backtrack_possible = backtrack_possible
+    self.peak_mapped_vnf_count = peak_vnf_cnt
