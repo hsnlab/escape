@@ -1001,12 +1001,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: the difference
     :rtype: Virtualizer
     """
-    base = Virtualizer.parse_from_text(text=self.last_virtualizer.xml())
-    # changed = Virtualizer.parse_from_text(text=vdata.xml())
-    # vdata = base.diff(target=changed)
-    # vdata = base.diff(target=vdata)
-    # log.log(VERBOSE, "last_virtualizer\n%s" % self.last_virtualizer)
-    # log.log(VERBOSE, "vdata\n%s" % vdata)
+    # base = Virtualizer.parse_from_text(text=self.last_virtualizer.xml())
+    base = self.last_virtualizer
     diff = base.diff(changed)
     return diff
 
