@@ -597,18 +597,17 @@ class NFFGConverter(object):
                        l.type == NFFG.TYPE_LINK_DYNAMIC and str(l.src.id) ==
                        str(vport_id)]
           if len(_dyn_port) > 1:
-            self.log.warning(
-              "Multiple dynamic link detected for NF(id: %s) Use first "
-              "link ..." % _vnf_id)
+            self.log.warning("Multiple dynamic link detected for NF(id: %s) "
+                             "Use first link ..." % _vnf_id)
           elif len(_dyn_port) < 1:
-            raise RuntimeError(
-              "Missing infra-vnf dynamic link for vnf: %s" % _vnf_id)
+            raise RuntimeError("Missing infra-vnf dynamic link for vnf: %s" %
+                               _vnf_id)
           # Get dynamic port from infra
           vport = nffg[infra.id].ports[_dyn_port[0]]
       except RuntimeError as e:
-        self.log.error(
-          "Port: %s is not found in the NFFG: %s from the flowrule:\n%s" % (
-            vport_id, e.message, flowentry))
+        self.log.error("Port: %s is not found in the NFFG: "
+                       "%s from the flowrule:\n%s" %
+                       (vport_id, e.message, flowentry))
         continue
 
       # Get resource values
