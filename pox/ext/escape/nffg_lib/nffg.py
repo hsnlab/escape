@@ -1507,7 +1507,7 @@ class NFFGToolBox(object):
                               name="SingleBiSBiS",
                               domain=NFFG.DEFAULT_DOMAIN,
                               infra_type=NFFG.TYPE_INFRA_BISBIS)
-    log.debug("Add Infra BiSBiS: %s" % sbb_infra)
+    log.debug("Added Infra BiSBiS: %s" % sbb_infra)
     # Compute and add resources
     # Sum of available CPU
     try:
@@ -1561,11 +1561,11 @@ class NFFGToolBox(object):
     for infra in nffg.infras:
       s_types = s_types.union(infra.supported)
     sbb_infra.add_supported_type(s_types)
-    log.debug("Add supported types: %s" % s_types)
+    log.debug("Added supported types: %s" % s_types)
     # Add existing NFs
     for nf in nffg.nfs:
       c_nf = sbb.add_nf(nf=nf.copy())
-      log.debug("Add NF: %s" % c_nf)
+      log.debug("Added NF: %s" % c_nf)
       # Discover and add NF connections
       for u, v, l in nffg.real_out_edges_iter(nf.id):
         if l.type != NFFG.TYPE_LINK_DYNAMIC:
@@ -1578,12 +1578,12 @@ class NFFGToolBox(object):
                                                dynamic=True,
                                                delay=l.delay,
                                                bandwidth=l.bandwidth)
-        log.debug("Add connection: %s" % link1)
-        log.debug("Add connection: %s" % link2)
+        log.debug("Added connection: %s" % link1)
+        log.debug("Added connection: %s" % link2)
     # Add existing SAPs and their connections to the SingleBiSBiS infra
     for sap in nffg.saps:
       c_sap = sbb.add_sap(sap=sap.copy())
-      log.debug("Add SAP: %s" % c_sap)
+      log.debug("Added SAP: %s" % c_sap)
       # Discover and add SAP connections
       for u, v, l in nffg.real_out_edges_iter(sap.id):
         # Explicitly add links for both direction
@@ -1593,8 +1593,8 @@ class NFFGToolBox(object):
                                                p1p2id=l.id,
                                                delay=l.delay,
                                                bandwidth=l.bandwidth)
-        log.debug("Add connection: %s" % link1)
-        log.debug("Add connection: %s" % link2)
+        log.debug("Added connection: %s" % link1)
+        log.debug("Addde connection: %s" % link2)
     # Recreate flowrules based on NBalazs functions
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(nffg=nffg)
     import pprint
@@ -1635,10 +1635,11 @@ class NFFGToolBox(object):
                       sg_dst_node, sg_dst_port, fr_hop, sbb_dst_port))
         continue
       sbb_dst_port = sbb_dst_port.pop()
-      sbb_src_port.add_flowrule(match="in_port=%s" % sbb_src_port.id,
-                                action="output=%s" % sbb_dst_port.id,
-                                bandwidth=fr_bw, delay=fr_delay,
-                                hop_id=fr_hop, id=fr_hop)
+      fr = sbb_src_port.add_flowrule(match="in_port=%s" % sbb_src_port.id,
+                                     action="output=%s" % sbb_dst_port.id,
+                                     bandwidth=fr_bw, delay=fr_delay,
+                                     hop_id=fr_hop, id=fr_hop)
+      log.debug("Added flowrule: %s" % fr)
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return sbb
