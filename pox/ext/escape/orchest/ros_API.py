@@ -306,6 +306,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         full_cfg = self.server.last_response.copy()
         # Adapt changes on the local config
         full_cfg.patch(source=received_cfg)
+        # full_cfg.bind(relative=True)
       else:
         full_cfg = received_cfg
       self.log.log(VERBOSE, "Generated request:\n%s" % full_cfg.xml())

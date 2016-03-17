@@ -851,11 +851,11 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       vdata = self.__calculate_diff(vdata)
     else:
       log.debug("Using given Virtualizer as full mapping request")
+    # Force relative path explicitly
+    vdata.bind(relative=True)
     plain_data = vdata.xml()
-    log.debug("Send NFFG to %s domain agent at %s..." % (
-      self.domain_name, self._base_url))
-    log.debug("Send topology description to domain agent at %s..." %
-              self._base_url)
+    log.debug("Send request to %s domain agent at %s..." %
+              (self.domain_name, self._base_url))
     log.log(VERBOSE, "Generated Virtualizer:\n%s" % plain_data)
     try:
       status = self.send_with_timeout(self.POST, 'edit-config', plain_data)
