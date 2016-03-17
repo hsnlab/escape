@@ -16,6 +16,7 @@ Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
 import copy
+from copy import deepcopy
 import itertools
 import logging
 import networkx
@@ -1111,7 +1112,6 @@ class NFFGToolBox(object):
     :return: the update base NFFG
     :rtype: :any:`NFFG`
     """
-    from copy import deepcopy
     # Get new domain name
     domain = cls.detect_domains(nffg=nffg)
     if len(domain) == 0:
@@ -1722,6 +1722,64 @@ class NFFGToolBox(object):
     else:
       # TODO - implement real update
       log.error("Domain update has not implemented yet!")
+
+  @classmethod
+  def _copy_node_type (cls, type_iter, target, log):
+    """
+    Copies all element from iterator if it is not in target, and merges their
+    port lists.
+    
+    :param type_iter: Iterator on objects to be added
+    :type type_iter: :any: iterator on `Node`
+    :param target: The target NFFG
+    :type target: :any: `NFFG`
+    :return: the updated base NFFG
+    :rtype: :any:`NFFG`
+    """
+    for obj in type_iter:
+      if obj.id not in target:
+        c_obj = target.add_node(deepcopy(obj))
+        log.debug("Copy NFFG node: %s" % c_obj)
+      else:
+        for p in obj.ports:
+          if p not in target.network.node[obj.id].ports:
+            target.network.node[obj.id].add_port(id=p.id, 
+                                                 properties=p.properties)
+            # TODO: Flowrules are not copied!
+            log.debug("Copy port %s to NFFG element %s"%(p, obj))
+    return target
+
+  @classmethod
+  def merge_nffgs (cls, target, new, log=logging.getLogger("UNION")):
+    """
+    Merges new `NFFG` to target `NFFG` keeping all parameters and copying 
+    port object from new. Comparison is done based on object id, resources and
+    requirements are kept unchanged in target.
+
+    :param target: target NFFG object
+    :type target: :any:`NFFG`
+    :param new: NFFG object to merge from
+    :type new: :any:`NFFG`
+    :return: the updated base NFFG
+    :rtype: :any:`NFFG`
+    """
+    # Copy Infras
+    target = cls._copy_node_type(new.infras, target, log)
+    # Copy NFs
+    target = cls._copy_node_type(new.nfs, target, log)
+    # Copy SAPs
+    target = cls._copy_node_type(new.saps, target, log)
+
+    # Copy remaining links which should be valid
+    for u, v, link in new.network.edges_iter(data=True):
+      src_port = target.network.node[u].ports[link.src.id]
+      dst_port = target.network.node[v].ports[link.dst.id]
+      c_link = deepcopy(link)
+      c_link.src = src_port
+      c_link.dst = dst_port
+      target.add_link(src_port=src_port, dst_port=dst_port, link=c_link)
+      log.debug("Copy Link: %s" % c_link)
+    return target
 
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------
