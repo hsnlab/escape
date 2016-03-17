@@ -76,6 +76,8 @@ helpmsg = """StressTest.py options are:
                             be used for sharing VNFs. Default value is unlimited.
    --sliding_share   If not set, the set of shareable SG-s is emptied after 
                      successfull batched mapping.
+   --use_saps_once   If set, all SAPs can only be used once as SC origin and 
+                     once as SC origin.
 """
 
 def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
@@ -241,7 +243,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
   """
   total_vnf_count = 0
   mapped_vnf_count = 0
-  network, topoparams = CarrierTopoBuilder.getMicroTopo()
+  network = CarrierTopoBuilder.getPicoTopo()
   max_test_lvl = 50000
   test_lvl = 1
   all_saps_ending = [s.id for s in network.saps]
@@ -267,23 +269,31 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
     ppid_pid = "%s.%s:"%(os.getppid(), os.getpid())
 
   try:
-    while test_lvl < max_test_lvl:
-      try:
-        batch_count = 0
-        batched_request = NFFG(id="Benchmark-Req-"+str(test_lvl))
-        # built-in libs can change the state of random module during mapping.
-        random_state = None
-        while batched_request is not None:
-          if test_lvl > max_test_lvl:
+    try:
+      batch_count = 0
+      batched_request = NFFG(id="Benchmark-Req-"+str(test_lvl))
+      # built-in libs can change the state of random module during mapping.
+      random_state = None
+      while batched_request is not None:
+        if test_lvl > max_test_lvl:
+          break
+        if (len(all_saps_ending) < batch_length or \
+            len(all_saps_beginning) < batch_length) and use_saps_once:
+          log.warn("Can't start batching because all SAPs should only be used"
+                   " once for SC origin and destination and there are not "
+                   "enough SAPs!")
+          batched_request = None
+        elif batch_count < batch_length:
+          request, all_saps_beginning, all_saps_ending = \
+                   generateRequestForCarrierTopo(test_lvl, all_saps_beginning, 
+                                                 all_saps_ending, running_nfs,
+                   loops=loops, use_saps_once=use_saps_once,
+                   vnf_sharing_probabilty=vnf_sharing,
+                   vnf_sharing_same_sg=vnf_sharing_same_sg,
+                   multiSC=multiple_scs, max_sc_count=max_sc_count)
+          if request is None:
             break
-          if batch_count < batch_length:
-            request, all_saps_beginning, all_saps_ending = \
-                     generateRequestForCarrierTopo(test_lvl, all_saps_beginning, 
-                                                   all_saps_ending, running_nfs,
-                     loops=loops, use_saps_once=use_saps_once,
-                     vnf_sharing_probabilty=vnf_sharing,
-                     vnf_sharing_same_sg=vnf_sharing_same_sg,
-                     multiSC=multiple_scs, max_sc_count=max_sc_count)
+          else:
             batch_count += 1   
             running_nfs[test_lvl] = [nf for nf in request.nfs 
                                      if nf.id.split("-")[1] == str(test_lvl)]
@@ -299,34 +309,35 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
             if not sliding_share and test_lvl % shareable_sg_count == 0:
               running_nfs = OrderedDict()
             log.debug("Batching Service Graph number %s..."%batch_count)
-          else:
-            batch_count = 0
-            total_vnf_count += len([nf for nf in batched_request.nfs])
-            random_state = random.getstate()
-            network, shortest_paths = MappingAlgorithms.MAP(batched_request, network, 
-                    full_remap=fullremap, enable_shortest_path_cache=True,
-                    bw_factor=bw_factor, res_factor=res_factor,
-                    lat_factor=lat_factor, shortest_paths=shortest_paths, 
-                    return_dist=True)
-            log.debug(ppid_pid+"Mapping successful on test level %s with batch"
-                      " length %s!"%(test_lvl, batch_length))
-            random.setstate(random_state)
-            mapped_vnf_count += len([nf for nf in batched_request.nfs])
-            batched_request = NFFG(id="Benchmark-Req-"+str(test_lvl))
+        else:
+          batch_count = 0
+          total_vnf_count += len([nf for nf in batched_request.nfs])
+          random_state = random.getstate()
+          network, shortest_paths = MappingAlgorithms.MAP(batched_request, network, 
+                  full_remap=fullremap, enable_shortest_path_cache=True,
+                  bw_factor=bw_factor, res_factor=res_factor,
+                  lat_factor=lat_factor, shortest_paths=shortest_paths, 
+                  return_dist=True)
+          log.debug(ppid_pid+"Mapping successful on test level %s with batch"
+                    " length %s!"%(test_lvl, batch_length))
+          random.setstate(random_state)
+          mapped_vnf_count += len([nf for nf in batched_request.nfs])
+          batched_request = NFFG(id="Benchmark-Req-"+str(test_lvl))
 
-      except uet.MappingException as me:
-        log.info(ppid_pid+"Mapping failed: %s"%me.msg)
-        if not me.backtrack_possible:
-          log.info("Peak mapped VNF count is %s in the last run."%
-                   me.peak_mapped_vnf_count)
-          mapped_vnf_count += me.peak_mapped_vnf_count
-          log.info("All-time peak mapped VNF count: %s, All-time total VNF "
-                   "count %s, Acceptance ratio: %s"%(mapped_vnf_count, 
-                   total_vnf_count, float(mapped_vnf_count)/total_vnf_count))
-        break
-      if request is None:
-        log.warn(ppid_pid+"Request generation reached its end!")
-        break
+    except uet.MappingException as me:
+      log.info(ppid_pid+"Mapping failed: %s"%me.msg)
+      if not me.backtrack_possible:
+        log.info("Peak mapped VNF count is %s in the last run."%
+                 me.peak_mapped_vnf_count)
+        mapped_vnf_count += me.peak_mapped_vnf_count
+        log.info("All-time peak mapped VNF count: %s, All-time total VNF "
+                 "count %s, Acceptance ratio: %s"%(mapped_vnf_count, 
+                 total_vnf_count, float(mapped_vnf_count)/total_vnf_count))
+      # break
+    if request is None or batched_request is None:
+      log.warn(ppid_pid+"Request generation reached its end!")
+      # break
+      
   except uet.UnifyException as ue:
     log.error(ppid_pid+ue.msg)
     log.error(ppid_pid+traceback.format_exc())
