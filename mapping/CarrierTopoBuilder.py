@@ -417,3 +417,31 @@ def getNanoTopo():
                                   [8,12,16], [32000,64000], [150], 4000, 4)})
   """
   return getCarrierTopo(topoparams, increment_port_ids=True), topoparams
+
+def getPicoTopo():
+  """
+  Not carrier style topo. Few nodes with big resources.
+  """
+  random.seed(0)
+  nffg = NFFG(id="SmallExampleTopo")
+  switch = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
+            'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
+  sw = nffg.add_infra(id = getName("sw"), **switch)
+  infra = {'cpu': 400, 'mem': 640000, 'storage': 1500, 'delay': 1.0,
+           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_EE}
+  linkres = {'bandwidth': 1000, 'delay': 0.5}
+
+  inf1 = nffg.add_infra(id = getName("infra"), **infra)
+  inf1.add_supported_type(['A','B','C'])
+  for i in range(0,4):
+    inf2 = nffg.add_infra(id = getName("infra"), **infra)
+    nameid = getName("sap")
+    sap = nffg.add_sap(id = nameid, name = nameid)
+    # add links
+    nffg.add_undirected_link(sw.add_port(), inf2.add_port(), **linkres)
+    nffg.add_undirected_link(inf1.add_port(), inf2.add_port(), **linkres)
+    nffg.add_undirected_link(inf2.add_port(), sap.add_port(), **linkres)
+    inf1 = inf2 
+    inf1.add_supported_type(['A','B','C'])
+    
+  return nffg
