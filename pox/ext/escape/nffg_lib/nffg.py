@@ -1796,19 +1796,20 @@ class NFFGToolBox(object):
     for fr in port.flowrules:
       actions = fr.action.split(";")
       for action in actions:
-        command, param = action.split("=")
-        if command == "TAG" and param == TAG:
-          for action2 in actions:
-            command2, param2 = action2.split("=")
-            try:
-              param2 = int(param2)
-            except ValueError:
-              pass
-            if command2 == "output":
-              return port.node.ports[param2], fr.bandwidth
-          else:
-            raise RuntimeError("No 'output' action found for flowrule with"
-                               " 'TAG' action!")
+        command_param = action.split("=")
+        if command_param[0] == "TAG":
+          if command_param[1] == TAG:
+            for action2 in actions:
+              command_param2 = action2.split("=")
+              if command_param2[0] == "output":
+                try:
+                  param2 = int(command_param2[1])
+                except ValueError:
+                  param2 = command_param2[1]
+                return port.node.ports[param2], fr.bandwidth
+            else:
+              raise RuntimeError("No 'output' action found for flowrule with"
+                                 " 'TAG' action!")
     # No flowrule with the given tag action found.
     return None, None
 
