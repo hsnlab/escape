@@ -615,12 +615,12 @@ class Flowrule(Element):
     return self
 
   def __repr__ (self):
-    return "Flowrule object:\nmatch: %s \naction: %s \nhop: %s \nbw: %s " \
-           "\nbandwidth: %s" % (
+    return "Flowrule object:\nmatch: %s \naction: %s \nhop: %s \nbandwidth: %s "\
+           "\ndelay: %s" % (
              self.match, self.action, self.hop_id, self.bandwidth, self.delay)
 
   def __str__ (self):
-    return "%s(match: %s, action: %s, hop: %s, bw: %s, delay: %s)" % (
+    return "%s(match: %s, action: %s, hop: %s, bandwidth: %s, delay: %s)" % (
       self.__class__.__name__, self.match, self.action, self.hop_id,
       self.bandwidth, self.delay)
 
