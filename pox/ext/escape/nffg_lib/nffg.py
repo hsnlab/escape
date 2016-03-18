@@ -954,10 +954,6 @@ class NFFG(AbstractNFFG):
           # is also handled by the Flowrule.bandwidth summerizing 'for loop'
           for link in path_of_TAG:
             link.availbandwidth -= flow_bw
-            # the last infra on the path is either a SAP or the last flowrule 
-            # is subtracted when we get there with the outer loop
-            if link.id != path_of_TAG[-1].id:
-              link.dst.node.availres.bandwidth -= flow_bw
             if link.availbandwidth < 0:
               raise RuntimeError("(BadInputException) "
                                  "The bandwidth usage implied by the sum of "
