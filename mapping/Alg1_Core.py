@@ -370,6 +370,7 @@ class CoreAlgorithm(object):
         self.net.node[path[0]].availres['bandwidth'] -= bw_req
         new_bw = self.net.node[path[0]].availres['bandwidth']
         if new_bw < 0 or new_bw > self.net.node[path[0]].resources['bandwidth']:
+          self.log.error("Node bandwidth is incorrect with value %s!"%new_bw)
           raise uet.InternalAlgorithmException("An internal bandwidth value got"
                                        " below zero or exceeded maximal value!")
         elif new_bw == 0:
@@ -382,6 +383,7 @@ class CoreAlgorithm(object):
           self.net[i][j][k].availbandwidth -= bw_req
           new_bw = self.net[i][j][k].availbandwidth
           if new_bw < 0 or new_bw > self.net[i][j][k].bandwidth:
+            self.log.error("Node bandwidth is incorrect with value %s!"%new_bw)
             raise uet.InternalAlgorithmException("The bandwidth resource of "
                       "link %s got below zero, or exceeded maximal value!"%k)
           elif new_bw == 0:
@@ -394,6 +396,8 @@ class CoreAlgorithm(object):
             new_bw_innode = self.net.node[j].availres['bandwidth']
             if new_bw_innode < 0 or new_bw_innode > \
                self.net.node[j].resources['bandwidth']:
+              self.log.error("Node bandwidth is incorrect with value %s!"%
+                             new_bw_innode)
               raise uet.InternalAlgorithmException("The bandwidth resource"
               " of node %s got below zero, or exceeded the maximal value!"%j)
             elif new_bw_innode == 0:

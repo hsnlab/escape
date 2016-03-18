@@ -667,6 +667,8 @@ class GraphPreprocessorClass(object):
     # calculated weights for infras based on their available bandwidth capacity
     for d in net.infras:
       if d.availres.bandwidth < 0:
+        self.log.error("Available bandwidth of Infra %s got below zero: %s"%
+                 (d.id, d.availres.bandwidth))
         raise uet.BadInputException(
            "The sum of bandwidth capacity of internal Flowrules should be "
            "less than the available internal bandwidth",

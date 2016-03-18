@@ -432,9 +432,13 @@ def getPicoTopo():
   linkres = {'bandwidth': 1000, 'delay': 0.5}
 
   inf1 = nffg.add_infra(id = getName("infra"), **infra)
+  inf0 = inf1
   inf1.add_supported_type(['A','B','C'])
   for i in range(0,4):
-    inf2 = nffg.add_infra(id = getName("infra"), **infra)
+    if i == 3:
+      inf2 = inf0
+    else:
+      inf2 = nffg.add_infra(id = getName("infra"), **infra)
     nameid = getName("sap")
     sap = nffg.add_sap(id = nameid, name = nameid)
     # add links

@@ -124,6 +124,8 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
   """
   chain_maxlen = 10
   sc_count=1
+  # maximal possible bandwidth for chains
+  max_bw = 10.0
   if multiSC:
     sc_count = random.randint(2,max_sc_count)
   while len(all_saps_ending) > sc_count and len(all_saps_beginning) > sc_count:
@@ -213,9 +215,9 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
       else:
         nfcnt = len([i for i in nffg.nfs])
         minlat = 5.0 * (nfcnt + 2)
-        maxlat = 13.0 * (nfcnt + 2)
+        maxlat = (14.0 - 1.75*(test_lvl%5))  * (nfcnt + 2)
       nffg.add_req(sap1port, sap2port, delay=random.uniform(minlat,maxlat), 
-                   bandwidth=random.random()*0.2, sg_path = sg_path)
+                   bandwidth=random.random()*max_bw, sg_path = sg_path)
       log.info("Service Chain on NF-s added: %s"%[nf.id for nf in nfs_this_sc])
       # this prevents loops in the chains and makes new and old NF-s equally 
       # preferable in total for NF sharing
