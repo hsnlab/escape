@@ -932,7 +932,6 @@ class NFFG(AbstractNFFG):
     # find all the flowrules with starting TAG and retrieve the paths, 
     # and subtract the reserved link and internal (inside Infras) bandwidth
     for d in self.infras:
-      reserved_internal_bw = 0
       for p in d.ports:
         for fr in p.flowrules:
           if fr.hop_id in sg_hop_ids:
@@ -947,7 +946,7 @@ class NFFG(AbstractNFFG):
                                "mapped path of SGHop %s." % (
                                  fr.id, d.id, fr.hop_id))
           if fr.bandwidth is not None:
-            reserved_internal_bw += fr.bandwidth
+            d.availres['bandwidth'] -= fr.bandwidth
         for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
           path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, self, p)
           # collocation flowrules have not TAGs so their empty lists are not 
@@ -971,7 +970,6 @@ class NFFG(AbstractNFFG):
                                    link.src.node.id,
                                    link.dst.node.id,
                                    link.id))
-      d.availres['bandwidth'] -= reserved_internal_bw
 
   def calculate_available_node_res (self, vnfs_to_be_ignored=(),
                                     full_remap=False):
