@@ -427,7 +427,7 @@ def getPicoTopo():
   switch = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
             'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   sw = nffg.add_infra(id = getName("sw"), **switch)
-  infra = {'cpu': 400, 'mem': 640000, 'storage': 1500, 'delay': 1.0,
+  infra = {'cpu': 400, 'mem': 320000, 'storage': 1500, 'delay': 1.0,
            'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_EE}
   linkres = {'bandwidth': 1000, 'delay': 0.5}
 

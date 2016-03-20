@@ -557,7 +557,7 @@ class CoreAlgorithm(object):
     used_lat = self._sumLatencyOnPath(path, linkids)
 
     if self._calculateAvgLinkUtil(path, linkids, bw_req) == -1:
-      self.log.error(
+      self.log.info(
         "Last link of chain or best-effort link %s, %s couldn`t be mapped!" % (
           vnf1, vnf2))
       raise uet.MappingException(

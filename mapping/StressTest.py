@@ -77,7 +77,7 @@ helpmsg = """StressTest.py options are:
    --sliding_share   If not set, the set of shareable SG-s is emptied after 
                      successfull batched mapping.
    --use_saps_once   If set, all SAPs can only be used once as SC origin and 
-                     once as SC origin.
+                     once as SC destination.
 """
 
 def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
@@ -122,10 +122,10 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
   'vnf_sharing_probabilty' determines the ratio of 
      #(VNF-s used by at least two SC-s)/#(not shared VNF-s).
   """
-  chain_maxlen = 10
+  chain_maxlen = 6
   sc_count=1
   # maximal possible bandwidth for chains
-  max_bw = 10.0
+  max_bw = 7.0
   if multiSC:
     sc_count = random.randint(2,max_sc_count)
   while len(all_saps_ending) > sc_count and len(all_saps_beginning) > sc_count:
@@ -213,9 +213,9 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
         minlat = 5.0 * (len(nfs_this_sc) + 2)
         maxlat = 13.0 * (len(nfs_this_sc) + 2)
       else:
-        nfcnt = len([i for i in nffg.nfs])
-        minlat = 5.0 * (nfcnt + 2)
-        maxlat = (14.0 - 1.75*(test_lvl%5))  * (nfcnt + 2)
+        # nfcnt = len([i for i in nffg.nfs])
+        minlat = 40 - 8.0*(test_lvl%5)
+        maxlat = 60.0 - 11.25*(test_lvl%5)
       nffg.add_req(sap1port, sap2port, delay=random.uniform(minlat,maxlat), 
                    bandwidth=random.random()*max_bw, sg_path = sg_path)
       log.info("Service Chain on NF-s added: %s"%[nf.id for nf in nfs_this_sc])
@@ -258,7 +258,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
   shortest_paths = shortest_paths_precalc
   ppid_pid = ""
   # log.addHandler(logging.StreamHandler())
-  log.setLevel(logging.DEBUG)
+  log.setLevel(logging.WARN)
   if filehandler is not None:
     log.addHandler(filehandler)
   if shortest_paths is not None and type(shortest_paths) != dict:
@@ -329,10 +329,10 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
     except uet.MappingException as me:
       log.info(ppid_pid+"Mapping failed: %s"%me.msg)
       if not me.backtrack_possible:
-        log.info("Peak mapped VNF count is %s in the last run."%
+        log.warn("Peak mapped VNF count is %s in the last run."%
                  me.peak_mapped_vnf_count)
         mapped_vnf_count += me.peak_mapped_vnf_count
-        log.info("All-time peak mapped VNF count: %s, All-time total VNF "
+        log.warn("All-time peak mapped VNF count: %s, All-time total VNF "
                  "count %s, Acceptance ratio: %s"%(mapped_vnf_count, 
                  total_vnf_count, float(mapped_vnf_count)/total_vnf_count))
       # break
