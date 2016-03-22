@@ -1082,7 +1082,7 @@ class CoreAlgorithm(object):
     # construct output NFFG with the mapping of VNFs and links
     return self.constructOutputNFFG()
 
-  def setBacktrackParameters(self, bt_limit=5, bt_branching_factor=4):
+  def setBacktrackParameters(self, bt_limit=6, bt_branching_factor=3):
     """
     Sets the depth and maximal branching factor for the backtracking process on
     nodes. bt_limit determines how many request graph nodes should be remembered
@@ -1097,6 +1097,9 @@ class CoreAlgorithm(object):
                                   %(bt_limit, bt_branching_factor))
     self.bt_branching_factor = bt_branching_factor
     self.bt_limit = bt_limit
+    self.bt_handler = backtrack.BacktrackHandler(\
+                        self.bt_handler.subchains_with_subgraphs, 
+                        self.bt_branching_factor, self.bt_limit)
     
   def setResourcePrioritiesOnNodes(self, cpu=0.3333, mem=0.3333, 
                                    storage=0.3333):
