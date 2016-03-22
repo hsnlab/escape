@@ -26,9 +26,9 @@ from itertools import count
 
 log = logging.getLogger("mapping")
 # log.setLevel(logging.DEBUG)
-if not log.getEffectiveLevel():
-  logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
-  log.setLevel(logging.DEBUG)
+#if not log.getEffectiveLevel():
+logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
+log.setLevel(logging.WARN)
 
 def retrieveFullDistMtx (dist, G_full):
   # this fix access latency is used by CarrierTopoBuilder.py
