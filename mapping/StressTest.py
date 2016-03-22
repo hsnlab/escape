@@ -61,6 +61,9 @@ helpmsg = """StressTest.py options are:
    --res_factor=f    and distance in latency during the mapping process. The
    --lat_factor=f    factors are advised to be summed to 3, if any is given the
                      others shall be given too!
+   --bt_limit=i      Backtracking depth limit of the mapping algorithm (def.: 6).
+   --bt_br_factor=i  Branching factor of the backtracking procedure of the 
+                     mapping algorithm (default is 3).
 
    --multiple_scs           One request will contain at least 2 chains with vnf sharing
                             probability defined by "--vnf_sharing_same_sg" option.
@@ -214,8 +217,8 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
         maxlat = 13.0 * (len(nfs_this_sc) + 2)
       else:
         # nfcnt = len([i for i in nffg.nfs])
-        minlat = 40 - 8.0*(test_lvl%5)
-        maxlat = 60.0 - 11.25*(test_lvl%5)
+        minlat = 50.0 - 10.0*(test_lvl%4)
+        maxlat = 60.0 - 12.25*(test_lvl%4)
       nffg.add_req(sap1port, sap2port, delay=random.uniform(minlat,maxlat), 
                    bandwidth=random.random()*max_bw, sg_path = sg_path)
       log.info("Service Chain on NF-s added: %s"%[nf.id for nf in nfs_this_sc])
@@ -233,8 +236,9 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
 def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs, 
                    max_sc_count, vnf_sharing_same_sg, fullremap, 
                    batch_length, shareable_sg_count, sliding_share,
-                   bw_factor, res_factor, lat_factor, outputfile, 
-                   queue=None, shortest_paths_precalc=None, filehandler=None):
+                   bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, 
+                   outputfile, queue=None, shortest_paths_precalc=None, 
+                   filehandler=None):
   """
   If queue is given, the result will be put in that Queue object too. Meanwhile
   if shortest_paths_precalc is not given, it means the caller needs the 
@@ -319,7 +323,8 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
                   full_remap=fullremap, enable_shortest_path_cache=True,
                   bw_factor=bw_factor, res_factor=res_factor,
                   lat_factor=lat_factor, shortest_paths=shortest_paths, 
-                  return_dist=True)
+                  return_dist=True,
+                  bt_limit=bt_limit, bt_branching_factor=bt_br_factor)
           log.debug(ppid_pid+"Mapping successful on test level %s with batch"
                     " length %s!"%(test_lvl, batch_length))
           random.setstate(random_state)
@@ -329,8 +334,8 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
     except uet.MappingException as me:
       log.info(ppid_pid+"Mapping failed: %s"%me.msg)
       if not me.backtrack_possible:
-        log.warn("Peak mapped VNF count is %s in the last run."%
-                 me.peak_mapped_vnf_count)
+        log.warn("Peak mapped VNF count is %s in the last run, test level: %s"%
+                 (me.peak_mapped_vnf_count, test_lvl))
         mapped_vnf_count += me.peak_mapped_vnf_count
         log.warn("All-time peak mapped VNF count: %s, All-time total VNF "
                  "count %s, Acceptance ratio: %s"%(mapped_vnf_count, 
@@ -374,6 +379,7 @@ def main(argv):
                                "vnf_sharing=", "multiple_scs", 
                                "vnf_sharing_same_sg=", "max_sc_count=",
                                "shareable_sg_count=", "batch_length=",
+                               "bt_br_factor=", "bt_limit=",
                                "sliding_share", "use_saps_once"])
   except getopt.GetoptError:
     print helpmsg
@@ -393,6 +399,8 @@ def main(argv):
   max_sc_count = 2
   shareable_sg_count = 99999999999999
   batch_length = 1
+  bt_br_factor = 6
+  bt_limit = 3
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
@@ -427,6 +435,10 @@ def main(argv):
       sliding_share = True
     elif opt == "--use_saps_once":
       use_saps_once = True
+    elif opt == "--bt_limit":
+      bt_limit = int(arg)
+    elif opt == "--bt_br_factor":
+      bt_br_factor = int(arg)
   params, args = zip(*opts)
   if "--bw_factor" not in params or "--res_factor" not in params or \
      "--lat_factor" not in params:
@@ -436,7 +448,7 @@ def main(argv):
   returned_test_lvl = StressTestCore(seed, loops, use_saps_once, vnf_sharing,
            multiple_scs, max_sc_count, vnf_sharing_same_sg, fullremap, 
            batch_length, shareable_sg_count, sliding_share,
-           bw_factor, res_factor, lat_factor, outputfile)
+           bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, outputfile)
   
   log.info("First unsuccessful mapping was at %s test level."%
            (returned_test_lvl+1))

@@ -74,7 +74,8 @@ def _purgeNFFGFromInfinityValues(nffg):
 def MAP (request, network, full_remap=False,
          enable_shortest_path_cache=False,
          bw_factor=1, res_factor=1, lat_factor=1,
-         shortest_paths=None, return_dist=False):
+         shortest_paths=None, return_dist=False,
+         bt_limit=6, bt_branching_factor=3):
   """
   The parameters are NFFG classes.
   Calculates service chain requirements from EdgeReq classes.
@@ -219,6 +220,7 @@ def MAP (request, network, full_remap=False,
                       enable_shortest_path_cache,
                       bw_factor=bw_factor, res_factor=res_factor,
                       lat_factor=lat_factor, shortest_paths=shortest_paths)
+  alg.setBacktrackParameters(bt_limit, bt_branching_factor)
   mappedNFFG = alg.start()
 
   # replace Infinity values
