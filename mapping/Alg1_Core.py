@@ -1056,7 +1056,7 @@ class CoreAlgorithm(object):
             if not me.backtrack_possible:
               # re-raise the exception, we have ran out of backrack 
               # possibilities.
-              raise uet.MappingException(me.msg, False, 
+              raise uet.MappingException(me.msg, False, peak_sc_cnt=me.peak_sc_cnt,
                                          peak_vnf_cnt=self.peak_mapped_vnf_count)
             else:
               try:
@@ -1064,8 +1064,9 @@ class CoreAlgorithm(object):
                    self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph([])
               except uet.MappingException as me2:
                 if not me2.backtrack_possible:
-                  raise uet.MappingException(me.msg, False, 
-                        peak_vnf_cnt=self.peak_mapped_vnf_count)
+                  raise uet.MappingException(me2.msg, False, 
+                            peak_sc_cnt=me2.peak_sc_cnt,
+                            peak_vnf_cnt=self.peak_mapped_vnf_count)
                 else:
                   raise
               for c_prime, prev_bt_rec, link_mapping_rec in link_bt_rec_list:

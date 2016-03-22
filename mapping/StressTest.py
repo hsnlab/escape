@@ -334,8 +334,11 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
     except uet.MappingException as me:
       log.info(ppid_pid+"Mapping failed: %s"%me.msg)
       if not me.backtrack_possible:
+        # NOTE: peak SC count is only corret to add to test_lvl if SC-s are 
+        # disjoint on VNFs.
         log.warn("Peak mapped VNF count is %s in the last run, test level: %s"%
-                 (me.peak_mapped_vnf_count, test_lvl))
+                 (me.peak_mapped_vnf_count, 
+                  test_lvl - batch_length + me.peak_sc_cnt))
         mapped_vnf_count += me.peak_mapped_vnf_count
         log.warn("All-time peak mapped VNF count: %s, All-time total VNF "
                  "count %s, Acceptance ratio: %s"%(mapped_vnf_count, 
