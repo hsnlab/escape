@@ -51,9 +51,12 @@ class BacktrackHandler(object):
     self.subchains_with_subgraphs = subchains_with_subgraphs
     self.current_subchain_level = 0
     self.vnf_index_in_subchain = 0
+    # the number of subchain which made us fail (induced the deepest backtrack)
+    self.failer_subchain_count = 1
 
   def moveOneBacktrackLevelForward(self):
     """
+    Handles the back or forward stepping on subchains and their VNFs.
     """
     if self.current_subchain_level < len(self.subchains_with_subgraphs):
       subchain = self.subchains_with_subgraphs[self.current_subchain_level][0]
@@ -82,6 +85,9 @@ class BacktrackHandler(object):
         else:
           return None
       self.vnf_index_in_subchain += 1
+      # maintain peak subchain counter.
+      if self.current_subchain_level + 1 > self.failer_subchain_count:
+        self.failer_subchain_count = self.current_subchain_level + 1 
       # return c, sub, curr_vnf, next_vnf, linkid
       return subchain, subgraph, \
           subchain['chain'][self.vnf_index_in_subchain - 1],\
@@ -191,7 +197,8 @@ class BacktrackHandler(object):
     except IndexError:
       raise uet.MappingException("Backtrack limit reached, no further mapping"
                                  "possibilities are available", 
-                                 backtrack_possible = False)
+                                 backtrack_possible = False,
+                                 peak_sc_cnt = self.failer_subchain_count)
 
     c_prime, prev_bt_rec, link_mapping_rec, tmp_subchain_level = \
                          self.getCurrentlyMappedBacktrackRecord()
