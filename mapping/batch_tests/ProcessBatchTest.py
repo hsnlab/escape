@@ -18,8 +18,13 @@ Script to analyze the difference between two BatchTest-*.py output files.
 """
 
 helpmsg="""
+Usage:
     -a <file>       The baseline test output (e.g. not batched case)
     -b <file>       The test output which needs to be compared to the baseline
+
+    --nfs           If set, the performacen will be measured based on the peak 
+                    mapped NF count of both test outputs. Otherwise only the 
+                    test level is considered.
 
     Outputs a sequence of percentages measuring how much test B improved 
     the performance throughtout the test.
@@ -35,19 +40,22 @@ StartBFound=3
 
 def main(argv):
   try:
-    opts, args = getopt.getopt(argv,"ha:b:",[])
-  except getopt.GetoptError:
+    opts, args = getopt.getopt(argv,"ha:b:",["nfs"])
+  except getopt.GetoptError as goe:
     print helpmsg
-    sys.exit()
+    raise
 
   filea = None
   fileb = None
   current_state = Init
+  nfs = False
   for opt, arg in opts:
     if opt == "-a":
       filea = arg
     elif opt == "-b":
       fileb = arg
+    elif opt == "--nfs":
+      nfs = True
     elif opt == "-h":
       print helpmsg
       sys.exit()
@@ -58,6 +66,10 @@ def main(argv):
         perfA = None
         perfB = None
         lineB = None
+        if nfs:
+          print "Seed\tNFcnt\tImprove[%]"
+        else:
+          print "Seed\tTestlvl\tImprove[%]"
         for lineA in A:
           try:
             if current_state == Init:
@@ -65,7 +77,10 @@ def main(argv):
                 current_state = StartAFound
                 curr_seed = int(lineA.split(" ")[2])
             elif current_state == StartAFound:
-              if "All-time peak" in lineA:
+              if not nfs and "Peak mapped VNF" in lineA:
+                current_state = Agood
+                perfA = int(lineA.split(" ")[12])
+              elif nfs and "All-time peak" in lineA:
                 current_state = Agood
                 perfA = int(lineA.split(" ")[5].rstrip(","))
               elif "==========" in lineA:
@@ -85,10 +100,17 @@ def main(argv):
             elif current_state == StartBFound:
               while True:
                 lineB = next(B)
-                if "All-time peak" in lineB:
+                if not nfs and "Peak mapped VNF" in lineB:
+                  perfB = int(lineB.split(" ")[12])
+                  print "%s\t%s\t%s"%(curr_seed, perfA, 
+                                      float(perfB - perfA)/perfA * 100.0)
+                  current_state = Init
+                  curr_seed = None
+                  break
+                elif nfs and "All-time peak" in lineB:
                   perfB = int(lineB.split(" ")[5].rstrip(","))
-                  print "%s\t%s\t%s"%(curr_seed, perfA,
-                                        float(perfB - perfA)/perfA * 100.0)
+                  print "%s\t%s\t%s"%(curr_seed, perfA, 
+                                      float(perfB - perfA)/perfA * 100.0)
                   current_state = Init
                   curr_seed = None
                   break
