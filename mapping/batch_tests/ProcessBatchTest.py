@@ -37,6 +37,8 @@ Init=0
 StartAFound=1
 Agood=2
 StartBFound=3
+Aprocessed = 4
+Bprocessed = 5 
 
 def main(argv):
   try:
@@ -66,10 +68,12 @@ def main(argv):
         perfA = None
         perfB = None
         lineB = None
+        timeA = None
+        timeB = None
         if nfs:
-          print "Seed\tNFcnt\tImprove[%]"
+          print "Seed\tNFcnt\tImprove[%]\tTimeA[s]\tTimeB[s]"
         else:
-          print "Seed\tTestlvl\tImprove[%]"
+          print "Seed\tTestlvl\tImprove[%]\tTimeA[s]\tTimeB[s]"
         for lineA in A:
           try:
             if current_state == Init:
@@ -87,6 +91,12 @@ def main(argv):
                 current_state = Init
                 curr_seed = None
             elif current_state == Agood:
+              if "real" in lineA and "sys" in lineA and "user" in lineA:
+                num = map(int, lineA.split('\t')[2].split(' ')[0].split('.')[0].\
+                          split(':'))
+                timeA = 60*num[0] + num[1]
+                current_state = Aprocessed
+            elif current_state == Aprocessed:
               while True:
                 lineB = next(B)
                 if "Command" in lineB:
@@ -102,15 +112,26 @@ def main(argv):
                 lineB = next(B)
                 if not nfs and "Peak mapped VNF" in lineB:
                   perfB = int(lineB.split(" ")[12])
-                  print "%s\t%s\t%s"%(curr_seed, perfA, 
-                                      float(perfB - perfA)/perfA * 100.0)
-                  current_state = Init
-                  curr_seed = None
+                  current_state = Bprocessed
                   break
                 elif nfs and "All-time peak" in lineB:
                   perfB = int(lineB.split(" ")[5].rstrip(","))
-                  print "%s\t%s\t%s"%(curr_seed, perfA, 
-                                      float(perfB - perfA)/perfA * 100.0)
+                  current_state = Bprocessed
+                  break
+                elif "==========" in lineB:
+                  current_state = Init
+                  curr_seed = None
+                  break
+            elif current_state == Bprocessed:
+              while True:
+                lineB = next(B)
+                if "real" in lineB and "sys" in lineB and "user" in lineB:
+                  num = map(int, lineB.split('\t')[2].split(' ')[0].split('.')[0].\
+                            split(':'))
+                  timeB = 60*num[0] + num[1]
+                  print "%s\t%s\t%0.6f\t%s\t%s"%(curr_seed, perfA, 
+                        float(perfB - perfA)/perfA * 100.0,
+                        timeA, timeB)
                   current_state = Init
                   curr_seed = None
                   break
