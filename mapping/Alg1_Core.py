@@ -148,10 +148,11 @@ class CoreAlgorithm(object):
     if vnf_id is not None:
       if self.req.node[vnf_id].resources['bandwidth'] is not None:
         internal_bw_req = self.req.node[vnf_id].resources['bandwidth']
+        # this is only a preliminary check (the bw_req should also be accomadated
+        # by the hosting node)
         avail_bw = self.net.node[path_to_map[-1]].availres[
                      'bandwidth'] - internal_bw_req
         if avail_bw < 0:
-          # Do not include VNF-internal bw req into link util calc.
           return -1
 
     if len(path_to_map) > 1:
@@ -178,7 +179,8 @@ class CoreAlgorithm(object):
       # The last node of the path should also be considered:
       #  - it is a SAP or
       #  - the traffic is steered into the to-be-mapped VNF
-      is_it_sap, util = self._checkBandwidthUtilOnHost(path_to_map[-1], bw_req)
+      is_it_sap, util = self._checkBandwidthUtilOnHost(path_to_map[-1], 
+                                                       bw_req + internal_bw_req)
       if is_it_sap >= 0:
         sap_count_on_path += is_it_sap
         sum_w += util
@@ -383,7 +385,7 @@ class CoreAlgorithm(object):
           self.net[i][j][k].availbandwidth -= bw_req
           new_bw = self.net[i][j][k].availbandwidth
           if new_bw < 0 or new_bw > self.net[i][j][k].bandwidth:
-            self.log.error("Node bandwidth is incorrect with value %s!"%new_bw)
+            self.log.error("Link bandwidth is incorrect with value %s!"%new_bw)
             raise uet.InternalAlgorithmException("The bandwidth resource of "
                       "link %s got below zero, or exceeded maximal value!"%k)
           elif new_bw == 0:
