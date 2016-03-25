@@ -25,6 +25,10 @@ Usage:
     --nfs           If set, the performacen will be measured based on the peak 
                     mapped NF count of both test outputs. Otherwise only the 
                     test level is considered.
+    --permissive    If set, all-time total VNF is also taken into account, and 
+                    if it is larger than the peak mapped VNF count, the 
+                    performance is considered the same. Only works if --nfs is 
+                    also set.
 
     Outputs a sequence of percentages measuring how much test B improved 
     the performance throughtout the test.
@@ -42,7 +46,7 @@ Bprocessed = 5
 
 def main(argv):
   try:
-    opts, args = getopt.getopt(argv,"ha:b:",["nfs"])
+    opts, args = getopt.getopt(argv,"ha:b:",["nfs", "permissive"])
   except getopt.GetoptError as goe:
     print helpmsg
     raise
@@ -51,6 +55,7 @@ def main(argv):
   fileb = None
   current_state = Init
   nfs = False
+  permissive = False
   for opt, arg in opts:
     if opt == "-a":
       filea = arg
@@ -58,6 +63,8 @@ def main(argv):
       fileb = arg
     elif opt == "--nfs":
       nfs = True
+    elif opt == "--permissive":
+      permissive = True
     elif opt == "-h":
       print helpmsg
       sys.exit()
@@ -70,6 +77,7 @@ def main(argv):
         lineB = None
         timeA = None
         timeB = None
+        vnfcountA = None
         if nfs:
           print "Seed\tNFcnt\tImprove[%]\tTimeA[s]\tTimeB[s]"
         else:
@@ -87,6 +95,8 @@ def main(argv):
               elif nfs and "All-time peak" in lineA:
                 current_state = Agood
                 perfA = int(lineA.split(" ")[5].rstrip(","))
+                if permissive:
+                  vnfcountA = int(lineA.split(" ")[10].rstrip(","))
               elif "==========" in lineA:
                 current_state = Init
                 curr_seed = None
@@ -116,6 +126,10 @@ def main(argv):
                   break
                 elif nfs and "All-time peak" in lineB:
                   perfB = int(lineB.split(" ")[5].rstrip(","))
+                  if permissive and \
+                     int(lineB.split(" ")[10].rstrip(",")) > vnfcountA and\
+                     perfB < perfA:
+                    perfB = perfA
                   current_state = Bprocessed
                   break
                 elif "==========" in lineB:

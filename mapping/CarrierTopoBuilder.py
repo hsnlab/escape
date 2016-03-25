@@ -25,6 +25,9 @@ Parameter names are also based on the .ppt file.
 import logging
 import math
 import random
+import string
+
+import networkx as nx
 
 try:
   from escape.nffg_lib.nffg import NFFG
@@ -328,25 +331,6 @@ def getCarrierTopo(params, increment_port_ids=False):
   log.debug("Carrier topology construction finished!")
   return nffg
 
-if __name__ == '__main__':
-  topoparams = []
-  # params of one PoP
-  # 'Retail': (BNAS, RCpb, RCT)
-  # 'Business': (PE, BCpb, BCT)
-  # 'CloudNFV': (CL,CH,SE,SAN_bw,SAN_sto,NF_types,SE_cores,SE_mem,SE_sto,
-  #              CL_bw, CH_links)
-  topoparams.append({'Retail': (2, 10000, 0.2), 'Business': (2, 8000, 0.2), 
-                     'CloudNFV': (2, 8, 8,  160000, 100000, ['A','B','C'], 
-                                  [4,8,16],  [32000], [100,150],   40000, 4)})
-  topoparams.append({'Retail': (2, 10000, 0.2), 'Business': (4, 4000, 0.2),
-                     'CloudNFV': (2, 8, 8,  160000, 100000, ['A','B'], 
-                                  [8,12,16], [32000,64000], [150], 40000, 4)})
-  # topoparams.append({'Retail': (2, 20000, 0.2), 'Business': (8, 4000, 0.2),
-  #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
-  #                                 [4,8,12,16], [32000,64000], [200], 40000, 4)})
-  topo = getCarrierTopo(topoparams)
-  print topo.dump()
-
 def getMediumTopo():
   """
   Constructs a medium sized topology for worst case presentation, if the bigger
@@ -442,6 +426,8 @@ def getPicoTopo():
     nameid = getName("sap")
     sap = nffg.add_sap(id = nameid, name = nameid)
     # add links
+
+
     nffg.add_undirected_link(sw.add_port(), inf2.add_port(), **linkres)
     nffg.add_undirected_link(inf1.add_port(), inf2.add_port(), **linkres)
     nffg.add_undirected_link(inf2.add_port(), sap.add_port(), **linkres)
@@ -449,3 +435,77 @@ def getPicoTopo():
     inf1.add_supported_type(['A','B','C'])
     
   return nffg
+
+def getSNDlib_dfn_gwin():
+  """
+  Topology taken from SNDlib, dfn-gwin.
+  """
+  random.seed(0)
+  gwin = nx.read_gml("dfn-gwin.gml")
+  nffg = NFFG(id="dfn-gwin")
+  nf_types = list(string.ascii_uppercase)[:10]
+  switch = {'cpu': 0, 'mem': 0, 'storage': 0, 'delay': 0.5,
+            'bandwidth': 40000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
+  infrares = {'cpu': 400, 'mem': 320000, 'storage': 1500, 'delay': 1.0,
+           'bandwidth': 40000, 'infra_type': NFFG.TYPE_INFRA_EE}
+  corelinkres = {'bandwidth': 10000, 'delay': 1.0}
+  aggrlinkres = {'bandwidth': 1000, 'delay': 5.0}
+  acclinkres = {'bandwidth': 100, 'delay': 1.0}
+  gwinnodes = []
+  for n in  gwin.nodes_iter():
+    gwinnodes.append(n.rstrip('.'))
+  # get topology from dfn-gwin
+  for n in gwinnodes:
+    nffg.add_infra(id=n, **switch)
+  for i,j in gwin.edges_iter():
+    nffg.add_undirected_link(nffg.network.node[i.rstrip('.')].add_port(), 
+                             nffg.network.node[j.rstrip('.')].add_port(), 
+                             **corelinkres)
+
+  
+  nodeset1 = random.sample(gwinnodes, 3)
+  nodeset1.extend(random.sample(gwinnodes, 3))
+  # add cloud nodes to 6 random nodes.
+  for n in nodeset1:
+    infra = nffg.add_infra(id=getName(n+"Host"), **infrares)
+    infra.add_supported_type(random.sample(nf_types, 6))
+    nffg.add_undirected_link(nffg.network.node[n].add_port(), infra.add_port(), 
+                             **corelinkres)
+    
+  nodeset2 = random.sample(gwinnodes, 3)
+  nodeset2.extend(random.sample(gwinnodes, 3))
+  # add access switched to 6 random nodes
+  for n in nodeset2:
+    sw = nffg.add_infra(id=getName(n+"Sw"), **switch)
+    nffg.add_undirected_link(nffg.network.node[n].add_port(), sw.add_port(),
+                             **aggrlinkres)
+    for i in xrange(0,random.randint(3,4)):
+      nameid = getName(n+"SAP")
+      sap = nffg.add_sap(id=nameid, name=nameid)
+      nffg.add_undirected_link(sap.add_port(), sw.add_port(), **acclinkres)
+  
+  # save it to file
+  # nx.write_gml(nffg.network, "augmented-dfn-gwin.gml")
+
+  return nffg
+  
+
+if __name__ == '__main__':
+  topoparams = []
+  # params of one PoP
+  # 'Retail': (BNAS, RCpb, RCT)
+  # 'Business': (PE, BCpb, BCT)
+  # 'CloudNFV': (CL,CH,SE,SAN_bw,SAN_sto,NF_types,SE_cores,SE_mem,SE_sto,
+  #              CL_bw, CH_links)
+  # print getSNDlib_dfn_gwin().dump() NOT WORKING.
+  topoparams.append({'Retail': (2, 10000, 0.2), 'Business': (2, 8000, 0.2), 
+                     'CloudNFV': (2, 8, 8,  160000, 100000, ['A','B','C'], 
+                                  [4,8,16],  [32000], [100,150],   40000, 4)})
+  topoparams.append({'Retail': (2, 10000, 0.2), 'Business': (4, 4000, 0.2),
+                     'CloudNFV': (2, 8, 8,  160000, 100000, ['A','B'], 
+                                  [8,12,16], [32000,64000], [150], 40000, 4)})
+  # topoparams.append({'Retail': (2, 20000, 0.2), 'Business': (8, 4000, 0.2),
+  #                    'CloudNFV': (2, 40, 8,  160000, 100000, ['B', 'C'], 
+  #                                 [4,8,12,16], [32000,64000], [200], 40000, 4)})
+  # topo = getCarrierTopo(topoparams)
+  # print topo.dump()

@@ -44,7 +44,7 @@ def gen_seq():
     yield int(math.floor(random.random() * 999999999))
 
 log = logging.getLogger("StressTest")
-log.setLevel(logging.INFO)
+log.setLevel(logging.WARN)
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
 # dictionary of newly added VNF-s keyed by the number of 'test_lvl' when it 
 # was added.
@@ -73,14 +73,19 @@ helpmsg = """StressTest.py options are:
    --max_sc_count=i         Determines how many chains should one request contain
                             at most.
 
-   --batch_length=i  The number of Service Graphs, that should be batched and 
-                     mapped together by the algorithm.
+   --batch_length=f  The number of time units to wait for Service Graphs, that 
+                     should be batched and mapped together by the algorithm. The
+                     expected arrival time difference is 1.0 between SG-s.
    --shareable_sg_count=i   The number of last 'i' Service Graphs which could
                             be used for sharing VNFs. Default value is unlimited.
    --sliding_share   If not set, the set of shareable SG-s is emptied after 
                      successfull batched mapping.
    --use_saps_once   If set, all SAPs can only be used once as SC origin and 
                      once as SC destination.
+   --poisson         Generate arrival time differneces with lambda=1.0 Exponential
+                     distribution.
+ 
+   --topo_name=<<gwin|picotopo>>
 """
 
 def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
@@ -126,6 +131,14 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
      #(VNF-s used by at least two SC-s)/#(not shared VNF-s).
   NOTE: some kind of periodicity is included to make the effect of batching 
   visible. But it is (and must be) independent of the batch_length.
+
+  WARNING!! batch_length meaining is changed if --poisson is set!
+
+  Generate exponential arrival time for VNF-s to make Batching more reasonable.
+  inter arrival time is Exp(1) so if we are batching for 4 time units, the 
+  expected SG count is 4, because the sum of 4 Exp(1) is Exp(4).
+  BUT we wait for 1 SG at least, but if by that time 4 units has already passed,
+  map the SG alone (unbatched).
   """
   chain_maxlen = 8
   sc_count=1
@@ -241,7 +254,8 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
 
 def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs, 
                    max_sc_count, vnf_sharing_same_sg, fullremap, 
-                   batch_length, shareable_sg_count, sliding_share,
+                   batch_length, shareable_sg_count, sliding_share, poisson,
+                   topo_name,
                    bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, 
                    outputfile, queue=None, shortest_paths_precalc=None, 
                    filehandler=None):
@@ -255,7 +269,11 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
   """
   total_vnf_count = 0
   mapped_vnf_count = 0
-  network = CarrierTopoBuilder.getPicoTopo()
+  network = None
+  if topo_name == "picotopo":
+      network = CarrierTopoBuilder.getPicoTopo()
+  # elif topo_name == "gwin":
+  #     network == CarrierTopoBuilder.getSNDlib_dfn_gwin()
   max_test_lvl = 50000
   test_lvl = 1
   all_saps_ending = [s.id for s in network.saps]
@@ -295,7 +313,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
                    " once for SC origin and destination and there are not "
                    "enough SAPs!")
           batched_request = None
-        elif batch_count < batch_length:
+        elif batch_count < batch_length or len([nf for nf in request.nfs]) == 0:
           request, all_saps_beginning, all_saps_ending = \
                    generateRequestForCarrierTopo(test_lvl, all_saps_beginning, 
                                                  all_saps_ending, running_nfs,
@@ -306,7 +324,10 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
           if request is None:
             break
           else:
-            batch_count += 1   
+            batch_count += (random.expovariate(1.0) if poisson else 1)
+            if poisson:
+                log.debug("Time passed since last batched mapping: %s"%
+                          batch_count)
             running_nfs[test_lvl] = [nf for nf in request.nfs 
                                      if nf.id.split("-")[1] == str(test_lvl)]
 
@@ -342,9 +363,13 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
       if not me.backtrack_possible:
         # NOTE: peak SC count is only corret to add to test_lvl if SC-s are 
         # disjoint on VNFs.
-        log.warn("Peak mapped VNF count is %s in the last run, test level: %s"%
-                 (me.peak_mapped_vnf_count, 
-                  test_lvl - batch_length + me.peak_sc_cnt))
+        if poisson:
+            log.warn("Peak mapped VNF count is %s in the last run, test level: "
+                     "UNKNOWN because of Poisson"%me.peak_mapped_vnf_count)
+        else:
+            log.warn("Peak mapped VNF count is %s in the last run, test level: %s"%
+                     (me.peak_mapped_vnf_count,
+                      test_lvl - batch_length + me.peak_sc_cnt))
         mapped_vnf_count += me.peak_mapped_vnf_count
         log.warn("All-time peak mapped VNF count: %s, All-time total VNF "
                  "count %s, Acceptance ratio: %s"%(mapped_vnf_count, 
@@ -385,11 +410,12 @@ def main(argv):
   try:
     opts, args = getopt.getopt(argv,"ho:",["loops", "fullremap", "bw_factor=",
                                "res_factor=", "lat_factor=", "request_seed=",
-                               "vnf_sharing=", "multiple_scs", 
+                               "vnf_sharing=", "multiple_scs", "poisson",
                                "vnf_sharing_same_sg=", "max_sc_count=",
                                "shareable_sg_count=", "batch_length=",
                                "bt_br_factor=", "bt_limit=",
-                               "sliding_share", "use_saps_once"])
+                               "sliding_share", "use_saps_once",
+                               "topo_name="])
   except getopt.GetoptError:
     print helpmsg
     sys.exit()
@@ -405,11 +431,13 @@ def main(argv):
   multiple_scs = False
   sliding_share = False
   use_saps_once = False
+  poisson = False
   max_sc_count = 2
   shareable_sg_count = 99999999999999
   batch_length = 1
   bt_br_factor = 6
   bt_limit = 3
+  topo_name = "picotopo"
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
@@ -439,7 +467,7 @@ def main(argv):
     elif opt == "--shareable_sg_count":
       shareable_sg_count = int(arg)
     elif opt == "--batch_length":
-      batch_length = int(arg)
+      batch_length = float(arg)
     elif opt == "--sliding_share":
       sliding_share = True
     elif opt == "--use_saps_once":
@@ -448,6 +476,11 @@ def main(argv):
       bt_limit = int(arg)
     elif opt == "--bt_br_factor":
       bt_br_factor = int(arg)
+    elif opt == "--poisson":
+      poisson = True
+    elif opt == "--topo_name":
+      topo_name = arg
+
   params, args = zip(*opts)
   if "--bw_factor" not in params or "--res_factor" not in params or \
      "--lat_factor" not in params:
@@ -456,7 +489,7 @@ def main(argv):
   
   returned_test_lvl = StressTestCore(seed, loops, use_saps_once, vnf_sharing,
            multiple_scs, max_sc_count, vnf_sharing_same_sg, fullremap, 
-           batch_length, shareable_sg_count, sliding_share,
+           batch_length, shareable_sg_count, sliding_share, poisson, topo_name,
            bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, outputfile)
   
   log.info("First unsuccessful mapping was at %s test level."%
