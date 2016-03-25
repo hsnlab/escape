@@ -1,4 +1,4 @@
-import subprocess, getopt, sys, threading
+import subprocess, getopt, sys, threading, os
 import numpy as np
 
 helpmsg="""
@@ -81,9 +81,11 @@ def main(argv):
         if opt == "--batch_step":
             batch_step = float(arg)
         elif opt == "--batch_length_end":
-            batch_length_end = float(arg) + 1
+            batch_length_end = float(arg)
         elif opt == "--bt_limit_end":
             bt_limit_end = int(arg) + 1
+
+    batch_length_end += batch_step
 
     if stress_type is None:
         print "StressTest type must be given!"
