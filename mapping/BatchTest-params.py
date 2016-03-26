@@ -25,13 +25,24 @@ semaphore = threading.Semaphore(4)
 
 class Test(threading.Thread):
     
-    def __init__(self, command):
+    def __init__(self, command, outputfile, i):
         threading.Thread.__init__(self)
         self.command = command
+        self.outputfile = outputfile
+        self.i = i
 
     def run(self):
         semaphore.acquire()
+        
+        with open(self.outputfile, "a") as f:
+            f.write("\nCommand seed: %s\n"%self.i)
+        print "Executing: ", self.command
+
         os.system(self.command)
+
+        with open(self.outputfile, "a") as f:
+            f.write("\n============================================\n")
+
         semaphore.release()
 
 
@@ -85,37 +96,31 @@ def main(argv):
         elif opt == "--bt_limit_end":
             bt_limit_end = int(arg) + 1
 
-    batch_length_end += batch_step
+    # batch_length_end += batch_step
 
     if stress_type is None:
         print "StressTest type must be given!"
         print helpmsg
         sys.exit()
     
-    for bt in xrange(bt_limit, bt_limit_end):
-        for batch in np.arange(batch_length, batch_length_end, batch_step):
+    for i in xrange(seed_start,seed_end):
+        for bt in xrange(bt_limit, bt_limit_end):
+            for batch in np.arange(batch_length, batch_length_end, batch_step):
 
-            outputfile = "batch_tests/"+("poi-" if poisson else "")+\
-                         "%s-%sbatched-seed%s-%s-bt%s-%s.out"\
-                         %(stress_type, batch, seed_start, seed_end, bt, 
-                           bt_br_factor)
-            commtime = "/usr/bin/time -o "+outputfile+" -a -f \"%U user,\t%S sys,\t%E real\" "
-            commbatch = "python StressTest-%s.py --bw_factor=0.5 --lat_factor=2.0 --res_factor=0.5 --shareable_sg_count=4 --batch_length=%s --bt_limit=%s --bt_br_factor=%s --request_seed="%(stress_type, batch, bt, bt_br_factor)
+                outputfile = "batch_tests/gw-"+("poi-" if poisson else "")+\
+                             "%s-%sbatched-seed%s-%s-bt%s-%s.out"\
+                             %(stress_type, batch, seed_start, seed_end, bt, 
+                               bt_br_factor)
+                commtime = "/usr/bin/time -o "+outputfile+" -a -f \"%U user,\t%S sys,\t%E real\" "
+                commbatch = "python StressTest-%s.py --bw_factor=0.5 --lat_factor=2.0 --res_factor=0.5 --shareable_sg_count=4 --batch_length=%s --bt_limit=%s --bt_br_factor=%s --request_seed="%(stress_type, batch, bt, bt_br_factor)
 
-            if time:
-                commbatch = commtime + commbatch
+                if time:
+                    commbatch = commtime + commbatch
 
-            for i in xrange(seed_start,seed_end):
                 command = commbatch + str(i) + (" --poisson 2>> " if poisson else " 2>> ") \
                           + outputfile
 
-                with open(outputfile, "a") as f:
-                    f.write("\nCommand seed: %s\n"%i)
-                print "Executing: ", command
-                Test(command).start()
-
-                with open(outputfile, "a") as f:
-                    f.write("\n============================================\n")
+                Test(command, outputfile, i).start()
 
 if __name__ == '__main__':
     main(sys.argv[1:])

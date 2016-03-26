@@ -24,6 +24,7 @@ import math
 import random
 import sys
 import traceback
+import string
 
 import CarrierTopoBuilder
 import MappingAlgorithms
@@ -46,8 +47,7 @@ def gen_seq():
 log = logging.getLogger("StressTest")
 log.setLevel(logging.WARN)
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
-# dictionary of newly added VNF-s keyed by the number of 'test_lvl' when it 
-# was added.
+nf_types = list(string.ascii_uppercase)[:10]
 
 helpmsg = """StressTest.py options are:
    -h                Print this message help message.
@@ -204,7 +204,7 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
         else:
           nf = nffg.add_nf(id="-".join(("Test",str(test_lvl),"SC",str(scid),
                                         "VNF",str(vnf))),
-                           func_type=random.choice(['A','B','C']), 
+                           func_type=random.choice(nf_types), 
                            cpu=random.randint(1 + (2 if test_lvl%4 == 3 else 0),
                                               4 + (6 if test_lvl%4 == 3 else 0)),
                            mem=random.random()*1000 + \
@@ -212,7 +212,7 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
                            storage=random.random()*3 + \
                               (6 if test_lvl%4 > 1 else 0),
                            delay=1 + random.random()*10,
-                           bandwidth=random.random())
+                           bandwidth=random.random()*100)
           vnf_added = True
         if vnf_added:
           # add olny the newly added VNF-s, not the shared ones.
@@ -235,10 +235,10 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
         maxlat = 13.0 * (len(nfs_this_sc) + 2)
       else:
         # nfcnt = len([i for i in nffg.nfs])
-        minlat = 45.0 - 10.0*(test_lvl%4)
-        maxlat = 60.0 - 12.25*(test_lvl%4)
+        minlat = 100.0 - 20.0*(test_lvl%4)
+        maxlat = 210.0 - 46.0*(test_lvl%4)
       nffg.add_req(sap1port, sap2port, delay=random.uniform(minlat,maxlat), 
-                   bandwidth=random.random()*(max_bw + test_lvl%4), 
+                   bandwidth=random.random()*(max_bw + 10*test_lvl%4), 
                    sg_path = sg_path)
       log.info("Service Chain on NF-s added: %s"%[nf.id for nf in nfs_this_sc])
       # this prevents loops in the chains and makes new and old NF-s equally 
