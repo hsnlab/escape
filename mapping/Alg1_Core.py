@@ -291,6 +291,8 @@ class CoreAlgorithm(object):
       avg_link_util = self._calculateAvgLinkUtil(path_to_map, linkids, bw_req,
                                                  vnf_id)
       if avg_link_util == -1:
+        self.log.debug("Host %s is not a good candidate for hosting %s due to "
+                       "bandwidth requirement."%(node_id, vnf_id))
         return -1, float("inf")
       sum_latency = self._sumLatencyOnPath(path_to_map, linkids)
       local_latreq = self.manager.getLocalAllowedLatency(cid, prev_vnf_id,
@@ -299,6 +301,8 @@ class CoreAlgorithm(object):
            self.manager.isVNFMappingDistanceGood(
         prev_vnf_id, vnf_id, path_to_map[0], path_to_map[-1]) or \
            local_latreq == 0:
+        self.log.debug("Host %s is too far measured in latency for hosting %s."%
+                       (node_id, vnf_id))
         return -1, float("inf")
 
       '''Here we know that node_id have enough resource and the path
@@ -329,6 +333,8 @@ class CoreAlgorithm(object):
       return self.bw_factor * scaled_bw_comp + self.res_factor * \
              scaled_res_comp + self.lat_factor * scaled_lat_comp, sum_latency
     else:
+      self.log.debug("Host %s does not have engough node resource for hosting %s."%
+                     (node_id, vnf_id))
       return -1, float("inf")
 
   def _updateGraphResources (self, bw_req, path, linkids, vnf=None, node=None, 
@@ -516,8 +522,9 @@ class CoreAlgorithm(object):
                     except IndexError:
                       break
             else:
-              self.log.debug("Host %s is not a good candidate for hosting %s."
-                             %(map_target,vnf_id))
+              # self.log.debug("Host %s is not a good candidate for hosting %s."
+              #                %(map_target,vnf_id))
+              pass
     try:
       best_node_sofar = best_node_que.pop()
       self.bt_handler.addBacktrackLevel(cid, best_node_que)
