@@ -436,7 +436,7 @@ def getPicoTopo():
     
   return nffg
 
-def getSNDlib_dfn_gwin():
+def getSNDlib_dfn_gwin(save_to_file = False):
   """
   Topology taken from SNDlib, dfn-gwin.
   """
@@ -485,7 +485,11 @@ def getSNDlib_dfn_gwin():
       nffg.add_undirected_link(sap.add_port(), sw.add_port(), **acclinkres)
   
   # save it to file
-  # nx.write_gml(nffg.network, "augmented-dfn-gwin.gml")
+  if save_to_file:
+    augmented_gwin = nx.MultiDiGraph()
+    augmented_gwin.add_nodes_from(nffg.network.nodes_iter())
+    augmented_gwin.add_edges_from(nffg.network.edges_iter())
+    nx.write_gml(augmented_gwin, "augmented-dfn-gwin.gml")
 
   return nffg
   
