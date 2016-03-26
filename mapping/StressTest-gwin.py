@@ -235,8 +235,8 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
         maxlat = 13.0 * (len(nfs_this_sc) + 2)
       else:
         # nfcnt = len([i for i in nffg.nfs])
-        minlat = 100.0 - 20.0*(test_lvl%4)
-        maxlat = 210.0 - 46.0*(test_lvl%4)
+        minlat = 110.0 - 20.0*(test_lvl%4)
+        maxlat = 220.0 - 46.0*(test_lvl%4)
       nffg.add_req(sap1port, sap2port, delay=random.uniform(minlat,maxlat), 
                    bandwidth=random.random()*(max_bw + 10*test_lvl%4), 
                    sg_path = sg_path)
