@@ -112,7 +112,7 @@ def main(argv):
                              %(stress_type, batch, seed_start, seed_end, bt, 
                                bt_br_factor)
                 commtime = "/usr/bin/time -o "+outputfile+" -a -f \"%U user,\t%S sys,\t%E real\" "
-                commbatch = "python StressTest-%s.py --bw_factor=0.5 --lat_factor=2.0 --res_factor=0.5 --shareable_sg_count=4 --batch_length=%s --bt_limit=%s --bt_br_factor=%s --request_seed="%(stress_type, batch, bt, bt_br_factor)
+                commbatch = "python StressTest-%s.py --bw_factor=0.5 --lat_factor=2.0 --res_factor=0.5 --shareable_sg_count=4 --topo_name=gwin --batch_length=%s --bt_limit=%s --bt_br_factor=%s --request_seed="%(stress_type, batch, bt, bt_br_factor)
 
                 if time:
                     commbatch = commtime + commbatch
