@@ -25,6 +25,7 @@ import random
 import sys
 import traceback
 import string
+import os
 
 import CarrierTopoBuilder
 import MappingAlgorithms
@@ -45,7 +46,7 @@ def gen_seq():
     yield int(math.floor(random.random() * 999999999))
 
 log = logging.getLogger("StressTest")
-log.setLevel(logging.WARN)
+log.setLevel(logging.INFO)
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
 nf_types = list(string.ascii_uppercase)[:10]
 
@@ -85,7 +86,12 @@ helpmsg = """StressTest.py options are:
    --poisson         Generate arrival time differneces with lambda=1.0 Exponential
                      distribution.
  
-   --topo_name=<<gwin|picotopo>>
+   --topo_name=<<gwin|picotopo>>    Topology name to be used as Substrate Network
+
+   --dump_nffgs=i[,folder]          If this option is set, every 'i'th mapped 
+                                    NFFG is dumped into a file, in 'folder' if
+                                    it is given, otherwise files are created in
+                                    current folder.
 """
 
 def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
@@ -257,8 +263,8 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
                    batch_length, shareable_sg_count, sliding_share, poisson,
                    topo_name,
                    bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, 
-                   outputfile, queue=None, shortest_paths_precalc=None, 
-                   filehandler=None):
+                   outputfile, dump_nffgs, dump_cnt, dump_folder, 
+                   queue=None, shortest_paths_precalc=None, filehandler=None):
   """
   If queue is given, the result will be put in that Queue object too. Meanwhile
   if shortest_paths_precalc is not given, it means the caller needs the 
@@ -279,6 +285,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
   all_saps_ending = [s.id for s in network.saps]
   all_saps_beginning = [s.id for s in network.saps]
   running_nfs = OrderedDict() 
+  do_the_dump = False
   random.seed(0)
   random.jumpahead(seed)
   random.shuffle(all_saps_beginning)
@@ -339,6 +346,8 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
               # make the ordered dict function as FIFO
               running_nfs.popitem(last=False) 
             test_lvl += 1
+            if dump_nffgs and test_lvl % dump_cnt == 0:
+              do_the_dump = True
             if not sliding_share and test_lvl % shareable_sg_count == 0:
               running_nfs = OrderedDict()
             log.debug("Batching Service Graph number %s..."%batch_count)
@@ -354,6 +363,12 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
                   bt_limit=bt_limit, bt_branching_factor=bt_br_factor)
           log.debug(ppid_pid+"Mapping successful on test level %s with batch"
                     " length %s!"%(test_lvl, batch_length))
+          if do_the_dump:
+            with open("".join([dump_folder,"/test_lvl-",str(test_lvl),".nffg"]),
+                      "w") as dumped:
+              log.info("Dumping NFFG at test_lvl %s..."%test_lvl)
+              dumped.write(network.dump())
+            do_the_dump = False
           random.setstate(random_state)
           mapped_vnf_count += len([nf for nf in batched_request.nfs])
           batched_request = NFFG(id="Benchmark-Req-"+str(test_lvl))
@@ -369,7 +384,8 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
         else:
             log.warn("Peak mapped VNF count is %s in the last run, test level: %s"%
                      (me.peak_mapped_vnf_count,
-                      test_lvl - batch_length + me.peak_sc_cnt))
+                      test_lvl - batch_length + \
+                      (me.peak_sc_cnt if me.peak_sc_cnt is not None else 0)))
         mapped_vnf_count += me.peak_mapped_vnf_count
         log.warn("All-time peak mapped VNF count: %s, All-time total VNF "
                  "count %s, Acceptance ratio: %s"%(mapped_vnf_count, 
@@ -415,7 +431,7 @@ def main(argv):
                                "shareable_sg_count=", "batch_length=",
                                "bt_br_factor=", "bt_limit=",
                                "sliding_share", "use_saps_once",
-                               "topo_name="])
+                               "topo_name=", "dump_nffgs="])
   except getopt.GetoptError:
     print helpmsg
     sys.exit()
@@ -438,6 +454,9 @@ def main(argv):
   bt_br_factor = 6
   bt_limit = 3
   topo_name = "picotopo"
+  dump_nffgs = False
+  dump_cnt = None
+  dump_folder = ""
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
@@ -480,6 +499,13 @@ def main(argv):
       poisson = True
     elif opt == "--topo_name":
       topo_name = arg
+    elif opt == "--dump_nffgs":
+      dump_nffgs = True
+      argsplit = arg.split(',')
+      dump_cnt = int(argsplit[0])
+      if len(argsplit) > 1:
+        os.system("mkdir -p "+argsplit[1])
+        dump_folder = argsplit[1]
 
   params, args = zip(*opts)
   if "--bw_factor" not in params or "--res_factor" not in params or \
@@ -490,7 +516,8 @@ def main(argv):
   returned_test_lvl = StressTestCore(seed, loops, use_saps_once, vnf_sharing,
            multiple_scs, max_sc_count, vnf_sharing_same_sg, fullremap, 
            batch_length, shareable_sg_count, sliding_share, poisson, topo_name,
-           bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, outputfile)
+           bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, outputfile,
+           dump_nffgs, dump_cnt, dump_folder)
   
   log.info("First unsuccessful mapping was at %s test level."%
            (returned_test_lvl+1))
