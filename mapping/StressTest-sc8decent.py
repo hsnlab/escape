@@ -369,7 +369,8 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
         else:
             log.warn("Peak mapped VNF count is %s in the last run, test level: %s"%
                      (me.peak_mapped_vnf_count,
-                      test_lvl - batch_length + me.peak_sc_cnt))
+                      test_lvl - batch_length + \
+                      (me.peak_sc_cnt if me.peak_sc_cnt is not None else 0)))
         mapped_vnf_count += me.peak_mapped_vnf_count
         log.warn("All-time peak mapped VNF count: %s, All-time total VNF "
                  "count %s, Acceptance ratio: %s"%(mapped_vnf_count, 

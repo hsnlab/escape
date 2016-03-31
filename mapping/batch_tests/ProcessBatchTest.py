@@ -143,9 +143,11 @@ def main(argv):
                   num = map(int, lineB.split('\t')[2].split(' ')[0].split('.')[0].\
                             split(':'))
                   timeB = 60*num[0] + num[1]
-                  print "%s\t%s\t%0.6f\t%s\t%s"%(curr_seed, perfA, 
-                        float(perfB - perfA)/perfA * 100.0,
-                        timeA, timeB)
+                  if perfA != 0:
+                    print "%s\t%s\t%0.6f\t%s\t%s"%(curr_seed, perfA, 
+                          float(perfB - perfA)/perfA * 100.0, timeA, timeB)
+                  else:
+                    print "%s\t%s\tN/A\t%s\t%s"%(curr_seed, perfA, timeA, timeB)
                   current_state = Init
                   curr_seed = None
                   break
