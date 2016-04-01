@@ -17,8 +17,7 @@ Sublayer.
 """
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG
-from escape.orchest import LAYER_NAME
-from escape.orchest import log as log  # Orchestration layer logger
+from escape.orchest import LAYER_NAME, log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
@@ -368,8 +367,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
         service_request = NFFG.parse(service_request)
         self.__proceed_instantiation(nffg=service_request)
       except (ValueError, IOError, TypeError) as e:
-        log.error(
-          "Can't load service request from file because of: " + str(e))
+        log.error("Can't load service request from file because of: " + str(e))
       else:
         log.info("Graph representation is loaded successfully!")
     # Initiate ROS REST-API if needed
@@ -563,8 +561,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.getChild('[Cf-Or]').info("Generate topo description...")
       return virt.get_resource_info()
     else:
-      log.error(
-        "Virtualizer(id=%s) assigned to REST-API is not found!" %
+      log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
         self.cfor_api.api_id)
 
   def api_cfor_edit_config (self, nffg):
@@ -607,16 +604,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
       self.__class__.__name__, nffg.name))
     # Initiate request mapping
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
-    log.getChild('API').debug(
-      "Invoked instantiate_nffg on %s is finished" % self.__class__.__name__)
+    log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
+                              self.__class__.__name__)
     # If mapping is not threaded and finished with OK
     if mapped_nffg is not None and not \
        self.resource_orchestrator.mapper.threaded:
       self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg)
     else:
-      log.warning(
-        "Something went wrong in service request instantiation: mapped "
-        "service request is missing!")
+      log.warning("Something went wrong in service request instantiation: "
+                  "mapped service request is missing!")
 
   def _proceed_to_install_NFFG (self, mapped_nffg):
     """
@@ -634,15 +630,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     # Non need to rebind req links --> it will be done in Adaptation layer
     # Log verbose mapping result in unified way (threaded/non-threaded)
-    log.log(VERBOSE,
-            "Mapping result of Orchestration Layer:\n%s" % mapped_nffg.dump())
+    log.log(VERBOSE, "Mapping result of Orchestration Layer:\n%s" %
+            mapped_nffg.dump())
     # Notify remote visualizer about the mapping result if it's needed
     notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending NF-FG to Adaptation layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
-    log.getChild('API').info(
-      "Mapped NF-FG: %s has been sent to Adaptation..." % mapped_nffg)
+    log.getChild('API').info("Mapped NF-FG: %s has been sent to Adaptation..." %
+                             mapped_nffg)
 
   def _handle_GetVirtResInfoEvent (self, event):
     """

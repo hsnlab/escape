@@ -58,7 +58,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     try:
       # print graph.dump()
       mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
-      mapped_nffg = MAP(request=graph.copy(), network=resource.copy(),
+      mapped_nffg = MAP(request=graph.copy(),
+                        network=resource.copy(),
                         **mapper_params)
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
@@ -71,17 +72,17 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     except MappingException as e:
       log.error(
         "Mapping algorithm unable to map given request! Cause:\n%s" % e.msg)
-      log.warning("Mapping algorithm on %s aborted!" % graph)
+      log.warning("Mapping algorithm on %s is aborted!" % graph)
       return
     except BadInputException as e:
       log.error("Mapping algorithm refuse given input! Cause:\n%s" % e.msg)
-      log.warning("Mapping algorithm on %s aborted!" % graph)
+      log.warning("Mapping algorithm on %s is aborted!" % graph)
       return
     except InternalAlgorithmException as e:
       log.critical(
         "Mapping algorithm fails due to implementation error or conceptual "
         "error! Cause:\n%s" % e.msg)
-      log.warning("Mapping algorithm on %s aborted!" % graph)
+      log.warning("Mapping algorithm on %s is aborted!" % graph)
       raise
     except:
       log.exception("Got unexpected error during mapping process!")
@@ -149,13 +150,13 @@ class ResourceOrchestrationMapper(AbstractMapper):
     if virt_resource.is_empty():
       log.warning("Resource information is empty!")
     # Log verbose resource view if it is exist
-    log.log(VERBOSE,
-            "Orchestration Layer resource graph:\n%s" % virt_resource.dump())
+    log.log(VERBOSE, "Orchestration Layer resource graph:\n%s" %
+            virt_resource.dump())
     # Check if the mapping algorithm is enabled
     if not CONFIG.get_mapping_enabled(LAYER_NAME):
-      log.warning(
-        "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
-        "return service request to lower layer..." % LAYER_NAME)
+      log.warning("Mapping algorithm in Layer: %s is disabled! "
+                  "Skip mapping step and return service request "
+                  "to lower layer..." % LAYER_NAME)
       # virt_resource.id = input_graph.id
       # return virt_resource
       # Send request forward (probably to Remote ESCAPE)
@@ -163,9 +164,8 @@ class ResourceOrchestrationMapper(AbstractMapper):
     # Run actual mapping algorithm
     if self._threaded:
       # Schedule a microtask which run mapping algorithm in a Python thread
-      log.info(
-        "Schedule mapping algorithm: %s in a worker thread" %
-        self.strategy.__name__)
+      log.info("Schedule mapping algorithm: %s in a worker thread" %
+               self.strategy.__name__)
       call_as_coop_task(self._start_mapping, graph=input_graph,
                         resource=virt_resource)
       log.info("NF-FG: %s orchestration is finished by %s" % (

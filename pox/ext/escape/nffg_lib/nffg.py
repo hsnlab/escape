@@ -1594,7 +1594,7 @@ class NFFGToolBox(object):
                                                delay=l.delay,
                                                bandwidth=l.bandwidth)
         log.debug("Added connection: %s" % link1)
-        log.debug("Addde connection: %s" % link2)
+        log.debug("Added connection: %s" % link2)
     # Recreate flowrules based on NBalazs functions
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(nffg=nffg)
     import pprint
