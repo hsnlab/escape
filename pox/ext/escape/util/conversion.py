@@ -922,7 +922,7 @@ class NFFGConverter(object):
     # Parse Metadata and Requirement links from Virtualizer
     self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
     self.log.debug("END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
-      3, NFFG.version))
+      V_, NFFG.version))
     return (nffg, virtualizer) if with_virt else nffg
 
   def _convert_nffg_infras (self, nffg, virtualizer):
@@ -1455,7 +1455,7 @@ class NFFGConverter(object):
     virtualizer.bind(relative=True)
     self.log.debug(
       "END conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
-        NFFG.version, 3))
+        NFFG.version, V_VERSION))
     # Return with created Virtualizer
     return virtualizer
 

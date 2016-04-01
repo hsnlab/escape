@@ -567,9 +567,8 @@ class VirtualizerManager(EventMixin):
           return
       # If a specific AbstractVirtualizer type was given
       elif cls is not None:
-        log.debug(
-          "Generating Virtualizer type: %s with id: %s" % (
-            cls.__name__, virtualizer_id))
+        log.debug("Generating Virtualizer type: %s with id: %s" %
+                  (cls.__name__, virtualizer_id))
         self._virtualizers[virtualizer_id] = cls(self.dov, virtualizer_id)
       # Generate a Single BiS-BiS Virtualizer by default
       else:
@@ -589,9 +588,8 @@ class VirtualizerManager(EventMixin):
     :rtype: :any:`SingleBiSBiSVirtualizer`
     """
     if id in self._virtualizers:
-      log.warning(
-        "Requested Virtualizer with ID: %s is already exist! "
-        "Virtualizer creation skipped..." % id)
+      log.warning("Requested Virtualizer with ID: %s is already exist! "
+                  "Virtualizer creation skipped..." % id)
     else:
       log.debug(
         "Generating Single BiSBiS Virtualizer with id: %s" % id)
@@ -608,11 +606,9 @@ class VirtualizerManager(EventMixin):
     :rtype: :any:`GlobalViewVirtualizer`
     """
     if id in self._virtualizers:
-      log.warning(
-        "Requested Virtualizer with ID: %s is already exist! "
-        "Virtualizer creation skipped..." % id)
+      log.warning("Requested Virtualizer with ID: %s is already exist! "
+                  "Virtualizer creation skipped..." % id)
     else:
-      log.debug(
-        "Generating Global View Virtualizer with id: %s" % id)
+      log.debug("Generating Global View Virtualizer with id: %s" % id)
       self._virtualizers[id] = GlobalViewVirtualizer(self.dov, id)
     return self._virtualizers[id]

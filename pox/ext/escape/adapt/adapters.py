@@ -200,17 +200,15 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
     # TODO: discover SDN topology and create the NFFG
     self.topo = None  # SDN domain topology stored in NFFG
     if not binding:
-      log.warning(
-        "No Infra-DPID binding are defined in the configuration! Using empty "
-        "data structure...")
+      log.warning("No Infra-DPID binding are defined in the configuration! "
+                  "Using empty data structure...")
     elif isinstance(binding, dict):
       self.infra_to_dpid = {
         infra: int(dpid, base=0) if not isinstance(dpid, int) else dpid for
         infra, dpid in binding.iteritems()}
     else:
-      log.warning(
-        "Wrong type: %s for binding in %s. Using empty data structure..." % (
-          type(binding), self))
+      log.warning("Wrong type: %s for binding in %s. "
+                  "Using empty data structure..." % (type(binding), self))
 
   def get_topology_resource (self):
     super(SDNDomainPOXAdapter, self).get_topology_resource()
@@ -1241,10 +1239,9 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # Cache virtualizer
       self.virtualizer = virt
       if self._original_virtualizer is None:
-        log.debug(
-          "Store Virtualizer(id: %s, name: %s) as the original domain "
-          "config..." % (
-            virt.id.get_as_text(), virt.name.get_as_text()))
+        log.debug("Store Virtualizer(id: %s, name: %s) as the original domain "
+                  "config..." % (
+                  virt.id.get_as_text(), virt.name.get_as_text()))
         self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg

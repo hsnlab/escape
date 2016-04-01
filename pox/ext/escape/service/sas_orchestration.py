@@ -63,8 +63,8 @@ class ServiceOrchestrator(AbstractOrchestrator):
     :return: NF-FG description
     :rtype: :any:`NFFG`
     """
-    log.debug(
-      "Invoke %s to initiate SG(id=%s)" % (self.__class__.__name__, sg.id))
+    log.debug("Invoke %s to initiate SG(id=%s)" %
+              (self.__class__.__name__, sg.id))
     # Store newly created SG
     self.sgManager.save(sg)
     # Get virtual resource info as a Virtualizer
@@ -86,16 +86,14 @@ class ServiceOrchestrator(AbstractOrchestrator):
           if sg.is_virtualized():
             if sg.is_SBB():
               log.debug("Request is a bare SingleBiSBiS representation!")
-              return sg
             else:
-              log.warning(
-                "Detected virtualized representation with multiple BiSBiS "
-                "nodes! Currently this type of virtualization is nut fully"
-                "supported!")
-              return sg
+              log.warning("Detected virtualized representation with multiple "
+                          "BiSBiS nodes! Currently this type of virtualization "
+                          "is nut fully supported!")
           else:
             log.debug("Detected full view representation!")
-            return sg
+          # Return with the original request
+          return sg
         else:
           log.info("Request check: detected valid content!")
         try:
@@ -104,8 +102,8 @@ class ServiceOrchestrator(AbstractOrchestrator):
           log.debug("SG initiation is finished by %s" % self.__class__.__name__)
           return mapped_nffg
         except ProcessorError as e:
-          log.warning(
-            "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
+          log.warning("Mapping pre/post processing was unsuccessful! "
+                      "Cause: %s" % e)
       else:
         log.warning("Virtual view is not subclass of AbstractVirtualizer!")
     else:

@@ -664,9 +664,8 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     arbiter.add_connection_listener(self.controller_address, self.openflow)
     # Launch OpenFlow connection handler if not started before with given name
     # launch() return the registered openflow module which is a coop Task
-    log.debug(
-      "Setup OF interface and initiate handler object for connection: (%s, "
-      "%i)" % (address, port))
+    log.debug("Setup OF interface and initiate handler object for connection: "
+              "(%s, %i)" % (address, port))
     from pox.openflow.of_01 import launch
     of = launch(name=name, address=address, port=port)
     # Start listening for OpenFlow connections

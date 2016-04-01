@@ -47,8 +47,8 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     :return: Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
-    log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
-      cls.__name__, graph, resource))
+    log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" %
+              (cls.__name__, graph, resource))
     if graph is None:
       log.error("Missing request NFFG! Abort mapping process...")
       return
@@ -57,24 +57,25 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       return
     try:
       mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
-      mapped_nffg = MAP(request=graph.copy(), network=resource.copy(),
+      mapped_nffg = MAP(request=graph.copy(),
+                        network=resource.copy(),
                         **mapper_params)
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-sas-mapped"
     except MappingException as e:
       log.error("Got exception during the mapping process! Cause:\n%s" % e.msg)
-      log.warning("Mapping algorithm on %s aborted!" % graph)
+      log.warning("Mapping algorithm on %s isaborted!" % graph)
       return
     except BadInputException as e:
       log.error("Mapping algorithm refuse given input! Cause:\n%s" % e.msg)
-      log.warning("Mapping algorithm on %s aborted!" % graph)
+      log.warning("Mapping algorithm on %s is aborted!" % graph)
       return
     except InternalAlgorithmException as e:
       log.critical(
         "Mapping algorithm fails due to implementation error or conceptual "
         "error! Cause:\n%s" % e.msg)
-      log.warning("Mapping algorithm on %s aborted!" % graph)
+      log.warning("Mapping algorithm on %s is aborted!" % graph)
       return
     except:
       log.exception("Got unexpected error during mapping process!")

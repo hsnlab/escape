@@ -21,8 +21,7 @@ from subprocess import Popen
 
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
-from escape.service import LAYER_NAME
-from escape.service import log as log  # Service layer logger
+from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
@@ -318,7 +317,7 @@ class ServiceLayerAPI(AbstractAPI):
     self.rest_api.start()
     handler.log.debug("Enforced configuration for %s: interface: %s" % (
       self.rest_api.api_id,
-      "UNIFY" if handler.virtualizer_format_enabled else"Internal-NFFG"))
+      "UNIFY" if handler.virtualizer_format_enabled else "Internal-NFFG"))
 
   def _initiate_gui (self):
     """
@@ -380,22 +379,21 @@ class ServiceLayerAPI(AbstractAPI):
     if hasattr(self, 'rest_api') and self.rest_api:
       self.rest_api.request_cache.add_request(id=service_nffg.id)
       self.rest_api.request_cache.set_in_progress(id=service_nffg.id)
-    log.getChild('API').info("Invoke request_service on %s with SG: %s " % (
-      self.__class__.__name__, service_nffg))
+    log.getChild('API').info("Invoke request_service on %s with SG: %s " %
+                             (self.__class__.__name__, service_nffg))
     # Initiate service request mapping
     mapped_nffg = self.service_orchestrator.initiate_service_graph(
       service_nffg)
-    log.getChild('API').debug(
-      "Invoked request_service on %s is finished" % self.__class__.__name__)
+    log.getChild('API').debug("Invoked request_service on %s is finished" %
+                              self.__class__.__name__)
     # If mapping is not threaded and finished with OK
     if mapped_nffg is not None and not \
        self.service_orchestrator.mapper.threaded:
       self._proceed_to_instantiate_NFFG(mapped_nffg)
       self.last_sg = mapped_nffg
     else:
-      log.warning(
-        "Something went wrong in service request initiation: mapped service "
-        "data is missing!")
+      log.warning("Something went wrong in service request initiation: "
+                  "mapped service data is missing!")
 
   def api_sas_get_topology (self):
     """

@@ -81,27 +81,26 @@ class ResourceOrchestrator(AbstractOrchestrator):
           if nffg.is_virtualized():
             if nffg.is_SBB():
               log.debug("Request is a bare SingleBiSBiS representation!")
-              return nffg
             else:
               log.warning(
                 "Detected virtualized representation with multiple BiSBiS "
                 "nodes! Currently this type of virtualization is nut fully"
                 "supported!")
-              return nffg
           else:
             log.debug("Detected full view representation!")
-            return nffg
+          # Return with the original request
+          return nffg
         else:
           log.info("Request check: detected valid content!")
         try:
           # Run Nf-FG mapping orchestration
           mapped_nffg = self.mapper.orchestrate(nffg, global_view)
-          log.debug(
-            "NF-FG instantiation is finished by %s" % self.__class__.__name__)
+          log.debug("NF-FG instantiation is finished by %s" %
+                    self.__class__.__name__)
           return mapped_nffg
         except ProcessorError as e:
-          log.warning(
-            "Mapping pre/post processing was unsuccessful! Cause: %s" % e)
+          log.warning("Mapping pre/post processing was unsuccessful! "
+                      "Cause: %s" % e)
       else:
         log.warning("Global view is not subclass of AbstractVirtualizer!")
     else:
@@ -133,8 +132,8 @@ class NFFGManager(object):
     """
     nffg_id = self._generate_id(nffg)
     self._nffgs[nffg_id] = nffg
-    log.debug("NF-FG: %s is saved by %s with id: %s" % (
-      nffg, self.__class__.__name__, nffg_id))
+    log.debug("NF-FG: %s is saved by %s with id: %s" %
+              (nffg, self.__class__.__name__, nffg_id))
     return nffg.id
 
   def _generate_id (self, nffg):
