@@ -19,21 +19,26 @@ Script to give start and give parameters to BatchTests.
    --batch_step=f
 
    --bt_limit_end=i
+
+   --dump_nffgs=i         Dump every 'i'th NFFG of a test sequence.
 """
 
 semaphore = threading.Semaphore(4)
+sem_bt_batch = {}
 
 class Test(threading.Thread):
     
-    def __init__(self, command, outputfile, i):
+    def __init__(self, command, outputfile, i, bt, batch):
         threading.Thread.__init__(self)
         self.command = command
         self.outputfile = outputfile
         self.i = i
+        self.semkey = (bt,batch)
 
     def run(self):
         semaphore.acquire()
-        
+        sem_bt_batch[self.semkey].acquire()
+
         with open(self.outputfile, "a") as f:
             f.write("\nCommand seed: %s\n"%self.i)
         print "Executing: ", self.command
@@ -43,6 +48,7 @@ class Test(threading.Thread):
         with open(self.outputfile, "a") as f:
             f.write("\n============================================\n")
 
+        sem_bt_batch[self.semkey].release()
         semaphore.release()
 
 
@@ -52,7 +58,8 @@ def main(argv):
                                               "seed_end=", "batch_length=", 
                                               "bt_limit=", "bt_br_factor=",
                                               "poisson", "batch_length_end=",
-                                              "batch_step=", "bt_limit_end="])
+                                              "batch_step=", "bt_limit_end=",
+                                              "dump_nffgs=", "topo_name="])
     except getopt.GetoptError as goe:
         print helpmsg
         raise
@@ -64,6 +71,9 @@ def main(argv):
     batch_length = 1.0
     bt_limit = 6
     bt_br_factor = 3
+    dump_nffgs = False
+    dump_cnt = 1
+    topo_name = "gwin"
     for opt, arg in opts:
         if opt == "-h":
             print helpmsg
@@ -84,8 +94,13 @@ def main(argv):
             bt_br_factor = int(arg)
         elif opt == "--poisson":
             poisson = True
+        elif opt == "--dump_nffgs":
+            dump_nffgs = True
+            dump_cnt = int(arg)
+        elif opt == "--topo_name":
+            topo_name = arg
 
-    batch_length_end = batch_length + 0.0001
+    batch_length_end = batch_length + 0.0000001
     batch_step = 1
     bt_limit_end = bt_limit + 1
     for opt, arg in opts:
@@ -103,16 +118,23 @@ def main(argv):
         print helpmsg
         sys.exit()
     
+    # ensures no files are written parallely by two or more processes
+    for bt in xrange(bt_limit, bt_limit_end):
+        for batch in np.arange(batch_length, batch_length_end, batch_step):
+            sem_bt_batch[(bt,batch)] = threading.Semaphore(1)
+
     for i in xrange(seed_start,seed_end):
         for bt in xrange(bt_limit, bt_limit_end):
             for batch in np.arange(batch_length, batch_length_end, batch_step):
+
 
                 outputfile = "batch_tests/gw-"+("poi-" if poisson else "")+\
                              "%s-%sbatched-seed%s-%s-bt%s-%s.out"\
                              %(stress_type, batch, seed_start, seed_end, bt, 
                                bt_br_factor)
                 commtime = "/usr/bin/time -o "+outputfile+" -a -f \"%U user,\t%S sys,\t%E real\" "
-                commbatch = "python StressTest-%s.py --bw_factor=0.5 --lat_factor=2.0 --res_factor=0.5 --shareable_sg_count=4 --topo_name=gwin --batch_length=%s --bt_limit=%s --bt_br_factor=%s --request_seed="%(stress_type, batch, bt, bt_br_factor)
+                commbatch = "python StressTest-%s.py --bw_factor=0.5 --lat_factor=2.0 --res_factor=0.5 --shareable_sg_count=4 --topo_name=%s %s --batch_length=%s --bt_limit=%s --bt_br_factor=%s --request_seed="%\
+                            (stress_type, topo_name, ("--dump_nffgs="+str(dump_cnt)+",nffgs-"+outputfile.rstrip(".out") if dump_nffgs else ""), batch, bt, bt_br_factor)
 
                 if time:
                     commbatch = commtime + commbatch
@@ -120,7 +142,8 @@ def main(argv):
                 command = commbatch + str(i) + (" --poisson 2>> " if poisson else " 2>> ") \
                           + outputfile
 
-                Test(command, outputfile, i).start()
+                Test(command, outputfile, i, bt, batch).start()
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

@@ -412,12 +412,12 @@ def getPicoTopo():
             'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_SDN_SW}
   sw = nffg.add_infra(id = getName("sw"), **switch)
   infra = {'cpu': 400, 'mem': 320000, 'storage': 1500, 'delay': 1.0,
-           'bandwidth': 1000, 'infra_type': NFFG.TYPE_INFRA_EE}
+           'bandwidth': 10000, 'infra_type': NFFG.TYPE_INFRA_EE}
   linkres = {'bandwidth': 1000, 'delay': 0.5}
 
   inf1 = nffg.add_infra(id = getName("infra"), **infra)
   inf0 = inf1
-  inf1.add_supported_type(['A','B','C'])
+  inf1.add_supported_type(list(string.ascii_uppercase)[:10])
   for i in range(0,4):
     if i == 3:
       inf2 = inf0
@@ -432,7 +432,7 @@ def getPicoTopo():
     nffg.add_undirected_link(inf1.add_port(), inf2.add_port(), **linkres)
     nffg.add_undirected_link(inf2.add_port(), sap.add_port(), **linkres)
     inf1 = inf2 
-    inf1.add_supported_type(['A','B','C'])
+    inf1.add_supported_type(list(string.ascii_uppercase)[:10])
     
   return nffg
 

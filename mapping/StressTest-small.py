@@ -213,14 +213,11 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
           nf = nffg.add_nf(id="-".join(("Test",str(test_lvl),"SC",str(scid),
                                         "VNF",str(vnf))),
                            func_type=rnd.choice(nf_types), 
-                           cpu=rnd.randint(1 + (2 if test_lvl%4 == 3 else 0),
-                                              4 + (6 if test_lvl%4 == 3 else 0)),
-                           mem=rnd.random()*1000 + \
-                              (1000 if test_lvl%4 > 1 else 0),
-                           storage=rnd.random()*3 + \
-                              (6 if test_lvl%4 > 1 else 0),
-                           delay=1 + rnd.random()*10,
-                           bandwidth=rnd.random()*100)
+                           cpu=rnd.randint(1, 4),
+                           mem=rnd.random()*1600,
+                           storage=rnd.random()*3,
+                           delay=2 + rnd.random()*10,
+                           bandwidth=rnd.random()*7.0)
           vnf_added = True
         if vnf_added:
           # add olny the newly added VNF-s, not the shared ones.
@@ -243,10 +240,10 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
         maxlat = 13.0 * (len(nfs_this_sc) + 2)
       else:
         # nfcnt = len([i for i in nffg.nfs])
-        minlat = 110.0 - 20.0*(test_lvl%4)
-        maxlat = 220.0 - 46.0*(test_lvl%4)
+        minlat = 60.0
+        maxlat = 220.0
       nffg.add_req(sap1port, sap2port, delay=rnd.uniform(minlat,maxlat), 
-                   bandwidth=rnd.random()*(max_bw + 10*test_lvl%4), 
+                   bandwidth=rnd.random()*max_bw, 
                    sg_path = sg_path)
       log.info("Service Chain on NF-s added: %s"%[nf.id for nf in nfs_this_sc])
       # this prevents loops in the chains and makes new and old NF-s equally 
