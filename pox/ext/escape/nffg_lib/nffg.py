@@ -185,7 +185,7 @@ class NFFG(AbstractNFFG):
     """
     super(NFFG, self).__init__()
     self.network = networkx.MultiDiGraph()
-    self.id = str(id) if id is not None else str(generate(self))
+    self.id = str(id) if id is not None else Element.generate_unique_id()
     self.name = name if name is not None else "NFFG-" + str(self.id)
     self.metadata = OrderedDict(metadata if metadata else ())
     self.version = version
@@ -903,16 +903,6 @@ class NFFG(AbstractNFFG):
     copy = NFFG(id=self.id, name=self.name, version=self.version)
     copy.network = self.network.copy()
     return copy
-
-  def generate_id (self):
-    """
-    Generate a unique id from object memory address.
-
-    :return: generated id
-    :rtype: str
-    """
-    self.id = str(generate(self))
-    return self.id
 
   def calculate_available_link_res (self, sg_hop_ids):
     """
@@ -2145,9 +2135,25 @@ class NFFGToolBox(object):
 
 
 if __name__ == "__main__":
-  logging.basicConfig(level=logging.DEBUG)
+  # logging.basicConfig(level=logging.DEBUG)
+  # with open("../../../../examples/escape-mn-mapped-topo.nffg") as f:
+  #   nffg = NFFG.parse(f.read())
+  #   for domain, part in NFFGToolBox.split_into_domains(nffg):
+  #     rebounded = NFFGToolBox.rebind_e2e_req_links(part)
+  #     logging.info(domain + "\n" + rebounded.dump())
+  from pprint import pprint
   with open("../../../../examples/escape-mn-mapped-topo.nffg") as f:
     nffg = NFFG.parse(f.read())
-    for domain, part in NFFGToolBox.split_into_domains(nffg):
-      rebounded = NFFGToolBox.rebind_e2e_req_links(part)
-      logging.info(domain + "\n" + rebounded.dump())
+  print nffg.network['comp']['decomp']
+  print nffg.network['comp']['decomp'][2], id(nffg.network['comp']['decomp'][2])
+  print nffg.network['comp']['decomp'][2].src, id(nffg.network['comp']['decomp'][2].src)
+  print nffg['comp'].ports[1], id(nffg['comp'].ports[1])
+
+  copy = nffg.copy()
+
+  print copy.network['comp']['decomp']
+  print copy.network['comp']['decomp'][2], id(copy.network['comp']['decomp'][2])
+  print nffg.network['comp']['decomp'][2].src, id(copy.network['comp']['decomp'][2].src)
+  print copy['comp'].ports[1], id(copy['comp'].ports[1])
+
+  # pprint(copy.network.__dict__)
