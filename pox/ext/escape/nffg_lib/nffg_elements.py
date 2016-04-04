@@ -84,12 +84,12 @@ class Element(Persistable):
     :return: None
     """
     super(Element, self).__init__()
-    self.id = id if id is not None else self._generate_unique_id()
+    self.id = id if id is not None else self.generate_unique_id()
     self.type = type
     self.operation = operation
 
   @staticmethod
-  def _generate_unique_id ():
+  def generate_unique_id ():
     """
     Generate a unique id for the object based on uuid module: :rfc:`4122`.
 
@@ -105,7 +105,7 @@ class Element(Persistable):
     :return: new id
     :rtype: str
     """
-    self.id = self._generate_unique_id()
+    self.id = self.generate_unique_id()
     return self.id
 
   def persist (self):
