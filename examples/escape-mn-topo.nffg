@@ -13,7 +13,9 @@
           "id": 1
         }
       ],
-      "domain": "eth0"
+      "domain": "eth0",
+      "delay": 1.5,
+      "bandwidth": 10
     },
     {
       "id": "SAP1",
