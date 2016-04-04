@@ -298,6 +298,14 @@ class NFFGConverter(object):
 
         self.log.debug("Added SAP port: %s" % sap_port)
 
+        # Add delay/bw for inter-domain links
+        if vport.sap_data.is_initialized() and \
+           vport.sap_data.resources.is_initialized():
+          if vport.sap_data.resources.delay.is_initialized():
+            sap.delay = vport.sap_data.resources.delay.get_value()
+          if vport.sap_data.resources.bandwidth.is_initialized():
+            sap.bandwidth = vport.sap_data.resources.bandwidth.get_value()
+
         # Add metadata from infra port metadata to sap metadata
         for key in vport.metadata:  # Optional - port.metadata
           sap.add_metadata(name=key,
@@ -1073,7 +1081,7 @@ class NFFGConverter(object):
 
   def _convert_nffg_saps (self, nffg, virtualizer):
     """
-    Convert infras in the given :any:`NFFG` into the given Virtualizer.
+    Convert SAPs in the given :any:`NFFG` into the given Virtualizer.
 
     :param nffg: NFFG object
     :type nffg: :any:`NFFG`
@@ -1102,9 +1110,14 @@ class NFFGConverter(object):
           # SAP.id <--> virtualizer.node.port.name
           v_sap_name = str(sap.id)
         v_sap_port.name.set_value(v_sap_name)
+        # Add delay/bw value for inter-domain link
+        if sap.delay:
+          v_sap_port.sap_data.resources.delay.set_value(sap.delay)
+        if sap.bandwidth:
+          v_sap_port.sap_data.resources.bandwidth.set_value(sap.bandwidth)
         self.log.debug(
           "Convert SAP to port: %s in infra: %s" % (link.dst.id, n))
-        # Check if the SAP is an bound, inter-domain SAP
+        # Check if the SAP is a bound, inter-domain SAP
         if nffg[s].domain is not None:
           v_sap_port.sap.set_value(s)
           self.log.debug(
