@@ -258,7 +258,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
     # Obtain NFFG from request body
     self.log.debug("Detected response format: %s" %
-                   self.headers.get("Content-Type", ""))
+                   self.headers.get("Content-Type"))
     raw_body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     if raw_body is None or not raw_body:
@@ -267,7 +267,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       return
     # Expect XML format --> need to convert first
     if self.virtualizer_format_enabled:
-      if self.headers.get("Content-Type", "") != "application/xml" and \
+      if self.headers.get("Content-Type") != "application/xml" and \
          not raw_body.startswith("<?xml version="):
         self.log.error("Received data is not in XML format despite of the "
                        "UNIFY interface is enabled!")
@@ -314,7 +314,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       converter = NFFGConverter(domain="REMOTE", logger=log)
       nffg = converter.parse_from_Virtualizer(vdata=full_cfg)
     else:
-      if self.headers.get("Content-Type", "") != "application/json":
+      if self.headers.get("Content-Type") != "application/json":
         self.log.error("Received data is not in JSON format despite of the "
                        "UNIFY interface is disabled!")
         self.send_error(415)
