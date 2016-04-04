@@ -17,6 +17,7 @@ details for the connections between ESCAPEv2 and other different domains.
 """
 from copy import deepcopy
 
+from ncclient import NCClientError
 from ncclient.operations import OperationError
 from ncclient.operations.rpc import RPCError
 from ncclient.transport import TransportError
@@ -461,12 +462,11 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     """
     Override parent function to catch and log exceptions gracefully.
     """
-    from ncclient.transport import TransportError
-    from ncclient.operations import OperationError
     try:
-      super(VNFStarterAdapter, self)._invoke_rpc(request_data)
-    except (RPCError, TransportError, OperationError) as e:
-      log.exception("Failed to invoke NETCONF based RPC! Cause: %s", e)
+      return super(VNFStarterAdapter, self)._invoke_rpc(request_data)
+    except NCClientError as e:
+      log.error("Failed to invoke NETCONF based RPC! Cause: %s", e)
+      raise
 
   ##############################################################################
   # RPC calls starts here
