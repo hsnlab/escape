@@ -912,7 +912,7 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     log.info("Install %s domain part..." % self.domain_name)
     try:
       if not self._poll and self._diff:
-        log.debug("Polling is not enabled. Requesting the most recent topology "
+        log.debug("Polling is disabled. Requesting the most recent topology "
                   "from domain: %s for installation..." % self.domain_name)
         # Request the most recent topo, which will update the cached
         # last_virtualizer for the diff calculation
@@ -942,7 +942,7 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
     if not self._poll and self._diff:
-      log.debug("Polling is not enabled. Requesting the most recent topology "
+      log.debug("Polling is disabled. Requesting the most recent topology "
                 "from domain: %s for domain clearing..." % self.domain_name)
       if (isinstance(self.topoAdapter, RemoteESCAPEv2RESTAdapter) and
             self.topoAdapter._unify_interface) or \
@@ -1036,7 +1036,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     log.info("Install %s domain part..." % self.domain_name)
     try:
       if not self._poll and self._diff:
-        log.debug("Polling is not enabled. Requesting the most recent topology "
+        log.debug("Polling is disabled. Requesting the most recent topology "
                   "from domain: %s for installation..." % self.domain_name)
         # Request the most recent topo, which will update the cached
         # last_virtualizer for the diff calculation
@@ -1066,7 +1066,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
     if not self._poll and self._diff:
-      log.debug("Polling is not enabled. Requesting the most recent topology "
+      log.debug("Polling is disabled. Requesting the most recent topology "
                 "from domain: %s for domain clearing..." % self.domain_name)
       recent_topo = self.topoAdapter.get_config()
       if recent_topo is not None:
