@@ -1165,7 +1165,7 @@ class AbstractRESTAdapter(Session):
     :return: the content type contains the given type or not
     :rtype: bool
     """
-    content_type = self._response.headers['Content-Type']
+    content_type = self._response.headers.get('Content-Type', "")
     if not content_type:
       return False
     else:

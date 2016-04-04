@@ -173,8 +173,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
     """
     self.log.debug("Called REST-API function: sg")
     # Obtain NFFG from request body
-    log.debug("Detected response format: %s" %
-              self.headers.get("Content-Type", ""))
+    log.debug("Detected response format: %s" % self.headers.get("Content-Type"))
     body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     if body is None or not body:
@@ -183,7 +182,7 @@ class ServiceRequestHandler(AbstractRequestHandler):
       return
     # Expect XML format --> need to convert first
     if self.virtualizer_format_enabled:
-      if self.headers.get("Content-Type", "") != "application/xml" or \
+      if self.headers.get("Content-Type") != "application/xml" or \
          not body.startswith("<?xml version="):
         log.error("Received data is not in XML format despite of the UNIFY "
                   "interface is enabled!")
