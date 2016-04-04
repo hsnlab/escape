@@ -902,10 +902,14 @@ class NodeSAP(Node):
   Class for SAP nodes in the NF-FG.
   """
 
-  def __init__ (self, id=None, name=None, domain=None):
+  def __init__ (self, id=None, name=None, domain=None, delay=None,
+                bandwidth=None):
     super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name)
     # Signals if the SAP is an inter-domain SAP
     self.domain = domain
+    # Store resource values of inter-domain connection
+    self.delay = delay
+    self.bandwidth = bandwidth
 
   def __str__ (self):
     return "SAP(id: %s, name: %s)" % (self.id, self.name)
@@ -917,11 +921,17 @@ class NodeSAP(Node):
     sap = super(NodeSAP, self).persist()
     if self.domain is not None:
       sap['domain'] = self.domain
+    if self.delay is not None:
+      sap['delay'] = self.delay
+    if self.bandwidth is not None:
+      sap['bandwidth'] = self.bandwidth
     return sap
 
   def load (self, data, *args, **kwargs):
     super(NodeSAP, self).load(data=data)
     self.domain = data.get('domain')
+    self.delay = data.get('delay')
+    self.bandwidth = data.get('bandwidth')
     return self
 
 
