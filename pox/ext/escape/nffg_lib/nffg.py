@@ -2142,18 +2142,22 @@ if __name__ == "__main__":
   #     rebounded = NFFGToolBox.rebind_e2e_req_links(part)
   #     logging.info(domain + "\n" + rebounded.dump())
   from pprint import pprint
+
   with open("../../../../examples/escape-mn-mapped-topo.nffg") as f:
     nffg = NFFG.parse(f.read())
   print nffg.network['comp']['decomp']
   print nffg.network['comp']['decomp'][2], id(nffg.network['comp']['decomp'][2])
-  print nffg.network['comp']['decomp'][2].src, id(nffg.network['comp']['decomp'][2].src)
+  print nffg.network['comp']['decomp'][2].src, id(
+    nffg.network['comp']['decomp'][2].src)
   print nffg['comp'].ports[1], id(nffg['comp'].ports[1])
 
-  copy = nffg.copy()
+  nffg_copy = nffg.copy()
 
-  print copy.network['comp']['decomp']
-  print copy.network['comp']['decomp'][2], id(copy.network['comp']['decomp'][2])
-  print nffg.network['comp']['decomp'][2].src, id(copy.network['comp']['decomp'][2].src)
-  print copy['comp'].ports[1], id(copy['comp'].ports[1])
+  print nffg_copy.network['comp']['decomp']
+  print nffg_copy.network['comp']['decomp'][2], id(
+    nffg_copy.network['comp']['decomp'][2])
+  print nffg_copy.network['comp']['decomp'][2].src, id(
+    nffg_copy.network['comp']['decomp'][2].src)
+  print nffg_copy['comp'].ports[1], id(nffg_copy['comp'].ports[1])
 
   # pprint(copy.network.__dict__)
