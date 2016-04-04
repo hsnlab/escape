@@ -17,7 +17,7 @@ Implement the supporting classes for communication over NETCONF.
 from StringIO import StringIO
 from lxml import etree
 
-from ncclient import manager
+from ncclient import manager, NCClientError
 from ncclient.operations import RPCError, OperationError
 from ncclient.transport import TransportError
 from ncclient.xml_ import new_ele, sub_ele
@@ -261,7 +261,7 @@ class AbstractNETCONFAdapter(object):
       # last RPC will always be accessible
       self._rpc_reply_as_xml = self.__connection.dispatch(request_data).xml
       return self._rpc_reply_as_xml
-    except (RPCError, TransportError, OperationError):
+    except NCClientError:
       # need to handle???
       raise
 
@@ -404,9 +404,6 @@ class AbstractNETCONFAdapter(object):
         return result
       else:
         raise
-    except (TransportError, OperationError):
-      # Need to handle here??
-      raise
 
   def __enter__ (self):
     """

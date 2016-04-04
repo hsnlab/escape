@@ -397,14 +397,19 @@ class InternalDomainManager(AbstractDomainManager):
           vnf = self.remoteAdapter.deployNF(**params)
         except NCClientError:
           log.error("Got NETCONF RPC communication error during NF: %s "
+                    "deploy! Skip deploy..." % nf.id)
+          result = False
+          continue
+        except BaseException:
+          log.error("Got unexpected error during NF: %s "
                     "initiation! Skip initiation..." % nf.name)
           result = False
           continue
         log.log(VERBOSE, "Initiated VNF:\n%s" % pprint.pformat(vnf))
         # Check if NETCONF communication was OK
-        if vnf is not None and vnf['initiated_vnfs']['pid'] and \
-              vnf['initiated_vnfs'][
-                'status'] == VNFStarterAPI.VNFStatus.s_UP_AND_RUNNING:
+        if vnf and 'initiated_vnfs' in vnf and vnf['initiated_vnfs']['pid'] \
+           and vnf['initiated_vnfs']['status'] == \
+              VNFStarterAPI.VNFStatus.s_UP_AND_RUNNING:
           log.info("NF: %s initiation has been verified on Node: %s" % (
             nf.short_name, infra.short_name))
           log.debug("Initiated VNF id: %s, PID: %s, status: %s" % (
