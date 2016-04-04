@@ -15,8 +15,7 @@
 Classes for handling the elements of the NF-FG data structure
 """
 import json
-import random
-from __builtin__ import id as generate
+import uuid
 from collections import Iterable, OrderedDict
 from itertools import chain
 
@@ -85,10 +84,29 @@ class Element(Persistable):
     :return: None
     """
     super(Element, self).__init__()
-    self.id = id if id is not None else generate(self) \
-                                        + random.randint(0, 999999)
+    self.id = id if id is not None else self._generate_unique_id()
     self.type = type
     self.operation = operation
+
+  @staticmethod
+  def _generate_unique_id ():
+    """
+    Generate a unique id for the object based on uuid module: :rfc:`4122`.
+
+    :return: unique id
+    :rtype: str
+    """
+    return str(uuid.uuid1())
+
+  def regenerate_id (self):
+    """
+    Regenerate and set id. Useful for object copy.
+
+    :return: new id
+    :rtype: str
+    """
+    self.id = self._generate_unique_id()
+    return self.id
 
   def persist (self):
     # Need to override
@@ -142,7 +160,7 @@ class Element(Persistable):
 
   def update (self, dict2):
     raise RuntimeError(
-      "This standard dict functions is not supported by NFFG! self:%s dict2: "
+      "This standard dict functions is not supported by NFFG! self: %s dict2: "
       "%s" % (self, dict2))
 
 
