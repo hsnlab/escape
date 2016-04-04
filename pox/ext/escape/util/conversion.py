@@ -302,9 +302,16 @@ class NFFGConverter(object):
         if vport.sap_data.is_initialized() and \
            vport.sap_data.resources.is_initialized():
           if vport.sap_data.resources.delay.is_initialized():
-            sap.delay = vport.sap_data.resources.delay.get_value()
+            try:
+              sap.delay = float(vport.sap_data.resources.delay.get_value())
+            except ValueError:
+              sap.delay = vport.sap_data.resources.delay.get_value()
           if vport.sap_data.resources.bandwidth.is_initialized():
-            sap.bandwidth = vport.sap_data.resources.bandwidth.get_value()
+            try:
+              sap.bandwidth = float(
+                vport.sap_data.resources.bandwidth.get_value())
+            except ValueError:
+              sap.bandwidth = vport.sap_data.resources.bandwidth.get_value()
 
         # Add metadata from infra port metadata to sap metadata
         for key in vport.metadata:  # Optional - port.metadata
@@ -335,7 +342,9 @@ class NFFGConverter(object):
           p1p2id="%s-%s-link" % (sap_id, infra.id),
           p2p1id="%s-%s-link-back" % (sap_id, infra.id),
           port1=sap_port,
-          port2=infra_port)
+          port2=infra_port,
+          delay=sap.delay,
+          bandwidth=sap.bandwidth)
 
         self.log.debug("Added SAP-Infra connection: %s" % l1)
         self.log.debug("Added Infra-SAP connection: %s" % l2)
