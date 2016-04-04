@@ -1167,8 +1167,49 @@ class NFFGToolBox(object):
         # Get the inter-domain port from already copied Infra
         domain_port_nffg = base.network.node[n_id].ports[p_id]
         log.debug("Found inter-domain port: %s" % domain_port_nffg)
+
+        # If the two resource value does not match
+        if base[sap_id].delay != nffg[sap_id].delay:
+          if base[sap_id].delay is None:
+            # If first is None the other can not be None
+            s_delay = nffg[sap_id].delay
+          elif nffg[sap_id].delay is None:
+            # If second is None the other can not be None
+            s_delay = base[sap_id].delay
+          else:
+            # Both values are valid, but different
+            log.warning(
+              "Inter-domain delay values (%s, %s) are set but do not match!"
+              " Use first value from base NFFG." % (base[sap_id].delay,
+                                                    nffg[sap_id].delay))
+            s_delay = base[sap_id].delay
+        else:
+          # Both value match: ether valid values or Nones --> choose first value
+          s_delay = base[sap_id].delay
+
+        # If the two resource value does not match
+        if base[sap_id].bandwidth != nffg[sap_id].bandwidth:
+          if base[sap_id].bandwidth is None:
+            # If first is None the other can not be None
+            s_bandwidth = nffg[sap_id].bandwidth
+          elif nffg[sap_id].bandwidth is None:
+            # If second is None the other can not be None
+            s_bandwidth = base[sap_id].bandwidth
+          else:
+            # Both values are valid, but different
+            log.warning(
+              "Inter-domain bandwidth values (%s, %s) are set but do not match!"
+              " Use first value from base NFFG." % (base[sap_id].bandwidth,
+                                                    nffg[sap_id].bandwidth))
+            s_bandwidth = base[sap_id].bandwidth
+        else:
+          # Both value match: ether valid values or Nones --> choose first value
+          s_bandwidth = base[sap_id].bandwidth
+
+        log.debug("Detected inter-domain resource values: delay: %s, "
+                  "bandwidth: %s" % (s_delay, s_bandwidth))
+
         # Copy inter-domain port properties for redundant storing
-        # FIXME - do it better
         if len(domain_port_nffg.properties) > 0:
           domain_port_dov.properties.update(domain_port_nffg.properties)
           log.debug("Copy inter-domain port properties: %s" %
@@ -1183,11 +1224,11 @@ class NFFGToolBox(object):
         # Signal Inter-domain port
         domain_port_dov.add_property("type", "inter-domain")
         domain_port_nffg.add_property("type", "inter-domain")
+
         # Delete both inter-domain SAP and links connected to them
         base.del_node(sap_id)
         nffg.del_node(sap_id)
-        log.debug("Add inter-domain connection with delay: %s, bandwidth: %s"
-                  % (b_links[0].delay, b_links[0].bandwidth))
+
         # Add the inter-domain links for both ways
         base.add_undirected_link(p1p2id="inter-domain-link-%s" % sap_id,
                                  p2p1id="inter-domain-link-%s-back" % sap_id,
