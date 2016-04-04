@@ -705,8 +705,8 @@ class ESCAPENetworkBuilder(object):
       log.error("An error occurred when load topology from file: %s" %
                 e.message)
       raise TopologyBuilderException("File parsing error!")
-    # except SystemExit:
-    #   raise TopologyBuilderException("Got exit exception from Mininet!")
+      # except SystemExit:
+      #   raise TopologyBuilderException("Got exit exception from Mininet!")
 
   def get_network (self):
     """
@@ -916,12 +916,14 @@ class ESCAPENetworkBuilder(object):
         else:
           border_node = sap_switch_links[0][0]
       except IndexError:
-        log.error(
-          "Link for inter-domain SAP: %s is not found. Skip SAP creation..."
-          % sap)
+        log.error("Link for inter-domain SAP: %s is not found. "
+                  "Skip SAP creation..." % sap)
         continue
-      log.debug("Detected inter-domain SAP: %s connected to border Node: %s" % (
-        sap, border_node))
+      log.debug("Detected inter-domain SAP: %s connected to border Node: %s" %
+                (sap, border_node))
+      if sap.delay or sap.bandwidth:
+        log.debug("Detected resource values for inter-domain connection: "
+                  "delay: %s, bandwidth: %s" % (sap.delay, sap.bandwidth))
       sw_name = nffg.network.node[border_node].id
       for sw in self.mn.switches:
         # print sw.name
