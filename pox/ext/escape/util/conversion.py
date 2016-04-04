@@ -922,7 +922,7 @@ class NFFGConverter(object):
     # Parse Metadata and Requirement links from Virtualizer
     self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
     self.log.debug("END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
-      V_, NFFG.version))
+      V_VERSION, NFFG.version))
     return (nffg, virtualizer) if with_virt else nffg
 
   def _convert_nffg_infras (self, nffg, virtualizer):
@@ -1043,7 +1043,7 @@ class NFFGConverter(object):
                                    delay=v_link_delay,
                                    bandwidth=v_link_bw))
           # Call bind to resolve src,dst references to workaround a bug
-          v_link.bind()
+          # v_link.bind()
           v_node.links.add(v_link)
       elif port_num == 1:
         # Only one port in infra - create loop-edge
@@ -1063,7 +1063,7 @@ class NFFGConverter(object):
                                  delay=str(v_link_delay),
                                  bandwidth=str(v_link_bw)))
         # Call bind to resolve src,dst references to workaround a bug
-        v_link.bind()
+        # v_link.bind()
         v_node.links.add(v_link)
       else:
         # No port in Infra - unusual but acceptable
@@ -1150,7 +1150,7 @@ class NFFGConverter(object):
         resources=virt_lib.Link_resource(delay=v_link_delay,
                                          bandwidth=v_link_bw))
       # Call bind to resolve src,dst references to workaround a bug
-      v_link.bind()
+      # v_link.bind()
       virtualizer.links.add(v_link)
 
   def _convert_nffg_reqs (self, nffg, virtualizer):
@@ -1473,7 +1473,7 @@ class NFFGConverter(object):
       vnode.NF_instances.node.clear_data()
       vnode.flowtable.flowentry.clear_data()
     # explicitly call bind to resolve absolute paths for safety reason
-    virtualizer.bind(relative=True)
+    # virtualizer.bind(relative=True)
     return virtualizer
 
   def adapt_mapping_into_Virtualizer (self, virtualizer, nffg, reinstall=False):
