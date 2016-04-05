@@ -22,7 +22,7 @@ Follows POX module conventions
 import logging
 
 import pox.lib.util as poxutil
-from pox.core import core
+from pox.core import core, log
 
 # Initial parameters
 init_param = {}
@@ -100,7 +100,6 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   else:
     # Launch pretty logger with specific log level
     launch(**{loglevel: True})
-  log = core.getLogger("core")
   log.info("Setup logger - formatter: %s, level: %s" % (
     "pretty_log", logging.getLevelName(log.getEffectiveLevel())))
   # Save additional config file name into POX's core as an attribute to avoid to

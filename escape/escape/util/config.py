@@ -26,6 +26,9 @@ from escape.service import LAYER_NAME as SERVICE
 from escape.util.misc import Singleton
 from pox.core import log, core
 
+# Store the project root where escape.py is started in
+PROJECT_ROOT = os.getcwd()
+
 
 class ConfigurationError(RuntimeError):
   """
@@ -107,8 +110,7 @@ class ESCAPEConfig(object):
       try:
         # util/escape/ext/pox/root
         config = os.path.abspath(
-          os.path.dirname(__file__) + "../../../../../" + self.__configuration[
-            self.DEFAULT_CFG])
+          os.path.join(PROJECT_ROOT, self.__configuration[self.DEFAULT_CFG]))
         log.debug("Load default config file: %s" % os.path.basename(config))
       except KeyError:
         log.error(
@@ -258,13 +260,12 @@ class ESCAPEConfig(object):
   @staticmethod
   def get_project_root_dir ():
     """
-    Return the absolute path of project dir
+    Return the absolute path of project dir.
 
     :return: path of project dir
     :rtype: str
     """
-    return os.path.abspath(
-      os.path.join(os.path.dirname(__file__), "../../../.."))
+    return PROJECT_ROOT
 
   ##############################################################################
   # Mapping related getters
