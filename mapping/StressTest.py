@@ -34,7 +34,7 @@ try:
 except ImportError:
   import sys, os
   sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                  "../pox/ext/escape/nffg_lib/")))
+                                  "../escape/escape/nffg_lib/")))
   from nffg import NFFG
 
 def gen_seq():
