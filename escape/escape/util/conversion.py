@@ -40,7 +40,7 @@ except ImportError:
   import os, inspect
 
   sys.path.append(os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../../../unify_virtualizer/")))
+    os.path.join(os.path.dirname(__file__), "../../../unify_virtualizer/")))
   # Import for standalone running
   import virtualizer as virt_lib
   from virtualizer import __version__ as V_VERSION
@@ -1573,11 +1573,11 @@ if __name__ == "__main__":
   #   "../../../../examples/escape-2sbb-topo.xml")
   changed = virt_lib.Virtualizer.parse_from_file(
     # "../../../../examples/escape-2sbb-mapped.xml")
-    "../../../../examples/escape-2sbb-test1.xml")
+    "../../../examples/escape-2sbb-test1.xml")
   with open(
      # "../../../../examples/escape-mn-mapped-test.nffg") as f:
      # "../../../../examples/escape-2sbb-mapped.nffg") as f:
-     "../../../../examples/escape-2sbb-test1.nffg") as f:
+     "../../../examples/escape-2sbb-test1.nffg") as f:
     new = NFFG.parse(raw_data=f.read())
   # print dov.xml()
   print new.dump()
