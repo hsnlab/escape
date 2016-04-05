@@ -81,9 +81,11 @@ def main ():
     # escape or util packages.
     import sys
     mn = os.path.abspath(os.path.dirname(__file__) + "/mininet")
-    misc = os.path.abspath(os.path.dirname(__file__) + "/pox/ext/escape/util")
-    sys.path.append(mn)
-    sys.path.append(misc)
+    # Import misc directly from util/ to avoid standard ESCAPE init steps
+    misc = os.path.abspath(os.path.dirname(__file__) + "/escape/escape/util")
+    sys.path.insert(0, mn)
+    sys.path.insert(0, misc)
+    print sys.path
     if os.geteuid() != 0:
       print "Cleanup process requires root privilege!"
       return
