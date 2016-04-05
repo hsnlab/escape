@@ -19,9 +19,9 @@ import sys
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../..'))  # ext dir
-sys.path.insert(0, os.path.abspath('../../..'))  # pox dir to handle lib/...
-root = os.path.abspath(os.path.dirname(__file__) + "../../../../..")
+sys.path.insert(0, os.path.abspath('..'))  # escape dir
+sys.path.insert(0, os.path.abspath('../../../pox'))  # pox dir to handle lib/...
+root = os.path.abspath(os.path.dirname(__file__) + "../../../..")
 for item in os.listdir(root):  # Dependency dirs like mininet
   abs_item = os.path.join(root, item)
   if not item.startswith('.') and item != "pox" and os.path.isdir(abs_item):
