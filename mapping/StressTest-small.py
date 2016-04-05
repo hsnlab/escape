@@ -363,10 +363,12 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
           log.debug(ppid_pid+"Mapping successful on test level %s with batch"
                     " length %s!"%(test_lvl, batch_length))
           if do_the_dump:
-            with open("".join([dump_folder,"/test_lvl-",str(test_lvl),".nffg"]),
-                      "w") as dumped:
+            dump_name = "".join([dump_folder,"/test_lvl-",str(test_lvl),".nffg"])
+            with open(dump_name, "w") as dumped:
               log.info("Dumping NFFG at test_lvl %s..."%test_lvl)
               dumped.write(network.dump())
+            os.system("".join(["tar -czf ",dump_name,".tgz"," ",dump_name]))
+            os.system("rm "+dump_name)
             do_the_dump = False
           rnd.setstate(random_state)
           mapped_vnf_count += len([nf for nf in batched_request.nfs])
