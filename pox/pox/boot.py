@@ -507,7 +507,8 @@ def boot (argv = None):
   # Add pox directory to path
   base = sys.path[0]
   sys.path.insert(0, os.path.abspath(os.path.join(base, 'pox')))
-  sys.path.insert(0, os.path.abspath(os.path.join(base, 'ext')))
+  # sys.path.insert(0, os.path.abspath(os.path.join(base, 'ext')))
+  sys.path.insert(0, os.path.abspath(os.path.join(base, '../escape')))
 
   thread_count = threading.active_count()
 
