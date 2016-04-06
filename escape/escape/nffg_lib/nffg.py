@@ -1045,7 +1045,13 @@ class NFFGToolBox(object):
             continue
           # Copy optional SAP metadata as special id or name
           # Create default SAP object attributes
-          sap_id = port.get_property("sap")
+          if port.has_property("sap"):
+            sap_id = port.get_property("sap")
+          else:
+            log.warning(
+              "%s is detected as inter-domain port, but 'sap' metadata is not "
+              "found! Using 'name' metadata as fallback...")
+            sap_id = port.get_property("name")
           sap_name = port.get_property("name")
           # Add SAP to splitted NFFG
           if sap_id in nffg:
