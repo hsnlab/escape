@@ -258,17 +258,17 @@ class NFFGConverter(object):
     """
     # Add ports to Infra Node
     for vport in vnode.ports:
-      # If it is a port connected to a SAP
+      # If it is a port connected to a SAP: <port-type>port-sap</port-type>
       if vport.port_type.get_value() == self.TYPE_VIRTUALIZER_PORT_SAP:
-        # If inter-domain SAP -> id = <sap> tag
-        if vport.sap.is_initialized():
+        # If inter-domain SAP -> id = <sap> tag: <sap>SAP14</sap>
+        if vport.sap.is_initialized() and vport.sap.get_value():
           # Use unique SAP tag as the id of the SAP
           sap_id = vport.sap.get_value()  # Optional port.sap
         # Regular SAP
         else:
           # Use port name as the SAP.id if it is set else generate one
           # SAP.id <--> virtualizer.node.port.name
-          if vport.name.is_initialized():
+          if vport.name.is_initialized() and vport.name.get_value():
             sap_id = vport.name.get_value()
           else:
             # Backup SAP id generation
@@ -280,7 +280,7 @@ class NFFGConverter(object):
         except ValueError:
           sap_port_id = vport.id.get_value()
         # SAP.name will be the same as the SAP.id or generate one for backup
-        if vport.name.is_initialized():
+        if vport.name.is_initialized() and vport.name.get_value():
           sap_name = vport.name.get_value()  # Optional - port.name
         else:
           sap_name = "name-%s" % sap_id
@@ -294,6 +294,8 @@ class NFFGConverter(object):
         if vport.name.is_initialized():
           sap_port.add_property("name", vport.name.get_value())
         if vport.sap.is_initialized():
+          # Set as inter-domain SAP
+          sap_port.add_property("type", "inter-domain")
           sap_port.add_property("sap", vport.sap.get_value())
 
         self.log.debug("Added SAP port: %s" % sap_port)
@@ -1112,7 +1114,9 @@ class NFFGConverter(object):
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
         v_sap_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
         # Add SAP.name as name to port or use sap.id
-        if link.src.has_property("name"):
+        if sap.name:
+          v_sap_name = sap.name
+        elif link.src.has_property("name"):
           v_sap_name = link.src.get_property("name")
         else:
           # Store SAP.id in the name attribute instead of SAP.name
@@ -1126,12 +1130,19 @@ class NFFGConverter(object):
           v_sap_port.sap_data.resources.bandwidth.set_value(sap.bandwidth)
         self.log.debug(
           "Convert SAP to port: %s in infra: %s" % (link.dst.id, n))
+        # Check if the SAP is an inter-domain SAP
+        if link.src.has_property("type") == "inter-domain":
+          # If sap metadata is set by merge, use this value else the SAP.id
+          if link.src.has_property("sap"):
+            v_sap_port.sap.set_value(link.src.get_property("sap"))
+          else:
+            v_sap_port.sap.set_value(str(sap.id))
         # Check if the SAP is a bound, inter-domain SAP
-        if nffg[s].domain is not None:
+        if sap.domain is not None:
           v_sap_port.sap.set_value(s)
-          self.log.debug(
-            "Convert inter-domain SAP to port: %s in infra: %s" % (
-              link.dst.id, n))
+          self.log.debug("Set port: %s in infra: %s as an inter-domain SAP with"
+                         " 'sap' value: %s" % (link.dst.id, n,
+                                               v_sap_port.sap.get_value()))
 
   def _convert_nffg_edges (self, nffg, virtualizer):
     """
