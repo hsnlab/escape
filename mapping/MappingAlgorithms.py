@@ -96,6 +96,7 @@ def MAP (request, network, full_remap=False,
                     " based on the flowrules...")
     sg_hops_given = False
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(request)
+    helper.log.log(5, "Retrieved SG hops:\n" + pformat(sg_hop_info))
     if len(sg_hop_info) == 0:
       raise uet.BadInputException("If SGHops are not given, flowrules should be"
                                   " in the NFFG",
