@@ -1534,7 +1534,7 @@ class NFFGToolBox(object):
     # Create Single BiSBiS NFFG
     log.debug("Generate trivial SingleBiSBiS NFFG based on %s:" % nffg)
     # Create the single BiSBiS infra
-    sbb_infra = sbb.add_infra(id="SingleBiSbiS",
+    sbb_infra = sbb.add_infra(id="SingleBiSBiS",
                               name="SingleBiSBiS",
                               domain=NFFG.DEFAULT_DOMAIN,
                               infra_type=NFFG.TYPE_INFRA_BISBIS)
