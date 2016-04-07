@@ -196,7 +196,7 @@ def main ():
   print "Starting %s..." % parser.description
 
   if args.POXlike:
-    pox_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "pox"))
+    pox_base = os.path.realpath((os.path.dirname(__file__) + "/pox"))
     # Change working directory
     os.chdir(pox_base)
     # Override first path element
@@ -205,6 +205,7 @@ def main ():
     sys.path[0] = pox_base
     pox_params = cmd[2:] if cmd[0] == "sudo" else cmd[1:]
     if args.debug:
+      print "POX base: %s" % pox_base
       print "POX parameters: %s" % pox_params
     from pox.boot import boot
     boot(argv=pox_params)
