@@ -852,7 +852,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       log.debug("Using given Virtualizer as full mapping request")
     # Force relative path explicitly
-    vdata.bind(relative=True)
+    # vdata.bind(relative=True)
     plain_data = vdata.xml()
     log.debug("Send request to %s domain agent at %s..." %
               (self.domain_name, self._base_url))
@@ -1003,7 +1003,11 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     # base = Virtualizer.parse_from_text(text=self.last_virtualizer.xml())
     base = self.last_virtualizer
-    diff = base.diff(changed)
+    # diff = base.diff(changed)
+    # Use fail-safe workaround of diff to avoid bugs in Virtualizer library
+    base.bind(relative=True)
+    changed.bind(relative=True)
+    diff = base.diff_failsafe(changed)
     return diff
 
 
