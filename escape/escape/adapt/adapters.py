@@ -15,6 +15,7 @@
 Contains Adapter classes which contains protocol and technology specific
 details for the connections between ESCAPEv2 and other different domains.
 """
+import os
 from copy import deepcopy
 
 from ncclient import NCClientError
@@ -26,6 +27,7 @@ from escape import CONFIG, __version__
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
+from escape.util.misc import run_cmd
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.lib.util import dpid_to_str
 from virtualizer import Virtualizer
@@ -1241,7 +1243,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       if self._original_virtualizer is None:
         log.debug("Store Virtualizer(id: %s, name: %s) as the original domain "
                   "config..." % (
-                  virt.id.get_as_text(), virt.name.get_as_text()))
+                    virt.id.get_as_text(), virt.name.get_as_text()))
         self._original_virtualizer = deepcopy(virt)
       # print nffg.dump()
       return nffg
@@ -1353,3 +1355,50 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def check_topology_changed (self):
     raise NotImplementedError("Not implemented yet!")
+
+
+class DataplaneComputeCtrlAdapter(AbstractESCAPEAdapter):
+  """
+  Adapter class to handle communication with Mininet domain.
+
+  Implement VNF managing API using direct access to the
+  :class:`mininet.net.Mininet` object.
+  """
+  # Events raised by this class
+  _eventMixin_events = {DomainChangedEvent}
+  name = "COMPUTE"
+  type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
+
+  def __init__ (self, **kwargs):
+    """
+    Init.
+
+    :param net: set pre-defined network (optional)
+    :type net: :class:`ESCAPENetworkBridge`
+    """
+    # Call base constructors directly to avoid super() and MRO traps
+    AbstractESCAPEAdapter.__init__(self, **kwargs)
+    log.debug("Init DataplaneComputeCtrlAdapter - type: %s" % self.type)
+
+  def check_domain_reachable (self):
+    """
+    Checker function for domain polling.
+
+    :return: the domain is detected or not
+    :rtype: bool
+    """
+    # Direct access to IL's Mininet wrapper <-- Internal Domain
+    return True
+
+  def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG`.
+
+    :return: the emulated topology description
+    :rtype: :any:`NFFG`
+    """
+    cmd_hwloc2nffg = os.path.normpath(os.path.join(
+      CONFIG.get_project_root_dir(), "hwloc2nffg/build/bin/hwloc2nffg"))
+    raw_data = run_cmd(cmd_hwloc2nffg)
+    topo = NFFG.parse(raw_data)
+    return topo
