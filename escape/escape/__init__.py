@@ -20,7 +20,7 @@ RequestHandler and strategy classes, the initial Adapter classes, etc.
 `CONFIG` contains the ESCAPEv2 dependent configuration as an
 :any:`ESCAPEConfig`.
 """
-from escape.util.config import ESCAPEConfig
+from escape.util.config import ESCAPEConfig, PROJECT_ROOT
 
 __project__ = "ESCAPEv2"
 __authors__ = "Janos Czentye, Balazs Sonkoly, Levente Csikor"
@@ -136,6 +136,7 @@ cfg = {
         # "SDN",
         # "OPENSTACK",
         # "UN"
+        "DATAPLANE"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
@@ -174,6 +175,19 @@ cfg = {
                 "server": "127.0.0.1",
                 "port": 830,
                 "timeout": 5
+              }
+          }
+        },
+      "DATAPLANE":
+        {
+          "module": "escape.adapt.managers",
+          "class": "DataplaneDomainManager",
+          "poll": False,
+          "adapters": {
+            "TOPOLOGY":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "DataplaneComputeCtrlAdapter",
               }
           }
         },
@@ -316,13 +330,11 @@ def add_dependencies ():
   import sys
   from pox.core import log
 
-  # Project root dir
-  root = ESCAPEConfig.get_project_root_dir()
   # Skipped folders under project's root
   skipped = ("escape", "examples", "pox", "OpenYuma", "Unify_ncagent", "tools",
              "gui", "nffg_BME", "include", "share", "lib", "bin")
-  for sub_folder in os.listdir(root):
-    abs_sub_folder = os.path.join(root, sub_folder)
+  for sub_folder in os.listdir(PROJECT_ROOT):
+    abs_sub_folder = os.path.join(PROJECT_ROOT, sub_folder)
     if not os.path.isdir(abs_sub_folder):
       continue
     if not (sub_folder.startswith('.') or sub_folder.upper().startswith(
