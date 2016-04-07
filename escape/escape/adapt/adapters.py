@@ -1401,4 +1401,5 @@ class DataplaneComputeCtrlAdapter(AbstractESCAPEAdapter):
       CONFIG.get_project_root_dir(), "hwloc2nffg/build/bin/hwloc2nffg"))
     raw_data = run_cmd(cmd_hwloc2nffg)
     topo = NFFG.parse(raw_data)
+    topo.duplicate_static_links()
     return topo
