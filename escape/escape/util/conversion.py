@@ -1567,14 +1567,14 @@ if __name__ == "__main__":
   # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
   # log.debug(nffg.dump())
 
-  # dov = virt_lib.Virtualizer.parse_from_file(
-  #   "../../../../examples/escape-2sbb-mapped.xml")
+  dov = virt_lib.Virtualizer.parse_from_file(
+    "../../../examples/hwloc2nffg_HPProBook450G2.xml")
   # dov.bind(relative=True)
   # log.info("Parsed XML:")
   # log.info("%s" % dov)
-  # nffg = c.parse_from_Virtualizer(vdata=dov.xml())
-  # log.info("Reconverted Virtualizer:")
-  # log.info("%s" % nffg.dump())
+  nffg = c.parse_from_Virtualizer(vdata=dov.xml())
+  log.info("Reconverted Virtualizer:")
+  log.info("%s" % nffg.dump())
   # virt = c.dump_to_Virtualizer(nffg=nffg)
   # # virt.bind()
   # log.info("Reconverted Virtualizer:")
@@ -1582,21 +1582,21 @@ if __name__ == "__main__":
 
   # dov = virt_lib.Virtualizer.parse_from_file(
   #   "../../../../examples/escape-2sbb-topo.xml")
-  changed = virt_lib.Virtualizer.parse_from_file(
-    # "../../../../examples/escape-2sbb-mapped.xml")
-    "../../../examples/escape-2sbb-test1.xml")
-  with open(
-     # "../../../../examples/escape-mn-mapped-test.nffg") as f:
-     # "../../../../examples/escape-2sbb-mapped.nffg") as f:
-     "../../../examples/escape-2sbb-test1.nffg") as f:
-    new = NFFG.parse(raw_data=f.read())
-  # print dov.xml()
-  print new.dump()
-  print changed.xml()
-  # diff = changed.diff(dov)
-  base = changed.copy()
-  # changed=changed.copy()
-  new = c.adapt_mapping_into_Virtualizer(virtualizer=base, nffg=new,
-                                         reinstall=True)
-  diff = changed.diff(new)
-  print diff.xml()
+  # changed = virt_lib.Virtualizer.parse_from_file(
+  #   # "../../../../examples/escape-2sbb-mapped.xml")
+  #   "../../../examples/escape-2sbb-test1.xml")
+  # with open(
+  #    # "../../../../examples/escape-mn-mapped-test.nffg") as f:
+  #    # "../../../../examples/escape-2sbb-mapped.nffg") as f:
+  #    "../../../examples/escape-2sbb-test1.nffg") as f:
+  #   new = NFFG.parse(raw_data=f.read())
+  # # print dov.xml()
+  # print new.dump()
+  # print changed.xml()
+  # # diff = changed.diff(dov)
+  # base = changed.copy()
+  # # changed=changed.copy()
+  # new = c.adapt_mapping_into_Virtualizer(virtualizer=base, nffg=new,
+  #                                        reinstall=True)
+  # diff = changed.diff(new)
+  # print diff.xml()
