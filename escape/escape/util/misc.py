@@ -154,7 +154,8 @@ def run_cmd (cmd):
   :return: output of the command
   :rtype: str
   """
-  return Popen(['/bin/sh', '-c', cmd], stdout=PIPE).communicate()[0]
+  return Popen(['/bin/sh', '-c', cmd], stdout=PIPE,
+               stderr=STDOUT).communicate()[0]
 
 
 def enum (*sequential, **named):
@@ -395,10 +396,13 @@ def do_profile (func):
 
   return decorator_func
 
+
 if __name__ == "__main__":
   import sys
+
   sys.path.insert(0, os.path.normpath(os.getcwd() + "/../nffg_lib"))
   from nffg import NFFG
+
   raw = run_cmd(os.path.abspath("../../../hwloc2nffg/build/bin/hwloc2nffg"))
   nffg = NFFG.parse(raw)
   print nffg.dump()
