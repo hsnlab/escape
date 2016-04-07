@@ -394,3 +394,11 @@ def do_profile (func):
     return result, ret
 
   return decorator_func
+
+if __name__ == "__main__":
+  import sys
+  sys.path.insert(0, os.path.normpath(os.getcwd() + "/../nffg_lib"))
+  from nffg import NFFG
+  raw = run_cmd(os.path.abspath("../../../hwloc2nffg/build/bin/hwloc2nffg"))
+  nffg = NFFG.parse(raw)
+  print nffg.dump()

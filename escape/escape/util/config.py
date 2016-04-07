@@ -63,6 +63,8 @@ class ESCAPEConfig(object):
     self.__configuration = default if default else dict.fromkeys(self.LAYERS,
                                                                  {})
     self.__initiated = False
+    # Store copy of project root directory
+    self.project_root = str(PROJECT_ROOT)
 
   @property
   def in_initiated (self):
@@ -109,8 +111,8 @@ class ESCAPEConfig(object):
       # Detect default config
       try:
         # util/escape/ext/pox/root
-        config = os.path.abspath(
-          os.path.join(PROJECT_ROOT, self.__configuration[self.DEFAULT_CFG]))
+        config = os.path.abspath(os.path.join(
+          self.project_root, self.__configuration[self.DEFAULT_CFG]))
         log.debug("Load default config file: %s" % os.path.basename(config))
       except KeyError:
         log.error(
@@ -257,15 +259,14 @@ class ESCAPEConfig(object):
     """
     raise RuntimeError("Explicit layer config deletion is not supported!")
 
-  @staticmethod
-  def get_project_root_dir ():
+  def get_project_root_dir (self):
     """
     Return the absolute path of project dir.
 
     :return: path of project dir
     :rtype: str
     """
-    return PROJECT_ROOT
+    return self.project_root
 
   ##############################################################################
   # Mapping related getters

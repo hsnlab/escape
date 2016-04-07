@@ -1,535 +1,535 @@
 {
-    "edge_links": [
+  "parameters": {
+    "id": "HP-ProBook",
+    "name": "NFFG-HP-ProBook",
+    "version": "1.0"
+  },
+  "node_saps": [
+    {
+      "id": "wlan0",
+      "name": "wlan0",
+      "ports": [
         {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "PU#0",
-            "dst_port": 0,
-            "id": 2,
-            "src_node": "Core#0",
-            "src_port": 3
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "PU#1",
-            "dst_port": 1,
-            "id": 4,
-            "src_node": "Core#0",
-            "src_port": 5
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "Core#0",
-            "dst_port": 6,
-            "id": 7,
-            "src_node": "L1d!0",
-            "src_port": 8
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "L1d!0",
-            "dst_port": 9,
-            "id": 10,
-            "src_node": "L2!0",
-            "src_port": 11
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "PU#2",
-            "dst_port": 13,
-            "id": 15,
-            "src_node": "Core#1",
-            "src_port": 16
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "PU#3",
-            "dst_port": 14,
-            "id": 17,
-            "src_node": "Core#1",
-            "src_port": 18
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "Core#1",
-            "dst_port": 19,
-            "id": 20,
-            "src_node": "L1d!1",
-            "src_port": 21
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "L1d!1",
-            "dst_port": 22,
-            "id": 23,
-            "src_node": "L2!1",
-            "src_port": 24
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "L2!0",
-            "dst_port": 12,
-            "id": 26,
-            "src_node": "L3!0",
-            "src_port": 27
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "L2!1",
-            "dst_port": 25,
-            "id": 28,
-            "src_node": "L3!0",
-            "src_port": 29
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "L3!0",
-            "dst_port": 30,
-            "id": 31,
-            "src_node": "Socket!0",
-            "src_port": 32
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "eth0",
-            "dst_port": 34,
-            "id": 35,
-            "src_node": "PCI 10ec:8168!0",
-            "src_port": 36
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "wlan0",
-            "dst_port": 38,
-            "id": 39,
-            "src_node": "PCI 10ec:b723!0",
-            "src_port": 40
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "PCI 10ec:8168!0",
-            "dst_port": 37,
-            "id": 42,
-            "src_node": "HostBridge!0",
-            "src_port": 43
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "PCI 10ec:b723!0",
-            "dst_port": 41,
-            "id": 44,
-            "src_node": "HostBridge!0",
-            "src_port": 45
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "Socket!0",
-            "dst_port": 33,
-            "id": 47,
-            "src_node": "Machine#0",
-            "src_port": 48
-        },
-        {
-            "bandwidth": 1000,
-            "delay": 0.10,
-            "dst_node": "HostBridge!0",
-            "dst_port": 46,
-            "id": 49,
-            "src_node": "Machine#0",
-            "src_port": 50
+          "id": 38
         }
-    ],
-    "node_infras": [
+      ]
+    },
+    {
+      "id": "eth0",
+      "name": "eth0",
+      "ports": [
         {
-            "domain": "INTERNAL",
-            "id": "PU#0",
-            "name": "PU#0",
-            "ports": [
-                {
-                    "id": 0
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 1,
-                "delay": 0.50,
-                "mem": 32000,
-                "storage": 150
-            },
-            "supported": [
-                "headerDecompressor"
-            ],
-            "type": "EE"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "PU#1",
-            "name": "PU#1",
-            "ports": [
-                {
-                    "id": 1
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 1,
-                "delay": 0.50,
-                "mem": 32000,
-                "storage": 150
-            },
-            "supported": [
-                "headerDecompressor"
-            ],
-            "type": "EE"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "Core#0",
-            "name": "Core#0",
-            "ports": [
-                {
-                    "id": 3
-                },
-                {
-                    "id": 5
-                },
-                {
-                    "id": 6
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "L1d!0",
-            "name": "L1d!0",
-            "ports": [
-                {
-                    "id": 8
-                },
-                {
-                    "id": 9
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "L2!0",
-            "name": "L2!0",
-            "ports": [
-                {
-                    "id": 11
-                },
-                {
-                    "id": 12
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "PU#2",
-            "name": "PU#2",
-            "ports": [
-                {
-                    "id": 13
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 1,
-                "delay": 0.50,
-                "mem": 32000,
-                "storage": 150
-            },
-            "supported": [
-                "headerDecompressor"
-            ],
-            "type": "EE"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "PU#3",
-            "name": "PU#3",
-            "ports": [
-                {
-                    "id": 14
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 1,
-                "delay": 0.50,
-                "mem": 32000,
-                "storage": 150
-            },
-            "supported": [
-                "headerDecompressor"
-            ],
-            "type": "EE"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "Core#1",
-            "name": "Core#1",
-            "ports": [
-                {
-                    "id": 16
-                },
-                {
-                    "id": 18
-                },
-                {
-                    "id": 19
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "L1d!1",
-            "name": "L1d!1",
-            "ports": [
-                {
-                    "id": 21
-                },
-                {
-                    "id": 22
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "L2!1",
-            "name": "L2!1",
-            "ports": [
-                {
-                    "id": 24
-                },
-                {
-                    "id": 25
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "L3!0",
-            "name": "L3!0",
-            "ports": [
-                {
-                    "id": 27
-                },
-                {
-                    "id": 29
-                },
-                {
-                    "id": 30
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "Socket!0",
-            "name": "Socket!0",
-            "ports": [
-                {
-                    "id": 32
-                },
-                {
-                    "id": 33
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "PCI 10ec:8168!0",
-            "name": "PCI 10ec:8168!0",
-            "ports": [
-                {
-                    "id": 36
-                },
-                {
-                    "id": 37
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "PCI 10ec:b723!0",
-            "name": "PCI 10ec:b723!0",
-            "ports": [
-                {
-                    "id": 40
-                },
-                {
-                    "id": 41
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "HostBridge!0",
-            "name": "HostBridge!0",
-            "ports": [
-                {
-                    "id": 43
-                },
-                {
-                    "id": 45
-                },
-                {
-                    "id": 46
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
-        },
-        {
-            "domain": "INTERNAL",
-            "id": "Machine#0",
-            "name": "Machine#0",
-            "ports": [
-                {
-                    "id": 48
-                },
-                {
-                    "id": 50
-                },
-                {
-                    "id": 51
-                }
-            ],
-            "resources": {
-                "bandwidth": 1000,
-                "cpu": 0,
-                "delay": 0.50,
-                "mem": 0,
-                "storage": 0
-            },
-            "type": "SDN-SWITCH"
+          "id": 34
         }
-    ],
-    "node_saps": [
-        {
-            "id": "eth0",
-            "name": "eth0",
-            "ports": [
-                {
-                    "id": 34
-                }
-            ]
-        },
-        {
-            "id": "wlan0",
-            "name": "wlan0",
-            "ports": [
-                {
-                    "id": 38
-                }
-            ]
-        }
-    ],
-    "parameters": {
-        "id": "HP-ProBook",
-        "name": "NFFG-HP-ProBook",
-        "version": "1.0"
+      ]
     }
+  ],
+  "node_infras": [
+    {
+      "id": "Socket!0",
+      "name": "Socket!0",
+      "ports": [
+        {
+          "id": 32
+        },
+        {
+          "id": 33
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "PCI 10ec:8168!0",
+      "name": "PCI 10ec:8168!0",
+      "ports": [
+        {
+          "id": 36
+        },
+        {
+          "id": 37
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "L1d!1",
+      "name": "L1d!1",
+      "ports": [
+        {
+          "id": 21
+        },
+        {
+          "id": 22
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "L1d!0",
+      "name": "L1d!0",
+      "ports": [
+        {
+          "id": 8
+        },
+        {
+          "id": 9
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "PCI 10ec:b723!0",
+      "name": "PCI 10ec:b723!0",
+      "ports": [
+        {
+          "id": 40
+        },
+        {
+          "id": 41
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "Machine#0",
+      "name": "Machine#0",
+      "ports": [
+        {
+          "id": 48
+        },
+        {
+          "id": 50
+        },
+        {
+          "id": 51
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "PU#2",
+      "name": "PU#2",
+      "ports": [
+        {
+          "id": 13
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "headerDecompressor"
+      ],
+      "resources": {
+        "cpu": 1.0,
+        "mem": 32000.0,
+        "storage": 150.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "PU#0",
+      "name": "PU#0",
+      "ports": [
+        {
+          "id": 0
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "headerDecompressor"
+      ],
+      "resources": {
+        "cpu": 1.0,
+        "mem": 32000.0,
+        "storage": 150.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "PU#1",
+      "name": "PU#1",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "headerDecompressor"
+      ],
+      "resources": {
+        "cpu": 1.0,
+        "mem": 32000.0,
+        "storage": 150.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "Core#0",
+      "name": "Core#0",
+      "ports": [
+        {
+          "id": 3
+        },
+        {
+          "id": 5
+        },
+        {
+          "id": 6
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "PU#3",
+      "name": "PU#3",
+      "ports": [
+        {
+          "id": 14
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "headerDecompressor"
+      ],
+      "resources": {
+        "cpu": 1.0,
+        "mem": 32000.0,
+        "storage": 150.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "Core#1",
+      "name": "Core#1",
+      "ports": [
+        {
+          "id": 16
+        },
+        {
+          "id": 18
+        },
+        {
+          "id": 19
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "L3!0",
+      "name": "L3!0",
+      "ports": [
+        {
+          "id": 27
+        },
+        {
+          "id": 29
+        },
+        {
+          "id": 30
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "HostBridge!0",
+      "name": "HostBridge!0",
+      "ports": [
+        {
+          "id": 43
+        },
+        {
+          "id": 45
+        },
+        {
+          "id": 46
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "L2!1",
+      "name": "L2!1",
+      "ports": [
+        {
+          "id": 24
+        },
+        {
+          "id": 25
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    },
+    {
+      "id": "L2!0",
+      "name": "L2!0",
+      "ports": [
+        {
+          "id": 11
+        },
+        {
+          "id": 12
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000.0
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": 31,
+      "src_node": "Socket!0",
+      "src_port": 32,
+      "dst_node": "L3!0",
+      "dst_port": 30,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 35,
+      "src_node": "PCI 10ec:8168!0",
+      "src_port": 36,
+      "dst_node": "eth0",
+      "dst_port": 34,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 20,
+      "src_node": "L1d!1",
+      "src_port": 21,
+      "dst_node": "Core#1",
+      "dst_port": 19,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 7,
+      "src_node": "L1d!0",
+      "src_port": 8,
+      "dst_node": "Core#0",
+      "dst_port": 6,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 39,
+      "src_node": "PCI 10ec:b723!0",
+      "src_port": 40,
+      "dst_node": "wlan0",
+      "dst_port": 38,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 47,
+      "src_node": "Machine#0",
+      "src_port": 48,
+      "dst_node": "Socket!0",
+      "dst_port": 33,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 49,
+      "src_node": "Machine#0",
+      "src_port": 50,
+      "dst_node": "HostBridge!0",
+      "dst_port": 46,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 2,
+      "src_node": "Core#0",
+      "src_port": 3,
+      "dst_node": "PU#0",
+      "dst_port": 0,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 4,
+      "src_node": "Core#0",
+      "src_port": 5,
+      "dst_node": "PU#1",
+      "dst_port": 1,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 15,
+      "src_node": "Core#1",
+      "src_port": 16,
+      "dst_node": "PU#2",
+      "dst_port": 13,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 17,
+      "src_node": "Core#1",
+      "src_port": 18,
+      "dst_node": "PU#3",
+      "dst_port": 14,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 28,
+      "src_node": "L3!0",
+      "src_port": 29,
+      "dst_node": "L2!1",
+      "dst_port": 25,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 26,
+      "src_node": "L3!0",
+      "src_port": 27,
+      "dst_node": "L2!0",
+      "dst_port": 12,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 42,
+      "src_node": "HostBridge!0",
+      "src_port": 43,
+      "dst_node": "PCI 10ec:8168!0",
+      "dst_port": 37,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 44,
+      "src_node": "HostBridge!0",
+      "src_port": 45,
+      "dst_node": "PCI 10ec:b723!0",
+      "dst_port": 41,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 23,
+      "src_node": "L2!1",
+      "src_port": 24,
+      "dst_node": "L1d!1",
+      "dst_port": 22,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 10,
+      "src_node": "L2!0",
+      "src_port": 11,
+      "dst_node": "L1d!0",
+      "dst_port": 9,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    }
+  ]
 }
