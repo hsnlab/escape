@@ -1614,7 +1614,7 @@ class NFFGModel(Element):
       elif isinstance(input, list):
         return [unicode_to_str(element) for element in input]
       elif isinstance(input, unicode):
-        return input.encode('utf-8')
+        return input.encode('utf-8').replace(' ', '_')
       else:
         return input
 
