@@ -136,7 +136,6 @@ cfg = {
         # "SDN",
         # "OPENSTACK",
         # "UN"
-        "DATAPLANE"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
@@ -175,19 +174,6 @@ cfg = {
                 "server": "127.0.0.1",
                 "port": 830,
                 "timeout": 5
-              }
-          }
-        },
-      "DATAPLANE":
-        {
-          "module": "escape.adapt.managers",
-          "class": "DataplaneDomainManager",
-          "poll": False,
-          "adapters": {
-            "TOPOLOGY":
-              {
-                "module": "escape.adapt.adapters",
-                "class": "DataplaneComputeCtrlAdapter",
               }
           }
         },
