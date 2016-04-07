@@ -798,7 +798,7 @@ class NFFGConverter(object):
       try:
         src_port = vlink.src.get_target()
       except:
-        log.exception(
+        self.log.exception(
           "Got unexpected exception during acquisition of link's src Port!")
       src_node = src_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
@@ -811,7 +811,7 @@ class NFFGConverter(object):
       try:
         dst_port = vlink.dst.get_target()
       except:
-        log.exception(
+        self.log.exception(
           "Got unexpected exception during acquisition of link's dst Port!")
       dst_node = dst_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
