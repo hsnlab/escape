@@ -237,18 +237,16 @@ class ComponentConfigurator(object):
         # Return the newly created object
         return component
       else:
-        log.error(
-          "Configuration of '%s' is missing. Skip initialization!" %
-          component_name)
+        log.error("Configuration of '%s' is missing. Skip initialization!" %
+                  component_name)
         raise ConfigurationError("Missing component configuration!")
     except AttributeError:
-      log.error(
-        "%s is not found. Skip component initialization!" % component_name)
+      log.error("%s is not found. Skip component initialization!" %
+                component_name)
       raise
     except ImportError:
-      log.error(
-        "Could not import module: %s. Skip component initialization!" %
-        component_name)
+      log.error("Could not import module: %s. Skip component initialization!" %
+                component_name)
       raise
 
   def load_default_mgrs (self):
@@ -264,13 +262,17 @@ class ComponentConfigurator(object):
       log.info("No DomainManager has been configured!")
       return
     for mgr_name in mgrs:
+      local_mgr = CONFIG.get_local_manager()
+      if local_mgr:
+        log.warning("A local Manager has already been initiated with the name: "
+                    "%s !" % local_mgr)
       mgr_cfg = CONFIG.get_component_params(component=mgr_name)
       if 'domain_name' in mgr_cfg and mgr_cfg['domain_name'] in self.domains:
-        log.warning(
-          "Domain name collision: Domain Manager: %s has already initiated "
-          "with the domain name: %s" % (
-            self.get_component_by_domain(domain_name=mgr_cfg['domain_name']),
-            mgr_cfg['domain_name']))
+        log.warning("Domain name collision! Domain Manager: %s has already "
+                    "initiated with the domain name: %s" % (
+                      self.get_component_by_domain(
+                        domain_name=mgr_cfg['domain_name']),
+                      mgr_cfg['domain_name']))
       log.debug("Init DomainManager based on config: %s" % mgr_name)
       self.start_mgr(name=mgr_name)
 
@@ -407,14 +409,14 @@ class ControllerAdapter(object):
       # Check if need to reset domain before install
       if CONFIG.reset_domains_before_install():
         log.debug("Reset %s domain before deploying mapped NFFG..." %
-                 domain_mgr.domain_name)
+                  domain_mgr.domain_name)
         domain_mgr.clear_domain()
       # Invoke DomainAdapter's install
       res = domain_mgr.install_nffg(part)
       # Update the DoV based on the mapping result covering some corner case
       if not res:
         log.error("Installation of %s in %s was unsuccessful!" %
-                    (part, domain))
+                  (part, domain))
       # Note result according to others before
       mapping_result = mapping_result and res
       # If installation of the domain was performed without error

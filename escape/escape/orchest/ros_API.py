@@ -535,7 +535,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     rewritten = []
     if domain_name is None:
-      domain_name = CONFIG.get_local_manager()
+      local_mgr = CONFIG.get_local_manager()
+      if local_mgr is None:
+        log.error("No local Manager has been initiated! "
+                  "Skip domain rewriting!")
+      elif len(local_mgr) > 1:
+        log.warning("Multiple local Manager has been initiated: %s! "
+                    "Arbitrarily use the first..." % local_mgr)
+      domain_name = local_mgr.pop()
     log.debug("Rewrite received NFFG domain to %s..." % domain_name)
     for infra in nffg_part.infras:
       infra.domain = domain_name
@@ -562,7 +569,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       return virt.get_resource_info()
     else:
       log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
-        self.cfor_api.api_id)
+                self.cfor_api.api_id)
 
   def api_cfor_edit_config (self, nffg):
     """

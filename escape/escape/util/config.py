@@ -560,21 +560,21 @@ class ESCAPEConfig(object):
     Based on the IS_LOCAL_MANAGER attribute of the defined DomainManager
     classes in the global config.
 
-    :return: local manager class
-    :rtype: :any:`AbstractDomainManager`
+    :return: local manager name(s)
+    :rtype: str
     """
+    local_mgrs = []
     for item in self.__configuration[ADAPT].itervalues():
       if isinstance(item, dict) and 'module' in item and 'class' in item:
         try:
           mgr_class = getattr(importlib.import_module(item['module']),
                               item['class'])
           if mgr_class.IS_LOCAL_MANAGER:
-            return item[
-              'domain_name'] if "domain_name" in item else \
-              mgr_class.DEFAULT_DOMAIN_NAME
+            local_mgrs.append(item['domain_name'] if "domain_name" in item else
+                              mgr_class.DEFAULT_DOMAIN_NAME)
         except (KeyError, AttributeError, TypeError):
           return None
-    return None
+    return local_mgrs if local_mgrs else None
 
   def clear_domains_after_shutdown (self):
     """

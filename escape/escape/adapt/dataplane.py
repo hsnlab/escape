@@ -112,7 +112,7 @@ class DataplaneDomainManager(AbstractDomainManager):
       # Mininet domain does not support NF migration directly -->
       # Remove unnecessary and moved NFs first
       # TODO
-      pass
+      return True
     except:
       log.exception("Got exception during NFFG installation into: %s." %
                     self.domain_name)
@@ -176,9 +176,14 @@ class DataplaneComputeCtrlAdapter(AbstractESCAPEAdapter):
     :return: the emulated topology description
     :rtype: :any:`NFFG`
     """
+    # Assemble shell command
     cmd_hwloc2nffg = os.path.normpath(os.path.join(
       CONFIG.get_project_root_dir(), "hwloc2nffg/build/bin/hwloc2nffg"))
+    # Run command
     raw_data = run_cmd(cmd_hwloc2nffg)
+    # Parse raw data
     topo = NFFG.parse(raw_data)
+    # Duplicate links for bidirectional connections
     topo.duplicate_static_links()
-    return topo
+    # Rewrite infra domains
+    return self.rewrite_domain(nffg=topo)

@@ -560,6 +560,8 @@ class AbstractESCAPEAdapter(EventMixin):
     :return: the rewritten description
     :rtype: :any:`NFFG`
     """
+    log.debug(
+      "Rewrite domain of Infrastructure nodes to: %s" % self.domain_name)
     if self.domain_name == "UNDEFINED":
       log.warning(
         "Domain name is not set for Adapter(name: %s)! Skip domain rewrite "
