@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 
-import copy
 import sys
-from pprint import pprint
 
-from escape.util.conversion import NFFGConverter
 from nffg import *
 
 DOMAIN_INTERNAL = "INTERNAL"
@@ -666,6 +663,7 @@ def generate_ewsdn_req3 ():
 
 
 def test_conversion ():
+  from escape.util.conversion import NFFGConverter
   with open("/home/czentye/escape/src/escape_v2/tools/os_domain.xml") as f:
     os_nffg, os_virt = NFFGConverter(
       domain="OPENSTACK").parse_from_Virtualizer(f.read(), with_virt=True)
@@ -704,9 +702,6 @@ def test_conversion ():
                                                action="output=1;TAG=24")
 
   print os_splitted.dump()
-  virt = NFFGToolBox.install_domain(virtualizer=os_virt, nffg=os_splitted)
-  print
-  print str(virt)
 
 
 def generate_merged_mapped ():
@@ -771,6 +766,24 @@ def generate_simple_test_req ():
   return test
 
 
+def generate_hwloc2nffg_test_req ():
+  test = NFFG(id="Dataplane-req", name="Dataplane-req")
+  wlan0 = test.add_sap(name="wlan0", id="wlan0")
+  eth0 = test.add_sap(name="eth0", id="eth0")
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  # wlan0 --> decomp --> eth0 --> wlan0
+  test.add_sglink(wlan0.add_port(38), decomp.add_port(1), id=1)
+  test.add_sglink(decomp.ports[1], eth0.add_port(34), id=2)
+  test.add_sglink(eth0.ports[34], wlan0.ports[38], id=3)
+
+  test.add_req(wlan0.ports[38], eth0.ports[34], bandwidth=50, delay=100,
+               sg_path=(1, 2))
+  test.add_req(eth0.ports[34], wlan0.ports[38], bandwidth=50, delay=100,
+               sg_path=(3,))
+  return test
+
+
 if __name__ == "__main__":
   # test_NFFG()
   # nffg = generate_mn_topo()
@@ -790,7 +803,8 @@ if __name__ == "__main__":
   # nffg = generate_simple_test_req()
   # nffg = generate_mn_topo2()
   # nffg = generate_mn_test_req2()
-  nffg = generate_mn_req_hackathon()
+  # nffg = generate_mn_req_hackathon()
+  nffg = generate_hwloc2nffg_test_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
