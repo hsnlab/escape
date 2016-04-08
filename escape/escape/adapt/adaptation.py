@@ -262,10 +262,6 @@ class ComponentConfigurator(object):
       log.info("No DomainManager has been configured!")
       return
     for mgr_name in mgrs:
-      local_mgr = CONFIG.get_local_manager()
-      if local_mgr:
-        log.warning("A local Manager has already been initiated with the name: "
-                    "%s !" % local_mgr)
       mgr_cfg = CONFIG.get_component_params(component=mgr_name)
       if 'domain_name' in mgr_cfg and mgr_cfg['domain_name'] in self.domains:
         log.warning("Domain name collision! Domain Manager: %s has already "
@@ -273,18 +269,33 @@ class ComponentConfigurator(object):
                       self.get_component_by_domain(
                         domain_name=mgr_cfg['domain_name']),
                       mgr_cfg['domain_name']))
-      log.debug("Init DomainManager based on config: %s" % mgr_name)
+      mgr_class = CONFIG.get_component(component=mgr_name)
+      if mgr_class.IS_LOCAL_MANAGER:
+        loaded_local_mgr = [name for name, mgr in self.__repository.iteritems()
+                            if mgr.IS_LOCAL_MANAGER]
+        if loaded_local_mgr:
+          log.warning("A local DomainManager has already been initiated with "
+                      "the name: %s! Skip initiating DomainManager: %s" %
+                      (loaded_local_mgr, mgr_name))
+          return
+      log.debug("Load DomainManager based on config: %s" % mgr_name)
       self.start_mgr(name=mgr_name)
 
-  def load_internal_mgr (self):
+  def load_local_domain_mgr (self):
     """
     Initiate the DomainManager for the internal domain.
 
     :return: None
     """
-    log.debug(
-      "Init DomainManager for internally emulated network based on config: "
-      "%s" % mgrs.InternalDomainManager.name)
+    loaded_local_mgr = [name for name, mgr in self.__repository.iteritems() if
+                        mgr.IS_LOCAL_MANAGER]
+    if loaded_local_mgr:
+      log.warning("A local DomainManager has already been initiated with the "
+                  "name: %s! Skip initiation of default local DomainManager: %s"
+                  % (loaded_local_mgr, mgrs.InternalDomainManager.name))
+      return
+    log.debug("Init DomainManager for local domain based on config: %s" %
+              mgrs.InternalDomainManager.name)
     # Internal domain is hard coded with the name: INTERNAL
     self.start_mgr(name=mgrs.InternalDomainManager.name)
 
@@ -344,7 +355,7 @@ class ControllerAdapter(object):
     try:
       if with_infr:
         # Init internal domain manager if Infrastructure Layer is started
-        self.domains.load_internal_mgr()
+        self.domains.load_local_domain_mgr()
       # Init default domain managers
       self.domains.load_default_mgrs()
     except (ImportError, AttributeError, ConfigurationError) as e:
