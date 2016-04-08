@@ -1,0 +1,96 @@
+{
+  "parameters": {
+    "id": "Dataplane-req",
+    "name": "Dataplane-req",
+    "version": "1.0"
+  },
+  "node_nfs": [
+    {
+      "id": "decomp",
+      "name": "DECOMPRESSOR",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "functional_type": "headerDecompressor",
+      "specification": {
+        "resources": {
+          "cpu": 1,
+          "mem": 1,
+          "storage": 0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "wlan0",
+      "name": "wlan0",
+      "ports": [
+        {
+          "id": 38
+        }
+      ]
+    },
+    {
+      "id": "eth0",
+      "name": "eth0",
+      "ports": [
+        {
+          "id": 34
+        }
+      ]
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": 1,
+      "src_node": "wlan0",
+      "src_port": 38,
+      "dst_node": "decomp",
+      "dst_port": 1
+    },
+    {
+      "id": 2,
+      "src_node": "decomp",
+      "src_port": 1,
+      "dst_node": "eth0",
+      "dst_port": 34
+    },
+    {
+      "id": 3,
+      "src_node": "eth0",
+      "src_port": 34,
+      "dst_node": "wlan0",
+      "dst_port": 38
+    }
+  ],
+  "edge_reqs": [
+    {
+      "id": "c7a8b082-fd72-11e5-9516-645106b16e7d",
+      "src_node": "wlan0",
+      "src_port": 38,
+      "dst_node": "eth0",
+      "dst_port": 34,
+      "delay": 100,
+      "bandwidth": 50,
+      "sg_path": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": "c7a8dff8-fd72-11e5-9516-645106b16e7d",
+      "src_node": "eth0",
+      "src_port": 34,
+      "dst_node": "wlan0",
+      "dst_port": 38,
+      "delay": 100,
+      "bandwidth": 50,
+      "sg_path": [
+        3
+      ]
+    }
+  ]
+}
