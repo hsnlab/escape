@@ -17,13 +17,14 @@ Contains manager and handling functions for global ESCAPE configuration.
 import importlib
 import json
 import os
+import pprint
 from distutils.util import strtobool
 
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.infr import LAYER_NAME as INFR
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
-from escape.util.misc import Singleton
+from escape.util.misc import Singleton, VERBOSE
 from pox.core import log, core
 
 # Store the project root where escape.py is started in
@@ -100,13 +101,13 @@ class ESCAPEConfig(object):
       return self
     if config:
       # Config is set directly
-      log.info(
-        "Load explicitly given config file: %s" % os.path.basename(config))
+      log.info("Load explicitly given config file: %s" %
+               os.path.basename(config))
     elif hasattr(core, "config_file_name"):
       # Config is set through POX's core object by a topmost module (unify)
       config = getattr(core, "config_file_name")
-      log.info(
-        "Load explicitly given config file: %s" % os.path.basename(config))
+      log.info("Load explicitly given config file: %s" %
+               os.path.basename(config))
     else:
       # Detect default config
       try:
@@ -115,8 +116,8 @@ class ESCAPEConfig(object):
           self.project_root, self.__configuration[self.DEFAULT_CFG]))
         log.debug("Load default config file: %s" % os.path.basename(config))
       except KeyError:
-        log.error(
-          "Additional config file is not found! Skip configuration update")
+        log.error("Additional config file is not found! "
+                  "Skip configuration update")
         self.__initiated = True
         return self
     try:
@@ -130,10 +131,11 @@ class ESCAPEConfig(object):
           if self.__parse_part(self.__configuration[layer], cfg[layer]):
             changed = True
         else:
-          log.warning(
-            "Unidentified layer name in loaded configuration: %s" % layer)
+          log.warning("Unidentified layer name in loaded configuration: %s" %
+                      layer)
       if changed:
         log.info("Running configuration has been updated from file!")
+        log.log(VERBOSE, "\n" + pprint.pformat(self.__configuration))
         return self
     except IOError:
       log.error("Additional configuration file not found: %s" % config)
@@ -182,7 +184,7 @@ class ESCAPEConfig(object):
           if key in inner_part:
             # If it is not the same
             if isinstance(value, (tuple, list)):
-              if not set(inner_part[key]) & set(value):
+              if set(inner_part[key]) != set(value):
                 # Config overrided
                 inner_part[key] = value
                 changed = True
