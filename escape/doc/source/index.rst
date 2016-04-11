@@ -74,12 +74,12 @@ Environment section below.
 The best choice of platform on wich ESCAPEv2 is recommended to install is the
 pre-build Mininet VM v2.1.0 (based on Ubuntu 14.04 LTS). However the install
 script also supports the standard Ubuntu flavours too (desktop and also server
-versions). Currently the Ubuntu 15.04 server is tested beside the Mininet VM.
+versions). Currently the Ubuntu 15.10 server is tested beside the Mininet VM.
 
 .. important::
 
-    Due to the limitation of Mininet 2.1.0, only **3.19** or older Linux kernel
-    versions are supported!
+    Due to the limitation of Mininet 2.1.0, newer Linux kernel versions
+    **4.x.x** are not supported!
 
 The preferred way
 -----------------
