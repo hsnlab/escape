@@ -29,6 +29,9 @@ Removes the uncompressed NFFG after it is finished with its processing.
                                     bars on the histogram.
    --hist_format=<<pdf|png|...>>    The format of the saved histograms. 
                                     PNG by default
+   --starting_lvl=i                 Start the analyzation only after the given 
+                                    test level.
+   --one                            Exit after one NFFG processing
 """
 
 def increment_util_counter(d, u, aggr_size):
@@ -51,8 +54,9 @@ def autolabel(rects, ax):
 
 def main(argv):
   try:
-    opts, args = getopt.getopt(argv, "hl:", ["hist=", "--add_hist_values", 
-                                             "--hist_format="])
+    opts, args = getopt.getopt(argv, "hl:", ["hist=", "add_hist_values", 
+                                             "hist_format=", "starting_lvl=",
+                                             "one"])
   except getopt.GetoptError as goe:
     print helpmsg
     raise
@@ -61,6 +65,8 @@ def main(argv):
   reskeys = ['cpu', 'mem', 'storage', 'bandwidth']
   add_hist_values = False
   hist_format = "png"
+  starting_lvl = 0
+  create_only_one_fig = False
   for opt, arg in opts:
     if opt == "-h":
       print helpmsg
@@ -80,6 +86,10 @@ def main(argv):
       add_hist_values = True
     elif opt == "--hist_format":
       hist_format = arg
+    elif opt == "--starting_lvl":
+      starting_lvl=int(arg)
+    elif opt == "--one":
+      create_only_one_fig = True
   nffg_num_list = []
   bashCommand = "ls -x "+loc_tgz
   process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -87,7 +97,7 @@ def main(argv):
   for filen in tgz_files.replace("\n", " ").split(" "):
     if 'test_lvl' in filen:
       nffg_num_list.append(int(filen.split('-')[1].split('.')[0]))
-  nffg_num_list = sorted(nffg_num_list)
+  nffg_num_list = sorted(filter(lambda x: x>=starting_lvl, nffg_num_list))
   
 
   print "test_lvl, avg(link_bw), ",", ".join(["".join(["avg(",noderes,")"]) \
@@ -165,10 +175,13 @@ def main(argv):
     ax.set_xlabel("Resource utiliztaion intervals [%]")
     ax.set_xticks(range_seq * (len(hist)+2)*width/hist_aggr_size)
     ax.set_xticklabels([str(int(100*util_range)) for util_range in range_seq])
-    ax.legend([r[0] for r in zip(*rects)[1]], zip(*rects)[0], ncol=2, loc=2, 
-              fontsize=10)
+    ax.legend([r[0] for r in zip(*rects)[1]], zip(*rects)[0], ncol=5, 
+              loc='upper left', fontsize=8)
     plt.savefig('plots/test_lvl-%s-hist.%s'%(test_lvl, hist_format), 
                 bbox_inches='tight')
+    plt.close(fig)
+    if create_only_one_fig:
+      break
 
 if __name__ == '__main__':
   main(sys.argv[1:])
