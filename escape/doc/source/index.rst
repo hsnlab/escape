@@ -64,7 +64,7 @@ The recommended Python version, in which the development and mostly the testing
 are performed, is the standard CPython **2.7.10** but the 2.7.6 (pre-build
 Mininet VM) are also tested and supported.
 
-.. warning::
+.. important::
 
   Only the standard CPython interpreter is supported!
 
@@ -75,6 +75,11 @@ The best choice of platform on wich ESCAPEv2 is recommended to install is the
 pre-build Mininet VM v2.1.0 (based on Ubuntu 14.04 LTS). However the install
 script also supports the standard Ubuntu flavours too (desktop and also server
 versions). Currently the Ubuntu 15.04 server is tested beside the Mininet VM.
+
+.. important::
+
+    Due to the limitation of Mininet 2.1.0, only **3.19** or older Linux kernel
+    versions are supported!
 
 The preferred way
 -----------------
@@ -223,8 +228,8 @@ For Mininet emulation tool:
 
 .. code-block:: bash
 
-    $ sudo apt-get install gcc make socat psmisc xterm ssh iperf iproute telnet \
-    python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8 \
+    $ sudo apt-get -y install gcc make socat psmisc xterm ssh iperf iproute \
+    telnet python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8 \
     openvswitch-switch
 
 For our rudimentary GUI:
@@ -238,10 +243,10 @@ For doc generations:
 .. code-block:: bash
 
     # html
-    $ sudo apt-get install graphviz
+    $ sudo apt-get -y install graphviz
     $ sudo pip install sphinx
     # latex
-    $ sudo apt-get install texlive-latex-extra
+    $ sudo apt-get install -y texlive-latex-extra
 
 For domain emulation scripts:
 
@@ -265,7 +270,7 @@ downgrade. In this case the authentication bypass needs to be done again.
     $ apt-get purge neo4j
     $ rm -rf /var/lib/neo4j/data/
     $ rm -rf /etc/neo4j/
-    $ apt-get install neo4j=2.2.7
+    $ apt-get install -y neo4j=2.2.7
     $ apt-mark hold neo4j
 
 In extreme cases, e.g. the `install_dep.sh` ran into an error, you should install
