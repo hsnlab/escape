@@ -175,6 +175,7 @@ function install_gui {
     info "==========================================================="
     info "==  Installing additional dependencies for internal GUI  =="
     info "==========================================================="
+    sudo apt-get install python-tk
     sudo pip install networkx_viewer numpy
 }
 

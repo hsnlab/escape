@@ -85,7 +85,6 @@ def main ():
     misc = os.path.abspath(os.path.dirname(__file__) + "/escape/escape/util")
     sys.path.insert(0, mn)
     sys.path.insert(0, misc)
-    print sys.path
     if os.geteuid() != 0:
       print "Cleanup process requires root privilege!"
       return
