@@ -546,7 +546,10 @@ class ESCAPENetworkBuilder(object):
     # If not set then cache the given NFFG as the topology description
     self.topo_desc = nffg
     # Create a Controller which will be the default internal POX controller
-    self.create_Controller("ESCAPE")
+    try:
+      self.create_Controller("ESCAPE")
+    except SystemExit:
+      raise TopologyBuilderException("Controller creations was unsuccessful!")
     # Convert INFRAs
     for infra in nffg.infras:
       # Create EE
