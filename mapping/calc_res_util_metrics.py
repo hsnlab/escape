@@ -66,7 +66,7 @@ def main(argv):
   add_hist_values = False
   hist_format = "png"
   starting_lvl = 0
-  create_only_one_fig = False
+  process_only_one = False
   for opt, arg in opts:
     if opt == "-h":
       print helpmsg
@@ -89,7 +89,7 @@ def main(argv):
     elif opt == "--starting_lvl":
       starting_lvl=int(arg)
     elif opt == "--one":
-      create_only_one_fig = True
+      process_only_one = True
   nffg_num_list = []
   bashCommand = "ls -x "+loc_tgz
   process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -103,7 +103,8 @@ def main(argv):
   print "test_lvl, avg(link_bw), ",", ".join(["".join(["avg(",noderes,")"]) \
                                               for noderes in reskeys])
 
-  empty_hist = copy.deepcopy(hist)
+  if draw_hist:
+    empty_hist = copy.deepcopy(hist)
   for test_lvl in nffg_num_list:
     filename = "test_lvl-%s.nffg.tgz"%test_lvl
     os.system("".join(["tar -xf ",loc_tgz,"/",filename])) # decompress
@@ -117,7 +118,8 @@ def main(argv):
       # calculate avg. res utils by resource types.
       avgs = {}
       cnts = {}
-      hist = copy.deepcopy(empty_hist)
+      if draw_hist:
+        hist = copy.deepcopy(empty_hist)
       for noderes in reskeys:
         avgs[noderes] = 0.0
         cnts[noderes] = 0
@@ -128,7 +130,8 @@ def main(argv):
                    i.resources[noderes]
             avgs[noderes] += util
             cnts[noderes] += 1
-            increment_util_counter(hist[noderes], util, hist_aggr_size)
+            if draw_hist:
+              increment_util_counter(hist[noderes], util, hist_aggr_size)
         avgs[noderes] /= cnts[noderes]
       avg_linkutil = 0.0
       linkcnt = 0
@@ -137,7 +140,8 @@ def main(argv):
           link_util = float(l.bandwidth - l.availbandwidth) / l.bandwidth
           avg_linkutil += link_util
           linkcnt += 1
-          increment_util_counter(hist['link_bw'], link_util, hist_aggr_size)
+          if draw_hist:
+            increment_util_counter(hist['link_bw'], link_util, hist_aggr_size)
       avg_linkutil /= linkcnt
       to_print = [test_lvl, avg_linkutil]
       to_print.extend([avgs[res] for res in reskeys])
@@ -145,42 +149,44 @@ def main(argv):
     # delete the NFFG and its parent folders
     os.system("rm -rf nffgs-batch_tests/")
 
-    # normalize the histogram to [0,1], so the resource types could be plotted 
-    # on the same bar chart
-    for res in hist:
-      sum_util_cnt = sum([hist[res][util_range] for util_range in hist[res]])
-      for util_range in hist[res]:
-        hist[res][util_range] = float(hist[res][util_range]) / sum_util_cnt
-    # print "test_lvl", test_lvl, pformat(hist),"\n"
-    
-    # plot the histograms.
-    fig, ax = plt.subplots()
-    range_seq = np.array([float("%.4f"%aggr) for aggr in \
-                          np.arange(hist_aggr_size, 1.0, hist_aggr_size)])
-    range_seq = np.append(range_seq, [1.0])
-    width = 5*hist_aggr_size
-    colors = ['r', 'g', 'b', 'c', 'y']
-    i = 2
-    rects = []
-    for res in hist:
-      rect = ax.bar(range_seq * (len(hist)+2)*width/hist_aggr_size +\
-                    (i+2.5)*width,
-                    [hist[res][util_range] for util_range in hist[res]], 
-                    width, color = colors[i-2])
-      rects.append((res, rect))
-      i += 1
-      if add_hist_values:
-        autolabel(rect, ax)
-    ax.set_ylabel("Ratio of network element counts to total count")
-    ax.set_xlabel("Resource utiliztaion intervals [%]")
-    ax.set_xticks(range_seq * (len(hist)+2)*width/hist_aggr_size)
-    ax.set_xticklabels([str(int(100*util_range)) for util_range in range_seq])
-    ax.legend([r[0] for r in zip(*rects)[1]], zip(*rects)[0], ncol=5, 
-              loc='upper left', fontsize=8)
-    plt.savefig('plots/test_lvl-%s-hist.%s'%(test_lvl, hist_format), 
-                bbox_inches='tight')
-    plt.close(fig)
-    if create_only_one_fig:
+    if draw_hist:
+      # normalize the histogram to [0,1], so the resource types could be plotted 
+      # on the same bar chart
+      for res in hist:
+        sum_util_cnt = sum([hist[res][util_range] for util_range in hist[res]])
+        for util_range in hist[res]:
+          hist[res][util_range] = float(hist[res][util_range]) / sum_util_cnt
+      print "test_lvl", test_lvl, pformat(hist),"\n"
+
+      # plot the histograms.
+      fig, ax = plt.subplots()
+      range_seq = np.array([float("%.4f"%(aggr/hist_aggr_size)) for aggr in \
+                            np.arange(hist_aggr_size, 1.0, hist_aggr_size)])
+      range_seq = np.append(range_seq, [1.0/hist_aggr_size])
+      width = range_seq[-1] / (len(hist)+2) / len(range_seq)
+      colors = iter(['r', 'g', 'b', 'c', 'y'])
+      i = 0
+      rects = []
+      for res in hist:
+        rect = ax.bar((range_seq - 1)* (len(hist)+2) * width + \
+                      (i+4.5) * width,
+                      [hist[res][util_range] for util_range in hist[res]], 
+                      width, color = next(colors))
+        rects.append((res, rect))
+        i += 1
+        if add_hist_values:
+          autolabel(rect, ax)
+      # ax.set_aspect(10)
+      ax.set_ylabel("Ratio of network element counts to total count")
+      ax.set_xlabel("Resource utiliztaion intervals [%]")
+      ax.set_xticks(range_seq * (len(hist)+2) * width)
+      ax.set_xticklabels([str(int(100*util_range)) for util_range in hist['cpu']])
+      ax.legend([r[0] for r in zip(*rects)[1]], zip(*rects)[0], ncol=5, 
+                loc='upper left', fontsize=8)
+      plt.savefig('plots/test_lvl-%s-hist.%s'%(test_lvl, hist_format), 
+                  bbox_inches='tight')
+      plt.close(fig)
+    if process_only_one:
       break
 
 if __name__ == '__main__':
