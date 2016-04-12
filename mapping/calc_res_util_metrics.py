@@ -4,6 +4,7 @@ from collections import OrderedDict
 from pprint import pformat
 import matplotlib.pyplot as plt
 import matplotlib
+import math
 
 
 try:
@@ -36,6 +37,11 @@ Removes the uncompressed NFFG after it is finished with its processing.
    --cdf                            Produces images of Cumulative Distribution 
                                     Function in the format specified by
                                     --cdf_formatoption for each resource type.
+   --print_avgs                     Print the average resource utilizations for 
+                                    all processed NFFG-s in CSV format.
+   --print_devs                     Print the deviations of resource utilizations
+                                    for all processed NFFG-s in CSV format. 
+                                    The --cdf option must be set too.
 """
 
 def increment_util_counter(d, u, aggr_size):
@@ -60,7 +66,8 @@ def main(argv):
   try:
     opts, args = getopt.getopt(argv, "hl:", ["hist=", "add_hist_values", 
                                              "hist_format=", "starting_lvl=",
-                                             "one", "cdf_format=", "cdf"])
+                                             "one", "cdf_format=", "cdf",
+                                             "print_devs", "print_avgs"])
   except getopt.GetoptError as goe:
     print helpmsg
     raise
@@ -73,6 +80,8 @@ def main(argv):
   process_only_one = False
   draw_cdf = False
   cdf_format = "png"
+  print_avgs = False
+  print_devs = False
   for opt, arg in opts:
     if opt == "-h":
       print helpmsg
@@ -103,6 +112,10 @@ def main(argv):
         cdf[res] = []
     elif opt == "--cdf_format":
       cdf_format = arg
+    elif opt == "--print_devs":
+      print_devs = True
+    elif opt == "--print_avgs":
+      print_avgs = True
       
   nffg_num_list = []
   bashCommand = "ls -x "+loc_tgz
@@ -113,9 +126,12 @@ def main(argv):
       nffg_num_list.append(int(filen.split('-')[1].split('.')[0]))
   nffg_num_list = sorted(filter(lambda x: x>=starting_lvl, nffg_num_list))
   
-
-  print "test_lvl, avg(link_bw), ",", ".join(["".join(["avg(",noderes,")"]) \
-                                              for noderes in reskeys])
+  if print_avgs:
+    print "test_lvl, avg(link_bw), ",", ".join(["".join(["avg(",noderes,")"]) \
+                                                for noderes in reskeys])
+  if print_devs:
+    print "test_lvl, ", ", ".join(["".join(["dev(",noderes,")"]) \
+                                   for noderes in cdf])
 
   if draw_hist:
     empty_hist = copy.deepcopy(hist)
@@ -165,9 +181,22 @@ def main(argv):
           if draw_cdf:
             cdf['link_bw'].append(link_util)
       avg_linkutil /= linkcnt
-      to_print = [test_lvl, avg_linkutil]
-      to_print.extend([avgs[res] for res in reskeys])
-      print ",".join(map(str, to_print))
+
+      if print_avgs:
+        to_print = [test_lvl, avg_linkutil]
+        to_print.extend([avgs[res] for res in reskeys])
+        print ",".join(map(str, to_print))
+      
+      if print_devs:
+        avgs['link_bw'] = avg_linkutil
+        devs = {}
+        for res in cdf:
+          devs[res] = math.sqrt(sum([(avgs[res]-u)**2 for u in cdf[res]]) / \
+                                (len(cdf[res])-1))
+        to_print = [test_lvl]
+        to_print.extend([devs[res] for res in cdf])
+        print ",".join(map(str, to_print))
+
     # delete the NFFG and its parent folders
     os.system("rm -rf nffgs-batch_tests/")
 
