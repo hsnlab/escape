@@ -181,6 +181,15 @@ class DataplaneComputeCtrlAdapter(AbstractESCAPEAdapter):
       CONFIG.get_project_root_dir(), "hwloc2nffg/build/bin/hwloc2nffg"))
     # Run command
     raw_data = run_cmd(cmd_hwloc2nffg)
+    # Basic validation
+    if not raw_data.startswith('{'):
+      if "not found" in raw_data:
+        # hwloc2nffg binary not found
+        raise RuntimeError(
+          "hwloc2nffg binary was not found under the path: %s" % cmd_hwloc2nffg)
+      else:
+        # unexpected error
+        return
     # Parse raw data
     topo = NFFG.parse(raw_data)
     # Duplicate links for bidirectional connections

@@ -1290,6 +1290,10 @@ class EdgeReq(Link):
 # --------========== MAIN CONTAINER STARTS HERE =========-------------
 ################################################################################
 
+class NFFGParseError(RuntimeError):
+  pass
+
+
 class NFFGModel(Element):
   """
   Wrapper class for a single NF-FG.
@@ -1643,6 +1647,8 @@ class NFFGModel(Element):
         container.edge_reqs.append(EdgeReq.parse(data=e, container=container))
     except KeyError as e:
       raise RuntimeError("Not a valid NFFGModel format!", str(e))
+    except ValueError:
+      raise NFFGParseError("Parsed data is not valid JSON!")
     return container
 
   def dump (self):
