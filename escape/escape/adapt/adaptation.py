@@ -534,6 +534,9 @@ class GlobalResourceManager(object):
     """
     # If the domain is not tracked
     if domain not in self.__tracked_domains:
+      if not nffg:
+        log.warning("Got empty data. Skip domain addition...")
+        return
       log.info("Append %s domain to DoV..." % domain)
       # If DoV is empty
       if not self.__dov.is_empty():
