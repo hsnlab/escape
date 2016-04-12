@@ -32,6 +32,10 @@ Removes the uncompressed NFFG after it is finished with its processing.
    --starting_lvl=i                 Start the analyzation only after the given 
                                     test level.
    --one                            Exit after one NFFG processing
+   --cdf_format=<<pdf|png|...>>     The format of the saved CDF, PNG by default.
+   --cdf                            Produces images of Cumulative Distribution 
+                                    Function in the format specified by
+                                    --cdf_formatoption for each resource type.
 """
 
 def increment_util_counter(d, u, aggr_size):
@@ -56,7 +60,7 @@ def main(argv):
   try:
     opts, args = getopt.getopt(argv, "hl:", ["hist=", "add_hist_values", 
                                              "hist_format=", "starting_lvl=",
-                                             "one"])
+                                             "one", "cdf_format=", "cdf"])
   except getopt.GetoptError as goe:
     print helpmsg
     raise
@@ -67,6 +71,8 @@ def main(argv):
   hist_format = "png"
   starting_lvl = 0
   process_only_one = False
+  draw_cdf = False
+  cdf_format = "png"
   for opt, arg in opts:
     if opt == "-h":
       print helpmsg
@@ -90,6 +96,14 @@ def main(argv):
       starting_lvl=int(arg)
     elif opt == "--one":
       process_only_one = True
+    elif opt == "--cdf":
+      draw_cdf = True
+      cdf = {}
+      for res in reskeys + ['link_bw']:
+        cdf[res] = []
+    elif opt == "--cdf_format":
+      cdf_format = arg
+      
   nffg_num_list = []
   bashCommand = "ls -x "+loc_tgz
   process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -105,6 +119,8 @@ def main(argv):
 
   if draw_hist:
     empty_hist = copy.deepcopy(hist)
+  if draw_cdf:
+    empty_cdf = copy.deepcopy(cdf)
   for test_lvl in nffg_num_list:
     filename = "test_lvl-%s.nffg.tgz"%test_lvl
     os.system("".join(["tar -xf ",loc_tgz,"/",filename])) # decompress
@@ -120,6 +136,8 @@ def main(argv):
       cnts = {}
       if draw_hist:
         hist = copy.deepcopy(empty_hist)
+      if draw_cdf:
+        cdf = copy.deepcopy(empty_cdf)
       for noderes in reskeys:
         avgs[noderes] = 0.0
         cnts[noderes] = 0
@@ -132,6 +150,8 @@ def main(argv):
             cnts[noderes] += 1
             if draw_hist:
               increment_util_counter(hist[noderes], util, hist_aggr_size)
+            if draw_cdf:
+              cdf[noderes].append(util)
         avgs[noderes] /= cnts[noderes]
       avg_linkutil = 0.0
       linkcnt = 0
@@ -142,6 +162,8 @@ def main(argv):
           linkcnt += 1
           if draw_hist:
             increment_util_counter(hist['link_bw'], link_util, hist_aggr_size)
+          if draw_cdf:
+            cdf['link_bw'].append(link_util)
       avg_linkutil /= linkcnt
       to_print = [test_lvl, avg_linkutil]
       to_print.extend([avgs[res] for res in reskeys])
@@ -156,10 +178,11 @@ def main(argv):
         sum_util_cnt = sum([hist[res][util_range] for util_range in hist[res]])
         for util_range in hist[res]:
           hist[res][util_range] = float(hist[res][util_range]) / sum_util_cnt
-      print "test_lvl", test_lvl, pformat(hist),"\n"
+      # print "test_lvl", test_lvl, pformat(hist),"\n"
 
       # plot the histograms.
       fig, ax = plt.subplots()
+      ax.set_ylim((0.00, 1.10))
       range_seq = np.array([float("%.4f"%(aggr/hist_aggr_size)) for aggr in \
                             np.arange(hist_aggr_size, 1.0, hist_aggr_size)])
       range_seq = np.append(range_seq, [1.0/hist_aggr_size])
@@ -178,14 +201,47 @@ def main(argv):
           autolabel(rect, ax)
       # ax.set_aspect(10)
       ax.set_ylabel("Ratio of network element counts to total count")
-      ax.set_xlabel("Resource utiliztaion intervals [%]")
+      ax.set_xlabel("Resource utilization intervals [%]")
       ax.set_xticks(range_seq * (len(hist)+2) * width)
       ax.set_xticklabels([str(int(100*util_range)) for util_range in hist['cpu']])
       ax.legend([r[0] for r in zip(*rects)[1]], zip(*rects)[0], ncol=5, 
-                loc='upper left', fontsize=8)
-      plt.savefig('plots/test_lvl-%s-hist.%s'%(test_lvl, hist_format), 
+                loc='upper left', fontsize=8, bbox_to_anchor=(0,1))
+      plt.savefig('plots/hist-test_lvl-%s.%s'%(test_lvl, hist_format), 
                   bbox_inches='tight')
       plt.close(fig)
+    
+    if draw_cdf:
+      # sort util values incrementing in each resource type
+      for res in cdf:
+        cdf[res] = sorted(cdf[res])
+      fig, ax = plt.subplots()
+      ax.set_xlim((-0.05, 1.05))
+      ax.set_ylim((-0.05, 1.10))
+      colors = iter(['r', 'g', 'b', 'c', 'y'])
+      for res in cdf:
+        last_point = (0, 0)
+        vertical_step = 1.0/len(cdf[res])
+        rescolor = next(colors)
+        reslab = res
+        for point in zip(cdf[res], 
+                         np.append(np.arange(vertical_step, 1.0, vertical_step),
+                                   [1.0])):
+          plt.plot((last_point[0], point[0]), (last_point[1], point[1]), 
+                   color=rescolor, lw=3, label=reslab)
+          reslab = None
+          last_point = point
+        plt.plot((last_point[0], 1.0), (last_point[1], 1.0), 
+                 color=rescolor, lw=3)
+      ax.set_ylabel("Ratio of network element counts to total count")
+      ax.set_xlabel("Resource utilization interval from 0 to x [%]")
+      ax.set_xticks([float(i)/100 for i in xrange(0,101, 5)])
+      ax.set_xticklabels([str(i) for i in xrange(0,101, 5)])
+      ax.legend(bbox_to_anchor=(0,1), loc='upper left', ncol=5, fontsize=8)
+      plt.savefig('plots/cdf-test_lvl-%s.%s'%(test_lvl, cdf_format), 
+                  bbox_inches='tight')
+      plt.close(fig)
+
+    # maybe finish after one iteration
     if process_only_one:
       break
 
