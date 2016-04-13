@@ -526,6 +526,13 @@ class GraphPreprocessorClass(object):
          "VNFs in the request graph should be connected by SGHops",
          "There are no SGHops in the request graph!")
 
+    # If there is no SAP in the SG, the request is meaningless
+    try:
+      next(self.req_graph.saps)
+    except StopIteration:
+      raise uet.BadInputException("There should be at least one SAP in the "
+                                  "Service Graph", "No SAPs could be found.")
+
     # SAPs are already reachained by the manager, based on their names.
     for vnf, data in self.req_graph.network.nodes_iter(data=True):
       if data.type == 'SAP':
