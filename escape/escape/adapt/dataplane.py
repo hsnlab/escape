@@ -161,7 +161,7 @@ class DataplaneComputeCtrlAdapter(AbstractESCAPEAdapter):
 
   def check_domain_reachable (self):
     """
-    Checker function for domain polling.
+    Checker function for domain polling and first time domain detection.
 
     :return: the domain is detected or not
     :rtype: bool

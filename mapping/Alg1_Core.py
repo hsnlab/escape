@@ -54,8 +54,8 @@ class CoreAlgorithm(object):
     
     # parameters contolling the backtrack process
     # how many of the best possible VNF mappings should be remembered
-    self.bt_branching_factor = 4
-    self.bt_limit = 5
+    self.bt_branching_factor = 3
+    self.bt_limit = 6
 
     self._preproc(net0, req0, chains0, shortest_paths)
 
@@ -87,6 +87,10 @@ class CoreAlgorithm(object):
     # and not STATIC links
     self.bare_infrastucture_nffg = self.net
     
+    # peak number of VNFs that were mapped to resource at the same time
+    self.peak_mapped_vnf_count = 0
+    self.sap_count = len([i for i in self.req.saps])
+
     # The networkx graphs from the NFFG should be enough for the core
     # unwrap them, to save one indirection after the preprocessor has
     # finished.
@@ -144,10 +148,11 @@ class CoreAlgorithm(object):
     if vnf_id is not None:
       if self.req.node[vnf_id].resources['bandwidth'] is not None:
         internal_bw_req = self.req.node[vnf_id].resources['bandwidth']
+        # this is only a preliminary check (the bw_req should also be accomadated
+        # by the hosting node)
         avail_bw = self.net.node[path_to_map[-1]].availres[
                      'bandwidth'] - internal_bw_req
         if avail_bw < 0:
-          # Do not include VNF-internal bw req into link util calc.
           return -1
 
     if len(path_to_map) > 1:
@@ -174,7 +179,8 @@ class CoreAlgorithm(object):
       # The last node of the path should also be considered:
       #  - it is a SAP or
       #  - the traffic is steered into the to-be-mapped VNF
-      is_it_sap, util = self._checkBandwidthUtilOnHost(path_to_map[-1], bw_req)
+      is_it_sap, util = self._checkBandwidthUtilOnHost(path_to_map[-1], 
+                                                       bw_req + internal_bw_req)
       if is_it_sap >= 0:
         sap_count_on_path += is_it_sap
         sum_w += util
@@ -285,6 +291,8 @@ class CoreAlgorithm(object):
       avg_link_util = self._calculateAvgLinkUtil(path_to_map, linkids, bw_req,
                                                  vnf_id)
       if avg_link_util == -1:
+        self.log.debug("Host %s is not a good candidate for hosting %s due to "
+                       "bandwidth requirement."%(node_id, vnf_id))
         return -1, float("inf")
       sum_latency = self._sumLatencyOnPath(path_to_map, linkids)
       local_latreq = self.manager.getLocalAllowedLatency(cid, prev_vnf_id,
@@ -293,6 +301,8 @@ class CoreAlgorithm(object):
            self.manager.isVNFMappingDistanceGood(
         prev_vnf_id, vnf_id, path_to_map[0], path_to_map[-1]) or \
            local_latreq == 0:
+        self.log.debug("Host %s is too far measured in latency for hosting %s."%
+                       (node_id, vnf_id))
         return -1, float("inf")
 
       '''Here we know that node_id have enough resource and the path
@@ -323,6 +333,8 @@ class CoreAlgorithm(object):
       return self.bw_factor * scaled_bw_comp + self.res_factor * \
              scaled_res_comp + self.lat_factor * scaled_lat_comp, sum_latency
     else:
+      self.log.debug("Host %s does not have engough node resource for hosting %s."%
+                     (node_id, vnf_id))
       return -1, float("inf")
 
   def _updateGraphResources (self, bw_req, path, linkids, vnf=None, node=None, 
@@ -366,6 +378,7 @@ class CoreAlgorithm(object):
         self.net.node[path[0]].availres['bandwidth'] -= bw_req
         new_bw = self.net.node[path[0]].availres['bandwidth']
         if new_bw < 0 or new_bw > self.net.node[path[0]].resources['bandwidth']:
+          self.log.error("Node bandwidth is incorrect with value %s!"%new_bw)
           raise uet.InternalAlgorithmException("An internal bandwidth value got"
                                        " below zero or exceeded maximal value!")
         elif new_bw == 0:
@@ -378,6 +391,7 @@ class CoreAlgorithm(object):
           self.net[i][j][k].availbandwidth -= bw_req
           new_bw = self.net[i][j][k].availbandwidth
           if new_bw < 0 or new_bw > self.net[i][j][k].bandwidth:
+            self.log.error("Link bandwidth is incorrect with value %s!"%new_bw)
             raise uet.InternalAlgorithmException("The bandwidth resource of "
                       "link %s got below zero, or exceeded maximal value!"%k)
           elif new_bw == 0:
@@ -390,6 +404,8 @@ class CoreAlgorithm(object):
             new_bw_innode = self.net.node[j].availres['bandwidth']
             if new_bw_innode < 0 or new_bw_innode > \
                self.net.node[j].resources['bandwidth']:
+              self.log.error("Node bandwidth is incorrect with value %s!"%
+                             new_bw_innode)
               raise uet.InternalAlgorithmException("The bandwidth resource"
               " of node %s got below zero, or exceeded the maximal value!"%j)
             elif new_bw_innode == 0:
@@ -412,6 +428,10 @@ class CoreAlgorithm(object):
       (step_data['vnf_id'], step_data['target_infra']))
     self.manager.vnf_mapping.append((step_data['vnf_id'], 
                                      step_data['target_infra']))
+    # maintain peak VNF count during the backtracking
+    if len(self.manager.vnf_mapping) - self.sap_count > \
+       self.peak_mapped_vnf_count:
+      self.peak_mapped_vnf_count = len(self.manager.vnf_mapping) - self.sap_count
     self.log.debug("Request Link %s, %s, %s mapped to path: %s" % (
       step_data['prev_vnf_id'], step_data['vnf_id'], step_data['reqlinkid'], 
       step_data['path']))
@@ -502,8 +522,9 @@ class CoreAlgorithm(object):
                     except IndexError:
                       break
             else:
-              self.log.debug("Host %s is not a good candidate for hosting %s."
-                             %(map_target,vnf_id))
+              # self.log.debug("Host %s is not a good candidate for hosting %s."
+              #                %(map_target,vnf_id))
+              pass
     try:
       best_node_sofar = best_node_que.pop()
       self.bt_handler.addBacktrackLevel(cid, best_node_que)
@@ -545,7 +566,7 @@ class CoreAlgorithm(object):
     used_lat = self._sumLatencyOnPath(path, linkids)
 
     if self._calculateAvgLinkUtil(path, linkids, bw_req) == -1:
-      self.log.error(
+      self.log.info(
         "Last link of chain or best-effort link %s, %s couldn`t be mapped!" % (
           vnf1, vnf2))
       raise uet.MappingException(
@@ -1044,10 +1065,19 @@ class CoreAlgorithm(object):
             if not me.backtrack_possible:
               # re-raise the exception, we have ran out of backrack 
               # possibilities.
-              raise
+              raise uet.MappingException(me.msg, False, peak_sc_cnt=me.peak_sc_cnt,
+                                         peak_vnf_cnt=self.peak_mapped_vnf_count)
             else:
-              c, sub, bt_record, link_bt_rec_list = \
-                 self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph([])
+              try:
+                c, sub, bt_record, link_bt_rec_list = \
+                   self.bt_handler.getNextBacktrackRecordAndSubchainSubgraph([])
+              except uet.MappingException as me2:
+                if not me2.backtrack_possible:
+                  raise uet.MappingException(me2.msg, False, 
+                            peak_sc_cnt=me2.peak_sc_cnt,
+                            peak_vnf_cnt=self.peak_mapped_vnf_count)
+                else:
+                  raise
               for c_prime, prev_bt_rec, link_mapping_rec in link_bt_rec_list:
                 if link_mapping_rec is not None:
                   self._resolveLinkMappingRecord(c_prime, link_mapping_rec)
@@ -1062,7 +1092,7 @@ class CoreAlgorithm(object):
     # construct output NFFG with the mapping of VNFs and links
     return self.constructOutputNFFG()
 
-  def setBacktrackParameters(self, bt_limit=5, bt_branching_factor=4):
+  def setBacktrackParameters(self, bt_limit=6, bt_branching_factor=3):
     """
     Sets the depth and maximal branching factor for the backtracking process on
     nodes. bt_limit determines how many request graph nodes should be remembered
@@ -1077,6 +1107,9 @@ class CoreAlgorithm(object):
                                   %(bt_limit, bt_branching_factor))
     self.bt_branching_factor = bt_branching_factor
     self.bt_limit = bt_limit
+    self.bt_handler = backtrack.BacktrackHandler(\
+                        self.bt_handler.subchains_with_subgraphs, 
+                        self.bt_branching_factor, self.bt_limit)
     
   def setResourcePrioritiesOnNodes(self, cpu=0.3333, mem=0.3333, 
                                    storage=0.3333):

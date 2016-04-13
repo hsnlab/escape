@@ -526,6 +526,13 @@ class GraphPreprocessorClass(object):
          "VNFs in the request graph should be connected by SGHops",
          "There are no SGHops in the request graph!")
 
+    # If there is no SAP in the SG, the request is meaningless
+    try:
+      next(self.req_graph.saps)
+    except StopIteration:
+      raise uet.BadInputException("There should be at least one SAP in the "
+                                  "Service Graph", "No SAPs could be found.")
+
     # SAPs are already reachained by the manager, based on their names.
     for vnf, data in self.req_graph.network.nodes_iter(data=True):
       if data.type == 'SAP':
@@ -667,6 +674,8 @@ class GraphPreprocessorClass(object):
     # calculated weights for infras based on their available bandwidth capacity
     for d in net.infras:
       if d.availres.bandwidth < 0:
+        self.log.error("Available bandwidth of Infra %s got below zero: %s"%
+                 (d.id, d.availres.bandwidth))
         raise uet.BadInputException(
            "The sum of bandwidth capacity of internal Flowrules should be "
            "less than the available internal bandwidth",
