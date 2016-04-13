@@ -23,7 +23,7 @@ import re
 import warnings
 import weakref
 from functools import wraps
-from subprocess import check_call, CalledProcessError, STDOUT, Popen, PIPE
+from subprocess import STDOUT, Popen, PIPE
 
 # Log level constant for additional VERBOSE level
 VERBOSE = 5
@@ -123,24 +123,6 @@ def call_delayed_as_coop_task (func, delay=0, *args, **kwargs):
   """
   from pox.core import core
   core.callDelayed(delay, func, *args, **kwargs)
-
-
-def run_silent (cmd):
-  """
-  Run the given shell command silent.
-
-  It's advisable to give the command with a raw string literal e.g.: r'ps aux'.
-
-  :param cmd: command
-  :type cmd: str
-  :return: return code of the subprocess call
-  :rtype: int
-  """
-  try:
-    return check_call(cmd.split(' '), stdout=open(os.devnull, 'wb'),
-                      stderr=STDOUT, close_fds=True)
-  except CalledProcessError:
-    return None
 
 
 def run_cmd (cmd):
@@ -303,20 +285,21 @@ def remove_junks (log=logging.getLogger("cleanup")):
   os.system("mv /etc/hosts2 /etc/hosts")
   log.debug("Cleanup still running VNF-related processes...")
   # Kill remained clickhelper.py/click
-  run_silent(r"sudo pkill -9 -f netconfd")
-  run_silent(r"sudo pkill -9 -f clickhelper")
-  run_silent(r"sudo pkill -9 -f click")
+  run_cmd(r"sudo pkill -9 -f netconfd")
+  run_cmd(r"sudo pkill -9 -f clickhelper")
+  run_cmd(r"sudo pkill -9 -f click")
   log.debug("Delete any remained veth pair...")
   veths = run_cmd(r"ip link show | egrep -o '(uny_\w+)'").split('\n')
   # only need to del one end of the veth pair
   for veth in veths[::2]:
     if veth != '':
-      run_silent(r"sudo ip link del %s" % veth)
+      run_cmd(r"sudo ip link del %s" % veth)
   log.debug("Remove remained tmp files, xterms, stacked netconfd sockets...")
   for f in os.listdir('/tmp'):
     if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
       os.remove(os.path.join('/tmp/', f))
-  run_silent(r"sudo pkill -9 -f xterm")
+  run_cmd("sudo pkill -f 'xterm -title SAP'")
+  # os.system("sudo pkill -f 'xterm -title SAP'")
   log.debug("Cleanup any Mininet-specific junk...")
   # Call Mininet's own cleanup stuff
   from mininet.clean import cleanup

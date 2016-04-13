@@ -51,9 +51,19 @@ class MappingException(UnifyException):
   """
   Raised when a mapping could not be found for the request given from the
   upper layer. Not enough resources, no path found.
+
+  :param peak_vnf_cnt: the peak number of VNFs mapped at the same time
+  :type peak_vnf_cnt: int
+  :param peak_sc_cnt: the number of subchain which couldn't be mapped last
+  :type peak_sc_cnt: int
+  :return: a MappingException object
+  :rtype: :any:`MappingException`
   """
 
-  def __init__(self, msg, backtrack_possible):
+  def __init__(self, msg, backtrack_possible, 
+               peak_vnf_cnt=None, peak_sc_cnt=None):
     super(MappingException, self).__init__(msg + " Backtrack available: %s"
                                            %backtrack_possible)
     self.backtrack_possible = backtrack_possible
+    self.peak_mapped_vnf_count = peak_vnf_cnt
+    self.peak_sc_cnt = peak_sc_cnt

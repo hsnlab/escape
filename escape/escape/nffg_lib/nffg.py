@@ -16,6 +16,7 @@ Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
 import copy
+from copy import deepcopy
 import itertools
 import logging
 import networkx
@@ -921,7 +922,6 @@ class NFFG(AbstractNFFG):
     # find all the flowrules with starting TAG and retrieve the paths, 
     # and subtract the reserved link and internal (inside Infras) bandwidth
     for d in self.infras:
-      reserved_internal_bw = 0
       for p in d.ports:
         for fr in p.flowrules:
           if fr.hop_id in sg_hop_ids:
@@ -936,7 +936,7 @@ class NFFG(AbstractNFFG):
                                "mapped path of SGHop %s." % (
                                  fr.id, d.id, fr.hop_id))
           if fr.bandwidth is not None:
-            reserved_internal_bw += fr.bandwidth
+            d.availres['bandwidth'] -= fr.bandwidth
         for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
           path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, self, p)
           # collocation flowrules have not TAGs so their empty lists are not 
@@ -944,10 +944,6 @@ class NFFG(AbstractNFFG):
           # is also handled by the Flowrule.bandwidth summerizing 'for loop'
           for link in path_of_TAG:
             link.availbandwidth -= flow_bw
-            # the last infra on the path is either a SAP or the last flowrule 
-            # is subtracted when we get there with the outer loop
-            if link.id != path_of_TAG[-1].id:
-              link.dst.node.availres.bandwidth -= flow_bw
             if link.availbandwidth < 0:
               raise RuntimeError("(BadInputException) "
                                  "The bandwidth usage implied by the sum of "
@@ -960,7 +956,6 @@ class NFFG(AbstractNFFG):
                                    link.src.node.id,
                                    link.dst.node.id,
                                    link.id))
-      d.availres['bandwidth'] -= reserved_internal_bw
 
   def calculate_available_node_res (self, vnfs_to_be_ignored=(),
                                     full_remap=False):
@@ -1107,7 +1102,6 @@ class NFFGToolBox(object):
     :return: the update base NFFG
     :rtype: :any:`NFFG`
     """
-    from copy import deepcopy
     # Get new domain name
     domain = cls.detect_domains(nffg=nffg)
     if len(domain) == 0:
@@ -1761,6 +1755,64 @@ class NFFGToolBox(object):
       # TODO - implement real update
       log.error("Domain update has not implemented yet!")
 
+  @classmethod
+  def _copy_node_type (cls, type_iter, target, log):
+    """
+    Copies all element from iterator if it is not in target, and merges their
+    port lists.
+    
+    :param type_iter: Iterator on objects to be added
+    :type type_iter: :any: iterator on `Node`
+    :param target: The target NFFG
+    :type target: :any: `NFFG`
+    :return: the updated base NFFG
+    :rtype: :any:`NFFG`
+    """
+    for obj in type_iter:
+      if obj.id not in target:
+        c_obj = target.add_node(deepcopy(obj))
+        log.debug("Copy NFFG node: %s" % c_obj)
+      else:
+        for p in obj.ports:
+          if p not in target.network.node[obj.id].ports:
+            target.network.node[obj.id].add_port(id=p.id, 
+                                                 properties=p.properties)
+            # TODO: Flowrules are not copied!
+            log.debug("Copy port %s to NFFG element %s"%(p, obj))
+    return target
+
+  @classmethod
+  def merge_nffgs (cls, target, new, log=logging.getLogger("UNION")):
+    """
+    Merges new `NFFG` to target `NFFG` keeping all parameters and copying 
+    port object from new. Comparison is done based on object id, resources and
+    requirements are kept unchanged in target.
+
+    :param target: target NFFG object
+    :type target: :any:`NFFG`
+    :param new: NFFG object to merge from
+    :type new: :any:`NFFG`
+    :return: the updated base NFFG
+    :rtype: :any:`NFFG`
+    """
+    # Copy Infras
+    target = cls._copy_node_type(new.infras, target, log)
+    # Copy NFs
+    target = cls._copy_node_type(new.nfs, target, log)
+    # Copy SAPs
+    target = cls._copy_node_type(new.saps, target, log)
+
+    # Copy remaining links which should be valid
+    for u, v, link in new.network.edges_iter(data=True):
+      src_port = target.network.node[u].ports[link.src.id]
+      dst_port = target.network.node[v].ports[link.dst.id]
+      c_link = deepcopy(link)
+      c_link.src = src_port
+      c_link.dst = dst_port
+      target.add_link(src_port=src_port, dst_port=dst_port, link=c_link)
+      log.debug("Copy Link: %s" % c_link)
+    return target
+
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------
   ##############################################################################
@@ -1776,19 +1828,20 @@ class NFFGToolBox(object):
     for fr in port.flowrules:
       actions = fr.action.split(";")
       for action in actions:
-        command, param = action.split("=")
-        if command == "TAG" and param == TAG:
-          for action2 in actions:
-            command2, param2 = action2.split("=")
-            try:
-              param2 = int(param2)
-            except ValueError:
-              pass
-            if command2 == "output":
-              return port.node.ports[param2], fr.bandwidth
-          else:
-            raise RuntimeError("No 'output' action found for flowrule with"
-                               " 'TAG' action!")
+        command_param = action.split("=")
+        if command_param[0] == "TAG":
+          if command_param[1] == TAG:
+            for action2 in actions:
+              command_param2 = action2.split("=")
+              if command_param2[0] == "output":
+                try:
+                  param2 = int(command_param2[1])
+                except ValueError:
+                  param2 = command_param2[1]
+                return port.node.ports[param2], fr.bandwidth
+            else:
+              raise RuntimeError("No 'output' action found for flowrule with"
+                                 " 'TAG' action!")
     # No flowrule with the given tag action found.
     return None, None
 
