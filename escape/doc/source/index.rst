@@ -354,7 +354,7 @@ For security reasons it's highly recommended to limit the SSH connections for th
 
 .. code-block:: bash
 
-    $ sudo echo "AllowUsers    <your_user1 user2 ...>  mininet@localhost" >> /etc/ssh/sshd_config
+    $ sudo echo -e 'Match Host *,!localhost\n  DenyUsers  mininet' >> /etc/ssh/sshd_config
     $ sudo service ssh reload
 
 Check the created user with the following command:
