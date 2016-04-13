@@ -515,14 +515,14 @@ class NodeResource(Persistable):
       raise RuntimeError("Node resource components should always be given",
                          "One of %s`s components is None" % str(self))
     if not reduce(lambda a, b: a and b,
-                  (0 <= self[attr] - substrahend[attr] <= maximal[attr]
+                  (-1e-6 <= self[attr] - substrahend[attr] <= maximal[attr]+1e-6
                    for attr in attrlist if
                    attr != 'bandwidth' and substrahend[attr] is not None)):
       raise RuntimeError("Node resource got below zero, or "
                          "exceeded the maximal value!")
     if substrahend['bandwidth'] is not None:
-      if not 0 <= self['bandwidth'] - link_count * substrahend['bandwidth'] <= \
-         maximal['bandwidth']:
+      if not -1e-6 <= self['bandwidth'] - link_count * substrahend['bandwidth'] \
+         <= maximal['bandwidth']+1e-6:
         raise RuntimeError("Internal bandwidth cannot get below "
                            "zero, or exceed the maximal value!")
     for attr in attrlist:
@@ -633,12 +633,12 @@ class Flowrule(Element):
     return self
 
   def __repr__ (self):
-    return "Flowrule object:\nmatch: %s \naction: %s \nhop: %s \nbw: %s " \
-           "\nbandwidth: %s" % (
+    return "Flowrule object:\nmatch: %s \naction: %s \nhop: %s \nbandwidth: %s "\
+           "\ndelay: %s" % (
              self.match, self.action, self.hop_id, self.bandwidth, self.delay)
 
   def __str__ (self):
-    return "%s(match: %s, action: %s, hop: %s, bw: %s, delay: %s)" % (
+    return "%s(match: %s, action: %s, hop: %s, bandwidth: %s, delay: %s)" % (
       self.__class__.__name__, self.match, self.action, self.hop_id,
       self.bandwidth, self.delay)
 

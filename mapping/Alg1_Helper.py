@@ -26,9 +26,9 @@ from itertools import count
 
 log = logging.getLogger("mapping")
 # log.setLevel(logging.DEBUG)
-if not log.getEffectiveLevel():
-  logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
-  log.setLevel(logging.DEBUG)
+# if not log.getEffectiveLevel():
+logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
+log.setLevel(logging.WARN)
 
 def retrieveFullDistMtx (dist, G_full):
   # this fix access latency is used by CarrierTopoBuilder.py
@@ -461,8 +461,8 @@ class MappingManager(object):
       # 'mapped_to' contains the hosting infra of vnf1 and vnf2 as well)
 
   def getNextOutputChainId (self):
-    self.max_input_chainid += 1
-    return self.max_input_chainid
+    self.max_output_chainid += 1
+    return self.max_output_chainid
 
   def isAnyVNFInChain (self, cid, subgraph):
     """
