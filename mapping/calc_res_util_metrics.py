@@ -284,7 +284,7 @@ def main(argv):
             plt.plot((last_point[0], point[0]), (last_point[1], last_point[1]), 
                      color=rescolor, lw=3, label=reslab)
             plt.plot((point[0], point[0]),(last_point[1], point[1]),
-                     color=rescolor, lw=3, label=reslab)
+                     color=rescolor, lw=3)
           else:
             plt.plot((last_point[0], point[0]), (last_point[1], point[1]), 
                      color=rescolor, lw=3, label=reslab)
