@@ -42,6 +42,12 @@ Removes the uncompressed NFFG after it is finished with its processing.
    --print_devs                     Print the deviations of resource utilizations
                                     for all processed NFFG-s in CSV format. 
                                     The --cdf option must be set too.
+   --print_cdf_data=<<res|mem...>>  Print the data used to plot the CDF in CSV 
+                                    format for the given resource types. The 
+                                    --cdf option must be set too!
+   --no_cdf_interpolation           If set, CDF is delignated in a step function
+                                    manner, instead of linear interpolation 
+                                    between points.
 """
 
 def increment_util_counter(d, u, aggr_size):
@@ -67,7 +73,9 @@ def main(argv):
     opts, args = getopt.getopt(argv, "hl:", ["hist=", "add_hist_values", 
                                              "hist_format=", "starting_lvl=",
                                              "one", "cdf_format=", "cdf",
-                                             "print_devs", "print_avgs"])
+                                             "print_devs", "print_avgs",
+                                             "print_cdf_data=", 
+                                             "no_cdf_interpolation"])
   except getopt.GetoptError as goe:
     print helpmsg
     raise
@@ -82,6 +90,9 @@ def main(argv):
   cdf_format = "png"
   print_avgs = False
   print_devs = False
+  print_cdf_data = False
+  res_cdf_to_print = None
+  no_cdf_interpolation = True
   for opt, arg in opts:
     if opt == "-h":
       print helpmsg
@@ -116,6 +127,11 @@ def main(argv):
       print_devs = True
     elif opt == "--print_avgs":
       print_avgs = True
+    elif opt == "--print_cdf_data":
+      print_cdf_data = True
+      res_cdf_to_print = arg
+    elif opt == "--no_cdf_interpolation":
+      no_cdf_interpolation = True
       
   nffg_num_list = []
   bashCommand = "ls -x "+loc_tgz
@@ -200,6 +216,13 @@ def main(argv):
     # delete the NFFG and its parent folders
     os.system("rm -rf nffgs-batch_tests/")
 
+    # we can only know the number of CDF points after the first processing.
+    # this number should stay the same for all consequential NFFG-s.
+    if print_cdf_data and test_lvl == nffg_num_list[0]:
+      print ",".join(["test_lvl"] + \
+                     [res_cdf_to_print+"_cdf_point"+str(i) \
+                      for i in range(0,len(cdf[res_cdf_to_print])+2)])
+
     if draw_hist:
       # normalize the histogram to [0,1], so the resource types could be plotted 
       # on the same bar chart
@@ -252,15 +275,29 @@ def main(argv):
         vertical_step = 1.0/len(cdf[res])
         rescolor = next(colors)
         reslab = res
+        if print_cdf_data and res == res_cdf_to_print:
+          cdf_plot_data = [last_point]
         for point in zip(cdf[res], 
                          np.append(np.arange(vertical_step, 1.0, vertical_step),
                                    [1.0])):
-          plt.plot((last_point[0], point[0]), (last_point[1], point[1]), 
-                   color=rescolor, lw=3, label=reslab)
+          if no_cdf_interpolation:
+            plt.plot((last_point[0], point[0]), (last_point[1], last_point[1]), 
+                     color=rescolor, lw=3, label=reslab)
+            plt.plot((point[0], point[0]),(last_point[1], point[1]),
+                     color=rescolor, lw=3, label=reslab)
+          else:
+            plt.plot((last_point[0], point[0]), (last_point[1], point[1]), 
+                     color=rescolor, lw=3, label=reslab)
           reslab = None
+          if print_cdf_data and res == res_cdf_to_print:
+            cdf_plot_data.append(point)
           last_point = point
         plt.plot((last_point[0], 1.0), (last_point[1], 1.0), 
                  color=rescolor, lw=3)
+        if print_cdf_data and res == res_cdf_to_print:
+          cdf_plot_data.append((1.0, 1.0))
+          print test_lvl, ",", ",".join(map(lambda t: "(%.6f; %.6f)"%(t[0], t[1]),
+                                            cdf_plot_data))
       ax.set_ylabel("Ratio of network element counts to total count")
       ax.set_xlabel("Resource utilization interval from 0 to x [%]")
       ax.set_xticks([float(i)/100 for i in xrange(0,101, 5)])
