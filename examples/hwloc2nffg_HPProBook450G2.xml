@@ -471,7 +471,8 @@
             <ports>
                 <port>
                     <id>36</id>
-                    <port_type>port-abstract</port_type>
+                    <name>eth0</name>
+                    <port_type>port-sap</port_type>
                 </port>
                 <port>
                     <id>37</id>
@@ -510,7 +511,8 @@
             <ports>
                 <port>
                     <id>40</id>
-                    <port_type>port-abstract</port_type>
+                    <name>wlan0</name>
+                    <port_type>port-sap</port_type>
                 </port>
                 <port>
                     <id>41</id>
@@ -765,9 +767,27 @@
             </resources>
         </link>
         <link>
+            <id>10-back</id>
+            <src>../../../nodes/node[id=L1d!0]/ports/port[id=9]</src>
+            <dst>../../../nodes/node[id=L2!0]/ports/port[id=11]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
             <id>15</id>
             <src>../../../nodes/node[id=Core#1]/ports/port[id=16]</src>
             <dst>../../../nodes/node[id=PU#2]/ports/port[id=13]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
+            <id>15-back</id>
+            <src>../../../nodes/node[id=PU#2]/ports/port[id=13]</src>
+            <dst>../../../nodes/node[id=Core#1]/ports/port[id=16]</dst>
             <resources>
                 <delay>0.1</delay>
                 <bandwidth>1000.0</bandwidth>
@@ -783,9 +803,27 @@
             </resources>
         </link>
         <link>
+            <id>17-back</id>
+            <src>../../../nodes/node[id=PU#3]/ports/port[id=14]</src>
+            <dst>../../../nodes/node[id=Core#1]/ports/port[id=18]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
             <id>2</id>
             <src>../../../nodes/node[id=Core#0]/ports/port[id=3]</src>
             <dst>../../../nodes/node[id=PU#0]/ports/port[id=0]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
+            <id>2-back</id>
+            <src>../../../nodes/node[id=PU#0]/ports/port[id=0]</src>
+            <dst>../../../nodes/node[id=Core#0]/ports/port[id=3]</dst>
             <resources>
                 <delay>0.1</delay>
                 <bandwidth>1000.0</bandwidth>
@@ -801,9 +839,27 @@
             </resources>
         </link>
         <link>
+            <id>20-back</id>
+            <src>../../../nodes/node[id=Core#1]/ports/port[id=19]</src>
+            <dst>../../../nodes/node[id=L1d!1]/ports/port[id=21]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
             <id>23</id>
             <src>../../../nodes/node[id=L2!1]/ports/port[id=24]</src>
             <dst>../../../nodes/node[id=L1d!1]/ports/port[id=22]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
+            <id>23-back</id>
+            <src>../../../nodes/node[id=L1d!1]/ports/port[id=22]</src>
+            <dst>../../../nodes/node[id=L2!1]/ports/port[id=24]</dst>
             <resources>
                 <delay>0.1</delay>
                 <bandwidth>1000.0</bandwidth>
@@ -819,9 +875,27 @@
             </resources>
         </link>
         <link>
+            <id>26-back</id>
+            <src>../../../nodes/node[id=L2!0]/ports/port[id=12]</src>
+            <dst>../../../nodes/node[id=L3!0]/ports/port[id=27]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
             <id>28</id>
             <src>../../../nodes/node[id=L3!0]/ports/port[id=29]</src>
             <dst>../../../nodes/node[id=L2!1]/ports/port[id=25]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
+            <id>28-back</id>
+            <src>../../../nodes/node[id=L2!1]/ports/port[id=25]</src>
+            <dst>../../../nodes/node[id=L3!0]/ports/port[id=29]</dst>
             <resources>
                 <delay>0.1</delay>
                 <bandwidth>1000.0</bandwidth>
@@ -837,9 +911,27 @@
             </resources>
         </link>
         <link>
+            <id>31-back</id>
+            <src>../../../nodes/node[id=L3!0]/ports/port[id=30]</src>
+            <dst>../../../nodes/node[id=Socket!0]/ports/port[id=32]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
             <id>4</id>
             <src>../../../nodes/node[id=Core#0]/ports/port[id=5]</src>
             <dst>../../../nodes/node[id=PU#1]/ports/port[id=1]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
+            <id>4-back</id>
+            <src>../../../nodes/node[id=PU#1]/ports/port[id=1]</src>
+            <dst>../../../nodes/node[id=Core#0]/ports/port[id=5]</dst>
             <resources>
                 <delay>0.1</delay>
                 <bandwidth>1000.0</bandwidth>
@@ -855,9 +947,27 @@
             </resources>
         </link>
         <link>
+            <id>42-back</id>
+            <src>../../../nodes/node[id=PCI_10ec:8168!0]/ports/port[id=37]</src>
+            <dst>../../../nodes/node[id=HostBridge!0]/ports/port[id=43]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
             <id>44</id>
             <src>../../../nodes/node[id=HostBridge!0]/ports/port[id=45]</src>
             <dst>../../../nodes/node[id=PCI_10ec:b723!0]/ports/port[id=41]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
+            <id>44-back</id>
+            <src>../../../nodes/node[id=PCI_10ec:b723!0]/ports/port[id=41]</src>
+            <dst>../../../nodes/node[id=HostBridge!0]/ports/port[id=45]</dst>
             <resources>
                 <delay>0.1</delay>
                 <bandwidth>1000.0</bandwidth>
@@ -873,9 +983,27 @@
             </resources>
         </link>
         <link>
+            <id>47-back</id>
+            <src>../../../nodes/node[id=Socket!0]/ports/port[id=33]</src>
+            <dst>../../../nodes/node[id=Machine#0]/ports/port[id=48]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
             <id>49</id>
             <src>../../../nodes/node[id=Machine#0]/ports/port[id=50]</src>
             <dst>../../../nodes/node[id=HostBridge!0]/ports/port[id=46]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
+        <link>
+            <id>49-back</id>
+            <src>../../../nodes/node[id=HostBridge!0]/ports/port[id=46]</src>
+            <dst>../../../nodes/node[id=Machine#0]/ports/port[id=50]</dst>
             <resources>
                 <delay>0.1</delay>
                 <bandwidth>1000.0</bandwidth>
@@ -890,6 +1018,15 @@
                 <bandwidth>1000.0</bandwidth>
             </resources>
         </link>
+        <link>
+            <id>7-back</id>
+            <src>../../../nodes/node[id=Core#0]/ports/port[id=6]</src>
+            <dst>../../../nodes/node[id=L1d!0]/ports/port[id=8]</dst>
+            <resources>
+                <delay>0.1</delay>
+                <bandwidth>1000.0</bandwidth>
+            </resources>
+        </link>
     </links>
-    <version>2016-02-24; compiled at 2016-03-05 07:50:35</version>
+    <version>2016-02-24; compiled at 2016-03-18 19:56:13</version>
 </virtualizer>
