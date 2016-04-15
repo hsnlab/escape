@@ -919,5 +919,394 @@
         "bandwidth": 1000.0
       }
     }
+  ],
+  "edge_links": [
+    {
+      "id": 56,
+      "src_node": "Core#4",
+      "src_port": 57,
+      "dst_node": "PU#10",
+      "dst_port": 53,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 54,
+      "src_node": "Core#4",
+      "src_port": 55,
+      "dst_node": "PU#4",
+      "dst_port": 52,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 69,
+      "src_node": "Core#5",
+      "src_port": 70,
+      "dst_node": "PU#11",
+      "dst_port": 66,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 67,
+      "src_node": "Core#5",
+      "src_port": 68,
+      "dst_node": "PU#5",
+      "dst_port": 65,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 30,
+      "src_node": "Core#2",
+      "src_port": 31,
+      "dst_node": "PU#8",
+      "dst_port": 27,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 28,
+      "src_node": "Core#2",
+      "src_port": 29,
+      "dst_node": "PU#2",
+      "dst_port": 26,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 62,
+      "src_node": "L2!4",
+      "src_port": 63,
+      "dst_node": "L1d!4",
+      "dst_port": 61,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 23,
+      "src_node": "L2!1",
+      "src_port": 24,
+      "dst_node": "L1d!1",
+      "dst_port": 22,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 10,
+      "src_node": "L2!0",
+      "src_port": 11,
+      "dst_node": "L1d!0",
+      "dst_port": 9,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 49,
+      "src_node": "L2!3",
+      "src_port": 50,
+      "dst_node": "L1d!3",
+      "dst_port": 48,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 36,
+      "src_node": "L2!2",
+      "src_port": 37,
+      "dst_node": "L1d!2",
+      "dst_port": 35,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 99,
+      "src_node": "PCI_8086:1584!0",
+      "src_port": 100,
+      "dst_node": "eth40",
+      "dst_port": 98,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 116,
+      "src_node": "HostBridge!0",
+      "src_port": 117,
+      "dst_node": "PCI_8086:1584!0",
+      "dst_port": 101,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 118,
+      "src_node": "HostBridge!0",
+      "src_port": 119,
+      "dst_node": "PCI_8086:1521!0",
+      "dst_port": 105,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 120,
+      "src_node": "HostBridge!0",
+      "src_port": 121,
+      "dst_node": "PCI_8086:1521!1",
+      "dst_port": 109,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 114,
+      "src_node": "HostBridge!0",
+      "src_port": 115,
+      "dst_node": "PCI_8086:10fb!0",
+      "dst_port": 97,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 122,
+      "src_node": "HostBridge!0",
+      "src_port": 123,
+      "dst_node": "PCI_8086:1521!2",
+      "dst_port": 113,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 103,
+      "src_node": "PCI_8086:1521!0",
+      "src_port": 104,
+      "dst_node": "eth0",
+      "dst_port": 102,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 107,
+      "src_node": "PCI_8086:1521!1",
+      "src_port": 108,
+      "dst_node": "eth1",
+      "dst_port": 106,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 88,
+      "src_node": "L3!0",
+      "src_port": 89,
+      "dst_node": "L2!5",
+      "dst_port": 77,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 86,
+      "src_node": "L3!0",
+      "src_port": 87,
+      "dst_node": "L2!4",
+      "dst_port": 64,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 80,
+      "src_node": "L3!0",
+      "src_port": 81,
+      "dst_node": "L2!1",
+      "dst_port": 25,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 78,
+      "src_node": "L3!0",
+      "src_port": 79,
+      "dst_node": "L2!0",
+      "dst_port": 12,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 84,
+      "src_node": "L3!0",
+      "src_port": 85,
+      "dst_node": "L2!3",
+      "dst_port": 51,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 82,
+      "src_node": "L3!0",
+      "src_port": 83,
+      "dst_node": "L2!2",
+      "dst_port": 38,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 125,
+      "src_node": "Machine#0",
+      "src_port": 126,
+      "dst_node": "Package!0",
+      "dst_port": 93,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 127,
+      "src_node": "Machine#0",
+      "src_port": 128,
+      "dst_node": "HostBridge!0",
+      "dst_port": 124,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 59,
+      "src_node": "L1d!4",
+      "src_port": 60,
+      "dst_node": "Core#4",
+      "dst_port": 58,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 95,
+      "src_node": "PCI_8086:10fb!0",
+      "src_port": 96,
+      "dst_node": "enp12s0f1",
+      "dst_port": 94,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 91,
+      "src_node": "Package!0",
+      "src_port": 92,
+      "dst_node": "L3!0",
+      "dst_port": 90,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 72,
+      "src_node": "L1d!5",
+      "src_port": 73,
+      "dst_node": "Core#5",
+      "dst_port": 71,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 20,
+      "src_node": "L1d!1",
+      "src_port": 21,
+      "dst_node": "Core#1",
+      "dst_port": 19,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 7,
+      "src_node": "L1d!0",
+      "src_port": 8,
+      "dst_node": "Core#0",
+      "dst_port": 6,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 46,
+      "src_node": "L1d!3",
+      "src_port": 47,
+      "dst_node": "Core#3",
+      "dst_port": 45,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 33,
+      "src_node": "L1d!2",
+      "src_port": 34,
+      "dst_node": "Core#2",
+      "dst_port": 32,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 2,
+      "src_node": "Core#0",
+      "src_port": 3,
+      "dst_node": "PU#0",
+      "dst_port": 0,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 4,
+      "src_node": "Core#0",
+      "src_port": 5,
+      "dst_node": "PU#6",
+      "dst_port": 1,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 15,
+      "src_node": "Core#1",
+      "src_port": 16,
+      "dst_node": "PU#1",
+      "dst_port": 13,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 17,
+      "src_node": "Core#1",
+      "src_port": 18,
+      "dst_node": "PU#7",
+      "dst_port": 14,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 111,
+      "src_node": "PCI_8086:1521!2",
+      "src_port": 112,
+      "dst_node": "eth2",
+      "dst_port": 110,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 75,
+      "src_node": "L2!5",
+      "src_port": 76,
+      "dst_node": "L1d!5",
+      "dst_port": 74,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 43,
+      "src_node": "Core#3",
+      "src_port": 44,
+      "dst_node": "PU#9",
+      "dst_port": 40,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    },
+    {
+      "id": 41,
+      "src_node": "Core#3",
+      "src_port": 42,
+      "dst_node": "PU#3",
+      "dst_port": 39,
+      "delay": 0.1,
+      "bandwidth": 1000.0
+    }
   ]
 }
