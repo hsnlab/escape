@@ -1557,9 +1557,9 @@ if __name__ == "__main__":
   with open(
      # "../../../../examples/escape-mn-mapped-test.nffg") as f:
      # "../../../../examples/escape-2sbb-mapped.nffg") as f:
-     "../../../examples/hwloc2nffg_HPProBook450G2.json") as f:
+     "../../../examples/hwloc2nffg_IntelXeonE5-2620-rhea.nffg") as f:
     nffg = NFFG.parse(raw_data=f.read())
-  # # nffg.duplicate_static_links()
+  nffg.duplicate_static_links()
   # log.debug("Parsed NFFG:\n%s" % nffg.dump())
   virt = c.dump_to_Virtualizer(nffg=nffg)
   log.debug("Converted:")
