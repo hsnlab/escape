@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 import networkx as nx
 import os
 import sys
@@ -7,17 +8,26 @@ import viewer_thread as vt
 
 try:
   from nffg import NFFG
+  from conversion import NFFGConverter
 except ImportError:
-  sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                               "../escape/escape/nffg_lib/")))
+  for p in ("../escape/escape/nffg_lib/",
+            "../escape/escape/util/",
+            "../unify_virtualizer/"):
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), p)))
   from nffg import NFFG
+  from conversion import NFFGConverter
 
 if __name__ == '__main__':
   graph = None
   if len(sys.argv) > 1:
     nffg_path = os.path.abspath(os.path.join(os.getcwd(), sys.argv[1]))
     with open(nffg_path, 'r') as f:
-      graph = NFFG.parse(f.read())
+      raw = f.read()
+    if raw.startswith("<?xml"):
+      converter = NFFGConverter(logger=logging.getLogger(__name__))
+      graph = converter.parse_from_Virtualizer(raw)
+    else:
+      graph = NFFG.parse(raw)
   else:
     # creating basic network graph
     G = nx.complete_graph(4)
