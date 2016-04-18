@@ -335,7 +335,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     self.log.info("Patching cached topology with received diff...")
     full_request = self.server.last_response.full_copy()
     full_request.bind(relative=True)
-    diff.bind(relative=True)
+    # Do not call bind on diff to avoid resolve error in Virtualizer
+    # diff.bind(relative=True)
     # Adapt changes on  the local config
     full_request.patch(source=diff)
     full_request.bind(relative=True)
