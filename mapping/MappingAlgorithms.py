@@ -1,3 +1,5 @@
+#!/usr/bin/python -u
+#
 # Copyright (c) 2015 Balazs Nemeth
 #
 # This file is free software: you can redistribute it and/or modify it
