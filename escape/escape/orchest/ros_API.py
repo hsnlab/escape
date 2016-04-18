@@ -301,11 +301,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
             else:
               self.log.debug("Cache acquired topology...")
               self.server.last_response = config
-        self.log.info("Patching cached topology with received diff...")
-        full_cfg = self.server.last_response.copy()
-        # Adapt changes on the local config
-        full_cfg.patch(source=received_cfg)
-        # full_cfg.bind(relative=True)
+        # Perform patching
+        full_cfg = self.__recreate_full_request(diff=received_cfg)
       else:
         full_cfg = received_cfg
       self.log.log(VERBOSE, "Generated request:\n%s" % full_cfg.xml())
@@ -326,6 +323,23 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     self._proceed_API_call('api_ros_edit_config', nffg)
     self.send_acknowledge()
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
+
+  def __recreate_full_request (self, diff):
+    """
+    Recreate the full domain install request based on previously sent
+    topology config and received diff request.
+
+    :return: recreated request
+    :rtype: :any:`NFFG`
+    """
+    self.log.info("Patching cached topology with received diff...")
+    full_request = self.server.last_response.full_copy()
+    full_request.bind(relative=True)
+    diff.bind(relative=True)
+    # Adapt changes on  the local config
+    full_request.patch(source=diff)
+    full_request.bind(relative=True)
+    return full_request
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
