@@ -339,8 +339,10 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     # diff.bind(relative=True)
     # Adapt changes on  the local config
     full_request.patch(source=diff)
-    full_request.bind(relative=True)
-    return full_request
+    # full_request.bind(relative=True)
+    # return full_request
+    # Perform hack to resolve inconsistency
+    return Virtualizer.parse_from_text(full_request.xml())
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
