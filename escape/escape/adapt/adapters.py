@@ -1001,10 +1001,10 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     # base = Virtualizer.parse_from_text(text=self.last_virtualizer.xml())
     base = self.last_virtualizer
-    # diff = base.diff(changed)
-    # Use fail-safe workaround of diff to avoid bugs in Virtualizer library
     base.bind(relative=True)
     changed.bind(relative=True)
+    # Use fail-safe workaround of diff to avoid bugs in Virtualizer library
+    # diff = base.diff(changed)
     diff = base.diff_failsafe(changed)
     return diff
 
