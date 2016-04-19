@@ -81,9 +81,10 @@ def main ():
     # escape or util packages.
     import sys
     mn = os.path.abspath(os.path.dirname(__file__) + "/mininet")
-    misc = os.path.abspath(os.path.dirname(__file__) + "/pox/ext/escape/util")
-    sys.path.append(mn)
-    sys.path.append(misc)
+    # Import misc directly from util/ to avoid standard ESCAPE init steps
+    misc = os.path.abspath(os.path.dirname(__file__) + "/escape/escape/util")
+    sys.path.insert(0, mn)
+    sys.path.insert(0, misc)
     if os.geteuid() != 0:
       print "Cleanup process requires root privilege!"
       return
@@ -194,7 +195,7 @@ def main ():
   print "Starting %s..." % parser.description
 
   if args.POXlike:
-    pox_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "pox"))
+    pox_base = os.path.realpath((os.path.dirname(__file__) + "/pox"))
     # Change working directory
     os.chdir(pox_base)
     # Override first path element
@@ -203,6 +204,7 @@ def main ():
     sys.path[0] = pox_base
     pox_params = cmd[2:] if cmd[0] == "sudo" else cmd[1:]
     if args.debug:
+      print "POX base: %s" % pox_base
       print "POX parameters: %s" % pox_params
     from pox.boot import boot
     boot(argv=pox_params)

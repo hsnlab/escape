@@ -24,11 +24,18 @@ import UnifyExceptionTypes as uet
 from heapq import heappush, heappop
 from itertools import count
 
+# Basic logger for mapping
 log = logging.getLogger("mapping")
-# log.setLevel(logging.DEBUG)
-# if not log.getEffectiveLevel():
-logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
-log.setLevel(logging.WARN)
+# Default log level
+# Change this constant to set logging level outside of ESCAPE
+DEFAULT_LOG_LEVEL = logging.WARN
+# print "effective level", log.getEffectiveLevel()
+# print "log level", log.level
+if log.getEffectiveLevel() > DEFAULT_LOG_LEVEL:
+  logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
+  log.setLevel(DEFAULT_LOG_LEVEL)
+# print "effective level", log.getEffectiveLevel()
+# print "log level", log.level
 
 def retrieveFullDistMtx (dist, G_full):
   # this fix access latency is used by CarrierTopoBuilder.py
@@ -52,7 +59,7 @@ def retrieveFullDistMtx (dist, G_full):
   return dist
 
 
-def shortestPathsInLatency (G_full, enable_shortest_path_cache, 
+def shortestPathsInLatency (G_full, enable_shortest_path_cache,
                             enable_network_cutting=False):
   """Wrapper function for Floyd`s algorithm to calculate shortest paths
   measured in latency, using also nodes` forwarding latencies.
@@ -67,7 +74,7 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
   # use some default dict magic here
   # for dist the default is the floating point inf value
   dist = defaultdict(lambda: defaultdict(lambda: float('inf')))
-  
+
   if enable_network_cutting:
     G = copy.deepcopy(G_full)
     for n,d in G.nodes(data=True):
@@ -92,7 +99,7 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
       raise uet.BadInputException("Bad format in shortest_paths.txt",
                                   "In every line: src_id dst_id "
                                   "<<float distance in ms>>")
-  
+
   for u in G:
     if G.node[u].type != 'SAP':
       dist[u][u] = G.node[u].resources['delay']
@@ -129,7 +136,7 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
       for v in G:
         sp.write(" ".join((u, v, str(dist[u][v]), "\n")))
     sp.close()
-  
+
   if enable_network_cutting:
     return dict(retrieveFullDistMtx(dist, G_full))
   else:
@@ -218,7 +225,7 @@ class MappingManager(object):
     except AttributeError as e:
       raise uet.BadInputException("Node data with name %s" % str(e),
                                   "Node data not found")
-    
+
     # same graph structure as the request, edge data stores the mapped path
     self.link_mapping = nx.MultiDiGraph()
 
@@ -227,21 +234,21 @@ class MappingManager(object):
     self.req = req
     # all chains are included, not only SAP-to-SAPs
     self.chains = chains
-    
+
     # the delay value which is considered to be infinite (although it should be
     # a constant not to zero out the latency component of objective function 
     # calculation)
     self.overall_highest_delay = overall_highest_delay
-    
+
     # chain - subchain pairing, stored in a bipartie graph
     self.chain_subchain = nx.Graph()
     for c in chains:
       if c['delay'] is None:
         c['delay'] = self.overall_highest_delay
     self.chain_subchain.add_nodes_from(
-      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay']}) 
+      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay']})
       for c in chains)
-    
+
   def getIdOfChainEnd_fromNetwork (self, _id):
     """
     SAPs are mapped by their name, NOT by their ID in the network/request
@@ -397,8 +404,8 @@ class MappingManager(object):
     # Give a spare chain ID for all the best effort subchains, so connect all
     # the subchains to this (self.max_input_chainid) chain in the helper graph
     self.max_input_chainid = maxcid
-    self.chain_subchain.add_node(self.max_input_chainid, 
-                                {'avail_latency': self.overall_highest_delay, 
+    self.chain_subchain.add_node(self.max_input_chainid,
+                                {'avail_latency': self.overall_highest_delay,
                                 'permitted_latency': self.overall_highest_delay})
     # we can't use the same ID-s for the output chains, because they will be 
     # splitted into pieces.
@@ -421,7 +428,7 @@ class MappingManager(object):
     """
     for c in self.chains:
       if cid == c['id']:
-        for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:], 
+        for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:],
                                    c['link_ids']):
           if infra in self.link_mapping[vnf1][vnf2][lid]['mapped_to']:
             if last_sghop_id in c['link_ids']:
@@ -444,7 +451,7 @@ class MappingManager(object):
     """
     for c in self.chains:
       prev_infra_of_path = None
-      for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:], 
+      for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:],
                                  c['link_ids']):
         # iterate on 'mapped_to' attribute of vnf1,vnf2,lid link of 
         # link_mapping structure
@@ -457,7 +464,7 @@ class MappingManager(object):
               self.getIdOfChainEnd_fromNetwork(vnf2) == forwarding_infra or \
               self.getIdOfChainEnd_fromNetwork(vnf1) == forwarding_infra else None,\
               forwarding_infra
-      # VNF2 is handled by the iteration on link mapping structure (because 
+      # VNF2 is handled by the iteration on link mapping structure (because
       # 'mapped_to' contains the hosting infra of vnf1 and vnf2 as well)
 
   def getNextOutputChainId (self):
@@ -497,7 +504,7 @@ class MappingManager(object):
               chain_piece = [i,j]
               link_ids_piece = [k]
               # find which part of the chain is mapped here
-              for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:], 
+              for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:],
                                          c['link_ids']):
                 if vnf1 != j  and not found_beginnig:
                   continue
@@ -517,7 +524,7 @@ class MappingManager(object):
               link_ids_piece.append(lid)
               chain_pieces.append((chain_piece, link_ids_piece))
               break
-    return chain_pieces 
+    return chain_pieces
 
   def getRemainingE2ELatency (self, chain_id):
     """

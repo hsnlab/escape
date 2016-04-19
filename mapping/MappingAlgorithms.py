@@ -1,3 +1,5 @@
+#!/usr/bin/python -u
+#
 # Copyright (c) 2015 Balazs Nemeth
 #
 # This file is free software: you can redistribute it and/or modify it
@@ -34,7 +36,7 @@ try:
 except ImportError:
   import sys, os
   sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                  "../pox/ext/escape/nffg_lib/")))
+                                  "../escape/escape/nffg_lib/")))
   from nffg import NFFG, NFFGToolBox
 from Alg1_Core import CoreAlgorithm
 import UnifyExceptionTypes as uet
@@ -97,6 +99,7 @@ def MAP (request, network, full_remap=False,
                     " based on the flowrules...")
     sg_hops_given = False
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(request)
+    helper.log.log(5, "Retrieved SG hops:\n" + pformat(sg_hop_info))
     if len(sg_hop_info) == 0:
       raise uet.BadInputException("If SGHops are not given, flowrules should be"
                                   " in the NFFG",
