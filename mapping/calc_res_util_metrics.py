@@ -48,6 +48,8 @@ Removes the uncompressed NFFG after it is finished with its processing.
    --no_cdf_interpolation           If set, CDF is delignated in a step function
                                     manner, instead of linear interpolation 
                                     between points.
+   --print_minmax                   Print the minimal and maximal utilization of 
+                                    all resource types of the processed NFFG-s.
 """
 
 def increment_util_counter(d, u, aggr_size):
@@ -74,7 +76,7 @@ def main(argv):
                                              "hist_format=", "starting_lvl=",
                                              "one", "cdf_format=", "cdf",
                                              "print_devs", "print_avgs",
-                                             "print_cdf_data=", 
+                                             "print_cdf_data=", "print_minmax", 
                                              "no_cdf_interpolation"])
   except getopt.GetoptError as goe:
     print helpmsg
@@ -93,6 +95,7 @@ def main(argv):
   print_cdf_data = False
   res_cdf_to_print = None
   no_cdf_interpolation = True
+  print_minmax = False
   for opt, arg in opts:
     if opt == "-h":
       print helpmsg
@@ -132,6 +135,8 @@ def main(argv):
       res_cdf_to_print = arg
     elif opt == "--no_cdf_interpolation":
       no_cdf_interpolation = True
+    elif opt == "--print_minmax":
+      print_minmax = True
       
   nffg_num_list = []
   bashCommand = "ls -x "+loc_tgz
@@ -148,6 +153,10 @@ def main(argv):
   if print_devs:
     print "test_lvl, ", ", ".join(["".join(["dev(",noderes,")"]) \
                                    for noderes in cdf])
+
+  if print_minmax:
+    print "test_lvl, ", ", ".join(["min(%s), max(%s)"%(res, res) for res in \
+                                   reskeys + ['link_bw']])
 
   if draw_hist:
     empty_hist = copy.deepcopy(hist)
@@ -166,6 +175,8 @@ def main(argv):
       # calculate avg. res utils by resource types.
       avgs = {}
       cnts = {}
+      mins = {}
+      maxs = {}
       if draw_hist:
         hist = copy.deepcopy(empty_hist)
       if draw_cdf:
@@ -180,6 +191,19 @@ def main(argv):
                    i.resources[noderes]
             avgs[noderes] += util
             cnts[noderes] += 1
+
+            # maintain max/min struct
+            if noderes in mins:
+              if mins[noderes] > util:
+                mins[noderes] = util
+            else:
+              mins[noderes] = util
+            if noderes in maxs:
+              if maxs[noderes] < util:
+                maxs[noderes] = util
+            else:
+              maxs[noderes] = util
+
             if draw_hist:
               increment_util_counter(hist[noderes], util, hist_aggr_size)
             if draw_cdf:
@@ -192,6 +216,19 @@ def main(argv):
           link_util = float(l.bandwidth - l.availbandwidth) / l.bandwidth
           avg_linkutil += link_util
           linkcnt += 1
+
+          # maintain max/min struct
+          if 'link_bw' in mins:
+            if mins['link_bw'] > link_util:
+              mins['link_bw'] = link_util
+          else:
+            mins['link_bw'] = link_util
+          if 'link_bw' in maxs:
+            if maxs['link_bw'] < link_util:
+              maxs['link_bw'] = link_util
+          else:
+            maxs['link_bw'] = link_util
+
           if draw_hist:
             increment_util_counter(hist['link_bw'], link_util, hist_aggr_size)
           if draw_cdf:
@@ -211,6 +248,13 @@ def main(argv):
                                 (len(cdf[res])-1))
         to_print = [test_lvl]
         to_print.extend([devs[res] for res in cdf])
+        print ",".join(map(str, to_print))
+
+      if print_minmax:
+        to_print = [test_lvl]
+        for res in reskeys + ['link_bw']:
+          to_print.append(mins[res])
+          to_print.append(maxs[res])
         print ",".join(map(str, to_print))
 
     # delete the NFFG and its parent folders
