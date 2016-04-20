@@ -343,10 +343,10 @@ def main(argv):
           print test_lvl, ",", ",".join(map(lambda t: "(%.6f; %.6f)"%(t[0], t[1]),
                                             cdf_plot_data))
       ax.set_ylabel("Ratio of network element counts to total count")
-      ax.set_xlabel("Resource utilization interval from 0 to x [%]")
+      ax.set_xlabel("Resource utilization [%]")
       ax.set_xticks([float(i)/100 for i in xrange(0,101, 5)])
       ax.set_xticklabels([str(i) for i in xrange(0,101, 5)])
-      ax.legend(bbox_to_anchor=(0,1), loc='upper left', ncol=5, fontsize=8)
+      ax.legend(bbox_to_anchor=(0,1), loc='upper left', ncol=5, fontsize=11)
       plt.savefig('plots/cdf-test_lvl-%s.%s'%(test_lvl, cdf_format), 
                   bbox_inches='tight')
       plt.close(fig)
