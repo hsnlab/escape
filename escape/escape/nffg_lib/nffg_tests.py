@@ -8,6 +8,78 @@ DOMAIN_INTERNAL = "INTERNAL"
 DOMAIN_SDN = "SDN"
 
 
+def test_parse_load ():
+  # NF
+  nf = NodeNF()
+  nf.id = "nf1"
+  nf.name = "NetworkFunction1"
+  nf.functional_type = "functype1"
+  nf.deployment_type = "virtual"
+  nf.resources.cpu = "10"
+  nf.resources.mem = "1"
+  nf.resources.storage = "10"
+  nf.resources.bandwidth = "2"
+  nf.resources.delay = "2"
+  # nf.add_port("port_nf1", "port1", "virtual", "vlan:1025")
+  p1 = nf.add_port(id="port_nf1",
+                   properties={"port1": 42, "virtual": 24, "vlan": 1025})
+  # SAP
+  sap = NodeSAP()
+  sap.id = "sap1"
+  sap.name = "sap1"
+  p2 = sap.add_port(id="port_sap")
+  # Infra
+  infra = NodeInfra()
+  infra.id = "infra1"
+  infra.operation = Element.ADD
+  infra.name = "BisBis1"
+  infra.domain = "virtual"
+  infra.resources.cpu = "20"
+  infra.resources.mem = "2"
+  infra.resources.storage = "20"
+  infra.resources.bandwidth = "4"
+  infra.add_metadata("meta1", "lorem")
+  infra.add_metadata("meta2", "ipsum")
+  # infra.add_supported_type("functype1")
+  infra.add_supported_type(("functype1", "functype2", "functype3"))
+  # infra.resources.delay = "4"
+  p3 = port_infra = infra.add_port(id="port_infra")
+  port_infra.add_flowrule("match123", "action456")
+  # Edge link
+  edge_link = EdgeLink(p2, p3, id="link3")
+  edge_link.bandwidth = "100"
+  edge_link.delay = "5"
+  edge_link.backward = True
+  edge_link.operation = Element.DEL
+  # Edge SG next hop
+  edge_sg = EdgeSGLink(p1, p2, id="link1")
+  edge_sg.flowclass = "flowclass1"
+  # Edge requirement
+  edge_req = EdgeReq(p2, p3)
+  edge_req.id = "link2"
+  edge_req.bandwidth = "100"
+  edge_req.delay = "5"
+  edge_req.sg_path.append(edge_sg.id)
+  edge_req.sg_path.append(edge_link.id)
+  # Generate
+  nffg = NFFGModel()
+  nffg.name = "NFFG1"
+  nffg.metadata['lorem'] = 'ipsum'
+  nffg.node_infras.append(infra)
+  nffg.node_nfs.append(nf)
+  nffg.node_saps.append(sap)
+  nffg.edge_links.append(edge_link)
+  nffg.edge_sg_nexthops.append(edge_sg)
+  nffg.edge_reqs.append(edge_req)
+  data = nffg.dump()
+  print "\nGenerated NF-FG:"
+  print data
+  nffg2 = NFFGModel.parse(data)
+  print "\nParsed NF-FG:"
+  print nffg2.dump()
+  return nffg
+
+
 def test_NFFG ():
   # Add nodes
   nffg = NFFG(id="BME-001")
@@ -35,6 +107,7 @@ def test_NFFG ():
   # Add req
   nffg.add_req(sap0.ports[1], sap1.ports[1], id="req", delay=10, bandwidth=100)
   # Dump NetworkX structure
+  from pprint import pprint
   print "\nNetworkX:"
   pprint(nffg.network.__dict__)
   # Dump NFFGModel structure
@@ -785,6 +858,7 @@ def generate_hwloc2nffg_test_req ():
 
 
 if __name__ == "__main__":
+  # test_parse_load()
   # test_NFFG()
   # nffg = generate_mn_topo()
   # nffg = generate_mn_test_req()
