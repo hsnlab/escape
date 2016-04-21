@@ -1045,7 +1045,7 @@ class NFFGToolBox(object):
           else:
             log.warning(
               "%s is detected as inter-domain port, but 'sap' metadata is not "
-              "found! Using 'name' metadata as fallback...")
+              "found! Using 'name' metadata as fallback..." % port)
             sap_id = port.get_property("name")
           sap_name = port.get_property("name")
           # Add SAP to splitted NFFG
