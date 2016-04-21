@@ -470,7 +470,7 @@ class ControllerAdapter(object):
     :type event: :any:`DomainChangedEvent`
     :return: None
     """
-    log.info("Received DomainChange event from domain: %s, cause: %s"
+    log.debug("Received DomainChange event from domain: %s, cause: %s"
              % (event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     # If new domain detected
     if event.cause == DomainChangedEvent.TYPE.DOMAIN_UP:
