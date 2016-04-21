@@ -28,7 +28,7 @@ function install_core {
     info "================================="
     echo "ESCAPEv2 version: 2.0.0"
     info "=== Checkout submodules ==="
-    git submodule update --init --recursive
+    git submodule update --init --recursive --merge
     # Remove ESCAPEv2 config file from index in git to untrack changes
     git update-index --assume-unchanged escape.config
 
