@@ -504,7 +504,7 @@ class NFFGConverter(object):
       try:
         v_fe_port = flowentry.port.get_target()
       except:
-        log.exception(
+        self.log.exception(
           "Got unexpected exception during acquisition of FlowEntry's in Port!")
       fr_match = "in_port="
       # Check if src port is a VNF port --> create the tagged port name
@@ -528,8 +528,8 @@ class NFFGConverter(object):
       try:
         v_fe_out = flowentry.out.get_target()
       except:
-        log.exception("Got unexpected exception during acquisition of "
-                      "FlowEntry's out Port!")
+        self.log.exception("Got unexpected exception during acquisition of "
+                           "FlowEntry's out Port!")
       fr_action = "output="
       # Check if dst port is a VNF port --> create the tagged port name
       if "NF_instances" in flowentry.out.get_as_text():
