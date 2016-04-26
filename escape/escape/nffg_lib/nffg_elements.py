@@ -673,7 +673,7 @@ class Port(Element):
     # self.__node = weakref.ref(node)
     self.__node = node
     # Set properties list according to given param type
-    self.properties = OrderedDict(properties if properties else ())
+    self.properties = OrderedDict(properties if properties else {})
 
   @property
   def node (self):
