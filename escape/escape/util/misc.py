@@ -380,12 +380,19 @@ def do_profile (func):
   return decorator_func
 
 
-if __name__ == "__main__":
-  import sys
+def unicode_to_str (raw):
+  """
+  Converter function to avoid unicode.
 
-  sys.path.insert(0, os.path.normpath(os.getcwd() + "/../nffg_lib"))
-  from nffg import NFFG
-
-  raw = run_cmd(os.path.abspath("../../../hwloc2nffg/build/bin/hwloc2nffg"))
-  nffg = NFFG.parse(raw)
-  print nffg.dump()
+  :param raw: raw data from
+  :return: convertaed data
+  """
+  if isinstance(raw, dict):
+    return {unicode_to_str(key): unicode_to_str(value) for key, value in
+            raw.iteritems()}
+  elif isinstance(raw, list):
+    return [unicode_to_str(element) for element in raw]
+  elif isinstance(raw, unicode):
+    return raw.encode('utf-8').replace(' ', '_')
+  else:
+    return raw
