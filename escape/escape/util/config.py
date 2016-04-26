@@ -14,6 +14,7 @@
 """
 Contains manager and handling functions for global ESCAPE configuration.
 """
+import collections
 import importlib
 import json
 import os
@@ -24,7 +25,7 @@ from escape.adapt import LAYER_NAME as ADAPT
 from escape.infr import LAYER_NAME as INFR
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
-from escape.util.misc import Singleton, VERBOSE
+from escape.util.misc import Singleton, VERBOSE, unicode_to_str
 from pox.core import log, core
 
 # Store the project root where escape.py is started in
@@ -123,7 +124,7 @@ class ESCAPEConfig(object):
     try:
       # Load file
       with open(os.path.abspath(config), 'r') as f:
-        cfg = json.load(f)
+        cfg = json.load(f, object_hook=unicode_to_str)
       # Iterate over layer config
       changed = False
       for layer in cfg:
@@ -158,7 +159,7 @@ class ESCAPEConfig(object):
     :param inner_part: part of inner representation of config (CONFIG)
     :type inner_part: dict
     :param loaded_part: part of loaded configuration (escape.config)
-    :type loaded_part: dict
+    :type loaded_part: collections.Mapping
     :return: original config is changed or not.
     :rtype: bool
     """
@@ -168,13 +169,14 @@ class ESCAPEConfig(object):
       # Iterating over the structure
       for key, value in loaded_part.iteritems():
         # If the loaded value is a dict
-        if isinstance(value, dict):
+        if isinstance(value, collections.Mapping):
           # If we need to check deeper
           if key in inner_part:
             # Recursion
             changed = self.__parse_part(inner_part[key], value)
           # If no entry in CONFIG just copying
           else:
+            # Add the new value(dict) to the inner part
             inner_part[key] = value
             # Config updated
             changed = True
@@ -538,8 +540,12 @@ class ESCAPEConfig(object):
     """
     params = self.__configuration[ADAPT][component].copy() \
       if parent is None else parent[component].copy()
-    del params['module']
-    del params['class']
+    # FIXME - what if there are not module and class???
+    try:
+      del params['module']
+      del params['class']
+    except KeyError:
+      pass
     return params
 
   def get_managers (self):
