@@ -28,7 +28,7 @@ from itertools import count
 log = logging.getLogger("mapping")
 # Default log level
 # Change this constant to set logging level outside of ESCAPE
-DEFAULT_LOG_LEVEL = logging.WARN
+DEFAULT_LOG_LEVEL = logging.DEBUG
 # print "effective level", log.getEffectiveLevel()
 # print "log level", log.level
 if log.getEffectiveLevel() > DEFAULT_LOG_LEVEL:
@@ -60,7 +60,7 @@ def retrieveFullDistMtx (dist, G_full):
 
 
 def shortestPathsInLatency (G_full, enable_shortest_path_cache,
-                            enable_network_cutting=False):
+                            enable_network_cutting=False, bidirectional=True):
   """Wrapper function for Floyd`s algorithm to calculate shortest paths
   measured in latency, using also nodes` forwarding latencies.
   Modified source code taken from NetworkX library.
@@ -109,6 +109,10 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
     for u, v, d in G.edges(data=True):
       e_weight = d.delay
       dist[u][v] = min(e_weight, dist[u][v])
+      if G.node[u].type != 'SAP':
+        dist[u][v] += G.node[u].resources['delay']
+      if G.node[v].type != 'SAP':
+        dist[u][v] += G.node[v].resources['delay']
   except KeyError as e:
     raise uet.BadInputException("Edge attribure(s) missing " + str(e),
                                 "{'delay': VALUE}")
@@ -117,13 +121,16 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
       if G.node[w].type != 'SAP':
         for u in G:
           for v in G:
-            if dist[u][v] > dist[u][w] + G.node[w].resources['delay'] + dist[w][
+            # subtract: because the latency of node 'w' would be added twice.
+            if dist[u][v] > dist[u][w] - G.node[w].resources['delay'] + dist[w][
               v]:
-              dist[u][v] = dist[u][w] + G.node[w].resources['delay'] + dist[w][
+              dist[u][v] = dist[u][w] - G.node[w].resources['delay'] + dist[w][
                 v]
-              dist[v][u] = dist[v][w] + G.node[w].resources['delay'] + dist[w][
-                u]
-            if u == v:
+              if bidirectional:
+                dist[v][u] = dist[v][w] - G.node[w].resources['delay'] + dist[w][
+                  u]
+            # Links are always considered bidirectional?!
+            if u == v and bidirectional:
               break
   except KeyError as e:
     raise uet.BadInputException("",
@@ -143,10 +150,12 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
     return dict(dist)
 
 
-def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
+def shortestPathsBasedOnEdgeWeight (G, source, weight='weight', target=None, 
+                                    cutoff=None):
   """Taken and modified from NetworkX source code,
   the function originally 'was single_source_dijkstra',
   now it returns the key edge data too.
+  If a weight doesn't exist let's be permissive and give it 0 weight.
   """
   if source == target:
     return {source: [source]}, {source: []}
@@ -156,10 +165,16 @@ def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
   paths = {source: [source]}  # dictionary of paths
   # dictionary of edge key lists of corresponding paths
   edgekeys = {source: []}
-  seen = {source: 0}
+  if weight == 'delay':
+    selfweight = (G.node[source].resources[weight] if \
+                  G.node[source].type != 'SAP' else 0)
+  else:
+    selfweight = (getattr(G.node[source], weight, 0) if \
+                  G.node[source].type != 'SAP' else 0)
+  seen = {source: selfweight}
   c = count()
   fringe = []  # use heapq with (distance,label) tuples
-  push(fringe, (getattr(G.node[source], 'weight', 0), next(c), source))
+  push(fringe, (selfweight, next(c), source))
   while fringe:
     (d, _, v) = pop(fringe)
     if v in dist:
@@ -171,12 +186,23 @@ def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
     # is about 30% slower than the following
     edata = []
     for w, keydata in G[v].items():
-      minweight, edgekey = min(((dd.weight, k) for k, dd in keydata.items()),
-                               key=lambda t: t[0])
-      edata.append((w, edgekey, {'weight': minweight}))
+      neighbourdata = []
+      for k, dd in keydata.items():
+        if not hasattr(dd, weight):
+          raise uet.BadInputException("Link %s should have edge attribute %s"%k,
+                                      "Link %s is %s"%(k, dd))
+        neighbourdata.append((getattr(dd, weight), k))
+      minweight, edgekey = min(neighbourdata, key=lambda t: t[0])
+      edata.append((w, edgekey, {weight: minweight}))
 
     for w, ekey, edgedata in edata:
-      vw_dist = dist[v] + getattr(G.node[w], 'weight', 0) + edgedata['weight']
+      if G.node[w].type == 'SAP':
+        tempweight = 0
+      elif weight == 'delay':
+        tempweight = G.node[w].resources[weight]
+      else:
+        tempweight = getattr(G.node[w], weight, 0)
+      vw_dist = dist[v] + tempweight + edgedata[weight]
       if cutoff is not None:
         if vw_dist > cutoff:
           continue
@@ -188,6 +214,8 @@ def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
         push(fringe, (vw_dist, next(c), w))
         paths[w] = paths[v] + [w]
         edgekeys[w] = edgekeys[v] + [ekey]
+  log.debug("Calculated distances from %s based on %s: %s"%
+            (source, weight, dist))
   return paths, edgekeys
 
 
