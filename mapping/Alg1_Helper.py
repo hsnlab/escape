@@ -274,8 +274,8 @@ class MappingManager(object):
       if c['delay'] is None:
         c['delay'] = self.overall_highest_delay
     self.chain_subchain.add_nodes_from(
-      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay']})
-      for c in chains)
+      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay'], 
+                 'chain': c['chain']}) for c in chains)
 
   def getIdOfChainEnd_fromNetwork (self, _id):
     """
@@ -355,6 +355,25 @@ class MappingManager(object):
       raise uet.InternalAlgorithmException(
         "Bad construction of chain-subchain bipartie graph!")
 
+  def areChainEndsReachableInLatency (self, used_lat, potential_host, subcid):
+    """
+    Does a forward checking to determine whether the ending SAPs of the involved
+    E2E chains of this subchain are still reachable in terms of latency if we 
+    map the current VNF to 'potential_host' during the mapping of 'subcid'.
+    """
+    for c in self.chain_subchain.neighbors_iter(subcid):
+      # Chain end should always be available because they are E2E chains.
+      chainend = self.getIdOfChainEnd_fromNetwork(\
+                      self.chain_subchain.node[c]['chain'][-1])
+      if self.shortest_paths_lengths[potential_host][chainend] > \
+         self.getLocalAllowedLatency(subcid) - used_lat:
+        self.log.debug("Potential mapping of a VNF to host %s was too far from"
+                       " chain end %s because of E2E latency requirement."%
+                       (potential_host, chainend))
+        return False
+    return True
+
+
   def isVNFMappingDistanceGood (self, vnf1, vnf2, n1, n2):
     """
     Mapping vnf2 to n2 shouldn`t be further from n1 (vnf1`s host) than
@@ -375,24 +394,7 @@ class MappingManager(object):
         for c, chdata in self.chain_subchain.nodes_iter(data=True):
           if 'subchain' in chdata.keys():
             if (vnf1, vnf2, linkid) in chdata['subchain']:
-              # TODO: The colored_req is saved now!!!!!!!!!!!
-              # there is only one subchain which contains this
-              # reqlink. (link -> chain mapping is not necessary
-              # anywhere else, a structure only for realizing this
-              # checking effectively seems not useful enough)
               lal = self.getLocalAllowedLatency(c, vnf1, vnf2, linkid)
-              subcend = self.\
-                        getIdOfChainEnd_fromNetwork(chdata['subchain'][-1][1])
-              if self.shortest_paths_lengths[n2][subcend] > \
-                 self.getLocalAllowedLatency(c):
-                # NOTE: we compare to remaining E2E latency to the minimal path
-                # length required until only subchain end, which is less strict 
-                # than the actual E2E chain end in general. And used latency
-                # between n1 and n2 is further omitted. But still some bad cases
-                # can be filtered here.
-                self.log.debug("Potential node mapping was too far from chain "
-                         "end because of remaining E2E latency requirement")
-                return False
               if lal < max_permitted_vnf_dist:
                 max_permitted_vnf_dist = lal
               break

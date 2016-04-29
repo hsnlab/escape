@@ -298,9 +298,10 @@ class CoreAlgorithm(object):
       local_latreq = self.manager.getLocalAllowedLatency(cid, prev_vnf_id,
                                                          vnf_id, reqlinkid)
       if sum_latency == -1 or sum_latency > local_latreq or not \
-           self.manager.isVNFMappingDistanceGood(
-        prev_vnf_id, vnf_id, path_to_map[0], path_to_map[-1]) or \
-           local_latreq == 0:
+           self.manager.isVNFMappingDistanceGood(\
+                prev_vnf_id, vnf_id, path_to_map[0], path_to_map[-1]) or \
+           local_latreq == 0 or not self.manager.areChainEndsReachableInLatency(\
+                sum_latency, node_id, cid):
         self.log.debug("Host %s is too far measured in latency for hosting %s."%
                        (node_id, vnf_id))
         return -1, float("inf")
