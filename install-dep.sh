@@ -40,7 +40,7 @@ function install_core {
     sudo apt-get update
     # Install dependencies
     sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev neo4j=2.2.7
-    sudo -H pip install ncclient pycrypto ecdsa networkx jinja2 py2neo
+    sudo -H pip install requests ncclient pycrypto ecdsa networkx jinja2 py2neo
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j-server.properties
