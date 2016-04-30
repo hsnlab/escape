@@ -40,7 +40,7 @@ function install_core {
     sudo apt-get update
     # Install dependencies
     sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev neo4j=2.2.7
-    sudo pip install ncclient pycrypto ecdsa networkx jinja2 py2neo
+    sudo -H pip install ncclient pycrypto ecdsa networkx jinja2 py2neo
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j-server.properties
@@ -167,7 +167,7 @@ function install_dev {
     # graphviz for UML class diagram generation
     # texlive-latex-extra for doc generation in PDF format
     sudo apt-get install graphviz texlive-latex-extra
-    sudo pip install tornado sphinx
+    sudo -H pip install tornado sphinx
 }
 
 # Install GUI dependencies
@@ -176,7 +176,7 @@ function install_gui {
     info "==  Installing additional dependencies for internal GUI  =="
     info "==========================================================="
     sudo apt-get install -y python-tk
-    sudo pip install networkx_viewer numpy
+    sudo -H pip install networkx_viewer numpy
 }
 
 # Install all main component
