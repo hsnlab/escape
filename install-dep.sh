@@ -2,7 +2,7 @@
 # Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
 # Install Python and system-wide packages, required programs and configurations
 # for ESCAPEv2 on pre-installed Mininet VM
-# Tested on: mininet-2.1.0p2-140718-ubuntu-14.04-server-amd64 and Ubuntu 15.04
+# Tested on: mininet-2.1.0p2-140718-ubuntu-14.04-server-amd64 and Ubuntu 16.04
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -39,7 +39,7 @@ function install_core {
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev neo4j=2.2.7
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev neo4j=2.2.7
     sudo pip install ncclient pycrypto ecdsa networkx jinja2 py2neo
 
     info "=== Configure neo4j graph database ==="
