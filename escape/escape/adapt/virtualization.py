@@ -341,7 +341,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :rtype: :any:`NFFG`
     """
     NFFGToolBox.remove_domain(base=self.__global_nffg, domain=domain, log=log)
-    log.log(VERBOSE, "Reduced Dov:\n%s" % self.__global_nffg.dump())
+    # log.log(VERBOSE, "Reduced Dov:\n%s" % self.__global_nffg.dump())
     NFFGToolBox.merge_new_domain(base=self.__global_nffg, nffg=nffg, log=log)
     log.log(VERBOSE, "Re-merged DoV:\n%s" % self.__global_nffg.dump())
     if self.__global_nffg.is_empty():
