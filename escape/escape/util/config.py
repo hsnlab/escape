@@ -538,10 +538,14 @@ class ESCAPEConfig(object):
     :return: initial params
     :rtype: dict
     """
-    params = self.__configuration[ADAPT][component].copy() \
-      if parent is None else parent[component].copy()
-    # FIXME - what if there are not module and class???
     try:
+      params = self.__configuration[ADAPT][component] \
+        if parent is None else parent[component]
+    except KeyError:
+      return {}
+    try:
+      # FIXME - what if there are not module and class???
+      params = params.copy()
       del params['module']
       del params['class']
     except KeyError:

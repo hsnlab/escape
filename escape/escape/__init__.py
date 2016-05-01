@@ -242,7 +242,8 @@ cfg = {
         {
           "module": "escape.adapt.managers",
           "class": "OpenStackDomainManager",
-          "poll": True,
+          "poll": False,
+          "diff": True,
           "adapters": {
             "REMOTE":
               {
@@ -258,6 +259,7 @@ cfg = {
           "module": "escape.adapt.managers",
           "class": "UniversalNodeDomainManager",
           "poll": False,
+          "diff": True,
           "adapters": {
             "REMOTE":
               {

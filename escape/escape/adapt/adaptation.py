@@ -88,7 +88,7 @@ class ComponentConfigurator(object):
         raise AttributeError(
           "No component is registered with the name: %s" % name)
 
-  def start_mgr (self, name, autostart=True):
+  def start_mgr (self, name, mgr_params=None, autostart=True):
     """
     Create, initialize and start a DomainManager with given name and start
     the manager by default.
@@ -103,7 +103,7 @@ class ComponentConfigurator(object):
     # If not started
     if not self.is_started(name):
       # Load from CONFIG
-      mgr = self.load_component(name)
+      mgr = self.load_component(name, params=mgr_params)
       if mgr is not None:
         # Call init - give self for the DomainManager to initiate the
         # necessary DomainAdapters itself
@@ -206,7 +206,7 @@ class ComponentConfigurator(object):
 
   # Configuration related functions
 
-  def load_component (self, component_name, parent=None):
+  def load_component (self, component_name, params=None, parent=None):
     """
     Load given component (DomainAdapter/DomainManager) from config.
     Initiate the given component class, pass the additional attributes,
@@ -226,8 +226,9 @@ class ComponentConfigurator(object):
       # If it's found
       if component_class is not None:
         # Get optional parameters of this component
-        params = CONFIG.get_component_params(component=component_name,
-                                             parent=parent)
+        if not params:
+          params = CONFIG.get_component_params(component=component_name,
+                                               parent=parent)
         # Initialize component
         component = component_class(**params)
         # Set up listeners for e.g. DomainChangedEvents
@@ -262,13 +263,19 @@ class ComponentConfigurator(object):
       log.info("No DomainManager has been configured!")
       return
     for mgr_name in mgrs:
+      # Get manager parameters from config
       mgr_cfg = CONFIG.get_component_params(component=mgr_name)
-      if 'domain_name' in mgr_cfg and mgr_cfg['domain_name'] in self.domains:
-        log.warning("Domain name collision! Domain Manager: %s has already "
-                    "initiated with the domain name: %s" % (
-                      self.get_component_by_domain(
-                        domain_name=mgr_cfg['domain_name']),
-                      mgr_cfg['domain_name']))
+      if 'domain_name' in mgr_cfg:
+        if mgr_cfg['domain_name'] in self.domains:
+          log.warning("Domain name collision! Domain Manager: %s has already "
+                      "initiated with the domain name: %s" % (
+                        self.get_component_by_domain(
+                          domain_name=mgr_cfg['domain_name']),
+                        mgr_cfg['domain_name']))
+      else:
+        # If no domain name was given, use the manager config name by default
+        mgr_cfg['domain_name'] = mgr_name
+      # Get manager class
       mgr_class = CONFIG.get_component(component=mgr_name)
       if mgr_class.IS_LOCAL_MANAGER:
         loaded_local_mgr = [name for name, mgr in self.__repository.iteritems()
@@ -279,7 +286,8 @@ class ComponentConfigurator(object):
                       (loaded_local_mgr, mgr_name))
           return
       log.debug("Load DomainManager based on config: %s" % mgr_name)
-      self.start_mgr(name=mgr_name)
+      # Start domain manager
+      self.start_mgr(name=mgr_name, mgr_params=mgr_cfg)
 
   def load_local_domain_mgr (self):
     """
@@ -471,7 +479,7 @@ class ControllerAdapter(object):
     :return: None
     """
     log.debug("Received DomainChange event from domain: %s, cause: %s"
-             % (event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
+              % (event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     # If new domain detected
     if event.cause == DomainChangedEvent.TYPE.DOMAIN_UP:
       self.DoVManager.add_domain(domain=event.domain,
