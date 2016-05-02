@@ -467,7 +467,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :return: the emulated topology description
     :rtype: :any:`NFFG`
     """
-    raise RuntimeError("VNFStarterAdapter not supported this function: "
+    raise RuntimeError("VNFStarterAdapter does not support this function: "
                        "get_topology_resource() !")
 
   def update_connection_params (self, **kwargs):

@@ -18,7 +18,7 @@ CPU/hardware specialities
 """
 import os
 
-from escape import CONFIG
+from escape import CONFIG, __version__
 from escape.util.domain import *
 from escape.util.misc import run_cmd
 
@@ -83,7 +83,7 @@ class DataplaneDomainManager(AbstractDomainManager):
     #   parent=self._adapters_cfg)
     # Init default NETCONF adapter
     self.remoteAdapter = configurator.load_component(
-      component_name=AbstractESCAPEAdapter.TYPE_MANAGEMENT,
+      component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
       parent=self._adapters_cfg)
     log.debug("Set %s as the topology Adapter for %s" %
               (self.topoAdapter.__class__.__name__, self.domain_name))
@@ -202,3 +202,107 @@ class DataplaneComputeCtrlAdapter(AbstractESCAPEAdapter):
     topo.duplicate_static_links()
     # Rewrite infra domains
     return self.rewrite_domain(nffg=topo)
+
+
+class DefaultDataplaneDomainAPI(object):
+  """
+  Define unified interface for managing Dataplane domains with REST-API.
+
+  Follows the MixIn design pattern approach.
+  """
+
+  def ovsports (self):
+    """
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def ovsflows (self):
+    """
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def running (self):
+    """
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def start (self, cmask=None, mem=None):
+    """
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  def stop (self, containerID=None):
+    """
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+
+class DataplaneRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
+                           DefaultDataplaneDomainAPI):
+  """
+  Implement the unified way to communicate with "Dataplane" domain which are
+  using REST-API.
+  """
+  # Set custom header
+  custom_headers = {
+    'User-Agent': "ESCAPE/" + __version__,
+    # XML-based Virtualizer format
+    'Accept': "application/xml"
+  }
+  # Adapter name used in CONFIG and ControllerAdapter class
+  name = "DATAPLANE-REST"
+  # type of the Adapter class - use this name for searching Adapter config
+  type = AbstractESCAPEAdapter.TYPE_MANAGEMENT
+
+  def __init__ (self, url, prefix="", **kwargs):
+    """
+    Init.
+
+    :param url: url of RESTful API
+    :type url: str
+    """
+    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
+    AbstractESCAPEAdapter.__init__(self, **kwargs)
+    log.debug("Init %s - type: %s, domain: %s, URL: %s" % (
+      self.__class__.__name__, self.type, self.domain_name, url))
+
+  def ovsflows (self):
+    # TODO
+    pass
+
+  def start (self, cmask=None, mem=None):
+    # TODO
+    pass
+
+  def ovsports (self):
+    # TODO
+    pass
+
+  def running (self):
+    # TODO
+    pass
+
+  def stop (self, containerID=None):
+    # TODO
+    pass
+
+  def check_domain_reachable (self):
+    """
+    Checker function for domain polling. Check the remote domain agent is
+    reachable.
+
+    :return: the remote domain is detected or not
+    :rtype: bool
+    """
+    return True
+
+  def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG`.
+
+    :return: the topology description of the remote domain
+    :rtype: :any:`NFFG`
+    """
+    # This function should not be called by ESCAPE
+    raise RuntimeError("DataplaneRESTAdapter does not support this function: "
+                       "get_topology_resource()!")
