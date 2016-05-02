@@ -117,6 +117,7 @@ class DataplaneDomainManager(AbstractDomainManager):
       # Mininet domain does not support NF migration directly -->
       # Remove unnecessary and moved NFs first
       # TODO
+      # log.debug("Generated mapped NFFG:\n%s" % nffg_part.dump())
       return True
     except:
       log.exception("Got exception during NFFG installation into: %s." %
