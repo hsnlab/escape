@@ -42,8 +42,8 @@ class DataplaneDomainManager(AbstractDomainManager):
     """
     Init
     """
-    log.debug(
-      "Create DataplaneDomainManager with domain name: %s" % domain_name)
+    log.debug("Create DataplaneDomainManager with domain name: %s" %
+              domain_name)
     super(DataplaneDomainManager, self).__init__(domain_name=domain_name,
                                                  *args, **kwargs)
     # self.controlAdapter = None  # DomainAdapter for POX-InternalPOXAdapter
@@ -77,17 +77,16 @@ class DataplaneDomainManager(AbstractDomainManager):
     self.topoAdapter = configurator.load_component(
       component_name=AbstractESCAPEAdapter.TYPE_TOPOLOGY,
       parent=self._adapters_cfg)
-    # Init adapter for internal controller: POX
-    # self.controlAdapter = configurator.load_component(
-    #   component_name=AbstractESCAPEAdapter.TYPE_CONTROLLER,
-    #   parent=self._adapters_cfg)
     # Init default NETCONF adapter
     self.remoteAdapter = configurator.load_component(
       component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
       parent=self._adapters_cfg)
+    # Init adapter for internal controller: POX
+    # self.controlAdapter = configurator.load_component(
+    #   component_name=AbstractESCAPEAdapter.TYPE_CONTROLLER,
+    #   parent=self._adapters_cfg)
     log.debug("Set %s as the topology Adapter for %s" %
               (self.topoAdapter.__class__.__name__, self.domain_name))
-    # self.controlAdapter.__class__.__name__),
 
   def finit (self):
     """
@@ -142,7 +141,7 @@ class DataplaneDomainManager(AbstractDomainManager):
     return False
 
 
-class DataplaneComputeCtrlAdapter(AbstractESCAPEAdapter):
+class DataplaneTopologyAdapter(AbstractESCAPEAdapter):
   """
   Adapter class to handle communication with Mininet domain.
 
@@ -151,7 +150,7 @@ class DataplaneComputeCtrlAdapter(AbstractESCAPEAdapter):
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
-  name = "COMPUTE"
+  name = "DATAPLANE-COMPUTE"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
   def __init__ (self, **kwargs):
@@ -193,9 +192,13 @@ class DataplaneComputeCtrlAdapter(AbstractESCAPEAdapter):
         # hwloc2nffg binary not found
         raise RuntimeError(
           "hwloc2nffg binary was not found under the path: %s" % cmd_hwloc2nffg)
+      elif "No such file" in raw_data:
+        # Shared library not found
+        raise RuntimeError(
+          "dependent package of hwloc2nffg is missing: %s" % raw_data)
       else:
         # unexpected error
-        return
+        raise RuntimeError(raw_data)
     # Parse raw data
     topo = NFFG.parse(raw_data)
     # Duplicate links for bidirectional connections
