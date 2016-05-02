@@ -1,0 +1,80 @@
+{
+  "parameters": {
+    "id": "AspireE311-req", 
+    "name": "NFFG-AspireE311-request", 
+    "version": "1.0"
+  }, 
+  "node_nfs": [
+    {
+      "id": "fwd", 
+      "name": "Simple Forwarder", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "functional_type": "ovs", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }
+  ], 
+  "node_saps": [
+    {
+      "id": "wlp2s0", 
+      "name": "wlp2s0", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "enp3s0", 
+      "name": "enp3s0", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 1, 
+      "src_node": "wlp2s0", 
+      "src_port": 1, 
+      "dst_node": "fwd", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 2, 
+      "src_node": "fwd", 
+      "src_port": 2, 
+      "dst_node": "enp3s0", 
+      "dst_port": 1
+    }
+  ], 
+  "edge_reqs": [
+    {
+      "id": "e2e", 
+      "src_node": "wlp2s0", 
+      "src_port": 1, 
+      "dst_node": "enp3s0", 
+      "dst_port": 1, 
+      "delay": 100, 
+      "bandwidth": 50, 
+      "sg_path": [
+        1, 
+        2
+      ]
+    }
+  ]
+}

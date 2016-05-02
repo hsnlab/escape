@@ -1,0 +1,226 @@
+{
+  "parameters": {
+    "id": "AspireE311",
+    "name": "NFFG-AspireE311",
+    "version": "1.0"
+  },
+  "node_saps": [
+    {
+      "id": "wlp2s0",
+      "name": "wlp2s0",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    {
+      "id": "enp3s0",
+      "name": "enp3s0",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "PU#1",
+      "name": "PU#1",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "ovs"
+      ],
+      "resources": {
+        "cpu": 1.0,
+        "mem": 32000.0,
+        "storage": 150.0,
+        "delay": 0.5,
+        "bandwidth": 1000
+      }
+    },
+    {
+      "id": "Machine#0",
+      "name": "Machine#0",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 3
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000
+      }
+    },
+    {
+      "id": "PCI_10ec:8168!0",
+      "name": "PCI_10ec:8168!0",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000
+      }
+    },
+    {
+      "id": "PCI_168c:0036!0",
+      "name": "PCI_168c:0036!0",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000
+      }
+    },
+    {
+      "id": "PU#2",
+      "name": "PU#2",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "ovs"
+      ],
+      "resources": {
+        "cpu": 1.0,
+        "mem": 32000.0,
+        "storage": 150.0,
+        "delay": 0.5,
+        "bandwidth": 1000
+      }
+    },
+    {
+      "id": "L2!0",
+      "name": "L2!0",
+      "ports": [
+        {
+          "id": 3
+        },
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.5,
+        "bandwidth": 1000
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "link6",
+      "src_node": "PU#1",
+      "src_port": 1,
+      "dst_node": "L2!0",
+      "dst_port": 1,
+      "delay": 0.1,
+      "bandwidth": 1000
+    },
+    {
+      "id": "link1",
+      "src_node": "wlp2s0",
+      "src_port": 1,
+      "dst_node": "PCI_168c:0036!0",
+      "dst_port": 1,
+      "delay": 0.1,
+      "bandwidth": 1000
+    },
+    {
+      "id": "link5",
+      "src_node": "Machine#0",
+      "src_port": 3,
+      "dst_node": "L2!0",
+      "dst_port": 3,
+      "delay": 0.1,
+      "bandwidth": 1000
+    },
+    {
+      "id": "link4",
+      "src_node": "PCI_10ec:8168!0",
+      "src_port": 2,
+      "dst_node": "Machine#0",
+      "dst_port": 2,
+      "delay": 0.1,
+      "bandwidth": 1000
+    },
+    {
+      "id": "link3",
+      "src_node": "PCI_168c:0036!0",
+      "src_port": 2,
+      "dst_node": "Machine#0",
+      "dst_port": 1,
+      "delay": 0.1,
+      "bandwidth": 1000
+    },
+    {
+      "id": "link2",
+      "src_node": "enp3s0",
+      "src_port": 1,
+      "dst_node": "PCI_10ec:8168!0",
+      "dst_port": 1,
+      "delay": 0.1,
+      "bandwidth": 1000
+    },
+    {
+      "id": "link7",
+      "src_node": "PU#2",
+      "src_port": 1,
+      "dst_node": "L2!0",
+      "dst_port": 2,
+      "delay": 0.1,
+      "bandwidth": 1000
+    }
+  ]
+}

@@ -857,6 +857,72 @@ def generate_hwloc2nffg_test_req ():
   return test
 
 
+def generate_simplified_hwloc2nffg ():
+  nffg = NFFG(id="AspireE311", name="NFFG-AspireE311")
+  wlp2s0 = nffg.add_sap(id="wlp2s0", name="wlp2s0")
+  enp3s0 = nffg.add_sap(id="enp3s0", name="enp3s0")
+  PCI_168c = nffg.add_infra(id="PCI_168c:0036!0", name="PCI_168c:0036!0",
+                            domain="INTERNAL",
+                            infra_type=NFFG.TYPE_INFRA_SDN_SW,
+                            cpu=0.0, mem=0.0, storage=0.0, delay=0.5,
+                            bandwidth=1000)
+  PCI_10ec = nffg.add_infra(id="PCI_10ec:8168!0", name="PCI_10ec:8168!0",
+                            domain="INTERNAL",
+                            infra_type=NFFG.TYPE_INFRA_SDN_SW,
+                            cpu=0.0, mem=0.0, storage=0.0, delay=0.5,
+                            bandwidth=1000)
+  nffg.add_link(src_port=wlp2s0.add_port(1), dst_port=PCI_168c.add_port(1),
+                id="link1", delay=0.1, bandwidth=1000)
+  nffg.add_link(src_port=enp3s0.add_port(1), dst_port=PCI_10ec.add_port(1),
+                id="link2", delay=0.1, bandwidth=1000)
+  Machine0 = nffg.add_infra(id="Machine#0", name="Machine#0",
+                            domain="INTERNAL",
+                            infra_type=NFFG.TYPE_INFRA_SDN_SW,
+                            cpu=0.0, mem=0.0, storage=0.0, delay=0.5,
+                            bandwidth=1000)
+  nffg.add_link(src_port=PCI_168c.add_port(2), dst_port=Machine0.add_port(1),
+                id="link3", delay=0.1, bandwidth=1000)
+  nffg.add_link(src_port=PCI_10ec.add_port(2), dst_port=Machine0.add_port(2),
+                id="link4", delay=0.1, bandwidth=1000)
+  L2 = nffg.add_infra(id="L2!0", name="L2!0",
+                      domain="INTERNAL",
+                      infra_type=NFFG.TYPE_INFRA_SDN_SW,
+                      cpu=0.0, mem=0.0, storage=0.0, delay=0.5,
+                      bandwidth=1000)
+  nffg.add_link(src_port=Machine0.add_port(3), dst_port=L2.add_port(3),
+                id="link5", delay=0.1, bandwidth=1000)
+  PU1 = nffg.add_infra(id="PU#1", name="PU#1",
+                       domain="INTERNAL",
+                       infra_type=NFFG.TYPE_INFRA_EE,
+                       cpu=1.0, mem=32000.0, storage=150.0, delay=0.5,
+                       bandwidth=1000)
+  PU1.add_supported_type(("ovs",))
+  PU2 = nffg.add_infra(id="PU#2", name="PU#2",
+                       domain="INTERNAL",
+                       infra_type=NFFG.TYPE_INFRA_EE,
+                       cpu=1.0, mem=32000.0, storage=150.0, delay=0.5,
+                       bandwidth=1000)
+  PU2.add_supported_type(("ovs",))
+  nffg.add_link(src_port=PU1.add_port(1), dst_port=L2.add_port(1),
+                id="link6", delay=0.1, bandwidth=1000)
+  nffg.add_link(src_port=PU2.add_port(1), dst_port=L2.add_port(2),
+                id="link7", delay=0.1, bandwidth=1000)
+  return nffg
+
+
+def generate_simplified_hwloc2nffg_req ():
+  nffg = NFFG(id="AspireE311-req", name="NFFG-AspireE311-request")
+  wlp2s0 = nffg.add_sap(id="wlp2s0", name="wlp2s0")
+  enp3s0 = nffg.add_sap(id="enp3s0", name="enp3s0")
+  fwd = nffg.add_nf(id="fwd", name="Simple Forwarder", func_type="ovs", cpu=1,
+                    mem=1, storage=0)
+  nffg.add_sglink(src_port=wlp2s0.add_port(1), dst_port=fwd.add_port(1), id=1)
+  nffg.add_sglink(src_port=fwd.add_port(2), dst_port=enp3s0.add_port(1), id=2)
+  nffg.add_req(src_port=wlp2s0.ports[1], dst_port=enp3s0.ports[1], id="e2e",
+               delay=100, bandwidth=50, sg_path=(1, 2))
+  return nffg
+
+
 if __name__ == "__main__":
   # test_parse_load()
   # test_NFFG()
@@ -878,7 +944,9 @@ if __name__ == "__main__":
   # nffg = generate_mn_topo2()
   # nffg = generate_mn_test_req2()
   # nffg = generate_mn_req_hackathon()
-  nffg = generate_hwloc2nffg_test_req()
+  # nffg = generate_hwloc2nffg_test_req()
+  nffg = generate_simplified_hwloc2nffg()
+  # nffg = generate_simplified_hwloc2nffg_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
