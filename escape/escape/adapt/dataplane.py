@@ -47,7 +47,8 @@ class DataplaneDomainManager(AbstractDomainManager):
     super(DataplaneDomainManager, self).__init__(domain_name=domain_name,
                                                  *args, **kwargs)
     # self.controlAdapter = None  # DomainAdapter for POX-InternalPOXAdapter
-    self.topoAdapter = None  # DomainAdapter for Mininet-InternalMininetAdapter
+    self.topoAdapter = None  # DomainAdapter for Dataplane
+    self.remoteAdapter = None  # REST management communication
 
   def init (self, configurator, **kwargs):
     """
@@ -80,6 +81,10 @@ class DataplaneDomainManager(AbstractDomainManager):
     # self.controlAdapter = configurator.load_component(
     #   component_name=AbstractESCAPEAdapter.TYPE_CONTROLLER,
     #   parent=self._adapters_cfg)
+    # Init default NETCONF adapter
+    self.remoteAdapter = configurator.load_component(
+      component_name=AbstractESCAPEAdapter.TYPE_MANAGEMENT,
+      parent=self._adapters_cfg)
     log.debug("Set %s as the topology Adapter for %s" %
               (self.topoAdapter.__class__.__name__, self.domain_name))
     # self.controlAdapter.__class__.__name__),
@@ -93,6 +98,7 @@ class DataplaneDomainManager(AbstractDomainManager):
     super(DataplaneDomainManager, self).finit()
     # self.controlAdapter.finit()
     self.topoAdapter.finit()
+    self.remoteAdapter.finit()
 
   # @property
   # def controller_name (self):

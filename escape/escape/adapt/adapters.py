@@ -21,6 +21,7 @@ from ncclient import NCClientError
 from ncclient.operations import OperationError
 from ncclient.operations.rpc import RPCError
 from ncclient.transport import TransportError
+from virtualizer import Virtualizer
 
 from escape import CONFIG, __version__
 from escape.infr.il_API import InfrastructureLayerAPI
@@ -28,7 +29,6 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.lib.util import dpid_to_str
-from virtualizer import Virtualizer
 
 
 class TopologyLoadException(Exception):
@@ -312,25 +312,20 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     } if agent is not None else {}
 
 
-class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
+class StaticFileTopoAdapter(AbstractESCAPEAdapter):
   """
-  Adapter class to return the topology description of the SDN domain.
-
-  Currently it just read the static description from file, and not discover it.
+  Adapter class to return the topology description parsed from a static file.
   """
-  name = "SDN-TOPO"
+  name = "STATIC-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
   def __init__ (self, path=None, *args, **kwargs):
-    super(SDNDomainTopoAdapter, self).__init__(*args, **kwargs)
-    log.debug(
-      "Init SDNDomainTopoAdapter - type: %s, domain: %s, optional path: %s" % (
-        self.type, self.domain_name, path))
+    super(StaticFileTopoAdapter, self).__init__(*args, **kwargs)
     self.topo = None
     try:
-      self.__init_from_CONFIG(path=path)
+      self._read_topo_from_file(path=path)
     except TopologyLoadException as e:
-      log.error("SDN adapter is not initialized properly: %s" % e)
+      log.error("StaticFileTopoAdapter is not initialized properly: %s" % e)
 
   def check_domain_reachable (self):
     """
@@ -350,6 +345,49 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
     """
     return self.topo
 
+  def _read_topo_from_file (self, path):
+    """
+    Load a pre-defined topology from an NFFG stored in a file.
+    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
+
+    :param path: additional file path
+    :type path: str
+    :return: None
+    """
+    try:
+      with open(path, 'r') as f:
+        log.info("Load topology from file: %s" % path)
+        self.topo = self.rewrite_domain(NFFG.parse(f.read()))
+        self.topo.duplicate_static_links()
+        # print self.topo.dump()
+    except IOError:
+      log.warning("Topology file not found: %s" % path)
+    except ValueError as e:
+      log.error("An error occurred when load topology from file: %s" %
+                e.message)
+      raise TopologyLoadException("File parsing error!")
+
+
+class SDNDomainTopoAdapter(StaticFileTopoAdapter):
+  """
+  Adapter class to return the topology description of the SDN domain.
+
+  Currently it just read the static description from file, and not discover it.
+  """
+  name = "SDN-TOPO"
+  type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
+
+  def __init__ (self, path=None, *args, **kwargs):
+    super(SDNDomainTopoAdapter, self).__init__(path=path, *args, **kwargs)
+    log.debug(
+      "Init SDNDomainTopoAdapter - type: %s, domain: %s, optional path: %s" % (
+        self.type, self.domain_name, path))
+    self.topo = None
+    try:
+      self.__init_from_CONFIG(path=path)
+    except TopologyLoadException as e:
+      log.error("SDN adapter is not initialized properly: %s" % e)
+
   def __init_from_CONFIG (self, path=None):
     """
     Load a pre-defined topology from an NFFG stored in a file.
@@ -365,18 +403,7 @@ class SDNDomainTopoAdapter(AbstractESCAPEAdapter):
       log.warning("SDN topology is missing from CONFIG!")
       raise TopologyLoadException("Missing Topology!")
     else:
-      try:
-        with open(path, 'r') as f:
-          log.info("Load SDN topology from file: %s" % path)
-          self.topo = self.rewrite_domain(NFFG.parse(f.read()))
-          self.topo.duplicate_static_links()
-          # print self.topo.dump()
-      except IOError:
-        log.warning("SDN topology file not found: %s" % path)
-      except ValueError as e:
-        log.error(
-          "An error occurred when load topology from file: %s" % e.message)
-        raise TopologyLoadException("File parsing error!")
+      self._read_topo_from_file(path=path)
 
 
 class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
