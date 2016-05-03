@@ -1,6 +1,3 @@
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
 	url = git@gitlab.fp7-unify.eu:Robert.Szabo/virtualizer.git
-[submodule "hwloc2nffg"]
-	path = hwloc2nffg
-	url = https://github.com/andmaj/hwloc2nffg.git
