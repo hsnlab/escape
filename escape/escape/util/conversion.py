@@ -59,7 +59,7 @@ class NFFGConverter(object):
   OP_INPORT = 'in_port'
   OP_OUTPUT = 'output'
   OP_FLOWCLASS = "flowclass"
-  GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG)
+  GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG, OP_FLOWCLASS)
   # Specific tags
   TAG_SG_HOP = "sg_hop"
   # Operation formats in Virtualizer
@@ -192,7 +192,7 @@ class NFFGConverter(object):
         self.log.warning("Invalid match field: %s" % match)
       return
     for kv in match_part:
-      op = kv.split('=')
+      op = kv.split('=', 1)
       if op[0] not in self.GENERAL_OPERATIONS:
         self.log.warning("Unsupported match operand: %s" % op[0])
         continue
@@ -206,6 +206,9 @@ class NFFGConverter(object):
           continue
           # elif op[0] == self.OP_SGHOP:
           #   ret.append(kv)
+      elif op[0] == self.OP_FLOWCLASS:
+        ret.append(op[1])
+
     return self.OP_DELIMITER.join(ret)
 
   def _convert_flowrule_action (self, action):
