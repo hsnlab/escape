@@ -58,6 +58,7 @@ class NFFGConverter(object):
   OP_UNTAG = 'UNTAG'
   OP_INPORT = 'in_port'
   OP_OUTPUT = 'output'
+  OP_FLOWCLASS = "flowclass"
   GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG)
   # Specific tags
   TAG_SG_HOP = "sg_hop"
@@ -138,7 +139,7 @@ class NFFGConverter(object):
         "Wrong format: %s! Separator (%s) not found!" % (
           field, cls.OP_DELIMITER))
     for part in parts:
-      kv = part.split(cls.KV_DELIMITER)
+      kv = part.split(cls.KV_DELIMITER, 1)
       if len(kv) != 2:
         if kv[0] == cls.OP_UNTAG and type.upper() == cls.TYPE_ACTION:
           ret['vlan_pop'] = True
@@ -162,6 +163,8 @@ class NFFGConverter(object):
           raise RuntimeError('Not supported field type: %s!' % type)
       elif kv[0] == cls.OP_OUTPUT:
         ret['out'] = kv[1]
+      elif kv[0] == cls.OP_FLOWCLASS and type.upper() == cls.TYPE_MATCH:
+        ret['flowclass'] = kv[1]
       else:
         raise RuntimeError("Unrecognizable key: %s" % kv[0])
     return ret

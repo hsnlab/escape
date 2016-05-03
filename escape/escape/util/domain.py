@@ -15,6 +15,7 @@ Implement the supporting classes for domain adapters.
 """
 import time
 import urlparse
+
 from requests import Session, ConnectionError, HTTPError, Timeout, \
   RequestException
 
@@ -764,6 +765,13 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
                     "Skip flowrule installation..." % match['vlan_id'])
         return
       msg.match.dl_vlan = vlan_id
+    # Append explicit matching parameters to OF flowrule
+    if 'flowclass' in match:
+      for ovs_match_entry in match['flowclass'].split(','):
+        kv = ovs_match_entry.split('=')
+        # kv = [field, value] ~ ['dl_src', '00:0A:E4:25:6B:B6']
+        setattr(msg.match, kv[0], kv[1])
+        # msg.match.dl_src = "00:00:00:00:00:01"
     if 'vlan_push' in action:
       try:
         vlan_push = int(action['vlan_push'])
