@@ -27,7 +27,7 @@ from escape.util.config import ConfigurationError
 from escape.util.misc import enum, VERBOSE
 from escape.util.pox_extension import OpenFlowBridge, \
   ExtendedOFConnectionArbiter
-from pox.lib.addresses import EthAddr
+from pox.lib.addresses import EthAddr, IPAddr
 from pox.lib.recoco import Timer
 from pox.lib.revent import EventMixin, Event
 
@@ -770,8 +770,17 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       for ovs_match_entry in match['flowclass'].split(','):
         kv = ovs_match_entry.split('=')
         # kv = [field, value] ~ ['dl_src', '00:0A:E4:25:6B:B6']
-        setattr(msg.match, kv[0], kv[1])
         # msg.match.dl_src = "00:00:00:00:00:01"
+        if kv[0] in ('dl_src', 'dl_dst'):
+          setattr(msg.match, kv[0], EthAddr(kv[1]))
+        elif kv[0] in ('in_port', 'dl_vlan', 'dl_type', 'ip_proto', 'nw_proto',
+                       'nw_tos', 'nw_ttl', 'tp_src', 'tp_dst'):
+          msg.match.dl_type = int(kv[1])
+        elif kv[0] in ('nw_src', 'nw_dst'):
+          setattr(msg.match, kv[0], IPAddr(kv[1]))
+        else:
+          setattr(msg.match, kv[0], kv[1])
+
     if 'vlan_push' in action:
       try:
         vlan_push = int(action['vlan_push'])
