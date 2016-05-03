@@ -557,8 +557,10 @@ class NFFGConverter(object):
       # Check if there is a matching operation -> currently just TAG is used
       if flowentry.match.is_initialized() and flowentry.match.get_value():
         for op in flowentry.match.get_as_text().split(self.OP_DELIMITER):
+          if op.startswith(self.OP_INPORT):
+            pass
           # e.g. <match>dl_tag=0x0004</match> --> in_port=1;TAG=SAP2|fwd|4
-          if op.startswith(self.MATCH_TAG):
+          elif op.startswith(self.MATCH_TAG):
             # if src or dst was a SAP: SAP.id == port.name
             # if scr or dst is a VNF port name of parent of port
             if v_fe_port.port_type.get_as_text() == \
@@ -575,6 +577,9 @@ class NFFGConverter(object):
             _tag = int(op.split('=')[1], base=0)
             fr_match += ";%s=%s" % (self.OP_TAG, self.LABEL_DELIMITER.join(
               (str(_src_name), str(_dst_name), str(_tag))))
+          else:
+            # Everything else is must come from flowclass
+            fr_match += ";%s" % op
 
       # Check if there is an action operation
       if flowentry.action.is_initialized() and flowentry.action.get_value():
