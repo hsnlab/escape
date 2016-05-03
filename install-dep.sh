@@ -48,6 +48,12 @@ function install_core {
     sudo service neo4j-service restart
     # Stick to version  2.2.7
     sudo apt-mark hold neo4j
+
+    info "=== Compile hwloc2nffg ==="
+    sudo apt-get -y install g++ cmake make libboost-program-options-dev libhwloc-dev libjsoncpp-dev
+    cd "$DIR/hwloc2nffg/build"
+    cmake ../
+    make
 }
 
 function install_mn_dep {
