@@ -52,7 +52,8 @@ alg = None
 
 
 class Graph(object):
-    """ representing a directed graph ( G = ( V , E) )
+    """ represents a directed graph ( G = ( V , E) )
+        is used for modeling the substrate as well as the request (service) graphs
     """
 
     def __init__(self, id):
@@ -209,7 +210,19 @@ class Graph(object):
 
 
 class Substrate(Graph):
-    """ representing the physical network
+    """ representing the physical network,
+
+        nodes have the following attributes
+        - id of the node
+        - type (an informal description which is not really used)
+        - types: NF that can be hosted on this node
+        - bandwidth, cpu, memory, storage, delay are directly taken from the respective SG nodes
+        node attributes are accessed e.g. via self.node[snode]['cpu'] where snode denotes the id of a substrate node
+
+        edges are 4 tuples (tail, tail_p, head_p, head), where tail and head denote the respective nodes and
+        tail_p and head_p denote the respective ports of the respective nodes. edges have the following attributes.
+        - delay, bandwidth
+        these attributes are accessed e.g. via self.edge[sedge]['cpu'], where sedge denotes a 4-tuple
     """
     def __init__(self, id):
         super(self.__class__, self).__init__(id)
@@ -272,8 +285,22 @@ class Substrate(Graph):
         return self.nodes_supporting_type[type]
 
 class Request(Graph):
-    """ represents a service graph
+
+    """ represents a single SG
+
+    nodes have the following attributes
+    - id of the node
+    - type: the corresponding NF-type or the static string 'SAP', if the node refers to a SAP
+    - cpu, memory, storage denote the standard requirements for the respective NF
+    - allowed_nodes may be set to restrict the potential mapping locations; e.g. given a SAP node, the only allowed_node will be the respective SAP
+
+    edges are 4 tuples (tail, tail_p, head_p, head), where tail and head denote the respective (virtual) nodes and
+    tail_p and head_p denote the respective ports of the respective nodes. edges have the following attributes.
+    - bandwidth
+
+    attributes are accessed as in the substrate graph
     """
+
     def __init__(self, id):
         super(self.__class__, self).__init__(id)
         self.graph['path_requirements'] = {}
@@ -331,7 +358,206 @@ class Request(Graph):
     def get_allowed_nodes_for_node_raw(self, node):
         return self.node[node]['allowed_nodes']
 
+
+
+def convert_req_to_request(req):
+
+
+    print "creating request {}".format(req.id)
+    result = Request(id=req.id)
+
+    # ADD NODES
+    # there exist three types: infras, saps, nfs
+
+    #   infras: make sure that none of these exist
+    for infra in req.infras:
+        #Matthias: this is just to check that I got the concept right
+        if infra.type != NFFG.TYPE_INFRA:
+            raise Exception("infra node is no infra node: {} has type {}".format(infra.id, infra.type))
+        raise Exception("request cannot contain infrastructure nodes: ".format(infra.id))
+
+    #   saps
+    for sap in req.saps:
+        print "\t adding SAP node {} WITHOUT CONSIDERING CPU, MEMORY or STORAGE".format(sap.id)
+        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(sap).items()) + "]"
+
+        if (sap.delay is not None and sap.delay > 0) or (sap.bandwidth is not None and sap.bandwidth > 0):
+            raise Exception("Cannot handle SAP delay ({}) or bandwidth ({}).".format(sap.delay, sap.bandwidth))
+
+        result.add_node(id=sap.id, ntype="SAP", cpu=0, memory=0, storage=0, allowed_snodes=[sap.name])
+
+    #   nfs
+    for nf in req.nfs:
+        print "\t adding NF node {}".format(nf.id)
+
+        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(nf).items()) + "]"
+
+        #check that bandwidth and delay are not used
+        if nf.resources.delay is not None and nf.resources.delay > 0:
+            raise Exception("Cannot handle NF delay requirements of NF {}".format(nf.id))
+
+        if nf.resources.bandwidth is not None and nf.resources.bandwidth > 0:
+            raise Exception("Cannot handle NF bandwidth requirements of NF {}".format(nf.id))
+
+        result.add_node(id=nf.id, ntype=nf.functional_type, cpu=nf.resources.cpu, memory=nf.resources.mem, storage=nf.resources.storage, allowed_snodes=None)
+
+    # ADD EDGES
+    #   there exist four types: STATIC, DYNAMIC, SG and REQUIREMENT
+
+    #   STATIC and DYNAMIC: make sure that these are not contained
+    for link in req.links:
+        #Matthias: this is just to check that I got the concept right
+        if link.type != NFFG.TYPE_LINK_DYNAMIC and link.type != NFFG.TYPE_LINK_STATIC:
+            raise Exception("link is neither dynamic nor static: {}".format(link.id))
+        raise Exception("Request may not contain static or dynamic links: {}".format(link.id))
+
+    #   SG
+    for sg_link in req.sg_hops:
+
+        print "\t adding edge {}".format(sg_link.id)
+
+        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(sg_link).items()) + "]"
+
+
+        bw_req = sg_link.bandwidth
+        if bw_req is None:
+            bw_req = 0
+
+        result.add_edge(id=sg_link.id, tail=sg_link.src.node.id, tail_port = sg_link.src.id, head_port=sg_link.dst.id, head=sg_link.dst.node.id, bandwidth=bw_req)
+
+        if sg_link.delay is not None and sg_link.delay > 0:
+            #add new novel constraint
+            result.add_delay_requirement(id="sg_link_req_{}".format(sg_link.id), path=[sg_link.id], delay=sg_link.delay)
+
+    for path_req in req.reqs:
+
+        print "\t handling path requirement {}".format(path_req.id)
+
+        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(path_req).items()) + "]"
+
+        result.add_delay_requirement(id=path_req.id, path=path_req.sg_path, delay=path_req.delay)
+
+        if path_req.bandwidth is not None and path_req.bandwidth > 0:
+            print "\t\t there exists an additional bandwidth requirement of {} units. Augmenting every contained link with the required bandwidth.".format(path_req.bandwidth)
+
+            #TODO I AM UNSURE WHETHER THE FOLLOWING IS CORRECT
+            for edge_id in path_req.sg_path:
+
+                edge = result.edge_id_to_edge[edge_id]
+                bw_req_before = result.edge[edge]['bandwidth']
+                result.edge[edge]['bandwidth'] += path_req.bandwidth
+                print "\t\t\t increasing bandwidth along edge {} (i.e. {}) from {} to {}".format(edge_id, edge, bw_req_before, result.edge[edge]['bandwidth'])
+
+
+    print "created request looks like .."
+
+    result.print_it(including_shortest_path_costs=False, data=True)
+
+    print "\n\n"
+
+    return result
+
+
+
+
+
+def convert_nffg_to_substrate(nffg):
+
+    print "creating substrate {}".format(nffg.id)
+    result = Substrate(id=nffg.id)
+
+    print "\t [" + ', '.join("%s: %s" % item for item in vars(nffg).items()) + "]"
+
+    # ADD NODES
+    # there exist three types: infras, saps, nfs
+
+    #   infras: make sure that these are added with the right resources
+
+    for infra in nffg.infras:
+
+        print "\t adding node {}".format(infra.id)
+
+        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(infra).items()) + "]"
+
+        delay = nffg.calculate_available_node_res('delay')
+
+        result.add_node(id=infra.id,
+                        type="INFRA",
+                        types=infra.supported,
+                        delay=infra.resources.delay,
+                        bandwidth=infra.resources.bandwidth,
+                        cpu=infra.resources.cpu,
+                        memory=infra.resources.mem,
+                        storage=infra.resources.storage)
+
+        # taking into account allocations..
+        for vnf in nffg.running_nfs(infra.id):
+            print "\t\t\t reducing resources of node {} according to resources {} of VNF {}".format(infra.id, vnf.resources, vnf.id)
+            result.reduce_available_resources_at_node(infra.id, vnf.resources)
+
+        print "\t\t final resources of node {} are {}".format(infra.id, result.node[infra.id])
+
+        #TODO: take into account the link allocations
+
+
+
+     #   saps
+    for sap in nffg.saps:
+        print "\t adding SAP node {} WITHOUT CONSIDERING CPU, MEMORY, BANDWIDTH OR DELAY".format(sap.id)
+        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(sap).items()) + "]"
+
+        #if (sap.delay is not None and sap.delay > 0) or (sap.bandwidth is not None and sap.bandwidth > 0):
+        #    raise Exception("Cannot handle SAP delay ({}) or bandwidth ({}).".format(sap.delay, sap.bandwidth))
+
+        if sap.delay is not None and sap.delay > 0:
+            print "\t\t ignoring {} delay at SAP {} as this is not of importance here; setting delay to 0 ".format(sap.delay, sap.id)
+        print "\t\t ignoring {} bandwidth at SAP {} as this is not of importance here; setting bandwidth to inf".format(sap.bandwidth, sap.id)
+
+
+        result.add_node(id=sap.id,
+                        type="SAP",
+                        types=["SAP"],
+                        delay=0.0,
+                        bandwidth=GRB.INFINITY,
+                        cpu=0,
+                        memory=0,
+                        storage=0)
+
+    #   nfs are not added to the substrate graph!
+
+
+    # ADD EDGES
+
+    for edge_link in nffg.links:
+
+        if edge_link.type == "STATIC":
+
+            print "\t adding static link {}".format(edge_link.id)
+            print "\t\t [" + ', '.join("%s: %s" % item for item in vars(edge_link).items()) + "]"
+
+            result.add_edge(id=edge_link.id,
+                            tail=edge_link.src.node.id,
+                            tail_port=edge_link.src.id,
+                            head_port=edge_link.dst.id,
+                            head=edge_link.dst.node.id,
+                            delay=edge_link.delay,
+                            bandwidth=edge_link.bandwidth)
+
+        else:
+            print "\t disregarding {} link {}".format(edge_link.type, edge_link.id)
+
+
+    print "created substrate looks like .."
+
+    result.print_it(including_shortest_path_costs=False, data=True)
+
+    return result
+
+
 class Scenario(object):
+    """
+        Binds together a substrate and a set of requests
+    """
 
     def __init__(self, substrate, requests):
         self.substrate = substrate
@@ -367,6 +593,10 @@ def construct_name(name, req_id=None, vnode=None, snode=None, vedge=None, sedge=
     return name.replace(" ", "")
 
 class ModelCreator(object):
+
+    """
+        interface for gurobi; NOT of interest in the current state
+    """
 
     def __init__(self, scenario):
         #storing the essential data
@@ -617,8 +847,8 @@ class ModelCreator(object):
 
                     vstart, vstart_p, vend_p, vend = vedge
 
-                    start_node = mapping.mapping_of_nodes[vstart]
-                    end_node = mapping.mapping_of_nodes[vend]
+                    start_node = mapping.vnode_to_snode[vstart]
+                    end_node = mapping.vnode_to_snode[vend]
 
                     if start_node == end_node:
                         # we do not need to perform any search: the virtualized functions are directly connected via the same node
@@ -657,12 +887,17 @@ class ModelCreator(object):
 
             print "\t storing the solution for request {}".format(req.id)
             self.solution.set_mapping_of_request(req, mapping)
-            print mapping.mapping_of_nodes
-            print mapping.mapping_of_edges
+            print mapping.vnode_to_snode
+            print mapping.vedge_to_spath
 
 
 
 class Mapping(object):
+
+    """ represents the mapping of a single request onto the substrate
+        may also represent the "non-embedding", if is_embedded is not set.
+
+    """
 
     def __init__(self, request, substrate, scenario, is_embedded=True):
         self.request = request
@@ -670,8 +905,12 @@ class Mapping(object):
         self.scenario = scenario
         self.is_embedded = is_embedded
 
-        self.mapping_of_nodes = {}
-        self.mapping_of_edges = {}
+        self.vnode_to_snode = {}
+        self.vedge_to_spath = {}
+
+        self.snode_to_hosted_vnodes = {}
+        self.sedge_to_vedges = {}
+
 
     def map_node(self, vnode, snode):
         if not self.is_embedded:
@@ -684,7 +923,12 @@ class Mapping(object):
         if snode not in self.scenario.compute_allowed_nodes(self.request, vnode):
             raise Exception("Substrate node {} does not match required type of vnode {} of request {}".format(snode, vnode, self.request.id))
 
-        self.mapping_of_nodes[vnode] = snode
+        self.vnode_to_snode[vnode] = snode
+
+        if not snode in self.snode_to_hosted_vnodes:
+            self.snode_to_hosted_vnodes[snode] = [vnode]
+        else:
+            self.snode_to_hosted_vnodes[snode].append(vnode)
 
 
     def map_edge(self, vedge, substrate_edge_path):
@@ -703,9 +947,9 @@ class Mapping(object):
         last_snode = None
         for index, (stail,stail_p, shead_p, shead) in enumerate(substrate_edge_path):
             if index == 0:
-                if vtail not in self.mapping_of_nodes:
+                if vtail not in self.vnode_to_snode:
                     raise Exception("Before adding mappings of edges, please add the node mappings: vnode {}".format(vtail))
-                if stail != self.mapping_of_nodes[vtail]:
+                if stail != self.vnode_to_snode[vtail]:
                     raise Exception("The substrate path {} does not start at the substrate node {} onto which the tail of the virtual link {} was mapped".format(substrate_edge_path, stail, vedge))
                 last_snode = shead
 
@@ -715,13 +959,29 @@ class Mapping(object):
                 last_snode = shead
 
                 if index == len(substrate_edge_path) -1:
-                    if vhead not in self.mapping_of_nodes:
+                    if vhead not in self.vnode_to_snode:
                         raise Exception("Before adding mappings of edges, please add the node mappings: vnode {}".format(vhead))
-                    if shead != self.mapping_of_nodes[vhead]:
+                    if shead != self.vnode_to_snode[vhead]:
                         raise Exception("The substrate path {} does not end at the substrate node {} onto which the head of the virtual link {} was mapped".format(substrate_edge_path, shead, vedge))
 
 
-        self.mapping_of_edges[vedge] = substrate_edge_path
+        self.vedge_to_spath[vedge] = substrate_edge_path
+
+        for sedge in substrate_edge_path:
+            if not sedge in self.sedge_to_vedges:
+                self.sedge_to_vedges[sedge] = [vedge]
+            else:
+                self.sedge_to_vedges[sedge].append(vedge)
+
+    def get_hosted_vnodes(self, snode):
+        if snode not in self.snode_to_hosted_vnodes:
+            return []
+        return self.snode_to_hosted_vnodes[snode]
+
+    def get_hosted_vedges(self, sedge):
+        if sedge not in self.sedge_to_vedges:
+            return []
+        return self.sedge_to_vedges[sedge]
 
 def isFeasibleStatus(status):
     result = True
@@ -826,196 +1086,32 @@ class ScenarioSolution(object):
         else:
             raise Exception("The request {} was already mapped!".format(request.id))
 
+    def validate_solution(self):
 
-def convert_req_to_request(req):
+        print "starting to validate solution..."
 
+        #check the three basic node properties, i.e. cpu, mem, storage
 
-    print "creating request {}".format(req.id)
-    result = Request(id=req.id)
+        basic_node_resources = ['cpu', 'memory', 'storage']
 
-    # ADD NODES
-    # there exist three types: infras, saps, nfs
+        for snode in self.substrate.nodes:
+            for resource in basic_node_resources:
+                available_resources = self.substrate.node[snode][resource]
 
-    #   infras: make sure that none of these exist
-    for infra in req.infras:
-        #Matthias: this is just to check that I got the concept right
-        if infra.type != NFFG.TYPE_INFRA:
-            raise Exception("infra node is no infra node: {} has type {}".format(infra.id, infra.type))
-        raise Exception("request cannot contain infrastructure nodes: ".format(infra.id))
+                for req in self.requests:
+                    mapping = self.mapping_of_request[req]
+                    if mapping.is_embedded:
+                        for vnode in mapping.get_hosted_vnodes(snode):
+                            available_resources -= req.node[vnode][resource]
 
-    #   saps
-    for sap in req.saps:
-        print "\t adding SAP node {} WITHOUT CONSIDERING CPU, MEMORY or STORAGE".format(sap.id)
-        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(sap).items()) + "]"
+                if available_resources < 0:
+                    raise Exception("The resource {} of substrate node {} is violated by the mapping by {} many units".format(resource, snode, available_resources))
 
-        if (sap.delay is not None and sap.delay > 0) or (sap.bandwidth is not None and sap.bandwidth > 0):
-            raise Exception("Cannot handle SAP delay ({}) or bandwidth ({}).".format(sap.delay, sap.bandwidth))
+        #check that bandwidth at nodes is sufficient
 
-        result.add_node(id=sap.id, ntype="SAP", cpu=0, memory=0, storage=0, allowed_snodes=[sap.name])
+        #some more checks here
 
-    #   nfs
-    for nf in req.nfs:
-        print "\t adding NF node {}".format(nf.id)
-
-        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(nf).items()) + "]"
-
-        #check that bandwidth and delay are not used
-        if nf.resources.delay is not None and nf.resources.delay > 0:
-            raise Exception("Cannot handle NF delay requirements of NF {}".format(nf.id))
-
-        if nf.resources.bandwidth is not None and nf.resources.bandwidth > 0:
-            raise Exception("Cannot handle NF bandwidth requirements of NF {}".format(nf.id))
-
-        result.add_node(id=nf.id, ntype=nf.functional_type, cpu=nf.resources.cpu, memory=nf.resources.mem, storage=nf.resources.storage, allowed_snodes=None)
-
-    # ADD EDGES
-    #   there exist four types: STATIC, DYNAMIC, SG and REQUIREMENT
-
-    #   STATIC and DYNAMIC: make sure that these are not contained
-    for link in req.links:
-        #Matthias: this is just to check that I got the concept right
-        if link.type != NFFG.TYPE_LINK_DYNAMIC and link.type != NFFG.TYPE_LINK_STATIC:
-            raise Exception("link is neither dynamic nor static: {}".format(link.id))
-        raise Exception("Request may not contain static or dynamic links: {}".format(link.id))
-
-    #   SG
-    for sg_link in req.sg_hops:
-
-        print "\t adding edge {}".format(sg_link.id)
-
-        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(sg_link).items()) + "]"
-
-
-        bw_req = sg_link.bandwidth
-        if bw_req is None:
-            bw_req = 0
-
-        result.add_edge(id=sg_link.id, tail=sg_link.src.node.id, tail_port = sg_link.src.id, head_port=sg_link.dst.id, head=sg_link.dst.node.id, bandwidth=bw_req)
-
-        if sg_link.delay is not None and sg_link.delay > 0:
-            #add new novel constraint
-            result.add_delay_requirement(id="sg_link_req_{}".format(sg_link.id), path=[sg_link.id], delay=sg_link.delay)
-
-    for path_req in req.reqs:
-
-        print "\t handling path requirement {}".format(path_req.id)
-
-        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(path_req).items()) + "]"
-
-        result.add_delay_requirement(id=path_req.id, path=path_req.sg_path, delay=path_req.delay)
-
-        if path_req.bandwidth is not None and path_req.bandwidth > 0:
-            print "\t\t there exists an additional bandwidth requirement of {} units. Augmenting every contained link with the required bandwidth.".format(path_req.bandwidth)
-
-            #TODO I AM UNSURE WHETHER THE FOLLOWING IS CORRECT
-            for edge_id in path_req.sg_path:
-
-                edge = result.edge_id_to_edge[edge_id]
-                bw_req_before = result.edge[edge]['bandwidth']
-                result.edge[edge]['bandwidth'] += path_req.bandwidth
-                print "\t\t\t increasing bandwidth along edge {} (i.e. {}) from {} to {}".format(edge_id, edge, bw_req_before, result.edge[edge]['bandwidth'])
-
-
-    print "created request looks like .."
-
-    result.print_it(including_shortest_path_costs=False, data=True)
-
-    print "\n\n"
-
-    return result
-
-def convert_nffg_to_substrate(nffg):
-
-
-
-    print "creating substrate {}".format(nffg.id)
-    result = Substrate(id=nffg.id)
-
-    print "\t [" + ', '.join("%s: %s" % item for item in vars(nffg).items()) + "]"
-
-    # ADD NODES
-    # there exist three types: infras, saps, nfs
-
-    #   infras: make sure that these are added with the right resources
-
-    for infra in nffg.infras:
-
-        print "\t adding node {}".format(infra.id)
-
-        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(infra).items()) + "]"
-
-        delay = nffg.calculate_available_node_res('delay')
-
-        result.add_node(id=infra.id,
-                        type="INFRA",
-                        types=infra.supported,
-                        delay=infra.resources.delay,
-                        bandwidth=infra.resources.bandwidth,
-                        cpu=infra.resources.cpu,
-                        memory=infra.resources.mem,
-                        storage=infra.resources.storage)
-
-        # taking into account allocations..
-        for vnf in nffg.running_nfs(infra.id):
-            print "\t\t\t reducing resources of node {} according to resources {} of VNF {}".format(infra.id, vnf.resources, vnf.id)
-            result.reduce_available_resources_at_node(infra.id, vnf.resources)
-
-        print "\t\t final resources of node {} are {}".format(infra.id, result.node[infra.id])
-
-
-
-     #   saps
-    for sap in nffg.saps:
-        print "\t adding SAP node {} WITHOUT CONSIDERING CPU, MEMORY, BANDWIDTH OR DELAY".format(sap.id)
-        print "\t\t [" + ', '.join("%s: %s" % item for item in vars(sap).items()) + "]"
-
-        #if (sap.delay is not None and sap.delay > 0) or (sap.bandwidth is not None and sap.bandwidth > 0):
-        #    raise Exception("Cannot handle SAP delay ({}) or bandwidth ({}).".format(sap.delay, sap.bandwidth))
-
-        if sap.delay is not None and sap.delay > 0:
-            print "\t\t ignoring {} delay at SAP {} as this is not of importance here; setting delay to 0 ".format(sap.delay, sap.id)
-        print "\t\t ignoring {} bandwidth at SAP {} as this is not of importance here; setting bandwidth to inf".format(sap.bandwidth, sap.id)
-
-
-        result.add_node(id=sap.id,
-                        type="SAP",
-                        types=["SAP"],
-                        delay=0.0,
-                        bandwidth=GRB.INFINITY,
-                        cpu=0,
-                        memory=0,
-                        storage=0)
-
-    #   nfs are not added to the substrate graph!
-
-
-    # ADD EDGES
-
-    for edge_link in nffg.links:
-
-        if edge_link.type == "STATIC":
-
-            print "\t adding static link {}".format(edge_link.id)
-            print "\t\t [" + ', '.join("%s: %s" % item for item in vars(edge_link).items()) + "]"
-
-            result.add_edge(id=edge_link.id,
-                            tail=edge_link.src.node.id,
-                            tail_port=edge_link.src.id,
-                            head_port=edge_link.dst.id,
-                            head=edge_link.dst.node.id,
-                            delay=edge_link.delay,
-                            bandwidth=edge_link.bandwidth)
-
-        else:
-            print "\t disregarding {} link {}".format(edge_link.type, edge_link.id)
-
-
-    print "created substrate looks like .."
-
-    result.print_it(including_shortest_path_costs=False, data=True)
-
-    return result
-
+        print "\t everything looks fine."
 
 
 
@@ -1046,7 +1142,11 @@ if __name__ == '__main__':
     scen = Scenario(substrate, [request])
     mc = ModelCreator(scen)
     mc.init_model_creator()
-    mc.run_milp()
+    if isFeasibleStatus(mc.run_milp()):
+        solution = mc.solution
+        solution.validate_solution()
+
+
 
     import sys
     sys.exit(0)
