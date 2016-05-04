@@ -466,66 +466,66 @@ class CoreAlgorithm(object):
     NOTE(loops): shortest path from i to i is [i] (This path is the
     collocation, and 1 long paths are handled right by the
     _objectiveFunction()/_calculateAvgLinkUtil()/_sumLat() functions)'''
-    # TODO: Write an utility func, which gives path based on lat AND bw
     paths, linkids = helper.shortestPathsBasedOnEdgeWeight(subgraph, start)
-    for map_target in paths:
-      if self.net.node[map_target].type == 'INFRA' and self.net.node[
-        map_target].supported is not None:
-        
-        """for supp in self.net.node[map_target].supported:
-          self.log.debug(" ".join((map_target,"has supported type: ",supp)))
-        """
-                         
-        if self.req.node[vnf_id].functional_type in self.net.node[
-          map_target].supported:
-
-          place_crit = self.req.node[vnf_id].placement_criteria
-          if len(place_crit) > 0 and map_target not in place_crit:
-            continue
-          else:
-            value, used_lat = self._objectiveFunction(cid, map_target,
-                                                      prev_vnf_id, vnf_id,
-                                                      reqlinkid,
-                                                      paths[map_target],
-                                                      linkids[map_target])
-            if value > -1:
-              self.log.debug("Calculated value: %f for VNF %s and path: %s" % (
-                value, vnf_id, paths[map_target]))
-              just_found = copy.deepcopy(base_bt_record)
-              just_found.update(zip(('target_infra', 'path', 'path_link_ids', 
-                                    'used_latency', 'obj_func_value'), 
-                                (map_target, paths[map_target], 
-                                 linkids[map_target], used_lat, value)))
-              if deque_length == 0:
-                best_node_que.append(just_found)
-                deque_length += 1
-              else:
-                best_node_sofar = best_node_que.pop()
-                best_node_que.append(best_node_sofar)
-                if best_node_sofar['obj_func_value'] > value:
-                  best_node_que.append(just_found)
-                elif deque_length <= self.bt_branching_factor > 1:
-                  least_good_que = deque()
-                  least_good_sofar = best_node_que.popleft()
-                  deque_length -= 1
-                  while least_good_sofar['obj_func_value'] > value:
-                    least_good_que.append(least_good_sofar)
-                    # too many good nodes can be remove, because we already 
-                    # know just found is worse than the best node
-                    least_good_sofar = best_node_que.popleft()
-                    deque_length -= 1
-                  best_node_que.appendleft(least_good_sofar)
-                  best_node_que.appendleft(just_found)
-                  deque_length += 2
-                  while deque_length < self.bt_branching_factor:
-                    try:
-                      best_node_que.appendleft(least_good_que.popleft())
-                    except IndexError:
-                      break
-            else:
-              # self.log.debug("Host %s is not a good candidate for hosting %s."
-              #                %(map_target,vnf_id))
-              pass
+    # TODO: sort 'paths' in ordered dict according to new latency pref value.
+    # allow only infras which has some 'supported'
+    potential_hosts = filter(lambda h, nodes=self.net.node: 
+      nodes[h].type=='INFRA' and nodes[h].supported is not None, 
+                             paths.keys())
+    # allow only hosts which supports this NF
+    potential_hosts = filter(lambda h, v=vnf_id, nodes=self.net.node, 
+      vnfs=self.req.node: vnfs[v].functional_type in nodes[h].supported, 
+                             potential_hosts)
+    # allow only hosts which complies to plac_crit if any
+    potential_hosts = filter(lambda h, v=vnf_id, vnfs=self.req.node:
+      len(vnfs[v].placement_criteria)==0 or h in vnfs[v].placement_criteria, 
+                             potential_hosts)
+    # potential_hosts = sorted(potential_hosts, cmp=lambda h1, h2, cid=cid, subg=subgraph, node=start, vnf1=prev_vnf_id, vnf2=vnf_id, reqlid=reqlinkid: 
+    #                       self.manager.cmpBasedOnDelayPreference(h1, h2, vnf1, vnf2, reqlid, cid, subg, node))
+    for map_target in potential_hosts:
+      value, used_lat = self._objectiveFunction(cid, map_target,
+                                                prev_vnf_id, vnf_id,
+                                                reqlinkid,
+                                                paths[map_target],
+                                                linkids[map_target])
+      if value > -1:
+        self.log.debug("Calculated value: %f for VNF %s and path: %s" % (
+          value, vnf_id, paths[map_target]))
+        just_found = copy.deepcopy(base_bt_record)
+        just_found.update(zip(('target_infra', 'path', 'path_link_ids', 
+                              'used_latency', 'obj_func_value'), 
+                          (map_target, paths[map_target], 
+                           linkids[map_target], used_lat, value)))
+        if deque_length == 0:
+          best_node_que.append(just_found)
+          deque_length += 1
+        else:
+          best_node_sofar = best_node_que.pop()
+          best_node_que.append(best_node_sofar)
+          if best_node_sofar['obj_func_value'] > value:
+            best_node_que.append(just_found)
+          elif deque_length <= self.bt_branching_factor > 1:
+            least_good_que = deque()
+            least_good_sofar = best_node_que.popleft()
+            deque_length -= 1
+            while least_good_sofar['obj_func_value'] > value:
+              least_good_que.append(least_good_sofar)
+              # too many good nodes can be remove, because we already 
+              # know just found is worse than the best node
+              least_good_sofar = best_node_que.popleft()
+              deque_length -= 1
+            best_node_que.appendleft(least_good_sofar)
+            best_node_que.appendleft(just_found)
+            deque_length += 2
+            while deque_length < self.bt_branching_factor:
+              try:
+                best_node_que.appendleft(least_good_que.popleft())
+              except IndexError:
+                break
+      else:
+        # self.log.debug("Host %s is not a good candidate for hosting %s."
+        #                %(map_target,vnf_id))
+        pass
     try:
       best_node_sofar = best_node_que.pop()
       self.bt_handler.addBacktrackLevel(cid, best_node_que)
