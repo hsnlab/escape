@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with POX. If not, see <http://www.gnu.org/licenses/>.
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import logging, copy
 
 import networkx as nx
@@ -561,3 +561,87 @@ class MappingManager(object):
     Returns the remaining latency of a given E2E chain.
     """
     return self.chain_subchain.node[chain_id]['avail_latency']
+
+  def cmpBasedOnDelayDist (self, h1, h2, origin):
+    """
+    Determines wether h1 or h2 is closer to origin based on distance measured 
+    in latency.
+    """
+    if self.shortest_paths_lengths[origin][h1] < \
+       self.shortest_paths_lengths[origin][h2]:
+      return -1
+    elif self.shortest_paths_lengths[origin][h1] > \
+       self.shortest_paths_lengths[origin][h2]:
+      return 1
+    else:
+      return 0
+
+  def calcDelayPrefValues (self, hosts, vnf1, vnf2, reqlid, cid, subg, 
+                           node_id):
+    """
+    Sorts potential hosts in the network based on a composite key:
+    Firstly, based on how far is the host from the shortest path between the 
+    (sub)chain ends, creates sets.
+    Secondly, based on distance from the current host, measured in delay.
+    Also calculates their latency component value, and returns a list of tuples:
+    (host, lat_pref_value).
+    """
+    # should always be mapped already
+    log.debug("Calculating latency preference values for placing VNF %s."%vnf2)
+    chainend = self.getIdOfChainEnd_fromNetwork(\
+               self.chain_subchain.node[cid]['subchain'][-1][1])
+    paths, _ = shortestPathsBasedOnEdgeWeight(subg, node_id, 
+                                                    weight='delay', 
+                                                    target=chainend)
+    sh_path = paths[chainend]
+    sh_path_lat = self.shortest_paths_lengths[node_id][chainend]
+    subchain = self.chain_subchain.node[cid]['subchain']
+    remaining_chain_len = len(subchain[subchain.index((vnf1, vnf2, reqlid)):])
+    if remaining_chain_len == 1:
+      raise uet.InternalAlgorithmException("Sorting based on latency preference"
+                " value shouldn't be called when only one request link is left!")
+    lal = self.getLocalAllowedLatency(cid)
+    dist_layer_step = float(lal) / \
+                      remaining_chain_len
+    dist_layers = {}
+    for h, sumlat in hosts:
+      if h in sh_path:
+        if 0 in dist_layers:
+          dist_layers[0].append((h, sumlat))
+        else:
+          dist_layers[0] = [(h,sumlat)]
+      else:
+        k = 2
+        placed_h_in_dist_layer = False
+        while sh_path_lat + (k-1)*dist_layer_step < lal:
+          if self.shortest_paths_lengths[node_id][h] + \
+             self.shortest_paths_lengths[h][chainend] < \
+             sh_path_lat + k*dist_layer_step:
+            if k-1 in dist_layers:
+              dist_layers[k-1].append((h,sumlat))
+            else:
+              dist_layers[k-1] = [(h,sumlat)]
+            placed_h_in_dist_layer = True
+            break
+          k += 1
+        if not placed_h_in_dist_layer:
+          log.debug("Host %s was filtered from subgraph of chain %s because it"
+                    " was too far from current and destination hosts!"%
+                    (h, subchain))
+    # sort host inside distance layers and calculate the pref values.
+    hosts_with_lat_values = []
+    lat_value_step_cnt = (lal - sh_path_lat) / \
+                         dist_layer_step
+    for k in dist_layers:
+      current_layer = sorted(dist_layers[k], cmp=lambda h1, h2, origin=node_id: \
+                             self.cmpBasedOnDelayDist(h1[0],h2[0],origin))
+      i = 0.0
+      for h,sumlat in current_layer:
+        # TODO: add capability to eliminate average calculation with previous 
+        # latency pref value
+        hosts_with_lat_values.append((h, sumlat, (float(k)/lat_value_step_cnt +\
+                            i/float(len(current_layer))/lat_value_step_cnt +\
+                            float(sumlat)/lal)/2.0))
+        i += 1.0
+      log.debug("Processed distance layer %s for mapping VNF %s"%(k, vnf2))
+    return hosts_with_lat_values
