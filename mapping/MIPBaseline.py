@@ -191,15 +191,14 @@ class Graph(object):
 
         return True
 
-    #TODO print attributes of graph, nodes and edges iff data is set to True
     def print_it(self, including_shortest_path_costs=True, data=False):
         print "Graph {}".format(self.id)
         print "\tnodes: {}, edges: {}".format(self.nodes, self.edges)
         if data:
-          print "additional data.."
-          print "\tof graph: {}".format(self.graph)
-          print "\tof nodes: {}".format(self.node)
-          print "\tof edges: {}".format(self.edge)
+            print "additional data.."
+            print "\tof graph: {}".format(self.graph)
+            print "\tof nodes: {}".format(self.node)
+            print "\tof edges: {}".format(self.edge)
         if including_shortest_path_costs:
             if self.shortest_paths_costs is None:
                 self.initialize_shortest_paths_costs()
@@ -210,8 +209,7 @@ class Graph(object):
 
 
 class Substrate(Graph):
-    """ representing a single substrate ( G_s = ( V_s , E_s) )
-        Attributes :
+    """ representing the physical network
     """
     def __init__(self, id):
         super(self.__class__, self).__init__(id)
@@ -274,7 +272,7 @@ class Substrate(Graph):
         return self.nodes_supporting_type[type]
 
 class Request(Graph):
-    """ represents a request graph ?
+    """ represents a service graph
     """
     def __init__(self, id):
         super(self.__class__, self).__init__(id)
@@ -350,6 +348,10 @@ class Scenario(object):
             else:
                 raise Exception("Couldn't resolve allowed nodes for node {} of request".format(vnode, request.id))
 
+    #TODO add some options for realizing different objectives
+
+
+
 
 def construct_name(name, req_id=None, vnode=None, snode=None, vedge=None, sedge=None):
     if req_id is not None:
@@ -367,6 +369,7 @@ def construct_name(name, req_id=None, vnode=None, snode=None, vedge=None, sedge=
 class ModelCreator(object):
 
     def __init__(self, scenario):
+        #storing the essential data
         self.scenario = scenario
         self.substrate = scenario.substrate
         self.requests = scenario.requests
@@ -374,14 +377,17 @@ class ModelCreator(object):
         #for easier lookup which nfs can be placed onto which substrate nodes
         self.allowed_nodes_copy = {}
 
-        #model
-
+        # gurobi interface
         self.model = None
+        self.status = None
 
-        #variables
+        # dictionaries with the variables for value lookup
         self.var_embedding_decision = {}
         self.var_node_mapping = {}
         self.var_edge_mapping = {}
+
+        # the final solution (if any was found)
+        self.solution = None
 
 
 
@@ -389,23 +395,58 @@ class ModelCreator(object):
 
         self.preprocess()
 
+        #create the gurobi model
         self.model = gurobipy.Model("test")
+
+        #create the variables
         self.create_variables()
 
         #necessary for accessing the variables after creation
         self.model.update()
 
+        #create constraints and the objective
         self.create_constraints()
-
-        self.create_objective()
-
-
         self.plugin_objective_maximize_number_of_embedded_requests()
 
+        #final update of the model to reflect the addition of the constraints
         self.model.update()
 
 
+    def run_milp(self):
+
         self.model.optimize()
+
+        #read meta data and store it ..
+        status = self.model.getAttr("Status")
+        objVal = None
+        objBound = GRB.INFINITY
+        objGap = GRB.INFINITY
+        solutionCount = self.model.getAttr("SolCount")
+
+        if solutionCount > 0:
+            objVal = objValue = self.model.getAttr("ObjVal")
+            # interestingly, MIPGap and ObjBound cannot be accessed when there are no variables and the MIP is infeasible..
+            objGap = self.model.getAttr("MIPGap")
+
+        if isFeasibleStatus(status):
+            objBound = self.model.getAttr("ObjBound")
+
+        self.status = GurobiStatus(status=status,
+                                   solCount=solutionCount,
+                                   objValue=objVal,
+                                   objGap=objGap,
+                                   objBound=objBound,
+                                   integralSolution=True)
+
+        if self.status.isFeasible():
+            print "\t MIP did produce a solution! Will start to parse the solution.."
+            self._obtain_solution()
+
+        else:
+            print "\t MIP did not produce a solution!"
+
+        return self.status
+
 
     def preprocess(self):
         for req in self.requests:
@@ -433,7 +474,7 @@ class ModelCreator(object):
 
         for req in self.requests:
             self.var_edge_mapping[req] = {}
-            #TODO the above assumes that arbitrary paths are possible. However, this is not the case as delay constraints need to hold.
+            #TODO the above assumes that arbitrary paths are possible. However, this is not the case as delay constraints might be enforced
             #TODO Some easy (presolving) optimizations would hence be applicable.
             for vedge in req.edges:
                 self.var_edge_mapping[req][vedge] = {}
@@ -543,12 +584,248 @@ class ModelCreator(object):
 
 
 
-    def create_objective(self):
-        pass
-
     def plugin_objective_maximize_number_of_embedded_requests(self):
         expr = LinExpr([(1.0, self.var_embedding_decision[req]) for req in self.requests])
         self.model.setObjective(expr, GRB.MAXIMIZE)
+
+
+
+    def _obtain_solution(self):
+        if not isFeasibleStatus(self.status):
+            raise Exception("Gurobi's solution does seem to be infeasible. Cannot parse the data!")
+
+        self.solution = ScenarioSolution(self.scenario)
+
+        for req in self.requests:
+
+            mapping = None
+
+            if self.var_embedding_decision[req].X > 0.5:
+                # this means that the request is embedded
+                mapping = Mapping(req, self.substrate, self.scenario, is_embedded=True)
+
+                for vnode in req.nodes:
+                    for snode, var in self.var_node_mapping[req][vnode].iteritems():
+                        if var.X > 0.5:
+                            mapping.map_node(vnode, snode)
+
+                for vedge in req.edges:
+
+                    #perform bfs to find embedding
+
+                    parent = {}
+
+                    vstart, vstart_p, vend_p, vend = vedge
+
+                    start_node = mapping.mapping_of_nodes[vstart]
+                    end_node = mapping.mapping_of_nodes[vend]
+
+                    if start_node == end_node:
+                        # we do not need to perform any search: the virtualized functions are directly connected via the same node
+                        mapping.map_edge(vedge, [])
+                    else:
+
+                        queue = [start_node]
+
+                        #perform search
+                        while len(queue) > 0:
+                            current_node = queue.pop(0)
+                            if current_node == end_node:
+                                break
+                            for (stail, stail_p, shead_p, shead) in self.substrate.get_out_neighbors(current_node):
+                                if not shead in parent:
+                                    parent[shead] = (stail, stail_p, shead_p, shead)
+                                    queue.append(shead)
+
+                        #perform backtracking
+                        if end_node not in parent:
+                            raise Exception("Couldn't backtrack path: {}".format(parent))
+
+                        substrate_edge_path = []
+                        current_node = end_node
+                        while True:
+                            pred, _,_,_ = parent[current_node]
+                            substrate_edge_path.append(parent[current_node])
+                            current_node = pred
+                            if current_node == start_node:
+                                break
+
+                        mapping.map_edge(vedge, list(reversed(substrate_edge_path)))
+
+            else:
+                mapping = Mapping(req, self.substrate, self.scenario, is_embedded=False)
+
+            print "\t storing the solution for request {}".format(req.id)
+            self.solution.set_mapping_of_request(req, mapping)
+            print mapping.mapping_of_nodes
+            print mapping.mapping_of_edges
+
+
+
+class Mapping(object):
+
+    def __init__(self, request, substrate, scenario, is_embedded=True):
+        self.request = request
+        self.substrate = substrate
+        self.scenario = scenario
+        self.is_embedded = is_embedded
+
+        self.mapping_of_nodes = {}
+        self.mapping_of_edges = {}
+
+    def map_node(self, vnode, snode):
+        if not self.is_embedded:
+            raise Exception("If the request is not embedded, it cannot be mapped!")
+
+        if vnode not in self.request.nodes:
+            raise Exception("NF {} does not belong to the request {}".format(vnode, self.request.id))
+        if snode not in self.substrate.nodes:
+            raise Exception("Substrate node {} does not belong to the substrate {}".format(snode, self.substrate.id))
+        if snode not in self.scenario.compute_allowed_nodes(self.request, vnode):
+            raise Exception("Substrate node {} does not match required type of vnode {} of request {}".format(snode, vnode, self.request.id))
+
+        self.mapping_of_nodes[vnode] = snode
+
+
+    def map_edge(self, vedge, substrate_edge_path):
+        if not self.is_embedded:
+            raise Exception("If the request is not embedded, it cannot be mapped!")
+
+        if vedge not in self.request.edges:
+            raise Exception("vedge {} does not belong to the request {}".format(vedge, self.request.id))
+
+        for sedge in substrate_edge_path:
+            if sedge not in self.substrate.edges:
+                raise Exception("Substrate edge {} does not belong to the substrate {}".format(sedge, self.substrate.id))
+
+        vtail, vtail_p, vhead_p, vhead = vedge
+
+        last_snode = None
+        for index, (stail,stail_p, shead_p, shead) in enumerate(substrate_edge_path):
+            if index == 0:
+                if vtail not in self.mapping_of_nodes:
+                    raise Exception("Before adding mappings of edges, please add the node mappings: vnode {}".format(vtail))
+                if stail != self.mapping_of_nodes[vtail]:
+                    raise Exception("The substrate path {} does not start at the substrate node {} onto which the tail of the virtual link {} was mapped".format(substrate_edge_path, stail, vedge))
+                last_snode = shead
+
+            elif index > 0:
+                if last_snode != stail:
+                    raise Exception("{} is not a path!".format(substrate_edge_path))
+                last_snode = shead
+
+                if index == len(substrate_edge_path) -1:
+                    if vhead not in self.mapping_of_nodes:
+                        raise Exception("Before adding mappings of edges, please add the node mappings: vnode {}".format(vhead))
+                    if shead != self.mapping_of_nodes[vhead]:
+                        raise Exception("The substrate path {} does not end at the substrate node {} onto which the head of the virtual link {} was mapped".format(substrate_edge_path, shead, vedge))
+
+
+        self.mapping_of_edges[vedge] = substrate_edge_path
+
+def isFeasibleStatus(status):
+    result = True
+    if status == GurobiStatus.INFEASIBLE:
+        result = False
+    elif status == GurobiStatus.INF_OR_UNBD:
+        result = False
+    elif status == GurobiStatus.UNBOUNDED:
+        result = False
+    elif status == GurobiStatus.LOADED:
+        result = False
+
+    return result
+
+
+class GurobiStatus(object):
+    LOADED = 1  # Model is loaded, but no solution information is available.
+    OPTIMAL = 2  # Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+    INFEASIBLE = 3  # Model was proven to be infeasible.
+    INF_OR_UNBD = 4  # Model was proven to be either infeasible or unbounded. To obtain a more definitive conclusion, set the DualReductions parameter to 0 and reoptimize.
+    UNBOUNDED = 5  # Model was proven to be unbounded. Important note: an unbounded status indicates the presence of an unbounded ray that allows the objective to improve without limit. It says nothing about whether the model has a feasible solution. If you require information on feasibility, you should set the objective to zero and reoptimize.
+    CUTOFF = 6  # Optimal objective for model was proven to be worse than the value specified in the Cutoff parameter. No solution information is available.
+    ITERATION_LIMIT = 7  # Optimization terminated because the total number of simplex iterations performed exceeded the value specified in the IterationLimit parameter, or because the total number of barrier iterations exceeded the value specified in the BarIterLimit parameter.
+    NODE_LIMIT = 8  # Optimization terminated because the total number of branch-and-cut nodes explored exceeded the value specified in the NodeLimit parameter.
+    TIME_LIMIT = 9  # Optimization terminated because the time expended exceeded the value specified in the TimeLimit parameter.
+    SOLUTION_LIMIT = 10  # Optimization terminated because the number of solutions found reached the value specified in the SolutionLimit parameter.
+    INTERRUPTED = 11  # Optimization was terminated by the user.
+    NUMERIC = 12  # Optimization was terminated due to unrecoverable numerical difficulties.
+    SUBOPTIMAL = 13  # Unable to satisfy optimality tolerances; a sub-optimal solution is available.
+    IN_PROGRESS = 14  # A non-blocking optimization call was made (by setting the NonBlocking parameter to 1 in a Gurobi Compute Server environment), but the associated optimization run is not yet complete.
+
+    def __init__(self,
+                 status=1,
+                 solCount=0,
+                 objValue=gurobipy.GRB.INFINITY,
+                 objBound=gurobipy.GRB.INFINITY,
+                 objGap=gurobipy.GRB.INFINITY,
+                 integralSolution=True
+                 ):
+        self.solCount = solCount
+        self.status = status
+        self.objValue = objValue
+        self.objBound = objBound
+        self.objGap = objGap
+        self.integralSolution = integralSolution
+
+    def _convertInfinityToNone(self, value):
+        if value is gurobipy.GRB.INFINITY:
+            return None
+        return value
+
+    def isIntegralSolution(self):
+        return self.integralSolution
+
+    def getObjectiveValue(self):
+        return self._convertInfinityToNone(self.objValue)
+
+    def getObjectiveBound(self):
+        return self._convertInfinityToNone(self.objBound)
+
+    def getMIPGap(self):
+        return self._convertInfinityToNone(self.objGap)
+
+    def hasFeasibleStatus(self):
+        return isFeasibleStatus(self.status)
+
+    def isFeasible(self):
+        feasibleStatus = self.hasFeasibleStatus()
+        result = feasibleStatus
+        if not self.integralSolution and feasibleStatus:
+            return True
+        elif self.integralSolution:
+            result = self.solCount > 0
+            if result and not feasibleStatus:
+                raise Exception("Solutions exist, but the status ({}) indicated an infeasibility.".format(self.status))
+            return result
+
+        return result
+
+    def isOptimal(self):
+        if self.status == self.OPTIMAL:
+            return True
+        else:
+            return False
+
+    def __str__(self):
+        return "solCount: {0}; status: {1}; objValue: {2}; objBound: {3}; objGap: {4}; integralSolution: {5}; ".format(self.solCount, self.status, self.objValue, self.objBound, self.objGap, self.integralSolution)
+
+
+class ScenarioSolution(object):
+
+    def __init__(self, scenario):
+        self.scenario = scenario
+        self.substrate = scenario.substrate
+        self.requests = scenario.requests
+
+        self.mapping_of_request = {}
+
+    def set_mapping_of_request(self, request, mapping):
+        if request not in self.mapping_of_request:
+            self.mapping_of_request[request] = mapping
+        else:
+            raise Exception("The request {} was already mapped!".format(request.id))
+
 
 def convert_req_to_request(req):
 
@@ -769,6 +1046,7 @@ if __name__ == '__main__':
     scen = Scenario(substrate, [request])
     mc = ModelCreator(scen)
     mc.init_model_creator()
+    mc.run_milp()
 
     import sys
     sys.exit(0)
