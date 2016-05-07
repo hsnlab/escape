@@ -213,16 +213,15 @@ If you don't want to install the Python dependencies globally you can follow the
 hard way and setup a virtual environment. Otherwise just run the following
 command(s):
 
-All required system and Python packages:
+Required system and Python packages:
 
 .. code-block:: bash
 
-    $ sudo apt-get -y install python-dev python-pip libxml2-dev libxslt1-dev \
-    libssh2-1-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev zlib1g-dev \
-    neo4j=2.2.7 gcc make automake ssh
+    $ sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev \
+    libxslt1-dev libssl-dev libffi-dev neo4j=2.2.7
 
-    $ sudo pip install ncclient pycrypto ecdsa networkx jinja2 py2neo numpy \
-    networkx_viewer
+    $ sudo -H pip install numpy jinja2 py2neo networkx requests ncclient \
+    cryptography==1.3.1
 
 For Mininet emulation tool:
 
@@ -236,7 +235,8 @@ For our rudimentary GUI:
 
 .. code-block:: bash
 
-    $ sudo pip install networkx_viewer numpy
+    $ sudo apt-get install -y python-tk
+    $ sudo -H pip install networkx_viewer
 
 For doc generations:
 
@@ -244,7 +244,7 @@ For doc generations:
 
     # html
     $ sudo apt-get -y install graphviz
-    $ sudo pip install sphinx
+    $ sudo -H pip install sphinx
     # latex
     $ sudo apt-get install -y texlive-latex-extra
 
@@ -252,7 +252,7 @@ For domain emulation scripts:
 
 .. code-block:: bash
 
-    $ sudo pip install tornado
+    $ sudo -H pip install tornado
 
 Other required programs (OpenYuma, click, neo4j, etc.), which are installed by
 the `install_dep.sh` script by default, are also need to be installed manually.
@@ -290,7 +290,8 @@ scripts (mnexec).
 Otherwise these assets have to be install manually which could be done from our
 Mininet folder (escape/mininet) or from the official Mininet git repository
 (`<https://github.com/mininet/mininet/>`__). Mininet has an install script for
-the installations (see the help with the ``-h`` flag):
+the installations (see the help with the ``-h`` flag) but this script will install
+the whole Mininet tool with unnecessary packages:
 
 .. code-block:: bash
 

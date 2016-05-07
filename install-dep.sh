@@ -40,7 +40,8 @@ function install_core {
     sudo apt-get update
     # Install dependencies
     sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev neo4j=2.2.7
-    sudo -H pip install requests ncclient pycrypto ecdsa networkx jinja2 py2neo
+
+    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient cryptography==1.3.1
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j-server.properties
@@ -49,11 +50,11 @@ function install_core {
     # Stick to version  2.2.7
     sudo apt-mark hold neo4j
 
-    info "=== Compile hwloc2nffg ==="
-    sudo apt-get -y install g++ cmake make libboost-program-options-dev libhwloc-dev libjsoncpp-dev
-    cd "$DIR/hwloc2nffg/build"
-    cmake ../
-    make
+#    info "=== Compile hwloc2nffg ==="
+#    sudo apt-get -y install g++ cmake make libboost-program-options-dev libhwloc-dev libjsoncpp-dev
+#    cd "$DIR/hwloc2nffg/build"
+#    cmake ../
+#    make
 }
 
 function install_mn_dep {
@@ -80,14 +81,14 @@ function install_mn_dep {
         sudo addgroup ${MNUSER} sudo
         echo "$MNUSER:$MNPASSWD" | sudo chpasswd
     fi
-    info "\nIf this installation was not performed on a VM, limit the SSH connections only to localhost due to security issues!"
+    info "\nIf this installation was not performed on a VM, limit the SSH connections only to localhost due to security issues!\n"
 }
 
 function install_infra {
     info "==================================================================="
     info "==  Install dependencies for Mininet-based Infrastructure Layer  =="
     info "==================================================================="
-    sudo apt-get install -y gcc make automake ssh libssh2-1-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev
+    sudo apt-get install -y gcc make automake ssh libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev
 
     info "=== Install OpenYuma for NETCONF capability ==="
     cd "$DIR/OpenYuma"
@@ -182,7 +183,7 @@ function install_gui {
     info "==  Installing additional dependencies for internal GUI  =="
     info "==========================================================="
     sudo apt-get install -y python-tk
-    sudo -H pip install networkx_viewer numpy
+    sudo -H pip install networkx_viewer
 }
 
 # Install all main component
