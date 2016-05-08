@@ -2106,13 +2106,13 @@ class NFFGToolBox(object):
               # want to mess up inclusion testing in sg_map
               flowclass = None
               for match in matches:
-                field, mparam = match.split("=")
+                field, mparam = match.split("=", 1)
                 if field == "flowclass":
                   flowclass = mparam
                   break
               for match in matches:
                 # match is always like: <<field=value>>
-                field, mparam = match.split("=")
+                field, mparam = match.split("=", 1)
                 if field == "TAG":
                   splitted_tag = mparam.split("|")
                   splitted_tag[2] = NFFGToolBox.try_to_convert(splitted_tag[2])
@@ -2143,7 +2143,7 @@ class NFFGToolBox(object):
                     else:
                       # there must be a TAG field in match
                       for match in matches:
-                        field, mparam = match.split("=")
+                        field, mparam = match.split("=", 1)
                         if field == "TAG":
                           tag_info = mparam
                           break
@@ -2159,7 +2159,7 @@ class NFFGToolBox(object):
               sghop_info = tuple(splitted_tag)
               flowclass = None
               for match in matches:
-                field, mparam = match.split("=")
+                field, mparam = match.split("=", 1)
                 if field == "flowclass":
                   flowclass = mparam
                   break
@@ -2184,7 +2184,7 @@ class NFFGToolBox(object):
               from_sap = False
               flowclass = None
               for match in matches:
-                field, mparam = match.split("=")
+                field, mparam = match.split("=", 1)
                 if field == "flowclass":
                   flowclass = mparam
                   break
