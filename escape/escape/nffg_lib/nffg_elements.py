@@ -271,6 +271,15 @@ class Node(Element):
   def short_name (self):
     return self.name if self.name else "id: %s" % self.id
 
+  def flowrules (self):
+    """
+    Return with an iterator over the flowrules sored in the ports.
+
+    :return: iterator of flowrules
+    :rtype: collections.Iterator
+    """
+    return self.ports.flowrules
+
   def add_port (self, id=None, properties=None):
     """
     Add a port with the given params to the :any:`Node`.
