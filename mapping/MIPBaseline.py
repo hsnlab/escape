@@ -929,7 +929,7 @@ class ModelCreator(object):
                                                 for (stail, stail_p, shead_p, shead) in self.substrate.edges
                                         ] +
                                         [
-                                            (substrate.node[snode]['delay'], self.var_node_mapping[req][vtail][snode])
+                                            (self.substrate.node[snode]['delay'], self.var_node_mapping[req][vtail][snode])
                                                 for snode in self.allowed_nodes_copy[req][vtail]
                                         ]
                                        )
