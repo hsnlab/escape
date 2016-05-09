@@ -30,6 +30,7 @@ import os
 import CarrierTopoBuilder
 import MappingAlgorithms
 import UnifyExceptionTypes as uet
+import milp_solution_in_nffg as MILP
 
 from collections import OrderedDict
 
@@ -94,6 +95,8 @@ helpmsg = """StressTest.py options are:
                                     NFFG is dumped into a file, in 'folder' if
                                     it is given, otherwise files are created in
                                     current folder.
+   --milp            Use Mixed Integer Linear Programming instead of the mapping
+                     algorithm for mapping the stress sequence.
 """
 
 def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
@@ -215,9 +218,7 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
                            func_type=rnd.choice(nf_types), 
                            cpu=rnd.randint(1, 4),
                            mem=rnd.random()*1600,
-                           storage=rnd.random()*3,
-                           delay=2 + rnd.random()*10,
-                           bandwidth=rnd.random()*7.0)
+                           storage=rnd.random()*3)
           vnf_added = True
         if vnf_added:
           # add olny the newly added VNF-s, not the shared ones.
@@ -262,7 +263,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
                    batch_length, shareable_sg_count, sliding_share, poisson,
                    topo_name,
                    bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, 
-                   outputfile, dump_nffgs, dump_cnt, dump_folder, 
+                   outputfile, dump_nffgs, dump_cnt, dump_folder, milp,
                    queue=None, shortest_paths_precalc=None, filehandler=None):
   """
   If queue is given, the result will be put in that Queue object too. Meanwhile
@@ -354,8 +355,12 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
           batch_count = 0
           total_vnf_count += len([nf for nf in batched_request.nfs])
           random_state = rnd.getstate()
-          network, shortest_paths = MappingAlgorithms.MAP(batched_request, network, 
-                  full_remap=fullremap, enable_shortest_path_cache=True,
+          if milp:
+            network = MILP.convert_mip_solution_to_nffg([batched_request], 
+                                                        network)
+          else:
+            network, shortest_paths = MappingAlgorithms.MAP(batched_request, 
+                  network, full_remap=fullremap, enable_shortest_path_cache=True,
                   bw_factor=bw_factor, res_factor=res_factor,
                   lat_factor=lat_factor, shortest_paths=shortest_paths, 
                   return_dist=True,
@@ -432,7 +437,7 @@ def main(argv):
                                "shareable_sg_count=", "batch_length=",
                                "bt_br_factor=", "bt_limit=",
                                "sliding_share", "use_saps_once",
-                               "topo_name=", "dump_nffgs="])
+                               "topo_name=", "dump_nffgs=", "milp"])
   except getopt.GetoptError:
     print helpmsg
     sys.exit()
@@ -458,6 +463,7 @@ def main(argv):
   dump_nffgs = False
   dump_cnt = None
   dump_folder = ""
+  milp = False
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
@@ -507,6 +513,8 @@ def main(argv):
       if len(argsplit) > 1:
         os.system("mkdir -p "+argsplit[1])
         dump_folder = argsplit[1]
+    elif opt == "--milp":
+      milp = True
 
   params, args = zip(*opts)
   if "--bw_factor" not in params or "--res_factor" not in params or \
@@ -518,7 +526,7 @@ def main(argv):
            multiple_scs, max_sc_count, vnf_sharing_same_sg, fullremap, 
            batch_length, shareable_sg_count, sliding_share, poisson, topo_name,
            bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, outputfile,
-           dump_nffgs, dump_cnt, dump_folder)
+                                     dump_nffgs, dump_cnt, dump_folder, milp)
   
   log.info("First unsuccessful mapping was at %s test level."%
            (returned_test_lvl+1))

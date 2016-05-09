@@ -71,23 +71,21 @@ def get_edge_id (g, srcid, srcpid, dstpid, dstid):
     if i == srcid and j == dstid and d.src.id == srcpid and d.dst.id == dstpid:
       return k
 
-def convert_mip_solution_to_nffg ():
-  reqfiles = ['../examples/escape-mn-req.nffg']
-  netfile = '../examples/escape-mn-topo.nffg'
+def convert_mip_solution_to_nffg (reqs, net, file_inputs=False):
+  if file_inputs:
+    request_seq = []
+    for reqfile in reqs:
+      with open(reqfile, "r") as f:
+        req = NFFG.parse(f.read())
+        request_seq.append(req)
 
-  request_seq = []
-  for reqfile in reqfiles:
-    with open(reqfile, "r") as f:
-      req = NFFG.parse(f.read())
-      request_seq.append(req)
-    
-  with open(netfile, "r") as g:
-    net = NFFG.parse(g.read())
+    with open(net, "r") as g:
+      net = NFFG.parse(g.read())
+  else:
+    request_seq = reqs
       
   # all input NFFG-s are obtained somehow
-  mapping_of_reqs = get_MIP_solution(request_seq, net)
-  
-  net.duplicate_static_links()
+ 
 
   ######################################################################
   ##### This is taken from the MappingAlgorithms.MAP() function ####
@@ -206,7 +204,21 @@ def convert_mip_solution_to_nffg ():
   ############################################################################
   # HACK: We only want to use the algorithm class to generate an NFFG, we will 
   # fill the mapping struct with the one found by MIP
-  alg = CoreAlgorithm(net, request, chainlist, True, False)
+  # net.duplicate_static_links()
+  alg = CoreAlgorithm(net, request, chainlist, False, False)
+  # move 'availres' and 'availbandwidth' values of the network to maxres, 
+  # because the MIP solution takes them as availabel resource.
+  net = alg.bare_infrastucture_nffg
+  for n in net.infras:
+    n.resources = n.availres
+  for d in net.links:
+    # there shouldn't be any Dynamic links by now.
+    d.bandwidth = d.availbandwidth
+  
+  # WARNING: there can be problems with duplicated links (inside or outside MIP)
+  net.merge_duplicated_links()
+  mapping_of_reqs = get_MIP_solution(request_seq, net)
+  net.duplicate_static_links()
   if mapping_of_reqs is None:
     print "No solution produced by MIP"
     sys.exit()
@@ -229,7 +241,10 @@ def convert_mip_solution_to_nffg ():
         lid = get_edge_id(alg.net, n1, trans_link[1], trans_link[2], n2)
         mapped_path.append(n1)
         path_link_ids.append(lid)
-      mapped_path.append(n2)
+      if len(trans_link_mapping[trans_sghop]) == 0:
+        mapped_path.append(alg.manager.getIdOfChainEnd_fromNetwork(vnf1))
+      else:
+        mapped_path.append(n2)
 
       alg.manager.link_mapping.add_edge(vnf1, vnf2, key=reqlid, 
                                         mapped_to=mapped_path, 
@@ -241,6 +256,9 @@ def convert_mip_solution_to_nffg ():
   MappingAlgorithms._purgeNFFGFromInfinityValues(mappedNFFG)
 
   print mappedNFFG.dump()
+  return mappedNFFG
 
 if __name__ == '__main__':
-  convert_mip_solution_to_nffg()
+  convert_mip_solution_to_nffg(['untracked/e2e-req-erronous.nffg'], 
+                               'untracked/mip_mapped-escape-mn-topo.nffg', 
+                               file_inputs=True)
