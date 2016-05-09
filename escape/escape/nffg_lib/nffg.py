@@ -2123,6 +2123,26 @@ class NFFGToolBox(object):
     return converted
 
   @staticmethod
+  def extract_flowclass (splitted_matches):
+    """
+    Interprets the match field of a flowrule as everything is flowclass except
+    "TAG=" and "in_port=" fields. Returns the string to be put into the 
+    flowclass field. Hopefully the order of the match segments are kept or 
+    irrelevant.
+    """
+    flowclass = ""
+    for match in splitted_matches:
+      field, mparam = match.split("=", 1)
+      if field == "flowclass":
+        flowclass += mparam
+      elif field != "TAG" and field != "in_port":
+        flowclass += "".join((field, "=", mparam))
+    if flowclass == "":
+      return None
+    else:
+      return flowclass
+
+  @staticmethod
   def retrieve_all_SGHops (nffg):
     """
     Returns a dictionary keyed by (VNFsrc, VNFdst, reqlinkid) tuples
@@ -2165,12 +2185,7 @@ class NFFGToolBox(object):
                 break
               # we must (surely) encounter flowclass before adding and we don't
               # want to mess up inclusion testing in sg_map
-              flowclass = None
-              for match in matches:
-                field, mparam = match.split("=", 1)
-                if field == "flowclass":
-                  flowclass = mparam
-                  break
+              flowclass = NFFGToolBox.extract_flowclass(matches)
               for match in matches:
                 # match is always like: <<field=value>>
                 field, mparam = match.split("=", 1)
@@ -2218,12 +2233,7 @@ class NFFGToolBox(object):
               splitted_tag = tag_info.split("|")
               splitted_tag[2] = NFFGToolBox.try_to_convert(splitted_tag[2])
               sghop_info = tuple(splitted_tag)
-              flowclass = None
-              for match in matches:
-                field, mparam = match.split("=", 1)
-                if field == "flowclass":
-                  flowclass = mparam
-                  break
+              flowclass = NFFGToolBox.extract_flowclass(matches)
               if sghop_info in sg_map:
                 sg_map[sghop_info][0] = starting_port
               else:
@@ -2243,12 +2253,7 @@ class NFFGToolBox(object):
               # All required SGHop info can be gathered at once from this
               # flowrule. It is either a SAP-SAP flowrule or a collocated.
               from_sap = False
-              flowclass = None
-              for match in matches:
-                field, mparam = match.split("=", 1)
-                if field == "flowclass":
-                  flowclass = mparam
-                  break
+              flowclass = NFFGToolBox.extract_flowclass(matches)
               sg_map_value = [None, None, flowclass, fr.bandwidth, fr.delay]
               for link in nffg.links:
                 # p.id is surely in the right format as link.dst.id (they
