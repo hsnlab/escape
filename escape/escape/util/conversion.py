@@ -59,7 +59,7 @@ class NFFGConverter(object):
   OP_INPORT = 'in_port'
   OP_OUTPUT = 'output'
   OP_FLOWCLASS = "flowclass"
-  GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG)
+  GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG, OP_FLOWCLASS)
   # Specific tags
   TAG_SG_HOP = "sg_hop"
   # Operation formats in Virtualizer
@@ -192,7 +192,7 @@ class NFFGConverter(object):
         self.log.warning("Invalid match field: %s" % match)
       return
     for kv in match_part:
-      op = kv.split('=')
+      op = kv.split('=', 1)
       if op[0] not in self.GENERAL_OPERATIONS:
         self.log.warning("Unsupported match operand: %s" % op[0])
         continue
@@ -206,6 +206,9 @@ class NFFGConverter(object):
           continue
           # elif op[0] == self.OP_SGHOP:
           #   ret.append(kv)
+      elif op[0] == self.OP_FLOWCLASS:
+        ret.append(op[1])
+
     return self.OP_DELIMITER.join(ret)
 
   def _convert_flowrule_action (self, action):
@@ -554,8 +557,10 @@ class NFFGConverter(object):
       # Check if there is a matching operation -> currently just TAG is used
       if flowentry.match.is_initialized() and flowentry.match.get_value():
         for op in flowentry.match.get_as_text().split(self.OP_DELIMITER):
+          if op.startswith(self.OP_INPORT):
+            pass
           # e.g. <match>dl_tag=0x0004</match> --> in_port=1;TAG=SAP2|fwd|4
-          if op.startswith(self.MATCH_TAG):
+          elif op.startswith(self.MATCH_TAG):
             # if src or dst was a SAP: SAP.id == port.name
             # if scr or dst is a VNF port name of parent of port
             if v_fe_port.port_type.get_as_text() == \
@@ -572,6 +577,9 @@ class NFFGConverter(object):
             _tag = int(op.split('=')[1], base=0)
             fr_match += ";%s=%s" % (self.OP_TAG, self.LABEL_DELIMITER.join(
               (str(_src_name), str(_dst_name), str(_tag))))
+          else:
+            # Everything else is must come from flowclass
+            fr_match += ";%s" % op
 
       # Check if there is an action operation
       if flowentry.action.is_initialized() and flowentry.action.get_value():
@@ -1049,14 +1057,11 @@ class NFFGConverter(object):
         # There are valid port-pairs
         for i, port_pair in enumerate(combinations(
            (p.id.get_value() for p in v_node.ports), 2)):
-          if infra.resources.delay is not None:
+          v_link_delay = v_link_bw = None
+          if infra.resources.delay:
             v_link_delay = str(infra.resources.delay)
-          else:
-            v_link_delay = None
-          if infra.resources.bandwidth is not None:
+          if infra.resources.bandwidth:
             v_link_bw = str(infra.resources.bandwidth)
-          else:
-            v_link_bw = None
           # Create link
           v_link = virt_lib.Link(id="resource-link%s" % i,
                                  src=v_node.ports[port_pair[0]],
@@ -1070,20 +1075,17 @@ class NFFGConverter(object):
       elif port_num == 1:
         # Only one port in infra - create loop-edge
         v_link_src = v_link_dst = iter(v_node.ports).next()
+        v_link_delay = v_link_bw = None
         if infra.resources.delay:
-          v_link_delay = infra.resources.delay
-        else:
-          v_link_delay = None
+          v_link_delay = str(infra.resources.delay)
         if infra.resources.bandwidth:
-          v_link_bw = infra.resources.bandwidth
-        else:
-          v_link_bw = None
+          v_link_bw = str(infra.resources.bandwidth)
         v_link = virt_lib.Link(id="resource-link",
                                src=v_link_src,
                                dst=v_link_dst,
                                resources=virt_lib.Link_resource(
-                                 delay=str(v_link_delay),
-                                 bandwidth=str(v_link_bw)))
+                                 delay=v_link_delay,
+                                 bandwidth=v_link_bw))
         # Call bind to resolve src,dst references to workaround a bug
         # v_link.bind()
         v_node.links.add(v_link)

@@ -1,0 +1,176 @@
+{
+  "parameters": {
+    "id": "MININET", 
+    "name": "MININET-splitted", 
+    "version": "1.0"
+  }, 
+  "node_saps": [
+    {
+      "id": "SAP2", 
+      "name": "SAP2", 
+      "ports": [
+        {
+          "id": "port-SAP2", 
+          "property": {
+            "name": "SAP2"
+          }
+        }, 
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "SAP14", 
+      "name": "SAP14", 
+      "ports": [
+        {
+          "id": "port-SAP14", 
+          "property": {
+            "name": "SAP14", 
+            "sap": "SAP14", 
+            "type": "inter-domain"
+          }
+        }
+      ]
+    }, 
+    {
+      "id": "SAP1", 
+      "name": "SAP1", 
+      "ports": [
+        {
+          "id": "port-SAP1", 
+          "property": {
+            "name": "SAP1"
+          }
+        }, 
+        {
+          "id": 1
+        }
+      ]
+    }
+  ], 
+  "node_infras": [
+    {
+      "id": "SingleBiSBiS@MININET", 
+      "name": "SingleBiSBiS", 
+      "ports": [
+        {
+          "id": "port-SAP1", 
+          "property": {
+            "name": "SAP1"
+          }, 
+          "flowrules": [
+            {
+              "id": "76dbdd04-154c-11e6-b1b8-080027f22527", 
+              "match": "in_port=port-SAP1", 
+              "action": "output=port-SAP14;TAG=SAP1|webserver1|11", 
+              "hop_id": "11"
+            }
+          ]
+        }, 
+        {
+          "id": "port-SAP14", 
+          "property": {
+            "name": "SAP14", 
+            "sap": "SAP14", 
+            "type": "inter-domain"
+          }, 
+          "flowrules": [
+            {
+              "id": "76dba244-154c-11e6-b1b8-080027f22527", 
+              "match": "in_port=port-SAP14;flowclass=dl_dst=00:00:00:00:00:02",
+              "action": "output=port-SAP2", 
+              "hop_id": "22"
+            }, 
+            {
+              "id": "76dc3d8a-154c-11e6-b1b8-080027f22527", 
+              "match": "in_port=port-SAP14",
+              "action": "output=port-SAP1", 
+              "hop_id": "13"
+            }
+          ]
+        }, 
+        {
+          "id": "port-SAP2", 
+          "property": {
+            "name": "SAP2"
+          }, 
+          "flowrules": [
+            {
+              "id": "76db55be-154c-11e6-b1b8-080027f22527", 
+              "match": "in_port=port-SAP2", 
+              "action": "output=port-SAP14;TAG=SAP2|webserver1|21", 
+              "hop_id": "21"
+            }
+          ]
+        }
+      ], 
+      "domain": "MININET", 
+      "type": "BiSBiS", 
+      "supported": [
+        "headerCompressor", 
+        "headerDecompressor", 
+        "simpleForwarder"
+      ], 
+      "resources": {
+        "cpu": 10.0, 
+        "mem": 10.0, 
+        "storage": 10.0, 
+        "delay": 0.2, 
+        "bandwidth": 160000.0
+      }
+    }
+  ], 
+  "edge_links": [
+    {
+      "id": "76e0819c-154c-11e6-b1b8-080027f22527", 
+      "src_node": "SingleBiSBiS@MININET", 
+      "src_port": "port-SAP14", 
+      "dst_node": "SAP14", 
+      "dst_port": "port-SAP14"
+    }, 
+    {
+      "id": "SAP1-SingleBiSBiS@MININET-link-back", 
+      "src_node": "SingleBiSBiS@MININET", 
+      "src_port": "port-SAP1", 
+      "dst_node": "SAP1", 
+      "dst_port": "port-SAP1", 
+      "delay": 0, 
+      "backward": true
+    }, 
+    {
+      "id": "SAP2-SingleBiSBiS@MININET-link-back", 
+      "src_node": "SingleBiSBiS@MININET", 
+      "src_port": "port-SAP2", 
+      "dst_node": "SAP2", 
+      "dst_port": "port-SAP2", 
+      "delay": 0, 
+      "backward": true
+    }, 
+    {
+      "id": "SAP2-SingleBiSBiS@MININET-link", 
+      "src_node": "SAP2", 
+      "src_port": "port-SAP2", 
+      "dst_node": "SingleBiSBiS@MININET", 
+      "dst_port": "port-SAP2", 
+      "delay": 0
+    }, 
+    {
+      "id": "76e0852a-154c-11e6-b1b8-080027f22527", 
+      "src_node": "SAP14", 
+      "src_port": "port-SAP14", 
+      "dst_node": "SingleBiSBiS@MININET", 
+      "dst_port": "port-SAP14", 
+      "backward": true
+    }, 
+    {
+      "id": "SAP1-SingleBiSBiS@MININET-link", 
+      "src_node": "SAP1", 
+      "src_port": "port-SAP1", 
+      "dst_node": "SingleBiSBiS@MININET", 
+      "dst_port": "port-SAP1", 
+      "delay": 0
+    }
+  ]
+}

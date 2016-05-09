@@ -16,11 +16,12 @@ Abstract class and implementation for basic operations with a single NF-FG, such
 as building, parsing, processing NF-FG, helper functions, etc.
 """
 import copy
-from copy import deepcopy
 import itertools
 import logging
-import networkx
 import re
+from copy import deepcopy
+
+import networkx
 from networkx.exception import NetworkXError
 
 from nffg_elements import *
@@ -730,6 +731,19 @@ class NFFG(AbstractNFFG):
       nffg.add_edge(req.src.node, req.dst.node, req)
     return nffg
 
+  @staticmethod
+  def parse_from_file (path):
+    """
+    Parse NFFG from file given by the path.
+
+    :param path: file path
+    :type path: str
+    :return: the parsed NF-FG representation
+    :rtype: :any:`NFFG`
+    """
+    with open(path) as f:
+      return NFFG.parse(f.read())
+
   ##############################################################################
   # Helper functions
   ##############################################################################
@@ -1361,6 +1375,53 @@ class NFFGToolBox(object):
     return splitted_parts
 
   @classmethod
+  def recreate_match_TAGs (cls, nffg, log=logging.getLogger("TAG")):
+    """
+    Recreate TAGs for flowrules forwarding traffic from a different domain.
+
+    :param nffg: mapped NFFG object
+    :type nffg: NFFG
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: None
+    """
+    for infra in nffg.infras:
+      # Iterate over flowrules of the infra
+      for flowrule in infra.flowrules():
+        # Get the source in_port of the flowrule from match filed
+        splitted = flowrule.match.split(';', 1)
+        in_port = splitted[0].split('=')[1]
+        try:
+          # Convert in_port to int if it is possible
+          in_port = int(in_port)
+        except ValueError:
+          pass
+        # If the port is an inter-domain port
+        if infra.ports[in_port].get_property('type') == "inter-domain":
+          log.debug("Found inter-domain port: %s", infra.ports[in_port])
+          if len(splitted) > 1:
+            # There is one or more TAG in match
+            tags = splitted[1].split(';')
+            found = False
+            for tag in tags:
+              try:
+                vlan = tag.split('|')[-1]
+              except ValueError:
+                continue
+              # Found a TAG with the vlan
+              if vlan == str(flowrule.hop_id):
+                found = True
+                break
+            if found:
+              # If found the appropriate TAG -> skip adding
+              continue
+          log.debug("TAG with vlan: %s is not found in %s!" % (flowrule.hop_id,
+                                                               flowrule))
+          match_vlan = ";TAG=<None>|<None>|%s" % flowrule.hop_id
+          flowrule.match += match_vlan
+          log.debug("Manually extended match field: %s" % flowrule.match)
+
+  @classmethod
   def rewrite_interdomain_tags (cls, slices, log=logging.getLogger("TAG")):
     """
     Calculate and rewrite inter-domain tags.
@@ -1760,7 +1821,7 @@ class NFFGToolBox(object):
     """
     Copies all element from iterator if it is not in target, and merges their
     port lists.
-    
+
     :param type_iter: Iterator on objects to be added
     :type type_iter: :any: iterator on `Node`
     :param target: The target NFFG
@@ -1775,16 +1836,16 @@ class NFFGToolBox(object):
       else:
         for p in obj.ports:
           if p not in target.network.node[obj.id].ports:
-            target.network.node[obj.id].add_port(id=p.id, 
+            target.network.node[obj.id].add_port(id=p.id,
                                                  properties=p.properties)
             # TODO: Flowrules are not copied!
-            log.debug("Copy port %s to NFFG element %s"%(p, obj))
+            log.debug("Copy port %s to NFFG element %s" % (p, obj))
     return target
 
   @classmethod
   def merge_nffgs (cls, target, new, log=logging.getLogger("UNION")):
     """
-    Merges new `NFFG` to target `NFFG` keeping all parameters and copying 
+    Merges new `NFFG` to target `NFFG` keeping all parameters and copying
     port object from new. Comparison is done based on object id, resources and
     requirements are kept unchanged in target.
 
@@ -1951,7 +2012,7 @@ class NFFGToolBox(object):
               pass
             splitted_portid = param.split("|")
             if command == "output" and len(splitted_portid) == 3:
-              # no TAG action was found, so the output port must be a dynamic 
+              # no TAG action was found, so the output port must be a dynamic
               # port with ID format InfraID|NFID|NFPortID
               infraid, nfid, nfportid = splitted_portid
               try:
@@ -1963,8 +2024,8 @@ class NFFGToolBox(object):
                  .dst.id == nfportid:
                 # WARNING!! IF 'starting_port' has 2 flowrules leading to the
                 #  same
-                # port of 'vnf2', we can't make difference between the 2 
-                # collocation flows!! --> Parallel SGHops to AND from the same 
+                # port of 'vnf2', we can't make difference between the 2
+                # collocation flows!! --> Parallel SGHops to AND from the same
                 # ports shouldn't be allowed! BUT otherwise, it is OK.
                 return [], fr.bandwidth
       else:
@@ -2001,7 +2062,7 @@ class NFFGToolBox(object):
       else:
         raise RuntimeError("Finishing flowrule couldn't be found for TAG: %s"
                            % TAG)
-    # curr_port is a flow finishing port, let's check whether the next node 
+    # curr_port is a flow finishing port, let's check whether the next node
     # would be a SAP
     """
     THIS IS NOT NEEDED CUZ NOW WE ALSO FIND THE LAST LINK IN PREV ITERATION
@@ -2082,7 +2143,7 @@ class NFFGToolBox(object):
           for action in actions:
             command_param = action.split("=")
             if "TAG=" in fr.match and command_param[0] == "output":
-              # it there is also an UNTAG action or the next node is a SAP 
+              # it there is also an UNTAG action or the next node is a SAP
               # then it is an ending flowrule
               ending_port = None
               # let's find which VNF/SAP port object should the SGHop connect
@@ -2097,22 +2158,22 @@ class NFFGToolBox(object):
                     transit_fr = False
                     break
                   else:
-                    # It means this is a transit flowrule, we don't need it at 
+                    # It means this is a transit flowrule, we don't need it at
                     # all, break from the whole action iteration!
                     break
               if transit_fr:
                 break
-              # we must (surely) encounter flowclass before adding and we don't 
+              # we must (surely) encounter flowclass before adding and we don't
               # want to mess up inclusion testing in sg_map
               flowclass = None
               for match in matches:
-                field, mparam = match.split("=")
+                field, mparam = match.split("=", 1)
                 if field == "flowclass":
                   flowclass = mparam
                   break
               for match in matches:
                 # match is always like: <<field=value>>
-                field, mparam = match.split("=")
+                field, mparam = match.split("=", 1)
                 if field == "TAG":
                   splitted_tag = mparam.split("|")
                   splitted_tag[2] = NFFGToolBox.try_to_convert(splitted_tag[2])
@@ -2120,7 +2181,7 @@ class NFFGToolBox(object):
                   if sghop_info in sg_map:
                     sg_map[sghop_info][1] = ending_port
                   else:
-                    # the last element is the port object which is used if the 
+                    # the last element is the port object which is used if the
                     # flowrules sequence of this TAG value only consists of this
                     # flowrule, and there is no starting flowrule for it, so the
                     # other end of the link (finishing in 'p') is the port where
@@ -2130,7 +2191,7 @@ class NFFGToolBox(object):
             # TAG action and match cannot coexsist in the same flowrule
             elif command_param[0] == "TAG" or "TAG=" in fr.match:
               starting_port = None
-              # let's find which SAP/VNF port object does the SGHop 
+              # let's find which SAP/VNF port object does the SGHop
               # originates from
               transit_fr = True
               tag_info = None
@@ -2143,7 +2204,7 @@ class NFFGToolBox(object):
                     else:
                       # there must be a TAG field in match
                       for match in matches:
-                        field, mparam = match.split("=")
+                        field, mparam = match.split("=", 1)
                         if field == "TAG":
                           tag_info = mparam
                           break
@@ -2159,14 +2220,14 @@ class NFFGToolBox(object):
               sghop_info = tuple(splitted_tag)
               flowclass = None
               for match in matches:
-                field, mparam = match.split("=")
+                field, mparam = match.split("=", 1)
                 if field == "flowclass":
                   flowclass = mparam
                   break
               if sghop_info in sg_map:
                 sg_map[sghop_info][0] = starting_port
               else:
-                # the last element means similar to the one before, but the 
+                # the last element means similar to the one before, but the
                 # destination port object can be reached from it similarly.
                 for a in actions:
                   c_p = a.split("=")
@@ -2184,13 +2245,13 @@ class NFFGToolBox(object):
               from_sap = False
               flowclass = None
               for match in matches:
-                field, mparam = match.split("=")
+                field, mparam = match.split("=", 1)
                 if field == "flowclass":
                   flowclass = mparam
                   break
               sg_map_value = [None, None, flowclass, fr.bandwidth, fr.delay]
               for link in nffg.links:
-                # p.id is surely in the right format as link.dst.id (they 
+                # p.id is surely in the right format as link.dst.id (they
                 # would reach the same string instance...)
                 if link.dst.id == p.id and link.dst.node.id == p.node.id:
                   sg_map_value[0] = link.src
@@ -2215,8 +2276,8 @@ class NFFGToolBox(object):
               else:
                 raise RuntimeError("No 'output' command found in collocation "
                                    "flowrule!")
-    # after all flowrules have been processed we have to check if there is 
-    # still a None prt object (meaning that flowrule sequence for that TAG 
+    # after all flowrules have been processed we have to check if there is
+    # still a None prt object (meaning that flowrule sequence for that TAG
     # consisted of only one NON-COLLOCATION flowrule)
     for sghop_info in sg_map:
       if sg_map[sghop_info][0] is None and len(sg_map[sghop_info]) == 6:
@@ -2235,7 +2296,7 @@ class NFFGToolBox(object):
 
 
 if __name__ == "__main__":
-  # logging.basicConfig(level=logging.DEBUG)
+  logging.basicConfig(level=logging.DEBUG)
   # with open("../../../../examples/escape-mn-mapped-topo.nffg") as f:
   #   nffg = NFFG.parse(f.read())
   #   for domain, part in NFFGToolBox.split_into_domains(nffg):
@@ -2243,21 +2304,28 @@ if __name__ == "__main__":
   #     logging.info(domain + "\n" + rebounded.dump())
   from pprint import pprint
 
-  with open("../../../../examples/escape-mn-mapped-topo.nffg") as f:
-    nffg = NFFG.parse(f.read())
-  print nffg.network['comp']['decomp']
-  print nffg.network['comp']['decomp'][2], id(nffg.network['comp']['decomp'][2])
-  print nffg.network['comp']['decomp'][2].src, id(
-    nffg.network['comp']['decomp'][2].src)
-  print nffg['comp'].ports[1], id(nffg['comp'].ports[1])
-
-  nffg_copy = nffg.copy()
-
-  print nffg_copy.network['comp']['decomp']
-  print nffg_copy.network['comp']['decomp'][2], id(
-    nffg_copy.network['comp']['decomp'][2])
-  print nffg_copy.network['comp']['decomp'][2].src, id(
-    nffg_copy.network['comp']['decomp'][2].src)
-  print nffg_copy['comp'].ports[1], id(nffg_copy['comp'].ports[1])
+  # with open("../../../../examples/escape-mn-mapped-topo.nffg") as f:
+  #   nffg = NFFG.parse(f.read())
+  # print nffg.network['comp']['decomp']
+  # print nffg.network['comp']['decomp'][2], id(nffg.network['comp'][
+  # 'decomp'][2])
+  # print nffg.network['comp']['decomp'][2].src, id(
+  #   nffg.network['comp']['decomp'][2].src)
+  # print nffg['comp'].ports[1], id(nffg['comp'].ports[1])
+  #
+  # nffg_copy = nffg.copy()
+  #
+  # print nffg_copy.network['comp']['decomp']
+  # print nffg_copy.network['comp']['decomp'][2], id(
+  #   nffg_copy.network['comp']['decomp'][2])
+  # print nffg_copy.network['comp']['decomp'][2].src, id(
+  #   nffg_copy.network['comp']['decomp'][2].src)
+  # print nffg_copy['comp'].ports[1], id(nffg_copy['comp'].ports[1])
 
   # pprint(copy.network.__dict__)
+
+  with open("../../../examples/etsi-req-single.nffg") as f:
+    nffg = NFFG.parse(f.read())
+    print nffg.dump()
+    NFFGToolBox.recreate_match_TAGs(nffg)
+    print nffg.dump()

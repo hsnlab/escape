@@ -415,6 +415,10 @@ class ControllerAdapter(object):
     # NFFGToolBox.rewrite_interdomain_tags(slices)
     mapping_result = True
     for domain, part in slices:
+      log.debug(
+        "Recreate missing TAG matching fields in domain part: %s..." % domain)
+      # Temporarily rewrite/recreate TAGs here
+      NFFGToolBox.recreate_match_TAGs(nffg=part, log=log)
       # Get Domain Manager
       domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
       if domain_mgr is None:
