@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with POX. If not, see <http://www.gnu.org/licenses/>.
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import logging, copy
 
 import networkx as nx
@@ -28,7 +28,7 @@ from itertools import count
 log = logging.getLogger("mapping")
 # Default log level
 # Change this constant to set logging level outside of ESCAPE
-DEFAULT_LOG_LEVEL = logging.WARN
+DEFAULT_LOG_LEVEL = logging.DEBUG
 # print "effective level", log.getEffectiveLevel()
 # print "log level", log.level
 if log.getEffectiveLevel() > DEFAULT_LOG_LEVEL:
@@ -60,7 +60,7 @@ def retrieveFullDistMtx (dist, G_full):
 
 
 def shortestPathsInLatency (G_full, enable_shortest_path_cache,
-                            enable_network_cutting=False):
+                            enable_network_cutting=False, bidirectional=True):
   """Wrapper function for Floyd`s algorithm to calculate shortest paths
   measured in latency, using also nodes` forwarding latencies.
   Modified source code taken from NetworkX library.
@@ -109,6 +109,10 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
     for u, v, d in G.edges(data=True):
       e_weight = d.delay
       dist[u][v] = min(e_weight, dist[u][v])
+      if G.node[u].type != 'SAP':
+        dist[u][v] += G.node[u].resources['delay']
+      if G.node[v].type != 'SAP':
+        dist[u][v] += G.node[v].resources['delay']
   except KeyError as e:
     raise uet.BadInputException("Edge attribure(s) missing " + str(e),
                                 "{'delay': VALUE}")
@@ -117,13 +121,16 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
       if G.node[w].type != 'SAP':
         for u in G:
           for v in G:
-            if dist[u][v] > dist[u][w] + G.node[w].resources['delay'] + dist[w][
+            # subtract: because the latency of node 'w' would be added twice.
+            if dist[u][v] > dist[u][w] - G.node[w].resources['delay'] + dist[w][
               v]:
-              dist[u][v] = dist[u][w] + G.node[w].resources['delay'] + dist[w][
+              dist[u][v] = dist[u][w] - G.node[w].resources['delay'] + dist[w][
                 v]
-              dist[v][u] = dist[v][w] + G.node[w].resources['delay'] + dist[w][
-                u]
-            if u == v:
+              if bidirectional:
+                dist[v][u] = dist[v][w] - G.node[w].resources['delay'] + dist[w][
+                  u]
+            # Links are always considered bidirectional?!
+            if u == v and bidirectional:
               break
   except KeyError as e:
     raise uet.BadInputException("",
@@ -143,10 +150,12 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
     return dict(dist)
 
 
-def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
+def shortestPathsBasedOnEdgeWeight (G, source, weight='weight', target=None, 
+                                    cutoff=None):
   """Taken and modified from NetworkX source code,
   the function originally 'was single_source_dijkstra',
   now it returns the key edge data too.
+  If a weight doesn't exist let's be permissive and give it 0 weight.
   """
   if source == target:
     return {source: [source]}, {source: []}
@@ -156,10 +165,16 @@ def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
   paths = {source: [source]}  # dictionary of paths
   # dictionary of edge key lists of corresponding paths
   edgekeys = {source: []}
-  seen = {source: 0}
+  if weight == 'delay':
+    selfweight = (G.node[source].resources[weight] if \
+                  G.node[source].type != 'SAP' else 0)
+  else:
+    selfweight = (getattr(G.node[source], weight, 0) if \
+                  G.node[source].type != 'SAP' else 0)
+  seen = {source: selfweight}
   c = count()
   fringe = []  # use heapq with (distance,label) tuples
-  push(fringe, (getattr(G.node[source], 'weight', 0), next(c), source))
+  push(fringe, (selfweight, next(c), source))
   while fringe:
     (d, _, v) = pop(fringe)
     if v in dist:
@@ -171,12 +186,23 @@ def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
     # is about 30% slower than the following
     edata = []
     for w, keydata in G[v].items():
-      minweight, edgekey = min(((dd.weight, k) for k, dd in keydata.items()),
-                               key=lambda t: t[0])
-      edata.append((w, edgekey, {'weight': minweight}))
+      neighbourdata = []
+      for k, dd in keydata.items():
+        if not hasattr(dd, weight):
+          raise uet.BadInputException("Link %s should have edge attribute %s"%k,
+                                      "Link %s is %s"%(k, dd))
+        neighbourdata.append((getattr(dd, weight), k))
+      minweight, edgekey = min(neighbourdata, key=lambda t: t[0])
+      edata.append((w, edgekey, {weight: minweight}))
 
     for w, ekey, edgedata in edata:
-      vw_dist = dist[v] + getattr(G.node[w], 'weight', 0) + edgedata['weight']
+      if G.node[w].type == 'SAP':
+        tempweight = 0
+      elif weight == 'delay':
+        tempweight = G.node[w].resources[weight]
+      else:
+        tempweight = getattr(G.node[w], weight, 0)
+      vw_dist = dist[v] + tempweight + edgedata[weight]
       if cutoff is not None:
         if vw_dist > cutoff:
           continue
@@ -188,6 +214,8 @@ def shortestPathsBasedOnEdgeWeight (G, source, target=None, cutoff=None):
         push(fringe, (vw_dist, next(c), w))
         paths[w] = paths[v] + [w]
         edgekeys[w] = edgekeys[v] + [ekey]
+  log.debug("Calculated distances from %s based on %s: %s"%
+            (source, weight, dist))
   return paths, edgekeys
 
 
@@ -246,8 +274,8 @@ class MappingManager(object):
       if c['delay'] is None:
         c['delay'] = self.overall_highest_delay
     self.chain_subchain.add_nodes_from(
-      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay']})
-      for c in chains)
+      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay'], 
+                 'chain': c['chain']}) for c in chains)
 
   def getIdOfChainEnd_fromNetwork (self, _id):
     """
@@ -327,6 +355,25 @@ class MappingManager(object):
       raise uet.InternalAlgorithmException(
         "Bad construction of chain-subchain bipartie graph!")
 
+  def areChainEndsReachableInLatency (self, used_lat, potential_host, subcid):
+    """
+    Does a forward checking to determine whether the ending SAPs of the involved
+    E2E chains of this subchain are still reachable in terms of latency if we 
+    map the current VNF to 'potential_host' during the mapping of 'subcid'.
+    """
+    for c in self.chain_subchain.neighbors_iter(subcid):
+      # Chain end should always be available because they are E2E chains.
+      chainend = self.getIdOfChainEnd_fromNetwork(\
+                      self.chain_subchain.node[c]['chain'][-1])
+      if self.shortest_paths_lengths[potential_host][chainend] > \
+         self.getLocalAllowedLatency(subcid) - used_lat:
+        self.log.debug("Potential mapping of a VNF to host %s was too far from"
+                       " chain end %s because of E2E latency requirement."%
+                       (potential_host, chainend))
+        return False
+    return True
+
+
   def isVNFMappingDistanceGood (self, vnf1, vnf2, n1, n2):
     """
     Mapping vnf2 to n2 shouldn`t be further from n1 (vnf1`s host) than
@@ -347,24 +394,7 @@ class MappingManager(object):
         for c, chdata in self.chain_subchain.nodes_iter(data=True):
           if 'subchain' in chdata.keys():
             if (vnf1, vnf2, linkid) in chdata['subchain']:
-              # TODO: The colored_req is saved now!!!!!!!!!!!
-              # there is only one subchain which contains this
-              # reqlink. (link -> chain mapping is not necessary
-              # anywhere else, a structure only for realizing this
-              # checking effectively seems not useful enough)
               lal = self.getLocalAllowedLatency(c, vnf1, vnf2, linkid)
-              subcend = self.\
-                        getIdOfChainEnd_fromNetwork(chdata['subchain'][-1][1])
-              if self.shortest_paths_lengths[n2][subcend] > \
-                 self.getLocalAllowedLatency(c):
-                # NOTE: we compare to remaining E2E latency to the minimal path
-                # length required until only subchain end, which is less strict 
-                # than the actual E2E chain end in general. And used latency
-                # between n1 and n2 is further omitted. But still some bad cases
-                # can be filtered here.
-                self.log.debug("Potential node mapping was too far from chain "
-                         "end because of remaining E2E latency requirement")
-                return False
               if lal < max_permitted_vnf_dist:
                 max_permitted_vnf_dist = lal
               break
@@ -531,3 +561,87 @@ class MappingManager(object):
     Returns the remaining latency of a given E2E chain.
     """
     return self.chain_subchain.node[chain_id]['avail_latency']
+
+  def cmpBasedOnDelayDist (self, h1, h2, origin):
+    """
+    Determines wether h1 or h2 is closer to origin based on distance measured 
+    in latency.
+    """
+    if self.shortest_paths_lengths[origin][h1] < \
+       self.shortest_paths_lengths[origin][h2]:
+      return -1
+    elif self.shortest_paths_lengths[origin][h1] > \
+       self.shortest_paths_lengths[origin][h2]:
+      return 1
+    else:
+      return 0
+
+  def calcDelayPrefValues (self, hosts, vnf1, vnf2, reqlid, cid, subg, 
+                           node_id):
+    """
+    Sorts potential hosts in the network based on a composite key:
+    Firstly, based on how far is the host from the shortest path between the 
+    (sub)chain ends, creates sets.
+    Secondly, based on distance from the current host, measured in delay.
+    Also calculates their latency component value, and returns a list of tuples:
+    (host, lat_pref_value).
+    """
+    # should always be mapped already
+    log.debug("Calculating latency preference values for placing VNF %s."%vnf2)
+    chainend = self.getIdOfChainEnd_fromNetwork(\
+               self.chain_subchain.node[cid]['subchain'][-1][1])
+    paths, _ = shortestPathsBasedOnEdgeWeight(subg, node_id, 
+                                                    weight='delay', 
+                                                    target=chainend)
+    sh_path = paths[chainend]
+    sh_path_lat = self.shortest_paths_lengths[node_id][chainend]
+    subchain = self.chain_subchain.node[cid]['subchain']
+    remaining_chain_len = len(subchain[subchain.index((vnf1, vnf2, reqlid)):])
+    if remaining_chain_len == 1:
+      raise uet.InternalAlgorithmException("Sorting based on latency preference"
+                " value shouldn't be called when only one request link is left!")
+    lal = self.getLocalAllowedLatency(cid)
+    dist_layer_step = float(lal) / \
+                      remaining_chain_len
+    dist_layers = {}
+    for h, sumlat in hosts:
+      if h in sh_path:
+        if 0 in dist_layers:
+          dist_layers[0].append((h, sumlat))
+        else:
+          dist_layers[0] = [(h,sumlat)]
+      else:
+        k = 2
+        placed_h_in_dist_layer = False
+        while sh_path_lat + (k-1)*dist_layer_step < lal:
+          if self.shortest_paths_lengths[node_id][h] + \
+             self.shortest_paths_lengths[h][chainend] < \
+             sh_path_lat + k*dist_layer_step:
+            if k-1 in dist_layers:
+              dist_layers[k-1].append((h,sumlat))
+            else:
+              dist_layers[k-1] = [(h,sumlat)]
+            placed_h_in_dist_layer = True
+            break
+          k += 1
+        if not placed_h_in_dist_layer:
+          log.debug("Host %s was filtered from subgraph of chain %s because it"
+                    " was too far from current and destination hosts!"%
+                    (h, subchain))
+    # sort host inside distance layers and calculate the pref values.
+    hosts_with_lat_values = []
+    lat_value_step_cnt = (lal - sh_path_lat) / \
+                         dist_layer_step
+    for k in dist_layers:
+      current_layer = sorted(dist_layers[k], cmp=lambda h1, h2, origin=node_id: \
+                             self.cmpBasedOnDelayDist(h1[0],h2[0],origin))
+      i = 0.0
+      for h,sumlat in current_layer:
+        # TODO: add capability to eliminate average calculation with previous 
+        # latency pref value
+        hosts_with_lat_values.append((h, sumlat, (float(k)/lat_value_step_cnt +\
+                            i/float(len(current_layer))/lat_value_step_cnt +\
+                            float(sumlat)/lal)/2.0))
+        i += 1.0
+      log.debug("Processed distance layer %s for mapping VNF %s"%(k, vnf2))
+    return hosts_with_lat_values

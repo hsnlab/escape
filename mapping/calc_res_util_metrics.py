@@ -48,6 +48,10 @@ Removes the uncompressed NFFG after it is finished with its processing.
    --no_cdf_interpolation           If set, CDF is delignated in a step function
                                     manner, instead of linear interpolation 
                                     between points.
+   --print_minmax                   Print the minimal and maximal utilization of 
+                                    all resource types of the processed NFFG-s.
+   --consider_seeds                 Makes the decompressed NFFG folder tree 
+                                    seed dependent.
 """
 
 def increment_util_counter(d, u, aggr_size):
@@ -70,12 +74,13 @@ def autolabel(rects, ax):
 
 def main(argv):
   try:
-    opts, args = getopt.getopt(argv, "hl:", ["hist=", "add_hist_values", 
+    opts, args = getopt.getopt(argv, "hl:s:", ["hist=", "add_hist_values", 
                                              "hist_format=", "starting_lvl=",
                                              "one", "cdf_format=", "cdf",
                                              "print_devs", "print_avgs",
-                                             "print_cdf_data=", 
-                                             "no_cdf_interpolation"])
+                                             "print_cdf_data=", "print_minmax", 
+                                             "no_cdf_interpolation", 
+                                               "consider_seeds"])
   except getopt.GetoptError as goe:
     print helpmsg
     raise
@@ -93,12 +98,17 @@ def main(argv):
   print_cdf_data = False
   res_cdf_to_print = None
   no_cdf_interpolation = True
+  print_minmax = False
+  seednum = None
+  consider_seeds = False
   for opt, arg in opts:
     if opt == "-h":
       print helpmsg
       sys.exit()
     elif opt == "-l":
       loc_tgz = arg
+    elif opt == "-s":
+      seednum = int(arg)
     elif opt == "--hist":
       draw_hist = True
       hist_aggr_size = float(arg)
@@ -132,6 +142,10 @@ def main(argv):
       res_cdf_to_print = arg
     elif opt == "--no_cdf_interpolation":
       no_cdf_interpolation = True
+    elif opt == "--print_minmax":
+      print_minmax = True
+    elif opt == "--consider_seeds":
+      consider_seeds = True
       
   nffg_num_list = []
   bashCommand = "ls -x "+loc_tgz
@@ -149,6 +163,10 @@ def main(argv):
     print "test_lvl, ", ", ".join(["".join(["dev(",noderes,")"]) \
                                    for noderes in cdf])
 
+  if print_minmax:
+    print "test_lvl, ", ", ".join(["min(%s), max(%s)"%(res, res) for res in \
+                                   reskeys + ['link_bw']])
+
   if draw_hist:
     empty_hist = copy.deepcopy(hist)
   if draw_cdf:
@@ -157,7 +175,10 @@ def main(argv):
     filename = "test_lvl-%s.nffg.tgz"%test_lvl
     os.system("".join(["tar -xf ",loc_tgz,"/",filename])) # decompress
     # after decompression nffg-s end up two folder deep.
-    nffg_prefix = "nffgs-batch_tests/"+loc_tgz.split("/")[-1]+"/"
+    if consider_seeds:
+      nffg_prefix = "nffgs-seed%s-batch_tests/"%seednum+loc_tgz.split("/")[-1]+"/"
+    else:
+      nffg_prefix = "nffgs-batch_tests/"+loc_tgz.split("/")[-1]+"/"
     with open("".join([nffg_prefix,"test_lvl-",str(test_lvl), ".nffg"]), 
               "r") as f:
       nffg = NFFG.parse(f.read())
@@ -166,6 +187,8 @@ def main(argv):
       # calculate avg. res utils by resource types.
       avgs = {}
       cnts = {}
+      mins = {}
+      maxs = {}
       if draw_hist:
         hist = copy.deepcopy(empty_hist)
       if draw_cdf:
@@ -180,6 +203,19 @@ def main(argv):
                    i.resources[noderes]
             avgs[noderes] += util
             cnts[noderes] += 1
+
+            # maintain max/min struct
+            if noderes in mins:
+              if mins[noderes] > util:
+                mins[noderes] = util
+            else:
+              mins[noderes] = util
+            if noderes in maxs:
+              if maxs[noderes] < util:
+                maxs[noderes] = util
+            else:
+              maxs[noderes] = util
+
             if draw_hist:
               increment_util_counter(hist[noderes], util, hist_aggr_size)
             if draw_cdf:
@@ -192,6 +228,19 @@ def main(argv):
           link_util = float(l.bandwidth - l.availbandwidth) / l.bandwidth
           avg_linkutil += link_util
           linkcnt += 1
+
+          # maintain max/min struct
+          if 'link_bw' in mins:
+            if mins['link_bw'] > link_util:
+              mins['link_bw'] = link_util
+          else:
+            mins['link_bw'] = link_util
+          if 'link_bw' in maxs:
+            if maxs['link_bw'] < link_util:
+              maxs['link_bw'] = link_util
+          else:
+            maxs['link_bw'] = link_util
+
           if draw_hist:
             increment_util_counter(hist['link_bw'], link_util, hist_aggr_size)
           if draw_cdf:
@@ -211,6 +260,13 @@ def main(argv):
                                 (len(cdf[res])-1))
         to_print = [test_lvl]
         to_print.extend([devs[res] for res in cdf])
+        print ",".join(map(str, to_print))
+
+      if print_minmax:
+        to_print = [test_lvl]
+        for res in reskeys + ['link_bw']:
+          to_print.append(mins[res])
+          to_print.append(maxs[res])
         print ",".join(map(str, to_print))
 
     # delete the NFFG and its parent folders
@@ -270,10 +326,12 @@ def main(argv):
       ax.set_xlim((-0.05, 1.05))
       ax.set_ylim((-0.05, 1.10))
       colors = iter(['r', 'g', 'b', 'c', 'y'])
+      styles = iter([[8, 4, 2, 4, 2, 4], [4,2], [8,2], [8,4,2,4], []])
       for res in cdf:
         last_point = (0, 0)
         vertical_step = 1.0/len(cdf[res])
         rescolor = next(colors)
+        resline = next(styles)
         reslab = res
         if print_cdf_data and res == res_cdf_to_print:
           cdf_plot_data = [last_point]
@@ -282,9 +340,9 @@ def main(argv):
                                    [1.0])):
           if no_cdf_interpolation:
             plt.plot((last_point[0], point[0]), (last_point[1], last_point[1]), 
-                     color=rescolor, lw=3, label=reslab)
+                     color=rescolor, lw=3, label=reslab, dashes=resline)
             plt.plot((point[0], point[0]),(last_point[1], point[1]),
-                     color=rescolor, lw=3, label=reslab)
+                     color=rescolor, lw=3, dashes=resline)
           else:
             plt.plot((last_point[0], point[0]), (last_point[1], point[1]), 
                      color=rescolor, lw=3, label=reslab)
@@ -299,10 +357,10 @@ def main(argv):
           print test_lvl, ",", ",".join(map(lambda t: "(%.6f; %.6f)"%(t[0], t[1]),
                                             cdf_plot_data))
       ax.set_ylabel("Ratio of network element counts to total count")
-      ax.set_xlabel("Resource utilization interval from 0 to x [%]")
+      ax.set_xlabel("Resource utilization [%]")
       ax.set_xticks([float(i)/100 for i in xrange(0,101, 5)])
       ax.set_xticklabels([str(i) for i in xrange(0,101, 5)])
-      ax.legend(bbox_to_anchor=(0,1), loc='upper left', ncol=5, fontsize=8)
+      ax.legend(bbox_to_anchor=(0,1), loc='upper left', ncol=5, fontsize=11)
       plt.savefig('plots/cdf-test_lvl-%s.%s'%(test_lvl, cdf_format), 
                   bbox_inches='tight')
       plt.close(fig)
