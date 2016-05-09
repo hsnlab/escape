@@ -626,8 +626,7 @@ class ESCAPENetworkBuilder(object):
       for port in n.ports:
         # ip should be something like '10.0.123.1/24'.
         ip = port.get_property('ip')
-        if ip is None:
-          continue
+        mac = port.get_property('mac')
         intf = mn_node.intfs.get(port.id)
         if intf is None:
           log.warn(("Port %s of node %s is not connected,"
@@ -636,7 +635,11 @@ class ESCAPENetworkBuilder(object):
         if intf == mn_node.defaultIntf():
           # Workaround a bug in Mininet
           mn_node.params.update({'ip': ip})
-        mn_node.setIP(ip, intf=intf)
+          mn_node.params.update({'mac': mac})
+        if ip is not None:
+          mn_node.setIP(ip, intf=intf)
+        if mac is not None:
+          mn_node.setMAC(mac, intf=intf)
 
     # For inter-domain SAPs no need to create host/xterm just add the SAP as
     # a port to the border Node
