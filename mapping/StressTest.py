@@ -262,7 +262,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
   shortest_paths = shortest_paths_precalc
   ppid_pid = ""
   # log.addHandler(logging.StreamHandler())
-  log.setLevel(logging.WARN)
+  # log.setLevel(logging.WARN)
   if filehandler is not None:
     log.addHandler(filehandler)
   if shortest_paths is not None and type(shortest_paths) != dict:

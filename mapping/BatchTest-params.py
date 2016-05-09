@@ -21,6 +21,8 @@ Script to give start and give parameters to BatchTests.
    --bt_limit_end=i
 
    --dump_nffgs=i         Dump every 'i'th NFFG of a test sequence.
+
+   --topo_name=<<>>
 """
 
 semaphore = threading.Semaphore(4)
@@ -127,14 +129,13 @@ def main(argv):
         for bt in xrange(bt_limit, bt_limit_end):
             for batch in np.arange(batch_length, batch_length_end, batch_step):
 
-
                 outputfile = "batch_tests/gw-"+("poi-" if poisson else "")+\
                              "%s-%sbatched-seed%s-%s-bt%s-%s.out"\
                              %(stress_type, batch, seed_start, seed_end, bt, 
                                bt_br_factor)
                 commtime = "/usr/bin/time -o "+outputfile+" -a -f \"%U user,\t%S sys,\t%E real\" "
                 commbatch = "python StressTest-%s.py --bw_factor=0.5 --lat_factor=2.0 --res_factor=0.5 --shareable_sg_count=4 --topo_name=%s %s --batch_length=%s --bt_limit=%s --bt_br_factor=%s --request_seed="%\
-                            (stress_type, topo_name, ("--dump_nffgs="+str(dump_cnt)+",nffgs-"+outputfile.rstrip(".out") if dump_nffgs else ""), batch, bt, bt_br_factor)
+                            (stress_type, topo_name, ("--dump_nffgs="+str(dump_cnt)+",nffgs-seed"+str(i)+"-"+outputfile.rstrip(".out") if dump_nffgs else ""), batch, bt, bt_br_factor)
 
                 if time:
                     commbatch = commtime + commbatch

@@ -273,7 +273,7 @@ class CoreAlgorithm(object):
       
 
   def _objectiveFunction (self, cid, node_id, prev_vnf_id, vnf_id, reqlinkid,
-       path_to_map, linkids):
+                          path_to_map, linkids, sum_latency):
     """Calculates a function to determine which node is better to map to,
     returns -1, if not feasible"""
     requested = self.req.node[vnf_id].resources
@@ -293,17 +293,17 @@ class CoreAlgorithm(object):
       if avg_link_util == -1:
         self.log.debug("Host %s is not a good candidate for hosting %s due to "
                        "bandwidth requirement."%(node_id, vnf_id))
-        return -1, float("inf")
-      sum_latency = self._sumLatencyOnPath(path_to_map, linkids)
+        return -1
       local_latreq = self.manager.getLocalAllowedLatency(cid, prev_vnf_id,
                                                          vnf_id, reqlinkid)
       if sum_latency == -1 or sum_latency > local_latreq or not \
-           self.manager.isVNFMappingDistanceGood(
-        prev_vnf_id, vnf_id, path_to_map[0], path_to_map[-1]) or \
-           local_latreq == 0:
+           self.manager.isVNFMappingDistanceGood(\
+                prev_vnf_id, vnf_id, path_to_map[0], path_to_map[-1]) or \
+           local_latreq == 0 or not self.manager.areChainEndsReachableInLatency(\
+                sum_latency, node_id, cid):
         self.log.debug("Host %s is too far measured in latency for hosting %s."%
                        (node_id, vnf_id))
-        return -1, float("inf")
+        return -1
 
       '''Here we know that node_id have enough resource and the path
       leading there satisfies the bandwidth req of the potentially
@@ -324,18 +324,19 @@ class CoreAlgorithm(object):
       scaled_bw_comp = 10 * float(
         self.pref_funcs['bandwidth'](avg_link_util)) / \
         self.pref_funcs['bandwidth'](1.0)
-      scaled_lat_comp = 10 * float(sum_latency) / local_latreq
+      # Except latency component, because it is added outside of the objective 
+      # function
+      # scaled_lat_comp = 10 * float(sum_latency) / local_latreq
 
-      self.log.debug("avglinkutil pref value: %f, sum res: %f, sumlat: %f" % (
-        self.bw_factor * scaled_bw_comp, self.res_factor * scaled_res_comp,
-        self.lat_factor * scaled_lat_comp))
+      # TODO: correct logs to new latency calculation!
+      self.log.debug("avglinkutil pref value: %f, sum res: %f" % (
+        self.bw_factor * scaled_bw_comp, self.res_factor * scaled_res_comp))
 
-      return self.bw_factor * scaled_bw_comp + self.res_factor * \
-             scaled_res_comp + self.lat_factor * scaled_lat_comp, sum_latency
+      return self.bw_factor * scaled_bw_comp + self.res_factor * scaled_res_comp
     else:
       self.log.debug("Host %s does not have engough node resource for hosting %s."%
                      (node_id, vnf_id))
-      return -1, float("inf")
+      return -1
 
   def _updateGraphResources (self, bw_req, path, linkids, vnf=None, node=None, 
                              redo=False):
@@ -465,66 +466,77 @@ class CoreAlgorithm(object):
     NOTE(loops): shortest path from i to i is [i] (This path is the
     collocation, and 1 long paths are handled right by the
     _objectiveFunction()/_calculateAvgLinkUtil()/_sumLat() functions)'''
-    # TODO: Write an utility func, which gives path based on lat AND bw
     paths, linkids = helper.shortestPathsBasedOnEdgeWeight(subgraph, start)
-    for map_target in paths:
-      if self.net.node[map_target].type == 'INFRA' and self.net.node[
-        map_target].supported is not None:
-        
-        """for supp in self.net.node[map_target].supported:
-          self.log.debug(" ".join((map_target,"has supported type: ",supp)))
-        """
-                         
-        if self.req.node[vnf_id].functional_type in self.net.node[
-          map_target].supported:
-
-          place_crit = self.req.node[vnf_id].placement_criteria
-          if len(place_crit) > 0 and map_target not in place_crit:
-            continue
-          else:
-            value, used_lat = self._objectiveFunction(cid, map_target,
-                                                      prev_vnf_id, vnf_id,
-                                                      reqlinkid,
-                                                      paths[map_target],
-                                                      linkids[map_target])
-            if value > -1:
-              self.log.debug("Calculated value: %f for VNF %s and path: %s" % (
-                value, vnf_id, paths[map_target]))
-              just_found = copy.deepcopy(base_bt_record)
-              just_found.update(zip(('target_infra', 'path', 'path_link_ids', 
-                                    'used_latency', 'obj_func_value'), 
-                                (map_target, paths[map_target], 
-                                 linkids[map_target], used_lat, value)))
-              if deque_length == 0:
-                best_node_que.append(just_found)
-                deque_length += 1
-              else:
-                best_node_sofar = best_node_que.pop()
-                best_node_que.append(best_node_sofar)
-                if best_node_sofar['obj_func_value'] > value:
-                  best_node_que.append(just_found)
-                elif deque_length <= self.bt_branching_factor > 1:
-                  least_good_que = deque()
-                  least_good_sofar = best_node_que.popleft()
-                  deque_length -= 1
-                  while least_good_sofar['obj_func_value'] > value:
-                    least_good_que.append(least_good_sofar)
-                    # too many good nodes can be remove, because we already 
-                    # know just found is worse than the best node
-                    least_good_sofar = best_node_que.popleft()
-                    deque_length -= 1
-                  best_node_que.appendleft(least_good_sofar)
-                  best_node_que.appendleft(just_found)
-                  deque_length += 2
-                  while deque_length < self.bt_branching_factor:
-                    try:
-                      best_node_que.appendleft(least_good_que.popleft())
-                    except IndexError:
-                      break
-            else:
-              # self.log.debug("Host %s is not a good candidate for hosting %s."
-              #                %(map_target,vnf_id))
-              pass
+    # TODO: sort 'paths' in ordered dict according to new latency pref value.
+    # allow only infras which has some 'supported'
+    potential_hosts = filter(lambda h, nodes=self.net.node: 
+      nodes[h].type=='INFRA' and nodes[h].supported is not None, 
+                             paths.keys())
+    # allow only hosts which supports this NF
+    potential_hosts = filter(lambda h, v=vnf_id, nodes=self.net.node, 
+      vnfs=self.req.node: vnfs[v].functional_type in nodes[h].supported, 
+                             potential_hosts)
+    # allow only hosts which complies to plac_crit if any
+    potential_hosts = filter(lambda h, v=vnf_id, vnfs=self.req.node:
+      len(vnfs[v].placement_criteria)==0 or h in vnfs[v].placement_criteria, 
+                             potential_hosts)
+    potential_hosts_sumlat = []
+    for host in potential_hosts:
+      potential_hosts_sumlat.append((host, self._sumLatencyOnPath(paths[host], 
+                                                                  linkids[host])))
+    hosts_with_lat_prefvalues = self.manager.calcDelayPrefValues(\
+                            potential_hosts_sumlat, prev_vnf_id, vnf_id, 
+                            reqlinkid, cid, subgraph, start)
+    # TODO: self.use_old_lat_calc variable to change between lat pref val 
+    # calculation methods
+    for map_target, sumlat, latprefval in hosts_with_lat_prefvalues:
+      value = self._objectiveFunction(cid, map_target,
+                                      prev_vnf_id, vnf_id,
+                                      reqlinkid,
+                                      paths[map_target],
+                                      linkids[map_target],
+                                      sumlat)
+      if value > -1:
+        self.log.debug("Calculated latency preference value: %f for VNF %s and "
+                       "path: %s" % (latprefval, vnf_id, paths[map_target]))
+        value += 10.0*latprefval
+        self.log.debug("Calculated value: %f for VNF %s and path: %s" % (
+          value, vnf_id, paths[map_target]))
+        just_found = copy.deepcopy(base_bt_record)
+        just_found.update(zip(('target_infra', 'path', 'path_link_ids', 
+                              'used_latency', 'obj_func_value'), 
+                          (map_target, paths[map_target], 
+                           linkids[map_target], sumlat, value)))
+        if deque_length == 0:
+          best_node_que.append(just_found)
+          deque_length += 1
+        else:
+          best_node_sofar = best_node_que.pop()
+          best_node_que.append(best_node_sofar)
+          if best_node_sofar['obj_func_value'] > value:
+            best_node_que.append(just_found)
+          elif deque_length <= self.bt_branching_factor > 1:
+            least_good_que = deque()
+            least_good_sofar = best_node_que.popleft()
+            deque_length -= 1
+            while least_good_sofar['obj_func_value'] > value:
+              least_good_que.append(least_good_sofar)
+              # too many good nodes can be remove, because we already 
+              # know just found is worse than the best node
+              least_good_sofar = best_node_que.popleft()
+              deque_length -= 1
+            best_node_que.appendleft(least_good_sofar)
+            best_node_que.appendleft(just_found)
+            deque_length += 2
+            while deque_length < self.bt_branching_factor:
+              try:
+                best_node_que.appendleft(least_good_que.popleft())
+              except IndexError:
+                break
+      else:
+        # self.log.debug("Host %s is not a good candidate for hosting %s."
+        #                %(map_target,vnf_id))
+        pass
     try:
       best_node_sofar = best_node_que.pop()
       self.bt_handler.addBacktrackLevel(cid, best_node_que)
