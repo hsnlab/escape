@@ -690,7 +690,7 @@ class ModelCreator(object):
         for req in self.requests:
             self.allowed_nodes_copy[req] = {}
             for vnode in req.nodes:
-                self.allowed_nodes_copy[req][vnode] = self.scenario.compute_allowed_nodes(request, vnode)
+                self.allowed_nodes_copy[req][vnode] = self.scenario.compute_allowed_nodes(req, vnode)
 
         # for req in self.requests:
         #     self.potential_vedge_embeddings_on_nodes[req] = {}
