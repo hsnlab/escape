@@ -605,7 +605,9 @@ class ModelCreator(object):
         self.requests = scenario.requests
 
         #for easier lookup which nfs can be placed onto which substrate nodes
-        self.allowed_nodes_copy = {}
+        self.allowed_nodes_copy = {}                    #a dict of req --> vnode --> [snodes]
+        #as vedges may be embedded on a single node, we use the following dict to store the respective potential node embeddings
+        # self.potential_vedge_embeddings_on_nodes = {}   #a dict of req --> vedge --> [snodes]
 
         # gurobi interface
         self.model = None
@@ -615,6 +617,10 @@ class ModelCreator(object):
         self.var_embedding_decision = {}
         self.var_node_mapping = {}
         self.var_edge_mapping = {}
+        self.var_node_load = {}
+        self.var_edge_load = {}
+        self.var_path_delay = {}
+        # self.var_vedge_to_snode_mapping = {}
 
         # the final solution (if any was found)
         self.solution = None
@@ -643,6 +649,8 @@ class ModelCreator(object):
 
 
     def run_milp(self):
+
+        self.model.write("lala.lp")
 
         self.model.optimize()
 
@@ -682,7 +690,23 @@ class ModelCreator(object):
         for req in self.requests:
             self.allowed_nodes_copy[req] = {}
             for vnode in req.nodes:
-                self.allowed_nodes_copy[req][vnode] = self.scenario.compute_allowed_nodes(request, vnode)
+                self.allowed_nodes_copy[req][vnode] = self.scenario.compute_allowed_nodes(req, vnode)
+
+        # for req in self.requests:
+        #     self.potential_vedge_embeddings_on_nodes[req] = {}
+        #
+        #     for vedge in req.edges:
+        #         self.potential_vedge_embeddings_on_nodes[req][vedge] = []
+        #
+        #         vtail, vtail_p, vhead_p, vhead = vedge
+        #
+        #         for snode in self.substrate.nodes:
+        #             if snode in self.allowed_nodes_copy[req][vtail] and snode in self.allowed_nodes_copy[req][vhead]:
+        #                 self.potential_vedge_embeddings_on_nodes[req][vedge].append(snode)
+
+
+
+
 
 
     def create_variables(self):
@@ -712,12 +736,41 @@ class ModelCreator(object):
                     variable_id = construct_name("edge_mapping", req_id=req.id, vedge=vedge, sedge=sedge)
                     self.var_edge_mapping[req][vedge][sedge] = self.model.addVar(lb=0.0, ub=1.0, obj=0.0, vtype=GRB.BINARY, name=variable_id)
 
+        node_resources = ["bandwidth", "cpu", "memory", "storage"]
+        for snode in self.substrate.nodes:
+            self.var_node_load[snode] = {}
+            for resource in node_resources:
+                variable_id = construct_name("node_load", snode=snode) + "_" + resource
+                self.var_node_load[snode][resource] = self.model.addVar(lb=0.0, ub=GRB.INFINITY, obj=0.0, vtype=GRB.CONTINUOUS, name=variable_id)
+
+        for sedge in self.substrate.edges:
+            variable_id = construct_name("edge_load", sedge=sedge)
+            self.var_edge_load[sedge] = self.model.addVar(lb=0.0, ub=GRB.INFINITY, obj=0.0, vtype=GRB.CONTINUOUS, name=variable_id)
+
+        for req in self.requests:
+            self.var_path_delay[req] = {}
+            for id, _ in req.graph["path_requirements"].keys():
+                variable_id = construct_name("path_delay", req_id=req.id) + "_" + str(id)
+                self.var_path_delay[req][id] = self.model.addVar(lb=0.0, ub=GRB.INFINITY, obj=0.0, vtype=GRB.CONTINUOUS, name=variable_id)
+
+        # for req in self.requests:
+        #     self.var_vedge_to_snode_mapping[req] = {}
+        #
+        #     for vedge in req.edges:
+        #         self.var_vedge_to_snode_mapping[req][vedge] = {}
+        #
+        #         for snode in self.potential_vedge_embeddings_on_nodes[req][vedge]:
+        #             variable_id = construct_name("vedge_mapping_on_snode", req_id=req.id, vedge=vedge, snode=snode)
+        #             self.var_vedge_to_snode_mapping[req][vedge][sedge] = self.model.addVar(lb=0.0, ub=1.0, obj=0.0, vtype=GRB.BINARY, name=variable_id)
+
 
     def create_constraints(self):
         self.create_constraint_request_embedding_triggers_node_embeddings()
         self.create_constraint_induce_and_preserve_unit_flows()
+        #self.create_constraint_set_vedge_via_snode_variables() #TODO currently not necessary
         self.create_constraint_node_loads_standard()
         self.create_constraint_node_load_bandwidth()
+        self.create_constraint_edge_load_bandwidth()
         self.create_constraint_delay_requirements()
 
 
@@ -736,16 +789,10 @@ class ModelCreator(object):
         for req in self.requests:
             for vedge in req.edges:
                 for snode in self.substrate.nodes:
-                    print "FOOO"
-                    print self.substrate.in_neighbors[snode]
-                    print self.substrate.out_neighbors[snode]
-
 
                     expr = LinExpr([(-1.0, self.var_edge_mapping[req][vedge][sedge]) for sedge in self.substrate.in_neighbors[snode]]
                                    +
                                    [(+1.0, self.var_edge_mapping[req][vedge][sedge]) for sedge in self.substrate.out_neighbors[snode]])
-
-                    print expr
 
                     vtail,_,_,vhead = vedge
 
@@ -759,6 +806,40 @@ class ModelCreator(object):
 
                     self.model.addConstr(expr, GRB.EQUAL, 0.0, name=constr_name)
 
+    # def create_constraint_set_vedge_via_snode_variables(self):
+    #
+    #     for req in self.requests:
+    #         for vedge in req.edges:
+    #
+    #             vtail, vtail_p, vhead_p, vhead = vedge
+    #
+    #             for snode in self.potential_vedge_embeddings_on_nodes[req][vedge]:
+    #
+    #                 expr = LinExpr([(+1.0, self.var_vedge_to_snode_mapping[req][vedge][snode]),
+    #                                 (-1.0, self.var_node_mapping[req][vtail][snode])])
+    #
+    #                 constr_name = construct_name("set_vedge_via_snode_1", req_id=req.id, vedge=vedge, snode=snode)
+    #
+    #                 self.model.addConstr(expr, GRB.LESS_EQUAL, 0.0, name=constr_name)
+    #
+    #
+    #                 expr = LinExpr([(+1.0, self.var_vedge_to_snode_mapping[req][vedge][snode]),
+    #                                 (-1.0, self.var_node_mapping[req][vhead][snode])])
+    #
+    #                 constr_name = construct_name("set_vedge_via_snode_2", req_id=req.id, vedge=vedge, snode=snode)
+    #
+    #                 self.model.addConstr(expr, GRB.LESS_EQUAL, 0.0, name=constr_name)
+    #
+    #
+    #                 expr = LinExpr([(+1.0, self.var_vedge_to_snode_mapping[req][vedge][snode]),
+    #                                 (-1.0, self.var_node_mapping[req][vtail][snode]),
+    #                                 (-1.0, self.var_node_mapping[req][vtail][snode])])
+    #
+    #                 constr_name = construct_name("set_vedge_via_snode_3", req_id=req.id, vedge=vedge, snode=snode)
+    #
+    #                 self.model.addConstr(expr, GRB.GREATE_EQUAL, -1.0, name=constr_name)
+
+
     def create_constraint_node_loads_standard(self):
         node_properties = ["cpu", "memory", "storage"]
 
@@ -768,21 +849,49 @@ class ModelCreator(object):
                 expr = LinExpr([(req.node[vnode][node_property], self.var_node_mapping[req][vnode][snode])
                                 for req in self.requests for vnode in req.nodes if snode in self.allowed_nodes_copy[req][vnode]])
 
+                expr.addTerms(-1.0, self.var_node_load[snode][node_property])
 
-                constr_name = construct_name("node_loads_standard", snode=snode) + "_{}".format(node_property)
+                constr_name = construct_name("set_node_load_var_standard", snode=snode) + "_{}".format(node_property)
+
+                self.model.addConstr(expr, GRB.EQUAL, 0.0,  constr_name)
+
+                expr = LinExpr([(1.0, self.var_node_load[snode][node_property])])
+
+                constr_name = construct_name("bound_node_load_standard", snode=snode) + "_{}".format(node_property)
 
                 self.model.addConstr(expr, GRB.LESS_EQUAL, self.substrate.node[snode][node_property],  constr_name)
 
+
     def create_constraint_node_load_bandwidth(self):
         for snode in self.substrate.nodes:
-            expr = LinExpr([(req.edge[vedge]['bandwidth'], self.var_edge_mapping[req][vedge][sedge])
-                            for req in self.requests
-                            for vedge in req.edges
-                            for sedge in self.substrate.in_neighbors[snode]])
 
-            constr_name = construct_name("node_load_bandwidth", snode=snode)
+            expr = LinExpr( [
+                                (req.edge[vedge]['bandwidth'], self.var_edge_mapping[req][vedge][sedge])
+                                    for req in self.requests
+                                    for vedge in req.edges
+                                    for sedge in self.substrate.in_neighbors[snode]
+                            ] +
+                            [
+                                (req.edge[(vtail, vtail_p, vhead_p, vhead)]['bandwidth'], self.var_node_mapping[req][vtail][snode])
+                                    for req in self.requests
+                                    for (vtail, vtail_p, vhead_p, vhead) in req.edges
+                                    if snode in self.allowed_nodes_copy[req][vtail]
+                            ]
+                           )
 
-            self.model.addConstr(expr, GRB.LESS_EQUAL, self.substrate.node[snode]['bandwidth'], constr_name)
+            expr.addTerms(-1.0, self.var_node_load[snode]["bandwidth"])
+
+            constr_name = construct_name("set_node_load_var_bw", snode=snode)
+
+            self.model.addConstr(expr, GRB.EQUAL, 0.0,  constr_name)
+
+            expr = LinExpr([(1.0, self.var_node_load[snode]["bandwidth"])])
+
+            constr_name = construct_name("bound_node_load_bandwidth", snode=snode)
+
+            self.model.addConstr(expr, GRB.LESS_EQUAL, self.substrate.node[snode]['bandwidth'],  constr_name)
+
+
 
     def create_constraint_edge_load_bandwidth(self):
         for sedge in self.substrate.edges:
@@ -790,9 +899,19 @@ class ModelCreator(object):
                             for req in self.requests
                             for vedge in req.edges])
 
-            constr_name = construct_name("edge_load_bandwidth", sedge=sedge)
 
-            self.model.addConstr(expr, GRB.LESS_EQUAL, self.substrate.edge[sedge]['bandwidth'], constr_name)
+            expr.addTerms(-1.0, self.var_edge_load[sedge])
+
+            constr_name = construct_name("set_edge_load", sedge=sedge)
+
+            self.model.addConstr(expr, GRB.EQUAL, 0.0,  constr_name)
+
+            expr = LinExpr(1.0, self.var_edge_load[sedge])
+
+            constr_name = construct_name("bound_edge_load", sedge=sedge)
+
+            self.model.addConstr(expr, GRB.LESS_EQUAL, self.substrate.edge[sedge]['bandwidth'],  constr_name)
+
 
     def create_constraint_delay_requirements(self):
         for req in self.requests:
@@ -800,15 +919,32 @@ class ModelCreator(object):
             for (id, tuple_path), delay_bound in req.get_path_requirements().iteritems():
                 expr = LinExpr()
                 for vedge in tuple_path:
-                    sub_expr = LinExpr([(self.substrate.edge[(stail, stail_p, shead_p, shead)]['delay'] +
-                                         self.substrate.node[shead]['delay'],
-                                         self.var_edge_mapping[req][vedge][(stail, stail_p, shead_p, shead)])
-                                         for (stail, stail_p, shead_p, shead) in self.substrate.edges
-                                        ])
+
+                    vtail, vtail_p, vhead_p, vhead = vedge
+
+                    sub_expr = LinExpr( [
+                                            (self.substrate.edge[(stail, stail_p, shead_p, shead)]['delay']
+                                             + self.substrate.node[shead]['delay'],
+                                            self.var_edge_mapping[req][vedge][(stail, stail_p, shead_p, shead)] )
+                                                for (stail, stail_p, shead_p, shead) in self.substrate.edges
+                                        ] +
+                                        [
+                                            (substrate.node[snode]['delay'], self.var_node_mapping[req][vtail][snode])
+                                                for snode in self.allowed_nodes_copy[req][vtail]
+                                        ]
+                                       )
 
                     expr.add(sub_expr)
 
-                constr_name = construct_name("delay_requirement", req_id=req.id) + "_id[{}]".format(id)
+                expr.addTerms(-1.0, self.var_path_delay[req][id])
+
+                constr_name = construct_name("set_delay", req_id=req.id) + "_id[{}]".format(id)
+
+                self.model.addConstr(expr, GRB.EQUAL, 0.0, constr_name)
+
+                expr = LinExpr(1.0, self.var_path_delay[req][id])
+
+                constr_name = construct_name("bound_delay", req_id=req.id) + "_id[{}]".format(id)
 
                 self.model.addConstr(expr, GRB.LESS_EQUAL, delay_bound, constr_name)
 
@@ -882,6 +1018,10 @@ class ModelCreator(object):
 
                         mapping.map_edge(vedge, list(reversed(substrate_edge_path)))
 
+                for (id, vedge_path) in req.graph['path_requirements']:
+                    mapping.set_raw_path_delay(id, vedge_path, self.var_path_delay[req][id].X)
+
+
             else:
                 mapping = Mapping(req, self.substrate, self.scenario, is_embedded=False)
 
@@ -889,6 +1029,17 @@ class ModelCreator(object):
             self.solution.set_mapping_of_request(req, mapping)
             print mapping.vnode_to_snode
             print mapping.vedge_to_spath
+
+
+        node_resources = ["bandwidth", "cpu", "memory", "storage"]
+
+        for snode in self.substrate.nodes:
+            for resource in node_resources:
+                self.solution.set_raw_node_load(snode, resource, self.var_node_load[snode][resource].X)
+
+        for sedge in self.substrate.edges:
+            self.solution.set_raw_edge_load(sedge, self.var_edge_load[sedge].X)
+
 
 
 
@@ -909,7 +1060,10 @@ class Mapping(object):
         self.vedge_to_spath = {}
 
         self.snode_to_hosted_vnodes = {}
+        self.snode_to_incident_vedges = {}
         self.sedge_to_vedges = {}
+
+        self.raw_path_delay = {}
 
 
     def map_node(self, vnode, snode):
@@ -967,21 +1121,73 @@ class Mapping(object):
 
         self.vedge_to_spath[vedge] = substrate_edge_path
 
+        #set mapping of edges to vedges
         for sedge in substrate_edge_path:
             if not sedge in self.sedge_to_vedges:
                 self.sedge_to_vedges[sedge] = [vedge]
             else:
                 self.sedge_to_vedges[sedge].append(vedge)
 
-    def get_hosted_vnodes(self, snode):
+        if len(substrate_edge_path) > 0:
+
+            #set mapping of substrate nodes to vedges
+            for index, sedge in enumerate(substrate_edge_path):
+
+                stail,stail_p, shead_p, shead = sedge
+
+                if index == 0:
+                    if not stail in self.snode_to_incident_vedges:
+                        self.snode_to_incident_vedges[stail] = [vedge]
+                    else:
+                        self.snode_to_incident_vedges[stail].append(vedge)
+
+                if not shead in self.snode_to_incident_vedges:
+                    self.snode_to_incident_vedges[shead] = [vedge]
+                else:
+                    self.snode_to_incident_vedges[shead].append(vedge)
+        else:
+            #both the head and the tail of the vedge are mapped onto the same node..
+            if self.vnode_to_snode[vtail] != self.vnode_to_snode[vhead]:
+                raise Exception("Empty edge mapping implies being hosted on the same node!")
+            snode = self.vnode_to_snode[vtail]
+            if snode not in self.snode_to_incident_vedges:
+                self.snode_to_incident_vedges[snode] = [vedge]
+            else:
+                self.snode_to_incident_vedges[snode].append(vedge)
+
+
+    def set_raw_path_delay(self, id, vedge_path, delay):
+        if (id, vedge_path) not in self.request.graph['path_requirements']:
+            raise Exception("Cannot set raw path delay for path {} with id {} as it is not part of the request.".format(vedge_path, id))
+        if (id, vedge_path) not in self.raw_path_delay:
+            self.raw_path_delay[(id,vedge_path)] = delay
+        else:
+            raise Exception("Raw path delay of request {} and id {} was already set.".format(self.request.id, id))
+
+
+    def get_hosted_vnodes_on_snode(self, snode):
         if snode not in self.snode_to_hosted_vnodes:
             return []
         return self.snode_to_hosted_vnodes[snode]
 
-    def get_hosted_vedges(self, sedge):
+    def get_hosted_vedges_on_sedge(self, sedge):
         if sedge not in self.sedge_to_vedges:
             return []
         return self.sedge_to_vedges[sedge]
+
+    def get_hosted_vedges_using_snode(self, snode):
+        if snode not in self.snode_to_incident_vedges:
+            return []
+        return self.snode_to_incident_vedges[snode]
+
+    def print_mapping(self):
+        print "\t Mapping of Request {}".format(self.request.id)
+        if self.is_embedded:
+            for vnode in self.request.nodes:
+                print "\t\t Node {} --> {}".format(vnode, self.vnode_to_snode[vnode])
+            for vedge in self.request.edges:
+                print "\t\t Edge {} --> {}".format(vedge, self.vedge_to_spath[vedge])
+
 
 def isFeasibleStatus(status):
     result = True
@@ -1071,6 +1277,14 @@ class GurobiStatus(object):
         return "solCount: {0}; status: {1}; objValue: {2}; objBound: {3}; objGap: {4}; integralSolution: {5}; ".format(self.solCount, self.status, self.objValue, self.objBound, self.objGap, self.integralSolution)
 
 
+def check_deviation(text, value1, value2, eps=0.0001):
+    if abs(value2) < 0.0001:
+        if abs(value1 - value2) + abs(value2- value1) > eps:
+            raise Exception(text + " {} vs. {}".format(value1, value2))
+    else:
+        if (value1 / value2 > 1.0 + eps) or (value1 / value2 < 1.0 - eps):
+            raise Exception(text + " {} vs. {}".format(value1, value2))
+
 class ScenarioSolution(object):
 
     def __init__(self, scenario):
@@ -1080,39 +1294,169 @@ class ScenarioSolution(object):
 
         self.mapping_of_request = {}
 
+        self.raw_node_load = {}
+        self.raw_edge_load = {}
+
     def set_mapping_of_request(self, request, mapping):
         if request not in self.mapping_of_request:
             self.mapping_of_request[request] = mapping
         else:
             raise Exception("The request {} was already mapped!".format(request.id))
 
-    def validate_solution(self):
+    def set_raw_node_load(self, snode, resource, value):
+        if snode not in self.raw_node_load:
+            self.raw_node_load[snode] = {}
+        if resource in self.raw_node_load[snode]:
+            raise Exception("Raw node load for resource {} on node {} was already set.".format(resource, snode))
+        self.raw_node_load[snode][resource] = value
+
+    def set_raw_edge_load(self, sedge, value):
+        if sedge not in self.raw_node_load:
+            self.raw_edge_load[sedge] = value
+        else:
+            raise Exception("Raw edge load on edge {} was already set.".format(sedge))
+
+
+    def validate_solution(self, debug_output = True):
 
         print "starting to validate solution..."
 
-        #check the three basic node properties, i.e. cpu, mem, storage
+        #   NODES
+
+        #       check the three basic node properties, i.e. cpu, mem, storage
 
         basic_node_resources = ['cpu', 'memory', 'storage']
 
-        for snode in self.substrate.nodes:
-            for resource in basic_node_resources:
-                available_resources = self.substrate.node[snode][resource]
+        for resource in basic_node_resources:
+            if debug_output:
+                "\t checking {} allocations on nodes".format(resource)
+            for snode in self.substrate.nodes:
+                used_resources = 0
 
                 for req in self.requests:
                     mapping = self.mapping_of_request[req]
                     if mapping.is_embedded:
-                        for vnode in mapping.get_hosted_vnodes(snode):
-                            available_resources -= req.node[vnode][resource]
+                        for vnode in mapping.get_hosted_vnodes_on_snode(snode):
+                            used_resources += req.node[vnode][resource]
 
-                if available_resources < 0:
-                    raise Exception("The resource {} of substrate node {} is violated by the mapping by {} many units".format(resource, snode, available_resources))
+                if self.substrate.node[snode][resource] < used_resources:
+                    raise Exception("The capacity of resource {} on substrate node {} is exceeded by {} many units.".format(resource,
+                                                                                                                            snode,
+                                                                                                                            used_resources - self.substrate.node[snode][resource]))
 
-        #check that bandwidth at nodes is sufficient
+                check_deviation("Comparison of LP resource allocation of resource {} on node {} and a posteriori computed allocations do not match.".format(resource, snode),
+                                used_resources,
+                                self.raw_node_load[snode][resource])
+
+
+        #       check that bandwidth at nodes is sufficient
+
+        if debug_output:
+            print "\t checking bandwidth allocations on nodes"
+        for snode in self.substrate.nodes:
+
+            used_resources = 0
+
+            for req in self.requests:
+
+                mapping = self.mapping_of_request[req]
+                if mapping.is_embedded:
+
+                    if debug_output:
+                        print "\t\t vedges being hosted on {} are {}".format(snode, mapping.get_hosted_vedges_using_snode(snode))
+
+                    # reduce bandwidth for each link that is incident to the edge
+                    for vedge in mapping.get_hosted_vedges_using_snode(snode):
+                        used_resources += req.edge[vedge]["bandwidth"]
+
+            if used_resources > self.substrate.node[snode]["bandwidth"]:
+                raise Exception("The capacity of resource bandwidth on substrate node {} is exceeded by {} many units.".format(snode,
+                                                                                                                               self.substrate.node[snode]["bandwidth"] - used_resources))
+
+            check_deviation("Comparison of LP resource allocation of resource bandwidth on node {} and a posteriori computed allocations do not match.".format(snode),
+                                used_resources,
+                                self.raw_node_load[snode]["bandwidth"])
+
+
+        #   EDGES
+
+        #       check that edges' capacities are not exceeded
+
+        if debug_output:
+            print "\t checking bandwidth allocations on edges"
+        for sedge in self.substrate.edges:
+            used_resources = 0
+
+            for req in self.requests:
+
+                mapping = self.mapping_of_request[req]
+
+                if mapping.is_embedded:
+
+                    if debug_output:
+                        print "\t\t vedges being hosted on {} are {}".format(sedge, mapping.get_hosted_vedges_on_sedge(sedge))
+
+                    for vedge in mapping.get_hosted_vedges_on_sedge(sedge):
+                        used_resources += req.edge[vedge]["bandwidth"]
+
+            if used_resources > self.substrate.edge[sedge]["bandwidth"]:
+                raise Exception("The capacity of resource bandwidth on substrate edge {} is exceeded by {} many units.".format(sedge,
+                                                                                                                               self.substrate.edge[sedge]["bandwidth"] - used_resources))
+
+            check_deviation("Comparison of LP resource allocation of resource bandwidth on edge {} and a posteriori computed allocations do not match.".format(sedge),
+                                used_resources,
+                                self.raw_edge_load[sedge])
+        #       check that requested latencies are not violated
+
+        if debug_output:
+            print "\t checking delay requirements"
+        for req in self.requests:
+            mapping = self.mapping_of_request[req]
+
+            if mapping.is_embedded:
+                for (id, vedge_path), delay in req.graph['path_requirements'].iteritems():
+                    cumulative_delay = 0
+
+                    for vedge in vedge_path:
+                        delay_of_vedge = self.substrate.get_path_delay(mapping.vedge_to_spath[vedge])
+                        if debug_output:
+                            print "\t\t vedge {} has pure edge delay of {}".format(vedge, delay_of_vedge)
+                        cumulative_delay += delay_of_vedge
+
+                    for vedge in vedge_path:
+                        vtail, vtail_p, vhead_p, vhead = vedge
+                        for index, (stail, stail_p, shead_p, shead) in enumerate(mapping.vedge_to_spath[vedge]):
+                            if index == 0:
+                                delay_of_tail = self.substrate.node[stail]['delay']
+                                if debug_output:
+                                    print "\t\t .. adding delay of {} for using snode {} for embedding {}".format(delay_of_tail,
+                                                                                                             stail,
+                                                                                                             (vtail, vtail_p, vhead_p, vhead))
+                                cumulative_delay += delay_of_tail
+
+                            delay_of_head = self.substrate.node[shead]['delay']
+                            if debug_output:
+                                print "\t\t .. adding delay of {} for using snode {} for embedding {}".format(delay_of_head,
+                                                                                                          shead,
+                                                                                                          (vtail, vtail_p, vhead_p, vhead))
+                            cumulative_delay += delay_of_head
+
+                    if cumulative_delay > delay:
+                        raise Exception("Delay bound of requirement {} is exceeded: {} vs. {}.".format(id, cumulative_delay, delay))
+
+                    check_deviation("Comparison of delay computed in LP and a posteriori computed delay does not match for delay requirement {} of request {} [{}]".format(id, req.id, vedge_path),
+                                        cumulative_delay,
+                                        mapping.raw_path_delay[(id, vedge_path)])
+
 
         #some more checks here
 
-        print "\t everything looks fine."
+        if debug_output:
+            print "...everything looks fine."
 
+    def print_solution(self):
+        for req in self.requests:
+            self.mapping_of_request[req].print_mapping()
 
 
 
@@ -1144,6 +1488,7 @@ if __name__ == '__main__':
     mc.init_model_creator()
     if isFeasibleStatus(mc.run_milp()):
         solution = mc.solution
+        solution.print_solution()
         solution.validate_solution()
 
 
