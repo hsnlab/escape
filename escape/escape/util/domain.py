@@ -775,7 +775,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
           setattr(msg.match, kv[0], EthAddr(kv[1]))
         elif kv[0] in ('in_port', 'dl_vlan', 'dl_type', 'ip_proto', 'nw_proto',
                        'nw_tos', 'nw_ttl', 'tp_src', 'tp_dst'):
-          msg.match.dl_type = int(kv[1])
+          setattr(msg.match, kv[0], int(kv[1], 0))
         elif kv[0] in ('nw_src', 'nw_dst'):
           setattr(msg.match, kv[0], IPAddr(kv[1]))
         else:
