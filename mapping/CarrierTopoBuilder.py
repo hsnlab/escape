@@ -423,6 +423,7 @@ def getPicoTopo():
       inf2 = inf0
     else:
       inf2 = nffg.add_infra(id = getName("infra"), **infra)
+      inf2.add_supported_type(list(string.ascii_uppercase)[:10])
     nameid = getName("sap")
     sap = nffg.add_sap(id = nameid, name = nameid)
     # add links
@@ -432,7 +433,6 @@ def getPicoTopo():
     nffg.add_undirected_link(inf1.add_port(), inf2.add_port(), **linkres)
     nffg.add_undirected_link(inf2.add_port(), sap.add_port(), **linkres)
     inf1 = inf2 
-    inf1.add_supported_type(list(string.ascii_uppercase)[:10])
     
   return nffg
 
