@@ -239,6 +239,11 @@ class Substrate(Graph):
                                              memory = memory,
                                              storage = storage,
                                              cost = cost)
+
+        types_set = set(types)
+        if len(types_set) != len(types):
+            raise Exception("Types need to be unique and may only occur once!")
+
         for supported_type in types:
             self.types.add(supported_type)
 
