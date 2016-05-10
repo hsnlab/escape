@@ -587,10 +587,18 @@ def construct_name(name, req_id=None, vnode=None, snode=None, vedge=None, sedge=
     if snode is not None:
         name += "_snode[{}]".format(snode)
     if vedge is not None:
-        name += "_vedge[{}]".format(vedge)
+        name += "_vedge[{}]".format(shorten_edge_representation_if_necessary(vedge))
     if sedge is not None:
-        name += "_sedge[{}]".format(sedge)
+        name += "_sedge[{}]".format(shorten_edge_representation_if_necessary(sedge))
     return name.replace(" ", "")
+
+def shorten_edge_representation_if_necessary(edge):
+    etail, etail_p, ehead_p, ehead = edge
+    if isinstance(etail_p, basestring) and len(etail_p) > 20:
+        etail_p = etail_p[0:7] + "-...-" + etail_p[-7:]
+    if isinstance(ehead_p, basestring) and len(ehead_p) > 20:
+        ehead_p = ehead_p[0:7] + "-...-" + ehead_p[-7:]
+    return (etail, etail_p, ehead_p, ehead)
 
 class ModelCreator(object):
 
