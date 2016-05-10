@@ -15,6 +15,7 @@
 
 import sys, logging
 import UnifyExceptionTypes as uet
+import networkx as nx
 
 from Alg1_Core import CoreAlgorithm
 try:
@@ -218,38 +219,42 @@ def convert_mip_solution_to_nffg (reqs, net, file_inputs=False,
   
   mapping_of_reqs = get_MIP_solution(request_seq, net)
 
-  if mapping_of_reqs is None:
-    print "No solution produced by MIP"
-    sys.exit()
+  mappedNFFG = NFFG(id="MILP-mapped")
   for transformed_req in mapping_of_reqs:
-    for n, vlist in mapping_of_reqs[transformed_req].\
-        snode_to_hosted_vnodes.items():
-      for v in vlist:
-        alg.manager.vnf_mapping.append((v, n))
-    trans_link_mapping = mapping_of_reqs[transformed_req].vedge_to_spath
-    for trans_sghop in trans_link_mapping:
-      vnf1 = trans_sghop[0]
-      vnf2 = trans_sghop[3]
-      reqlid = get_edge_id(alg.req, vnf1, trans_sghop[1], 
-                           trans_sghop[2], vnf2)
-      mapped_path = []
-      path_link_ids = []
-      for trans_link in trans_link_mapping[trans_sghop]:
-        n1 = trans_link[0]
-        n2 = trans_link[3]
-        lid = get_edge_id(alg.net, n1, trans_link[1], trans_link[2], n2)
-        mapped_path.append(n1)
-        path_link_ids.append(lid)
-      if len(trans_link_mapping[trans_sghop]) == 0:
-        mapped_path.append(alg.manager.getIdOfChainEnd_fromNetwork(vnf1))
-      else:
-        mapped_path.append(n2)
+    if mapping_of_reqs[transformed_req].is_embedded:
+      alg.manager.vnf_mapping = []
+      alg.manager.link_mapping = nx.MultiDiGraph()
+      for n, vlist in mapping_of_reqs[transformed_req].\
+          snode_to_hosted_vnodes.items():
+        for v in vlist:
+          alg.manager.vnf_mapping.append((v, n))
+      trans_link_mapping = mapping_of_reqs[transformed_req].vedge_to_spath
+      for trans_sghop in trans_link_mapping:
+        vnf1 = trans_sghop[0]
+        vnf2 = trans_sghop[3]
+        reqlid = get_edge_id(alg.req, vnf1, trans_sghop[1], 
+                             trans_sghop[2], vnf2)
+        mapped_path = []
+        path_link_ids = []
+        for trans_link in trans_link_mapping[trans_sghop]:
+          n1 = trans_link[0]
+          n2 = trans_link[3]
+          lid = get_edge_id(alg.net, n1, trans_link[1], trans_link[2], n2)
+          mapped_path.append(n1)
+          path_link_ids.append(lid)
+        if len(trans_link_mapping[trans_sghop]) == 0:
+          mapped_path.append(alg.manager.getIdOfChainEnd_fromNetwork(vnf1))
+        else:
+          mapped_path.append(n2)
 
-      alg.manager.link_mapping.add_edge(vnf1, vnf2, key=reqlid, 
-                                        mapped_to=mapped_path, 
-                                        path_link_ids=path_link_ids)
+        alg.manager.link_mapping.add_edge(vnf1, vnf2, key=reqlid, 
+                                          mapped_to=mapped_path, 
+                                          path_link_ids=path_link_ids)
     
-  mappedNFFG = alg.constructOutputNFFG()
+      oneNFFG = alg.constructOutputNFFG()
+      mappedNFFG = NFFGToolBox.merge_nffgs(mappedNFFG, oneNFFG)
+    else:
+      print "MILP didn't produce a mapping for request %s"%transformed_req
 
   # replace Infinity values
   MappingAlgorithms._purgeNFFGFromInfinityValues(mappedNFFG)

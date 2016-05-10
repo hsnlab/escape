@@ -43,7 +43,7 @@ except ImportError:
   from nffg import NFFG, NFFGToolBox
 
 log = logging.getLogger("StressTest")
-log.setLevel(logging.WARN)
+log.setLevel(logging.INFO)
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
 nf_types = list(string.ascii_uppercase)[:10]
 rnd = random.Random()
@@ -97,6 +97,8 @@ helpmsg = """StressTest.py options are:
                                     current folder.
    --milp            Use Mixed Integer Linear Programming instead of the mapping
                      algorithm for mapping the stress sequence.
+   --map_only_first_batch           After mapping the first batch, the stress 
+                                    test exits, even if the mapping was successful
 """
 
 def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
@@ -264,6 +266,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
                    topo_name,
                    bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, 
                    outputfile, dump_nffgs, dump_cnt, dump_folder, milp,
+                   map_only_first_batch,
                    queue=None, shortest_paths_precalc=None, filehandler=None):
   """
   If queue is given, the result will be put in that Queue object too. Meanwhile
@@ -378,6 +381,9 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
             do_the_dump = False
           rnd.setstate(random_state)
           mapped_vnf_count += len([nf for nf in batched_request.nfs])
+          if map_only_first_batch:
+            log.info("Mapping only the first batch finished! Exiting...")
+            return test_lvl-1
           batched_request = NFFG(id="Benchmark-Req-"+str(test_lvl))
 
     except uet.MappingException as me:
@@ -438,7 +444,8 @@ def main(argv):
                                "shareable_sg_count=", "batch_length=",
                                "bt_br_factor=", "bt_limit=",
                                "sliding_share", "use_saps_once",
-                               "topo_name=", "dump_nffgs=", "milp"])
+                               "topo_name=", "dump_nffgs=", "milp",
+                               "map_only_first_batch"])
   except getopt.GetoptError:
     print helpmsg
     sys.exit()
@@ -465,6 +472,7 @@ def main(argv):
   dump_cnt = None
   dump_folder = ""
   milp = False
+  map_only_first_batch = False
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
@@ -516,6 +524,8 @@ def main(argv):
         dump_folder = argsplit[1]
     elif opt == "--milp":
       milp = True
+    elif opt == "--map_only_first_batch":
+      map_only_first_batch = True
 
   params, args = zip(*opts)
   if "--bw_factor" not in params or "--res_factor" not in params or \
@@ -527,7 +537,8 @@ def main(argv):
            multiple_scs, max_sc_count, vnf_sharing_same_sg, fullremap, 
            batch_length, shareable_sg_count, sliding_share, poisson, topo_name,
            bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, outputfile,
-                                     dump_nffgs, dump_cnt, dump_folder, milp)
+                                     dump_nffgs, dump_cnt, dump_folder, milp,
+                                     map_only_first_batch)
   
   log.info("First unsuccessful mapping was at %s test level."%
            (returned_test_lvl+1))

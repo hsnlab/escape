@@ -256,12 +256,13 @@ class Substrate(Graph):
     def add_edge(self, id, tail, tail_port, head_port, head, delay, bandwidth, cost=1):
         if(tail in self.nodes and head in self.nodes):
             #is always bidirected
+            # (Balazs): Yes, but they are modeled as two directed links
             super(self.__class__, self).add_edge(id,
                                                  tail,
                                                  tail_port,
                                                  head_port,
                                                  head,
-                                                 bidirected=True,
+                                                 bidirected=False,
                                                  delay = delay,
                                                  bandwidth = bandwidth,
                                                  cost = cost)

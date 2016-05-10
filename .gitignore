@@ -13,6 +13,7 @@ old.*
 *.pcap
 *~
 *.a
+*.out
 escape.config
 Python-*
 bin/
