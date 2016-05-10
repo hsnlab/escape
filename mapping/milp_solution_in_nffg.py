@@ -71,7 +71,8 @@ def get_edge_id (g, srcid, srcpid, dstpid, dstid):
     if i == srcid and j == dstid and d.src.id == srcpid and d.dst.id == dstpid:
       return k
 
-def convert_mip_solution_to_nffg (reqs, net, file_inputs=False):
+def convert_mip_solution_to_nffg (reqs, net, file_inputs=False, 
+                                  full_remap=False):
   if file_inputs:
     request_seq = []
     for reqfile in reqs:
@@ -204,8 +205,8 @@ def convert_mip_solution_to_nffg (reqs, net, file_inputs=False):
   ############################################################################
   # HACK: We only want to use the algorithm class to generate an NFFG, we will 
   # fill the mapping struct with the one found by MIP
-  # net.duplicate_static_links()
-  alg = CoreAlgorithm(net, request, chainlist, False, False)
+  alg = CoreAlgorithm(net, request, chainlist, full_remap, False)
+
   # move 'availres' and 'availbandwidth' values of the network to maxres, 
   # because the MIP solution takes them as availabel resource.
   net = alg.bare_infrastucture_nffg
@@ -215,10 +216,8 @@ def convert_mip_solution_to_nffg (reqs, net, file_inputs=False):
     # there shouldn't be any Dynamic links by now.
     d.bandwidth = d.availbandwidth
   
-  # WARNING: there can be problems with duplicated links (inside or outside MIP)
-  net.merge_duplicated_links()
   mapping_of_reqs = get_MIP_solution(request_seq, net)
-  net.duplicate_static_links()
+
   if mapping_of_reqs is None:
     print "No solution produced by MIP"
     sys.exit()
@@ -255,7 +254,7 @@ def convert_mip_solution_to_nffg (reqs, net, file_inputs=False):
   # replace Infinity values
   MappingAlgorithms._purgeNFFGFromInfinityValues(mappedNFFG)
 
-  print mappedNFFG.dump()
+  # print mappedNFFG.dump()
   return mappedNFFG
 
 if __name__ == '__main__':

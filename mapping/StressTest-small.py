@@ -357,7 +357,8 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
           random_state = rnd.getstate()
           if milp:
             network = MILP.convert_mip_solution_to_nffg([batched_request], 
-                                                        network)
+                                                        network, 
+                                                        full_remap=fullremap)
           else:
             network, shortest_paths = MappingAlgorithms.MAP(batched_request, 
                   network, full_remap=fullremap, enable_shortest_path_cache=True,
