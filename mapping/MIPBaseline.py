@@ -655,7 +655,7 @@ class ModelCreator(object):
 
         #create constraints and the objective
         self.create_constraints()
-        self.plugin_objective_maximize_number_of_embedded_requests()
+        self.plugin_objective_maximize_number_of_embedded_requests_and_minimize_costs()
 
         #final update of the model to reflect the addition of the constraints
         self.model.update()
@@ -968,6 +968,21 @@ class ModelCreator(object):
         self.model.setObjective(expr, GRB.MAXIMIZE)
 
 
+    def plugin_objective_maximize_number_of_embedded_requests_and_minimize_costs(self):
+
+        max_edge_cost = 0.0
+        for sedge in self.substrate.edges:
+            max_edge_cost += self.substrate.edge[sedge]['cost'] * self.substrate.edge[sedge]['bandwidth']
+
+        profit_expr = LinExpr([(2.0 * max_edge_cost, self.var_embedding_decision[req]) for req in self.requests])
+        cost_expr = LinExpr([(-self.substrate.edge[sedge]['cost'], self.var_edge_load[sedge])
+                                for sedge in self.substrate.edges])
+
+        profit_expr.add(cost_expr)
+
+        self.model.setObjective(profit_expr, GRB.MAXIMIZE)
+
+
 
     def _obtain_solution(self):
         if not isFeasibleStatus(self.status):
@@ -1012,7 +1027,7 @@ class ModelCreator(object):
                             if current_node == end_node:
                                 break
                             for (stail, stail_p, shead_p, shead) in self.substrate.get_out_neighbors(current_node):
-                                if not shead in parent:
+                                if not shead in parent and self.var_edge_mapping[req][vedge][(stail, stail_p, shead_p, shead)].X > 0.5:
                                     parent[shead] = (stail, stail_p, shead_p, shead)
                                     queue.append(shead)
 
@@ -1030,6 +1045,16 @@ class ModelCreator(object):
                                 break
 
                         mapping.map_edge(vedge, list(reversed(substrate_edge_path)))
+
+                        #TODO search whether other stuff is available!
+                        edge_counter = 0
+                        for sedge in self.substrate.edges:
+                            if self.var_edge_mapping[req][vedge][(stail, stail_p, shead_p, shead)].X > 0.5:
+                                edge_counter += 1
+
+                        print edge_counter, len(substrate_edge_path)
+                        if edge_counter > len(substrate_edge_path):
+                            print "there might exist some unnecessary cycles!"
 
                 for (id, vedge_path) in req.graph['path_requirements']:
                     mapping.set_raw_path_delay(id, vedge_path, self.var_path_delay[req][id].X)
@@ -1385,6 +1410,7 @@ class ScenarioSolution(object):
             if used_resources > self.substrate.node[snode]["bandwidth"]:
                 raise Exception("The capacity of resource bandwidth on substrate node {} is exceeded by {} many units.".format(snode,
                                                                                                                                self.substrate.node[snode]["bandwidth"] - used_resources))
+            self.print_solution()
 
             check_deviation("Comparison of LP resource allocation of resource bandwidth on node {} and a posteriori computed allocations do not match.".format(snode),
                                 used_resources,
