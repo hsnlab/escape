@@ -30,7 +30,6 @@ import os
 import CarrierTopoBuilder
 import MappingAlgorithms
 import UnifyExceptionTypes as uet
-import milp_solution_in_nffg as MILP
 
 from collections import OrderedDict
 
@@ -43,7 +42,7 @@ except ImportError:
   from nffg import NFFG, NFFGToolBox
 
 log = logging.getLogger("StressTest")
-log.setLevel(logging.INFO)
+log.setLevel(logging.WARN)
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
 nf_types = list(string.ascii_uppercase)[:10]
 rnd = random.Random()
@@ -359,6 +358,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
           total_vnf_count += len([nf for nf in batched_request.nfs])
           random_state = rnd.getstate()
           if milp:
+            import milp_solution_in_nffg as MILP
             network = MILP.convert_mip_solution_to_nffg([batched_request], 
                                                         network, 
                                                         full_remap=fullremap)
@@ -382,7 +382,10 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
           rnd.setstate(random_state)
           mapped_vnf_count += len([nf for nf in batched_request.nfs])
           if map_only_first_batch:
-            log.info("Mapping only the first batch finished! Exiting...")
+            if network is not None:
+              log.warn("Mapping only the first batch finished successfully!")
+            else:
+              log.warn("Mapping only the first batch failed!")
             return test_lvl-1
           batched_request = NFFG(id="Benchmark-Req-"+str(test_lvl))
 

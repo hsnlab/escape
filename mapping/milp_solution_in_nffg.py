@@ -52,7 +52,7 @@ def get_MIP_solution (reqnffgs, netnffg):
   mc.init_model_creator()
   if isFeasibleStatus(mc.run_milp()):
     solution = mc.solution
-    solution.validate_solution()
+    solution.validate_solution(debug_output=False)
     
     return solution.mapping_of_request
   
@@ -255,6 +255,7 @@ def convert_mip_solution_to_nffg (reqs, net, file_inputs=False,
       mappedNFFG = NFFGToolBox.merge_nffgs(mappedNFFG, oneNFFG)
     else:
       print "MILP didn't produce a mapping for request %s"%transformed_req
+      return None
 
   # replace Infinity values
   MappingAlgorithms._purgeNFFGFromInfinityValues(mappedNFFG)
