@@ -1,0 +1,131 @@
+{
+  "parameters": {
+    "id": "SG-robot2", 
+    "name": "SG-robot2", 
+    "version": "1.0"
+  }, 
+  "node_nfs": [
+    {
+      "id": "splitter2", 
+      "name": "splitter2", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }
+      ], 
+      "functional_type": "splitter", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "balance_server3", 
+      "name": "balance_server3", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "balance_server", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "balance_server4", 
+      "name": "balance_server4", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "balance_server", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }
+  ], 
+  "node_saps": [
+    {
+      "id": "SAP54", 
+      "name": "SAP54", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 22, 
+      "src_node": "splitter2", 
+      "src_port": 2, 
+      "dst_node": "balance_server3", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 23, 
+      "src_node": "splitter2", 
+      "src_port": 3, 
+      "dst_node": "balance_server4", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 24, 
+      "src_node": "balance_server3", 
+      "src_port": 1, 
+      "dst_node": "SAP54", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 25, 
+      "src_node": "balance_server4", 
+      "src_port": 1, 
+      "dst_node": "SAP54", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 21, 
+      "src_node": "SAP54", 
+      "src_port": 1, 
+      "dst_node": "splitter2", 
+      "dst_port": 1, 
+      "flowclass": "dl_src=9c:5c:8e:af:2e:e0"
+    }
+  ], 
+  "edge_reqs": [
+    {
+      "id": "4ad5e9a4-155e-11e6-be2c-080027f22527", 
+      "src_node": "SAP54", 
+      "src_port": 1, 
+      "dst_node": "SAP54", 
+      "dst_port": 1, 
+      "delay": 50, 
+      "bandwidth": 1, 
+      "sg_path": [
+        21, 
+        22, 
+        24
+      ]
+    }
+  ]
+}

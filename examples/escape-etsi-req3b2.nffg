@@ -1,0 +1,171 @@
+{
+  "parameters": {
+    "id": "ETSI-2sap-web-dpi-comp-decomp-onlysap1", 
+    "name": "ETSI-2sap-web-dpi-comp-decomp-onlysap1", 
+    "version": "1.0"
+  }, 
+  "node_nfs": [
+    {
+      "id": "comp", 
+      "name": "COMPRESSOR", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "headerCompressor", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "webserver1", 
+      "name": "webserver1", 
+      "ports": [
+        {
+          "id": 0
+        }
+      ], 
+      "functional_type": "webserver", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "dpi", 
+      "name": "DPI", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "functional_type": "dpi", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "decomp", 
+      "name": "DECOMPRESSOR", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "headerDecompressor", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }
+  ], 
+  "node_saps": [
+    {
+      "id": "sap2", 
+      "name": "SAP2", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "sap1", 
+      "name": "SAP1", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 14, 
+      "src_node": "comp", 
+      "src_port": 1, 
+      "dst_node": "decomp", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 22, 
+      "src_node": "webserver1", 
+      "src_port": 0, 
+      "dst_node": "sap2", 
+      "dst_port": 1, 
+      "flowclass": "dl_dst=00:00:00:00:00:02"
+    }, 
+    {
+      "id": 12, 
+      "src_node": "webserver1", 
+      "src_port": 0, 
+      "dst_node": "dpi", 
+      "dst_port": 1, 
+      "flowclass": "dl_dst=00:00:00:00:00:01"
+    }, 
+    {
+      "id": 13, 
+      "src_node": "dpi", 
+      "src_port": 2, 
+      "dst_node": "comp", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 21, 
+      "src_node": "sap2", 
+      "src_port": 1, 
+      "dst_node": "webserver1", 
+      "dst_port": 0
+    }, 
+    {
+      "id": 11, 
+      "src_node": "sap1", 
+      "src_port": 1, 
+      "dst_node": "webserver1", 
+      "dst_port": 0
+    }, 
+    {
+      "id": 15, 
+      "src_node": "decomp", 
+      "src_port": 1, 
+      "dst_node": "sap1", 
+      "dst_port": 1
+    }
+  ], 
+  "edge_reqs": [
+    {
+      "id": "60cca7b4-168c-11e6-9df4-080027f22527", 
+      "src_node": "sap1", 
+      "src_port": 1, 
+      "dst_node": "sap1", 
+      "dst_port": 1, 
+      "delay": 100, 
+      "bandwidth": 1, 
+      "sg_path": [
+        11, 
+        12, 
+        13, 
+        14, 
+        15
+      ]
+    }
+  ]
+}
