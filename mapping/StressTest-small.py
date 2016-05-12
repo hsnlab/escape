@@ -371,7 +371,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
                   bt_limit=bt_limit, bt_branching_factor=bt_br_factor)
           log.debug(ppid_pid+"Mapping successful on test level %s with batch"
                     " length %s!"%(test_lvl, batch_length))
-          if do_the_dump:
+          if do_the_dump and network is not None:
             dump_name = "".join([dump_folder,"/test_lvl-",str(test_lvl),".nffg"])
             with open(dump_name, "w") as dumped:
               log.info("Dumping NFFG at test_lvl %s..."%test_lvl)
