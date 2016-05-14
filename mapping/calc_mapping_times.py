@@ -19,8 +19,9 @@ for b in xrange(4, 300, 4):
     for line in f:
       line = line.split(" ")
       if line[0] == "Command":
-        if next(f).rstrip('\n') == "WARNING:StressTest:Mapping only the first"\
-           " batch finished successfully!":
+        try:
+          if next(f).rstrip('\n') == "WARNING:StressTest:Mapping only the first"\
+             " batch finished successfully!":
             real_time = next(f).rstrip('\n').split('\t')[2].split(' ')
             if real_time[1] == "real":
               time = 60.0*float(real_time[0].split(':')[0]) + \
@@ -31,6 +32,8 @@ for b in xrange(4, 300, 4):
                 maxs[b] = time
               if mins[b] > time:
                 mins[b] = time
+        except StopIteration:
+          pass
 
 print "sc_count, avg_running_time, min_running_time, max_running_time, sample_size"
 for b in map_times:
