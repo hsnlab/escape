@@ -37,4 +37,4 @@ for b in xrange(4, 300, 4):
 
 print "sc_count, avg_running_time, min_running_time, max_running_time, sample_size"
 for b in map_times:
-  print "%s, %s, %s, %s, %s"%b, map_times[b]/cnts[b], mins[b], maxs[b], cnts[b]
+  print "%s, %s, %s, %s, %s"%(b, map_times[b]/cnts[b], mins[b], maxs[b], cnts[b])
