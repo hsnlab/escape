@@ -36,6 +36,6 @@ for b in xrange(4, 300, 4):
           pass
 
 print "sc_count, avg_running_time, min_running_time, max_running_time, sample_size"
-for b in map_times:
+for b in xrange(4, 300, 4):
   print "%s, %s, %s, %s, %s"%(b, map_times[b]/cnts[b] if cnts[b]>0 else "N/A", 
                               mins[b], maxs[b], cnts[b])
