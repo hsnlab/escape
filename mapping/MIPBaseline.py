@@ -1316,8 +1316,8 @@ class GurobiStatus(object):
         return "solCount: {0}; status: {1}; objValue: {2}; objBound: {3}; objGap: {4}; integralSolution: {5}; ".format(self.solCount, self.status, self.objValue, self.objBound, self.objGap, self.integralSolution)
 
 
-def check_deviation(text, value1, value2, eps=0.0001):
-    if abs(value2) < 0.0001:
+def check_deviation(text, value1, value2, eps=0.001):
+    if abs(value2) < 0.001:
         if abs(value1 - value2) + abs(value2- value1) > eps:
             raise Exception(text + " {} vs. {}".format(value1, value2))
     else:
