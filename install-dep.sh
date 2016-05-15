@@ -60,18 +60,27 @@ function install_core {
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto openjdk-8-jdk neo4j=2.2.7
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto openjdk-8-jdk neo4j
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     sudo -H pip install cryptography==1.3.1
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient cryptography==1.3.1
 
     info "=== Configure neo4j graph database ==="
-    # Disable authentication in /etc/neo4j/neo4j-server.properties
-    sudo sed -i s/dbms\.security\.auth_enabled=true/dbms\.security\.auth_enabled=false/ /etc/neo4j/neo4j-server.properties
+    # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
+    if [ -f /etc/neo4j/neo4j.conf ]
+    then
+        sudo sed -i /dbms\.security\.auth_enabled=false/s/^#//g /etc/neo4j/neo4j.conf
+    elif [ -f /etc/neo4j/neo4j-server.properties ]
+    then
+        sudo sed -i s/dbms\.security\.auth_enabled=true/dbms\.security\.auth_enabled=false/ /etc/neo4j/neo4j-server.properties
+    else
+        on_error "neo4j server configuration file was not found!"
+    fi
     sudo service neo4j-service restart
-    # Stick to version  2.2.7
-    sudo apt-mark hold neo4j
+
+    #Stick to version  2.2.7
+    #sudo apt-mark hold neo4j
 
 #    info "=== Compile hwloc2nffg ==="
 #    sudo apt-get -y install g++ cmake make libboost-program-options-dev libhwloc-dev libjsoncpp-dev
