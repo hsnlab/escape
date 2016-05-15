@@ -8,17 +8,38 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+set -euo pipefail 
+
 # Fail on error
 trap on_error ERR
+trap "on_error 'Got signal: SIGHUP'" SIGHUP
+trap "on_error 'Got signal: SIGINT'" SIGINT
+trap "on_error 'Got signal: SIGTERM'" SIGTERM
 
-function on_error {
-    echo -e "${RED}Error during installation!${NC}"
+function on_error() {
+    echo -e "\n${RED}Error during installation! $1${NC}"
     exit 1
 }
 
 function info() {
     echo -e "${GREEN}$1${NC}"
 }
+
+# Set environment
+set +u
+if [ -z "$LC_ALL" ]
+then
+        if [ -n "$LANG" ]
+	then
+    	    info "=== Set environment ==="
+    	    sudo locale-gen $LANG
+    	    export LC_ALL=$LANG
+	    locale
+	else
+   	     on_error "locale variable: LANG is unset!"
+        fi
+fi
+set -u
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
