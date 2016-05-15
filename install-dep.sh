@@ -60,7 +60,7 @@ function install_core {
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j=2.2.7
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto openjdk-8-jdk neo4j=2.2.7
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     sudo -H pip install cryptography==1.3.1
