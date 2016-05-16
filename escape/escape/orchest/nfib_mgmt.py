@@ -14,12 +14,13 @@
 """
 Contains the class for managing NFIB.
 """
-import networkx
 import os
 from collections import deque
 
+import networkx
 import py2neo
 from py2neo import Graph, Relationship
+from py2neo.error import Unauthorized
 from py2neo.packages.httpstream.http import SocketError
 
 from escape.nffg_lib.nffg import NFFG
@@ -694,5 +695,9 @@ class NFIBManager(object):
         "NFIB is not reachable due to failed neo4j service! Cause: " + str(e))
     except KeyboardInterrupt:
       log.warning("NFIB was interrupted by user!")
+    except Unauthorized:
+      log.error(
+        "neo4j responded with Unauthorized error! Maybe you forgot disabling "
+        "authentication in '/etc/neo4j/neo4j.conf' ?")
     except:
       log.exception("Got unexpected error during NFIB initialization!")
