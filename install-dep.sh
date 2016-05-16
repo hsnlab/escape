@@ -53,18 +53,24 @@ function install_core {
     # Remove ESCAPEv2 config file from index in git to untrack changes
     git update-index --assume-unchanged escape.config
 
-    info "=== Add neo4j repository ==="
+    info "Add neo4j repository"
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
-    sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' > /etc/apt/sources.list.d/neo4j.list"
+    sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list"
+
+    info "Add OpenJDK repository and install Java 8"
+    sudo apt-get update
+    sudo apt-get -y install software-properties-common
+    sudo add-apt-repository -y ppa:openjdk-r/ppa
+    sudo apt-get -y install openjdk-8-jdk
 
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto openjdk-8-jdk neo4j
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     sudo -H pip install cryptography==1.3.1
-    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient cryptography==1.3.1
+    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
