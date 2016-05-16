@@ -137,7 +137,7 @@ cfg = {
         # "SDN",
         # "OPENSTACK",
         # "UN"
-        "DOCKER"
+        # "DOCKER"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config

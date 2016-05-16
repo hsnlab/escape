@@ -1123,25 +1123,3 @@ class UniversalNodeDomainManager(UnifyDomainManager):
       "Create UniversalNodeDomainManager wrapper for domain: %s" % domain_name)
     super(UniversalNodeDomainManager, self).__init__(domain_name=domain_name,
                                                      *args, **kwargs)
-
-
-class DockerDomainManager(UnifyDomainManager):
-  """
-  Adapter class to handle communication component in a Docker domain.
-
-  .. warning::
-    Not implemented yet!
-  """
-  # Domain name
-  name = "DOCKER"
-  # Default domain name
-  DEFAULT_DOMAIN_NAME = "DOCKER"
-
-  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
-    """
-    Init
-    """
-    log.debug(
-      "Create DockerDomainManager with domain name: %s" % self.domain_name)
-    super(DockerDomainManager, self).__init__(domain_name=domain_name, *args,
-                                              **kwargs)

@@ -77,13 +77,15 @@ function install_core {
     if [ -f /etc/neo4j/neo4j.conf ]
     then
         sudo sed -i /dbms\.security\.auth_enabled=false/s/^#//g /etc/neo4j/neo4j.conf
+        sudo service neo4j restart
     elif [ -f /etc/neo4j/neo4j-server.properties ]
     then
         sudo sed -i s/dbms\.security\.auth_enabled=true/dbms\.security\.auth_enabled=false/ /etc/neo4j/neo4j-server.properties
+        sudo service neo4j-service restart
     else
         on_error "neo4j server configuration file was not found!"
     fi
-    sudo service neo4j-service restart
+
 
     #Stick to version  2.2.7
     #sudo apt-mark hold neo4j
