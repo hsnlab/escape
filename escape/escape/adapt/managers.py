@@ -220,7 +220,7 @@ class InternalDomainManager(AbstractDomainManager):
       # Just for sure remove NFs
       self._delete_running_nfs(),
       # and flowrules
-      self._delete_flowrules(nffg=self.topoAdapter.get_topology_resource())
+      self._delete_flowrules()
     )
     return all(result)
 
@@ -503,7 +503,7 @@ class InternalDomainManager(AbstractDomainManager):
              % (nffg, "SUCCESS" if result else "FAILURE"))
     return result
 
-  def _delete_flowrules (self, nffg):
+  def _delete_flowrules (self, nffg=None):
     """
     Delete all flowrules from the first (default) table of all infras.
 
@@ -514,19 +514,24 @@ class InternalDomainManager(AbstractDomainManager):
     """
     log.debug("Reset domain steering and delete installed flowrules...")
     result = True
+    # Get topology NFFG to detect corresponding infras and skip needless infras
     topo = self.topoAdapter.get_topology_resource()
     if topo is None:
       log.warning("Missing topology description from %s domain! Skip flowrule "
                   "deletions..." % self.domain_name)
       return False
+    # If nffg is not given, all the flowrules in physical topology will be
+    # removed
+    if nffg is None:
+      nffg = topo
+    topo_infras = (n.id for n in topo.infras)
     # Iter through the container INFRAs in the given mapped NFFG part
     for infra in nffg.infras:
-      if infra.infra_type not in (
-         NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
-         NFFG.TYPE_INFRA_SDN_SW):
+      if infra.infra_type not in (NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
+                                  NFFG.TYPE_INFRA_SDN_SW):
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
-      if infra.id not in (n.id for n in topo.infras):
+      if infra.id not in topo_infras:
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
                   "flowrule delete on this Node..." % (
                     infra.short_name, self.domain_name))
