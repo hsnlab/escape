@@ -459,9 +459,9 @@ class InternalDomainManager(AbstractDomainManager):
             id=infra_port_num)
           log.debug("%s - detected physical %s" % (deployed_nf, infra_port))
           # Add Links to mn topo
-          l1, l2 = mn_topo.add_undirected_link(port1=nf_port, port2=infra_port,
-                                               dynamic=True, delay=link.delay,
-                                               bandwidth=link.bandwidth)
+          mn_topo.add_undirected_link(port1=nf_port, port2=infra_port,
+                                      dynamic=True, delay=link.delay,
+                                      bandwidth=link.bandwidth)
           # Port mapping
           dynamic_port = nffg.network.node[infra_id].ports[link.dst.id].id
           self.portmap[dynamic_port] = infra_port_num

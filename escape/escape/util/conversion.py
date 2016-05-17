@@ -834,12 +834,12 @@ class NFFGConverter(object):
         dst_node_id = dst_node.id.get_value()
       try:
         src_port_id = int(src_port.id.get_value())
-      except ValueError as e:
+      except ValueError:
         # self.log.warning("Source port id is not a valid number: %s" % e)
         src_port_id = src_port.id.get_value()
       try:
         dst_port_id = int(dst_port.id.get_value())
-      except ValueError as e:
+      except ValueError:
         # self.log.warning("Destination port id is not a valid number: %s" % e)
         dst_port_id = dst_port.id.get_value()
       params = dict()

@@ -724,7 +724,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
         adapter.startVNF(vnf_id=vnf_id)
         # Return with whole VNF description
         return adapter.getVNFInfo(vnf_id=vnf_id)
-      except RPCError as e:
+      except RPCError:
         log.error("Got Error during deployVNF through NETCONF:")
         raise
       except KeyError as e:
@@ -743,7 +743,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
       try:
         # Stop and remove VNF
         return adapter.stopVNF(vnf_id=vnf_id)
-      except RPCError as e:
+      except RPCError:
         log.error("Got Error during removeVNF through NETCONF:")
         raise
       except KeyError as e:

@@ -95,6 +95,8 @@ class ComponentConfigurator(object):
 
     :param name: name of domain manager
     :type name: str
+    :param mgr_params: mgr parameters
+    :type mgr_params: dict
     :param autostart: also start the domain manager (default: True)
     :type autostart: bool
     :return: domain manager
@@ -214,6 +216,8 @@ class ComponentConfigurator(object):
 
     :param component_name: component's config name
     :type component_name: str
+    :param params: component parameters
+    :type params: dict
     :param parent: define the parent of the actual component's configuration
     :type parent: dict
     :return: initiated component
