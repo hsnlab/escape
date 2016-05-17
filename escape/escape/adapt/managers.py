@@ -520,8 +520,8 @@ class InternalDomainManager(AbstractDomainManager):
       log.warning("Missing topology description from %s domain! Skip flowrule "
                   "deletions..." % self.domain_name)
       return False
-    # If nffg is not given, all the flowrules in physical topology will be
-    # removed
+    # If nffg is not given or is a bare topology, which is probably a cleanup
+    # topo, all the flowrules in physical topology will be removed
     if nffg is None or nffg.is_bare():
       nffg = topo
     topo_infras = (n.id for n in topo.infras)
