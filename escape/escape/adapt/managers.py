@@ -522,7 +522,7 @@ class InternalDomainManager(AbstractDomainManager):
       return False
     # If nffg is not given, all the flowrules in physical topology will be
     # removed
-    if nffg is None:
+    if nffg is None or nffg.is_bare():
       nffg = topo
     topo_infras = (n.id for n in topo.infras)
     # Iter through the container INFRAs in the given mapped NFFG part
