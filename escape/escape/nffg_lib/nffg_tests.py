@@ -857,69 +857,720 @@ def generate_hwloc2nffg_test_req ():
   return test
 
 
-def generate_simplified_hwloc2nffg ():
-  nffg = NFFG(id="AspireE311", name="NFFG-AspireE311")
-  wlp2s0 = nffg.add_sap(id="wlp2s0", name="wlp2s0")
-  enp3s0 = nffg.add_sap(id="enp3s0", name="enp3s0")
-  PCI_168c = nffg.add_infra(id="PCI_168c:0036!0", name="PCI_168c:0036!0",
-                            domain="INTERNAL",
-                            infra_type=NFFG.TYPE_INFRA_SDN_SW,
-                            cpu=0.0, mem=0.0, storage=0.0, delay=0.5,
-                            bandwidth=1000)
-  PCI_10ec = nffg.add_infra(id="PCI_10ec:8168!0", name="PCI_10ec:8168!0",
-                            domain="INTERNAL",
-                            infra_type=NFFG.TYPE_INFRA_SDN_SW,
-                            cpu=0.0, mem=0.0, storage=0.0, delay=0.5,
-                            bandwidth=1000)
-  nffg.add_link(src_port=wlp2s0.add_port(1), dst_port=PCI_168c.add_port(1),
-                id="link1", delay=0.1, bandwidth=1000)
-  nffg.add_link(src_port=enp3s0.add_port(1), dst_port=PCI_10ec.add_port(1),
-                id="link2", delay=0.1, bandwidth=1000)
-  Machine0 = nffg.add_infra(id="Machine#0", name="Machine#0",
-                            domain="INTERNAL",
-                            infra_type=NFFG.TYPE_INFRA_SDN_SW,
-                            cpu=0.0, mem=0.0, storage=0.0, delay=0.5,
-                            bandwidth=1000)
-  nffg.add_link(src_port=PCI_168c.add_port(2), dst_port=Machine0.add_port(1),
-                id="link3", delay=0.1, bandwidth=1000)
-  nffg.add_link(src_port=PCI_10ec.add_port(2), dst_port=Machine0.add_port(2),
-                id="link4", delay=0.1, bandwidth=1000)
-  L2 = nffg.add_infra(id="L2!0", name="L2!0",
-                      domain="INTERNAL",
-                      infra_type=NFFG.TYPE_INFRA_SDN_SW,
-                      cpu=0.0, mem=0.0, storage=0.0, delay=0.5,
-                      bandwidth=1000)
-  nffg.add_link(src_port=Machine0.add_port(3), dst_port=L2.add_port(3),
-                id="link5", delay=0.1, bandwidth=1000)
-  PU1 = nffg.add_infra(id="PU#1", name="PU#1",
-                       domain="INTERNAL",
-                       infra_type=NFFG.TYPE_INFRA_EE,
-                       cpu=1.0, mem=32000.0, storage=150.0, delay=0.5,
-                       bandwidth=1000)
-  PU1.add_supported_type(("ovs",))
-  PU2 = nffg.add_infra(id="PU#2", name="PU#2",
-                       domain="INTERNAL",
-                       infra_type=NFFG.TYPE_INFRA_EE,
-                       cpu=1.0, mem=32000.0, storage=150.0, delay=0.5,
-                       bandwidth=1000)
-  PU2.add_supported_type(("ovs",))
-  nffg.add_link(src_port=PU1.add_port(1), dst_port=L2.add_port(1),
-                id="link6", delay=0.1, bandwidth=1000)
-  nffg.add_link(src_port=PU2.add_port(1), dst_port=L2.add_port(2),
-                id="link7", delay=0.1, bandwidth=1000)
-  return nffg
+def generate_5gex_req0 ():
+  test = NFFG(id="SG-1", name="SG-name1")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+
+  test.add_sglink(sap1.add_port(1), sap2.add_port(1), id=1)
+  test.add_sglink(sap1.ports[1], sap2.ports[1], id=2)
+
+  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20,
+               sg_path=(1, 2))
+  return test
 
 
-def generate_simplified_hwloc2nffg_req ():
-  nffg = NFFG(id="AspireE311-req", name="NFFG-AspireE311-request")
-  wlp2s0 = nffg.add_sap(id="wlp2s0", name="wlp2s0")
-  enp3s0 = nffg.add_sap(id="enp3s0", name="enp3s0")
-  fwd = nffg.add_nf(id="fwd", name="Simple Forwarder", func_type="ovs", cpu=1,
-                    mem=1, storage=0)
-  nffg.add_sglink(src_port=wlp2s0.add_port(1), dst_port=fwd.add_port(1), id=1)
-  nffg.add_sglink(src_port=fwd.add_port(2), dst_port=enp3s0.add_port(1), id=2)
-  nffg.add_req(src_port=wlp2s0.ports[1], dst_port=enp3s0.ports[1], id="e2e",
-               delay=100, bandwidth=50, sg_path=(1, 2))
+def generate_5gex_req1 ():
+  test = NFFG(id="SG-1", name="SG-name1")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  bridge = test.add_nf(id="bridge", name="BRIDGE", func_type="bridge",
+                    cpu=1, mem=1, storage=0)
+  fwd = test.add_nf(id="fwd", name="FORWARDER", func_type="simpleForwarder",
+                    cpu=1, mem=1, storage=0)
+  test.add_sglink(sap1.add_port(1), bridge.add_port(1), id=1)
+  test.add_sglink(bridge.add_port(2), sap2.add_port(1), id=2)
+  test.add_sglink(sap2.ports[1], fwd.add_port(1), id=3)
+  test.add_sglink(fwd.ports[1], sap1.ports[1], id=4)
+
+  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20,
+               sg_path=(1, 2))
+  test.add_req(sap2.ports[1], sap1.ports[1], bandwidth=4, delay=20,
+               sg_path=(3, 4))
+  return test
+
+
+def generate_5gex_req2 ():
+  test = NFFG(id="SG-2", name="SG-name2")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  comp = test.add_nf(id="comp", name="COMPRESSOR", func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1, storage=0)
+  fwd = test.add_nf(id="fwd", name="FORWARDER", func_type="simpleForwarder",
+                    cpu=1, mem=1, storage=0)
+  test.add_sglink(sap1.add_port(1), comp.add_port(1), id=1)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=2)
+  test.add_sglink(decomp.ports[1], sap2.add_port(1), id=3)
+  test.add_sglink(sap2.ports[1], fwd.add_port(1), id=4)
+  test.add_sglink(fwd.ports[1], sap1.ports[1], id=5)
+
+  test.add_req(sap1.ports[1], sap2.ports[1], bandwidth=4, delay=20,
+               sg_path=(1, 2, 3))
+  test.add_req(sap2.ports[1], sap1.ports[1], bandwidth=4, delay=20,
+               sg_path=(4, 5))
+  return test
+
+
+def generate_req_verification ():
+  test = NFFG(id="verification-2sap-web-fw-dpi-nat",
+              name="verification-2sap-web-fw-dpi-nat")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  sap3 = test.add_sap(name="SAP3", id="sap3")
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  nat = test.add_nf(id="nat", name="NAT", func_type="nat",
+                    cpu=1, mem=1, storage=0)
+  fw = test.add_nf(id="fw", name="FIREWALL", func_type="firewall", 
+                   cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", 
+                    cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap1.add_port(1), nat.add_port(1), id=11)
+  test.add_sglink(nat.add_port(2), webserver1.add_port(1), id=12)
+  test.add_sglink(webserver1.ports[1], fw.add_port(1), id=13, flowclass='dl_type=0x0800,nw_dst=20.0.0.1')
+  test.add_sglink(fw.add_port(2), nat.ports[2], id=14)
+  test.add_sglink(nat.ports[1], sap1.ports[1], id=15, flowclass='dl_type=0x0800,nw_dst=10.0.0.1')
+
+  test.add_sglink(sap2.add_port(1), nat.ports[1], id=21)
+  test.add_sglink(nat.ports[1], dpi.add_port(1), id=25, flowclass='dl_type=0x0800,nw_dst=10.0.0.2')
+  test.add_sglink(dpi.add_port(2), sap2.ports[1], id=26)
+
+  test.add_sglink(sap3.add_port(1), webserver1.ports[1], id=31)
+  test.add_sglink(webserver1.ports[1], sap3.ports[1], id=32, flowclass='dl_type=0x0800,nw_dst=20.0.0.3')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13, 14, 15))
+  # test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+  #              sg_path=(21, 22, 14, 23))
+  return test
+
+
+def generate_etsi_req1a ():
+  test = NFFG(id="ETSI-1sap-web", name="ETSI-1sap-web")
+  sap1 = test.add_sap(name="SAP1", id="SAP1")
+
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], sap1.ports[1], id=12, flowclass='dl_dst=00:00:00:00:00:01')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12))
+  return test
+
+
+def generate_etsi_req1b ():
+  test = NFFG(id="ETSI-2sap-web", name="ETSI-2sap-web")
+  sap1 = test.add_sap(name="SAP1", id="SAP1")
+  sap2 = test.add_sap(name="SAP2", id="SAP2")
+
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], sap1.ports[1], id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12))
+  return test
+
+
+def generate_etsi_req2a ():
+  test = NFFG(id="ETSI-1sap-web-dpi", name="ETSI-1sap-web-dpi")
+  sap1 = test.add_sap(name="SAP1", id="SAP1")
+
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), sap1.ports[1], id=13)
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13))
+  return test
+
+
+def generate_etsi_req2b ():
+  test = NFFG(id="ETSI-2sap-web-dpi", name="ETSI-2sap-web-dpi")
+  sap1 = test.add_sap(name="SAP1", id="SAP1")
+  sap2 = test.add_sap(name="SAP2", id="SAP2")
+
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+  # fwd = test.add_nf(id="fwd", name="FORWARDER", func_type="simpleForwarder",
+  #                   cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), sap1.ports[1], id=13)
+
+  # test.add_sglink(sap2.add_port(1), fwd.add_port(1), id=21)
+  # test.add_sglink(fwd.ports[1], webserver1.ports[0], id=22)
+  # test.add_sglink(webserver1.ports[0], sap2.ports[1], id=23, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13))
+  test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+               sg_path=(21, 22))
+  return test
+
+
+def generate_etsi_req3a ():
+  test = NFFG(id="ETSI-1sap-web-dpi-comp-decomp",
+              name="ETSI-1sap-web-dpi-comp-decomp")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  comp = test.add_nf(id="comp", name="COMPRESSOR",
+                     func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1,
+                       storage=0)
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), comp.add_port(1), id=13)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=14)
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id=15)
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13, 14, 15))
+  return test
+
+
+def generate_etsi_req3b ():
+  test = NFFG(id="ETSI-2sap-web-dpi-comp-decomp",
+              name="ETSI-2sap-web-dpi-comp-decomp")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  comp = test.add_nf(id="comp", name="COMPRESSOR",
+                     func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1,
+                       storage=0)
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), comp.add_port(1), id=13)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=14)
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id=15, flowclass='dl_type=0x0800,nw_dst=10.0.0.1')
+
+  test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
+  test.add_sglink(webserver1.ports[0], comp.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(decomp.ports[1], sap2.ports[1], id=23, flowclass='dl_type=0x0800,nw_dst=10.0.0.2')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13, 14, 15))
+  # test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+  #              sg_path=(21, 22, 14, 23))
+  return test
+
+
+def generate_etsi_req3b2 ():
+  test = NFFG(id="ETSI-2sap-web-dpi-comp-decomp-onlysap1",
+              name="ETSI-2sap-web-dpi-comp-decomp-onlysap1")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  comp = test.add_nf(id="comp", name="COMPRESSOR",
+                     func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1,
+                       storage=0)
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), comp.add_port(1), id=13)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=14)
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id=15)
+
+  test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13, 14, 15))
+  # test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+  #              sg_path=(21, 22, 14, 23))
+  return test
+
+
+def generate_etsi_req4b2a ():
+  test = NFFG(id="ETSI-2sap-web-dpi-bridge-comp-decomp-onlysap1",
+              name="ETSI-2sap-web-dpi-bridge-comp-decomp-onlysap1")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  comp = test.add_nf(id="comp", name="COMPRESSOR",
+                     func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1,
+                       storage=0)
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
+                    storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
+  test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
+
+  test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13, 14, 15, 16))
+  # test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+  #              sg_path=(21, 22, 14, 23))
+  return test
+
+
+def generate_etsi_req4b2b ():
+  test = NFFG(id="ETSI-2sap-web-dpi-bridge+-comp-decomp-onlysap1",
+              name="ETSI-2sap-web-dpi-bridge+-comp-decomp-onlysap1")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  comp = test.add_nf(id="comp", name="COMPRESSOR",
+                     func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1,
+                       storage=0)
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
+                    storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
+  test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
+
+  test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(bridge.add_port(3), sap2.ports[1], id=23)
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13, 14, 15, 16))
+  # test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+  #              sg_path=(21, 22, 14, 23))
+  return test
+
+
+def generate_etsi_req4b2b_robot1 ():
+  test = NFFG(id="ETSI-2sap-web-dpi-bridge+-comp-decomp-onlysap1+robot1",
+              name="ETSI-2sap-web-dpi-bridge+-comp-decomp-onlysap1+robot1")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap2 = test.add_sap(name="SAP2", id="sap2")
+  comp = test.add_nf(id="comp", name="COMPRESSOR",
+                     func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1,
+                       storage=0)
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
+                    storage=0)
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
+  test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
+
+  test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(bridge.add_port(3), sap2.ports[1], id=23)
+
+  sap54 = test.add_sap(name="SAP54", id="SAP54")
+  balancer1 = test.add_nf(id="balance_server1", name="balance_server1",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  balancer2 = test.add_nf(id="balance_server2", name="balance_server2",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  splitter1 = test.add_nf(id="splitter", name="splitter", func_type="splitter",
+                          cpu=1, mem=1, storage=0)
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=31, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=32)
+  test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=33)
+  test.add_sglink(balancer1.ports[1], sap54.ports[1], id=34)
+  test.add_sglink(balancer2.ports[1], sap54.ports[1], id=35)
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13, 14, 15, 16))
+  # test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+  #              sg_path=(21, 22, 14, 23))
+  return test
+
+
+# def generate_etsi_req4a ():
+#   test = NFFG(id="ETSI-1sap-web-dpi-bridge-comp-decomp",
+#               name="ETSI-1sap-web-dpi-bridge-comp-decomp")
+#   sap1 = test.add_sap(name="SAP1", id="sap1")
+#   comp = test.add_nf(id="comp", name="COMPRESSOR",
+#                      func_type="headerCompressor",
+#                      cpu=1, mem=1, storage=0)
+#   decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+#                        func_type="headerDecompressor", cpu=1, mem=1,
+#                        storage=0)
+#   webserver1 = test.add_nf(id="webserver1", name="webserver1",
+#                            func_type="webserver", cpu=1, mem=1, storage=0)
+#   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+#                     storage=0)
+#   bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
+#                     storage=0)
+
+#   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+#   test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+#   test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
+#   test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
+#   test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
+#   test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
+
+#   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+#                sg_path=(11, 12, 13, 14, 15, 16))
+#   return test
+
+
+# def generate_etsi_req4b ():
+#   test = NFFG(id="ETSI-2sap-web-dpi-bridge-comp-decomp",
+#               name="ETSI-2sap-web-dpi-bridge-comp-decomp")
+#   sap1 = test.add_sap(name="SAP1", id="sap1")
+#   sap2 = test.add_sap(name="SAP2", id="sap2")
+#   comp = test.add_nf(id="comp", name="COMPRESSOR",
+#                      func_type="headerCompressor",
+#                      cpu=1, mem=1, storage=0)
+#   decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+#                        func_type="headerDecompressor", cpu=1, mem=1,
+#                        storage=0)
+#   webserver1 = test.add_nf(id="webserver1", name="webserver1",
+#                            func_type="webserver", cpu=1, mem=1, storage=0)
+#   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+#                     storage=0)
+#   bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
+#                     storage=0)
+
+#   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+#   test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+#   test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
+#   test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
+#   test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
+#   test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
+
+#   test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
+#   test.add_sglink(webserver1.ports[0], bridge.add_port(3), id=22, flowclass='dl_dst=00:00:00:00:00:02')
+#   test.add_sglink(bridge.add_port(4), sap2.ports[1], id=23)
+
+#   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+#                sg_path=(11, 12, 13, 14, 15, 16))
+#   test.add_req(sap2.ports[1], sap2.ports[1], bandwidth=1, delay=100,
+#                sg_path=(21, 22, 23))
+#   return test
+
+
+def generate_etsi_req4a_robot1 ():
+  test = NFFG(id="ETSI-1sap-web-dpi-bridge-comp-decomp-rob1",
+              name="ETSI-1sap-web-dpi-bridge-comp-decomp-rob1")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap54 = test.add_sap(name="SAP54", id="SAP54")
+  comp = test.add_nf(id="comp", name="COMPRESSOR",
+                     func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1,
+                       storage=0)
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
+                    storage=0)
+  balancer1 = test.add_nf(id="balance_server1", name="balance_server1",
+                          func_type="balance_server", cpu=3, mem=1,
+                          storage=0)
+  balancer2 = test.add_nf(id="balance_server2", name="balance_server2",
+                          func_type="balance_server", cpu=3, mem=1,
+                          storage=0)
+  splitter1 = test.add_nf(id="splitter", name="splitter", func_type="splitter",
+                          cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
+  test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
+
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=21, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=22)
+  test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=23)
+  test.add_sglink(balancer1.ports[1], sap54.ports[1], id=24)
+  test.add_sglink(balancer2.ports[1], sap54.ports[1], id=25)
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13, 14, 15, 16))
+  test.add_req(sap54.ports[1], sap54.ports[1], bandwidth=1, delay=50,
+               sg_path=(21, 22, 24))
+  return test
+
+
+def generate_etsi_req4a_robot12 ():
+  test = NFFG(id="ETSI-1sap-web-dpi-bridge-comp-decomp-rob12",
+              name="ETSI-1sap-web-dpi-bridge-comp-decomp-rob12")
+  sap1 = test.add_sap(name="SAP1", id="sap1")
+  sap54 = test.add_sap(name="SAP54", id="SAP54")
+  comp = test.add_nf(id="comp", name="COMPRESSOR",
+                     func_type="headerCompressor",
+                     cpu=1, mem=1, storage=0)
+  decomp = test.add_nf(id="decomp", name="DECOMPRESSOR",
+                       func_type="headerDecompressor", cpu=1, mem=1,
+                       storage=0)
+  webserver1 = test.add_nf(id="webserver1", name="webserver1",
+                           func_type="webserver", cpu=1, mem=1, storage=0)
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
+                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
+                    storage=0)
+  balancer1 = test.add_nf(id="balance_server1", name="balance_server1",
+                          func_type="balance_server", cpu=3, mem=1,
+                          storage=0)
+  balancer2 = test.add_nf(id="balance_server2", name="balance_server2",
+                          func_type="balance_server", cpu=3, mem=1,
+                          storage=0)
+  splitter1 = test.add_nf(id="splitter", name="splitter", func_type="splitter",
+                          cpu=1, mem=1, storage=0)
+  balancer3 = test.add_nf(id="balance_server3", name="balance_server3",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  balancer4 = test.add_nf(id="balance_server4", name="balance_server4",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  splitter2 = test.add_nf(id="splitter2", name="splitter2", func_type="splitter",
+                          cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
+  test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
+  test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
+
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=21, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=22)
+  test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=23)
+  test.add_sglink(balancer1.ports[1], sap54.ports[1], id=24)
+  test.add_sglink(balancer2.ports[1], sap54.ports[1], id=25)
+
+  test.add_sglink(sap54.ports[1], splitter2.add_port(1), id=31, flowclass='dl_src=9c:5c:8e:af:2e:e0')
+  test.add_sglink(splitter2.add_port(2), balancer3.add_port(1), id=32)
+  test.add_sglink(splitter2.add_port(3), balancer4.add_port(1), id=33)
+  test.add_sglink(balancer3.ports[1], sap54.ports[1], id=34)
+  test.add_sglink(balancer4.ports[1], sap54.ports[1], id=35)
+
+  test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
+               sg_path=(11, 12, 13, 14, 15, 16))
+  test.add_req(sap54.ports[1], sap54.ports[1], bandwidth=1, delay=50,
+               sg_path=(21, 22, 24))
+  return test
+
+
+def generate_etsi_req_robot1 ():
+  test = NFFG(id="SG-robot1", name="SG-robot1")
+  sap54 = test.add_sap(name="SAP54", id="SAP54")
+  balancer1 = test.add_nf(id="balance_server1", name="balance_server1",
+                          func_type="balance_server", cpu=3, mem=1,
+                          storage=0)
+  balancer2 = test.add_nf(id="balance_server2", name="balance_server2",
+                          func_type="balance_server", cpu=3, mem=1,
+                          storage=0)
+  splitter1 = test.add_nf(id="splitter", name="splitter", func_type="splitter",
+                          cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=11, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=12)
+  test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=13)
+
+  test.add_sglink(balancer1.ports[1], sap54.ports[1], id=14)
+  test.add_sglink(balancer2.ports[1], sap54.ports[1], id=15)
+
+  test.add_req(sap54.ports[1], sap54.ports[1], bandwidth=1, delay=50,
+               sg_path=(11, 12, 14))
+  return test
+
+
+def generate_etsi_req_robot1_simple ():
+  test = NFFG(id="SG-robot1-simple", name="SG-robot1-simple")
+  sap54 = test.add_sap(name="SAP54", id="SAP54")
+  balancer1 = test.add_nf(id="balance_server1", name="balance_server1",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  # balancer2 = test.add_nf(id="balance_server2", name="balance_server2",
+  #                         func_type="balance_server", cpu=3, mem=1,
+  #                         storage=0)
+  splitter1 = test.add_nf(id="splitter", name="splitter", func_type="splitter",
+                          cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=11, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=12)
+  # test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=13)
+
+  test.add_sglink(balancer1.ports[1], sap54.ports[1], id=14)
+  # test.add_sglink(balancer2.ports[1], sap54.ports[1], id=15)
+
+  test.add_req(sap54.ports[1], sap54.ports[1], bandwidth=1, delay=50,
+               sg_path=(11, 12))
+  return test
+
+
+def generate_etsi_req_robot2 ():
+  test = NFFG(id="SG-robot2", name="SG-robot2")
+  sap54 = test.add_sap(name="SAP54", id="SAP54")
+  balancer3 = test.add_nf(id="balance_server3", name="balance_server3",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  balancer4 = test.add_nf(id="balance_server4", name="balance_server4",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  splitter2 = test.add_nf(id="splitter2", name="splitter2", func_type="splitter",
+                          cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap54.add_port(1), splitter2.add_port(1), id=21, flowclass='dl_src=9c:5c:8e:af:2e:e0')
+  test.add_sglink(splitter2.add_port(2), balancer3.add_port(1), id=22)
+  test.add_sglink(splitter2.add_port(3), balancer4.add_port(1), id=23)
+  test.add_sglink(balancer3.ports[1], sap54.ports[1], id=24)
+  test.add_sglink(balancer4.ports[1], sap54.ports[1], id=25)
+
+  test.add_req(sap54.ports[1], sap54.ports[1], bandwidth=1, delay=50,
+               sg_path=(21, 22, 24))
+  return test
+
+
+def generate_etsi_req_robot12 ():
+  test = NFFG(id="SG-robot12", name="SG-robot12")
+  sap54 = test.add_sap(name="SAP54", id="SAP54")
+  balancer1 = test.add_nf(id="balance_server1", name="balance_server1",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  balancer2 = test.add_nf(id="balance_server2", name="balance_server2",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  splitter1 = test.add_nf(id="splitter1", name="splitter1", func_type="splitter",
+                          cpu=1, mem=1, storage=0)
+  balancer3 = test.add_nf(id="balance_server3", name="balance_server3",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  balancer4 = test.add_nf(id="balance_server4", name="balance_server4",
+                          func_type="balance_server", cpu=1, mem=1,
+                          storage=0)
+  splitter2 = test.add_nf(id="splitter2", name="splitter2", func_type="splitter",
+                          cpu=1, mem=1, storage=0)
+
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=11, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=12)
+  test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=13)
+  test.add_sglink(balancer1.ports[1], sap54.ports[1], id=14)
+  test.add_sglink(balancer2.ports[1], sap54.ports[1], id=15)
+
+  test.add_sglink(sap54.ports[1], splitter2.add_port(1), id=21, flowclass='dl_src=9c:5c:8e:af:2e:e0')
+  test.add_sglink(splitter2.add_port(2), balancer3.add_port(1), id=22)
+  test.add_sglink(splitter2.add_port(3), balancer4.add_port(1), id=23)
+  test.add_sglink(balancer3.ports[1], sap54.ports[1], id=24)
+  test.add_sglink(balancer4.ports[1], sap54.ports[1], id=25)
+
+  test.add_req(sap54.ports[1], sap54.ports[1], bandwidth=1, delay=50,
+               sg_path=(11, 12, 14))
+  return test
+
+
+def generate_mn_topo_etsi ():
+  # Create NFFG
+  nffg = NFFG(id="INTERNAL", name="Internal-Mininet-Topology-ETSI")
+  # Add environments
+  ee11 = nffg.add_infra(id="EE11", name="ee-infra-11", domain=DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                        delay=0.9, bandwidth=5000)
+  ee12 = nffg.add_infra(id="EE12", name="ee-infra-12", domain=DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_EE, cpu=2, mem=2, storage=2,
+                        delay=0.9, bandwidth=5000)
+  ee21 = nffg.add_infra(id="EE21", name="ee-infra-21", domain=DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_EE, cpu=5, mem=5, storage=5,
+                        delay=0.9, bandwidth=5000)
+  ee22 = nffg.add_infra(id="EE22", name="ee-infra-22", domain=DOMAIN_INTERNAL,
+                        infra_type=NFFG.TYPE_INFRA_EE, cpu=2, mem=2, storage=2,
+                        delay=0.9, bandwidth=5000)
+  # Add supported types
+  ee11.add_supported_type(
+    ('headerDecompressor', 'simpleForwarder'))
+  ee12.add_supported_type(
+    ('headerDecompressor', 'simpleForwarder'))
+  ee21.add_supported_type(
+    ('headerCompressor', 'simpleForwarder'))
+  ee22.add_supported_type(
+    ('headerCompressor', 'simpleForwarder'))
+  # Add OVS switches
+  sw1 = nffg.add_infra(id="SW1", name="switch-1", domain=DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
+  sw2 = nffg.add_infra(id="SW2", name="switch-2", domain=DOMAIN_INTERNAL,
+                       infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.2,
+                       bandwidth=10000)
+  gw = nffg.add_infra(id="GW", name="gateway", domain=DOMAIN_INTERNAL,
+                      infra_type=NFFG.TYPE_INFRA_SDN_SW, delay=0.1,
+                      bandwidth=10000)
+  # Add SAPs
+  sap1 = nffg.add_sap(id="SAP1", name="SAP1")
+  sap2 = nffg.add_sap(id="SAP2", name="SAP2")
+  sap14 = nffg.add_sap(id="SAP14", name="SAP14")
+  sap14.domain = "eth0"
+  # Add links
+  link_res = {'delay': 1.5, 'bandwidth': 10}
+  nffg.add_link(sw1.add_port(1), sap1.add_port(1), id="mn-link-sw1-sap1", **link_res)
+  nffg.add_link(sw1.add_port(2), ee11.add_port(1), id="mn-link-sw1-ee11", **link_res)
+  nffg.add_link(sw1.add_port(3), ee12.add_port(1), id="mn-link-sw1-ee12", **link_res)
+  nffg.add_link(sw2.add_port(1), sap2.add_port(1), id="mn-link-sw2-sap2", **link_res)
+  nffg.add_link(sw2.add_port(2), ee21.add_port(1), id="mn-link-sw2-ee21", **link_res)
+  nffg.add_link(sw2.add_port(3), ee22.add_port(1), id="mn-link-sw2-ee22", **link_res)
+  nffg.add_link(sw1.add_port(4), sw2.add_port(4), id="mn-link-sw1-sw2", **link_res)
+  nffg.add_link(sw2.add_port(5), gw.add_port(1), id="mn-link-sw2-gw", **link_res)
+  nffg.add_link(gw.add_port(2), sap14.add_port(1), id="mn-link-gw-sap14", **link_res)
+  # nffg.duplicate_static_links()
   return nffg
 
 
@@ -938,15 +1589,19 @@ if __name__ == "__main__":
   # nffg = generate_os_mn_req()
   # nffg = generate_dov()
   # nffg = generate_global_req()
-  # nffg = generate_ewsdn_req3()
+  # nffg = generate_ewsdn_req2()
   # nffg = generate_simple_test_topo()
   # nffg = generate_simple_test_req()
   # nffg = generate_mn_topo2()
   # nffg = generate_mn_test_req2()
   # nffg = generate_mn_req_hackathon()
   # nffg = generate_hwloc2nffg_test_req()
-  nffg = generate_simplified_hwloc2nffg()
-  # nffg = generate_simplified_hwloc2nffg_req()
+  # nffg = generate_5gex_req1()
+  # nffg = generate_etsi_req1b()
+  # nffg = generate_etsi_req4b2b_robot1()
+  # nffg = generate_etsi_req_robot1_simple()
+  # nffg = generate_mn_topo_etsi()
+  nffg = generate_req_verification()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()
