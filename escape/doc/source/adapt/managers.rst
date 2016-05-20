@@ -12,7 +12,6 @@ the particular domain.
    escape.adapt.managers.RemoteESCAPEDomainManager
    escape.adapt.managers.OpenStackDomainManager
    escape.adapt.managers.UniversalNodeDomainManager
-   escape.adapt.managers.DockerDomainManager
    escape.adapt.managers.SDNDomainManager
    escape.adapt.managers.UnifyDomainManager
    :parts: 1
@@ -34,9 +33,6 @@ managing the domain based on the Universal Node conception.
 
 :any:`SDNDomainManager` interacts and handles legacy OpenFlow 1.0 switches
 aggregated into a separate domain.
-
-:any:`DockerDomainManager` is a placeholder class for managing Docker-based
-network entities.
 
 Module contents
 ---------------

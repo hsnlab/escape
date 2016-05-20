@@ -77,6 +77,7 @@ The preferred way
 -----------------
 
 1. Download a pre-build Ubuntu 16.04 LTS image or create one in your VM manager.
+   ISO: http://releases.ubuntu.com/16.04/
 
 2. Create the ``.ssh`` folder in the home directory and copy your private RSA key
 which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
