@@ -19,8 +19,7 @@ from collections import deque
 
 import networkx
 import py2neo
-from py2neo import Graph, Relationship
-from py2neo.error import Unauthorized
+from py2neo import Graph, Relationship, Unauthorized
 from py2neo.packages.httpstream.http import SocketError
 
 from escape.nffg_lib.nffg import NFFG
@@ -57,6 +56,7 @@ class NFIBManager(object):
     import logging
     level = level if level is not None else logging.WARNING
     logging.getLogger("py2neo").setLevel(level)
+    logging.getLogger("neo4j").setLevel(level)
     logging.getLogger("httpstream").setLevel(level)
 
   def addNode (self, node):
