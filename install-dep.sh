@@ -60,11 +60,17 @@ function install_core {
     info "Add OpenJDK repository and install Java 8"
     sudo apt-get -y install software-properties-common
     sudo add-apt-repository -y ppa:openjdk-r/ppa
-    sudo apt-get update
-    sudo apt-get -y install openjdk-8-jdk
+
+    info "Add 3rd party PPA repo for most recent Python2.7"
+    sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
+
 
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
+    # Install Java 8 explicitly
+    sudo apt-get -y install openjdk-8-jdk
+    # Install Python 2.7.11 explicitly
+    sudo apt-get -y install python2.7
     # Install dependencies
     sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j
 
@@ -85,16 +91,6 @@ function install_core {
     else
         on_error "neo4j server configuration file was not found!"
     fi
-
-
-    #Stick to version  2.2.7
-    #sudo apt-mark hold neo4j
-
-#    info "=== Compile hwloc2nffg ==="
-#    sudo apt-get -y install g++ cmake make libboost-program-options-dev libhwloc-dev libjsoncpp-dev
-#    cd "$DIR/hwloc2nffg/build"
-#    cmake ../
-#    make
 }
 
 function install_mn_dep {
