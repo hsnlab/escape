@@ -61,7 +61,7 @@ for explicit compiling or installation. The only requirement need to be
 pre-installed is a Python interpreter.
 
 The recommended Python version, in which the development and mostly the testing
-are performed, is the standard CPython **2.7.10**.
+are performed, is the standard CPython **2.7.11**.
 
 .. important::
 
@@ -71,13 +71,23 @@ If you want to use a different and separated Python version check the Virtual
 Environment section below.
 
 The best choice of platform on wich ESCAPEv2 is recommended to install and the
-*install-dep.sh* is tested is Ubuntu 16.04 LTS server.
+*install-dep.sh* is tested is Ubuntu. Both the 16.04 LTS and 14.04.4 LTS version
+is supported.
+
+However ESCAPEv2 is developed on Kubuntu 16.04, some issues are experienced
+related to SAP-xterm initiation in case the platform was an Ubuntu 16.04 server
+image and ESCAPEv2 was started through an SSH channel.
+
+.. important::
+    Considering this limitation we recommend to use the older 14.04 LTS version in
+    case ESCAPEv2 is intended to run on a VM without any graphical interface.
+
+The install script (*install-dep.sh*) supports both LTS version.
 
 The preferred way
 -----------------
 
-1. Download a pre-build Ubuntu 16.04 LTS image or create one in your VM manager.
-   ISO: http://releases.ubuntu.com/16.04/
+1. Download one of pre-build Ubuntu LTS image or create one in your VM manager.
 
 2. Create the ``.ssh`` folder in the home directory and copy your private RSA key
 which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
