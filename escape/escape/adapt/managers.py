@@ -523,18 +523,21 @@ class InternalDomainManager(AbstractDomainManager):
     # If nffg is not given or is a bare topology, which is probably a cleanup
     # topo, all the flowrules in physical topology will be removed
     if nffg is None or nffg.is_bare():
-      log.debug("Detected empty NFFG! Remove all the installed flowrules...")
+      log.debug(
+        "Detected empty request NFFG! Remove all the installed flowrules...")
       nffg = topo
-    topo_infras = (n.id for n in topo.infras)
+    topo_infras = [n.id for n in topo.infras]
     # Iter through the container INFRAs in the given mapped NFFG part
+    log.debug("Managed topo infras: %s" % topo_infras)
     for infra in nffg.infras:
+      log.debug("Process flowrules in infra: %s" % infra.id)
       if infra.infra_type not in (NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
                                   NFFG.TYPE_INFRA_SDN_SW):
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in topo_infras:
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
-                  "flowrule delete on this Node..." % (
+                  "flowrule deletion on this Node..." % (
                     infra.id, self.domain_name))
         result = False
         continue
