@@ -341,15 +341,15 @@ class InternalDomainManager(AbstractDomainManager):
          NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE):
         log.debug("Infrastructure Node: %s (type: %s) is not Container type! "
                   "Continue to next Node..." %
-                  (infra.short_name, infra.infra_type))
+                  (infra.id, infra.infra_type))
         continue
       else:
-        log.debug("Check NFs mapped on Node: %s" % infra.short_name)
+        log.debug("Check NFs mapped on Node: %s" % infra.id)
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in self.internal_topo.infras):
         log.error("Infrastructure Node: %s is not found in the %s domain! "
                   "Skip NF initiation on this Node..." %
-                  (infra.short_name, self.domain_name))
+                  (infra.id, self.domain_name))
         result = False
         continue
       # Iter over the NFs connected the actual INFRA
@@ -358,7 +358,7 @@ class InternalDomainManager(AbstractDomainManager):
         # static and continue
         if nf.id in (nf.id for nf in self.internal_topo.nfs):
           log.debug("NF: %s has already been initiated. Continue to next NF..."
-                    % nf.short_name)
+                    % nf.id)
           for u, v, link in nffg.real_out_edges_iter(nf.id):
             dyn_port = nffg[v].ports[link.dst.id]
             for x, y, l in mn_topo.real_out_edges_iter(nf.id):
@@ -375,7 +375,7 @@ class InternalDomainManager(AbstractDomainManager):
         # Check if every param is not None or empty
         if not all(params.values()):
           log.error("Missing arguments for initiation of NF: %s. Extracted "
-                    "params: %s" % (nf.short_name, params))
+                    "params: %s" % (nf.id, params))
           result = False
           continue
         # Create connection Adapter to EE agent
@@ -383,11 +383,11 @@ class InternalDomainManager(AbstractDomainManager):
           infra.id)
         if connection_params is None:
           log.error("Missing connection params for communication with the "
-                    "agent of Node: %s" % infra.short_name)
+                    "agent of Node: %s" % infra.id)
           result = False
           continue
         # Save last used adapter --> and last RPC result
-        log.debug("Initiating NF: %s with params: %s" % (nf.short_name, params))
+        log.debug("Initiating NF: %s with params: %s" % (nf.id, params))
         updated = self.remoteAdapter.update_connection_params(
           **connection_params)
         if updated:
@@ -411,13 +411,13 @@ class InternalDomainManager(AbstractDomainManager):
            and vnf['initiated_vnfs']['status'] == \
               VNFStarterAPI.VNFStatus.s_UP_AND_RUNNING:
           log.info("NF: %s initiation has been verified on Node: %s" % (
-            nf.short_name, infra.short_name))
+            nf.id, infra.id))
           log.debug("Initiated VNF id: %s, PID: %s, status: %s" % (
             vnf['initiated_vnfs']['vnf_id'], vnf['initiated_vnfs']['pid'],
             vnf['initiated_vnfs']['status']))
         else:
           log.error("Initiated NF: %s is not verified. Initiation was "
-                    "unsuccessful!" % nf.short_name)
+                    "unsuccessful!" % nf.id)
           result = False
           continue
         # Store NETCONF related info of deployed NF
@@ -523,6 +523,7 @@ class InternalDomainManager(AbstractDomainManager):
     # If nffg is not given or is a bare topology, which is probably a cleanup
     # topo, all the flowrules in physical topology will be removed
     if nffg is None or nffg.is_bare():
+      log.debug("Detected empty NFFG! Remove all the installed flowrules...")
       nffg = topo
     topo_infras = (n.id for n in topo.infras)
     # Iter through the container INFRAs in the given mapped NFFG part
@@ -534,7 +535,7 @@ class InternalDomainManager(AbstractDomainManager):
       if infra.id not in topo_infras:
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
                   "flowrule delete on this Node..." % (
-                    infra.short_name, self.domain_name))
+                    infra.id, self.domain_name))
         result = False
         continue
       try:
@@ -587,13 +588,13 @@ class InternalDomainManager(AbstractDomainManager):
          NFFG.TYPE_INFRA_SDN_SW):
         log.debug("Infrastructure Node: %s (type: %s) is not Switch or "
                   "Container type! Continue to next Node..." %
-                  (infra.short_name, infra.infra_type))
+                  (infra.id, infra.infra_type))
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in topo.infras):
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
                   "flowrule install on this Node..." % (
-                    infra.short_name, self.domain_name))
+                    infra.id, self.domain_name))
         result = False
         continue
       try:
@@ -788,13 +789,13 @@ class SDNDomainManager(AbstractDomainManager):
          NFFG.TYPE_INFRA_SDN_SW):
         log.debug("Infrastructure Node: %s (type: %s) is not Switch or "
                   "Container type! Continue to next Node..." %
-                  (infra.short_name, infra.infra_type))
+                  (infra.id, infra.infra_type))
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in (n.id for n in topo.infras):
         log.error("Infrastructure Node: %s is not found in the %s domain! Skip "
                   "flowrule install on this Node..." %
-                  (infra.short_name, self.domain_name))
+                  (infra.id, self.domain_name))
         result = False
         continue
       # Check the OF connection is alive
