@@ -24,6 +24,7 @@ from py2neo.packages.httpstream.http import SocketError
 
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log
+from escape.util.misc import quit_with_error
 
 
 class NFIBManager(object):
@@ -41,7 +42,12 @@ class NFIBManager(object):
     log.debug("Init %s based on neo4j" % self.__class__.__name__)
     # Suppress low level logging
     self.__suppress_neo4j_logging()
-    self.graph_db = Graph()
+    try:
+      self.graph_db = Graph()
+    except Unauthorized as e:
+      quit_with_error(
+        "Got Unauthorozed error on: %s from neo4j! Disable the authorization "
+        "in /etc/neo4j/neoj4-server.properties!" % e)
 
   @staticmethod
   def __suppress_neo4j_logging (level=None):
