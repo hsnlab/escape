@@ -8,6 +8,10 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+# Component versions
+JAVA_VERSION=7
+NEO4J_VERSION=2.2.7
+
 set -euo pipefail 
 
 # Fail on error
@@ -27,9 +31,9 @@ function info() {
 
 # Set environment
 set +u
-if [ -z "$LC_ALL" ]
+if [[ ! "$LC_ALL" ]]
 then
-        if [ -n "$LANG" ]
+        if [[ "$LANG" ]]
 	then
     	    info "=== Set environment ==="
     	    sudo locale-gen $LANG
@@ -57,9 +61,12 @@ function install_core {
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
     sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list"
 
-    info "Add OpenJDK repository and install Java 8"
-    sudo apt-get -y install software-properties-common
-    sudo add-apt-repository -y ppa:openjdk-r/ppa
+    if [[ ! $(sudo apt-cache search openjdk-${JAVA_VERSION}-jdk) ]]
+    then
+        info "Add OpenJDK repository and install Java $JAVA_VERSION"
+        sudo apt-get -y install software-properties-common
+        sudo add-apt-repository -y ppa:openjdk-r/ppa
+    fi
 
     info "Add 3rd party PPA repo for most recent Python2.7"
     sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
@@ -68,11 +75,11 @@ function install_core {
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install Java 8 explicitly
-    sudo apt-get -y install openjdk-8-jdk
+    sudo apt-get -y install openjdk-${JAVA_VERSION}-jdk
     # Install Python 2.7.11 explicitly
     sudo apt-get -y install python2.7
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     sudo -H pip install cryptography==1.3.1
