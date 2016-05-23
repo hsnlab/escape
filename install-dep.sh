@@ -38,7 +38,7 @@ then
     	    info "=== Set environment ==="
     	    sudo locale-gen $LANG
     	    export LC_ALL=$LANG
-	    locale
+	        locale
 	else
    	     on_error "locale variable: LANG is unset!"
         fi
@@ -57,18 +57,18 @@ function install_core {
     # Remove ESCAPEv2 config file from index in git to untrack changes
     git update-index --assume-unchanged escape.config
 
-    info "Add neo4j repository"
+    info "=== Add neo4j repository ==="
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
     sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list"
 
     if [[ ! $(sudo apt-cache search openjdk-${JAVA_VERSION}-jdk) ]]
     then
-        info "Add OpenJDK repository and install Java $JAVA_VERSION"
+        info "=== Add OpenJDK repository and install Java $JAVA_VERSION ==="
         sudo apt-get -y install software-properties-common
         sudo add-apt-repository -y ppa:openjdk-r/ppa
     fi
 
-    info "Add 3rd party PPA repo for most recent Python2.7"
+    info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
     sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
 
 
@@ -89,14 +89,16 @@ function install_core {
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
     if [ -f /etc/neo4j/neo4j.conf ]
     then
+        # neo4j >= 3.0
         sudo sed -i /dbms\.security\.auth_enabled=false/s/^#//g /etc/neo4j/neo4j.conf
         sudo service neo4j restart
     elif [ -f /etc/neo4j/neo4j-server.properties ]
     then
+        # neo4j <= 2.3.4
         sudo sed -i s/dbms\.security\.auth_enabled=true/dbms\.security\.auth_enabled=false/ /etc/neo4j/neo4j-server.properties
         sudo service neo4j-service restart
     else
-        on_error "neo4j server configuration file was not found!"
+        on_error "=== neo4j server configuration file was not found! ==="
     fi
 }
 
