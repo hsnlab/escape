@@ -112,8 +112,8 @@ cfg = {
           "prefix": "escape",
           "address": "0.0.0.0",
           "port": 8888,
-          "virtualizer_type": "SINGLE",
-          # "virtualizer_type": "GLOBAL",
+          # "virtualizer_type": "SINGLE",
+          "virtualizer_type": "GLOBAL",
           "unify_interface": True,
           "diff": True
         },
