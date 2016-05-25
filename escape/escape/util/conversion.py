@@ -410,9 +410,18 @@ class NFFGConverter(object):
         nf_dep_type = None
       # Add NF resources, remove optional units
       if v_vnf.resources.is_initialized():
-        nf_cpu = v_vnf.resources.cpu.get_as_text().split(' ')[0]
-        nf_mem = v_vnf.resources.mem.get_as_text().split(' ')[0]
-        nf_storage = v_vnf.resources.storage.get_as_text().split(' ')[0]
+        if v_vnf.resources.cpu.is_initialized():
+          nf_cpu = v_vnf.resources.cpu.get_as_text().split(' ')[0]
+        else:
+          nf_cpu = None
+        if v_vnf.resources.mem.is_initialized():
+          nf_mem = v_vnf.resources.mem.get_as_text().split(' ')[0]
+        else:
+          nf_mem = None
+        if v_vnf.resources.storage.is_initialized():
+          nf_storage = v_vnf.resources.storage.get_as_text().split(' ')[0]
+        else:
+          nf_storage = None
         try:
           nf_cpu = float(nf_cpu) if nf_cpu is not None else None
         except ValueError as e:
