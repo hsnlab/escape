@@ -525,7 +525,7 @@ class InternalDomainManager(AbstractDomainManager):
     if nffg is None or nffg.is_bare():
       log.debug(
         "Detected empty request NFFG! Remove all the installed flowrules...")
-      nffg = topo.copy()
+      nffg = topo
     topo_infras = [n.id for n in topo.infras]
     # Iter through the container INFRAs in the given mapped NFFG part
     log.debug("Managed topo infras: %s" % topo_infras)

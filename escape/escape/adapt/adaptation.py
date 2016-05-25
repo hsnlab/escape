@@ -460,8 +460,20 @@ class ControllerAdapter(object):
         continue
       # If the internalDM is the only initiated mgr, we can override the
       # whole DoV
-      if len(self.domains) == 1 and domain_mgr.IS_LOCAL_MANAGER:
-        self.DoVManager.set_global_view(nffg=mapped_nffg)
+      if domain_mgr.IS_LOCAL_MANAGER:
+        if mapped_nffg.is_SBB():
+          if mapped_nffg.is_bare():
+            log.debug(
+              "Detected cleanup topology (no NF/Flowrule)! Skip DoV update...")
+          log.warning(
+            "Detected SingleBiSBiS topology! Local domain has been already "
+            "cleared, skip DoV update...")
+        if not mapped_nffg.is_virtualized():
+          self.DoVManager.set_global_view(nffg=mapped_nffg)
+        else:
+          log.warning(
+            "Detected virtualized Infrastructure node in mapped NFFG! Skip "
+            "DoV update...")
         continue
       # Explicit domain update
       self.DoVManager.update_domain(domain=domain, nffg=part)
