@@ -465,10 +465,11 @@ class ControllerAdapter(object):
           if mapped_nffg.is_bare():
             log.debug(
               "Detected cleanup topology (no NF/Flowrule)! Skip DoV update...")
-          log.warning(
-            "Detected SingleBiSBiS topology! Local domain has been already "
-            "cleared, skip DoV update...")
-        if not mapped_nffg.is_virtualized():
+          else:
+            log.warning(
+              "Detected SingleBiSBiS topology! Local domain has been already "
+              "cleared, skip DoV update...")
+        elif not mapped_nffg.is_virtualized():
           self.DoVManager.set_global_view(nffg=mapped_nffg)
         else:
           log.warning(
