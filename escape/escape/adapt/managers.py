@@ -533,6 +533,9 @@ class InternalDomainManager(AbstractDomainManager):
       log.debug("Process flowrules in infra: %s" % infra.id)
       if infra.infra_type not in (NFFG.TYPE_INFRA_EE, NFFG.TYPE_INFRA_STATIC_EE,
                                   NFFG.TYPE_INFRA_SDN_SW):
+        log.warning(
+          "Detected virtual Infrastructure Node type: %s! Skip infra node "
+          "processing..." % infra.infra_type)
         continue
       # If the actual INFRA isn't in the topology(NFFG) of this domain -> skip
       if infra.id not in topo_infras:
