@@ -4,3 +4,5 @@
 [submodule "dummy-orchestrator"]
 	path = dummy-orchestrator
 	url = git@gitlab.fp7-unify.eu:wp2/dummy-orchestrator
+	branch = MultiProvidersConsumers
+
