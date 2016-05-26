@@ -132,7 +132,16 @@ function install_mn_dep {
         sudo addgroup ${MNUSER} sudo
         echo "$MNUSER:$MNPASSWD" | sudo chpasswd
     fi
-    info "\nIf this installation was not performed on a VM, limit the SSH connections only to localhost due to security issues!\n"
+    # Only works on Ubuntu
+    . /etc/lsb-release
+    if [ $DISTRIB_RELEASE = "14.04" ]
+    then
+        info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
+        # Only works with OpenSSH_6.6.1p1 and tested on Ubuntu 14.04
+        sudo sh -c 'echo "Match Host *,!localhost\n  DenyUsers  mininet" >> /etc/ssh/sshd_config'
+    else
+        info "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
+    fi
 }
 
 function install_infra {
