@@ -71,8 +71,7 @@ If you want to use a different and separated Python version check the Virtual
 Environment section below.
 
 The best choice of platform on wich ESCAPEv2 is recommended to install and the
-*install-dep.sh* is tested is Ubuntu. Both the 16.04 LTS and 14.04.4 LTS version
-is supported.
+*install-dep.sh* is tested is Ubuntu 14.04.4 LTS.
 
 However ESCAPEv2 is developed on Kubuntu 16.04, some issues are experienced
 related to SAP-xterm initiation in case the platform was an Ubuntu 16.04 server
@@ -91,7 +90,7 @@ The preferred way
 
 2. Create the ``.ssh`` folder in the home directory and copy your private RSA key
 which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
-``id_rsa``. If you use the Mininet image then the following commands can be used
+``id_rsa``. If you use a VM image then the following commands can be used
 in the VM to copy your RSA key from your host:
 
   .. code-block:: bash
@@ -101,8 +100,7 @@ in the VM to copy your RSA key from your host:
     $ scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
     $ sudo chmod 700 .ssh && sudo chmod 600 .ssh/id_rsa
 
-3. Clone the shared escape repository in a folder named:
-*escape*.
+3. Clone the shared escape repository in a folder named: *escape*.
 
   .. code-block:: bash
 
@@ -257,7 +255,7 @@ following commands to downgrade. In this case the authentication bypass needs
 to be done again.
 
 .. code-block:: bash
-    
+
     $ sudo -i
     $ apt-get purge neo4j
     $ rm -rf /var/lib/neo4j/data/

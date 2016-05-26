@@ -11,6 +11,7 @@ It is a realization of the UNIFY service programming and orchestration framework
 which enables the joint programming and virtualization of cloud and networking
 resources.
 
+## Installation
 Dependencies:
 ```bash
 sudo apt -y install python2.7 python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
@@ -22,30 +23,38 @@ sudo apt -y install python2.7 python-dev python-pip zlib1g-dev libxml2-dev libxs
 sudo pip -H install numpy jinja2 py2neo networkx requests ncclient cryptography==1.3.1 tornado \
     sphinx networkx_viewer
 ```
-## Installation
+Because the core ESCAPEv2 relies on POX and written in Python there is no need
+for explicit compiling or installation. The only requirement need to be
+pre-installed is a Python interpreter.
+
+The recommended Python version, in which the development and mostly the testing
+are performed, is the standard CPython **2.7.11**.
+
+The best choice of platform on wich ESCAPEv2 is recommended to install and the
+*install-dep.sh* is tested is **Ubuntu 14.04.4 LTS**.
+
+However ESCAPEv2 is developed on Kubuntu 16.04, some issues are experienced
+related to SAP-xterm initiation in case the platform was an Ubuntu 16.04 server
+image and ESCAPEv2 was started through an SSH channel.
+Considering this limitation we recommend to use the older 14.04 LTS version in
+case ESCAPEv2 is intended to run on a VM without any graphical interface.
+
 The preferred way:
-1. Download one of pre-build Mininet image which has already had the necessary tools (Mininet scripts and Open vSwitch).
-     * https://github.com/mininet/mininet/wiki/Mininet-VM-Images
 
-    The images is in an open virtual format (.ovf) which can import most of the
-    virtualization manager. Username/password: mininet/mininet
-
-    Our implementation relies on Mininet 2.1.0, but ESCAPEv2 has been tested on
-    the newest image too (Mininet 2.2.1 on Ubuntu 14.04 - 64 bit) and no problem
-    has occurred yet!
+1. Download one of pre-build Ubuntu LTS image or create one in your VM manager.
 
 2. Create the *.ssh* folder in the home directory and copy your private RSA key
     which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
-    id_rsa. If you use the Mininet image then the following command can be used
+    `id_rsa`. If you use a VM image then the following commands can be used
     in the VM to copy your RSA key from your host:
     ```bash
     cd
     mkdir .ssh
     scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
     ```
-3. Clone the shared escape repository in a folder named: escape.
+3. Clone the shared escape repository in a folder named: *escape*.
     ```bash
-    git clone git@gitlab.fp7-unify.eu:Balazs.Sonkoly/escape-shared.git escape
+    git clone git@5gexgit.tmit.bme.hu:unify/escape.git escape
     ```
 
 4. Install the necessary dependencies with the *install_dep.sh* script (system
@@ -56,21 +65,47 @@ The preferred way:
     escape$ ./install_dep.sh
     ```
     In a high level the script above does the following things:
-      * Install the necessary system and Python packages
-      * Compile and install the `OpenYuma` tools with our `VNF_starter` module
-      * Compile and install `Click` modular router and `The Click GUI`.
-      * Install `neo4j` graph database for NFIB
+    
+    * Install the necessary system and Python packages
+    * Compile and install the `OpenYuma` tools with our `VNF_starter` module
+    * Compile and install `Click` modular router and `The Click GUI`.
+    * Install `neo4j` graph database for NFIB
+      
+    See help menu for further parameters:
+    ```bash
+    ./install-dep.sh -h
+    Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i]
+    Install script for ESCAPEv2
+
+    options:
+        -a:   (default) install (A)ll ESCAPEv2 components (identical with -cgi)
+        -c:   install (C)ore dependencies for Global Orchestration
+        -d:   install additional dependencies for (D)evelopment and test tools
+        -g:   install dependencies for our rudimentary (G)UI
+        -h:   print this (H)elp message
+        -i:   install components of (I)nfrastructure Layer for Local Orchestration
+    ```
 
 5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
     available arguments of the top stating script check the help menu:
     ```bash
     ./escape.py --help
     ```
+    To verify ESCAPEv2's components are installed and set up correctly you can run
+    the following command and test the reachability of the initiated SAPs (``xterm``)
+    with `ping`:
+    ```bash
+    ./escape.py -df -s examples/escape-mn-req.nffg
+    # on SAP1 xterm
+    $ ping sap2
+    # on SAP2 xterm
+    $ ping sap1
+    ```
 
-For more information see: https://sb.tmit.bme.hu/escape/
-
-To setup virtualizer library as a subtree module, use the following commands from
+To setup virtualizer library as a subtree module manually, use the following commands from
 the project's root directory:
 ```bash
 git submodule update --init --recursive --merge
 ```
+
+For more information see: https://sb.tmit.bme.hu/escape/
