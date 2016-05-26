@@ -45,7 +45,7 @@ The preferred way:
     ```
 3. Clone the shared escape repository in a folder named: escape.
     ```bash
-    git clone git@gitlab.fp7-unify.eu:Balazs.Sonkoly/escape-shared.git escape
+    git clone git@5gexgit.tmit.bme.hu:unify/escape.git escape
     ```
 
 4. Install the necessary dependencies with the *install_dep.sh* script (system
