@@ -29,25 +29,30 @@ function info() {
     echo -e "${GREEN}$1${NC}"
 }
 
-# Set environment
-set +u
-if [[ ! "$LC_ALL" ]]
-then
-        if [[ "$LANG" ]]
-	then
-    	    info "=== Set environment ==="
-    	    sudo locale-gen $LANG
-    	    export LC_ALL=$LANG
-	        locale
-	else
-   	     on_error "locale variable: LANG is unset!"
-        fi
-fi
-set -u
+function env_setup {
+    # Set environment
+    set +u
+    # If LC_ALL is not set up
+    if [[ ! "$LC_ALL" ]]
+    then
+            if [[ "$LANG" ]]
+        then
+                # Set LC_ALL as LANG
+                info "=== Set environment ==="
+                sudo locale-gen $LANG
+                export LC_ALL=$LANG
+                locale
+        else
+             on_error "locale variable: LANG is unset!"
+            fi
+    fi
+    set -u
+}
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 function install_core {
+    env_setup
     info "================================="
     info "==  Install core dependencies  =="
     info "================================="
@@ -103,6 +108,7 @@ function install_core {
 }
 
 function install_mn_dep {
+    env_setup
     BINDIR=/usr/bin
     MNEXEC=mnexec
     MNUSER=mininet
@@ -130,6 +136,7 @@ function install_mn_dep {
 }
 
 function install_infra {
+    env_setup
     info "==================================================================="
     info "==  Install dependencies for Mininet-based Infrastructure Layer  =="
     info "==================================================================="
@@ -211,6 +218,7 @@ EOF
 # Install development dependencies as tornado for scripts in ./tools,
 # for doc generations, etc.
 function install_dev {
+    env_setup
     info "=========================================================="
     info "==  Installing additional dependencies for development  =="
     info "=========================================================="
@@ -224,6 +232,7 @@ function install_dev {
 
 # Install GUI dependencies
 function install_gui {
+    env_setup
     info "==========================================================="
     info "==  Installing additional dependencies for internal GUI  =="
     info "==========================================================="
@@ -233,6 +242,7 @@ function install_gui {
 
 # Install all main component
 function all {
+    env_setup
     install_core
     install_gui
     install_infra
