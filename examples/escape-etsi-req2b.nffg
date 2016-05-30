@@ -1,0 +1,134 @@
+{
+  "parameters": {
+    "id": "ETSI-2sap-web-dpi", 
+    "name": "ETSI-2sap-web-dpi", 
+    "version": "1.0"
+  }, 
+  "node_nfs": [
+    {
+      "id": "dpi", 
+      "name": "DPI", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "functional_type": "dpi", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "webserver1", 
+      "name": "webserver1", 
+      "ports": [
+        {
+          "id": 0
+        }
+      ], 
+      "functional_type": "webserver", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }
+  ], 
+  "node_saps": [
+    {
+      "id": "SAP1", 
+      "name": "SAP1", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }, 
+    {
+      "id": "SAP2", 
+      "name": "SAP2", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 13, 
+      "src_node": "dpi", 
+      "src_port": 2, 
+      "dst_node": "SAP1", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 22, 
+      "src_node": "webserver1", 
+      "src_port": 0, 
+      "dst_node": "SAP2", 
+      "dst_port": 1, 
+      "flowclass": "dl_dst=00:00:00:00:00:02"
+    }, 
+    {
+      "id": 12, 
+      "src_node": "webserver1", 
+      "src_port": 0, 
+      "dst_node": "dpi", 
+      "dst_port": 1, 
+      "flowclass": "dl_dst=00:00:00:00:00:01"
+    }, 
+    {
+      "id": 11, 
+      "src_node": "SAP1", 
+      "src_port": 1, 
+      "dst_node": "webserver1", 
+      "dst_port": 0
+    }, 
+    {
+      "id": 21, 
+      "src_node": "SAP2", 
+      "src_port": 1, 
+      "dst_node": "webserver1", 
+      "dst_port": 0
+    }
+  ], 
+  "edge_reqs": [
+    {
+      "id": "6039f7f4-269d-11e6-a290-28b2bd3b0029", 
+      "src_node": "SAP1", 
+      "src_port": 1, 
+      "dst_node": "SAP1", 
+      "dst_port": 1, 
+      "delay": 100, 
+      "bandwidth": 1, 
+      "sg_path": [
+        11, 
+        12, 
+        13
+      ]
+    }, 
+    {
+      "id": "6039f7f5-269d-11e6-a290-28b2bd3b0029", 
+      "src_node": "SAP2", 
+      "src_port": 1, 
+      "dst_node": "SAP2", 
+      "dst_port": 1, 
+      "delay": 100, 
+      "bandwidth": 1, 
+      "sg_path": [
+        21, 
+        22
+      ]
+    }
+  ]
+}
