@@ -362,15 +362,17 @@ class MappingManager(object):
     map the current VNF to 'potential_host' during the mapping of 'subcid'.
     """
     for c in self.chain_subchain.neighbors_iter(subcid):
-      # Chain end should always be available because they are E2E chains.
-      chainend = self.getIdOfChainEnd_fromNetwork(\
-                      self.chain_subchain.node[c]['chain'][-1])
-      if self.shortest_paths_lengths[potential_host][chainend] > \
-         self.getLocalAllowedLatency(subcid) - used_lat:
-        self.log.debug("Potential mapping of a VNF to host %s was too far from"
-                       " chain end %s because of E2E latency requirement."%
-                       (potential_host, chainend))
-        return False
+      # 
+      if c < self.max_input_chainid:
+        # Chain end should always be available because they are E2E chains.
+        chainend = self.getIdOfChainEnd_fromNetwork(\
+                        self.chain_subchain.node[c]['chain'][-1])
+        if self.shortest_paths_lengths[potential_host][chainend] > \
+           self.getLocalAllowedLatency(subcid) - used_lat:
+          self.log.debug("Potential mapping of a VNF to host %s was too far from"
+                         " chain end %s because of E2E latency requirement."%
+                         (potential_host, chainend))
+          return False
     return True
 
 
