@@ -102,7 +102,8 @@ cfg = {
       # Interface / Upper layer related configuration
       "ESCAPE-SERVICE":
         {
-          "virtualizer_type": "SINGLE"
+          # "virtualizer_type": "SINGLE"
+          "virtualizer_type": "GLOBAL"
         },
       "Sl-Or":
         {
@@ -136,6 +137,7 @@ cfg = {
         # "SDN",
         # "OPENSTACK",
         # "UN"
+        # "DOCKER"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
@@ -272,8 +274,17 @@ cfg = {
       "DOCKER":
         {
           "module": "escape.adapt.managers",
-          "class": "DockerDomainManager",
-          "poll": False
+          "class": "UnifyDomainManager",
+          "poll": False,
+          "diff": True,
+          "adapters": {
+            "REMOTE":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "UnifyRESTAdapter",
+                "url": "http://192.168.0.121:8888"
+              }
+          }
         }
     },
   "infrastructure":  # Infrastructure Layer

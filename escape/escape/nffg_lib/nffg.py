@@ -792,7 +792,8 @@ class NFFG(AbstractNFFG):
     :rtype: bool
     """
     return len([i for i in self.infras if
-                i.infra_type == self.TYPE_INFRA_BISBIS]) > 0
+                i.infra_type not in (self.TYPE_INFRA_SDN_SW, self.TYPE_INFRA_EE,
+                                     self.TYPE_INFRA_STATIC_EE)]) > 0
 
   def real_neighbors_iter (self, node):
     """

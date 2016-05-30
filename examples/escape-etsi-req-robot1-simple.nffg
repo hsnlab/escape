@@ -1,0 +1,96 @@
+{
+  "parameters": {
+    "id": "SG-robot1-simple", 
+    "name": "SG-robot1-simple", 
+    "version": "1.0"
+  }, 
+  "node_nfs": [
+    {
+      "id": "balance_server1", 
+      "name": "balance_server1", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "balance_server", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "splitter", 
+      "name": "splitter", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }
+      ], 
+      "functional_type": "splitter", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }
+  ], 
+  "node_saps": [
+    {
+      "id": "SAP54", 
+      "name": "SAP54", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 14, 
+      "src_node": "balance_server1", 
+      "src_port": 1, 
+      "dst_node": "SAP54", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 12, 
+      "src_node": "splitter", 
+      "src_port": 2, 
+      "dst_node": "balance_server1", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 11, 
+      "src_node": "SAP54", 
+      "src_port": 1, 
+      "dst_node": "splitter", 
+      "dst_port": 1, 
+      "flowclass": "dl_src=bc:ee:7b:e6:8c:07"
+    }
+  ], 
+  "edge_reqs": [
+    {
+      "id": "e7628898-1696-11e6-addc-080027f22527", 
+      "src_node": "SAP54", 
+      "src_port": 1, 
+      "dst_node": "SAP54", 
+      "dst_port": 1, 
+      "delay": 50, 
+      "bandwidth": 1, 
+      "sg_path": [
+        11, 
+        12
+      ]
+    }
+  ]
+}

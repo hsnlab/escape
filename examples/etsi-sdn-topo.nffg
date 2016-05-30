@@ -1,0 +1,88 @@
+{
+  "parameters": {
+    "id": "SDN",
+    "name": "SDN-Topology",
+    "version": "1.0"
+  },
+  "node_saps": [
+    {
+      "id": "SAP64",
+      "name": "SAP64",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    {
+      "id": "SAP14",
+      "name": "SAP14",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    {
+      "id": "SAP24",
+      "name": "SAP24",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "MT1",
+      "name": "MikroTik-SW-1",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 3
+        }
+      ],
+      "domain": "SDN",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "delay": 0.2,
+        "bandwidth": 4000
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "mn-link1",
+      "src_node": "SAP14",
+      "src_port": 1,
+      "dst_node": "MT1",
+      "dst_port": 2,
+      "delay": 1.5,
+      "bandwidth": 1000
+    },
+    {
+      "id": "ryu-link2",
+      "src_node": "SAP64",
+      "src_port": 1,
+      "dst_node": "MT1",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 1000
+    },
+    {
+      "id": "os-link3",
+      "src_node": "SAP24",
+      "src_port": 1,
+      "dst_node": "MT1",
+      "dst_port": 3,
+      "delay": 1.5,
+      "bandwidth": 1000
+    }
+  ]
+}

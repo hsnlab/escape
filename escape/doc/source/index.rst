@@ -61,8 +61,7 @@ for explicit compiling or installation. The only requirement need to be
 pre-installed is a Python interpreter.
 
 The recommended Python version, in which the development and mostly the testing
-are performed, is the standard CPython **2.7.10** but the 2.7.6 (pre-build
-Mininet VM) are also tested and supported.
+are performed, is the standard CPython **2.7.11**.
 
 .. important::
 
@@ -71,36 +70,27 @@ Mininet VM) are also tested and supported.
 If you want to use a different and separated Python version check the Virtual
 Environment section below.
 
-The best choice of platform on wich ESCAPEv2 is recommended to install is the
-pre-build Mininet VM v2.1.0 (based on Ubuntu 14.04 LTS). However the install
-script also supports the standard Ubuntu flavours too (desktop and also server
-versions). Currently the Ubuntu 15.10 server is tested beside the Mininet VM.
+The best choice of platform on wich ESCAPEv2 is recommended to install and the
+*install-dep.sh* is tested is Ubuntu 14.04.4 LTS.
+
+However ESCAPEv2 is developed on Kubuntu 16.04, some issues are experienced
+related to SAP-xterm initiation in case the platform was an Ubuntu 16.04 server
+image and ESCAPEv2 was started through an SSH channel.
 
 .. important::
+    Considering this limitation we recommend to use the older 14.04 LTS version in
+    case ESCAPEv2 is intended to run on a VM without any graphical interface.
 
-    Due to the limitation of Mininet 2.1.0, newer Linux kernel versions
-    **4.x.x** are not supported!
+The install script (*install-dep.sh*) supports both LTS version.
 
 The preferred way
 -----------------
 
-1. Download one of pre-build Mininet image which has already had the necessary
-tools (Mininet scripts and Open vSwitch).
-
-  https://github.com/mininet/mininet/wiki/Mininet-VM-Images
-
-  The images are in an open virtual format (``.ovf``) which can be imported by
-  most of the virtualization managers.
-
-  Username/password: **mininet/mininet**
-
-  Our implementation relies on Mininet 2.1.0, but ESCAPEv2 has been tested on
-  the newest image too (Mininet 2.2.1 on Ubuntu 14.04 - 64 bit) and no problem
-  has occurred yet!
+1. Download one of pre-build Ubuntu LTS image or create one in your VM manager.
 
 2. Create the ``.ssh`` folder in the home directory and copy your private RSA key
 which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
-``id_rsa``. If you use the Mininet image then the following commands can be used
+``id_rsa``. If you use a VM image then the following commands can be used
 in the VM to copy your RSA key from your host:
 
   .. code-block:: bash
@@ -110,8 +100,7 @@ in the VM to copy your RSA key from your host:
     $ scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
     $ sudo chmod 700 .ssh && sudo chmod 600 .ssh/id_rsa
 
-3. Clone the shared escape repository in a folder named:
-*escape*.
+3. Clone the shared escape repository in a folder named: *escape*.
 
   .. code-block:: bash
 
@@ -257,15 +246,16 @@ For domain emulation scripts:
 Other required programs (OpenYuma, click, neo4j, etc.), which are installed by
 the `install_dep.sh` script by default, are also need to be installed manually.
 
-On Ubuntu the newest ``neo4j`` database server (2.3.1) does not work with ESCAPEv2
-due to a socket Exception raised during connection initiation. The latest tested
-version is *2.2.7*.
+On Ubuntu the ``neo4j`` database server (>=2.3.1) does not work with
+OpenJDK 7 correctly. In this case the ``neo4j`` server is need to be downgraded
+or the latest OpenJDK 8 need to be installed.
 
-If a newer version has been installed on the system, use the following commands to
-downgrade. In this case the authentication bypass needs to be done again.
+If a newer version of ``neo4j`` has been installed on the system, use the
+following commands to downgrade. In this case the authentication bypass needs
+to be done again.
 
 .. code-block:: bash
-    
+
     $ sudo -i
     $ apt-get purge neo4j
     $ rm -rf /var/lib/neo4j/data/

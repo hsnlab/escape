@@ -8,11 +8,20 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+# Component versions
+JAVA_VERSION=7
+NEO4J_VERSION=2.2.7
+
+set -euo pipefail 
+
 # Fail on error
 trap on_error ERR
+trap "on_error 'Got signal: SIGHUP'" SIGHUP
+trap "on_error 'Got signal: SIGINT'" SIGINT
+trap "on_error 'Got signal: SIGTERM'" SIGTERM
 
-function on_error {
-    echo -e "${RED}Error during installation!${NC}"
+function on_error() {
+    echo -e "\n${RED}Error during installation! $1${NC}"
     exit 1
 }
 
@@ -20,9 +29,30 @@ function info() {
     echo -e "${GREEN}$1${NC}"
 }
 
+function env_setup {
+    # Set environment
+    set +u
+    # If LC_ALL is not set up
+    if [[ ! "$LC_ALL" ]]
+    then
+            if [[ "$LANG" ]]
+        then
+                # Set LC_ALL as LANG
+                info "=== Set environment ==="
+                sudo locale-gen $LANG
+                export LC_ALL=$LANG
+                locale
+        else
+             on_error "locale variable: LANG is unset!"
+            fi
+    fi
+    set -u
+}
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 function install_core {
+    env_setup
     info "================================="
     info "==  Install core dependencies  =="
     info "================================="
@@ -34,32 +64,51 @@ function install_core {
 
     info "=== Add neo4j repository ==="
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
-    sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' > /etc/apt/sources.list.d/neo4j.list"
+    sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list"
+
+    if [[ ! $(sudo apt-cache search openjdk-${JAVA_VERSION}-jdk) ]]
+    then
+        info "=== Add OpenJDK repository and install Java $JAVA_VERSION ==="
+        sudo apt-get -y install software-properties-common
+        sudo add-apt-repository -y ppa:openjdk-r/ppa
+    fi
+
+    info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
+    sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
+
 
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
+    # Install Java 8 explicitly
+    sudo apt-get -y install openjdk-${JAVA_VERSION}-jdk
+    # Install Python 2.7.11 explicitly
+    sudo apt-get -y install python2.7
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j=2.2.7
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     sudo -H pip install cryptography==1.3.1
-    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient cryptography==1.3.1
+    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
 
     info "=== Configure neo4j graph database ==="
-    # Disable authentication in /etc/neo4j/neo4j-server.properties
-    sudo sed -i s/dbms\.security\.auth_enabled=true/dbms\.security\.auth_enabled=false/ /etc/neo4j/neo4j-server.properties
-    sudo service neo4j-service restart
-    # Stick to version  2.2.7
-    sudo apt-mark hold neo4j
-
-#    info "=== Compile hwloc2nffg ==="
-#    sudo apt-get -y install g++ cmake make libboost-program-options-dev libhwloc-dev libjsoncpp-dev
-#    cd "$DIR/hwloc2nffg/build"
-#    cmake ../
-#    make
+    # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
+    if [ -f /etc/neo4j/neo4j.conf ]
+    then
+        # neo4j >= 3.0
+        sudo sed -i /dbms\.security\.auth_enabled=false/s/^#//g /etc/neo4j/neo4j.conf
+        sudo service neo4j restart
+    elif [ -f /etc/neo4j/neo4j-server.properties ]
+    then
+        # neo4j <= 2.3.4
+        sudo sed -i s/dbms\.security\.auth_enabled=true/dbms\.security\.auth_enabled=false/ /etc/neo4j/neo4j-server.properties
+        sudo service neo4j-service restart
+    else
+        on_error "=== neo4j server configuration file was not found! ==="
+    fi
 }
 
 function install_mn_dep {
+    env_setup
     BINDIR=/usr/bin
     MNEXEC=mnexec
     MNUSER=mininet
@@ -83,10 +132,20 @@ function install_mn_dep {
         sudo addgroup ${MNUSER} sudo
         echo "$MNUSER:$MNPASSWD" | sudo chpasswd
     fi
-    info "\nIf this installation was not performed on a VM, limit the SSH connections only to localhost due to security issues!\n"
+    # Only works on Ubuntu
+    . /etc/lsb-release
+    if [ $DISTRIB_RELEASE = "14.04" ]
+    then
+        info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
+        # Only works with OpenSSH_6.6.1p1 and tested on Ubuntu 14.04
+        sudo sh -c 'echo "Match Host *,!localhost\n  DenyUsers  mininet" >> /etc/ssh/sshd_config'
+    else
+        info "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
+    fi
 }
 
 function install_infra {
+    env_setup
     info "==================================================================="
     info "==  Install dependencies for Mininet-based Infrastructure Layer  =="
     info "==================================================================="
@@ -168,6 +227,7 @@ EOF
 # Install development dependencies as tornado for scripts in ./tools,
 # for doc generations, etc.
 function install_dev {
+    env_setup
     info "=========================================================="
     info "==  Installing additional dependencies for development  =="
     info "=========================================================="
@@ -181,6 +241,7 @@ function install_dev {
 
 # Install GUI dependencies
 function install_gui {
+    env_setup
     info "==========================================================="
     info "==  Installing additional dependencies for internal GUI  =="
     info "==========================================================="
@@ -190,6 +251,7 @@ function install_gui {
 
 # Install all main component
 function all {
+    env_setup
     install_core
     install_gui
     install_infra

@@ -495,9 +495,7 @@
         </node>
         <node>
             <id>UUID-OpenStack-01-pack@OPENSTACK</id>
-            <name>single Bis-Bis node representing the whole OpenStack
-                domain-packaged
-            </name>
+            <name>OS single Bis-Bis node</name>
             <type>BisBis</type>
             <ports>
                 <port>

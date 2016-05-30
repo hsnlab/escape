@@ -1,3 +1,9 @@
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
 	url = git@gitlab.fp7-unify.eu:Robert.Szabo/virtualizer.git
+	branch = v5
+[submodule "dummy-orchestrator"]
+	path = dummy-orchestrator
+	url = git@gitlab.fp7-unify.eu:wp2/dummy-orchestrator
+	branch = MultiProvidersConsumers
+

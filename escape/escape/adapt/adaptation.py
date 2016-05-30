@@ -95,6 +95,8 @@ class ComponentConfigurator(object):
 
     :param name: name of domain manager
     :type name: str
+    :param mgr_params: mgr parameters
+    :type mgr_params: dict
     :param autostart: also start the domain manager (default: True)
     :type autostart: bool
     :return: domain manager
@@ -214,6 +216,8 @@ class ComponentConfigurator(object):
 
     :param component_name: component's config name
     :type component_name: str
+    :param params: component parameters
+    :type params: dict
     :param parent: define the parent of the actual component's configuration
     :type parent: dict
     :return: initiated component
@@ -456,8 +460,21 @@ class ControllerAdapter(object):
         continue
       # If the internalDM is the only initiated mgr, we can override the
       # whole DoV
-      if len(self.domains) == 1 and domain_mgr.IS_LOCAL_MANAGER:
-        self.DoVManager.set_global_view(nffg=mapped_nffg)
+      if domain_mgr.IS_LOCAL_MANAGER:
+        if mapped_nffg.is_SBB():
+          if mapped_nffg.is_bare():
+            log.debug(
+              "Detected cleanup topology (no NF/Flowrule)! Skip DoV update...")
+          else:
+            log.warning(
+              "Detected SingleBiSBiS topology! Local domain has been already "
+              "cleared, skip DoV update...")
+        elif not mapped_nffg.is_virtualized():
+          self.DoVManager.set_global_view(nffg=mapped_nffg)
+        else:
+          log.warning(
+            "Detected virtualized Infrastructure node in mapped NFFG! Skip "
+            "DoV update...")
         continue
       # Explicit domain update
       self.DoVManager.update_domain(domain=domain, nffg=part)

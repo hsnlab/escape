@@ -14,16 +14,17 @@
 """
 Contains the class for managing NFIB.
 """
-import networkx
 import os
 from collections import deque
 
+import networkx
 import py2neo
-from py2neo import Graph, Relationship
+from py2neo import Graph, Relationship, Unauthorized
 from py2neo.packages.httpstream.http import SocketError
 
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log
+from escape.util.misc import quit_with_error
 
 
 class NFIBManager(object):
@@ -41,7 +42,12 @@ class NFIBManager(object):
     log.debug("Init %s based on neo4j" % self.__class__.__name__)
     # Suppress low level logging
     self.__suppress_neo4j_logging()
-    self.graph_db = Graph()
+    try:
+      self.graph_db = Graph()
+    except Unauthorized as e:
+      quit_with_error(
+        "Got Unauthorozed error on: %s from neo4j! Disable the authorization "
+        "in /etc/neo4j/neoj4-server.properties!" % e)
 
   @staticmethod
   def __suppress_neo4j_logging (level=None):
@@ -56,6 +62,7 @@ class NFIBManager(object):
     import logging
     level = level if level is not None else logging.WARNING
     logging.getLogger("py2neo").setLevel(level)
+    logging.getLogger("neo4j").setLevel(level)
     logging.getLogger("httpstream").setLevel(level)
 
   def addNode (self, node):
@@ -694,5 +701,9 @@ class NFIBManager(object):
         "NFIB is not reachable due to failed neo4j service! Cause: " + str(e))
     except KeyboardInterrupt:
       log.warning("NFIB was interrupted by user!")
+    except Unauthorized:
+      log.error(
+        "neo4j responded with Unauthorized error! Maybe you forgot disabling "
+        "authentication in '/etc/neo4j/neo4j.conf' ?")
     except:
       log.exception("Got unexpected error during NFIB initialization!")
