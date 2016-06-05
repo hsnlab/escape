@@ -1,0 +1,155 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<nodes>
+		<node>
+			<id>SingleBiSBiS</id>
+			<NF_instances>
+				<node operation="create">
+					<id>comp</id>
+					<name>COMPRESSOR</name>
+					<type>headerCompressor</type>
+					<ports>
+						<port>
+							<id>1</id>
+							<port_type>port-abstract</port_type>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>1.0</mem>
+						<storage>0.0</storage>
+					</resources>
+				</node>
+				<node operation="create">
+					<id>decomp</id>
+					<name>DECOMPRESSOR</name>
+					<type>headerDecompressor</type>
+					<ports>
+						<port>
+							<id>1</id>
+							<port_type>port-abstract</port_type>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>1.0</mem>
+						<storage>0.0</storage>
+					</resources>
+				</node>
+			</NF_instances>
+			<flowtable>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry1</id>
+					<name>sg_hop:1</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP14]</port>
+					<match>dl_type=0x0806,dl_dst=00:00:00:00:00:01;dl_tag=0x0001</match>
+					<out>../../../ports/port[id=port-SAP1]</out>
+					<resources>
+						<bandwidth>0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry11</id>
+					<name>sg_hop:11</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP1]</port>
+					<action>push_tag:0x000b</action>
+					<out>../../../ports/port[id=port-SAP14]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry13</id>
+					<name>sg_hop:13</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP14]</port>
+					<match>dl_tag=0x000d</match>
+					<action>pop_tag</action>
+					<out>../../../NF_instances/node[id=comp]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry14</id>
+					<name>sg_hop:14</name>
+					<priority>100</priority>
+					<port>../../../NF_instances/node[id=comp]/ports/port[id=1]</port>
+					<out>../../../NF_instances/node[id=decomp]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry15</id>
+					<name>sg_hop:15</name>
+					<priority>100</priority>
+					<port>../../../NF_instances/node[id=decomp]/ports/port[id=1]</port>
+					<match>dl_type=0x0800,nw_dst=10.0.0.1</match>
+					<action>push_tag:0x000f</action>
+					<out>../../../ports/port[id=port-SAP1]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry2</id>
+					<name>sg_hop:2</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP14]</port>
+					<match>dl_type=0x0806,dl_dst=00:00:00:00:00:02;dl_tag=0x0002</match>
+					<out>../../../ports/port[id=port-SAP2]</out>
+					<resources>
+						<bandwidth>0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry21</id>
+					<name>sg_hop:21</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP2]</port>
+					<action>push_tag:0x0015</action>
+					<out>../../../ports/port[id=port-SAP14]</out>
+					<resources>
+						<bandwidth>0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry22</id>
+					<name>sg_hop:22</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP14]</port>
+					<match>dl_type=0x0800,nw_dst=10.0.0.2;dl_tag=0x0016</match>
+					<action>pop_tag</action>
+					<out>../../../NF_instances/node[id=comp]/ports/port[id=1]</out>
+					<resources>
+						<bandwidth>0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry23</id>
+					<name>sg_hop:23</name>
+					<priority>100</priority>
+					<port>../../../NF_instances/node[id=decomp]/ports/port[id=1]</port>
+					<match>dl_type=0x0800,nw_dst=10.0.0.2</match>
+					<action>push_tag:0x0017</action>
+					<out>../../../ports/port[id=port-SAP2]</out>
+					<resources>
+						<bandwidth>0</bandwidth>
+					</resources>
+				</flowentry>
+			</flowtable>
+		</node>
+	</nodes>
+	<metadata operation="create">
+		<key>REQ:4</key>
+		<value>{'snode':'SAP1','sg_path':[11],'delay':'25.000','bw':'0.000','dport':'port-SAP14','sport':'port-SAP1','dnode':'SAP14'}</value>
+	</metadata>
+	<metadata operation="create">
+		<key>REQ:7</key>
+		<value>{'snode':'SAP14','sg_path':[13,14,15],'delay':'75.000','bw':'0.000','dport':'port-SAP1','sport':'port-SAP14','dnode':'SAP1'}</value>
+	</metadata>
+	<version>2016-02-24; compiled at 2016-03-18  19:56:13</version>
+</virtualizer>
