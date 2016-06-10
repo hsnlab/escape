@@ -5,7 +5,7 @@ helpmsg="""
 Script to give start and give parameters to BatchTests.
 
    --stress_type=<<agressive|normal|decent|    The name of the available 
-                   sc8decent>>                 StressTest-*.py script to be used.
+                   sc8decent|small>>           StressTest-*.py script to be used.
    --seed_start=i          The starting seed for the test sequences
    --seed_end=i            The end seed for the test sequences
    -t                      If set, time is measured for each StressTest.
@@ -23,9 +23,13 @@ Script to give start and give parameters to BatchTests.
    --dump_nffgs=i         Dump every 'i'th NFFG of a test sequence.
 
    --topo_name=<<>>
+   --single_test          Sets 'map_only_first_batch' to the StressTest-*.py
+   --milp                 Use Mixed Integer Linear Programming instead of the
+                          heuristic algorithm.
+   --threads=i            Sets the maximal parallel thread count during testing.
 """
 
-semaphore = threading.Semaphore(4)
+semaphore = None
 sem_bt_batch = {}
 
 class Test(threading.Thread):
@@ -61,7 +65,8 @@ def main(argv):
                                               "bt_limit=", "bt_br_factor=",
                                               "poisson", "batch_length_end=",
                                               "batch_step=", "bt_limit_end=",
-                                              "dump_nffgs=", "topo_name="])
+                                              "dump_nffgs=", "topo_name=", 
+                                              "single_test", "milp", "threads="])
     except getopt.GetoptError as goe:
         print helpmsg
         raise
@@ -76,6 +81,9 @@ def main(argv):
     dump_nffgs = False
     dump_cnt = 1
     topo_name = "gwin"
+    single_test = False
+    milp = False
+    max_thread_cnt = 4
     for opt, arg in opts:
         if opt == "-h":
             print helpmsg
@@ -101,6 +109,12 @@ def main(argv):
             dump_cnt = int(arg)
         elif opt == "--topo_name":
             topo_name = arg
+        elif opt == "--single_test":
+            single_test = True
+        elif opt == "--milp":
+            milp = True
+        elif opt == "--threads":
+            max_thread_cnt = int(arg)
 
     batch_length_end = batch_length + 0.0000001
     batch_step = 1
@@ -119,6 +133,9 @@ def main(argv):
         print "StressTest type must be given!"
         print helpmsg
         sys.exit()
+
+    global semaphore
+    semaphore = threading.Semaphore(max_thread_cnt)
     
     # ensures no files are written parallely by two or more processes
     for bt in xrange(bt_limit, bt_limit_end):
@@ -140,8 +157,9 @@ def main(argv):
                 if time:
                     commbatch = commtime + commbatch
 
-                command = commbatch + str(i) + (" --poisson 2>> " if poisson else " 2>> ") \
-                          + outputfile
+                command = commbatch + str(i) + (" --milp " if milp else "") + \
+                          (" --map_only_first_batch " if single_test else "") + \
+                          (" --poisson 2>> " if poisson else " 2>> ") + outputfile
 
                 Test(command, outputfile, i, bt, batch).start()
 

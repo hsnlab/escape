@@ -255,7 +255,7 @@ following commands to downgrade. In this case the authentication bypass needs
 to be done again.
 
 .. code-block:: bash
-    
+
     $ sudo -i
     $ apt-get purge neo4j
     $ rm -rf /var/lib/neo4j/data/
