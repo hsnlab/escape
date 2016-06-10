@@ -780,7 +780,6 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
           setattr(msg.match, kv[0], IPAddr(kv[1]))
         else:
           setattr(msg.match, kv[0], kv[1])
-
     if 'vlan_push' in action:
       try:
         vlan_push = int(action['vlan_push'])
