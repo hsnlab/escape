@@ -192,7 +192,12 @@ class ServiceRequestHandler(AbstractRequestHandler):
       nffg = NFFGConverter(domain="INTERNAL",
                            logger=log).parse_from_Virtualizer(vdata=body)
     else:
-      nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+      try:
+        nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+      except Exception as e:
+        self.log.error(
+          "Abort request! Received exception during payload parsing: %s" % e)
+        return
     self.log.debug("Parsed service request: %s" % nffg)
     self._proceed_API_call('api_sas_sg_request', nffg)
     self.send_acknowledge()

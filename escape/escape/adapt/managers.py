@@ -18,6 +18,7 @@ connections with entities in the particular domain.
 """
 import pprint
 
+import re
 from ncclient import NCClientError
 
 from escape.adapt.adapters import RemoteESCAPEv2RESTAdapter, UnifyRESTAdapter
@@ -56,6 +57,8 @@ class InternalDomainManager(AbstractDomainManager):
     # deployNF, key: (infra_id, nf_id), value: initiated_vnf part of the
     # parsed reply in JSON
     self.sapinfos = {}
+    # Mapper structure for non-integer link id
+    self.vlan_register = {}
 
   def init (self, configurator, **kwargs):
     """
@@ -633,12 +636,90 @@ class InternalDomainManager(AbstractDomainManager):
             log.warning("Wrong format in match/action field: %s" % e)
             result = False
             continue
-
+          # Process the abstract TAG in match
+          if 'vlan_id' in match:
+            log.debug("Process TAG: %s in match field" % match['vlan_id'])
+            vlan = self.__process_tag(abstract_id=match['vlan_id'])
+            if vlan is not None:
+              match['vlan_id'] = vlan
+            else:
+              log.error("Abort Flowrule deployment...")
+              return
+          # Process the abstract TAG in action
+          if 'vlan_push' in action:
+            log.debug("Process TAG: %s in action field" % action['vlan_push'])
+            vlan = self.__process_tag(abstract_id=action['vlan_push'])
+            if vlan is not None:
+              action['vlan_push'] = vlan
+            else:
+              log.error("Abort Flowrule deployment...")
+              return
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match, action)
     log.debug("Flowrule deploy result: %s" %
               ("SUCCESS" if result else "FAILURE"))
+    log.log(VERBOSE,
+            "Registered VLAN IDs:\n%s" % pprint.pformat(self.vlan_register))
     return result
+
+  def __process_tag (self, abstract_id):
+    """
+    Generate a valid VLAN id from the raw_id data which derived from directly
+    an SG hop link id.
+
+    :param abstract_id: raw link id
+    :type abstract_id: str or int
+    :return: valid VLAN id
+    :rtype: int
+    """
+    # Check if the abstract tag has already processed
+    if abstract_id in self.vlan_register:
+      log.debug("Found already register TAG ID: %s ==> %s" % (
+        abstract_id, self.vlan_register[abstract_id]))
+      return self.vlan_register[abstract_id]
+    # Check if the raw_id is a valid number
+    try:
+      vlan_id = int(abstract_id)
+      # Check if the raw_id is free
+      if 0 < vlan_id < 4095 and vlan_id not in self.vlan_register.itervalues():
+        self.vlan_register[abstract_id] = vlan_id
+        log.debug(
+          "Abstract ID a valid not-taken VLAN ID! Register %s ==> %s" % (
+            abstract_id, vlan_id))
+        return vlan_id
+    except ValueError:
+      # Cant be converted to int, continue with raw_id processing
+      pass
+    trailer_num = re.search(r'\d+$', abstract_id)
+    # If the raw_id ends with number
+    if trailer_num is not None:
+      # Check if the trailing number is a valid VLAN id (0 and 4095 are
+      # reserved)
+      trailer_num = int(trailer_num.group())  # Get matched data from Match obj
+      # Check if the VLAN candidate is free
+      if 0 < trailer_num < 4095 and \
+            trailer_num not in self.vlan_register.itervalues():
+        self.vlan_register[abstract_id] = trailer_num
+        log.debug(
+          "Trailing number is a valid non-taken VLAN ID! Register %s ==> "
+          "%s..." % (abstract_id, trailer_num))
+        return trailer_num
+        # else Try to find a free VLAN
+      else:
+        log.debug(
+          "Detected trailing number: %s is not a valid VLAN or already "
+          "taken!" % trailer_num)
+    # No valid VLAN number has found from abstract_id, try to find a free VLAN
+    for vlan in xrange(1, 4094):
+      if vlan not in self.vlan_register.itervalues():
+        self.vlan_register[abstract_id] = vlan
+        log.debug(
+          "Generated and registered VLAN id %s ==> %s" % (abstract_id, vlan))
+        return vlan
+    # For loop is exhausted
+    else:
+      log.error("No available VLAN id found!")
+      return None
 
 
 class SDNDomainManager(AbstractDomainManager):
