@@ -47,12 +47,15 @@ The preferred way:
     which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
     `id_rsa`. If you use a VM image then the following commands can be used
     in the VM to copy your RSA key from your host:
+    
     ```bash
     cd
     mkdir .ssh
     scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
     ```
+
 3. Clone the shared escape repository in a folder named: *escape*.
+
     ```bash
     git clone git@5gexgit.tmit.bme.hu:unify/escape.git escape
     ```
@@ -72,6 +75,7 @@ The preferred way:
     * Install `neo4j` graph database for NFIB
       
     See help menu for further parameters:
+    
     ```bash
     ./install-dep.sh -h
     Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i]
@@ -88,12 +92,15 @@ The preferred way:
 
 5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
     available arguments of the top stating script check the help menu:
+
     ```bash
     ./escape.py --help
     ```
+
     To verify ESCAPEv2's components are installed and set up correctly you can run
     the following command and test the reachability of the initiated SAPs (``xterm``)
     with `ping`:
+
     ```bash
     ./escape.py -df -s examples/escape-mn-req.nffg
     # on SAP1 xterm
@@ -104,6 +111,7 @@ The preferred way:
 
 To setup virtualizer library as a subtree module manually, use the following commands from
 the project's root directory:
+
 ```bash
 git submodule update --init --recursive --merge
 ```
