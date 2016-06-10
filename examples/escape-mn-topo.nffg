@@ -63,7 +63,7 @@
       "resources": {
         "cpu": 5,
         "mem": 5,
-        "storage": 5,
+        "storage": 20,
         "delay": 0.9,
         "bandwidth": 5000
       }
@@ -140,7 +140,7 @@
       "resources": {
         "cpu": 5,
         "mem": 5,
-        "storage": 5,
+        "storage": 20,
         "delay": 0.9,
         "bandwidth": 5000
       }
