@@ -785,8 +785,8 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       try:
         vlan_push = int(action['vlan_push'])
       except ValueError:
-        log.warning("VLAN_ID: %s in action field is not a valid number! "
-                    "Skip flowrule installation..." % match['vlan_id'])
+        log.warning("VLAN_PUSH: %s in action field is not a valid number! "
+                    "Skip flowrule installation..." % action['vlan_push'])
         return
       msg.actions.append(of.ofp_action_vlan_vid(vlan_vid=vlan_push))
       # msg.actions.append(of.ofp_action_vlan_vid())
