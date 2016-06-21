@@ -113,6 +113,9 @@ def MAP (request, network, full_remap=False,
   chainlist = []
   cid = 1
   edgereqlist = []
+  # a delay value which is assumed to be infinity in terms of connection RTT 
+  # or latency requirement (set it to 100s = 100 000ms)
+  overall_highest_delay = 100000
   for req in request.reqs:
     edgereqlist.append(req)
     request.del_edge(req.src, req.dst, req.id)
@@ -151,7 +154,8 @@ def MAP (request, network, full_remap=False,
       try:
         chain = {'id': cid, 'link_ids': req.sg_path,
                  'bandwidth': req.bandwidth if req.bandwidth is not None else 0,
-                 'delay': req.delay if req.delay is not None else float("inf")}
+                 'delay': req.delay if req.delay is not None \
+                 else overall_highest_delay}
       except AttributeError:
         raise uet.BadInputException(
            "EdgeReq attributes are: sg_path, bandwidth, delay",
@@ -220,7 +224,7 @@ def MAP (request, network, full_remap=False,
 
   # create the class of the algorithm
   alg = CoreAlgorithm(network, request, chainlist, full_remap,
-                      enable_shortest_path_cache,
+                      enable_shortest_path_cache, overall_highest_delay,
                       bw_factor=bw_factor, res_factor=res_factor,
                       lat_factor=lat_factor, shortest_paths=shortest_paths)
   alg.setBacktrackParameters(bt_limit, bt_branching_factor)
