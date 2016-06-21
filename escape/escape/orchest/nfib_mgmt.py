@@ -585,7 +585,6 @@ class NFIBManager(object):
     log.info("Initializing NF database with NFs and decompositions...")
     # start clean - all the existing info is removed from the DB
     self.removeGraphDB()
-
     # add new high-level NF to the DB, all the information related to the NF
     # should be given as a dict
     self.addNode({'label': 'NF', 'node_id': 'forwarder', 'type': 'NA'})
@@ -705,5 +704,11 @@ class NFIBManager(object):
       log.error(
         "neo4j responded with Unauthorized error! Maybe you forgot disabling "
         "authentication in '/etc/neo4j/neo4j.conf' ?")
+    except OSError as e:
+      if ".neo4j/known_hosts" in str(e):
+        # Skip Permission denied in case of accessing neo4j cache file (v3.0.2)
+        pass
+      else:
+        raise
     except:
       log.exception("Got unexpected error during NFIB initialization!")

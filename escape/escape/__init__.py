@@ -331,7 +331,8 @@ def add_dependencies ():
 
   # Skipped folders under project's root
   skipped = ("escape", "examples", "pox", "OpenYuma", "Unify_ncagent", "tools",
-             "gui", "hwloc2nffg", "nffg_BME", "include", "share", "lib", "bin")
+             "gui", "hwloc2nffg", "nffg_BME", "include", "share", "lib", "bin",
+             "dummy-orchestrator")
   for sub_folder in os.listdir(PROJECT_ROOT):
     abs_sub_folder = os.path.join(PROJECT_ROOT, sub_folder)
     if not os.path.isdir(abs_sub_folder):
