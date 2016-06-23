@@ -38,6 +38,7 @@ except ImportError:
 
 class CoreAlgorithm(object):
   def __init__ (self, net0, req0, chains0, full_remap, cache_shortest_path, 
+                overall_highest_delay,
                 bw_factor=1, res_factor=1, lat_factor=1, shortest_paths=None):
     self.log = helper.log.getChild(self.__class__.__name__)
     self.log.setLevel(helper.log.getEffectiveLevel())
@@ -57,7 +58,7 @@ class CoreAlgorithm(object):
     self.bt_branching_factor = 3
     self.bt_limit = 6
 
-    self._preproc(net0, req0, chains0, shortest_paths)
+    self._preproc(net0, req0, chains0, shortest_paths, overall_highest_delay)
 
     # must be sorted in alphabetic order of keys: cpu, mem, storage
     self.resource_priorities = [0.333, 0.333, 0.333]
@@ -97,11 +98,13 @@ class CoreAlgorithm(object):
     self.net = self.net.network
     self.req = self.req.network
 
-  def _preproc (self, net0, req0, chains0, shortest_paths):
+  def _preproc (self, net0, req0, chains0, shortest_paths, 
+                overall_highest_delay):
     self.log.info("Preprocessing:")
     
     # 100 000ms is considered to be infinite latency
-    self.manager = helper.MappingManager(net0, req0, chains0, 100000)
+    self.manager = helper.MappingManager(net0, req0, chains0, 
+                                         overall_highest_delay)
 
     self.preprocessor = GraphPreprocessor.GraphPreprocessorClass(net0, req0,
                                                                  chains0,

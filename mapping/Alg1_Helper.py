@@ -275,7 +275,8 @@ class MappingManager(object):
         c['delay'] = self.overall_highest_delay
     self.chain_subchain.add_nodes_from(
       (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay'], 
-                 'chain': c['chain']}) for c in chains)
+                 'chain': c['chain'], 'link_ids': c['link_ids']}) \
+      for c in chains)
 
   def getIdOfChainEnd_fromNetwork (self, _id):
     """
@@ -590,15 +591,18 @@ class MappingManager(object):
     """
     # should always be mapped already
     log.debug("Calculating latency preference values for placing VNF %s."%vnf2)
-    chainend = self.getIdOfChainEnd_fromNetwork(\
-               self.chain_subchain.node[cid]['subchain'][-1][1])
+    strictest_cid = min(self.chain_subchain[cid].keys(), 
+                        key=lambda sc, graph=self.chain_subchain: \
+                        graph.node[sc]['avail_latency'])
+    end_sap = self.chain_subchain.node[strictest_cid]['chain'][-1]
+    chainend = self.getIdOfChainEnd_fromNetwork(end_sap)
     paths, _ = shortestPathsBasedOnEdgeWeight(subg, node_id, 
                                                     weight='delay', 
                                                     target=chainend)
     sh_path = paths[chainend]
     sh_path_lat = self.shortest_paths_lengths[node_id][chainend]
-    subchain = self.chain_subchain.node[cid]['subchain']
-    remaining_chain_len = len(subchain[subchain.index((vnf1, vnf2, reqlid)):])
+    chain_link_ids = self.chain_subchain.node[strictest_cid]['link_ids']
+    remaining_chain_len = len(chain_link_ids[chain_link_ids.index(reqlid):])
     if remaining_chain_len == 1:
       raise uet.InternalAlgorithmException("Sorting based on latency preference"
                 " value shouldn't be called when only one request link is left!")
@@ -629,7 +633,7 @@ class MappingManager(object):
         if not placed_h_in_dist_layer:
           log.debug("Host %s was filtered from subgraph of chain %s because it"
                     " was too far from current and destination hosts!"%
-                    (h, subchain))
+                    (h, chain_link_ids))
     # sort host inside distance layers and calculate the pref values.
     hosts_with_lat_values = []
     lat_value_step_cnt = (lal - sh_path_lat) / \
