@@ -704,7 +704,7 @@ class NFIBManager(object):
       log.error(
         "neo4j responded with Unauthorized error! Maybe you forgot disabling "
         "authentication in '/etc/neo4j/neo4j.conf' ?")
-    except OSError as e:
+    except IOError as e:
       if ".neo4j/known_hosts" in str(e):
         # Skip Permission denied in case of accessing neo4j cache file (v3.0.2)
         pass
