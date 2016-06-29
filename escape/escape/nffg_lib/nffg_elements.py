@@ -347,7 +347,7 @@ class Node(Element):
     :return: has metadata with given name or not
     :rtype: bool
     """
-    return self.metadata.has_key(name)
+    return name in self.metadata
 
   def del_metadata (self, name=None):
     """
@@ -662,7 +662,7 @@ class Port(Element):
   # Port type
   TYPE = "PORT"
 
-  def __init__ (self, node, properties=None, id=None):
+  def __init__ (self, node, id=None, properties=None, metadata=None):
     """
     Init.
 
@@ -672,6 +672,8 @@ class Port(Element):
     :type id: str or int
     :param properties: supported properties of the port
     :type properties: str or iterable(str)
+    :param metadata: metadata related to Node
+    :type metadata: dict
     :return: None
     """
     super(Port, self).__init__(id=id, type=self.TYPE)
@@ -683,6 +685,7 @@ class Port(Element):
     self.__node = node
     # Set properties list according to given param type
     self.properties = OrderedDict(properties if properties else {})
+    self.metadata = OrderedDict(metadata if metadata else ())
 
   @property
   def node (self):
@@ -716,7 +719,7 @@ class Port(Element):
     :return: has a property with given name or not
     :rtype: bool
     """
-    return self.properties.has_key(property)
+    return property in self.properties
 
   def del_property (self, property=None):
     """
@@ -744,15 +747,69 @@ class Port(Element):
     """
     return self.properties.get(property)
 
+  def add_metadata (self, name, value):
+    """
+    Add metadata with the given `name`.
+
+    :param name: metadata name
+    :type name: str
+    :param value: metadata value
+    :type value: str
+    :return: the :any:`Port` object to allow function chaining
+    :rtype: :any:`Port`
+    """
+    self.metadata[name] = value
+    return self
+
+  def has_metadata (self, name):
+    """
+    Return True if the :any:`Port` has a metadata with the given `name`.
+
+    :param name: metadata name
+    :type name: str
+    :return: has metadata with given name or not
+    :rtype: bool
+    """
+    return name in self.metadata
+
+  def del_metadata (self, name=None):
+    """
+    Remove the metadata from the :any:`Port`. If no metadata is given all the
+    metadata will be removed.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: removed metadata or None
+    :rtype: str or None
+    """
+    if name is None:
+      self.metadata.clear()
+    else:
+      return self.metadata.pop(name, None)
+
+  def get_metadata (self, name):
+    """
+    Return the value of metadata.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: metadata value
+    :rtype: str
+    """
+    return self.metadata.get(name)
+
   def persist (self):
     port = super(Port, self).persist()
     if self.properties:
       port["property"] = self.properties.copy()
+    if self.metadata:
+      port["metadata"] = self.metadata.copy()
     return port
 
   def load (self, data, *args, **kwargs):
     super(Port, self).load(data=data)
     self.properties = OrderedDict(data.get('property', ()))
+    self.metadata = OrderedDict(data.get('metadata', ()))
 
   def __repr__ (self):
     return "%s(node: %s, id: %s)" % (
@@ -764,7 +821,7 @@ class InfraPort(Port):
   Class for storing a port of Infra Node and handles flowrules.
   """
 
-  def __init__ (self, node, properties=None, id=None):
+  def __init__ (self, node, properties=None, id=None, metadata=None):
     """
     Init.
 
@@ -774,9 +831,12 @@ class InfraPort(Port):
     :type id: str or int
     :param properties: supported properties of the port
     :type properties: str or iterable(str)
+    :param metadata: metadata related to Node
+    :type metadata: dict
     :return: None
     """
-    super(InfraPort, self).__init__(node=node, id=id, properties=properties)
+    super(InfraPort, self).__init__(node=node, id=id, properties=properties,
+                                    metadata=metadata)
     self.flowrules = []
 
   def add_flowrule (self, match, action, bandwidth=None, delay=None,
