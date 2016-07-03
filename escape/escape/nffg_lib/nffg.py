@@ -445,7 +445,8 @@ class NFFG(AbstractNFFG):
     self.add_node(nf)
     return nf
 
-  def add_sap (self, sap=None, id=None, name=None):
+  def add_sap (self, sap=None, id=None, name=None, domain=None, delay=None,
+               bandwidth=None):
     """
     Add a Service Access Point to the structure.
 
@@ -455,11 +456,16 @@ class NFFG(AbstractNFFG):
     :type id: str or int
     :param name: optional name
     :type name: str
+    :param delay: delay property of the Node
+    :type delay: float
+    :param bandwidth: bandwidth property of the Node
+    :type bandwidth: float
     :return: newly created node
     :rtype: :any:`NodeSAP`
     """
     if sap is None:
-      sap = NodeSAP(id=id, name=name)
+      sap = NodeSAP(id=id, name=name, domain=domain, delay=delay,
+                    bandwidth=bandwidth)
     self.add_node(sap)
     return sap
 
@@ -2301,37 +2307,45 @@ class NFFGToolBox(object):
     return sg_map
 
 
+def generate_test_NFFG ():
+  nffg = NFFG()
+  nffg.add_metadata(name="test_metadata1", value="abc")
+  nffg.add_metadata(name="test_metadata2", value="123")
+
+  sap = nffg.add_sap(id="sap1", name="SAP_node1", domain="eth1", delay=1,
+                     bandwidth=2)
+  p_sap = sap.add_port(id=1, properties={"property1": "123"})
+  sap.add_metadata(name="sap_meta", value="123")
+
+  nf = nffg.add_nf(id="nf1", name="NF1", func_type="nf1", dep_type="xxx", cpu=1,
+                   mem=2, storage=3, delay=4, bandwidth=5)
+  nf.add_metadata(name="meta1", value="123")
+  p_nf = nf.add_port(id=1)
+  infra = nffg.add_infra(id="infra1", name="Infra_node1", domain="TEST",
+                         infra_type=NFFG.TYPE_INFRA_BISBIS, cpu=1, mem=2,
+                         storage=3, delay=4, bandwidth=5)
+  infra.add_supported_type("nf1")
+  infra.add_supported_type("nf2")
+  p_infra1 = infra.add_port(id=1)
+  p_infra2 = infra.add_port(id="infra1|nf1|1")
+  p_infra1.add_flowrule(match="in_port=1;TAG=sap1|nf1|1",
+                        action="output=infra1|nf1|1;UNTAG", delay=1,
+                        bandwidth=2, hop_id="sg1")
+  nffg.add_undirected_link(port1=p_sap, port2=p_infra1, delay=1, bandwidth=2)
+  nffg.add_link(src_port=p_infra2, dst_port=p_nf, id="l1", dynamic=True,
+                backward=False, delay=1, bandwidth=2)
+  nffg.add_link(src_port=p_nf, dst_port=p_infra2, id="l2", dynamic=True,
+                backward=True, delay=1, bandwidth=2)
+  nffg.add_sglink(src_port=p_sap, dst_port=p_nf, id="sg1",
+                  flowclass="dl_type:0x0800", tag_info="", delay=1, bandwidth=2)
+  nffg.add_req(src_port=p_sap, dst_port=p_nf, id="req1", delay=1, bandwidth=2,
+               sg_path=["sg1"])
+  return nffg
+
+
 if __name__ == "__main__":
   logging.basicConfig(level=logging.DEBUG)
-  # with open("../../../../examples/escape-mn-mapped-topo.nffg") as f:
-  #   nffg = NFFG.parse(f.read())
-  #   for domain, part in NFFGToolBox.split_into_domains(nffg):
-  #     rebounded = NFFGToolBox.rebind_e2e_req_links(part)
-  #     logging.info(domain + "\n" + rebounded.dump())
-  from pprint import pprint
-
-  # with open("../../../../examples/escape-mn-mapped-topo.nffg") as f:
-  #   nffg = NFFG.parse(f.read())
-  # print nffg.network['comp']['decomp']
-  # print nffg.network['comp']['decomp'][2], id(nffg.network['comp'][
-  # 'decomp'][2])
-  # print nffg.network['comp']['decomp'][2].src, id(
-  #   nffg.network['comp']['decomp'][2].src)
-  # print nffg['comp'].ports[1], id(nffg['comp'].ports[1])
-  #
-  # nffg_copy = nffg.copy()
-  #
-  # print nffg_copy.network['comp']['decomp']
-  # print nffg_copy.network['comp']['decomp'][2], id(
-  #   nffg_copy.network['comp']['decomp'][2])
-  # print nffg_copy.network['comp']['decomp'][2].src, id(
-  #   nffg_copy.network['comp']['decomp'][2].src)
-  # print nffg_copy['comp'].ports[1], id(nffg_copy['comp'].ports[1])
-
-  # pprint(copy.network.__dict__)
-
-  with open("../../../examples/etsi-req-single.nffg") as f:
-    nffg = NFFG.parse(f.read())
-    print nffg.dump()
-    NFFGToolBox.recreate_match_TAGs(nffg)
-    print nffg.dump()
+  raw = generate_test_NFFG().dump()
+  print raw
+  # parsed = NFFG.parse(raw_data=raw)
+  # print parsed.dump()
