@@ -132,12 +132,16 @@ def run_cmd (cmd):
   It's advisable to give the command with a raw string literal e.g.: r'ps aux'.
 
   :param cmd: command
-  :type cmd: str
+  :type cmd: str or list or tuple
   :return: output of the command
   :rtype: str
   """
-  return Popen(['/bin/sh', '-c', cmd], stdout=PIPE,
-               stderr=STDOUT).communicate()[0]
+  shell_cmd = ['/bin/sh', '-c']
+  if isinstance(cmd, basestring):
+    shell_cmd.append(cmd)
+  elif isinstance(cmd, (list, tuple)):
+    shell_cmd.append(' '.join(cmd))
+  return Popen(shell_cmd, stdout=PIPE, stderr=STDOUT).communicate()[0]
 
 
 def enum (*sequential, **named):
