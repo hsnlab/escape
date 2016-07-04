@@ -969,19 +969,159 @@ class NodeNF(Node):
       self.__class__.__name__, self.id, self.functional_type)
 
 
+class L3Address(Element):
+  """
+  Wrapper class for storing L3 address values.
+  """
+
+  def __init__ (self, id, name=None, configure=None, client=None,
+                requested=None, provided=None):
+    super(L3Address, self).__init__(id=id, type="L3ADDRESS")
+    self.name = name
+    self.configure = configure
+    self.client = client
+    self.requested = requested
+    self.provided = provided
+
+  def load (self, data, *args, **kwargs):
+    super(L3Address, self).load(data=data)
+    self.name = data.get('name')
+    self.configure = data.get('configure')
+    self.requested = data.get('requested')
+    self.provided = data.get('provided')
+    return self
+
+  def persist (self):
+    l3 = super(L3Address, self).persist()
+    if self.name is not None:
+      l3['name'] = self.name
+    if self.configure is not None:
+      l3['configure'] = self.configure
+    if self.client is not None:
+      l3['client'] = self.client
+    if self.requested is not None:
+      l3['requested'] = self.requested
+    if self.provided is not None:
+      l3['provided'] = self.provided
+    return l3
+
+
+class L3AddressContainer(Persistable):
+  """
+  Container class for storing L3 address data.
+  """
+
+  def __init__ (self, container=None):
+    super(L3AddressContainer, self).__init__()
+    self.container = container if container is not None else []
+
+  def __getitem__ (self, id):
+    for l3 in self.container:
+      if l3.id == id:
+        return l3
+    raise KeyError("L3 address with id: %s is not defined!" % id)
+
+  def __iter__ (self):
+    return iter(self.container)
+
+  def __len__ (self):
+    return len(self.container)
+
+  def __contains__ (self, item):
+    if not isinstance(item, L3Address):
+      raise RuntimeError(
+        "L3AddressContainer's operator \"in\" works only with L3Address "
+        "objects (and not ID-s!)")
+    return item in self.container
+
+  def append (self, item):
+    self.container.append(item)
+    return item
+
+  def remove (self, item):
+    return self.container.remove(item)
+
+  def clear (self):
+    del self.container[:]
+
+  def __str__ (self):
+    return str(self.container)
+
+  def __repr__ (self):
+    return str(self)
+
+  def add_l3address (self, id, name=None, configure=None, client=None,
+                     requested=None, provided=None):
+    self.container.append(
+      L3Address(id, name=name, configure=configure, client=client,
+                requested=requested, provided=provided))
+
+  def persist (self):
+    return [l3.persist() for l3 in self.container]
+
+  def load (self, data, *args, **kwargs):
+    for item in data:
+      self.add_l3address(id=item['id'], name=item.get('name'),
+                         configure=item.get('configure'),
+                         client=item.get('client'),
+                         requested=item.get('requested'),
+                         provided=item.get('provided'))
+
+
 class NodeSAP(Node):
   """
   Class for SAP nodes in the NF-FG.
   """
 
-  def __init__ (self, id=None, name=None, domain=None, delay=None,
-                bandwidth=None):
-    super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name)
+  def __init__ (self, id=None, name=None, domain=None, technology=None,
+                delay=None, bandwidth=None, cost=None, controller=None,
+                orchestrator=None, l2=None, l4=None, metadata=None):
+    """
+    Init.
+
+    :param id: optional id
+    :type id: str or int
+    :param name: optional name
+    :type name: str
+    :param domain: interface binding
+    :type domain: str
+    :param technology: technology
+    :type technology: str
+    :param delay: delay
+    :type delay: str
+    :param bandwidth: bandwidth
+    :type bandwidth: str
+    :param cost: cost
+    :type cost: str
+    :param controller: controller
+    :type controller: str
+    :param orchestrator: orchestrator
+    :type orchestrator: str
+    :param l2: l2
+    :param l2: str
+    :param l4: l4
+    :type l4: str
+    :param metadata: metadata related to Node
+    :type metadata: dict
+    :return: None
+    """
+    super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name,
+                                  metadata=metadata)
     # Signals if the SAP is an inter-domain SAP
     self.domain = domain
-    # Store resource values of inter-domain connection
+    # sap_data
+    self.technology = technology
+    # sap_data/resources
     self.delay = delay
     self.bandwidth = bandwidth
+    self.cost = cost
+    # control
+    self.controller = controller
+    self.orchestrator = orchestrator
+    # addresses
+    self.l2 = l2
+    self.l3 = L3AddressContainer()
+    self.l4 = l4
 
   def __str__ (self):
     return "SAP(id: %s, name: %s)" % (self.id, self.name)
@@ -993,17 +1133,63 @@ class NodeSAP(Node):
     sap = super(NodeSAP, self).persist()
     if self.domain is not None:
       sap['domain'] = self.domain
-    if self.delay is not None:
-      sap['delay'] = self.delay
-    if self.bandwidth is not None:
-      sap['bandwidth'] = self.bandwidth
+    # if self.delay is not None:
+    #   sap['delay'] = self.delay
+    # if self.bandwidth is not None:
+    #   sap['bandwidth'] = self.bandwidth
+    if any(v is not None for v in
+           (self.technology, self.delay, self.bandwidth, self.cost)):
+      sap['sap_data'] = {}
+      if self.technology is not None:
+        sap['sap_data']['technology'] = self.technology
+      if any(v is not None for v in (self.delay, self.bandwidth, self.cost)):
+        sap['sap_data']['resources'] = {}
+        if self.delay is not None:
+          sap['sap_data']['resources']['delay'] = self.delay
+        if self.bandwidth is not None:
+          sap['sap_data']['resources']['bandwidth'] = self.bandwidth
+        if self.cost is not None:
+          sap['sap_data']['resources']['cost'] = self.cost
+    if any(v is not None for v in (self.controller, self.orchestrator)):
+      sap['control'] = {}
+      if self.controller is not None:
+        sap['control']['controller'] = self.controller
+      if self.orchestrator is not None:
+        sap['control']['orchestrator'] = self.orchestrator
+    if any(v is not None for v in (self.l2, self.l4)):
+      sap['addresses'] = {}
+      if self.l2 is not None:
+        sap['addresses']['l2'] = self.l2
+      if self.l4 is not None:
+        sap['addresses']['l4'] = self.l4
+      if len(self.l3):
+        sap['addresses']['l3'] = self.l3.persist()
     return sap
 
   def load (self, data, *args, **kwargs):
     super(NodeSAP, self).load(data=data)
     self.domain = data.get('domain')
-    self.delay = data.get('delay')
-    self.bandwidth = data.get('bandwidth')
+    # self.delay = data.get('delay')
+    # self.bandwidth = data.get('bandwidth')
+    if 'sap_data' in data:
+      self.technology = data['sap_data'].get('technology')
+      if 'resources' in data['sap_data']:
+        self.delay = data['sap_data']['resources'].get('delay')
+        self.bandwidth = data['sap_data']['resources'].get('bandwidth')
+        self.cost = data['sap_data']['resources'].get('cost')
+    else:
+      self.technology = self.delay = self.bandwidth = self.cost = None
+    if 'control' in data:
+      self.controller = data['control'].get('controller')
+      self.orchestrator = data['control'].get('orchestrator')
+    else:
+      self.controller = self.orchestrator = None
+    if 'addresses' in data:
+      self.l2 = data['addresses'].get('l2')
+      self.l3.load(data=data['addresses'].get('l3', ()))
+      self.l4 = data['addresses'].get('l4')
+    else:
+      self.l2 = self.l4 = None
     return self
 
 

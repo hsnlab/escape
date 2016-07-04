@@ -2312,10 +2312,20 @@ def generate_test_NFFG ():
   nffg.add_metadata(name="test_metadata1", value="abc")
   nffg.add_metadata(name="test_metadata2", value="123")
 
-  sap = nffg.add_sap(id="sap1", name="SAP_node1", domain="eth1", delay=1,
-                     bandwidth=2)
+  sap = nffg.add_sap(id="sap1", name="SAP_node1", domain="eth1")
   p_sap = sap.add_port(id=1, properties={"property1": "123"})
   sap.add_metadata(name="sap_meta", value="123")
+
+  sap.technology = "sap_tech"
+  sap.delay = 2
+  sap.bandwidth = 3
+  sap.cost = 4
+  sap.controller = "sap_c"
+  sap.orchestrator = "sap_o"
+  sap.l2 = "l2"
+  sap.l4 = "l4"
+  sap.l3.add_l3address(id='l3_id', name="L3", configure="True", client="10",
+                       requested="R", provided="P")
 
   nf = nffg.add_nf(id="nf1", name="NF1", func_type="nf1", dep_type="xxx", cpu=1,
                    mem=2, storage=3, delay=4, bandwidth=5)
@@ -2347,5 +2357,5 @@ if __name__ == "__main__":
   logging.basicConfig(level=logging.DEBUG)
   raw = generate_test_NFFG().dump()
   print raw
-  # parsed = NFFG.parse(raw_data=raw)
-  # print parsed.dump()
+  parsed = NFFG.parse(raw_data=raw)
+  print parsed.dump()
