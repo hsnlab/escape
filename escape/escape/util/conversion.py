@@ -375,9 +375,9 @@ class NFFGConverter(object):
         if vport.capability.is_initialized():
           infra_port.add_property(
             "capability", vport.capability.get_value())
-        # Add metadata from non-sap port to infra port properties
+        # Add metadata from non-sap port to infra port metadata
         for key in vport.metadata:
-          infra_port.add_property(property=key,
+          infra_port.add_metadata(name=key,
                                   value=vport.metadata[key].value.get_value())
 
         self.log.debug("Added static %s" % infra_port)
@@ -1036,13 +1036,13 @@ class NFFGConverter(object):
         # Set default port-type to port-abstract
         # during SAP detection the SAP<->Node port-type will be overridden
         v_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_ABSTRACT)
+        # TODO implement conversion of additional SAP values
         # Migrate port metadata
-        for property, value in port.properties.iteritems():
-          if property not in ('name', 'capability', 'sap', 'type'):
-            meta_key = str(property)
-            meta_value = str(value) if value is not None else None
-            v_port.metadata.add(
-              virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
+        for name, value in port.metadata.iteritems():
+          meta_key = str(name)
+          meta_value = str(value) if value is not None else None
+          v_port.metadata.add(
+            virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
         # port_type: port-abstract & sap: -    -->  regular port
         # port_type: port-abstract & sap: <SAP...>    -->  was connected to
         # an inter-domain port - set this data in Virtualizer
@@ -1142,6 +1142,12 @@ class NFFGConverter(object):
           v_sap_port.sap_data.resources.delay.set_value(sap.delay)
         if sap.bandwidth:
           v_sap_port.sap_data.resources.bandwidth.set_value(sap.bandwidth)
+        # Migrate metadata
+        for key, value in sap.metadata.iteritems():
+          meta_key = str(key)
+          meta_value = str(value) if value is not None else None
+          v_sap_port.metadata.add(
+            virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
         self.log.debug(
           "Convert SAP to port: %s in infra: %s" % (link.dst.id, n))
         # Check if the SAP is an inter-domain SAP

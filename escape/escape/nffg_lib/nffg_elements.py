@@ -347,7 +347,7 @@ class Node(Element):
     :return: has metadata with given name or not
     :rtype: bool
     """
-    return self.metadata.has_key(name)
+    return name in self.metadata
 
   def del_metadata (self, name=None):
     """
@@ -662,7 +662,7 @@ class Port(Element):
   # Port type
   TYPE = "PORT"
 
-  def __init__ (self, node, properties=None, id=None):
+  def __init__ (self, node, id=None, properties=None, metadata=None):
     """
     Init.
 
@@ -672,6 +672,8 @@ class Port(Element):
     :type id: str or int
     :param properties: supported properties of the port
     :type properties: str or iterable(str)
+    :param metadata: metadata related to Node
+    :type metadata: dict
     :return: None
     """
     super(Port, self).__init__(id=id, type=self.TYPE)
@@ -683,6 +685,7 @@ class Port(Element):
     self.__node = node
     # Set properties list according to given param type
     self.properties = OrderedDict(properties if properties else {})
+    self.metadata = OrderedDict(metadata if metadata else ())
 
   @property
   def node (self):
@@ -716,7 +719,7 @@ class Port(Element):
     :return: has a property with given name or not
     :rtype: bool
     """
-    return self.properties.has_key(property)
+    return property in self.properties
 
   def del_property (self, property=None):
     """
@@ -744,15 +747,69 @@ class Port(Element):
     """
     return self.properties.get(property)
 
+  def add_metadata (self, name, value):
+    """
+    Add metadata with the given `name`.
+
+    :param name: metadata name
+    :type name: str
+    :param value: metadata value
+    :type value: str
+    :return: the :any:`Port` object to allow function chaining
+    :rtype: :any:`Port`
+    """
+    self.metadata[name] = value
+    return self
+
+  def has_metadata (self, name):
+    """
+    Return True if the :any:`Port` has a metadata with the given `name`.
+
+    :param name: metadata name
+    :type name: str
+    :return: has metadata with given name or not
+    :rtype: bool
+    """
+    return name in self.metadata
+
+  def del_metadata (self, name=None):
+    """
+    Remove the metadata from the :any:`Port`. If no metadata is given all the
+    metadata will be removed.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: removed metadata or None
+    :rtype: str or None
+    """
+    if name is None:
+      self.metadata.clear()
+    else:
+      return self.metadata.pop(name, None)
+
+  def get_metadata (self, name):
+    """
+    Return the value of metadata.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: metadata value
+    :rtype: str
+    """
+    return self.metadata.get(name)
+
   def persist (self):
     port = super(Port, self).persist()
     if self.properties:
       port["property"] = self.properties.copy()
+    if self.metadata:
+      port["metadata"] = self.metadata.copy()
     return port
 
   def load (self, data, *args, **kwargs):
     super(Port, self).load(data=data)
     self.properties = OrderedDict(data.get('property', ()))
+    self.metadata = OrderedDict(data.get('metadata', ()))
 
   def __repr__ (self):
     return "%s(node: %s, id: %s)" % (
@@ -764,7 +821,7 @@ class InfraPort(Port):
   Class for storing a port of Infra Node and handles flowrules.
   """
 
-  def __init__ (self, node, properties=None, id=None):
+  def __init__ (self, node, properties=None, id=None, metadata=None):
     """
     Init.
 
@@ -774,9 +831,12 @@ class InfraPort(Port):
     :type id: str or int
     :param properties: supported properties of the port
     :type properties: str or iterable(str)
+    :param metadata: metadata related to Node
+    :type metadata: dict
     :return: None
     """
-    super(InfraPort, self).__init__(node=node, id=id, properties=properties)
+    super(InfraPort, self).__init__(node=node, id=id, properties=properties,
+                                    metadata=metadata)
     self.flowrules = []
 
   def add_flowrule (self, match, action, bandwidth=None, delay=None,
@@ -909,19 +969,159 @@ class NodeNF(Node):
       self.__class__.__name__, self.id, self.functional_type)
 
 
+class L3Address(Element):
+  """
+  Wrapper class for storing L3 address values.
+  """
+
+  def __init__ (self, id, name=None, configure=None, client=None,
+                requested=None, provided=None):
+    super(L3Address, self).__init__(id=id, type="L3ADDRESS")
+    self.name = name
+    self.configure = configure
+    self.client = client
+    self.requested = requested
+    self.provided = provided
+
+  def load (self, data, *args, **kwargs):
+    super(L3Address, self).load(data=data)
+    self.name = data.get('name')
+    self.configure = data.get('configure')
+    self.requested = data.get('requested')
+    self.provided = data.get('provided')
+    return self
+
+  def persist (self):
+    l3 = super(L3Address, self).persist()
+    if self.name is not None:
+      l3['name'] = self.name
+    if self.configure is not None:
+      l3['configure'] = self.configure
+    if self.client is not None:
+      l3['client'] = self.client
+    if self.requested is not None:
+      l3['requested'] = self.requested
+    if self.provided is not None:
+      l3['provided'] = self.provided
+    return l3
+
+
+class L3AddressContainer(Persistable):
+  """
+  Container class for storing L3 address data.
+  """
+
+  def __init__ (self, container=None):
+    super(L3AddressContainer, self).__init__()
+    self.container = container if container is not None else []
+
+  def __getitem__ (self, id):
+    for l3 in self.container:
+      if l3.id == id:
+        return l3
+    raise KeyError("L3 address with id: %s is not defined!" % id)
+
+  def __iter__ (self):
+    return iter(self.container)
+
+  def __len__ (self):
+    return len(self.container)
+
+  def __contains__ (self, item):
+    if not isinstance(item, L3Address):
+      raise RuntimeError(
+        "L3AddressContainer's operator \"in\" works only with L3Address "
+        "objects (and not ID-s!)")
+    return item in self.container
+
+  def append (self, item):
+    self.container.append(item)
+    return item
+
+  def remove (self, item):
+    return self.container.remove(item)
+
+  def clear (self):
+    del self.container[:]
+
+  def __str__ (self):
+    return str(self.container)
+
+  def __repr__ (self):
+    return str(self)
+
+  def add_l3address (self, id, name=None, configure=None, client=None,
+                     requested=None, provided=None):
+    self.container.append(
+      L3Address(id, name=name, configure=configure, client=client,
+                requested=requested, provided=provided))
+
+  def persist (self):
+    return [l3.persist() for l3 in self.container]
+
+  def load (self, data, *args, **kwargs):
+    for item in data:
+      self.add_l3address(id=item['id'], name=item.get('name'),
+                         configure=item.get('configure'),
+                         client=item.get('client'),
+                         requested=item.get('requested'),
+                         provided=item.get('provided'))
+
+
 class NodeSAP(Node):
   """
   Class for SAP nodes in the NF-FG.
   """
 
-  def __init__ (self, id=None, name=None, domain=None, delay=None,
-                bandwidth=None):
-    super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name)
+  def __init__ (self, id=None, name=None, domain=None, technology=None,
+                delay=None, bandwidth=None, cost=None, controller=None,
+                orchestrator=None, l2=None, l4=None, metadata=None):
+    """
+    Init.
+
+    :param id: optional id
+    :type id: str or int
+    :param name: optional name
+    :type name: str
+    :param domain: interface binding
+    :type domain: str
+    :param technology: technology
+    :type technology: str
+    :param delay: delay
+    :type delay: str
+    :param bandwidth: bandwidth
+    :type bandwidth: str
+    :param cost: cost
+    :type cost: str
+    :param controller: controller
+    :type controller: str
+    :param orchestrator: orchestrator
+    :type orchestrator: str
+    :param l2: l2
+    :param l2: str
+    :param l4: l4
+    :type l4: str
+    :param metadata: metadata related to Node
+    :type metadata: dict
+    :return: None
+    """
+    super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name,
+                                  metadata=metadata)
     # Signals if the SAP is an inter-domain SAP
     self.domain = domain
-    # Store resource values of inter-domain connection
+    # sap_data
+    self.technology = technology
+    # sap_data/resources
     self.delay = delay
     self.bandwidth = bandwidth
+    self.cost = cost
+    # control
+    self.controller = controller
+    self.orchestrator = orchestrator
+    # addresses
+    self.l2 = l2
+    self.l3 = L3AddressContainer()
+    self.l4 = l4
 
   def __str__ (self):
     return "SAP(id: %s, name: %s)" % (self.id, self.name)
@@ -933,17 +1133,63 @@ class NodeSAP(Node):
     sap = super(NodeSAP, self).persist()
     if self.domain is not None:
       sap['domain'] = self.domain
-    if self.delay is not None:
-      sap['delay'] = self.delay
-    if self.bandwidth is not None:
-      sap['bandwidth'] = self.bandwidth
+    # if self.delay is not None:
+    #   sap['delay'] = self.delay
+    # if self.bandwidth is not None:
+    #   sap['bandwidth'] = self.bandwidth
+    if any(v is not None for v in
+           (self.technology, self.delay, self.bandwidth, self.cost)):
+      sap['sap_data'] = {}
+      if self.technology is not None:
+        sap['sap_data']['technology'] = self.technology
+      if any(v is not None for v in (self.delay, self.bandwidth, self.cost)):
+        sap['sap_data']['resources'] = {}
+        if self.delay is not None:
+          sap['sap_data']['resources']['delay'] = self.delay
+        if self.bandwidth is not None:
+          sap['sap_data']['resources']['bandwidth'] = self.bandwidth
+        if self.cost is not None:
+          sap['sap_data']['resources']['cost'] = self.cost
+    if any(v is not None for v in (self.controller, self.orchestrator)):
+      sap['control'] = {}
+      if self.controller is not None:
+        sap['control']['controller'] = self.controller
+      if self.orchestrator is not None:
+        sap['control']['orchestrator'] = self.orchestrator
+    if any(v is not None for v in (self.l2, self.l4)):
+      sap['addresses'] = {}
+      if self.l2 is not None:
+        sap['addresses']['l2'] = self.l2
+      if self.l4 is not None:
+        sap['addresses']['l4'] = self.l4
+      if len(self.l3):
+        sap['addresses']['l3'] = self.l3.persist()
     return sap
 
   def load (self, data, *args, **kwargs):
     super(NodeSAP, self).load(data=data)
     self.domain = data.get('domain')
-    self.delay = data.get('delay')
-    self.bandwidth = data.get('bandwidth')
+    # self.delay = data.get('delay')
+    # self.bandwidth = data.get('bandwidth')
+    if 'sap_data' in data:
+      self.technology = data['sap_data'].get('technology')
+      if 'resources' in data['sap_data']:
+        self.delay = data['sap_data']['resources'].get('delay')
+        self.bandwidth = data['sap_data']['resources'].get('bandwidth')
+        self.cost = data['sap_data']['resources'].get('cost')
+    else:
+      self.technology = self.delay = self.bandwidth = self.cost = None
+    if 'control' in data:
+      self.controller = data['control'].get('controller')
+      self.orchestrator = data['control'].get('orchestrator')
+    else:
+      self.controller = self.orchestrator = None
+    if 'addresses' in data:
+      self.l2 = data['addresses'].get('l2')
+      self.l3.load(data=data['addresses'].get('l3', ()))
+      self.l4 = data['addresses'].get('l4')
+    else:
+      self.l2 = self.l4 = None
     return self
 
 

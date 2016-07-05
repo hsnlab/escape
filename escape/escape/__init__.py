@@ -317,6 +317,10 @@ cfg = {
     }
 }
 
+ADDITIONAL_DIRS = ("unify_virtualizer",  # Virtualizer lib
+                   "mapping",  # Mapping algorithm
+                   "mininet"  # Tweaked Mininet for Click-Mininet Infrastructure
+                   )
 
 def add_dependencies ():
   """
@@ -338,7 +342,7 @@ def add_dependencies ():
     if not os.path.isdir(abs_sub_folder):
       continue
     if not (sub_folder.startswith('.') or sub_folder.upper().startswith(
-       'PYTHON')) and sub_folder not in skipped:
+       'PYTHON')) and sub_folder in ADDITIONAL_DIRS:
       if abs_sub_folder not in sys.path:
         log.debug("Add dependency: %s" % abs_sub_folder)
         sys.path.insert(0, abs_sub_folder)
