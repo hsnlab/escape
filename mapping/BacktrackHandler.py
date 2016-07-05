@@ -60,6 +60,10 @@ class BacktrackHandler(object):
     """
     if self.current_subchain_level < len(self.subchains_with_subgraphs):
       subchain = self.subchains_with_subgraphs[self.current_subchain_level][0]
+      """
+      MAYBE this checking is not necessary anymore since we correctly handle the
+      LinkMappingRecords during backtracking
+      """
       if len(self.currently_mapped) > 0:
         tmp_mapping_rec = self.currently_mapped.pop()
         self.currently_mapped.append(tmp_mapping_rec)
@@ -213,7 +217,7 @@ class BacktrackHandler(object):
       tmp_subchain_level, possible_hosts_of_a_vnf = record
       self.checkSubchainLevelStep(tmp_subchain_level)
       bt_record = possible_hosts_of_a_vnf.pop()
-      self.log.debug("Stepping back on VNF %s of subchain %s"%
+      self.log.debug("Stepping back on VNF %s of subchain level %s"%
                      (bt_record['vnf_id'], tmp_subchain_level))
       c = self.subchains_with_subgraphs[self.current_subchain_level][0]
       # return c, sub, bt_record, list of (cid, prev_bt_rec, link_mapping_rec)
