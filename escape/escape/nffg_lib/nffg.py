@@ -784,11 +784,14 @@ class NFFG(AbstractNFFG):
     """
     # If there is no VNF
     if len([v for v in self.nfs]) == 0:
-      # And there is no flowrule in the ports
       fr_sum = sum([sum(1 for fr in i.ports.flowrules) for i in self.infras])
-      return fr_sum == 0
-    else:
-      return False
+      # And there is no flowrule in the ports
+      if fr_sum == 0:
+        sg_sum = len([sg for sg in self.sg_hops])
+        # And there is not SG hop
+        if sg_sum == 0:
+          return True
+    return False
 
   def is_virtualized (self):
     """

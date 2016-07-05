@@ -28,7 +28,7 @@ from itertools import count
 log = logging.getLogger("mapping")
 # Default log level
 # Change this constant to set logging level outside of ESCAPE
-DEFAULT_LOG_LEVEL = logging.WARN
+DEFAULT_LOG_LEVEL = logging.DEBUG
 # print "effective level", log.getEffectiveLevel()
 # print "log level", log.level
 if log.getEffectiveLevel() > DEFAULT_LOG_LEVEL:
