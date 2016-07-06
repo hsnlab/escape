@@ -303,23 +303,55 @@ class NFFGConverter(object):
           # Set as inter-domain SAP
           sap_port.add_property("type", "inter-domain")
           sap_port.add_property("sap", vport.sap.get_value())
+          sap.sap = vport.sap.get_value()
 
         self.log.debug("Added SAP port: %s" % sap_port)
 
-        # Add delay/bw for inter-domain links
-        if vport.sap_data.is_initialized() and \
-           vport.sap_data.resources.is_initialized():
-          if vport.sap_data.resources.delay.is_initialized():
+        # Fill SAP-specific data
+        sap.sap = vport.sap.get_value()
+        if vport.sap_data.is_initialized():
+          sap.technology = vport.sap_data.technology.get_value()
+          if vport.sap_data.resources.is_initialized():
             try:
               sap.delay = float(vport.sap_data.resources.delay.get_value())
             except ValueError:
               sap.delay = vport.sap_data.resources.delay.get_value()
-          if vport.sap_data.resources.bandwidth.is_initialized():
             try:
               sap.bandwidth = float(
                 vport.sap_data.resources.bandwidth.get_value())
             except ValueError:
               sap.bandwidth = vport.sap_data.resources.bandwidth.get_value()
+            try:
+              sap.cost = float(vport.sap_data.resources.cost.get_value())
+            except ValueError:
+              sap.cost = vport.sap_data.resources.cost.get_value()
+        if vport.control.is_initialized():
+          sap.controller = vport.control.controller.get_value()
+          sap.orchestrator = vport.control.orchestrator.get_value()
+        if vport.addresses.is_initialized():
+          sap.l2 = vport.addresses.l2.get_value()
+          sap.l4 = vport.addresses.l4.get_value()
+          for l3 in vport.addresses.l3.itervalues():
+            sap.l3.add_l3address(id=l3.id.get_value(), name=l3.name.get_value(),
+                                 configure=l3.configure.get_value(),
+                                 client=l3.client.get_value(),
+                                 requested=l3.requested.get_value(),
+                                 provided=l3.provided.get_value())
+
+        # # Add delay/bw for inter-domain links
+        # if vport.sap_data.is_initialized() and \
+        #    vport.sap_data.resources.is_initialized():
+        #   if vport.sap_data.resources.delay.is_initialized():
+        #     try:
+        #       sap.delay = float(vport.sap_data.resources.delay.get_value())
+        #     except ValueError:
+        #       sap.delay = vport.sap_data.resources.delay.get_value()
+        #   if vport.sap_data.resources.bandwidth.is_initialized():
+        #     try:
+        #       sap.bandwidth = float(
+        #         vport.sap_data.resources.bandwidth.get_value())
+        #     except ValueError:
+        #       sap.bandwidth = vport.sap_data.resources.bandwidth.get_value()
 
         # Add metadata from infra port metadata to sap metadata
         for key in vport.metadata:  # Optional - port.metadata
@@ -1137,11 +1169,40 @@ class NFFGConverter(object):
           # SAP.id <--> virtualizer.node.port.name
           v_sap_name = str(sap.id)
         v_sap_port.name.set_value(v_sap_name)
-        # Add delay/bw value for inter-domain link
-        if sap.delay:
-          v_sap_port.sap_data.resources.delay.set_value(sap.delay)
-        if sap.bandwidth:
-          v_sap_port.sap_data.resources.bandwidth.set_value(sap.bandwidth)
+        # Check if the SAP is an inter-domain SAP
+        if sap.sap is not None:
+          v_sap_port.sap.set_value(sap.sap)
+        elif link.src.has_property("type") == "inter-domain":
+          # If sap metadata is set by merge, use this value else the SAP.id
+          if link.src.has_property("sap"):
+            v_sap_port.sap.set_value(link.src.get_property("sap"))
+          else:
+            v_sap_port.sap.set_value(str(sap.id))
+        # Check if the SAP is a bound, inter-domain SAP (no sap and port
+        # property are set in this case)
+        if sap.binding is not None:
+          v_sap_port.sap.set_value(s)
+          self.log.debug("Set port: %s in infra: %s as an inter-domain SAP with"
+                         " 'sap' value: %s" % (link.dst.id, n,
+                                               v_sap_port.sap.get_value()))
+
+        # Convert SAP-specific data
+        v_sap_port.sap_data.technology.set_value(sap.technology)
+        v_sap_port.sap_data.resources.delay.set_value(sap.delay)
+        v_sap_port.sap_data.resources.bandwidth.set_value(sap.bandwidth)
+        v_sap_port.sap_data.resources.cost.set_value(sap.cost)
+        v_sap_port.control.controller.set_value(sap.controller)
+        v_sap_port.control.orchestrator.set_value(sap.orchestrator)
+        v_sap_port.addresses.l2.set_value(sap.l2)
+        v_sap_port.addresses.l4.set_value(sap.l4)
+        for l3 in sap.l3:
+          v_sap_port.addresses.l3.add(
+            virt_lib.L3_address(id=l3.id,
+                                name=l3.name,
+                                configure=l3.configure,
+                                requested=l3.requested,
+                                provided=l3.provided))
+
         # Migrate metadata
         for key, value in sap.metadata.iteritems():
           meta_key = str(key)
@@ -1149,20 +1210,7 @@ class NFFGConverter(object):
           v_sap_port.metadata.add(
             virt_lib.MetadataMetadata(key=meta_key, value=meta_value))
         self.log.debug(
-          "Convert SAP to port: %s in infra: %s" % (link.dst.id, n))
-        # Check if the SAP is an inter-domain SAP
-        if link.src.has_property("type") == "inter-domain":
-          # If sap metadata is set by merge, use this value else the SAP.id
-          if link.src.has_property("sap"):
-            v_sap_port.sap.set_value(link.src.get_property("sap"))
-          else:
-            v_sap_port.sap.set_value(str(sap.id))
-        # Check if the SAP is a bound, inter-domain SAP
-        if sap.domain is not None:
-          v_sap_port.sap.set_value(s)
-          self.log.debug("Set port: %s in infra: %s as an inter-domain SAP with"
-                         " 'sap' value: %s" % (link.dst.id, n,
-                                               v_sap_port.sap.get_value()))
+          "Convert %s to port: %s in infra: %s" % (sap, link.dst.id, n))
 
   def _convert_nffg_edges (self, nffg, virtualizer):
     """
@@ -1576,17 +1624,17 @@ if __name__ == "__main__":
 
   with open(
      # "../../../../examples/escape-mn-mapped-test.nffg") as f:
-     # "../../../../examples/escape-2sbb-mapped.nffg") as f:
-     "../../../examples/hwloc2nffg_IntelXeonE5-2620-rhea.nffg") as f:
+     "../../../gui/escape-2sbb-mapped.nffg") as f:
+    # "../../../examples/hwloc2nffg_IntelXeonE5-2620-rhea.nffg") as f:
     nffg = NFFG.parse(raw_data=f.read())
-  nffg.duplicate_static_links()
+  # nffg.duplicate_static_links()
   # log.debug("Parsed NFFG:\n%s" % nffg.dump())
   virt = c.dump_to_Virtualizer(nffg=nffg)
   log.debug("Converted:")
   log.debug(virt.xml())
-  # log.debug("Reconvert to NFFG:")
-  # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
-  # log.debug(nffg.dump())
+  log.debug("Reconvert to NFFG:")
+  nffg = c.parse_from_Virtualizer(vdata=virt.xml())
+  log.debug(nffg.dump())
 
   # dov = virt_lib.Virtualizer.parse_from_file(
   #   "../../../examples/hwloc2nffg_HPProBook450G2.xml")
