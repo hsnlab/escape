@@ -18,6 +18,7 @@ except ImportError:
   from conversion import NFFGConverter
 
 if __name__ == '__main__':
+  logging.basicConfig(level=logging.DEBUG)
   graph = None
   if len(sys.argv) > 1:
     nffg_path = os.path.abspath(os.path.join(os.getcwd(), sys.argv[1]))
@@ -42,4 +43,5 @@ if __name__ == '__main__':
   # t_view = vt.ViewerThread(viewer_type="get", graph=G)
   t_view = vt.ViewerThread(viewer_type="get", graph=graph)
   t_view.start()
-  # t_view.join()
+  t_view.join()
+  logging.info("Quitting...")
