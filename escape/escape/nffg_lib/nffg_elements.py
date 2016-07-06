@@ -1073,9 +1073,10 @@ class NodeSAP(Node):
   Class for SAP nodes in the NF-FG.
   """
 
-  def __init__ (self, id=None, name=None, domain=None, technology=None,
-                delay=None, bandwidth=None, cost=None, controller=None,
-                orchestrator=None, l2=None, l4=None, metadata=None):
+  def __init__ (self, id=None, name=None, binding=None, sap=None,
+                technology=None, delay=None, bandwidth=None, cost=None,
+                controller=None, orchestrator=None, l2=None, l4=None,
+                metadata=None):
     """
     Init.
 
@@ -1083,14 +1084,16 @@ class NodeSAP(Node):
     :type id: str or int
     :param name: optional name
     :type name: str
-    :param domain: interface binding
-    :type domain: str
+    :param binding: interface binding
+    :type binding: str
+    :param sap: inter-domain SAP identifier
+    :type sap: str
     :param technology: technology
     :type technology: str
     :param delay: delay
-    :type delay: str
+    :type delay: float
     :param bandwidth: bandwidth
-    :type bandwidth: str
+    :type bandwidth: float
     :param cost: cost
     :type cost: str
     :param controller: controller
@@ -1108,7 +1111,9 @@ class NodeSAP(Node):
     super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name,
                                   metadata=metadata)
     # Signals if the SAP is an inter-domain SAP
-    self.domain = domain
+    self.binding = binding
+    # Virtualizer-related data
+    self.sap = sap
     # sap_data
     self.technology = technology
     # sap_data/resources
@@ -1131,12 +1136,10 @@ class NodeSAP(Node):
 
   def persist (self):
     sap = super(NodeSAP, self).persist()
-    if self.domain is not None:
-      sap['domain'] = self.domain
-    # if self.delay is not None:
-    #   sap['delay'] = self.delay
-    # if self.bandwidth is not None:
-    #   sap['bandwidth'] = self.bandwidth
+    if self.binding is not None:
+      sap['binding'] = self.binding
+    if self.sap is not None:
+      sap['sap'] = self.sap
     if any(v is not None for v in
            (self.technology, self.delay, self.bandwidth, self.cost)):
       sap['sap_data'] = {}
@@ -1168,9 +1171,8 @@ class NodeSAP(Node):
 
   def load (self, data, *args, **kwargs):
     super(NodeSAP, self).load(data=data)
-    self.domain = data.get('domain')
-    # self.delay = data.get('delay')
-    # self.bandwidth = data.get('bandwidth')
+    self.binding = data.get('domain')
+    self.sap = data.get('sap')
     if 'sap_data' in data:
       self.technology = data['sap_data'].get('technology')
       if 'resources' in data['sap_data']:

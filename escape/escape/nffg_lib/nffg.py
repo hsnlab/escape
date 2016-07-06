@@ -445,29 +445,52 @@ class NFFG(AbstractNFFG):
     self.add_node(nf)
     return nf
 
-  def add_sap (self, sap=None, id=None, name=None, domain=None, delay=None,
-               bandwidth=None):
+  def add_sap (self, sap_obj=None, id=None, name=None, binding=None, sap=None,
+               technology=None, delay=None, bandwidth=None, cost=None,
+               controller=None, orchestrator=None, l2=None, l4=None,
+               metadata=None):
     """
     Add a Service Access Point to the structure.
 
-    :param sap: add this explicit SAP object instead of create one
-    :type sap: :any:`NodeSAP`
+    :param sap_obj: add this explicit SAP object instead of create one
+    :type sap_obj: :any:`NodeSAP`
     :param id: optional id
     :type id: str or int
     :param name: optional name
     :type name: str
-    :param delay: delay property of the Node
+    :param binding: interface binding
+    :type binding: str
+    :param sap: inter-domain SAP identifier
+    :type sap: str
+    :param technology: technology
+    :type technology: str
+    :param delay: delay
     :type delay: float
-    :param bandwidth: bandwidth property of the Node
+    :param bandwidth: bandwidth
     :type bandwidth: float
+    :param cost: cost
+    :type cost: str
+    :param controller: controller
+    :type controller: str
+    :param orchestrator: orchestrator
+    :type orchestrator: str
+    :param l2: l2
+    :param l2: str
+    :param l4: l4
+    :type l4: str
+    :param metadata: metadata related to Node
+    :type metadata: dict
     :return: newly created node
     :rtype: :any:`NodeSAP`
     """
-    if sap is None:
-      sap = NodeSAP(id=id, name=name, domain=domain, delay=delay,
-                    bandwidth=bandwidth)
-    self.add_node(sap)
-    return sap
+    if sap_obj is None:
+      sap_obj = NodeSAP(id=id, name=name, binding=binding, sap=sap,
+                        technology=technology, delay=delay, bandwidth=bandwidth,
+                        cost=cost, controller=controller,
+                        orchestrator=orchestrator, l2=l2, l4=l4,
+                        metadata=metadata)
+    self.add_node(sap_obj)
+    return sap_obj
 
   def add_infra (self, infra=None, id=None, name=None, domain=None,
                  infra_type=None, cpu=None, mem=None, storage=None, delay=None,
@@ -1262,7 +1285,7 @@ class NFFGToolBox(object):
                                  bandwidth=b_links[0].bandwidth)
       else:
         # Normal SAP --> copy SAP
-        c_sap = base.add_sap(sap=deepcopy(nffg.network.node[sap_id]))
+        c_sap = base.add_sap(sap_obj=deepcopy(nffg.network.node[sap_id]))
         log.debug("Copy SAP: %s" % c_sap)
     # Copy remaining links which should be valid
     for u, v, link in nffg.network.edges_iter(data=True):
@@ -1491,7 +1514,6 @@ class NFFGToolBox(object):
                 tag_id = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
                 # tag_exact = tag
 
-
           # collect outbound flowrules toward SAP ports
           else:
             pass
@@ -1684,7 +1706,7 @@ class NFFGToolBox(object):
         log.debug("Added connection: %s" % link2)
     # Add existing SAPs and their connections to the SingleBiSBiS infra
     for sap in nffg.saps:
-      c_sap = sbb.add_sap(sap=sap.copy())
+      c_sap = sbb.add_sap(sap_obj=sap.copy())
       log.debug("Added SAP: %s" % c_sap)
       # Discover and add SAP connections
       for u, v, l in nffg.real_out_edges_iter(sap.id):
@@ -1994,7 +2016,6 @@ class NFFGToolBox(object):
     :return:
     """
     edge_list = []
-    bandwidth = None
     tag_list = TAG.split("|")
     vnf1 = tag_list[0]
     vnf2 = tag_list[1]
@@ -2262,7 +2283,6 @@ class NFFGToolBox(object):
               # we know here: action != TAG and  "TAG=" not in fr.match
               # All required SGHop info can be gathered at once from this
               # flowrule. It is either a SAP-SAP flowrule or a collocated.
-              from_sap = False
               flowclass = NFFGToolBox.extract_flowclass(matches)
               sg_map_value = [None, None, flowclass, fr.bandwidth, fr.delay]
               for link in nffg.links:
@@ -2315,10 +2335,11 @@ def generate_test_NFFG ():
   nffg.add_metadata(name="test_metadata1", value="abc")
   nffg.add_metadata(name="test_metadata2", value="123")
 
-  sap = nffg.add_sap(id="sap1", name="SAP_node1", domain="eth1")
+  sap = nffg.add_sap(id="sap1", name="SAP_node1", binding="eth1")
   p_sap = sap.add_port(id=1, properties={"property1": "123"})
   sap.add_metadata(name="sap_meta", value="123")
 
+  sap.sap = "SAP14"
   sap.technology = "sap_tech"
   sap.delay = 2
   sap.bandwidth = 3
