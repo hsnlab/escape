@@ -578,7 +578,7 @@ class ESCAPENetworkBuilder(object):
               "process in %s!" % (
                 infra.infra_type, infra, self.__class__.__name__), logger=log)
     # Create SAPs - skip the temporary, inter-domain SAPs
-    for sap in {s for s in nffg.saps if not s.domain}:
+    for sap in {s for s in nffg.saps if not s.binding}:
       # Create SAP
       sap_host = self.create_SAP(name=sap.id)
       created_mn_nodes[sap.id] = sap_host
@@ -589,9 +589,9 @@ class ESCAPENetworkBuilder(object):
     for edge in [l for l in nffg.links]:
       # Skip initiation of links which connected to an inter-domain SAP
       if (edge.src.node.type == NFFG.TYPE_SAP and
-              edge.src.node.domain is not None) or (
+              edge.src.node.binding is not None) or (
              edge.dst.node.type == NFFG.TYPE_SAP and
-             edge.dst.node.domain is not None):
+             edge.dst.node.binding is not None):
         continue
       # Create Links
       mn_src_node = created_mn_nodes.get(edge.src.node.id)
@@ -621,7 +621,7 @@ class ESCAPENetworkBuilder(object):
     #  "ports": [{ "id": 1,
     #              "property": ["ip:10.0.10.1/24"] }]
     #
-    for n in {s for s in nffg.saps if not s.domain}:
+    for n in {s for s in nffg.saps if not s.binding}:
       mn_node = self.mn.getNodeByName(n.id)
       for port in n.ports:
         # ip should be something like '10.0.123.1/24'.
@@ -910,7 +910,7 @@ class ESCAPENetworkBuilder(object):
     """
     log.debug("Search for inter-domain SAPs...")
     # Create the inter-domain SAP ports
-    for sap in {s for s in nffg.saps if s.domain is not None}:
+    for sap in {s for s in nffg.saps if s.binding is not None}:
       # NFFG is the raw NFFG without link duplication --> iterate over every
       # edges in or out there should be only one link in this case
       # e = (u, v, data)

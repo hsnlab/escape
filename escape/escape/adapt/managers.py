@@ -151,7 +151,7 @@ class InternalDomainManager(AbstractDomainManager):
                 "Skip SAP data discovery.")
     for sap in topo.saps:
       # skip inter-domain SAPs
-      if sap.domain is not None:
+      if sap.binding is not None:
         continue
       connected_node = [(v, link.dst.id) for u, v, link in
                         topo.real_out_edges_iter(sap.id)]
