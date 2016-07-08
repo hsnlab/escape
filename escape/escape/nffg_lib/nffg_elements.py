@@ -1171,7 +1171,7 @@ class NodeSAP(Node):
 
   def load (self, data, *args, **kwargs):
     super(NodeSAP, self).load(data=data)
-    self.binding = data.get('domain')
+    self.binding = data.get('binding')
     self.sap = data.get('sap')
     if 'sap_data' in data:
       self.technology = data['sap_data'].get('technology')

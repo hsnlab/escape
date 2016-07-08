@@ -927,23 +927,23 @@ class ESCAPENetworkBuilder(object):
         continue
       log.debug("Detected inter-domain SAP: %s connected to border Node: %s" %
                 (sap, border_node))
-      if sap.delay or sap.bandwidth:
-        log.debug("Detected resource values for inter-domain connection: "
-                  "delay: %s, bandwidth: %s" % (sap.delay, sap.bandwidth))
+      # if sap.delay or sap.bandwidth:
+      #   log.debug("Detected resource values for inter-domain connection: "
+      #             "delay: %s, bandwidth: %s" % (sap.delay, sap.bandwidth))
       sw_name = nffg.network.node[border_node].id
       for sw in self.mn.switches:
         # print sw.name
         if sw.name == sw_name:
-          if sap.domain not in get_ifaces():
+          if sap.binding not in get_ifaces():
             log.warning(
               "Physical interface: %s is not found! Skip binding..."
-              % sap.domain)
+              % sap.binding)
             continue
           log.debug("Add physical port as inter-domain SAP: %s -> %s" %
-                    (sap.domain, sap.id))
+                    (sap.binding, sap.id))
           # Add interface to border switch in Mininet
           # os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
-          sw.addIntf(intf=Intf(name=sap.domain, node=sw))
+          sw.addIntf(intf=Intf(name=sap.binding, node=sw))
 
   def create_Link (self, src, dst, src_port=None, dst_port=None, **params):
     """
