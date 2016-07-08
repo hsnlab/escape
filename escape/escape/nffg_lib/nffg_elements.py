@@ -14,7 +14,6 @@
 """
 Classes for handling the elements of the NF-FG data structure
 """
-import ast
 import json
 import uuid
 from collections import Iterable, OrderedDict
@@ -287,9 +286,9 @@ class Port(Element):
   # Port type
   TYPE = "PORT"
 
-  def __init__ (self, node, id=None, properties=None, sap=None, capability=None,
-                technology=None, delay=None, bandwidth=None, cost=None,
-                controller=None, orchestrator=None, l2=None, l4=None,
+  def __init__ (self, node, id=None, name=None, properties=None, sap=None,
+                capability=None, technology=None, delay=None, bandwidth=None,
+                cost=None, controller=None, orchestrator=None, l2=None, l4=None,
                 metadata=None):
     """
     Init.
@@ -333,6 +332,7 @@ class Port(Element):
     self.properties = OrderedDict(properties if properties else {})
     self.metadata = OrderedDict(metadata if metadata else ())
     # Virtualizer-related data
+    self.name = name
     self.sap = sap
     self.capability = capability
     # sap_data
@@ -464,6 +464,8 @@ class Port(Element):
     port = super(Port, self).persist()
     if self.properties:
       port["property"] = self.properties.copy()
+    if self.name is not None:
+      port['name'] = self.name
     if self.sap is not None:
       port['sap'] = self.sap
     if self.capability is not None:
@@ -504,6 +506,7 @@ class Port(Element):
     super(Port, self).load(data=data)
     self.properties = OrderedDict(data.get('property', ()))
     self.sap = data.get('sap')
+    self.name = data.get('name')
     self.capability = data.get('capability')
     if 'sap_data' in data:
       self.technology = data['sap_data'].get('technology', [])
