@@ -484,11 +484,7 @@ class NFFG(AbstractNFFG):
     :rtype: :any:`NodeSAP`
     """
     if sap_obj is None:
-      sap_obj = NodeSAP(id=id, name=name, binding=binding, sap=sap,
-                        technology=technology, delay=delay, bandwidth=bandwidth,
-                        cost=cost, controller=controller,
-                        orchestrator=orchestrator, l2=l2, l4=l4,
-                        metadata=metadata)
+      sap_obj = NodeSAP(id=id, name=name, binding=binding, metadata=metadata)
     self.add_node(sap_obj)
     return sap_obj
 
@@ -2339,17 +2335,17 @@ def generate_test_NFFG ():
   p_sap = sap.add_port(id=1, properties={"property1": "123"})
   sap.add_metadata(name="sap_meta", value="123")
 
-  sap.sap = "SAP14"
-  sap.technology = "sap_tech"
-  sap.delay = 2
-  sap.bandwidth = 3
-  sap.cost = 4
-  sap.controller = "sap_c"
-  sap.orchestrator = "sap_o"
-  sap.l2 = "l2"
-  sap.l4 = "l4"
-  sap.l3.add_l3address(id='l3_id', name="L3", configure="True", client="10",
-                       requested="R", provided="P")
+  p_sap.sap = "SAP14"
+  p_sap.technology = "sap_tech"
+  p_sap.delay = 2
+  p_sap.bandwidth = 3
+  p_sap.cost = 4
+  p_sap.controller = "sap_c"
+  p_sap.orchestrator = "sap_o"
+  p_sap.l2 = "l2"
+  p_sap.l4 = "l4"
+  p_sap.l3.add_l3address(id='l3_id', name="L3", configure=True, client="10",
+                         requested="R", provided="P")
 
   nf = nffg.add_nf(id="nf1", name="NF1", func_type="nf1", dep_type="xxx", cpu=1,
                    mem=2, storage=3, delay=4, bandwidth=5)
