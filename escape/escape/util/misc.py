@@ -400,3 +400,15 @@ def unicode_to_str (raw):
     return raw.encode('utf-8').replace(' ', '_')
   else:
     return raw
+
+
+def remove_units (raw):
+  """
+  Remove units from resource values.
+
+  :param raw: raw resource value
+  :type raw: str
+  :return: resource value
+  :rtype : int
+  """
+  return filter(lambda x: x.isdigit(), raw)
