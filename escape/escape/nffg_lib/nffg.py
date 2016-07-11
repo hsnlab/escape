@@ -2336,6 +2336,8 @@ def generate_test_NFFG ():
   sap.add_metadata(name="sap_meta", value="123")
 
   p_sap.sap = "SAP14"
+  p_sap.name = "portname_SAP14"
+  p_sap.capability = "cap1"
   p_sap.technology = "sap_tech"
   p_sap.delay = 2
   p_sap.bandwidth = 3
@@ -2346,6 +2348,7 @@ def generate_test_NFFG ():
   p_sap.l4 = "l4"
   p_sap.l3.add_l3address(id='l3_id', name="L3", configure=True, client="10",
                          requested="R", provided="P")
+  p_sap.add_metadata("meta1", "metavalue")
 
   nf = nffg.add_nf(id="nf1", name="NF1", func_type="nf1", dep_type="xxx", cpu=1,
                    mem=2, storage=3, delay=4, bandwidth=5)

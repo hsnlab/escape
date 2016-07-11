@@ -474,7 +474,7 @@ class Port(Element):
            (True if self.technology else None, self.delay, self.bandwidth,
             self.cost)):
       port['sap_data'] = {}
-      if len(self.technology):
+      if self.technology is not None:
         port['sap_data']['technology'] = self.technology
       if any(v is not None for v in (self.delay, self.bandwidth, self.cost)):
         port['sap_data']['resources'] = {}
@@ -509,7 +509,7 @@ class Port(Element):
     self.name = data.get('name')
     self.capability = data.get('capability')
     if 'sap_data' in data:
-      self.technology = data['sap_data'].get('technology', [])
+      self.technology = data['sap_data'].get('technology')
       if 'resources' in data['sap_data']:
         self.delay = data['sap_data']['resources'].get('delay')
         self.bandwidth = data['sap_data']['resources'].get('bandwidth')
