@@ -330,7 +330,7 @@ class Port(Element):
     self.__node = node
     # Set properties list according to given param type
     self.properties = OrderedDict(properties if properties else {})
-    self.metadata = OrderedDict(metadata if metadata else ())
+    self.metadata = OrderedDict(metadata if metadata else {})
     # Virtualizer-related data
     self.name = name
     self.sap = sap
@@ -638,7 +638,7 @@ class Node(Element):
     super(Node, self).__init__(id=id, type=type)
     self.name = name if name is not None else str(id)  # optional
     self.ports = PortContainer()  # list of Ports
-    self.metadata = OrderedDict(metadata if metadata else ())
+    self.metadata = OrderedDict(metadata if metadata else {})
 
   @property
   def short_name (self):
