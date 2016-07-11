@@ -310,7 +310,9 @@ class MappingManager(object):
     if len(chainids) == 0:
       self.chain_subchain.add_edge(self.max_input_chainid, subcid)
     for cid in chainids:
-      if cid > self.max_input_chainid:
+      # the common chain ID for all best-effort subchains 
+      # (self.max_input_chainid) shouldn't be in chainids in any case!
+      if cid >= self.max_input_chainid:
         raise uet.InternalAlgorithmException(
           "Invalid chain identifier given to MappingManager!")
       else:
@@ -374,6 +376,15 @@ class MappingManager(object):
                          " chain end %s because of E2E latency requirement."%
                          (potential_host, chainend))
           return False
+      elif c == self.max_input_chainid:
+        if len(self.chain_subchain.neighbors(subcid)) != 1:
+          raise uet.InternalAlgorithmException("If a subchain is already "
+                "connected to the common best-effort chain, then it shouldn't "
+                                               "have other neighbors!")
+        return True
+      else:
+        raise uet.InternalAlgorithmException("Invalid connection in Chain-"
+                                             "Subchain graph!")
     return True
 
 
@@ -594,18 +605,38 @@ class MappingManager(object):
     strictest_cid = min(self.chain_subchain[cid].keys(), 
                         key=lambda sc, graph=self.chain_subchain: \
                         graph.node[sc]['avail_latency'])
-    end_sap = self.chain_subchain.node[strictest_cid]['chain'][-1]
+    end_sap = None
+    if strictest_cid == self.max_input_chainid:
+      # If this is a best-effort link, we have to inspect latency until the 
+      # subchain's end.
+      end_of_besteffort_subc = self.chain_subchain.node[cid]['subchain'][-1][1]
+      # This VNF should always be mapped due to Best-effort subchain retrieval
+      # This is already checked by the best-effort subchain finding procedure.
+      if self.getIdOfChainEnd_fromNetwork(end_of_besteffort_subc) == -1:
+        raise uet.InternalAlgorithmException("Last VNF of best-effort subchain "
+                  "should already be mapped temporarily!")
+      else:
+        end_sap = end_of_besteffort_subc
+    else:
+      end_sap = self.chain_subchain.node[strictest_cid]['chain'][-1]
     chainend = self.getIdOfChainEnd_fromNetwork(end_sap)
     paths, _ = shortestPathsBasedOnEdgeWeight(subg, node_id, 
                                                     weight='delay', 
                                                     target=chainend)
     sh_path = paths[chainend]
     sh_path_lat = self.shortest_paths_lengths[node_id][chainend]
-    chain_link_ids = self.chain_subchain.node[strictest_cid]['link_ids']
+    chain_link_ids = None
+    if strictest_cid == self.max_input_chainid:
+      chain_link_ids = list(zip(*self.chain_subchain.node[cid]['subchain'])[2])
+    else:
+      chain_link_ids = self.chain_subchain.node[strictest_cid]['link_ids']
     remaining_chain_len = len(chain_link_ids[chain_link_ids.index(reqlid):])
     if remaining_chain_len == 1:
       raise uet.InternalAlgorithmException("Sorting based on latency preference"
                 " value shouldn't be called when only one request link is left!")
+    # If the current cid is a best-effort subchain, lal will be around the 
+    # self.overall_highest_delay (maybe decremented a bit already) -> which 
+    # means almost surely only one distance layer in the structure.
     lal = self.getLocalAllowedLatency(cid)
     dist_layer_step = float(lal) / \
                       remaining_chain_len

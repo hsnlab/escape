@@ -1044,12 +1044,22 @@ class CoreAlgorithm(object):
     # breaking when there are no more BacktrackLevels forward, meaning the 
     # mapping is full. Or exception is thrown, when mapping can't be finished.
     self.log.info("Starting core mapping procedure...")
+    c = None
+    curr_vnf = None
+    next_vnf = None
+    linkid = None
     while True:
       # Mapping must be started with subchains derived from e2e chains,
-      # with lower latency requirement. It is realiyed by the preprocessor,
+      # with lower latency requirement. It is realized by the preprocessor,
       # because it adds the subchains in the appropriate order.
-      # ANF moveOneSubchainLevelForward() respects this order.
-      tmp = self.bt_handler.moveOneBacktrackLevelForward()
+      # AND moveOneSubchainLevelForward() respects this order.
+      ready_for_next_subchain = False
+      if c is not None:
+        ready_for_next_subchain = (curr_vnf == c['chain'][-2] and \
+                                   next_vnf == c['chain'][-1]) and \
+                                  (curr_vnf, next_vnf, linkid) in \
+                                  self.manager.link_mapping.edges(keys=True)
+      tmp = self.bt_handler.moveOneBacktrackLevelForward(ready_for_next_subchain)
       if tmp is None:
         break
       else:

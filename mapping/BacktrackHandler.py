@@ -54,16 +54,14 @@ class BacktrackHandler(object):
     # the number of subchain which made us fail (induced the deepest backtrack)
     self.failer_subchain_count = 1
 
-  def moveOneBacktrackLevelForward(self):
+  def moveOneBacktrackLevelForward(self, ready_for_next_subchain):
     """
     Handles the back or forward stepping on subchains and their VNFs.
     """
     if self.current_subchain_level < len(self.subchains_with_subgraphs):
-      subchain = self.subchains_with_subgraphs[self.current_subchain_level][0]
       """
       MAYBE this checking is not necessary anymore since we correctly handle the
       LinkMappingRecords during backtracking
-      """
       if len(self.currently_mapped) > 0:
         tmp_mapping_rec = self.currently_mapped.pop()
         self.currently_mapped.append(tmp_mapping_rec)
@@ -77,8 +75,10 @@ class BacktrackHandler(object):
           # but the backtrack procedure would continue on next chain (can happen
           # when we step back on the last link of a subchain)
           self.vnf_index_in_subchain -= 1
-      if self.vnf_index_in_subchain < len(subchain['chain']) - 1:
+      """
+      if not ready_for_next_subchain:
         subgraph = self.subchains_with_subgraphs[self.current_subchain_level][1]
+        subchain = self.subchains_with_subgraphs[self.current_subchain_level][0]
       else: 
         self.current_subchain_level += 1
         self.vnf_index_in_subchain = 0
