@@ -653,7 +653,10 @@ class Node(Element):
     """
     return self.ports.flowrules
 
-  def add_port (self, id=None, properties=None):
+  def add_port (self, id=None, name=None, properties=None, sap=None,
+                capability=None, technology=None, delay=None, bandwidth=None,
+                cost=None, controller=None, orchestrator=None, l2=None, l4=None,
+                metadata=None):
     """
     Add a port with the given params to the :any:`Node`.
 
@@ -664,7 +667,10 @@ class Node(Element):
     :return: newly created and stored Port object
     :rtype: :any:`Port`
     """
-    port = Port(node=self, properties=properties, id=id)
+    port = Port(node=self, id=id, name=name, properties=properties, sap=sap,
+                capability=capability, technology=technology, delay=delay,
+                bandwidth=bandwidth, cost=cost, controller=controller,
+                orchestrator=orchestrator, l2=l2, l4=l4, metadata=metadata)
     self.ports.append(port)
     return port
 
