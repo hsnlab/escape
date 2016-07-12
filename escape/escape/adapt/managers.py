@@ -659,7 +659,7 @@ class InternalDomainManager(AbstractDomainManager):
     log.debug("Flowrule deploy result: %s" %
               ("SUCCESS" if result else "FAILURE"))
     log.log(VERBOSE,
-            "Registered VLAN IDs:\n%s" % pprint.pformat(self.vlan_register))
+            "Registered VLAN IDs: %s" % pprint.pformat(self.vlan_register))
     return result
 
   def __process_tag (self, abstract_id):

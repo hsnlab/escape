@@ -470,9 +470,8 @@ class Port(Element):
       port['sap'] = self.sap
     if self.capability is not None:
       port['capability'] = self.capability
-    if any(v is not None for v in
-           (True if self.technology else None, self.delay, self.bandwidth,
-            self.cost)):
+    if any(v is not None for v in (self.technology, self.delay, self.bandwidth,
+                                   self.cost)):
       port['sap_data'] = {}
       if self.technology is not None:
         port['sap_data']['technology'] = self.technology
@@ -490,7 +489,8 @@ class Port(Element):
         port['control']['controller'] = self.controller
       if self.orchestrator is not None:
         port['control']['orchestrator'] = self.orchestrator
-    if any(v is not None for v in (self.l2, self.l4, self.l3)):
+    if any(
+          v is not None for v in (self.l2, self.l4, True if self.l3 else None)):
       port['addresses'] = {}
       if self.l2 is not None:
         port['addresses']['l2'] = self.l2
