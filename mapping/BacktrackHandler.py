@@ -216,6 +216,7 @@ class BacktrackHandler(object):
     try:
       tmp_subchain_level, possible_hosts_of_a_vnf = record
       self.checkSubchainLevelStep(tmp_subchain_level)
+      self.vnf_index_in_subchain -= 1
       bt_record = possible_hosts_of_a_vnf.pop()
       self.log.debug("Stepping back on VNF %s of subchain level %s"%
                      (bt_record['vnf_id'], tmp_subchain_level))
@@ -227,5 +228,4 @@ class BacktrackHandler(object):
 
     except IndexError:
       self.bt_struct.pop() # remove empty deque of possible mappings ('record')
-      self.vnf_index_in_subchain -= 1
       return self.getNextBacktrackRecordAndSubchainSubgraph(link_bt_rec_list)
