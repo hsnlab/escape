@@ -490,7 +490,7 @@ class Port(Element):
         port['control']['controller'] = self.controller
       if self.orchestrator is not None:
         port['control']['orchestrator'] = self.orchestrator
-    if any(v is not None for v in (self.l2, self.l4)):
+    if any(v is not None for v in (self.l2, self.l4, self.l3)):
       port['addresses'] = {}
       if self.l2 is not None:
         port['addresses']['l2'] = self.l2
