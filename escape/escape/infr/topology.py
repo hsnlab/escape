@@ -625,8 +625,21 @@ class ESCAPENetworkBuilder(object):
       mn_node = self.mn.getNodeByName(n.id)
       for port in n.ports:
         # ip should be something like '10.0.123.1/24'.
-        ip = port.get_property('ip')
-        mac = port.get_property('mac')
+        if len(port.l3):
+          if len(port.l3) == 1:
+            ip = port.l3.container[0].provided
+          else:
+            log.warning(
+              "Multiple L3 address is detected! Skip explicit IP address "
+              "definition...")
+            ip = None
+        else:
+          # or None
+          ip = port.get_property('ip')
+        if port.l2:
+          mac = port.l2
+        else:
+          mac = port.get_property('mac')
         intf = mn_node.intfs.get(port.id)
         if intf is None:
           log.warn(("Port %s of node %s is not connected,"
@@ -638,8 +651,10 @@ class ESCAPENetworkBuilder(object):
           mn_node.params.update({'mac': mac})
         if ip is not None:
           mn_node.setIP(ip, intf=intf)
+          log.debug("Use explicit IP: %s for node: %s" % (ip, n))
         if mac is not None:
           mn_node.setMAC(mac, intf=intf)
+          log.debug("Use explicit MAC: %s for node: %s" % (mac, n))
 
     # For inter-domain SAPs no need to create host/xterm just add the SAP as
     # a port to the border Node
