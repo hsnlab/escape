@@ -1,0 +1,248 @@
+{
+  "parameters": {
+    "id": "verification-2sap-web-fw-dpi-nat",
+    "name": "verification-2sap-web-fw-dpi-nat",
+    "version": "1.0"
+  },
+  "node_nfs": [
+    {
+      "id": "fw",
+      "name": "FIREWALL",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        }
+      ],
+      "functional_type": "firewall",
+      "specification": {
+        "resources": {
+          "cpu": 1,
+          "mem": 1,
+          "storage": 0
+        }
+      }
+    },
+    {
+      "id": "webserver1",
+      "name": "webserver1",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "functional_type": "webserver",
+      "specification": {
+        "resources": {
+          "cpu": 1,
+          "mem": 1,
+          "storage": 0
+        }
+      }
+    },
+    {
+      "id": "dpi",
+      "name": "DPI",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        }
+      ],
+      "functional_type": "dpi",
+      "specification": {
+        "resources": {
+          "cpu": 1,
+          "mem": 1,
+          "storage": 0
+        }
+      }
+    },
+    {
+      "id": "nat",
+      "name": "NAT",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        }
+      ],
+      "functional_type": "nat",
+      "specification": {
+        "resources": {
+          "cpu": 1,
+          "mem": 1,
+          "storage": 0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "sap1",
+      "name": "SAP1",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    {
+      "id": "sap2",
+      "name": "SAP2",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    {
+      "id": "sap3",
+      "name": "SAP3",
+      "ports": [
+        {
+          "id": 1
+        }
+      ]
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": 11,
+      "src_node": "sap1",
+      "src_port": 1,
+      "dst_node": "nat",
+      "dst_port": 1
+    },
+    {
+      "id": 12,
+      "src_node": "nat",
+      "src_port": 2,
+      "dst_node": "fw",
+      "dst_port": 2
+    },
+    {
+      "id": 13,
+      "src_node": "fw",
+      "src_port": 1,
+      "dst_node": "webserver1",
+      "dst_port": 1
+    },
+    {
+      "id": 14,
+      "src_node": "webserver1",
+      "src_port": 1,
+      "dst_node": "fw",
+      "dst_port": 1,
+      "flowclass": "dl_type=0x0800,nw_dst=20.0.0.1"
+    },
+    {
+      "id": 15,
+      "src_node": "fw",
+      "src_port": 2,
+      "dst_node": "nat",
+      "dst_port": 2
+    },
+    {
+      "id": 16,
+      "src_node": "nat",
+      "src_port": 1,
+      "dst_node": "sap1",
+      "dst_port": 1,
+      "flowclass": "dl_type=0x0800,nw_dst=10.0.0.1"
+    },
+    {
+      "id": 21,
+      "src_node": "sap2",
+      "src_port": 1,
+      "dst_node": "nat",
+      "dst_port": 1
+    },
+    {
+      "id": 26,
+      "src_node": "nat",
+      "src_port": 1,
+      "dst_node": "dpi",
+      "dst_port": 1,
+      "flowclass": "dl_type=0x0800,nw_dst=10.0.0.2"
+    },
+    {
+      "id": 27,
+      "src_node": "dpi",
+      "src_port": 2,
+      "dst_node": "sap2",
+      "dst_port": 1
+    },
+    {
+      "id": 31,
+      "src_node": "sap3",
+      "src_port": 1,
+      "dst_node": "webserver1",
+      "dst_port": 1
+    },
+    {
+      "id": 32,
+      "src_node": "webserver1",
+      "src_port": 1,
+      "dst_node": "sap3",
+      "dst_port": 1,
+      "flowclass": "dl_type=0x0800,nw_dst=20.0.0.3"
+    }
+  ],
+  "edge_reqs": [
+    {
+      "id": "9a6a39ce-1c2b-11e6-8873-080027f22527",
+      "src_node": "sap1",
+      "src_port": 1,
+      "dst_node": "sap1",
+      "dst_port": 1,
+      "delay": 100,
+      "bandwidth": 1,
+      "sg_path": [
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ]
+    },
+    {
+      "id": "9a6a39ce-1c2b-11e6-8873-080027f22528",
+      "src_node": "sap2",
+      "src_port": 1,
+      "dst_node": "sap2",
+      "dst_port": 1,
+      "delay": 100,
+      "bandwidth": 1,
+      "sg_path": [
+        21,
+        12,
+        13,
+        14,
+        15,
+        26,
+        27
+      ]
+    },
+    {
+      "id": "9a6a39ce-1c2b-11e6-8873-080027f22529",
+      "src_node": "sap3",
+      "src_port": 1,
+      "dst_node": "sap3",
+      "dst_port": 1,
+      "delay": 100,
+      "bandwidth": 1,
+      "sg_path": [
+        31,
+        32
+      ]
+    }
+  ]
+}

@@ -66,10 +66,10 @@ function install_core {
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
     sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list"
 
+    sudo apt-get -y install software-properties-common
     if [[ ! $(sudo apt-cache search openjdk-${JAVA_VERSION}-jdk) ]]
     then
         info "=== Add OpenJDK repository and install Java $JAVA_VERSION ==="
-        sudo apt-get -y install software-properties-common
         sudo add-apt-repository -y ppa:openjdk-r/ppa
     fi
 
