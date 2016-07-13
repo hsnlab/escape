@@ -296,7 +296,7 @@ class NFFGConverter(object):
         self.log.debug("Created SAP node: %s" % sap)
         # SAP.name will be the same as the SAP.id or generate one for backup
         if vport.name.is_initialized() and \
-           not vport.name.get_as_text().startswidth(self.SAP_NAME_PREFIX):
+           not vport.name.get_as_text().startswith(self.SAP_NAME_PREFIX):
           sap.name = vport.name.get_value()  # Optional - port.name
 
         sap_port = sap.add_port(id=sap_port_id)
