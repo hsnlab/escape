@@ -1846,17 +1846,21 @@ class NFFGToolBox(object):
       # Skip nodes from other domains
       if infra.domain != domain:
         continue
-        # Iterate over out edges from the current BB node
+      # Iterate over out edges from the current BB node
       for infra_id, node_id, link in base.real_out_edges_iter(infra.id):
         # Mark connected NF for deletion
         if base[node_id].type in (NFFG.TYPE_NF,):
           deletable_nfs.add(node_id)
         # Mark related dynamic port for deletion
         deletable_ports.add(link.src)
-      log.debug("Initiated NFs marked for deletion: %s" % deletable_nfs)
+      if deletable_nfs:
+        log.debug("Initiated NFs marked for deletion: %s on node: %s" %
+                  (deletable_nfs, infra.id))
       # Remove NFs
       base.network.remove_nodes_from(deletable_nfs)
-      log.debug("Dynamic ports marked for deletion: %s" % deletable_ports)
+      if deletable_ports:
+        log.debug("Dynamic ports marked for deletion: %s on node: %s" %
+                  (deletable_ports, infra.id))
       # Remove dynamic ports
       for p in deletable_ports:
         base[infra.id].ports.remove(p)
