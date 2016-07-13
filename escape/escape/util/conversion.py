@@ -62,6 +62,8 @@ class NFFGConverter(object):
   GENERAL_OPERATIONS = (OP_INPORT, OP_OUTPUT, OP_TAG, OP_UNTAG, OP_FLOWCLASS)
   # Specific tags
   TAG_SG_HOP = "sg_hop"
+  # SAP id storing prefix
+  SAP_NAME_PREFIX = 'SAP:'
   # Operation formats in Virtualizer
   MATCH_TAG = r"dl_tag"
   ACTION_PUSH_TAG = r"push_tag"
@@ -276,8 +278,8 @@ class NFFGConverter(object):
           # Use port name as the SAP.id if it is set else generate one
           # SAP.id <--> virtualizer.node.port.name
           if vport.name.is_initialized():
-            if str(vport.name.get_value()).startswith("SAP:"):
-              sap_id = vport.name.get_as_text()[len("SAP:"):]
+            if str(vport.name.get_value()).startswith(self.SAP_NAME_PREFIX):
+              sap_id = vport.name.get_as_text()[len(self.SAP_NAME_PREFIX):]
           else:
             # Backup SAP id generation
             # sap_id = "SAP%s" % len([s for s in nffg.saps])
@@ -289,15 +291,13 @@ class NFFGConverter(object):
           sap_port_id = int(vport.id.get_value())  # Mandatory port.id
         except ValueError:
           sap_port_id = vport.id.get_value()
-        # SAP.name will be the same as the SAP.id or generate one for backup
-        if vport.name.is_initialized() and vport.name.get_value():
-          sap_name = vport.name.get_value()  # Optional - port.name
-        else:
-          sap_name = "name-%s" % sap_id
         # Create SAP and Add port to SAP
-        sap = nffg.add_sap(id=sap_id, name=sap_name)
-
+        sap = nffg.add_sap(id=sap_id)
         self.log.debug("Created SAP node: %s" % sap)
+        # SAP.name will be the same as the SAP.id or generate one for backup
+        if vport.name.is_initialized() and \
+           not vport.name.get_as_text().startswidth(self.SAP_NAME_PREFIX):
+          sap.name = vport.name.get_value()  # Optional - port.name
 
         sap_port = sap.add_port(id=sap_port_id)
         # Add port properties as metadata to SAP port
