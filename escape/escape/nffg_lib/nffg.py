@@ -843,7 +843,7 @@ class NFFG(AbstractNFFG):
 
     :param node: examined :any:`Node` id
     :type node: str or int
-    :return: iterator over the filtered neighbors
+    :return: iterator over the filtered neighbors (u,v,d)
     :rtype: iterator
     """
     return (data for data in self.network.out_edges_iter(node, data=True)
@@ -1819,6 +1819,51 @@ class NFFGToolBox(object):
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return sbb
+
+  @classmethod
+  def clear_domain (cls, base, domain, log=logging.getLogger("CLEAN")):
+    """
+    Clean domain by removing initiated NFs and flowrules related to BiSBiS
+    nodes of the given domain
+
+    :param base: base NFFG object
+    :type base: :any:`NFFG`
+    :param domain: domain name
+    :type domain: str
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    base_domain = cls.detect_domains(nffg=base)
+    if domain not in base_domain:
+      log.warning("No node was found in %s with domain: %s for cleanup! "
+                  "Leave NFFG unchanged..." % (base, domain))
+      return base
+    deletable_ports = set()
+    deletable_nfs = set()
+    for infra in base.infras:
+      # Skip nodes from other domains
+      if infra.domain != domain:
+        continue
+        # Iterate over out edges from the current BB node
+      for infra_id, node_id, link in base.real_out_edges_iter(infra.id):
+        # Mark connected NF for deletion
+        if base[node_id].type in (NFFG.TYPE_NF,):
+          deletable_nfs.add(node_id)
+        # Mark related dynamic port for deletion
+        deletable_ports.add(link.src)
+      log.debug("Initiated NFs marked for deletion: %s" % deletable_nfs)
+      # Remove NFs
+      base.network.remove_nodes_from(deletable_nfs)
+      log.debug("Dynamic ports marked for deletion: %s" % deletable_ports)
+      # Remove dynamic ports
+      for p in deletable_ports:
+        base[infra.id].ports.remove(p)
+      # Delete flowrules from ports
+      for port in base[infra.id].ports:
+        port.clear_flowrules()
+    return base
 
   @classmethod
   def remove_domain (cls, base, domain, log=logging.getLogger("REMOVE")):
