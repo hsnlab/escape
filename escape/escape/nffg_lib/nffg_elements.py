@@ -589,7 +589,10 @@ class PortContainer(Persistable):
     return item
 
   def remove (self, item):
-    return self.container.remove(item)
+    try:
+      return self.container.remove(item)
+    except ValueError:
+      return
 
   def clear (self):
     del self.container[:]
@@ -1113,6 +1116,14 @@ class InfraPort(Port):
         self.flowrules.remove(f)
         ret = True
       return ret
+
+  def clear_flowrules (self):
+    """
+    Delete all the flowrules from the port.
+
+    :return: None
+    """
+    del self.flowrules[:]
 
   def persist (self):
     port = super(InfraPort, self).persist()

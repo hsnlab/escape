@@ -389,6 +389,28 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.REDUCE)
     return self.__global_nffg
 
+  def clean_domain_from_dov (self, domain):
+    """
+    Clean domain by removing initiated NFs and flowrules related to BiSBiS
+    nodes of the given domain
+
+    :param domain: domain name
+    :type domain: str
+    :return: updated Dov
+    :rtype: :any:`NFFG`
+    """
+    if self.__global_nffg.is_empty():
+      log.debug("DoV is empty! Skip cleanup domain: %s" % domain)
+      return self.__global_nffg
+    if self.__global_nffg.is_bare():
+      log.debug("No initiated service has been detected in DoV! "
+                "Skip cleanup domain: %s" % domain)
+      return self.__global_nffg
+    NFFGToolBox.clear_domain(base=self.__global_nffg, domain=domain, log=log)
+    log.log(VERBOSE, "Cleaned Dov:\n%s" % self.__global_nffg.dump())
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
+    return self.__global_nffg
+
 
 class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
   """

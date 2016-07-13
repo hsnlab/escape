@@ -80,9 +80,10 @@ class ServiceOrchestrator(AbstractOrchestrator):
         # deletion --> skip mapping to avoid BadInputException and forward
         # topo to adaptation layer
         if sg.is_bare():
-          log.warning("No VNF or Flowrule has been detected in SG request! "
-                      "Skip orchestration in layer: %s and proceed with the "
-                      "bare %s..." % (LAYER_NAME, sg))
+          log.warning("No valid service request (VNFs/Flowrules/SGhops) has "
+                      "been detected in SG request! Skip orchestration in "
+                      "layer: %s and proceed with the bare %s..." %
+                      (LAYER_NAME, sg))
           if sg.is_virtualized():
             if sg.is_SBB():
               log.debug("Request is a bare SingleBiSBiS representation!")
