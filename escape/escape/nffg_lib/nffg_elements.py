@@ -1114,6 +1114,14 @@ class InfraPort(Port):
         ret = True
       return ret
 
+  def clear_flowrules (self):
+    """
+    Delete all the flowrules from the port.
+
+    :return: None
+    """
+    del self.flowrules[:]
+
   def persist (self):
     port = super(InfraPort, self).persist()
     flowrules = [f.persist() for f in self.flowrules]
