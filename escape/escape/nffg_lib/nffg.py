@@ -1851,8 +1851,8 @@ class NFFGToolBox(object):
         # Mark connected NF for deletion
         if base[node_id].type in (NFFG.TYPE_NF,):
           deletable_nfs.add(node_id)
-        # Mark related dynamic port for deletion
-        deletable_ports.add(link.src)
+          # Mark related dynamic port for deletion
+          deletable_ports.add(link.src)
       if deletable_nfs:
         log.debug("Initiated NFs marked for deletion: %s on node: %s" %
                   (deletable_nfs, infra.id))
