@@ -462,23 +462,25 @@ class ControllerAdapter(object):
       # whole DoV
       if domain_mgr.IS_LOCAL_MANAGER:
         if mapped_nffg.is_SBB():
+          # If the request was a cleanup request, we can simply clean the DOV
           if mapped_nffg.is_bare():
             log.debug(
               "Detected cleanup topology (no NF/Flowrule/SG_hop)! Clean DoV...")
             self.DoVManager.clean_domain(domain=domain)
+          # If the reset contains some VNF, cannot clean or override
           else:
             log.warning(
               "Detected SingleBiSBiS topology! Local domain has been already "
               "cleared, skip DoV update...")
-            continue
+        # If the the topology was a GLOBAL view, just override the whole DoV
         elif not mapped_nffg.is_virtualized():
           self.DoVManager.set_global_view(nffg=mapped_nffg)
-          continue
         else:
           log.warning(
             "Detected virtualized Infrastructure node in mapped NFFG! Skip "
             "DoV update...")
-          continue
+        # In case of Local manager skip the rest of the update
+        continue
       # Explicit domain update
       self.DoVManager.update_domain(domain=domain, nffg=part)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
