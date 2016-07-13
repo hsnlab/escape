@@ -1731,28 +1731,28 @@ if __name__ == "__main__":
                     # ensure_unique_id=True,
                     logger=log)
 
-  with open(
+  # with open(
      # "../../../../examples/escape-mn-mapped-test.nffg") as f:
-     "../../../gui/escape-2sbb-mapped.nffg") as f:
+     # "../../../gui/escape-2sbb-mapped.nffg") as f:
     # "../../../examples/hwloc2nffg_IntelXeonE5-2620-rhea.nffg") as f:
-    nffg = NFFG.parse(raw_data=f.read())
+    # nffg = NFFG.parse(raw_data=f.read())
   # nffg.duplicate_static_links()
   # log.debug("Parsed NFFG:\n%s" % nffg.dump())
-  virt = c.dump_to_Virtualizer(nffg=nffg)
-  log.debug("Converted:")
-  log.debug(virt.xml())
-  log.debug("Reconvert to NFFG:")
-  nffg = c.parse_from_Virtualizer(vdata=virt.xml())
-  log.debug(nffg.dump())
+  # virt = c.dump_to_Virtualizer(nffg=nffg)
+  # log.debug("Converted:")
+  # log.debug(virt.xml())
+  # log.debug("Reconvert to NFFG:")
+  # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
+  # log.debug(nffg.dump())
 
-  # dov = virt_lib.Virtualizer.parse_from_file(
-  #   "../../../examples/hwloc2nffg_HPProBook450G2.xml")
+  dov = virt_lib.Virtualizer.parse_from_file(
+    "test2.xml")
   # dov.bind(relative=True)
-  # log.info("Parsed XML:")
-  # log.info("%s" % dov)
-  # nffg = c.parse_from_Virtualizer(vdata=dov.xml())
-  # log.info("Reconverted Virtualizer:")
-  # log.info("%s" % nffg.dump())
+  log.info("Parsed XML:")
+  log.info("%s" % dov.xml())
+  nffg = c.parse_from_Virtualizer(vdata=dov.xml())
+  log.info("Reconverted Virtualizer:")
+  log.info("%s" % nffg.dump())
   # virt = c.dump_to_Virtualizer(nffg=nffg)
   # # virt.bind()
   # log.info("Reconverted Virtualizer:")

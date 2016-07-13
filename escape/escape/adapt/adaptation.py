@@ -464,18 +464,21 @@ class ControllerAdapter(object):
         if mapped_nffg.is_SBB():
           if mapped_nffg.is_bare():
             log.debug(
-              "Detected cleanup topology (no NF/Flowrule)! Skip DoV update...")
+              "Detected cleanup topology (no NF/Flowrule/SG_hop)! Clean DoV...")
+            self.DoVManager.clean_domain(domain=domain)
           else:
             log.warning(
               "Detected SingleBiSBiS topology! Local domain has been already "
               "cleared, skip DoV update...")
+            continue
         elif not mapped_nffg.is_virtualized():
           self.DoVManager.set_global_view(nffg=mapped_nffg)
+          continue
         else:
           log.warning(
             "Detected virtualized Infrastructure node in mapped NFFG! Skip "
             "DoV update...")
-        continue
+          continue
       # Explicit domain update
       self.DoVManager.update_domain(domain=domain, nffg=part)
     log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
@@ -631,3 +634,20 @@ class GlobalResourceManager(object):
     else:
       log.warning("Removing domain: %s is not included in tracked domains: %s! "
                   "Skip removing..." % (domain, self.__tracked_domains))
+
+  def clean_domain (self, domain):
+    """
+    Clean given domain.
+
+    :param domain: domain name
+    :type domain: str
+    :return: None
+    """
+    if domain in self.__tracked_domains:
+      log.info(
+        "Remove initiated VNFs and flowrules from the domain: %s" % domain)
+      self.__dov.clean_domain_from_dov(domain=domain)
+    else:
+      log.error(
+        "Detected domain: %s is not included in tracked domains: %s! Abort "
+        "cleaning..." % (domain, self.__tracked_domains))
