@@ -281,6 +281,7 @@ class NFFGConverter(object):
           else:
             # Backup SAP id generation
             # sap_id = "SAP%s" % len([s for s in nffg.saps])
+            self.log.warning("No explicit SAP id was detected! Generating...")
             sap_id = "SAP_%s" % vport.id.get_value()
         try:
           # Use port id of the Infra node as the SAP port id
@@ -1264,17 +1265,19 @@ class NFFGConverter(object):
             v_sap_port.sap.set_value(sap_port.get_property('sap'))
           else:
             v_sap_port.sap.set_value(str(sap.id))
+        # Check if the SAP is a bound, inter-domain SAP (no sap and port
+        # property are set in this case)
+        elif sap.binding is not None:
+          v_sap_port.sap.set_value(s)
+          self.log.debug(
+            "Set port: %s in infra: %s as an inter-domain SAP with"
+            " 'sap' value: %s" % (link.dst.id, n,
+                                  v_sap_port.sap.get_value()))
         else:
           # If sap is not inter-domain SAP, use name field to store sap id and
           # set port-type to port-abstract
           v_sap_port.name.set_value("SAP:" + str(sap.id))
-        # Check if the SAP is a bound, inter-domain SAP (no sap and port
-        # property are set in this case)
-        if sap.binding is not None:
-          v_sap_port.sap.set_value(s)
-          self.log.debug("Set port: %s in infra: %s as an inter-domain SAP with"
-                         " 'sap' value: %s" % (link.dst.id, n,
-                                               v_sap_port.sap.get_value()))
+
         # Set sap.name if it has not used for storing SAP.id
         if sap_port.name is not None and not v_sap_port.name.get_value():
           v_sap_port.name.set_value(sap_port.name)
