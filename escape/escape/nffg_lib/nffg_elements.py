@@ -589,7 +589,10 @@ class PortContainer(Persistable):
     return item
 
   def remove (self, item):
-    return self.container.remove(item)
+    try:
+      return self.container.remove(item)
+    except ValueError:
+      return
 
   def clear (self):
     del self.container[:]

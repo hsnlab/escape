@@ -312,7 +312,8 @@ class NFFGConverter(object):
 
         # Fill SAP-specific data
         # Add port properties
-        if vport.name.is_initialized():
+        if vport.name.is_initialized() and \
+           not vport.name.get_as_text().startswith(self.SAP_NAME_PREFIX):
           sap_port.name = vport.name.get_value()
           # For backward compatibility
           # sap_port.add_property("name", vport.name.get_value())
@@ -368,7 +369,7 @@ class NFFGConverter(object):
         infra_port = infra.add_port(id=infra_port_id)
         # Add port properties as property to Infra port too
         if vport.name.is_initialized():
-          infra_port.add_property("name", vport.name.get_value())
+          # infra_port.add_property("name", vport.name.get_value())
           infra_port.name = vport.name.get_value()
         if vport.sap.is_initialized():
           infra_port.add_property("sap", vport.sap.get_value())
@@ -1628,9 +1629,8 @@ class NFFGConverter(object):
           virt_fe = virt_lib.Flowentry(id=fe_id, priority=fe_pri, port=in_port,
                                        match=match, action=action, out=out_port,
                                        resources=_resources, name=v_fe_name)
-          self.log.log(VERBOSE,
-                       "Generated Flowentry:\n%s" % v_node.flowtable.add(
-                         virt_fe))
+          self.log.log(VERBOSE, "Generated Flowentry:\n%s" %
+                       v_node.flowtable.add(virt_fe).xml())
 
   def dump_to_Virtualizer (self, nffg):
     """

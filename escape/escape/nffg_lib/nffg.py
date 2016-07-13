@@ -1840,9 +1840,9 @@ class NFFGToolBox(object):
       log.warning("No node was found in %s with domain: %s for cleanup! "
                   "Leave NFFG unchanged..." % (base, domain))
       return base
-    deletable_ports = set()
-    deletable_nfs = set()
     for infra in base.infras:
+      deletable_ports = set()
+      deletable_nfs = set()
       # Skip nodes from other domains
       if infra.domain != domain:
         continue
