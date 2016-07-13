@@ -275,8 +275,9 @@ class NFFGConverter(object):
           # port.id is mandatory now
           # Use port name as the SAP.id if it is set else generate one
           # SAP.id <--> virtualizer.node.port.name
-          if vport.name.is_initialized() and len(vport.name.get_value()) < 10:
-            sap_id = vport.name.get_value()
+          if vport.name.is_initialized():
+            if str(vport.name.get_value()).startswith("SAP:"):
+              sap_id = vport.name.get_as_text()[len("SAP:"):]
           else:
             # Backup SAP id generation
             # sap_id = "SAP%s" % len([s for s in nffg.saps])
@@ -1234,6 +1235,7 @@ class NFFGConverter(object):
       for s, n, link in nffg.network.edges_iter([sap.id], data=True):
         if link.type != NFFG.TYPE_LINK_STATIC:
           continue
+        sap_port = link.src
         # Rewrite port-type to port-sap
         if self.ensure_unique_id:
           infra_id = str(n).split(self.UNIQUE_ID_DELIMITER)[0]
@@ -1251,9 +1253,10 @@ class NFFGConverter(object):
         #   # SAP.id <--> virtualizer.node.port.name
         #   v_sap_name = str(sap.id)
         # v_sap_port.name.set_value(v_sap_name)
+
         # Check if the SAP is an inter-domain SAP
-        sap_port = link.src
         if sap_port.sap is not None:
+          # Set static 'sap' value
           v_sap_port.sap.set_value(sap_port.sap)
         elif sap_port.has_property("type") == "inter-domain":
           # If sap metadata is set by merge, use this value else the SAP.id
@@ -1261,6 +1264,10 @@ class NFFGConverter(object):
             v_sap_port.sap.set_value(sap_port.get_property('sap'))
           else:
             v_sap_port.sap.set_value(str(sap.id))
+        else:
+          # If sap is not inter-domain SAP, use name field to store sap id and
+          # set port-type to port-abstract
+          v_sap_port.name.set_value("SAP:" + str(sap.id))
         # Check if the SAP is a bound, inter-domain SAP (no sap and port
         # property are set in this case)
         if sap.binding is not None:
@@ -1268,11 +1275,9 @@ class NFFGConverter(object):
           self.log.debug("Set port: %s in infra: %s as an inter-domain SAP with"
                          " 'sap' value: %s" % (link.dst.id, n,
                                                v_sap_port.sap.get_value()))
-        # v_sap_port.name.set_value(sap_port.name)
-        if sap_port.name is not None:
+        # Set sap.name if it has not used for storing SAP.id
+        if sap_port.name is not None and not v_sap_port.name.get_value():
           v_sap_port.name.set_value(sap_port.name)
-        elif sap_port.has_property("name"):
-          v_sap_port.name.set_value(sap_port.get_property('name'))
         # Convert other SAP-port-specific data
         v_sap_port.capability.set_value(sap_port.capability)
         v_sap_port.sap_data.technology.set_value(sap_port.technology)
@@ -1732,10 +1737,10 @@ if __name__ == "__main__":
                     logger=log)
 
   # with open(
-     # "../../../../examples/escape-mn-mapped-test.nffg") as f:
-     # "../../../gui/escape-2sbb-mapped.nffg") as f:
-    # "../../../examples/hwloc2nffg_IntelXeonE5-2620-rhea.nffg") as f:
-    # nffg = NFFG.parse(raw_data=f.read())
+  # "../../../../examples/escape-mn-mapped-test.nffg") as f:
+  # "../../../gui/escape-2sbb-mapped.nffg") as f:
+  # "../../../examples/hwloc2nffg_IntelXeonE5-2620-rhea.nffg") as f:
+  # nffg = NFFG.parse(raw_data=f.read())
   # nffg.duplicate_static_links()
   # log.debug("Parsed NFFG:\n%s" % nffg.dump())
   # virt = c.dump_to_Virtualizer(nffg=nffg)
