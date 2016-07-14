@@ -79,82 +79,6 @@ class InstantiationFinishedEvent(Event):
     self.error = error
 
 
-class CfOrRequestHandler(AbstractRequestHandler):
-  """
-  Request Handler for the Cf-OR interface.
-
-  .. warning::
-    This class is out of the context of the recoco's co-operative thread
-    context! While you don't need to worry much about synchronization between
-    recoco tasks, you do need to think about synchronization between recoco task
-    and normal threads. Synchronisation is needed to take care manually: use
-    relevant helper function of core object: `callLater`/`raiseLater` or use
-    `schedule_as_coop_task` decorator defined in util.misc on the called
-    function.
-
-  Contains handler functions for REST-API.
-  """
-  # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {
-    'GET': ('ping', 'version', 'operations', 'get_config'),
-    'POST': ('ping', 'get_config', 'edit_config')
-  }
-  # Statically defined layer component to which this handler is bounded
-  # Need to be set by container class
-  bounded_layer = 'orchestration'
-  static_prefix = "cfor"
-  # Logger name
-  LOGGER_NAME = "Cf-Or"
-  log = log.getChild("[%s]" % LOGGER_NAME)
-  # Use Virtualizer format
-  virtualizer_format_enabled = False
-  # Default communication approach
-  DEFAULT_DIFF = False
-  # Name mapper to avoid Python naming constraint
-  rpc_mapper = {
-    'get-config': "get_config",
-    'edit-config': "edit_config"
-  }
-
-  def __init__ (self, request, client_address, server):
-    """
-    Init.
-    """
-    AbstractRequestHandler.__init__(self, request, client_address, server)
-
-  def get_config (self):
-    """
-    Response configuration.
-    """
-    self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
-    config = self._proceed_API_call('api_cfor_get_config')
-    if config is None:
-      self.send_error(404, message="Resource info is missing!")
-      return
-    self.send_response(200)
-    data = config.dump()
-    self.log.log(VERBOSE, "Generated config for 'get-config:\n%s" % data)
-    self.send_header('Content-Type', 'application/json')
-    self.send_header('Content-Length', len(data))
-    self.end_headers()
-    self.log.info("Send back topology description...")
-    self.wfile.write(data)
-    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
-
-  def edit_config (self):
-    """
-    Receive configuration and initiate orchestration.
-    """
-    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
-    body = self._get_body()
-    # log.getChild("REST-API").debug("Request body:\n%s" % body)
-    nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    self.log.log(VERBOSE, "Received request for 'edit-config':\n%s" % nffg)
-    self._proceed_API_call('api_cfor_edit_config', nffg)
-    self.send_acknowledge()
-    self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
-
-
 class ROSAgentRequestHandler(AbstractRequestHandler):
   """
   Request Handler for agent behaviour in Resource Orchestration SubLayer.
@@ -192,6 +116,8 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     'get-config': "get_config",
     'edit-config': "edit_config"
   }
+  API_CALL_GET_CONFIG = 'api_ros_get_config'
+  API_CALL_EDIT_CONFIG = 'api_ros_edit_config'
 
   def __init__ (self, request, client_address, server):
     """
@@ -207,7 +133,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     """
     self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
     # Forward call to main layer class
-    config = self._proceed_API_call('api_ros_get_config')
+    config = self._proceed_API_call(self.API_CALL_GET_CONFIG)
     if config is None:
       self.send_error(404, message="Resource info is missing!")
       return
@@ -281,7 +207,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       if self.DEFAULT_DIFF:
         if self.server.last_response is None:
           self.log.info("Missing cached Virtualizer! Acquiring topology now...")
-          config = self._proceed_API_call('api_ros_get_config')
+          config = self._proceed_API_call(self.API_CALL_GET_CONFIG)
           if config is None:
             self.log.error("Requested resource info is missing!")
             self.send_error(404, message="Resource info is missing!")
@@ -320,7 +246,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       self.log.info("Parsing request into internal NFFG format...")
       nffg = NFFG.parse(raw_body)
     self.log.debug("Parsed NFFG install request: %s" % nffg)
-    self._proceed_API_call('api_ros_edit_config', nffg)
+    self._proceed_API_call(self.API_CALL_EDIT_CONFIG, nffg)
     self.send_acknowledge()
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
@@ -343,6 +269,89 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     # return full_request
     # Perform hack to resolve inconsistency
     return Virtualizer.parse_from_text(full_request.xml())
+
+
+class CfOrRequestHandler(ROSAgentRequestHandler):
+  """
+  Request Handler for the Cf-OR interface.
+
+  .. warning::
+    This class is out of the context of the recoco's co-operative thread
+    context! While you don't need to worry much about synchronization between
+    recoco tasks, you do need to think about synchronization between recoco task
+    and normal threads. Synchronisation is needed to take care manually: use
+    relevant helper function of core object: `callLater`/`raiseLater` or use
+    `schedule_as_coop_task` decorator defined in util.misc on the called
+    function.
+
+  Contains handler functions for REST-API.
+  """
+  # Bind HTTP verbs to UNIFY's API functions
+  request_perm = {
+    'GET': ('ping', 'version', 'operations', 'get_config'),
+    'POST': ('ping', 'get_config', 'edit_config')
+  }
+  # Statically defined layer component to which this handler is bounded
+  # Need to be set by container class
+  bounded_layer = 'orchestration'
+  static_prefix = "cfor"
+  # Logger name
+  LOGGER_NAME = "Cf-Or"
+  log = log.getChild("[%s]" % LOGGER_NAME)
+  # Use Virtualizer format
+  virtualizer_format_enabled = False
+  # Default communication approach
+  DEFAULT_DIFF = False
+  # Name mapper to avoid Python naming constraint
+  rpc_mapper = {
+    'get-config': "get_config",
+    'edit-config': "edit_config"
+  }
+  API_CALL_GET_CONFIG = 'api_cfor_get_config'
+  API_CALL_EDIT_CONFIG = 'api_cfor_edit_config'
+
+  def __init__ (self, request, client_address, server):
+    """
+    Init.
+    """
+    ROSAgentRequestHandler.__init__(self, request, client_address, server)
+
+  def get_config (self):
+    """
+    Response configuration.
+    """
+    # self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
+    # # Obtain NFFG from request body
+    # self.log.debug("Detected response format: %s" %
+    #                self.headers.get("Content-Type"))
+    # config = self._proceed_API_call('api_cfor_get_config')
+    # if config is None:
+    #   self.send_error(404, message="Resource info is missing!")
+    #   return
+    # self.send_response(200)
+    # data = config.dump()
+    # self.log.log(VERBOSE, "Generated config for 'get-config:\n%s" % data)
+    # self.send_header('Content-Type', 'application/json')
+    # self.send_header('Content-Length', len(data))
+    # self.end_headers()
+    # self.log.info("Send back topology description...")
+    # self.wfile.write(data)
+    # self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
+    super(CfOrRequestHandler, self).get_config()
+
+  def edit_config (self):
+    """
+    Receive configuration and initiate orchestration.
+    """
+    # self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
+    # body = self._get_body()
+    # # log.getChild("REST-API").debug("Request body:\n%s" % body)
+    # nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
+    # self.log.log(VERBOSE, "Received request for 'edit-config':\n%s" % nffg)
+    # self._proceed_API_call('api_cfor_edit_config', nffg)
+    # self.send_acknowledge()
+    # self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
+    super(CfOrRequestHandler, self).edit_config()
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
