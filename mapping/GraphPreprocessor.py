@@ -164,15 +164,23 @@ class GraphPreprocessorClass(object):
     the given list of chain ids.
     Subgraph intersections are unwrapped from the NFFG class
     """
-    intersect = self.smallest.copy()
-    for c, g in chains_w_graphs:
-      if c['id'] in chain_ids and g is not self.smallest:
-        intersect.remove_nodes_from(
-           [n for n in intersect.nodes_iter() if n not in g])
+    # why does this line hangs if we step on it with debugger??
+    relevant_ch_gr = filter(lambda b, ids=chain_ids: b[0]['id'] in ids, 
+                            chains_w_graphs)
+    intersect = min(map(lambda b: b[1], relevant_ch_gr),
+                    key=lambda a: a.size()).copy()
+    if len(relevant_ch_gr) > 1:
+      for c, g in relevant_ch_gr:
+        if c['id'] in chain_ids and g is not intersect:
+          intersect.remove_nodes_from(
+             [n for n in intersect.nodes_iter() if n not in g])
     '''We want only the graph structure to be copied, the attributes
     shall point to the original ones. Set the references back to the
     PREPROCESSED NETWORK wich`s attributes will be updated during mapping
     NOTE:values are not changed in this stage.'''
+    if intersect.size() == 0:
+      self.log.warn("An intersection of subgraphs for determining the possible "
+                    "hosting network part of a subchain doesn't contain nodes!")
     for i, j, k in intersect.edges_iter(keys=True):
       intersect[i][j][k] = self.net.network[i][j][k]
     for n in intersect.nodes_iter():
@@ -584,13 +592,8 @@ class GraphPreprocessorClass(object):
         not_e2e_chains.append(chain)
       self.log.info("Chain %s preprocessed" % chain)
     if len(e2e_chains_with_graphs) == 0:
-      self.log.warn("No SAP - SAP chain was given! All request links will be "
+      self.log.warn("No SAP - SAP chain were given! All request links will be "
                     "mapped as best effort links!")
-      self.smallest = self.net.network
-    else:
-      # determine the smallest subgraph for efficient intersection calculation
-      self.smallest = min(map(lambda b: b[1], e2e_chains_with_graphs),
-                          key=lambda a: a.size())
     """
     These chains are disjoint on the set of links, each has a subgraph
     which it should be mapped to.
