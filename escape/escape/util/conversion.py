@@ -272,19 +272,26 @@ class NFFGConverter(object):
         if vport.sap.is_initialized() and vport.sap.get_value():
           # Use unique SAP tag as the id of the SAP
           sap_id = vport.sap.get_value()  # Optional port.sap
+          self.log.debug("Detect SAP id from sap field: %s" % sap_id)
         # Regular SAP
         else:
           # port.id is mandatory now
           # Use port name as the SAP.id if it is set else generate one
+          # SAP.id <--> virtualizer.node.port.id
+          if vport.id.get_as_text().startswith(self.SAP_NAME_PREFIX):
+            sap_id = vport.id.get_value()
+            log.debug("Detect SAP id from id field: %s" % sap_id)
           # SAP.id <--> virtualizer.node.port.name
-          if vport.name.is_initialized():
-            if str(vport.name.get_value()).startswith(self.SAP_NAME_PREFIX):
-              sap_id = vport.name.get_as_text()[len(self.SAP_NAME_PREFIX):]
+          elif vport.name.is_initialized() and \
+             vport.name.get_as_text().startswith(self.SAP_NAME_PREFIX):
+            sap_id = vport.name.get_as_text()[len(self.SAP_NAME_PREFIX):]
+            self.log.debug("Detect SAP id from name field: %s" % sap_id)
           else:
             # Backup SAP id generation
             # sap_id = "SAP%s" % len([s for s in nffg.saps])
-            self.log.warning("No explicit SAP id was detected! Generating...")
             sap_id = "SAP_%s" % vport.id.get_value()
+            self.log.warning(
+              "No explicit SAP id was detected! Generated: %s" % sap_id)
         try:
           # Use port id of the Infra node as the SAP port id
           # because sap port info was lost during NFFG->Virtualizer conversion
