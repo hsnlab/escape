@@ -292,21 +292,20 @@ class NFFGConverter(object):
             sap_id = "SAP_%s" % vport.id.get_value()
             self.log.warning(
               "No explicit SAP id was detected! Generated: %s" % sap_id)
+
+        # Create SAP and Add port to SAP
+        sap = nffg.add_sap(id=sap_id)
+        self.log.debug("Created SAP node: %s" % sap)
+
         try:
           # Use port id of the Infra node as the SAP port id
           # because sap port info was lost during NFFG->Virtualizer conversion
           sap_port_id = int(vport.id.get_value())  # Mandatory port.id
         except ValueError:
           sap_port_id = vport.id.get_value()
-        # Create SAP and Add port to SAP
-        sap = nffg.add_sap(id=sap_id)
-        self.log.debug("Created SAP node: %s" % sap)
-        # SAP.name will be the same as the SAP.id or generate one for backup
-        if vport.name.is_initialized() and \
-           not vport.name.get_as_text().startswith(self.SAP_NAME_PREFIX):
-          sap.name = vport.name.get_value()  # Optional - port.name
-
         sap_port = sap.add_port(id=sap_port_id)
+        self.log.debug("Added SAP port: %s" % sap_port)
+
         # Add port properties as metadata to SAP port
         if vport.sap.is_initialized():
           # Add sap value to properties to be backward compatible for adaptation
@@ -315,15 +314,33 @@ class NFFGConverter(object):
           sap_port.add_property("sap", vport.sap.get_value())
           sap_port.sap = vport.sap.get_value()
 
-        self.log.debug("Added SAP port: %s" % sap_port)
+        # Create and add the port of the opposite Infra node
+        try:
+          infra_port_id = int(vport.id.get_value())
+        except ValueError:
+          infra_port_id = vport.id.get_value()
+        # Add port to Infra
+        infra_port = infra.add_port(id=infra_port_id)
+        self.log.debug("Added infra port: %s" % infra_port)
+        if vport.sap.is_initialized():
+          # For internal use and backward compatibility
+          infra_port.add_property("sap", vport.sap.get_value())
+          infra_port.sap = vport.sap.get_value()
+
+        # Add port names
+        if vport.name.is_initialized():
+          if not vport.name.get_as_text().startswith(self.SAP_NAME_PREFIX):
+            sap_port.name = vport.name.get_value()
+            # For backward compatibility
+            # sap_port.add_property("name", vport.name.get_value())
+            # SAP.name will be the same as the SAP.id or generate one for backup
+            sap.name = vport.name.get_value()  # Optional - port.name
+            # Add port properties as property to Infra port too
+            # infra_port.add_property("name", vport.name.get_value())
+            # Copy the original name to infra port even if it starts with 'SAP:'
+          infra_port.name = vport.name.get_value()
 
         # Fill SAP-specific data
-        # Add port properties
-        if vport.name.is_initialized() and \
-           not vport.name.get_as_text().startswith(self.SAP_NAME_PREFIX):
-          sap_port.name = vport.name.get_value()
-          # For backward compatibility
-          # sap_port.add_property("name", vport.name.get_value())
         # Add infra port capabilities
         if vport.capability.is_initialized():
           sap_port.capability = vport.capability.get_value()
@@ -366,21 +383,6 @@ class NFFGConverter(object):
         for key in vport.metadata:  # Optional - port.metadata
           sap_port.add_metadata(name=key,
                                 value=vport.metadata[key].value.get_value())
-
-        # Create and add the port of the opposite Infra node
-        try:
-          infra_port_id = int(vport.id.get_value())
-        except ValueError:
-          infra_port_id = vport.id.get_value()
-        # Add port to Infra
-        infra_port = infra.add_port(id=infra_port_id)
-        # Add port properties as property to Infra port too
-        if vport.name.is_initialized():
-          # infra_port.add_property("name", vport.name.get_value())
-          infra_port.name = vport.name.get_value()
-        if vport.sap.is_initialized():
-          infra_port.add_property("sap", vport.sap.get_value())
-          # infra_port.sap = vport.sap.get_value()
 
         self.log.debug("Added port for SAP -> %s" % infra_port)
 
@@ -639,6 +641,7 @@ class NFFGConverter(object):
       except:
         self.log.exception(
           "Got unexpected exception during acquisition of FlowEntry's in Port!")
+        return
       fr_match = "in_port="
       # Check if src port is a VNF port --> create the tagged port name
       if "NF_instances" in flowentry.port.get_as_text():
@@ -663,6 +666,7 @@ class NFFGConverter(object):
       except:
         self.log.exception("Got unexpected exception during acquisition of "
                            "FlowEntry's out Port!")
+        return
       fr_action = "output="
       # Check if dst port is a VNF port --> create the tagged port name
       if "NF_instances" in flowentry.out.get_as_text():
@@ -1507,6 +1511,7 @@ class NFFGConverter(object):
                          "name=%s)" % (nf, virtualizer.id.get_as_text(),
                                        virtualizer.name.get_as_text()))
 
+  # noinspection PyDefaultArgument
   def _convert_nffg_flowrules (self, virtualizer, nffg, cntr=[0]):
     """
     Convert flowrules in the given :any:`NFFG` into the given Virtualizer.
