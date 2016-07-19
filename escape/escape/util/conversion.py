@@ -63,7 +63,7 @@ class NFFGConverter(object):
   # Specific tags
   TAG_SG_HOP = "sg_hop"
   # SAP id storing prefix
-  SAP_NAME_PREFIX = 'SAP:'
+  SAP_NAME_PREFIX = 'SAP'
   # Operation formats in Virtualizer
   MATCH_TAG = r"dl_tag"
   ACTION_PUSH_TAG = r"push_tag"
@@ -284,7 +284,8 @@ class NFFGConverter(object):
           # SAP.id <--> virtualizer.node.port.name
           elif vport.name.is_initialized() and \
              vport.name.get_as_text().startswith(self.SAP_NAME_PREFIX):
-            sap_id = vport.name.get_as_text()[len(self.SAP_NAME_PREFIX):]
+            sap_id = vport.name.get_as_text().upper()[
+                     len(self.SAP_NAME_PREFIX) + 1:]
             self.log.debug("Detect SAP id from name field: %s" % sap_id)
           else:
             # Backup SAP id generation
