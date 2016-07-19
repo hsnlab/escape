@@ -738,7 +738,7 @@ class NFFGConverter(object):
               (str(_src_name), str(_dst_name), str(_tag))))
           else:
             # Everything else is must come from flowclass
-            fr_match += ";%s" % op
+            fr_match += ";%s=%s" % (self.OP_FLOWCLASS, op)
 
       # Check if there is an action operation
       if flowentry.action.is_initialized() and flowentry.action.get_value():
@@ -1623,7 +1623,11 @@ class NFFGConverter(object):
           self.log.debug("Converting flowrule: %s..." % fr)
           # Define id based on FR_ID_GEN_STRATEGY
           if self.FR_ID_GEN_STRATEGY == self.FR_ID_GEN_HOP:
-            fe_id = "ESCAPE-flowentry" + str(fr.hop_id)
+            if fr.hop_id is not None:
+              fe_id = "ESCAPE-flowentry" + str(fr.hop_id)
+            else:
+              # hop_id is not set
+              fe_id = str(fr.id)
           elif self.FR_ID_GEN_STRATEGY == self.FR_ID_GEN_GLOBAL:
             fe_id = "ESCAPE-flowentry" + str(cntr[0])
             cntr[0] += 1
