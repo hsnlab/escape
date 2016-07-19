@@ -282,14 +282,14 @@ class NFFGConverter(object):
           log.debug("Detected SAP id as id field: %s" % sap_id)
         # SAP.id <--> virtualizer.node.port.name
         elif vport.name.is_initialized() and \
+           vport.name.get_as_text().upper().startswith(
+                self.SAP_NAME_PREFIX + ":"):
+          sap_id = vport.name.get_as_text()[len(self.SAP_NAME_PREFIX + ":"):]
+          self.log.debug("Detected SAP id from name field: %s" % sap_id)
+        elif vport.name.is_initialized() and \
            vport.name.get_as_text().upper().startswith(self.SAP_NAME_PREFIX):
           sap_id = vport.name.get_as_text()
           self.log.debug("Detected SAP id as name field: %s" % sap_id)
-        elif vport.name.is_initialized() and \
-           vport.name.get_as_text().upper().startswith(
-                self.SAP_NAME_PREFIX + ":"):
-          sap_id = vport.name.get_as_text()[len(self.SAP_NAME_PREFIX) + 1:]
-          self.log.debug("Detected SAP id from name field: %s" % sap_id)
         else:
           # Backup SAP id generation
           # sap_id = "SAP%s" % len([s for s in nffg.saps])
@@ -338,10 +338,10 @@ class NFFGConverter(object):
             # For backward compatibility
             # sap_port.add_property("name", vport.name.get_value())
             # SAP.name will be the same as the SAP.id or generate one for backup
-            sap.name = vport.name.get_value()  # Optional - port.name
             # Add port properties as property to Infra port too
             # infra_port.add_property("name", vport.name.get_value())
             # Copy the original name to infra port even if it starts with 'SAP:'
+          sap.name = vport.name.get_value()  # Optional - port.name
           infra_port.name = vport.name.get_value()
 
         # Fill SAP-specific data
@@ -1341,7 +1341,6 @@ class NFFGConverter(object):
                                   v_sap_port.sap.get_value()))
         else:
           # If sap is not inter-domain SAP, use name field to store sap id and
-          # set port-type to port-abstract
           v_sap_port.name.set_value("%s:%s" % (self.SAP_NAME_PREFIX, sap.id))
 
         # Set sap.name if it has not used for storing SAP.id
