@@ -279,7 +279,7 @@ class NFFGConverter(object):
           # Use port name as the SAP.id if it is set else generate one
           # SAP.id <--> virtualizer.node.port.id
           sap_id = vport.id.get_value()
-          log.debug("Detected SAP id as id field: %s" % sap_id)
+          self.log.debug("Detected SAP id as id field: %s" % sap_id)
         # SAP.id <--> virtualizer.node.port.name
         elif vport.name.is_initialized() and \
            vport.name.get_as_text().upper().startswith(
@@ -1852,17 +1852,17 @@ if __name__ == "__main__":
   # log.debug(nffg.dump())
 
   dov = virt_lib.Virtualizer.parse_from_file(
-    "test2.xml")
+    # "test2.xml")
+    "un1.xml")
   # dov.bind(relative=True)
   log.info("Parsed XML:")
   log.info("%s" % dov.xml())
   nffg = c.parse_from_Virtualizer(vdata=dov.xml())
   log.info("Converted NFFG:")
   log.info("%s" % nffg.dump())
-  virt = c.dump_to_Virtualizer(nffg=nffg)
-  # # virt.bind()
-  log.info("Reconverted Virtualizer:")
-  log.info("%s" % virt.xml())
+  # virt = c.dump_to_Virtualizer(nffg=nffg)
+  # log.info("Reconverted Virtualizer:")
+  # log.info("%s" % virt.xml())
 
   # dov = virt_lib.Virtualizer.parse_from_file(
   #   "../../../../examples/escape-2sbb-topo.xml")
