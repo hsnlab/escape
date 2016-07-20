@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+import argparse
 import logging
-import networkx as nx
 import os
 import sys
+
+import networkx as nx
 
 import viewer_thread as vt
 
@@ -18,10 +20,16 @@ except ImportError:
   from conversion import NFFGConverter
 
 if __name__ == '__main__':
-  logging.basicConfig(level=logging.DEBUG)
+  parser = argparse.ArgumentParser(description="Rudimentary GUI for ESCAPEv2",
+                                   add_help=True)
+  parser.add_argument("-d", "--debug", action="store_true", default=False,
+                      help="run GUI logging on debug level")
+  parser.add_argument("topo", help="topo file")
+  args = parser.parse_args()
+  logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
   graph = None
-  if len(sys.argv) > 1:
-    nffg_path = os.path.abspath(os.path.join(os.getcwd(), sys.argv[1]))
+  if args.topo:
+    nffg_path = os.path.abspath(os.path.join(os.getcwd(), args.topo))
     with open(nffg_path, 'r') as f:
       raw = f.read()
     if raw.startswith("<?xml"):
