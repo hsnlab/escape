@@ -297,8 +297,18 @@ class NFFGConverter(object):
           self.log.warning(
             "No explicit SAP id was detected! Generated: %s" % sap_id)
 
+        # Add port names
+        if vport.name.is_initialized():
+          sap_prefix = "%s:" % self.SAP_NAME_PREFIX
+          if vport.name.get_as_text().startswith(sap_prefix):
+            sap_name = vport.name.get_as_text()[len(sap_prefix):]
+          else:
+            sap_name = vport.name.get_as_text()
+        else:
+          sap_name = sap_id
+
         # Create SAP and Add port to SAP
-        sap = nffg.add_sap(id=sap_id)
+        sap = nffg.add_sap(id=sap_id, name=sap_name)
         self.log.debug("Created SAP node: %s" % sap)
 
         try:
@@ -333,16 +343,7 @@ class NFFGConverter(object):
 
         # Add port names
         if vport.name.is_initialized():
-          if vport.name.get_as_text().startswith("%s:" % self.SAP_NAME_PREFIX):
-            sap_port.name = vport.name.get_as_text()[
-                            len(self.SAP_NAME_PREFIX + ":"):]
-            # For backward compatibility
-            # sap_port.add_property("name", vport.name.get_value())
-            # SAP.name will be the same as the SAP.id or generate one for backup
-            # Add port properties as property to Infra port too
-            # infra_port.add_property("name", vport.name.get_value())
-            # Copy the original name to infra port even if it starts with 'SAP:'
-          sap.name = sap_port.name  # Optional - port.name
+          sap_port.name = vport.name.get_as_text()
           infra_port.name = vport.name.get_value()
 
         # Fill SAP-specific data
