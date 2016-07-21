@@ -333,15 +333,16 @@ class NFFGConverter(object):
 
         # Add port names
         if vport.name.is_initialized():
-          if not vport.name.get_as_text().startswith(self.SAP_NAME_PREFIX):
-            sap_port.name = vport.name.get_value()
+          if vport.name.get_as_text().startswith("%s:" % self.SAP_NAME_PREFIX):
+            sap_port.name = vport.name.get_as_text()[
+                            len(self.SAP_NAME_PREFIX + ":"):]
             # For backward compatibility
             # sap_port.add_property("name", vport.name.get_value())
             # SAP.name will be the same as the SAP.id or generate one for backup
             # Add port properties as property to Infra port too
             # infra_port.add_property("name", vport.name.get_value())
             # Copy the original name to infra port even if it starts with 'SAP:'
-          sap.name = vport.name.get_value()  # Optional - port.name
+          sap.name = sap_port.name  # Optional - port.name
           infra_port.name = vport.name.get_value()
 
         # Fill SAP-specific data
