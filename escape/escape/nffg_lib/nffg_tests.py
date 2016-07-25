@@ -875,7 +875,7 @@ def generate_5gex_req1 ():
   sap1 = test.add_sap(name="SAP1", id="sap1")
   sap2 = test.add_sap(name="SAP2", id="sap2")
   bridge = test.add_nf(id="bridge", name="BRIDGE", func_type="bridge",
-                    cpu=1, mem=1, storage=0)
+                       cpu=1, mem=1, storage=0)
   fwd = test.add_nf(id="fwd", name="FORWARDER", func_type="simpleForwarder",
                     cpu=1, mem=1, storage=0)
   test.add_sglink(sap1.add_port(1), bridge.add_port(1), id=1)
@@ -923,23 +923,27 @@ def generate_req_verification ():
                            func_type="webserver", cpu=1, mem=1, storage=0)
   nat = test.add_nf(id="nat", name="NAT", func_type="nat",
                     cpu=1, mem=1, storage=0)
-  fw = test.add_nf(id="fw", name="FIREWALL", func_type="firewall", 
+  fw = test.add_nf(id="fw", name="FIREWALL", func_type="firewall",
                    cpu=1, mem=1, storage=0)
-  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", 
+  dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi",
                     cpu=1, mem=1, storage=0)
 
   test.add_sglink(sap1.add_port(1), nat.add_port(1), id=11)
   test.add_sglink(nat.add_port(2), webserver1.add_port(1), id=12)
-  test.add_sglink(webserver1.ports[1], fw.add_port(1), id=13, flowclass='dl_type=0x0800,nw_dst=20.0.0.1')
+  test.add_sglink(webserver1.ports[1], fw.add_port(1), id=13,
+                  flowclass='dl_type=0x0800,nw_dst=20.0.0.1')
   test.add_sglink(fw.add_port(2), nat.ports[2], id=14)
-  test.add_sglink(nat.ports[1], sap1.ports[1], id=15, flowclass='dl_type=0x0800,nw_dst=10.0.0.1')
+  test.add_sglink(nat.ports[1], sap1.ports[1], id=15,
+                  flowclass='dl_type=0x0800,nw_dst=10.0.0.1')
 
   test.add_sglink(sap2.add_port(1), nat.ports[1], id=21)
-  test.add_sglink(nat.ports[1], dpi.add_port(1), id=25, flowclass='dl_type=0x0800,nw_dst=10.0.0.2')
+  test.add_sglink(nat.ports[1], dpi.add_port(1), id=25,
+                  flowclass='dl_type=0x0800,nw_dst=10.0.0.2')
   test.add_sglink(dpi.add_port(2), sap2.ports[1], id=26)
 
   test.add_sglink(sap3.add_port(1), webserver1.ports[1], id=31)
-  test.add_sglink(webserver1.ports[1], sap3.ports[1], id=32, flowclass='dl_type=0x0800,nw_dst=20.0.0.3')
+  test.add_sglink(webserver1.ports[1], sap3.ports[1], id=32,
+                  flowclass='dl_type=0x0800,nw_dst=20.0.0.3')
 
   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
                sg_path=(11, 12, 13, 14, 15))
@@ -956,7 +960,8 @@ def generate_etsi_req1a ():
                            func_type="webserver", cpu=1, mem=1, storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], sap1.ports[1], id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], sap1.ports[1], id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
 
   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
                sg_path=(11, 12))
@@ -972,9 +977,11 @@ def generate_etsi_req1b ():
                            func_type="webserver", cpu=1, mem=1, storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], sap1.ports[1], id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], sap1.ports[1], id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
-  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22,
+                  flowclass='dl_dst=00:00:00:00:00:02')
 
   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
                sg_path=(11, 12))
@@ -991,7 +998,8 @@ def generate_etsi_req2a ():
                     storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), sap1.ports[1], id=13)
 
   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
@@ -1012,14 +1020,17 @@ def generate_etsi_req2b ():
   #                   cpu=1, mem=1, storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), sap1.ports[1], id=13)
 
   # test.add_sglink(sap2.add_port(1), fwd.add_port(1), id=21)
   # test.add_sglink(fwd.ports[1], webserver1.ports[0], id=22)
-  # test.add_sglink(webserver1.ports[0], sap2.ports[1], id=23, flowclass='dl_dst=00:00:00:00:00:02')
+  # test.add_sglink(webserver1.ports[0], sap2.ports[1], id=23,
+  # flowclass='dl_dst=00:00:00:00:00:02')
   test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
-  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22,
+                  flowclass='dl_dst=00:00:00:00:00:02')
 
   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
                sg_path=(11, 12, 13))
@@ -1044,7 +1055,8 @@ def generate_etsi_req3a ():
                     storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), comp.add_port(1), id=13)
   test.add_sglink(comp.ports[1], decomp.add_port(1), id=14)
   test.add_sglink(decomp.ports[1], sap1.ports[1], id=15)
@@ -1071,14 +1083,18 @@ def generate_etsi_req3b ():
                     storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), comp.add_port(1), id=13)
   test.add_sglink(comp.ports[1], decomp.add_port(1), id=14)
-  test.add_sglink(decomp.ports[1], sap1.ports[1], id=15, flowclass='dl_type=0x0800,nw_dst=10.0.0.1')
+  test.add_sglink(decomp.ports[1], sap1.ports[1], id=15,
+                  flowclass='dl_type=0x0800,nw_dst=10.0.0.1')
 
   test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
-  test.add_sglink(webserver1.ports[0], comp.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
-  test.add_sglink(decomp.ports[1], sap2.ports[1], id=23, flowclass='dl_type=0x0800,nw_dst=10.0.0.2')
+  test.add_sglink(webserver1.ports[0], comp.ports[1], id=22,
+                  flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(decomp.ports[1], sap2.ports[1], id=23,
+                  flowclass='dl_type=0x0800,nw_dst=10.0.0.2')
 
   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
                sg_path=(11, 12, 13, 14, 15))
@@ -1104,13 +1120,15 @@ def generate_etsi_req3b2 ():
                     storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), comp.add_port(1), id=13)
   test.add_sglink(comp.ports[1], decomp.add_port(1), id=14)
   test.add_sglink(decomp.ports[1], sap1.ports[1], id=15)
 
   test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
-  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22,
+                  flowclass='dl_dst=00:00:00:00:00:02')
 
   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
                sg_path=(11, 12, 13, 14, 15))
@@ -1134,18 +1152,21 @@ def generate_etsi_req4b2a ():
                            func_type="webserver", cpu=1, mem=1, storage=0)
   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
                     storage=0)
-  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
-                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge",
+                       cpu=1, mem=1,
+                       storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
   test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
   test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
   test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
 
   test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
-  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22,
+                  flowclass='dl_dst=00:00:00:00:00:02')
 
   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
                sg_path=(11, 12, 13, 14, 15, 16))
@@ -1169,18 +1190,21 @@ def generate_etsi_req4b2b ():
                            func_type="webserver", cpu=1, mem=1, storage=0)
   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
                     storage=0)
-  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
-                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge",
+                       cpu=1, mem=1,
+                       storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
   test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
   test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
   test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
 
   test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
-  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22,
+                  flowclass='dl_dst=00:00:00:00:00:02')
   test.add_sglink(bridge.add_port(3), sap2.ports[1], id=23)
 
   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
@@ -1205,17 +1229,20 @@ def generate_etsi_req4b2b_robot1 ():
                            func_type="webserver", cpu=1, mem=1, storage=0)
   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
                     storage=0)
-  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
-                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge",
+                       cpu=1, mem=1,
+                       storage=0)
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
   test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
   test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
   test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
 
   test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
-  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22, flowclass='dl_dst=00:00:00:00:00:02')
+  test.add_sglink(webserver1.ports[0], sap2.ports[1], id=22,
+                  flowclass='dl_dst=00:00:00:00:00:02')
   test.add_sglink(bridge.add_port(3), sap2.ports[1], id=23)
 
   sap54 = test.add_sap(name="SAP54", id="SAP54")
@@ -1227,7 +1254,8 @@ def generate_etsi_req4b2b_robot1 ():
                           storage=0)
   splitter1 = test.add_nf(id="splitter", name="splitter", func_type="splitter",
                           cpu=1, mem=1, storage=0)
-  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=31, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=31,
+                  flowclass='dl_src=bc:ee:7b:e6:8c:07')
   test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=32)
   test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=33)
   test.add_sglink(balancer1.ports[1], sap54.ports[1], id=34)
@@ -1254,11 +1282,13 @@ def generate_etsi_req4b2b_robot1 ():
 #                            func_type="webserver", cpu=1, mem=1, storage=0)
 #   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
 #                     storage=0)
-#   bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
+#   bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge",
+# cpu=1, mem=1,
 #                     storage=0)
 
 #   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-#   test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+#   test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+# flowclass='dl_dst=00:00:00:00:00:01')
 #   test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
 #   test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
 #   test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
@@ -1284,18 +1314,21 @@ def generate_etsi_req4b2b_robot1 ():
 #                            func_type="webserver", cpu=1, mem=1, storage=0)
 #   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
 #                     storage=0)
-#   bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
+#   bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge",
+# cpu=1, mem=1,
 #                     storage=0)
 
 #   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-#   test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+#   test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+# flowclass='dl_dst=00:00:00:00:00:01')
 #   test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
 #   test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
 #   test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
 #   test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
 
 #   test.add_sglink(sap2.add_port(1), webserver1.ports[0], id=21)
-#   test.add_sglink(webserver1.ports[0], bridge.add_port(3), id=22, flowclass='dl_dst=00:00:00:00:00:02')
+#   test.add_sglink(webserver1.ports[0], bridge.add_port(3), id=22,
+# flowclass='dl_dst=00:00:00:00:00:02')
 #   test.add_sglink(bridge.add_port(4), sap2.ports[1], id=23)
 
 #   test.add_req(sap1.ports[1], sap1.ports[1], bandwidth=1, delay=100,
@@ -1320,8 +1353,9 @@ def generate_etsi_req4a_robot1 ():
                            func_type="webserver", cpu=1, mem=1, storage=0)
   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
                     storage=0)
-  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
-                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge",
+                       cpu=1, mem=1,
+                       storage=0)
   balancer1 = test.add_nf(id="balance_server1", name="balance_server1",
                           func_type="balance_server", cpu=3, mem=1,
                           storage=0)
@@ -1332,13 +1366,15 @@ def generate_etsi_req4a_robot1 ():
                           cpu=1, mem=1, storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
   test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
   test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
   test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
 
-  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=21, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=21,
+                  flowclass='dl_src=bc:ee:7b:e6:8c:07')
   test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=22)
   test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=23)
   test.add_sglink(balancer1.ports[1], sap54.ports[1], id=24)
@@ -1366,8 +1402,9 @@ def generate_etsi_req4a_robot12 ():
                            func_type="webserver", cpu=1, mem=1, storage=0)
   dpi = test.add_nf(id="dpi", name="DPI", func_type="dpi", cpu=1, mem=1,
                     storage=0)
-  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge", cpu=1, mem=1,
-                    storage=0)
+  bridge = test.add_nf(id="dockernf", name="dockernf", func_type="bridge",
+                       cpu=1, mem=1,
+                       storage=0)
   balancer1 = test.add_nf(id="balance_server1", name="balance_server1",
                           func_type="balance_server", cpu=3, mem=1,
                           storage=0)
@@ -1382,23 +1419,27 @@ def generate_etsi_req4a_robot12 ():
   balancer4 = test.add_nf(id="balance_server4", name="balance_server4",
                           func_type="balance_server", cpu=1, mem=1,
                           storage=0)
-  splitter2 = test.add_nf(id="splitter2", name="splitter2", func_type="splitter",
+  splitter2 = test.add_nf(id="splitter2", name="splitter2",
+                          func_type="splitter",
                           cpu=1, mem=1, storage=0)
 
   test.add_sglink(sap1.add_port(1), webserver1.add_port(0), id=11)
-  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12, flowclass='dl_dst=00:00:00:00:00:01')
+  test.add_sglink(webserver1.ports[0], dpi.add_port(1), id=12,
+                  flowclass='dl_dst=00:00:00:00:00:01')
   test.add_sglink(dpi.add_port(2), bridge.add_port(1), id=13)
   test.add_sglink(bridge.add_port(2), comp.add_port(1), id=14)
   test.add_sglink(comp.ports[1], decomp.add_port(1), id=15)
   test.add_sglink(decomp.ports[1], sap1.ports[1], id=16)
 
-  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=21, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=21,
+                  flowclass='dl_src=bc:ee:7b:e6:8c:07')
   test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=22)
   test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=23)
   test.add_sglink(balancer1.ports[1], sap54.ports[1], id=24)
   test.add_sglink(balancer2.ports[1], sap54.ports[1], id=25)
 
-  test.add_sglink(sap54.ports[1], splitter2.add_port(1), id=31, flowclass='dl_src=9c:5c:8e:af:2e:e0')
+  test.add_sglink(sap54.ports[1], splitter2.add_port(1), id=31,
+                  flowclass='dl_src=9c:5c:8e:af:2e:e0')
   test.add_sglink(splitter2.add_port(2), balancer3.add_port(1), id=32)
   test.add_sglink(splitter2.add_port(3), balancer4.add_port(1), id=33)
   test.add_sglink(balancer3.ports[1], sap54.ports[1], id=34)
@@ -1423,7 +1464,8 @@ def generate_etsi_req_robot1 ():
   splitter1 = test.add_nf(id="splitter", name="splitter", func_type="splitter",
                           cpu=1, mem=1, storage=0)
 
-  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=11, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=11,
+                  flowclass='dl_src=bc:ee:7b:e6:8c:07')
   test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=12)
   test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=13)
 
@@ -1447,7 +1489,8 @@ def generate_etsi_req_robot1_simple ():
   splitter1 = test.add_nf(id="splitter", name="splitter", func_type="splitter",
                           cpu=1, mem=1, storage=0)
 
-  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=11, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=11,
+                  flowclass='dl_src=bc:ee:7b:e6:8c:07')
   test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=12)
   # test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=13)
 
@@ -1468,10 +1511,12 @@ def generate_etsi_req_robot2 ():
   balancer4 = test.add_nf(id="balance_server4", name="balance_server4",
                           func_type="balance_server", cpu=1, mem=1,
                           storage=0)
-  splitter2 = test.add_nf(id="splitter2", name="splitter2", func_type="splitter",
+  splitter2 = test.add_nf(id="splitter2", name="splitter2",
+                          func_type="splitter",
                           cpu=1, mem=1, storage=0)
 
-  test.add_sglink(sap54.add_port(1), splitter2.add_port(1), id=21, flowclass='dl_src=9c:5c:8e:af:2e:e0')
+  test.add_sglink(sap54.add_port(1), splitter2.add_port(1), id=21,
+                  flowclass='dl_src=9c:5c:8e:af:2e:e0')
   test.add_sglink(splitter2.add_port(2), balancer3.add_port(1), id=22)
   test.add_sglink(splitter2.add_port(3), balancer4.add_port(1), id=23)
   test.add_sglink(balancer3.ports[1], sap54.ports[1], id=24)
@@ -1491,7 +1536,8 @@ def generate_etsi_req_robot12 ():
   balancer2 = test.add_nf(id="balance_server2", name="balance_server2",
                           func_type="balance_server", cpu=1, mem=1,
                           storage=0)
-  splitter1 = test.add_nf(id="splitter1", name="splitter1", func_type="splitter",
+  splitter1 = test.add_nf(id="splitter1", name="splitter1",
+                          func_type="splitter",
                           cpu=1, mem=1, storage=0)
   balancer3 = test.add_nf(id="balance_server3", name="balance_server3",
                           func_type="balance_server", cpu=1, mem=1,
@@ -1499,16 +1545,19 @@ def generate_etsi_req_robot12 ():
   balancer4 = test.add_nf(id="balance_server4", name="balance_server4",
                           func_type="balance_server", cpu=1, mem=1,
                           storage=0)
-  splitter2 = test.add_nf(id="splitter2", name="splitter2", func_type="splitter",
+  splitter2 = test.add_nf(id="splitter2", name="splitter2",
+                          func_type="splitter",
                           cpu=1, mem=1, storage=0)
 
-  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=11, flowclass='dl_src=bc:ee:7b:e6:8c:07')
+  test.add_sglink(sap54.add_port(1), splitter1.add_port(1), id=11,
+                  flowclass='dl_src=bc:ee:7b:e6:8c:07')
   test.add_sglink(splitter1.add_port(2), balancer1.add_port(1), id=12)
   test.add_sglink(splitter1.add_port(3), balancer2.add_port(1), id=13)
   test.add_sglink(balancer1.ports[1], sap54.ports[1], id=14)
   test.add_sglink(balancer2.ports[1], sap54.ports[1], id=15)
 
-  test.add_sglink(sap54.ports[1], splitter2.add_port(1), id=21, flowclass='dl_src=9c:5c:8e:af:2e:e0')
+  test.add_sglink(sap54.ports[1], splitter2.add_port(1), id=21,
+                  flowclass='dl_src=9c:5c:8e:af:2e:e0')
   test.add_sglink(splitter2.add_port(2), balancer3.add_port(1), id=22)
   test.add_sglink(splitter2.add_port(3), balancer4.add_port(1), id=23)
   test.add_sglink(balancer3.ports[1], sap54.ports[1], id=24)
@@ -1561,16 +1610,69 @@ def generate_mn_topo_etsi ():
   sap14.domain = "eth0"
   # Add links
   link_res = {'delay': 1.5, 'bandwidth': 10}
-  nffg.add_link(sw1.add_port(1), sap1.add_port(1), id="mn-link-sw1-sap1", **link_res)
-  nffg.add_link(sw1.add_port(2), ee11.add_port(1), id="mn-link-sw1-ee11", **link_res)
-  nffg.add_link(sw1.add_port(3), ee12.add_port(1), id="mn-link-sw1-ee12", **link_res)
-  nffg.add_link(sw2.add_port(1), sap2.add_port(1), id="mn-link-sw2-sap2", **link_res)
-  nffg.add_link(sw2.add_port(2), ee21.add_port(1), id="mn-link-sw2-ee21", **link_res)
-  nffg.add_link(sw2.add_port(3), ee22.add_port(1), id="mn-link-sw2-ee22", **link_res)
-  nffg.add_link(sw1.add_port(4), sw2.add_port(4), id="mn-link-sw1-sw2", **link_res)
-  nffg.add_link(sw2.add_port(5), gw.add_port(1), id="mn-link-sw2-gw", **link_res)
-  nffg.add_link(gw.add_port(2), sap14.add_port(1), id="mn-link-gw-sap14", **link_res)
+  nffg.add_link(sw1.add_port(1), sap1.add_port(1), id="mn-link-sw1-sap1",
+                **link_res)
+  nffg.add_link(sw1.add_port(2), ee11.add_port(1), id="mn-link-sw1-ee11",
+                **link_res)
+  nffg.add_link(sw1.add_port(3), ee12.add_port(1), id="mn-link-sw1-ee12",
+                **link_res)
+  nffg.add_link(sw2.add_port(1), sap2.add_port(1), id="mn-link-sw2-sap2",
+                **link_res)
+  nffg.add_link(sw2.add_port(2), ee21.add_port(1), id="mn-link-sw2-ee21",
+                **link_res)
+  nffg.add_link(sw2.add_port(3), ee22.add_port(1), id="mn-link-sw2-ee22",
+                **link_res)
+  nffg.add_link(sw1.add_port(4), sw2.add_port(4), id="mn-link-sw1-sw2",
+                **link_res)
+  nffg.add_link(sw2.add_port(5), gw.add_port(1), id="mn-link-sw2-gw",
+                **link_res)
+  nffg.add_link(gw.add_port(2), sap14.add_port(1), id="mn-link-gw-sap14",
+                **link_res)
   # nffg.duplicate_static_links()
+  return nffg
+
+
+def generate_ietf_req ():
+  nffg = NFFG(id="SG-etsi-req", name="SG-etsi-req")
+  sap84 = nffg.add_sap(id="SAP84", name="SAP84")
+  sap85 = nffg.add_sap(id="SAP85", name="SAP85")
+  l2fwd = nffg.add_nf(id="L2fwdVhost", name="L2fwdVhost",
+                      func_type="L2fwdVhost", cpu=2, mem=4, storage=0)
+  l2fwd.add_metadata(name="bw_req", value=0)
+  l2fwd.add_metadata(name="delay_req", value=100)
+  l2fwd2 = nffg.add_nf(id="L2fwdVhost2", name="L2fwdVhost2",
+                       func_type="L2fwdVhost2", cpu=2, mem=4, storage=0)
+  l2fwd2.add_metadata(name="bw_req", value=0)
+  l2fwd2.add_metadata(name="delay_req", value=100)
+  nfpa = nffg.add_nf(id="NfpaVhost", name="NfpaVhost", func_type="NfpaVhost",
+                     cpu=2, mem=4, storage=0)
+  nfpa.add_metadata(name="bw_req", value=0)
+  nfpa.add_metadata(name="delay_req", value=100)
+  nfpa2 = nffg.add_nf(id="NfpaVhost2", name="NfpaVhost2",
+                      func_type="NfpaVhost2",
+                      cpu=2, mem=4, storage=0)
+  nfpa2.add_metadata(name="bw_req", value=0)
+  nfpa2.add_metadata(name="delay_req", value=100)
+  # l2fdw
+  nffg.add_sglink(src_port=sap84.add_port(2), dst_port=l2fwd.add_port(1),
+                  id=11, flowclass="eth_type=2048,ip_proto=17,udp_dst=8900")
+  nffg.add_sglink(src_port=l2fwd.ports[1], dst_port=sap84.ports[2],
+                  id=12)
+  # l2fdw2
+  nffg.add_sglink(src_port=sap84.add_port(2), dst_port=l2fwd2.add_port(2),
+                  id=17, flowclass="eth_type=2048,ip_proto=17,udp_dst=8901")
+  nffg.add_sglink(src_port=l2fwd2.ports[2], dst_port=sap84.ports[2],
+                  id=18)
+  # nfpa
+  nffg.add_sglink(src_port=sap85.add_port(2), dst_port=nfpa.add_port(1),
+                  id=13, flowclass="eth_type=2048,ip_proto=17,udp_dst=8900")
+  nffg.add_sglink(src_port=nfpa.ports[1], dst_port=sap85.ports[2],
+                  id=14)
+  # nfpa2
+  nffg.add_sglink(src_port=sap85.ports[2], dst_port=nfpa2.add_port(2),
+                  id=15, flowclass="eth_type=2048,ip_proto=17,udp_dst=8901")
+  nffg.add_sglink(src_port=nfpa2.ports[2], dst_port=sap85.ports[2],
+                  id=16)
   return nffg
 
 
@@ -1601,7 +1703,8 @@ if __name__ == "__main__":
   # nffg = generate_etsi_req4b2b_robot1()
   # nffg = generate_etsi_req_robot1_simple()
   # nffg = generate_mn_topo_etsi()
-  nffg = generate_req_verification()
+  # nffg = generate_req_verification()
+  nffg = generate_ietf_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()

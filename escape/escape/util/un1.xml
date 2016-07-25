@@ -1,0 +1,89 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>tenant-1-virtualizer</id>
+	<name>Local Orchestrator Test Upper View</name>
+	<nodes>
+		<node>
+			<id>1</id>
+			<name>Tenant 1 BisBis Node</name>
+			<type>BisBis</type>
+			<ports>
+				<port>
+					<id>1</id>
+					<name>SAP75</name>
+					<port_type>port-sap</port_type>
+					<sap>SAP75</sap>
+				</port>
+				<port>
+					<id>2</id>
+					<name>SAP85</name>
+					<port_type>port-sap</port_type>
+				</port>
+			</ports>
+			<links>
+				<link>
+					<id>1-to-2-link</id>
+					<name>1 To 2 Link</name>
+					<src>../../../ports/port[id=1]</src>
+					<dst>../../../ports/port[id=2]</dst>
+					<resources>
+						<delay>1</delay>
+						<bandwidth>100</bandwidth>
+					</resources>
+				</link>
+				<link>
+					<id>2-to-1-link</id>
+					<name>2 To 1 Link</name>
+					<src>../../../ports/port[id=2]</src>
+					<dst>../../../ports/port[id=1]</dst>
+					<resources>
+						<delay>1</delay>
+						<bandwidth>100</bandwidth>
+					</resources>
+				</link>
+			</links>
+			<resources>
+				<cpu>12</cpu>
+				<mem>64</mem>
+				<storage>100</storage>
+			</resources>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<id>BngNfId</id>
+						<type>lsi</type>
+					</node>
+					<node>
+						<id>EPGNfId</id>
+						<type>lsi</type>
+					</node>
+					<node>
+						<id>EchoNfId</id>
+						<type>lsi</type>
+					</node>
+					<node>
+						<id>GenericLSIId</id>
+						<type>lsi</type>
+					</node>
+					<node>
+						<id>NATDockerId</id>
+						<type>docker-ivshmem</type>
+					</node>
+					<node>
+						<id>NATIvsh</id>
+						<type>kvm-ivshmem</type>
+					</node>
+					<node>
+						<id>NATKVMVhostId</id>
+						<type>kvm-vhost</type>
+					</node>
+					<node>
+						<id>NfpaVhost</id>
+						<type>NfpaVhost</type>
+					</node>
+				</supported_NFs>
+			</capabilities>
+		</node>
+	</nodes>
+	<version>2016-07-08; compiled at 2016-07-08  19:29:40</version>
+</virtualizer>
