@@ -58,7 +58,7 @@ function install_core {
     info "================================="
     echo "ESCAPEv2 version: 2.0.0"
     info "=== Checkout submodules ==="
-    git submodule update --init --recursive --merge
+    git submodule update --init --remote --recursive --merge
     # Remove ESCAPEv2 config file from index in git to untrack changes
     git update-index --assume-unchanged escape.config
 
@@ -76,7 +76,6 @@ function install_core {
     info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
     sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
 
-
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install Java 8 explicitly
@@ -87,8 +86,11 @@ function install_core {
     sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
+    info "=== Install ESCAPEv2 Python dependencies ==="
     sudo -H pip install cryptography==1.3.1
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
+    # Update setuptools explicitly to workaround a bug related to 3.x.x version
+    sudo -H pip install --upgrade setuptools
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
