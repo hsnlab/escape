@@ -686,7 +686,7 @@ class InternalDomainManager(AbstractDomainManager):
       if 0 < vlan_id < 4095 and vlan_id not in self.vlan_register.itervalues():
         self.vlan_register[abstract_id] = vlan_id
         log.debug(
-          "Abstract ID a valid not-taken VLAN ID! Register %s ==> %s" % (
+          "Abstract ID is a valid not-taken VLAN ID! Register %s ==> %s" % (
             abstract_id, vlan_id))
         return vlan_id
     except ValueError:
