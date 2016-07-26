@@ -79,7 +79,7 @@
   ], 
   "node_saps": [
     {
-      "id": "sap2", 
+      "id": "SAP2",
       "name": "SAP2", 
       "ports": [
         {
@@ -88,7 +88,7 @@
       ]
     }, 
     {
-      "id": "sap1", 
+      "id": "SAP1",
       "name": "SAP1", 
       "ports": [
         {
@@ -117,7 +117,7 @@
       "id": 2, 
       "src_node": "webserver1", 
       "src_port": 0, 
-      "dst_node": "sap2", 
+      "dst_node": "SAP2",
       "dst_port": 1, 
       "flowclass": "dl_type=0x0806,dl_dst=00:00:00:00:00:02"
     }, 
@@ -125,7 +125,7 @@
       "id": 1, 
       "src_node": "webserver1", 
       "src_port": 0, 
-      "dst_node": "sap1", 
+      "dst_node": "SAP1",
       "dst_port": 1, 
       "flowclass": "dl_type=0x0806,dl_dst=00:00:00:00:00:01"
     }, 
@@ -146,14 +146,14 @@
     }, 
     {
       "id": 21, 
-      "src_node": "sap2", 
+      "src_node": "SAP2",
       "src_port": 1, 
       "dst_node": "webserver1", 
       "dst_port": 0
     }, 
     {
       "id": 11, 
-      "src_node": "sap1", 
+      "src_node": "SAP1",
       "src_port": 1, 
       "dst_node": "webserver1", 
       "dst_port": 0
@@ -162,7 +162,7 @@
       "id": 15, 
       "src_node": "decomp", 
       "src_port": 1, 
-      "dst_node": "sap1", 
+      "dst_node": "SAP1",
       "dst_port": 1, 
       "flowclass": "dl_type=0x0800,nw_dst=10.0.0.1"
     }, 
@@ -170,7 +170,7 @@
       "id": 23, 
       "src_node": "decomp", 
       "src_port": 1, 
-      "dst_node": "sap2", 
+      "dst_node": "SAP2",
       "dst_port": 1, 
       "flowclass": "dl_type=0x0800,nw_dst=10.0.0.2"
     }
@@ -178,9 +178,9 @@
   "edge_reqs": [
     {
       "id": "e1cd02fa-26a4-11e6-a290-28b2bd3b0029", 
-      "src_node": "sap1", 
+      "src_node": "SAP1",
       "src_port": 1, 
-      "dst_node": "sap1", 
+      "dst_node": "SAP1",
       "dst_port": 1, 
       "delay": 100, 
       "bandwidth": 1, 

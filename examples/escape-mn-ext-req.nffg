@@ -59,7 +59,7 @@
   ],
   "node_saps": [
     {
-      "id": "sap4",
+      "id": "SAP4",
       "name": "SAP4",
       "ports": [
         {
@@ -68,7 +68,7 @@
       ]
     },
     {
-      "id": "sap3",
+      "id": "SAP3",
       "name": "SAP3",
       "ports": [
         {
@@ -80,7 +80,7 @@
   "edge_sg_nexthops": [
     {
       "id": 4,
-      "src_node": "sap4",
+      "src_node": "SAP4",
       "src_port": 1,
       "dst_node": "fwd",
       "dst_port": 1
@@ -96,19 +96,19 @@
       "id": 5,
       "src_node": "fwd",
       "src_port": 1,
-      "dst_node": "sap3",
+      "dst_node": "SAP3",
       "dst_port": 1
     },
     {
       "id": 3,
       "src_node": "decomp",
       "src_port": 1,
-      "dst_node": "sap4",
+      "dst_node": "SAP4",
       "dst_port": 1
     },
     {
       "id": 1,
-      "src_node": "sap3",
+      "src_node": "SAP3",
       "src_port": 1,
       "dst_node": "comp",
       "dst_port": 1
@@ -117,9 +117,9 @@
   "edge_reqs": [
     {
       "id": 140226658089759,
-      "src_node": "sap4",
+      "src_node": "SAP4",
       "src_port": 1,
-      "dst_node": "sap3",
+      "dst_node": "SAP3",
       "dst_port": 1,
       "delay": 20,
       "bandwidth": 4,
@@ -130,9 +130,9 @@
     },
     {
       "id": 140226658318003,
-      "src_node": "sap3",
+      "src_node": "SAP3",
       "src_port": 1,
-      "dst_node": "sap4",
+      "dst_node": "SAP4",
       "dst_port": 1,
       "delay": 20,
       "bandwidth": 4,

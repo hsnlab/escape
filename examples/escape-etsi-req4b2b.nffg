@@ -102,7 +102,7 @@
   ], 
   "node_saps": [
     {
-      "id": "sap2", 
+      "id": "SAP2",
       "name": "SAP2", 
       "ports": [
         {
@@ -111,7 +111,7 @@
       ]
     }, 
     {
-      "id": "sap1", 
+      "id": "SAP1",
       "name": "SAP1", 
       "ports": [
         {
@@ -132,7 +132,7 @@
       "id": 23, 
       "src_node": "dockernf", 
       "src_port": 3, 
-      "dst_node": "sap2", 
+      "dst_node": "SAP2",
       "dst_port": 1
     }, 
     {
@@ -146,7 +146,7 @@
       "id": 22, 
       "src_node": "webserver1", 
       "src_port": 0, 
-      "dst_node": "sap2", 
+      "dst_node": "SAP2",
       "dst_port": 1, 
       "flowclass": "dl_dst=00:00:00:00:00:02"
     }, 
@@ -167,14 +167,14 @@
     }, 
     {
       "id": 21, 
-      "src_node": "sap2", 
+      "src_node": "SAP2",
       "src_port": 1, 
       "dst_node": "webserver1", 
       "dst_port": 0
     }, 
     {
       "id": 11, 
-      "src_node": "sap1", 
+      "src_node": "SAP1",
       "src_port": 1, 
       "dst_node": "webserver1", 
       "dst_port": 0
@@ -183,16 +183,16 @@
       "id": 16, 
       "src_node": "decomp", 
       "src_port": 1, 
-      "dst_node": "sap1", 
+      "dst_node": "SAP1",
       "dst_port": 1
     }
   ], 
   "edge_reqs": [
     {
       "id": "dc57fef4-168e-11e6-9a71-080027f22527", 
-      "src_node": "sap1", 
+      "src_node": "SAP1",
       "src_port": 1, 
-      "dst_node": "sap1", 
+      "dst_node": "SAP1",
       "dst_port": 1, 
       "delay": 100, 
       "bandwidth": 1, 
