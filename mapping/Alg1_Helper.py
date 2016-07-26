@@ -232,23 +232,23 @@ class MappingManager(object):
     self.log.setLevel(log.getEffectiveLevel())
     # list of tuples of mapping (vnf_id, node_id)
     self.vnf_mapping = []
-    # SAP mapping can be done here based on their names
+    # SAP mapping can be done here based on their ID-s
     try:
       for vnf, dv in req.network.nodes_iter(data=True):
         if dv.type == 'SAP':
-          sapname = dv.name
+          sapid = dv.id
           sapfound = False
           for n, dn in net.network.nodes_iter(data=True):
             if dn.type == 'SAP':
-              if dn.name == sapname:
+              if dn.id == sapid:
                 self.vnf_mapping.append((vnf, n))
                 sapfound = True
                 break
           if not sapfound:
-            self.log.error("No SAP found in network with name: %s" % sapname)
+            self.log.error("No SAP found in network with ID: %s" % sapid)
             raise uet.MappingException(
-              "No SAP found in network with name: %s. SAPs are mapped "
-              "exclusively by their names." % sapname,
+              "No SAP found in network with ID: %s. SAPs are mapped "
+              "exclusively by their ID-s." % sapid,
               backtrack_possible = False)
     except AttributeError as e:
       raise uet.BadInputException("Node data with name %s" % str(e),
