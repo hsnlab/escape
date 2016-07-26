@@ -304,9 +304,10 @@ class InternalDomainManager(AbstractDomainManager):
                     "Skip deletion..." % nf_id)
           result = False
           continue
-        except NCClientError:
+        except NCClientError as e:
           log.error("Got NETCONF RPC communication error during NF: %s "
                     "deletion! Skip deletion..." % nf_id)
+          log.log(VERBOSE, "Exception: %s" % e)
           result = False
           continue
     log.debug("NF deletion result: %s" % ("SUCCESS" if result else "FAILURE"))
@@ -398,9 +399,10 @@ class InternalDomainManager(AbstractDomainManager):
             self.remoteAdapter.__class__.__name__, updated))
         try:
           vnf = self.remoteAdapter.deployNF(**params)
-        except NCClientError:
+        except NCClientError as e:
           log.error("Got NETCONF RPC communication error during NF: %s "
                     "deploy! Skip deploy..." % nf.id)
+          log.log(VERBOSE, "Exception: %s" % e)
           result = False
           continue
         except BaseException:
