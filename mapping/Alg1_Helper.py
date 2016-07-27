@@ -31,11 +31,11 @@ log = logging.getLogger("mapping")
 DEFAULT_LOG_LEVEL = logging.DEBUG
 # print "effective level", log.getEffectiveLevel()
 # print "log level", log.level
-if log.getEffectiveLevel() > DEFAULT_LOG_LEVEL:
-  logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
-  log.setLevel(DEFAULT_LOG_LEVEL)
-# print "effective level", log.getEffectiveLevel()
-# print "log level", log.level
+# ESCAPE uses INFO and DEBUG levels. The default level of a logger is WARNING.
+if log.getEffectiveLevel() >= logging.WARNING:
+  # If the RootLogger is not configured, setup a basic config here
+  logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s',
+                      level=DEFAULT_LOG_LEVEL)
 
 def retrieveFullDistMtx (dist, G_full):
   # this fix access latency is used by CarrierTopoBuilder.py
@@ -150,7 +150,7 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
     return dict(dist)
 
 
-def shortestPathsBasedOnEdgeWeight (G, source, weight='weight', target=None, 
+def shortestPathsBasedOnEdgeWeight (G, source, weight='weight', target=None,
                                     cutoff=None):
   """Taken and modified from NetworkX source code,
   the function originally 'was single_source_dijkstra',
@@ -274,7 +274,7 @@ class MappingManager(object):
       if c['delay'] is None:
         c['delay'] = self.overall_highest_delay
     self.chain_subchain.add_nodes_from(
-      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay'], 
+      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay'],
                  'chain': c['chain'], 'link_ids': c['link_ids']}) \
       for c in chains)
 
@@ -590,7 +590,7 @@ class MappingManager(object):
     else:
       return 0
 
-  def calcDelayPrefValues (self, hosts, vnf1, vnf2, reqlid, cid, subg, 
+  def calcDelayPrefValues (self, hosts, vnf1, vnf2, reqlid, cid, subg,
                            node_id):
     """
     Sorts potential hosts in the network based on a composite key:
@@ -602,7 +602,7 @@ class MappingManager(object):
     """
     # should always be mapped already
     log.debug("Calculating latency preference values for placing VNF %s."%vnf2)
-    strictest_cid = min(self.chain_subchain[cid].keys(), 
+    strictest_cid = min(self.chain_subchain[cid].keys(),
                         key=lambda sc, graph=self.chain_subchain: \
                         graph.node[sc]['avail_latency'])
     end_sap = None
@@ -620,8 +620,8 @@ class MappingManager(object):
     else:
       end_sap = self.chain_subchain.node[strictest_cid]['chain'][-1]
     chainend = self.getIdOfChainEnd_fromNetwork(end_sap)
-    paths, _ = shortestPathsBasedOnEdgeWeight(subg, node_id, 
-                                                    weight='delay', 
+    paths, _ = shortestPathsBasedOnEdgeWeight(subg, node_id,
+                                                    weight='delay',
                                                     target=chainend)
     sh_path = paths[chainend]
     sh_path_lat = self.shortest_paths_lengths[node_id][chainend]
