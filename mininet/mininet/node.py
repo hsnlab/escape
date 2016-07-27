@@ -1247,7 +1247,7 @@ class NetconfAgent( Agent ):
     # class variable: next netconf port to be used
     nextPort = 830
     # similarly for VNF control ports
-    nextMinPort = 8001
+    nextMinPort = 9001
     defaultPorts = 10
 
     def __init__( self, name, opts='', agentPort=None, minPort=None,
