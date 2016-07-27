@@ -47,7 +47,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :return: mapped Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
-    log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" % (
+    log.info("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
     if graph is None:
       log.error("Missing request NFFG! Abort mapping process...")
@@ -64,9 +64,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-ros-mapped"
-      log.debug(
-        "Mapping algorithm: %s is finished on NF-FG: %s" % (
-          cls.__name__, graph))
+      log.info("Mapping algorithm: %s is finished on NF-FG: %s" %
+               (cls.__name__, graph))
       # print mapped_nffg.dump()
       return mapped_nffg
     except MappingException as e:

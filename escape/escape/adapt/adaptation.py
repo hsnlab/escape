@@ -483,7 +483,7 @@ class ControllerAdapter(object):
         continue
       # Explicit domain update
       self.DoVManager.update_domain(domain=domain, nffg=part)
-    log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
+    log.info("NF-FG installation is finished by %s" % self.__class__.__name__)
     # Post-mapping steps
     if mapping_result:
       log.info("All installation process has been finished with success! ")

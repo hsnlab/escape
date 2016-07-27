@@ -92,7 +92,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
           # Return with the original request
           return nffg
         else:
-          log.info("Request check: detected valid content!")
+          log.info("Request check: detected valid NFFG content!")
         try:
           # Run Nf-FG mapping orchestration
           mapped_nffg = self.mapper.orchestrate(nffg, global_view)

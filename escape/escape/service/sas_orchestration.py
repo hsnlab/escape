@@ -96,7 +96,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
           # Return with the original request
           return sg
         else:
-          log.info("Request check: detected valid content!")
+          log.info("Request check: detected valid NFFG content!")
         try:
           # Run orchestration before service mapping algorithm
           mapped_nffg = self.mapper.orchestrate(sg, virtual_view)

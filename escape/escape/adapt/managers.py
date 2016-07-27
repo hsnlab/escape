@@ -391,7 +391,8 @@ class InternalDomainManager(AbstractDomainManager):
           result = False
           continue
         # Save last used adapter --> and last RPC result
-        log.debug("Initiating NF: %s with params: %s" % (nf.id, params))
+        log.info("Initiating NF: %s ..." % nf.id)
+        log.debug("NF parameters: %s" % params)
         updated = self.remoteAdapter.update_connection_params(
           **connection_params)
         if updated:
@@ -428,7 +429,7 @@ class InternalDomainManager(AbstractDomainManager):
         # Store NETCONF related info of deployed NF
         self.deployed_vnfs[(infra.id, nf.id)] = vnf['initiated_vnfs']
         # Add initiated NF to topo description
-        log.info("Update Infrastructure layer topology description...")
+        log.debug("Update Infrastructure layer topology description...")
         deployed_nf = nf.copy()
         deployed_nf.ports.clear()
         mn_topo.add_nf(nf=deployed_nf)
@@ -658,7 +659,7 @@ class InternalDomainManager(AbstractDomainManager):
               return
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match, action)
-    log.debug("Flowrule deploy result: %s" %
+    log.info("Flowrule deploy result: %s" %
               ("SUCCESS" if result else "FAILURE"))
     log.log(VERBOSE,
             "Registered VLAN IDs: %s" % pprint.pformat(self.vlan_register))
@@ -918,7 +919,7 @@ class SDNDomainManager(AbstractDomainManager):
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match=match,
                                                action=action)
-    log.debug("Flowrule deploy result: %s" %
+    log.info("Flowrule deploy result: %s" %
               ("SUCCESS" if result else "FAILURE"))
     return result
 

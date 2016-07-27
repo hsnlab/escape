@@ -714,7 +714,7 @@ class ESCAPENetworkBuilder(object):
       with open(path, 'r') as f:
         log.info("Load topology from file: %s" % path)
         if format == self.DEFAULT_NFFG_FORMAT:
-          log.info("Using file format: %s" % format)
+          log.debug("Using file format: %s" % format)
           self.__init_from_NFFG(nffg=NFFG.parse(f.read()))
         else:
           raise TopologyBuilderException("Unsupported file format: %s!" %
@@ -1021,16 +1021,16 @@ class ESCAPENetworkBuilder(object):
     # Load topology
     try:
       if topo is None:
-        log.info("Get Topology description from CONFIG...")
+        log.debug("Get Topology description from CONFIG...")
         self.__init_from_CONFIG()
       elif isinstance(topo, NFFG):
-        log.info("Get Topology description from given NFFG...")
+        log.debug("Get Topology description from given NFFG...")
         self.__init_from_NFFG(nffg=topo)
       elif isinstance(topo, basestring) and topo.startswith('/'):
-        log.info("Get Topology description from given file...")
+        log.debug("Get Topology description from given file...")
         self.__init_from_file(path=topo)
       elif isinstance(topo, AbstractTopology):
-        log.info("Get Topology description based on Topology class...")
+        log.debug("Get Topology description based on Topology class...")
         self.__init_from_AbstractTopology(topo_class=topo)
       else:
         raise TopologyBuilderException(
