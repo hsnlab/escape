@@ -414,6 +414,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :param event: event object
     """
     log.info("Resource Orchestration Sublayer is going down...")
+    self.resource_orchestrator.finalize()
     if self._agent or self._rosapi:
       log.debug("REST-API: %s is shutting down..." % self.ros_api.api_id)
       # self.ros_api.stop()

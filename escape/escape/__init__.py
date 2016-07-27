@@ -306,7 +306,8 @@ cfg = {
           "class": "FallbackDynamicTopology"
         },
       "SAP-xterms": True,
-      "SHUTDOWN-CLEAN": True
+      "SHUTDOWN-CLEAN": True,
+      "manage-neo4j-service": True
     },
   "additional-config-file": "escape.config",  # relative to project root
   "visualization":

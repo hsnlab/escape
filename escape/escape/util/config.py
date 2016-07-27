@@ -723,6 +723,18 @@ class ESCAPEConfig(object):
     except (KeyError, AttributeError, TypeError):
       return True
 
+  def get_manage_neo4j_service (self):
+    """
+    Return the value if neo4j needs to be managed by ESCAPE.
+
+    :return: manage_neo4j_service
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[INFR]["manage-neo4j-service"]
+    except (KeyError, AttributeError, TypeError):
+      return False
+
   def get_Controller_params (self):
     """
     Return the additional parameter which are forwarded to the constructor of

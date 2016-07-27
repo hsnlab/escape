@@ -421,3 +421,15 @@ def remove_units (raw):
   :rtype : int
   """
   return filter(lambda x: x.isdigit(), raw)
+
+
+def check_service_status (name):
+  status_all = run_cmd("sudo service --status-all")
+  for line in status_all.splitlines():
+    status, service = line.split(']')
+    if name == service.strip():
+      if "+" in status:
+        return True
+      else:
+        return False
+  return False
