@@ -18,7 +18,7 @@ from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
 from escape.nffg_lib.nffg_elements import NodeInfra
-from escape.util.misc import quit_with_error, get_ifaces
+from escape.util.misc import quit_with_error, get_ifaces, remove_junks_at_boot
 from mininet.link import TCLink, Intf
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
@@ -407,13 +407,13 @@ class ESCAPENetworkBridge(object):
       for term in self.xterms:
         os.killpg(term.pid, signal.SIGTERM)
       # Schedule a cleanup as a coop task to avoid threading issues
-      from escape.util.misc import remove_junks
+      from escape.util.misc import remove_junks_at_shutdown
       # call_as_coop_task(remove_junks, log=log)
       # threading.Thread(target=remove_junks, name="cleanup", args=(log,
       # )).start()
       # multiprocessing.Process(target=remove_junks, name="cleanup",
       #                         args=(log,)).start()
-      remove_junks(log=log)
+      remove_junks_at_shutdown(log=log)
 
   def get_agent_to_switch (self, switch_name):
     """
@@ -1018,6 +1018,7 @@ class ESCAPENetworkBuilder(object):
     :rtype: :any:`ESCAPENetworkBridge`
     """
     log.debug("Init emulated topology based on Mininet v%s" % MNVERSION)
+    remove_junks_at_boot(log=log)
     # Load topology
     try:
       if topo is None:

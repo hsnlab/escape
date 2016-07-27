@@ -89,9 +89,10 @@ def main ():
       print "Cleanup process requires root privilege!"
       return
     else:
-      print "Run cleaning process..."
-      from misc import remove_junks
-      remove_junks()
+      print "Run full cleaning process..."
+      from misc import remove_junks_at_shutdown, remove_junks_at_boot
+      remove_junks_at_shutdown()
+      remove_junks_at_boot()
       print "Cleaned."
       return
 
