@@ -228,19 +228,19 @@ EOF
     make -j${CPU}
     sudo make install
 
-    info "=== Install clicky for graphical VNF management ==="
     # sudo apt-get install libgtk2.0-dev
-    cd apps/clicky
-    autoreconf -i
-    ./configure
-    make -j${CPU}
-    sudo make install
-    cd ${DIR}
-    rm -rf click
+    info "=== Install clicky for graphical VNF management ==="
+#    cd apps/clicky
+#    autoreconf -i
+#    ./configure
+#    make -j${CPU}
+#    sudo make install
+#    cd ${DIR}
+#    rm -rf click
 
     info "=== Install clickhelper.py ==="
     # install clickhelper.py to be available from netconfd
-    sudo ln -vs "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
+    sudo ln -vfs "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
 
     if [ ! -f /usr/bin/mnexec ]; then
         info "=== Pre-installed Mininet not detected! Try to install mn dependencies... ==="
