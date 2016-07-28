@@ -85,11 +85,12 @@ function install_core {
     info "================================="
     echo "ESCAPEv2 version: 2.0.0"
     # Create symlink to the appropriate .gitmodules file
+    info "=== Checkout submodules ==="
+    git submodule update --init --remote --merge
     info "=== Create symlinks for submodules ==="
     cd "$DIR/dummy-orchestrator"
     ln -vfs .gitmodules.unify .gitmodules
     cd "$DIR"
-    info "=== Checkout submodules ==="
     git submodule update --init --remote --recursive --merge
     # Remove ESCAPEv2 config file from index in git to untrack changes
     git update-index --assume-unchanged escape.config
