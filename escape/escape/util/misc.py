@@ -299,7 +299,7 @@ def remove_junks_at_shutdown (log=logging.getLogger("cleanup")):
     if veth != '':
       run_cmd(r"sudo ip link del %s" % veth)
   log.debug("Remove remained xterms and stacked netconfd sockets...")
-  run_cmd("sudo pkill -f 'xterm -title SAP'")
+  run_cmd("sudo pkill -f '%s'" % 'xterm -title "SAP')
   # os.system("sudo pkill -f 'xterm -title SAP'")
   log.debug("Cleanup any Mininet-specific junk...")
   # Call Mininet's own cleanup stuff
