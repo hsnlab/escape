@@ -757,7 +757,7 @@ class NFIBManager(object):
 
     log.debug("Detected Neo4j service name: %s" % self.service_name)
     if check_service_status(self.service_name):
-      log.debug("%s service is already running...")
+      log.debug("%s service is already running..." % self.service_name)
     else:
       log.debug("Starting service: %s..." % self.service_name)
       ret = run_cmd('sudo service %s start' % self.service_name)
