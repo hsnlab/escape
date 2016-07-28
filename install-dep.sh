@@ -121,10 +121,10 @@ function install_core {
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     info "=== Install ESCAPEv2 Python dependencies ==="
+    sudo -H pip install --upgrade setuptools
     sudo -H pip install cryptography==1.3.1
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
-    sudo -H pip install --upgrade setuptools
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
@@ -164,7 +164,7 @@ function install_mn_dep {
     if [ "$DISTRIB_VER" = "14.04" ]; then
         info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
         # Only works with OpenSSH_6.6.1p1 and tested on Ubuntu 14.04
-        sudo sh -c 'echo "Match Host *,!localhost\n  DenyUsers  mininet" >> /etc/ssh/sshd_config'
+        sudo sh -c 'echo "# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet" | tee -a /etc/ssh/sshd_config'
     else
         warn "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
     fi
@@ -229,14 +229,16 @@ EOF
     sudo make install
 
     # sudo apt-get install libgtk2.0-dev
-    info "=== Install clicky for graphical VNF management ==="
+#    info "=== Install clicky for graphical VNF management ==="
 #    cd apps/clicky
 #    autoreconf -i
 #    ./configure
 #    make -j${CPU}
 #    sudo make install
-#    cd ${DIR}
-#    rm -rf click
+
+    # Remove click codes
+    # cd ${DIR}
+    # rm -rf click
 
     info "=== Install clickhelper.py ==="
     # install clickhelper.py to be available from netconfd
