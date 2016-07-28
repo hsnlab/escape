@@ -2,17 +2,17 @@
 # Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
 # Install Python and system-wide packages, required programs and configurations
 # for ESCAPEv2 on pre-installed Mininet VM
-# Tested on: mininet-2.1.0p2-140718-ubuntu-14.04-server-amd64 and Ubuntu 16.04
+# Tested on: Ubuntu 14.04.4 LTS and 16.04 LTS
 
-GREEN='\033[0;32m'
+### Initial setup
+
+# Constants for colorful logging
 RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
 NC='\033[0m'
 
-# Component versions
-JAVA_VERSION=7
-NEO4J_VERSION=2.2.7
-
-set -euo pipefail 
+set -euo pipefail
 
 # Fail on error
 trap on_error ERR
@@ -29,27 +29,53 @@ function info() {
     echo -e "${GREEN}$1${NC}"
 }
 
+function warn() {
+    echo -e "\n${YELLOW}WARNING: $1${NC}"
+    read -rsp $'Press ENTER to continue...\n'
+}
+
 function env_setup {
     # Set environment
     set +u
     # If LC_ALL is not set up
-    if [[ ! "$LC_ALL" ]]
-    then
-            if [[ "$LANG" ]]
-        then
-                # Set LC_ALL as LANG
-                info "=== Set environment ==="
-                sudo locale-gen $LANG
-                export LC_ALL=$LANG
-                locale
+    if [[ ! "$LC_ALL" ]]; then
+        if [[ "$LANG" ]]; then
+            # Set LC_ALL as LANG
+            info "=== Set environment ==="
+            sudo locale-gen $LANG
+            export LC_ALL=$LANG
+            locale
         else
              on_error "locale variable: LANG is unset!"
-            fi
+        fi
     fi
     set -u
 }
 
+### Constants
+
+# Component versions
+JAVA_VERSION=7
+NEO4J_VERSION=2.2.7
+
+# Other constants
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+BINDIR=/usr/bin
+MNEXEC=mnexec
+MNUSER=mininet
+MNPASSWD=mininet
+
+# Distributor constants
+if [ -f /etc/lsb-release ]; then
+    DISTRIB_ID=$(lsb_release -si)
+    DISTRIB_VER=$(lsb_release -sr)
+    info "Detected platform is $DISTRIB_ID, version: $DISTRIB_VER!"
+else
+    warn "Detected platform is NOT Ubuntu! This may lead to skip some installation steps!"
+fi
+
+### Menu point functions
 
 function install_core {
     env_setup
@@ -57,8 +83,14 @@ function install_core {
     info "==  Install core dependencies  =="
     info "================================="
     echo "ESCAPEv2 version: 2.0.0"
+    # Create symlink to the appropriate .gitmodules file
     info "=== Checkout submodules ==="
-    git submodule update --init --recursive --merge
+    git submodule update --init --remote --merge
+    info "=== Create symlinks for submodules ==="
+    cd "$DIR/dummy-orchestrator"
+    ln -vfs .gitmodules.unify .gitmodules
+    cd "$DIR"
+    git submodule update --init --remote --recursive --merge
     # Remove ESCAPEv2 config file from index in git to untrack changes
     git update-index --assume-unchanged escape.config
 
@@ -66,16 +98,17 @@ function install_core {
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
     sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list"
 
-    if [[ ! $(sudo apt-cache search openjdk-${JAVA_VERSION}-jdk) ]]
-    then
+    sudo apt-get -y install software-properties-common
+
+    if [[ ! $(sudo apt-cache search openjdk-${JAVA_VERSION}-jdk) ]]; then
         info "=== Add OpenJDK repository and install Java $JAVA_VERSION ==="
-        sudo apt-get -y install software-properties-common
         sudo add-apt-repository -y ppa:openjdk-r/ppa
     fi
 
-    info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
-    sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
-
+    if [ "$DISTRIB_ID" = "Ubuntu" ]; then
+        info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
+        sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
+    fi
 
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
@@ -87,18 +120,19 @@ function install_core {
     sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
+    info "=== Install ESCAPEv2 Python dependencies ==="
+    sudo -H pip install --upgrade setuptools
     sudo -H pip install cryptography==1.3.1
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
+    # Update setuptools explicitly to workaround a bug related to 3.x.x version
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
-    if [ -f /etc/neo4j/neo4j.conf ]
-    then
+    if [ -f /etc/neo4j/neo4j.conf ]; then
         # neo4j >= 3.0
         sudo sed -i /dbms\.security\.auth_enabled=false/s/^#//g /etc/neo4j/neo4j.conf
         sudo service neo4j restart
-    elif [ -f /etc/neo4j/neo4j-server.properties ]
-    then
+    elif [ -f /etc/neo4j/neo4j-server.properties ]; then
         # neo4j <= 2.3.4
         sudo sed -i s/dbms\.security\.auth_enabled=true/dbms\.security\.auth_enabled=false/ /etc/neo4j/neo4j-server.properties
         sudo service neo4j-service restart
@@ -109,10 +143,6 @@ function install_core {
 
 function install_mn_dep {
     env_setup
-    BINDIR=/usr/bin
-    MNEXEC=mnexec
-    MNUSER=mininet
-    MNPASSWD=mininet
     info "=== Install Mininet dependencies ==="
     # Copied from /mininet/util/install.sh
     sudo apt-get install -y gcc make socat psmisc xterm ssh iperf iproute telnet \
@@ -123,8 +153,7 @@ function install_mn_dep {
     cd "$DIR/mininet"
     make mnexec
     sudo install -v ${MNEXEC} ${BINDIR}
-    if id -u ${MNUSER} >/dev/null 2>&1
-    then
+    if id -u ${MNUSER} >/dev/null 2>&1; then
         info "=== User: $MNUSER already exist. Skip user addition... ==="
     else
         info "=== Create user: mininet passwd: mininet for communication over NETCONF ==="
@@ -132,15 +161,12 @@ function install_mn_dep {
         sudo addgroup ${MNUSER} sudo
         echo "$MNUSER:$MNPASSWD" | sudo chpasswd
     fi
-    # Only works on Ubuntu
-    . /etc/lsb-release
-    if [ $DISTRIB_RELEASE = "14.04" ]
-    then
+    if [ "$DISTRIB_VER" = "14.04" ]; then
         info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
         # Only works with OpenSSH_6.6.1p1 and tested on Ubuntu 14.04
-        sudo sh -c 'echo "Match Host *,!localhost\n  DenyUsers  mininet" >> /etc/ssh/sshd_config'
+        sudo sh -c 'echo "# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet" | tee -a /etc/ssh/sshd_config'
     else
-        info "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
+        warn "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
     fi
 }
 
@@ -157,8 +183,7 @@ function install_infra {
     make -i
     sudo make install
 
-    if grep -Fxq "# --- ESCAPEv2 ---" "/etc/ssh/sshd_config"
-    then
+    if grep -Fxq "# --- ESCAPEv2 ---" "/etc/ssh/sshd_config"; then
         info "=== Remove previous ESCAPEv2-related sshd config ==="
         sudo sed -in '/.*ESCAPEv2.*/,/.*ESCAPEv2 END.*/d' "/etc/ssh/sshd_config"
     fi
@@ -203,22 +228,23 @@ EOF
     make -j${CPU}
     sudo make install
 
-    info "=== Install clicky for graphical VNF management ==="
     # sudo apt-get install libgtk2.0-dev
-    cd apps/clicky
-    autoreconf -i
-    ./configure
-    make -j${CPU}
-    sudo make install
-    cd ${DIR}
-    rm -rf click
+#    info "=== Install clicky for graphical VNF management ==="
+#    cd apps/clicky
+#    autoreconf -i
+#    ./configure
+#    make -j${CPU}
+#    sudo make install
+
+    # Remove click codes
+    # cd ${DIR}
+    # rm -rf click
 
     info "=== Install clickhelper.py ==="
     # install clickhelper.py to be available from netconfd
-    sudo ln -vs "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
+    sudo ln -vfs "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
 
-    if [ ! -f /usr/bin/mnexec ]
-    then
+    if [ ! -f /usr/bin/mnexec ]; then
         info "=== Pre-installed Mininet not detected! Try to install mn dependencies... ==="
         install_mn_dep
     fi
@@ -275,13 +301,11 @@ function print_usage {
     exit 2
 }
 
-if [ $# -eq 0 ]
-then
+if [ $# -eq 0 ]; then
     # No param was given
     all
 else
-    while getopts 'acdghi' OPTION
-    do
+    while getopts 'acdghi' OPTION; do
         case ${OPTION} in
         a)  all;;
         c)  install_core;;

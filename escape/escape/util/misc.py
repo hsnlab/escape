@@ -278,7 +278,7 @@ def deprecated (func):
   return newFunc
 
 
-def remove_junks (log=logging.getLogger("cleanup")):
+def remove_junks_at_shutdown (log=logging.getLogger("cleanup")):
   if os.geteuid() != 0:
     log.error("Cleanup process requires root privilege!")
     return
@@ -298,16 +298,25 @@ def remove_junks (log=logging.getLogger("cleanup")):
   for veth in veths[::2]:
     if veth != '':
       run_cmd(r"sudo ip link del %s" % veth)
-  log.debug("Remove remained tmp files, xterms, stacked netconfd sockets...")
-  for f in os.listdir('/tmp'):
-    if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
-      os.remove(os.path.join('/tmp/', f))
-  run_cmd("sudo pkill -f 'xterm -title SAP'")
+  log.debug("Remove remained xterms and stacked netconfd sockets...")
+  run_cmd("sudo pkill -f '%s'" % 'xterm -title "SAP')
   # os.system("sudo pkill -f 'xterm -title SAP'")
   log.debug("Cleanup any Mininet-specific junk...")
   # Call Mininet's own cleanup stuff
   from mininet.clean import cleanup
   cleanup()
+
+
+def remove_junks_at_boot (log=logging.getLogger("cleanup")):
+  if os.geteuid() != 0:
+    log.error("Cleanup process requires root privilege!")
+    return
+  log.debug("Remove remained log files of VNF, agent and netconfd instances "
+            "from previous run...")
+  run_cmd('rm -f /tmp/*.log')
+  for f in os.listdir('/tmp'):
+    if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
+      os.remove(os.path.join('/tmp/', f))
 
 
 def get_ifaces ():
@@ -400,3 +409,27 @@ def unicode_to_str (raw):
     return raw.encode('utf-8').replace(' ', '_')
   else:
     return raw
+
+
+def remove_units (raw):
+  """
+  Remove units from resource values.
+
+  :param raw: raw resource value
+  :type raw: str
+  :return: resource value
+  :rtype : int
+  """
+  return filter(lambda x: x.isdigit(), raw)
+
+
+def check_service_status (name):
+  status_all = run_cmd("sudo service --status-all")
+  for line in status_all.splitlines():
+    status, service = line.split(']')
+    if name == service.strip():
+      if "+" in status:
+        return True
+      else:
+        return False
+  return False

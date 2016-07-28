@@ -1,19 +1,20 @@
 {
   "parameters": {
     "id": "INTERNAL", 
-    "name": "Internal-Mininet-Topology-ETSI", 
+    "name": "Internal-Mininet-Topology-Domain1", 
     "version": "1.0"
   }, 
   "node_saps": [
     {
-      "id": "SAP14", 
-      "name": "SAP14", 
+      "id": "SAP12", 
+      "name": "SAP12", 
       "ports": [
         {
-          "id": 1
+          "id": 1,
+	  "name": "SAP12" 
         }
       ], 
-      "binding": "eth0"
+      "binding": "eth2"
     }, 
     {
       "id": "SAP1", 
@@ -21,6 +22,7 @@
       "ports": [
         {
           "id": 1,
+	  "name": "SAP1", 
           "property" : {
 	    "ip": "10.0.0.1/24",
 	    "mac": "00:00:00:00:00:01"
@@ -34,6 +36,7 @@
       "ports": [
         {
           "id": 1,
+	  "name": "SAP2", 
           "property" : {
 	    "ip": "10.0.0.2/24",
 	    "mac": "00:00:00:00:00:02"
@@ -206,10 +209,10 @@
   ], 
   "edge_links": [
     {
-      "id": "mn-link-gw-sap14", 
+      "id": "mn-link-gw-sap12", 
       "src_node": "GW", 
       "src_port": 2, 
-      "dst_node": "SAP14", 
+      "dst_node": "SAP12", 
       "dst_port": 1, 
       "delay": 1.5, 
       "bandwidth": 10

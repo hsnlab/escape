@@ -13,7 +13,7 @@
           "id": 1
         }
       ],
-      "domain": "eth0",
+      "binding": "eth0",
       "delay": 1.5,
       "bandwidth": 10
     },
@@ -23,9 +23,9 @@
       "ports": [
         {
           "id": 1,
-          "property" : {
-	    "ip": "10.0.0.1/24",
-	    "mac": "00:00:00:00:00:01"
+          "property": {
+            "ip": "10.0.0.1/24",
+            "mac": "00:00:00:00:00:01"
           }
         }
       ]
@@ -36,9 +36,9 @@
       "ports": [
         {
           "id": 1,
-          "property" : {
-	    "ip": "10.0.0.2/24",
-	    "mac": "00:00:00:00:00:02"
+          "property": {
+            "ip": "10.0.0.2/24",
+            "mac": "00:00:00:00:00:02"
           }
         }
       ]
@@ -83,8 +83,8 @@
         },
         {
           "id": 4,
-          "property" : {
-	    "type": "inter-domain"
+          "property": {
+            "type": "inter-domain"
           }
         }
       ],

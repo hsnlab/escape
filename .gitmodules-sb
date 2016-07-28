@@ -1,0 +1,8 @@
+[submodule "unify_virtualizer"]
+	path = unify_virtualizer
+	url = ssh://git@sb.tmit.bme.hu:42322/unify/virtualizer.git
+	branch = master
+[submodule "dummy-orchestrator"]
+	path = dummy-orchestrator
+	url = ssh://git@sb.tmit.bme.hu:42322/unify/dummy-orchestrator.git
+	branch = master

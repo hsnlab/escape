@@ -151,7 +151,7 @@ class InternalDomainManager(AbstractDomainManager):
                 "Skip SAP data discovery.")
     for sap in topo.saps:
       # skip inter-domain SAPs
-      if sap.domain is not None:
+      if sap.binding is not None:
         continue
       connected_node = [(v, link.dst.id) for u, v, link in
                         topo.real_out_edges_iter(sap.id)]
@@ -304,9 +304,10 @@ class InternalDomainManager(AbstractDomainManager):
                     "Skip deletion..." % nf_id)
           result = False
           continue
-        except NCClientError:
+        except NCClientError as e:
           log.error("Got NETCONF RPC communication error during NF: %s "
                     "deletion! Skip deletion..." % nf_id)
+          log.log(VERBOSE, "Exception: %s" % e)
           result = False
           continue
     log.debug("NF deletion result: %s" % ("SUCCESS" if result else "FAILURE"))
@@ -390,7 +391,8 @@ class InternalDomainManager(AbstractDomainManager):
           result = False
           continue
         # Save last used adapter --> and last RPC result
-        log.debug("Initiating NF: %s with params: %s" % (nf.id, params))
+        log.info("Initiating NF: %s ..." % nf.id)
+        log.debug("NF parameters: %s" % params)
         updated = self.remoteAdapter.update_connection_params(
           **connection_params)
         if updated:
@@ -398,9 +400,10 @@ class InternalDomainManager(AbstractDomainManager):
             self.remoteAdapter.__class__.__name__, updated))
         try:
           vnf = self.remoteAdapter.deployNF(**params)
-        except NCClientError:
+        except NCClientError as e:
           log.error("Got NETCONF RPC communication error during NF: %s "
                     "deploy! Skip deploy..." % nf.id)
+          log.log(VERBOSE, "Exception: %s" % e)
           result = False
           continue
         except BaseException:
@@ -426,7 +429,7 @@ class InternalDomainManager(AbstractDomainManager):
         # Store NETCONF related info of deployed NF
         self.deployed_vnfs[(infra.id, nf.id)] = vnf['initiated_vnfs']
         # Add initiated NF to topo description
-        log.info("Update Infrastructure layer topology description...")
+        log.debug("Update Infrastructure layer topology description...")
         deployed_nf = nf.copy()
         deployed_nf.ports.clear()
         mn_topo.add_nf(nf=deployed_nf)
@@ -656,10 +659,10 @@ class InternalDomainManager(AbstractDomainManager):
               return
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match, action)
-    log.debug("Flowrule deploy result: %s" %
+    log.info("Flowrule deploy result: %s" %
               ("SUCCESS" if result else "FAILURE"))
     log.log(VERBOSE,
-            "Registered VLAN IDs:\n%s" % pprint.pformat(self.vlan_register))
+            "Registered VLAN IDs: %s" % pprint.pformat(self.vlan_register))
     return result
 
   def __process_tag (self, abstract_id):
@@ -684,7 +687,7 @@ class InternalDomainManager(AbstractDomainManager):
       if 0 < vlan_id < 4095 and vlan_id not in self.vlan_register.itervalues():
         self.vlan_register[abstract_id] = vlan_id
         log.debug(
-          "Abstract ID a valid not-taken VLAN ID! Register %s ==> %s" % (
+          "Abstract ID is a valid not-taken VLAN ID! Register %s ==> %s" % (
             abstract_id, vlan_id))
         return vlan_id
     except ValueError:
@@ -916,7 +919,7 @@ class SDNDomainManager(AbstractDomainManager):
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match=match,
                                                action=action)
-    log.debug("Flowrule deploy result: %s" %
+    log.info("Flowrule deploy result: %s" %
               ("SUCCESS" if result else "FAILURE"))
     return result
 

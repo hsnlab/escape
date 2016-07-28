@@ -819,7 +819,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     log.debug(
       "Install flow entry into INFRA: %s on connection: %s ..." % (id, conn))
     conn.send(msg)
-    log.log(VERBOSE, "Sent OpenFlow flowrule:\n%s" % msg)
+    log.log(VERBOSE, "Sent raw OpenFlow flowrule:\n%s" % msg)
 
 
 class VNFStarterAPI(object):

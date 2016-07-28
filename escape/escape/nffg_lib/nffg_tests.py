@@ -1666,6 +1666,50 @@ def generate_sssa_req2 ():
   return nffg
 
 
+def generate_ietf_req ():
+  nffg = NFFG(id="SG-etsi-req", name="SG-etsi-req")
+  sap84 = nffg.add_sap(id="SAP84", name="SAP84")
+  sap85 = nffg.add_sap(id="SAP85", name="SAP85")
+  l2fwd = nffg.add_nf(id="L2fwdVhost", name="L2fwdVhost",
+                      func_type="L2fwdVhost", cpu=2, mem=4, storage=0)
+  l2fwd.add_metadata(name="bw_req", value=0)
+  l2fwd.add_metadata(name="delay_req", value=100)
+  l2fwd2 = nffg.add_nf(id="L2fwdVhost2", name="L2fwdVhost2",
+                       func_type="L2fwdVhost2", cpu=2, mem=4, storage=0)
+  l2fwd2.add_metadata(name="bw_req", value=0)
+  l2fwd2.add_metadata(name="delay_req", value=100)
+  nfpa = nffg.add_nf(id="NfpaVhost", name="NfpaVhost", func_type="NfpaVhost",
+                     cpu=2, mem=4, storage=0)
+  nfpa.add_metadata(name="bw_req", value=0)
+  nfpa.add_metadata(name="delay_req", value=100)
+  nfpa2 = nffg.add_nf(id="NfpaVhost2", name="NfpaVhost2",
+                      func_type="NfpaVhost2",
+                      cpu=2, mem=4, storage=0)
+  nfpa2.add_metadata(name="bw_req", value=0)
+  nfpa2.add_metadata(name="delay_req", value=100)
+  # l2fdw
+  nffg.add_sglink(src_port=sap84.add_port(2), dst_port=l2fwd.add_port(1),
+                  id=11, flowclass="eth_type=2048,ip_proto=17,udp_dst=8900")
+  nffg.add_sglink(src_port=l2fwd.ports[1], dst_port=sap84.ports[2],
+                  id=12)
+  # l2fdw2
+  nffg.add_sglink(src_port=sap84.add_port(2), dst_port=l2fwd2.add_port(2),
+                  id=17, flowclass="eth_type=2048,ip_proto=17,udp_dst=8901")
+  nffg.add_sglink(src_port=l2fwd2.ports[2], dst_port=sap84.ports[2],
+                  id=18)
+  # nfpa
+  nffg.add_sglink(src_port=sap85.add_port(2), dst_port=nfpa.add_port(1),
+                  id=13, flowclass="eth_type=2048,ip_proto=17,udp_dst=8900")
+  nffg.add_sglink(src_port=nfpa.ports[1], dst_port=sap85.ports[2],
+                  id=14)
+  # nfpa2
+  nffg.add_sglink(src_port=sap85.ports[2], dst_port=nfpa2.add_port(2),
+                  id=15, flowclass="eth_type=2048,ip_proto=17,udp_dst=8901")
+  nffg.add_sglink(src_port=nfpa2.ports[2], dst_port=sap85.ports[2],
+                  id=16)
+  return nffg
+
+
 if __name__ == "__main__":
   # test_parse_load()
   # test_NFFG()
@@ -1695,7 +1739,10 @@ if __name__ == "__main__":
   # nffg = generate_mn_topo_etsi()
   # nffg = generate_req_verification()
   # nffg = generate_sssa_req1()
-  nffg = generate_sssa_req2()
+  nffg = generate_ietf_req()
 
-  # print generate_merged_mapped()
+  # pprint(nffg.network.__dict__)
+  # nffg.merge_duplicated_links()
+  # pprint(nffg.network.__dict__)
   print nffg.dump()
+  # print generate_merged_mapped()

@@ -18,7 +18,7 @@ from escape import CONFIG
 from escape.infr import log, LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
 from escape.nffg_lib.nffg_elements import NodeInfra
-from escape.util.misc import quit_with_error, get_ifaces
+from escape.util.misc import quit_with_error, get_ifaces, remove_junks_at_boot
 from mininet.link import TCLink, Intf
 from mininet.net import VERSION as MNVERSION, Mininet, MininetWithControlNet
 from mininet.node import RemoteController, RemoteSwitch
@@ -407,13 +407,13 @@ class ESCAPENetworkBridge(object):
       for term in self.xterms:
         os.killpg(term.pid, signal.SIGTERM)
       # Schedule a cleanup as a coop task to avoid threading issues
-      from escape.util.misc import remove_junks
+      from escape.util.misc import remove_junks_at_shutdown
       # call_as_coop_task(remove_junks, log=log)
       # threading.Thread(target=remove_junks, name="cleanup", args=(log,
       # )).start()
       # multiprocessing.Process(target=remove_junks, name="cleanup",
       #                         args=(log,)).start()
-      remove_junks(log=log)
+      remove_junks_at_shutdown(log=log)
 
   def get_agent_to_switch (self, switch_name):
     """
@@ -578,7 +578,7 @@ class ESCAPENetworkBuilder(object):
               "process in %s!" % (
                 infra.infra_type, infra, self.__class__.__name__), logger=log)
     # Create SAPs - skip the temporary, inter-domain SAPs
-    for sap in {s for s in nffg.saps if not s.domain}:
+    for sap in {s for s in nffg.saps if not s.binding}:
       # Create SAP
       sap_host = self.create_SAP(name=sap.id)
       created_mn_nodes[sap.id] = sap_host
@@ -589,9 +589,9 @@ class ESCAPENetworkBuilder(object):
     for edge in [l for l in nffg.links]:
       # Skip initiation of links which connected to an inter-domain SAP
       if (edge.src.node.type == NFFG.TYPE_SAP and
-              edge.src.node.domain is not None) or (
+              edge.src.node.binding is not None) or (
              edge.dst.node.type == NFFG.TYPE_SAP and
-             edge.dst.node.domain is not None):
+             edge.dst.node.binding is not None):
         continue
       # Create Links
       mn_src_node = created_mn_nodes.get(edge.src.node.id)
@@ -621,12 +621,25 @@ class ESCAPENetworkBuilder(object):
     #  "ports": [{ "id": 1,
     #              "property": ["ip:10.0.10.1/24"] }]
     #
-    for n in {s for s in nffg.saps if not s.domain}:
+    for n in {s for s in nffg.saps if not s.binding}:
       mn_node = self.mn.getNodeByName(n.id)
       for port in n.ports:
         # ip should be something like '10.0.123.1/24'.
-        ip = port.get_property('ip')
-        mac = port.get_property('mac')
+        if len(port.l3):
+          if len(port.l3) == 1:
+            ip = port.l3.container[0].provided
+          else:
+            log.warning(
+              "Multiple L3 address is detected! Skip explicit IP address "
+              "definition...")
+            ip = None
+        else:
+          # or None
+          ip = port.get_property('ip')
+        if port.l2:
+          mac = port.l2
+        else:
+          mac = port.get_property('mac')
         intf = mn_node.intfs.get(port.id)
         if intf is None:
           log.warn(("Port %s of node %s is not connected,"
@@ -638,8 +651,10 @@ class ESCAPENetworkBuilder(object):
           mn_node.params.update({'mac': mac})
         if ip is not None:
           mn_node.setIP(ip, intf=intf)
+          log.debug("Use explicit IP: %s for node: %s" % (ip, n))
         if mac is not None:
           mn_node.setMAC(mac, intf=intf)
+          log.debug("Use explicit MAC: %s for node: %s" % (mac, n))
 
     # For inter-domain SAPs no need to create host/xterm just add the SAP as
     # a port to the border Node
@@ -699,7 +714,7 @@ class ESCAPENetworkBuilder(object):
       with open(path, 'r') as f:
         log.info("Load topology from file: %s" % path)
         if format == self.DEFAULT_NFFG_FORMAT:
-          log.info("Using file format: %s" % format)
+          log.debug("Using file format: %s" % format)
           self.__init_from_NFFG(nffg=NFFG.parse(f.read()))
         else:
           raise TopologyBuilderException("Unsupported file format: %s!" %
@@ -910,7 +925,7 @@ class ESCAPENetworkBuilder(object):
     """
     log.debug("Search for inter-domain SAPs...")
     # Create the inter-domain SAP ports
-    for sap in {s for s in nffg.saps if s.domain is not None}:
+    for sap in {s for s in nffg.saps if s.binding is not None}:
       # NFFG is the raw NFFG without link duplication --> iterate over every
       # edges in or out there should be only one link in this case
       # e = (u, v, data)
@@ -927,23 +942,23 @@ class ESCAPENetworkBuilder(object):
         continue
       log.debug("Detected inter-domain SAP: %s connected to border Node: %s" %
                 (sap, border_node))
-      if sap.delay or sap.bandwidth:
-        log.debug("Detected resource values for inter-domain connection: "
-                  "delay: %s, bandwidth: %s" % (sap.delay, sap.bandwidth))
+      # if sap.delay or sap.bandwidth:
+      #   log.debug("Detected resource values for inter-domain connection: "
+      #             "delay: %s, bandwidth: %s" % (sap.delay, sap.bandwidth))
       sw_name = nffg.network.node[border_node].id
       for sw in self.mn.switches:
         # print sw.name
         if sw.name == sw_name:
-          if sap.domain not in get_ifaces():
+          if sap.binding not in get_ifaces():
             log.warning(
               "Physical interface: %s is not found! Skip binding..."
-              % sap.domain)
+              % sap.binding)
             continue
           log.debug("Add physical port as inter-domain SAP: %s -> %s" %
-                    (sap.domain, sap.id))
+                    (sap.binding, sap.id))
           # Add interface to border switch in Mininet
           # os.system('ovs-vsctl add-port %s %s' % (sw_name, sap.domain))
-          sw.addIntf(intf=Intf(name=sap.domain, node=sw))
+          sw.addIntf(intf=Intf(name=sap.binding, node=sw))
 
   def create_Link (self, src, dst, src_port=None, dst_port=None, **params):
     """
@@ -1003,19 +1018,20 @@ class ESCAPENetworkBuilder(object):
     :rtype: :any:`ESCAPENetworkBridge`
     """
     log.debug("Init emulated topology based on Mininet v%s" % MNVERSION)
+    remove_junks_at_boot(log=log)
     # Load topology
     try:
       if topo is None:
-        log.info("Get Topology description from CONFIG...")
+        log.debug("Get Topology description from CONFIG...")
         self.__init_from_CONFIG()
       elif isinstance(topo, NFFG):
-        log.info("Get Topology description from given NFFG...")
+        log.debug("Get Topology description from given NFFG...")
         self.__init_from_NFFG(nffg=topo)
       elif isinstance(topo, basestring) and topo.startswith('/'):
-        log.info("Get Topology description from given file...")
+        log.debug("Get Topology description from given file...")
         self.__init_from_file(path=topo)
       elif isinstance(topo, AbstractTopology):
-        log.info("Get Topology description based on Topology class...")
+        log.debug("Get Topology description based on Topology class...")
         self.__init_from_AbstractTopology(topo_class=topo)
       else:
         raise TopologyBuilderException(

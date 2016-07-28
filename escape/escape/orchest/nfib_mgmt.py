@@ -22,9 +22,11 @@ import py2neo
 from py2neo import Graph, Relationship, Unauthorized
 from py2neo.packages.httpstream.http import SocketError
 
+from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log
-from escape.util.misc import quit_with_error
+from escape.util.misc import quit_with_error, check_service_status, run_cmd, \
+  VERBOSE
 
 
 class NFIBManager(object):
@@ -42,12 +44,25 @@ class NFIBManager(object):
     log.debug("Init %s based on neo4j" % self.__class__.__name__)
     # Suppress low level logging
     self.__suppress_neo4j_logging()
+    self.service_name = self.__detect_neo4j_service_name()
+    self.__manage_neo4j_service()
     try:
       self.graph_db = Graph()
     except Unauthorized as e:
       quit_with_error(
         "Got Unauthorozed error on: %s from neo4j! Disable the authorization "
         "in /etc/neo4j/neoj4-server.properties!" % e)
+
+  def finalize (self):
+    """
+    Finalize function for the class.
+
+    :return: None
+    """
+    if CONFIG.get_manage_neo4j_service():
+      log.info("Stopping %s service..." % self.service_name)
+      ret = run_cmd('sudo service %s stop' % self.service_name)
+      log.log(VERBOSE, "Neo4j service shutdown status: %s" % ret)
 
   @staticmethod
   def __suppress_neo4j_logging (level=None):
@@ -712,3 +727,41 @@ class NFIBManager(object):
         raise
     except:
       log.exception("Got unexpected error during NFIB initialization!")
+
+  @staticmethod
+  def __detect_neo4j_service_name ():
+    """
+    Detect the name of the neo4j service.
+
+    :return: name of the service
+    :rtype: str
+    """
+    import os.path
+    if os.path.isfile('/etc/neo4j/neo4j.conf'):
+      return "neo4j"
+    elif os.path.isfile('/etc/neo4j/neo4j-server.properties'):
+      return "neo4j-service"
+    else:
+      log.error("No configuration file was found for neo4j service!")
+
+  def __manage_neo4j_service (self):
+    """
+    Manage neo4j service.
+
+    :return: None
+    """
+    if not CONFIG.get_manage_neo4j_service():
+      log.debug("Skip Neo4j service management...")
+      return
+    log.info("Checking Neo4j service status...")
+
+    log.debug("Detected Neo4j service name: %s" % self.service_name)
+    if check_service_status(self.service_name):
+      log.debug("%s service is already running..." % self.service_name)
+    else:
+      log.info("Starting service: %s..." % self.service_name)
+      ret = run_cmd('sudo service %s start' % self.service_name)
+      if "failed" in ret:
+        log.error("Neo4j service initiation status: %s" % ret)
+      else:
+        log.log(VERBOSE, "Neo4j service initiation status: %s" % ret)

@@ -445,29 +445,48 @@ class NFFG(AbstractNFFG):
     self.add_node(nf)
     return nf
 
-  def add_sap (self, sap=None, id=None, name=None, domain=None, delay=None,
-               bandwidth=None):
+  def add_sap (self, sap_obj=None, id=None, name=None, binding=None, sap=None,
+               technology=None, delay=None, bandwidth=None, cost=None,
+               controller=None, orchestrator=None, l2=None, l4=None,
+               metadata=None):
     """
     Add a Service Access Point to the structure.
 
-    :param sap: add this explicit SAP object instead of create one
-    :type sap: :any:`NodeSAP`
+    :param sap_obj: add this explicit SAP object instead of create one
+    :type sap_obj: :any:`NodeSAP`
     :param id: optional id
     :type id: str or int
     :param name: optional name
     :type name: str
-    :param delay: delay property of the Node
+    :param binding: interface binding
+    :type binding: str
+    :param sap: inter-domain SAP identifier
+    :type sap: str
+    :param technology: technology
+    :type technology: str
+    :param delay: delay
     :type delay: float
-    :param bandwidth: bandwidth property of the Node
+    :param bandwidth: bandwidth
     :type bandwidth: float
+    :param cost: cost
+    :type cost: str
+    :param controller: controller
+    :type controller: str
+    :param orchestrator: orchestrator
+    :type orchestrator: str
+    :param l2: l2
+    :param l2: str
+    :param l4: l4
+    :type l4: str
+    :param metadata: metadata related to Node
+    :type metadata: dict
     :return: newly created node
     :rtype: :any:`NodeSAP`
     """
-    if sap is None:
-      sap = NodeSAP(id=id, name=name, domain=domain, delay=delay,
-                    bandwidth=bandwidth)
-    self.add_node(sap)
-    return sap
+    if sap_obj is None:
+      sap_obj = NodeSAP(id=id, name=name, binding=binding, metadata=metadata)
+    self.add_node(sap_obj)
+    return sap_obj
 
   def add_infra (self, infra=None, id=None, name=None, domain=None,
                  infra_type=None, cpu=None, mem=None, storage=None, delay=None,
@@ -824,7 +843,7 @@ class NFFG(AbstractNFFG):
 
     :param node: examined :any:`Node` id
     :type node: str or int
-    :return: iterator over the filtered neighbors
+    :return: iterator over the filtered neighbors (u,v,d)
     :rtype: iterator
     """
     return (data for data in self.network.out_edges_iter(node, data=True)
@@ -1066,12 +1085,23 @@ class NFFGToolBox(object):
           # Create default SAP object attributes
           if port.has_property("sap"):
             sap_id = port.get_property("sap")
+            log.debug("Detected dynamic 'sap' property: %s in port: %s" %
+                      (sap_id, port))
+          elif port.sap is not None:
+            sap_id = port.sap
+            log.debug("Detected static 'sap' value: %s in port: %s" %
+                      (sap_id, port))
           else:
             log.warning(
               "%s is detected as inter-domain port, but 'sap' metadata is not "
               "found! Using 'name' metadata as fallback..." % port)
             sap_id = port.get_property("name")
-          sap_name = port.get_property("name")
+          if port.has_property('name'):
+            sap_name = port.get_property("name")
+            log.debug('Using dynamic name: %s for inter-domain port' % sap_name)
+          else:
+            sap_name = port.name
+            log.debug('Using static name: %s for inter-domain port' % sap_name)
           # Add SAP to splitted NFFG
           if sap_id in nffg:
             log.warning("%s is already in the splitted NFFG. Skip adding..." %
@@ -1079,8 +1109,19 @@ class NFFGToolBox(object):
             continue
           sap = nffg.add_sap(id=sap_id, name=sap_name)
           # Add port to SAP port number(id) is identical with the Infra's port
-          sap_port = sap.add_port(id=port.id,
-                                  properties=port.properties.copy())
+          sap_port = sap.add_port(id=port.id, name=port.name,
+                                  properties=port.properties.copy(),
+                                  sap=port.sap,
+                                  capability=port.capability,
+                                  technology=port.technology,
+                                  delay=port.delay,
+                                  bandwidth=port.bandwidth, cost=port.cost,
+                                  controller=port.controller,
+                                  orchestrator=port.orchestrator, l2=port.l2,
+                                  l4=port.l4,
+                                  metadata=port.metadata.copy())
+          for l3 in port.l3:
+            sap_port.l3.append(l3.copy())
           # Connect SAP to Infra
           nffg.add_undirected_link(port1=port, port2=sap_port)
           log.debug(
@@ -1172,6 +1213,7 @@ class NFFGToolBox(object):
           continue
         # Get inter-domain port in base NFFG
         domain_port_dov = b_links[0].dst
+        sap_port_dov = b_links[0].src
         log.debug("Found inter-domain port: %s" % domain_port_dov)
         # Search outgoing links from SAP, should be only one
         n_links = [l for u, v, l in nffg.real_out_edges_iter(sap_id)]
@@ -1190,50 +1232,52 @@ class NFFGToolBox(object):
         n_id = n_links[0].dst.node.id
         # Get the inter-domain port from already copied Infra
         domain_port_nffg = base.network.node[n_id].ports[p_id]
+        sap_port_nffg = n_links[0].src
         log.debug("Found inter-domain port: %s" % domain_port_nffg)
 
         # If the two resource value does not match
-        if base[sap_id].delay != nffg[sap_id].delay:
-          if base[sap_id].delay is None:
+        if domain_port_dov.delay != domain_port_nffg.delay:
+          if domain_port_dov.delay is None:
             # If first is None the other can not be None
-            s_delay = nffg[sap_id].delay
-          elif nffg[sap_id].delay is None:
+            s_delay = domain_port_nffg.delay
+          elif domain_port_nffg.delay is None:
             # If second is None the other can not be None
-            s_delay = base[sap_id].delay
+            s_delay = domain_port_dov.delay
           else:
             # Both values are valid, but different
+            s_delay = max(domain_port_dov.delay, domain_port_nffg.delay)
             log.warning(
               "Inter-domain delay values (%s, %s) are set but do not match!"
-              " Use first value from base NFFG." % (base[sap_id].delay,
-                                                    nffg[sap_id].delay))
-            s_delay = base[sap_id].delay
+              " Use max: %s" % (domain_port_dov.delay, domain_port_nffg.delay,
+                                s_delay))
         else:
           # Both value match: ether valid values or Nones --> choose first value
-          s_delay = base[sap_id].delay
+          s_delay = domain_port_dov.delay
 
         # If the two resource value does not match
-        if base[sap_id].bandwidth != nffg[sap_id].bandwidth:
-          if base[sap_id].bandwidth is None:
+        if domain_port_dov.bandwidth != domain_port_nffg.bandwidth:
+          if domain_port_dov.bandwidth is None:
             # If first is None the other can not be None
-            s_bandwidth = nffg[sap_id].bandwidth
-          elif nffg[sap_id].bandwidth is None:
+            s_bandwidth = domain_port_nffg.bandwidth
+          elif domain_port_nffg.bandwidth is None:
             # If second is None the other can not be None
-            s_bandwidth = base[sap_id].bandwidth
+            s_bandwidth = domain_port_dov.bandwidth
           else:
             # Both values are valid, but different
+            s_bandwidth = min(domain_port_dov.bandwidth,
+                              domain_port_nffg.bandwidth)
             log.warning(
               "Inter-domain bandwidth values (%s, %s) are set but do not match!"
-              " Use first value from base NFFG." % (base[sap_id].bandwidth,
-                                                    nffg[sap_id].bandwidth))
-            s_bandwidth = base[sap_id].bandwidth
+              " Use min: %s" % (domain_port_dov.bandwidth,
+                                domain_port_nffg.bandwidth, s_bandwidth))
         else:
           # Both value match: ether valid values or Nones --> choose first value
-          s_bandwidth = base[sap_id].bandwidth
+          s_bandwidth = domain_port_dov.bandwidth
 
         log.debug("Detected inter-domain resource values: delay: %s, "
                   "bandwidth: %s" % (s_delay, s_bandwidth))
 
-        # Copy inter-domain port properties for redundant storing
+        # Copy inter-domain port properties/values for redundant storing
         if len(domain_port_nffg.properties) > 0:
           domain_port_dov.properties.update(domain_port_nffg.properties)
           log.debug("Copy inter-domain port properties: %s" %
@@ -1249,6 +1293,37 @@ class NFFGToolBox(object):
         domain_port_dov.add_property("type", "inter-domain")
         domain_port_nffg.add_property("type", "inter-domain")
 
+        # Copy SAP port values into the infra ports
+        domain_port_dov.name = sap_port_dov.name
+        domain_port_dov.sap = sap_port_dov.sap
+        domain_port_dov.capability = sap_port_dov.capability
+        domain_port_dov.technology = sap_port_dov.technology
+        domain_port_dov.delay = sap_port_dov.delay
+        domain_port_dov.bandwidth = sap_port_dov.bandwidth
+        domain_port_dov.cost = sap_port_dov.cost
+        domain_port_dov.controller = sap_port_dov.controller
+        domain_port_dov.orchestrator = sap_port_dov.orchestrator
+        domain_port_dov.l2 = sap_port_dov.l2
+        domain_port_dov.l4 = sap_port_dov.l4
+        for l3 in sap_port_dov.l3:
+          domain_port_dov.l3.append(l3.copy())
+        domain_port_dov.metadata.update(sap_port_dov.metadata)
+
+        domain_port_nffg.name = sap_port_nffg.name
+        domain_port_nffg.sap = sap_port_nffg.sap
+        domain_port_nffg.capability = sap_port_nffg.capability
+        domain_port_nffg.technology = sap_port_nffg.technology
+        domain_port_nffg.delay = sap_port_nffg.delay
+        domain_port_nffg.bandwidth = sap_port_nffg.bandwidth
+        domain_port_nffg.cost = sap_port_nffg.cost
+        domain_port_nffg.controller = sap_port_nffg.controller
+        domain_port_nffg.orchestrator = sap_port_nffg.orchestrator
+        domain_port_nffg.l2 = sap_port_nffg.l2
+        domain_port_nffg.l4 = sap_port_nffg.l4
+        for l3 in sap_port_nffg.l3:
+          domain_port_nffg.l3.append(l3.copy())
+        domain_port_nffg.metadata.update(sap_port_nffg.metadata)
+
         # Delete both inter-domain SAP and links connected to them
         base.del_node(sap_id)
         nffg.del_node(sap_id)
@@ -1258,11 +1333,11 @@ class NFFGToolBox(object):
                                  p2p1id="inter-domain-link-%s-back" % sap_id,
                                  port1=domain_port_dov,
                                  port2=domain_port_nffg,
-                                 delay=b_links[0].delay,
-                                 bandwidth=b_links[0].bandwidth)
+                                 delay=s_delay,
+                                 bandwidth=s_bandwidth)
       else:
         # Normal SAP --> copy SAP
-        c_sap = base.add_sap(sap=deepcopy(nffg.network.node[sap_id]))
+        c_sap = base.add_sap(sap_obj=deepcopy(nffg.network.node[sap_id]))
         log.debug("Copy SAP: %s" % c_sap)
     # Copy remaining links which should be valid
     for u, v, link in nffg.network.edges_iter(data=True):
@@ -1491,7 +1566,6 @@ class NFFGToolBox(object):
                 tag_id = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
                 # tag_exact = tag
 
-
           # collect outbound flowrules toward SAP ports
           else:
             pass
@@ -1684,7 +1758,7 @@ class NFFGToolBox(object):
         log.debug("Added connection: %s" % link2)
     # Add existing SAPs and their connections to the SingleBiSBiS infra
     for sap in nffg.saps:
-      c_sap = sbb.add_sap(sap=sap.copy())
+      c_sap = sbb.add_sap(sap_obj=sap.copy())
       log.debug("Added SAP: %s" % c_sap)
       # Discover and add SAP connections
       for u, v, l in nffg.real_out_edges_iter(sap.id):
@@ -1745,6 +1819,55 @@ class NFFGToolBox(object):
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return sbb
+
+  @classmethod
+  def clear_domain (cls, base, domain, log=logging.getLogger("CLEAN")):
+    """
+    Clean domain by removing initiated NFs and flowrules related to BiSBiS
+    nodes of the given domain
+
+    :param base: base NFFG object
+    :type base: :any:`NFFG`
+    :param domain: domain name
+    :type domain: str
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    base_domain = cls.detect_domains(nffg=base)
+    if domain not in base_domain:
+      log.warning("No node was found in %s with domain: %s for cleanup! "
+                  "Leave NFFG unchanged..." % (base, domain))
+      return base
+    for infra in base.infras:
+      deletable_ports = set()
+      deletable_nfs = set()
+      # Skip nodes from other domains
+      if infra.domain != domain:
+        continue
+      # Iterate over out edges from the current BB node
+      for infra_id, node_id, link in base.real_out_edges_iter(infra.id):
+        # Mark connected NF for deletion
+        if base[node_id].type in (NFFG.TYPE_NF,):
+          deletable_nfs.add(node_id)
+          # Mark related dynamic port for deletion
+          deletable_ports.add(link.src)
+      if deletable_nfs:
+        log.debug("Initiated NFs marked for deletion: %s on node: %s" %
+                  (deletable_nfs, infra.id))
+      # Remove NFs
+      base.network.remove_nodes_from(deletable_nfs)
+      if deletable_ports:
+        log.debug("Dynamic ports marked for deletion: %s on node: %s" %
+                  (deletable_ports, infra.id))
+      # Remove dynamic ports
+      for p in deletable_ports:
+        base[infra.id].ports.remove(p)
+      # Delete flowrules from ports
+      for port in base[infra.id].ports:
+        port.clear_flowrules()
+    return base
 
   @classmethod
   def remove_domain (cls, base, domain, log=logging.getLogger("REMOVE")):
@@ -1994,7 +2117,6 @@ class NFFGToolBox(object):
     :return:
     """
     edge_list = []
-    bandwidth = None
     tag_list = TAG.split("|")
     vnf1 = tag_list[0]
     vnf2 = tag_list[1]
@@ -2262,7 +2384,6 @@ class NFFGToolBox(object):
               # we know here: action != TAG and  "TAG=" not in fr.match
               # All required SGHop info can be gathered at once from this
               # flowrule. It is either a SAP-SAP flowrule or a collocated.
-              from_sap = False
               flowclass = NFFGToolBox.extract_flowclass(matches)
               sg_map_value = [None, None, flowclass, fr.bandwidth, fr.delay]
               for link in nffg.links:
@@ -2315,20 +2436,24 @@ def generate_test_NFFG ():
   nffg.add_metadata(name="test_metadata1", value="abc")
   nffg.add_metadata(name="test_metadata2", value="123")
 
-  sap = nffg.add_sap(id="sap1", name="SAP_node1", domain="eth1")
+  sap = nffg.add_sap(id="sap1", name="SAP_node1", binding="eth1")
   p_sap = sap.add_port(id=1, properties={"property1": "123"})
   sap.add_metadata(name="sap_meta", value="123")
 
-  sap.technology = "sap_tech"
-  sap.delay = 2
-  sap.bandwidth = 3
-  sap.cost = 4
-  sap.controller = "sap_c"
-  sap.orchestrator = "sap_o"
-  sap.l2 = "l2"
-  sap.l4 = "l4"
-  sap.l3.add_l3address(id='l3_id', name="L3", configure="True", client="10",
-                       requested="R", provided="P")
+  p_sap.sap = "SAP14"
+  p_sap.name = "portname_SAP14"
+  p_sap.capability = "cap1"
+  p_sap.technology = "sap_tech"
+  p_sap.delay = 2
+  p_sap.bandwidth = 3
+  p_sap.cost = 4
+  p_sap.controller = "sap_c"
+  p_sap.orchestrator = "sap_o"
+  p_sap.l2 = "l2"
+  p_sap.l4 = "l4"
+  p_sap.l3.add_l3address(id='l3_id', name="L3", configure=True, client="10",
+                         requested="R", provided="P")
+  p_sap.add_metadata("meta1", "metavalue")
 
   nf = nffg.add_nf(id="nf1", name="NF1", func_type="nf1", dep_type="xxx", cpu=1,
                    mem=2, storage=3, delay=4, bandwidth=5)

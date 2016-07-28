@@ -343,7 +343,7 @@ class RESTError(Exception):
     return self._msg
 
 
-class AbstractRequestHandler(BaseHTTPRequestHandler):
+class AbstractRequestHandler(BaseHTTPRequestHandler, object):
   """
   Minimalistic RESTful API for Layer APIs.
 

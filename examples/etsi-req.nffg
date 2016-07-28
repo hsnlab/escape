@@ -1,0 +1,174 @@
+{
+  "parameters": {
+    "id": "SG-etsi-req",
+    "name": "SG-etsi-req",
+    "version": "1.0"
+  },
+  "node_nfs": [
+    {
+      "id": "NfpaVhost2",
+      "name": "NfpaVhost2",
+      "ports": [
+        {
+          "id": 2
+        }
+      ],
+      "metadata": {
+        "bw_req": 0,
+        "delay_req": 100
+      },
+      "functional_type": "NfpaVhost2",
+      "specification": {
+        "resources": {
+          "cpu": 2,
+          "mem": 4,
+          "storage": 0
+        }
+      }
+    },
+    {
+      "id": "L2fwdVhost2",
+      "name": "L2fwdVhost2",
+      "ports": [
+        {
+          "id": 2
+        }
+      ],
+      "metadata": {
+        "bw_req": 0,
+        "delay_req": 100
+      },
+      "functional_type": "L2fwdVhost2",
+      "specification": {
+        "resources": {
+          "cpu": 2,
+          "mem": 4,
+          "storage": 0
+        }
+      }
+    },
+    {
+      "id": "L2fwdVhost",
+      "name": "L2fwdVhost",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "metadata": {
+        "bw_req": 0,
+        "delay_req": 100
+      },
+      "functional_type": "L2fwdVhost",
+      "specification": {
+        "resources": {
+          "cpu": 2,
+          "mem": 4,
+          "storage": 0
+        }
+      }
+    },
+    {
+      "id": "NfpaVhost",
+      "name": "NfpaVhost",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "metadata": {
+        "bw_req": 0,
+        "delay_req": 100
+      },
+      "functional_type": "NfpaVhost",
+      "specification": {
+        "resources": {
+          "cpu": 2,
+          "mem": 4,
+          "storage": 0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "SAP85",
+      "name": "SAP85",
+      "ports": [
+        {
+          "id": 2
+        }
+      ]
+    },
+    {
+      "id": "SAP84",
+      "name": "SAP84",
+      "ports": [
+        {
+          "id": 2
+        },
+        {
+          "id": 2
+        }
+      ]
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": 15,
+      "src_node": "SAP85",
+      "src_port": 2,
+      "dst_node": "NfpaVhost2",
+      "dst_port": 2
+    },
+    {
+      "id": 13,
+      "src_node": "SAP85",
+      "src_port": 2,
+      "dst_node": "NfpaVhost",
+      "dst_port": 1
+    },
+    {
+      "id": 17,
+      "src_node": "SAP84",
+      "src_port": 2,
+      "dst_node": "L2fwdVhost2",
+      "dst_port": 2
+    },
+    {
+      "id": 11,
+      "src_node": "SAP84",
+      "src_port": 2,
+      "dst_node": "L2fwdVhost",
+      "dst_port": 1
+    },
+    {
+      "id": 16,
+      "src_node": "NfpaVhost2",
+      "src_port": 2,
+      "dst_node": "SAP85",
+      "dst_port": 2
+    },
+    {
+      "id": 18,
+      "src_node": "L2fwdVhost2",
+      "src_port": 2,
+      "dst_node": "SAP84",
+      "dst_port": 2
+    },
+    {
+      "id": 12,
+      "src_node": "L2fwdVhost",
+      "src_port": 1,
+      "dst_node": "SAP84",
+      "dst_port": 2
+    },
+    {
+      "id": 14,
+      "src_node": "NfpaVhost",
+      "src_port": 1,
+      "dst_node": "SAP85",
+      "dst_port": 2
+    }
+  ]
+}

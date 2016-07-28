@@ -49,6 +49,14 @@ class ResourceOrchestrator(AbstractOrchestrator):
     self.nfibManager = NFIBManager()
     self.nfibManager.initialize()
 
+  def finalize(self):
+    """
+    Finalize func for class.
+
+    :return: None
+    """
+    self.nfibManager.finalize()
+
   def instantiate_nffg (self, nffg):
     """
     Main API function for NF-FG instantiation.
@@ -75,9 +83,10 @@ class ResourceOrchestrator(AbstractOrchestrator):
         # deletion --> skip mapping to avoid BadInputException and forward
         # topo to adaptation layer
         if nffg.is_bare():
-          log.warning("No VNF or Flowrule has been detected in SG request! "
-                      "Skip orchestration in layer: %s and proceed with the "
-                      "bare %s..." % (LAYER_NAME, nffg))
+          log.warning("No valid service request (VNFs/Flowrules/SGhops) has "
+                      "been detected in SG request! Skip orchestration in "
+                      "layer: %s and proceed with the bare %s..." %
+                      (LAYER_NAME, nffg))
           if nffg.is_virtualized():
             if nffg.is_SBB():
               log.debug("Request is a bare SingleBiSBiS representation!")
@@ -91,7 +100,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
           # Return with the original request
           return nffg
         else:
-          log.info("Request check: detected valid content!")
+          log.info("Request check: detected valid NFFG content!")
         try:
           # Run Nf-FG mapping orchestration
           mapped_nffg = self.mapper.orchestrate(nffg, global_view)
