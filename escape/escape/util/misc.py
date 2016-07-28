@@ -20,12 +20,15 @@ import logging
 import os
 import pstats
 import re
+import socket
 import warnings
 import weakref
 from functools import wraps
 from subprocess import STDOUT, Popen, PIPE
 
 # Log level constant for additional VERBOSE level
+import time
+
 VERBOSE = 5
 
 
@@ -432,4 +435,20 @@ def check_service_status (name):
         return True
       else:
         return False
+  return False
+
+
+def port_tester (host, port, interval=1, period=5,
+                 log=logging.getLogger("port_tester")):
+  log.debug(
+    "Testing port: %s on host: %s with interval: %s" % (host, port, interval))
+  for i in xrange(1, period):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+      s.connect((socket.gethostbyname(host), port))
+      return True
+    except socket.error:
+      log.log(VERBOSE, "Attempt: %s - Port closed!" % i)
+      s.close()
+      time.sleep(interval)
   return False
