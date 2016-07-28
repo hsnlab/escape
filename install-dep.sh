@@ -2,8 +2,7 @@
 # Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
 # Install Python and system-wide packages, required programs and configurations
 # for ESCAPEv2 on pre-installed Mininet VM
-# Tested on: mininet-2.1.0p2-140718-ubuntu-14.04-server-amd64 and Ubuntu 16.04
-
+# Tested on: Ubuntu 14.04.4 LTS and 16.04 LTS
 
 ### Initial setup
 
