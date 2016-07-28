@@ -62,7 +62,7 @@ class NFIBManager(object):
     if CONFIG.get_manage_neo4j_service():
       log.debug("Stopping %s service..." % self.service_name)
       ret = run_cmd('sudo service %s stop' % self.service_name)
-      log.log(VERBOSE, "Result: %s" % ret)
+      log.log(VERBOSE, "Neo4j service shutdown status: %s" % ret)
 
   @staticmethod
   def __suppress_neo4j_logging (level=None):
@@ -762,6 +762,6 @@ class NFIBManager(object):
       log.debug("Starting service: %s..." % self.service_name)
       ret = run_cmd('sudo service %s start' % self.service_name)
       if "failed" in ret:
-        log.error(ret)
+        log.error("Neo4j service initiation status: %s" % ret)
       else:
-        log.log(VERBOSE, "Result: %s" % ret)
+        log.log(VERBOSE, "Neo4j service initiation status: %s" % ret)
