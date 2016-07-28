@@ -60,7 +60,7 @@ class NFIBManager(object):
     :return: None
     """
     if CONFIG.get_manage_neo4j_service():
-      log.debug("Stopping %s service..." % self.service_name)
+      log.info("Stopping %s service..." % self.service_name)
       ret = run_cmd('sudo service %s stop' % self.service_name)
       log.log(VERBOSE, "Neo4j service shutdown status: %s" % ret)
 
@@ -753,13 +753,13 @@ class NFIBManager(object):
     if not CONFIG.get_manage_neo4j_service():
       log.debug("Skip Neo4j service management...")
       return
-    log.debug("Checking Neo4j service status...")
+    log.info("Checking Neo4j service status...")
 
     log.debug("Detected Neo4j service name: %s" % self.service_name)
     if check_service_status(self.service_name):
       log.debug("%s service is already running..." % self.service_name)
     else:
-      log.debug("Starting service: %s..." % self.service_name)
+      log.info("Starting service: %s..." % self.service_name)
       ret = run_cmd('sudo service %s start' % self.service_name)
       if "failed" in ret:
         log.error("Neo4j service initiation status: %s" % ret)
