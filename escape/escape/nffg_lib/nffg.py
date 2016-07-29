@@ -2014,10 +2014,13 @@ class NFFGToolBox(object):
   @staticmethod
   def _get_output_port_of_TAG_action (TAG, port):
     """
+    Finds the first output port of a flowrule sequence tagged by TAG and 
+    starting from port. Returns (None, None) if no flowrule with the given TAG 
+    action could be found.
 
-    :param TAG:
-    :param port:
-    :return:
+    :param TAG: TAG to be used
+    :param port: port object which contains the starting flowrule.
+    :return: tuple of output port object and the bandwidth of the sequence
     """
     for fr in port.flowrules:
       actions = fr.action.split(";")
@@ -2028,10 +2031,7 @@ class NFFGToolBox(object):
             for action2 in actions:
               command_param2 = action2.split("=")
               if command_param2[0] == "output":
-                try:
-                  param2 = int(command_param2[1])
-                except ValueError:
-                  param2 = command_param2[1]
+                param2 = NFFGToolBox.try_to_convert(command_param2[1])
                 return port.node.ports[param2], fr.bandwidth
             else:
               raise RuntimeError("No 'output' action found for flowrule with"
@@ -2042,10 +2042,12 @@ class NFFGToolBox(object):
   @staticmethod
   def _find_static_link (nffg, port, outbound=True):
     """
+    Returns the object of a static link which is connected to 'port'.
+    If None is returned, we can suppose that the port is dynamic.
 
-    :param nffg:
-    :param port:
-    :param outbound:
+    :param nffg: NFFG object which contains port.
+    :param port: The port which should be the source or destination.
+    :param outbound: Determines whether outbound or inbound link should be found.
     :return:
     """
     edges_func = None
@@ -2071,10 +2073,11 @@ class NFFGToolBox(object):
   @staticmethod
   def _is_port_finishing_flow (TAG, port):
     """
+    Determines wheater this port finishes the flow sequence of TAG.
 
-    :param TAG:
-    :param port:
-    :return:
+    :param TAG: TAG to look for
+    :param port: Port object
+    :return: boolean value
     """
     if port.node.type == 'SAP':
       return True
@@ -2091,9 +2094,10 @@ class NFFGToolBox(object):
   @staticmethod
   def get_TAGs_of_starting_flows (port):
     """
+    Generates the TAGs of multi-hop flows starting from the port object.
 
-    :param port:
-    :return:
+    :param port: port object to look for TAGs
+    :return: generator for TAGs
     """
     for fr in port.flowrules:
       for action in fr.action.split(";"):
@@ -2111,9 +2115,9 @@ class NFFGToolBox(object):
     TODO (?): add default 'None' parameter value for starting_port
     , when the function should find where the given TAG is put on the traffic
 
-    :param TAG:
-    :param nffg:
-    :param starting_port:
+    :param TAG: common TAG for the whole path
+    :param nffg: NFFG object
+    :param starting_port: port object where the path of TAG starts
     :return:
     """
     edge_list = []
@@ -2233,9 +2237,12 @@ class NFFGToolBox(object):
   @staticmethod
   def generate_all_TAGs_of_NFFG (nffg):
     """
+    Generates all possible TAGs of a request graph NFFG based on the SG hop ID-s 
+    and the SG hop endings. 
+    TAGs are in format of <<source_NF_ID|destination_NF_ID|SG_hop_id>>
 
-    :param nffg:
-    :return:
+    :param nffg: NFFG object to generate TAGs from
+    :return: generator for all TAGs of nffg
     """
     for sg in nffg.sg_links:
       yield "|".join((sg.src.node.id, sg.dst.node.id, sg.id))
@@ -2243,9 +2250,10 @@ class NFFGToolBox(object):
   @staticmethod
   def try_to_convert (id):
     """
+    Tries to convert a string type ID to integer (base 10).
 
-    :param id:
-    :return:
+    :param id: ID to be converted
+    :return: integer ID if it can be converted, string otherwise
     """
     converted = id
     try:
@@ -2280,8 +2288,6 @@ class NFFGToolBox(object):
     Returns a dictionary keyed by (VNFsrc, VNFdst, reqlinkid) tuples
     , data is [PortObjsrc, PortObjdst] list of port
     objects. It is based exclusively on flowrules.
-    # TODO: retrieve bandwidth and latency (these should be the same for a given
-    flowrule sequence, because they all represent the same SGHop)
 
     :param nffg:
     :return:
