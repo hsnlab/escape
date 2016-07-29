@@ -440,12 +440,29 @@ def check_service_status (name):
 
 def port_tester (host, port, interval=1, period=5,
                  log=logging.getLogger("port_tester")):
+  """
+  Test the given port with the interval (in sec) until the attempts reach the
+  given period.
+
+  :param host: host
+  :type host: str
+  :param port: port number
+  :type port: int
+  :param interval: delay betwwen the attempts
+  :type interval: int
+  :param period: number of checks
+  :type period: int
+  :param log: additional log object
+  :return: port is open or not
+  :rtype: bool
+  """
   log.debug(
-    "Testing port: %s on host: %s with interval: %s" % (host, port, interval))
+    "Testing port: %s on host: %s with interval: %ss" % (host, port, interval))
   for i in xrange(1, period):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
       s.connect((socket.gethostbyname(host), port))
+      log.log(VERBOSE, "Port open: %s!" % port)
       return True
     except socket.error:
       log.log(VERBOSE, "Attempt: %s - Port closed!" % i)
