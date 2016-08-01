@@ -77,7 +77,7 @@ def MAP (request, network, full_remap=False,
          enable_shortest_path_cache=False,
          bw_factor=1, res_factor=1, lat_factor=1,
          shortest_paths=None, return_dist=False,
-         bt_limit=6, bt_branching_factor=3):
+         bt_limit=6, bt_branching_factor=3, **kwargs):
   """
   The parameters are NFFG classes.
   Calculates service chain requirements from EdgeReq classes.
