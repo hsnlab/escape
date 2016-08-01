@@ -192,7 +192,7 @@ class NFFG(AbstractNFFG):
     self.id = str(id) if id is not None else Element.generate_unique_id()
     self.name = name if name is not None else "NFFG-" + str(self.id)
     self.metadata = OrderedDict(metadata if metadata else ())
-    self.mode = mode if mode else self.MODE_ADD
+    self.mode = mode
     self.version = version
 
   ##############################################################################

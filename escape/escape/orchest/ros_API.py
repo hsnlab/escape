@@ -207,7 +207,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     :rtype: :any:`NFFG`
     """
     # Obtain NFFG from request body
-    self.log.debug("Detected response format: %s" %
+    self.log.debug("Detected message format: %s" %
                    self.headers.get("Content-Type"))
     raw_body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
@@ -268,6 +268,16 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       # Initialize NFFG from JSON representation
       self.log.info("Parsing request into internal NFFG format...")
       nffg = NFFG.parse(raw_body)
+    command = self.command.upper()
+    if command == 'POST':
+      nffg.mode = NFFG.MODE_ADD
+    elif command == 'DELETE':
+      nffg.mode = NFFG.MODE_DEL
+    elif command == 'PUT':
+      nffg.mode = NFFG.MODE_REMAP
+    else:
+      self.log.warning("Unsupported HTTP verb for mapping mode: %s" % command)
+    self.log.info("Detected mapping mode based on HTTP request: %s" % nffg.mode)
     self.log.debug("Parsed NFFG install request: %s" % nffg)
     return nffg
 
