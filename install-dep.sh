@@ -229,12 +229,12 @@ EOF
     sudo make install
 
     # sudo apt-get install libgtk2.0-dev
-#    info "=== Install clicky for graphical VNF management ==="
-#    cd apps/clicky
-#    autoreconf -i
-#    ./configure
-#    make -j${CPU}
-#    sudo make install
+    info "=== Install clicky for graphical VNF management ==="
+    cd apps/clicky
+    autoreconf -i
+    ./configure
+    make -j${CPU}
+    sudo make install
 
     # Remove click codes
     # cd ${DIR}
