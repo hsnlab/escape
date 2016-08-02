@@ -15,6 +15,7 @@
 Contains the class for managing NFIB.
 """
 import os
+import time
 from collections import deque
 
 import networkx
@@ -22,9 +23,11 @@ import py2neo
 from py2neo import Graph, Relationship, Unauthorized
 from py2neo.packages.httpstream.http import SocketError
 
+from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log
-from escape.util.misc import quit_with_error
+from escape.util.misc import quit_with_error, check_service_status, run_cmd, \
+  VERBOSE, port_tester
 
 
 class NFIBManager(object):
@@ -34,20 +37,40 @@ class NFIBManager(object):
   Use neo4j implementation for storing and querying NFs and NF decompositions.
   """
 
+  DB_HOST = "localhost"  # default
+  DB_PORT = 7474  # default
+
   def __init__ (self):
     """
     Init.
     """
     super(NFIBManager, self).__init__()
-    log.debug("Init %s based on neo4j" % self.__class__.__name__)
+    log.debug("Init %s" % self.__class__.__name__)
     # Suppress low level logging
     self.__suppress_neo4j_logging()
+    self.service_name = self.__detect_neo4j_service_name()
+    self.__manage_neo4j_service()
+    self.graph_db = None
     try:
-      self.graph_db = Graph()
+      self.graph_db = Graph(host=self.DB_HOST, http_port=self.DB_PORT)
     except Unauthorized as e:
       quit_with_error(
-        "Got Unauthorozed error on: %s from neo4j! Disable the authorization "
+        "Got Unauthorized error on: %s from neo4j! Disable the authorization "
         "in /etc/neo4j/neoj4-server.properties!" % e)
+    except SocketError as e:
+      log.error(
+        "Got connection error: %s! NFIBManager has not been initialized!" % e)
+
+  def finalize (self):
+    """
+    Finalize function for the class.
+
+    :return: None
+    """
+    if CONFIG.get_manage_neo4j_service():
+      log.info("Stopping %s service..." % self.service_name)
+      ret = run_cmd('sudo service %s stop' % self.service_name)
+      log.log(VERBOSE, "Neo4j service shutdown status: %s" % ret)
 
   @staticmethod
   def __suppress_neo4j_logging (level=None):
@@ -694,7 +717,10 @@ class NFIBManager(object):
     Initialize NFIB with test data.
     """
     try:
-      self.__initialize()
+      if self.graph_db:
+        self.__initialize()
+      else:
+        log.warning("NFIB initialization has been skipped!")
     except SocketError as e:
       log.error(
         "NFIB is not reachable due to failed neo4j service! Cause: " + str(e))
@@ -712,3 +738,45 @@ class NFIBManager(object):
         raise
     except:
       log.exception("Got unexpected error during NFIB initialization!")
+
+  @staticmethod
+  def __detect_neo4j_service_name ():
+    """
+    Detect the name of the neo4j service.
+
+    :return: name of the service
+    :rtype: str
+    """
+    import os.path
+    if os.path.isfile('/etc/neo4j/neo4j.conf'):
+      return "neo4j"
+    elif os.path.isfile('/etc/neo4j/neo4j-server.properties'):
+      return "neo4j-service"
+    else:
+      log.error("No configuration file was found for neo4j service!")
+
+  def __manage_neo4j_service (self):
+    """
+    Manage neo4j service.
+
+    :return: None
+    """
+    if not CONFIG.get_manage_neo4j_service():
+      log.debug("Skip Neo4j service management...")
+      return
+    log.debug("Detected Neo4j service name: %s" % self.service_name)
+    if check_service_status(self.service_name):
+      log.debug("%s service is already running..." % self.service_name)
+      return
+    log.info("Starting service: %s..." % self.service_name)
+    ret = run_cmd('sudo service %s start' % self.service_name)
+    if "failed" in ret:
+      log.error("Neo4j service initiation status: %s" % ret)
+      return
+    log.log(VERBOSE, "Neo4j service initiation status: %s" % ret)
+    # Check if the service has been started - only 5 try
+    if port_tester(host=self.DB_HOST, port=self.DB_PORT, interval=1, period=10, log=log):
+      log.debug("Neo4j service has been verified!")
+    else:
+      log.error("Neo4j service has not started correctly!")
+

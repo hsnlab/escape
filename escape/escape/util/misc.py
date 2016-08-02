@@ -20,12 +20,15 @@ import logging
 import os
 import pstats
 import re
+import socket
 import warnings
 import weakref
 from functools import wraps
 from subprocess import STDOUT, Popen, PIPE
 
 # Log level constant for additional VERBOSE level
+import time
+
 VERBOSE = 5
 
 
@@ -299,7 +302,7 @@ def remove_junks_at_shutdown (log=logging.getLogger("cleanup")):
     if veth != '':
       run_cmd(r"sudo ip link del %s" % veth)
   log.debug("Remove remained xterms and stacked netconfd sockets...")
-  run_cmd("sudo pkill -f 'xterm -title SAP'")
+  run_cmd("sudo pkill -f '%s'" % 'xterm -title "SAP')
   # os.system("sudo pkill -f 'xterm -title SAP'")
   log.debug("Cleanup any Mininet-specific junk...")
   # Call Mininet's own cleanup stuff
@@ -421,3 +424,48 @@ def remove_units (raw):
   :rtype : int
   """
   return filter(lambda x: x.isdigit(), raw)
+
+
+def check_service_status (name):
+  status_all = run_cmd("sudo service --status-all")
+  for line in status_all.splitlines():
+    status, service = line.split(']')
+    if name == service.strip():
+      if "+" in status:
+        return True
+      else:
+        return False
+  return False
+
+
+def port_tester (host, port, interval=1, period=5,
+                 log=logging.getLogger("port_tester")):
+  """
+  Test the given port with the interval (in sec) until the attempts reach the
+  given period.
+
+  :param host: host
+  :type host: str
+  :param port: port number
+  :type port: int
+  :param interval: delay betwwen the attempts
+  :type interval: int
+  :param period: number of checks
+  :type period: int
+  :param log: additional log object
+  :return: port is open or not
+  :rtype: bool
+  """
+  log.debug(
+    "Testing port: %s on host: %s with interval: %ss" % (host, port, interval))
+  for i in xrange(1, period):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+      s.connect((socket.gethostbyname(host), port))
+      log.log(VERBOSE, "Port open: %s!" % port)
+      return True
+    except socket.error:
+      log.log(VERBOSE, "Attempt: %s - Port closed!" % i)
+      s.close()
+      time.sleep(interval)
+  return False

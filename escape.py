@@ -90,8 +90,13 @@ def main ():
       return
     else:
       print "Run full cleaning process..."
+      # Kill stacked ESCAPE processes
+      from misc import run_cmd
+      run_cmd('sudo -S pkill -f "unify"')
       from misc import remove_junks_at_shutdown, remove_junks_at_boot
+      # Remove remained temporarily files
       remove_junks_at_shutdown()
+      # Remove log files from /tmp
       remove_junks_at_boot()
       print "Cleaned."
       return

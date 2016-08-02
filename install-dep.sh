@@ -2,8 +2,7 @@
 # Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
 # Install Python and system-wide packages, required programs and configurations
 # for ESCAPEv2 on pre-installed Mininet VM
-# Tested on: mininet-2.1.0p2-140718-ubuntu-14.04-server-amd64 and Ubuntu 16.04
-
+# Tested on: Ubuntu 14.04.4 LTS and 16.04 LTS
 
 ### Initial setup
 
@@ -84,7 +83,13 @@ function install_core {
     info "==  Install core dependencies  =="
     info "================================="
     echo "ESCAPEv2 version: 2.0.0"
+    # Create symlink to the appropriate .gitmodules file
     info "=== Checkout submodules ==="
+    git submodule update --init --remote --merge
+    info "=== Create symlinks for submodules ==="
+    cd "$DIR/dummy-orchestrator"
+    ln -vfs .gitmodules.unify .gitmodules
+    cd "$DIR"
     git submodule update --init --remote --recursive --merge
     # Remove ESCAPEv2 config file from index in git to untrack changes
     git update-index --assume-unchanged escape.config
@@ -116,10 +121,10 @@ function install_core {
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     info "=== Install ESCAPEv2 Python dependencies ==="
+    sudo -H pip install --upgrade setuptools
     sudo -H pip install cryptography==1.3.1
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
-    sudo -H pip install --upgrade setuptools
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
@@ -159,7 +164,7 @@ function install_mn_dep {
     if [ "$DISTRIB_VER" = "14.04" ]; then
         info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
         # Only works with OpenSSH_6.6.1p1 and tested on Ubuntu 14.04
-        sudo sh -c 'echo "Match Host *,!localhost\n  DenyUsers  mininet" >> /etc/ssh/sshd_config'
+        sudo sh -c 'echo "# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet" | tee -a /etc/ssh/sshd_config'
     else
         warn "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
     fi
@@ -223,19 +228,21 @@ EOF
     make -j${CPU}
     sudo make install
 
-    info "=== Install clicky for graphical VNF management ==="
     # sudo apt-get install libgtk2.0-dev
+    info "=== Install clicky for graphical VNF management ==="
     cd apps/clicky
     autoreconf -i
     ./configure
     make -j${CPU}
     sudo make install
-    cd ${DIR}
-    rm -rf click
+
+    # Remove click codes
+    # cd ${DIR}
+    # rm -rf click
 
     info "=== Install clickhelper.py ==="
     # install clickhelper.py to be available from netconfd
-    sudo ln -vs "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
+    sudo ln -vfs "$DIR/mininet/mininet/clickhelper.py" /usr/local/bin/clickhelper.py
 
     if [ ! -f /usr/bin/mnexec ]; then
         info "=== Pre-installed Mininet not detected! Try to install mn dependencies... ==="

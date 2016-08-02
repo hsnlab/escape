@@ -428,6 +428,7 @@ class ControllerAdapter(object):
       if domain_mgr is None:
         log.warning("No DomainManager has been initialized for domain: %s! "
                     "Skip install domain part..." % domain)
+        mapping_result = False
         continue
       log.log(VERBOSE, "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       log.info("Delegate splitted part: %s to %s" % (part, domain_mgr))

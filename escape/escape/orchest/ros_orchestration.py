@@ -49,6 +49,14 @@ class ResourceOrchestrator(AbstractOrchestrator):
     self.nfibManager = NFIBManager()
     self.nfibManager.initialize()
 
+  def finalize(self):
+    """
+    Finalize func for class.
+
+    :return: None
+    """
+    self.nfibManager.finalize()
+
   def instantiate_nffg (self, nffg):
     """
     Main API function for NF-FG instantiation.
