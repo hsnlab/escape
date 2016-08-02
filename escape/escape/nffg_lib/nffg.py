@@ -951,13 +951,14 @@ class NFFG(AbstractNFFG):
     copy.network = self.network.copy()
     return copy
 
-  def calculate_available_link_res (self, sg_hop_ids):
+  def calculate_available_link_res (self, sg_hops_to_be_ignored):
     """
     Calculates available bandwidth on all the infrastructure links.
     Stores them in 'availbandwidth' field of the link objects.
     Modifies the NFFG instance. 
     
-    :param sg_hop_ids: container for the EdgeSGLink ID-s to look for
+    :param sg_hops_to_be_ignored: container for the EdgeSGLink ID-s which should
+                                  be ignored
     :return: None
     """
     # set availbandwidth to the maximal value
@@ -970,41 +971,34 @@ class NFFG(AbstractNFFG):
     for d in self.infras:
       for p in d.ports:
         for fr in p.flowrules:
-          if fr.hop_id in sg_hop_ids:
-            raise RuntimeError("(BadInputException) "
-                               "SGHops in request graph shouldn't be"
-                               " mapped already to the substrate graph. SGHop "
-                               "ID-s shold be"
-                               " different, otherwise they are considered the "
-                               "same! "
-                               "Flowrule %s in Infra node %s is a part of the "
-                               "(earlier) "
-                               "mapped path of SGHop %s." % (
-                                 fr.id, d.id, fr.hop_id))
-          if fr.bandwidth is not None:
+          if fr.hop_id in sg_hops_to_be_ignored and fr.bandwidth is not None:
+            # If the parent SG of this flowrule is in both graphs and the 
+            # SG hops both ends are also in both graphs
             d.availres['bandwidth'] -= fr.bandwidth
-        for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p):
+        for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p, 
+                                                          sg_hops_to_be_ignored):
           path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, self, p)
-          # collocation flowrules have not TAGs so their empty lists are not 
+          # collocation flowrules dont have TAGs so their empty lists are not 
           # returned by get_TAGs_of_starting_flows, but this case
           # is also handled by the Flowrule.bandwidth summerizing 'for loop'
-          for link in path_of_TAG:
-            link.availbandwidth -= flow_bw
-            if link.availbandwidth < 0:
-              raise RuntimeError("(BadInputException) "
-                                 "The bandwidth usage implied by the sum of "
-                                 "flowrule "
-                                 "bandwidths should determine the occupied "
-                                 "capacity on links. "
-                                 "The bandwidth capacity on link %s, %s, "
-                                 "%s got below "
-                                 "zero!" % (
-                                   link.src.node.id,
-                                   link.dst.node.id,
-                                   link.id))
+          if flow_bw is not None:
+            for link in path_of_TAG:
+              link.availbandwidth -= flow_bw
+              if link.availbandwidth < 0:
+                raise RuntimeError("(BadInputException) "
+                                   "The bandwidth usage implied by the sum of "
+                                   "flowrule "
+                                   "bandwidths should determine the occupied "
+                                   "capacity on links. "
+                                   "The bandwidth capacity on link %s, %s, "
+                                   "%s got below "
+                                   "zero!" % (
+                                     link.src.node.id,
+                                     link.dst.node.id,
+                                     link.id))
 
-  def calculate_available_node_res (self, vnfs_to_be_ignored=(),
-                                    full_remap=False):
+  def calculate_available_node_res (self, vnfs_to_be_left_in_place={},
+                                    mode=MODE_ADD):
     """
     Calculates available computation and networking resources of the nodes of
     NFFG. Creates a NodeResource instance for each NodeInfra to store the 
@@ -1019,23 +1013,45 @@ class NFFG(AbstractNFFG):
     for n in self.infras:
       setattr(self.network.node[n.id], 'availres',
               copy.deepcopy(self.network.node[n.id].resources))
-      for vnf in self.running_nfs(n.id):
-        # if a VNF needs to be left in place, then it is still mapped by the 
-        # mapping process, but with placement criteria, so its resource 
-        # requirements will be subtracted during the greedy process.
-        if not full_remap and vnf.id not in vnfs_to_be_ignored:
-          try:
-            newres = self.network.node[n.id].availres.subtractNodeRes(
-              self.network.node[vnf.id].resources,
-              self.network.node[n.id].resources)
-          except RuntimeError:
-            raise RuntimeError(
-              "Infra node`s resources are expected to represent its maximal "
-              "capabilities."
-              "The NodeNF(s) running on Infra node %s, use(s)more resource "
-              "than the maximal." % n.name)
-
+      if mode == self.MODE_ADD:
+        for vnf in self.running_nfs(n.id):
+          # if a VNF needs to be left in place, then it is still mapped by the 
+          # mapping process, but with placement criteria, so its resource 
+          # requirements will be subtracted during the greedy process.
+          if vnf.id not in vnfs_to_be_left_in_place:
+            try:
+              newres = self.network.node[n.id].availres.subtractNodeRes(
+                self.network.node[vnf.id].resources,
+                self.network.node[n.id].resources)
+            except RuntimeError:
+              raise RuntimeError(
+                "Infra node`s resources are expected to represent its maximal "
+                "capabilities."
+                "The NodeNF(s) running on Infra node %s, use(s)more resource "
+                "than the maximal." % n.id)
+          else:
+            try:
+              newres = self.network.node[n.id].availres.subtractNodeRes(
+                vnfs_to_be_left_in_place[vnf.id].resources,
+                self.network.node[n.id].resources)
+            except RuntimeError:
+              raise RuntimeError("VNF %s cannot be kept on host %s with "
+                                 "increased resource requirements due to not " 
+                                 "enough available resources!"%(vnf.id, n.id))
+              
           self.network.node[n.id].availres = newres
+
+  def del_flowrules_of_SGHop (self, hop_id_to_del):
+    """
+    Deletes all flowrules, which belong to a given SGHop ID. Uses the hop_id 
+    field of the Flowrule class.
+    """
+
+    for n in self. infras:
+      for p in n.ports:
+        for fr in p.flowrules:
+          if fr.hop_id == hop_id_to_del:
+            p.del_flowrule(id=fr.id)
 
 
 class NFFGToolBox(object):
@@ -2095,7 +2111,7 @@ class NFFGToolBox(object):
     return False
 
   @staticmethod
-  def get_TAGs_of_starting_flows (port):
+  def get_TAGs_of_starting_flows (port, sg_hops_to_be_ignored):
     """
     Generates the TAGs of multi-hop flows starting from the port object.
 
@@ -2103,10 +2119,11 @@ class NFFGToolBox(object):
     :return: generator for TAGs
     """
     for fr in port.flowrules:
-      for action in fr.action.split(";"):
-        command_param = action.split("=")
-        if command_param[0] == "TAG":
-          yield command_param[1]
+      if fr.hop_id not in sg_hops_to_be_ignored:
+        for action in fr.action.split(";"):
+          command_param = action.split("=")
+          if command_param[0] == "TAG":
+            yield command_param[1]
 
   @staticmethod
   def retrieve_mapped_path (TAG, nffg, starting_port):
