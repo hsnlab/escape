@@ -45,8 +45,6 @@ function env_setup {
             sudo locale-gen $LANG
             export LC_ALL=$LANG
             locale
-        else
-             on_error "locale variable: LANG is unset!"
         fi
     fi
     set -u
@@ -117,7 +115,8 @@ function install_core {
     # Install Python 2.7.11 explicitly
     sudo apt-get -y install python2.7
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
+                            libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     info "=== Install ESCAPEv2 Python dependencies ==="
