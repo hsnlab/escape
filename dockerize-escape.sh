@@ -12,18 +12,18 @@ NC='\033[0m'
 set -euo pipefail
 
 # Fail on error
-trap on_error ERR
 trap "on_error 'Got signal: SIGHUP'" SIGHUP
 trap "on_error 'Got signal: SIGINT'" SIGINT
 trap "on_error 'Got signal: SIGTERM'" SIGTERM
+trap on_error ERR
 
 function on_error() {
-    echo -e "\n${RED}Error during installation! $1${NC}"
+    echo -e "\n${RED}Error during installation! ${1-}${NC}"
     exit 1
 }
 
 function info() {
-    echo -e "${GREEN}$1${NC}"
+    echo -e "${GREEN}${1}${NC}"
 }
 
 ### Constants
@@ -58,8 +58,9 @@ fi
 cp -R ~/.ssh .ssh
 
 sudo docker build --rm -t ${IMAGE_NAME} .
-sudo docker create --name $(CONTAINER_NAME) -p 8008:8008 -p 8888:8888 -p 8889:8889 -it ${IMAGE_NAME}
+sudo docker create --name ${CONTAINER_NAME} -p 8008:8008 -p 8888:8888 -p 8889:8889 -it ${IMAGE_NAME}
 
 rm -rf .ssh
 
-info "To start the container use the following command: sudo docker -i start ESCAPE"
+info "To start the default container use the following command: sudo docker start -i ESCAPE \n
+or run a new one with different ESCAPE parameters: sudo docker run -p 8008:8008 -p 8888:8888 -p 8889:8889 --name <new name> -it ${IMAGE_NAME} <new parameters...>"

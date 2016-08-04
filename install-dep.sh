@@ -21,16 +21,16 @@ trap "on_error 'Got signal: SIGTERM'" SIGTERM
 trap on_error ERR
 
 function on_error() {
-    echo -e "\n${RED}Error during installation! ${1+''}${NC}"
+    echo -e "\n${RED}Error during installation! ${1-}${NC}"
     exit 1
 }
 
 function info() {
-    echo -e "${GREEN}${1+''}${NC}"
+    echo -e "${GREEN}${1-INFO}${NC}"
 }
 
 function warn() {
-    echo -e "\n${YELLOW}WARNING: ${1+''}${NC}"
+    echo -e "\n${YELLOW}WARNING: ${1-WARNING}${NC}"
     read -rsp $'Press ENTER to continue...\n'
 }
 
