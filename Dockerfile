@@ -13,4 +13,4 @@ EXPOSE 8008 8888 8889
 # Start ESCAPE by default
 ENTRYPOINT ["./escape.py"]
 # Default parameter is debug logging
-CMD ["-d"]
+CMD ["-d", "-c", "default-docker.config"]
