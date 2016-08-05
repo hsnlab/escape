@@ -1046,7 +1046,8 @@ class CoreAlgorithm(object):
           " addition to the output NFFG. Maybe same SGLink "
           "ID in current request and a previous request?")
 
-    # adding the flowrules should be after deleting the flowrules of 
+    # adding the flowrules should be after deleting the flowrules of SGHops 
+    # to be updated from the data of the Request (relevant in case of MODE_ADD)
     for vnf in self.req.nodes_iter():
       for i, j, k, d in self.req.out_edges_iter([vnf], data=True, keys=True):
         # i is always vnf

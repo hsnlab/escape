@@ -331,7 +331,7 @@ class GraphPreprocessorClass(object):
               # DFS run of the rechaining.
               if best_effort_graph.has_edge(i,j,k):
                 best_effort_graph.remove_edge(i, j, k)
-            if self.rechained[last_vnf]:
+            if self.rechained[last_vnf] or vnf == last_vnf:
               break
             else:
               # If a rechained vnf is not found for the chain end, we start a 
@@ -340,9 +340,10 @@ class GraphPreprocessorClass(object):
               vnf = last_vnf
 
           if not self.rechained[subc_path[-1]]:
-            raise uet.InternalAlgorithmException("Last VNF of best-effort "
-                      "subchain is not rechained yet! It wont be mapped when"
-                      " the mapping reaches this subchain!")
+            raise uet.BadInputException("There should be at least one directed"
+                      " path between SAPs in the Request Graph!", 
+                      "Subchain finding couldn't get further than VNF %s."
+                                        %last_vnf)
           for nf in subc_path:
             self.rechained[nf] = True
           subc['chain'] = subc_path
@@ -480,8 +481,13 @@ class GraphPreprocessorClass(object):
     # calling processReq and processNet
     # must be the same that processNetwork() returned.
     self.net = preprocessed_network
-    specific_tag_format = "dl_vlan="
 
+    ###### NOTE: only a workaround to operate without working TAG changes in
+    # multi-domain orchestration environment, when an SG hop's two ends are 
+    # mapped in different domains. In this case (without saving tag_info) the
+    # information that the two parts of this SGhop belongs to the same flow 
+    # would be lost
+    specific_tag_format = "dl_vlan="
     for n in self.req_graph.infras:
       for p in n.ports:
         for fr in p.flowrules:
@@ -602,28 +608,21 @@ class GraphPreprocessorClass(object):
         subg = self._findSubgraphForChain(chain)
         e2e_chains_with_graphs.append((chain, subg))
       else:
-        """
-        not SAP-SAP chains will be mapped to some (intersections of)
-        subgraphs found to e2e chains
-        """
+        # not SAP-SAP chains will be mapped to some (intersections of)
+        # subgraphs found to e2e chains
         not_e2e_chains.append(chain)
       self.log.info("Chain %s preprocessed" % chain)
     if len(e2e_chains_with_graphs) == 0:
       self.log.warn("No SAP - SAP chain were given! All request links will be "
                     "mapped as best effort links!")
-    """
-    These chains are disjoint on the set of links, each has a subgraph
-    which it should be mapped to.
-    """
+    # These chains are disjoint on the set of links, each has a subgraph
+    # which it should be mapped to.
     divided_chains_with_graphs = self._divideIntoDisjointSubchains(mode,
        e2e_chains_with_graphs, not_e2e_chains)
 
-    """
-    After the request graph is divided, the latency and bw reqs of the
-    divided chains are not valid! because those corresponds to the e2e
-    chains. Handling this correctly is done by the MappingManager.
-    """
-
+    # After the request graph is divided, the latency and bw reqs of the
+    # divided chains are not valid! because those corresponds to the e2e
+    # chains. Handling this correctly is done by the MappingManager.
     return self.req_graph, divided_chains_with_graphs
 
   def processNetwork (self, mode, cache_shortest_path):
@@ -693,8 +692,8 @@ class GraphPreprocessorClass(object):
     """
     # in case of REMAP mode there is nothing to do with the flowrules, they 
     # will be deleted...
+    sg_hops_to_be_left_in_place = set()
     if mode == NFFG.MODE_ADD:
-      sg_hops_to_be_left_in_place = set()
       sgs_in_network = zip(*net.network.edges(keys=True))[2]
       for sg in self.req_graph.sg_hops:
         if sg.src.node.id in vnf_to_be_left_in_place and \
@@ -704,7 +703,7 @@ class GraphPreprocessorClass(object):
           raise uet.BadInputException("An SGHop which needs to be updated must"
                 " have both ends connected to a VNF which is left in place!", 
                 "SGHop %s has one of its ends not mapped yet!"%sg.id)
-      net.calculate_available_link_res(sg_hops_to_be_left_in_place)
+    net.calculate_available_link_res(sg_hops_to_be_left_in_place, mode)
 
     # calculated weights for infras based on their available bandwidth capacity
     for d in net.infras:
@@ -723,7 +722,7 @@ class GraphPreprocessorClass(object):
 
     # after all the TAG values are traced back, and the reserved bandwidth 
     # capacities are subtracted from the available resources, we can 
-    # calculate the link weights.
+    # calculate the link weights. Needed in every mode (mabye unnecesary in DEL).
     for i, j, k, d in net.network.edges_iter(data=True, keys=True):
       if d.type == 'STATIC':
         if d.availbandwidth > 0:
@@ -738,7 +737,8 @@ class GraphPreprocessorClass(object):
     # NOTE: in case of ADD operation these ports will be still in the output, 
     # because then the saved original request NFFG is used as base to generate
     # output NFFG and these ports can be used there! Port removal here is good 
-    # not to confuse anything with the invalid ports during the mapping.
+    # not to confuse anything with the invalid ports during the mapping. Other-
+    # wise they would just grow with coninout REMAPs
     for link in net.links:
       if link.type == link.DYNAMIC:
         if link.src is not None:

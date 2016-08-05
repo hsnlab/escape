@@ -951,7 +951,7 @@ class NFFG(AbstractNFFG):
     copy.network = self.network.copy()
     return copy
 
-  def calculate_available_link_res (self, sg_hops_to_be_ignored):
+  def calculate_available_link_res (self, sg_hops_to_be_ignored, mode=MODE_ADD):
     """
     Calculates available bandwidth on all the infrastructure links.
     Stores them in 'availbandwidth' field of the link objects.
@@ -959,6 +959,7 @@ class NFFG(AbstractNFFG):
     
     :param sg_hops_to_be_ignored: container for the EdgeSGLink ID-s which should
                                   be ignored
+    :param mode: Determines whether the flowrules should be considered.
     :return: None
     """
     # set availbandwidth to the maximal value
@@ -968,34 +969,35 @@ class NFFG(AbstractNFFG):
           setattr(self.network[i][j][k], 'availbandwidth', d.bandwidth)
     # find all the flowrules with starting TAG and retrieve the paths, 
     # and subtract the reserved link and internal (inside Infras) bandwidth
-    for d in self.infras:
-      for p in d.ports:
-        for fr in p.flowrules:
-          if fr.hop_id in sg_hops_to_be_ignored and fr.bandwidth is not None:
-            # If the parent SG of this flowrule is in both graphs and the 
-            # SG hops both ends are also in both graphs
-            d.availres['bandwidth'] -= fr.bandwidth
-        for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p, 
-                                                          sg_hops_to_be_ignored):
-          path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, self, p)
-          # collocation flowrules dont have TAGs so their empty lists are not 
-          # returned by get_TAGs_of_starting_flows, but this case
-          # is also handled by the Flowrule.bandwidth summerizing 'for loop'
-          if flow_bw is not None:
-            for link in path_of_TAG:
-              link.availbandwidth -= flow_bw
-              if link.availbandwidth < 0:
-                raise RuntimeError("(BadInputException) "
-                                   "The bandwidth usage implied by the sum of "
-                                   "flowrule "
-                                   "bandwidths should determine the occupied "
-                                   "capacity on links. "
-                                   "The bandwidth capacity on link %s, %s, "
-                                   "%s got below "
-                                   "zero!" % (
-                                     link.src.node.id,
-                                     link.dst.node.id,
-                                     link.id))
+    if mode == self.MODE_ADD:
+      for d in self.infras:
+        for p in d.ports:
+          for fr in p.flowrules:
+            if fr.hop_id in sg_hops_to_be_ignored and fr.bandwidth is not None:
+              # If the parent SG of this flowrule is in both graphs and the 
+              # SG hops both ends are also in both graphs
+              d.availres['bandwidth'] -= fr.bandwidth
+          for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p, 
+                                 sg_hops_to_be_ignored):
+            path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, self, p)
+            # collocation flowrules dont have TAGs so their empty lists are not 
+            # returned by get_TAGs_of_starting_flows, but this case
+            # is also handled by the Flowrule.bandwidth summerizing 'for loop'
+            if flow_bw is not None:
+              for link in path_of_TAG:
+                link.availbandwidth -= flow_bw
+                if link.availbandwidth < 0:
+                  raise RuntimeError("(BadInputException) "
+                                     "The bandwidth usage implied by the sum of "
+                                     "flowrule "
+                                     "bandwidths should determine the occupied "
+                                     "capacity on links. "
+                                     "The bandwidth capacity on link %s, %s, "
+                                     "%s got below "
+                                     "zero!" % (
+                                       link.src.node.id,
+                                       link.dst.node.id,
+                                       link.id))
 
   def calculate_available_node_res (self, vnfs_to_be_left_in_place={},
                                     mode=MODE_ADD):
@@ -1006,6 +1008,7 @@ class NFFG(AbstractNFFG):
 
     :param vnfs_to_be_ignored: NodeNF.id-s to be ignored subtraction.
     :type vnfs_to_be_ignored: list
+    :param mode: Determines whether the running NFs should be considered.
     :return: None
     """
     # add available res attribute to all Infras and subtract the running
