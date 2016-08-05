@@ -1073,10 +1073,43 @@ class NFFGConverter(object):
         except ValueError:
           self.log.warning("Delay in requirement metadata: %s is not a "
                            "valid float value!" % values['delay'])
+        # Detect source port
+        try:
+          snode = nffg[values['snode']]
+          sport = snode.ports[values['sport']]
+          self.log.debug(
+            "Get source port for Requirement link: %s" % sport)
+        except KeyError:
+          # SAP port id cannot be transferred in Virtualizer
+          # If source port is not found, try to detect the only port in SAP
+          if len(snode.ports) == 1:
+            sport = snode.ports.container[0]
+            self.log.debug(
+              "Port id mismatch! Detected source port for Requirement link: "
+              "%s" % sport)
+          else:
+            raise
+        # Detect destination port
+        try:
+          dnode = nffg[values['dnode']]
+          dport = dnode.ports[values['dport']]
+          self.log.debug(
+            "Get destination port for Requirement link: %s" % sport)
+        except KeyError:
+          # SAP port id cannot be transferred in Virtualizer
+          # If source port is not found, try to detect the only port in SAP
+          if len(dnode.ports) == 1:
+            dport = dnode.ports.container[0]
+            self.log.debug(
+              "Port id mismatch! Detected destination port for Requirement "
+              "link: %s" % dport)
+          else:
+            raise
+        # Create Requirement link
         req = nffg.add_req(
           id=req_id,
-          src_port=nffg[values['snode']].ports[values['sport']],
-          dst_port=nffg[values['dnode']].ports[values['dport']],
+          src_port=sport,
+          dst_port=dport,
           delay=values['delay'],
           bandwidth=values['bw'],
           sg_path=values['sg_path'])
@@ -1085,6 +1118,25 @@ class NFFGConverter(object):
       else:
         nffg.add_metadata(name=key,
                           value=virtualizer.metadata[key].value.get_value())
+
+  def _parse_sghops_from_flowrules (self, nffg, virtualizer):
+    """
+    Recreate the SG hop links based on the flowrules.
+    Use the flowrule id as the is of the SG hop link.
+
+    :param nffg: Container NFFG
+    :type nffg: :any:`NFFG`
+    :param virtualizer: Virtualizer object
+    :type virtualizer: Virtualizer
+    :return: None
+    """
+    if nffg.is_SBB():
+      return
+    self.log.debug(
+      "Detected SingleBiSBiS view! Recreate SG hop links based on flowrules...")
+    for sbb in nffg.infras:
+      for flowrule in sbb.flowrules:
+        print flowrule
 
   def parse_from_Virtualizer (self, vdata, with_virt=False):
     """
@@ -1130,6 +1182,9 @@ class NFFGConverter(object):
     self._parse_virtualizer_links(nffg=nffg, virtualizer=virtualizer)
     # Parse Metadata and Requirement links from Virtualizer
     self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
+    # If the received NFFG is a SingleBiSBiS, recreate the SG hop links
+    # which are in compliance with flowrules in SBB node
+    self._parse_sghops_from_flowrules(nffg=nffg, virtualizer=virtualizer)
     self.log.debug("END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
       V_VERSION, NFFG.version))
     return (nffg, virtualizer) if with_virt else nffg
@@ -1853,18 +1908,24 @@ if __name__ == "__main__":
   # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
   # log.debug(nffg.dump())
 
-  dov = virt_lib.Virtualizer.parse_from_file(
-    # "test2.xml")
-    "un1.xml")
-  # dov.bind(relative=True)
-  log.info("Parsed XML:")
-  log.info("%s" % dov.xml())
-  nffg = c.parse_from_Virtualizer(vdata=dov.xml())
-  log.info("Converted NFFG:")
-  log.info("%s" % nffg.dump())
+  # dov = virt_lib.Virtualizer.parse_from_file(
+  #   # "test2.xml")
+  #   "un1.xml")
+  # # dov.bind(relative=True)
+  # log.info("Parsed XML:")
+  # log.info("%s" % dov.xml())
+  # nffg = c.parse_from_Virtualizer(vdata=dov.xml())
+  # log.info("Converted NFFG:")
+  # log.info("%s" % nffg.dump())
+
+  # nffg = NFFG.parse_from_file("../../../examples/escape-sbb-mapped.nffg")
   # virt = c.dump_to_Virtualizer(nffg=nffg)
   # log.info("Reconverted Virtualizer:")
   # log.info("%s" % virt.xml())
+
+  v = virt_lib.Virtualizer.parse_from_file(
+    "../../../examples/escape-sbb-mapped.xml")
+  nffg = c.parse_from_Virtualizer(vdata=v.xml())
 
   # dov = virt_lib.Virtualizer.parse_from_file(
   #   "../../../../examples/escape-2sbb-topo.xml")
