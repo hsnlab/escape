@@ -1,5 +1,6 @@
 FROM ubuntu:14.04.4
 MAINTAINER Janos Czentye <czentye@tmit.bme.hu>
+LABEL Description="ESCAPE: Multi-domain Orchestrator" Project="UNIFY" version="2.0"
 COPY . /home/escape/
 COPY .ssh/ /root/.ssh/
 WORKDIR /home/escape
