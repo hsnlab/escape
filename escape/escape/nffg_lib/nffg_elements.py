@@ -1136,10 +1136,11 @@ class InfraPort(Port):
     super(InfraPort, self).load(data=data)
     for flowrule in data.get('flowrules', ()):
       self.add_flowrule(
+        id=flowrule['id'],
         match=flowrule.get('match'),
         action=flowrule.get('action'),
-        delay=float(flowrule['delay']) if 'delay' in data else None,
-        bandwidth=float(flowrule['bandwidth']) if 'bandwidth' in data else None,
+        delay=float(flowrule['delay']) if 'delay' in flowrule else None,
+        bandwidth=float(flowrule['bandwidth']) if 'bandwidth' in flowrule else None,
         hop_id=flowrule.get('hop_id'))
 
 
@@ -1361,9 +1362,6 @@ class NodeInfra(Node):
 
   def load (self, data, *args, **kwargs):
     super(NodeInfra, self).load(data=data)
-    for port in data.get('ports', ()):
-      for flowrule in port.get('flowrules', ()):
-        self.ports[port['id']].flowrules.append(Flowrule.parse(flowrule))
     self.domain = data.get('domain', self.DEFAULT_DOMAIN)  # optional
     self.infra_type = data['type']
     if 'supported' in data:
