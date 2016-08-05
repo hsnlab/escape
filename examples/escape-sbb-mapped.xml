@@ -134,7 +134,7 @@
 			<flowtable>
 				<flowentry>
 					<id>ESCAPE-flowentry1</id>
-					<name>sg_hop:1</name>
+					<name>test</name>
 					<priority>100</priority>
 					<port>../../../ports/port[id=port-SAP1]</port>
 					<match>dl_tag=0x0001</match>

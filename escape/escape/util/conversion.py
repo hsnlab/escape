@@ -824,16 +824,21 @@ class NFFGConverter(object):
       fr_hop_id = None
       if flowentry.name.is_initialized():
         if not flowentry.name.get_as_text().startswith(self.TAG_SG_HOP):
-          self.log.warning(
-            "Flowrule's name: %s is not following the SG hop naming "
-            "convention! SG hop for %s is undefined..." % (
-              flowentry.name.get_as_text(), flowentry))
-          fr_hop_id = None
+          # self.log.warning(
+          #   "Flowrule's name: %s is not following the SG hop naming "
+          #   "convention! SG hop for %s is undefined..." % (
+          #     flowentry.name.get_as_text(), flowentry))
+          # fr_hop_id = None
+
+          # If hop_id is not set in the name field, use flowrule.id instead
+          fr_hop_id = flowentry.id.get_value()
+          self.log.debug("Use flowentry id for hop_id: %s" % fr_hop_id)
         else:
           try:
             fr_hop_id = int(flowentry.name.get_as_text().split(':')[1])
           except ValueError:
             fr_hop_id = flowentry.name.get_as_text().split(':')[1]
+          self.log.debug("Detected hop_id in name field: %s" % fr_hop_id)
 
       # Add flowrule to port
       fr = vport.add_flowrule(id=fr_id, match=fr_match, action=fr_action,
@@ -1130,13 +1135,51 @@ class NFFGConverter(object):
     :type virtualizer: Virtualizer
     :return: None
     """
-    if nffg.is_SBB():
+    if not nffg.is_SBB():
       return
     self.log.debug(
       "Detected SingleBiSBiS view! Recreate SG hop links based on flowrules...")
     for sbb in nffg.infras:
-      for flowrule in sbb.flowrules:
-        print flowrule
+      for flowrule in sbb.flowrules():
+        # Get source port / in_port
+        in_port = None
+        flowclass = None
+        for item in flowrule.match.split(';'):
+          if item.startswith('in_port'):
+            in_port = item.split('=')[1]
+          elif item.startswith('TAG') or item.startswith('UNTAG'):
+            pass
+          elif item.startswith('flowclass'):
+            flowclass = item.split('=')[1]
+          else:
+            flowclass = item
+        if in_port is not None:
+          in_port = sbb.ports[in_port]
+        else:
+          self.log.warning(
+            "in_port for SG hop link cannot be determined from: %s. Skip SG "
+            "hop recreation..." % flowrule)
+          return
+        # Get destination port / output
+        output = None
+        for item in flowrule.action.split(';'):
+          if item.startswith('output'):
+            output = item.split('=')[1]
+        if output is not None:
+          output = sbb.ports[output]
+        else:
+          self.log.warning(
+            "output for SG hop link cannot be determined from: %s. Skip SG "
+            "hop recreation..." % flowrule)
+          return
+        fr_id = flowrule.hop_id if flowrule.hop_id else flowrule.id
+        sg = nffg.add_sglink(id=fr_id,
+                             src_port=in_port,
+                             dst_port=output,
+                             flowclass=flowclass,
+                             delay=flowrule.delay,
+                             bandwidth=flowrule.bandwidth)
+        log.debug("Recreated SG hop: %s" % sg)
 
   def parse_from_Virtualizer (self, vdata, with_virt=False):
     """
@@ -1680,7 +1723,7 @@ class NFFGConverter(object):
           # Define id based on FR_ID_GEN_STRATEGY
           if self.FR_ID_GEN_STRATEGY == self.FR_ID_GEN_HOP:
             if fr.hop_id is not None:
-              fe_id = "ESCAPE-flowentry" + str(fr.hop_id)
+              fe_id = fr.hop_id
             else:
               # hop_id is not set
               fe_id = str(fr.id)
@@ -1918,14 +1961,16 @@ if __name__ == "__main__":
   # log.info("Converted NFFG:")
   # log.info("%s" % nffg.dump())
 
-  # nffg = NFFG.parse_from_file("../../../examples/escape-sbb-mapped.nffg")
-  # virt = c.dump_to_Virtualizer(nffg=nffg)
-  # log.info("Reconverted Virtualizer:")
-  # log.info("%s" % virt.xml())
+  nffg = NFFG.parse_from_file("../../../examples/escape-sbb-mapped.nffg")
+  virt = c.dump_to_Virtualizer(nffg=nffg)
+  log.info("Reconverted Virtualizer:")
+  log.info("%s" % virt.xml())
 
-  v = virt_lib.Virtualizer.parse_from_file(
-    "../../../examples/escape-sbb-mapped.xml")
-  nffg = c.parse_from_Virtualizer(vdata=v.xml())
+  # v = virt_lib.Virtualizer.parse_from_file(
+  #   "../../../examples/escape-sbb-mapped.xml")
+  # nffg = c.parse_from_Virtualizer(vdata=v.xml())
+  nffg = c.parse_from_Virtualizer(vdata=virt.xml())
+  log.debug(nffg.dump())
 
   # dov = virt_lib.Virtualizer.parse_from_file(
   #   "../../../../examples/escape-2sbb-topo.xml")
