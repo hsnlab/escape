@@ -731,7 +731,7 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[INFR]["manage-neo4j-service"]
+      return self.__configuration[ORCHEST]["manage-neo4j-service"]
     except (KeyError, AttributeError, TypeError):
       return False
 

@@ -127,7 +127,8 @@ cfg = {
           "port": 8889,
           "virtualizer_type": "GLOBAL",
           "unify_interface": True
-        }
+        },
+      "manage-neo4j-service": True
     },
   "adaptation":  # Controller Adaptation Sublayer
     {
@@ -307,8 +308,7 @@ cfg = {
           "class": "FallbackDynamicTopology"
         },
       "SAP-xterms": True,
-      "SHUTDOWN-CLEAN": True,
-      "manage-neo4j-service": False
+      "SHUTDOWN-CLEAN": True
     },
   "additional-config-file": "escape.config",  # relative to project root
   "visualization":
