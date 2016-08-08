@@ -2518,3 +2518,5 @@ if __name__ == "__main__":
   parsed.mode = NFFG.MODE_REMAP
   print parsed.dump()
   print "mode:", parsed.mode
+  # nffg = NFFG.parse_from_file('op-add-mapped-topo1.nffg')
+  # print nffg.dump()

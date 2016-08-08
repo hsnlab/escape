@@ -15,22 +15,22 @@ NC='\033[0m'
 set -euo pipefail
 
 # Fail on error
-trap on_error ERR
 trap "on_error 'Got signal: SIGHUP'" SIGHUP
 trap "on_error 'Got signal: SIGINT'" SIGINT
 trap "on_error 'Got signal: SIGTERM'" SIGTERM
+trap on_error ERR
 
 function on_error() {
-    echo -e "\n${RED}Error during installation! $1${NC}"
+    echo -e "\n${RED}Error during installation! ${1-}${NC}"
     exit 1
 }
 
 function info() {
-    echo -e "${GREEN}$1${NC}"
+    echo -e "${GREEN}${1-INFO}${NC}"
 }
 
 function warn() {
-    echo -e "\n${YELLOW}WARNING: $1${NC}"
+    echo -e "\n${YELLOW}WARNING: ${1-WARNING}${NC}"
     read -rsp $'Press ENTER to continue...\n'
 }
 
@@ -45,8 +45,6 @@ function env_setup {
             sudo locale-gen $LANG
             export LC_ALL=$LANG
             locale
-        else
-             on_error "locale variable: LANG is unset!"
         fi
     fi
     set -u
@@ -57,6 +55,7 @@ function env_setup {
 # Component versions
 JAVA_VERSION=7
 NEO4J_VERSION=2.2.7
+CRYPTOGRAPHY_VERSION=1.3.1
 
 # Other constants
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -105,7 +104,7 @@ function install_core {
         sudo add-apt-repository -y ppa:openjdk-r/ppa
     fi
 
-    if [ "$DISTRIB_ID" = "Ubuntu" ]; then
+    if [ "$DISTRIB_ID" = "Ubuntu" -a "$DISTRIB_VER" = "14.04" ]; then
         info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
         sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
     fi
@@ -117,12 +116,13 @@ function install_core {
     # Install Python 2.7.11 explicitly
     sudo apt-get -y install python2.7
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
+                            libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     info "=== Install ESCAPEv2 Python dependencies ==="
     sudo -H pip install --upgrade setuptools
-    sudo -H pip install cryptography==1.3.1
+    sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
 
