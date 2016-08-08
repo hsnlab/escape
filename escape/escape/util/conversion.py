@@ -1179,7 +1179,7 @@ class NFFGConverter(object):
                              flowclass=flowclass,
                              delay=flowrule.delay,
                              bandwidth=flowrule.bandwidth)
-        log.debug("Recreated SG hop: %s" % sg)
+        self.log.debug("Recreated SG hop: %s" % sg)
 
   def parse_from_Virtualizer (self, vdata, with_virt=False):
     """
