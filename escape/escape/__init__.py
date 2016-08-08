@@ -128,7 +128,7 @@ cfg = {
           "virtualizer_type": "GLOBAL",
           "unify_interface": True
         },
-      "manage-neo4j-service": True
+      "manage-neo4j-service": False
     },
   "adaptation":  # Controller Adaptation Sublayer
     {
