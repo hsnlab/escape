@@ -54,6 +54,10 @@ class GraphPreprocessorClass(object):
     # subchain.
     self.link_rechained = nx.MultiDiGraph()
 
+    # needed in case of MODE_DEL, when we only want to delete one SGhop!
+    # shouldn't be in the NFFG of any other MODE!
+    self.reserved_vnf_id_for_edge_del = 'DEL-EDGE-HELPER-NODE'
+
   def _findSubgraphForChain (self, chain):
     """
     Induced subgraph where for all node:
@@ -469,12 +473,49 @@ class GraphPreprocessorClass(object):
 
     return sorted_output
 
+  def processDelRequest (self):
+    """
+    Checks whether there are SG elements in the request which are not in the 
+    substrate.
+    """
+    for d in self.req_graph.nfs:
+      if d.id not in self.net.network.nodes_iter():
+        self.log.warn("NF %s to be deleted couldn't be found in substrate "
+                      "network! Skipping and removing all connected edges..."
+                      %d.id)
+        self.req_graph.del_node(d)
+      
+    for d in self.req_graph.reqs:
+      if d not in self.net.reqs:
+        self.log.warn("SGHop %s to be deleted couldn't be found in substrate"
+                      " network! Skipping..."%d.id)
+        self.req_graph.del_edge(d.src, d.dst, d.id)
+
+    for s in self.req_graph.saps:
+      raise uet.BadInputException("SAPs cannot be deleted", "SAP node %s found"
+                                  " in delete request"%s.id)
+
+    # Simply remove the infra nodes (The Dynamic and Static links go with them)
+    for infra in [i for i in self.req_graph.infras]:
+      self.req_graph.del_node(infra)
+
+    return self.req_graph
+
   def processRequest (self, mode, preprocessed_network):
     """
     Translates the e2e bandwidth reqs to links, and chains to subchains,
     additionally finds subgraph for subchains.
     Removes the unneeded nodes and edges from the service graph.
     """
+    if mode == NFFG.MODE_DEL:
+      # the return value should be compatible with the other modes, but second 
+      # parameter won't be used.
+      return self.preprocessed_del_req, []
+    elif self.reserved_vnf_id_for_edge_del in self.req_graph.network.node:
+      raise uet.BadInputException("VNF ID %s is reserved for delete requests "
+                "with only edges"%self.reserved_vnf_id_for_edge_del, 
+                "The reserved VNF ID is used in the request in not MODE_DEL")
+
     e2e_chains_with_graphs = []
     not_e2e_chains = []
     # The parameter is needed to indicate the required order of
@@ -562,6 +603,9 @@ class GraphPreprocessorClass(object):
       elif mode == NFFG.MODE_ADD:
         self.log.warn("No SAPs could be found, no end-to-end chains and helper"
                       " subgraphs are going to be found!")
+      elif mode == NFFG.MODE_DEL:
+        # any object can be in the NFFG in MODE_DEL
+        pass
 
     # SAPs are already mapped by the manager, based on their IDs.
     for vnf, data in self.req_graph.network.nodes_iter(data=True):
@@ -585,11 +629,9 @@ class GraphPreprocessorClass(object):
       self.max_chain_id = max(c['id'] for c in self.chains) + 1
     self.manager.setMaxInputChainId(self.max_chain_id)
 
-    """
-    Placement criteria is a list of physical nodes, where the VNF
-    can be placed. It can be also specified by the upper layer, and the
-    preprocessing procedure
-    """
+    # Placement criteria is a list of physical nodes, where the VNF
+    # can be placed. It can be also specified by the upper layer, and the
+    # preprocessing procedure
     for vnf in self.req_graph.network.nodes_iter():
       if not hasattr(self.req_graph.network.node[vnf], 'placement_criteria'):
         setattr(self.req_graph.network.node[vnf], 'placement_criteria', [])
@@ -633,6 +675,11 @@ class GraphPreprocessorClass(object):
     from the network.
     Calculates shortest paths on the infrastructure, weighted by latency.
     """
+    
+    if mode == NFFG.MODE_DEL:
+      # we have to do the SG preprocessing before the substrate preprocessing
+      self.preprocessed_del_req = self.processDelRequest()
+
     # remove deepcopy!! (we already saved the full input, in Core)
     net = self.net
 
@@ -675,8 +722,8 @@ class GraphPreprocessorClass(object):
     # Add available resources to 'availres' attribute of each NodeInfra.
     # Subtract the updated resource requirements of VNFs, which are in both the
     # request and substrate graphs.
-    # TODO: IF mode is DELETE then ignore this function call.
-    net.calculate_available_node_res(vnf_to_be_left_in_place, mode)
+    if mode != NFFG.MODE_DEL:
+      net.calculate_available_node_res(vnf_to_be_left_in_place, mode)
 
     # REQUEST or SG links between SAPs are not removed anywhere else
     for i, j, link in net.network.edges_iter(data=True):
@@ -703,35 +750,37 @@ class GraphPreprocessorClass(object):
           raise uet.BadInputException("An SGHop which needs to be updated must"
                 " have both ends connected to a VNF which is left in place!", 
                 "SGHop %s has one of its ends not mapped yet!"%sg.id)
-    net.calculate_available_link_res(sg_hops_to_be_left_in_place, mode)
+    if mode != NFFG.MODE_DEL:
+      net.calculate_available_link_res(sg_hops_to_be_left_in_place, mode)
 
-    # calculated weights for infras based on their available bandwidth capacity
-    for d in net.infras:
-      if d.availres.bandwidth < 0:
-        self.log.error("Available bandwidth of Infra %s got below zero: %s"%
-                 (d.id, d.availres.bandwidth))
-        raise uet.BadInputException(
-           "The sum of bandwidth capacity of internal Flowrules should be "
-           "less than the available internal bandwidth",
-           "On node %s internal bandwidth would get below zero!" % d.id)
-      else:
-        setattr(d, 'weight', 1.0 / d.availres.bandwidth if \
-                d.availres.bandwidth > 0 else float("inf"))
-        self.log.debug("Weight for node %s: %f" % (d.id, d.weight))
-        self.log.debug("Supported types of node %s: %s" % (d.id, d.supported))
-
-    # after all the TAG values are traced back, and the reserved bandwidth 
-    # capacities are subtracted from the available resources, we can 
-    # calculate the link weights. Needed in every mode (mabye unnecesary in DEL).
-    for i, j, k, d in net.network.edges_iter(data=True, keys=True):
-      if d.type == 'STATIC':
-        if d.availbandwidth > 0:
-          setattr(net.network[i][j][k], 'weight', 1.0 / d.availbandwidth)
+      # calculated weights for infras based on their available bandwidth 
+      # capacity. This only needed in not MODE_DEL.
+      for d in net.infras:
+        if d.availres.bandwidth < 0:
+          self.log.error("Available bandwidth of Infra %s got below zero: %s"%
+                   (d.id, d.availres.bandwidth))
+          raise uet.BadInputException(
+             "The sum of bandwidth capacity of internal Flowrules should be "
+             "less than the available internal bandwidth",
+             "On node %s internal bandwidth would get below zero!" % d.id)
         else:
-          setattr(net.network[i][j][k], 'weight', float("inf"))
-        self.log.debug("Weight for link %s, %s, %s: %f" % (
-          i, j, k, net.network[i][j][k].weight))
-    self.log.info("Link and node weights calculated")
+          setattr(d, 'weight', 1.0 / d.availres.bandwidth if \
+                  d.availres.bandwidth > 0 else float("inf"))
+          self.log.debug("Weight for node %s: %f" % (d.id, d.weight))
+          self.log.debug("Supported types of node %s: %s" % (d.id, d.supported))
+    
+      # after all the TAG values are traced back, and the reserved bandwidth 
+      # capacities are subtracted from the available resources, we can 
+      # calculate the link weights. Needed in every mode, but DEL
+      for i, j, k, d in net.network.edges_iter(data=True, keys=True):
+        if d.type == 'STATIC':
+          if d.availbandwidth > 0:
+            setattr(net.network[i][j][k], 'weight', 1.0 / d.availbandwidth)
+          else:
+            setattr(net.network[i][j][k], 'weight', float("inf"))
+          self.log.debug("Weight for link %s, %s, %s: %f" % (
+            i, j, k, net.network[i][j][k].weight))
+      self.log.info("Link and node weights calculated")
 
     # delete the ports which connect the to be deleted VNF-s to the Infras.
     # NOTE: in case of ADD operation these ports will be still in the output, 
@@ -739,11 +788,15 @@ class GraphPreprocessorClass(object):
     # output NFFG and these ports can be used there! Port removal here is good 
     # not to confuse anything with the invalid ports during the mapping. Other-
     # wise they would just grow with coninout REMAPs
-    for link in net.links:
-      if link.type == link.DYNAMIC:
-        if link.src is not None:
-          if link.src.node.type == 'INFRA':
-            link.src.node.del_port(link.src.id)
+    # In DEL mode the bare infrasturcure is used, but the VNF ports should be 
+    # kept in the NFFG, because the output DEL request should reuse them (but 
+    # all the ports stay!)
+    if mode != NFFG.MODE_DEL:
+      for link in net.links:
+        if link.type == link.DYNAMIC:
+          if link.src is not None:
+            if link.src.node.type == 'INFRA':
+              link.src.node.del_port(link.src.id)
 
     # delete the already mapped VNFs, we have used all the information needed.
     # NOTE: the original NFFG is saved in the CoreAlgorithm
@@ -779,14 +832,15 @@ class GraphPreprocessorClass(object):
          "NodeNF %s couldn`t be removed from the NFFG" % net.network.node[n].id,
          "This NodeNF probably isn`t mapped anywhere")
 
-    if self.shortest_paths is None:
-      self.log.info("Calculating shortest paths measured in latency...")
-      self.shortest_paths = helper.shortestPathsInLatency(net.network,
-           enable_shortest_path_cache=cache_shortest_path,
-           enable_network_cutting=False)
-    else:
-      self.log.info("Shortest paths are received from previous run!")
-    self.manager.addShortestRoutesInLatency(self.shortest_paths)
-    self.log.info("Shortest path calculation completed!")
+    if mode != NFFG.MODE_DEL:
+      if self.shortest_paths is None:
+        self.log.info("Calculating shortest paths measured in latency...")
+        self.shortest_paths = helper.shortestPathsInLatency(net.network,
+             enable_shortest_path_cache=cache_shortest_path,
+             enable_network_cutting=False)
+      else:
+        self.log.info("Shortest paths are received from previous run!")
+      self.manager.addShortestRoutesInLatency(self.shortest_paths)
+      self.log.info("Shortest path calculation completed!")
 
     return net

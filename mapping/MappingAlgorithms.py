@@ -486,12 +486,12 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../examples/escape-mn-req.nffg', "r") as f:
+    with open('untracked/op-del-req1.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('untracked/op-add-mapped-topo1.nffg', "r") as g:
+    with open('untracked/op-del-mapped-topo1.nffg', "r") as g:
       net = NFFG.parse(g.read())
       # net.duplicate_static_links()
-    mapped = MAP(req, net, mode=NFFG.MODE_REMAP)
+    mapped = MAP(req, net, mode=NFFG.MODE_DEL)
     print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
