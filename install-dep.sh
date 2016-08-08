@@ -55,6 +55,7 @@ function env_setup {
 # Component versions
 JAVA_VERSION=7
 NEO4J_VERSION=2.2.7
+CRYPTOGRAPHY_VERSION=1.3.1
 
 # Other constants
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -103,7 +104,7 @@ function install_core {
         sudo add-apt-repository -y ppa:openjdk-r/ppa
     fi
 
-    if [ "$DISTRIB_ID" = "Ubuntu" ]; then
+    if [ "$DISTRIB_ID" = "Ubuntu" -a "$DISTRIB_VER" = "14.04" ]; then
         info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
         sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
     fi
@@ -121,7 +122,7 @@ function install_core {
     # Force cryptography package installation prior to avoid issues in 1.3.2
     info "=== Install ESCAPEv2 Python dependencies ==="
     sudo -H pip install --upgrade setuptools
-    sudo -H pip install cryptography==1.3.1
+    sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
 
