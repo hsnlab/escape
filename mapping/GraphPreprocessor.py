@@ -54,10 +54,6 @@ class GraphPreprocessorClass(object):
     # subchain.
     self.link_rechained = nx.MultiDiGraph()
 
-    # needed in case of MODE_DEL, when we only want to delete one SGhop!
-    # shouldn't be in the NFFG of any other MODE!
-    self.reserved_vnf_id_for_edge_del = 'DEL-EDGE-HELPER-NODE'
-
   def _findSubgraphForChain (self, chain):
     """
     Induced subgraph where for all node:
@@ -502,8 +498,8 @@ class GraphPreprocessorClass(object):
     for d in self.req_graph.nfs:
       if d.id not in self.net.network.nodes_iter():
         self.log.warn("NF %s to be deleted couldn't be found in substrate "
-                      "network! Skipping and removing all connected edges..."
-                      %d.id)
+                      "network! Skipping and removing all connected edges from "
+                      "the request graph..."%d.id)
         self.req_graph.del_node(d)
       
     for d in self.req_graph.reqs:
@@ -512,12 +508,10 @@ class GraphPreprocessorClass(object):
                       " network! Skipping..."%d.id)
         self.req_graph.del_edge(d.src, d.dst, d.id)
 
-    for s in self.req_graph.saps:
-      raise uet.BadInputException("SAPs cannot be deleted", "SAP node %s found"
-                                  " in delete request"%s.id)
-
     # Simply remove the infra nodes (The Dynamic and Static links go with them)
     for infra in [i for i in self.req_graph.infras]:
+      self.log.warn("Infra node %s found in DEL request graph! Removing with all"
+                    " connected edges!")
       self.req_graph.del_node(infra)
 
     return self.req_graph
@@ -532,10 +526,6 @@ class GraphPreprocessorClass(object):
       # the return value should be compatible with the other modes, but second 
       # parameter won't be used.
       return self.preprocessed_del_req, []
-    elif self.reserved_vnf_id_for_edge_del in self.req_graph.network.node:
-      raise uet.BadInputException("VNF ID %s is reserved for delete requests "
-                "with only edges"%self.reserved_vnf_id_for_edge_del, 
-                "The reserved VNF ID is used in the request in not MODE_DEL")
 
     e2e_chains_with_graphs = []
     not_e2e_chains = []
@@ -804,14 +794,11 @@ class GraphPreprocessorClass(object):
       self.log.info("Link and node weights calculated")
 
     # delete the ports which connect the to be deleted VNF-s to the Infras.
-    # NOTE: in case of ADD operation these ports will be still in the output, 
+    # NOTE: in case of ADD/DEL operation these ports will be still in the output,
     # because then the saved original request NFFG is used as base to generate
     # output NFFG and these ports can be used there! Port removal here is good 
     # not to confuse anything with the invalid ports during the mapping. Other-
     # wise they would just grow with coninout REMAPs
-    # In DEL mode the bare infrasturcure is used, but the VNF ports should be 
-    # kept in the NFFG, because the output DEL request should reuse them (but 
-    # all the ports stay!)
     if mode != NFFG.MODE_DEL:
       for link in net.links:
         if link.type == link.DYNAMIC:
@@ -824,8 +811,8 @@ class GraphPreprocessorClass(object):
     for vnf in [v for v in net.nfs]:
       net.del_node(vnf.id)
 
-    # in case of remap or delete operation all the flowrules should be deleted.
-    if mode == NFFG.MODE_REMAP or mode == NFFG.MODE_DEL:
+    # in case of remap operation all the flowrules should be deleted.
+    if mode == NFFG.MODE_REMAP:
       for n in net.infras:
         for p in n.ports:
           deletable = []

@@ -486,12 +486,12 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('untracked/steven-composition-req1.nffg', "r") as f:
+    with open('../examples/operation-add-req1.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('untracked/steven-composition-net1.nffg', "r") as g:
+    with open('../examples/operations-mapped-topo1.nffg', "r") as g:
       net = NFFG.parse(g.read())
       # net.duplicate_static_links()
-    mapped = MAP(req, net, mode=NFFG.MODE_REMAP)
+    mapped = MAP(req, net, mode=NFFG.MODE_ADD)
     print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg
