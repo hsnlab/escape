@@ -73,20 +73,34 @@ def _purgeNFFGFromInfinityValues(nffg):
     helper.log.info("Purging link resource of output NFFG from Infinity values"
                     " was required.")
 
-def MAP (request, network, full_remap=False,
-         enable_shortest_path_cache=False,
+def MAP (request, network, enable_shortest_path_cache=False,
          bw_factor=1, res_factor=1, lat_factor=1,
          shortest_paths=None, return_dist=False,
-         bt_limit=6, bt_branching_factor=3):
+         bt_limit=6, bt_branching_factor=3, **kwargs):
   """
   The parameters are NFFG classes.
   Calculates service chain requirements from EdgeReq classes.
   enable_shortest_path_cache: whether we should store the calculated shortest 
   paths in a file for later usage.
-  full_remap: whether the resources of the VNF-s contained in the resource
-  NFFG be subtracted and deleted or just deleted from the resource NFFG 
-  before mapping.
+  MODE_REMAP: the resources of the VNF-s contained in the resource
+  NFFG are just deleted from the resource NFFG before mapping.
+  MODE_ADD: The stored VNF information in the substrate graph is interpreted as
+  reservation state. Their resource requirements are subtracted from the 
+  available. If an ID is present in both the substrate and request graphs, the 
+  resource requirements (and the whole instance) will be updated.
+  MODE_DELETE: Finds the elements of the request NFFG in the substrate NFFG and
+  removes them.
   """
+  
+  # possible values are NFFG.MODE_ADD, NFFG.MODE_DELETE, NFFG.MODE_REMAP
+  if 'mode' not in kwargs:
+    raise uet.BadInputException("Mapping operation mode should always be set", 
+                                "No mode specified for mapping operation!")
+  else:
+    mode = kwargs['mode']
+
+  """
+  # NOTE: SG Hops are always given in the service graph from now on!
   sg_hops_given = True
   try:
     # if there is at least ONE SGHop in the graph, we don't do SGHop retrieval.
@@ -109,19 +123,26 @@ def MAP (request, network, full_remap=False,
       # VNF ports are given to the function
       request.add_sglink(v[0], v[1], flowclass=v[2], bandwidth=v[3], delay=v[4],
                          id=k[2])
+  """
 
   chainlist = []
   cid = 1
   edgereqlist = []
+  # a delay value which is assumed to be infinity in terms of connection RTT 
+  # or latency requirement (set it to 100s = 100 000ms)
+  overall_highest_delay = 100000
   for req in request.reqs:
     edgereqlist.append(req)
     request.del_edge(req.src, req.dst, req.id)
-
+    
+  """
+  # NOTE: this is not needed because SG Hops are always given from now on.
   if len(edgereqlist) != 0 and not sg_hops_given:
     helper.log.warn("EdgeReqs were given, but the SGHops (which the EdgeReqs "
                     "refer to by id) are retrieved based on the flowrules of "
                     "infrastructure. This can cause error later if the "
                     "flowrules was malformed...")
+  """
 
   # construct chains from EdgeReqs
   for req in edgereqlist:
@@ -151,7 +172,8 @@ def MAP (request, network, full_remap=False,
       try:
         chain = {'id': cid, 'link_ids': req.sg_path,
                  'bandwidth': req.bandwidth if req.bandwidth is not None else 0,
-                 'delay': req.delay if req.delay is not None else float("inf")}
+                 'delay': req.delay if req.delay is not None \
+                 else overall_highest_delay}
       except AttributeError:
         raise uet.BadInputException(
            "EdgeReq attributes are: sg_path, bandwidth, delay",
@@ -219,8 +241,8 @@ def MAP (request, network, full_remap=False,
         setattr(d, 'bandwidth', float("inf"))
 
   # create the class of the algorithm
-  alg = CoreAlgorithm(network, request, chainlist, full_remap,
-                      enable_shortest_path_cache,
+  alg = CoreAlgorithm(network, request, chainlist, mode,
+                      enable_shortest_path_cache, overall_highest_delay,
                       bw_factor=bw_factor, res_factor=res_factor,
                       lat_factor=lat_factor, shortest_paths=shortest_paths)
   alg.setBacktrackParameters(bt_limit, bt_branching_factor)
