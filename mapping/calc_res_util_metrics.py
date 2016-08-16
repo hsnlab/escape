@@ -12,7 +12,7 @@ try:
 except ImportError:
   import sys, os
   sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                  "../pox/ext/escape/nffg_lib/")))
+                                  "../escape/escape/nffg_lib/")))
   from nffg import NFFG
 
 helpmsg="""
@@ -51,7 +51,9 @@ Removes the uncompressed NFFG after it is finished with its processing.
    --print_minmax                   Print the minimal and maximal utilization of 
                                     all resource types of the processed NFFG-s.
    --consider_seeds                 Makes the decompressed NFFG folder tree 
-                                    seed dependent.
+                                    seed dependent. Use "-s" to set the seed.
+   -s <<seed_number>> 
+   --plot_aspect=<<float>>          Ratio of x/y axis.
 """
 
 def increment_util_counter(d, u, aggr_size):
@@ -80,7 +82,7 @@ def main(argv):
                                              "print_devs", "print_avgs",
                                              "print_cdf_data=", "print_minmax", 
                                              "no_cdf_interpolation", 
-                                               "consider_seeds"])
+                                               "consider_seeds", "plot_aspect="])
   except getopt.GetoptError as goe:
     print helpmsg
     raise
@@ -100,6 +102,7 @@ def main(argv):
   no_cdf_interpolation = True
   print_minmax = False
   seednum = None
+  plot_aspect = 1
   consider_seeds = False
   for opt, arg in opts:
     if opt == "-h":
@@ -146,6 +149,8 @@ def main(argv):
       print_minmax = True
     elif opt == "--consider_seeds":
       consider_seeds = True
+    elif opt == "--plot_aspect":
+      plot_aspect = float(arg)
       
   nffg_num_list = []
   bashCommand = "ls -x "+loc_tgz
@@ -307,11 +312,11 @@ def main(argv):
         i += 1
         if add_hist_values:
           autolabel(rect, ax)
-      # ax.set_aspect(10)
       ax.set_ylabel("Ratio of network element counts to total count")
       ax.set_xlabel("Resource utilization intervals [%]")
       ax.set_xticks(range_seq * (len(hist)+2) * width)
       ax.set_xticklabels([str(int(100*util_range)) for util_range in hist['cpu']])
+      ax.set_aspect(plot_aspect)
       ax.legend([r[0] for r in zip(*rects)[1]], zip(*rects)[0], ncol=5, 
                 loc='upper left', fontsize=8, bbox_to_anchor=(0,1))
       plt.savefig('plots/hist-test_lvl-%s.%s'%(test_lvl, hist_format), 
@@ -324,14 +329,16 @@ def main(argv):
         cdf[res] = sorted(cdf[res])
       fig, ax = plt.subplots()
       ax.set_xlim((-0.05, 1.05))
-      ax.set_ylim((-0.05, 1.10))
+      ax.set_ylim((-0.05, 1.19))
       colors = iter(['r', 'g', 'b', 'c', 'y'])
-      styles = iter([[8, 4, 2, 4, 2, 4], [4,2], [8,2], [8,4,2,4], []])
+      styles = iter([[8, 4, 2, 4, 2, 4], [4,2], [8,4,4,2], [8,4,2,4], []])
+      markers = iter(['o', 'v', '+', 's', ''])
       for res in cdf:
         last_point = (0, 0)
         vertical_step = 1.0/len(cdf[res])
         rescolor = next(colors)
         resline = next(styles)
+        resmarker = next(markers)
         reslab = res
         if print_cdf_data and res == res_cdf_to_print:
           cdf_plot_data = [last_point]
@@ -340,27 +347,32 @@ def main(argv):
                                    [1.0])):
           if no_cdf_interpolation:
             plt.plot((last_point[0], point[0]), (last_point[1], last_point[1]), 
-                     color=rescolor, lw=3, label=reslab, dashes=resline)
+                     color=rescolor, lw=1.5, label=reslab, dashes=resline, 
+                     marker=resmarker)
             plt.plot((point[0], point[0]),(last_point[1], point[1]),
-                     color=rescolor, lw=3, dashes=resline)
+                     color=rescolor, lw=1.5, dashes=resline, marker=resmarker)
           else:
             plt.plot((last_point[0], point[0]), (last_point[1], point[1]), 
-                     color=rescolor, lw=3, label=reslab)
+                     color=rescolor, lw=1.5, dashes=resline, label=reslab, 
+                     marker=resmarker)
           reslab = None
           if print_cdf_data and res == res_cdf_to_print:
             cdf_plot_data.append(point)
           last_point = point
         plt.plot((last_point[0], 1.0), (last_point[1], 1.0), 
-                 color=rescolor, lw=3)
+                 color=rescolor, lw=1.5, dashes=resline, label=reslab, 
+                 marker=resmarker)
         if print_cdf_data and res == res_cdf_to_print:
           cdf_plot_data.append((1.0, 1.0))
           print test_lvl, ",", ",".join(map(lambda t: "(%.6f; %.6f)"%(t[0], t[1]),
                                             cdf_plot_data))
-      ax.set_ylabel("Ratio of network element counts to total count")
+      ax.set_ylabel("CDF")
       ax.set_xlabel("Resource utilization [%]")
-      ax.set_xticks([float(i)/100 for i in xrange(0,101, 5)])
-      ax.set_xticklabels([str(i) for i in xrange(0,101, 5)])
-      ax.legend(bbox_to_anchor=(0,1), loc='upper left', ncol=5, fontsize=11)
+      ax.set_aspect(plot_aspect)
+      ax.set_xticks([float(i)/100 for i in xrange(0,101, 20)])
+      ax.set_xticklabels([str(i) for i in xrange(0,101, 20)])
+      ax.legend(bbox_to_anchor=(0,1), loc='upper left', ncol=5, fontsize=12, 
+                columnspacing=0.9)
       plt.savefig('plots/cdf-test_lvl-%s.%s'%(test_lvl, cdf_format), 
                   bbox_inches='tight')
       plt.close(fig)

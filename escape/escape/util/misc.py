@@ -20,12 +20,15 @@ import logging
 import os
 import pstats
 import re
+import socket
 import warnings
 import weakref
 from functools import wraps
 from subprocess import STDOUT, Popen, PIPE
 
 # Log level constant for additional VERBOSE level
+import time
+
 VERBOSE = 5
 
 
@@ -132,12 +135,16 @@ def run_cmd (cmd):
   It's advisable to give the command with a raw string literal e.g.: r'ps aux'.
 
   :param cmd: command
-  :type cmd: str
+  :type cmd: str or list or tuple
   :return: output of the command
   :rtype: str
   """
-  return Popen(['/bin/sh', '-c', cmd], stdout=PIPE,
-               stderr=STDOUT).communicate()[0]
+  shell_cmd = ['/bin/sh', '-c']
+  if isinstance(cmd, basestring):
+    shell_cmd.append(cmd)
+  elif isinstance(cmd, (list, tuple)):
+    shell_cmd.append(' '.join(cmd))
+  return Popen(shell_cmd, stdout=PIPE, stderr=STDOUT).communicate()[0]
 
 
 def enum (*sequential, **named):
@@ -274,7 +281,7 @@ def deprecated (func):
   return newFunc
 
 
-def remove_junks (log=logging.getLogger("cleanup")):
+def remove_junks_at_shutdown (log=logging.getLogger("cleanup")):
   if os.geteuid() != 0:
     log.error("Cleanup process requires root privilege!")
     return
@@ -294,16 +301,25 @@ def remove_junks (log=logging.getLogger("cleanup")):
   for veth in veths[::2]:
     if veth != '':
       run_cmd(r"sudo ip link del %s" % veth)
-  log.debug("Remove remained tmp files, xterms, stacked netconfd sockets...")
-  for f in os.listdir('/tmp'):
-    if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
-      os.remove(os.path.join('/tmp/', f))
-  run_cmd("sudo pkill -f 'xterm -title SAP'")
+  log.debug("Remove remained xterms and stacked netconfd sockets...")
+  run_cmd("sudo pkill -f '%s'" % 'xterm -title "SAP')
   # os.system("sudo pkill -f 'xterm -title SAP'")
   log.debug("Cleanup any Mininet-specific junk...")
   # Call Mininet's own cleanup stuff
   from mininet.clean import cleanup
   cleanup()
+
+
+def remove_junks_at_boot (log=logging.getLogger("cleanup")):
+  if os.geteuid() != 0:
+    log.error("Cleanup process requires root privilege!")
+    return
+  log.debug("Remove remained log files of VNF, agent and netconfd instances "
+            "from previous run...")
+  run_cmd('rm -f /tmp/*.log')
+  for f in os.listdir('/tmp'):
+    if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
+      os.remove(os.path.join('/tmp/', f))
 
 
 def get_ifaces ():
@@ -396,3 +412,60 @@ def unicode_to_str (raw):
     return raw.encode('utf-8').replace(' ', '_')
   else:
     return raw
+
+
+def remove_units (raw):
+  """
+  Remove units from resource values.
+
+  :param raw: raw resource value
+  :type raw: str
+  :return: resource value
+  :rtype : int
+  """
+  return filter(lambda x: x.isdigit(), raw)
+
+
+def check_service_status (name):
+  status_all = run_cmd("sudo service --status-all")
+  for line in status_all.splitlines():
+    status, service = line.split(']')
+    if name == service.strip():
+      if "+" in status:
+        return True
+      else:
+        return False
+  return False
+
+
+def port_tester (host, port, interval=1, period=5,
+                 log=logging.getLogger("port_tester")):
+  """
+  Test the given port with the interval (in sec) until the attempts reach the
+  given period.
+
+  :param host: host
+  :type host: str
+  :param port: port number
+  :type port: int
+  :param interval: delay betwwen the attempts
+  :type interval: int
+  :param period: number of checks
+  :type period: int
+  :param log: additional log object
+  :return: port is open or not
+  :rtype: bool
+  """
+  log.debug(
+    "Testing port: %s on host: %s with interval: %ss" % (host, port, interval))
+  for i in xrange(1, period):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+      s.connect((socket.gethostbyname(host), port))
+      log.log(VERBOSE, "Port open: %s!" % port)
+      return True
+    except socket.error:
+      log.log(VERBOSE, "Attempt: %s - Port closed!" % i)
+      s.close()
+      time.sleep(interval)
+  return False

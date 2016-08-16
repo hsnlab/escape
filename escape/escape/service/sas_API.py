@@ -21,6 +21,7 @@ from subprocess import Popen
 
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
+from escape.orchest.ros_API import BasicUnifyRequestHandler
 from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
@@ -65,7 +66,7 @@ class GetVirtResInfoEvent(Event):
     self.sid = sid
 
 
-class ServiceRequestHandler(AbstractRequestHandler):
+class ServiceRequestHandler(BasicUnifyRequestHandler):
   """
   Request Handler for Service Adaptation SubLayer.
 
@@ -86,11 +87,17 @@ class ServiceRequestHandler(AbstractRequestHandler):
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'service'
+  static_prefix = "escape"
   # Logger name
   LOGGER_NAME = "U-Sl"
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
+  # Default communication approach
+  DEFAULT_DIFF = True
+  # Bound function
+  API_CALL_RESOURCE = 'api_sas_get_topology'
+  API_CALL_REQUEST = 'api_sas_sg_request'
 
   def __init__ (self, request, client_address, server):
     """
@@ -120,46 +127,9 @@ class ServiceRequestHandler(AbstractRequestHandler):
     """
     self.log.info("Call %s function: topology" % self.LOGGER_NAME)
     # Forward call to main layer class
-    topology = self._proceed_API_call('api_sas_get_topology')
-    if topology is None:
-      self.send_error(404, message="Resource info is missing!")
-      return
-    # Setup OK status for HTTP response
-    self.send_response(200)
-    if topology is False:
-      self.log.info(
-        "Requested resource has not changed! Respond with cached topology...")
-      if self.virtualizer_format_enabled:
-        data = self.server.last_response.xml()
-      else:
-        data = self.server.last_response.dump()
-    else:
-      if self.virtualizer_format_enabled:
-        self.log.debug("Convert internal NFFG to Virtualizer...")
-        converter = NFFGConverter(domain=None, logger=log)
-        # Dump to plain text format
-        v_topology = converter.dump_to_Virtualizer(nffg=topology)
-        # Cache converted data for edit-config patching
-        self.log.debug("Cache converted topology...")
-        self.server.last_response = v_topology
-        # Dump to plain text format
-        data = v_topology.xml()
-        # Setup HTTP response format
-      else:
-        self.log.debug("Cache converted topology...")
-        self.server.last_response = topology
-        data = topology.dump()
-    if self.virtualizer_format_enabled:
-      self.send_header('Content-Type', 'application/xml')
-    else:
-      self.send_header('Content-Type', 'application/json')
-    self.log.log(VERBOSE, "Responded topology for 'get-config':\n%s" % data)
-    # Setup length for HTTP response
-    self.send_header('Content-Length', len(data))
-    self.end_headers()
-    self.log.info("Send back topology description...")
-    self.wfile.write(data)
-    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
+    resource = self._proceed_API_call(self.API_CALL_RESOURCE)
+    self._topology_view_responder(resource_nffg=resource)
+    self.log.debug("%s function: topology ended!" % self.LOGGER_NAME)
 
   def sg (self):
     """
@@ -171,32 +141,12 @@ class ServiceRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    self.log.debug("Called REST-API function: sg")
-    # Obtain NFFG from request body
-    log.debug("Detected response format: %s" % self.headers.get("Content-Type"))
-    body = self._get_body()
-    # log.getChild("REST-API").debug("Request body:\n%s" % body)
-    if body is None or not body:
-      log.warning("Received data is empty!")
-      self.send_error(400, "Missing body!")
-      return
-    # Expect XML format --> need to convert first
-    if self.virtualizer_format_enabled:
-      if self.headers.get("Content-Type") != "application/xml" or \
-         not body.startswith("<?xml version="):
-        log.error("Received data is not in XML format despite of the UNIFY "
-                  "interface is enabled!")
-        self.send_error(415)
-        return
-      # Convert response's body to NFFG
-      nffg = NFFGConverter(domain="INTERNAL",
-                           logger=log).parse_from_Virtualizer(vdata=body)
-    else:
-      nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    self.log.debug("Parsed service request: %s" % nffg)
-    self._proceed_API_call('api_sas_sg_request', nffg)
-    self.send_acknowledge()
-    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
+    self.log.info("Call %s function: sg" % self.LOGGER_NAME)
+    nffg = self._service_request_parser()
+    if nffg:
+      self._proceed_API_call(self.API_CALL_REQUEST, nffg)
+      self.send_acknowledge()
+    self.log.debug("%s function: sg ended!" % self.LOGGER_NAME)
 
 
 class ServiceLayerAPI(AbstractAPI):

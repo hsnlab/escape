@@ -47,8 +47,8 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     :return: Network Function Forwarding Graph
     :rtype: :any:`NFFG`
     """
-    log.debug("Invoke mapping algorithm: %s - request: %s resource: %s" %
-              (cls.__name__, graph, resource))
+    log.info("Invoke mapping algorithm: %s - request: %s resource: %s" %
+             (cls.__name__, graph, resource))
     if graph is None:
       log.error("Missing request NFFG! Abort mapping process...")
       return
@@ -57,6 +57,11 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       return
     try:
       mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
+      if 'mode' in mapper_params:
+        log.debug("Setup mapping mode from config: %s" % mapper_params['mode'])
+      else:
+        mapper_params['mode'] = graph.mode
+        log.debug("Setup mapping mode based on request type: %s" % graph.mode)
       mapped_nffg = MAP(request=graph.copy(),
                         network=resource.copy(),
                         **mapper_params)
@@ -80,8 +85,8 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
     except:
       log.exception("Got unexpected error during mapping process!")
       return
-    log.debug(
-      "Mapping algorithm: %s is finished on SG: %s" % (cls.__name__, graph))
+    log.info("Mapping algorithm: %s is finished on SG: %s" %
+             (cls.__name__, graph))
     return mapped_nffg
 
 

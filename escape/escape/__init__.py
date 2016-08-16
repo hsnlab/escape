@@ -71,7 +71,8 @@ cfg = {
           "prefix": "escape",
           "address": "0.0.0.0",
           "port": 8008,
-          "unify_interface": False
+          "unify_interface": False,
+          "diff": True
         }
     },
   "orchestration":  # Resource Orchestration Sublayer
@@ -102,17 +103,18 @@ cfg = {
       # Interface / Upper layer related configuration
       "ESCAPE-SERVICE":
         {
-          "virtualizer_type": "SINGLE"
+          # "virtualizer_type": "SINGLE"
+          "virtualizer_type": "GLOBAL"
         },
       "Sl-Or":
         {
           "module": "escape.orchest.ros_API",
-          "class": "ROSAgentRequestHandler",
+          "class": "BasicUnifyRequestHandler",
           "prefix": "escape",
           "address": "0.0.0.0",
           "port": 8888,
-          # "virtualizer_type": "SINGLE",
-          "virtualizer_type": "GLOBAL",
+          "virtualizer_type": "SINGLE",
+          # "virtualizer_type": "GLOBAL",
           "unify_interface": True,
           "diff": True
         },
@@ -125,7 +127,8 @@ cfg = {
           "port": 8889,
           "virtualizer_type": "GLOBAL",
           "unify_interface": True
-        }
+        },
+      "manage-neo4j-service": False
     },
   "adaptation":  # Controller Adaptation Sublayer
     {
@@ -136,6 +139,7 @@ cfg = {
         # "SDN",
         # "OPENSTACK",
         # "UN"
+        # "DOCKER"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
@@ -272,8 +276,17 @@ cfg = {
       "DOCKER":
         {
           "module": "escape.adapt.managers",
-          "class": "DockerDomainManager",
-          "poll": False
+          "class": "UnifyDomainManager",
+          "poll": False,
+          "diff": True,
+          "adapters": {
+            "REMOTE":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "UnifyRESTAdapter",
+                "url": "http://192.168.0.121:8888"
+              }
+          }
         }
     },
   "infrastructure":  # Infrastructure Layer
@@ -306,6 +319,11 @@ cfg = {
     }
 }
 
+ADDITIONAL_DIRS = ("unify_virtualizer",  # Virtualizer lib
+                   "mapping",  # Mapping algorithm
+                   "mininet"  # Tweaked Mininet for Click-Mininet Infrastructure
+                   )
+
 
 def add_dependencies ():
   """
@@ -320,13 +338,14 @@ def add_dependencies ():
 
   # Skipped folders under project's root
   skipped = ("escape", "examples", "pox", "OpenYuma", "Unify_ncagent", "tools",
-             "gui", "hwloc2nffg", "nffg_BME", "include", "share", "lib", "bin")
+             "gui", "hwloc2nffg", "nffg_BME", "include", "share", "lib", "bin",
+             "dummy-orchestrator", "click")
   for sub_folder in os.listdir(PROJECT_ROOT):
     abs_sub_folder = os.path.join(PROJECT_ROOT, sub_folder)
     if not os.path.isdir(abs_sub_folder):
       continue
     if not (sub_folder.startswith('.') or sub_folder.upper().startswith(
-       'PYTHON')) and sub_folder not in skipped:
+       'PYTHON')) and sub_folder in ADDITIONAL_DIRS:
       if abs_sub_folder not in sys.path:
         log.debug("Add dependency: %s" % abs_sub_folder)
         sys.path.insert(0, abs_sub_folder)

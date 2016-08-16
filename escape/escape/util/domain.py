@@ -775,18 +775,17 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
           setattr(msg.match, kv[0], EthAddr(kv[1]))
         elif kv[0] in ('in_port', 'dl_vlan', 'dl_type', 'ip_proto', 'nw_proto',
                        'nw_tos', 'nw_ttl', 'tp_src', 'tp_dst'):
-          msg.match.dl_type = int(kv[1])
+          setattr(msg.match, kv[0], int(kv[1], 0))
         elif kv[0] in ('nw_src', 'nw_dst'):
           setattr(msg.match, kv[0], IPAddr(kv[1]))
         else:
           setattr(msg.match, kv[0], kv[1])
-
     if 'vlan_push' in action:
       try:
         vlan_push = int(action['vlan_push'])
       except ValueError:
-        log.warning("VLAN_ID: %s in action field is not a valid number! "
-                    "Skip flowrule installation..." % match['vlan_id'])
+        log.warning("VLAN_PUSH: %s in action field is not a valid number! "
+                    "Skip flowrule installation..." % action['vlan_push'])
         return
       msg.actions.append(of.ofp_action_vlan_vid(vlan_vid=vlan_push))
       # msg.actions.append(of.ofp_action_vlan_vid())
@@ -820,7 +819,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     log.debug(
       "Install flow entry into INFRA: %s on connection: %s ..." % (id, conn))
     conn.send(msg)
-    log.log(VERBOSE, "Sent OpenFlow flowrule:\n%s" % msg)
+    log.log(VERBOSE, "Sent raw OpenFlow flowrule:\n%s" % msg)
 
 
 class VNFStarterAPI(object):

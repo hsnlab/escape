@@ -164,6 +164,377 @@ class Element(Persistable):
       "%s" % (self, dict2))
 
 
+class L3Address(Element):
+  """
+  Wrapper class for storing L3 address values.
+  """
+
+  def __init__ (self, id, name=None, configure=None, client=None,
+                requested=None, provided=None):
+    """
+    Init.
+
+    :param id: optional id
+    :type id: str or int
+    :param name: optional name
+    :type name: str
+    :param configure: request address
+    :type configure: bool
+    :param client: client of the address request
+    :type client: str
+    :param requested: requested IP
+    :type requested: str
+    :param provided: provided IP
+    :type provided: str
+    """
+    super(L3Address, self).__init__(id=id, type="L3ADDRESS")
+    self.name = name
+    self.configure = configure
+    self.client = client
+    self.requested = requested
+    self.provided = provided
+
+  def load (self, data, *args, **kwargs):
+    super(L3Address, self).load(data=data)
+    self.name = data.get('name')
+    self.configure = data.get('configure')
+    self.requested = data.get('requested')
+    self.provided = data.get('provided')
+    return self
+
+  def persist (self):
+    l3 = super(L3Address, self).persist()
+    if self.name is not None:
+      l3['name'] = self.name
+    if self.configure is not None:
+      l3['configure'] = self.configure
+    if self.client is not None:
+      l3['client'] = self.client
+    if self.requested is not None:
+      l3['requested'] = self.requested
+    if self.provided is not None:
+      l3['provided'] = self.provided
+    return l3
+
+
+class L3AddressContainer(Persistable):
+  """
+  Container class for storing L3 address data.
+  """
+
+  def __init__ (self, container=None):
+    super(L3AddressContainer, self).__init__()
+    self.container = container if container is not None else []
+
+  def __getitem__ (self, id):
+    for l3 in self.container:
+      if l3.id == id:
+        return l3
+    raise KeyError("L3 address with id: %s is not defined!" % id)
+
+  def __iter__ (self):
+    return iter(self.container)
+
+  def __len__ (self):
+    return len(self.container)
+
+  def __contains__ (self, item):
+    if not isinstance(item, L3Address):
+      raise RuntimeError(
+        "L3AddressContainer's operator \"in\" works only with L3Address "
+        "objects (and not ID-s!)")
+    return item in self.container
+
+  def append (self, item):
+    self.container.append(item)
+    return item
+
+  def remove (self, item):
+    return self.container.remove(item)
+
+  def clear (self):
+    del self.container[:]
+
+  def __str__ (self):
+    return str(self.container)
+
+  def __repr__ (self):
+    return str(self)
+
+  def add_l3address (self, id, name=None, configure=None, client=None,
+                     requested=None, provided=None):
+    self.container.append(
+      L3Address(id, name=name, configure=configure, client=client,
+                requested=requested, provided=provided))
+
+  def persist (self):
+    return [l3.persist() for l3 in self.container]
+
+  def load (self, data, *args, **kwargs):
+    for item in data:
+      self.add_l3address(id=item['id'], name=item.get('name'),
+                         configure=item.get('configure'),
+                         client=item.get('client'),
+                         requested=item.get('requested'),
+                         provided=item.get('provided'))
+
+
+class Port(Element):
+  """
+  Class for storing a port of an NF.
+  """
+  # Port type
+  TYPE = "PORT"
+
+  def __init__ (self, node, id=None, name=None, properties=None, sap=None,
+                capability=None, technology=None, delay=None, bandwidth=None,
+                cost=None, controller=None, orchestrator=None, l2=None, l4=None,
+                metadata=None):
+    """
+    Init.
+
+    :param node: container node
+    :type node: :any:`Node`
+    :param id: optional id
+    :type id: str or int
+    :param properties: supported properties of the port
+    :type properties: str or iterable(str)
+    :param sap: inter-domain SAP identifier
+    :type sap: str
+    :param technology: supported technologies
+    :type technology: str
+    :param delay: delay
+    :type delay: float
+    :param bandwidth: bandwidth
+    :type bandwidth: float
+    :param cost: cost
+    :type cost: str
+    :param controller: controller URL
+    :type controller: str
+    :param orchestrator: orchestrator URL
+    :type orchestrator: str
+    :param l2: l2 address
+    :param l2: str
+    :param l4: l4 fields
+    :type l4: str
+    :param metadata: metadata related to Node
+    :type metadata: dict
+    :return: None
+    """
+    super(Port, self).__init__(id=id, type=self.TYPE)
+    if not isinstance(node, Node):
+      raise RuntimeError("Port's container node must be derived from Node!")
+    # weakref to avoid circular reference
+    # weakref causes some really annoying issue --> changed to normal ref
+    # self.__node = weakref.ref(node)
+    self.__node = node
+    # Set properties list according to given param type
+    self.properties = OrderedDict(properties if properties else {})
+    self.metadata = OrderedDict(metadata if metadata else {})
+    # Virtualizer-related data
+    self.name = name
+    self.sap = sap
+    self.capability = capability
+    # sap_data
+    self.technology = technology
+    # sap_data/resources
+    self.delay = delay
+    self.bandwidth = bandwidth
+    self.cost = cost
+    # control
+    self.controller = controller
+    self.orchestrator = orchestrator
+    # addresses
+    self.l2 = l2
+    self.l3 = L3AddressContainer()
+    self.l4 = l4
+
+  @property
+  def node (self):
+    # return self.__node()
+    return self.__node
+
+  @node.deleter
+  def node (self):
+    del self.__node
+
+  def add_property (self, property, value):
+    """
+    Add a property to the :any:`Port`.
+
+    :param property: property
+    :type property: str
+    :param value: property value
+    :type value: str
+    :return: the Port object to allow function chaining
+    :rtype: :any:`Port`
+    """
+    self.properties[property] = value
+    return self
+
+  def has_property (self, property):
+    """
+    Return True if :any:`Port` has a property with given `property`.
+
+    :param property: property
+    :type property: str
+    :return: has a property with given name or not
+    :rtype: bool
+    """
+    return property in self.properties
+
+  def del_property (self, property=None):
+    """
+    Remove the property from the :any:`Port`. If no property is given all the
+    properties will be removed from the :any:`Port`.
+
+    :param property: property name
+    :type property: str
+    :return: removed property or None
+    :rtype: str or None
+    """
+    if property is None:
+      self.properties.clear()
+    else:
+      return self.properties.pop(property, None)
+
+  def get_property (self, property):
+    """
+    Return the value of property.
+
+    :param property: property
+    :type property: str
+    :return: the value of the property
+    :rtype: str
+    """
+    return self.properties.get(property)
+
+  def add_metadata (self, name, value):
+    """
+    Add metadata with the given `name`.
+
+    :param name: metadata name
+    :type name: str
+    :param value: metadata value
+    :type value: str
+    :return: the :any:`Port` object to allow function chaining
+    :rtype: :any:`Port`
+    """
+    self.metadata[name] = value
+    return self
+
+  def has_metadata (self, name):
+    """
+    Return True if the :any:`Port` has a metadata with the given `name`.
+
+    :param name: metadata name
+    :type name: str
+    :return: has metadata with given name or not
+    :rtype: bool
+    """
+    return name in self.metadata
+
+  def del_metadata (self, name=None):
+    """
+    Remove the metadata from the :any:`Port`. If no metadata is given all the
+    metadata will be removed.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: removed metadata or None
+    :rtype: str or None
+    """
+    if name is None:
+      self.metadata.clear()
+    else:
+      return self.metadata.pop(name, None)
+
+  def get_metadata (self, name):
+    """
+    Return the value of metadata.
+
+    :param name: name of the metadata
+    :type name: str
+    :return: metadata value
+    :rtype: str
+    """
+    return self.metadata.get(name)
+
+  def persist (self):
+    port = super(Port, self).persist()
+    if self.properties:
+      port["property"] = self.properties.copy()
+    if self.name is not None:
+      port['name'] = self.name
+    if self.sap is not None:
+      port['sap'] = self.sap
+    if self.capability is not None:
+      port['capability'] = self.capability
+    if any(v is not None for v in (self.technology, self.delay, self.bandwidth,
+                                   self.cost)):
+      port['sap_data'] = {}
+      if self.technology is not None:
+        port['sap_data']['technology'] = self.technology
+      if any(v is not None for v in (self.delay, self.bandwidth, self.cost)):
+        port['sap_data']['resources'] = {}
+        if self.delay is not None:
+          port['sap_data']['resources']['delay'] = self.delay
+        if self.bandwidth is not None:
+          port['sap_data']['resources']['bandwidth'] = self.bandwidth
+        if self.cost is not None:
+          port['sap_data']['resources']['cost'] = self.cost
+    if any(v is not None for v in (self.controller, self.orchestrator)):
+      port['control'] = {}
+      if self.controller is not None:
+        port['control']['controller'] = self.controller
+      if self.orchestrator is not None:
+        port['control']['orchestrator'] = self.orchestrator
+    if any(
+          v is not None for v in (self.l2, self.l4, True if self.l3 else None)):
+      port['addresses'] = {}
+      if self.l2 is not None:
+        port['addresses']['l2'] = self.l2
+      if self.l4 is not None:
+        port['addresses']['l4'] = self.l4
+      if len(self.l3):
+        port['addresses']['l3'] = self.l3.persist()
+    if self.metadata:
+      port["metadata"] = self.metadata.copy()
+    return port
+
+  def load (self, data, *args, **kwargs):
+    super(Port, self).load(data=data)
+    self.properties = OrderedDict(data.get('property', ()))
+    self.sap = data.get('sap')
+    self.name = data.get('name')
+    self.capability = data.get('capability')
+    if 'sap_data' in data:
+      self.technology = data['sap_data'].get('technology')
+      if 'resources' in data['sap_data']:
+        self.delay = data['sap_data']['resources'].get('delay')
+        self.bandwidth = data['sap_data']['resources'].get('bandwidth')
+        self.cost = data['sap_data']['resources'].get('cost')
+    else:
+      self.technology = self.delay = self.bandwidth = self.cost = None
+    if 'control' in data:
+      self.controller = data['control'].get('controller')
+      self.orchestrator = data['control'].get('orchestrator')
+    else:
+      self.controller = self.orchestrator = None
+    if 'addresses' in data:
+      self.l2 = data['addresses'].get('l2')
+      self.l3.load(data=data['addresses'].get('l3', ()))
+      self.l4 = data['addresses'].get('l4')
+    else:
+      self.l2 = self.l4 = None
+    self.metadata = OrderedDict(data.get('metadata', ()))
+    return self
+
+  def __repr__ (self):
+    return "%s(node: %s, id: %s)" % (
+      self.__class__.__name__, self.node.id, self.id)
+
+
 class PortContainer(Persistable):
   """
   Basic container class for ports.
@@ -218,7 +589,10 @@ class PortContainer(Persistable):
     return item
 
   def remove (self, item):
-    return self.container.remove(item)
+    try:
+      return self.container.remove(item)
+    except ValueError:
+      return
 
   def clear (self):
     del self.container[:]
@@ -240,6 +614,8 @@ class Node(Element):
   """
   Base class for different types of nodes in the NF-FG.
   """
+  # Class of the contained ports
+  PORT_CLASS = Port
   # Node type constants:
   # Infrastructure node --> abstract node represents one or more physical node
   INFRA = "INFRA"
@@ -265,7 +641,7 @@ class Node(Element):
     super(Node, self).__init__(id=id, type=type)
     self.name = name if name is not None else str(id)  # optional
     self.ports = PortContainer()  # list of Ports
-    self.metadata = OrderedDict(metadata if metadata else ())
+    self.metadata = OrderedDict(metadata if metadata else {})
 
   @property
   def short_name (self):
@@ -280,7 +656,10 @@ class Node(Element):
     """
     return self.ports.flowrules
 
-  def add_port (self, id=None, properties=None):
+  def add_port (self, id=None, name=None, properties=None, sap=None,
+                capability=None, technology=None, delay=None, bandwidth=None,
+                cost=None, controller=None, orchestrator=None, l2=None, l4=None,
+                metadata=None):
     """
     Add a port with the given params to the :any:`Node`.
 
@@ -291,7 +670,10 @@ class Node(Element):
     :return: newly created and stored Port object
     :rtype: :any:`Port`
     """
-    port = Port(node=self, properties=properties, id=id)
+    port = Port(node=self, id=id, name=name, properties=properties, sap=sap,
+                capability=capability, technology=technology, delay=delay,
+                bandwidth=bandwidth, cost=cost, controller=controller,
+                orchestrator=orchestrator, l2=l2, l4=l4, metadata=metadata)
     self.ports.append(port)
     return port
 
@@ -347,7 +729,7 @@ class Node(Element):
     :return: has metadata with given name or not
     :rtype: bool
     """
-    return self.metadata.has_key(name)
+    return name in self.metadata
 
   def del_metadata (self, name=None):
     """
@@ -389,8 +771,10 @@ class Node(Element):
   def load (self, data, *args, **kwargs):
     super(Node, self).load(data=data)
     self.name = data.get('name')  # optional
-    for port in data.get('ports', ()):
-      self.add_port(id=port['id'], properties=port.get('property'))
+    for item in data.get('ports', ()):
+      port = self.PORT_CLASS(node=self)
+      port.load(data=item)
+      self.ports.append(port)
     self.metadata = OrderedDict(data.get('metadata', ()))
     return self
 
@@ -655,116 +1039,12 @@ class Flowrule(Element):
       self.bandwidth, self.delay)
 
 
-class Port(Element):
-  """
-  Class for storing a port of an NF.
-  """
-  # Port type
-  TYPE = "PORT"
-
-  def __init__ (self, node, properties=None, id=None):
-    """
-    Init.
-
-    :param node: container node
-    :type node: :any:`Node`
-    :param id: optional id
-    :type id: str or int
-    :param properties: supported properties of the port
-    :type properties: str or iterable(str)
-    :return: None
-    """
-    super(Port, self).__init__(id=id, type=self.TYPE)
-    if not isinstance(node, Node):
-      raise RuntimeError("Port's container node must be derived from Node!")
-    # weakref to avoid circular reference
-    # weakref causes some really annoying issue --> changed to normal ref
-    # self.__node = weakref.ref(node)
-    self.__node = node
-    # Set properties list according to given param type
-    self.properties = OrderedDict(properties if properties else {})
-
-  @property
-  def node (self):
-    # return self.__node()
-    return self.__node
-
-  @node.deleter
-  def node (self):
-    del self.__node
-
-  def add_property (self, property, value):
-    """
-    Add a property to the :any:`Port`.
-
-    :param property: property
-    :type property: str
-    :param value: property value
-    :type value: str
-    :return: the Port object to allow function chaining
-    :rtype: :any:`Port`
-    """
-    self.properties[property] = value
-    return self
-
-  def has_property (self, property):
-    """
-    Return True if :any:`Port` has a property with given `property`.
-
-    :param property: property
-    :type property: str
-    :return: has a property with given name or not
-    :rtype: bool
-    """
-    return self.properties.has_key(property)
-
-  def del_property (self, property=None):
-    """
-    Remove the property from the :any:`Port`. If no property is given all the
-    properties will be removed from the :any:`Port`.
-
-    :param property: property name
-    :type property: str
-    :return: removed property or None
-    :rtype: str or None
-    """
-    if property is None:
-      self.properties.clear()
-    else:
-      return self.properties.pop(property, None)
-
-  def get_property (self, property):
-    """
-    Return the value of property.
-
-    :param property: property
-    :type property: str
-    :return: the value of the property
-    :rtype: str
-    """
-    return self.properties.get(property)
-
-  def persist (self):
-    port = super(Port, self).persist()
-    if self.properties:
-      port["property"] = self.properties.copy()
-    return port
-
-  def load (self, data, *args, **kwargs):
-    super(Port, self).load(data=data)
-    self.properties = OrderedDict(data.get('property', ()))
-
-  def __repr__ (self):
-    return "%s(node: %s, id: %s)" % (
-      self.__class__.__name__, self.node.id, self.id)
-
-
 class InfraPort(Port):
   """
   Class for storing a port of Infra Node and handles flowrules.
   """
 
-  def __init__ (self, node, properties=None, id=None):
+  def __init__ (self, node, properties=None, id=None, metadata=None):
     """
     Init.
 
@@ -774,9 +1054,12 @@ class InfraPort(Port):
     :type id: str or int
     :param properties: supported properties of the port
     :type properties: str or iterable(str)
+    :param metadata: metadata related to Node
+    :type metadata: dict
     :return: None
     """
-    super(InfraPort, self).__init__(node=node, id=id, properties=properties)
+    super(InfraPort, self).__init__(node=node, id=id, properties=properties,
+                                    metadata=metadata)
     self.flowrules = []
 
   def add_flowrule (self, match, action, bandwidth=None, delay=None,
@@ -834,6 +1117,14 @@ class InfraPort(Port):
         ret = True
       return ret
 
+  def clear_flowrules (self):
+    """
+    Delete all the flowrules from the port.
+
+    :return: None
+    """
+    del self.flowrules[:]
+
   def persist (self):
     port = super(InfraPort, self).persist()
     flowrules = [f.persist() for f in self.flowrules]
@@ -843,12 +1134,13 @@ class InfraPort(Port):
 
   def load (self, data, *args, **kwargs):
     super(InfraPort, self).load(data=data)
-    for flowrule in data('flowrules', ()):
+    for flowrule in data.get('flowrules', ()):
       self.add_flowrule(
+        id=flowrule['id'],
         match=flowrule.get('match'),
         action=flowrule.get('action'),
-        delay=float(flowrule['delay']) if 'delay' in data else None,
-        bandwidth=float(flowrule['bandwidth']) if 'bandwidth' in data else None,
+        delay=float(flowrule['delay']) if 'delay' in flowrule else None,
+        bandwidth=float(flowrule['bandwidth']) if 'bandwidth' in flowrule else None,
         hop_id=flowrule.get('hop_id'))
 
 
@@ -914,14 +1206,24 @@ class NodeSAP(Node):
   Class for SAP nodes in the NF-FG.
   """
 
-  def __init__ (self, id=None, name=None, domain=None, delay=None,
-                bandwidth=None):
-    super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name)
+  def __init__ (self, id=None, name=None, binding=None, metadata=None):
+    """
+    Init.
+
+    :param id: optional id
+    :type id: str or int
+    :param name: optional name
+    :type name: str
+    :param binding: interface binding
+    :type binding: str
+    :param metadata: metadata related to Node
+    :type metadata: dict
+    :return: None
+    """
+    super(NodeSAP, self).__init__(id=id, type=Node.SAP, name=name,
+                                  metadata=metadata)
     # Signals if the SAP is an inter-domain SAP
-    self.domain = domain
-    # Store resource values of inter-domain connection
-    self.delay = delay
-    self.bandwidth = bandwidth
+    self.binding = binding
 
   def __str__ (self):
     return "SAP(id: %s, name: %s)" % (self.id, self.name)
@@ -931,19 +1233,13 @@ class NodeSAP(Node):
 
   def persist (self):
     sap = super(NodeSAP, self).persist()
-    if self.domain is not None:
-      sap['domain'] = self.domain
-    if self.delay is not None:
-      sap['delay'] = self.delay
-    if self.bandwidth is not None:
-      sap['bandwidth'] = self.bandwidth
+    if self.binding is not None:
+      sap['binding'] = self.binding
     return sap
 
   def load (self, data, *args, **kwargs):
     super(NodeSAP, self).load(data=data)
-    self.domain = data.get('domain')
-    self.delay = data.get('delay')
-    self.bandwidth = data.get('bandwidth')
+    self.binding = data.get('binding')
     return self
 
 
@@ -951,6 +1247,7 @@ class NodeInfra(Node):
   """
   Class for infrastructure nodes in the NF-FG.
   """
+  PORT_CLASS = InfraPort
   # Defined Infra types
   TYPE_BISBIS = "BiSBiS"
   TYPE_EE = "EE"  # default Execution Environment with NETCONF
@@ -1065,9 +1362,6 @@ class NodeInfra(Node):
 
   def load (self, data, *args, **kwargs):
     super(NodeInfra, self).load(data=data)
-    for port in data.get('ports', ()):
-      for flowrule in port.get('flowrules', ()):
-        self.ports[port['id']].flowrules.append(Flowrule.parse(flowrule))
     self.domain = data.get('domain', self.DEFAULT_DOMAIN)  # optional
     self.infra_type = data['type']
     if 'supported' in data:
@@ -1630,7 +1924,8 @@ class NFFGModel(Element):
       elif isinstance(input, list):
         return [unicode_to_str(element) for element in input]
       elif isinstance(input, unicode):
-        return input.encode('utf-8').replace(' ', '_')
+        # return input.encode('utf-8').replace(' ', '_')
+        return input.encode('utf-8')
       else:
         return input
 

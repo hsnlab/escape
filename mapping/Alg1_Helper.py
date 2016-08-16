@@ -31,11 +31,11 @@ log = logging.getLogger("mapping")
 DEFAULT_LOG_LEVEL = logging.DEBUG
 # print "effective level", log.getEffectiveLevel()
 # print "log level", log.level
-if log.getEffectiveLevel() > DEFAULT_LOG_LEVEL:
-  logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
-  log.setLevel(DEFAULT_LOG_LEVEL)
-# print "effective level", log.getEffectiveLevel()
-# print "log level", log.level
+# ESCAPE uses INFO and DEBUG levels. The default level of a logger is WARNING.
+if log.getEffectiveLevel() >= logging.WARNING:
+  # If the RootLogger is not configured, setup a basic config here
+  logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s',
+                      level=DEFAULT_LOG_LEVEL)
 
 def retrieveFullDistMtx (dist, G_full):
   # this fix access latency is used by CarrierTopoBuilder.py
@@ -150,7 +150,7 @@ def shortestPathsInLatency (G_full, enable_shortest_path_cache,
     return dict(dist)
 
 
-def shortestPathsBasedOnEdgeWeight (G, source, weight='weight', target=None, 
+def shortestPathsBasedOnEdgeWeight (G, source, weight='weight', target=None,
                                     cutoff=None):
   """Taken and modified from NetworkX source code,
   the function originally 'was single_source_dijkstra',
@@ -232,23 +232,23 @@ class MappingManager(object):
     self.log.setLevel(log.getEffectiveLevel())
     # list of tuples of mapping (vnf_id, node_id)
     self.vnf_mapping = []
-    # SAP mapping can be done here based on their names
+    # SAP mapping can be done here based on their ID-s
     try:
       for vnf, dv in req.network.nodes_iter(data=True):
         if dv.type == 'SAP':
-          sapname = dv.name
+          sapid = dv.id
           sapfound = False
           for n, dn in net.network.nodes_iter(data=True):
             if dn.type == 'SAP':
-              if dn.name == sapname:
+              if dn.id == sapid:
                 self.vnf_mapping.append((vnf, n))
                 sapfound = True
                 break
           if not sapfound:
-            self.log.error("No SAP found in network with name: %s" % sapname)
+            self.log.error("No SAP found in network with ID: %s" % sapid)
             raise uet.MappingException(
-              "No SAP found in network with name: %s. SAPs are mapped "
-              "exclusively by their names." % sapname,
+              "No SAP found in network with ID: %s. SAPs are mapped "
+              "exclusively by their ID-s." % sapid,
               backtrack_possible = False)
     except AttributeError as e:
       raise uet.BadInputException("Node data with name %s" % str(e),
@@ -274,8 +274,9 @@ class MappingManager(object):
       if c['delay'] is None:
         c['delay'] = self.overall_highest_delay
     self.chain_subchain.add_nodes_from(
-      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay'], 
-                 'chain': c['chain']}) for c in chains)
+      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay'],
+                 'chain': c['chain'], 'link_ids': c['link_ids']}) \
+      for c in chains)
 
   def getIdOfChainEnd_fromNetwork (self, _id):
     """
@@ -309,7 +310,9 @@ class MappingManager(object):
     if len(chainids) == 0:
       self.chain_subchain.add_edge(self.max_input_chainid, subcid)
     for cid in chainids:
-      if cid > self.max_input_chainid:
+      # the common chain ID for all best-effort subchains 
+      # (self.max_input_chainid) shouldn't be in chainids in any case!
+      if cid >= self.max_input_chainid:
         raise uet.InternalAlgorithmException(
           "Invalid chain identifier given to MappingManager!")
       else:
@@ -362,15 +365,26 @@ class MappingManager(object):
     map the current VNF to 'potential_host' during the mapping of 'subcid'.
     """
     for c in self.chain_subchain.neighbors_iter(subcid):
-      # Chain end should always be available because they are E2E chains.
-      chainend = self.getIdOfChainEnd_fromNetwork(\
-                      self.chain_subchain.node[c]['chain'][-1])
-      if self.shortest_paths_lengths[potential_host][chainend] > \
-         self.getLocalAllowedLatency(subcid) - used_lat:
-        self.log.debug("Potential mapping of a VNF to host %s was too far from"
-                       " chain end %s because of E2E latency requirement."%
-                       (potential_host, chainend))
-        return False
+      # 
+      if c < self.max_input_chainid:
+        # Chain end should always be available because they are E2E chains.
+        chainend = self.getIdOfChainEnd_fromNetwork(\
+                        self.chain_subchain.node[c]['chain'][-1])
+        if self.shortest_paths_lengths[potential_host][chainend] > \
+           self.getLocalAllowedLatency(subcid) - used_lat:
+          self.log.debug("Potential mapping of a VNF to host %s was too far from"
+                         " chain end %s because of E2E latency requirement."%
+                         (potential_host, chainend))
+          return False
+      elif c == self.max_input_chainid:
+        if len(self.chain_subchain.neighbors(subcid)) != 1:
+          raise uet.InternalAlgorithmException("If a subchain is already "
+                "connected to the common best-effort chain, then it shouldn't "
+                                               "have other neighbors!")
+        return True
+      else:
+        raise uet.InternalAlgorithmException("Invalid connection in Chain-"
+                                             "Subchain graph!")
     return True
 
 
@@ -576,7 +590,7 @@ class MappingManager(object):
     else:
       return 0
 
-  def calcDelayPrefValues (self, hosts, vnf1, vnf2, reqlid, cid, subg, 
+  def calcDelayPrefValues (self, hosts, vnf1, vnf2, reqlid, cid, subg,
                            node_id):
     """
     Sorts potential hosts in the network based on a composite key:
@@ -588,18 +602,41 @@ class MappingManager(object):
     """
     # should always be mapped already
     log.debug("Calculating latency preference values for placing VNF %s."%vnf2)
-    chainend = self.getIdOfChainEnd_fromNetwork(\
-               self.chain_subchain.node[cid]['subchain'][-1][1])
-    paths, _ = shortestPathsBasedOnEdgeWeight(subg, node_id, 
-                                                    weight='delay', 
+    strictest_cid = min(self.chain_subchain[cid].keys(),
+                        key=lambda sc, graph=self.chain_subchain: \
+                        graph.node[sc]['avail_latency'])
+    end_sap = None
+    if strictest_cid == self.max_input_chainid:
+      # If this is a best-effort link, we have to inspect latency until the 
+      # subchain's end.
+      end_of_besteffort_subc = self.chain_subchain.node[cid]['subchain'][-1][1]
+      # This VNF should always be mapped due to Best-effort subchain retrieval
+      # This is already checked by the best-effort subchain finding procedure.
+      if self.getIdOfChainEnd_fromNetwork(end_of_besteffort_subc) == -1:
+        raise uet.InternalAlgorithmException("Last VNF of best-effort subchain "
+                  "should already be mapped temporarily!")
+      else:
+        end_sap = end_of_besteffort_subc
+    else:
+      end_sap = self.chain_subchain.node[strictest_cid]['chain'][-1]
+    chainend = self.getIdOfChainEnd_fromNetwork(end_sap)
+    paths, _ = shortestPathsBasedOnEdgeWeight(subg, node_id,
+                                                    weight='delay',
                                                     target=chainend)
     sh_path = paths[chainend]
     sh_path_lat = self.shortest_paths_lengths[node_id][chainend]
-    subchain = self.chain_subchain.node[cid]['subchain']
-    remaining_chain_len = len(subchain[subchain.index((vnf1, vnf2, reqlid)):])
+    chain_link_ids = None
+    if strictest_cid == self.max_input_chainid:
+      chain_link_ids = list(zip(*self.chain_subchain.node[cid]['subchain'])[2])
+    else:
+      chain_link_ids = self.chain_subchain.node[strictest_cid]['link_ids']
+    remaining_chain_len = len(chain_link_ids[chain_link_ids.index(reqlid):])
     if remaining_chain_len == 1:
       raise uet.InternalAlgorithmException("Sorting based on latency preference"
                 " value shouldn't be called when only one request link is left!")
+    # If the current cid is a best-effort subchain, lal will be around the 
+    # self.overall_highest_delay (maybe decremented a bit already) -> which 
+    # means almost surely only one distance layer in the structure.
     lal = self.getLocalAllowedLatency(cid)
     dist_layer_step = float(lal) / \
                       remaining_chain_len
@@ -627,7 +664,7 @@ class MappingManager(object):
         if not placed_h_in_dist_layer:
           log.debug("Host %s was filtered from subgraph of chain %s because it"
                     " was too far from current and destination hosts!"%
-                    (h, subchain))
+                    (h, chain_link_ids))
     # sort host inside distance layers and calculate the pref values.
     hosts_with_lat_values = []
     lat_value_step_cnt = (lal - sh_path_lat) / \

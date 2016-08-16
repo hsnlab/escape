@@ -79,83 +79,7 @@ class InstantiationFinishedEvent(Event):
     self.error = error
 
 
-class CfOrRequestHandler(AbstractRequestHandler):
-  """
-  Request Handler for the Cf-OR interface.
-
-  .. warning::
-    This class is out of the context of the recoco's co-operative thread
-    context! While you don't need to worry much about synchronization between
-    recoco tasks, you do need to think about synchronization between recoco task
-    and normal threads. Synchronisation is needed to take care manually: use
-    relevant helper function of core object: `callLater`/`raiseLater` or use
-    `schedule_as_coop_task` decorator defined in util.misc on the called
-    function.
-
-  Contains handler functions for REST-API.
-  """
-  # Bind HTTP verbs to UNIFY's API functions
-  request_perm = {
-    'GET': ('ping', 'version', 'operations', 'get_config'),
-    'POST': ('ping', 'get_config', 'edit_config')
-  }
-  # Statically defined layer component to which this handler is bounded
-  # Need to be set by container class
-  bounded_layer = 'orchestration'
-  static_prefix = "cfor"
-  # Logger name
-  LOGGER_NAME = "Cf-Or"
-  log = log.getChild("[%s]" % LOGGER_NAME)
-  # Use Virtualizer format
-  virtualizer_format_enabled = False
-  # Default communication approach
-  DEFAULT_DIFF = False
-  # Name mapper to avoid Python naming constraint
-  rpc_mapper = {
-    'get-config': "get_config",
-    'edit-config': "edit_config"
-  }
-
-  def __init__ (self, request, client_address, server):
-    """
-    Init.
-    """
-    AbstractRequestHandler.__init__(self, request, client_address, server)
-
-  def get_config (self):
-    """
-    Response configuration.
-    """
-    self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
-    config = self._proceed_API_call('api_cfor_get_config')
-    if config is None:
-      self.send_error(404, message="Resource info is missing!")
-      return
-    self.send_response(200)
-    data = config.dump()
-    self.log.log(VERBOSE, "Generated config for 'get-config:\n%s" % data)
-    self.send_header('Content-Type', 'application/json')
-    self.send_header('Content-Length', len(data))
-    self.end_headers()
-    self.log.info("Send back topology description...")
-    self.wfile.write(data)
-    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
-
-  def edit_config (self):
-    """
-    Receive configuration and initiate orchestration.
-    """
-    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
-    body = self._get_body()
-    # log.getChild("REST-API").debug("Request body:\n%s" % body)
-    nffg = NFFG.parse(body)  # Initialize NFFG from JSON representation
-    self.log.log(VERBOSE, "Received request for 'edit-config':\n%s" % nffg)
-    self._proceed_API_call('api_cfor_edit_config', nffg)
-    self.send_acknowledge()
-    self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
-
-
-class ROSAgentRequestHandler(AbstractRequestHandler):
+class BasicUnifyRequestHandler(AbstractRequestHandler):
   """
   Request Handler for agent behaviour in Resource Orchestration SubLayer.
 
@@ -184,14 +108,17 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
   LOGGER_NAME = "Sl-Or"
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
-  virtualizer_format_enabled = False
+  virtualizer_format_enabled = True
   # Default communication approach
-  DEFAULT_DIFF = False
+  DEFAULT_DIFF = True
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
     'edit-config': "edit_config"
   }
+  # Bound function
+  API_CALL_RESOURCE = 'api_ros_get_config'
+  API_CALL_REQUEST = 'api_ros_edit_config'
 
   def __init__ (self, request, client_address, server):
     """
@@ -207,14 +134,38 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     """
     self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
     # Forward call to main layer class
-    config = self._proceed_API_call('api_ros_get_config')
-    if config is None:
+    resource = self._proceed_API_call(self.API_CALL_RESOURCE)
+    self._topology_view_responder(resource_nffg=resource)
+    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
+
+  def edit_config (self):
+    """
+    Receive configuration and initiate orchestration.
+
+    :return: None
+    """
+    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
+    nffg = self._service_request_parser()
+    if nffg:
+      self._proceed_API_call(self.API_CALL_REQUEST, nffg)
+      self.send_acknowledge()
+    self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
+
+  def _topology_view_responder (self, resource_nffg):
+    """
+    Process the required topology data and sent back to the REST client.
+
+    :param resource_nffg: required data
+    :type resource_nffg: :any: `NFFG`
+    :return: None
+    """
+    if resource_nffg is None:
       self.send_error(404, message="Resource info is missing!")
       return
     # Setup OK status for HTTP response
     self.send_response(200)
     # Global resource has not changed -> respond with the cached topo
-    if config is False:
+    if resource_nffg is False:
       self.log.info(
         "Global resource has not changed! Respond with cached topology...")
       if self.virtualizer_format_enabled:
@@ -226,7 +177,7 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       if self.virtualizer_format_enabled:
         self.log.debug("Convert internal NFFG to Virtualizer...")
         converter = NFFGConverter(domain=None, logger=log)
-        v_topology = converter.dump_to_Virtualizer(nffg=config)
+        v_topology = converter.dump_to_Virtualizer(nffg=resource_nffg)
         # Cache converted data for edit-config patching
         self.log.debug("Cache converted topology...")
         self.server.last_response = v_topology
@@ -235,29 +186,28 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         # Setup HTTP response format
       else:
         self.log.debug("Cache acquired topology...")
-        self.server.last_response = config
-        data = config.dump()
+        self.server.last_response = resource_nffg
+        data = resource_nffg.dump()
     if self.virtualizer_format_enabled:
       self.send_header('Content-Type', 'application/xml')
     else:
       self.send_header('Content-Type', 'application/json')
-    self.log.log(VERBOSE, "Responded topology for 'get-config':\n%s" % data)
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
     self.log.info("Send back topology description...")
     self.wfile.write(data)
-    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
+    self.log.log(VERBOSE, "Responded topology:\n%s" % data)
 
-  def edit_config (self):
+  def _service_request_parser (self):
     """
-    Receive configuration and initiate orchestration.
+    Process the received service request.
 
-    :return: None
+    :return: Parsed service request
+    :rtype: :any:`NFFG`
     """
-    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
     # Obtain NFFG from request body
-    self.log.debug("Detected response format: %s" %
+    self.log.debug("Detected message format: %s" %
                    self.headers.get("Content-Type"))
     raw_body = self._get_body()
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
@@ -275,13 +225,12 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
         return
       # Get received Virtualizer
       received_cfg = Virtualizer.parse_from_text(text=raw_body)
-      self.log.log(VERBOSE,
-                   "Received request for 'edit-config':\n%s" % raw_body)
+      self.log.log(VERBOSE, "Received request:\n%s" % raw_body)
       # If there was not get-config request so far
       if self.DEFAULT_DIFF:
         if self.server.last_response is None:
           self.log.info("Missing cached Virtualizer! Acquiring topology now...")
-          config = self._proceed_API_call('api_ros_get_config')
+          config = self._proceed_API_call(self.API_CALL_RESOURCE)
           if config is None:
             self.log.error("Requested resource info is missing!")
             self.send_error(404, message="Resource info is missing!")
@@ -319,10 +268,18 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
       # Initialize NFFG from JSON representation
       self.log.info("Parsing request into internal NFFG format...")
       nffg = NFFG.parse(raw_body)
+    command = self.command.upper()
+    if command == 'POST':
+      nffg.mode = NFFG.MODE_ADD
+    elif command == 'DELETE':
+      nffg.mode = NFFG.MODE_DEL
+    elif command == 'PUT':
+      nffg.mode = NFFG.MODE_REMAP
+    else:
+      self.log.warning("Unsupported HTTP verb for mapping mode: %s" % command)
+    self.log.info("Detected mapping mode based on HTTP request: %s" % nffg.mode)
     self.log.debug("Parsed NFFG install request: %s" % nffg)
-    self._proceed_API_call('api_ros_edit_config', nffg)
-    self.send_acknowledge()
-    self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
+    return nffg
 
   def __recreate_full_request (self, diff):
     """
@@ -343,6 +300,78 @@ class ROSAgentRequestHandler(AbstractRequestHandler):
     # return full_request
     # Perform hack to resolve inconsistency
     return Virtualizer.parse_from_text(full_request.xml())
+
+
+class CfOrRequestHandler(BasicUnifyRequestHandler):
+  """
+  Request Handler for the Cf-OR interface.
+
+  .. warning::
+    This class is out of the context of the recoco's co-operative thread
+    context! While you don't need to worry much about synchronization between
+    recoco tasks, you do need to think about synchronization between recoco task
+    and normal threads. Synchronisation is needed to take care manually: use
+    relevant helper function of core object: `callLater`/`raiseLater` or use
+    `schedule_as_coop_task` decorator defined in util.misc on the called
+    function.
+
+  Contains handler functions for REST-API.
+  """
+  # Bind HTTP verbs to UNIFY's API functions
+  request_perm = {
+    'GET': ('ping', 'version', 'operations', 'get_config'),
+    'POST': ('ping', 'get_config', 'edit_config')
+  }
+  # Statically defined layer component to which this handler is bounded
+  # Need to be set by container class
+  bounded_layer = 'orchestration'
+  static_prefix = "cfor"
+  # Logger name
+  LOGGER_NAME = "Cf-Or"
+  log = log.getChild("[%s]" % LOGGER_NAME)
+  # Use Virtualizer format
+  virtualizer_format_enabled = True
+  # Default communication approach
+  DEFAULT_DIFF = True
+  # Name mapper to avoid Python naming constraint
+  rpc_mapper = {
+    'get-config': "get_config",
+    'edit-config': "edit_config"
+  }
+  # Bound function
+  API_CALL_RESOURCE = 'api_cfor_get_config'
+  API_CALL_REQUEST = 'api_cfor_edit_config'
+
+  def __init__ (self, request, client_address, server):
+    """
+    Init.
+    """
+    BasicUnifyRequestHandler.__init__(self, request, client_address, server)
+
+  def get_config (self):
+    """
+    Response configuration.
+
+    :return: None
+    """
+    self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
+    # Forward call to main layer class
+    resource = self._proceed_API_call(self.API_CALL_RESOURCE)
+    self._topology_view_responder(resource_nffg=resource)
+    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
+
+  def edit_config (self):
+    """
+    Receive configuration and initiate orchestration.
+
+    :return: None
+    """
+    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
+    nffg = self._service_request_parser()
+    if nffg:
+      self._proceed_API_call(self.API_CALL_REQUEST, nffg)
+      self.send_acknowledge()
+    self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -405,6 +434,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :param event: event object
     """
     log.info("Resource Orchestration Sublayer is going down...")
+    self.resource_orchestrator.finalize()
     if self._agent or self._rosapi:
       log.debug("REST-API: %s is shutting down..." % self.ros_api.api_id)
       # self.ros_api.stop()

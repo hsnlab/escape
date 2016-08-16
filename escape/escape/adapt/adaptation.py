@@ -95,6 +95,8 @@ class ComponentConfigurator(object):
 
     :param name: name of domain manager
     :type name: str
+    :param mgr_params: mgr parameters
+    :type mgr_params: dict
     :param autostart: also start the domain manager (default: True)
     :type autostart: bool
     :return: domain manager
@@ -214,6 +216,8 @@ class ComponentConfigurator(object):
 
     :param component_name: component's config name
     :type component_name: str
+    :param params: component parameters
+    :type params: dict
     :param parent: define the parent of the actual component's configuration
     :type parent: dict
     :return: initiated component
@@ -424,6 +428,7 @@ class ControllerAdapter(object):
       if domain_mgr is None:
         log.warning("No DomainManager has been initialized for domain: %s! "
                     "Skip install domain part..." % domain)
+        mapping_result = False
         continue
       log.log(VERBOSE, "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       log.info("Delegate splitted part: %s to %s" % (part, domain_mgr))
@@ -456,12 +461,30 @@ class ControllerAdapter(object):
         continue
       # If the internalDM is the only initiated mgr, we can override the
       # whole DoV
-      if len(self.domains) == 1 and domain_mgr.IS_LOCAL_MANAGER:
-        self.DoVManager.set_global_view(nffg=mapped_nffg)
+      if domain_mgr.IS_LOCAL_MANAGER:
+        if mapped_nffg.is_SBB():
+          # If the request was a cleanup request, we can simply clean the DOV
+          if mapped_nffg.is_bare():
+            log.debug(
+              "Detected cleanup topology (no NF/Flowrule/SG_hop)! Clean DoV...")
+            self.DoVManager.clean_domain(domain=domain)
+          # If the reset contains some VNF, cannot clean or override
+          else:
+            log.warning(
+              "Detected SingleBiSBiS topology! Local domain has been already "
+              "cleared, skip DoV update...")
+        # If the the topology was a GLOBAL view, just override the whole DoV
+        elif not mapped_nffg.is_virtualized():
+          self.DoVManager.set_global_view(nffg=mapped_nffg)
+        else:
+          log.warning(
+            "Detected virtualized Infrastructure node in mapped NFFG! Skip "
+            "DoV update...")
+        # In case of Local manager skip the rest of the update
         continue
       # Explicit domain update
       self.DoVManager.update_domain(domain=domain, nffg=part)
-    log.debug("NF-FG installation is finished by %s" % self.__class__.__name__)
+    log.info("NF-FG installation is finished by %s" % self.__class__.__name__)
     # Post-mapping steps
     if mapping_result:
       log.info("All installation process has been finished with success! ")
@@ -614,3 +637,20 @@ class GlobalResourceManager(object):
     else:
       log.warning("Removing domain: %s is not included in tracked domains: %s! "
                   "Skip removing..." % (domain, self.__tracked_domains))
+
+  def clean_domain (self, domain):
+    """
+    Clean given domain.
+
+    :param domain: domain name
+    :type domain: str
+    :return: None
+    """
+    if domain in self.__tracked_domains:
+      log.info(
+        "Remove initiated VNFs and flowrules from the domain: %s" % domain)
+      self.__dov.clean_domain_from_dov(domain=domain)
+    else:
+      log.error(
+        "Detected domain: %s is not included in tracked domains: %s! Abort "
+        "cleaning..." % (domain, self.__tracked_domains))

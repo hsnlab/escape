@@ -41,7 +41,8 @@ def cleanup():
     sh( 'pkill -9 -f "sudo mnexec"')
 
     info( "*** Removing junk from /tmp\n" )
-    sh( 'rm -f /tmp/vconn* /tmp/vlogs* /tmp/*.out /tmp/*.log' )
+    # sh( 'rm -f /tmp/vconn* /tmp/vlogs* /tmp/*.out /tmp/*.log' )
+    sh( 'rm -f /tmp/vconn* /tmp/vlogs* /tmp/*.out' )
 
     info( "*** Removing old X11 tunnels\n" )
     cleanUpScreens()

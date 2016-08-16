@@ -13,6 +13,7 @@ old.*
 *.pcap
 *~
 *.a
+*.out
 escape.config
 Python-*
 bin/
@@ -24,4 +25,4 @@ OpenYuma/libtoaster/lib/
 Unify_ncagent/vnf_starter/bin/
 Unify_ncagent/vnf_starter/lib/
 pip-selfcheck.json
-escape/doc/built/
+escape/doc/build

@@ -13,7 +13,7 @@
           "id": 1
         }
       ],
-      "domain": "eth0",
+      "binding": "eth0",
       "delay": 1.5,
       "bandwidth": 10
     },
@@ -23,8 +23,9 @@
       "ports": [
         {
           "id": 1,
-          "property" : {
-	    "ip": "10.0.0.1/24"
+          "property": {
+            "ip": "10.0.0.1/24",
+            "mac": "00:00:00:00:00:01"
           }
         }
       ]
@@ -35,8 +36,9 @@
       "ports": [
         {
           "id": 1,
-          "property" : {
-	    "ip": "10.0.0.2/24"
+          "property": {
+            "ip": "10.0.0.2/24",
+            "mac": "00:00:00:00:00:02"
           }
         }
       ]
@@ -61,7 +63,7 @@
       "resources": {
         "cpu": 5,
         "mem": 5,
-        "storage": 5,
+        "storage": 20,
         "delay": 0.9,
         "bandwidth": 5000
       }
@@ -80,7 +82,10 @@
           "id": 3
         },
         {
-          "id": 4
+          "id": 4,
+          "property": {
+            "type": "inter-domain"
+          }
         }
       ],
       "domain": "INTERNAL",
@@ -135,7 +140,7 @@
       "resources": {
         "cpu": 5,
         "mem": 5,
-        "storage": 5,
+        "storage": 20,
         "delay": 0.9,
         "bandwidth": 5000
       }
