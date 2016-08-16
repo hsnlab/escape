@@ -310,9 +310,28 @@ class GraphPreprocessorClass(object):
                 last_vnf = j
                 if self.rechained[j]:
                   break
+                # if it would be a loop in this chain (with an ending not 
+                # rechained yet), that is not good! 
+                # cut the ending and continue the DFS from somewhere
                 if subc_path.count(j) == 2:
-                  self.rechained[j] = True
+                  # leave the last element out, we dont need loop
+                  subc_path = subc_path[:-1]
+                  link_ids = link_ids[:-1]
+                  # continue on next DFS edges.
+              elif i in subc_path:
+                # let's have a look where does the DFS would continue, leave out
+                # the tail and continue
+                tail_start = subc_path.index(i)
+                subc_path = subc_path[:tail_start+1].append(j)
+                linkid = next(best_effort_graph[i][j].iterkeys())
+                link_ids = link_ids[:tail_start].append(linkid)
+                last_vnf = j
+                # from here do the same thing basically.
+                if self.rechained[j]:
                   break
+                if subc_path.count(j) == 2:
+                  subc_path = subc_path[:-1]
+                  link_ids = link_ids[:-1]
               else:
                 # don't go further if the DFS would change path
                 break
@@ -348,6 +367,9 @@ class GraphPreprocessorClass(object):
         elif best_effort_graph.out_degree(vnf) == 0 and \
               best_effort_graph.in_degree(vnf) == 0:
           best_effort_graph.remove_node(vnf)
+                    # if we run out of DFS edges, and we still haven't found an ending
+              # VNF, which would be mapped at least temporarily during 
+              # core mapping
     return subchains
 
   def _divideIntoDisjointSubchains (self, e2e_w_graph, not_e2e):
