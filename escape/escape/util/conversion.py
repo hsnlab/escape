@@ -1144,6 +1144,7 @@ class NFFGConverter(object):
         # Get source port / in_port
         in_port = None
         flowclass = None
+        fr_id = flowrule.hop_id if flowrule.hop_id else flowrule.id
         for item in flowrule.match.split(';'):
           if item.startswith('in_port'):
             in_port = item.split('=')[1]
@@ -1154,7 +1155,17 @@ class NFFGConverter(object):
           else:
             flowclass = item
         if in_port is not None:
-          in_port = sbb.ports[in_port]
+          # Detect the connected NF/SAP port for sg_hop
+          opposite_node = [l.dst for u, v, l in nffg.real_out_edges_iter(sbb.id)
+                           if l.src.id == in_port]
+          if len(opposite_node) == 1:
+            in_port = opposite_node.pop()
+            log.debug("Detected src port for SG hop: %s" % in_port)
+          else:
+            log.warning(
+              "src port for SG hop: %s cannot be detected! Possible ports: %s" %
+              (fr_id, opposite_node))
+            continue
         else:
           self.log.warning(
             "in_port for SG hop link cannot be determined from: %s. Skip SG "
@@ -1166,20 +1177,29 @@ class NFFGConverter(object):
           if item.startswith('output'):
             output = item.split('=')[1]
         if output is not None:
-          output = sbb.ports[output]
+          # Detect the connected NF/SAP port for sg_hop
+          opposite_node = [l.dst for u, v, l in nffg.real_out_edges_iter(sbb.id)
+                           if l.src.id == output]
+          if len(opposite_node) == 1:
+            output = opposite_node.pop()
+            log.debug("Detected dst port for SG hop: %s" % output)
+          else:
+            log.warning(
+              "dst port for SG hop: %s cannot be detected! Possible ports: %s" %
+              (fr_id, opposite_node))
+            continue
         else:
           self.log.warning(
             "output for SG hop link cannot be determined from: %s. Skip SG "
             "hop recreation..." % flowrule)
           return
-        fr_id = flowrule.hop_id if flowrule.hop_id else flowrule.id
         sg = nffg.add_sglink(id=fr_id,
                              src_port=in_port,
                              dst_port=output,
                              flowclass=flowclass,
                              delay=flowrule.delay,
                              bandwidth=flowrule.bandwidth)
-        log.debug("Recreated SG hop: %s" % sg)
+        self.log.debug("Recreated SG hop: %s" % sg)
 
   def parse_from_Virtualizer (self, vdata, with_virt=False):
     """
