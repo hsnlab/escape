@@ -175,7 +175,7 @@ function install_infra {
     info "==================================================================="
     info "==  Install dependencies for Mininet-based Infrastructure Layer  =="
     info "==================================================================="
-    sudo apt-get install -y gcc make automake ssh libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev
+    sudo apt-get install -y gcc make automake ssh libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev
 
     info "=== Install OpenYuma for NETCONF capability ==="
     cd "$DIR/OpenYuma"
