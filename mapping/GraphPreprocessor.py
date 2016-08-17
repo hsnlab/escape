@@ -560,6 +560,12 @@ class GraphPreprocessorClass(object):
     # we need to have different all-flowrule iteration, otherwise we couldn't
     # identify whether a specific_tag_format field in match would belong to 
     # outbound or inbound flowrule sequence
+    infra_nodes = [node for node in self.req_graph.infras]
+    if len(infra_nodes) > 1:
+      self.log.warn("If multiple infra nodes are present in the substrate graph"
+                    " and their VNF-Infra mapping is supposed to mean a "
+                    "placement criterion on the (possibly decomposed) Infra node"
+                    ", it will not be considered, because it is NYI.")
     for n in [node for node in self.req_graph.infras]:
       # we have to go through the iterator, because we want to delete from it,
       # cuz we want only the service graph (after interdomain tag_info has been 
