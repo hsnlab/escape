@@ -281,10 +281,6 @@ function all {
     install_core
     install_gui
     install_infra
-    info "============"
-    info "==  Done  =="
-    info "============"
-    exit 0
 }
 
 # Print help
@@ -322,3 +318,5 @@ fi
 info "============"
 info "==  Done  =="
 info "============"
+# Force to return with 0
+exit 0
