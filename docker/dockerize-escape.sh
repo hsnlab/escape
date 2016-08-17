@@ -57,7 +57,7 @@ fi
 # Dockerize
 cp -R ~/.ssh .ssh
 
-sudo docker build --rm -t ${IMAGE_NAME} .
+sudo docker build -f ../Dockerfile --rm -t ${IMAGE_NAME} ..
 sudo docker create --name ${CONTAINER_NAME} -p 8008:8008 -p 8888:8888 -p 8889:8889 -it ${IMAGE_NAME}
 
 rm -rf .ssh
