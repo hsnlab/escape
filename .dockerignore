@@ -2,3 +2,8 @@
 # in case the submodules have already pulled
 dummy-orchestrator
 unify_virtualizer
+# Ignore binaries to avoid compilation errors
+OpenYuma/netconf/target/bin/*
+/OpenYuma/libtoaster/bin/*
+/Unify_ncagent/vnf_starter/bin/*
+/mininet/bin/*
