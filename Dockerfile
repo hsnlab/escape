@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y git wget && \
     locale-gen en_US.UTF-8 && \
     export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
     ./install-dep.sh -${ESC_INSTALL_PARAMS} && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    rm -rf  /root/.ssh && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.ssh
 # REST-APIs:  Service Layer  |  Resource Orchestration Layer  |  Cf-Or
 EXPOSE 8008 8888 8889
 # Set starting script which start required services and init a shell
