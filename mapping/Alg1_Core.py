@@ -928,6 +928,9 @@ class CoreAlgorithm(object):
       # the just mapped request should be appended to the one sent by the 
       # lower layer indicating the already mapped VNF-s.
       nffg = self.net0
+    else:
+      raise uet.InternalAlgorithmException("Invalid mapping operation mode "
+                                           "shouldn't reach here!")
 
     self.log.debug("Constructing output NFFG...")
     for vnf, host in self.manager.vnf_mapping:
