@@ -2031,6 +2031,58 @@ class NFFGToolBox(object):
       log.debug("Copy Link: %s" % c_link)
     return target
 
+  @classmethod
+  def subtract_nffg (cls, minuend, subtrahend):
+    """
+    Deletes every (all types of) node from minuend which have higher degree in
+    subtrahend. And removes every (all types of) edge from minuend which are 
+    present in subtrahend. Changes minuend, but doesn't change subtrahend.
+    NOTE: a node cannot be decreased to degree 0, because then it will be 
+    removed.
+
+    :param minuend: minuend NFFG object
+    :type minuend: :any:`NFFG`
+    :param subtrahend: NFFG object to be subtracted
+    :type subtrahend: :any:`NFFG`
+    :return: NFFG which is minuend \ subtrahend
+    :rtype: :any:`NFFG`
+    """
+    minuend_degrees = minuend.network.degree()
+    for n, d in subtrahend.network.degree().iteritems():
+      if n in minuend_degrees:
+        if d >= minuend_degrees[n]:
+          for edge_func in (minuend.network.in_edges_iter, 
+                            minuend.network.out_edges_iter):
+            for i,j,d in edge_func([n], data=True):
+              if d.type == 'SG':
+                minuend.del_flowrules_of_SGHop(d.id)
+          minuend.del_node(minuend.network.node[n])
+    for i,j,k in subtrahend.network.edges_iter(keys=True):
+      if minuend.network.has_edge(i,j, key=k):
+        minuend.del_edge(i, j, k)
+    return minuend
+
+  @classmethod
+  def generate_difference_of_nffgs (cls, old, new):
+    """
+    Creates two NFFG objects which can be used in NFFG.MODE_ADD and NFFG.MODE_DEL
+    operation modes of the mapping algorithm. Doesn't modify input objects.
+    
+    :param old: old NFFG object
+    :type old: :any:`NFFG`
+    :param new: NFFG object of the new config
+    :type new: :any:`NFFG`
+    :return: a tuple of NFFG-s for addition and deletion resp. on old config.
+    :rtype: :any:(`NFFG`,`NFFG`)
+    """
+    add_nffg = copy.deepcopy(new)
+    add_nffg.mode = NFFG.MODE_ADD
+    del_nffg = copy.deepcopy(old)
+    del_nffg.mode = NFFG.MODE_DEL
+
+    return NFFGToolBox.subtract_nffg(add_nffg, old), \
+      NFFGToolBox.subtract_nffg(del_nffg, new)
+
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------
   ##############################################################################

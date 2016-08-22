@@ -76,7 +76,7 @@ def _purgeNFFGFromInfinityValues(nffg):
 def MAP (request, network, enable_shortest_path_cache=False,
          bw_factor=1, res_factor=1, lat_factor=1,
          shortest_paths=None, return_dist=False,
-         bt_limit=6, bt_branching_factor=3, **kwargs):
+         bt_limit=6, bt_branching_factor=3, mode=NFFG.MODE_ADD, **kwargs):
   """
   The parameters are NFFG classes.
   Calculates service chain requirements from EdgeReq classes.
@@ -93,12 +93,9 @@ def MAP (request, network, enable_shortest_path_cache=False,
   """
   
   # possible values are NFFG.MODE_ADD, NFFG.MODE_DELETE, NFFG.MODE_REMAP
-  if 'mode' not in kwargs:
+  if mode is None:
     raise uet.BadInputException("Mapping operation mode should always be set", 
                                 "No mode specified for mapping operation!")
-  else:
-    mode = kwargs['mode']
-
   """
   # NOTE: SG Hops are always given in the service graph from now on!
   sg_hops_given = True
@@ -486,12 +483,12 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('untracked/steven-composition-req1.nffg', "r") as f:
+    with open('../examples/operation-add-req1.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('untracked/steven-composition-net1.nffg', "r") as g:
+    with open('../examples/operations-mapped-topo1.nffg', "r") as g:
       net = NFFG.parse(g.read())
       # net.duplicate_static_links()
-    mapped = MAP(req, net, mode=NFFG.MODE_REMAP)
+    mapped = MAP(req, net, mode=NFFG.MODE_ADD)
     print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg

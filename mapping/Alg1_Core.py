@@ -928,6 +928,9 @@ class CoreAlgorithm(object):
       # the just mapped request should be appended to the one sent by the 
       # lower layer indicating the already mapped VNF-s.
       nffg = self.net0
+    else:
+      raise uet.InternalAlgorithmException("Invalid mapping operation mode "
+                                           "shouldn't reach here!")
 
     self.log.debug("Constructing output NFFG...")
     for vnf, host in self.manager.vnf_mapping:
@@ -1063,81 +1066,46 @@ class CoreAlgorithm(object):
     for deletion. SG elements are matched exclusively by their ID-s.
     """
     self.log.debug("Constructing output delete NFFG...")
-    nffg = self.bare_infrastucture_nffg
+    nffg = self.net0
+    # we need the original copy not to spoil the struct during deletion.
+    original_nffg = copy.deepcopy(self.net0)
     # there should be only VNFs, SAPs, SGHops in the request graph. And all
     # of them should be in the substrate NFFG, otherwise they were removed.
     for vnf, d in self.req.nodes_iter(data=True):
-      # Infras are removed, so degree is now the number of SGHops connected.
-      req_edge_cnt = 0
-      for i,j,k,d in self.req.out_edges_iter([vnf], data=True, 
-                                                     keys=True):
-        if d.type == 'SG':
-          req_edge_cnt += 1
-      for i,j,k,d in self.req.in_edges_iter([vnf], data=True, 
-                                                     keys=True):
-        # let's not count the loop SGhops twice!
-        if d.type == 'SG' and (i,j,k) not in self.req.out_edges_iter([vnf], 
-                                                                     keys=True):
-          req_edge_cnt += 1
-
-      # The original input substrate is used, without any preprocessing
-      net_edge_cnt = 0
-      for edge_func in (self.net0.network.out_edges_iter, 
-                        self.net0.network.in_edges_iter):
-        for i,j,k,d in edge_func([vnf], data=True, keys=True):
-          if d.type == 'SG':
-            net_edge_cnt += 1
-      if net_edge_cnt > req_edge_cnt:
+      # make the union of out and inbound edges.
+      if d.type != 'NF':
+        continue
+      all_connected_sghops = None
+      cnt = [0, 0]
+      for graph, idx in ((original_nffg.network, 0), (self.req, 1)):
+        all_connected_sghops = set([(i,j,k) for i,j,k in \
+                                    graph.out_edges_iter([vnf], 
+                                    keys=True) if graph[i][j][k].type == 'SG'])|\
+                               set([(i,j,k) for i,j,k in \
+                                    graph.in_edges_iter([vnf],  
+                                    keys=True) if graph[i][j][k].type == 'SG'])
+        # 0th is network, 1st is the request
+        cnt[idx] = len(all_connected_sghops)
+      if cnt[0] > cnt[1]:
         # it is maybe used by some other request.
-        raise uet.BadInputException("A complete subgraph should be specified for"
-                  " deletion", "VNF %s in the request has less connected edges "
-                                    "than in the substrate."%vnf)
-      elif net_edge_cnt < req_edge_cnt:
+        self.log.debug("Skipping deletion of VNF %s, it has not speficied edges"
+                       " connected in the substrate graph!"%vnf)
+      elif cnt[0] < cnt[1]:
         # by this time this shouldn't happen, cuz those edges were removed.
         raise uet.InternalAlgorithmException("After delete request preprocessing"
                   ", VNF %s has more edges than in the substrate graph!"%vnf)
       else:
         # add it to the output, this VNF can be deleted
-        self.log.debug("Adding %s to output delete NFFG"%vnf)
-        vnf_todel = self._retrieveOrAddVNF(nffg, vnf)
+        self.log.debug("Deleting VNF %s and all of its connected SGHops from "
+                       "output NFFG"%vnf)
+        nffg.del_node(vnf)
 
     for i,j,k,d in self.req.edges_iter(data=True, keys=True):
-      nffg.add_sglink(nffg.network.node[i].ports[d.src.id],
-                      nffg.network.node[j].ports[d.dst.id], id=d.id,
-                      flowclass=d.flowclass, tag_info=d.tag_info,
-                      delay=d.delay, bandwidth=d.bandwidth)
-      self.log.debug("SGHop %s added to output delete NFFG"%d.id)
+      nffg.del_flowrules_of_SGHop(k)
+      nffg.del_edge(d.src, d.dst, d.id)
+      self.log.debug("SGHop %s with its flowrules are deleted from output NFFG"
+                     %d.id)
 
-    # Add DYNAMIC links connected the to be deleted VNFs to infras
-    for vnf in nffg.nfs:
-      dynamic_link = None
-      for i,j,d in self.net0.network.out_edges_iter([vnf.id], data=True):
-        if d.type == 'DYNAMIC':
-          # there can only be one such dynamic edge.
-          dynamic_link = d
-          break
-      # we have to use the port objects of the output sturcture
-      nffg.add_undirected_link(nffg.network.node[vnf.id].ports[\
-                                    dynamic_link.src.id], 
-                               nffg.network.node[dynamic_link.dst.node.id].ports[\
-                                    dynamic_link.dst.id],
-                               dynamic=True)
-      self.log.debug("Connecting VNF %s to infra %s in output delete request"
-                     %(vnf.id, dynamic_link.dst.node.id))
-
-    # After all adding, iterate on the infras, and remove those who doesn't 
-    # have any connected VNFs.
-    infra_to_del = []
-    for i in nffg.infras:
-      if len([vnf for vnf in nffg.running_nfs(i.id)]) == 0:
-        infra_to_del.append(i)
-    for i in infra_to_del:
-      nffg.del_node(i.id)
-
-    # there shouldn't be any SAPs in the output, we can't delete SAPs.
-    for sap in [s for s in nffg.saps]:
-      nffg.del_node(sap.id)
-  
     return nffg
 
   def start (self):

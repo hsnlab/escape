@@ -1,0 +1,100 @@
+{
+  "parameters": {
+    "id": "SG-request-mode-add",
+    "name": "SG-name-mode-add", 
+    "version": "1.0"
+  }, 
+  "node_nfs": [
+    {
+      "id": "comp", 
+      "name": "COMPRESSOR", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "headerCompressor", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    },
+    {
+      "id": "comp1", 
+      "name": "COMPRESSOR", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "headerCompressor", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "decomp1", 
+      "name": "DECOMPRESSOR", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "headerDecompressor", 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 0
+        }
+      }
+    }, 
+    {
+      "id": "decomp", 
+      "name": "DECOMPRESSOR", 
+      "ports": [
+        {
+          "id": 1
+        }
+      ], 
+      "functional_type": "headerDecompressor", 
+      "specification": {
+        "resources": {
+          "cpu": 3, 
+          "mem": 3, 
+          "storage": 0
+        }
+      }
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 11, 
+      "src_node": "comp", 
+      "src_port": 1, 
+      "dst_node": "decomp1", 
+      "dst_port": 1
+    },
+    {
+      "id": 12, 
+      "src_node": "decomp1", 
+      "src_port": 1, 
+      "dst_node": "comp1", 
+      "dst_port": 1
+    },
+    {
+      "id": 13, 
+      "src_node": "comp1", 
+      "src_port": 1, 
+      "dst_node": "decomp", 
+      "dst_port": 1
+    }
+  ]
+}
