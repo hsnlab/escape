@@ -2,7 +2,8 @@
   "parameters": {
     "id": "SG-request",
     "name": "SG-name", 
-    "version": "1.0"
+    "version": "1.0",
+    "mode": "ADD"
   }, 
   "node_nfs": [
     {

@@ -175,12 +175,12 @@ function install_infra {
     info "==================================================================="
     info "==  Install dependencies for Mininet-based Infrastructure Layer  =="
     info "==================================================================="
-    sudo apt-get install -y gcc make automake ssh libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev
+    sudo apt-get install -y gcc make automake ssh libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev
 
     info "=== Install OpenYuma for NETCONF capability ==="
     cd "$DIR/OpenYuma"
-    # -i flag -> got error during first run of make but it seems OK, so ignore...
-    make -i
+    make clean
+    make
     sudo make install
 
     if grep -Fxq "# --- ESCAPEv2 ---" "/etc/ssh/sshd_config"; then
@@ -216,6 +216,13 @@ EOF
     mkdir -p bin
     mkdir -p lib
     sudo cp vnf_starter.yang /usr/share/yuma/modules/netconfcentral/
+
+    # Docker workaround
+    if [ ! -f /usr/include/glib-2.0/glib/glib-autocleanups.h ]; then
+        wget -vP /usr/include/glib-2.0/glib/ https://github.com/GNOME/glib/blob/master/glib/glib-autocleanups.h
+    fi
+
+    make clean
     make
     sudo make install
 
@@ -225,6 +232,7 @@ EOF
     cd click
     ./configure --disable-linuxmodule
     CPU=$(grep -c '^processor' /proc/cpuinfo)
+    make clean
     make -j${CPU}
     sudo make install
 
@@ -233,6 +241,7 @@ EOF
     cd apps/clicky
     autoreconf -i
     ./configure
+    make clean
     make -j${CPU}
     sudo make install
 
@@ -281,10 +290,6 @@ function all {
     install_core
     install_gui
     install_infra
-    info "============"
-    info "==  Done  =="
-    info "============"
-    exit 0
 }
 
 # Print help
@@ -322,3 +327,5 @@ fi
 info "============"
 info "==  Done  =="
 info "============"
+# Force to return with 0 for docker build
+exit 0

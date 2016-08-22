@@ -215,6 +215,12 @@ class ServiceLayerAPI(AbstractAPI):
         else:
           log.warning("Detected unexpected format...")
           return
+        if nffg.mode is not None:
+          log.info('Detected mapping mode in NFFG: %s' % nffg.mode)
+        else:
+          nffg.mode = NFFG.MODE_ADD
+          log.info("No mapping mode has been detected in NFFG! "
+                   "Set default mode: %s" % nffg.mode)
         log.info("Schedule service request delayed by 3 seconds...")
         self.api_sas_sg_request_delayed(service_nffg=nffg)
       except (ValueError, IOError, TypeError) as e:
