@@ -698,7 +698,7 @@ class NFFG(AbstractNFFG):
     """
     # Create the model
     nffg = NFFGModel(id=self.id, name=self.name, version=self.version,
-                     metadata=self.metadata)
+                     mode=self.mode, metadata=self.metadata)
     # Load Infras
     for infra in self.infras:
       nffg.node_infras.append(infra)
@@ -735,7 +735,7 @@ class NFFG(AbstractNFFG):
     model = NFFGModel.parse(raw_data)
     # Create new NFFG
     nffg = NFFG(id=model.id, name=model.name, version=model.version,
-                metadata=model.metadata)
+                mode=model.mode, metadata=model.metadata)
     # Load Infras
     for infra in model.node_infras:
       nffg.add_node(infra)
@@ -977,9 +977,10 @@ class NFFG(AbstractNFFG):
               # If the parent SG of this flowrule is in both graphs and the 
               # SG hops both ends are also in both graphs
               d.availres['bandwidth'] -= fr.bandwidth
-          for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p, 
-                                 sg_hops_to_be_ignored):
-            path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, self, p)
+          for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p,
+                                                            sg_hops_to_be_ignored):
+            path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, self,
+                                                                    p)
             # collocation flowrules dont have TAGs so their empty lists are not 
             # returned by get_TAGs_of_starting_flows, but this case
             # is also handled by the Flowrule.bandwidth summerizing 'for loop'
@@ -988,7 +989,8 @@ class NFFG(AbstractNFFG):
                 link.availbandwidth -= flow_bw
                 if link.availbandwidth < 0:
                   raise RuntimeError("(BadInputException) "
-                                     "The bandwidth usage implied by the sum of "
+                                     "The bandwidth usage implied by the sum "
+                                     "of "
                                      "flowrule "
                                      "bandwidths should determine the occupied "
                                      "capacity on links. "
@@ -1039,9 +1041,9 @@ class NFFG(AbstractNFFG):
                 self.network.node[n.id].resources)
             except RuntimeError:
               raise RuntimeError("VNF %s cannot be kept on host %s with "
-                                 "increased resource requirements due to not " 
-                                 "enough available resources!"%(vnf.id, n.id))
-              
+                                 "increased resource requirements due to not "
+                                 "enough available resources!" % (vnf.id, n.id))
+
           self.network.node[n.id].availres = newres
 
   def del_flowrules_of_SGHop (self, hop_id_to_del):
@@ -1050,7 +1052,7 @@ class NFFG(AbstractNFFG):
     field of the Flowrule class.
     """
 
-    for n in self. infras:
+    for n in self.infras:
       for p in n.ports:
         for fr in p.flowrules:
           if fr.hop_id == hop_id_to_del:
@@ -2069,7 +2071,8 @@ class NFFGToolBox(object):
 
     :param nffg: NFFG object which contains port.
     :param port: The port which should be the source or destination.
-    :param outbound: Determines whether outbound or inbound link should be found.
+    :param outbound: Determines whether outbound or inbound link should be
+    found.
     :return:
     """
     edges_func = None
@@ -2260,7 +2263,8 @@ class NFFGToolBox(object):
   @staticmethod
   def generate_all_TAGs_of_NFFG (nffg):
     """
-    Generates all possible TAGs of a request graph NFFG based on the SG hop ID-s 
+    Generates all possible TAGs of a request graph NFFG based on the SG hop
+    ID-s
     and the SG hop endings. 
     TAGs are in format of <<source_NF_ID|destination_NF_ID|SG_hop_id>>
 
@@ -2465,6 +2469,8 @@ def generate_test_NFFG ():
   nffg.add_metadata(name="test_metadata1", value="abc")
   nffg.add_metadata(name="test_metadata2", value="123")
 
+  nffg.mode = NFFG.MODE_ADD
+
   sap = nffg.add_sap(id="sap1", name="SAP_node1", binding="eth1")
   p_sap = sap.add_port(id=1, properties={"property1": "123"})
   sap.add_metadata(name="sap_meta", value="123")
@@ -2517,6 +2523,5 @@ if __name__ == "__main__":
   parsed = NFFG.parse(raw_data=raw)
   parsed.mode = NFFG.MODE_REMAP
   print parsed.dump()
-  print "mode:", parsed.mode
   # nffg = NFFG.parse_from_file('op-add-mapped-topo1.nffg')
   # print nffg.dump()

@@ -1140,7 +1140,8 @@ class InfraPort(Port):
         match=flowrule.get('match'),
         action=flowrule.get('action'),
         delay=float(flowrule['delay']) if 'delay' in flowrule else None,
-        bandwidth=float(flowrule['bandwidth']) if 'bandwidth' in flowrule else None,
+        bandwidth=float(
+          flowrule['bandwidth']) if 'bandwidth' in flowrule else None,
         hop_id=flowrule.get('hop_id'))
 
 
@@ -1597,6 +1598,9 @@ class EdgeReq(Link):
 ################################################################################
 
 class NFFGParseError(RuntimeError):
+  """
+  Exception class for specific parsing errors.
+  """
   pass
 
 
@@ -1619,7 +1623,8 @@ class NFFGModel(Element):
   # Container type
   TYPE = "NFFG"
 
-  def __init__ (self, id=None, name=None, version=None, metadata=None):
+  def __init__ (self, id=None, name=None, metadata=None, mode=None,
+                version=None):
     """
     Init
 
@@ -1635,6 +1640,7 @@ class NFFGModel(Element):
     self.name = name
     self.version = version if version is not None else self.VERSION
     self.metadata = OrderedDict(metadata if metadata else ())
+    self.mode = mode
     self.node_nfs = []
     self.node_saps = []
     self.node_infras = []
@@ -1890,6 +1896,8 @@ class NFFGModel(Element):
     nffg["parameters"]["version"] = self.version
     if self.metadata:
       nffg["parameters"]["metadata"] = self.metadata
+    if self.mode:
+      nffg['parameters']['mode'] = self.mode
     if self.node_nfs:
       nffg["node_nfs"] = [nf.persist() for nf in self.node_nfs]
     if self.node_saps:
@@ -1937,6 +1945,7 @@ class NFFGModel(Element):
         id=data['parameters'].get('id'),  # mandatory
         name=data['parameters'].get('name'),  # can be None
         metadata=data['parameters'].get('metadata'),
+        mode=data['parameters'].get('mode'),
         version=data['parameters'].get('version'))  # mandatory
       # Fill Container lists
       for n in data.get('node_nfs', ()):
