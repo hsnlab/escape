@@ -194,7 +194,7 @@ function install_infra {
     info "=== Install OpenYuma for NETCONF capability ==="
     cd "$DIR/OpenYuma"
     make clean
-    make
+    make -i
     sudo make install
 
     if grep -Fxq "# --- ESCAPEv2 ---" "/etc/ssh/sshd_config"; then
