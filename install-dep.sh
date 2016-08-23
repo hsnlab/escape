@@ -233,7 +233,7 @@ EOF
 
     # Docker workaround
     if [ ! -f /usr/include/glib-2.0/glib/glib-autocleanups.h ]; then
-        wget -vP /usr/include/glib-2.0/glib/ https://github.com/GNOME/glib/blob/master/glib/glib-autocleanups.h
+        sudo wget -vP /usr/include/glib-2.0/glib/ https://github.com/GNOME/glib/blob/master/glib/glib-autocleanups.h
     fi
 
     make clean
