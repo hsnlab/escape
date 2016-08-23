@@ -254,7 +254,9 @@ EOF
 
     info "=== Install click for VNFs ==="
     cd ${DIR}
-    git clone --depth 1 https://github.com/kohler/click.git
+    if [ ! -d click ]; then
+        git clone --depth 1 https://github.com/kohler/click.git
+    fi
     cd click
     ./configure --disable-linuxmodule
     CPU=$(grep -c '^processor' /proc/cpuinfo)
