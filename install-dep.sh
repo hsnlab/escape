@@ -176,9 +176,21 @@ function install_mn_dep {
         echo "$MNUSER:$MNPASSWD" | sudo chpasswd
     fi
     if [ "$DISTRIB_VER" = "14.04" ]; then
+        if grep -Fxq "# --- ESCAPE-mininet ---" "/etc/ssh/sshd_config"; then
+            info "=== Remove previous ESCAPEv2-related mininet config ==="
+            sudo sed -in '/.*ESCAPE-mininet.*/,/.*ESCAPE-mininet END.*/d' "/etc/ssh/sshd_config"
+        fi
+
         info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
         # Only works with OpenSSH_6.6.1p1 and tested on Ubuntu 14.04
-        sudo sh -c 'echo "# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet" | tee -a /etc/ssh/sshd_config'
+        cat <<EOF | sudo tee -a /etc/ssh/sshd_config
+# --- ESCAPE-mininet ---
+# Restrict mininet user to be able to login only from localhost
+Match Host *,!localhost
+  DenyUsers  mininet
+# --- ESCAPE-mininet END---
+EOF
+#        sudo sh -c 'echo "# --- ESCAPE-mininet ---\n# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet\n# --- ESCAPE-mininet END---" | tee -a /etc/ssh/sshd_config'
     else
         warn "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
     fi
@@ -197,14 +209,14 @@ function install_infra {
     make -i
     sudo make install
 
-    if grep -Fxq "# --- ESCAPEv2 ---" "/etc/ssh/sshd_config"; then
+    if grep -Fxq "# --- ESCAPE-sshd ---" "/etc/ssh/sshd_config"; then
         info "=== Remove previous ESCAPEv2-related sshd config ==="
-        sudo sed -in '/.*ESCAPEv2.*/,/.*ESCAPEv2 END.*/d' "/etc/ssh/sshd_config"
+        sudo sed -in '/.*ESCAPE-sshd.*/,/.*ESCAPE-sshd END.*/d' "/etc/ssh/sshd_config"
     fi
 
     info "=== Set sshd configuration ==="
     cat <<EOF | sudo tee -a /etc/ssh/sshd_config
-# --- ESCAPEv2 ---
+# --- ESCAPE-sshd ---
 # Only 8 Port can be used as a listening port for SSH daemon.
 # The default Port 22 has already reserved one port.
 # To overcome this limitation the openssh-server needs to be
@@ -217,7 +229,7 @@ Port 834
 Port 835
 Port 836
 Subsystem netconf /usr/sbin/netconf-subsystem
-# --- ESCAPEv2 END ---
+# --- ESCAPEv2-sshd END ---
 EOF
 
     info "=== Restart sshd ==="
