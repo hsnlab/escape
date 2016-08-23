@@ -52,6 +52,9 @@ function env_setup {
 
 ### Constants
 
+# Project - unify | 5gex | ericsson | sb
+PROJECT="unify"
+
 # Component versions
 JAVA_VERSION=7
 NEO4J_VERSION=2.2.7
@@ -82,12 +85,23 @@ function install_core {
     info "==  Install core dependencies  =="
     info "================================="
     echo "ESCAPEv2 version: 2.0.0"
+
     # Create symlink to the appropriate .gitmodules file
     info "=== Checkout submodules ==="
+    if [ -f ".gitmodules.$PROJECT" ]; then
+        ln -vfs ".gitmodules.$PROJECT" .gitmodules
+    else
+        on_error "Missing submodule file of project: $PROJECT for ESCAPE repo!"
+    fi
     git submodule update --init --remote --merge
+
     info "=== Create symlinks for submodules ==="
     cd "$DIR/dummy-orchestrator"
-    ln -vfs .gitmodules.unify .gitmodules
+    if [ -f ".gitmodules.$PROJECT" ]; then
+        ln -vfs ".gitmodules.$PROJECT" .gitmodules
+    else
+        on_error "Missing submodule file of project: $PROJECT for dummy-orchestrator!"
+    fi
     cd "$DIR"
     git submodule update --init --remote --recursive --merge
     # Remove ESCAPEv2 config file from index in git to untrack changes
