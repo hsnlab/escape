@@ -308,7 +308,7 @@ function all {
 
 # Print help
 function print_usage {
-    echo -e "Usage: $0 [-a] [-c] [-d] [-g] [-h] [-i]"
+    echo -e "Usage: $0 [-a] [-c] [-d] [-g] [-h] [-i] [-p project]"
     echo -e "Install script for ESCAPEv2\n"
     echo -e "options:"
     echo -e "\t-a:   (default) install (A)ll ESCAPEv2 components (identical with -cgi)"
@@ -317,14 +317,23 @@ function print_usage {
     echo -e "\t-g:   install dependencies for our rudimentary (G)UI"
     echo -e "\t-h:   print this (H)elp message"
     echo -e "\t-i:   install components of (I)nfrastructure Layer for Local Orchestration"
+    echo -e "\t-p:   use specific project module files [unify|sb|5gex|ericsson] default: unify"
     exit 2
 }
 
 if [ $# -eq 0 ]; then
-    # No param was given
+    # No param was given, call all with default project
     all
 else
-    while getopts 'acdghi' OPTION; do
+    # Parse optional project parameter
+    while getopts ':p:' OPTION; do
+        case ${OPTION} in
+        p)  PROJECT=$OPTARG;;
+        esac
+    done
+    OPTIND=1    # Reset getopts
+    info "User project config: $PROJECT"
+    while getopts 'acdghip:' OPTION; do
         case ${OPTION} in
         a)  all;;
         c)  install_core;;
@@ -332,6 +341,7 @@ else
         g)  install_gui;;
         h)  print_usage;;
         i)  install_infra;;
+        p)  if [ $# -eq 2 ]; then all; fi;; # If only -p was set, call all else skip
         \?)  print_usage;;
         esac
     done
