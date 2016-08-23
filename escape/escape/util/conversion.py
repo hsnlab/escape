@@ -152,7 +152,7 @@ class NFFGConverter(object):
         try:
           ret['in_port'] = int(kv[1])
         except ValueError:
-          # log.warning(
+          # self.log.warning(
           #    "in_port is not a valid port number: %s! Skip "
           #    "converting..." % kv[1])
           ret['in_port'] = kv[1]
@@ -467,7 +467,7 @@ class NFFGConverter(object):
         #   sap_port.controller = vport.control.controller.get_value()
         #   sap_port.orchestrator = vport.control.orchestrator.get_value()
         if vport.control.is_initialized() or vport.sap_data.is_initialized():
-          log.warning("Unexpected values: <sap_data> and <control> are not "
+          self.log.warning("Unexpected values: <sap_data> and <control> are not "
                       "converted in case of non-sap infra ports!")
         # Add metadata from non-sap port to infra port metadata
         for key in vport.metadata:
@@ -604,7 +604,7 @@ class NFFGConverter(object):
         #       except ValueError:
         #         nf_port.cost = vport.sap_data.resources.cost.get_value()
         if vport.sap_data.is_initialized():
-          log.warning("Unexpected value: <sap_data> and is not converted in "
+          self.log.warning("Unexpected value: <sap_data> and is not converted in "
                       "case of NF ports!")
         if vport.control.is_initialized():
           nf_port.controller = vport.control.controller.get_value()
@@ -1160,9 +1160,9 @@ class NFFGConverter(object):
                            if l.src.id == in_port]
           if len(opposite_node) == 1:
             in_port = opposite_node.pop()
-            log.debug("Detected src port for SG hop: %s" % in_port)
+            self.log.debug("Detected src port for SG hop: %s" % in_port)
           else:
-            log.warning(
+            self.log.warning(
               "src port for SG hop: %s cannot be detected! Possible ports: %s" %
               (fr_id, opposite_node))
             continue
@@ -1182,9 +1182,9 @@ class NFFGConverter(object):
                            if l.src.id == output]
           if len(opposite_node) == 1:
             output = opposite_node.pop()
-            log.debug("Detected dst port for SG hop: %s" % output)
+            self.log.debug("Detected dst port for SG hop: %s" % output)
           else:
-            log.warning(
+            self.log.warning(
               "dst port for SG hop: %s cannot be detected! Possible ports: %s" %
               (fr_id, opposite_node))
             continue
@@ -1674,7 +1674,7 @@ class NFFGConverter(object):
             #   port.bandwidth)
             # v_nf_port.sap_data.resources.cost.set_value(port.cost)
             if v_nf_port.sap_data.is_initialized():
-              log.warning("Unexpected value: sap_data values of NF is not "
+              self.log.warning("Unexpected value: sap_data values of NF is not "
                           "converted to <sap_data>!")
             v_nf_port.control.controller.set_value(port.controller)
             v_nf_port.control.orchestrator.set_value(port.orchestrator)
