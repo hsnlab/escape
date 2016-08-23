@@ -17,8 +17,8 @@ domain management. Uses Adapter classes for ensuring protocol-specific
 connections with entities in the particular domain.
 """
 import pprint
-
 import re
+
 from ncclient import NCClientError
 
 from escape.adapt.adapters import RemoteESCAPEv2RESTAdapter, UnifyRESTAdapter
@@ -191,6 +191,9 @@ class InternalDomainManager(AbstractDomainManager):
         # then (re)initiate mapped NFs
         self._deploy_new_nfs(nffg=nffg_part)
       ]
+      if not all(result):
+        log.warning("Skip traffic steering due to NF initiation error(s)!")
+        return all(result)
       log.info("Perform traffic steering according to mapped tunnels/labels...")
       # OpenFlow flowrule deletion/addition is fairly cheap operations
       # The most robust solution is to delete every flowrule
@@ -307,7 +310,7 @@ class InternalDomainManager(AbstractDomainManager):
         except NCClientError as e:
           log.error("Got NETCONF RPC communication error during NF: %s "
                     "deletion! Skip deletion..." % nf_id)
-          log.log(VERBOSE, "Exception: %s" % e)
+          log.error(VERBOSE, "Exception: %s" % e)
           result = False
           continue
     log.debug("NF deletion result: %s" % ("SUCCESS" if result else "FAILURE"))
@@ -403,7 +406,7 @@ class InternalDomainManager(AbstractDomainManager):
         except NCClientError as e:
           log.error("Got NETCONF RPC communication error during NF: %s "
                     "deploy! Skip deploy..." % nf.id)
-          log.log(VERBOSE, "Exception: %s" % e)
+          log.error(VERBOSE, "Exception: %s" % e)
           result = False
           continue
         except BaseException:
@@ -505,8 +508,12 @@ class InternalDomainManager(AbstractDomainManager):
             _action[0] = _action[0].replace(str(dyn), str(phy))
           flowrule.match = ";".join(_match)
           flowrule.action = ";".join(_action)
-    log.info("Initiation of NFs in NFFG part: %s has been finished! Result: %s"
-             % (nffg, "SUCCESS" if result else "FAILURE"))
+    if result:
+      log.info("Initiation of NFs in NFFG part: %s has been finished! Result: "
+               "SUCCESS" % nffg)
+    else:
+      log.info("Initiation of NFs in NFFG part: %s has been finished! Result: "
+               "FAILURE" % nffg)
     return result
 
   def _delete_flowrules (self, nffg=None):
@@ -660,7 +667,7 @@ class InternalDomainManager(AbstractDomainManager):
           log.debug("Assemble OpenFlow flowrule from: %s" % flowrule)
           self.controlAdapter.install_flowrule(infra.id, match, action)
     log.info("Flowrule deploy result: %s" %
-              ("SUCCESS" if result else "FAILURE"))
+             ("SUCCESS" if result else "FAILURE"))
     log.log(VERBOSE,
             "Registered VLAN IDs: %s" % pprint.pformat(self.vlan_register))
     return result
@@ -920,7 +927,7 @@ class SDNDomainManager(AbstractDomainManager):
           self.controlAdapter.install_flowrule(infra.id, match=match,
                                                action=action)
     log.info("Flowrule deploy result: %s" %
-              ("SUCCESS" if result else "FAILURE"))
+             ("SUCCESS" if result else "FAILURE"))
     return result
 
   def clear_domain (self):

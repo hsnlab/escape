@@ -15,22 +15,22 @@ NC='\033[0m'
 set -euo pipefail
 
 # Fail on error
-trap on_error ERR
 trap "on_error 'Got signal: SIGHUP'" SIGHUP
 trap "on_error 'Got signal: SIGINT'" SIGINT
 trap "on_error 'Got signal: SIGTERM'" SIGTERM
+trap on_error ERR
 
 function on_error() {
-    echo -e "\n${RED}Error during installation! $1${NC}"
+    echo -e "\n${RED}Error during installation! ${1-}${NC}"
     exit 1
 }
 
 function info() {
-    echo -e "${GREEN}$1${NC}"
+    echo -e "${GREEN}${1-INFO}${NC}"
 }
 
 function warn() {
-    echo -e "\n${YELLOW}WARNING: $1${NC}"
+    echo -e "\n${YELLOW}WARNING: ${1-WARNING}${NC}"
     read -rsp $'Press ENTER to continue...\n'
 }
 
@@ -45,8 +45,6 @@ function env_setup {
             sudo locale-gen $LANG
             export LC_ALL=$LANG
             locale
-        else
-             on_error "locale variable: LANG is unset!"
         fi
     fi
     set -u
@@ -54,9 +52,13 @@ function env_setup {
 
 ### Constants
 
+# Project - unify | 5gex | ericsson | sb
+PROJECT="unify"
+
 # Component versions
 JAVA_VERSION=7
 NEO4J_VERSION=2.2.7
+CRYPTOGRAPHY_VERSION=1.3.1
 
 # Other constants
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -83,12 +85,23 @@ function install_core {
     info "==  Install core dependencies  =="
     info "================================="
     echo "ESCAPEv2 version: 2.0.0"
+
     # Create symlink to the appropriate .gitmodules file
     info "=== Checkout submodules ==="
+    if [ -f ".gitmodules.$PROJECT" ]; then
+        ln -vfs ".gitmodules.$PROJECT" .gitmodules
+    else
+        on_error "Missing submodule file of project: $PROJECT for ESCAPE repo!"
+    fi
     git submodule update --init --remote --merge
+
     info "=== Create symlinks for submodules ==="
     cd "$DIR/dummy-orchestrator"
-    ln -vfs .gitmodules.unify .gitmodules
+    if [ -f ".gitmodules.$PROJECT" ]; then
+        ln -vfs ".gitmodules.$PROJECT" .gitmodules
+    else
+        on_error "Missing submodule file of project: $PROJECT for dummy-orchestrator!"
+    fi
     cd "$DIR"
     git submodule update --init --remote --recursive --merge
     # Remove ESCAPEv2 config file from index in git to untrack changes
@@ -105,7 +118,7 @@ function install_core {
         sudo add-apt-repository -y ppa:openjdk-r/ppa
     fi
 
-    if [ "$DISTRIB_ID" = "Ubuntu" ]; then
+    if [ "$DISTRIB_ID" = "Ubuntu" -a "$DISTRIB_VER" = "14.04" ]; then
         info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
         sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
     fi
@@ -117,12 +130,13 @@ function install_core {
     # Install Python 2.7.11 explicitly
     sudo apt-get -y install python2.7
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
+    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
+                            libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
     info "=== Install ESCAPEv2 Python dependencies ==="
     sudo -H pip install --upgrade setuptools
-    sudo -H pip install cryptography==1.3.1
+    sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
 
@@ -162,9 +176,21 @@ function install_mn_dep {
         echo "$MNUSER:$MNPASSWD" | sudo chpasswd
     fi
     if [ "$DISTRIB_VER" = "14.04" ]; then
+        if grep -Fxq "# --- ESCAPE-mininet ---" "/etc/ssh/sshd_config"; then
+            info "=== Remove previous ESCAPEv2-related mininet config ==="
+            sudo sed -in '/.*ESCAPE-mininet.*/,/.*ESCAPE-mininet END.*/d' "/etc/ssh/sshd_config"
+        fi
+
         info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
         # Only works with OpenSSH_6.6.1p1 and tested on Ubuntu 14.04
-        sudo sh -c 'echo "# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet" | tee -a /etc/ssh/sshd_config'
+        cat <<EOF | sudo tee -a /etc/ssh/sshd_config
+# --- ESCAPE-mininet ---
+# Restrict mininet user to be able to login only from localhost
+Match Host *,!localhost
+  DenyUsers  mininet
+# --- ESCAPE-mininet END---
+EOF
+#        sudo sh -c 'echo "# --- ESCAPE-mininet ---\n# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet\n# --- ESCAPE-mininet END---" | tee -a /etc/ssh/sshd_config'
     else
         warn "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
     fi
@@ -175,22 +201,22 @@ function install_infra {
     info "==================================================================="
     info "==  Install dependencies for Mininet-based Infrastructure Layer  =="
     info "==================================================================="
-    sudo apt-get install -y gcc make automake ssh libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev
+    sudo apt-get install -y gcc make automake ssh libxml2-dev libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev libgtk2.0-dev
 
     info "=== Install OpenYuma for NETCONF capability ==="
     cd "$DIR/OpenYuma"
-    # -i flag -> got error during first run of make but it seems OK, so ignore...
+    #make clean
     make -i
     sudo make install
 
-    if grep -Fxq "# --- ESCAPEv2 ---" "/etc/ssh/sshd_config"; then
+    if grep -Fxq "# --- ESCAPE-sshd ---" "/etc/ssh/sshd_config"; then
         info "=== Remove previous ESCAPEv2-related sshd config ==="
-        sudo sed -in '/.*ESCAPEv2.*/,/.*ESCAPEv2 END.*/d' "/etc/ssh/sshd_config"
+        sudo sed -in '/.*ESCAPE-sshd.*/,/.*ESCAPE-sshd END.*/d' "/etc/ssh/sshd_config"
     fi
 
     info "=== Set sshd configuration ==="
     cat <<EOF | sudo tee -a /etc/ssh/sshd_config
-# --- ESCAPEv2 ---
+# --- ESCAPE-sshd ---
 # Only 8 Port can be used as a listening port for SSH daemon.
 # The default Port 22 has already reserved one port.
 # To overcome this limitation the openssh-server needs to be
@@ -203,7 +229,7 @@ Port 834
 Port 835
 Port 836
 Subsystem netconf /usr/sbin/netconf-subsystem
-# --- ESCAPEv2 END ---
+# --- ESCAPEv2-sshd END ---
 EOF
 
     info "=== Restart sshd ==="
@@ -216,25 +242,36 @@ EOF
     mkdir -p bin
     mkdir -p lib
     sudo cp vnf_starter.yang /usr/share/yuma/modules/netconfcentral/
+
+    # Docker workaround
+    if [ ! -f /usr/include/glib-2.0/glib/glib-autocleanups.h ]; then
+        sudo wget -vP /usr/include/glib-2.0/glib/ https://github.com/GNOME/glib/blob/master/glib/glib-autocleanups.h
+    fi
+
+    make clean
     make
     sudo make install
 
     info "=== Install click for VNFs ==="
     cd ${DIR}
-    git clone --depth 1 https://github.com/kohler/click.git
+    if [ ! -d click ]; then
+        git clone --depth 1 https://github.com/kohler/click.git
+    fi
     cd click
     ./configure --disable-linuxmodule
     CPU=$(grep -c '^processor' /proc/cpuinfo)
+    make clean
     make -j${CPU}
     sudo make install
 
     # sudo apt-get install libgtk2.0-dev
-#    info "=== Install clicky for graphical VNF management ==="
-#    cd apps/clicky
-#    autoreconf -i
-#    ./configure
-#    make -j${CPU}
-#    sudo make install
+    info "=== Install clicky for graphical VNF management ==="
+    cd apps/clicky
+    autoreconf -i
+    ./configure
+    make clean
+    make -j${CPU}
+    sudo make install
 
     # Remove click codes
     # cd ${DIR}
@@ -281,15 +318,11 @@ function all {
     install_core
     install_gui
     install_infra
-    info "============"
-    info "==  Done  =="
-    info "============"
-    exit 0
 }
 
 # Print help
 function print_usage {
-    echo -e "Usage: $0 [-a] [-c] [-d] [-g] [-h] [-i]"
+    echo -e "Usage: $0 [-a] [-c] [-d] [-g] [-h] [-i] [-p project]"
     echo -e "Install script for ESCAPEv2\n"
     echo -e "options:"
     echo -e "\t-a:   (default) install (A)ll ESCAPEv2 components (identical with -cgi)"
@@ -298,14 +331,23 @@ function print_usage {
     echo -e "\t-g:   install dependencies for our rudimentary (G)UI"
     echo -e "\t-h:   print this (H)elp message"
     echo -e "\t-i:   install components of (I)nfrastructure Layer for Local Orchestration"
+    echo -e "\t-p:   use specific project module files [unify|sb|5gex|ericsson] default: unify"
     exit 2
 }
 
 if [ $# -eq 0 ]; then
-    # No param was given
+    # No param was given, call all with default project
     all
 else
-    while getopts 'acdghi' OPTION; do
+    # Parse optional project parameter
+    while getopts ':p:' OPTION; do
+        case ${OPTION} in
+        p)  PROJECT=$OPTARG;;
+        esac
+    done
+    OPTIND=1    # Reset getopts
+    info "User project config: $PROJECT"
+    while getopts 'acdghip:' OPTION; do
         case ${OPTION} in
         a)  all;;
         c)  install_core;;
@@ -313,6 +355,7 @@ else
         g)  install_gui;;
         h)  print_usage;;
         i)  install_infra;;
+        p)  if [ $# -eq 2 ]; then all; fi;; # If only -p was set, call all else skip
         \?)  print_usage;;
         esac
     done
@@ -322,3 +365,5 @@ fi
 info "============"
 info "==  Done  =="
 info "============"
+# Force to return with 0 for docker build
+exit 0

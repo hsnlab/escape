@@ -71,7 +71,8 @@ cfg = {
           "prefix": "escape",
           "address": "0.0.0.0",
           "port": 8008,
-          "unify_interface": False
+          "unify_interface": False,
+          "diff": True
         }
     },
   "orchestration":  # Resource Orchestration Sublayer
@@ -108,7 +109,7 @@ cfg = {
       "Sl-Or":
         {
           "module": "escape.orchest.ros_API",
-          "class": "ROSAgentRequestHandler",
+          "class": "BasicUnifyRequestHandler",
           "prefix": "escape",
           "address": "0.0.0.0",
           "port": 8888,
@@ -126,7 +127,8 @@ cfg = {
           "port": 8889,
           "virtualizer_type": "GLOBAL",
           "unify_interface": True
-        }
+        },
+      "manage-neo4j-service": False
     },
   "adaptation":  # Controller Adaptation Sublayer
     {
@@ -306,8 +308,7 @@ cfg = {
           "class": "FallbackDynamicTopology"
         },
       "SAP-xterms": True,
-      "SHUTDOWN-CLEAN": True,
-      "manage-neo4j-service": True
+      "SHUTDOWN-CLEAN": True
     },
   "additional-config-file": "escape.config",  # relative to project root
   "visualization":

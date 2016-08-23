@@ -37,7 +37,7 @@ except ImportError:
 
 
 class CoreAlgorithm(object):
-  def __init__ (self, net0, req0, chains0, full_remap, cache_shortest_path, 
+  def __init__ (self, net0, req0, chains0, mode, cache_shortest_path, 
                 overall_highest_delay,
                 bw_factor=1, res_factor=1, lat_factor=1, shortest_paths=None):
     self.log = helper.log.getChild(self.__class__.__name__)
@@ -51,7 +51,7 @@ class CoreAlgorithm(object):
     self.net0 = copy.deepcopy(net0)
     self.original_chains = chains0
     self.enable_shortest_path_cache = cache_shortest_path
-    self.full_remap = full_remap
+    self.mode = mode
     
     # parameters contolling the backtrack process
     # how many of the best possible VNF mappings should be remembered
@@ -110,10 +110,10 @@ class CoreAlgorithm(object):
                                                                  chains0,
                                                                  self.manager)
     self.preprocessor.shortest_paths = shortest_paths
-    self.net = self.preprocessor.processNetwork(self.full_remap, 
+    self.net = self.preprocessor.processNetwork(self.mode, 
                                                 self.enable_shortest_path_cache)
     self.req, chains_with_subgraphs = self.preprocessor.processRequest(
-      self.net)
+      self.mode, self.net)
     self.bt_handler = backtrack.BacktrackHandler(chains_with_subgraphs, 
          self.bt_branching_factor, self.bt_limit)
 
@@ -762,11 +762,18 @@ class CoreAlgorithm(object):
           match_str, action_str, bw, hop_id = reqlid)
 
   def _retrieveOrAddVNF (self, nffg, vnfid):
-    if vnfid not in nffg.network:
+    # add the VNF from the request graph to update the resource requirements 
+    # and instance! The new requirements are checked for VNFs which are left 
+    # in place!
+    if vnfid in nffg.network:
+      nodenf_res = copy.deepcopy(self.req.node[vnfid].resources)
+      nffg.network.node[vnfid].resources = nodenf_res
+      nffg.network.node[vnfid].name = self.req.node[vnfid].name
+      nodenf = nffg.network.node[vnfid]
+    else:
       nodenf = copy.deepcopy(self.req.node[vnfid])
       nffg.add_node(nodenf)
-    else:
-      nodenf = nffg.network.node[vnfid]
+
     return nodenf
 
   def _addSAPportIfNeeded(self, nffg, sapid, portid):
@@ -913,14 +920,19 @@ class CoreAlgorithm(object):
   def constructOutputNFFG (self):
     # use the unchanged input from the lower layer (deepcopied in the
     # constructor, modify it now)
-    if self.full_remap:
+    if self.mode == NFFG.MODE_REMAP:
       # use the already preprocessed network we don't need to append the VNF
       # mappings to the existing VNF mappings
       nffg = self.bare_infrastucture_nffg
-    else:
+    elif self.mode == NFFG.MODE_ADD:
       # the just mapped request should be appended to the one sent by the 
       # lower layer indicating the already mapped VNF-s.
       nffg = self.net0
+    else:
+      raise uet.InternalAlgorithmException("Invalid mapping operation mode "
+                                           "shouldn't reach here!")
+
+    self.log.debug("Constructing output NFFG...")
     for vnf, host in self.manager.vnf_mapping:
       # duplicate the object, so the original one is not modified.
       if self.req.node[vnf].type == 'NF':
@@ -951,9 +963,8 @@ class CoreAlgorithm(object):
             # use the (copies of the) ports between the SGLinks to
             # connect the VNF to the Infra node.
             # Add the mapping indicator DYNAMIC link only if the port was just
-            # added. NOTE: In case of NOT FULL_REMAP, the VNF-s left in place 
-            # still have these links. In case of (future) VNF replacement, 
-            # change is required here!
+            # added. NOTE: _retrieveOrAddVNF() function already returns the 
+            # right (updated in case of ADD operation mode) VNF instance!
             nffg.add_undirected_link(out_infra_port, mappednodenf.ports[d.src.id],
                                      dynamic=True)
           helperlink = self.manager.link_mapping[i][j][k]
@@ -986,18 +997,21 @@ class CoreAlgorithm(object):
             helperlink['infra_ports'] = [None, in_infra_port]
             # Here a None instead of a port object means that the
             # SGLink`s beginning or ending is a SAP.
-
-    for vnf in self.req.nodes_iter():
-      for i, j, k, d in self.req.out_edges_iter([vnf], data=True, keys=True):
-        # i is always vnf
-        self._addFlowrulesToNFFGDerivatedFromReqLinks(vnf, j, k, nffg)
           
     # all VNFs are added to the NFFG, so now, req ids are valid in this
     # NFFG instance. Ports for the SG link ends are reused from the mapped NFFG.
     # Add all the SGHops to the NFFG keeping the SGHops` identifiers, so the
     # installed flowrules and TAG-s will be still valid
+    # REFACTOR: make port object retrieval nicer (independent of SAPness)
     try:
       for i, j, d in self.req.edges_iter(data=True):
+        if nffg.network.has_edge(i, j, key=d.id):
+          # it means this link is under an update, so add it with the new 
+          # attributes! and remove the old one!
+          nffg.network.remove_edge(i, j, key=d.id)
+          self.log.debug("Removed old SGHop %s for SG Hop data update!"%d.id)
+          nffg.del_flowrules_of_SGHop(d.id)
+          self.log.debug("Removed all flowrules belonging to SGHop %s!"%d.id)
         if self.req.node[i].type == 'SAP':
           # if i is a SAP we have to find what is its ID in the network
           # d.id is the link`s key
@@ -1028,19 +1042,76 @@ class CoreAlgorithm(object):
                           nffg.network.node[j].ports[d.dst.id], id=d.id,
                           flowclass=d.flowclass, tag_info=d.tag_info,
                           delay=d.delay, bandwidth=d.bandwidth)
+        self.log.debug("SGHop %s added to output NFFG."%d.id)
     except RuntimeError as re:
       raise uet.InternalAlgorithmException("RuntimeError catched during SGLink"
-          " addition to the output NFFG. Not Yet Implemented feature: keeping "
-          "already mapped SGLinks in place if not full_remap. Maybe same SGLink "
+          " addition to the output NFFG. Maybe same SGLink "
           "ID in current request and a previous request?")
-    
+
+    # adding the flowrules should be after deleting the flowrules of SGHops 
+    # to be updated from the data of the Request (relevant in case of MODE_ADD)
+    for vnf in self.req.nodes_iter():
+      for i, j, k, d in self.req.out_edges_iter([vnf], data=True, keys=True):
+        # i is always vnf
+        self._addFlowrulesToNFFGDerivatedFromReqLinks(vnf, j, k, nffg)
+
     # Add EdgeReqs to propagate E2E latency reqs.
     self._divideEndToEndRequirements(nffg)
 
     return nffg
 
+  def constructDelOutputNFFG (self):
+    """
+    Constructs an output NFFG, which can be used by the lower layered NFFG-s 
+    for deletion. SG elements are matched exclusively by their ID-s.
+    """
+    self.log.debug("Constructing output delete NFFG...")
+    nffg = self.net0
+    # we need the original copy not to spoil the struct during deletion.
+    original_nffg = copy.deepcopy(self.net0)
+    # there should be only VNFs, SAPs, SGHops in the request graph. And all
+    # of them should be in the substrate NFFG, otherwise they were removed.
+    for vnf, d in self.req.nodes_iter(data=True):
+      # make the union of out and inbound edges.
+      if d.type != 'NF':
+        continue
+      all_connected_sghops = None
+      cnt = [0, 0]
+      for graph, idx in ((original_nffg.network, 0), (self.req, 1)):
+        all_connected_sghops = set([(i,j,k) for i,j,k in \
+                                    graph.out_edges_iter([vnf], 
+                                    keys=True) if graph[i][j][k].type == 'SG'])|\
+                               set([(i,j,k) for i,j,k in \
+                                    graph.in_edges_iter([vnf],  
+                                    keys=True) if graph[i][j][k].type == 'SG'])
+        # 0th is network, 1st is the request
+        cnt[idx] = len(all_connected_sghops)
+      if cnt[0] > cnt[1]:
+        # it is maybe used by some other request.
+        self.log.debug("Skipping deletion of VNF %s, it has not speficied edges"
+                       " connected in the substrate graph!"%vnf)
+      elif cnt[0] < cnt[1]:
+        # by this time this shouldn't happen, cuz those edges were removed.
+        raise uet.InternalAlgorithmException("After delete request preprocessing"
+                  ", VNF %s has more edges than in the substrate graph!"%vnf)
+      else:
+        # add it to the output, this VNF can be deleted
+        self.log.debug("Deleting VNF %s and all of its connected SGHops from "
+                       "output NFFG"%vnf)
+        nffg.del_node(vnf)
+
+    for i,j,k,d in self.req.edges_iter(data=True, keys=True):
+      nffg.del_flowrules_of_SGHop(k)
+      nffg.del_edge(d.src, d.dst, d.id)
+      self.log.debug("SGHop %s with its flowrules are deleted from output NFFG"
+                     %d.id)
+
+    return nffg
 
   def start (self):
+    if self.mode == NFFG.MODE_DEL:
+      return self.constructDelOutputNFFG()
+
     # breaking when there are no more BacktrackLevels forward, meaning the 
     # mapping is full. Or exception is thrown, when mapping can't be finished.
     self.log.info("Starting core mapping procedure...")

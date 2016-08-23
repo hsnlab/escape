@@ -57,6 +57,11 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       return
     try:
       mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
+      if 'mode' in mapper_params:
+        log.debug("Setup mapping mode from config: %s" % mapper_params['mode'])
+      else:
+        mapper_params['mode'] = graph.mode
+        log.debug("Setup mapping mode based on request type: %s" % graph.mode)
       mapped_nffg = MAP(request=graph.copy(),
                         network=resource.copy(),
                         **mapper_params)
