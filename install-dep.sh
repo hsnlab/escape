@@ -193,7 +193,7 @@ function install_infra {
 
     info "=== Install OpenYuma for NETCONF capability ==="
     cd "$DIR/OpenYuma"
-    make clean
+    #make clean
     make -i
     sudo make install
 
