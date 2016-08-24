@@ -764,7 +764,7 @@ class NFFGConverter(object):
             # Convert from int/hex to int
             _tag = int(op.split(':')[1], base=0)
             fr_action += ";%s=%s" % (self.OP_TAG, self.LABEL_DELIMITER.join(
-              (_src_name, _dst_name, str(_tag))))
+              (str(_src_name), str(_dst_name), str(_tag))))
           # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
           elif op.startswith(self.ACTION_POP_TAG):
             fr_action += ";%s" % self.OP_UNTAG
