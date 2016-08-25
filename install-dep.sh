@@ -349,14 +349,14 @@ else
     info "User project config: $PROJECT"
     while getopts 'acdghip:' OPTION; do
         case ${OPTION} in
-        a)  all;;
-        c)  install_core;;
-        d)  install_dev;;
-        g)  install_gui;;
-        h)  print_usage;;
-        i)  install_infra;;
-        p)  if [ $# -eq 2 ]; then all; fi;; # If only -p was set, call all else skip
-        \?)  print_usage;;
+            a)  all;;
+            c)  install_core;;
+            d)  install_dev;;
+            g)  install_gui;;
+            h)  print_usage;;
+            i)  install_infra;;
+            p)  if [ $# -eq 2 ]; then all; fi;; # If only -p was set, call all else skip
+            \?)  print_usage;;
         esac
     done
     #shift $(($OPTIND - 1))
