@@ -3,6 +3,7 @@
 # Setup VxLAN-based tunnel between two VM our OpenStack environment
 
 BRIDGE="br-vxlan"
+# veth pain names in array: [pair1_ovs, pair1_mininet, pair2_ovs, pair2_mininet, ...]
 VETHS=(vxlan_sap14 sap14_veth)
 
 function print_help
@@ -16,44 +17,52 @@ function print_help
 }
 
 function setup () {
+    # Save IP parameter
     remoteIP=$1
-
-    #Create veth interfaces
-    for ((i=0; i<${#VETHS[@]}; i+=2)); do
-        echo "Add veth pair: ${VETHS[$i]} - ${VETHS[$((i+1))]}"
-        sudo ip link add "${VETHS[$i]}" type veth peer name "${VETHS[$((i+1))]}"
-    done
-    for veth in "${VETHS[@]}"; do
-        echo "Bring up interfaces: $veth"
-        sudo ifconfig ${veth} up
-    done
-
-    #Create Vxlan OVS
+    echo "------------------------------------------------------------------"
+    # Create Vxlan OVS
     echo "Add OVS bridge: $BRIDGE"
     sudo ovs-vsctl add-br ${BRIDGE}
+    # Add VXLAN interface to bridge --> create vxlan_sys_ interface and add to bridge as port 1
     sudo ovs-vsctl add-port ${BRIDGE} vxlan -- set Interface vxlan type=vxlan options:remote_ip=${remoteIP}
+    # Remove default flow
+    sudo ovs-ofctl del-flows ${BRIDGE}
+    # Create veth pairs and connect them to the VXLAN interface
+    VXLAN_OVS_PORT=1
+    veth_port_cntr=2
     for ((i=0; i<${#VETHS[@]}; i+=2)); do
+        echo "------------------------------------------------------------------"
+        # Create veth pairs
+        echo "Add veth pair: ${VETHS[$i]} <--> ${VETHS[$((i+1))]}"
+        sudo ip link add "${VETHS[$i]}" type veth peer name "${VETHS[$((i+1))]}"
+        # Bring up created interfaces
+        echo "Bring up interface: ${VETHS[$i]}"
+        sudo ifconfig "${VETHS[$i]}" up
+        echo "Bring up interface: ${VETHS[$((i+1))]}"
+        sudo ifconfig "${VETHS[$((i+1))]}" up
         echo "Add veth end: ${VETHS[$i]} to bridge: $BRIDGE"
         sudo ovs-vsctl add-port ${BRIDGE} "${VETHS[$i]}"
+        echo "Add flowrules between OVS ports: ${VXLAN_OVS_PORT} <--> ${veth_port_cntr}"
+        sudo ovs-ofctl add-flow ${BRIDGE} in_port=${VXLAN_OVS_PORT},action=output:${veth_port_cntr}
+        sudo ovs-ofctl add-flow ${BRIDGE} in_port=${veth_port_cntr},action=output:${VXLAN_OVS_PORT}
+        # Increase veth port counter
+        ((veth_port_cntr++))
+        echo "------------------------------------------------------------------"
     done
-
-    #Add entries
-    sudo ovs-ofctl del-flows ${BRIDGE}
-    # TODO get smarter!!!!!!!!!!!
-    sudo ovs-ofctl add-flow ${BRIDGE} in_port=1,action=output:2
-    sudo ovs-ofctl add-flow ${BRIDGE} in_port=2,action=output:1
-
+    # Dump configures OVS bridge
+    sudo ovs-ofctl show ${BRIDGE}
+    echo "------------------------------------------------------------------"
     sudo ovs-ofctl dump-flows ${BRIDGE}
 }
 
 function shutdown {
-        #Create veth interfaces
-    for ((i=0; i<${#VETHS[@]}; i+=2)); do
-        echo "Remove veth pair: ${VETHS[$i]}-${VETHS[$((i+1))]}"
-        sudo ip link del "${VETHS[$i]}"
-    done
     echo "Remove OVS bridge: $BRIDGE"
     sudo ovs-vsctl del-br ${BRIDGE}
+    #Create veth interfaces
+    for ((i=0; i<${#VETHS[@]}; i+=2)); do
+        echo "Remove veth pair: ${VETHS[$i]} <--> ${VETHS[$((i+1))]}"
+        sudo ip link del "${VETHS[$i]}"
+    done
     echo "Remove VXLAN interface"
     sudo ip link del $(ip link show | egrep -o '(vxlan_\w+)')
 }
