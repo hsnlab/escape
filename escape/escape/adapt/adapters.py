@@ -21,7 +21,6 @@ from ncclient import NCClientError
 from ncclient.operations import OperationError
 from ncclient.operations.rpc import RPCError
 from ncclient.transport import TransportError
-from virtualizer import Virtualizer
 
 from escape import CONFIG, __version__
 from escape.infr.il_API import InfrastructureLayerAPI
@@ -29,6 +28,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.lib.util import dpid_to_str
+from virtualizer import Virtualizer
 
 
 class TopologyLoadException(Exception):
@@ -46,6 +46,9 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
   """
   name = "INTERNAL-POX"
   type = AbstractESCAPEAdapter.TYPE_CONTROLLER
+  # Use this prefix to detect bound physical interface in OVS to detect
+  # DPID-OVS switch association
+  SAP_IF_PREFIX = "e"
 
   # Static mapping of infra IDs and DPIDs
   infra_to_dpid = {
@@ -70,7 +73,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
   }
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
-                keepalive=False, *args, **kwargs):
+                keepalive=False, sap_if_prefix=None, *args, **kwargs):
     """
     Initialize attributes, register specific connection Arbiter if needed and
     set up listening of OpenFlow events.
@@ -90,6 +93,10 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
         self.__class__.__name__, self.type, address, port, self.domain_name,
         name))
     self.topoAdapter = None
+    if sap_if_prefix:
+      self.SAP_IF_PREFIX = sap_if_prefix
+    log.debug("Set inter-domain SAP prefix: %s" % self.SAP_IF_PREFIX)
+
 
   def check_domain_reachable (self):
     """
@@ -160,9 +167,11 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     dpid = connection.dpid
     # Generate the list of port names from OF Feature Reply msg
     ports = [port.name for port in connection.features.ports]
+    log.log(VERBOSE, "Detected ports from OF features: %s" % ports)
     # Remove inter-domain SAP ports (starting with 'eth')
-    for p in [p for p in ports if p.startswith('eth')]:
+    for p in [p for p in ports if p.startswith(self.SAP_IF_PREFIX)]:
       ports.remove(p)
+      log.log(VERBOSE, "Identified inter-domain bound port: %s" % p)
     # Mininet naming convention for port in OVS:
     # <bridge_name> (internal), <bridge_name>-eth<num>, ...
     # Define the internal port and use the port name (same as bridge name) as
