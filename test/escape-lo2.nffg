@@ -26,7 +26,7 @@
           "id": 1
         }
       ],
-      "binding": "access_veth1",
+      "binding": "veth_sap14",
       "delay": 1.5,
       "bandwidth": 10
     },
