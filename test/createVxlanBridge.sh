@@ -3,7 +3,7 @@
 # Setup VxLAN-based tunnel between two VM our OpenStack environment
 
 BRIDGE="br-vxlan"
-VETHS=(veth0 veth1)
+VETHS=(vxlan_veth0 access_veth1)
 
 function print_help
 {
