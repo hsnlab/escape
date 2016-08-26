@@ -467,8 +467,9 @@ class NFFGConverter(object):
         #   sap_port.controller = vport.control.controller.get_value()
         #   sap_port.orchestrator = vport.control.orchestrator.get_value()
         if vport.control.is_initialized() or vport.sap_data.is_initialized():
-          self.log.warning("Unexpected values: <sap_data> and <control> are not "
-                      "converted in case of non-sap infra ports!")
+          self.log.warning(
+            "Unexpected values: <sap_data> and <control> are not "
+            "converted in case of non-sap infra ports!")
         # Add metadata from non-sap port to infra port metadata
         for key in vport.metadata:
           infra_port.add_metadata(name=key,
@@ -604,8 +605,9 @@ class NFFGConverter(object):
         #       except ValueError:
         #         nf_port.cost = vport.sap_data.resources.cost.get_value()
         if vport.sap_data.is_initialized():
-          self.log.warning("Unexpected value: <sap_data> and is not converted in "
-                      "case of NF ports!")
+          self.log.warning(
+            "Unexpected value: <sap_data> and is not converted in "
+            "case of NF ports!")
         if vport.control.is_initialized():
           nf_port.controller = vport.control.controller.get_value()
           nf_port.orchestrator = vport.control.orchestrator.get_value()
@@ -726,12 +728,31 @@ class NFFGConverter(object):
             # if scr or dst is a VNF port name of parent of port
             if v_fe_port.port_type.get_as_text() == \
                self.TYPE_VIRTUALIZER_PORT_SAP:
-              _src_name = v_fe_port.name.get_as_text()
+              # If port is an inter-domain SAP port --> port.sap
+              if v_fe_port.sap.is_initialized() and v_fe_port.sap.get_value():
+                _src_name = v_fe_port.sap.get_as_text()
+              # If port is local SAP --> SAP:<sap_name>
+              elif v_fe_port.name.is_initialized() and str(
+                 v_fe_port.name.get_value()).startswith(self.SAP_NAME_PREFIX):
+                _src_name = v_fe_port.name.get_as_text()[
+                            len(self.SAP_NAME_PREFIX + ":"):]
+              else:
+                _src_name = str(v_fe_port.name.get_value())
             else:
               _src_name = v_fe_port.get_parent().get_parent().id.get_as_text()
+            # If port is an inter-domain SAP port --> port.sap
             if v_fe_out.port_type.get_as_text() == \
                self.TYPE_VIRTUALIZER_PORT_SAP:
-              _dst_name = v_fe_out.name.get_as_text()
+              # If port is an inter-domain SAP port --> port.sap
+              if v_fe_out.sap.is_initialized() and v_fe_port.sap.get_value():
+                _dst_name = v_fe_out.sap.get_as_text()
+              # If port is local SAP --> SAP:<sap_name>
+              elif v_fe_out.name.is_initialized() and str(
+                 v_fe_out.name.get_value()).startswith(self.SAP_NAME_PREFIX):
+                _dst_name = v_fe_out.name.get_as_text()[
+                            len(self.SAP_NAME_PREFIX + ':'):]
+              else:
+                _dst_name = v_fe_out.name.get_as_text()
             else:
               _dst_name = v_fe_out.get_parent().get_parent().id.get_as_text()
             # Convert from int/hex to int
@@ -753,12 +774,29 @@ class NFFGConverter(object):
             # if scr or dst is a VNF port name of parent of port
             if v_fe_port.port_type.get_as_text() == \
                self.TYPE_VIRTUALIZER_PORT_SAP:
-              _src_name = v_fe_port.name.get_as_text()
+              # If port is an inter-domain SAP port --> port.sap
+              if v_fe_port.sap.is_initialized() and v_fe_port.sap.get_value():
+                _src_name = v_fe_port.sap.get_as_text()
+              # If port is local SAP --> SAP:<sap_name>
+              elif v_fe_port.name.is_initialized() and str(
+                 v_fe_port.name.get_value()).startswith(self.SAP_NAME_PREFIX):
+                _src_name = v_fe_port.name.get_as_text()[
+                            len(self.SAP_NAME_PREFIX + ':'):]
+              else:
+                _src_name = v_fe_port.name.get_as_text()
             else:
               _src_name = v_fe_port.get_parent().get_parent().id.get_as_text()
             if v_fe_out.port_type.get_as_text() == \
                self.TYPE_VIRTUALIZER_PORT_SAP:
-              _dst_name = v_fe_out.name.get_as_text()
+              # If port is an inter-domain SAP port --> port.sap
+              if v_fe_out.sap.is_initialized() and v_fe_out.sap.get_value():
+                _dst_name = v_fe_out.sap.get_as_text()
+              elif v_fe_out.name.is_initialized() and str(
+                 v_fe_out.name.get_value()).startswith(self.SAP_NAME_PREFIX):
+                _dst_name = v_fe_out.name.get_as_text()[
+                            len(self.SAP_NAME_PREFIX + ':'):]
+              else:
+                _dst_name = v_fe_out.name.get_as_text()
             else:
               _dst_name = v_fe_out.get_parent().get_parent().id.get_as_text()
             # Convert from int/hex to int
@@ -1675,7 +1713,7 @@ class NFFGConverter(object):
             # v_nf_port.sap_data.resources.cost.set_value(port.cost)
             if v_nf_port.sap_data.is_initialized():
               self.log.warning("Unexpected value: sap_data values of NF is not "
-                          "converted to <sap_data>!")
+                               "converted to <sap_data>!")
             v_nf_port.control.controller.set_value(port.controller)
             v_nf_port.control.orchestrator.set_value(port.orchestrator)
             v_nf_port.addresses.l2.set_value(port.l2)

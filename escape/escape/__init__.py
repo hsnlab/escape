@@ -155,7 +155,8 @@ cfg = {
                 "name": None,
                 "address": "127.0.0.1",
                 "port": 6653,
-                "keepalive": False
+                "keepalive": False,
+                "sap_if_prefix": "eth"
               },
             "TOPOLOGY":
               {

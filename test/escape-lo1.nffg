@@ -13,7 +13,7 @@
           "id": 1
         }
       ],
-      "binding": "eth1",
+      "binding": "sap14_veth",
       "delay": 1.5,
       "bandwidth": 10
     },
