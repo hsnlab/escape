@@ -82,7 +82,9 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {
     'GET': ('ping', 'version', 'operations', 'topology'),
-    'POST': ('ping', 'result', 'sg', 'topology')
+    'POST': ('ping', 'result', 'sg', 'topology'),
+    # 'DELETE': ('sg',),
+    'PUT': ('sg',)
   }
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class

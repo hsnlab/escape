@@ -97,7 +97,9 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {
     'GET': ('ping', 'version', 'operations', 'get_config'),
-    'POST': ('ping', 'get_config', 'edit_config')
+    'POST': ('ping', 'get_config', 'edit_config'),
+    # 'DELETE': ('edit_config',),
+    'PUT': ('edit_config',)
   }
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
@@ -268,16 +270,30 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       # Initialize NFFG from JSON representation
       self.log.info("Parsing request into internal NFFG format...")
       nffg = NFFG.parse(raw_body)
-    command = self.command.upper()
-    if command == 'POST':
-      nffg.mode = NFFG.MODE_ADD
-    elif command == 'DELETE':
-      nffg.mode = NFFG.MODE_DEL
-    elif command == 'PUT':
-      nffg.mode = NFFG.MODE_REMAP
+    # command = self.command.upper()
+    # if command == 'POST':
+    #   nffg.mode = NFFG.MODE_ADD
+    # elif command == 'DELETE':
+    #   nffg.mode = NFFG.MODE_DEL
+    # elif command == 'PUT':
+    #   nffg.mode = NFFG.MODE_REMAP
+    # else:
+    #   self.log.warning("Unsupported HTTP verb for mapping mode: %s" % command)
+    if nffg.mode:
+      self.log.info(
+        "Detected mapping mode in request body: %s" % nffg.mode)
     else:
-      self.log.warning("Unsupported HTTP verb for mapping mode: %s" % command)
-    self.log.info("Detected mapping mode based on HTTP request: %s" % nffg.mode)
+      command = self.command.upper()
+      if command == 'POST':
+        nffg.mode = NFFG.MODE_ADD
+        self.log.debug(
+          'Add mapping mode: %s based on HTTP verb: %s' % (nffg.mode, command))
+      elif command == 'PUT':
+        nffg.mode = NFFG.MODE_DEL
+        self.log.debug(
+          'Add mapping mode: %s based on HTTP verb: %s' % (nffg.mode, command))
+      else:
+        self.log.info('No mode parameter has benn defined in body!')
     self.log.debug("Parsed NFFG install request: %s" % nffg)
     return nffg
 
