@@ -75,7 +75,7 @@ class Element(Persistable):
   OP_DELETE = "delete"
   # Status constants
   STATUS_INIT = "INITIALIZED"
-  STATUS_START = "STARTING"
+  STATUS_PENDING = "PENDING"
   STATUS_RUN = "RUNNING"
   STATUS_STOP = "STOPPED"
   STATUS_FAIL = "FAILED"
@@ -121,11 +121,14 @@ class Element(Persistable):
     element = OrderedDict(id=self.id)
     if self.operation is not None:
       element["operation"] = self.operation
+    if self.status is not None:
+      element["status"] = self.status
     return element
 
   def load (self, data, *args, **kwargs):
     self.id = data['id']
     self.operation = data.get("operation")  # optional
+    self.status = data.get("status")  # optional
     return self
 
   def copy (self):
@@ -553,7 +556,7 @@ class PortContainer(Persistable):
     >>> cont["port_id"]
   """
 
-  def __init__ (self, container=None):
+  def   __init__ (self, container=None):
     """
     Init.
 
@@ -577,10 +580,10 @@ class PortContainer(Persistable):
   def __contains__ (self, item):
     # this type checking is important because with Port ID input the function
     # would silently return False!
-    if not isinstance(item, Port):
-      raise RuntimeError("PortContainer's operator \"in\" works only with Port"
-                         " objects (and not Port ID-s!)")
-    return item in self.container
+    if isinstance(item, Port):
+      return item in self.container
+    else:
+      return item in (p.id for p in self.container)
 
   @property
   def flowrules (self):
