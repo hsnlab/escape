@@ -497,8 +497,9 @@ class ControllerAdapter(object):
             # Override the whole DoV by default
             self.DoVManager.set_global_view(nffg=mapped_nffg)
           else:
-            # In case of status updates, the DOV update has been done -> update
-            # the DoV
+            # In case of status updates, the DOV update has been done
+            # In role of lLocal Orchestrator each element is up and running
+            # update DoV with status RUNNING
             self.DoVManager.update_global_view_status(status=NFFG.STATUS_RUN)
         else:
           log.warning(

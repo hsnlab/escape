@@ -15,6 +15,7 @@
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
 from escape.adapt.virtualization import AbstractVirtualizer, VirtualizerManager
+from escape.nffg_lib.nffg import NFFGToolBox
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
@@ -49,7 +50,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     self.nfibManager = NFIBManager()
     self.nfibManager.initialize()
 
-  def finalize(self):
+  def finalize (self):
     """
     Finalize func for class.
 
@@ -67,8 +68,29 @@ class ResourceOrchestrator(AbstractOrchestrator):
     :rtype: :any:`NFFG`
     """
     log.debug("Invoke %s to instantiate given NF-FG" % self.__class__.__name__)
+    last_request = self.nffgManager.get_last_request()
     # Store newly created NF-FG
     self.nffgManager.save(nffg)
+    if last_request is None:
+      log.debug("Missing last request from %s. Proceed with original request!" %
+                self.nffgManager.__class__.__name__)
+    else:
+      # Calculated ADD-DELETE difference
+      log.debug("Calculate ADD - DELETE difference of mapping mode...")
+      add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
+        old=last_request, new=nffg)
+      if add_nffg is not None and del_nffg is None:
+        nffg = add_nffg
+        log.debug("Detected mapping mode: %s" % nffg.mode)
+      elif add_nffg is None and del_nffg is not None:
+        nffg = del_nffg
+        log.debug("Detected mapping mode: %s" % nffg.mode)
+      elif add_nffg is None and del_nffg is None:
+        log.error("Difference calculation resulted empty subNFFGs!")
+        return
+      else:
+        log.warning("both ADD / DEL mode is not supported currently")
+        return
     # Get Domain Virtualizer to acquire global domain view
     global_view = self.virtualizerManager.dov
     # Notify remote visualizer about resource view of this layer if it's needed
@@ -129,6 +151,7 @@ class NFFGManager(object):
     super(NFFGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self._nffgs = dict()
+    self._last = None
 
   def save (self, nffg):
     """
@@ -141,9 +164,19 @@ class NFFGManager(object):
     """
     nffg_id = self._generate_id(nffg)
     self._nffgs[nffg_id] = nffg
+    self._last = nffg
     log.debug("NF-FG: %s is saved by %s with id: %s" %
               (nffg, self.__class__.__name__, nffg_id))
     return nffg.id
+
+  def get_last_request (self):
+    """
+    Return with the last saved :any:`NFFG`*[]:
+
+    :return: last saved NFFG
+    :rtype: :any:`NFFG`
+    """
+    return self._last
 
   def _generate_id (self, nffg):
     """
