@@ -1,3 +1,4 @@
+
 # Copyright (c) 2014 Balazs Nemeth
 #
 # This file is free software: you can redistribute it and/or modify it
@@ -757,15 +758,20 @@ class GraphPreprocessorClass(object):
     # in case of REMAP mode there is nothing to do with the flowrules, they 
     # will be deleted...
     sg_hops_to_be_left_in_place = set()
+    sap_intersection = set([s.id for s in self.req_graph.saps \
+                            if s.id in net.network])
     if mode == NFFG.MODE_ADD:
       sgs_in_network = zip(*net.network.edges(keys=True))[2]
       for sg in self.req_graph.sg_hops:
-        if sg.src.node.id in vnf_to_be_left_in_place and \
-           sg.dst.node.id in vnf_to_be_left_in_place:
+        if (sg.src.node.id in vnf_to_be_left_in_place or \
+            sg.src.node.id in sap_intersection)\
+           and (sg.dst.node.id in vnf_to_be_left_in_place or \
+                sg.dst.node.id in sap_intersection):
           sg_hops_to_be_left_in_place.add(sg)
         elif sg.id in sgs_in_network:
           raise uet.BadInputException("An SGHop which needs to be updated must"
-                " have both ends connected to a VNF which is left in place!", 
+                " have both ends connected to a VNF which is left in place or a"
+                " SAP which is present in both the request and resource!", 
                 "SGHop %s has one of its ends not mapped yet!"%sg.id)
     if mode != NFFG.MODE_DEL:
       net.calculate_available_link_res(sg_hops_to_be_left_in_place, mode)
