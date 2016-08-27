@@ -68,12 +68,19 @@ class Element(Persistable):
   Contains the common functionality.
   """
   # Operation constants
-  ADD = "ADD"
-  DEL = "DELETE"
-  MOD = "MODIFIED"
-  MOV = "MOVED"
+  OP_CREATE = "create"
+  OP_REPLACE = "replace"
+  OP_MERGE = "merge"
+  OP_REMOVE = "remove"
+  OP_DELETE = "delete"
+  # Status constants
+  STATUS_INIT = "INITIALIZED"
+  STATUS_START = "STARTING"
+  STATUS_RUN = "RUNNING"
+  STATUS_STOP = "STOPPED"
+  STATUS_FAIL = "FAILED"
 
-  def __init__ (self, id=None, type="ELEMENT", operation=None):
+  def __init__ (self, id=None, type="ELEMENT", operation=None, status=None):
     """
     Init.
 
@@ -87,6 +94,7 @@ class Element(Persistable):
     self.id = id if id is not None else self.generate_unique_id()
     self.type = type
     self.operation = operation
+    self.status = status
 
   @staticmethod
   def generate_unique_id ():

@@ -165,10 +165,22 @@ class NFFG(AbstractNFFG):
   TYPE_LINK_DYNAMIC = Link.DYNAMIC
   TYPE_LINK_SG = Link.SG
   TYPE_LINK_REQUIREMENT = Link.REQUIREMENT
-  # Operations
+  # Mapping mode operations
   MODE_ADD = "ADD"
   MODE_DEL = "DELETE"
   MODE_REMAP = "REMAP"
+  # Element operation
+  OP_CREATE = Element.OP_CREATE
+  OP_REPLACE = Element.OP_REPLACE
+  OP_MERGE = Element.OP_MERGE
+  OP_REMOVE = Element.OP_REMOVE
+  OP_DELETE = Element.OP_DELETE
+  # Element status
+  STATUS_INIT = Element.STATUS_INIT
+  STATUS_START = Element.STATUS_START
+  STATUS_RUN = Element.STATUS_RUN
+  STATUS_STOP = Element.STATUS_STOP
+  STATUS_FAIL = Element.STATUS_FAIL
 
   version = __version__
 
@@ -2051,21 +2063,22 @@ class NFFGToolBox(object):
     for n, d in subtrahend.network.degree().iteritems():
       if n in minuend_degrees:
         if d >= minuend_degrees[n]:
-          for edge_func in (minuend.network.in_edges_iter, 
+          for edge_func in (minuend.network.in_edges_iter,
                             minuend.network.out_edges_iter):
-            for i,j,d in edge_func([n], data=True):
+            for i, j, d in edge_func([n], data=True):
               if d.type == 'SG':
                 minuend.del_flowrules_of_SGHop(d.id)
           minuend.del_node(minuend.network.node[n])
-    for i,j,k in subtrahend.network.edges_iter(keys=True):
-      if minuend.network.has_edge(i,j, key=k):
+    for i, j, k in subtrahend.network.edges_iter(keys=True):
+      if minuend.network.has_edge(i, j, key=k):
         minuend.del_edge(i, j, k)
     return minuend
 
   @classmethod
   def generate_difference_of_nffgs (cls, old, new):
     """
-    Creates two NFFG objects which can be used in NFFG.MODE_ADD and NFFG.MODE_DEL
+    Creates two NFFG objects which can be used in NFFG.MODE_ADD and
+    NFFG.MODE_DEL
     operation modes of the mapping algorithm. Doesn't modify input objects.
     
     :param old: old NFFG object
@@ -2081,7 +2094,7 @@ class NFFGToolBox(object):
     del_nffg.mode = NFFG.MODE_DEL
 
     return NFFGToolBox.subtract_nffg(add_nffg, old), \
-      NFFGToolBox.subtract_nffg(del_nffg, new)
+           NFFGToolBox.subtract_nffg(del_nffg, new)
 
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------
