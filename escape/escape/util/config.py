@@ -625,6 +625,20 @@ class ESCAPEConfig(object):
     except KeyError:
       return True
 
+  def use_status_based_update (self):
+    """
+    Return True if the status based update strategy is enabled.
+    This approach update DoV as a first step and use element status to update
+    the domain.
+
+    :return: status update strategy is enabled or not (default: False)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT]['USE-STATUS-BASED-UPDATE']
+    except KeyError:
+      return False
+
   def ensure_unique_id (self):
     """
     Return with the ID generations strategy for nodes.

@@ -68,12 +68,20 @@ class Element(Persistable):
   Contains the common functionality.
   """
   # Operation constants
-  ADD = "ADD"
-  DEL = "DELETE"
-  MOD = "MODIFIED"
-  MOV = "MOVED"
+  OP_CREATE = "create"
+  OP_REPLACE = "replace"
+  OP_MERGE = "merge"
+  OP_REMOVE = "remove"
+  OP_DELETE = "delete"
+  # Status constants
+  STATUS_INIT = "INITIALIZED"
+  STATUS_PENDING = "PENDING"
+  STATUS_DEPLOY = "DEPLOYED"
+  STATUS_RUN = "RUNNING"
+  STATUS_STOP = "STOPPED"
+  STATUS_FAIL = "FAILED"
 
-  def __init__ (self, id=None, type="ELEMENT", operation=None):
+  def __init__ (self, id=None, type="ELEMENT", operation=None, status=None):
     """
     Init.
 
@@ -87,6 +95,7 @@ class Element(Persistable):
     self.id = id if id is not None else self.generate_unique_id()
     self.type = type
     self.operation = operation
+    self.status = status
 
   @staticmethod
   def generate_unique_id ():
@@ -113,11 +122,14 @@ class Element(Persistable):
     element = OrderedDict(id=self.id)
     if self.operation is not None:
       element["operation"] = self.operation
+    if self.status is not None:
+      element["status"] = self.status
     return element
 
   def load (self, data, *args, **kwargs):
     self.id = data['id']
     self.operation = data.get("operation")  # optional
+    self.status = data.get("status")  # optional
     return self
 
   def copy (self):
@@ -545,7 +557,7 @@ class PortContainer(Persistable):
     >>> cont["port_id"]
   """
 
-  def __init__ (self, container=None):
+  def   __init__ (self, container=None):
     """
     Init.
 
@@ -569,10 +581,10 @@ class PortContainer(Persistable):
   def __contains__ (self, item):
     # this type checking is important because with Port ID input the function
     # would silently return False!
-    if not isinstance(item, Port):
-      raise RuntimeError("PortContainer's operator \"in\" works only with Port"
-                         " objects (and not Port ID-s!)")
-    return item in self.container
+    if isinstance(item, Port):
+      return item in self.container
+    else:
+      return item in (p.id for p in self.container)
 
   @property
   def flowrules (self):

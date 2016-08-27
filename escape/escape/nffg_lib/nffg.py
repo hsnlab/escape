@@ -165,10 +165,23 @@ class NFFG(AbstractNFFG):
   TYPE_LINK_DYNAMIC = Link.DYNAMIC
   TYPE_LINK_SG = Link.SG
   TYPE_LINK_REQUIREMENT = Link.REQUIREMENT
-  # Operations
+  # Mapping mode operations
   MODE_ADD = "ADD"
   MODE_DEL = "DELETE"
   MODE_REMAP = "REMAP"
+  # Element operation
+  OP_CREATE = Element.OP_CREATE
+  OP_REPLACE = Element.OP_REPLACE
+  OP_MERGE = Element.OP_MERGE
+  OP_REMOVE = Element.OP_REMOVE
+  OP_DELETE = Element.OP_DELETE
+  # Element status
+  STATUS_INIT = Element.STATUS_INIT
+  STATUS_PENDING = Element.STATUS_PENDING
+  STATUS_DEPLOY = Element.STATUS_DEPLOY
+  STATUS_RUN = Element.STATUS_RUN
+  STATUS_STOP = Element.STATUS_STOP
+  STATUS_FAIL = Element.STATUS_FAIL
 
   version = __version__
 
@@ -1943,7 +1956,7 @@ class NFFGToolBox(object):
   @classmethod
   def update_domain (cls, base, updated, log):
     """
-    Update the given ``nffg`` into the ``base`` NFFG.
+    Update the given ``updated`` nffg into the ``base`` NFFG.
 
     :param base: base NFFG object
     :type base: :any:`NFFG`
@@ -1972,6 +1985,76 @@ class NFFGToolBox(object):
     else:
       # TODO - implement real update
       log.error("Domain update has not implemented yet!")
+
+  @classmethod
+  def update_status_info (cls, nffg, status, log):
+    """
+    Update the mapped elements of given nffg with given status.
+
+    :param nffg: base NFFG object
+    :type nffg: :any:`NFFG`
+    :param status: new status
+    :type status: str
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    log.debug("Add %s status for NFs..." % status)
+    for nf in nffg.nfs:
+      nf.status = status
+    log.debug("Add %s status for Flowrules..." % status)
+    for infra in nffg.infras:
+      for flowrule in infra.flowrules():
+        flowrule.status = status
+    return nffg
+
+  @classmethod
+  def update_domain_by_status (cls, base, updated, log):
+    """
+    Update status of the elements of the given ``base`` nffg  based on the
+    given ``updated`` nffg.
+
+    :param base: base NFFG object
+    :type base: :any:`NFFG`
+    :param updated: updated domain information
+    :type updated: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    # Update NF status
+    base_nfs = {nf.id for nf in base.nfs}
+    updated_nfs = {nf.id for nf in updated.nfs}
+    log.debug("Update status of NF nodes: %s" % updated_nfs)
+    for nf in base_nfs:
+      if nf in updated_nfs:
+        base[nf].status = updated[nf].status
+    # Update Flowrule status
+    base_infra = {infra.id for infra in base.infras}
+    updated_infra = {infra.id for infra in updated.infras}
+    log.debug("Update status of flowrules in Infra nodes: %s" % updated_infra)
+    for infra_id in base_infra:
+      if infra_id not in updated_infra:
+        continue
+      for port in base[infra_id].ports:
+        if port.id not in updated[infra_id].ports:
+          log.warning("Port: %s in Infra: %s is not in the updated NFFG! "
+                      "Skip flowrule status update in this Port..."
+                      % (port.id, infra_id))
+          continue
+        updated_frs = {f.id for f in
+                       updated[infra_id].ports[port.id].flowrules}
+        for fr in base[infra_id].ports[port.id].flowrules:
+          if fr.id not in updated_frs:
+            log.warning("Flowrule: %s is not in the updated NFFG! "
+                        "Skip flowrule status update...")
+            continue
+          for f in updated[infra_id].ports[port.id].flowrules:
+            if f.id == fr.id:
+              fr.status = f.status
+    return base
 
   @classmethod
   def _copy_node_type (cls, type_iter, target, log):
@@ -2051,21 +2134,22 @@ class NFFGToolBox(object):
     for n, d in subtrahend.network.degree().iteritems():
       if n in minuend_degrees:
         if d >= minuend_degrees[n]:
-          for edge_func in (minuend.network.in_edges_iter, 
+          for edge_func in (minuend.network.in_edges_iter,
                             minuend.network.out_edges_iter):
-            for i,j,d in edge_func([n], data=True):
+            for i, j, d in edge_func([n], data=True):
               if d.type == 'SG':
                 minuend.del_flowrules_of_SGHop(d.id)
           minuend.del_node(minuend.network.node[n])
-    for i,j,k in subtrahend.network.edges_iter(keys=True):
-      if minuend.network.has_edge(i,j, key=k):
+    for i, j, k in subtrahend.network.edges_iter(keys=True):
+      if minuend.network.has_edge(i, j, key=k):
         minuend.del_edge(i, j, k)
     return minuend
 
   @classmethod
   def generate_difference_of_nffgs (cls, old, new):
     """
-    Creates two NFFG objects which can be used in NFFG.MODE_ADD and NFFG.MODE_DEL
+    Creates two NFFG objects which can be used in NFFG.MODE_ADD and
+    NFFG.MODE_DEL
     operation modes of the mapping algorithm. Doesn't modify input objects.
     
     :param old: old NFFG object
@@ -2081,7 +2165,7 @@ class NFFGToolBox(object):
     del_nffg.mode = NFFG.MODE_DEL
 
     return NFFGToolBox.subtract_nffg(add_nffg, old), \
-      NFFGToolBox.subtract_nffg(del_nffg, new)
+           NFFGToolBox.subtract_nffg(del_nffg, new)
 
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------
