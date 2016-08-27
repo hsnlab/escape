@@ -137,6 +137,8 @@ cfg = {
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
+      # Update DoV in one step and use element status to update domains
+      "USE-STATUS-BASED-UPDATE": False,
       # Use re-merge instead of straightforward update when updating DoV
       "USE-REMERGE-UPDATE-STRATEGY": True,
       "ENSURE-UNIQUE-ID": True,  # ID conversion strategy for nodes
