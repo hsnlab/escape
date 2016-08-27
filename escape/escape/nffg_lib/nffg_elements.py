@@ -76,6 +76,7 @@ class Element(Persistable):
   # Status constants
   STATUS_INIT = "INITIALIZED"
   STATUS_PENDING = "PENDING"
+  STATUS_DEPLOY = "DEPLOYED"
   STATUS_RUN = "RUNNING"
   STATUS_STOP = "STOPPED"
   STATUS_FAIL = "FAILED"

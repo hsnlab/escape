@@ -408,6 +408,10 @@ class ControllerAdapter(object):
       self.__class__.__name__, mapped_nffg.name))
     # # Notify remote visualizer about the deployable NFFG if it's needed
     # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
+    # If DoV update is based on status updates, rewrite the whole DoV as the
+    # first step
+    if self.DoVManager._status_updates:
+      self.DoVManager.rewrite_global_view_with_status(nffg=mapped_nffg)
     slices = NFFGToolBox.split_into_domains(nffg=mapped_nffg, log=log)
     if slices is None:
       log.warning("Given mapped NFFG: %s can not be sliced! "
@@ -442,13 +446,27 @@ class ControllerAdapter(object):
       # Invoke DomainAdapter's install
       res = domain_mgr.install_nffg(part)
       # Update the DoV based on the mapping result covering some corner case
+      if res:
+        log.info("Installation of %s in %s was successful!" % (part, domain))
+        log.debug("Update installed part with collective result: %s" %
+                  NFFG.STATUS_DEPLOY)
+        # Update successful status info of mapped elements in NFFG part for
+        # DoV update
+        NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_DEPLOY,
+                                       log=log)
       if not res:
         log.error("Installation of %s in %s was unsuccessful!" %
                   (part, domain))
+        log.debug("Update installed part with collective result: %s" %
+                  NFFG.STATUS_FAIL)
+        # Update failed status info of mapped elements in NFFG part for DoV
+        # update
+        NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
+                                       log=log)
       # Note result according to others before
       mapping_result = mapping_result and res
       # If installation of the domain was performed without error
-      if not res:
+      if not res and not self.DoVManager._status_updates:
         log.warning("Skip DoV update with domain: %s! Cause: "
                     "Domain installation was unsuccessful!" % domain)
         continue
@@ -473,9 +491,15 @@ class ControllerAdapter(object):
             log.warning(
               "Detected SingleBiSBiS topology! Local domain has been already "
               "cleared, skip DoV update...")
-        # If the the topology was a GLOBAL view, just override the whole DoV
+        # If the the topology was a GLOBAL view
         elif not mapped_nffg.is_virtualized():
-          self.DoVManager.set_global_view(nffg=mapped_nffg)
+          if not self.DoVManager._status_updates:
+            # Override the whole DoV by default
+            self.DoVManager.set_global_view(nffg=mapped_nffg)
+          else:
+            # In case of status updates, the DOV update has been done -> update
+            # the DoV
+            self.DoVManager.update_global_view_status(status=NFFG.STATUS_RUN)
         else:
           log.warning(
             "Detected virtualized Infrastructure node in mapped NFFG! Skip "
@@ -499,7 +523,7 @@ class ControllerAdapter(object):
   def _handle_DomainChangedEvent (self, event):
     """
     Handle DomainChangedEvents, dispatch event according to the cause to
-    store and enfore changes into DoV.
+    store and enforce changes into DoV.
 
     :param event: event object
     :type event: :any:`DomainChangedEvent`
@@ -533,7 +557,8 @@ class GlobalResourceManager(object):
     log.debug("Init DomainResourceManager")
     self.__dov = DomainVirtualizer(self)  # Domain Virtualizer
     self.__tracked_domains = set()  # Cache for detected and stored domains
-    self._remerge = CONFIG.use_remerge_update_strategy()
+    self._status_updates = CONFIG.use_status_based_update()
+    self._remerge_strategy = CONFIG.use_remerge_update_strategy()
 
   @property
   def dov (self):
@@ -567,6 +592,32 @@ class GlobalResourceManager(object):
     self.dov.update_full_global_view(nffg=nffg)
     self.__tracked_domains.clear()
     self.__tracked_domains.update(NFFGToolBox.detect_domains(nffg))
+
+  def update_global_view_status (self, status):
+    """
+    Update the status of the elements in DoV with the given status.
+
+    :param status: status
+    :type status: str
+    :return: None
+    """
+    log.debug("Update Global view (DoV) mapping status with: %s" % status)
+    NFFGToolBox.update_status_info(nffg=self.__dov.get_resource_info(),
+                                   status=status, log=log)
+
+  def rewrite_global_view_with_status (self, nffg, status=NFFG.STATUS_PENDING):
+    """
+    Replace the global view with the given topology and add status for the
+    elements.
+
+    :param nffg: new global topology
+    :type nffg: :any:`NFFG`
+    :return: None
+    """
+    log.debug(
+      "Set mapped NFFG as the Global view (DoV) with status: %s..." % status)
+    NFFGToolBox.update_status_info(nffg=nffg, status=status, log=log)
+    self.set_global_view(nffg=nffg)
 
   def add_domain (self, domain, nffg):
     """
@@ -611,7 +662,10 @@ class GlobalResourceManager(object):
     """
     if domain in self.__tracked_domains:
       log.info("Update domain: %s in DoV..." % domain)
-      if self._remerge:
+      if self._status_updates:
+        log.debug("Update status info for domain: %s in DoV..." % domain)
+        self.__dov.update_domain_status_in_dov(domain=domain, nffg=nffg)
+      elif self._remerge_strategy:
         log.debug("Using REMERGE strategy for DoV update...")
         self.__dov.remerge_domain_in_dov(domain=domain, nffg=nffg)
       else:
