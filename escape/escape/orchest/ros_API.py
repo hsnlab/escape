@@ -715,7 +715,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.warning("Both ADD / DEL mode is not supported currently")
       return
     else:
-      log.warning("Difference calculation resulted empty subNFFGs!")
+      log.debug("Difference calculation resulted empty subNFFGs!")
+      log.info("No change has been detected in request! Skip mapping...")
       log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
                                 self.__class__.__name__)
       return
