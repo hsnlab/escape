@@ -703,14 +703,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.debug("Calculate ADD - DELETE difference with mapping mode...")
     add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
       old=resource_nffg, new=nffg)
-    log.log(VERBOSE, "ADD NFFG:\n%s" % add_nffg.dump())
-    log.log(VERBOSE, "DEL NFFG:\n%s" % del_nffg.dump())
+    log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
+    log.log(VERBOSE, "Calculated DEL NFFG:\n%s" % del_nffg.dump())
     if not add_nffg.is_empty() and del_nffg.is_empty():
       nffg = add_nffg
-      log.debug("Calculated mapping mode: %s" % nffg.mode)
+      log.info("Calculated mapping mode: %s" % nffg.mode)
     elif add_nffg.is_empty() and not del_nffg.is_empty():
       nffg = del_nffg
-      log.debug("Calculated mapping mode: %s" % nffg.mode)
+      log.info("Calculated mapping mode: %s" % nffg.mode)
     elif not add_nffg.is_empty() and not del_nffg.is_empty():
       log.warning("Both ADD / DEL mode is not supported currently")
       return

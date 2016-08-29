@@ -46,7 +46,7 @@ cfg = {
           "module": "escape.service.sas_mapping",
           "class": "ServiceGraphMapper",
           "mapping-config": {},
-          "mapping-enabled": False
+          "mapping-enabled": True
         },
       "STRATEGY":
         {
@@ -97,8 +97,8 @@ cfg = {
       # Interface / Upper layer related configuration
       "ESCAPE-SERVICE":
         {
-          # "virtualizer_type": "SINGLE"
-          "virtualizer_type": "GLOBAL"
+          "virtualizer_type": "SINGLE"
+          # "virtualizer_type": "GLOBAL"
         },
       "Sl-Or":
         {
