@@ -90,6 +90,8 @@ class ResourceOrchestrator(AbstractOrchestrator):
         return
       else:
         log.warning("both ADD / DEL mode is not supported currently")
+        log.warning("Add:\n%s" % add_nffg.dump())
+        log.warning("Del:\n%s" % del_nffg.dump())
         return
     # Get Domain Virtualizer to acquire global domain view
     global_view = self.virtualizerManager.dov

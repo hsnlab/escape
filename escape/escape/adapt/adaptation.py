@@ -606,7 +606,7 @@ class GlobalResourceManager(object):
     NFFGToolBox.update_status_info(nffg=self.__dov.get_resource_info(),
                                    status=status, log=log)
 
-  def rewrite_global_view_with_status (self, nffg, status=NFFG.STATUS_PENDING):
+  def rewrite_global_view_with_status (self, nffg):
     """
     Replace the global view with the given topology and add status for the
     elements.
@@ -615,10 +615,15 @@ class GlobalResourceManager(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    log.debug(
-      "Set mapped NFFG as the Global view (DoV) with status: %s..." % status)
-    NFFGToolBox.update_status_info(nffg=nffg, status=status, log=log)
+    if nffg.is_virtualized():
+      log.debug(
+        "Update NFFG contains virtualized elements! Skip DoV update...")
+    log.debug("Update status info based on Global view (DoV)...")
+    NFFGToolBox.update_status_by_dov(nffg=nffg,
+                                     dov=self.__dov.get_resource_info(),
+                                     log=log)
     self.set_global_view(nffg=nffg)
+    log.log(VERBOSE, "Updated DoV:\n%s" % self.__dov.get_resource_info().dump())
 
   def add_domain (self, domain, nffg):
     """

@@ -1078,7 +1078,7 @@ class NFFGToolBox(object):
   """
 
   ##############################################################################
-  # ----------------------- High level NFFG operations ------------------------
+  # ------------------ Splitting/Merging-related functions ---------------------
   ##############################################################################
 
   @staticmethod
@@ -1696,6 +1696,10 @@ class NFFGToolBox(object):
     # Return the rebounded NFFG
     return nffg
 
+  ##############################################################################
+  # ----------------------- Single BiSBiS view generation ----------------------
+  ##############################################################################
+
   @staticmethod
   def generate_SBB_representation (nffg, log=logging.getLogger("SBB")):
     """
@@ -1857,6 +1861,10 @@ class NFFGToolBox(object):
     # Return with Single BiSBiS infra
     return sbb
 
+  ##############################################################################
+  # ----------------------- Domain update functions -----------------------
+  ##############################################################################
+
   @classmethod
   def clear_domain (cls, base, domain, log=logging.getLogger("CLEAN")):
     """
@@ -1986,8 +1994,13 @@ class NFFGToolBox(object):
       # TODO - implement real update
       log.error("Domain update has not implemented yet!")
 
+  ##############################################################################
+  # ------------------- Status info-based update functions ---------------------
+  ##############################################################################
+
   @classmethod
-  def update_status_info (cls, nffg, status, log):
+  def update_status_info (cls, nffg, status,
+                          log=logging.getLogger("UPDATE-STATUS")):
     """
     Update the mapped elements of given nffg with given status.
 
@@ -2010,7 +2023,8 @@ class NFFGToolBox(object):
     return nffg
 
   @classmethod
-  def update_domain_by_status (cls, base, updated, log):
+  def update_nffg_by_status (cls, base, updated,
+                             log=logging.getLogger("UPDATE-DOMAIN-STATUS")):
     """
     Update status of the elements of the given ``base`` nffg  based on the
     given ``updated`` nffg.
@@ -2032,11 +2046,11 @@ class NFFGToolBox(object):
       if nf in updated_nfs:
         base[nf].status = updated[nf].status
     # Update Flowrule status
-    base_infra = {infra.id for infra in base.infras}
-    updated_infra = {infra.id for infra in updated.infras}
-    log.debug("Update status of flowrules in Infra nodes: %s" % updated_infra)
-    for infra_id in base_infra:
-      if infra_id not in updated_infra:
+    base_infras = {infra.id for infra in base.infras}
+    updated_infras = {infra.id for infra in updated.infras}
+    log.debug("Update status of flowrules in Infra nodes: %s" % updated_infras)
+    for infra_id in base_infras:
+      if infra_id not in updated_infras:
         continue
       for port in base[infra_id].ports:
         if port.id not in updated[infra_id].ports:
@@ -2049,12 +2063,76 @@ class NFFGToolBox(object):
         for fr in base[infra_id].ports[port.id].flowrules:
           if fr.id not in updated_frs:
             log.warning("Flowrule: %s is not in the updated NFFG! "
-                        "Skip flowrule status update...")
+                        "Skip flowrule status update..." % fr)
             continue
           for f in updated[infra_id].ports[port.id].flowrules:
             if f.id == fr.id:
               fr.status = f.status
     return base
+
+  @classmethod
+  def update_status_by_dov (cls, nffg, dov,
+                             log=logging.getLogger("UPDATE-DOV-STATUS")):
+    """
+    Update status of the elements of the given ``base`` nffg  based on the
+    given ``updated`` nffg.
+
+    :param nffg: base NFFG object
+    :type nffg: :any:`NFFG`
+    :param dov: updated domain information
+    :type dov: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    # Update NF status
+    nffg_nfs = {nf.id for nf in nffg.nfs}
+    dov_nfs = {nf.id for nf in dov.nfs}
+    log.debug("Update status of NF nodes: %s" % nffg_nfs)
+    for nf in nffg_nfs:
+      if nf in dov_nfs:
+        nffg[nf].status = dov[nf].status
+      else:
+        nffg[nf].status = NFFG.STATUS_PENDING
+    # Update Flowrule status
+    for infra in nffg.infras:
+      for flowrule in infra.flowrules():
+        flowrule.status = NFFG.STATUS_PENDING
+    nffg_infras = {infra.id for infra in nffg.infras}
+    dov_infras = {infra.id for infra in dov.infras}
+    log.debug("Update status of flowrules in Infra nodes: %s" % nffg_infras)
+    for infra_id in nffg_infras:
+      if infra_id not in dov_infras:
+        continue
+      for port in nffg[infra_id].ports:
+        if port.id not in dov[infra_id].ports:
+          continue
+        dov_frs = {f.id for f in dov[infra_id].ports[port.id].flowrules}
+        for fr in nffg[infra_id].ports[port.id].flowrules:
+          if fr.id not in dov_frs:
+            fr.status = NFFG.STATUS_PENDING
+          for f in dov[infra_id].ports[port.id].flowrules:
+            if f.id == fr.id:
+              fr.status = f.status
+    return nffg
+
+  def filter_non_running_NFs (self, nffg, log=logging.getLogger("FILTER")):
+    """
+    Create a new NFFG from the given ``nffg`` and filter out the
+    stoped/failed Nfs.
+
+    :param nffg: base NFFG object
+    :type nffg: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return:
+    """
+    pass
+
+  ##############################################################################
+  # ----------------------- High level NFFG operations ------------------------
+  ##############################################################################
 
   @classmethod
   def _copy_node_type (cls, type_iter, target, log):
