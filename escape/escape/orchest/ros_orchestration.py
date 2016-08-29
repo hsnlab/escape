@@ -79,19 +79,19 @@ class ResourceOrchestrator(AbstractOrchestrator):
       log.debug("Calculate ADD - DELETE difference of mapping mode...")
       add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
         old=last_request, new=nffg)
-      if add_nffg is not None and del_nffg is None:
+      log.warning("ADD NFFG:\n%s" % add_nffg.dump())
+      log.warning("DEL NFFG:\n%s" % del_nffg.dump())
+      if not add_nffg.is_empty() and del_nffg.is_empty():
         nffg = add_nffg
-        log.debug("Detected mapping mode: %s" % nffg.mode)
-      elif add_nffg is None and del_nffg is not None:
+        log.debug("Calculated mapping mode: %s" % nffg.mode)
+      elif add_nffg.is_empty() and not del_nffg.is_empty():
         nffg = del_nffg
-        log.debug("Detected mapping mode: %s" % nffg.mode)
-      elif add_nffg is None and del_nffg is None:
+        log.debug("Calculated mapping mode: %s" % nffg.mode)
+      elif not add_nffg.is_empty() and not del_nffg.is_empty():
         log.error("Difference calculation resulted empty subNFFGs!")
         return
       else:
-        log.warning("both ADD / DEL mode is not supported currently")
-        log.warning("Add:\n%s" % add_nffg.dump())
-        log.warning("Del:\n%s" % del_nffg.dump())
+        log.warning("Both ADD / DEL mode is not supported currently")
         return
     # Get Domain Virtualizer to acquire global domain view
     global_view = self.virtualizerManager.dov
