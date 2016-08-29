@@ -68,31 +68,8 @@ class ResourceOrchestrator(AbstractOrchestrator):
     :rtype: :any:`NFFG`
     """
     log.debug("Invoke %s to instantiate given NF-FG" % self.__class__.__name__)
-    last_request = self.nffgManager.get_last_request()
     # Store newly created NF-FG
     self.nffgManager.save(nffg)
-    if last_request is None:
-      log.debug("Missing last request from %s. Proceed with original request!" %
-                self.nffgManager.__class__.__name__)
-    else:
-      # Calculated ADD-DELETE difference
-      log.debug("Calculate ADD - DELETE difference of mapping mode...")
-      add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
-        old=last_request, new=nffg)
-      log.warning("ADD NFFG:\n%s" % add_nffg.dump())
-      log.warning("DEL NFFG:\n%s" % del_nffg.dump())
-      if not add_nffg.is_empty() and del_nffg.is_empty():
-        nffg = add_nffg
-        log.debug("Calculated mapping mode: %s" % nffg.mode)
-      elif add_nffg.is_empty() and not del_nffg.is_empty():
-        nffg = del_nffg
-        log.debug("Calculated mapping mode: %s" % nffg.mode)
-      elif not add_nffg.is_empty() and not del_nffg.is_empty():
-        log.error("Difference calculation resulted empty subNFFGs!")
-        return
-      else:
-        log.warning("Both ADD / DEL mode is not supported currently")
-        return
     # Get Domain Virtualizer to acquire global domain view
     global_view = self.virtualizerManager.dov
     # Notify remote visualizer about resource view of this layer if it's needed
@@ -164,12 +141,12 @@ class NFFGManager(object):
     :return: generated ID of given NF-FG
     :rtype: int
     """
-    nffg_id = self._generate_id(nffg)
-    self._nffgs[nffg_id] = nffg
+    nffg_id = nffg.id
+    self._nffgs[nffg_id] = nffg.copy()
     self._last = nffg
     log.debug("NF-FG: %s is saved by %s with id: %s" %
               (nffg, self.__class__.__name__, nffg_id))
-    return nffg.id
+    return nffg_id
 
   def get_last_request (self):
     """
@@ -179,25 +156,6 @@ class NFFGManager(object):
     :rtype: :any:`NFFG`
     """
     return self._last
-
-  def _generate_id (self, nffg):
-    """
-    Try to generate a unique id for NFFG.
-
-    :param nffg: NFFG
-    :type nffg: :any:`NFFG`
-    """
-    tmp = nffg.id if nffg.id is not None else id(nffg)
-    if tmp in self._nffgs:
-      tmp = len(self._nffgs)
-      if tmp in self._nffgs:
-        for i in xrange(100):
-          tmp += i
-          if tmp not in self._nffgs:
-            return tmp
-        else:
-          raise RuntimeError("Can't be able to generate a unique id!")
-    return tmp
 
   def get (self, nffg_id):
     """

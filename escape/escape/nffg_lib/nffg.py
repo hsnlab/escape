@@ -2013,10 +2013,9 @@ class NFFGToolBox(object):
     :return: the update base NFFG
     :rtype: :any:`NFFG`
     """
-    log.debug("Add %s status for NFs..." % status)
+    log.debug("Add %s status for NFs and Flowrules..." % status)
     for nf in nffg.nfs:
       nf.status = status
-    log.debug("Add %s status for Flowrules..." % status)
     for infra in nffg.infras:
       for flowrule in infra.flowrules():
         flowrule.status = status

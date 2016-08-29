@@ -16,7 +16,7 @@ Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
 from escape import CONFIG
-from escape.nffg_lib.nffg import NFFG
+from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest import LAYER_NAME, log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
@@ -150,7 +150,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     nffg = self._service_request_parser()
     if nffg:
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
-      self.send_acknowledge()
+      self.send_acknowledge(id=nffg.id)
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
   def _topology_view_responder (self, resource_nffg):
@@ -386,7 +386,7 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
     nffg = self._service_request_parser()
     if nffg:
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
-      self.send_acknowledge()
+      self.send_acknowledge(id=nffg.id)
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
 
@@ -427,7 +427,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
       try:
         service_request = self._read_data_from_file(self._nffg_file)
         service_request = NFFG.parse(service_request)
-        self.__proceed_instantiation(nffg=service_request)
+        dov = self.resource_orchestrator.virtualizerManager.dov
+        self.__proceed_instantiation(nffg=service_request,
+                                     resource_view=dov.get_resource_info())
       except (ValueError, IOError, TypeError) as e:
         log.error("Can't load service request from file because of: " + str(e))
       else:
@@ -544,6 +546,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # Agent API functions starts here
   ##############################################################################
 
+  def __get_slor_resource_view (self):
+    """
+    Return with the Virtualizer object assigned to the Sl-Or interface.
+    """
+    virt_mgr = self.resource_orchestrator.virtualizerManager
+    return virt_mgr.get_virtual_view(virtualizer_id=self.ros_api.api_id,
+                                     type=self.ros_api.virtualizer_type)
+
   def api_ros_get_config (self):
     """
     Implementation of REST-API RPC: get-config. Return with the global
@@ -554,13 +564,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: :any:`NFFG` or False
     """
     log.getChild('[Sl-Or]').info("Requesting Virtualizer for REST-API")
-    virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
-      virtualizer_id=self.ros_api.api_id, type=self.ros_api.virtualizer_type)
-    if virt is not None:
+    slor_virt = self.__get_slor_resource_view()
+    if slor_virt is not None:
       # Check if the resource is changed
-      if virt.is_changed():
+      if slor_virt.is_changed():
         log.getChild('[Sl-Or]').info("Generate topo description...")
-        res = virt.get_resource_info()
+        res = slor_virt.get_resource_info()
         return res
       # If resource has not been changed return False
       # This causes to response with the cached topology
@@ -583,8 +592,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
       # ESCAPE serves as a local orchestrator, probably with infrastructure
       # layer --> rewrite domain
       nffg = self.__update_nffg_domain(nffg_part=nffg)
+    # Get resource view of the interface
+    res = self.__get_slor_resource_view().get_resource_info()
     # ESCAPE serves as a global or proxy orchestrator
-    self.__proceed_instantiation(nffg=nffg)
+    self.__proceed_instantiation(nffg=nffg, resource_nffg=res)
 
   @staticmethod
   def __update_nffg_domain (nffg_part, domain_name=None):
@@ -617,6 +628,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # Cf-Or API functions starts here
   ##############################################################################
 
+  def __get_cfor_resource_view (self):
+    """
+    Return with the Virtualizer object assigned to the Cf-Or interface.
+    """
+    virt_mgr = self.resource_orchestrator.virtualizerManager
+    return virt_mgr.get_virtual_view(virtualizer_id=self.cfor_api.api_id,
+                                     type=self.cfor_api.virtualizer_type)
+
   def api_cfor_get_config (self):
     """
     Implementation of Cf-Or REST-API RPC: get-config.
@@ -625,11 +644,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: str
     """
     log.getChild('[Cf-Or]').info("Requesting Virtualizer for REST-API...")
-    virt = self.resource_orchestrator.virtualizerManager.get_virtual_view(
-      virtualizer_id=self.cfor_api.api_id, type=self.cfor_api.virtualizer_type)
-    if virt is not None:
+    cfor_virt = self.__get_cfor_resource_view()
+    if cfor_virt is not None:
       log.getChild('[Cf-Or]').info("Generate topo description...")
-      return virt.get_resource_info()
+      return cfor_virt.get_resource_info()
     else:
       log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
                 self.cfor_api.api_id)
@@ -643,7 +661,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('[Cf-Or]').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
-    self.__proceed_instantiation(nffg=nffg)
+    # Get resource view of the interface
+    res = self.__get_cfor_resource_view().get_resource_info()
+    self.__proceed_instantiation(nffg=nffg, resource_nffg=res)
 
   ##############################################################################
   # UNIFY Sl- Or API functions starts here
@@ -659,10 +679,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Received NF-FG: %s from %s layer" % (
       event.nffg, str(event.source._core_name).title()))
-    self.__proceed_instantiation(nffg=event.nffg)
+    self.__proceed_instantiation(nffg=event.nffg,
+                                 resource_nffg=event.resource_nffg)
 
   @schedule_as_coop_task
-  def __proceed_instantiation (self, nffg):
+  def __proceed_instantiation (self, nffg, resource_nffg):
     """
     Helper function to instantiate the NFFG mapping from different source.
 
@@ -672,6 +693,32 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, nffg.name))
+    # Get shown topology view
+    if resource_nffg is None:
+      log.error("Missing resource for difference calculation!")
+      return
+    log.debug(
+      "Got resource view for difference calculation: %s" % resource_nffg)
+    # Calculated ADD-DELETE difference
+    log.debug("Calculate ADD - DELETE difference with mapping mode...")
+    add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
+      old=resource_nffg, new=nffg)
+    log.log(VERBOSE, "ADD NFFG:\n%s" % add_nffg.dump())
+    log.log(VERBOSE, "DEL NFFG:\n%s" % del_nffg.dump())
+    if not add_nffg.is_empty() and del_nffg.is_empty():
+      nffg = add_nffg
+      log.debug("Calculated mapping mode: %s" % nffg.mode)
+    elif add_nffg.is_empty() and not del_nffg.is_empty():
+      nffg = del_nffg
+      log.debug("Calculated mapping mode: %s" % nffg.mode)
+    elif not add_nffg.is_empty() and not del_nffg.is_empty():
+      log.warning("Both ADD / DEL mode is not supported currently")
+      return
+    else:
+      log.warning("Difference calculation resulted empty subNFFGs!")
+      log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
+                                self.__class__.__name__)
+      return
     # Initiate request mapping
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
     log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %

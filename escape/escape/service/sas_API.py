@@ -38,7 +38,7 @@ class InstantiateNFFGEvent(Event):
   Event for passing NFFG (mapped SG) to Orchestration layer.
   """
 
-  def __init__ (self, nffg):
+  def __init__ (self, nffg, resource_nffg):
     """
     Init.
 
@@ -47,6 +47,7 @@ class InstantiateNFFGEvent(Event):
     """
     super(InstantiateNFFGEvent, self).__init__()
     self.nffg = nffg
+    self.resource_nffg = resource_nffg
 
 
 class GetVirtResInfoEvent(Event):
@@ -147,7 +148,7 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
     nffg = self._service_request_parser()
     if nffg:
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
-      self.send_acknowledge()
+      self.send_acknowledge(id=nffg.id)
     self.log.debug("%s function: sg ended!" % self.LOGGER_NAME)
 
 
@@ -352,6 +353,11 @@ class ServiceLayerAPI(AbstractAPI):
       log.warning("Something went wrong in service request initiation: "
                   "mapped service data is missing!")
 
+  def __get_sas_resource_view (self):
+    """
+    """
+    return self.service_orchestrator.virtResManager.virtual_view
+
   def api_sas_get_topology (self):
     """
     Return with the topology description.
@@ -361,15 +367,15 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.getChild('[U-Sl]').info("Requesting Virtualizer for REST-API...")
     # Get or if not available then request the layer's Virtualizer
-    sas_virtualizer = self.service_orchestrator.virtResManager.virtual_view
-    if sas_virtualizer is not None:
+    sas_virt = self.__get_sas_resource_view()
+    if sas_virt is not None:
       log.getChild('[U-Sl]').info("Generate topo description...")
       # return with the virtual view as an NFFG
-      return sas_virtualizer.get_resource_info()
+      return sas_virt.get_resource_info()
     else:
       log.getChild('[U-Sl]').error(
         "Virtualizer(id=%s) assigned to REST-API is not found!" %
-        self.cfor_api.api_id)
+        self.rest_api.api_id)
 
   def get_result (self, id):
     """
@@ -403,9 +409,10 @@ class ServiceLayerAPI(AbstractAPI):
             "Mapping result of Service Layer:\n%s" % mapped_nffg.dump())
     # Notify remote visualizer about the mapping result if it's needed
     notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
+    sas_res = self.__get_sas_resource_view().get_resource_info()
     # Sending mapped SG / NF-FG to Orchestration layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
-    self.raiseEventNoErrors(InstantiateNFFGEvent, mapped_nffg)
+    self.raiseEventNoErrors(InstantiateNFFGEvent, mapped_nffg, sas_res)
     log.getChild('API').info(
       "Generated NF-FG: %s has been sent to Orchestration..." % mapped_nffg)
 
