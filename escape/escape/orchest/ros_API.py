@@ -701,6 +701,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
       "Got resource view for difference calculation: %s" % resource_nffg)
     # Calculated ADD-DELETE difference
     log.debug("Calculate ADD - DELETE difference with mapping mode...")
+    log.log(VERBOSE, "New NFFG:\n%s" % nffg.dump())
+    log.log(VERBOSE, "Resource NFFG:\n%s" % resource_nffg.dump())
     add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
       old=resource_nffg, new=nffg)
     log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
