@@ -333,7 +333,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     Update the existing domain in the merged Global view with explicit domain
     remove and re-add.
 
-    :param nffg: NFFG object need to be updated with
+    :param nffg: changed infrastructure info
     :type nffg: :any:`NFFG`
     :param domain: name of the merging domain
     :type domain: str
@@ -355,7 +355,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     Update the existing domain in the merged Global view.
 
-    :param nffg: NFFG object need to be updated with
+    :param nffg: changed infrastructure info
     :type nffg: :any:`NFFG`
     :param domain: name of the merging domain
     :type domain: str
@@ -408,6 +408,27 @@ class DomainVirtualizer(AbstractVirtualizer):
       return self.__global_nffg
     NFFGToolBox.clear_domain(base=self.__global_nffg, domain=domain, log=log)
     log.log(VERBOSE, "Cleaned Dov:\n%s" % self.__global_nffg.dump())
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
+    return self.__global_nffg
+
+  def update_domain_status_in_dov (self, domain, nffg):
+    """
+    Set status of initiated NFs and flowrules related to BiSBiS nodes of the
+    given domain.
+
+    :param domain: domain name
+    :type domain: str
+    :param nffg: changed infrastructure info
+    :type nffg: :any:`NFFG`
+    :return: updated Dov
+    :rtype: :any:`NFFG`
+    """
+    if self.__global_nffg.is_empty():
+      log.debug("DoV is empty! Skip cleanup domain: %s" % domain)
+      return self.__global_nffg
+    NFFGToolBox.update_nffg_by_status(base=self.__global_nffg, updated=nffg,
+                                      log=log)
+    log.log(VERBOSE, "Updated Dov:\n%s" % self.__global_nffg.dump())
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
 

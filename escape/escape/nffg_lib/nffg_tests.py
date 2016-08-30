@@ -31,7 +31,7 @@ def test_parse_load ():
   # Infra
   infra = NodeInfra()
   infra.id = "infra1"
-  infra.operation = Element.ADD
+  infra.operation = Element.OP_CREATE
   infra.name = "BisBis1"
   infra.domain = "virtual"
   infra.resources.cpu = "20"
@@ -50,7 +50,7 @@ def test_parse_load ():
   edge_link.bandwidth = "100"
   edge_link.delay = "5"
   edge_link.backward = True
-  edge_link.operation = Element.DEL
+  edge_link.operation = Element.OP_DELETE
   # Edge SG next hop
   edge_sg = EdgeSGLink(p1, p2, id="link1")
   edge_sg.flowclass = "flowclass1"

@@ -165,10 +165,23 @@ class NFFG(AbstractNFFG):
   TYPE_LINK_DYNAMIC = Link.DYNAMIC
   TYPE_LINK_SG = Link.SG
   TYPE_LINK_REQUIREMENT = Link.REQUIREMENT
-  # Operations
+  # Mapping mode operations
   MODE_ADD = "ADD"
   MODE_DEL = "DELETE"
   MODE_REMAP = "REMAP"
+  # Element operation
+  OP_CREATE = Element.OP_CREATE
+  OP_REPLACE = Element.OP_REPLACE
+  OP_MERGE = Element.OP_MERGE
+  OP_REMOVE = Element.OP_REMOVE
+  OP_DELETE = Element.OP_DELETE
+  # Element status
+  STATUS_INIT = Element.STATUS_INIT
+  STATUS_PENDING = Element.STATUS_PENDING
+  STATUS_DEPLOY = Element.STATUS_DEPLOY
+  STATUS_RUN = Element.STATUS_RUN
+  STATUS_STOP = Element.STATUS_STOP
+  STATUS_FAIL = Element.STATUS_FAIL
 
   version = __version__
 
@@ -698,7 +711,7 @@ class NFFG(AbstractNFFG):
     """
     # Create the model
     nffg = NFFGModel(id=self.id, name=self.name, version=self.version,
-                     metadata=self.metadata)
+                     mode=self.mode, metadata=self.metadata)
     # Load Infras
     for infra in self.infras:
       nffg.node_infras.append(infra)
@@ -735,7 +748,7 @@ class NFFG(AbstractNFFG):
     model = NFFGModel.parse(raw_data)
     # Create new NFFG
     nffg = NFFG(id=model.id, name=model.name, version=model.version,
-                metadata=model.metadata)
+                mode=model.mode, metadata=model.metadata)
     # Load Infras
     for infra in model.node_infras:
       nffg.add_node(infra)
@@ -977,9 +990,10 @@ class NFFG(AbstractNFFG):
               # If the parent SG of this flowrule is in both graphs and the 
               # SG hops both ends are also in both graphs
               d.availres['bandwidth'] -= fr.bandwidth
-          for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p, 
-                                 sg_hops_to_be_ignored):
-            path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, self, p)
+          for TAG in NFFGToolBox.get_TAGs_of_starting_flows(p,
+                                                            sg_hops_to_be_ignored):
+            path_of_TAG, flow_bw = NFFGToolBox.retrieve_mapped_path(TAG, self,
+                                                                    p)
             # collocation flowrules dont have TAGs so their empty lists are not 
             # returned by get_TAGs_of_starting_flows, but this case
             # is also handled by the Flowrule.bandwidth summerizing 'for loop'
@@ -988,7 +1002,8 @@ class NFFG(AbstractNFFG):
                 link.availbandwidth -= flow_bw
                 if link.availbandwidth < 0:
                   raise RuntimeError("(BadInputException) "
-                                     "The bandwidth usage implied by the sum of "
+                                     "The bandwidth usage implied by the sum "
+                                     "of "
                                      "flowrule "
                                      "bandwidths should determine the occupied "
                                      "capacity on links. "
@@ -1039,9 +1054,9 @@ class NFFG(AbstractNFFG):
                 self.network.node[n.id].resources)
             except RuntimeError:
               raise RuntimeError("VNF %s cannot be kept on host %s with "
-                                 "increased resource requirements due to not " 
-                                 "enough available resources!"%(vnf.id, n.id))
-              
+                                 "increased resource requirements due to not "
+                                 "enough available resources!" % (vnf.id, n.id))
+
           self.network.node[n.id].availres = newres
 
   def del_flowrules_of_SGHop (self, hop_id_to_del):
@@ -1050,7 +1065,7 @@ class NFFG(AbstractNFFG):
     field of the Flowrule class.
     """
 
-    for n in self. infras:
+    for n in self.infras:
       for p in n.ports:
         for fr in p.flowrules:
           if fr.hop_id == hop_id_to_del:
@@ -1063,7 +1078,7 @@ class NFFGToolBox(object):
   """
 
   ##############################################################################
-  # ----------------------- High level NFFG operations ------------------------
+  # ------------------ Splitting/Merging-related functions ---------------------
   ##############################################################################
 
   @staticmethod
@@ -1681,6 +1696,10 @@ class NFFGToolBox(object):
     # Return the rebounded NFFG
     return nffg
 
+  ##############################################################################
+  # ----------------------- Single BiSBiS view generation ----------------------
+  ##############################################################################
+
   @staticmethod
   def generate_SBB_representation (nffg, log=logging.getLogger("SBB")):
     """
@@ -1797,12 +1816,14 @@ class NFFGToolBox(object):
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(nffg=nffg)
     import pprint
     log.debug("Detected SG hop info:\n%s" % pprint.pformat(sg_hop_info))
+    log.debug("Recreate flowrules...")
     for key, value in sg_hop_info.iteritems():
       sg_src_node = key[0]
       sg_src_port = value[0].id
       sg_dst_node = key[1]
       sg_dst_port = value[1].id
       fr_bw = value[3]
+      flowclass = value[2]
       fr_delay = value[4]
       fr_hop = key[2]
       sbb_src_port = [l.dst for u, v, l in
@@ -1838,9 +1859,24 @@ class NFFGToolBox(object):
                                      bandwidth=fr_bw, delay=fr_delay,
                                      hop_id=fr_hop, id=fr_hop)
       log.debug("Added flowrule: %s" % fr)
+    log.debug("Recreate SG hops...")
+    for key, value in sg_hop_info.iteritems():
+      hop_id = key[2]
+      sg_src_port = value[0]
+      sg_dst_port = value[1]
+      hop_fc = value[2]
+      hop_bw = value[3]
+      hop_delay = value[4]
+      sg = sbb.add_sglink(src_port=sg_src_port, dst_port=sg_dst_port, id=hop_id,
+                          flowclass=hop_fc, delay=hop_delay, bandwidth=hop_bw)
+      log.debug("Added SG hop: %s" % sg)
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return sbb
+
+  ##############################################################################
+  # ----------------------- Domain update functions -----------------------
+  ##############################################################################
 
   @classmethod
   def clear_domain (cls, base, domain, log=logging.getLogger("CLEAN")):
@@ -1941,7 +1977,7 @@ class NFFGToolBox(object):
   @classmethod
   def update_domain (cls, base, updated, log):
     """
-    Update the given ``nffg`` into the ``base`` NFFG.
+    Update the given ``updated`` nffg into the ``base`` NFFG.
 
     :param base: base NFFG object
     :type base: :any:`NFFG`
@@ -1970,6 +2006,145 @@ class NFFGToolBox(object):
     else:
       # TODO - implement real update
       log.error("Domain update has not implemented yet!")
+
+  ##############################################################################
+  # ------------------- Status info-based update functions ---------------------
+  ##############################################################################
+
+  @classmethod
+  def update_status_info (cls, nffg, status,
+                          log=logging.getLogger("UPDATE-STATUS")):
+    """
+    Update the mapped elements of given nffg with given status.
+
+    :param nffg: base NFFG object
+    :type nffg: :any:`NFFG`
+    :param status: new status
+    :type status: str
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    log.debug("Add %s status for NFs and Flowrules..." % status)
+    for nf in nffg.nfs:
+      nf.status = status
+    for infra in nffg.infras:
+      for flowrule in infra.flowrules():
+        flowrule.status = status
+    return nffg
+
+  @classmethod
+  def update_nffg_by_status (cls, base, updated,
+                             log=logging.getLogger("UPDATE-DOMAIN-STATUS")):
+    """
+    Update status of the elements of the given ``base`` nffg  based on the
+    given ``updated`` nffg.
+
+    :param base: base NFFG object
+    :type base: :any:`NFFG`
+    :param updated: updated domain information
+    :type updated: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    # Update NF status
+    base_nfs = {nf.id for nf in base.nfs}
+    updated_nfs = {nf.id for nf in updated.nfs}
+    log.debug("Update status of NF nodes: %s" % updated_nfs)
+    for nf in base_nfs:
+      if nf in updated_nfs:
+        base[nf].status = updated[nf].status
+    # Update Flowrule status
+    base_infras = {infra.id for infra in base.infras}
+    updated_infras = {infra.id for infra in updated.infras}
+    log.debug("Update status of flowrules in Infra nodes: %s" % updated_infras)
+    for infra_id in base_infras:
+      if infra_id not in updated_infras:
+        continue
+      for port in base[infra_id].ports:
+        if port.id not in updated[infra_id].ports:
+          log.warning("Port: %s in Infra: %s is not in the updated NFFG! "
+                      "Skip flowrule status update in this Port..."
+                      % (port.id, infra_id))
+          continue
+        updated_frs = {f.id for f in
+                       updated[infra_id].ports[port.id].flowrules}
+        for fr in base[infra_id].ports[port.id].flowrules:
+          if fr.id not in updated_frs:
+            log.warning("Flowrule: %s is not in the updated NFFG! "
+                        "Skip flowrule status update..." % fr)
+            continue
+          for f in updated[infra_id].ports[port.id].flowrules:
+            if f.id == fr.id:
+              fr.status = f.status
+    return base
+
+  @classmethod
+  def update_status_by_dov (cls, nffg, dov,
+                            log=logging.getLogger("UPDATE-DOV-STATUS")):
+    """
+    Update status of the elements of the given ``base`` nffg  based on the
+    given ``updated`` nffg.
+
+    :param nffg: base NFFG object
+    :type nffg: :any:`NFFG`
+    :param dov: updated domain information
+    :type dov: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the update base NFFG
+    :rtype: :any:`NFFG`
+    """
+    # Update NF status
+    nffg_nfs = {nf.id for nf in nffg.nfs}
+    dov_nfs = {nf.id for nf in dov.nfs}
+    log.debug("Update status of NF nodes: %s" % nffg_nfs)
+    for nf in nffg_nfs:
+      if nf in dov_nfs:
+        nffg[nf].status = dov[nf].status
+      else:
+        nffg[nf].status = NFFG.STATUS_PENDING
+    # Update Flowrule status
+    for infra in nffg.infras:
+      for flowrule in infra.flowrules():
+        flowrule.status = NFFG.STATUS_PENDING
+    nffg_infras = {infra.id for infra in nffg.infras}
+    dov_infras = {infra.id for infra in dov.infras}
+    log.debug("Update status of flowrules in Infra nodes: %s" % nffg_infras)
+    for infra_id in nffg_infras:
+      if infra_id not in dov_infras:
+        continue
+      for port in nffg[infra_id].ports:
+        if port.id not in dov[infra_id].ports:
+          continue
+        dov_frs = {f.id for f in dov[infra_id].ports[port.id].flowrules}
+        for fr in nffg[infra_id].ports[port.id].flowrules:
+          if fr.id not in dov_frs:
+            fr.status = NFFG.STATUS_PENDING
+          for f in dov[infra_id].ports[port.id].flowrules:
+            if f.id == fr.id:
+              fr.status = f.status
+    return nffg
+
+  def filter_non_running_NFs (self, nffg, log=logging.getLogger("FILTER")):
+    """
+    Create a new NFFG from the given ``nffg`` and filter out the
+    stoped/failed Nfs.
+
+    :param nffg: base NFFG object
+    :type nffg: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return:
+    """
+    pass
+
+  ##############################################################################
+  # ----------------------- High level NFFG operations ------------------------
+  ##############################################################################
 
   @classmethod
   def _copy_node_type (cls, type_iter, target, log):
@@ -2049,21 +2224,22 @@ class NFFGToolBox(object):
     for n, d in subtrahend.network.degree().iteritems():
       if n in minuend_degrees:
         if d >= minuend_degrees[n]:
-          for edge_func in (minuend.network.in_edges_iter, 
+          for edge_func in (minuend.network.in_edges_iter,
                             minuend.network.out_edges_iter):
-            for i,j,d in edge_func([n], data=True):
+            for i, j, d in edge_func([n], data=True):
               if d.type == 'SG':
                 minuend.del_flowrules_of_SGHop(d.id)
           minuend.del_node(minuend.network.node[n])
-    for i,j,k in subtrahend.network.edges_iter(keys=True):
-      if minuend.network.has_edge(i,j, key=k):
+    for i, j, k in subtrahend.network.edges_iter(keys=True):
+      if minuend.network.has_edge(i, j, key=k):
         minuend.del_edge(i, j, k)
     return minuend
 
   @classmethod
   def generate_difference_of_nffgs (cls, old, new):
     """
-    Creates two NFFG objects which can be used in NFFG.MODE_ADD and NFFG.MODE_DEL
+    Creates two NFFG objects which can be used in NFFG.MODE_ADD and
+    NFFG.MODE_DEL
     operation modes of the mapping algorithm. Doesn't modify input objects.
     
     :param old: old NFFG object
@@ -2079,7 +2255,7 @@ class NFFGToolBox(object):
     del_nffg.mode = NFFG.MODE_DEL
     add_nffg = NFFGToolBox.subtract_nffg(add_nffg, old)
     del_nffg = NFFGToolBox.subtract_nffg(del_nffg, new)
-    ##WARNING: we always remove the EdgeReqs from the delete NFFG, this doesn't 
+    ##WARNING: we always remove the EdgeReqs from the delete NFFG, this doesn't
     # have a defined meaning so far.
     for req in [r for r in del_nffg.reqs]:
       del_nffg.del_edge(r.src, r.dst, r.id)
@@ -2128,7 +2304,8 @@ class NFFGToolBox(object):
 
     :param nffg: NFFG object which contains port.
     :param port: The port which should be the source or destination.
-    :param outbound: Determines whether outbound or inbound link should be found.
+    :param outbound: Determines whether outbound or inbound link should be
+    found.
     :return:
     """
     edges_func = None
@@ -2319,7 +2496,8 @@ class NFFGToolBox(object):
   @staticmethod
   def generate_all_TAGs_of_NFFG (nffg):
     """
-    Generates all possible TAGs of a request graph NFFG based on the SG hop ID-s 
+    Generates all possible TAGs of a request graph NFFG based on the SG hop
+    ID-s
     and the SG hop endings. 
     TAGs are in format of <<source_NF_ID|destination_NF_ID|SG_hop_id>>
 
@@ -2524,6 +2702,8 @@ def generate_test_NFFG ():
   nffg.add_metadata(name="test_metadata1", value="abc")
   nffg.add_metadata(name="test_metadata2", value="123")
 
+  nffg.mode = NFFG.MODE_ADD
+
   sap = nffg.add_sap(id="sap1", name="SAP_node1", binding="eth1")
   p_sap = sap.add_port(id=1, properties={"property1": "123"})
   sap.add_metadata(name="sap_meta", value="123")
@@ -2576,6 +2756,5 @@ if __name__ == "__main__":
   parsed = NFFG.parse(raw_data=raw)
   parsed.mode = NFFG.MODE_REMAP
   print parsed.dump()
-  print "mode:", parsed.mode
   # nffg = NFFG.parse_from_file('op-add-mapped-topo1.nffg')
   # print nffg.dump()

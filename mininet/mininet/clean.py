@@ -56,7 +56,7 @@ def cleanup():
     info( "***  Removing OVS datapaths" )
     dps = sh("ovs-vsctl --timeout=1 list-br").split( '\n' )
     for dp in dps:
-        if dp:
+        if dp and 'vxlan' not in dp:
             sh( 'ovs-vsctl del-br ' + dp )
 
     info( "*** Removing all links of the pattern foo-ethX\n" )

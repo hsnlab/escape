@@ -45,11 +45,8 @@ cfg = {
         {
           "module": "escape.service.sas_mapping",
           "class": "ServiceGraphMapper",
-          "mapping-config":
-            {
-              "full_remap": True
-            },
-          "mapping-enabled": False
+          "mapping-config": {},
+          "mapping-enabled": True
         },
       "STRATEGY":
         {
@@ -82,10 +79,7 @@ cfg = {
         {
           "module": "escape.orchest.ros_mapping",
           "class": "ResourceOrchestrationMapper",
-          "mapping-config":
-            {
-              "full_remap": True
-            },
+          "mapping-config": {},
           "mapping-enabled": True
         },
       "STRATEGY":
@@ -103,8 +97,8 @@ cfg = {
       # Interface / Upper layer related configuration
       "ESCAPE-SERVICE":
         {
-          # "virtualizer_type": "SINGLE"
-          "virtualizer_type": "GLOBAL"
+          "virtualizer_type": "SINGLE"
+          # "virtualizer_type": "GLOBAL"
         },
       "Sl-Or":
         {
@@ -143,6 +137,8 @@ cfg = {
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
+      # Update DoV in one step and use element status to update domains
+      "USE-STATUS-BASED-UPDATE": True,
       # Use re-merge instead of straightforward update when updating DoV
       "USE-REMERGE-UPDATE-STRATEGY": True,
       "ENSURE-UNIQUE-ID": True,  # ID conversion strategy for nodes
@@ -161,7 +157,8 @@ cfg = {
                 "name": None,
                 "address": "127.0.0.1",
                 "port": 6653,
-                "keepalive": False
+                "keepalive": False,
+                "sap_if_prefix": "eth"
               },
             "TOPOLOGY":
               {

@@ -127,6 +127,7 @@ class SGManager(object):
     super(SGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self._service_graphs = dict()
+    self._last = None
 
   def save (self, sg):
     """
@@ -137,11 +138,12 @@ class SGManager(object):
     :return: computed id of given Service Graph
     :rtype: int
     """
-    sg_id = self._generate_id(sg)
+    sg_id = sg.id
     self._service_graphs[sg_id] = sg.copy()
+    self._last = sg
     log.debug("SG: %s is saved by %s with id: %s" % (
       sg, self.__class__.__name__, sg_id))
-    return sg.id
+    return sg_id
 
   def get (self, graph_id):
     """
@@ -154,24 +156,14 @@ class SGManager(object):
     """
     return self._service_graphs.get(graph_id, None)
 
-  def _generate_id (self, sg):
+  def get_last_request (self):
     """
-    Try to generate a unique id for SG.
+    Return with the last saved :any:`NFFG`*[]:
 
-    :param sg: SG
-    :type sg: :any:`NFFG`
+    :return: last saved NFFG
+    :rtype: :any:`NFFG`
     """
-    tmp = sg.id if sg.id is not None else id(sg)
-    if tmp in self._service_graphs:
-      tmp = len(self._service_graphs)
-      if tmp in self._service_graphs:
-        for i in xrange(100):
-          tmp += i
-          if tmp not in self._service_graphs:
-            return tmp
-        else:
-          raise RuntimeError("Can't be able to generate a unique id!")
-    return tmp
+    return self._last
 
 
 class VirtualResourceManager(EventMixin):

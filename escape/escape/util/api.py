@@ -551,7 +551,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     except KeyError:
       pass
 
-  def send_acknowledge (self, msg='{"result": "Accepted"}'):
+  def send_acknowledge (self, id, msg=None):
     """
     Send back acknowledge message.
 
@@ -559,6 +559,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     :param msg: dict
     :return: None
     """
+    if msg is None:
+      msg = '{"result": "Accepted", "id": "%s"}' % id
     msg.encode("UTF-8")
     self.send_response(202)
     self.send_header('Content-Type', 'text/json; charset=UTF-8')

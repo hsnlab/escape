@@ -15,6 +15,7 @@
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
 from escape.adapt.virtualization import AbstractVirtualizer, VirtualizerManager
+from escape.nffg_lib.nffg import NFFGToolBox
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
@@ -49,7 +50,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     self.nfibManager = NFIBManager()
     self.nfibManager.initialize()
 
-  def finalize(self):
+  def finalize (self):
     """
     Finalize func for class.
 
@@ -129,6 +130,7 @@ class NFFGManager(object):
     super(NFFGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
     self._nffgs = dict()
+    self._last = None
 
   def save (self, nffg):
     """
@@ -139,30 +141,21 @@ class NFFGManager(object):
     :return: generated ID of given NF-FG
     :rtype: int
     """
-    nffg_id = self._generate_id(nffg)
-    self._nffgs[nffg_id] = nffg
+    nffg_id = nffg.id
+    self._nffgs[nffg_id] = nffg.copy()
+    self._last = nffg
     log.debug("NF-FG: %s is saved by %s with id: %s" %
               (nffg, self.__class__.__name__, nffg_id))
-    return nffg.id
+    return nffg_id
 
-  def _generate_id (self, nffg):
+  def get_last_request (self):
     """
-    Try to generate a unique id for NFFG.
+    Return with the last saved :any:`NFFG`*[]:
 
-    :param nffg: NFFG
-    :type nffg: :any:`NFFG`
+    :return: last saved NFFG
+    :rtype: :any:`NFFG`
     """
-    tmp = nffg.id if nffg.id is not None else id(nffg)
-    if tmp in self._nffgs:
-      tmp = len(self._nffgs)
-      if tmp in self._nffgs:
-        for i in xrange(100):
-          tmp += i
-          if tmp not in self._nffgs:
-            return tmp
-        else:
-          raise RuntimeError("Can't be able to generate a unique id!")
-    return tmp
+    return self._last
 
   def get (self, nffg_id):
     """
