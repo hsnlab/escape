@@ -511,7 +511,7 @@ class GraphPreprocessorClass(object):
     # Simply remove the infra nodes (The Dynamic and Static links go with them)
     for infra in [i for i in self.req_graph.infras]:
       self.log.warn("Infra node %s found in DEL request graph! Removing with all"
-                    " connected edges!")
+                    " connected edges!"%infra.id)
       self.req_graph.del_node(infra)
 
     return self.req_graph
