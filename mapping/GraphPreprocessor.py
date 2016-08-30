@@ -654,7 +654,7 @@ class GraphPreprocessorClass(object):
         setattr(vnfobj, 'placement_criteria', [])
       if vnfobj.type == 'NF':
         if reduce(lambda a, b: a or b, (vnfobj.resources[attr] is None \
-                  for attr in ['cpu', 'mem', 'storage', 'bandwidth'])):
+                  for attr in ['cpu', 'mem', 'storage'])):
           raise uet.BadInputException("VNF resource requirements should always"
                                       " be given", "One of %s`s components is"
                                       " None" % vnf)
