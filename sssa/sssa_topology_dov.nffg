@@ -1,0 +1,165 @@
+{
+  "parameters": {
+    "id": "DoV",
+    "name": "DoV",
+    "version": "1.0"
+  },
+  "node_saps": [
+    {
+      "id": "SAP4",
+      "name": "SAP4",
+      "ports": [
+        {
+          "id": "port-SAP4",
+          "property": {
+            "name": "SAP4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAP1",
+      "name": "SAP1",
+      "ports": [
+        {
+          "id": "port-SAP1",
+          "property": {
+            "name": "SAP1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAP2",
+      "name": "SAP2",
+      "ports": [
+        {
+          "id": "port-SAP2",
+          "property": {
+            "name": "SAP2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAP3",
+      "name": "SAP3",
+      "ports": [
+        {
+          "id": "port-SAP3",
+          "property": {
+            "name": "SAP3"
+          }
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "SingleBiSBiS@SSSA",
+      "name": "SingleBiSBiS",
+      "ports": [
+        {
+          "id": "port-SAP1",
+          "property": {
+            "name": "SAP1"
+          }
+        },
+        {
+          "id": "port-SAP2",
+          "property": {
+            "name": "SAP2"
+          }
+        },
+        {
+          "id": "port-SAP3",
+          "property": {
+            "name": "SAP3"
+          }
+        },
+        {
+          "id": "port-SAP4",
+          "property": {
+            "name": "SAP4"
+          }
+        }
+      ],
+      "domain": "SSSA",
+      "type": "BiSBiS",
+      "supported": [
+        "FW",
+        "IDS",
+        "NAT"
+      ],
+      "resources": {
+        "cpu": 10.0,
+        "mem": 10.0,
+        "storage": 10.0,
+        "delay": 0.2,
+        "bandwidth": 1120000.0
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "SAP4-SingleBiSBiS@SSSA-link",
+      "src_node": "SAP4",
+      "src_port": "port-SAP4",
+      "dst_node": "SingleBiSBiS@SSSA",
+      "dst_port": "port-SAP4"
+    },
+    {
+      "id": "SAP4-SingleBiSBiS@SSSA-link-back",
+      "src_node": "SingleBiSBiS@SSSA",
+      "src_port": "port-SAP4",
+      "dst_node": "SAP4",
+      "dst_port": "port-SAP4",
+      "backward": true
+    },
+    {
+      "id": "SAP1-SingleBiSBiS@SSSA-link-back",
+      "src_node": "SingleBiSBiS@SSSA",
+      "src_port": "port-SAP1",
+      "dst_node": "SAP1",
+      "dst_port": "port-SAP1",
+      "backward": true
+    },
+    {
+      "id": "SAP2-SingleBiSBiS@SSSA-link-back",
+      "src_node": "SingleBiSBiS@SSSA",
+      "src_port": "port-SAP2",
+      "dst_node": "SAP2",
+      "dst_port": "port-SAP2",
+      "backward": true
+    },
+    {
+      "id": "SAP3-SingleBiSBiS@SSSA-link-back",
+      "src_node": "SingleBiSBiS@SSSA",
+      "src_port": "port-SAP3",
+      "dst_node": "SAP3",
+      "dst_port": "port-SAP3",
+      "backward": true
+    },
+    {
+      "id": "SAP1-SingleBiSBiS@SSSA-link",
+      "src_node": "SAP1",
+      "src_port": "port-SAP1",
+      "dst_node": "SingleBiSBiS@SSSA",
+      "dst_port": "port-SAP1"
+    },
+    {
+      "id": "SAP2-SingleBiSBiS@SSSA-link",
+      "src_node": "SAP2",
+      "src_port": "port-SAP2",
+      "dst_node": "SingleBiSBiS@SSSA",
+      "dst_port": "port-SAP2"
+    },
+    {
+      "id": "SAP3-SingleBiSBiS@SSSA-link",
+      "src_node": "SAP3",
+      "src_port": "port-SAP3",
+      "dst_node": "SingleBiSBiS@SSSA",
+      "dst_port": "port-SAP3"
+    }
+  ]
+}

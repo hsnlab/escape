@@ -1632,6 +1632,40 @@ def generate_mn_topo_etsi ():
   return nffg
 
 
+def generate_sssa_req ():
+  nffg = NFFG(id="SSSAreq1", name="SSSA connectivity request SAP1<->2")
+  sap1 = nffg.add_sap(id="SAP1", name="SAP1")
+  sap2 = nffg.add_sap(id="SAP2", name="SAP2")
+  nffg.add_sglink(src_port=sap1.add_port("port-SAP1"),
+                  dst_port=sap2.add_port("port-SAP2"))
+  nffg.add_sglink(src_port=sap2.ports["port-SAP2"],
+                  dst_port=sap1.ports["port-SAP1"])
+  return nffg
+
+
+def generate_sssa_req2 ():
+  nffg = NFFG(id="SSSAreq1", name="SSSA connectivity request SAP1<->2")
+  sap1 = nffg.add_sap(id="SAP1", name="SAP1")
+  sap2 = nffg.add_sap(id="SAP2", name="SAP2")
+  nffg.add_sglink(src_port=sap1.add_port("port-SAP1"),
+                  dst_port=sap2.add_port("port-SAP2"),
+                  id="sg1")
+  nffg.add_sglink(src_port=sap2.ports["port-SAP2"],
+                  dst_port=sap1.ports["port-SAP1"],
+                  id="sg2")
+  nffg.add_req(src_port=sap1.ports["port-SAP1"],
+               dst_port=sap2.ports["port-SAP2"],
+               sg_path=["sg1"],
+               delay=1.0,
+               bandwidth=1000)
+  nffg.add_req(src_port=sap2.ports["port-SAP2"],
+               dst_port=sap1.ports["port-SAP1"],
+               sg_path=["sg2"],
+               delay=1.0,
+               bandwidth=1000)
+  return nffg
+
+
 def generate_ietf_req ():
   nffg = NFFG(id="SG-etsi-req", name="SG-etsi-req")
   sap84 = nffg.add_sap(id="SAP84", name="SAP84")
@@ -1704,6 +1738,7 @@ if __name__ == "__main__":
   # nffg = generate_etsi_req_robot1_simple()
   # nffg = generate_mn_topo_etsi()
   # nffg = generate_req_verification()
+  # nffg = generate_sssa_req1()
   nffg = generate_ietf_req()
 
   # pprint(nffg.network.__dict__)

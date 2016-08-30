@@ -1,0 +1,63 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<nodes>
+		<node>
+			<id>0000000000000001</id>
+			<flowtable>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry11</id>
+					<name>sg_hop:11</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=1]</port>
+					<match>dl_tag=0x000b</match>
+					<out>../../../ports/port[id=5]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry12</id>
+					<name>sg_hop:12</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=5]</port>
+					<match>dl_dst=00:00:00:00:00:01;dl_tag=0x000c</match>
+					<out>../../../ports/port[id=1]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry21</id>
+					<name>sg_hop:21</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=1]</port>
+					<match>dl_tag=0x0015</match>
+					<out>../../../ports/port[id=5]</out>
+					<resources>
+						<bandwidth>0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry22</id>
+					<name>sg_hop:22</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=5]</port>
+					<match>dl_dst=00:00:00:00:00:02;dl_tag=0x0016</match>
+					<out>../../../ports/port[id=1]</out>
+					<resources>
+						<bandwidth>0</bandwidth>
+					</resources>
+				</flowentry>
+			</flowtable>
+		</node>
+	</nodes>
+	<metadata operation="create">
+		<key>REQ:5</key>
+		<value>{'snode':'SAP14','sg_path':[11],'delay':'0.000','bw':'0.000','dport':5,'sport':1,'dnode':'SAP24'}</value>
+	</metadata>
+	<metadata operation="create">
+		<key>REQ:6</key>
+		<value>{'snode':'SAP14','sg_path':[11],'delay':'0.000','bw':'0.000','dport':5,'sport':1,'dnode':'SAP24'}</value>
+	</metadata>
+	<version>2016-02-24; compiled at 2016-03-18  19:56:13</version>
+</virtualizer>

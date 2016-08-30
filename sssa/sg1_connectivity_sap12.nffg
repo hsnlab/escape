@@ -1,0 +1,43 @@
+{
+  "parameters": {
+    "id": "SSSAreq1",
+    "name": "SSSA connectivity request SAP1<->2",
+    "version": "1.0"
+  },
+  "node_saps": [
+    {
+      "id": "SAP1",
+      "name": "SAP1",
+      "ports": [
+        {
+          "id": "port-SAP1"
+        }
+      ]
+    },
+    {
+      "id": "SAP2",
+      "name": "SAP2",
+      "ports": [
+        {
+          "id": "port-SAP2"
+        }
+      ]
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": "565f4fec-42ac-11e6-854c-645106b16e7d",
+      "src_node": "SAP1",
+      "src_port": "port-SAP1",
+      "dst_node": "SAP2",
+      "dst_port": "port-SAP2"
+    },
+    {
+      "id": "565f4fed-42ac-11e6-854c-645106b16e7d",
+      "src_node": "SAP2",
+      "src_port": "port-SAP2",
+      "dst_node": "SAP1",
+      "dst_port": "port-SAP1"
+    }
+  ]
+}
