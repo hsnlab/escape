@@ -1816,12 +1816,14 @@ class NFFGToolBox(object):
     sg_hop_info = NFFGToolBox.retrieve_all_SGHops(nffg=nffg)
     import pprint
     log.debug("Detected SG hop info:\n%s" % pprint.pformat(sg_hop_info))
+    log.debug("Recreate flowrules...")
     for key, value in sg_hop_info.iteritems():
       sg_src_node = key[0]
       sg_src_port = value[0].id
       sg_dst_node = key[1]
       sg_dst_port = value[1].id
       fr_bw = value[3]
+      flowclass = value[2]
       fr_delay = value[4]
       fr_hop = key[2]
       sbb_src_port = [l.dst for u, v, l in
@@ -1857,6 +1859,17 @@ class NFFGToolBox(object):
                                      bandwidth=fr_bw, delay=fr_delay,
                                      hop_id=fr_hop, id=fr_hop)
       log.debug("Added flowrule: %s" % fr)
+    log.debug("Recreate SG hops...")
+    for key, value in sg_hop_info.iteritems():
+      hop_id = key[2]
+      sg_src_port = value[0]
+      sg_dst_port = value[1]
+      hop_fc = value[2]
+      hop_bw = value[3]
+      hop_delay = value[4]
+      sg = sbb.add_sglink(src_port=sg_src_port, dst_port=sg_dst_port, id=hop_id,
+                          flowclass=hop_fc, delay=hop_delay, bandwidth=hop_bw)
+      log.debug("Added SG hop: %s" % sg)
     log.debug("SingleBiSBiS generation has been finished!")
     # Return with Single BiSBiS infra
     return sbb
@@ -2071,7 +2084,7 @@ class NFFGToolBox(object):
 
   @classmethod
   def update_status_by_dov (cls, nffg, dov,
-                             log=logging.getLogger("UPDATE-DOV-STATUS")):
+                            log=logging.getLogger("UPDATE-DOV-STATUS")):
     """
     Update status of the elements of the given ``base`` nffg  based on the
     given ``updated`` nffg.
