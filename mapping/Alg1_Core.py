@@ -1093,7 +1093,8 @@ class CoreAlgorithm(object):
       elif cnt[0] < cnt[1]:
         # by this time this shouldn't happen, cuz those edges were removed.
         raise uet.InternalAlgorithmException("After delete request preprocessing"
-                  ", VNF %s has more edges than in the substrate graph!"%vnf)
+                  ", VNF %s has more edges than in the substrate graph! Are "
+                  "there any SGHops in the resource graph?"%vnf)
       else:
         # add it to the output, this VNF can be deleted
         self.log.debug("Deleting VNF %s and all of its connected SGHops from "

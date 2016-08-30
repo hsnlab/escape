@@ -512,7 +512,7 @@ class GraphPreprocessorClass(object):
     # Simply remove the infra nodes (The Dynamic and Static links go with them)
     for infra in [i for i in self.req_graph.infras]:
       self.log.warn("Infra node %s found in DEL request graph! Removing with all"
-                    " connected edges!")
+                    " connected edges!"%infra.id)
       self.req_graph.del_node(infra)
 
     return self.req_graph
@@ -650,9 +650,15 @@ class GraphPreprocessorClass(object):
     # Placement criteria is a list of physical nodes, where the VNF
     # can be placed. It can be also specified by the upper layer, and the
     # preprocessing procedure
-    for vnf in self.req_graph.network.nodes_iter():
-      if not hasattr(self.req_graph.network.node[vnf], 'placement_criteria'):
-        setattr(self.req_graph.network.node[vnf], 'placement_criteria', [])
+    for vnf, vnfobj in self.req_graph.network.nodes_iter(data=True):
+      if not hasattr(vnfobj, 'placement_criteria'):
+        setattr(vnfobj, 'placement_criteria', [])
+      if vnfobj.type == 'NF':
+        if reduce(lambda a, b: a or b, (vnfobj.resources[attr] is None \
+                  for attr in ['cpu', 'mem', 'storage', 'bandwidth'])):
+          raise uet.BadInputException("VNF resource requirements should always"
+                                      " be given", "One of %s`s components is"
+                                      " None" % vnf)
 
     for chain in self.chains:
       node_path = chain['chain']

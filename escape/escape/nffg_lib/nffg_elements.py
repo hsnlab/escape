@@ -917,7 +917,7 @@ class NodeResource(Persistable):
     """
     attrlist = ['cpu', 'mem', 'storage', 'bandwidth']  # delay excepted!
     if reduce(lambda a, b: a or b, (self[attr] is None for attr in attrlist)):
-      raise RuntimeError("Node resource components should always be given",
+      raise RuntimeError("Node resource components should always be given"
                          "One of %s`s components is None" % str(self))
     if not reduce(lambda a, b: a and b,
                   (-1e-6 <= self[attr] - substrahend[attr] <= maximal[

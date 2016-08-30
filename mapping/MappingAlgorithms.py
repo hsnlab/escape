@@ -250,10 +250,11 @@ def MAP (request, network, enable_shortest_path_cache=False,
   # print mappedNFFG.dump()
   # The printed format is vnfs: (vnf_id, node_id) and links: MultiDiGraph, edge
   # data is the paths (with link ID-s) where the request links are mapped.
-  helper.log.info("The VNF mappings are (vnf_id, node_id): \n%s" % pformat(
-     alg.manager.vnf_mapping))
-  helper.log.debug("The link mappings are: \n%s" % pformat(
-     alg.manager.link_mapping.edges(data=True, keys=True)))
+  if not alg.mode == NFFG.MODE_DEL:
+    helper.log.info("The VNF mappings are (vnf_id, node_id): \n%s" % pformat(
+      alg.manager.vnf_mapping))
+    helper.log.debug("The link mappings are: \n%s" % pformat(
+      alg.manager.link_mapping.edges(data=True, keys=True)))
 
   if return_dist:
     return mappedNFFG, alg.preprocessor.shortest_paths
@@ -483,12 +484,12 @@ if __name__ == '__main__':
     # print net.dump()
     # req = _testRequestForBacktrack()
     # net = _testNetworkForBacktrack()
-    with open('../examples/operation-add-req1.nffg', "r") as f:
+    with open('untracked/deladd-bug1-req.nffg', "r") as f:
       req = NFFG.parse(f.read())
-    with open('../examples/operations-mapped-topo1.nffg', "r") as g:
+    with open('untracked/deladd-bug1-net.nffg', "r") as g:
       net = NFFG.parse(g.read())
       # net.duplicate_static_links()
-    mapped = MAP(req, net, mode=NFFG.MODE_ADD)
+    mapped = MAP(req, net, mode=NFFG.MODE_DEL)
     print mapped.dump()
   except uet.UnifyException as ue:
     print ue, ue.msg

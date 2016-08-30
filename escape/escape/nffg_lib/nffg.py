@@ -2253,9 +2253,16 @@ class NFFGToolBox(object):
     add_nffg.mode = NFFG.MODE_ADD
     del_nffg = copy.deepcopy(old)
     del_nffg.mode = NFFG.MODE_DEL
-
-    return NFFGToolBox.subtract_nffg(add_nffg, old), \
-           NFFGToolBox.subtract_nffg(del_nffg, new)
+    add_nffg = NFFGToolBox.subtract_nffg(add_nffg, old)
+    del_nffg = NFFGToolBox.subtract_nffg(del_nffg, new)
+    ##WARNING: we always remove the EdgeReqs from the delete NFFG, this doesn't
+    # have a defined meaning so far.
+    for req in [r for r in del_nffg.reqs]:
+      del_nffg.del_edge(r.src, r.dst, r.id)
+    for n, d in [t for t in del_nffg.network.nodes(data=True)]:
+      if del_nffg.network.out_degree(n) + del_nffg.network.in_degree(n) == 0:
+        del_nffg.del_node(d)
+    return add_nffg, del_nffg
 
   ##############################################################################
   # --------------------- Mapping-related NFFG operations ----------------------
