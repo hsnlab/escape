@@ -733,6 +733,15 @@ class NFFG(AbstractNFFG):
     # Dump
     return nffg.dump()
 
+  def dump_to_json (self):
+    """
+    Return the NF-FG structure in JSON compatible format.
+
+    :return: NFFG as a valid JSON
+    :rtype: dict
+    """
+    return json.loads(self.dump())
+
   @classmethod
   def parse (cls, raw_data):
     """
