@@ -1096,9 +1096,11 @@ class CoreAlgorithm(object):
                   ", VNF %s has more edges than in the substrate graph! Are "
                   "there any SGHops in the resource graph?"%vnf)
       else:
-        # add it to the output, this VNF can be deleted
         self.log.debug("Deleting VNF %s and all of its connected SGHops from "
                        "output NFFG"%vnf)
+        hosting_infra = next(nffg.infra_neighbors(vnf))
+        for dyn_link in nffg.network[vnf][hosting_infra.id].itervalues():
+          hosting_infra.del_port(dyn_link.dst.id)
         nffg.del_node(vnf)
 
     for i,j,k,d in self.req.edges_iter(data=True, keys=True):
@@ -1106,6 +1108,7 @@ class CoreAlgorithm(object):
       nffg.del_edge(d.src, d.dst, d.id)
       self.log.debug("SGHop %s with its flowrules are deleted from output NFFG"
                      %d.id)
+      # Maybe the VNF ports should be deleted too?
 
     return nffg
 
