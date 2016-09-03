@@ -4,10 +4,10 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.adapt.adaptation.ComponentConfigurator
-   escape.adapt.adaptation.ControllerAdapter
-   escape.adapt.adaptation.GlobalResourceManager
+   escape.adapt.adaptation
    :parts: 1
 
 :any:`ComponentConfigurator` creates, initializes, stores and manages different

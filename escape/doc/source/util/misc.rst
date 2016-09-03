@@ -3,9 +3,10 @@
 
 Contains miscellaneous helper functions.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.util.misc.SimpleStandaloneHelper
-   escape.util.misc.Singleton
+   escape.util.misc
    :parts: 1
 
 :any:`schedule_as_coop_task()` helps invoking a function in POX's cooperative

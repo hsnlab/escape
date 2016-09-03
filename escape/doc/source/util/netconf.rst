@@ -11,8 +11,10 @@ Requirements:
       python-libxml2 python-libxslt1 libxml2 libxslt1-dev
     $ sudo pip install ncclient
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.util.netconf.AbstractNETCONFAdapter
+   escape.util.netconf
    :parts: 1
 
 :any:`AbstractNETCONFAdapter` contains the main function for communication
