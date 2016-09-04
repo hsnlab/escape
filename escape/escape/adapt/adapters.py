@@ -1429,11 +1429,24 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
     :return:
     """
-    pass
+    data = self.send_no_error(self.GET, 'virtualizer')
+    if data:
+      # TODO implement
+      print data
+      pass
+    return
 
   def check_domain_reachable (self):
+    # TODO implement
     return True
 
   def get_topology_resource (self):
+    # TODO implement
+    self.request_bgp_ls_virtualizer()
     nffg = NFFG()
     return nffg
+
+  def check_topology_changed(self):
+    # TODO implement
+    super(BGPLSRESTAdapter, self).check_topology_changed()
+

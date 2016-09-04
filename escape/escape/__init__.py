@@ -134,7 +134,7 @@ cfg = {
         # "OPENSTACK",
         # "UN",
         # "DOCKER",
-        "BGP-LS-SPEAKER"
+        # "BGP-LS-SPEAKER"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
@@ -299,7 +299,7 @@ cfg = {
                 "module": "escape.adapt.adapters",
                 "class": "BGPLSRESTAdapter",
                 "url": "http://localhost:8088",
-                "prefix": "restconf/data/virtualizer/"
+                "prefix": "restconf/data"
               }
           }
         }

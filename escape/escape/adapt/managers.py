@@ -27,10 +27,6 @@ from escape.util.domain import *
 from pox.lib.util import dpid_to_str
 
 
-class ExternalDomainDetectedEvent(object):
-  pass
-
-
 class GetLocalDomainViewEvent(object):
   pass
 
@@ -1247,8 +1243,7 @@ class ExternalDomainManager(AbstractRemoteDomainManager):
   a.k.a. the DoV through events.
   """
   # Events raised by this class
-  _eventMixin_events = {DomainChangedEvent, ExternalDomainDetectedEvent,
-                        GetLocalDomainViewEvent}
+  _eventMixin_events = {DomainChangedEvent, GetLocalDomainViewEvent}
   # DomainManager name
   name = "EXTERNAL"
   # Default domain name

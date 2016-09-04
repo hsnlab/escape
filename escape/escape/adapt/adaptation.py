@@ -539,7 +539,8 @@ class ControllerAdapter(object):
     if event.source.IS_EXTERNAL_MANAGER:
       log.debug("Received DomainChanged event from ExternalDomainManager! "
                 "Skip implicit domain update from domain: %s" % event.domain)
-      return
+      # Handle external domains
+      return self._manage_external_domain_changes(event)
     log.debug("Received DomainChange event from domain: %s, cause: %s"
               % (event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     # If new domain detected
@@ -553,6 +554,29 @@ class ControllerAdapter(object):
     # If domain has got down
     elif event.cause == DomainChangedEvent.TYPE.DOMAIN_DOWN:
       self.DoVManager.remove_domain(domain=event.domain)
+
+  def _handle_GetLocalDomainViewEvent (self, event):
+    """
+    Handle GetLocalDomainViewEvent and set the domain view for the external
+    DomainManager.
+
+    :param event: event object
+    :type event: :any:`DomainChangedEvent`
+    :return: None
+    """
+    # TODO implement
+    pass
+
+  def _manage_external_domain_changes (self, event):
+    """
+    Handle DomainChangedEvents came from asn ExternalDomainManager.
+
+    :param event: event object
+    :type event: :any:`DomainChangedEvent`
+    :return: None
+    """
+    # TODO implement
+    pass
 
 
 class GlobalResourceManager(object):
