@@ -132,8 +132,9 @@ cfg = {
         # "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
-        # "UN"
-        # "DOCKER"
+        # "UN",
+        # "DOCKER",
+        "BGP-LS-SPEAKER"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
@@ -270,6 +271,7 @@ cfg = {
               }
           }
         },
+      # Docker DomainManager is not supported yet!
       "DOCKER":
         {
           "module": "escape.adapt.managers",
@@ -282,6 +284,22 @@ cfg = {
                 "module": "escape.adapt.adapters",
                 "class": "UnifyRESTAdapter",
                 "url": "http://192.168.0.121:8888"
+              }
+          }
+        },
+      "BGP-LS-SPEAKER":
+        {
+          "module": "escape.adapt.managers",
+          "class": "BGPLSBasedDomainManager",
+          "poll": False,
+          "diff": False,
+          "adapters": {
+            "REMOTE":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "BGPLSRESTAdapter",
+                "url": "http://localhost:8088",
+                "prefix": "restconf/data/virtualizer/"
               }
           }
         }

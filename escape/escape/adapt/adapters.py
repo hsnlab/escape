@@ -97,7 +97,6 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
       self.SAP_IF_PREFIX = sap_if_prefix
     log.debug("Set inter-domain SAP prefix: %s" % self.SAP_IF_PREFIX)
 
-
   def check_domain_reachable (self):
     """
     Checker function for domain polling.
@@ -1393,3 +1392,48 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def check_topology_changed (self):
     raise NotImplementedError("Not implemented yet!")
+
+
+class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
+                       BGPLSSpeakerAPI):
+  """
+  Implement the necessary interface to advertise managed domains and discover
+  external domains through BGP-LS using the REST-API of BGP-LS Speaker.
+  """
+  # Set custom header
+  custom_headers = {
+    'User-Agent': "ESCAPE/" + __version__,
+    # XML-based Virtualizer format
+    'Accept': "application/json"
+  }
+  # Adapter name used in CONFIG and ControllerAdapter class
+  name = "BGP-LS-REST"
+  # type of the Adapter class - use this name for searching Adapter config
+  type = AbstractESCAPEAdapter.TYPE_REMOTE
+
+  def __init__ (self, url, prefix="", **kwargs):
+    """
+    Init.
+
+    :param url: url of RESTful API
+    :type url: str
+    """
+    AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
+    AbstractESCAPEAdapter.__init__(self, **kwargs)
+    log.debug("Init %s - type: %s, domain: %s, URL: %s" % (
+      self.__class__.__name__, self.type, self.domain_name, url))
+
+  def request_bgp_ls_virtualizer (self):
+    """
+    Request the external domain description from the BGP-LS client.
+
+    :return:
+    """
+    pass
+
+  def check_domain_reachable (self):
+    return True
+
+  def get_topology_resource (self):
+    nffg = NFFG()
+    return nffg

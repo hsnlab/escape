@@ -15,6 +15,7 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
 """
+import pprint
 import weakref
 
 import escape.adapt.managers as mgrs
@@ -245,6 +246,11 @@ class ComponentConfigurator(object):
         log.error("Configuration of '%s' is missing. Skip initialization!" %
                   component_name)
         raise ConfigurationError("Missing component configuration!")
+    except TypeError as e:
+      if "takes at least" in e.message:
+        log.error("Mandatory configuration field is missing from:\n%s" %
+                  pprint.pformat(params))
+      raise
     except AttributeError:
       log.error("%s is not found. Skip component initialization!" %
                 component_name)

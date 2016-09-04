@@ -98,6 +98,8 @@ class AbstractDomainManager(EventMixin):
   DEFAULT_DOMAIN_NAME = "UNDEFINED"
   # Signal that the Manager class is for the Local Mininet-based topology
   IS_LOCAL_MANAGER = False
+  # Signal that the Manager class manages external domains
+  IS_EXTERNAL_MANAGER = False
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, adapters=None, **kwargs):
     """
@@ -264,7 +266,7 @@ class AbstractDomainManager(EventMixin):
       log.info("Requesting resource information from %s domain..." %
                self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
-      if topo_nffg:
+      if topo_nffg is not None:
         log.debug("Save detected topology: %s..." % topo_nffg)
         # Update the received new topo
         self.internal_topo = topo_nffg
@@ -993,6 +995,7 @@ class OpenStackAPI(DefaultUnifyDomainAPI):
 
   Follows the MixIn design pattern approach to support OpenStack functionality.
   """
+  pass
 
 
 class UniversalNodeAPI(DefaultUnifyDomainAPI):
@@ -1004,6 +1007,7 @@ class UniversalNodeAPI(DefaultUnifyDomainAPI):
 
   Follows the MixIn design pattern approach to support UN functionality.
   """
+  pass
 
 
 class RemoteESCAPEv2API(DefaultUnifyDomainAPI):
@@ -1013,6 +1017,18 @@ class RemoteESCAPEv2API(DefaultUnifyDomainAPI):
   Follows the MixIn design pattern approach to support remote ESCAPEv2
   functionality.
   """
+  pass
+
+
+class BGPLSSpeakerAPI(object):
+  """
+  Define interface for managing external domains using REST-API of
+  BGP-LS-based Speaker client.
+
+  Follows the MixIn design pattern approach to support external discovery
+  functionality.
+  """
+  pass
 
 
 class AbstractRESTAdapter(Session):
@@ -1096,8 +1112,11 @@ class AbstractRESTAdapter(Session):
         # if given body is an NFFG
         body = body.dump()
         kwargs['headers']['Content-Type'] = "application/json"
-      elif isinstance(body, basestring) and body.startswith("<?xml version="):
-        kwargs['headers']['Content-Type'] = "application/xml"
+      elif isinstance(body, basestring):
+        if body.startswith("{"):
+          kwargs['headers']['Content-Type'] = "application/json"
+        elif body.startswith("<?xml"):
+          kwargs['headers']['Content-Type'] = "application/xml"
     # Setup parameters - URL
     if url is not None:
       if not url.startswith('http'):

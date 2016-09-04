@@ -27,6 +27,14 @@ from escape.util.domain import *
 from pox.lib.util import dpid_to_str
 
 
+class ExternalDomainDetectedEvent(object):
+  pass
+
+
+class GetLocalDomainViewEvent(object):
+  pass
+
+
 class InternalDomainManager(AbstractDomainManager):
   """
   Manager class to handle communication with internally emulated network.
@@ -1091,8 +1099,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     Init.
     """
-    log.debug(
-      "Create UnifyDomainManager with domain name: %s" % domain_name)
+    log.debug("Create UnifyDomainManager with domain name: %s" % domain_name)
     super(UnifyDomainManager, self).__init__(domain_name=domain_name, *args,
                                              **kwargs)
 
@@ -1107,8 +1114,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :return: None
     """
     super(UnifyDomainManager, self).init(configurator, **kwargs)
-    log.info(
-      "DomainManager for %s domain has been initialized!" % self.domain_name)
+    log.info("DomainManager for %s domain has been initialized!" %
+             self.domain_name)
 
   def initiate_adapters (self, configurator):
     """
@@ -1226,3 +1233,137 @@ class UniversalNodeDomainManager(UnifyDomainManager):
       "Create UniversalNodeDomainManager wrapper for domain: %s" % domain_name)
     super(UniversalNodeDomainManager, self).__init__(domain_name=domain_name,
                                                      *args, **kwargs)
+
+
+class ExternalDomainManager(AbstractRemoteDomainManager):
+  """
+  Main Abstract class for handling external domains.
+
+  This base class gives the capability of detecting external domains through
+  various ways and initiate dedicated DomainManagers to that domains on-the-fly.
+
+  This class has also the special roles of accessing/notifying the container
+  class, a.k.a. the ComponentConfigurator and the global domain view,
+  a.k.a. the DoV through events.
+  """
+  # Events raised by this class
+  _eventMixin_events = {DomainChangedEvent, ExternalDomainDetectedEvent,
+                        GetLocalDomainViewEvent}
+  # DomainManager name
+  name = "EXTERNAL"
+  # Default domain name
+  DEFAULT_DOMAIN_NAME = "EXTERNAL"
+  # Set External Manager status
+  IS_EXTERNAL_MANAGER = True
+
+  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
+    """
+    Init.
+    """
+    super(ExternalDomainManager, self).__init__(domain_name=domain_name, *args,
+                                                **kwargs)
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize the ExternalDomainManager.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :param kwargs: optional parameters
+    :type kwargs: dict
+    :return: None
+    """
+    super(ExternalDomainManager, self).init(configurator=configurator, **kwargs)
+
+  def initiate_adapters (self, configurator):
+    """
+    Initiate Adapters for DomainManager.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :return: None
+    """
+    raise NotImplementedError(
+      "Managers must override this function to initiate Adapters!")
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(ExternalDomainManager, self).finit()
+
+  def clear_domain (self):
+    """
+    External DomainManager should not receive cleanup NFFGs.
+    Return with success cleanup result by default for avoiding running errors.
+
+    :return: cleanup success
+    :rtype: bool
+    """
+    log.warning("External DomainManager: %s received cleanup call! "
+                "Skip processing..." % self.name)
+    return True
+
+  def install_nffg (self, nffg_part):
+    """
+    External DomainManager should not receive install NFFGs.
+    Return with success install result by default for avoiding running errors.
+
+    :return: installation success
+    :rtype: bool
+    """
+    log.warning("External DomainManager: %s received install call! "
+                "Skip processing..." % self.name)
+    return True
+
+
+class BGPLSBasedDomainManager(ExternalDomainManager):
+  """
+  External DomainManager using BGP-LS Speaker to detect external domains.
+  """
+  # DomainManager name
+  name = "BGP-LS-SPEAKER"
+  # Default domain name
+  DEFAULT_DOMAIN_NAME = "EXTERNAL"
+
+  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
+    """
+    Init.
+    """
+    log.debug("Create BGP-LS-based ExternalDomainManager with domain name: %s" %
+              domain_name)
+    super(BGPLSBasedDomainManager, self).__init__(domain_name=domain_name,
+                                                  *args, **kwargs)
+
+  def init (self, configurator, **kwargs):
+    """
+
+    :param configurator:
+    :param kwargs:
+    :return:
+    """
+    super(BGPLSBasedDomainManager, self).init(configurator, **kwargs)
+    log.debug("BGP-LS-based ExternalDomainManager has been initialized!")
+
+  def initiate_adapters (self, configurator):
+    """
+    Init Adapters.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :return: None
+    """
+    self.topoAdapter = configurator.load_component(
+      component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
+      parent=self._adapters_cfg)
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(BGPLSBasedDomainManager, self).finit()
+    self.topoAdapter.finit()
