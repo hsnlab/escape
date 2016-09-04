@@ -536,6 +536,10 @@ class ControllerAdapter(object):
     :type event: :any:`DomainChangedEvent`
     :return: None
     """
+    if event.source.IS_EXTERNAL_MANAGER:
+      log.debug("Received DomainChanged event from ExternalDomainManager! "
+                "Skip implicit domain update from domain: %s" % event.domain)
+      return
     log.debug("Received DomainChange event from domain: %s, cause: %s"
               % (event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     # If new domain detected
