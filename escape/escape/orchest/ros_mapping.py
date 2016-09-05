@@ -57,7 +57,10 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       return
     try:
       mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
-      if graph.mode:
+      if 'mode' in mapper_params:
+        log.debug("Setup mapping mode from configuration: %s" %
+                  mapper_params['mode'])
+      elif graph.mode:
         mapper_params['mode'] = graph.mode
         log.debug("Setup mapping mode based on request: %s" % graph.mode)
       mapped_nffg = MAP(request=graph.copy(),

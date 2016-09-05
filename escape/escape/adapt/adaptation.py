@@ -24,7 +24,9 @@ from escape.adapt import log as log, LAYER_NAME
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.util.config import ConfigurationError
-from escape.util.domain import DomainChangedEvent, AbstractRemoteDomainManager
+from escape.util.domain import DomainChangedEvent, \
+  AbstractRemoteDomainManager, \
+  AbstractDomainManager
 from escape.util.misc import notify_remote_visualizer, VERBOSE
 
 
@@ -536,7 +538,8 @@ class ControllerAdapter(object):
     :type event: :any:`DomainChangedEvent`
     :return: None
     """
-    if event.source.IS_EXTERNAL_MANAGER:
+    if isinstance(event.source, AbstractDomainManager) \
+       and event.source.IS_EXTERNAL_MANAGER:
       log.debug("Received DomainChanged event from ExternalDomainManager! "
                 "Skip implicit domain update from domain: %s" % event.domain)
       # Handle external domains
