@@ -46,7 +46,7 @@ cfg = {
           "module": "escape.service.sas_mapping",
           "class": "ServiceGraphMapper",
           "mapping-config": {
-            "mode": "REMAP"
+            # "mode": "REMAP"
           },
           "mapping-enabled": True
         },
@@ -82,7 +82,7 @@ cfg = {
           "module": "escape.orchest.ros_mapping",
           "class": "ResourceOrchestrationMapper",
           "mapping-config": {
-            "mode": "REMAP"
+            # "mode": "REMAP"
           },
           "mapping-enabled": True
         },
