@@ -15,6 +15,7 @@
 Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
 """
+import pprint
 import weakref
 
 import escape.adapt.managers as mgrs
@@ -23,7 +24,9 @@ from escape.adapt import log as log, LAYER_NAME
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.util.config import ConfigurationError
-from escape.util.domain import DomainChangedEvent, AbstractRemoteDomainManager
+from escape.util.domain import DomainChangedEvent, \
+  AbstractRemoteDomainManager, \
+  AbstractDomainManager
 from escape.util.misc import notify_remote_visualizer, VERBOSE
 
 
@@ -245,6 +248,11 @@ class ComponentConfigurator(object):
         log.error("Configuration of '%s' is missing. Skip initialization!" %
                   component_name)
         raise ConfigurationError("Missing component configuration!")
+    except TypeError as e:
+      if "takes at least" in e.message:
+        log.error("Mandatory configuration field is missing from:\n%s" %
+                  pprint.pformat(params))
+      raise
     except AttributeError:
       log.error("%s is not found. Skip component initialization!" %
                 component_name)
@@ -530,6 +538,12 @@ class ControllerAdapter(object):
     :type event: :any:`DomainChangedEvent`
     :return: None
     """
+    if isinstance(event.source, AbstractDomainManager) \
+       and event.source.IS_EXTERNAL_MANAGER:
+      log.debug("Received DomainChanged event from ExternalDomainManager! "
+                "Skip implicit domain update from domain: %s" % event.domain)
+      # Handle external domains
+      return self._manage_external_domain_changes(event)
     log.debug("Received DomainChange event from domain: %s, cause: %s"
               % (event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
     # If new domain detected
@@ -543,6 +557,29 @@ class ControllerAdapter(object):
     # If domain has got down
     elif event.cause == DomainChangedEvent.TYPE.DOMAIN_DOWN:
       self.DoVManager.remove_domain(domain=event.domain)
+
+  def _handle_GetLocalDomainViewEvent (self, event):
+    """
+    Handle GetLocalDomainViewEvent and set the domain view for the external
+    DomainManager.
+
+    :param event: event object
+    :type event: :any:`DomainChangedEvent`
+    :return: None
+    """
+    # TODO implement
+    pass
+
+  def _manage_external_domain_changes (self, event):
+    """
+    Handle DomainChangedEvents came from asn ExternalDomainManager.
+
+    :param event: event object
+    :type event: :any:`DomainChangedEvent`
+    :return: None
+    """
+    # TODO implement
+    pass
 
 
 class GlobalResourceManager(object):

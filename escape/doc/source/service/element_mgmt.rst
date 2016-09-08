@@ -3,9 +3,10 @@
 
 Contains classes relevant to element management.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.service.element_mgmt.AbstractElementManager
-   escape.service.element_mgmt.ClickManager
+   escape.service.element_mgmt
    :parts: 1
 
 :any:`AbstractElementManager` is an abstract class for element managers.

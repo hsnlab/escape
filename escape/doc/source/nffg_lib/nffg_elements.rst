@@ -3,23 +3,10 @@
 
 Element classes for NFFG based on ``nffg.yang``.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.nffg_lib.nffg_elements.NFFGModel
-   escape.nffg_lib.nffg_elements.Persistable
-   escape.nffg_lib.nffg_elements.Element
-   escape.nffg_lib.nffg_elements.PortContainer
-   escape.nffg_lib.nffg_elements.Node
-   escape.nffg_lib.nffg_elements.Link
-   escape.nffg_lib.nffg_elements.NodeResource
-   escape.nffg_lib.nffg_elements.Flowrule
-   escape.nffg_lib.nffg_elements.Port
-   escape.nffg_lib.nffg_elements.InfraPort
-   escape.nffg_lib.nffg_elements.NodeNF
-   escape.nffg_lib.nffg_elements.NodeSAP
-   escape.nffg_lib.nffg_elements.NodeInfra
-   escape.nffg_lib.nffg_elements.EdgeLink
-   escape.nffg_lib.nffg_elements.EdgeSGLink
-   escape.nffg_lib.nffg_elements.EdgeReq
+   escape.nffg_lib.nffg_elements
    :parts: 1
 
 :any:`NFFGModel` represents the main container class.

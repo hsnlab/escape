@@ -3,13 +3,10 @@
 
 Contains abstract classes for NFFG mapping.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.util.mapping.AbstractMapper
-   escape.util.mapping.AbstractMappingStrategy
-   escape.util.mapping.AbstractOrchestrator
-   escape.util.mapping.ProcessorError
-   escape.util.mapping.AbstractMappingDataProcessor
-   escape.util.mapping.ProcessorSkipper
+   escape.util.mapping
    :parts: 1
 
 :any:`AbstractMapper` is an abstract class for orchestration method which

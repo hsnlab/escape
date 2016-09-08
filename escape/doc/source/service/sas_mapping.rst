@@ -3,10 +3,10 @@
 
 Contains classes which implement SG mapping functionality.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.service.sas_mapping.DefaultServiceMappingStrategy
-   escape.service.sas_mapping.SGMappingFinishedEvent
-   escape.service.sas_mapping.ServiceGraphMapper
+   escape.service.sas_mapping
    :parts: 1
 
 :any:`DefaultServiceMappingStrategy` implements a default mapping algorithm

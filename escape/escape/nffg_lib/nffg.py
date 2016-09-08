@@ -2313,8 +2313,7 @@ class NFFGToolBox(object):
 
     :param nffg: NFFG object which contains port.
     :param port: The port which should be the source or destination.
-    :param outbound: Determines whether outbound or inbound link should be
-    found.
+    :param outbound: Determines whether outbound or inbound link should be found
     :return:
     """
     edges_func = None
