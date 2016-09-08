@@ -4,11 +4,7 @@
 Contains abstract classes for concrete layer API modules.
 
 .. inheritance-diagram::
-   escape.util.api.AbstractAPI
-   escape.util.api.RequestCache
-   escape.util.api.RESTServer
-   escape.util.api.RESTError
-   escape.util.api.AbstractRequestHandler
+   escape.util.api
    :parts: 1
 
 :any:`AbstractAPI` contains the register mechanism into the POX core for

@@ -697,31 +697,37 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if resource_nffg is None:
       log.error("Missing resource for difference calculation!")
       return
-    log.debug(
-      "Got resource view for difference calculation: %s" % resource_nffg)
-    # Calculated ADD-DELETE difference
-    log.debug("Calculate ADD - DELETE difference with mapping mode...")
-    log.log(VERBOSE, "New NFFG:\n%s" % nffg.dump())
-    log.log(VERBOSE, "Resource NFFG:\n%s" % resource_nffg.dump())
-    add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
-      old=resource_nffg, new=nffg)
-    log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
-    log.log(VERBOSE, "Calculated DEL NFFG:\n%s" % del_nffg.dump())
-    if not add_nffg.is_empty() and del_nffg.is_empty():
-      nffg = add_nffg
-      log.info("Calculated mapping mode: %s" % nffg.mode)
-    elif add_nffg.is_empty() and not del_nffg.is_empty():
-      nffg = del_nffg
-      log.info("Calculated mapping mode: %s" % nffg.mode)
-    elif not add_nffg.is_empty() and not del_nffg.is_empty():
-      log.warning("Both ADD / DEL mode is not supported currently")
-      return
+    log.debug("Got resource view for difference calculation: %s" %
+              resource_nffg)
+    # Check if mapping mode is set globally in CONFIG
+    mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
+    if 'mode' in mapper_params and mapper_params['mode'] == NFFG.MODE_REMAP:
+      log.debug("Mode: %s detected from config! Skip difference calculation..."
+                % mapper_params['mode'])
     else:
-      log.debug("Difference calculation resulted empty subNFFGs!")
-      log.info("No change has been detected in request! Skip mapping...")
-      log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
-                                self.__class__.__name__)
-      return
+      # Calculated ADD-DELETE difference
+      log.debug("Calculate ADD - DELETE difference with mapping mode...")
+      log.log(VERBOSE, "New NFFG:\n%s" % nffg.dump())
+      log.log(VERBOSE, "Resource NFFG:\n%s" % resource_nffg.dump())
+      add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
+        old=resource_nffg, new=nffg)
+      log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
+      log.log(VERBOSE, "Calculated DEL NFFG:\n%s" % del_nffg.dump())
+      if not add_nffg.is_empty() and del_nffg.is_empty():
+        nffg = add_nffg
+        log.info("Calculated mapping mode: %s" % nffg.mode)
+      elif add_nffg.is_empty() and not del_nffg.is_empty():
+        nffg = del_nffg
+        log.info("Calculated mapping mode: %s" % nffg.mode)
+      elif not add_nffg.is_empty() and not del_nffg.is_empty():
+        log.warning("Both ADD / DEL mode is not supported currently")
+        return
+      else:
+        log.debug("Difference calculation resulted empty subNFFGs!")
+        log.info("No change has been detected in request! Skip mapping...")
+        log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
+                                  self.__class__.__name__)
+        return
     # Initiate request mapping
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
     log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %

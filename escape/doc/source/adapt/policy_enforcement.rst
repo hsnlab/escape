@@ -3,10 +3,10 @@
 
 Contains functionality related to policy enforcement.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.adapt.policy_enforcement.PolicyEnforcementError
-   escape.adapt.policy_enforcement.PolicyEnforcementMetaClass
-   escape.adapt.policy_enforcement.PolicyEnforcement
+   escape.adapt.policy_enforcement
    :parts: 1
 
 :any:`PolicyEnforcementError` represents a violation during the policy

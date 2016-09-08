@@ -3,19 +3,10 @@
 
 Implement the supporting classes for domain adapters.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.util.domain.DomainChangedEvent
-   escape.util.domain.DeployEvent
-   escape.util.domain.AbstractDomainManager
-   escape.util.domain.AbstractRemoteDomainManager
-   escape.util.domain.AbstractESCAPEAdapter
-   escape.util.domain.AbstractOFControllerAdapter
-   escape.util.domain.DefaultUnifyDomainAPI
-   escape.util.domain.VNFStarterAPI
-   escape.util.domain.OpenStackAPI
-   escape.util.domain.UniversalNodeAPI
-   escape.util.domain.RemoteESCAPEv2API
-   escape.util.domain.AbstractRESTAdapter
+   escape.util.domain
    :parts: 1
 
 :any:`DomainChangedEvent` signals changes for :any:`ControllerAdapter` in

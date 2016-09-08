@@ -111,7 +111,7 @@ function install_core {
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
     sudo sh -c "echo 'deb http://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list"
 
-    sudo apt-get -y install software-properties-common
+    sudo apt-get install -y software-properties-common
 
     if [[ ! $(sudo apt-cache search openjdk-${JAVA_VERSION}-jdk) ]]; then
         info "=== Add OpenJDK repository and install Java $JAVA_VERSION ==="
@@ -126,11 +126,11 @@ function install_core {
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install Java 8 explicitly
-    sudo apt-get -y install openjdk-${JAVA_VERSION}-jdk
+    sudo apt-get install -y openjdk-${JAVA_VERSION}-jdk
     # Install Python 2.7.11 explicitly
-    sudo apt-get -y install python2.7
+    sudo apt-get install -y python2.7
     # Install dependencies
-    sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
+    sudo apt-get install -y python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
                             libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
 
     # Force cryptography package installation prior to avoid issues in 1.3.2
@@ -298,7 +298,7 @@ function install_dev {
     # sphinx for doc generation
     # graphviz for UML class diagram generation
     # texlive-latex-extra for doc generation in PDF format
-    sudo apt-get install graphviz texlive-latex-extra
+    sudo apt-get install -y graphviz texlive-latex-extra
     sudo -H pip install tornado sphinx
 }
 

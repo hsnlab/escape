@@ -3,8 +3,10 @@
 
 Contains helper classes for conversion between different NF-FG representations.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.util.conversion.NFFGConverter
+   escape.util.conversion
    :parts: 1
 
 :any:`NFFGConverter` contains conversation logic for different :any:`NFFG`

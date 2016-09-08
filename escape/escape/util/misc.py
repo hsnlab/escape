@@ -421,7 +421,7 @@ def remove_units (raw):
   :param raw: raw resource value
   :type raw: str
   :return: resource value
-  :rtype : int
+  :rtype: int
   """
   return filter(lambda x: x.isdigit(), raw)
 

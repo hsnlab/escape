@@ -3,9 +3,10 @@
 
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.orchest.ros_orchestration.ResourceOrchestrator
-   escape.orchest.ros_orchestration.NFFGManager
+   escape.orchest.ros_orchestration
    :parts: 1
 
 :any:`ResourceOrchestrator` orchestrates :any:`NFFG` mapping and centralize

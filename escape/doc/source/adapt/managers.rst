@@ -7,13 +7,10 @@ domain management.
 Uses Adapter classes for ensuring protocol-specific connections with entities in
 the particular domain.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.adapt.managers.InternalDomainManager
-   escape.adapt.managers.RemoteESCAPEDomainManager
-   escape.adapt.managers.OpenStackDomainManager
-   escape.adapt.managers.UniversalNodeDomainManager
-   escape.adapt.managers.SDNDomainManager
-   escape.adapt.managers.UnifyDomainManager
+   escape.adapt.managers
    :parts: 1
 
 :any:`InternalDomainManager` represent the top class for interacting with the

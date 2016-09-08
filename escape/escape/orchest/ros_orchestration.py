@@ -150,7 +150,7 @@ class NFFGManager(object):
 
   def get_last_request (self):
     """
-    Return with the last saved :any:`NFFG`*[]:
+    Return with the last saved :any:`NFFG`:
 
     :return: last saved NFFG
     :rtype: :any:`NFFG`
