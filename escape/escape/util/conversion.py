@@ -15,14 +15,15 @@
 Contains helper classes for conversion between different NF-FG representations.
 """
 import json
+import logging
 import string
 import sys
 
 try:
   # Import for ESCAPEv2
   from escape.nffg_lib.nffg import AbstractNFFG, NFFG
-  from escape.util.misc import VERBOSE
-except ImportError:
+  from escape.util.misc import VERBOSE, unicode_to_str, remove_units
+except (ImportError, AttributeError):
   import os, inspect
 
   for p in ("../nffg_lib/",
@@ -30,20 +31,20 @@ except ImportError:
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), p)))
   # Import for standalone running
   from nffg import AbstractNFFG, NFFG
-  from misc import VERBOSE
+  from misc import VERBOSE, unicode_to_str, remove_units
 
 try:
   # Import for ESCAPEv2
   import virtualizer as virt_lib
   from virtualizer import __version__ as V_VERSION, Virtualizer
-except ImportError:
+except (ImportError, AttributeError):
   import os, inspect
 
   sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../../../unify_virtualizer/")))
   # Import for standalone running
   import virtualizer as virt_lib
-  from virtualizer import __version__ as V_VERSION
+  from virtualizer import __version__ as V_VERSION, Virtualizer
 
 
 class NFFGConverter(object):
@@ -92,6 +93,7 @@ class NFFGConverter(object):
     self.ensure_unique_id = ensure_unique_id
     self.log = logger if logger is not None else logging.getLogger(__name__)
     self.FR_ID_GEN_STRATEGY = self.FR_ID_GEN_HOP
+    self.log.debug('Created NFFGConverter with domain name: %s' % self.domain)
 
   @classmethod
   def field_splitter (cls, type, field):
@@ -1986,7 +1988,108 @@ class NFFGConverter(object):
     return data.replace("&lt;", "<").replace("&gt;", ">")
 
 
-if __name__ == "__main__":
+class UC3MNFFGConverter():
+  """
+  Convert JSON-based UC3M format to :any:`NFFG`.
+
+  Currently the format contains limited information therefore the conversion
+  is very rudimentary.
+  """
+
+  def __init__ (self, domain=None, logger=None):
+    # Save domain name for define domain attribute in infras
+    self.domain = domain
+    self.log = logger if logger is not None else logging.getLogger(__name__)
+    self.log.debug("Created UC3MCNFFGConverter with domain name: %s" %
+                   self.domain)
+
+  def parse_from_raw (self, raw_data):
+    """
+    Convert JSON-based Virtualizer-like format to NFFG.
+
+    :param raw_data: raw data
+    :type raw_data: str
+    :return: converted NFFG
+    :rtype: :any:`NFFG`
+    """
+    try:
+      topo = json.loads(raw_data, object_hook=unicode_to_str)
+      return self.parse_from_json(data=topo)
+    except ValueError:
+      self.log.error("Received data is not valid JSON!")
+
+  def parse_from_json (self, data):
+    """
+    Convert JSON-based Virtualizer-like format to NFFG.
+
+    :param data: parsed JSON
+    :type data: dict
+    :return: converted NFFG
+    :rtype: :any:`NFFG`
+    """
+    self.log.debug("Start conversion: BGP-LS-based JSON ---> NFFG")
+    try:
+      # Create main NFFG
+      nffg = NFFG()
+      for node in data['nodes']['node']:
+        node_id = node['id']
+        res = node['resources']
+        self.log.debug('Detected node: %s' % node_id)
+        # Add Infra BiSBiS
+        infra = nffg.add_infra(id=node_id,
+                               name="ExternalNode",
+                               domain=self.domain,
+                               infra_type=NFFG.TYPE_INFRA_BISBIS,
+                               cpu=remove_units(res['cpu']),
+                               mem=remove_units(res['mem']),
+                               storage=remove_units(res['storage']))
+        # Add Infra BiSBiS metadata
+        for meta in node['metadata']:
+          self.log.debug("Add metadata to Infra node: %s" % meta)
+          infra.add_metadata(name=meta['key'], value=meta['value'])
+        # Add ports
+        for port in node['ports']['port']:
+          port_id = port['id']
+          self.log.debug("Add port to Infra node: %s" % port_id)
+          infra.add_port(id=port_id)
+          for meta in port['metadata']:
+            port.add_metadata(name=meta['key'], value=meta['value'])
+      # Add main metadata
+      for meta in data['metadata']:
+        self.log.debug("Add metadata to NFFG: %s" % meta)
+        nffg.add_metadata(name=meta['key'], value=meta['value'])
+      for link in data['links']['link']:
+        src_node, src_port = self.__parse_abs_link(link_data=link['src'])
+        dst_node, dst_port = self.__parse_abs_link(link_data=link['dst'])
+        nffg.add_link(src_port=nffg[src_node].ports[src_port],
+                      dst_port=nffg[dst_node].ports[dst_port])
+      return nffg
+    except ValueError:
+      self.log.error("Received data from BGP-LS speaker is not valid JSON!")
+    except KeyError as e:
+      self.log.exception("Missing required field from topology data: %s!" % e)
+
+  @staticmethod
+  def __parse_abs_link (link_data):
+    """
+    Parse the link ports and return the (node_id, port_id) tuple
+
+    :param link_data: link port path
+    :type link_data: str
+    :return: tuple of node, port ids
+    :rtype: tuple
+    """
+    node_id = None
+    port_id = None
+    for item in link_data.split('/'):
+      if item.startswith('node[id='):
+        node_id = item.split('=')[1].rstrip(']')
+      if item.startswith('port[id='):
+        port_id = item.split('=')[1].rstrip(']')
+    return node_id, port_id
+
+
+def test_NFFGConverter ():
   import logging
 
   logging.basicConfig(level=VERBOSE)
@@ -1994,7 +2097,6 @@ if __name__ == "__main__":
   c = NFFGConverter(domain="OPENSTACK",
                     # ensure_unique_id=True,
                     logger=log)
-
   # with open(
   # "../../../../examples/escape-mn-mapped-test.nffg") as f:
   # "../../../gui/escape-2sbb-mapped.nffg") as f:
@@ -2050,3 +2152,20 @@ if __name__ == "__main__":
   #                                        reinstall=True)
   # diff = changed.diff(new)
   # print diff.xml()
+
+
+def test_UC3MNFFGConverter ():
+  import logging
+
+  logging.basicConfig(level=VERBOSE)
+  log = logging.getLogger(__name__)
+  c = UC3MNFFGConverter(domain="BGP-LS", logger=log)
+  with open("examples/UC3M_json_example.json") as f:
+    data = f.read()
+  nffg = c.parse_from_raw(raw_data=data)
+  print nffg.dump()
+
+
+if __name__ == "__main__":
+  # test_NFFGConverter()
+  test_UC3MNFFGConverter()

@@ -294,7 +294,7 @@ cfg = {
       "BGP-LS-SPEAKER":
         {
           "module": "escape.adapt.managers",
-          "class": "BGPLSBasedDomainManager",
+          "class": "BGPLSBasedExternalDomainManager",
           "poll": False,
           "diff": False,
           "adapters": {

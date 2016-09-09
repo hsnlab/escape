@@ -1314,7 +1314,7 @@ class ExternalDomainManager(AbstractRemoteDomainManager):
     return True
 
 
-class BGPLSBasedDomainManager(ExternalDomainManager):
+class BGPLSBasedExternalDomainManager(ExternalDomainManager):
   """
   External DomainManager using BGP-LS Speaker to detect external domains.
   """
@@ -1329,8 +1329,8 @@ class BGPLSBasedDomainManager(ExternalDomainManager):
     """
     log.debug("Create BGP-LS-based ExternalDomainManager with domain name: %s" %
               domain_name)
-    super(BGPLSBasedDomainManager, self).__init__(domain_name=domain_name,
-                                                  *args, **kwargs)
+    super(BGPLSBasedExternalDomainManager, self).__init__(
+      domain_name=domain_name, *args, **kwargs)
 
   def init (self, configurator, **kwargs):
     """
@@ -1339,7 +1339,7 @@ class BGPLSBasedDomainManager(ExternalDomainManager):
     :param kwargs:
     :return:
     """
-    super(BGPLSBasedDomainManager, self).init(configurator, **kwargs)
+    super(BGPLSBasedExternalDomainManager, self).init(configurator, **kwargs)
     log.debug("BGP-LS-based ExternalDomainManager has been initialized!")
 
   def initiate_adapters (self, configurator):
@@ -1360,5 +1360,5 @@ class BGPLSBasedDomainManager(ExternalDomainManager):
 
     :return: None
     """
-    super(BGPLSBasedDomainManager, self).finit()
+    super(BGPLSBasedExternalDomainManager, self).finit()
     self.topoAdapter.finit()
