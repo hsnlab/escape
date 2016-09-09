@@ -1,0 +1,170 @@
+{
+  "links": {
+    "link": [
+      {
+        "dst": "/nodes/node[id=0.0.0.2]/ports/port[id=172.16.102.101]",
+        "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.104]"
+      }
+    ]
+  },
+  "metadata": [],
+  "nodes": {
+    "node": [
+      {
+        "id": "0.0.0.2",
+        "links": {
+          "link": [
+            {
+              "dst": "/nodes/node[id=0.0.0.2]/ports/port[id=172.16.102.102]",
+              "resources": {
+                "delay": "2"
+              },
+              "src": "/nodes/node[id=0.0.0.2]/ports/port[id=172.16.102.101]"
+            }
+          ]
+        },
+        "metadata": [
+          {
+            "key": "unify-slor",
+            "value": "http://127.0.0.1:8888/escape"
+          }
+        ],
+        "ports": {
+          "port": [
+            {
+              "id": "172.16.102.101",
+              "metadata": []
+            },
+            {
+              "id": "172.16.102.102",
+              "metadata": []
+            }
+          ]
+        },
+        "resources": {
+          "cpu": "222",
+          "mem": "222Gbyte",
+          "storage": "222Tbyte"
+        }
+      },
+      {
+        "id": "0.0.0.1",
+        "links": {
+          "link": [
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.104]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "99"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.101]"
+            },
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.101]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "99"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.104]"
+            },
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.102]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "99"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.101]"
+            },
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.101]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "99"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.102]"
+            },
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.103]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "102103"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.102]"
+            },
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.102]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "99"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.103]"
+            },
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.104]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "99"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.103]"
+            },
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.103]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "99"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.104]"
+            },
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.104]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "99"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.102]"
+            },
+            {
+              "dst": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.102]",
+              "resources": {
+                "bandwidth": "500",
+                "delay": "99"
+              },
+              "src": "/nodes/node[id=0.0.0.1]/ports/port[id=172.16.101.104]"
+            }
+          ]
+        },
+        "metadata": [
+          {
+            "key": "unify-slor",
+            "value": "http://127.0.0.1:8899/ro/os"
+          }
+        ],
+        "ports": {
+          "port": [
+            {
+              "id": "172.16.101.101",
+              "metadata": []
+            },
+            {
+              "id": "172.16.101.104",
+              "metadata": []
+            },
+            {
+              "id": "172.16.101.102",
+              "metadata": []
+            },
+            {
+              "id": "172.16.101.103",
+              "metadata": []
+            }
+          ]
+        },
+        "resources": {
+          "cpu": "100",
+          "mem": "100Gbyte",
+          "storage": "100Tbyte"
+        }
+      }
+    ]
+  }
+}
