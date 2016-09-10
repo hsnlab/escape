@@ -327,10 +327,11 @@ class ComponentConfigurator(object):
     """
     log.info("Resetting detected domains before shutdown...")
     for name, mgr in self:
-      try:
-        mgr.clear_domain()
-      except:
-        log.exception("Got exception during domain resetting!")
+      if not mgr.IS_EXTERNAL_MANAGER:
+        try:
+          mgr.clear_domain()
+        except:
+          log.exception("Got exception during domain resetting!")
 
   def stop_initiated_mgrs (self):
     """

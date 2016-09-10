@@ -1192,6 +1192,50 @@ class AbstractRESTAdapter(Session):
                   "interrupted by user!" % (self.name, self._base_url))
       return None
 
+  def send_quietly (self, method, url=None, body=None, timeout=None, **kwargs):
+    """
+    Send REST request with handling exceptions and logging only in VERBOSE mode.
+
+    :param method: HTTP method
+    :type method: str
+    :param url: valid URL or relevant part follows ``self.base_url``
+    :type url: str
+    :param body: request body
+    :type body: :any:`NFFG` or dict or bytes or str
+    :param timeout: optional timeout param can be given also here
+    :type timeout: int
+    :raises: :any:`requests.Timeout`
+    :return: raw response data
+    :rtype: str
+    """
+    try:
+      if timeout is not None:
+        kwargs['timeout'] = timeout
+      self.send_request(method, url, body, **kwargs)
+      return self._response.text if self._response is not None else None
+    except Timeout:
+      log.log(VERBOSE,
+              "Remote agent(adapter: %s, url: %s) reached timeout limit!"
+              % (self.name, self._base_url))
+      return None
+    except ConnectionError:
+      log.log(VERBOSE,
+              "Remote agent(adapter: %s, url: %s) is not reachable!"
+              % (self.name, self._base_url))
+      return None
+    except HTTPError as e:
+      log.log(VERBOSE,
+              "Remote agent(adapter: %s, url: %s) responded with an error: %s"
+              % (self.name, self._base_url, e.message))
+      return None
+    except RequestException as e:
+      log.log(VERBOSE, "Got unexpected exception: %s" % e)
+      return None
+    except KeyboardInterrupt:
+      log.log(VERBOSE, "Request to remote agent(adapter: %s, url: %s) is "
+                       "interrupted by user!" % (self.name, self._base_url))
+      return None
+
   def is_content_type (self, ctype):
     """
     Return True is the content type of the last request contains the given

@@ -2003,7 +2003,7 @@ class UC3MNFFGConverter():
     self.log.debug("Created UC3MCNFFGConverter with domain name: %s" %
                    self.domain)
 
-  def parse_from_raw (self, raw_data):
+  def parse_from_raw (self, raw_data, level=logging.DEBUG):
     """
     Convert JSON-based Virtualizer-like format to NFFG.
 
@@ -2014,27 +2014,27 @@ class UC3MNFFGConverter():
     """
     try:
       topo = json.loads(raw_data, object_hook=unicode_to_str)
-      return self.parse_from_json(data=topo)
+      return self.parse_from_json(data=topo, level=level)
     except ValueError:
       self.log.error("Received data is not valid JSON!")
 
-  def parse_from_json (self, data):
+  def parse_from_json (self, data, level=logging.DEBUG):
     """
     Convert JSON-based Virtualizer-like format to NFFG.
 
     :param data: parsed JSON
     :type data: dict
+    :param level: logging level
     :return: converted NFFG
     :rtype: :any:`NFFG`
     """
-    self.log.debug("Start conversion: BGP-LS-based JSON ---> NFFG")
     try:
       # Create main NFFG
       nffg = NFFG()
       for node in data['nodes']['node']:
         node_id = node['id']
         res = node['resources']
-        self.log.debug('Detected node: %s' % node_id)
+        self.log.log(level, 'Detected node: %s' % node_id)
         # Add Infra BiSBiS
         infra = nffg.add_infra(id=node_id,
                                name="ExternalNode",
@@ -2045,18 +2045,18 @@ class UC3MNFFGConverter():
                                storage=remove_units(res['storage']))
         # Add Infra BiSBiS metadata
         for meta in node['metadata']:
-          self.log.debug("Add metadata to Infra node: %s" % meta)
+          self.log.log(level, "Add metadata to Infra node: %s" % meta)
           infra.add_metadata(name=meta['key'], value=meta['value'])
         # Add ports
         for port in node['ports']['port']:
           port_id = port['id']
-          self.log.debug("Add port to Infra node: %s" % port_id)
+          self.log.log(level, "Add port to Infra node: %s" % port_id)
           infra.add_port(id=port_id)
           for meta in port['metadata']:
             port.add_metadata(name=meta['key'], value=meta['value'])
       # Add main metadata
       for meta in data['metadata']:
-        self.log.debug("Add metadata to NFFG: %s" % meta)
+        self.log.log(level, "Add metadata to NFFG: %s" % meta)
         nffg.add_metadata(name=meta['key'], value=meta['value'])
       for link in data['links']['link']:
         src_node, src_port = self.__parse_abs_link(link_data=link['src'])
