@@ -295,8 +295,10 @@ cfg = {
         {
           "module": "escape.adapt.managers",
           "class": "BGPLSBasedExternalDomainManager",
+          "domain_name": "BGP-LS",
+          "bgp_domain_id": "0.0.0.2",  # IP address format
+          "prototype": "EXTERNAL",  # default DomainManager for detected domains
           "poll": False,
-          "diff": False,
           "adapters": {
             "REMOTE":
               {
@@ -306,7 +308,24 @@ cfg = {
                 "prefix": "restconf/data"
               }
           }
-        }
+        },
+      # Default DomainManager class
+      "EXTERNAL":
+        {
+          "module": "escape.adapt.managers",
+          "class": "UnifyDomainManager",
+          "poll": True,
+          "diff": False,
+          "adapters": {
+            "REMOTE":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "UnifyRESTAdapter",
+                "url": None,
+                "prefix": None
+              }
+          }
+        },
     },
   "infrastructure":  # Infrastructure Layer
     {

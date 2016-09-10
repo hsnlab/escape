@@ -811,7 +811,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     try:
       log.log(VERBOSE, "Send ping request to remote agent: %s" % self._base_url)
-      return self.send_request(self.GET, 'ping')
+      return self.send_quietly(self.GET, 'ping')
     except RequestException:
       # Any exception is bad news -> return None
       return None
@@ -1268,7 +1268,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self._original_virtualizer = None
 
   def ping (self):
-    return self.send_no_error(self.GET, 'ping')
+    return self.send_quietly(self.GET, 'ping')
 
   def get_config (self, filter=None):
     data = self.send_no_error(self.POST, 'get-config')
@@ -1304,7 +1304,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
-    return self.ping()
+    return self.ping() is not None
 
   def get_topology_resource (self):
     return self.get_config()
@@ -1352,7 +1352,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self._original_virtualizer = None
 
   def ping (self):
-    return self.send_no_error(self.GET, 'ping')
+    return self.send_quietly(self.GET, 'ping')
 
   def get_config (self, filter=None):
     data = self.send_no_error(self.POST, 'get-config')
@@ -1390,7 +1390,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
-    return self.ping()
+    return self.ping() is not None
 
   def get_topology_resource (self):
     return self.get_config()
@@ -1449,7 +1449,7 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: the remote domain is detected or not
     :rtype: bool
     """
-    return self.send_no_error(self.GET, 'virtualizer') is not None
+    return self.send_quietly(self.GET, 'virtualizer') is not None
 
   def request_bgp_ls_virtualizer (self):
     """
@@ -1478,6 +1478,7 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     Return with the topology description as an :any:`NFFG`.
     """
     topo_data = self.request_bgp_ls_virtualizer()
+    log.debug("Start conversion: BGP-LS-based JSON ---> NFFG")
     nffg = self.converter.parse_from_json(data=topo_data)
     if nffg is not None:
       log.debug("Cache received topology...")
@@ -1494,8 +1495,13 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: the received topology is different from cached one
     :rtype: bool or None or :any:`NFFG`
     """
-    topo_data = self.request_bgp_ls_virtualizer()
-    nffg = self.converter.parse_from_json(data=topo_data)
+    raw_data = self.send_quietly(self.GET, 'virtualizer')
+    if raw_data is None:
+      # Probably lost connection with agent
+      log.warning("Requested network topology is missing from domain: %s!" %
+                  self.domain_name)
+      return
+    nffg = self.converter.parse_from_raw(raw_data=raw_data, level=VERBOSE)
     if self.last_topo is None:
       log.warning("Missing last received topo description!")
       return

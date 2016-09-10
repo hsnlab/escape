@@ -16,6 +16,7 @@ Contains classes relevant to the main adaptation function of the Controller
 Adaptation Sublayer
 """
 import pprint
+import urlparse
 import weakref
 
 import escape.adapt.managers as mgrs
@@ -124,6 +125,31 @@ class ComponentConfigurator(object):
     # Return with manager
     return self.__repository[name]
 
+  def register_mgr (self, name, mgr, autostart=False):
+    """
+    Initialize the given manager object and with init() call and store it in
+    the ComponentConfigurator with the given name.
+
+    :param name: name of the component, must be unique
+    :type name: str
+    :param mgr: created DomainManager object
+    :type mgr: :any:`AbstractDomainManager`
+    :param autostart: also start the DomainManager (default: False)
+    :type autostart: bool
+    :return: None
+    """
+    if self.is_started(name=name):
+      log.warning("DomainManager with name: %s has already exist! Skip init...")
+      return
+    # Call init - give self for the DomainManager to initiate the
+    # necessary DomainAdapters itself
+    mgr.init(self)
+    # Autostart if needed
+    if autostart:
+      mgr.run()
+    # Save into repository
+    self.__repository[name] = mgr
+
   def stop_mgr (self, name):
     """
     Stop and derefer a DomainManager with given name and remove from the
@@ -191,6 +217,20 @@ class ComponentConfigurator(object):
     for component in self.__repository.itervalues():
       if component.domain_name == domain_name:
         return component
+
+  def get_component_name_by_domain (self, domain_name):
+    """
+    Return with the initiated Domain Manager name configured with the given
+    domain_name.
+
+    :param domain_name: name of the domain used in :any:`NFFG` descriptions
+    :type domain_name: str
+    :return: the initiated domain Manager name
+    :rtype: str
+    """
+    for name, component in self.__repository.iteritems():
+      if component.domain_name == domain_name:
+        return name
 
   def __iter__ (self):
     """
@@ -299,7 +339,7 @@ class ComponentConfigurator(object):
           return
       log.debug("Load DomainManager based on config: %s" % mgr_name)
       # Start domain manager
-      self.start_mgr(name=mgr_name, mgr_params=mgr_cfg)
+      self.start_mgr(name=mgr_name, mgr_params=mgr_cfg, autostart=True)
 
   def load_local_domain_mgr (self):
     """
@@ -327,10 +367,11 @@ class ComponentConfigurator(object):
     """
     log.info("Resetting detected domains before shutdown...")
     for name, mgr in self:
-      try:
-        mgr.clear_domain()
-      except:
-        log.exception("Got exception during domain resetting!")
+      if not mgr.IS_EXTERNAL_MANAGER:
+        try:
+          mgr.clear_domain()
+        except:
+          log.exception("Got exception during domain resetting!")
 
   def stop_initiated_mgrs (self):
     """
@@ -540,8 +581,9 @@ class ControllerAdapter(object):
     """
     if isinstance(event.source, AbstractDomainManager) \
        and event.source.IS_EXTERNAL_MANAGER:
-      log.debug("Received DomainChanged event from ExternalDomainManager! "
-                "Skip implicit domain update from domain: %s" % event.domain)
+      log.debug("Received DomainChanged event from ExternalDomainManager with "
+                "cause: %s! Skip implicit domain update from domain: %s" %
+                (DomainChangedEvent.TYPE.reversed[event.cause], event.domain))
       # Handle external domains
       return self._manage_external_domain_changes(event)
     log.debug("Received DomainChange event from domain: %s, cause: %s"
@@ -570,16 +612,131 @@ class ControllerAdapter(object):
     # TODO implement
     pass
 
+  def remove_external_domain_managers (self, domain):
+    """
+    Shutdown adn remove ExternalDomainManager.
+
+    :param domain: domain name
+    :type domain: str
+    :return: None
+    """
+    log.warning("Connection has been lost with external domain client! "
+                "Shutdown successor DomainManagers for domain: %s..." %
+                domain)
+    # Get removable DomainManager names
+    ext_mgrs = [name for name, mgr in self.domains
+                if '@' in mgr.domain_name and
+                mgr.domain_name.endswith(domain)]
+    # Remove DomainManagers one by one
+    for mgr_name in ext_mgrs:
+      log.info("Found DomainManager: %s for ExternalDomainManager: %s" %
+               (mgr_name, domain))
+      self.domains.stop_mgr(name=mgr_name)
+    return
+
+  def get_external_domain_ids (self, domain, topo_nffg):
+    """
+    Get the IDs of nodes from the detected external topology.
+
+    :param domain: domain name
+    :type domain: str
+    :param topo_nffg: topology description
+    :type topo_nffg: :any:`NFFG`
+    :return:
+    """
+    domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
+    new_ids = {infra.id for infra in topo_nffg.infras}
+    # # Got empty topo
+    # if not new_ids:
+    #   log.debug("No remote domain has been detected!")
+    #   return
+    # # Remove oneself from domains
+    try:
+      if new_ids:
+        new_ids.remove(domain_mgr.bgp_domain_id)
+    except KeyError:
+      log.warning("Detected domains does not include own BGP ID: %s" %
+                  domain_mgr.bgp_domain_id)
+    return new_ids
+
   def _manage_external_domain_changes (self, event):
     """
-    Handle DomainChangedEvents came from asn ExternalDomainManager.
+    Handle DomainChangedEvents came from an ExternalDomainManager.
 
     :param event: event object
     :type event: :any:`DomainChangedEvent`
     :return: None
     """
-    # TODO implement
-    pass
+    # BGP-LS client is up
+    if event.cause == DomainChangedEvent.TYPE.DOMAIN_UP:
+      log.debug("Detect remote domains from external DomainManager...")
+    # New topology received from BGP-LS client
+    elif event.cause == DomainChangedEvent.TYPE.DOMAIN_CHANGED:
+      log.debug("Detect domain changes from external DomainManager...")
+    # BGP-LS client is down
+    elif event.cause == DomainChangedEvent.TYPE.DOMAIN_DOWN:
+      return self.remove_external_domain_managers(domain=event.domain)
+    topo_nffg = event.data
+    if topo_nffg is None:
+      log.warning("Topology description is missing!")
+      return
+    # Get domain Ids
+    new_ids = self.get_external_domain_ids(domain=event.domain,
+                                           topo_nffg=topo_nffg)
+    # Get the main ExternalDomainManager
+    domain_mgr = self.domains.get_component_by_domain(domain_name=event.domain)
+    # Check lost domain
+    for id in domain_mgr.managed_domain_ids - new_ids:
+      log.info("Detected domain lost from external DomainManager! "
+               "BGP id: %s" % id)
+      # Remove lost domain
+      if id in domain_mgr.managed_domain_ids:
+        domain_mgr.managed_domain_ids.remove(id)
+      else:
+        log.warning("Lost domain is missing from managed domains: %s!" %
+                    domain_mgr.managed_domain_ids)
+        # Get DomainManager name by domain name
+        ext_domain_name = "%s@%s" % (id, domain_mgr.domain_name)
+        ext_mgr_name = self.domains.get_component_name_by_domain(
+          domain_name=ext_domain_name)
+        # Stop DomainManager and remove object from register
+        self.domains.stop_mgr(name=ext_mgr_name)
+    # Check new domains
+    for id in new_ids - domain_mgr.managed_domain_ids:
+      orchestrator_url = topo_nffg[id].metadata.get('unify-slor')
+      log.info("New domain detected from external DomainManager! "
+               "BGP id: %s, Orchestrator URL: %s" % (id, orchestrator_url))
+      # Track new domain
+      domain_mgr.managed_domain_ids.add(id)
+      # Get RemoteDM config
+      mgr_cfg = CONFIG.get_component_params(component=domain_mgr.prototype)
+      if mgr_cfg is None:
+        log.warning("DomainManager: %s configurations is not found! "
+                    "Skip initialization...")
+        return
+      # Set domain name
+      mgr_cfg['domain_name'] = "%s@%s" % (id, domain_mgr.domain_name)
+      log.debug("Generated domain name: %s" % mgr_cfg['domain_name'])
+      # Set URL and prefix
+      try:
+        url = urlparse.urlsplit(orchestrator_url)
+        mgr_cfg['adapters']['REMOTE']['url'] = "http://%s" % url.netloc
+        mgr_cfg['adapters']['REMOTE']['prefix'] = url.path
+      except KeyError as e:
+        log.warning("Missing required config entry %s from "
+                    "RemoteDomainManager: %s" % (e, domain_mgr.prototype))
+      log.log(VERBOSE, "Used configuration:\n%s" % pprint.pformat(mgr_cfg))
+      log.info("Initiate DomainManager for detected external domain: %s" %
+               mgr_cfg['domain_name'])
+      # Initialize DomainManager for detected domain
+      ext_mgr = self.domains.load_component(component_name=domain_mgr.prototype,
+                                            params=mgr_cfg)
+      log.debug("Use domain name: %s for external DomainManager name!" %
+                ext_mgr.domain_name)
+      # Start the DomainManager
+      self.domains.register_mgr(name=ext_mgr.domain_name,
+                                mgr=ext_mgr,
+                                autostart=True)
 
 
 class GlobalResourceManager(object):
