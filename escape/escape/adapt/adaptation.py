@@ -218,6 +218,20 @@ class ComponentConfigurator(object):
       if component.domain_name == domain_name:
         return component
 
+  def get_component_name_by_domain (self, domain_name):
+    """
+    Return with the initiated Domain Manager name configured with the given
+    domain_name.
+
+    :param domain_name: name of the domain used in :any:`NFFG` descriptions
+    :type domain_name: str
+    :return: the initiated domain Manager name
+    :rtype: str
+    """
+    for name, component in self.__repository.iteritems():
+      if component.domain_name == domain_name:
+        return name
+
   def __iter__ (self):
     """
     Return with an iterator over the (name, DomainManager) items.
@@ -598,6 +612,53 @@ class ControllerAdapter(object):
     # TODO implement
     pass
 
+  def remove_external_domain_managers (self, domain):
+    """
+    Shutdown adn remove ExternalDomainManager.
+
+    :param domain: domain name
+    :type domain: str
+    :return: None
+    """
+    log.warning("Connection has been lost with external domain client! "
+                "Shutdown successor DomainManagers for domain: %s..." %
+                domain)
+    # Get removable DomainManager names
+    ext_mgrs = [name for name, mgr in self.domains
+                if '@' in mgr.domain_name and
+                mgr.domain_name.endswith(domain)]
+    # Remove DomainManagers one by one
+    for mgr_name in ext_mgrs:
+      log.info("Found DomainManager: %s for ExternalDomainManager: %s" %
+               (mgr_name, domain))
+      self.domains.stop_mgr(name=mgr_name)
+    return
+
+  def get_external_domain_ids (self, domain, topo_nffg):
+    """
+    Get the IDs of nodes from the detected external topology.
+
+    :param domain: domain name
+    :type domain: str
+    :param topo_nffg: topology description
+    :type topo_nffg: :any:`NFFG`
+    :return:
+    """
+    domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
+    new_ids = {infra.id for infra in topo_nffg.infras}
+    # # Got empty topo
+    # if not new_ids:
+    #   log.debug("No remote domain has been detected!")
+    #   return
+    # # Remove oneself from domains
+    try:
+      if new_ids:
+        new_ids.remove(domain_mgr.bgp_domain_id)
+    except KeyError:
+      log.warning("Detected domains does not include own BGP ID: %s" %
+                  domain_mgr.bgp_domain_id)
+    return new_ids
+
   def _manage_external_domain_changes (self, event):
     """
     Handle DomainChangedEvents came from an ExternalDomainManager.
@@ -606,8 +667,6 @@ class ControllerAdapter(object):
     :type event: :any:`DomainChangedEvent`
     :return: None
     """
-    domain_mgr = self.domains.get_component_by_domain(domain_name=event.domain)
-    topo_nffg = event.data
     # BGP-LS client is up
     if event.cause == DomainChangedEvent.TYPE.DOMAIN_UP:
       log.debug("Detect remote domains from external DomainManager...")
@@ -616,25 +675,16 @@ class ControllerAdapter(object):
       log.debug("Detect domain changes from external DomainManager...")
     # BGP-LS client is down
     elif event.cause == DomainChangedEvent.TYPE.DOMAIN_DOWN:
-      log.warning("Connection has been lost with external domain client!")
-      # TODO remove initiated domains?
-      return
-    # Get domain Ids
+      return self.remove_external_domain_managers(domain=event.domain)
+    topo_nffg = event.data
     if topo_nffg is None:
       log.warning("Topology description is missing!")
       return
-    new_ids = {infra.id for infra in topo_nffg.infras}
-    # Got empty topo
-    if not new_ids:
-      log.debug("No remote domain has been detected!")
-      return
-    # Remove oneself from domains
-    try:
-      if new_ids:
-        new_ids.remove(domain_mgr.bgp_domain_id)
-    except KeyError:
-      log.warning("Detected domains does not include own BGP ID: %s" %
-                  domain_mgr.bgp_domain_id)
+    # Get domain Ids
+    new_ids = self.get_external_domain_ids(domain=event.domain,
+                                           topo_nffg=topo_nffg)
+    # Get the main ExternalDomainManager
+    domain_mgr = self.domains.get_component_by_domain(domain_name=event.domain)
     # Check lost domain
     for id in domain_mgr.managed_domain_ids - new_ids:
       log.info("Detected domain lost from external DomainManager! "
@@ -645,7 +695,12 @@ class ControllerAdapter(object):
       else:
         log.warning("Lost domain is missing from managed domains: %s!" %
                     domain_mgr.managed_domain_ids)
-        # TODO what?
+        # Get DomainManager name by domain name
+        ext_domain_name = "%s@%s" % (id, domain_mgr.domain_name)
+        ext_mgr_name = self.domains.get_component_name_by_domain(
+          domain_name=ext_domain_name)
+        # Stop DomainManager and remove object from register
+        self.domains.stop_mgr(name=ext_mgr_name)
     # Check new domains
     for id in new_ids - domain_mgr.managed_domain_ids:
       orchestrator_url = topo_nffg[id].metadata.get('unify-slor')
