@@ -2354,7 +2354,7 @@ class NFFGToolBox(object):
     for fr in port.flowrules:
       matches = fr.match.split(";")
       for match in matches:
-        field, mparam = match.split("=")
+        field, mparam = match.split("=", 1)
         if field == "TAG" and mparam == TAG:
           for action in fr.action.split(";"):
             if action == "UNTAG":
@@ -2446,7 +2446,7 @@ class NFFGToolBox(object):
       next_link_found = False
       for fr in curr_port.flowrules:
         for match in fr.match.split(";"):
-          field, mparam = match.split("=")
+          field, mparam = match.split("=", 1)
           if field == "TAG" and mparam == TAG:
             for action in fr.action.split(";"):
               command, cparam = action.split("=")
