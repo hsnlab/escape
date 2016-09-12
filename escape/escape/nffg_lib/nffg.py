@@ -1863,10 +1863,14 @@ class NFFGToolBox(object):
                       sg_dst_node, sg_dst_port, fr_hop, sbb_dst_port))
         continue
       sbb_dst_port = sbb_dst_port.pop()
-      fr = sbb_src_port.add_flowrule(match="in_port=%s" % sbb_src_port.id,
+      if flowclass:
+        fr_match = "in_port=%s;flowclass=%s" % (sbb_src_port.id, flowclass)
+      else:
+        fr_match = "in_port=%s" % sbb_src_port.id
+      fr = sbb_src_port.add_flowrule(match=fr_match,
                                      action="output=%s" % sbb_dst_port.id,
                                      bandwidth=fr_bw, delay=fr_delay,
-                                     hop_id=fr_hop, id=fr_hop)
+                                     hop_id=fr_hop, id=fr_hop, )
       log.debug("Added flowrule: %s" % fr)
     log.debug("Recreate SG hops...")
     for key, value in sg_hop_info.iteritems():
