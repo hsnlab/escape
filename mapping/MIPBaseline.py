@@ -387,7 +387,8 @@ def convert_req_to_request(req):
         print "\t adding SAP node {} WITHOUT CONSIDERING CPU, MEMORY or STORAGE".format(sap.id)
         print "\t\t [" + ', '.join("%s: %s" % item for item in vars(sap).items()) + "]"
 
-        if (sap.delay is not None and sap.delay > 0) or (sap.bandwidth is not None and sap.bandwidth > 0):
+        if (hasattr(sap, 'delay') and sap.delay is not None and sap.delay > 0) or\
+           (hasattr(sap, 'bandwidth') and sap.bandwidth is not None and sap.bandwidth > 0):
             raise Exception("Cannot handle SAP delay ({}) or bandwidth ({}).".format(sap.delay, sap.bandwidth))
 
         result.add_node(id=sap.id, ntype="SAP", cpu=0, memory=0, storage=0, allowed_snodes=[sap.name])
@@ -515,9 +516,10 @@ def convert_nffg_to_substrate(nffg):
         #if (sap.delay is not None and sap.delay > 0) or (sap.bandwidth is not None and sap.bandwidth > 0):
         #    raise Exception("Cannot handle SAP delay ({}) or bandwidth ({}).".format(sap.delay, sap.bandwidth))
 
-        if sap.delay is not None and sap.delay > 0:
+        if hasattr(sap, 'delay') and sap.delay is not None and sap.delay > 0:
             print "\t\t ignoring {} delay at SAP {} as this is not of importance here; setting delay to 0 ".format(sap.delay, sap.id)
-        print "\t\t ignoring {} bandwidth at SAP {} as this is not of importance here; setting bandwidth to inf".format(sap.bandwidth, sap.id)
+        if hasattr(sap, 'bandwidth'):
+          print "\t\t ignoring {} bandwidth at SAP {} as this is not of importance here; setting bandwidth to inf".format(sap.bandwidth, sap.id)
 
 
         result.add_node(id=sap.id,

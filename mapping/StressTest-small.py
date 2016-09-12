@@ -42,7 +42,7 @@ except ImportError:
   from nffg import NFFG, NFFGToolBox
 
 log = logging.getLogger("StressTest")
-log.setLevel(logging.WARN)
+log.setLevel(logging.DEBUG)
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
 nf_types = list(string.ascii_uppercase)[:10]
 rnd = random.Random()
@@ -277,6 +277,7 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
   """
   total_vnf_count = 0
   mapped_vnf_count = 0
+  mode = NFFG.MODE_REMAP if fullremap else NFFG.MODE_ADD
   network = None
   if topo_name == "picotopo":
     network = CarrierTopoBuilder.getPicoTopo()
@@ -361,13 +362,13 @@ def StressTestCore(seed, loops, use_saps_once, vnf_sharing, multiple_scs,
             import milp_solution_in_nffg as MILP
             network = MILP.convert_mip_solution_to_nffg([batched_request], 
                                                         network, 
-                                                        full_remap=fullremap)
+                                                        mode=mode)
           else:
             network, shortest_paths = MappingAlgorithms.MAP(batched_request, 
-                  network, full_remap=fullremap, enable_shortest_path_cache=True,
+                  network, enable_shortest_path_cache=True,
                   bw_factor=bw_factor, res_factor=res_factor,
                   lat_factor=lat_factor, shortest_paths=shortest_paths, 
-                  return_dist=True,
+                  return_dist=True, mode=mode,
                   bt_limit=bt_limit, bt_branching_factor=bt_br_factor)
           log.debug(ppid_pid+"Mapping successful on test level %s with batch"
                     " length %s!"%(test_lvl, batch_length))
@@ -537,7 +538,7 @@ def main(argv):
     raise Exception("Not all algorithm params are given!")
   
   returned_test_lvl = StressTestCore(seed, loops, use_saps_once, vnf_sharing,
-           multiple_scs, max_sc_count, vnf_sharing_same_sg, fullremap, 
+           multiple_scs, max_sc_count, vnf_sharing_same_sg, fullremap,
            batch_length, shareable_sg_count, sliding_share, poisson, topo_name,
            bw_factor, res_factor, lat_factor, bt_limit, bt_br_factor, outputfile,
                                      dump_nffgs, dump_cnt, dump_folder, milp,

@@ -73,7 +73,7 @@ def get_edge_id (g, srcid, srcpid, dstpid, dstid):
       return k
 
 def convert_mip_solution_to_nffg (reqs, net, file_inputs=False, 
-                                  full_remap=False):
+                                  mode=NFFG.MODE_ADD):
   if file_inputs:
     request_seq = []
     for reqfile in reqs:
@@ -206,7 +206,7 @@ def convert_mip_solution_to_nffg (reqs, net, file_inputs=False,
   ############################################################################
   # HACK: We only want to use the algorithm class to generate an NFFG, we will 
   # fill the mapping struct with the one found by MIP
-  alg = CoreAlgorithm(net, request, chainlist, full_remap, False)
+  alg = CoreAlgorithm(net, request, chainlist, mode, False, 100000)
 
   # move 'availres' and 'availbandwidth' values of the network to maxres, 
   # because the MIP solution takes them as availabel resource.
