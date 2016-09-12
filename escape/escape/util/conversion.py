@@ -1189,7 +1189,7 @@ class NFFGConverter(object):
           elif item.startswith('TAG') or item.startswith('UNTAG'):
             pass
           elif item.startswith('flowclass'):
-            flowclass = item.split('=')[1]
+            flowclass = item.split('=', 1)[1]
           else:
             flowclass = item
         if in_port is not None:
