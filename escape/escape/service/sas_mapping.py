@@ -57,7 +57,7 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       return
     try:
       mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
-      if 'mode' in mapper_params:
+      if 'mode' in mapper_params and mapper_params['mode']:
         log.debug("Setup mapping mode from configuration: %s" %
                   mapper_params['mode'])
       elif graph.mode:
