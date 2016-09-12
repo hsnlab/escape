@@ -450,7 +450,7 @@ class ControllerAdapter(object):
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: NFFG
-    :return: mapping result
+    :return: deploy result
     :rtype: bool
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
@@ -461,16 +461,16 @@ class ControllerAdapter(object):
     # first step
     if self.DoVManager._status_updates:
       self.DoVManager.rewrite_global_view_with_status(nffg=mapped_nffg)
+    deploy_result = True
     slices = NFFGToolBox.split_into_domains(nffg=mapped_nffg, log=log)
     if slices is None:
       log.warning("Given mapped NFFG: %s can not be sliced! "
                   "Skip domain notification steps" % mapped_nffg)
-      return
+      return deploy_result
     log.debug("Notify initiated domains: %s" %
               [d for d in self.domains.initiated])
     # TODO - abstract/inter-domain tag rewrite
     # NFFGToolBox.rewrite_interdomain_tags(slices)
-    mapping_result = True
     for domain, part in slices:
       log.debug(
         "Recreate missing TAG matching fields in domain part: %s..." % domain)
@@ -481,7 +481,7 @@ class ControllerAdapter(object):
       if domain_mgr is None:
         log.warning("No DomainManager has been initialized for domain: %s! "
                     "Skip install domain part..." % domain)
-        mapping_result = False
+        deploy_result = False
         continue
       log.log(VERBOSE, "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       log.info("Delegate splitted part: %s to %s" % (part, domain_mgr))
@@ -513,7 +513,7 @@ class ControllerAdapter(object):
         NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
                                        log=log)
       # Note result according to others before
-      mapping_result = mapping_result and res
+      deploy_result = deploy_result and res
       # If installation of the domain was performed without error
       if not res and not self.DoVManager._status_updates:
         log.warning("Skip DoV update with domain: %s! Cause: "
@@ -560,7 +560,7 @@ class ControllerAdapter(object):
       self.DoVManager.update_domain(domain=domain, nffg=part)
     log.info("NF-FG installation is finished by %s" % self.__class__.__name__)
     # Post-mapping steps
-    if mapping_result:
+    if deploy_result:
       log.info("All installation process has been finished with success! ")
       # Notify remote visualizer about the installation result if it's needed
       notify_remote_visualizer(
@@ -568,7 +568,7 @@ class ControllerAdapter(object):
         id=LAYER_NAME)
     else:
       log.error("%s installation was not successful!" % mapped_nffg)
-    return mapping_result
+    return deploy_result
 
   def _handle_DomainChangedEvent (self, event):
     """
