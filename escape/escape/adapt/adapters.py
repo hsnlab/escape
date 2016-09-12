@@ -15,6 +15,8 @@
 Contains Adapter classes which contains protocol and technology specific
 details for the connections between ESCAPEv2 and other different domains.
 """
+import json
+import pprint
 from copy import deepcopy
 
 from ncclient import NCClientError
@@ -24,8 +26,10 @@ from ncclient.transport import TransportError
 
 from escape import CONFIG, __version__
 from escape.infr.il_API import InfrastructureLayerAPI
-from escape.util.conversion import NFFGConverter
+from escape.nffg_lib.nffg import NFFGToolBox
+from escape.util.conversion import NFFGConverter, UC3MNFFGConverter
 from escape.util.domain import *
+from escape.util.misc import unicode_to_str
 from escape.util.netconf import AbstractNETCONFAdapter
 from pox.lib.util import dpid_to_str
 from virtualizer import Virtualizer
@@ -807,7 +811,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     try:
       log.log(VERBOSE, "Send ping request to remote agent: %s" % self._base_url)
-      return self.send_request(self.GET, 'ping')
+      return self.send_quietly(self.GET, 'ping')
     except RequestException:
       # Any exception is bad news -> return None
       return None
@@ -848,7 +852,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # self.last_virtualizer = virt.copy()
       return virt
     else:
-      log.error("No data is received from remote agent at %s!" % self._base_url)
+      log.error("No data has been received from remote agent at %s!" %
+                self._base_url)
       return
 
   def edit_config (self, data, diff=False):
@@ -1263,7 +1268,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self._original_virtualizer = None
 
   def ping (self):
-    return self.send_no_error(self.GET, 'ping')
+    return self.send_quietly(self.GET, 'ping')
 
   def get_config (self, filter=None):
     data = self.send_no_error(self.POST, 'get-config')
@@ -1299,7 +1304,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
-    return self.ping()
+    return self.ping() is not None
 
   def get_topology_resource (self):
     return self.get_config()
@@ -1347,7 +1352,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self._original_virtualizer = None
 
   def ping (self):
-    return self.send_no_error(self.GET, 'ping')
+    return self.send_quietly(self.GET, 'ping')
 
   def get_config (self, filter=None):
     data = self.send_no_error(self.POST, 'get-config')
@@ -1385,7 +1390,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.send_no_error(self.POST, 'edit-config', data)
 
   def check_domain_reachable (self):
-    return self.ping()
+    return self.ping() is not None
 
   def get_topology_resource (self):
     return self.get_config()
@@ -1422,31 +1427,108 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     AbstractESCAPEAdapter.__init__(self, **kwargs)
     log.debug("Init %s - type: %s, domain: %s, URL: %s" % (
       self.__class__.__name__, self.type, self.domain_name, url))
+    # Converter object
+    self.converter = UC3MNFFGConverter(domain=self.domain_name, logger=log)
+    self.last_topo = None
+
+  def __cache (self, nffg):
+    """
+    Cache last received topology.
+
+    :param nffg: received NFFG
+    :type nffg: :any:`NFFG`
+    :return: None
+    """
+    self.last_topo = nffg.copy()
+
+  def check_domain_reachable (self):
+    """
+    Checker function for domain polling. Check the remote domain agent is
+    reachable.
+
+    :return: the remote domain is detected or not
+    :rtype: bool
+    """
+    return self.send_quietly(self.GET, 'virtualizer') is not None
 
   def request_bgp_ls_virtualizer (self):
     """
     Request the external domain description from the BGP-LS client.
 
-    :return:
+    :return: parsed data from JSON
+    :rtype: dict
     """
+    log.debug("Request topology description from BGP-LS client...")
     data = self.send_no_error(self.GET, 'virtualizer')
     if data:
-      # TODO implement
-      print data
-      pass
-    return
-
-  def check_domain_reachable (self):
-    # TODO implement
-    return True
+      try:
+        network_topo = json.loads(data, object_hook=unicode_to_str)
+      except ValueError:
+        log.error("Received data from BGP-LS speaker is not valid JSON!")
+        return
+      log.log(VERBOSE, "Received topology from BGP-LS speaker:\n%s" %
+              pprint.pformat(network_topo))
+      return network_topo
+    else:
+      log.warning("No data has been received from client at %s!" %
+                  self._base_url)
 
   def get_topology_resource (self):
-    # TODO implement
-    self.request_bgp_ls_virtualizer()
-    nffg = NFFG()
-    return nffg
+    """
+    Return with the topology description as an :any:`NFFG`.
+    """
+    topo_data = self.request_bgp_ls_virtualizer()
+    log.debug("Start conversion: BGP-LS-based JSON ---> NFFG")
+    nffg = self.converter.parse_from_json(data=topo_data)
+    if nffg is not None:
+      log.debug("Cache received topology...")
+      self.__cache(nffg=nffg)
+      return nffg
+    log.warning("Converted NFFG is missing!")
 
-  def check_topology_changed(self):
-    # TODO implement
-    super(BGPLSRESTAdapter, self).check_topology_changed()
+  def check_topology_changed (self):
+    """
+    Check the last received topology and return ``False`` if there was no
+    changes, ``None`` if domain was unreachable and the converted topology if
+    the domain changed.
 
+    :return: the received topology is different from cached one
+    :rtype: bool or None or :any:`NFFG`
+    """
+    raw_data = self.send_quietly(self.GET, 'virtualizer')
+    if raw_data is None:
+      # Probably lost connection with agent
+      log.warning("Requested network topology is missing from domain: %s!" %
+                  self.domain_name)
+      return
+    nffg = self.converter.parse_from_raw(raw_data=raw_data, level=VERBOSE)
+    if self.last_topo is None:
+      log.warning("Missing last received topo description!")
+      return
+    if not self.__is_changed(new_data=nffg):
+      return False
+    else:
+      log.debug("Domain topology has been changed in domain: %s!" %
+                self.domain_name)
+      log.log(VERBOSE, "New topology \n%s" % nffg.dump())
+      self.__cache(nffg=nffg)
+      return nffg
+
+  def __is_changed (self, new_data):
+    """
+    Return True if the given ``new_data`` is different compared to cached
+    ``last_topo``.
+
+    :param new_data: received new data
+    :type new_data: :any:`NFFG`
+    :return: changed or not
+    :rtype: bool
+    """
+    # Calculate differences
+    add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
+      old=self.last_topo, new=new_data)
+    # If both NFFG are empty --> no difference
+    if add_nffg.is_empty() and del_nffg.is_empty():
+      return False
+    else:
+      return True

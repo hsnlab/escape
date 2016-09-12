@@ -1045,8 +1045,8 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     """
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
-      log.error("Missing original topology in %s domain! "
-                "Skip domain resetting..." % self.domain_name)
+      log.warning("Missing original topology in %s domain! "
+                  "Skip domain resetting..." % self.domain_name)
       return
     log.info("Reset %s domain based on original topology description..." %
              self.domain_name)
@@ -1168,8 +1168,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
-      log.error("Missing original topology in %s domain! "
-                "Skip domain resetting..." % self.domain_name)
+      log.warning("Missing original topology in %s domain! "
+                  "Skip domain resetting..." % self.domain_name)
       return
     log.info("Reset %s domain based on original topology description..." %
              self.domain_name)
@@ -1314,7 +1314,7 @@ class ExternalDomainManager(AbstractRemoteDomainManager):
     return True
 
 
-class BGPLSBasedDomainManager(ExternalDomainManager):
+class BGPLSBasedExternalDomainManager(ExternalDomainManager):
   """
   External DomainManager using BGP-LS Speaker to detect external domains.
   """
@@ -1322,15 +1322,30 @@ class BGPLSBasedDomainManager(ExternalDomainManager):
   name = "BGP-LS-SPEAKER"
   # Default domain name
   DEFAULT_DOMAIN_NAME = "EXTERNAL"
+  # Default DomainManager config
+  DEFAULT_DOMAIN_MANAGER_CFG = "EXTERNAL"
 
-  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
+  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, bgp_domain_id=None,
+                prototype=None, *args, **kwargs):
     """
     Init.
     """
-    log.debug("Create BGP-LS-based ExternalDomainManager with domain name: %s" %
-              domain_name)
-    super(BGPLSBasedDomainManager, self).__init__(domain_name=domain_name,
-                                                  *args, **kwargs)
+    log.debug("Create BGP-LS-based ExternalDomainManager with domain name: %s, "
+              "BGP domain ID: %s" % (domain_name, bgp_domain_id))
+    super(BGPLSBasedExternalDomainManager, self).__init__(
+      domain_name=domain_name, *args, **kwargs)
+    # Own BGP domain ID
+    self.bgp_domain_id = bgp_domain_id
+    if prototype:
+      log.debug("Set default DomainManager config: %s for external domains!" %
+                prototype)
+      self.prototype = prototype
+    else:
+      log.warning("No default DomainManager was given! Using default config: %s"
+                  % self.DEFAULT_DOMAIN_MANAGER_CFG)
+      self.prototype = self.DEFAULT_DOMAIN_MANAGER_CFG
+    # Keep tracking the IDs of the discovered external domains
+    self.managed_domain_ids = set()
 
   def init (self, configurator, **kwargs):
     """
@@ -1339,7 +1354,7 @@ class BGPLSBasedDomainManager(ExternalDomainManager):
     :param kwargs:
     :return:
     """
-    super(BGPLSBasedDomainManager, self).init(configurator, **kwargs)
+    super(BGPLSBasedExternalDomainManager, self).init(configurator, **kwargs)
     log.debug("BGP-LS-based ExternalDomainManager has been initialized!")
 
   def initiate_adapters (self, configurator):
@@ -1360,5 +1375,5 @@ class BGPLSBasedDomainManager(ExternalDomainManager):
 
     :return: None
     """
-    super(BGPLSBasedDomainManager, self).finit()
+    super(BGPLSBasedExternalDomainManager, self).finit()
     self.topoAdapter.finit()
