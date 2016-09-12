@@ -58,13 +58,16 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     try:
       mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
       if 'mode' in mapper_params and mapper_params['mode']:
-        log.debug("Setup mapping mode from configuration: %s" %
-                  mapper_params['mode'])
+        mapping_mode = mapper_params['mode']
+        log.debug("Setup mapping mode from configuration: %s" % mapping_mode)
       elif graph.mode:
-        mapper_params['mode'] = graph.mode
-        log.debug("Setup mapping mode based on request: %s" % graph.mode)
+        mapping_mode = graph.mode
+        log.debug("Setup mapping mode based on request: %s" % mapping_mode)
+      else:
+        mapping_mode = None
       mapped_nffg = MAP(request=graph.copy(),
                         network=resource.copy(),
+                        mode=mapping_mode,
                         **mapper_params)
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
