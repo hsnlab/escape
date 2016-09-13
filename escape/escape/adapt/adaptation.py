@@ -814,8 +814,7 @@ class GlobalResourceManager(object):
     elif nffg.is_bare():
       log.debug("Update NFFG is bare NFFG! "
                 "Clean DoV and remove deployed services...")
-      NFFGToolBox.remove_deployed_services(nffg=self.__dov.get_resource_info(),
-                                           log=log)
+      self.dov.remove_deployed_elements()
     elif nffg.is_SBB():
       log.warning("Update NFFG is a SingleBiSBiS NFFG with deployed elements! "
                   "Skip explicit DoV update...")
