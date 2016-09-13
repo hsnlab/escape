@@ -809,14 +809,26 @@ class GlobalResourceManager(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    if nffg.is_virtualized():
-      log.debug(
-        "Update NFFG contains virtualized elements! Skip DoV update...")
-    log.debug("Update status info based on Global view (DoV)...")
-    NFFGToolBox.update_status_by_dov(nffg=nffg,
-                                     dov=self.__dov.get_resource_info(),
-                                     log=log)
-    self.set_global_view(nffg=nffg)
+    if nffg.is_empty():
+      log.warning("Update NFFG is empty! Skip Global view update...")
+    elif nffg.is_bare():
+      log.debug("Update NFFG is bare NFFG! "
+                "Clean DoV and remove deployed services...")
+      NFFGToolBox.remove_deployed_services(nffg=self.__dov.get_resource_info(),
+                                           log=log)
+    elif nffg.is_SBB():
+      log.warning("Update NFFG is a SingleBiSBiS NFFG with deployed elements! "
+                  "Skip explicit DoV update...")
+      # TODO
+    elif nffg.is_virtualized():
+      log.warning("Update NFFG contains virtualized elements! "
+                  "Skip explicit DoV update...")
+    else:
+      log.debug("Update status info based on Global view (DoV)...")
+      NFFGToolBox.update_status_by_dov(nffg=nffg,
+                                       dov=self.__dov.get_resource_info(),
+                                       log=log)
+      self.set_global_view(nffg=nffg)
     log.log(VERBOSE, "Updated DoV:\n%s" % self.__dov.get_resource_info().dump())
 
   def add_domain (self, domain, nffg):

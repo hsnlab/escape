@@ -2153,7 +2153,36 @@ class NFFGToolBox(object):
     :type log: :any:`logging.Logger`
     :return:
     """
+    # TODO implement
     pass
+
+  @classmethod
+  def remove_deployed_services (cls, nffg, log=logging.getLogger("CLEAN")):
+    """
+    Remove all the installed NFs, flowrules and dynamic ports from given NFFG.
+
+    :param nffg: base NFFG
+    :type nffg: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the cleaned nffg
+    :rtype: :any:`NFFG`
+    """
+    for infra in nffg.infras():
+      del_ports = []
+      del_nfs = []
+      for src, dst, link in nffg.network.out_edges_iter(data=True):
+        if link.type == NFFG.TYPE_LINK_DYNAMIC and \
+              link.dst.node.type == NFFG.TYPE_NF:
+          del_nfs.append(dst)
+          del_ports.append(link.src.id)
+      if del_nfs:
+        nffg.network.remove_nodes_from(del_nfs)
+        log.debug("Removed NFs from Infra: %s" % del_nfs)
+        for id in del_ports:
+          infra.del_port(id)
+        log.debug("Removed ports from Infra: %s" % del_ports)
+    return nffg
 
   ##############################################################################
   # ----------------------- High level NFFG operations ------------------------
