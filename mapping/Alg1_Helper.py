@@ -274,7 +274,8 @@ class MappingManager(object):
       if c['delay'] is None:
         c['delay'] = self.overall_highest_delay
     self.chain_subchain.add_nodes_from(
-      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay'],
+      (c['id'], {'avail_latency': c['delay'], 'permitted_latency': c['delay'] \
+                 if c['delay'] > 1e-8 else 1e-3,
                  'chain': c['chain'], 'link_ids': c['link_ids']}) \
       for c in chains)
 
@@ -352,7 +353,16 @@ class MappingManager(object):
       if min(chain_maxlat, link_maxlat) > self.overall_highest_delay:
         raise uet.InternalAlgorithmException("Local allowed latency should"
         " never exceed the overall_highest_delay")
-      return min(chain_maxlat, link_maxlat)
+      latreq_to_return = min(chain_maxlat, link_maxlat)
+      if latreq_to_return < 1e-8:
+        latreq_to_return = 1e-3
+        # this should be the ideal operation, but most of the cases the latency
+        # parameters from the resources are missing, so we substitute them with
+        # zero in order they do not ruin anything with the missing resources...
+        # raise uet.BadInputException("End-to-end delay requirement shouldn't be "
+        # "zero!","Local allowed latency for chain %s is %f"
+        #                             %(chain_link_ids, lal))
+      return latreq_to_return
 
     except KeyError as e:
       raise uet.InternalAlgorithmException(
@@ -638,10 +648,6 @@ class MappingManager(object):
     # self.overall_highest_delay (maybe decremented a bit already) -> which 
     # means almost surely only one distance layer in the structure.
     lal = self.getLocalAllowedLatency(cid)
-    if lal < 1e-6:
-      raise uet.BadInputException("End-to-end delay requirement shouldn't be "
-                "zero!","Local allowed latency for chain %s is %f"
-                                  %(chain_link_ids, lal))
     dist_layer_step = float(lal) / \
                       remaining_chain_len
     dist_layers = {}
