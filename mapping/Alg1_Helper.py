@@ -601,7 +601,7 @@ class MappingManager(object):
     (host, lat_pref_value).
     """
     # should always be mapped already
-    log.debug("Calculating latency preference values for placing VNF %s."%vnf2)
+    log.debug("Calculating latency preference values for placing VNF %s for hosts %s."%(vnf2, hosts))
     strictest_cid = min(self.chain_subchain[cid].keys(),
                         key=lambda sc, graph=self.chain_subchain: \
                         graph.node[sc]['avail_latency'])
@@ -669,6 +669,7 @@ class MappingManager(object):
     hosts_with_lat_values = []
     lat_value_step_cnt = (lal - sh_path_lat) / \
                          dist_layer_step
+    self.log.debug("Dist layers: %s"%dist_layers)
     for k in dist_layers:
       current_layer = sorted(dist_layers[k], cmp=lambda h1, h2, origin=node_id: \
                              self.cmpBasedOnDelayDist(h1[0],h2[0],origin))
