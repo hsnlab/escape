@@ -4,8 +4,7 @@
 Contains manager and handling functions for global ESCAPE configuration.
 
 .. inheritance-diagram::
-   escape.util.config.ESCAPEConfig
-   escape.util.config.ConfigurationError
+   escape.util.config
    :parts: 1
 
 :any:`ESCAPEConfig` is a wrapper class for CONFIG.

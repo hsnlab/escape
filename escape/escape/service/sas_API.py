@@ -339,9 +339,27 @@ class ServiceLayerAPI(AbstractAPI):
       self.rest_api.request_cache.set_in_progress(id=service_nffg.id)
     log.getChild('API').info("Invoke request_service on %s with SG: %s " %
                              (self.__class__.__name__, service_nffg))
+    # Check if mapping mode is set globally in CONFIG
+    mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
+    if 'mode' in mapper_params and mapper_params['mode'] is not None:
+      mapping_mode = mapper_params['mode']
+      log.info("Detected mapping mode from configuration: %s" % mapping_mode)
+    elif service_nffg.mode is not None:
+      mapping_mode = service_nffg.mode
+      log.info("Detected mapping mode from NFFG: %s" % mapping_mode)
+    else:
+      mapping_mode = None
+      log.info("No mapping mode was detected!")
     # Initiate service request mapping
     mapped_nffg = self.service_orchestrator.initiate_service_graph(
       service_nffg)
+    # Rewrite REMAP mode for backward compatibility
+    if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
+      mapped_nffg.mode = mapping_mode
+      log.debug(
+        "Rewrite mapping mode: %s into mapped NFFG..." % mapped_nffg.mode)
+    else:
+      log.debug("Skip mapping mode rewriting! Mode was: %s" % mapping_mode)
     log.getChild('API').debug("Invoked request_service on %s is finished" %
                               self.__class__.__name__)
     # If mapping is not threaded and finished with OK

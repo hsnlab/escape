@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<nodes>
+		<node>
+			<id>SingleBiSBiS</id>
+			<flowtable>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry11</id>
+					<name>sg_hop:11</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP1]</port>
+					<action>push_tag:0x000b</action>
+					<out>../../../ports/port[id=port-SAP14]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry13</id>
+					<name>sg_hop:13</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP14]</port>
+					<match>dl_tag=0x000d</match>
+					<out>../../../ports/port[id=port-SAP1]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry21</id>
+					<name>sg_hop:21</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP2]</port>
+					<action>push_tag:0x0015</action>
+					<out>../../../ports/port[id=port-SAP14]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+				<flowentry operation="create">
+					<id>ESCAPE-flowentry22</id>
+					<name>sg_hop:22</name>
+					<priority>100</priority>
+					<port>../../../ports/port[id=port-SAP14]</port>
+					<match>dl_dst=00:00:00:00:00:02;dl_tag=0x0016</match>
+					<out>../../../ports/port[id=port-SAP2]</out>
+					<resources>
+						<bandwidth>1.0</bandwidth>
+					</resources>
+				</flowentry>
+			</flowtable>
+		</node>
+	</nodes>
+	<metadata operation="create">
+		<key>REQ:12</key>
+		<value>{'snode':'SAP1','sg_path':[11],'delay':'50.000','bw':'0.000','dport':'port-SAP14','sport':'port-SAP1','dnode':'SAP14'}</value>
+	</metadata>
+	<metadata operation="create">
+		<key>REQ:5</key>
+		<value>{'snode':'SAP2','sg_path':[21],'delay':'50.000','bw':'0.000','dport':'port-SAP14','sport':'port-SAP2','dnode':'SAP14'}</value>
+	</metadata>
+	<metadata operation="create">
+		<key>REQ:8</key>
+		<value>{'snode':'SAP2','sg_path':[21],'delay':'50.000','bw':'0.000','dport':'port-SAP14','sport':'port-SAP2','dnode':'SAP14'}</value>
+	</metadata>
+	<metadata operation="create">
+		<key>REQ:9</key>
+		<value>{'snode':'SAP1','sg_path':[11],'delay':'50.000','bw':'0.000','dport':'port-SAP14','sport':'port-SAP1','dnode':'SAP14'}</value>
+	</metadata>
+	<version>2016-02-24; compiled at 2016-03-18  19:56:13</version>
+</virtualizer>

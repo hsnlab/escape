@@ -3,15 +3,10 @@
 
 Contains components relevant to virtualization of resources and views.
 
+Classes of the module:
+
 .. inheritance-diagram::
-   escape.adapt.virtualization.MissingGlobalViewEvent
-   escape.adapt.virtualization.DoVChangedEvent
-   escape.adapt.virtualization.AbstractVirtualizer
-   escape.adapt.virtualization.AbstractFilteringVirtualizer
-   escape.adapt.virtualization.DomainVirtualizer
-   escape.adapt.virtualization.GlobalViewVirtualizer
-   escape.adapt.virtualization.SingleBiSBiSVirtualizer
-   escape.adapt.virtualization.VirtualizerManager
+   escape.adapt.virtualization
    :parts: 1
 
 :any:`MissingGlobalViewEvent` can signal missing global view.

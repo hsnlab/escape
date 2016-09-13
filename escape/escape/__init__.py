@@ -45,7 +45,9 @@ cfg = {
         {
           "module": "escape.service.sas_mapping",
           "class": "ServiceGraphMapper",
-          "mapping-config": {},
+          "mapping-config": {
+            # "mode": "REMAP"
+          },
           "mapping-enabled": True
         },
       "STRATEGY":
@@ -79,7 +81,9 @@ cfg = {
         {
           "module": "escape.orchest.ros_mapping",
           "class": "ResourceOrchestrationMapper",
-          "mapping-config": {},
+          "mapping-config": {
+            # "mode": "REMAP"
+          },
           "mapping-enabled": True
         },
       "STRATEGY":
@@ -132,8 +136,9 @@ cfg = {
         # "REMOTE-ESCAPE-ext",
         # "SDN",
         # "OPENSTACK",
-        # "UN"
-        # "DOCKER"
+        # "UN",
+        # "DOCKER",
+        # "BGP-LS-SPEAKER"
       ],
       "RESET-DOMAINS-BEFORE-INSTALL": False,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": False,  # Shutdown strategy config
@@ -270,6 +275,7 @@ cfg = {
               }
           }
         },
+      # Docker DomainManager is not supported yet!
       "DOCKER":
         {
           "module": "escape.adapt.managers",
@@ -284,7 +290,42 @@ cfg = {
                 "url": "http://192.168.0.121:8888"
               }
           }
-        }
+        },
+      "BGP-LS-SPEAKER":
+        {
+          "module": "escape.adapt.managers",
+          "class": "BGPLSBasedExternalDomainManager",
+          "domain_name": "BGP-LS",
+          "bgp_domain_id": "0.0.0.2",  # IP address format
+          "prototype": "EXTERNAL",  # default DomainManager for detected domains
+          "poll": False,
+          "adapters": {
+            "REMOTE":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "BGPLSRESTAdapter",
+                "url": "http://localhost:8088",
+                "prefix": "restconf/data"
+              }
+          }
+        },
+      # Default DomainManager class
+      "EXTERNAL":
+        {
+          "module": "escape.adapt.managers",
+          "class": "UnifyDomainManager",
+          "poll": True,
+          "diff": False,
+          "adapters": {
+            "REMOTE":
+              {
+                "module": "escape.adapt.adapters",
+                "class": "UnifyRESTAdapter",
+                "url": None,
+                "prefix": None
+              }
+          }
+        },
     },
   "infrastructure":  # Infrastructure Layer
     {

@@ -697,33 +697,55 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if resource_nffg is None:
       log.error("Missing resource for difference calculation!")
       return
-    log.debug(
-      "Got resource view for difference calculation: %s" % resource_nffg)
-    # Calculated ADD-DELETE difference
-    log.debug("Calculate ADD - DELETE difference with mapping mode...")
-    log.log(VERBOSE, "New NFFG:\n%s" % nffg.dump())
-    log.log(VERBOSE, "Resource NFFG:\n%s" % resource_nffg.dump())
-    add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
-      old=resource_nffg, new=nffg)
-    log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
-    log.log(VERBOSE, "Calculated DEL NFFG:\n%s" % del_nffg.dump())
-    if not add_nffg.is_empty() and del_nffg.is_empty():
-      nffg = add_nffg
-      log.info("Calculated mapping mode: %s" % nffg.mode)
-    elif add_nffg.is_empty() and not del_nffg.is_empty():
-      nffg = del_nffg
-      log.info("Calculated mapping mode: %s" % nffg.mode)
-    elif not add_nffg.is_empty() and not del_nffg.is_empty():
-      log.warning("Both ADD / DEL mode is not supported currently")
-      return
+    log.debug("Got resource view for difference calculation: %s" %
+              resource_nffg)
+    # Check if mapping mode is set globally in CONFIG
+    mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
+    if 'mode' in mapper_params and mapper_params['mode'] is not None:
+      mapping_mode = mapper_params['mode']
+      log.info("Detected mapping mode from configuration: %s" % mapping_mode)
+    elif nffg.mode is not None:
+      mapping_mode = nffg.mode
+      log.info("Detected mapping mode from NFFG: %s" % mapping_mode)
     else:
-      log.debug("Difference calculation resulted empty subNFFGs!")
-      log.info("No change has been detected in request! Skip mapping...")
-      log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
-                                self.__class__.__name__)
-      return
+      mapping_mode = None
+      log.info("No mapping mode was detected!")
+    if mapping_mode != NFFG.MODE_REMAP:
+      # Calculated ADD-DELETE difference
+      log.debug("Calculate ADD - DELETE difference with mapping mode...")
+      log.log(VERBOSE, "New NFFG:\n%s" % nffg.dump())
+      log.log(VERBOSE, "Resource NFFG:\n%s" % resource_nffg.dump())
+      add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
+        old=resource_nffg, new=nffg)
+      log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
+      log.log(VERBOSE, "Calculated DEL NFFG:\n%s" % del_nffg.dump())
+      if not add_nffg.is_empty() and del_nffg.is_empty():
+        nffg = add_nffg
+        log.info("Calculated mapping mode: %s" % nffg.mode)
+      elif add_nffg.is_empty() and not del_nffg.is_empty():
+        nffg = del_nffg
+        log.info("Calculated mapping mode: %s" % nffg.mode)
+      elif not add_nffg.is_empty() and not del_nffg.is_empty():
+        log.warning("Both ADD / DEL mode is not supported currently")
+        return
+      else:
+        log.debug("Difference calculation resulted empty subNFFGs!")
+        log.info("No change has been detected in request! Skip mapping...")
+        log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
+                                  self.__class__.__name__)
+        return
+    else:
+      log.debug("Mode: %s detected from config! Skip difference calculation..."
+                % mapping_mode)
     # Initiate request mapping
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
+    # Rewrite REMAP mode for backward compatibility
+    if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
+      mapped_nffg.mode = mapping_mode
+      log.debug(
+        "Rewrite mapping mode: %s into mapped NFFG..." % mapped_nffg.mode)
+    else:
+      log.debug("Skip mapping mode rewriting! Mode was: %s" % mapping_mode)
     log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
                               self.__class__.__name__)
     # If mapping is not threaded and finished with OK

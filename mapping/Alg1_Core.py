@@ -472,17 +472,26 @@ class CoreAlgorithm(object):
     paths, linkids = helper.shortestPathsBasedOnEdgeWeight(subgraph, start)
     # TODO: sort 'paths' in ordered dict according to new latency pref value.
     # allow only infras which has some 'supported'
+    self.log.debug("Potential hosts #1 (unfiltered) for  VNF %s: %s"
+                   %(vnf_id, paths.keys()))
     potential_hosts = filter(lambda h, nodes=self.net.node: 
       nodes[h].type=='INFRA' and nodes[h].supported is not None, 
                              paths.keys())
     # allow only hosts which supports this NF
+    self.log.debug("Potential hosts #2 (non-Infras and nodes without "
+                   "supported NFs are filtered) for  VNF %s: %s"
+                   %(vnf_id, potential_hosts))
     potential_hosts = filter(lambda h, v=vnf_id, nodes=self.net.node, 
       vnfs=self.req.node: vnfs[v].functional_type in nodes[h].supported, 
                              potential_hosts)
+    self.log.debug("Potential hosts #3 (not supporting this NF type are "
+                   "filtered) for  VNF %s: %s"%(vnf_id, potential_hosts))
     # allow only hosts which complies to plac_crit if any
-    potential_hosts = filter(lambda h, v=vnf_id, vnfs=self.req.node:
-      len(vnfs[v].placement_criteria)==0 or h in vnfs[v].placement_criteria, 
-                             potential_hosts)
+    # potential_hosts = filter(lambda h, v=vnf_id, vnfs=self.req.node:
+    #   len(vnfs[v].placement_criteria)==0 or h in vnfs[v].placement_criteria, 
+    #                          potential_hosts)
+    # self.log.debug("Potential hosts #4 (filtering due to placement criteria)"
+    #                " for  VNF %s: %s"%(vnf_id, potential_hosts))
     potential_hosts_sumlat = []
     for host in potential_hosts:
       potential_hosts_sumlat.append((host, self._sumLatencyOnPath(paths[host], 
@@ -492,6 +501,7 @@ class CoreAlgorithm(object):
                             reqlinkid, cid, subgraph, start)
     # TODO: self.use_old_lat_calc variable to change between lat pref val 
     # calculation methods
+    self.log.debug("Hosts with lat pref values from VNF %s: \n %s"%(vnf_id, hosts_with_lat_prefvalues))
     for map_target, sumlat, latprefval in hosts_with_lat_prefvalues:
       value = self._objectiveFunction(cid, map_target,
                                       prev_vnf_id, vnf_id,
@@ -499,6 +509,7 @@ class CoreAlgorithm(object):
                                       paths[map_target],
                                       linkids[map_target],
                                       sumlat)
+      self.log.debug("Objective function value for VNF %s - Host %s mapping: %s"%(vnf_id, map_target, value))
       if value > -1:
         self.log.debug("Calculated latency preference value: %f for VNF %s and "
                        "path: %s" % (latprefval, vnf_id, paths[map_target]))
@@ -537,8 +548,8 @@ class CoreAlgorithm(object):
               except IndexError:
                 break
       else:
-        # self.log.debug("Host %s is not a good candidate for hosting %s."
-        #                %(map_target,vnf_id))
+        self.log.debug("Host %s is not a good candidate for hosting %s."
+                       %(map_target,vnf_id))
         pass
     try:
       best_node_sofar = best_node_que.pop()

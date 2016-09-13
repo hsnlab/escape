@@ -733,6 +733,15 @@ class NFFG(AbstractNFFG):
     # Dump
     return nffg.dump()
 
+  def dump_to_json (self):
+    """
+    Return the NF-FG structure in JSON compatible format.
+
+    :return: NFFG as a valid JSON
+    :rtype: dict
+    """
+    return json.loads(self.dump())
+
   @classmethod
   def parse (cls, raw_data):
     """
@@ -1854,10 +1863,14 @@ class NFFGToolBox(object):
                       sg_dst_node, sg_dst_port, fr_hop, sbb_dst_port))
         continue
       sbb_dst_port = sbb_dst_port.pop()
-      fr = sbb_src_port.add_flowrule(match="in_port=%s" % sbb_src_port.id,
+      if flowclass:
+        fr_match = "in_port=%s;flowclass=%s" % (sbb_src_port.id, flowclass)
+      else:
+        fr_match = "in_port=%s" % sbb_src_port.id
+      fr = sbb_src_port.add_flowrule(match=fr_match,
                                      action="output=%s" % sbb_dst_port.id,
                                      bandwidth=fr_bw, delay=fr_delay,
-                                     hop_id=fr_hop, id=fr_hop)
+                                     hop_id=fr_hop, id=fr_hop, )
       log.debug("Added flowrule: %s" % fr)
     log.debug("Recreate SG hops...")
     for key, value in sg_hop_info.iteritems():
@@ -2304,8 +2317,7 @@ class NFFGToolBox(object):
 
     :param nffg: NFFG object which contains port.
     :param port: The port which should be the source or destination.
-    :param outbound: Determines whether outbound or inbound link should be
-    found.
+    :param outbound: Determines whether outbound or inbound link should be found
     :return:
     """
     edges_func = None
@@ -2342,7 +2354,7 @@ class NFFGToolBox(object):
     for fr in port.flowrules:
       matches = fr.match.split(";")
       for match in matches:
-        field, mparam = match.split("=")
+        field, mparam = match.split("=", 1)
         if field == "TAG" and mparam == TAG:
           for action in fr.action.split(";"):
             if action == "UNTAG":
@@ -2434,7 +2446,7 @@ class NFFGToolBox(object):
       next_link_found = False
       for fr in curr_port.flowrules:
         for match in fr.match.split(";"):
-          field, mparam = match.split("=")
+          field, mparam = match.split("=", 1)
           if field == "TAG" and mparam == TAG:
             for action in fr.action.split(";"):
               command, cparam = action.split("=")

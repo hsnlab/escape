@@ -1632,6 +1632,40 @@ def generate_mn_topo_etsi ():
   return nffg
 
 
+def generate_sssa_req ():
+  nffg = NFFG(id="SSSAreq1", name="SSSA connectivity request SAP1<->2")
+  sap1 = nffg.add_sap(id="SAP1", name="SAP1")
+  sap2 = nffg.add_sap(id="SAP2", name="SAP2")
+  nffg.add_sglink(src_port=sap1.add_port("port-SAP1"),
+                  dst_port=sap2.add_port("port-SAP2"))
+  nffg.add_sglink(src_port=sap2.ports["port-SAP2"],
+                  dst_port=sap1.ports["port-SAP1"])
+  return nffg
+
+
+def generate_sssa_req2 ():
+  nffg = NFFG(id="SSSAreq1", name="SSSA connectivity request SAP1<->2")
+  sap1 = nffg.add_sap(id="SAP1", name="SAP1")
+  sap2 = nffg.add_sap(id="SAP2", name="SAP2")
+  nffg.add_sglink(src_port=sap1.add_port("port-SAP1"),
+                  dst_port=sap2.add_port("port-SAP2"),
+                  id="sg1")
+  nffg.add_sglink(src_port=sap2.ports["port-SAP2"],
+                  dst_port=sap1.ports["port-SAP1"],
+                  id="sg2")
+  nffg.add_req(src_port=sap1.ports["port-SAP1"],
+               dst_port=sap2.ports["port-SAP2"],
+               sg_path=["sg1"],
+               delay=1.0,
+               bandwidth=1000)
+  nffg.add_req(src_port=sap2.ports["port-SAP2"],
+               dst_port=sap1.ports["port-SAP1"],
+               sg_path=["sg2"],
+               delay=1.0,
+               bandwidth=1000)
+  return nffg
+
+
 def generate_ietf_req ():
   nffg = NFFG(id="SG-etsi-req", name="SG-etsi-req")
   sap84 = nffg.add_sap(id="SAP84", name="SAP84")
@@ -1676,6 +1710,70 @@ def generate_ietf_req ():
   return nffg
 
 
+def generate_verification_req ():
+  nffg = NFFG(id="verification-2sap-web-fw-dpi-nat",
+              name="verification-2sap-web-fw-dpi-nat")
+  sap1 = nffg.add_sap(id="SAP1", name="SAP1")
+  sap1.add_port(1)
+  sap2 = nffg.add_sap(id="SAP2", name="SAP2")
+  sap2.add_port(1)
+  sap3 = nffg.add_sap(id="SAP3", name="SAP3")
+  sap3.add_port(1)
+  fw = nffg.add_nf(id="fw", name="FIREWALL", func_type="firewall",
+                   cpu=1, mem=1, storage=0)
+  fw.add_port(1)
+  fw.add_port(2)
+  fw.add_metadata(name="nf_static_config",
+                  value="ovs-ofctl add-flow fw in_port=2,actions=output:1;"
+                        "ovs-ofctl add-flow fw in_port=1,dl_type=0x0800,"
+                        "nw_proto=6,tp_src=80,actions=output:2")
+  ws1 = nffg.add_nf(id="webserver1", name="webserver1", func_type="webserver",
+                    cpu=1, mem=1, storage=0)
+  ws1.add_port(1)
+  ws1.add_metadata(name="nf_static_config",
+                   value="filter packets with 'sex'")
+  dpi = nffg.add_nf(id="dpi", name="DPI", func_type="dpi",
+                    cpu=1, mem=1, storage=0)
+  dpi.add_port(1)
+  dpi.add_port(2)
+  dpi.add_metadata(name="nf_static_config", value="10.0.0.0/24 <-> 20.0.0.1/32")
+  nat = nffg.add_nf(id="nat", name="NAT", func_type="nat",
+                    cpu=1, mem=1, storage=0)
+  nat.add_port(1)
+  nat.add_port(2)
+  nffg.add_sglink(id=11, src_port=sap1.ports[1], dst_port=nat.ports[1])
+  nffg.add_sglink(id=12, src_port=nat.ports[2], dst_port=fw.ports[2])
+  nffg.add_sglink(id=13, src_port=fw.ports[1], dst_port=ws1.ports[1])
+  nffg.add_sglink(id=14, src_port=ws1.ports[1], dst_port=fw.ports[1],
+                  flowclass="dl_type=0x0800,nw_dst=20.0.0.1")
+  nffg.add_sglink(id=15, src_port=fw.ports[2], dst_port=nat.ports[2])
+  nffg.add_sglink(id=16, src_port=nat.ports[1], dst_port=sap1.ports[1],
+                  flowclass="dl_type=0x0800,nw_dst=10.0.0.1")
+  nffg.add_sglink(id=21, src_port=sap2.ports[1], dst_port=nat.ports[1])
+  nffg.add_sglink(id=26, src_port=nat.ports[1], dst_port=dpi.ports[1],
+                  flowclass="dl_type=0x0800,nw_dst=10.0.0.2")
+  nffg.add_sglink(id=27, src_port=dpi.ports[2], dst_port=sap2.ports[1])
+  nffg.add_sglink(id=31, src_port=sap3.ports[1], dst_port=ws1.ports[1])
+  nffg.add_sglink(id=32, src_port=ws1.ports[1], dst_port=sap3.ports[1],
+                  flowclass="dl_type=0x0800,nw_dst=20.0.0.3")
+  nffg.add_req(src_port=sap1.ports[1],
+               dst_port=sap1.ports[1],
+               sg_path=[11, 12, 13, 14, 15, 16],
+               delay=100,
+               bandwidth=1)
+  nffg.add_req(src_port=sap2.ports[1],
+               dst_port=sap2.ports[1],
+               sg_path=[21, 12, 13, 14, 15, 26, 27],
+               delay=100,
+               bandwidth=1)
+  nffg.add_req(src_port=sap3.ports[1],
+               dst_port=sap3.ports[1],
+               sg_path=[31, 32],
+               delay=100,
+               bandwidth=1)
+  return nffg
+
+
 if __name__ == "__main__":
   # test_parse_load()
   # test_NFFG()
@@ -1704,7 +1802,9 @@ if __name__ == "__main__":
   # nffg = generate_etsi_req_robot1_simple()
   # nffg = generate_mn_topo_etsi()
   # nffg = generate_req_verification()
-  nffg = generate_ietf_req()
+  # nffg = generate_sssa_req1()
+  # nffg = generate_ietf_req()
+  nffg = generate_verification_req()
 
   # pprint(nffg.network.__dict__)
   # nffg.merge_duplicated_links()

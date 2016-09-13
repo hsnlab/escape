@@ -700,7 +700,7 @@ ROS API specific functions
 
 Can be started with the ``--agent`` or ``--rosapi`` initial flags.
 
-The following functions are defined in :any:`ROSAgentRequestHandler`.
+The following functions are defined in :any:`BasicUnifyRequestHandler`.
 
 +-------------------+----------------+-------------------+-------------------------------------------+
 |      Path         |     Params     |     HTTP verbs    | Description                               |

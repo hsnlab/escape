@@ -27,3 +27,4 @@ Unify_ncagent/vnf_starter/lib/
 pip-selfcheck.json
 escape/doc/build
 click
+bgp-ls/netphony-*

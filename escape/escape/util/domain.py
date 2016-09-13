@@ -98,6 +98,8 @@ class AbstractDomainManager(EventMixin):
   DEFAULT_DOMAIN_NAME = "UNDEFINED"
   # Signal that the Manager class is for the Local Mininet-based topology
   IS_LOCAL_MANAGER = False
+  # Signal that the Manager class manages external domains
+  IS_EXTERNAL_MANAGER = False
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, adapters=None, **kwargs):
     """
@@ -264,7 +266,7 @@ class AbstractDomainManager(EventMixin):
       log.info("Requesting resource information from %s domain..." %
                self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
-      if topo_nffg:
+      if topo_nffg is not None:
         log.debug("Save detected topology: %s..." % topo_nffg)
         # Update the received new topo
         self.internal_topo = topo_nffg
@@ -993,6 +995,7 @@ class OpenStackAPI(DefaultUnifyDomainAPI):
 
   Follows the MixIn design pattern approach to support OpenStack functionality.
   """
+  pass
 
 
 class UniversalNodeAPI(DefaultUnifyDomainAPI):
@@ -1004,6 +1007,7 @@ class UniversalNodeAPI(DefaultUnifyDomainAPI):
 
   Follows the MixIn design pattern approach to support UN functionality.
   """
+  pass
 
 
 class RemoteESCAPEv2API(DefaultUnifyDomainAPI):
@@ -1013,6 +1017,18 @@ class RemoteESCAPEv2API(DefaultUnifyDomainAPI):
   Follows the MixIn design pattern approach to support remote ESCAPEv2
   functionality.
   """
+  pass
+
+
+class BGPLSSpeakerAPI(object):
+  """
+  Define interface for managing external domains using REST-API of
+  BGP-LS-based Speaker client.
+
+  Follows the MixIn design pattern approach to support external discovery
+  functionality.
+  """
+  pass
 
 
 class AbstractRESTAdapter(Session):
@@ -1096,8 +1112,11 @@ class AbstractRESTAdapter(Session):
         # if given body is an NFFG
         body = body.dump()
         kwargs['headers']['Content-Type'] = "application/json"
-      elif isinstance(body, basestring) and body.startswith("<?xml version="):
-        kwargs['headers']['Content-Type'] = "application/xml"
+      elif isinstance(body, basestring):
+        if body.startswith("{"):
+          kwargs['headers']['Content-Type'] = "application/json"
+        elif body.startswith("<?xml"):
+          kwargs['headers']['Content-Type'] = "application/xml"
     # Setup parameters - URL
     if url is not None:
       if not url.startswith('http'):
@@ -1171,6 +1190,50 @@ class AbstractRESTAdapter(Session):
     except KeyboardInterrupt:
       log.warning("Request to remote agent(adapter: %s, url: %s) is "
                   "interrupted by user!" % (self.name, self._base_url))
+      return None
+
+  def send_quietly (self, method, url=None, body=None, timeout=None, **kwargs):
+    """
+    Send REST request with handling exceptions and logging only in VERBOSE mode.
+
+    :param method: HTTP method
+    :type method: str
+    :param url: valid URL or relevant part follows ``self.base_url``
+    :type url: str
+    :param body: request body
+    :type body: :any:`NFFG` or dict or bytes or str
+    :param timeout: optional timeout param can be given also here
+    :type timeout: int
+    :raises: :any:`requests.Timeout`
+    :return: raw response data
+    :rtype: str
+    """
+    try:
+      if timeout is not None:
+        kwargs['timeout'] = timeout
+      self.send_request(method, url, body, **kwargs)
+      return self._response.text if self._response is not None else None
+    except Timeout:
+      log.log(VERBOSE,
+              "Remote agent(adapter: %s, url: %s) reached timeout limit!"
+              % (self.name, self._base_url))
+      return None
+    except ConnectionError:
+      log.log(VERBOSE,
+              "Remote agent(adapter: %s, url: %s) is not reachable!"
+              % (self.name, self._base_url))
+      return None
+    except HTTPError as e:
+      log.log(VERBOSE,
+              "Remote agent(adapter: %s, url: %s) responded with an error: %s"
+              % (self.name, self._base_url, e.message))
+      return None
+    except RequestException as e:
+      log.log(VERBOSE, "Got unexpected exception: %s" % e)
+      return None
+    except KeyboardInterrupt:
+      log.log(VERBOSE, "Request to remote agent(adapter: %s, url: %s) is "
+                       "interrupted by user!" % (self.name, self._base_url))
       return None
 
   def is_content_type (self, ctype):

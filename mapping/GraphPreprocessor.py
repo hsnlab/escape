@@ -686,6 +686,10 @@ class GraphPreprocessorClass(object):
     divided_chains_with_graphs = self._divideIntoDisjointSubchains(mode,
        e2e_chains_with_graphs, not_e2e_chains)
 
+    for vnf, d in self.req_graph.network.nodes_iter(data=True):
+      self.log.debug("Final placement criterion of VNF %s is %s"
+                     %(vnf, d.placement_criteria))
+
     # After the request graph is divided, the latency and bw reqs of the
     # divided chains are not valid! because those corresponds to the e2e
     # chains. Handling this correctly is done by the MappingManager.
