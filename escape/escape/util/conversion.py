@@ -2092,7 +2092,7 @@ class UC3MNFFGConverter():
 def test_NFFGConverter ():
   import logging
 
-  logging.basicConfig(level=VERBOSE)
+  logging.basicConfig(level=logging.DEBUG)
   log = logging.getLogger(__name__)
   c = NFFGConverter(domain="OPENSTACK",
                     # ensure_unique_id=True,
@@ -2111,47 +2111,18 @@ def test_NFFGConverter ():
   # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
   # log.debug(nffg.dump())
 
-  # dov = virt_lib.Virtualizer.parse_from_file(
-  #   # "test2.xml")
-  #   "un1.xml")
-  # # dov.bind(relative=True)
-  # log.info("Parsed XML:")
-  # log.info("%s" % dov.xml())
-  # nffg = c.parse_from_Virtualizer(vdata=dov.xml())
-  # log.info("Converted NFFG:")
-  # log.info("%s" % nffg.dump())
-
-  nffg = NFFG.parse_from_file("../../../examples/escape-sbb-mapped.nffg")
+  # nffg = NFFG.parse_from_file("../../../examples/escape-sbb-mapped.nffg")
+  nffg = NFFG.parse_from_file("./escape_verification_request_req3_e2e_meta.nffg")
+  print nffg.dump()
   virt = c.dump_to_Virtualizer(nffg=nffg)
   log.info("Reconverted Virtualizer:")
   log.info("%s" % virt.xml())
 
-  # v = virt_lib.Virtualizer.parse_from_file(
-  #   "../../../examples/escape-sbb-mapped.xml")
-  # nffg = c.parse_from_Virtualizer(vdata=v.xml())
-  nffg = c.parse_from_Virtualizer(vdata=virt.xml())
-  log.debug(nffg.dump())
-
-  # dov = virt_lib.Virtualizer.parse_from_file(
-  #   "../../../../examples/escape-2sbb-topo.xml")
-  # changed = virt_lib.Virtualizer.parse_from_file(
-  #   # "../../../../examples/escape-2sbb-mapped.xml")
-  #   "../../../examples/escape-2sbb-test1.xml")
-  # with open(
-  #    # "../../../../examples/escape-mn-mapped-test.nffg") as f:
-  #    # "../../../../examples/escape-2sbb-mapped.nffg") as f:
-  #    "../../../examples/escape-2sbb-test1.nffg") as f:
-  #   new = NFFG.parse(raw_data=f.read())
-  # # print dov.xml()
-  # print new.dump()
-  # print changed.xml()
-  # # diff = changed.diff(dov)
-  # base = changed.copy()
-  # # changed=changed.copy()
-  # new = c.adapt_mapping_into_Virtualizer(virtualizer=base, nffg=new,
-  #                                        reinstall=True)
-  # diff = changed.diff(new)
-  # print diff.xml()
+  # # v = virt_lib.Virtualizer.parse_from_file(
+  # #   "../../../examples/escape-sbb-mapped.xml")
+  # # nffg = c.parse_from_Virtualizer(vdata=v.xml())
+  # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
+  # log.debug(nffg.dump())
 
 
 def test_UC3MNFFGConverter ():
@@ -2167,5 +2138,5 @@ def test_UC3MNFFGConverter ():
 
 
 if __name__ == "__main__":
-  # test_NFFGConverter()
-  test_UC3MNFFGConverter()
+  test_NFFGConverter()
+  # test_UC3MNFFGConverter()
