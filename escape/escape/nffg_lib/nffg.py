@@ -2169,6 +2169,7 @@ class NFFGToolBox(object):
     :rtype: :any:`NFFG`
     """
     for infra in nffg.infras:
+      log.debug("Remove deployed elements from Infra: %s" % infra.id)
       del_ports = []
       del_nfs = []
       for src, dst, link in nffg.network.out_edges_iter(data=True):
@@ -2178,10 +2179,15 @@ class NFFGToolBox(object):
           del_ports.append(link.src.id)
       if del_nfs:
         nffg.network.remove_nodes_from(del_nfs)
-        log.debug("Removed NFs from Infra: %s" % del_nfs)
+        log.debug("Removed NFs: %s" % del_nfs)
+      if del_ports:
         for id in del_ports:
           infra.del_port(id)
-        log.debug("Removed ports from Infra: %s" % del_ports)
+        log.debug("Removed dynamic ports: %s" % del_ports)
+      log.debug("Clear flowrules...")
+      for port in infra.ports:
+        port.clear_flowrules()
+
     return nffg
 
   ##############################################################################
