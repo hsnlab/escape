@@ -37,7 +37,7 @@
         }
       ],
       "metadata": {
-        "nf_static_config": "10.0.0.0/24 <-> 20.0.0.1/32"
+        "nf_static_config": "filter packets with 'sex'"
       },
       "functional_type": "webserver",
       "specification": {
@@ -80,7 +80,7 @@
         }
       ],
       "metadata": {
-        "nf_static_config": "filter packets with 'sex'"
+        "nf_static_config": "10.0.0.0/24 <-> 20.0.0.1/32"
       },
       "functional_type": "dpi",
       "specification": {
@@ -206,7 +206,7 @@
   ],
   "edge_reqs": [
     {
-      "id": "605e386b-7997-11e6-86cb-9cad979316cb",
+      "id": "c60320e3-79a9-11e6-8d71-9cad979316cb",
       "src_node": "SAP2",
       "src_port": 1,
       "dst_node": "SAP2",
@@ -224,7 +224,7 @@
       ]
     },
     {
-      "id": "605e386a-7997-11e6-86cb-9cad979316cb",
+      "id": "c60320e2-79a9-11e6-8d71-9cad979316cb",
       "src_node": "SAP1",
       "src_port": 1,
       "dst_node": "SAP1",
@@ -241,7 +241,7 @@
       ]
     },
     {
-      "id": "605e386c-7997-11e6-86cb-9cad979316cb",
+      "id": "c60320e4-79a9-11e6-8d71-9cad979316cb",
       "src_node": "SAP3",
       "src_port": 1,
       "dst_node": "SAP3",

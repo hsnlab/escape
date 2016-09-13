@@ -703,11 +703,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:
       mapping_mode = mapper_params['mode']
+      log.info("Detected mapping mode from configuration: %s" % mapping_mode)
     elif nffg.mode is not None:
       mapping_mode = nffg.mode
+      log.info("Detected mapping mode from NFFG: %s" % mapping_mode)
     else:
       mapping_mode = None
-    log.info("Detected mapping mode: %s" % mapping_mode)
+      log.info("No mapping mode was detected!")
     if mapping_mode != NFFG.MODE_REMAP:
       # Calculated ADD-DELETE difference
       log.debug("Calculate ADD - DELETE difference with mapping mode...")
@@ -737,12 +739,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
                 % mapping_mode)
     # Initiate request mapping
     mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
-    if mapping_mode == NFFG.MODE_REMAP:
+    # Rewrite REMAP mode for backward compatibility
+    if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
       mapped_nffg.mode = mapping_mode
       log.debug(
         "Rewrite mapping mode: %s into mapped NFFG..." % mapped_nffg.mode)
     else:
-      log.debug("Mapping mode rewrite is skipped! Mode was: %s" % mapping_mode)
+      log.debug("Skip mapping mode rewriting! Mode was: %s" % mapping_mode)
     log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
                               self.__class__.__name__)
     # If mapping is not threaded and finished with OK

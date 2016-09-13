@@ -1731,12 +1731,12 @@ def generate_verification_req ():
                     cpu=1, mem=1, storage=0)
   ws1.add_port(1)
   ws1.add_metadata(name="nf_static_config",
-                   value="10.0.0.0/24 <-> 20.0.0.1/32")
+                   value="filter packets with 'sex'")
   dpi = nffg.add_nf(id="dpi", name="DPI", func_type="dpi",
                     cpu=1, mem=1, storage=0)
   dpi.add_port(1)
   dpi.add_port(2)
-  dpi.add_metadata(name="nf_static_config", value="filter packets with 'sex'")
+  dpi.add_metadata(name="nf_static_config", value="10.0.0.0/24 <-> 20.0.0.1/32")
   nat = nffg.add_nf(id="nat", name="NAT", func_type="nat",
                     cpu=1, mem=1, storage=0)
   nat.add_port(1)

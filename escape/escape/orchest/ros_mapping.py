@@ -56,18 +56,17 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       log.error("Missing resource NFFG! Abort mapping process...")
       return
     try:
-      mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
+      # Copy mapping config
+      mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME).copy()
       if 'mode' in mapper_params and mapper_params['mode']:
-        mapping_mode = mapper_params['mode']
-        log.debug("Setup mapping mode from configuration: %s" % mapping_mode)
+        log.debug("Setup mapping mode from configuration: %s" %
+                  mapper_params['mode'])
       elif graph.mode:
-        mapping_mode = graph.mode
-        log.debug("Setup mapping mode based on request: %s" % mapping_mode)
-      else:
-        mapping_mode = None
+        mapper_params['mode'] = graph.mode
+        log.debug("Setup mapping mode based on request: %s" %
+                  mapper_params['mode'])
       mapped_nffg = MAP(request=graph.copy(),
                         network=resource.copy(),
-                        mode=mapping_mode,
                         **mapper_params)
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
