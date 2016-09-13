@@ -2168,7 +2168,7 @@ class NFFGToolBox(object):
     :return: the cleaned nffg
     :rtype: :any:`NFFG`
     """
-    for infra in nffg.infras():
+    for infra in nffg.infras:
       del_ports = []
       del_nfs = []
       for src, dst, link in nffg.network.out_edges_iter(data=True):
