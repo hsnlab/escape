@@ -547,7 +547,7 @@ class ControllerAdapter(object):
             # In role of Local Orchestrator each element is up and running
             # update DoV with status RUNNING
             if mapped_nffg.is_bare():
-              log.debug("Detected ")
+              log.debug("Detected cleanup topology!")
             else:
               log.debug("Detected new deployment!")
               self.DoVManager.update_global_view_status(status=NFFG.STATUS_RUN)
@@ -814,9 +814,14 @@ class GlobalResourceManager(object):
     :return: None
     """
     if nffg.is_virtualized():
-      log.warning("Update NFFG contains virtualized node! "
-                  "Skip explicit DoV update...")
-      return
+      log.debug("Update NFFG contains virtualized node(s)!")
+      if self.__dov.get_resource_info().is_virtualized():
+        log.debug("DoV also contains virtualized node(s)! "
+                  "Enable DoV rewriting!")
+      else:
+        log.warning("Detected unexpected virtualized node(s) in update NFFG! "
+                    "Skip DoV update...")
+        return
     log.debug("Update status info based on Global view (DoV)...")
     NFFGToolBox.update_status_by_dov(nffg=nffg,
                                      dov=self.__dov.get_resource_info(),
