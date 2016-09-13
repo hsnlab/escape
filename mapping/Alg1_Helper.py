@@ -638,6 +638,10 @@ class MappingManager(object):
     # self.overall_highest_delay (maybe decremented a bit already) -> which 
     # means almost surely only one distance layer in the structure.
     lal = self.getLocalAllowedLatency(cid)
+    if lal < 1e-6:
+      raise uet.BadInputException("End-to-end delay requirement shouldn't be "
+                "zero!","Local allowed latency for chain %s is %f"
+                                  %(chain_link_ids, lal))
     dist_layer_step = float(lal) / \
                       remaining_chain_len
     dist_layers = {}
