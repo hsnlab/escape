@@ -542,14 +542,18 @@ class ControllerAdapter(object):
               "cleared, skip DoV update...")
         # If the the topology was a GLOBAL view
         elif not mapped_nffg.is_virtualized():
-          if not self.DoVManager._status_updates:
+          if self.DoVManager._status_updates:
+            # In case of status updates, the DOV update has been done
+            # In role of Local Orchestrator each element is up and running
+            # update DoV with status RUNNING
+            if mapped_nffg.is_bare():
+              log.debug("Detected ")
+            else:
+              log.debug("Detected new deployment!")
+              self.DoVManager.update_global_view_status(status=NFFG.STATUS_RUN)
+          else:
             # Override the whole DoV by default
             self.DoVManager.set_global_view(nffg=mapped_nffg)
-          else:
-            # In case of status updates, the DOV update has been done
-            # In role of lLocal Orchestrator each element is up and running
-            # update DoV with status RUNNING
-            self.DoVManager.update_global_view_status(status=NFFG.STATUS_RUN)
         else:
           log.warning(
             "Detected virtualized Infrastructure node in mapped NFFG! Skip "
@@ -809,11 +813,9 @@ class GlobalResourceManager(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
-    if nffg.is_empty():
-      log.warning("Update NFFG is empty! Skip Global view update...")
-      return
-    elif nffg.is_bare():
-      log.debug("Update NFFG is bare NFFG! Skip explicit DoV update...")
+    if nffg.is_virtualized():
+      log.warning("Update NFFG contains virtualized node! "
+                  "Skip explicit DoV update...")
       return
     log.debug("Update status info based on Global view (DoV)...")
     NFFGToolBox.update_status_by_dov(nffg=nffg,
