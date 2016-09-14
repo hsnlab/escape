@@ -130,7 +130,7 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: topology" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: topology" % self.LOGGER_NAME)
     # Forward call to main layer class
     resource = self._proceed_API_call(self.API_CALL_RESOURCE)
     self._topology_view_responder(resource_nffg=resource)
@@ -146,7 +146,7 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: sg" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: sg" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
     if nffg:
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
@@ -397,11 +397,11 @@ class ServiceLayerAPI(AbstractAPI):
     :return: topology description requested from the layer's Virtualizer
     :rtype: :any:`NFFG`
     """
-    log.getChild('[U-Sl]').info("Requesting Virtualizer for REST-API...")
+    log.getChild('[U-Sl]').debug("Requesting Virtualizer for REST-API...")
     # Get or if not available then request the layer's Virtualizer
     sas_virt = self.__get_sas_resource_view()
     if sas_virt is not None:
-      log.getChild('[U-Sl]').info("Generate topo description...")
+      log.getChild('[U-Sl]').debug("Generate topo description...")
       # return with the virtual view as an NFFG
       return sas_virt.get_resource_info()
     else:

@@ -136,7 +136,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: get-config" % self.LOGGER_NAME)
     # Forward call to main layer class
     resource = self._proceed_API_call(self.API_CALL_RESOURCE)
     self._topology_view_responder(resource_nffg=resource)
@@ -148,7 +148,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: edit-config" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
     if nffg:
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
@@ -170,7 +170,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     self.send_response(200)
     # Global resource has not changed -> respond with the cached topo
     if resource_nffg is False:
-      self.log.info(
+      self.log.debug(
         "Global resource has not changed! Respond with cached topology...")
       if self.virtualizer_format_enabled:
         data = self.server.last_response.xml()
@@ -199,7 +199,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
-    self.log.info("Send back topology description...")
+    self.log.debug("Send back topology description...")
     self.wfile.write(data)
     self.log.log(VERBOSE, "Responded topology:\n%s" % data)
 
@@ -372,7 +372,7 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: get-config" % self.LOGGER_NAME)
     # Forward call to main layer class
     resource = self._proceed_API_call(self.API_CALL_RESOURCE)
     self._topology_view_responder(resource_nffg=resource)
@@ -384,7 +384,7 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: edit-config" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
     if nffg:
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
@@ -565,12 +565,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: global resource view (DoV)
     :rtype: :any:`NFFG` or False
     """
-    log.getChild('[Sl-Or]').info("Requesting Virtualizer for REST-API")
+    log.getChild('[Sl-Or]').debug("Requesting Virtualizer for REST-API")
     slor_virt = self.__get_slor_resource_view()
     if slor_virt is not None:
       # Check if the resource is changed
       if slor_virt.is_changed():
-        log.getChild('[Sl-Or]').info("Generate topo description...")
+        log.getChild('[Sl-Or]').debug("Generate topo description...")
         res = slor_virt.get_resource_info()
         return res
       # If resource has not been changed return False
@@ -645,10 +645,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of a single BiSBiS view based on DoV
     :rtype: str
     """
-    log.getChild('[Cf-Or]').info("Requesting Virtualizer for REST-API...")
+    log.getChild('[Cf-Or]').debug("Requesting Virtualizer for REST-API...")
     cfor_virt = self.__get_cfor_resource_view()
     if cfor_virt is not None:
-      log.getChild('[Cf-Or]').info("Generate topo description...")
+      log.getChild('[Cf-Or]').debug("Generate topo description...")
       return cfor_virt.get_resource_info()
     else:
       log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
