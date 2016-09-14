@@ -75,6 +75,10 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       mapped_nffg.name = graph.name + "-sas-mapped"
       # Explicitly copy metadata
       mapped_nffg.metadata = graph.metadata.copy()
+      # Explicit copy of SAP data
+      for sap in graph.saps:
+        if sap.id in mapped_nffg:
+          mapped_nffg[sap.id].metadata = graph[sap.id].metadata.copy()
     except MappingException as e:
       log.error("Got exception during the mapping process! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s isaborted!" % graph)

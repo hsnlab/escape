@@ -74,6 +74,10 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       mapped_nffg.name = graph.name + "-ros-mapped"
       # Explicitly copy metadata
       mapped_nffg.metadata = graph.metadata.copy()
+      # Explicit copy of SAP data
+      for sap in graph.saps:
+        if sap.id in mapped_nffg:
+          mapped_nffg[sap.id].metadata = graph[sap.id].metadata.copy()
       log.info("Mapping algorithm: %s is finished on NF-FG: %s" %
                (cls.__name__, graph))
       # print mapped_nffg.dump()
