@@ -204,9 +204,11 @@ class RequestCache(object):
   Store HTTP request states.
   """
   # State constants
-  UNKNOWN = "UNKNOWN"
+  INITIATED = "INITIATED"
+  IN_PROGRESS = "IN_PROGRESS"
   SUCCESS = "SUCCESS"
   ERROR = "ERROR"
+  UNKNOWN = "UNKNOWN"
 
   def __init__ (self):
     super(RequestCache, self).__init__()

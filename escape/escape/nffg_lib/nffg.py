@@ -839,7 +839,9 @@ class NFFG(AbstractNFFG):
         sg_sum = len([sg for sg in self.sg_hops])
         # And there is not SG hop
         if sg_sum == 0:
-          return True
+          e2e_sum = len([sg for sg in self.reqs])
+          if e2e_sum == 0:
+            return True
     return False
 
   def is_virtualized (self):
