@@ -182,10 +182,12 @@ class NFFG(AbstractNFFG):
   STATUS_RUN = Element.STATUS_RUN
   STATUS_STOP = Element.STATUS_STOP
   STATUS_FAIL = Element.STATUS_FAIL
+  # Mapping process status
+  MAP_STATUS_SKIPPED = "SKIPPED"  # mark NFFG as skipped for ESCAPE
 
   version = __version__
 
-  def __init__ (self, id=None, name=None, mode=None, metadata=None,
+  def __init__ (self, id=None, name=None, mode=None, metadata=None, status=None,
                 version=__version__):
     """
     Init
@@ -196,6 +198,8 @@ class NFFG(AbstractNFFG):
     :type name: str
     :param mode: describe how to handle the defined elements (defaul: ADD)
     :type mode: str
+    :param status: optional info for NFFG
+    :type status: str
     :param version: optional version (default: 1.0)
     :type version: str
     :return: None
@@ -206,6 +210,7 @@ class NFFG(AbstractNFFG):
     self.name = name if name is not None else "NFFG-" + str(self.id)
     self.metadata = OrderedDict(metadata if metadata else ())
     self.mode = mode
+    self.status = status
     self.version = version
 
   ##############################################################################

@@ -18,6 +18,7 @@ Contains classes which implement :any:`NFFG` mapping functionality.
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import *
 from escape import CONFIG
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log, LAYER_NAME
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.util.misc import call_as_coop_task, VERBOSE
@@ -166,6 +167,8 @@ class ResourceOrchestrationMapper(AbstractMapper):
       # virt_resource.id = input_graph.id
       # return virt_resource
       # Send request forward (probably to Remote ESCAPE)
+      input_graph.status = NFFG.MAP_STATUS_SKIPPED
+      log.debug("Mark NFFG status: %s!" % input_graph.status)
       return input_graph
     # Run actual mapping algorithm
     if self._threaded:

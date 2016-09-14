@@ -710,7 +710,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
     else:
       mapping_mode = None
       log.info("No mapping mode was detected!")
-    if mapping_mode != NFFG.MODE_REMAP:
+    if nffg.status == NFFG.MAP_STATUS_SKIPPED:
+      log.debug("Detected NFFG map status: %s! "
+                "Skip difference calculation and "
+                "proceed with original request..." % nffg.status)
+    elif mapping_mode != NFFG.MODE_REMAP:
       # Calculated ADD-DELETE difference
       log.debug("Calculate ADD - DELETE difference with mapping mode...")
       log.log(VERBOSE, "New NFFG:\n%s" % nffg.dump())
@@ -745,7 +749,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.debug(
         "Rewrite mapping mode: %s into mapped NFFG..." % mapped_nffg.mode)
     else:
-      log.debug("Skip mapping mode rewriting! Mode was: %s" % mapping_mode)
+      log.debug("Skip mapping mode rewriting! Mode remained: %s" % mapping_mode)
     log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
                               self.__class__.__name__)
     # If mapping is not threaded and finished with OK

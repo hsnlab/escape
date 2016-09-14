@@ -359,7 +359,7 @@ class ServiceLayerAPI(AbstractAPI):
       log.debug(
         "Rewrite mapping mode: %s into mapped NFFG..." % mapped_nffg.mode)
     else:
-      log.debug("Skip mapping mode rewriting! Mode was: %s" % mapping_mode)
+      log.debug("Skip mapping mode rewriting! Mode remained: %s" % mapping_mode)
     log.getChild('API').debug("Invoked request_service on %s is finished" %
                               self.__class__.__name__)
     # If mapping is not threaded and finished with OK

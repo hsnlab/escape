@@ -18,6 +18,7 @@ Contains classes which implement SG mapping functionality.
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import *
 from escape import CONFIG
+from escape.nffg_lib.nffg import NFFG
 from escape.service import log as log, LAYER_NAME
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
 from escape.util.misc import call_as_coop_task, VERBOSE
@@ -162,6 +163,8 @@ class ServiceGraphMapper(AbstractMapper):
       log.warning(
         "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
         "forward service request to lower layer..." % LAYER_NAME)
+      input_graph.status = NFFG.MAP_STATUS_SKIPPED
+      log.debug("Mark NFFG status: %s!" % input_graph.status)
       return input_graph
     # Run actual mapping algorithm
     if self._threaded:
