@@ -769,7 +769,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     except ProcessorError as e:
       self.raiseEventNoErrors(InstantiationFinishedEvent,
                               id=nffg.id,
-                              result=InstantiationFinishedEvent.VERIFICATION_REFUSED,
+                              result=InstantiationFinishedEvent.REFUSED_BY_VERIFICATION,
                               error=e)
 
   def _proceed_to_install_NFFG (self, mapped_nffg):

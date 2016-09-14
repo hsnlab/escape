@@ -382,7 +382,7 @@ class ServiceLayerAPI(AbstractAPI):
       self._handle_InstantiationFinishedEvent(
         event=InstantiationFinishedEvent(
           id=service_nffg.id,
-          result=InstantiationFinishedEvent.VERIFICATION_REFUSED,
+          result=InstantiationFinishedEvent.REFUSED_BY_VERIFICATION,
           error=e))
 
   def __get_sas_resource_view (self):

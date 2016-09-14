@@ -43,8 +43,8 @@ class BaseResultEvent(Event):
   SUCCESS = "SUCCESS"
   ERROR = "ERROR"
   MAPPING_ERROR = "MAPPING_ERROR"
-  DEPLOY_ERROR = "DEPLOY_ERROR"
-  VERIFICATION_REFUSED = "VERIFICATION_REFUSED"
+  DEPLOY_ERROR = "DEPLOYMENT_ERROR"
+  REFUSED_BY_VERIFICATION = "REFUSED_BY_VERIFICATION"
   ABORTED = "ABORTED"
   UNKNOWN = "UNKNOWN"
 
@@ -57,7 +57,7 @@ class BaseResultEvent(Event):
     :return:
     """
     if result in (cls.ERROR, cls.MAPPING_ERROR, cls.DEPLOY_ERROR,
-                  cls.VERIFICATION_REFUSED, cls.ABORTED):
+                  cls.REFUSED_BY_VERIFICATION, cls.ABORTED):
       return True
     else:
       return False
