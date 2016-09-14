@@ -32,6 +32,37 @@ from pox.lib.recoco import Timer
 from pox.lib.revent import EventMixin, Event
 
 
+class BaseResultEvent(Event):
+  """
+  Base class for deploy result signalling Events.
+  """
+  # State constants
+  INITIATED = "INITIATED"
+  IN_PROGRESS = "IN_PROGRESS"
+  DEPLOYED = "DEPLOYED"
+  SUCCESS = "SUCCESS"
+  ERROR = "ERROR"
+  MAPPING_ERROR = "MAPPING_ERROR"
+  DEPLOY_ERROR = "DEPLOY_ERROR"
+  VERIFICATION_REFUSED = "VERIFICATION_REFUSED"
+  ABORTED = "ABORTED"
+  UNKNOWN = "UNKNOWN"
+
+  @classmethod
+  def is_error (cls, result):
+    """
+    Check the result is error type or not.
+
+    :param result:
+    :return:
+    """
+    if result in (cls.ERROR, cls.MAPPING_ERROR, cls.DEPLOY_ERROR,
+                  cls.VERIFICATION_REFUSED, cls.ABORTED):
+      return True
+    else:
+      return False
+
+
 class DomainChangedEvent(Event):
   """
   Event class for signaling all kind of change(s) in specific domain.

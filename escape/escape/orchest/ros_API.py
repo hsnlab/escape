@@ -21,6 +21,8 @@ from escape.orchest import LAYER_NAME, log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
+from escape.util.domain import BaseResultEvent
+from escape.util.mapping import ProcessorError
 from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
   VERBOSE
 from pox.lib.revent.revent import Event
@@ -67,7 +69,7 @@ class GetGlobalResInfoEvent(Event):
   pass
 
 
-class InstantiationFinishedEvent(Event):
+class InstantiationFinishedEvent(BaseResultEvent):
   """
   Event for signalling end of mapping process finished with success.
   """
@@ -735,30 +737,40 @@ class ResourceOrchestrationAPI(AbstractAPI):
       else:
         log.debug("Difference calculation resulted empty subNFFGs!")
         log.info("No change has been detected in request! Skip mapping...")
-        log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
-                                  self.__class__.__name__)
+        log.getChild('API').debug("Invoked instantiate_nffg on %s is finished!"
+                                  % self.__class__.__name__)
         return
     else:
       log.debug("Mode: %s detected from config! Skip difference calculation..."
                 % mapping_mode)
-    # Initiate request mapping
-    mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
-    # Rewrite REMAP mode for backward compatibility
-    if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
-      mapped_nffg.mode = mapping_mode
-      log.debug(
-        "Rewrite mapping mode: %s into mapped NFFG..." % mapped_nffg.mode)
-    else:
-      log.debug("Skip mapping mode rewriting! Mode remained: %s" % mapping_mode)
-    log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
-                              self.__class__.__name__)
-    # If mapping is not threaded and finished with OK
-    if mapped_nffg is not None and not \
-       self.resource_orchestrator.mapper.threaded:
-      self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg)
-    else:
-      log.warning("Something went wrong in service request instantiation: "
-                  "mapped service request is missing!")
+    try:
+      # Initiate request mapping
+      mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
+      # Rewrite REMAP mode for backward compatibility
+      if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
+        mapped_nffg.mode = mapping_mode
+        log.debug("Rewrite mapping mode: %s into mapped NFFG..." %
+                  mapped_nffg.mode)
+      else:
+        log.debug("Skip mapping mode rewriting! Mode remained: %s" %
+                  mapping_mode)
+      log.getChild('API').debug("Invoked instantiate_nffg on %s is finished!" %
+                                self.__class__.__name__)
+      # If mapping is not threaded and finished with OK
+      if mapped_nffg is not None and not \
+         self.resource_orchestrator.mapper.threaded:
+        self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg)
+      else:
+        log.warning("Something went wrong in service request instantiation: "
+                    "mapped service request is missing!")
+        self.raiseEventNoErrors(InstantiationFinishedEvent,
+                                id=nffg.id,
+                                result=InstantiationFinishedEvent.MAPPING_ERROR)
+    except ProcessorError as e:
+      self.raiseEventNoErrors(InstantiationFinishedEvent,
+                              id=nffg.id,
+                              result=InstantiationFinishedEvent.VERIFICATION_REFUSED,
+                              error=e)
 
   def _proceed_to_install_NFFG (self, mapped_nffg):
     """
@@ -844,11 +856,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`InstallationFinishedEvent`
     :return: None
     """
-    if event.result:
+    if not InstantiationFinishedEvent.is_error(event.result):
       log.getChild('API').info(
-        "NF-FG instantiation has been finished successfully!")
+        "NF-FG instantiation has been finished successfully with result: %s!" %
+        event.result)
     else:
       log.getChild('API').error(
-        "NF-FG instantiation has been finished with error!")
-    self.raiseEventNoErrors(InstantiationFinishedEvent, id=event.id,
+        "NF-FG instantiation has been finished with error result: %s!" %
+        event.result)
+    self.raiseEventNoErrors(InstantiationFinishedEvent,
+                            id=event.id,
                             result=event.result)

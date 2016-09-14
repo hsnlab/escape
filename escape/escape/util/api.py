@@ -205,8 +205,6 @@ class RequestCache(object):
   """
   # State constants
   UNKNOWN = "UNKNOWN"
-  INITIATED = "INITIATED"
-  IN_PROGRESS = "IN_PROGRESS"
   SUCCESS = "SUCCESS"
   ERROR = "ERROR"
 
@@ -245,7 +243,12 @@ class RequestCache(object):
     :type result: bool
     """
     try:
-      self.cache[id] = self.SUCCESS if result else self.ERROR
+      if type(result) is bool:
+        self.cache[id] = self.SUCCESS if result else self.ERROR
+      elif isinstance(result, basestring):
+        self.cache[id] = result
+      else:
+        self.cache[id] = self.UNKNOWN
     except KeyError:
       pass
 

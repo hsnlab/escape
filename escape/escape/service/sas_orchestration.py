@@ -105,6 +105,8 @@ class ServiceOrchestrator(AbstractOrchestrator):
         except ProcessorError as e:
           log.warning("Mapping pre/post processing was unsuccessful! "
                       "Cause: %s" % e)
+          # Propagate the ProcessError to API layer
+          raise
       else:
         log.warning("Virtual view is not subclass of AbstractVirtualizer!")
     else:

@@ -21,13 +21,15 @@ from subprocess import Popen
 
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
-from escape.orchest.ros_API import BasicUnifyRequestHandler
+from escape.orchest.ros_API import BasicUnifyRequestHandler, \
+  InstantiationFinishedEvent
 from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
-from escape.util.mapping import PreMapEvent, PostMapEvent
+from escape.util.domain import BaseResultEvent
+from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError
 from escape.util.misc import schedule_delayed_as_coop_task, \
   schedule_as_coop_task, notify_remote_visualizer, VERBOSE
 from pox.lib.revent.revent import Event
@@ -350,26 +352,38 @@ class ServiceLayerAPI(AbstractAPI):
     else:
       mapping_mode = None
       log.info("No mapping mode was detected!")
-    # Initiate service request mapping
-    mapped_nffg = self.service_orchestrator.initiate_service_graph(
-      service_nffg)
-    # Rewrite REMAP mode for backward compatibility
-    if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
-      mapped_nffg.mode = mapping_mode
-      log.debug(
-        "Rewrite mapping mode: %s into mapped NFFG..." % mapped_nffg.mode)
-    else:
-      log.debug("Skip mapping mode rewriting! Mode remained: %s" % mapping_mode)
-    log.getChild('API').debug("Invoked request_service on %s is finished" %
-                              self.__class__.__name__)
-    # If mapping is not threaded and finished with OK
-    if mapped_nffg is not None and not \
-       self.service_orchestrator.mapper.threaded:
-      self._proceed_to_instantiate_NFFG(mapped_nffg)
-      self.last_sg = mapped_nffg
-    else:
-      log.warning("Something went wrong in service request initiation: "
-                  "mapped service data is missing!")
+    try:
+      # Initiate service request mapping
+      mapped_nffg = self.service_orchestrator.initiate_service_graph(
+        service_nffg)
+      # Rewrite REMAP mode for backward compatibility
+      if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
+        mapped_nffg.mode = mapping_mode
+        log.debug("Rewrite mapping mode: %s into mapped NFFG..." %
+                  mapped_nffg.mode)
+      else:
+        log.debug(
+          "Skip mapping mode rewriting! Mode remained: %s" % mapping_mode)
+      log.getChild('API').debug("Invoked request_service on %s is finished" %
+                                self.__class__.__name__)
+      # If mapping is not threaded and finished with OK
+      if mapped_nffg is not None and not \
+         self.service_orchestrator.mapper.threaded:
+        self._proceed_to_instantiate_NFFG(mapped_nffg)
+        self.last_sg = mapped_nffg
+      else:
+        log.warning("Something went wrong in service request initiation: "
+                    "mapped service data is missing!")
+        self._handle_InstantiationFinishedEvent(
+          event=InstantiationFinishedEvent(
+            id=service_nffg.id,
+            result=InstantiationFinishedEvent.MAPPING_ERROR))
+    except ProcessorError as e:
+      self._handle_InstantiationFinishedEvent(
+        event=InstantiationFinishedEvent(
+          id=service_nffg.id,
+          result=InstantiationFinishedEvent.VERIFICATION_REFUSED,
+          error=e))
 
   def __get_sas_resource_view (self):
     """
@@ -471,11 +485,14 @@ class ServiceLayerAPI(AbstractAPI):
   def _handle_InstantiationFinishedEvent (self, event):
     """
     """
-    if hasattr(self, 'rest_api') and self.rest_api:
-      self.rest_api.request_cache.set_result(id=event.id, result=event.result)
-    if event.result:
+    if not BaseResultEvent.is_error(event.result):
       log.getChild('API').info(
-        "Service request(id=%s) has been finished successfully!" % event.id)
+        "Service request(id=%s) has been finished successfully with result: %s!"
+        % (event.id, event.result))
     else:
       log.getChild('API').error(
-        "Service request(id=%s) has been finished with error!" % event.id)
+        "Service request(id=%s) has been finished with error result: %s!" %
+        (event.id, event.result))
+    if hasattr(self, 'rest_api') and self.rest_api:
+      self.rest_api.request_cache.set_result(id=event.id, result=event.result)
+      log.getChild('API').debug("Cache request result...")

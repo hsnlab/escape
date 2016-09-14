@@ -21,6 +21,7 @@ from escape.adapt.adaptation import ControllerAdapter
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
 from escape.util.api import AbstractAPI
+from escape.util.domain import BaseResultEvent
 from escape.util.misc import schedule_as_coop_task
 from pox.lib.revent.revent import Event
 
@@ -41,7 +42,7 @@ class GlobalResInfoEvent(Event):
     self.dov = dov
 
 
-class InstallationFinishedEvent(Event):
+class InstallationFinishedEvent(BaseResultEvent):
   """
   Event for signalling end of mapping process.
   """
@@ -154,11 +155,17 @@ class ControllerAdaptationAPI(AbstractAPI):
       install_result = self.controller_adapter.install_nffg(mapped_nffg)
     except Exception as e:
       log.error("Something went wrong during NFFG installation!")
-      self.raiseEventNoErrors(InstallationFinishedEvent, result=False, error=e)
+      self.raiseEventNoErrors(InstallationFinishedEvent,
+                              id=mapped_nffg.id,
+                              result=InstallationFinishedEvent.DEPLOY_ERROR,
+                              error=e)
       raise
-    log.getChild('API').debug("Invoked install_nffg on %s is finished" %
+    log.getChild('API').debug("Invoked install_nffg on %s is finished!" %
                               self.__class__.__name__)
-    self.raiseEventNoErrors(InstallationFinishedEvent, id=mapped_nffg.id,
+    install_result = InstallationFinishedEvent.DEPLOYED if install_result \
+      else InstallationFinishedEvent.DEPLOY_ERROR
+    self.raiseEventNoErrors(InstallationFinishedEvent,
+                            id=mapped_nffg.id,
                             result=install_result)
 
   ##############################################################################
@@ -205,10 +212,17 @@ class ControllerAdaptationAPI(AbstractAPI):
     :type event: :any:`DeploymentFinishedEvent`
     :return: None
     """
-    if event.success:
+    if not InstallationFinishedEvent.is_error(event.success):
       log.getChild('API').info(
-        "NF-FG installation has been finished successfully!")
+        "NF-FG installation has been finished successfully with result: %s!" %
+        event.result)
+      self.raiseEventNoErrors(InstallationFinishedEvent,
+                              id=event.id,
+                              success=event.success)
     else:
       log.getChild('API').error(
-        "NF-FG installation has been finished with error!")
-    self.raiseEventNoErrors(InstallationFinishedEvent, event.success)
+        "NF-FG installation has been finished with error result: %s!" %
+        event.result)
+    self.raiseEventNoErrors(InstallationFinishedEvent,
+                            id=event.id,
+                            success=event.success)
