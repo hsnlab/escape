@@ -72,6 +72,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-ros-mapped"
+      # Explicitly copy metadata
+      mapped_nffg.metadata = graph.metadata.copy()
       log.info("Mapping algorithm: %s is finished on NF-FG: %s" %
                (cls.__name__, graph))
       # print mapped_nffg.dump()
