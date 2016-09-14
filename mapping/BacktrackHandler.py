@@ -178,8 +178,8 @@ class BacktrackHandler(object):
         # if we step back we need to adjust the vnf_index
         chain_to_bt_len = len(self.subchains_with_subgraphs[\
                                   tmp_subchain_level][0]['chain'])
-        self.vnf_index_in_subchain = chain_to_bt_len-2 if \
-                                     chain_to_bt_len-2 > 0 else 0
+        self.vnf_index_in_subchain = chain_to_bt_len-1 if \
+                                     chain_to_bt_len-1 > 0 else 0
         self.current_subchain_level = tmp_subchain_level
     else:
       raise uet.InternalAlgorithmException("Backtrack structure maintenance"
