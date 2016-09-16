@@ -479,6 +479,7 @@ class MappingManager(object):
     'infra'. Should be used when this infra is only used as forwarding infra, 
     but not as for hosting VNF for 'cid'. last_sghop_id indicates where is the
     requirement division process in the chain.
+    WTF? always returns last_sghop_id??
     """
     for c in self.chains:
       if cid == c['id']:
@@ -525,30 +526,31 @@ class MappingManager(object):
     self.max_output_chainid += 1
     return self.max_output_chainid
 
-  def isAnyVNFInChain (self, cid, subgraph):
+  def isItTransitInfraNow (self, infra, sg_hop_obj):
     """
-    Checks whether any VNF of subgraph is a part of the given cid.
+    Checks whether this infra routes the traffic of the chain only at this part
+    (indicated by sg_hop) of the chain. The infra may host other parts of the 
+    chain where it also hosts VNFs.
     """
-    for vnf in subgraph.nodes_iter():
-      for c in self.chains:
-        if cid == c['id'] and vnf in c['chain']:
-          return True
-    return False
+    sghop_hosting_path = self.link_mapping[sg_hop_obj.src.node.id]\
+                      [sg_hop_obj.dst.node.id][sg_hop_obj.id]['mapped_to'][1:-1]
+    return infra in sghop_hosting_path
 
-  def getChainPiecesOfReqSubgraph (self, cid, subgraph):
+  def getNextChainPieceOfReqSubgraph (self, cid, subgraph, sg_hop):
     """
     Iterates on all the "inbound" SGHops of this subgraph (these are not part 
     of the subgraph, they were the bordering edges in the request graph) and 
-    finds the parts of the given chain (cid) which has any part mapped here. 
+    finds the part of the given chain (cid) which starts from sg_hop and is 
+    mapped here. 
     We don't need the BiSBiS directly but all the VNF-s of subgraph should be 
     mapped to the same BiSBiS.
     """
     # A structure for storing SGHop
     # store list, there can be multiple disjoint chain parts mapped
     # here (if an internal VNF is mapped elsewhere)
-    chain_pieces = []
     for i,j,k,d in self.colored_req.edges_iter(data=True, keys=True):
-      if i not in subgraph.nodes_iter() and j in subgraph.nodes_iter():
+      if i not in subgraph.nodes_iter() and j in subgraph.nodes_iter() \
+         and k == sg_hop:
         # i,j,k is an inbound SGHop from the (implicitly) given BiSBiS
         if cid in d['color']:
           for c in self.chains:
@@ -560,7 +562,9 @@ class MappingManager(object):
               # find which part of the chain is mapped here
               for vnf1, vnf2, lid in zip(c['chain'][:-1], c['chain'][1:],
                                          c['link_ids']):
-                if vnf1 != j  and not found_beginnig:
+                if (vnf1 != j or lid != c['link_ids'][c['link_ids'].\
+                                                      index(sg_hop)+1]) \
+                  and not found_beginnig:
                   continue
                 elif not found_beginnig:
                   found_beginnig = True
@@ -576,9 +580,10 @@ class MappingManager(object):
               # this infra is the last to host a VNF for this chain
               chain_piece.append(vnf2)
               link_ids_piece.append(lid)
-              chain_pieces.append((chain_piece, link_ids_piece))
-              break
-    return chain_pieces
+              return chain_piece, link_ids_piece
+    else:
+      raise uet.InternalAlgorithmException("Mapped chain part couldn't be found"
+                                           " on a given infra for chain %s!"%cid)
 
   def getRemainingE2ELatency (self, chain_id):
     """

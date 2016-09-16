@@ -863,15 +863,29 @@ class CoreAlgorithm(object):
       nffg.del_edge(req.src, req.dst, req.id)
     e2e_chainpieces = {}
     last_sghop_id = None
+    last_sghop_obj = None 
+    last_cid = None
     for cid, first_vnf, infra in self.manager.genPathOfChains(nffg):
+      if last_cid != cid:
+        last_cid = cid
+        for chain in self.manager.chains:
+          if chain['id'] == cid:
+            last_sghop_id = chain['link_ids'][0]
+            self.log.debug("Starting E2E requirement division on chain %s with "
+                           "path %s"%(cid, chain['link_ids']))
+            break
+      for i,j,k,d in self.req.edges_iter(data=True, keys=True):
+        if last_sghop_id == k:
+          last_sghop_obj = d
+          break
       if nffg.network.node[infra].type == 'INFRA':
+        mapped_req = self.req.subgraph((vnf.id for vnf in \
+                                        nffg.running_nfs(infra)))
         if nffg.network.node[infra].infra_type == NFFG.TYPE_INFRA_BISBIS:
-          mapped_req = self.req.subgraph((vnf.id for vnf in \
-                                          nffg.running_nfs(infra)))
           outedgereq = None
           delay_of_infra = self._sumLatencyOnPath([infra], [])
           if len(mapped_req) == 0 or \
-             not self.manager.isAnyVNFInChain(cid, mapped_req) or \
+             self.manager.isItTransitInfraNow(infra, last_sghop_obj) or \
              first_vnf is None:
             # we know that 'cid' traverses 'infra', but if this chain has no 
             # mapped node here, then it olny uses this infra in its path
@@ -895,26 +909,37 @@ class CoreAlgorithm(object):
                                       sg_path=[sghop_id])
             self._addEdgeReqToChainPieceStruct(e2e_chainpieces, cid, outedgereq)
           else:
-            chain_pieces_of_infra = self.manager.\
-                                    getChainPiecesOfReqSubgraph(cid, mapped_req)
-            for chain_piece, link_ids_piece in chain_pieces_of_infra:
-              src, _ = self._getSrcDstPortsOfOutputEdgeReq(nffg, 
-                                                           link_ids_piece[0], 
-                                                           infra, dst=False)
-              _, dst = self._getSrcDstPortsOfOutputEdgeReq(nffg,
-                                                           link_ids_piece[-1],
-                                                           infra, src=False)
-              # a chain part spends one time of delay_of_infra for every link 
-              # mapped here, becuase it is valid between all the port pairs only.
-              outedgereq = nffg.add_req(src, dst, 
-                                        delay=len(link_ids_piece)*delay_of_infra, 
-                                        bandwidth=0,
-                                        id=self.manager.getNextOutputChainId(),
-                                        sg_path=link_ids_piece)
-              self._addEdgeReqToChainPieceStruct(e2e_chainpieces, cid, 
-                                                 outedgereq)
+            chain_piece, link_ids_piece= self.manager.\
+                                    getNextChainPieceOfReqSubgraph(cid, 
+                                    mapped_req, last_sghop_id)
+            src, _ = self._getSrcDstPortsOfOutputEdgeReq(nffg, 
+                                                         link_ids_piece[0], 
+                                                         infra, dst=False)
+            _, dst = self._getSrcDstPortsOfOutputEdgeReq(nffg,
+                                                         link_ids_piece[-1],
+                                                         infra, src=False)
+            # a chain part spends one time of delay_of_infra for every link 
+            # mapped here, becuase it is valid between all the port pairs only.
+            outedgereq = nffg.add_req(src, dst, 
+                                      delay=len(link_ids_piece)*delay_of_infra, 
+                                      bandwidth=0,
+                                      id=self.manager.getNextOutputChainId(),
+                                      sg_path=link_ids_piece)
+            self._addEdgeReqToChainPieceStruct(e2e_chainpieces, cid, 
+                                               outedgereq)
           last_sghop_id = outedgereq.sg_path[-1]
-            
+        elif len(mapped_req) > 0 and not \
+             self.manager.isItTransitInfraNow(infra, last_sghop_obj):
+          # in this case a non-BiSBiS infra hosts a VNF, so the last_sghop_id
+          # needs to be updated!
+          chain_piece, link_ids_piece= self.manager.\
+                                    getNextChainPieceOfReqSubgraph(cid, 
+                                    mapped_req, last_sghop_id)
+          last_sghop_id = link_ids_piece[-1]
+          self.log.debug("Stepping on non-BiSBiS infra node %s hosting chain "
+                         "part %s and finishing in SGHop %s."%
+                         (infra, chain_piece, last_sghop_id))
+
     # now iterate on the chain pieces
     for cid in e2e_chainpieces:
       # this is NOT equal to permitted minus remaining!
