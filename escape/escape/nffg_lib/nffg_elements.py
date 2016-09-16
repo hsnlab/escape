@@ -1635,7 +1635,7 @@ class NFFGModel(Element):
   # Container type
   TYPE = "NFFG"
 
-  def __init__ (self, id=None, name=None, metadata=None, mode=None,
+  def __init__ (self, id=None, name=None, metadata=None, mode=None, status=None,
                 version=None):
     """
     Init
@@ -1652,6 +1652,7 @@ class NFFGModel(Element):
     self.name = name
     self.version = version if version is not None else self.VERSION
     self.metadata = OrderedDict(metadata if metadata else ())
+    self.status = status
     self.mode = mode
     self.node_nfs = []
     self.node_saps = []
@@ -1958,6 +1959,7 @@ class NFFGModel(Element):
         name=data['parameters'].get('name'),  # can be None
         metadata=data['parameters'].get('metadata'),
         mode=data['parameters'].get('mode'),
+        status=data['parameters'].get('status'),
         version=data['parameters'].get('version'))  # mandatory
       # Fill Container lists
       for n in data.get('node_nfs', ()):

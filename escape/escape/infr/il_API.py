@@ -19,18 +19,19 @@ from escape.infr import LAYER_NAME
 from escape.infr import log as log  # Infrastructure layer logger
 from escape.infr.topology import ESCAPENetworkBuilder
 from escape.util.api import AbstractAPI
+from escape.util.domain import BaseResultEvent
 from escape.util.misc import schedule_as_coop_task
-from pox.lib.revent import Event
 from pox.openflow.of_01 import OpenFlow_01_Task
 
 
-class DeploymentFinishedEvent(Event):
+class DeploymentFinishedEvent(BaseResultEvent):
   """
   Event for signaling NF-FG deployment
   """
 
-  def __init__ (self, success, error=None):
+  def __init__ (self, id, success, error=None):
     super(DeploymentFinishedEvent, self).__init__()
+    self.id = id
     self.success = success
     self.error = error
 
@@ -131,4 +132,6 @@ class InfrastructureLayerAPI(AbstractAPI):
     # TODO - probably will not be supported in the future
     log.getChild('API').info(
       "NF-FG: %s deployment has been finished successfully!" % event.nffg_part)
-    self.raiseEventNoErrors(DeploymentFinishedEvent, True)
+    self.raiseEventNoErrors(DeploymentFinishedEvent,
+                            id=event.nffg_part.id,
+                            success=DeploymentFinishedEvent.DEPLOYED)

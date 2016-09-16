@@ -21,6 +21,8 @@ from escape.orchest import LAYER_NAME, log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
+from escape.util.domain import BaseResultEvent
+from escape.util.mapping import ProcessorError
 from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
   VERBOSE
 from pox.lib.revent.revent import Event
@@ -67,7 +69,7 @@ class GetGlobalResInfoEvent(Event):
   pass
 
 
-class InstantiationFinishedEvent(Event):
+class InstantiationFinishedEvent(BaseResultEvent):
   """
   Event for signalling end of mapping process finished with success.
   """
@@ -134,7 +136,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: get-config" % self.LOGGER_NAME)
     # Forward call to main layer class
     resource = self._proceed_API_call(self.API_CALL_RESOURCE)
     self._topology_view_responder(resource_nffg=resource)
@@ -146,7 +148,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: edit-config" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
     if nffg:
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
@@ -168,7 +170,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     self.send_response(200)
     # Global resource has not changed -> respond with the cached topo
     if resource_nffg is False:
-      self.log.info(
+      self.log.debug(
         "Global resource has not changed! Respond with cached topology...")
       if self.virtualizer_format_enabled:
         data = self.server.last_response.xml()
@@ -197,7 +199,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
     self.end_headers()
-    self.log.info("Send back topology description...")
+    self.log.debug("Send back topology description...")
     self.wfile.write(data)
     self.log.log(VERBOSE, "Responded topology:\n%s" % data)
 
@@ -370,7 +372,7 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: get-config" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: get-config" % self.LOGGER_NAME)
     # Forward call to main layer class
     resource = self._proceed_API_call(self.API_CALL_RESOURCE)
     self._topology_view_responder(resource_nffg=resource)
@@ -382,7 +384,7 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
 
     :return: None
     """
-    self.log.info("Call %s function: edit-config" % self.LOGGER_NAME)
+    self.log.debug("Call %s function: edit-config" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
     if nffg:
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
@@ -563,12 +565,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: global resource view (DoV)
     :rtype: :any:`NFFG` or False
     """
-    log.getChild('[Sl-Or]').info("Requesting Virtualizer for REST-API")
+    log.getChild('[Sl-Or]').debug("Requesting Virtualizer for REST-API")
     slor_virt = self.__get_slor_resource_view()
     if slor_virt is not None:
       # Check if the resource is changed
       if slor_virt.is_changed():
-        log.getChild('[Sl-Or]').info("Generate topo description...")
+        log.getChild('[Sl-Or]').debug("Generate topo description...")
         res = slor_virt.get_resource_info()
         return res
       # If resource has not been changed return False
@@ -643,10 +645,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: dump of a single BiSBiS view based on DoV
     :rtype: str
     """
-    log.getChild('[Cf-Or]').info("Requesting Virtualizer for REST-API...")
+    log.getChild('[Cf-Or]').debug("Requesting Virtualizer for REST-API...")
     cfor_virt = self.__get_cfor_resource_view()
     if cfor_virt is not None:
-      log.getChild('[Cf-Or]').info("Generate topo description...")
+      log.getChild('[Cf-Or]').debug("Generate topo description...")
       return cfor_virt.get_resource_info()
     else:
       log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
@@ -710,7 +712,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
     else:
       mapping_mode = None
       log.info("No mapping mode was detected!")
-    if mapping_mode != NFFG.MODE_REMAP:
+    if nffg.status == NFFG.MAP_STATUS_SKIPPED:
+      log.debug("Detected NFFG map status: %s! "
+                "Skip difference calculation and "
+                "proceed with original request..." % nffg.status)
+    elif mapping_mode != NFFG.MODE_REMAP:
       # Calculated ADD-DELETE difference
       log.debug("Calculate ADD - DELETE difference with mapping mode...")
       log.log(VERBOSE, "New NFFG:\n%s" % nffg.dump())
@@ -731,30 +737,40 @@ class ResourceOrchestrationAPI(AbstractAPI):
       else:
         log.debug("Difference calculation resulted empty subNFFGs!")
         log.info("No change has been detected in request! Skip mapping...")
-        log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
-                                  self.__class__.__name__)
+        log.getChild('API').debug("Invoked instantiate_nffg on %s is finished!"
+                                  % self.__class__.__name__)
         return
     else:
       log.debug("Mode: %s detected from config! Skip difference calculation..."
                 % mapping_mode)
-    # Initiate request mapping
-    mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
-    # Rewrite REMAP mode for backward compatibility
-    if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
-      mapped_nffg.mode = mapping_mode
-      log.debug(
-        "Rewrite mapping mode: %s into mapped NFFG..." % mapped_nffg.mode)
-    else:
-      log.debug("Skip mapping mode rewriting! Mode was: %s" % mapping_mode)
-    log.getChild('API').debug("Invoked instantiate_nffg on %s is finished" %
-                              self.__class__.__name__)
-    # If mapping is not threaded and finished with OK
-    if mapped_nffg is not None and not \
-       self.resource_orchestrator.mapper.threaded:
-      self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg)
-    else:
-      log.warning("Something went wrong in service request instantiation: "
-                  "mapped service request is missing!")
+    try:
+      # Initiate request mapping
+      mapped_nffg = self.resource_orchestrator.instantiate_nffg(nffg=nffg)
+      # Rewrite REMAP mode for backward compatibility
+      if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
+        mapped_nffg.mode = mapping_mode
+        log.debug("Rewrite mapping mode: %s into mapped NFFG..." %
+                  mapped_nffg.mode)
+      else:
+        log.debug("Skip mapping mode rewriting! Mode remained: %s" %
+                  mapping_mode)
+      log.getChild('API').debug("Invoked instantiate_nffg on %s is finished!" %
+                                self.__class__.__name__)
+      # If mapping is not threaded and finished with OK
+      if mapped_nffg is not None and not \
+         self.resource_orchestrator.mapper.threaded:
+        self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg)
+      else:
+        log.warning("Something went wrong in service request instantiation: "
+                    "mapped service request is missing!")
+        self.raiseEventNoErrors(InstantiationFinishedEvent,
+                                id=nffg.id,
+                                result=InstantiationFinishedEvent.MAPPING_ERROR)
+    except ProcessorError as e:
+      self.raiseEventNoErrors(InstantiationFinishedEvent,
+                              id=nffg.id,
+                              result=InstantiationFinishedEvent.REFUSED_BY_VERIFICATION,
+                              error=e)
 
   def _proceed_to_install_NFFG (self, mapped_nffg):
     """
@@ -840,11 +856,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`InstallationFinishedEvent`
     :return: None
     """
-    if event.result:
+    if not InstantiationFinishedEvent.is_error(event.result):
       log.getChild('API').info(
-        "NF-FG instantiation has been finished successfully!")
+        "NF-FG instantiation has been finished successfully with result: %s!" %
+        event.result)
     else:
       log.getChild('API').error(
-        "NF-FG instantiation has been finished with error!")
-    self.raiseEventNoErrors(InstantiationFinishedEvent, id=event.id,
+        "NF-FG instantiation has been finished with error result: %s!" %
+        event.result)
+    self.raiseEventNoErrors(InstantiationFinishedEvent,
+                            id=event.id,
                             result=event.result)

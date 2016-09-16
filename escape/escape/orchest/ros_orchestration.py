@@ -111,6 +111,8 @@ class ResourceOrchestrator(AbstractOrchestrator):
         except ProcessorError as e:
           log.warning("Mapping pre/post processing was unsuccessful! "
                       "Cause: %s" % e)
+          # Propagate the ProcessError to API layer
+          raise
       else:
         log.warning("Global view is not subclass of AbstractVirtualizer!")
     else:

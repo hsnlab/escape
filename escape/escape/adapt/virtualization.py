@@ -432,6 +432,23 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
 
+  def remove_deployed_elements (self):
+    """
+    Remove all the NFs, flowrules and dynamic ports from DoV.s
+
+    :param nffg: changed infrastructure info
+    :type nffg: :any:`NFFG`
+    :return: updated Dov
+    :rtype: :any:`NFFG`
+    """
+    if self.__global_nffg.is_empty():
+      log.debug("DoV is empty! Skip DoV cleanup")
+      return self.__global_nffg
+    NFFGToolBox.remove_deployed_services(nffg=self.__global_nffg, log=log)
+    log.log(VERBOSE, "Cleared Dov:\n%s" % self.__global_nffg.dump())
+    self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
+    return self.__global_nffg
+
 
 class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
   """

@@ -182,10 +182,12 @@ class NFFG(AbstractNFFG):
   STATUS_RUN = Element.STATUS_RUN
   STATUS_STOP = Element.STATUS_STOP
   STATUS_FAIL = Element.STATUS_FAIL
+  # Mapping process status
+  MAP_STATUS_SKIPPED = "SKIPPED"  # mark NFFG as skipped for ESCAPE
 
   version = __version__
 
-  def __init__ (self, id=None, name=None, mode=None, metadata=None,
+  def __init__ (self, id=None, name=None, mode=None, metadata=None, status=None,
                 version=__version__):
     """
     Init
@@ -196,6 +198,8 @@ class NFFG(AbstractNFFG):
     :type name: str
     :param mode: describe how to handle the defined elements (defaul: ADD)
     :type mode: str
+    :param status: optional info for NFFG
+    :type status: str
     :param version: optional version (default: 1.0)
     :type version: str
     :return: None
@@ -206,6 +210,7 @@ class NFFG(AbstractNFFG):
     self.name = name if name is not None else "NFFG-" + str(self.id)
     self.metadata = OrderedDict(metadata if metadata else ())
     self.mode = mode
+    self.status = status
     self.version = version
 
   ##############################################################################
@@ -834,7 +839,9 @@ class NFFG(AbstractNFFG):
         sg_sum = len([sg for sg in self.sg_hops])
         # And there is not SG hop
         if sg_sum == 0:
-          return True
+          e2e_sum = len([sg for sg in self.reqs])
+          if e2e_sum == 0:
+            return True
     return False
 
   def is_virtualized (self):
@@ -2153,7 +2160,42 @@ class NFFGToolBox(object):
     :type log: :any:`logging.Logger`
     :return:
     """
+    # TODO implement
     pass
+
+  @classmethod
+  def remove_deployed_services (cls, nffg, log=logging.getLogger("CLEAN")):
+    """
+    Remove all the installed NFs, flowrules and dynamic ports from given NFFG.
+
+    :param nffg: base NFFG
+    :type nffg: :any:`NFFG`
+    :param log: additional logger
+    :type log: :any:`logging.Logger`
+    :return: the cleaned nffg
+    :rtype: :any:`NFFG`
+    """
+    for infra in nffg.infras:
+      log.debug("Remove deployed elements from Infra: %s" % infra.id)
+      del_ports = []
+      del_nfs = []
+      for src, dst, link in nffg.network.out_edges_iter(data=True):
+        if link.type == NFFG.TYPE_LINK_DYNAMIC and \
+              link.dst.node.type == NFFG.TYPE_NF:
+          del_nfs.append(dst)
+          del_ports.append(link.src.id)
+      if del_nfs:
+        nffg.network.remove_nodes_from(del_nfs)
+        log.debug("Removed NFs: %s" % del_nfs)
+      if del_ports:
+        for id in del_ports:
+          infra.del_port(id)
+        log.debug("Removed dynamic ports: %s" % del_ports)
+      log.debug("Clear flowrules...")
+      for port in infra.ports:
+        port.clear_flowrules()
+
+    return nffg
 
   ##############################################################################
   # ----------------------- High level NFFG operations ------------------------

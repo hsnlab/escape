@@ -18,6 +18,7 @@ Contains classes which implement SG mapping functionality.
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import *
 from escape import CONFIG
+from escape.nffg_lib.nffg import NFFG
 from escape.service import log as log, LAYER_NAME
 from escape.util.mapping import AbstractMappingStrategy, AbstractMapper
 from escape.util.misc import call_as_coop_task, VERBOSE
@@ -72,6 +73,12 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-sas-mapped"
+      # Explicitly copy metadata
+      mapped_nffg.metadata = graph.metadata.copy()
+      # Explicit copy of SAP data
+      for sap in graph.saps:
+        if sap.id in mapped_nffg:
+          mapped_nffg[sap.id].metadata = graph[sap.id].metadata.copy()
     except MappingException as e:
       log.error("Got exception during the mapping process! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s isaborted!" % graph)
@@ -162,6 +169,8 @@ class ServiceGraphMapper(AbstractMapper):
       log.warning(
         "Mapping algorithm in Layer: %s is disabled! Skip mapping step and "
         "forward service request to lower layer..." % LAYER_NAME)
+      input_graph.status = NFFG.MAP_STATUS_SKIPPED
+      log.debug("Mark NFFG status: %s!" % input_graph.status)
       return input_graph
     # Run actual mapping algorithm
     if self._threaded:

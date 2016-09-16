@@ -18,6 +18,7 @@ Contains classes which implement :any:`NFFG` mapping functionality.
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import *
 from escape import CONFIG
+from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log, LAYER_NAME
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.util.misc import call_as_coop_task, VERBOSE
@@ -71,6 +72,12 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       # Set mapped NFFG id for original SG request tracking
       mapped_nffg.id = graph.id
       mapped_nffg.name = graph.name + "-ros-mapped"
+      # Explicitly copy metadata
+      mapped_nffg.metadata = graph.metadata.copy()
+      # Explicit copy of SAP data
+      for sap in graph.saps:
+        if sap.id in mapped_nffg:
+          mapped_nffg[sap.id].metadata = graph[sap.id].metadata.copy()
       log.info("Mapping algorithm: %s is finished on NF-FG: %s" %
                (cls.__name__, graph))
       # print mapped_nffg.dump()
@@ -166,6 +173,8 @@ class ResourceOrchestrationMapper(AbstractMapper):
       # virt_resource.id = input_graph.id
       # return virt_resource
       # Send request forward (probably to Remote ESCAPE)
+      input_graph.status = NFFG.MAP_STATUS_SKIPPED
+      log.debug("Mark NFFG status: %s!" % input_graph.status)
       return input_graph
     # Run actual mapping algorithm
     if self._threaded:

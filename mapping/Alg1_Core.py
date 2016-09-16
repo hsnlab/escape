@@ -919,14 +919,14 @@ class CoreAlgorithm(object):
     for cid in e2e_chainpieces:
       # this is NOT equal to permitted minus remaining!
       sum_of_latency_pieces = sum((er.delay for er in e2e_chainpieces[cid]))
-      # divide the remaining E2E latency weighted by the least necessary latency
+      # divide the remaining E2E latency equally among the e2e pieces
       # and add this to the propagated latency as extra.
-      if sum_of_latency_pieces > 0:
-        for er in e2e_chainpieces[cid]:
-          er.delay += float(er.delay) / sum_of_latency_pieces * \
-                      self.manager.getRemainingE2ELatency(cid)
-          self.log.debug("Output latency requirement increased to %s in %s for "
-                         "path %s"%(er.delay, er.src.node.id, er.sg_path))
+      for er in e2e_chainpieces[cid]:
+        er.delay += 1.0 / len(e2e_chainpieces[cid]) * \
+                    self.manager.getRemainingE2ELatency(cid)
+        self.log.debug("Output latency requirement increased to %s in %s for "
+                       "path %s"%(er.delay, er.src.node.id, er.sg_path))
+        
 
   def constructOutputNFFG (self):
     # use the unchanged input from the lower layer (deepcopied in the

@@ -1127,13 +1127,18 @@ class NFFGConverter(object):
         except KeyError:
           # SAP port id cannot be transferred in Virtualizer
           # If source port is not found, try to detect the only port in SAP
-          if len(snode.ports) == 1:
-            sport = snode.ports.container[0]
-            self.log.debug(
-              "Port id mismatch! Detected source port for Requirement link: "
-              "%s" % sport)
-          else:
-            raise
+          try:
+            if len(snode.ports) == 1:
+              sport = snode.ports.container[0]
+              self.log.debug(
+                "Port id mismatch! Detected source port for Requirement link: "
+                "%s" % sport)
+            else:
+              raise Exception()
+          except:
+            self.log.warning("Source port for Req link is not found! "
+                             "Skip conversion...")
+            continue
         # Detect destination port
         try:
           dnode = nffg[values['dnode']]
@@ -1143,13 +1148,18 @@ class NFFGConverter(object):
         except KeyError:
           # SAP port id cannot be transferred in Virtualizer
           # If source port is not found, try to detect the only port in SAP
-          if len(dnode.ports) == 1:
-            dport = dnode.ports.container[0]
-            self.log.debug(
-              "Port id mismatch! Detected destination port for Requirement "
-              "link: %s" % dport)
-          else:
-            raise
+          try:
+            if len(dnode.ports) == 1:
+              dport = dnode.ports.container[0]
+              self.log.debug(
+                "Port id mismatch! Detected destination port for Requirement "
+                "link: %s" % dport)
+            else:
+              raise Exception()
+          except:
+            self.log.warning("Destination port for Req link is not found! "
+                             "Skip conversion...")
+            continue
         # Create Requirement link
         req = nffg.add_req(
           id=req_id,
@@ -2112,7 +2122,8 @@ def test_NFFGConverter ():
   # log.debug(nffg.dump())
 
   # nffg = NFFG.parse_from_file("../../../examples/escape-sbb-mapped.nffg")
-  nffg = NFFG.parse_from_file("./escape_verification_request_req3_e2e_meta.nffg")
+  nffg = NFFG.parse_from_file(
+    "./escape_verification_request_req3_e2e_meta.nffg")
   print nffg.dump()
   virt = c.dump_to_Virtualizer(nffg=nffg)
   log.info("Reconverted Virtualizer:")
