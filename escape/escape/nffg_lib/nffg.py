@@ -812,6 +812,15 @@ class NFFG(AbstractNFFG):
     """
     return len(self.network) == 0
 
+  def is_infrastructure (self):
+    """
+    Return True if the NFFG is an infrastructure view with Infrastructure nodes.
+
+    :return: the NFFG is an infrastructure view
+    :rtype: bool
+    """
+    return sum([1 for i in self.infras]) != 0
+
   def is_SBB (self):
     """
     Return True if the topology detected as a trivial SingleBiSBiS view,
@@ -1523,6 +1532,7 @@ class NFFGToolBox(object):
     :type log: :any:`logging.Logger`
     :return: None
     """
+    log.debug("Recreate missing TAG matching fields...")
     for infra in nffg.infras:
       # Iterate over flowrules of the infra
       for flowrule in infra.flowrules():
@@ -2077,11 +2087,14 @@ class NFFGToolBox(object):
     for nf in base_nfs:
       if nf in updated_nfs:
         base[nf].status = updated[nf].status
+      else:
+        log.warning("Missing NF: %s from base NFFG: %s" % (nf, base))
     # Update Flowrule status
     base_infras = {infra.id for infra in base.infras}
     updated_infras = {infra.id for infra in updated.infras}
     log.debug("Update status of flowrules in Infra nodes: %s" % updated_infras)
     for infra_id in base_infras:
+      # Skip Infras from other domains
       if infra_id not in updated_infras:
         continue
       for port in base[infra_id].ports:
@@ -2090,20 +2103,32 @@ class NFFGToolBox(object):
                       "Skip flowrule status update in this Port..."
                       % (port.id, infra_id))
           continue
-        updated_frs = {f.id for f in
-                       updated[infra_id].ports[port.id].flowrules}
+        # updated_frs = {f.id for f in
+        #                updated[infra_id].ports[port.id].flowrules}
+        # for fr in base[infra_id].ports[port.id].flowrules:
+        #   if fr.id not in updated_frs:
+        #     log.warning("Flowrule: %s is not in the updated NFFG! "
+        #                 "Skip flowrule status update..." % fr)
+        #     continue
+        #   for f in updated[infra_id].ports[port.id].flowrules:
+        #     if f.id == fr.id:
+        #       fr.status = f.status
         for fr in base[infra_id].ports[port.id].flowrules:
-          if fr.id not in updated_frs:
+          changed = False
+          for ufr in updated[infra_id].ports[port.id].flowrules:
+            # Theoretically in a port there is only one flowrule with a given
+            #  hop_id --> if the hop_ids are the same it must be the same fr
+            if fr.hop_id == ufr.hop_id:
+              fr.status = ufr.status
+              changed = True
+              break
+          if not changed:
             log.warning("Flowrule: %s is not in the updated NFFG! "
                         "Skip flowrule status update..." % fr)
-            continue
-          for f in updated[infra_id].ports[port.id].flowrules:
-            if f.id == fr.id:
-              fr.status = f.status
     return base
 
   @classmethod
-  def update_status_by_dov (cls, nffg, dov,
+  def update_status_by_dov (cls, nffg, dov, init_status=NFFG.STATUS_PENDING,
                             log=logging.getLogger("UPDATE-DOV-STATUS")):
     """
     Update status of the elements of the given ``base`` nffg  based on the
@@ -2113,6 +2138,7 @@ class NFFGToolBox(object):
     :type nffg: :any:`NFFG`
     :param dov: updated domain information
     :type dov: :any:`NFFG`
+    :type init_status: init status of new element
     :param log: additional logger
     :type log: :any:`logging.Logger`
     :return: the update base NFFG
@@ -2121,19 +2147,20 @@ class NFFGToolBox(object):
     # Update NF status
     nffg_nfs = {nf.id for nf in nffg.nfs}
     dov_nfs = {nf.id for nf in dov.nfs}
-    log.debug("Update status of NF nodes: %s" % nffg_nfs)
+    log.debug("Update status of existing NF nodes: %s" % nffg_nfs)
     for nf in nffg_nfs:
       if nf in dov_nfs:
         nffg[nf].status = dov[nf].status
       else:
-        nffg[nf].status = NFFG.STATUS_PENDING
+        nffg[nf].status = init_status
     # Update Flowrule status
     for infra in nffg.infras:
       for flowrule in infra.flowrules():
-        flowrule.status = NFFG.STATUS_PENDING
+        flowrule.status = init_status
     nffg_infras = {infra.id for infra in nffg.infras}
     dov_infras = {infra.id for infra in dov.infras}
-    log.debug("Update status of flowrules in Infra nodes: %s" % nffg_infras)
+    log.debug("Update status of existing flowrules in Infra nodes: %s" %
+              nffg_infras)
     for infra_id in nffg_infras:
       if infra_id not in dov_infras:
         continue
@@ -2143,7 +2170,7 @@ class NFFGToolBox(object):
         dov_frs = {f.id for f in dov[infra_id].ports[port.id].flowrules}
         for fr in nffg[infra_id].ports[port.id].flowrules:
           if fr.id not in dov_frs:
-            fr.status = NFFG.STATUS_PENDING
+            fr.status = init_status
           for f in dov[infra_id].ports[port.id].flowrules:
             if f.id == fr.id:
               fr.status = f.status

@@ -988,6 +988,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if not self.__is_changed(virt):
       return False
     else:
+      log.info("Received changed topology from domain: %s" % self.domain_name)
       log.log(VERBOSE, "Changed domain topology from: %s:\n%s" % (
         self.domain_name, virt.xml()))
       # Cache new topo

@@ -455,27 +455,29 @@ class ControllerAdapter(object):
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
-    # # Notify remote visualizer about the deployable NFFG if it's needed
-    # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # If DoV update is based on status updates, rewrite the whole DoV as the
     # first step
     if self.DoVManager._status_updates:
+      log.debug("Status-based update is enabled! "
+                "Rewrite DoV with mapping result...")
       self.DoVManager.rewrite_global_view_with_status(nffg=mapped_nffg)
-    deploy_result = True
+    # Split the mapped NFFG into slices based on domains
     slices = NFFGToolBox.split_into_domains(nffg=mapped_nffg, log=log)
+    # If no Infranode in the NFFG, no domain can be detected and slicing by it
     if slices is None:
       log.warning("Given mapped NFFG: %s can not be sliced! "
                   "Skip domain notification steps" % mapped_nffg)
-      return deploy_result
-    log.debug("Notify initiated domains: %s" %
-              [d for d in self.domains.initiated])
+      # Return with deploy result: fail
+      return False
+    log.info("Notify initiated domains: %s" %
+             [d for d in self.domains.initiated])
     # TODO - abstract/inter-domain tag rewrite
     # NFFGToolBox.rewrite_interdomain_tags(slices)
+    # Set deploy result True by default
+    deploy_result = True
+    # Perform domain installations
     for domain, part in slices:
-      log.debug(
-        "Recreate missing TAG matching fields in domain part: %s..." % domain)
-      # Temporarily rewrite/recreate TAGs here
-      NFFGToolBox.recreate_match_TAGs(nffg=part, log=log)
+      log.debug("Search DomainManager for domain: %s" % domain)
       # Get Domain Manager
       domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
       if domain_mgr is None:
@@ -483,19 +485,21 @@ class ControllerAdapter(object):
                     "Skip install domain part..." % domain)
         deploy_result = False
         continue
-      log.log(VERBOSE, "Splitted domain: %s part:\n%s" % (domain, part.dump()))
-      log.info("Delegate splitted part: %s to %s" % (part, domain_mgr))
+      # Temporarily rewrite/recreate TAGs here
+      NFFGToolBox.recreate_match_TAGs(nffg=part, log=log)
       # Rebind requirement link fragments as e2e reqs
       part = NFFGToolBox.rebind_e2e_req_links(nffg=part, log=log)
+      log.log(VERBOSE, "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       # Check if need to reset domain before install
       if CONFIG.reset_domains_before_install():
         log.debug("Reset %s domain before deploying mapped NFFG..." %
                   domain_mgr.domain_name)
         domain_mgr.clear_domain()
+      log.info("Delegate splitted part: %s to %s" % (part, domain_mgr))
       # Invoke DomainAdapter's install
-      res = domain_mgr.install_nffg(part)
+      domain_install_result = domain_mgr.install_nffg(part)
       # Update the DoV based on the mapping result covering some corner case
-      if res:
+      if domain_install_result:
         log.info("Installation of %s in %s was successful!" % (part, domain))
         log.debug("Update installed part with collective result: %s" %
                   NFFG.STATUS_DEPLOY)
@@ -503,7 +507,7 @@ class ControllerAdapter(object):
         # DoV update
         NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_DEPLOY,
                                        log=log)
-      if not res:
+      else:
         log.error("Installation of %s in %s was unsuccessful!" %
                   (part, domain))
         log.debug("Update installed part with collective result: %s" %
@@ -513,9 +517,9 @@ class ControllerAdapter(object):
         NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
                                        log=log)
       # Note result according to others before
-      deploy_result = deploy_result and res
+      deploy_result = deploy_result and domain_install_result
       # If installation of the domain was performed without error
-      if not res and not self.DoVManager._status_updates:
+      if not domain_install_result and not self.DoVManager._status_updates:
         log.warning("Skip DoV update with domain: %s! Cause: "
                     "Domain installation was unsuccessful!" % domain)
         continue
@@ -532,8 +536,8 @@ class ControllerAdapter(object):
         if mapped_nffg.is_SBB():
           # If the request was a cleanup request, we can simply clean the DOV
           if mapped_nffg.is_bare():
-            log.debug(
-              "Detected cleanup topology (no NF/Flowrule/SG_hop)! Clean DoV...")
+            log.debug("Detected cleanup topology (no NF/Flowrule/SG_hop)! "
+                      "Clean DoV...")
             self.DoVManager.clean_domain(domain=domain)
           # If the reset contains some VNF, cannot clean or override
           else:
@@ -547,7 +551,8 @@ class ControllerAdapter(object):
             # In role of Local Orchestrator each element is up and running
             # update DoV with status RUNNING
             if mapped_nffg.is_bare():
-              log.debug("Detected cleanup topology!")
+              log.debug("Detected cleanup topology! "
+                        "No need for status update...")
             else:
               log.debug("Detected new deployment!")
               self.DoVManager.update_global_view_status(status=NFFG.STATUS_RUN)
@@ -555,9 +560,8 @@ class ControllerAdapter(object):
             # Override the whole DoV by default
             self.DoVManager.set_global_view(nffg=mapped_nffg)
         else:
-          log.warning(
-            "Detected virtualized Infrastructure node in mapped NFFG! Skip "
-            "DoV update...")
+          log.warning("Detected virtualized Infrastructure node in mapped NFFG!"
+                      " Skip DoV update...")
         # In case of Local manager skip the rest of the update
         continue
       # Explicit domain update
@@ -592,6 +596,7 @@ class ControllerAdapter(object):
       return self._manage_external_domain_changes(event)
     log.debug("Received DomainChange event from domain: %s, cause: %s"
               % (event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
+    log.log(VERBOSE, "Changed topology:\n%s" % event.data.dump())
     # If new domain detected
     if event.cause == DomainChangedEvent.TYPE.DOMAIN_UP:
       self.DoVManager.add_domain(domain=event.domain,
@@ -813,6 +818,10 @@ class GlobalResourceManager(object):
     :type nffg: :any:`NFFG`
     :return: None
     """
+    if not nffg.is_infrastructure():
+      log.error("New topology is not contains no infrastructure node!"
+                "Skip DoV update...")
+      return
     if nffg.is_virtualized():
       log.debug("Update NFFG contains virtualized node(s)!")
       if self.__dov.get_resource_info().is_virtualized():
@@ -822,7 +831,7 @@ class GlobalResourceManager(object):
         log.warning("Detected unexpected virtualized node(s) in update NFFG! "
                     "Skip DoV update...")
         return
-    log.debug("Update status info based on Global view (DoV)...")
+    log.debug("Migrate status info of deployed elements from DoV...")
     NFFGToolBox.update_status_by_dov(nffg=nffg,
                                      dov=self.__dov.get_resource_info(),
                                      log=log)

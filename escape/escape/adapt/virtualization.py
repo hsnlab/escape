@@ -426,6 +426,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     if self.__global_nffg.is_empty():
       log.debug("DoV is empty! Skip cleanup domain: %s" % domain)
       return self.__global_nffg
+    NFFGToolBox.update_status_info(nffg=nffg, status=NFFG.STATUS_DEPLOY)
     NFFGToolBox.update_nffg_by_status(base=self.__global_nffg, updated=nffg,
                                       log=log)
     log.log(VERBOSE, "Updated Dov:\n%s" % self.__global_nffg.dump())
