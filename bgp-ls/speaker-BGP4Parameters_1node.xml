@@ -48,7 +48,8 @@
     <!-- Optional Parameter. How to learn the topology. Possibilities: fromXML, fromBGP. Default: fromBGP -->
     <learnTopology>fromXML</learnTopology>
     <!-- Topology network to read. It is mandatory if and only if learnTopology parameter is fromXML. -->
-    <topologyFile>/home/czentye/5gex/escape-5gex/bgp-ls/network1_esc.xml</topologyFile>
+    <!--<topologyFile>speaker-network_2nodes.xml</topologyFile>-->
+    <topologyFile>speaker-network_1node.xml</topologyFile>
     <!-- Optional Parameter. Instance Identifier for node and link NLRI. See rfc 6549. Default value: 0-->
     <!--<instanceID>0</instanceID>-->
     <!-- Optional Parameter. Default value: localhost -->

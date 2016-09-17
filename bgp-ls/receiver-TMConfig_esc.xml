@@ -15,6 +15,6 @@
     <BGPLS>
         <Reader>True</Reader>
         <Writer>False</Writer>
-        <BGPLSconfigFile>src/test/resources/BGP4Parameters_2.xml</BGPLSconfigFile>
+        <BGPLSconfigFile>receiver-BGP4Parameters_2.xml</BGPLSconfigFile>
     </BGPLS>
 </config>
