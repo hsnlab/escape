@@ -6,11 +6,11 @@
 	path = dummy-orchestrator
 	url = git@5gexgit.tmit.bme.hu:unify/dummy-orchestrator.git
 	branch = master
-[submodule "netphony-topology"]
-	path = bgp-ls/netphony-topology
-	url = git@5gexgit.tmit.bme.hu:ogd/netphony-topology.git
-	branch = 5gex
 [submodule "tnova_connector"]
 	path = tnova_connector
 	url = git@5gexgit.tmit.bme.hu:unify/tnova_connector.git
 	branch = master
+[submodule "bgp-ls/netphony-topology"]
+	path = bgp-ls/netphony-topology
+	url = git@5gexgit.tmit.bme.hu:ogd/netphony-topology.git
+	branch = 5gex
