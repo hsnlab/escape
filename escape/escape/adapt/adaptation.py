@@ -596,13 +596,14 @@ class ControllerAdapter(object):
       return self._manage_external_domain_changes(event)
     log.debug("Received DomainChange event from domain: %s, cause: %s"
               % (event.domain, DomainChangedEvent.TYPE.reversed[event.cause]))
-    log.log(VERBOSE, "Changed topology:\n%s" % event.data.dump())
     # If new domain detected
     if event.cause == DomainChangedEvent.TYPE.DOMAIN_UP:
       self.DoVManager.add_domain(domain=event.domain,
                                  nffg=event.data)
     # If domain has changed
     elif event.cause == DomainChangedEvent.TYPE.DOMAIN_CHANGED:
+      if isinstance(event.data, NFFG):
+        log.log(VERBOSE, "Changed topology:\n%s" % event.data.dump())
       self.DoVManager.update_domain(domain=event.domain,
                                     nffg=event.data)
     # If domain has got down
