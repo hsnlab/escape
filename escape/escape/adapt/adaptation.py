@@ -117,7 +117,8 @@ class ComponentConfigurator(object):
         # Autostart if needed
         if autostart:
           mgr.run()
-          # Save into repository
+        # Save into repository
+        log.debug("Register DomainManager: %s into repository..." % name)
         self.__repository[name] = mgr
     else:
       log.warning("%s domain component has been already started! Skip "
@@ -152,7 +153,7 @@ class ComponentConfigurator(object):
 
   def stop_mgr (self, name):
     """
-    Stop and derefer a DomainManager with given name and remove from the
+    Stop DomainManager with given name and remove from the
     repository also.
 
     :param name: name of domain manager
@@ -165,6 +166,26 @@ class ComponentConfigurator(object):
       self.__repository[name].finit()
       # Remove from repository
       # del self.__repository[domain_name]
+    else:
+      log.warning(
+        "Missing domain component: %s! Skipping stop task..." % name)
+
+  def remove_mgr (self, name):
+    """
+    Stop and derefer a DomainManager with given name and remove from the
+    repository also.
+
+    :param name: name of domain manager
+    :type name: str
+    :return: None
+    """
+    # If started
+    if self.is_started(name):
+      # Call finalize
+      self.__repository[name].finit()
+      # Remove from repository
+      log.debug("Remove DomainManager: %s from repository..." % name)
+      del self.__repository[name]
     else:
       log.warning(
         "Missing domain component: %s! Skipping stop task..." % name)
@@ -639,9 +660,9 @@ class ControllerAdapter(object):
                 mgr.domain_name.endswith(domain)]
     # Remove DomainManagers one by one
     for mgr_name in ext_mgrs:
-      log.info("Found DomainManager: %s for ExternalDomainManager: %s" %
-               (mgr_name, domain))
-      self.domains.stop_mgr(name=mgr_name)
+      log.debug("Found DomainManager: %s for ExternalDomainManager: %s" %
+                (mgr_name, domain))
+      self.domains.remove_mgr(name=mgr_name)
     return
 
   def get_external_domain_ids (self, domain, topo_nffg):
@@ -696,7 +717,7 @@ class ControllerAdapter(object):
     # Get the main ExternalDomainManager
     domain_mgr = self.domains.get_component_by_domain(domain_name=event.domain)
     # Check lost domain
-    for id in domain_mgr.managed_domain_ids - new_ids:
+    for id in (domain_mgr.managed_domain_ids - new_ids):
       log.info("Detected domain lost from external DomainManager! "
                "BGP id: %s" % id)
       # Remove lost domain
@@ -712,7 +733,7 @@ class ControllerAdapter(object):
         # Stop DomainManager and remove object from register
         self.domains.stop_mgr(name=ext_mgr_name)
     # Check new domains
-    for id in new_ids - domain_mgr.managed_domain_ids:
+    for id in (new_ids - domain_mgr.managed_domain_ids):
       orchestrator_url = topo_nffg[id].metadata.get('unify-slor')
       log.info("New domain detected from external DomainManager! "
                "BGP id: %s, Orchestrator URL: %s" % (id, orchestrator_url))
