@@ -9,7 +9,7 @@
             <prefix>29</prefix>
         </reachability_entry>
         <it_resources>
-            <controller_it>http://127.0.0.1:8899/ro/openstack</controller_it>
+            <controller_it>http://127.0.0.1:8899/ro/sdn</controller_it>
             <cpu>100</cpu>
             <mem>100Gbyte</mem>
             <storage>100Tbyte</storage>

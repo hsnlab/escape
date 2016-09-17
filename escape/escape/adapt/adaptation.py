@@ -718,7 +718,7 @@ class ControllerAdapter(object):
     domain_mgr = self.domains.get_component_by_domain(domain_name=event.domain)
     # Check lost domain
     for id in (domain_mgr.managed_domain_ids - new_ids):
-      log.info("Detected domain lost from external DomainManager! "
+      log.info("Detected disconnected domain from external DomainManager! "
                "BGP id: %s" % id)
       # Remove lost domain
       if id in domain_mgr.managed_domain_ids:
