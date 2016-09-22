@@ -1525,6 +1525,10 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: changed or not
     :rtype: bool
     """
+    # If got error before, mark domain as unchanged by default
+    if new_data is None:
+      log.error("Missing new topology!")
+      return False
     # Calculate differences
     add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
       old=self.last_topo, new=new_data)
