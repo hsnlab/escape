@@ -350,6 +350,10 @@ class ComponentConfigurator(object):
         mgr_cfg['domain_name'] = mgr_name
       # Get manager class
       mgr_class = CONFIG.get_component(component=mgr_name)
+      if mgr_class is None:
+        log.fatal("Missing DomainManager config: %s" % mgr_name)
+        raise ConfigurationError(
+          "Missing configuration for added DomainManager: %s" % mgr_name)
       if mgr_class.IS_LOCAL_MANAGER:
         loaded_local_mgr = [name for name, mgr in self.__repository.iteritems()
                             if mgr.IS_LOCAL_MANAGER]

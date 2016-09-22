@@ -48,7 +48,7 @@ cfg = {
           "mapping-config": {
             # "mode": "REMAP"
           },
-          "mapping-enabled": True
+          "mapping-enabled": False
         },
       "STRATEGY":
         {
