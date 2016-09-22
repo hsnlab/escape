@@ -1,8 +1,12 @@
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
-	url = ssh://git@sb.tmit.bme.hu:42322/unify/virtualizer.git
+	url = git@sb.tmit.bme.hu:42322/unify/virtualizer.git
 	branch = master
 [submodule "dummy-orchestrator"]
 	path = dummy-orchestrator
-	url = ssh://git@sb.tmit.bme.hu:42322/unify/dummy-orchestrator.git
+	url = git@sb.tmit.bme.hu:42322/unify/dummy-orchestrator.git
+	branch = master
+[submodule "escape/escape/nffg_lib"]
+	path = escape/escape/nffg_lib
+	url = git@sb.tmit.bme.hu:42322/unify/nffg.git
 	branch = master
