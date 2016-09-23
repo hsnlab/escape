@@ -14,7 +14,7 @@
     </configPeer>
 	<configPeer>
                 <peer>localhost</peer>
-                <export>true</export>
+                <export>false</export>
                 <import>true</import>
                 <peerPort>22179</peerPort>
     </configPeer>

@@ -9,7 +9,7 @@
     <configPeer>
                 <peer>localhost</peer>
                 <export>true</export>
-                <import>true</import>
+                <import>false</import>
                 <peerPort>22179</peerPort>
     </configPeer>
 	<!-- Ficheros log (servidor, protocolo PCEP y OSPF). Campos opcionales-->
