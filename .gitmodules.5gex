@@ -1,3 +1,7 @@
+[submodule "escape/escape/nffg_lib"]
+	path = escape/escape/nffg_lib
+	url = git@5gexgit.tmit.bme.hu:unify/nffg.git
+	branch = master
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
 	url = git@5gexgit.tmit.bme.hu:unify/virtualizer.git
@@ -13,8 +17,4 @@
 [submodule "bgp-ls/netphony-topology"]
 	path = bgp-ls/netphony-topology
 	url = git@5gexgit.tmit.bme.hu:ogd/netphony-topology.git
-	branch = 5gex
-[submodule "escape/escape/nffg_lib"]
-	path = escape/escape/nffg_lib
-	url = git@5gexgit.tmit.bme.hu:unify/nffg.git
-	branch = master
+	branch = feature/bugfix
