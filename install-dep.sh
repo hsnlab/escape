@@ -53,7 +53,7 @@ function env_setup {
 ### Constants
 
 # Project - unify | 5gex | ericsson | sb
-PROJECT="unify"
+PROJECT="sb"
 
 # Component versions
 JAVA_VERSION=7
@@ -153,6 +153,9 @@ function install_core {
     else
         on_error "=== neo4j server configuration file was not found! ==="
     fi
+    # Freeze neo4j version
+    echo "Mark current version of neo4j: $NEO4J_VERSION as held back..."
+    sudo apt-mark hold neo4j
 }
 
 function install_mn_dep {
