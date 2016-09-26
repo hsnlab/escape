@@ -567,9 +567,12 @@ class AbstractESCAPEAdapter(EventMixin):
   """
   # Adapter name used in POX's core or CONFIG, etc.
   name = None
+  """Adapter name used in POX's core or CONFIG, etc."""
   # Adapter type used in CONFIG under the specific DomainManager
   # Defines the general Adapter name in the CONFIG
   type = None
+  """Adapter type used in CONFIG under the specific DomainManager
+  Defines the general Adapter name in the CONFIG"""
   # Pre-defined constants for type field
   TYPE_CONTROLLER = "CONTROLLER"
   TYPE_TOPOLOGY = "TOPOLOGY"
@@ -1075,8 +1078,10 @@ class AbstractRESTAdapter(Session):
   custom_headers = {
     'User-Agent': "ESCAPE/" + __version__,
   }
+  """Default HTTP response headers"""
   # Connection timeout (sec)
   CONNECTION_TIMEOUT = 5
+  """Connection timeout (sec)"""
   # HTTP methods
   GET = "GET"
   POST = "POST"
