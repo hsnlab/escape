@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 
-ROOT=$PWD
-cd netphony-topology
 if [ "$#" -eq 0 ]; then
-	java -Dlog4j.configurationFile=log4j2.xml \
-	    -jar target/bgp-ls-speaker-jar-with-dependencies.jar \
-	    ${ROOT}/BGP4Parameters_1_esc.xml
+	java -Dlog4j.configurationFile=log4j2.xml -jar bgp-ls-speaker-jar-with-dependencies.jar speaker-BGP4Parameters_1node.xml
 else
-	java -Dlog4j.configurationFile=log4j2.xml -jar target/bgp-ls-speaker-jar-with-dependencies.jar $@
+	java -Dlog4j.configurationFile=log4j2.xml -jar bgp-ls-speaker-jar-with-dependencies.jar $@
 fi

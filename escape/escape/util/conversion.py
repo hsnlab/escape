@@ -2071,8 +2071,16 @@ class UC3MNFFGConverter():
       for link in data['links']['link']:
         src_node, src_port = self.__parse_abs_link(link_data=link['src'])
         dst_node, dst_port = self.__parse_abs_link(link_data=link['dst'])
-        nffg.add_link(src_port=nffg[src_node].ports[src_port],
-                      dst_port=nffg[dst_node].ports[dst_port])
+        # In the received Virtualizer-like format there are in most cases links
+        # which are contains references to nodes of external BGP domains which
+        # are not in the topology --> broken links, skip processing
+        try:
+          nffg.add_link(src_port=nffg[src_node].ports[src_port],
+                        dst_port=nffg[dst_node].ports[dst_port])
+        except KeyError as e:
+          self.log.log(VERBOSE, "Got broken link with non-existent element: %s!"
+                                " Skip processing link..." % e)
+          pass
       return nffg
     except ValueError:
       self.log.error("Received data from BGP-LS speaker is not valid JSON!")

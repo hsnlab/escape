@@ -1,7 +1,0 @@
-[submodule "unify_virtualizer"]
-	path = unify_virtualizer
-	url = git@5gexgit.tmit.bme.hu:unify/virtualizer.git
-	branch = v5
-[submodule "tnova_connector"]
-	path = tnova_connector
-	url = git@5gexgit.tmit.bme.hu:unify/tnova_connector.git
