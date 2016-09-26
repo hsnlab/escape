@@ -22,9 +22,10 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))  # escape dir
 sys.path.insert(0, os.path.abspath('../../../pox'))  # pox dir to handle lib/...
 root = os.path.abspath(os.path.dirname(__file__) + "../../../..")
+ADD_DEP = ("escape", "unify_virtualizer", "mapping", "mininet")
 for item in os.listdir(root):  # Dependency dirs like mininet
   abs_item = os.path.join(root, item)
-  if not item.startswith('.') and item != "pox" and os.path.isdir(abs_item):
+  if not item.startswith('.') and item in ADD_DEP and os.path.isdir(abs_item):
     sys.path.insert(0, abs_item)
 
 # -- General configuration ------------------------------------------------
@@ -57,8 +58,8 @@ master_doc = 'index'
 # from escape import __version__, __project__, __copyright__, __maintainer__
 # General information about the project.
 project = "ESCAPEv2"
-author = u"János Czentye, Balázs Sonkoly"
-copyright = author + " 2015, under Apache License Version 2.0"
+author = u"János Czentye, Balázs Sonkoly, Balázs Németh"
+copyright = author + " 2016, under Apache License Version 2.0"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -292,6 +293,7 @@ texinfo_documents = [(master_doc, 'ESCAPEv2', u'ESCAPEv2 Documentation', author,
 intersphinx_mapping = {
   'python': ('https://docs.python.org/2.7/', None),
   'ncclient': ('http://ncclient.readthedocs.org/en/latest/', None),
+  'networkx': ('http://networkx.readthedocs.io/en/networkx-1.11/', None),
   'requests': ('http://docs.python-requests.org/en/latest/', None)
 }
 

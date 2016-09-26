@@ -9,12 +9,12 @@
     <configPeer>
                 <peer>localhost</peer>
                 <export>true</export>
-                <import>true</import>
+                <import>false</import>
                 <peerPort>11179</peerPort>
     </configPeer>
 	<configPeer>
                 <peer>localhost</peer>
-                <export>true</export>
+                <export>false</export>
                 <import>true</import>
                 <peerPort>33179</peerPort>
     </configPeer>

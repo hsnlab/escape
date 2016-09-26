@@ -35,8 +35,10 @@ class AbstractNETCONFAdapter(object):
   """
   # NETCONF namespace - u'urn:ietf:params:xml:ns:netconf:base:1.0'
   NETCONF_NAMESPACE = manager.BASE_NS_1_0
+  """NETCONF namespace - u'urn:ietf:params:xml:ns:netconf:base:1.0'"""
   # RPC namespace. Must be set by derived classes through RPC_NAMESPACE
   RPC_NAMESPACE = None
+  """RPC namespace. Must be set by derived classes through RPC_NAMESPACE"""
 
   def __init__ (self, server, port, username, password, timeout=10,
                 debug=False, *args, **kwargs):

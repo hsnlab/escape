@@ -25,9 +25,8 @@ from escape.adapt import log as log, LAYER_NAME
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.util.config import ConfigurationError
-from escape.util.domain import DomainChangedEvent, \
-  AbstractRemoteDomainManager, \
-  AbstractDomainManager
+from escape.util.domain import DomainChangedEvent, AbstractDomainManager, \
+  AbstractRemoteDomainManager
 from escape.util.misc import notify_remote_visualizer, VERBOSE
 
 
@@ -64,6 +63,30 @@ class ComponentConfigurator(object):
       # Initiate adapters from CONFIG
       self.load_default_mgrs()
 
+  @property
+  def components (self):
+    """
+    Return the dict of initiated Domain managers.
+
+    :return: container of initiated DomainManagers
+    :rtype: dict
+    """
+    return self.__repository
+
+  @property
+  def domains (self):
+    """
+    Return the list of domain_names which have been managed by DomainManagers.
+
+    :return: list of already managed domains
+    :rtype: list
+    """
+    return [mgr.domain_name for mgr in self.__repository.itervalues()]
+
+  @property
+  def initiated (self):
+    return self.__repository.iterkeys()
+
   def __len__ (self):
     """
     Return the number of initiated components.
@@ -73,7 +96,26 @@ class ComponentConfigurator(object):
     """
     return len(self.__repository)
 
+  def __iter__ (self):
+    """
+    Return with an iterator over the (name, DomainManager) items.
+    """
+    return self.__repository.iteritems()
+
+  def __getitem__ (self, item):
+    """
+    Return with the DomainManager given by name: ``item``.
+
+    :param item: component name
+    :type item: str
+    :return: component
+    :rtype: :any:`AbstractDomainManager`
+    """
+    return self.get_mgr(item)
+
+  ##############################################################################
   # General DomainManager handling functions: create/start/stop/get
+  ##############################################################################
 
   def get_mgr (self, name):
     """
@@ -201,30 +243,6 @@ class ComponentConfigurator(object):
     """
     return name in self.__repository
 
-  @property
-  def components (self):
-    """
-    Return the dict of initiated Domain managers.
-
-    :return: container of initiated DomainManagers
-    :rtype: dict
-    """
-    return self.__repository
-
-  @property
-  def domains (self):
-    """
-    Return the list of domain_names which have been managed by DomainManagers.
-
-    :return: list of already managed domains
-    :rtype: list
-    """
-    return [mgr.domain_name for mgr in self.__repository.itervalues()]
-
-  @property
-  def initiated (self):
-    return self.__repository.iterkeys()
-
   def get_component_by_domain (self, domain_name):
     """
     Return with the initiated Domain Manager configured with the given
@@ -233,7 +251,7 @@ class ComponentConfigurator(object):
     :param domain_name: name of the domain used in :any:`NFFG` descriptions
     :type domain_name: str
     :return: the initiated domain Manager
-    :rtype: any:`AbstractDomainManager`
+    :rtype: :any:`AbstractDomainManager`
     """
     for component in self.__repository.itervalues():
       if component.domain_name == domain_name:
@@ -253,24 +271,9 @@ class ComponentConfigurator(object):
       if component.domain_name == domain_name:
         return name
 
-  def __iter__ (self):
-    """
-    Return with an iterator over the (name, DomainManager) items.
-    """
-    return self.__repository.iteritems()
-
-  def __getitem__ (self, item):
-    """
-    Return with the DomainManager given by name: ``item``.
-
-    :param item: component name
-    :type item: str
-    :return: component
-    :rtype: :any:`AbstractDomainManager`
-    """
-    return self.get_mgr(item)
-
-  # Configuration related functions
+  ##############################################################################
+  # High-level configuration-related functions
+  ##############################################################################
 
   def load_component (self, component_name, params=None, parent=None):
     """
@@ -482,7 +485,7 @@ class ControllerAdapter(object):
       self.__class__.__name__, mapped_nffg.name))
     # If DoV update is based on status updates, rewrite the whole DoV as the
     # first step
-    if self.DoVManager._status_updates:
+    if self.DoVManager.status_updates:
       log.debug("Status-based update is enabled! "
                 "Rewrite DoV with mapping result...")
       self.DoVManager.rewrite_global_view_with_status(nffg=mapped_nffg)
@@ -544,7 +547,7 @@ class ControllerAdapter(object):
       # Note result according to others before
       deploy_result = deploy_result and domain_install_result
       # If installation of the domain was performed without error
-      if not domain_install_result and not self.DoVManager._status_updates:
+      if not domain_install_result and not self.DoVManager.status_updates:
         log.warning("Skip DoV update with domain: %s! Cause: "
                     "Domain installation was unsuccessful!" % domain)
         continue
@@ -571,7 +574,7 @@ class ControllerAdapter(object):
               "cleared, skip DoV update...")
         # If the the topology was a GLOBAL view
         elif not mapped_nffg.is_virtualized():
-          if self.DoVManager._status_updates:
+          if self.DoVManager.status_updates:
             # In case of status updates, the DOV update has been done
             # In role of Local Orchestrator each element is up and running
             # update DoV with status RUNNING
@@ -597,8 +600,7 @@ class ControllerAdapter(object):
       log.info("All installation process has been finished with success! ")
       # Notify remote visualizer about the installation result if it's needed
       notify_remote_visualizer(
-        data=self.DoVManager.dov.get_resource_info(),
-        id=LAYER_NAME)
+        data=self.DoVManager.dov.get_resource_info(), id=LAYER_NAME)
     else:
       log.error("%s installation was not successful!" % mapped_nffg)
     return deploy_result
@@ -677,17 +679,14 @@ class ControllerAdapter(object):
     :type domain: str
     :param topo_nffg: topology description
     :type topo_nffg: :any:`NFFG`
-    :return:
+    :return: external domain IDs
+    :rtype: set
     """
     domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
     new_ids = {infra.id for infra in topo_nffg.infras}
-    # # Got empty topo
-    # if not new_ids:
-    #   log.debug("No remote domain has been detected!")
-    #   return
-    # # Remove oneself from domains
     try:
       if new_ids:
+        # Remove oneself from domains
         new_ids.remove(domain_mgr.bgp_domain_id)
     except KeyError:
       log.warning("Detected domains does not include own BGP ID: %s" %
@@ -696,7 +695,7 @@ class ControllerAdapter(object):
 
   def _manage_external_domain_changes (self, event):
     """
-    Handle DomainChangedEvents came from an ExternalDomainManager.
+    Handle DomainChangedEvents came from an :any:`ExternalDomainManager`.
 
     :param event: event object
     :type event: :any:`DomainChangedEvent`
@@ -776,7 +775,7 @@ class ControllerAdapter(object):
 
 class GlobalResourceManager(object):
   """
-  Handle and store the global resources view as known as the DoV.
+  Handle and store the Global Resources view as known as the DoV.
   """
 
   def __init__ (self):
@@ -787,8 +786,8 @@ class GlobalResourceManager(object):
     log.debug("Init DomainResourceManager")
     self.__dov = DomainVirtualizer(self)  # Domain Virtualizer
     self.__tracked_domains = set()  # Cache for detected and stored domains
-    self._status_updates = CONFIG.use_status_based_update()
-    self._remerge_strategy = CONFIG.use_remerge_update_strategy()
+    self.status_updates = CONFIG.use_status_based_update()
+    self.remerge_strategy = CONFIG.use_remerge_update_strategy()
 
   @property
   def dov (self):
@@ -908,10 +907,10 @@ class GlobalResourceManager(object):
     """
     if domain in self.__tracked_domains:
       log.info("Update domain: %s in DoV..." % domain)
-      if self._status_updates:
+      if self.status_updates:
         log.debug("Update status info for domain: %s in DoV..." % domain)
         self.__dov.update_domain_status_in_dov(domain=domain, nffg=nffg)
-      elif self._remerge_strategy:
+      elif self.remerge_strategy:
         log.debug("Using REMERGE strategy for DoV update...")
         self.__dov.remerge_domain_in_dov(domain=domain, nffg=nffg)
       else:

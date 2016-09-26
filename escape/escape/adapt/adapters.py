@@ -50,9 +50,9 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
   """
   name = "INTERNAL-POX"
   type = AbstractESCAPEAdapter.TYPE_CONTROLLER
-  # Use this prefix to detect bound physical interface in OVS to detect
-  # DPID-OVS switch association
   SAP_IF_PREFIX = "e"
+  """Use this prefix to detect bound physical interface in OVS to detect
+  DPID-OVS switch association"""
 
   # Static mapping of infra IDs and DPIDs
   infra_to_dpid = {
@@ -61,6 +61,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     # 'SW3': 0x3,
     # 'SW4': 0x4
   }
+  """Static mapping of infra ID -> DPID"""
   saps = {
     # 'SW3': {
     #   'port': '3',
@@ -75,6 +76,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     #   'dl_src': 'ff:ff:ff:ff:ff:ff'
     # }
   }
+  """Static mapping of DPID -> infra-ID"""
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
                 keepalive=False, sap_if_prefix=None, *args, **kwargs):
@@ -88,6 +90,11 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     :type address: str
     :param port: socket port (default: 6633)
     :type port: int
+    :param keepalive: use keepalive messages in contol channel
+    :type keepalive: bool
+    :param sap_if_prefix: prefix of physical inteface name of SAP
+    :type sap_if_prefix: str
+    :return: None
     """
     super(InternalPOXAdapter, self).__init__(name=name, address=address,
                                              port=port, keepalive=keepalive,
@@ -123,6 +130,9 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
   def _handle_ConnectionUp (self, event):
     """
     Handle incoming OpenFlow connections.
+
+    :param event: event object
+    :type event: pox.openflow.ConnectionUp
     """
     log.debug("Handle connection by %s" % self.task_name)
     self._identify_ovs_device(connection=event.connection)
@@ -138,6 +148,9 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
   def _handle_ConnectionDown (self, event):
     """
     Handle disconnected device.
+
+    :param event: event object
+    :type event: pox.openflow.ConnectionDown
     """
     log.debug("Handle disconnection by %s" % self.task_name)
     if event.dpid in self.infra_to_dpid.itervalues():
@@ -206,6 +219,22 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
 
   def __init__ (self, name=None, address="0.0.0.0", port=6653, keepalive=False,
                 binding=None, *args, **kwargs):
+    """
+    Initialize attributes, register specific connection Arbiter if needed and
+    set up listening of OpenFlow events.
+
+    :param name: name used to register component ito ``pox.core``
+    :type name: str
+    :param address: socket address (default: 127.0.0.1)
+    :type address: str
+    :param port: socket port (default: 6633)
+    :type port: int
+    :param keepalive: use keepalive messages in contol channel
+    :type keepalive: bool
+    :param binding: explicit infra-DPID bindings
+    :type binding: dict
+    :return: None
+    """
     super(SDNDomainPOXAdapter, self).__init__(name=name, address=address,
                                               port=port, keepalive=keepalive,
                                               *args, **kwargs)
@@ -224,9 +253,21 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
                   "Using empty data structure..." % (type(binding), self))
 
   def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG`.
+
+    :return: the emulated topology description
+    :rtype: :any:`NFFG`
+    """
     super(SDNDomainPOXAdapter, self).get_topology_resource()
 
   def check_domain_reachable (self):
+    """
+    Checker function for domain polling.
+
+    :return: the domain is detected or not
+    :rtype: bool
+    """
     super(SDNDomainPOXAdapter, self).check_domain_reachable()
 
   def _identify_ovs_device (self, connection):
@@ -317,11 +358,9 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
     :rtype: dict
     """
     agent = self.__IL_topo_ref.get_agent_to_switch(ee_name)
-    return {
-      "server": "127.0.0.1", "port": agent.agentPort,
-      "username": agent.username,
-      "password": agent.passwd
-    } if agent is not None else {}
+    return {"server": "127.0.0.1", "port": agent.agentPort,
+            "username": agent.username,
+            "password": agent.passwd} if agent is not None else {}
 
 
 class StaticFileTopoAdapter(AbstractESCAPEAdapter):
@@ -332,6 +371,13 @@ class StaticFileTopoAdapter(AbstractESCAPEAdapter):
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
   def __init__ (self, path=None, *args, **kwargs):
+    """
+    Init.
+
+    :param path: file path offered as the domain topology
+    :type path: str
+    :return: None
+    """
     super(StaticFileTopoAdapter, self).__init__(*args, **kwargs)
     self.topo = None
     try:
@@ -451,7 +497,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :type password: str
     :param timeout: connection timeout (default=30)
     :type timeout: int
-    :return:
+    :return: None
     """
     # Call base constructors directly to avoid super() and MRO traps
     AbstractNETCONFAdapter.__init__(self, *args, **kwargs)
@@ -500,6 +546,8 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
   def _invoke_rpc (self, request_data):
     """
     Override parent function to catch and log exceptions gracefully.
+
+    :return: None
     """
     try:
       return super(VNFStarterAdapter, self)._invoke_rpc(request_data)
@@ -574,6 +622,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :param switch_id: switch ID (mandatory)
     :type switch_id: str
     :return: Returns the connected port(s) with the corresponding switch(es).
+    :rtype: dict
     :raises: RPCError, OperationError, TransportError
     """
     log.debug("Call connectVNF - VNF id: %s port: %s --> node: %s" % (
@@ -602,6 +651,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :param vnf_port: VNF port (mandatory)
     :type vnf_port: str
     :return: reply data
+    :rtype: dict
     :raises: RPCError, OperationError, TransportError
     """
     log.debug("Call disconnectVNF - VNF id: %s port: %s" % (vnf_id, vnf_port))
@@ -622,6 +672,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
     :return: reply data
+    :rtype_ dict
     :raises: RPCError, OperationError, TransportError
     """
     log.debug("Call startVNF - VNF id: %s" % vnf_id)
@@ -647,6 +698,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
     :return: reply data
+    :rtype: dict
     :raises: RPCError, OperationError, TransportError
     """
     log.debug("Call stopVNF - VNF id: %s" % vnf_id)
@@ -691,6 +743,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :param vnf_id: VNF ID  (default: list info about all VNF)
     :type vnf_id: str
     :return: reply data
+    :rtype: dict
     :raises: RPCError, OperationError, TransportError
     """
     log.debug(
@@ -750,6 +803,9 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
   def removeNF (self, vnf_id):
     """
     Stop and remove the given NF using the general RPC calls.
+
+    :return: reply data
+    :rtype: dict
     """
     with self as adapter:
       try:
@@ -790,6 +846,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
     :param url: url of RESTful API
     :type url: str
+    :return: None
     """
     AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
     AbstractESCAPEAdapter.__init__(self, **kwargs)
@@ -1063,6 +1120,7 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
 
     :param url: remote ESCAPEv2 RESTful API URL
     :type url: str
+    :return: None
     """
     super(RemoteESCAPEv2RESTAdapter, self).__init__(url=url, prefix=prefix,
                                                     **kwargs)
@@ -1255,6 +1313,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
     :param url: OpenStack RESTful API URL
     :type url: str
+    :return: None
     """
     log.debug(
       "Init OpenStackRESTAdapter - type: %s, URL: %s" % (self.type, url))
@@ -1423,6 +1482,7 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
     :param url: url of RESTful API
     :type url: str
+    :return: None
     """
     AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
     AbstractESCAPEAdapter.__init__(self, **kwargs)
@@ -1477,6 +1537,9 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   def get_topology_resource (self):
     """
     Return with the topology description as an :any:`NFFG`.
+
+    :return: the emulated topology description
+    :rtype: :any:`NFFG`
     """
     topo_data = self.request_bgp_ls_virtualizer()
     log.debug("Start conversion: BGP-LS-based JSON ---> NFFG")
