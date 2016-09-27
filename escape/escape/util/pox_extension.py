@@ -27,7 +27,7 @@ class OpenFlowBridge(OpenFlowNexus):
   """
   # do not clear flowrules on connection up
   clear_flows_on_connect = False
-
+  """Do not clear flowrules on connection up"""
   pass
 
 
@@ -37,8 +37,9 @@ class ExtendedOFConnectionArbiter(OpenFlowConnectionArbiter):
   :class:`Connection` between registered OF event originators (
   :class:`OpenFlowNexus`) according to the connection's listening address.
   """
-  # core name to register the class as a OpenFlowConnectionArbiter
+  # core name to register the class as an OpenFlowConnectionArbiter
   _core_name = "OpenFlowConnectionArbiter"
+  """Core name to register the class as an OpenFlowConnectionArbiter"""
 
   def __init__ (self, default=False):
     """
@@ -46,6 +47,7 @@ class ExtendedOFConnectionArbiter(OpenFlowConnectionArbiter):
 
     :param default: inherited param
     :type default: :class:`OpenFlowNexus`
+    :return: None
     """
     super(ExtendedOFConnectionArbiter, self).__init__(default)
     try:
@@ -129,7 +131,10 @@ class ESCAPEInteractiveHelper(object):
 
   def __repr__ (self):
     """
-    return with defined helper functions.
+    Return with defined helper functions.
+
+    :return: spec representation
+    :rtype: str
     """
     return "\n".join([f for f in dir(self) if not f.startswith('_')])
 
@@ -137,6 +142,8 @@ class ESCAPEInteractiveHelper(object):
   def init ():
     """
     Register an ESCPAEInteractiveHelper into POX's core.
+
+    :return: None
     """
     core.components['helper'] = ESCAPEInteractiveHelper()
 

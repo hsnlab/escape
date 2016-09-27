@@ -28,6 +28,9 @@ from pox.lib.util import dpid_to_str
 
 
 class GetLocalDomainViewEvent(object):
+  """
+  Event for requesting the Global View (DoV).
+  """
   pass
 
 
@@ -48,7 +51,15 @@ class InternalDomainManager(AbstractDomainManager):
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
-    Init
+    Init.
+
+    :param domain_name: the domain name
+    :type domain_name: str
+    :param args: optional param list
+    :type args: list
+    :param kwargs: optional keywords
+    :type kwargs: dict
+    :return: None
     """
     log.debug("Create InternalDomainManager with domain name: %s" % domain_name)
     super(InternalDomainManager, self).__init__(domain_name=domain_name,
@@ -118,6 +129,12 @@ class InternalDomainManager(AbstractDomainManager):
 
   @property
   def controller_name (self):
+    """
+    Return with the name of the controller name.
+
+    :return: controller name
+    :rtype: str
+    """
     return self.controlAdapter.task_name
 
   def _setup_sap_hostnames (self):
@@ -169,11 +186,9 @@ class InternalDomainManager(AbstractDomainManager):
                   "port: %s" % (ip, mac, sap, node[0], node[1]))
         if node[0] not in self.controlAdapter.saps:
           self.controlAdapter.saps[node[0]] = {}
-        sapinfo = {
-          'dl_src': "ff:ff:ff:ff:ff:ff",
-          'dl_dst': str(mac),
-          'nw_dst': str(ip)
-        }
+        sapinfo = {'dl_src': "ff:ff:ff:ff:ff:ff",
+                   'dl_dst': str(mac),
+                   'nw_dst': str(ip)}
         self.controlAdapter.saps[node[0]][str(node[1])] = sapinfo
         self.sapinfos[str(sap.id)] = sapinfo
 
@@ -201,11 +216,9 @@ class InternalDomainManager(AbstractDomainManager):
       log.info("Perform traffic steering according to mapped tunnels/labels...")
       # OpenFlow flowrule deletion/addition is fairly cheap operations
       # The most robust solution is to delete every flowrule
-      result.extend((
-        self._delete_flowrules(nffg=nffg_part),
-        # and (re)add the new ones
-        self._deploy_flowrules(nffg_part=nffg_part))
-      )
+      result.extend((self._delete_flowrules(nffg=nffg_part),
+                     # and (re)add the new ones
+                     self._deploy_flowrules(nffg_part=nffg_part)))
       return all(result)
     except:
       log.exception("Got exception during NFFG installation into: %s." %
@@ -226,12 +239,8 @@ class InternalDomainManager(AbstractDomainManager):
       # Infrastructure layer has been cleared.
       log.debug("%s domain has already been cleared!" % self.domain_name)
       return True
-    result = (
-      # Just for sure remove NFs
-      self._delete_running_nfs(),
-      # and flowrules
-      self._delete_flowrules()
-    )
+    result = (self._delete_running_nfs(),  # Just for sure remove NFs
+              self._delete_flowrules())  # and flowrules
     return all(result)
 
   def _delete_running_nfs (self, nffg=None):
@@ -750,7 +759,15 @@ class SDNDomainManager(AbstractDomainManager):
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
-    Init
+    Init.
+
+    :param domain_name: the domain name
+    :type domain_name: str
+    :param args: optional param list
+    :type args: list
+    :param kwargs: optional keywords
+    :type kwargs: dict
+    :return: None
     """
     log.debug("Create SDNDomainManager with domain name: %s" % domain_name)
     super(SDNDomainManager, self).__init__(domain_name=domain_name, *args,
@@ -815,10 +832,8 @@ class SDNDomainManager(AbstractDomainManager):
     """
     log.info("Install %s domain part..." % self.domain_name)
     try:
-      result = (
-        self._delete_flowrules(nffg_part=nffg_part),
-        self._deploy_flowrules(nffg_part=nffg_part)
-      )
+      result = (self._delete_flowrules(nffg_part=nffg_part),
+                self._deploy_flowrules(nffg_part=nffg_part))
       return all(result)
     except:
       log.exception(
@@ -954,8 +969,8 @@ class SDNDomainManager(AbstractDomainManager):
 class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
   """
   Manager class to handle communication with other ESCAPEv2 processes started
-  in agent-mode through
-  a REST-API which is provided by the Resource Orchestration Sublayer.
+  in agent-mode through a REST-API which is provided by the Resource
+  Orchestration Sublayer.
 
   .. note::
     Uses :class:`RemoteESCAPEv2RESTAdapter` for communicate with the remote
@@ -968,7 +983,15 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
-    Init
+    Init.
+
+    :param domain_name: the domain name
+    :type domain_name: str
+    :param args: optional param list
+    :type args: list
+    :param kwargs: optional keywords
+    :type kwargs: dict
+    :return: None
     """
     log.debug(
       "Create RemoteESCAPEDomainManager with domain name: %s" % domain_name)
@@ -977,7 +1000,7 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
 
   def init (self, configurator, **kwargs):
     """
-    Initialize Internal domain manager.
+    Initialize Internal DomainManager.
 
     :param configurator: component configurator for configuring adapters
     :type configurator: :any:`ComponentConfigurator`
@@ -1094,6 +1117,14 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
     Init.
+
+    :param domain_name: the domain name
+    :type domain_name: str
+    :param args: optional param list
+    :type args: list
+    :param kwargs: optional keywords
+    :type kwargs: dict
+    :return: None
     """
     log.debug("Create UnifyDomainManager with domain name: %s" % domain_name)
     super(UnifyDomainManager, self).__init__(domain_name=domain_name, *args,
@@ -1205,6 +1236,14 @@ class OpenStackDomainManager(UnifyDomainManager):
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
     Init.
+
+    :param domain_name: the domain name
+    :type domain_name: str
+    :param args: optional param list
+    :type args: list
+    :param kwargs: optional keywords
+    :type kwargs: dict
+    :return: None
     """
     log.debug(
       "Create OpenStackDomainManager wrapper for domain: %s" % domain_name)
@@ -1224,6 +1263,14 @@ class UniversalNodeDomainManager(UnifyDomainManager):
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
     Init.
+
+    :param domain_name: the domain name
+    :type domain_name: str
+    :param args: optional param list
+    :type args: list
+    :param kwargs: optional keywords
+    :type kwargs: dict
+    :return: None
     """
     log.debug(
       "Create UniversalNodeDomainManager wrapper for domain: %s" % domain_name)
@@ -1254,6 +1301,14 @@ class ExternalDomainManager(AbstractRemoteDomainManager):
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
     Init.
+
+    :param domain_name: the domain name
+    :type domain_name: str
+    :param args: optional param list
+    :type args: list
+    :param kwargs: optional keywords
+    :type kwargs: dict
+    :return: None
     """
     super(ExternalDomainManager, self).__init__(domain_name=domain_name, *args,
                                                 **kwargs)
@@ -1329,6 +1384,18 @@ class BGPLSBasedExternalDomainManager(ExternalDomainManager):
                 prototype=None, *args, **kwargs):
     """
     Init.
+
+    :param domain_name: the domain name
+    :type domain_name: str
+    :param bgp_domain_id: domain name used for BGP-LS speaker
+    :type bgp_domain_id: str
+    :param prototype: DomainManager name initialized for new detected domains
+    :type prototype: str
+    :param args: optional param list
+    :type args: list
+    :param kwargs: optional keywords
+    :type kwargs: dict
+    :return: None
     """
     log.debug("Create BGP-LS-based ExternalDomainManager with domain name: %s, "
               "BGP domain ID: %s" % (domain_name, bgp_domain_id))
@@ -1349,10 +1416,13 @@ class BGPLSBasedExternalDomainManager(ExternalDomainManager):
 
   def init (self, configurator, **kwargs):
     """
+    Initialize the ExternalDomainManager.
 
-    :param configurator:
-    :param kwargs:
-    :return:
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :param kwargs: optional parameters
+    :type kwargs: dict
+    :return: Nones
     """
     super(BGPLSBasedExternalDomainManager, self).init(configurator, **kwargs)
     log.debug("BGP-LS-based ExternalDomainManager has been initialized!")

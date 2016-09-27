@@ -30,6 +30,7 @@ from pox.core import log, core
 
 # Store the project root where escape.py is started in
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__) + "/../../../")
+"""Store the project root where escape.py is started in"""
 
 
 class ConfigurationError(RuntimeError):
@@ -50,10 +51,13 @@ class ESCAPEConfig(object):
   """
   # Singleton
   __metaclass__ = Singleton
+  """Singleton"""
   # Predefined layer names
   LAYERS = (SERVICE, ORCHEST, ADAPT, INFR)
+  """Predefined layer names"""
   # Default additional config name
   DEFAULT_CFG = "additional-config-file"
+  """Default additional config name"""
 
   def __init__ (self, default=None):
     """
@@ -61,6 +65,7 @@ class ESCAPEConfig(object):
 
     :param default: default configuration
     :type default: dict
+    :return: None
     """
     self.__configuration = default if default else dict.fromkeys(self.LAYERS,
                                                                  {})
@@ -70,6 +75,12 @@ class ESCAPEConfig(object):
 
   @property
   def in_initiated (self):
+    """
+    Return True if config is initiated.
+
+    :return: initiated or not
+    :rtype: bool
+    """
     return self.__initiated
 
   def add_cfg (self, cfg):
@@ -254,12 +265,16 @@ class ESCAPEConfig(object):
   def __setitem__ (self, key, value):
     """
     Disable explicit layer config modification.
+
+    :raise: :any:`exceptions.RuntimeError`
     """
     raise RuntimeError("Explicit layer config modification is not supported!")
 
   def __delitem__ (self, key):
     """
     Disable explicit layer config deletion.
+
+    :raise: :any:`exceptions.RuntimeError`
     """
     raise RuntimeError("Explicit layer config deletion is not supported!")
 
@@ -842,10 +857,6 @@ class ESCAPEConfig(object):
     :return: url
     :rtype: str
     """
-    # try:
-    #   return self.__configuration["visualization"]["rpc"]
-    # except KeyError:
-    #   return None
     try:
       return self.__configuration["visualization"]["rpc"]
     except KeyError:
@@ -858,10 +869,6 @@ class ESCAPEConfig(object):
     :return: url
     :rtype: str
     """
-    # try:
-    #   return self.__configuration["visualization"]["rpc"]
-    # except KeyError:
-    #   return None
     try:
       return self.__configuration["visualization"]["instance_id"]
     except KeyError:

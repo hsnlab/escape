@@ -30,6 +30,17 @@ class DeploymentFinishedEvent(BaseResultEvent):
   """
 
   def __init__ (self, id, success, error=None):
+    """
+    Init.
+
+    :param id: id of the :any:`NFFG`
+    :type id: str
+    :param success: te result is a success or not
+    :type success: bool
+    :param error: error object (optional)
+    :type error: :class:`exceptions.BaseException`
+    :return: None
+    """
     super(DeploymentFinishedEvent, self).__init__()
     self.id = id
     self.success = success
@@ -123,7 +134,8 @@ class InfrastructureLayerAPI(AbstractAPI):
     """
     Install mapped NFFG part into the emulated network.
 
-    :param event:event object
+    :param event: event object
+    :type event: :class:`DeployNFFGEvent`
     :return: :any:`DeployNFFGEvent`
     """
     log.getChild('API').info("Received mapped NF-FG: %s from %s Layer" % (

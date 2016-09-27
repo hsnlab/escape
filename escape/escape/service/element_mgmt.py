@@ -26,7 +26,9 @@ class AbstractElementManager(object):
 
   def __init__ (self):
     """
-    Init
+    Init.
+
+    :return: None
     """
     pass
 
@@ -42,5 +44,7 @@ class ClickManager(AbstractElementManager):
   def __init__ (self):
     """
     Init.
+
+    :return: None
     """
     super(ClickManager, self).__init__()

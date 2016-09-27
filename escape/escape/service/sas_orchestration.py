@@ -35,6 +35,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
   """
   # Default Mapper class as a fallback mapper
   DEFAULT_MAPPER = ServiceGraphMapper
+  """Default Mapper class as a fallback mapper"""
 
   def __init__ (self, layer_API):
     """
@@ -125,6 +126,8 @@ class SGManager(object):
   def __init__ (self):
     """
     Init.
+
+    :return: None
     """
     super(SGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
@@ -178,6 +181,7 @@ class VirtualResourceManager(EventMixin):
   """
   # Events raised by this class
   _eventMixin_events = {MissingVirtualViewEvent}
+  """Events raised by this class"""
 
   def __init__ (self):
     """

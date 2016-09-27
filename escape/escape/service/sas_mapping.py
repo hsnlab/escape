@@ -33,6 +33,8 @@ class DefaultServiceMappingStrategy(AbstractMappingStrategy):
   def __init__ (self):
     """
     Init.
+
+    :return: None
     """
     super(DefaultServiceMappingStrategy, self).__init__()
 
@@ -112,6 +114,7 @@ class SGMappingFinishedEvent(Event):
 
     :param nffg: NF-FG need to be initiated
     :type nffg: :any:`NFFG`
+    :return: None
     """
     super(SGMappingFinishedEvent, self).__init__()
     self.nffg = nffg
@@ -123,8 +126,10 @@ class ServiceGraphMapper(AbstractMapper):
   """
   # Events raised by this class
   _eventMixin_events = {SGMappingFinishedEvent}
+  """Events raised by this class"""
   # Default Strategy class as a fallback strategy
   DEFAULT_STRATEGY = DefaultServiceMappingStrategy
+  """Default Strategy class as a fallback strategy"""
 
   def __init__ (self, strategy=None):
     """

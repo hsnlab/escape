@@ -53,8 +53,10 @@ class BaseResultEvent(Event):
     """
     Check the result is error type or not.
 
-    :param result:
-    :return:
+    :param result: result of the operation
+    :type result: str
+    :return: the result is an error type or note
+    :rtype: bool
     """
     if result in (cls.ERROR, cls.MAPPING_ERROR, cls.DEPLOY_ERROR,
                   cls.REFUSED_BY_VERIFICATION, cls.ABORTED):
@@ -79,10 +81,11 @@ class DomainChangedEvent(Event):
               'NODE_DOWN',  # one Node/BiSBiS got down
               'CONNECTION_UP',  # connection gone up
               'CONNECTION_DOWN')  # connection got down
+  """Causes of possible changes"""
 
   def __init__ (self, domain, cause, data=None):
     """
-    Init event object
+    Init event object.
 
     :param domain: domain name. Should be :any:`AbstractESCAPEAdapter.name`
     :type domain: str
@@ -106,6 +109,13 @@ class DeployEvent(Event):
   """
 
   def __init__ (self, nffg_part):
+    """
+    Init.
+
+    :param nffg_part: NFFG object needs to deploy
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
     super(DeployEvent, self).__init__()
     self.nffg_part = nffg_part
 
@@ -123,18 +133,31 @@ class AbstractDomainManager(EventMixin):
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
+  """Events raised by this class"""
   # DomainManager name- used more or less the type of the manager
   name = "UNDEFINED"
+  """DomainManager name"""
   # Default domain name
   DEFAULT_DOMAIN_NAME = "UNDEFINED"
+  """Default domain name"""
   # Signal that the Manager class is for the Local Mininet-based topology
   IS_LOCAL_MANAGER = False
+  """Signal that the Manager class is for the Local Mininet-based topology"""
   # Signal that the Manager class manages external domains
   IS_EXTERNAL_MANAGER = False
+  """Signal that the Manager class manages external domains"""
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, adapters=None, **kwargs):
     """
     Init.
+
+    :param domain_name: domain name
+    :type domain_name: str
+    :param adapters: config of adapters
+    :type adapters: dict
+    :param kwargs: optional params
+    :type kwargs: dict
+    :return: None
     """
     super(AbstractDomainManager, self).__init__()
     # Name of the domain
@@ -146,6 +169,12 @@ class AbstractDomainManager(EventMixin):
     self._adapters_cfg = adapters
 
   def __str__ (self):
+    """
+    Return with specific string representation.
+
+    :return: string representation
+    :rtype: str
+    """
     return "DomainManager(name: %s, domain: %s)" % (self.name, self.domain_name)
 
   @property
@@ -236,6 +265,8 @@ class AbstractDomainManager(EventMixin):
   def finit (self):
     """
     Abstract function for stopping component.
+
+    :return: None
     """
     log.info("Stop DomainManager for %s domain!" % self.domain_name)
 
@@ -331,12 +362,22 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
   """
   # Polling interval
   POLL_INTERVAL = 3
+  """Polling interval"""
   # Request formats
   DEFAULT_DIFF_VALUE = False
+  """Request formats"""
 
   def __init__ (self, domain_name=None, adapters=None, **kwargs):
     """
     Init.
+
+    :param domain_name: domain name
+    :type domain_name: str
+    :param adapters: config of adapters
+    :type adapters: dict
+    :param kwargs: optional params
+    :type kwargs: dict
+    :return: None
     """
     super(AbstractRemoteDomainManager, self).__init__(domain_name=domain_name,
                                                       adapters=adapters,
@@ -413,6 +454,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
   def finit (self):
     """
     Abstract function for starting component.
+
+    :return: None
     """
     self.stop_polling()
     super(AbstractRemoteDomainManager, self).finit()
@@ -427,6 +470,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
 
     :param interval: polling period (default: 1)
     :type interval: int
+    :return: None
     """
     if self.__timer:
       # Already timing
@@ -440,6 +484,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
 
     :param interval: polling period (default: 3)
     :type interval: int
+    :return: None
     """
     if self.__timer:
       self.__timer.cancel()
@@ -449,6 +494,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
   def stop_polling (self):
     """
     Stop timer.
+
+    :return: None
     """
     if self.__timer:
       self.__timer.cancel()
@@ -536,6 +583,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     """
     Install an :any:`NFFG` related to the specific domain.
 
+    :raise: :any:`exceptions.NotImplementedError`
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
     :return: status if the install process was success
@@ -546,6 +594,9 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
   def clear_domain (self):
     """
     Clear the Domain according to the first received config.
+
+    :raise: :any:`exceptions.NotImplementedError`
+    :return: None
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -582,6 +633,10 @@ class AbstractESCAPEAdapter(EventMixin):
   def __init__ (self, domain_name='UNDEFINED', **kwargs):
     """
     Init.
+
+    :param domain_name: domain name
+    :type domain_name: str
+    :return: None
     """
     super(AbstractESCAPEAdapter, self).__init__()
     self.domain_name = domain_name
@@ -612,6 +667,7 @@ class AbstractESCAPEAdapter(EventMixin):
     Checker function for domain polling. Check the remote domain agent is
     reachable.
 
+    :raise: :any:`exceptions.NotImplementedError`
     :return: the remote domain is detected or not
     :rtype: bool
     """
@@ -621,6 +677,7 @@ class AbstractESCAPEAdapter(EventMixin):
     """
     Return with the topology description as an :any:`NFFG`.
 
+    :raise: :any:`exceptions.NotImplementedError`
     :return: the topology description
     :rtype: :any:`NFFG`
     """
@@ -656,9 +713,11 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
   """
   # Events raised by this class
   _eventMixin_events = {DomainChangedEvent}
+  """Events raised by this class"""
   # Keepalive constants
   _interval = 20
   _switch_timeout = 5
+  """Keepalive constant"""
   # Static mapping of infra IDs and DPIDs
   infra_to_dpid = {
     # 'EE1': 0x1,
@@ -666,6 +725,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     # 'SW3': 0x3,
     # 'SW4': 0x4
   }
+  """Static mapping of infra IDs and DPIDs"""
   saps = {
     # 'SW3': {
     #   'port': '3',
@@ -678,6 +738,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     #   'dl_src': 'ff:ff:ff:ff:ff:ff'  # '00:00:00:00:00:02'
     # }
   }
+  """Static mapping of DPIDs and infra IDs"""
 
   def __init__ (self, name=None, address="127.0.0.1", port=6653,
                 keepalive=False, *args, **kwargs):
@@ -691,6 +752,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     :type address: str
     :param port: socket port (default: 6633)
     :type port: int
+    :return: None
     """
     name = name if name is not None else self.name
     super(AbstractOFControllerAdapter, self).__init__(*args, **kwargs)
@@ -725,6 +787,13 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
 
   @classmethod
   def _handle_keepalive_handler (cls, ofnexus):
+    """
+    Handles keepalive event.
+
+    :param ofnexus: event originator object
+    :type ofnexus: :class:`pox.openflow.OpenFlowNexus`
+    :return: None
+    """
     # Construct OF Echo Request packet
     er = of.ofp_echo_request().pack()
     t = time.time()
@@ -752,9 +821,19 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     return True
 
   def get_topology_resource (self):
+    """
+    Return with the topology description as an :any:`NFFG`.
+
+    :raise: :any:`exceptions.NotImplementedError`
+    """
     raise NotImplementedError("Not implemented yet!")
 
   def check_domain_reachable (self):
+    """
+    Checker function for domain polling.
+
+    :raise: :any:`exceptions.NotImplementedError`
+    """
     raise NotImplementedError("Not implemented yet!")
 
   def delete_flowrules (self, id):
@@ -897,6 +976,11 @@ class VNFStarterAPI(object):
     s_CONNECTED = "CONNECTED"
 
   def __init__ (self):
+    """
+    Init.
+
+    :return: None
+    """
     super(VNFStarterAPI, self).__init__()
 
   def initiateVNF (self, vnf_type, vnf_description=None, options=None):
@@ -911,6 +995,7 @@ class VNFStarterAPI(object):
     :type options: collections.OrderedDict
     :return: parsed RPC response
     :rtype: dict
+    :raise: :any:`exceptions.NotImplementedError`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -926,6 +1011,7 @@ class VNFStarterAPI(object):
     :type switch_id: str
     :return: Returns the connected port(s) with the corresponding switch(es).
     :rtype: dict
+    :raise: :any:`exceptions.NotImplementedError`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -939,6 +1025,7 @@ class VNFStarterAPI(object):
     :type vnf_port: str
     :return: reply data
     :rtype: dict
+    :raise: :any:`exceptions.NotImplementedError`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -950,6 +1037,7 @@ class VNFStarterAPI(object):
     :type vnf_id: str
     :return: reply data
     :rtype: dict
+    :raise: :any:`exceptions.NotImplementedError`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -961,6 +1049,7 @@ class VNFStarterAPI(object):
     :type vnf_id: str
     :return: reply data
     :rtype: dict
+    :raise: :any:`exceptions.NotImplementedError`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -972,6 +1061,7 @@ class VNFStarterAPI(object):
     :type vnf_id: str
     :return: parsed RPC reply
     :rtype: dict
+    :raise: :any:`exceptions.NotImplementedError`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -989,6 +1079,7 @@ class DefaultUnifyDomainAPI(object):
 
     :return: response text (should be: 'OK')
     :rtype: str
+    :raise: :any:`exceptions.NotImplementedError`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -1003,6 +1094,7 @@ class DefaultUnifyDomainAPI(object):
     :param filter: request a filtered description instead of full
     :type filter: str
     :return: infrastructure view in the original format
+    :raise: :any:`exceptions.NotImplementedError`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -1016,6 +1108,7 @@ class DefaultUnifyDomainAPI(object):
     :param diff: bool
     :return: status code
     :rtype: str
+    :raise: :any:`exceptions.NotImplementedError`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -1087,6 +1180,19 @@ class AbstractRESTAdapter(Session):
   POST = "POST"
 
   def __init__ (self, base_url, prefix="", auth=None, **kwargs):
+    """
+    Init.
+
+    :param base_url: base URL without the prefix path
+    :type base_url: str
+    :param prefix: prefix
+    :type prefix: str
+    :param auth: optional authentications
+    :type auth: str
+    :param kwargs: optional params:
+    :type kwargs: dict
+    :return: None
+    """
     super(AbstractRESTAdapter, self).__init__()
     if base_url.endswith('/'):
       self._base_url = urlparse.urljoin(base_url, prefix + "/")
@@ -1104,6 +1210,12 @@ class AbstractRESTAdapter(Session):
 
   @property
   def URL (self):
+    """
+    Return with the assembled URL.
+
+    :return: full URL
+    :rtype: str
+    """
     return self._base_url
 
   @staticmethod

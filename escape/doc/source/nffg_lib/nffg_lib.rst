@@ -17,3 +17,4 @@ Submodules
 
     nffg
     nffg_elements
+    diff

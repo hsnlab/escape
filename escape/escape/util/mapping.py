@@ -31,7 +31,9 @@ class AbstractMappingStrategy(object):
 
   def __init__ (self):
     """
-    Init
+    Init.
+
+    :return: None
     """
     super(AbstractMappingStrategy, self).__init__()
 
@@ -47,7 +49,7 @@ class AbstractMappingStrategy(object):
     :type graph: :any:`NFFG`
     :param resource: resource info
     :type resource: :any:`NFFG`
-    :raise: NotImplementedError
+    :raise: :any:`exceptions.NotImplementedError`
     :return: mapped graph
     :rtype: :any:`NFFG`
     """
@@ -69,6 +71,13 @@ class AbstractMappingDataProcessor(object):
   """
 
   def __init__ (self, layer_name):
+    """
+    Init.
+
+    :param layer_name: layer name
+    :type layer_name: str
+    :return: None
+    """
     super(AbstractMappingDataProcessor, self).__init__()
     self._layer_name = layer_name
 
@@ -127,9 +136,21 @@ class ProcessorSkipper(AbstractMappingDataProcessor):
   """
 
   def pre_mapping_exec (self, input_graph, resource_graph):
+    """
+    Skip the validation by default and return with successful result.
+
+    :return: successful result (False)
+    :rtype: bool
+    """
     return False
 
   def post_mapping_exec (self, input_graph, resource_graph, result_graph):
+    """
+    Skip the validation ba default and return with successful result.
+
+    :return: successful result (False)
+    :rtype: bool
+    """
     return False
 
 
@@ -141,6 +162,17 @@ class PrePostMapNotifier(AbstractMappingDataProcessor):
   """
 
   def pre_mapping_exec (self, input_graph, resource_graph):
+    """
+    Raise specific event for pre-mapping validation. Default return value is
+    skip validation.
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_graph: resource information
+    :type resource_graph: :any:`NFFG`
+    :return: successful result (False)
+    :rtype: bool
+    """
     # Raise event for external POX modules
     core.components[self._layer_name].raiseEvent(PreMapEvent,
                                                  input_graph=input_graph,
@@ -149,6 +181,19 @@ class PrePostMapNotifier(AbstractMappingDataProcessor):
     return False
 
   def post_mapping_exec (self, input_graph, resource_graph, result_graph):
+    """
+    Raise specific event for post-mapping validation. Default return value is
+    skip validation.
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_graph: resource information
+    :type resource_graph: :any:`NFFG`
+    :param result_graph: result of the mapping process
+    :type result_graph: :any:`NFFG`
+    :return: successful result (False)
+    :rtype: bool
+    """
     # Raise event for external POX modules
     core.components[self._layer_name].raiseEvent(PostMapEvent,
                                                  input_graph=input_graph,
@@ -167,6 +212,15 @@ class PreMapEvent(Event):
   """
 
   def __init__ (self, input_graph, resource_graph):
+    """
+    Init.
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_graph: resource information
+    :type resource_graph: :any:`NFFG`
+    :return: None
+    """
     super(PreMapEvent, self).__init__()
     self.input_graph = input_graph
     self.resource_graph = resource_graph
@@ -175,6 +229,9 @@ class PreMapEvent(Event):
   def sg (self):
     """
     For support backward compatibility.
+
+    :return: input graph
+    :rtype: :any:`NFFG`
     """
     return self.input_graph
 
@@ -187,6 +244,17 @@ class PostMapEvent(Event):
   """
 
   def __init__ (self, input_graph, resource_graph, result_graph):
+    """
+    Init.
+
+    :param input_graph: graph representation which need to be mapped
+    :type input_graph: :any:`NFFG`
+    :param resource_graph: resource information
+    :type resource_graph: :any:`NFFG`
+    :param result_graph: result of the mapping process
+    :type result_graph: :any:`NFFG`
+    :return: None
+    """
     super(PostMapEvent, self).__init__()
     self.input_graph = input_graph
     self.resource_graph = resource_graph
@@ -207,6 +275,7 @@ class AbstractMapper(EventMixin):
   """
   # Default Strategy class as a fallback strategy
   DEFAULT_STRATEGY = None
+  """Default Strategy class as a fallback strategy"""
 
   def __init__ (self, layer_name, strategy=None, threaded=None):
     """

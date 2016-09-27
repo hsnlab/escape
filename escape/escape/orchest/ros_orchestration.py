@@ -15,7 +15,6 @@
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
 from escape.adapt.virtualization import AbstractVirtualizer, VirtualizerManager
-from escape.nffg_lib.nffg import NFFGToolBox
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
@@ -29,6 +28,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
   """
   # Default Mapper class as a fallback mapper
   DEFAULT_MAPPER = ResourceOrchestrationMapper
+  """Default Mapper class as a fallback mapper"""
 
   def __init__ (self, layer_API):
     """
@@ -128,6 +128,8 @@ class NFFGManager(object):
   def __init__ (self):
     """
     Init.
+
+    :return: None
     """
     super(NFFGManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)

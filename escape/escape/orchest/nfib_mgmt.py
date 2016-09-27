@@ -15,7 +15,6 @@
 Contains the class for managing NFIB.
 """
 import os
-import time
 from collections import deque
 
 import networkx
@@ -43,6 +42,8 @@ class NFIBManager(object):
   def __init__ (self):
     """
     Init.
+
+    :return: None
     """
     super(NFIBManager, self).__init__()
     log.debug("Init %s" % self.__class__.__name__)
@@ -775,8 +776,8 @@ class NFIBManager(object):
       return
     log.log(VERBOSE, "Neo4j service initiation status: %s" % ret)
     # Check if the service has been started - only 5 try
-    if port_tester(host=self.DB_HOST, port=self.DB_PORT, interval=1, period=10, log=log):
+    if port_tester(host=self.DB_HOST, port=self.DB_PORT, interval=1, period=10,
+                   log=log):
       log.debug("Neo4j service has been verified!")
     else:
       log.error("Neo4j service has not started correctly!")
-

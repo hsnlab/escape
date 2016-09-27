@@ -16,6 +16,7 @@ Contains functions and classes for remote visualization.
 """
 import logging
 import urlparse
+
 from requests import Session, ConnectionError, HTTPError, Timeout
 
 import virtualizer as Virtualizer
@@ -35,8 +36,10 @@ class RemoteVisualizer(Session):
   """
   # Singleton
   __metaclass__ = Singleton
+  """Singleton"""
   # name form POXCore
   _core_name = "visualizer"
+  """Name form POXCore"""
 
   # Bindings of Layer IDs
   ID_MAPPER = {
@@ -44,14 +47,17 @@ class RemoteVisualizer(Session):
     ORCHEST: "ESCAPE-ORCHESTRATION",
     ADAPT: "ESCAPE-ADAPTATION"
   }
+  """Bindings of Layer IDs"""
 
   # Basic HTTP headers
   basic_headers = {
     'User-Agent': "ESCAPE/" + __version__,
     'Content-Type': "application/xml"}
+  """Basic HTTP headers"""
 
   # Default timeout value in sec
   DEFAULT_TIMEOUT = 1
+  """Default timeout value in sec"""
 
   def __init__ (self, url=None, rpc=None, timeout=DEFAULT_TIMEOUT,
                 instance_id=None):

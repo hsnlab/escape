@@ -87,6 +87,17 @@ class NFFGConverter(object):
   FR_ID_GEN_STRATEGY = None
 
   def __init__ (self, domain=None, logger=None, ensure_unique_id=None):
+    """
+    Init.
+
+    :param domain: domain name
+    :type domain: str
+    :param logger: optional logger
+    :type logger: str or :any:`logging.Logger`
+    :param ensure_unique_id: generate unique id for nodes
+    :type ensure_unique_id: bool
+    :return: None
+    """
     # Save domain name for define domain attribute in infras
     self.domain = domain
     # If clarify_id is True, add domain name as a prefix to the node ids
@@ -1630,6 +1641,7 @@ class NFFGConverter(object):
     :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
     :param nffg: splitted NFFG (not necessarily in valid syntax)
     :return: modified Virtualizer object
+    :rtype: :class:`Virtualizer`
     """
     self.log.debug("Converting NFs...")
     # Check every infra Node
@@ -1766,6 +1778,7 @@ class NFFGConverter(object):
     :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
     :param nffg: splitted NFFG (not necessarily in valid syntax)
     :return: modified Virtualizer object
+    :rtype: :class:`Virtualizer`
     """
     self.log.debug("Converting flowrules...")
     # Check every infra Node
@@ -1972,6 +1985,7 @@ class NFFGConverter(object):
     :param reinstall: need to clear every NF/flowrules from given virtualizer
     :type reinstall: bool
     :return: modified Virtualizer object
+    :rtype: :class:`Virtualizer`
     """
     virt = virtualizer.full_copy()
     # Remove previously installed NFs and flowrules from Virtualizer for
@@ -2007,6 +2021,15 @@ class UC3MNFFGConverter():
   """
 
   def __init__ (self, domain=None, logger=None):
+    """
+    Init.
+
+    :param domain: domain name
+    :type domain: str
+    :param logger: optional logger
+    :type logger: str or :any:`logging.Logger`
+    :return: None
+    """
     # Save domain name for define domain attribute in infras
     self.domain = domain
     self.log = logger if logger is not None else logging.getLogger(__name__)
@@ -2108,6 +2131,11 @@ class UC3MNFFGConverter():
 
 
 def test_NFFGConverter ():
+  """
+  Test function for internal testing.
+
+  :return: None
+  """
   import logging
 
   logging.basicConfig(level=logging.DEBUG)

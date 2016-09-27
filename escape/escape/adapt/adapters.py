@@ -132,7 +132,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     Handle incoming OpenFlow connections.
 
     :param event: event object
-    :type event: pox.openflow.ConnectionUp
+    :type event: :class:`pox.openflow.ConnectionUp`
     """
     log.debug("Handle connection by %s" % self.task_name)
     self._identify_ovs_device(connection=event.connection)
@@ -150,7 +150,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     Handle disconnected device.
 
     :param event: event object
-    :type event: pox.openflow.ConnectionDown
+    :type event: :class:`pox.openflow.ConnectionDown`
     """
     log.debug("Handle disconnection by %s" % self.task_name)
     if event.dpid in self.infra_to_dpid.itervalues():
@@ -672,7 +672,7 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
     :param vnf_id: VNF ID (mandatory)
     :type vnf_id: str
     :return: reply data
-    :rtype_ dict
+    :rtype: dict
     :raises: RPCError, OperationError, TransportError
     """
     log.debug("Call startVNF - VNF id: %s" % vnf_id)

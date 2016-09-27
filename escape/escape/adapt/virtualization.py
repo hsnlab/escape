@@ -32,10 +32,15 @@ class DoVChangedEvent(Event):
   """
   # Constants for type of changes
   TYPE = enum("UPDATE", "EXTEND", "CHANGE", "REDUCE", "EMPTY")
+  """Constants for type of changes"""
 
   def __init__ (self, cause):
     """
-    Init
+    Init.
+
+    :param cause: cause of the change
+    :type cause: str
+    :return: None
     """
     super(DoVChangedEvent, self).__init__()
     self.cause = cause
@@ -55,8 +60,10 @@ class AbstractVirtualizer(EventMixin):
   Follows the Proxy design pattern.
   """
   __metaclass__ = PolicyEnforcementMetaClass
+  """Metaclass"""
   # Default domain type for Virtualizers
   DEFAULT_DOMAIN = "VIRTUAL"
+  """Default domain type for Virtualizers"""
   # Trivial Virtualizer types
   DOMAIN_VIRTUALIZER = "DOV"
   SINGLE_VIRTUALIZER = "SINGLE"
@@ -68,11 +75,18 @@ class AbstractVirtualizer(EventMixin):
 
     :param type: Virtualizer type
     :type type: str
+    :return: None
     """
     super(AbstractVirtualizer, self).__init__()
     self.type = type
 
   def __str__ (self):
+    """
+    Return with specific string representation.
+
+    :return: string representation
+    :rtype: str
+    """
     return "%s(type=%s)" % (self.__class__.__name__, self.type)
 
   def get_resource_info (self):
@@ -119,6 +133,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     :type global_view: :any:`DomainVirtualizer`
     :param type: Virtualizer type
     :type type: str
+    :return: None
     """
     super(AbstractFilteringVirtualizer, self).__init__(type=type)
     self.id = id
@@ -131,6 +146,12 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     self._cache = None  # Cache for computed topology
 
   def __str__ (self):
+    """
+    Return with specific string representation.
+
+    :return: string representation
+    :rtype: str
+    """
     return "%s(assigned:%s, type=%s)" % (
       self.__class__.__name__, self.id, self.type)
 
@@ -207,6 +228,7 @@ class DomainVirtualizer(AbstractVirtualizer):
   """
   # Events raised by this class
   _eventMixin_events = {DoVChangedEvent}
+  """Events raised by this class"""
 
   def __init__ (self, mgr, global_res=None):
     """
@@ -231,15 +253,33 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   @property
   def name (self):
+    """
+    Return with the name of the View.
+
+    :return: name of the view
+    :rtype: str
+    """
     if self.__global_nffg is not None and hasattr(self.__global_nffg, 'name'):
       return self.__global_nffg.name
     else:
       return DoV + "-uninitialized"
 
   def __str__ (self):
+    """
+    Return with specific string representation.
+
+    :return: string representation
+    :rtype: str
+    """
     return "DomainVirtualizer(name=%s)" % self.name
 
   def __repr__ (self):
+    """
+    Return with specific representation.
+
+    :return: spec representation
+    :rtype: str
+    """
     return super(DomainVirtualizer, self).__repr__()
 
   def is_empty (self):
@@ -466,6 +506,7 @@ class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
     :type global_view: :any:`DomainVirtualizer`
     :param id: id of the assigned entity
     :type: id: str
+    :return: None
     """
     log.debug("Initiate unfiltered/global <Virtual View>")
     super(GlobalViewVirtualizer, self).__init__(id=id,

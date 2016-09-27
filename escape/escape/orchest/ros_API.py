@@ -41,6 +41,7 @@ class InstallNFFGEvent(Event):
 
     :param mapped_nffg: NF-FG graph need to be installed
     :type mapped_nffg: NFFG
+    :return: None
     """
     super(InstallNFFGEvent, self).__init__()
     self.mapped_nffg = mapped_nffg
@@ -53,10 +54,11 @@ class VirtResInfoEvent(Event):
 
   def __init__ (self, virtualizer):
     """
-    Init
+    Init.
 
     :param virtualizer: virtual resource info
     :type virtualizer: :any:`AbstractVirtualizer`
+    :return: None
     """
     super(VirtResInfoEvent, self).__init__()
     self.virtualizer = virtualizer
@@ -75,6 +77,16 @@ class InstantiationFinishedEvent(BaseResultEvent):
   """
 
   def __init__ (self, id, result, error=None):
+    """
+    Init.
+
+    :param id: NFFG id
+    :type id: str or int
+    :param result: result of the instantiation
+    :type result: str
+    :param error: optional Error object
+    :type error: :any:`exceptions.BaseException`
+    """
     super(InstantiationFinishedEvent, self).__init__()
     self.id = id
     self.result = result
@@ -106,20 +118,26 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'orchestration'
+  """Statically defined layer component to which this handler is bounded"""
   # Set special prefix to imitate OpenStack agent API
   static_prefix = "escape"
+  """ special prefix to imitate OpenStack agent API"""
   # Logger name
   LOGGER_NAME = "Sl-Or"
+  """Logger name"""
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = True
+  """Use Virtualizer format"""
   # Default communication approach
   DEFAULT_DIFF = True
+  """Default communication approach"""
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
     'edit-config': "edit_config"
   }
+  """ Name mapper to avoid Python naming constraint"""
   # Bound function
   API_CALL_RESOURCE = 'api_ros_get_config'
   API_CALL_REQUEST = 'api_ros_edit_config'
@@ -127,6 +145,14 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   def __init__ (self, request, client_address, server):
     """
     Init.
+
+    :param request: request type
+    :type request: str
+    :param client_address: client address
+    :type client_address: str
+    :param server: server object
+    :type server: :any:`BaseHTTPServer.HTTPServer`
+    :return: None
     """
     AbstractRequestHandler.__init__(self, request, client_address, server)
 
@@ -272,15 +298,6 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       # Initialize NFFG from JSON representation
       self.log.info("Parsing request into internal NFFG format...")
       nffg = NFFG.parse(raw_body)
-    # command = self.command.upper()
-    # if command == 'POST':
-    #   nffg.mode = NFFG.MODE_ADD
-    # elif command == 'DELETE':
-    #   nffg.mode = NFFG.MODE_DEL
-    # elif command == 'PUT':
-    #   nffg.mode = NFFG.MODE_REMAP
-    # else:
-    #   self.log.warning("Unsupported HTTP verb for mapping mode: %s" % command)
     if nffg.mode:
       self.log.info(
         "Detected mapping mode in request body: %s" % nffg.mode)
@@ -340,22 +357,28 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
     'GET': ('ping', 'version', 'operations', 'get_config'),
     'POST': ('ping', 'get_config', 'edit_config')
   }
+  """Bind HTTP verbs to UNIFY's API functions"""
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'orchestration'
+  """Statically defined layer component to which this handler is bounded"""
   static_prefix = "cfor"
   # Logger name
   LOGGER_NAME = "Cf-Or"
+  """Logger name"""
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = True
+  """Use Virtualizer format"""
   # Default communication approach
   DEFAULT_DIFF = True
+  """Default communication approach"""
   # Name mapper to avoid Python naming constraint
   rpc_mapper = {
     'get-config': "get_config",
     'edit-config': "edit_config"
   }
+  """Name mapper to avoid Python naming constraint"""
   # Bound function
   API_CALL_RESOURCE = 'api_cfor_get_config'
   API_CALL_REQUEST = 'api_cfor_edit_config'
@@ -363,6 +386,14 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
   def __init__ (self, request, client_address, server):
     """
     Init.
+
+    :param request: request type
+    :type request: str
+    :param client_address: client address
+    :type client_address: str
+    :param server: server object
+    :type server: :any:`BaseHTTPServer.HTTPServer`
+    :return: None
     """
     BasicUnifyRequestHandler.__init__(self, request, client_address, server)
 
@@ -400,13 +431,16 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   Implement the Sl - Or reference point.
   """
-  # Define specific name for core object i.e. pox.core.<_core_name>
+  # Defined specific name for core object i.e. pox.core.<_core_name>
   _core_name = LAYER_NAME
+  """Defined specific name for core object"""
   # Events raised by this class
   _eventMixin_events = {InstallNFFGEvent, GetGlobalResInfoEvent,
                         VirtResInfoEvent, InstantiationFinishedEvent}
+  """Events raised by this class"""
   # Dependencies
   dependencies = ('adaptation',)
+  """Layer dependencies"""
 
   def __init__ (self, standalone=False, **kwargs):
     """
@@ -633,6 +667,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def __get_cfor_resource_view (self):
     """
     Return with the Virtualizer object assigned to the Cf-Or interface.
+
+    :return: Virtualizer of Cf-Or interface
+    :rtype: :any:`AbstractVirtualizer`
     """
     virt_mgr = self.resource_orchestrator.virtualizerManager
     return virt_mgr.get_virtual_view(virtualizer_id=self.cfor_api.api_id,

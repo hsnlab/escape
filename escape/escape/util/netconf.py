@@ -15,11 +15,10 @@
 Implement the supporting classes for communication over NETCONF.
 """
 from StringIO import StringIO
-from lxml import etree
 
+from lxml import etree
 from ncclient import manager, NCClientError
-from ncclient.operations import RPCError, OperationError
-from ncclient.transport import TransportError
+from ncclient.operations import RPCError
 from ncclient.xml_ import new_ele, sub_ele
 
 
@@ -91,6 +90,8 @@ class AbstractNETCONFAdapter(object):
   @property
   def connected (self):
     """
+    Return with connection state.
+
     :return: Return connection state
     :rtype: bool
     """
@@ -99,6 +100,8 @@ class AbstractNETCONFAdapter(object):
   @property
   def connection_data (self):
     """
+    Return with connection data.
+
     :return: Return connection data in (server, port, username) tuples
     :rtype: tuple
     """
@@ -107,6 +110,8 @@ class AbstractNETCONFAdapter(object):
   @property
   def manager (self):
     """
+    Return the connection amamger object.
+
     :return: Return the connection manager (wrapper for NETCONF commands)
     :rtype: :class:`ncclient.manager.Manager`
     """
@@ -415,6 +420,9 @@ class AbstractNETCONFAdapter(object):
 
     >>> with AbstractNETCONFAdapter() as adapter:
     >>>  ...
+
+    :return: self object
+    :rtype: :any:`AbstractNETCONFAdapter`
     """
     if not self.connected:
       self.connect()
@@ -422,7 +430,9 @@ class AbstractNETCONFAdapter(object):
 
   def __exit__ (self, exc_type, exc_val, exc_tb):
     """
-    Context manager cleanup action
+    Context manager cleanup action.
+
+    :return: None
     """
     if self.connected:
       self.disconnect()

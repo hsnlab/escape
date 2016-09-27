@@ -37,8 +37,10 @@ class AbstractAPI(EventMixin):
   """
   # Default value for logger. Should be overwritten by child classes
   _core_name = "AbstractAPI"
+  """Default value for logger. Should be overwritten by child classes"""
   # Explicitly defined dependencies as POX components
   dependencies = ()
+  """Explicitly defined dependencies as POX components"""
 
   # Events raised by this class, but already defined in superclass
   # _eventMixin_events = set()
@@ -69,6 +71,7 @@ class AbstractAPI(EventMixin):
 
     :param standalone: started in standalone mode or not
     :type standalone: bool
+    :return: None
     """
     super(AbstractAPI, self).__init__()
     # Save custom parameters with the given name
@@ -211,6 +214,11 @@ class RequestCache(object):
   UNKNOWN = "UNKNOWN"
 
   def __init__ (self):
+    """
+    Init.
+
+    :return: None
+    """
     super(RequestCache, self).__init__()
     self.cache = dict()
 
@@ -285,6 +293,7 @@ class RESTServer(ThreadingMixIn, HTTPServer):
       :type address: str
       :param port: Used port number
       :type port: int
+      :return: None
       """
     HTTPServer.__init__(self, (address, port), RequestHandlerClass)
     self._thread = threading.Thread(target=self.run,
@@ -300,6 +309,8 @@ class RESTServer(ThreadingMixIn, HTTPServer):
   def start (self):
     """
     Start RESTServer thread.
+
+    :return: None
     """
     self.started = True
     self._thread.start()
@@ -307,6 +318,8 @@ class RESTServer(ThreadingMixIn, HTTPServer):
   def stop (self):
     """
     Stop RESTServer thread.
+
+    :return: None
     """
     if self.started:
       self.shutdown()
@@ -314,6 +327,8 @@ class RESTServer(ThreadingMixIn, HTTPServer):
   def run (self):
     """
     Handle one request at a time until shutdown.
+
+    :return: None
     """
     # Start API loop
     # print "start"
@@ -332,19 +347,46 @@ class RESTError(Exception):
   """
 
   def __init__ (self, msg=None, code=0):
+    """
+    Init.
+
+    :param msg: error message
+    :type msg: str
+    :param code: error code
+    :type code: int
+    :return: None
+    """
     super(RESTError, self).__init__()
     self._msg = msg
     self._code = code
 
   @property
   def msg (self):
+    """
+    Return with the message.
+
+    :return: error massage
+    :rtype: str
+    """
     return self._msg
 
   @property
   def code (self):
+    """
+    Return with the error code.
+
+    :return: error code
+    :rtype: int
+    """
     return int(self._code)
 
   def __str__ (self):
+    """
+    Return with spec string representation.
+
+    :return: error representation
+    :rtype: str
+    """
     return self._msg
 
 
@@ -368,23 +410,30 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
   """
   # For HTTP Response messages
   server_version = "ESCAPE/" + __version__
+  """server version for HTTP Response messages"""
   static_prefix = "escape"
-  # Bind HTTP verbs to UNIFY's API functions
+  # Bound HTTP verbs to UNIFY's API functions
   request_perm = {
     'GET': ('ping', 'version', 'operations'),
     'POST': ('ping',)}
+  """Bound HTTP verbs to UNIFY's API functions"""
   # Name of the layer API to which the server bounded
   bounded_layer = None
+  """Name of the layer API to which the server bounded"""
   # Name mapper to avoid Python naming constraint (dict: rpc-name: mapped name)
   rpc_mapper = None
+  """Name mapper to avoid Python naming constraint"""
   # Logger name
   LOGGER_NAME = "REST-API"
+  """Logger name"""
   # Logger. Should be overrided in child classes
   log = core.getLogger("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
+  """Use Virtualizer format"""
   # Default communication approach
   format = "FULL"
+  """Default communication approach"""
 
   def do_GET (self):
     """
@@ -395,18 +444,24 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
   def do_POST (self):
     """
     Create an entity. C for CRUD convention.
+
+    :return: None
     """
     self._process_url()
 
   def do_PUT (self):
     """
     Update an entity. U for CRUD convention.
+
+    :return: None
     """
     self._process_url()
 
   def do_DELETE (self):
     """
     Delete an entity. D for CRUD convention.
+
+    :return: None
     """
     self._process_url()
 
@@ -594,6 +649,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     # self.wfile.flush()
 
   error_content_type = "text/json"
+  """Content-Type for error responses"""
 
   def send_error (self, code, message=None):
     """
@@ -604,6 +660,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     :type code: int
     :param message: error message
     :type message: str
+    :return: None
     """
     try:
       short, long = self.responses[code]
@@ -615,10 +672,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     self.log_error("code %d, message %s", code, message)
     # using _quote_html to prevent Cross Site Scripting attacks (see bug
     # #1100201)
-    content = {
-      "title": "Error response", 'Error code': code,
-      'Message': message, 'Explanation': explain
-    }
+    content = {"title": "Error response",
+               'Error code': code,
+               'Message': message,
+               'Explanation': explain}
     self.send_response(code, message)
     self.send_header("Content-Type", self.error_content_type)
     self.send_header('Connection', 'close')
@@ -632,6 +689,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     Overwritten to use POX logging mechanism.
 
     :param mformat: message format
+    :type mformat: str
+    :return: None
     """
     self.log.warning("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
@@ -641,6 +700,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     Disable logging of incoming messages.
 
     :param mformat: message format
+    :type mformat: str
+    :return: None
     """
     pass
 
@@ -649,6 +710,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     Overwritten to use POX logging mechanism.
 
     :param mformat: message format
+    :type mformat: str
+    :return: None
     """
     self.log.debug("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
@@ -690,6 +753,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
   def ping (self):
     """
     For testing REST API aliveness and reachability.
+
+    :return: None
     """
     response_body = "OK"
     self.send_response(200)

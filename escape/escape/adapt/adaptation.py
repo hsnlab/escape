@@ -206,8 +206,6 @@ class ComponentConfigurator(object):
     if self.is_started(name):
       # Call finalize
       self.__repository[name].finit()
-      # Remove from repository
-      # del self.__repository[domain_name]
     else:
       log.warning(
         "Missing domain component: %s! Skipping stop task..." % name)

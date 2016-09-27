@@ -37,6 +37,7 @@ class GlobalResInfoEvent(Event):
 
     :param dov: Domain Virtualizer which handles the Global Infrastructure View.
     :type dov: :any:`DomainVirtualizer`
+    :return: None
     """
     super(GlobalResInfoEvent, self).__init__()
     self.dov = dov
@@ -48,6 +49,16 @@ class InstallationFinishedEvent(BaseResultEvent):
   """
 
   def __init__ (self, id, result, error=None):
+    """
+    Init.
+
+    :param id: :any:`NFFG` id
+    :type id: str
+    :param result: result of the installation
+    :type: result: str
+    :param error: error object (optional)
+    :type error: :any:`exceptions.BaseException`
+    """
     super(InstallationFinishedEvent, self).__init__()
     self.id = id
     self.result = result
@@ -61,6 +72,13 @@ class DeployNFFGEvent(Event):
   """
 
   def __init__ (self, nffg_part):
+    """
+    Init.
+
+    :param nffg_part: NFFG needs to deploy
+    :type nffg_part: :any:`NFFG`
+    :return: None
+    """
     super(DeployNFFGEvent, self).__init__()
     self.nffg_part = nffg_part
 
@@ -120,6 +138,8 @@ class ControllerAdaptationAPI(AbstractAPI):
       :func:`AbstractAPI.shutdown() <escape.util.api.AbstractAPI.shutdown>`
 
     :param event: event object
+    :type: :class:`pox.lib.revent.revent.Event`
+    :return: None
     """
     log.info("Controller Adaptation Sublayer is going down...")
     self.controller_adapter.shutdown()

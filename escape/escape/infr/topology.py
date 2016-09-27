@@ -38,18 +38,32 @@ class AbstractTopology(Topo):
   """
   # Default host options
   default_host_opts = None
+  """Default host options for Mininet"""
   # Default switch options
   default_switch_opts = None
+  """Default switch options for Mininet"""
   # Default link options
   default_link_opts = None
+  """Default link options for Mininet"""
   # Default EE options
   default_EE_opts = None
+  """Default EE options for Mininet"""
   # Type of the Topology class - NEED to be set
   # The construction and build of the network is different for the STATIC and
   # DYNAMIC way
   TYPE = None
+  """Type of the Topology class - NEED to be set"""
 
   def __init__ (self, hopts=None, sopts=None, lopts=None, eopts=None):
+    """
+    Init.
+
+    :param hopts: host options (optional)
+    :param sopts: switch options (optional)
+    :param lopts: link options (optional)
+    :param eopts: EE options (optional)
+    :return: None
+    """
     # Topo is Old-style class
     Topo.__init__(self, hopts, sopts, lopts, eopts)
 
@@ -57,7 +71,7 @@ class AbstractTopology(Topo):
     """
     Base class for construct the topology.
 
-    :param builder: builder object
+    :param builder: optional builder object
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -65,6 +79,9 @@ class AbstractTopology(Topo):
   def get_topo_desc ():
     """
     Return the NFFG object represents the specific, constructed topology
+
+    :return: topology description
+    :rtype: :any`NFFG`
     """
     raise NotImplementedError("Not implemented yet!")
 
@@ -98,6 +115,13 @@ class FallbackStaticTopology(AbstractTopology):
   TYPE = "STATIC"
 
   def construct (self, builder=None):
+    """
+    Assemble the topology description statically.
+
+    :param builder: optional builder object
+    :return: self
+    :rtype: :any:`FallbackStaticTopology`
+    """
     # nc1 = self.addEE(name='NC1', {})
     # nc2 = self.addEE(name='NC2', {})
     log.info("Start static topology creation...")
@@ -128,6 +152,12 @@ class FallbackStaticTopology(AbstractTopology):
 
   @staticmethod
   def get_topo_desc ():
+    """
+    Return the topology description.
+
+    :return: topo description
+    :rtype: :any:`NFFG`
+    """
     # Create NFFG
     nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
     # Add switches
@@ -206,6 +236,12 @@ class FallbackDynamicTopology(AbstractTopology):
 
   @staticmethod
   def get_topo_desc ():
+    """
+    Return the topology description.
+
+    :return: topo description
+    :rtype: :any:`NFFG`
+    """
     # Create NFFG
     nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
     # Add NETCONF capable containers a.k.a. Execution Environments
@@ -258,6 +294,7 @@ class InternalControllerProxy(RemoteController):
     :type ip: str
     :param port: port number (default 6633)
     :type port: int
+    :return: None
     """
     # Using old-style class because of MN's RemoteController class
     RemoteController.__init__(self, name, ip, port, **kwargs)
@@ -327,7 +364,7 @@ class ESCAPENetworkBridge(object):
   @property
   def network (self):
     """
-    Internal network representation.
+    Return the internal network representation.
 
     :return: network representation
     :rtype: :class:`mininet.net.MininetWithControlNet`
@@ -351,6 +388,8 @@ class ESCAPENetworkBridge(object):
   def start_network (self):
     """
     Start network.
+
+    :return: None
     """
     log.debug("Starting Mininet network...")
     if self.__mininet is not None:
@@ -376,6 +415,8 @@ class ESCAPENetworkBridge(object):
   def stop_network (self):
     """
     Stop network.
+
+    :return: None
     """
     log.debug("Shutting down Mininet network...")
     if self.__mininet is not None:
@@ -459,10 +500,11 @@ class ESCAPENetworkBuilder(object):
     'autoSetMacs': False,  # Set simple MACs
     'autoStaticArp': True,  # Set static ARP entries
     'listenPort': None,  # Add listen port to OVS switches
-    'link': TCLink  # Add default link
-  }
+    'link': TCLink}  # Add default link
+  """Default initial options for Mininet"""
   # Default internal storing format for NFFG parsing/reading from file
   DEFAULT_NFFG_FORMAT = "NFFG"
+  """Default internal storing format for NFFG parsing/reading from file"""
   # Constants
   TYPE_EE_LOCAL = "LOCAL"
   TYPE_EE_REMOTE = "REMOTE"
@@ -971,7 +1013,7 @@ class ESCAPENetworkBuilder(object):
     :param src_port: source Port (optional)
     :param dst_port: destination Port (optional)
     :param params: additional link parameters
-    :return:
+    :return: None
     """
     log.debug("Create Link %s%s <--> %s%s" % (
       src, ":%s" % src_port if src_port is not None else "", dst,

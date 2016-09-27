@@ -33,6 +33,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
   def __init__ (self):
     """
     Init
+
+    :return: None
     """
     super(ESCAPEMappingStrategy, self).__init__()
 
@@ -112,6 +114,7 @@ class NFFGMappingFinishedEvent(Event):
 
     :param nffg: NF-FG need to be installed
     :type nffg: :any:`NFFG`
+    :return: None
     """
     super(NFFGMappingFinishedEvent, self).__init__()
     self.nffg = nffg
@@ -123,8 +126,10 @@ class ResourceOrchestrationMapper(AbstractMapper):
   """
   # Events raised by this class
   _eventMixin_events = {NFFGMappingFinishedEvent}
+  """Events raised by this class"""
   # Default Mapper class as a fallback mapper
   DEFAULT_STRATEGY = ESCAPEMappingStrategy
+  """Default Mapper class as a fallback mapper"""
 
   def __init__ (self, strategy=None):
     """

@@ -30,6 +30,7 @@ from subprocess import STDOUT, Popen, PIPE
 import time
 
 VERBOSE = 5
+"""Verbose logging level"""
 
 
 def schedule_as_coop_task (func):
@@ -208,6 +209,7 @@ class SimpleStandaloneHelper(object):
     :type: EventMixin
     :param cover_name: Container's name for logging
     :type cover_name: str
+    :return: None
     """
     from pox.lib.revent.revent import EventMixin
     super(SimpleStandaloneHelper, self).__init__()
@@ -257,6 +259,9 @@ class Singleton(type):
   _instances = {}
 
   def __call__ (cls, *args):
+    """
+    Override.
+    """
     if cls not in cls._instances:
       cls._instances[cls] = super(Singleton, cls).__call__(*args)
     return cls._instances[cls]
@@ -268,6 +273,9 @@ def deprecated (func):
   will result in a warning being emitted when the function is used.
 
   :param func: original function
+  :type func: :any:`collections.Callable`
+  :return: decorated func
+  :rtype: :any:`collections.Callable`
   """
 
   def newFunc (*args, **kwargs):
@@ -282,6 +290,13 @@ def deprecated (func):
 
 
 def remove_junks_at_shutdown (log=logging.getLogger("cleanup")):
+  """
+  Remove junk files used/created by ESCAPE.
+
+  :param log: optional logger
+  :type log: :any:`logging.Logger`
+  :return: None
+  """
   if os.geteuid() != 0:
     log.error("Cleanup process requires root privilege!")
     return
@@ -311,6 +326,13 @@ def remove_junks_at_shutdown (log=logging.getLogger("cleanup")):
 
 
 def remove_junks_at_boot (log=logging.getLogger("cleanup")):
+  """
+  Remove junk files used/created by ESCAPE.
+
+  :param log: optional logger
+  :type log: :any:`logging.Logger`
+  :return: None
+  """
   if os.geteuid() != 0:
     log.error("Cleanup process requires root privilege!")
     return
@@ -337,7 +359,9 @@ def get_escape_name_version ():
   """
   Return the initiation message for the current ESCAPE version.
   Acquiring information from escape package.
-  :return:
+
+  :return: name and version
+  :rtype: tuple
   """
   import escape
   return escape.__project__, escape.__version__
@@ -401,7 +425,7 @@ def unicode_to_str (raw):
   Converter function to avoid unicode.
 
   :param raw: raw data from
-  :return: convertaed data
+  :return: converted data
   """
   if isinstance(raw, dict):
     return {unicode_to_str(key): unicode_to_str(value) for key, value in
@@ -427,6 +451,14 @@ def remove_units (raw):
 
 
 def check_service_status (name):
+  """
+  Return if a Linux process given by ``name`` is running or not.
+
+  :param name: process name
+  :type name: str
+  :return: process is running or not
+  :rtype: bool
+  """
   status_all = run_cmd("sudo service --status-all")
   for line in status_all.splitlines():
     status, service = line.split(']')

@@ -46,6 +46,7 @@ class InstantiateNFFGEvent(Event):
 
     :param nffg: NF-FG need to be initiated
     :type nffg: :any:`NFFG`
+    :return: None
     """
     super(InstantiateNFFGEvent, self).__init__()
     self.nffg = nffg
@@ -63,6 +64,7 @@ class GetVirtResInfoEvent(Event):
 
     :param sid: Service layer ID
     :type sid: int
+    :return: None
     """
     super(GetVirtResInfoEvent, self).__init__()
     # service layer ID
@@ -89,17 +91,22 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
     # 'DELETE': ('sg',),
     'PUT': ('sg',)
   }
+  """Bind HTTP verbs to UNIFY's API functions"""
   # Statically defined layer component to which this handler is bounded
   # Need to be set by container class
   bounded_layer = 'service'
+  """Statically defined layer component to which this handler is bounded"""
   static_prefix = "escape"
   # Logger name
   LOGGER_NAME = "U-Sl"
+  """Logger name"""
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Use Virtualizer format
   virtualizer_format_enabled = False
+  """Use Virtualizer format"""
   # Default communication approach
   DEFAULT_DIFF = True
+  """Default communication approach"""
   # Bound function
   API_CALL_RESOURCE = 'api_sas_get_topology'
   API_CALL_REQUEST = 'api_sas_sg_request'
@@ -107,12 +114,22 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
   def __init__ (self, request, client_address, server):
     """
     Init.
+
+    :param request: request type
+    :type request: str
+    :param client_address: client address
+    :type client_address: str
+    :param server: server object
+    :type server: :any:`BaseHTTPServer.HTTPServer`
+    :return: None
     """
     AbstractRequestHandler.__init__(self, request, client_address, server)
 
   def result (self):
     """
-    Return the result of a request given by the id.
+    Retspond the result of a request given by the id.
+
+    :return: None
     """
     params = json.loads(self._get_body())
     try:
@@ -162,15 +179,19 @@ class ServiceLayerAPI(AbstractAPI):
 
   Implement the U - Sl reference point.
   """
-  # Define specific name for core object as pox.core.<_core_name>
+  # Defined specific name for core object as pox.core.<_core_name>
   _core_name = LAYER_NAME
+  """Defined specific name for core object """
   # Layer id constant
   LAYER_ID = "ESCAPE-" + LAYER_NAME
+  """Layer id constant"""
   # Events raised by this class
   _eventMixin_events = {InstantiateNFFGEvent, GetVirtResInfoEvent, PreMapEvent,
                         PostMapEvent}
+  """Events raised by this class"""
   # Dependencies
   dependencies = ('orchestration',)
+  """Layer dependencies"""
 
   def __init__ (self, standalone=False, **kwargs):
     """
@@ -282,6 +303,8 @@ class ServiceLayerAPI(AbstractAPI):
   def _initiate_gui (self):
     """
     Initiate and set up GUI.
+
+    :return: None
     """
     # TODO - set up and initiate MiniEdit here???
     devnull = open(os.devnull, 'r+')
@@ -387,6 +410,10 @@ class ServiceLayerAPI(AbstractAPI):
 
   def __get_sas_resource_view (self):
     """
+    Return with the resource view of SAS layer.
+
+    :return: resource view
+    :rtype: :any:`AbstractVirtualizer`
     """
     return self.service_orchestrator.virtResManager.virtual_view
 
@@ -484,6 +511,11 @@ class ServiceLayerAPI(AbstractAPI):
 
   def _handle_InstantiationFinishedEvent (self, event):
     """
+    Receive the result of the instantiated NFFG and save it.
+
+    :param event: event object
+    :type event: :any:`InstantiationFinishedEvent`
+    :return: None
     """
     if not BaseResultEvent.is_error(event.result):
       log.getChild('API').info(
