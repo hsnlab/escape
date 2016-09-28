@@ -10,6 +10,9 @@ Classes of the module:
    escape.adapt.adapters
    :parts: 1
 
+:any:`TopologyLoadException` implements exception class for
+topology-related errors.
+
 :any:`InternalPOXAdapter` implements the OF controller functionality for the
 Mininet-based emulated topology.
 
@@ -19,10 +22,17 @@ external SDN/OpenFlow switches.
 :any:`InternalMininetAdapter` implements Mininet related functionality
 transparently e.g. start/stop/clean topology built from an :any:'NFFG'.
 
+:any:`StaticFileTopoAdapter` implements a simple adapter which load the topology
+information from file.
+
 :any:`SDNDomainTopoAdapter` implements SDN topology related functions.
 
 :any:`VNFStarterAdapter` is a helper/wrapper class for vnf_starter NETCONF
 module.
+
+:any:`UnifyRESTAdapter` is a wrapper class for the unified, REST-like
+communication with the "Unify" domain which using pre-defined REST-API functions
+and the "Virtualizer" XML-based format.
 
 :any:`RemoteESCAPEv2RESTAdapter` is a wrapper class for REST-based communication
 with an another ESCAPE instance started in agent mode.
@@ -33,9 +43,8 @@ functions.
 :any:`UniversalNodeRESTAdapter` is a wrapper class for REST-like communication
 with the Universal Node domain.
 
-:any:`UnifyRESTAdapter` is a wrapper class for the unified, REST-like
-communication with the "Unify" domain which using pre-defined REST-API functions
-and the "Virtualizer" XML-based format.
+:any:`BGPLSRESTAdapter` is a wrapper class for communicating with an external
+component called TopologyManager using BGP-LS protocol with special extensions.
 
 Module contents
 ---------------

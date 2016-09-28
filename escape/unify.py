@@ -13,19 +13,20 @@
 # limitations under the License.
 
 """
-Basic POX module for ESCAPE
+The overall POX module for the layer modules of ESCAPE.
 
-Initiate appropriate APIs
+Initiate appropriate layer APIs.
 
-Follows POX module conventions
+Follows POX module conventions.
 """
 import logging
 
 import pox.lib.util as poxutil
 from pox.core import core, log
 
-# Initial parameters
+# Initial parameters used for storing command line parameters.
 init_param = {}
+"""Initial parameters used for storing command line parameters."""
 
 
 # noinspection PyUnusedLocal
@@ -34,7 +35,7 @@ def _start_components (event):
   Initiate and run POX with ESCAPE components.
 
   :param event: POX's going up event
-  :type event: GoingUpEvent
+  :type event: :class:`pox.core.GoingUpEvent`
   :return: None
   """
   # Launch ESCAPE components

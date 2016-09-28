@@ -24,6 +24,7 @@ from pox.lib.revent.revent import EventMixin, Event
 
 # Common reference name for the DomainVirtualizer
 DoV = "DoV"
+"""Common reference name for the DomainVirtualizer"""
 
 
 class DoVChangedEvent(Event):

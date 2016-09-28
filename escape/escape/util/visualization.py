@@ -42,17 +42,14 @@ class RemoteVisualizer(Session):
   """Name form POXCore"""
 
   # Bindings of Layer IDs
-  ID_MAPPER = {
-    SERVICE: "ESCAPE-SERVICE",
-    ORCHEST: "ESCAPE-ORCHESTRATION",
-    ADAPT: "ESCAPE-ADAPTATION"
-  }
+  ID_MAPPER = {SERVICE: "ESCAPE-SERVICE",
+               ORCHEST: "ESCAPE-ORCHESTRATION",
+               ADAPT: "ESCAPE-ADAPTATION"}
   """Bindings of Layer IDs"""
 
   # Basic HTTP headers
-  basic_headers = {
-    'User-Agent': "ESCAPE/" + __version__,
-    'Content-Type': "application/xml"}
+  basic_headers = {'User-Agent': "ESCAPE/" + __version__,
+                   'Content-Type': "application/xml"}
   """Basic HTTP headers"""
 
   # Default timeout value in sec

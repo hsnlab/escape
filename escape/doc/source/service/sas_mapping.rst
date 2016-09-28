@@ -10,7 +10,7 @@ Classes of the module:
    :parts: 1
 
 :any:`DefaultServiceMappingStrategy` implements a default mapping algorithm
-which map given SG on a single Bis-Bis.
+which map given SG on a single BiSBiS.
 
 :any:`SGMappingFinishedEvent` can signal end of service graph mapping.
 

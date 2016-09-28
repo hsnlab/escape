@@ -1460,7 +1460,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
 
 class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
-                       BGPLSSpeakerAPI):
+                       BGPLSbasedTopologyManagerAPI):
   """
   Implement the necessary interface to advertise managed domains and discover
   external domains through BGP-LS using the REST-API of BGP-LS Speaker.

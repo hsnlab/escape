@@ -21,6 +21,9 @@ upper layer.
 
 :any:`BasicUnifyRequestHandler` implements the REST-API functions for agent mode.
 
+:any:`CfOrRequestHandler` implements the REST-API functions for the Cf-Or
+interface.
+
 :any:`ResourceOrchestrationAPI` represents the ROS layer and implement all
 related functionality.
 

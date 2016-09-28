@@ -17,9 +17,6 @@ adaptation components, i.e. derived classes of :any:`AbstractDomainManager` and
 :any:`ControllerAdapter` implements the centralized functionality of high-level
 adaptation and installation of :any:`NFFG`.
 
-:any:`DomainVirtualizer` implements the standard virtualization/generalization
-logic of the Resource Orchestration Sublayer.
-
 :any:`GlobalResourceManager` stores and manages the global Virtualizer.
 
 Module contents

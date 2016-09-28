@@ -9,16 +9,19 @@ Classes of the module:
    escape.adapt.virtualization
    :parts: 1
 
-:any:`MissingGlobalViewEvent` can signal missing global view.
-
 :any:`DoVChangedEvent` can signal for the specific Virtualizers the DOV is
 changed.
+
+:any:`MissingGlobalViewEvent` can signal missing global view.
 
 :any:`AbstractVirtualizer` contains the basic logic and defines the API of
 Virtualizers.
 
 :any:`AbstractFilteringVirtualizer` contains the main logic for observing
 global Virtualizer.
+
+:any:`DomainVirtualizer` implements the standard virtualization/generalization
+logic of the Resource Orchestration Sublayer.
 
 :any:`GlobalViewVirtualizer` implements a non-filtering/non-virtualizing logic.
 

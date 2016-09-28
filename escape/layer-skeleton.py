@@ -20,6 +20,7 @@ from pox.core import core
 
 # Initial parameters
 init_param = {}
+"""Initial parameters used for storing command line parameters."""
 
 
 class SkeletonAPI(AbstractAPI):
@@ -44,7 +45,7 @@ def _start_layer (event):
   Initiate and run POX module
 
   :param event: POX's going up event
-  :type event: GoingUpEvent
+  :type event: :class:`pox.core.GoingUpEvent`
   :return: None
   """
   # Instantiate the API class and register into pox.core only once

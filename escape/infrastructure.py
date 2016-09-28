@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Basic POX module for ESCAPE Infrastructure Layer
+Main POX module for ESCAPE Infrastructure Layer.
 
-Initiate appropriate API class which emulate Co-Rm reference point
+Initiate appropriate API class which emulate Co-Rm reference point.
 
-Follows POX module conventions
+Follows POX module conventions.
 """
 import os
 
@@ -27,6 +27,7 @@ from pox.core import core
 
 # Initial parameters
 init_param = {}
+"""Initial parameters used for storing command line parameters."""
 
 
 def _start_layer (event):
@@ -34,7 +35,7 @@ def _start_layer (event):
   Initiate and run Infrastructure module.
 
   :param event: POX's going up event
-  :type event: GoingUpEvent
+  :type event: :class:`pox.core.GoingUpEvent`
   :return: None
   """
   # Instantiate the API class and register into pox.core only once

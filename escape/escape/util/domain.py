@@ -1147,7 +1147,7 @@ class RemoteESCAPEv2API(DefaultUnifyDomainAPI):
   pass
 
 
-class BGPLSSpeakerAPI(object):
+class BGPLSbasedTopologyManagerAPI(object):
   """
   Define interface for managing external domains using REST-API of
   BGP-LS-based Speaker client.
@@ -1163,7 +1163,7 @@ class AbstractRESTAdapter(Session):
   Abstract class for various adapters rely on a RESTful API.
   Contains basic functions for managing HTTP connections.
 
-  Based on :any::`Session` class.
+  Based on :class:`requests.sessions.Session` class.
 
   Follows Adapter design pattern.
   """

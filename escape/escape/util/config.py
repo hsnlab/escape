@@ -30,7 +30,6 @@ from pox.core import log, core
 
 # Store the project root where escape.py is started in
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__) + "/../../../")
-"""Store the project root where escape.py is started in"""
 
 
 class ConfigurationError(RuntimeError):

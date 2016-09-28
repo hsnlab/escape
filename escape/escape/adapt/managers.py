@@ -1371,7 +1371,7 @@ class ExternalDomainManager(AbstractRemoteDomainManager):
 
 class BGPLSBasedExternalDomainManager(ExternalDomainManager):
   """
-  External DomainManager using BGP-LS Speaker to detect external domains.
+  External DomainManager using BGP-LS TM component to detect external domains.
   """
   # DomainManager name
   name = "BGP-LS-SPEAKER"
