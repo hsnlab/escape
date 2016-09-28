@@ -5,16 +5,28 @@ Welcome to ESCAPEv2's documentation!
 Overview
 ========
 
-On the one hand, ESCAPE (Extensible Service ChAin Prototyping
-Environment) is a general prototyping framework which supports the
-development of several parts of the service chaining architecture
-including VNF implementation, traffic steering, virtual network
-embedding, etc.  On the other hand, ESCAPE is a proof of concept
-prototype implementing a novel SFC (Service Function Chaining)
-architecture proposed by `EU FP7 UNIFY project <https://www.fp7-unify.eu/>`__.
+On the one hand, ESCAPE (Extensible Service ChAin Prototyping Environment) is a
+general prototyping framework which supports the development of several parts of
+the service chaining architecture including VNF implementation, traffic steering,
+virtual network embedding, etc.  On the other hand, ESCAPE is a proof of concept
+prototype implementing a novel SFC (Service Function Chaining) architecture proposed
+by `EU FP7 UNIFY project <https://www.fp7-unify.eu/>`__.
 It is a realization of the UNIFY service programming and orchestration framework
 which enables the joint programming and virtualization of cloud and networking
 resources.
+
+The main scope of ESCAPE as a multi-domain orchestrator (MdO) is to discover,
+detect and manage the different administrative domains which can use different
+transport technologies, communication interfaces and message formats.
+
+ESCAPE may receive the specific service requests on it REST-like API, orchestrate
+the requested Network Functions on its global resource view, which collected from
+the administrative domains, with the help of a dedicated resource mapping algorithm
+and propagate the calculated service parts to the managed Domain Orchestrators.
+
+In addition ESCAPE can be used in the role of a local Domain Orchestrator in which
+ESCAPE uses a modified version of the Mininet network emulation platform to realize
+the dataplane connectivity.
 
 .. tip::
 
@@ -57,41 +69,48 @@ Installation
 ============
 
 Because the core ESCAPEv2 relies on POX and written in Python there is no need
-for explicit compiling or installation. The only requirement need to be
-pre-installed is a Python interpreter.
+for explicit compiling or installation. The required dependencies such as databases,
+external programs, system packages and the latest Python 2.7 interpreter are completely
+handled and installed by the main setup script: **install-dep.sh**
 
-The recommended Python version, in which the development and mostly the testing
-are performed, is the standard CPython **2.7.11**.
+The currently recommended Python version, in which the development and mostly the
+testing are performed, is the standard CPython **2.7.12**.
 
 .. important::
 
-  Only the standard CPython interpreter is supported!
+  Only the standard CPython interpreter is tested and supported!
 
 If you want to use a different and separated Python version check the Virtual
 Environment section below.
 
-The best choice of platform on wich ESCAPEv2 is recommended to install and the
-*install-dep.sh* is tested is Ubuntu 14.04.4 LTS.
+The best choice of platform on which ESCAPEv2 is recommended to be installed and
+the *install-dep.sh* installation script is tested is Ubuntu 14.04.5 and 16.04.1 LTS.
 
-However ESCAPEv2 is developed on Kubuntu 16.04, some issues are experienced
-related to SAP-xterm initiation in case the platform was an Ubuntu 16.04 server
-image and ESCAPEv2 was started through an SSH channel.
+However ESCAPEv2 is developed on Ubuntu 16.04, some issues are experienced
+related to SAP-xterm initiation in case ESCAPE was run on an Ubuntu 16.04 virtual
+machine through an SSH channel with X11 forwarding.
 
 .. important::
-    Considering this limitation we recommend to use the older 14.04 LTS version in
-    case ESCAPEv2 is intended to run on a VM without any graphical interface.
 
-The install script (*install-dep.sh*) supports both LTS version.
+    Considering this limitation we recommend to use the older 14.04.5 LTS version
+    in case ESCAPEv2 is intended to run:
+
+      * on a VM
+      * without any graphical interface
+      * as a local Domain Orchestrator.
+
+Nevertheless the install script (``install-dep.sh``) supports both LTS version.
 
 The preferred way
 -----------------
 
-1. Download one of pre-build Ubuntu LTS image or create one in your VM manager.
+1. Download one of pre-build Ubuntu LTS VM image, create one in your preferred VM
+manager or just use the default Docker image.
 
-2. Create the ``.ssh`` folder in the home directory and copy your private RSA key
-which you gave on the *fp7-unify.eu GitLab* site into the VM with the name
-``id_rsa``. If you use a VM image then the following commands can be used
-in the VM to copy your RSA key from your host:
+2. Create the ``~/.ssh`` folder in your environment and copy your private RSA key
+you have given on the *GitLab* site, with the name ``id_rsa``.
+If you use a VM image then the following commands can be used to copy your RSA
+key from your host:
 
   .. code-block:: bash
 
@@ -100,14 +119,15 @@ in the VM to copy your RSA key from your host:
     $ scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
     $ sudo chmod 700 .ssh && sudo chmod 600 .ssh/id_rsa
 
-3. Clone the shared escape repository in a folder named: *escape*.
+3. Clone the shared escape repository
+(the default folder name will be: *escape*).
 
   .. code-block:: bash
 
-    $ git clone git@gitlab.fp7-unify.eu:Balazs.Sonkoly/escape-shared.git escape
+    $ git clone git@5gexgit.tmit.bme.hu:unify/escape.git
 
 4. Install the necessary dependencies with the ``install_dep.sh`` script (system
-and Python packages, OpenYuma with VNFStarter module):
+and Python packages, OpenYuma with VNFStarter module, etc.):
 
   .. code-block:: bash
 
@@ -119,7 +139,9 @@ and Python packages, OpenYuma with VNFStarter module):
   .. code-block:: text
 
     $ ./install-dep.sh -h
-    Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i]
+    Detected platform is Ubuntu, version: 16.04!
+    User project config: sb
+    Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i] [-p project]
     Install script for ESCAPEv2
 
     options:
@@ -129,6 +151,8 @@ and Python packages, OpenYuma with VNFStarter module):
         -g:   install dependencies for our rudimentary (G)UI
         -h:   print this (H)elp message
         -i:   install components of (I)nfrastructure Layer for Local Orchestration
+        -p:   use specific project module files [unify|sb|5gex|ericsson] default: unify
+
 
 
   In a high level the script above carries the following things:
@@ -139,7 +163,7 @@ and Python packages, OpenYuma with VNFStarter module):
       router and The Click GUI: `Clicky <http://read.cs.ucla.edu/click/clicky>`__
     * Install `neo4j <http://neo4j.com/>`__ graph database for NFIB
     * If Mininet is not installed on the VM, install the ``mnexec`` utility and
-      create a system user: **mininet** for NETCONF communication
+      create a system user: **mininet** for NETCONF-based communication
 
 5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
 available arguments of the top starting script check the help menu:
@@ -148,9 +172,18 @@ available arguments of the top starting script check the help menu:
 
     $ ./escape.py --help
 
-To verify ESCAPEv2's components are installed and set up correctly you can run
-the following command and test the reachability of the initiated SAPs (``xterm``)
-with ``ping``:
+To verify ESCAPEv2 in MdO role you can run without any command line flag. If ESCAPE
+is up and running and the following line is logged on the console:
+
+    .. code-block:: text
+
+      > [core                   ] ESCAPEv2 is up.
+
+then each component was installed and configured successfully.
+
+To verify ESCAPEv2 in DO role with all the components you can run the following
+command and test the reachability between the initiated service access points (SAP)
+represented by the ``xterm`` windows with the ``ping`` command:
 
   .. code-block:: bash
 
@@ -161,18 +194,18 @@ with ``ping``:
     # SAP2 xterm
     $ ping sap1
 
-This command start the full stack ESCAPEv2 with the default topology
+This command starts the full stack ESCAPEv2 with the default topology
 (`examples/escape-mn-topo.nffg`) and initiate a service request consists of a
 *HeaderCompressor* and a *HeaderDecompressor* VNF for one direction and a simple
-*Forwarder* VNF for the backward direction. The two initiated SAP can reach each
-other.
+*Forwarder* VNF for the backward direction between SAP1 and SAP2.
+The two initiated SAP should reach each other after the service request has processed.
 
 .. important::
 
-    If you want to initiate more then 15 node (including switches and also Execution
-    Environments) in the Mininet-based Infrastructure layer you should recompile
-    the OpenSSH server from source to increase the number of possible listening
-    ports up to 256. In this case you can use the following commands:
+    If you want to initiate more then 7 node (including switches and also Execution
+    Environments) in the Mininet-based Infrastructure layer you have to recompile and
+    reinstall the OpenSSH server from source to increase the number of possible listening
+    ports. In this case you can use the following commands:
 
      .. code-block:: bash
 
@@ -190,35 +223,55 @@ other.
 The hard way
 ------------
 
-Obviously you can install ESCAPEv2 on your host or on an empty VM too. For that
-you need to install the requirements manually.
+Obviously you can install ESCAPEv2 on your host machine or on an different platform.
+For that you need to install the requirements manually.
 
-To install the Python dependencies and other system packages you can use the
-dependency installation script mentioned above or you can do it manually.
+**Submodules**
+
+The project uses several dependent component as a Git submodule. To acquire these
+source codes a symlink have to be created in the project's root folder referring
+to the gitmodule config of the actual project at first:
+
+.. code-block:: bash
+
+    $ ln -s .gitmodules.<project_name> .gitmodules
+    $ git submodule update --init --remote --recursive --merge
 
 **Dependencies**
 
-If you don't want to install the Python dependencies globally you can follow the
-hard way and setup a virtual environment. Otherwise just run the following
-command(s):
+If you don't want to install the Python dependencies globally, you can follow the
+hard way and setup a virtual environment step-by-step.
+
+For stability ESCAPE uses the dedicated version of the following packages:
+    * neo4j: 2.2.7
+    * cryptography 1.3.1
+
+neo4j requires Java 7 which can't be found in the official Ubuntu 14.04 repositories.
+To install the Java package and the latest Python 2.7 the following PPA repositories
+can be used:
+
+.. code-block:: bash
+
+    $ sudo apt-get install -y software-properties-common
+    $ sudo add-apt-repository -y ppa:openjdk-r/ppa
+    $ sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
+    $ sudo apt-get install openjdk-7-jdk python2.7
 
 Required system and Python packages:
 
 .. code-block:: bash
 
-    $ sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev \
-    libxslt1-dev libssl-dev libffi-dev neo4j=2.2.7
+    $ sudo apt-get -y installpython-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
+        libssl-dev libffi-dev python-crypto openvswitch-switch neo4j=2.2.7
 
-    $ sudo -H pip install numpy jinja2 py2neo networkx requests ncclient \
-    cryptography==1.3.1
+    $ sudo -H pip install numpy jinja2 py2neo networkx requests ncclient cryptography==1.3.1
 
 For Mininet emulation tool:
 
 .. code-block:: bash
 
-    $ sudo apt-get -y install gcc make socat psmisc xterm ssh iperf iproute \
-    telnet python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8 \
-    openvswitch-switch
+    $ sudo apt-get -y install gcc make socat psmisc xterm ssh iperf iproute telnet \
+    python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8 openvswitch-switch
 
 For our rudimentary GUI:
 
@@ -241,18 +294,10 @@ For domain emulation scripts:
 
 .. code-block:: bash
 
-    $ sudo -H pip install tornado
+    $ sudo -H pip install tornado openvswitch-switch
 
-Other required programs (OpenYuma, click, neo4j, etc.), which are installed by
-the `install_dep.sh` script by default, are also need to be installed manually.
-
-On Ubuntu the ``neo4j`` database server (>=2.3.1) does not work with
-OpenJDK 7 correctly. In this case the ``neo4j`` server is need to be downgraded
-or the latest OpenJDK 8 need to be installed.
-
-If a newer version of ``neo4j`` has been installed on the system, use the
-following commands to downgrade. In this case the authentication bypass needs
-to be done again.
+If a newer version of ``neo4j`` has been installed on the system, use the following commands to downgrade.
+In this case the authentication bypass needs to be done again.
 
 .. code-block:: bash
 
@@ -268,14 +313,18 @@ these dependencies one by one according to your OS, distro or development enviro
 For that you can check the steps in the install script and/or the online documentations
 referenced in entry 4. of the previous subsection.
 
+In case of the additional DO functionality other required programs (OpenYuma, click, neo4j, etc.),
+which are installed by the `install_dep.sh` script by default, are also need to be installed manually.
+The relevant command can be found in the ``install-dep.sh`` script's *install_mn_dep()* and
+*install_infra()* functions.
+
 To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
 host (more precisely the **Open vSwitch** implementation and the specific
 **mnexec** utility is only required to be installed globally).
 
-If Mininet has already been installed, there should be nothing to do. ESCAPEv2
-uses the specifically-modified Mininet files in the project folder
-(*Mininet v2.1.0mod-ESCAPE*) which use the globally installed Mininet utility
-scripts (mnexec).
+If Mininet has already been installed, there should be nothing to do.
+ESCAPEv2 uses the specifically-modified Mininet files in the project folder (*Mininet v2.1.0mod-ESCAPE*)
+which use the globally installed Mininet utility scripts (mnexec).
 
 Otherwise these assets have to be install manually which could be done from our
 Mininet folder (escape/mininet) or from the official Mininet git repository
@@ -303,24 +352,6 @@ copy the binary into a folder which is in your ``PATH`` system variable.
     $ cd mininet/
     $ make mnexec
     $ sudo install mnexec /usr/bin
-
-However you can install the Open vSwitch packages manually:
-
-.. code-block:: bash
-
-    $ sudo apt-get install openvswitch-switch
-
-If the command complains about the Open vSwitch not installed then you have to
-install it from source. See more on `<http://openvswitch.org/download/>`_. On the
-newest distributions (e.g. Ubuntu 15.04) more steps and explicit patching is
-required. For that the only way is sadly to use google and search for it based
-on your distro. But a good choice to start here:
-https://github.com/mininet/mininet/wiki/Installing-new-version-of-Open-vSwitch
-
-.. hint::
-
-  If your intention is to run ESCAPEv2 in a virtual machine, you should really
-  consider to use one of the pre-build Mininet VM images.
 
 If you want to develop on your host machine, you should take care of a user for
 the netconfd server. This user's name and password will be used for the
@@ -439,41 +470,45 @@ Usage:
 .. code-block:: text
 
     $ ./escape.py -h
-      usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-i] [-p] [-r]
-                       [-s file] [-t file] [-x] [-V] [-4]
-                       ...
+    usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-g] [-i] [-p] [-r]
+                     [-s file] [-t file] [-x] [-V] [-4]
+                     ...
 
-      ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet,
-      Click, NETCONF and POX
+    ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet,
+    Click, NETCONF and POX
 
-      optional arguments:
-        -h, --help            show this help message and exit
-        -v, --version         show program's version number and exit
+    optional arguments:
+      -h, --help            show this help message and exit
+      -v, --version         show program's version number and exit
 
-      ESCAPEv2 arguments:
-        -a, --agent           run in AGENT mode: start the infrastructure layer with
-                              the ROS REST-API (without the Service sublayer (SAS))
-        -c path, --config path
-                              override default config filename
-        -d, --debug           run the ESCAPE in debug mode
-        -e, --environment     run ESCAPEv2 in the pre-defined virtualenv environment
-        -f, --full            run the infrastructure layer also
-        -i, --interactive     run an interactive shell for observing internal states
-        -p, --POXlike         start ESCAPEv2 in the actual interpreter using ./pox
-                              as working directory instead of using a separate shell
-                              process with POX's own PYTHON env
-        -r, --rosapi          start the REST-API for the Resource Orchestration
-                              sublayer (ROS)
-        -s file, --service file
-                              skip the SAS REST-API initiation and read the service
-                              request from the given file
-        -t file, --topo file  read the topology from the given file explicitly
-        -x, --clean           run the cleanup task standalone and kill remained
-                              programs, interfaces, veth parts and junk files
-        -V, --visualization   run the visualization module to send data to a remote
-                              server
-        -4, --cfor            start the REST-API for the Cf-Or interface
-        ...                   optional POX modules
+    ESCAPEv2 arguments:
+      -a, --agent           run in AGENT mode: start the infrastructure layer with
+                            the ROS REST-API (without the Service sublayer (SAS))
+      -c path, --config path
+                            override default config filename
+      -d, --debug           run the ESCAPE in debug mode (can use multiple times
+                            for more verbose logging)
+      -e, --environment     run ESCAPEv2 in the pre-defined virtualenv
+      -f, --full            run the infrastructure layer also
+      -g, --gui             initiate the graph-viewer GUI app which automatically
+                            connects to the ROS REST-API
+      -i, --interactive     run an interactive shell for observing internal states
+      -p, --POXlike         start ESCAPEv2 in the actual interpreter using ./pox
+                            as working directory instead of using a separate shell
+                            process with POX's own PYTHON env
+      -r, --rosapi          start the REST-API for the Resource Orchestration
+                            sublayer (ROS)
+      -s file, --service file
+                            skip the SAS REST-API initiation and read the service
+                            request from the given file
+      -t file, --topo file  read the topology from the given file explicitly
+      -x, --clean           run the cleanup task standalone and kill remained
+                            programs, interfaces, veth parts and junk files
+      -V, --visualization   run the visualization module to send data to a remote
+                            server
+      -4, --cfor            start the REST-API for the Cf-Or interface
+      ...                   optional POX modules
+
 
 During a test or development the ``--debug`` flag is almost necessary.
 
@@ -484,6 +519,11 @@ by default) and start the Infrastructure layer with the Mininet-based emulation.
 
 If the request is in a file it's more convenient to give it with the ``--service``
 initial parameter and not bother with the REST-API.
+
+.. warning::
+
+    If the service request is given by the ``--service`` parameter,
+    the topmost REST-API of the *Service* layer will not be started!
 
 If you want to initiate the Mininet-based infrastructure layer and use ESCAPE as
 the local orchestrator you can use the ``--agent`` flag.
@@ -551,8 +591,28 @@ and check the state of the DoV:
 
     ...
 
-More advanced commands (mostly advisable for testing purposes)
---------------------------------------------------------------
+Advanced start commands (mostly advisable for testing purposes)
+---------------------------------------------------------------
+
+By default ESCAPE initiates the logging module with level *INFO*.
+To set the logging level to *DEBUG* the ``-d`` initial flag should be used.
+
+.. code-block:: bash
+
+    $ ./escape.py -d
+
+ESCAPE defines a lower and more detailed logging level with the name: *VERBOSE*
+which logs all the received, transmitted and calculated internal data as well.
+
+In order to start ESCAPE with VERBOSE logging the debug initial flag have to be
+used multiple times e.g. ``-dd`` or ``-d -d``.
+
+.. code-block:: bash
+
+    $ ./escape.py -dd
+
+Lower level start commands (only advisable for developers)
+----------------------------------------------------------
 
 For more flexible control ESCAPEv2 can be started directly with POX's starting
 script under the ``pox`` folder.
@@ -650,14 +710,16 @@ REST APIs
 
 ESCAPEv2 has currently 3 REST-APIs.
 
-The Service layer has a REST-API for communication with users/GUI. This API is
-initiated by default when the layer was started.
+The Service layer has a REST-API for communication with the users and/or a GUI.
+This API is initiated by default when the layer was started.
 
 The Resource Orchestration layer has 2 API which are only initiated if the
 appropriate flag is given to the starting script.
+
 The ROS API can be used for communicating with other UNIFY layer e.g. a
 Controller Adaptation Sublayer of a standalone ESCAPEv2 in a multi-level
 scenario or with a GUI.
+
 The CfOr API realizes the interface for service elasticity feature.
 
 Common API functions
@@ -682,18 +744,20 @@ The SAS API is automatically initiated by the Service layer. If the ``--service`
 is used the service request is loaded from the given file and the REST-API
 initiation is skipped.
 
-*Content Negotiation:* The Service layer's RESTful API accepts and returns data
-only in JSON format.
+*Content Negotiation:* The Service layer's RESTful API can accept and return data
+in JSON format and in Virtualizer format too (need to set in the config).
 
 The following functions are defined in :any:`ServiceRequestHandler`.
 
-+-------------------+----------------+-------------------+----------------------------------------------------------------+
-|      Path         |     Params     |     HTTP verbs    | Description                                                    |
-+===================+================+===================+================================================================+
-| */topology*       | ``None``       | GET, POST         | Returns with the resource view of the Service layer            |
-+-------------------+----------------+-------------------+----------------------------------------------------------------+
-| */sg*             | ``NFFG``       | POST              | Initiate given NFFG. Returns the initiation is accepted or not |
-+-------------------+----------------+-------------------+----------------------------------------------------------------+
++-------------------+------------------+-------------------+----------------------------------------------------------------+
+|      Path         |     Params       |     HTTP verbs    | Description                                                    |
++===================+==================+===================+================================================================+
+| */topology*       | ``None``         | GET, POST         | Returns with the resource view of the Service layer            |
++-------------------+------------------+-------------------+----------------------------------------------------------------+
+| */sg*             | ``NFFG``         | POST              | Initiate given NFFG. Returns the initiation is accepted or not |
++-------------------+------------------+-------------------+----------------------------------------------------------------+
+| */result*         |``{"id": "..."}`` | POST              | Returns with the overall result of the given Service request   |
++-------------------+------------------+-------------------+----------------------------------------------------------------+
 
 ROS API specific functions
 --------------------------
@@ -1166,7 +1230,7 @@ instance, experiment or even call different functions.
 POX uses a topmost object called *core* which serves a rendezvous point between
 POX's components (e.g. our components representing the UNIFY layers). Through
 that object we can reach every registered object easily.
-E.g. to shut down the REST API of the Service layer manually we can use the
+E.g. to shut down the REST API of the Service layer manually we can enter the
 following function call:
 
 .. code-block:: bash
@@ -1227,6 +1291,8 @@ Contacts
 János Czentye - janos.czentye@tmit.bme.hu
 
 Balázs Sonkoly - balazs.sonkoly@tmit.bme.hu
+
+Balázs Németh - balazs.nemeth@tmit.bme.hu
 
 Indices and tables
 ==================

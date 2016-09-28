@@ -156,6 +156,8 @@ function install_core {
     # Freeze neo4j version
     echo "Mark current version of neo4j: $NEO4J_VERSION as held back..."
     sudo apt-mark hold neo4j
+    info "=== Install dependencies for testing ==="
+    sudo apt-get install -y openvswitch-switch
 }
 
 function install_mn_dep {
@@ -193,7 +195,7 @@ Match Host *,!localhost
   DenyUsers  mininet
 # --- ESCAPE-mininet END---
 EOF
-#        sudo sh -c 'echo "# --- ESCAPE-mininet ---\n# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet\n# --- ESCAPE-mininet END---" | tee -a /etc/ssh/sshd_config'
+    # sudo sh -c 'echo "# --- ESCAPE-mininet ---\n# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet\n# --- ESCAPE-mininet END---" | tee -a /etc/ssh/sshd_config'
     else
         warn "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
     fi
