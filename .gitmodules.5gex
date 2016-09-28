@@ -17,4 +17,4 @@
 [submodule "bgp-ls/netphony-topology"]
 	path = bgp-ls/netphony-topology
 	url = git@5gexgit.tmit.bme.hu:ogd/netphony-topology.git
-	branch = feature/bugfix
+	branch = 5gex
