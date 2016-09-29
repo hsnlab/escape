@@ -14,9 +14,6 @@
 """
 Unifying package for ESCAPEv2 functions.
 
-'cfg' defines the default configuration settings such as the concrete
-RequestHandler and strategy classes, the initial Adapter classes, etc.
-
 `CONFIG` contains the ESCAPEv2 dependent configuration as an
 :any:`ESCAPEConfig`.
 """

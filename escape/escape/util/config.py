@@ -106,9 +106,12 @@ class ESCAPEConfig(object):
     # Load file
     path = os.path.abspath(path)
     log.info("Load default config from file: %s" % path)
-    with open(path, 'r') as f:
-      self.__configuration = json.load(f, object_hook=unicode_to_str)
-      # self.__configuration = dict.fromkeys(self.LAYERS, {})
+    try:
+      with open(path, 'r') as f:
+        self.__configuration = json.load(f, object_hook=unicode_to_str)
+    except IOError:
+      log.warning('Default config file: %s is not found!' % path)
+      self.__configuration = dict.fromkeys(self.LAYERS, {})
 
   def load_config (self, config=None):
     """
