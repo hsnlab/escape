@@ -55,8 +55,8 @@ class ESCAPEConfig(object):
   LAYERS = (SERVICE, ORCHEST, ADAPT, INFR)
   """Predefined layer names"""
   # Default additional config name
-  DEFAULT_CFG = "additional-config-file"
-  """Default additional config name"""
+  DEFAULT_CONFIG_FILE = "escape.config"  # relative to project root
+  """Path of the default config file"""
 
   def __init__ (self, default=None):
     """
@@ -66,11 +66,13 @@ class ESCAPEConfig(object):
     :type default: dict
     :return: None
     """
-    self.__configuration = default if default else dict.fromkeys(self.LAYERS,
-                                                                 {})
-    self.__initiated = False
     # Store copy of project root directory
     self.project_root = str(PROJECT_ROOT)
+    self.__initiated = False
+    if default:
+      self.__configuration = default
+    else:
+      self.__initialize_from_file(path=self.DEFAULT_CONFIG_FILE)
 
   @property
   def in_initiated (self):
@@ -92,6 +94,21 @@ class ESCAPEConfig(object):
     """
     if isinstance(cfg, dict) and cfg:
       self.__configuration = cfg
+
+  def __initialize_from_file (self, path):
+    """
+    Initialize the config from a file given by ``path``.
+    
+    :param path: config file path
+    :type path: str
+    :return: None
+    """
+    # Load file
+    path = os.path.abspath(path)
+    log.info("Load default config from file: %s" % path)
+    with open(path, 'r') as f:
+      self.__configuration = json.load(f, object_hook=unicode_to_str)
+      # self.__configuration = dict.fromkeys(self.LAYERS, {})
 
   def load_config (self, config=None):
     """
@@ -120,44 +137,33 @@ class ESCAPEConfig(object):
       log.info("Load explicitly given config file: %s" %
                os.path.basename(config))
     else:
-      # Detect default config
-      try:
-        # util/escape/ext/pox/root
-        config = os.path.abspath(os.path.join(
-          self.project_root, self.__configuration[self.DEFAULT_CFG]))
-        log.debug("Load default config file: %s" % os.path.basename(config))
-      except KeyError:
-        log.error("Additional config file is not found! "
-                  "Skip configuration update")
-        self.__initiated = True
-        return self
+      # No config file has been given
+      log.debug("No additional configuration has been given!")
     try:
-      # Load file
-      with open(os.path.abspath(config), 'r') as f:
-        cfg = json.load(f, object_hook=unicode_to_str)
-      # Iterate over layer config
-      changed = False
-      for layer in cfg:
-        if layer in self.__configuration:
-          if self.__parse_part(self.__configuration[layer], cfg[layer]):
-            changed = True
-        else:
-          log.warning("Unidentified layer name in loaded configuration: %s" %
-                      layer)
-      if changed:
-        log.info("Running configuration has been updated from file!")
-        log.log(VERBOSE, "\n" + pprint.pformat(self.__configuration))
-        return self
+      if config:
+        # Load file
+        with open(os.path.abspath(config), 'r') as f:
+          cfg = json.load(f, object_hook=unicode_to_str)
+        # Iterate over layer config
+        changed = False
+        for layer in cfg:
+          if layer in self.__configuration:
+            if self.__parse_part(self.__configuration[layer], cfg[layer]):
+              changed = True
+          else:
+            log.warning("Unidentified layer name in loaded configuration: %s" %
+                        layer)
+        if changed:
+          log.info("Running configuration has been updated from file!")
     except IOError:
       log.error("Additional configuration file not found: %s" % config)
     except ValueError as e:
       log.error("An error occurred when load configuration: %s" % e)
-    finally:
-      # Register config into pox.core to be reachable for other future
-      # components -not used currently
-      self.__initiated = True
-      core.register("CONFIG", self)
-    log.info("No change during config update! Using default configuration...")
+    # Register config into pox.core to be reachable for other future
+    # components -not used currently
+    self.__initiated = True
+    core.register("CONFIG", self)
+    log.log(VERBOSE, "Running config:\n" + pprint.pformat(self.__configuration))
     return self
 
   def __parse_part (self, inner_part, loaded_part):

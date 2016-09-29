@@ -105,7 +105,7 @@ function install_core {
     cd "$DIR"
     git submodule update --init --remote --recursive --merge
     # Remove ESCAPEv2 config file from index in git to untrack changes
-    git update-index --assume-unchanged escape.config
+    # git update-index --assume-unchanged escape.config
 
     info "=== Add neo4j repository ==="
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
