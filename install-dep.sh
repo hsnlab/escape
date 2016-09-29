@@ -347,7 +347,7 @@ else
     # Parse optional project parameter
     while getopts ':p:' OPTION; do
         case ${OPTION} in
-        p)  PROJECT=$OPTARG;;
+            p)  PROJECT=$OPTARG;;
         esac
     done
     OPTIND=1    # Reset getopts
