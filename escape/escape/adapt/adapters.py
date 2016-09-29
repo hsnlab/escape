@@ -1542,8 +1542,9 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :rtype: :any:`NFFG`
     """
     topo_data = self.request_bgp_ls_virtualizer()
-    log.debug("Start conversion: BGP-LS-based JSON ---> NFFG")
-    nffg = self.converter.parse_from_json(data=topo_data)
+    log.debug("Process BGP-LS-based JSON...")
+    nffg = self.converter.parse_from_json(data=topo_data,
+                                          filter_empty_nodes=True)
     if nffg is not None:
       log.debug("Cache received topology...")
       self.__cache(nffg=nffg)
@@ -1565,7 +1566,9 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.warning("Requested network topology is missing from domain: %s!" %
                   self.domain_name)
       return
-    nffg = self.converter.parse_from_raw(raw_data=raw_data, level=VERBOSE)
+    nffg = self.converter.parse_from_raw(raw_data=raw_data,
+                                         filter_empty_nodes=True,
+                                         level=VERBOSE)
     if self.last_topo is None:
       log.warning("Missing last received topo description!")
       return

@@ -419,6 +419,8 @@ class ControllerAdapter(object):
   """
   Higher-level class for :any:`NFFG` adaptation between multiple domains.
   """
+  EXTERNAL_MDO_META_NAME = 'unify-slor'
+  """Attribute name used topology from TADS to identify external MdO URL"""
 
   def __init__ (self, layer_API, with_infr=False):
     """
@@ -735,7 +737,12 @@ class ControllerAdapter(object):
         self.domains.stop_mgr(name=ext_mgr_name)
     # Check new domains
     for id in (new_ids - domain_mgr.managed_domain_ids):
-      orchestrator_url = topo_nffg[id].metadata.get('unify-slor')
+      orchestrator_url = topo_nffg[id].metadata.get(self.EXTERNAL_MDO_META_NAME)
+      if orchestrator_url is None:
+        log.warning("MdO URL is not found in the Node: %s with the name: %s! "
+                    "Skip initialization..." % (
+                      id, self.EXTERNAL_MDO_META_NAME))
+        return
       log.info("New domain detected from external DomainManager! "
                "BGP id: %s, Orchestrator URL: %s" % (id, orchestrator_url))
       # Track new domain

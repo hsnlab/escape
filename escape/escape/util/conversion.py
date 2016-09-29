@@ -2036,46 +2036,64 @@ class UC3MNFFGConverter():
     self.log.debug("Created UC3MCNFFGConverter with domain name: %s" %
                    self.domain)
 
-  def parse_from_raw (self, raw_data, level=logging.DEBUG):
+  def parse_from_raw (self, raw_data, filter_empty_nodes=False,
+                      level=logging.DEBUG):
     """
     Convert JSON-based Virtualizer-like format to NFFG.
 
     :param raw_data: raw data
     :type raw_data: str
+    :param filter_empty_nodes: skip nodes which only exist for valid
+      inter-BiSBiS links (default: False)
+    :type filter_empty_nodes: bool
     :return: converted NFFG
     :rtype: :any:`NFFG`
     """
     try:
       topo = json.loads(raw_data, object_hook=unicode_to_str)
-      return self.parse_from_json(data=topo, level=level)
+      return self.parse_from_json(data=topo,
+                                  filter_empty_nodes=filter_empty_nodes,
+                                  level=level)
     except ValueError:
       self.log.error("Received data is not valid JSON!")
 
-  def parse_from_json (self, data, level=logging.DEBUG):
+  def parse_from_json (self, data, filter_empty_nodes=False,
+                       level=logging.DEBUG):
     """
     Convert JSON-based Virtualizer-like format to NFFG.
 
     :param data: parsed JSON
     :type data: dict
+    :param filter_empty_nodes: skip nodes which only exist for valid
+      inter-BiSBiS links (default: False)
+    :type filter_empty_nodes: bool
     :param level: logging level
     :return: converted NFFG
     :rtype: :any:`NFFG`
     """
+    self.log.log(level, "START conversion: TADS topology --> NFFG")
     try:
       # Create main NFFG
       nffg = NFFG()
       for node in data['nodes']['node']:
         node_id = node['id']
-        res = node['resources']
         self.log.log(level, 'Detected node: %s' % node_id)
+        if filter_empty_nodes:
+          if len(node['links']['link']) == 0 and \
+                len(node.get('resources', ())) == 0:
+            # There is no intra BisBis link --> empty BB
+            self.log.log(level, "Node is a bare BiSBiS! Jump to next node...")
+            continue
         # Add Infra BiSBiS
         infra = nffg.add_infra(id=node_id,
                                name="ExternalNode",
                                domain=self.domain,
-                               infra_type=NFFG.TYPE_INFRA_BISBIS,
-                               cpu=remove_units(res['cpu']),
-                               mem=remove_units(res['mem']),
-                               storage=remove_units(res['storage']))
+                               infra_type=NFFG.TYPE_INFRA_BISBIS)
+        if 'resources' in node:
+          # Add resources if detected node is not a bare Node
+          infra.resources.cpu = node['resources'].get('cpu')
+          infra.resources.mem = node['resources'].get('mem')
+          infra.resources.storage = node['resources'].get('storage')
         # Add Infra BiSBiS metadata
         for meta in node['metadata']:
           self.log.log(level, "Add metadata to Infra node: %s" % meta)
@@ -2104,6 +2122,7 @@ class UC3MNFFGConverter():
           self.log.log(VERBOSE, "Got broken link with non-existent element: %s!"
                                 " Skip processing link..." % e)
           pass
+      self.log.log(level, "END conversion: TADS topology --> NFFG")
       return nffg
     except ValueError:
       self.log.error("Received data from BGP-LS speaker is not valid JSON!")
