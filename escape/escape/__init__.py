@@ -38,6 +38,21 @@ ADDITIONAL_DIRS = ("unify_virtualizer",  # Virtualizer lib
                    )
 """Additional source code directories added to PYTHONPATH"""
 
+# Skipped folders under project's root
+EXCLUDED_DIRS = ("OpenYuma",
+                 "Unify_ncagent",
+                 "bgp-ls",
+                 "config",
+                 "docker",
+                 "dummy-orchestrator",
+                 "examples",
+                 "gui",
+                 "sssa",
+                 "test",
+                 "tnova_connector",
+                 "tools")
+"""Directories excluded from PYTHONPATH"""
+
 
 def add_dependencies ():
   """
@@ -50,16 +65,14 @@ def add_dependencies ():
   import sys
   from pox.core import log
 
-  # Skipped folders under project's root
-  skipped = ("escape", "examples", "pox", "OpenYuma", "Unify_ncagent", "tools",
-             "gui", "hwloc2nffg", "nffg_BME", "include", "share", "lib", "bin",
-             "dummy-orchestrator", "click")
   for sub_folder in os.listdir(PROJECT_ROOT):
     abs_sub_folder = os.path.join(PROJECT_ROOT, sub_folder)
     if not os.path.isdir(abs_sub_folder):
       continue
-    if not (sub_folder.startswith('.') or sub_folder.upper().startswith(
-       'PYTHON')) and sub_folder in ADDITIONAL_DIRS:
+    if not sub_folder.startswith('.') and \
+       not sub_folder.upper().startswith('PYTHON') \
+       and sub_folder not in EXCLUDED_DIRS:
+      # and sub_folder not in ADDITIONAL_DIRS:
       if abs_sub_folder not in sys.path:
         log.debug("Add dependency: %s" % abs_sub_folder)
         sys.path.insert(0, abs_sub_folder)

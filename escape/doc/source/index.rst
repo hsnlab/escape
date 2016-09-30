@@ -173,13 +173,13 @@ available arguments of the top starting script check the help menu:
     $ ./escape.py --help
 
 To verify ESCAPEv2 in MdO role you can run without any command line flag. If ESCAPE
-is up and running and the following line is logged on the console:
+is up and running, the following line is logged to the console:
 
     .. code-block:: text
 
       > [core                   ] ESCAPEv2 is up.
 
-then each component was installed and configured successfully.
+Tis final log entry means that each component was installed and configured successfully.
 
 To verify ESCAPEv2 in DO role with all the components you can run the following
 command and test the reachability between the initiated service access points (SAP)
@@ -792,34 +792,49 @@ The following functions are defined in :any:`CfOrRequestHandler`.
 Configuration
 =============
 
-ESCAPEv2 has a default configuration under the `escape` package (in the
-`__init__.py` file as ``cfg``). This configuration contains the necessary
-information for manager/adapter initializations, remote connections, etc. and
-also provides the base for the internal running configuration.
+ESCAPEv2 loads its default configuration from file from the poject's root directory: ``escape.config``.
+This configuration contains the necessary information for manager/adapter initializations,
+remote connections, etc. and also provides the base for the internal running configuration.
 
-If you want to override some of the parameters you can change the default values
-in the ``cfg`` directly (not preferred) or you can just define them in an
-additional config file.
+If you want to override some of the parameters, one option could be to change the values
+in the default configuration directly, which is highly not recommended.
 
-The default configuration file which ESCAPEv2 is looking for is ``escape.config``.
-At every start ESCAPEv2 checks the presence of this file and updates/overrides
-the running configuration if it's necessary.
+However, ESCAPE provides the opportunity to specify the minimal change set in an additional
+config file with the ``--config`` initial parameter and load it at boot time.
 
-The ``escape.py`` starting script also provides the opportunity to specify a
-different configuration file with the ``--config`` initial argument.
+.. important::
 
+  The configuration is parsed at boot time. Changes in the config
+  file have no effect at runtime.
+
+Only the changed entries have to be defined in the additional configuration files with the
+hierarchical structure.
 The additional config can be added only in JSON format, but the structure of the
-configuration is strictly follows the default configuration which is defined in Python
-with basic data structures.
+configuration has to strictly follows the default configuration.
+
+ESCAPE merges the additional configuration with the basic configuration file to create
+the running configuration held in the memory.
+This merging mechanism gives the possibility not just to define new config entries but also
+to override any part of the default config entry set in a straightforward way.
 
 The configuration units (coherent values, single boolean flags, paths, etc.) are
 handled through the main :any:`ESCAPEConfig` class so every possible configuration
 entry has an assigned `getter` function in the main class.
 
-.. important::
+Default configuration (JSON)
+----------------------------
 
-  The configurations is parsed during the starting process. Changes in the config
-  file have no effect at runtime.
+The following JSON-based configuration (``escape.config``) contains the default (and possible)
+configuration entries of the main layers and its subcomponents.
+
+As an example, several additional configuration files can be found under the ``config`` folder.
+
+An additional configuration file should be based on a subpart of
+this configurations structure.
+
+.. include:: escape.config
+    :literal:
+    :code: json
 
 Configuration structure
 -----------------------
@@ -828,11 +843,11 @@ The configurations is divided to 4 parts according to the UNIFY's / ESCAPEv2's
 main layers, namely ``service``, ``orchestration``, ``adaptation`` and
 ``infrastructure``.
 
-service and orchestration
+Service and Orchestration
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The top 2 layer (``service`` and ``orchestration``) has similar configuration
-parameters. In both layers the mapping process can be controlled with the following
+parameters. In both layers the core mapping process can be controlled with the following
 entries:
 
   * **MAPPER** defines the mapping class which controls the mapping process
@@ -882,26 +897,104 @@ These REST-API configurations consist of
   * optionally the type of used Virtualizer (``virtualizer_type``) which filters
     the data flow of the API (currently only supported the global (`GLOBAL`) and
     single BiS-BiS (`SINGLE`) Virtualizer)
+  * flags mark the interface as UNIFY interface (``unify_interface``) with difference format (``diff``)
 
-adaptation
+Summarized configuration entries:
+
+MAPPER
+******
+Contains the configuration of the *Mapper* class responsible for managing the overall mapping process of the layer.
+    `module`
+        (:any:`string`) Python module name where `class` can be found, e.g. ``escape.orchest.ros_mapping``
+    `class`
+        (:any:`string`) Python class name of the *MAPPER*, e.g. ``ResourceOrchestrationMapper``
+    `mapping-enabled`
+        (:any:`bool`) Enables the mapping process in the actual layer
+    `mapping config`
+        (:class:`dict`) Optional arguments directly given to the main entry point of the core
+        mapping function ``MappingAlgorithms.MAP()``, e.g ``mode="REMAP"`` force the algorithm
+        to use the *REMAP* orchestration approach in every case. See more in the function's documentation.
+
+STRATEGY
+********
+Contains the configuration of the *Strategy* class responsible for running chosen orchestration algorithm.
+    `module`
+        (:any:`string`) Python module name where `class` can be found, e.g. ``escape.service.sas_mapping``
+    `class`
+        (:any:`string`) Python class name of the *STRATEGY*, e.g. ``DefaultServiceMappingStrategy``
+    `THREADED`
+        (:any:`bool`) Enables the mapping process in a separate thread (experimental).
+
+PROCESSOR
+*********
+Contains the configurations of the *Processor* class responsible for invoke pre/post mapping functionality.
+    `module`
+        (:any:`string`) Python module name where `class` can be found, e.g. ``escape.util.mapping``
+    `class`
+        (:any:`string`) Python class name of the *PROCESSOR*, e.g. ``ProcessorSkipper``
+    `enabled`
+        (:any:`bool`) Enables pre/post processing
+
+REST-API, Sl-Or, Cf-Or
+**********************
+Contains the configuration of the *Handler* class responsible for processing requests *Sl-Or*, *Cf-Or* interface.
+    `module`
+        (:any:`string`) Python module name where `class` can be found, e.g. ``escape.orchest.ros_API``
+    `class`
+        (:any:`string`) Python class name of the *HANDLER*, e.g. ``BasicUnifyRequestHandler``
+    `address`
+        (:any:`string`) Address the REST server bound to, e.g. ``0.0.0.0``
+    `port`
+        (:any:`int`) Port the REST server listens on, e.g. ``8008``
+    `prefix`
+        (:any:`string`) Used prefix in the REST request URLs, e.g. ``escape``
+    `unify_interface`
+        (:any:`bool`) Set the interface to use the Virtualizer format.
+    `diff`
+        (:any:`bool`) Set accepted format to difference instead of full.
+    `virtualizer_type`
+        (:any:`string`) Use the given abstraction for generation topology description:
+            ``SINGLE``: use Single BiSBiS representation
+
+            ``GLOBAL``: offer the whole domain view intact
+
+Other configuration entries
+***************************
+Other configuration entries of the layers.
+
+*service*
+  `SERVICE-LAYER-ID`
+    (:any:`string`) Internal ID of Service module - shouldn't be changed.
+
+*orchestration*
+  `ESCAPE-SERVICE`
+    (:class:`dict`) Defines parameters for internal Service API identified by the name: *ESCAPE-SERVICE*
+      `virtualizer_type`
+        (:any:`string`) Use the given topology abstraction for internal Service layer:
+          ``SINGLE``: use Single BiSBiS representation
+
+          ``GLOBAL``: offer the whole domain view intact
+  `manage-neo4j-service`
+    (:any:`bool`) Force ESCAPE to startand stop Neo4j service by itself
+
+Adaptation
 ^^^^^^^^^^
 
-The ``adaptation`` layer contains the different Manager (inherited from
-:any:`AbstractDomainManager`) classes under their specific name which is defined
-in the ``name`` class attribute. These configurations are used by the
-:any:`ComponentConfigurator` to initiate the required components dynamically.
-Every Manager use different Adapters (inherited from :any:`AbstractESCAPEAdapter`)
-to hide the specific protocol-agnostic steps in the communication between the
-ESCAPE orchestrator and network elements. The configurations of these Adapters
-can be found under the related Manager names in order to be able to initiate
-multiple Managers based on the same class with different Adapter configurations.
-The class configurations can be given by the ``module`` and ``class`` pair
-similar way as so far.
-Other values such as path, url, keepalive, etc. will be forwarded to the
-constructor of the component at initialization time so the possible config names
-and types result from the constructor attributes.
+The ``adaptation`` layer contains the different Manager (inherited from :any:`AbstractDomainManager`)
+classes under their specific name which is defined in the ``name`` class attribute.
 
-The ``MANAGERS`` config value contains the Managers need to be initiated.
+These configurations are used by the :any:`ComponentConfigurator` to initiate the required
+components dynamically. Every Manager use different Adapters (inherited from :any:`AbstractESCAPEAdapter`)
+to hide the specific protocol-agnostic steps in the communication between the ESCAPE orchestrator and network elements.
+
+The configurations of these Adapters can be found under the related Manager names
+in order to be able to initiate multiple Managers based on the same class with different Adapter configurations.
+
+The class configurations can be given by the ``module`` and ``class`` pair similar way as so far.
+Other values such as path, url, keepalive, etc. will be forwarded to the constructor of the component
+at initialization time so the possible config names and types result from the constructor attributes.
+
+The ``MANAGERS`` list contains the configuration names of Managers need to be initiated.
 
 .. hint::
 
@@ -909,11 +1002,155 @@ The ``MANAGERS`` config value contains the Managers need to be initiated.
   name of the DomainManager to the ``MANAGERS`` list. The manager will be
   initiated with other Managers at boot time of ESCAPEv2.
 
+Configuration entry:
 
-With the ``RESET-DOMAINS-AFTER-SHUTDOWN`` config entry can be enabled/disabled
-the cleanup of the domains.
+    `MANAGERS`
+        (:any:`list`) Contains the name of the domain managers need to be initiated, e.g. `["SDN", "OPENSTACK"]`
 
-infrastructure
+Domain Managers
+***************
+
+The domain manager configurations contain the parameters of the different manager objects.
+The defined manager configuration is directly given to the constructor function of the manager
+class by the container :any:`ComponentConfigurator`.
+
+The default configuration defines the domain manager and the relevant adapter configurations
+for the Infrastructure layer by default with the name: `INTERNAL`. The internal domain manager
+is used for managing the Mininet-based emulated network initiated by the ``--full`` command line parameter.
+
+ESCAPE also has default configuration for other type of domain managers:
+
+* ``SDN`` entry defines a domain manager dedicated to manage external SDN-capable hardwere or
+  software switches with a singly-purpose domain manager realized by ``SDNDomainManager``.
+  This manager uses the available POX OpenFlow controller features and a static topology description file.
+
+* ``OPENSTACK`` entry defines a more generic domain manager which uses the general ``UnifyDomainManager``
+  to manage UNIFY domains.
+
+* ``REMOTE-ESCAPE`` entry defines a domain manager for another ESCAPE instance in the role of
+  local Domain Orchestrator. This domain manager also uses the UNIFY format some addition
+  for the DO's mapping algorithm to be more deterministic.
+
+* ``BGP-LS-SPEAKER`` gives an example for an external domain manager which discovers other providers' domains
+  with the help of different external tools instead of directly managing a local DO. External domain managers have
+  the authority to initiate other domain managers for the detected domain.
+
+An additional configuration file typically contains these domain manager configurations along with the list (``MANAGERS``)
+of the enabled managers. Several example file can be found under the ``config`` folder.
+
+Summarized configuration entries for domain managers:
+
+    `NAME`
+        Unique domain manager name. Used in the ``MANAGERS`` list for enabling the defined domain manager.
+
+        Default domain managers: ``INTERNAL``, ``SDN``, ``OPENSTACK``, ``REMOTE-ESCAPE``, ``BGP-LS-SPEAKER``.
+
+        `module`
+            (:any:`string`) Python module name where `class` can be found, e.g. ``escape.adapt.managers``
+        `class`
+            (:any:`string`) Python class name of the domain manager, e.g. ``UnifyDomainManager``
+        `domain_name`
+            (:any:`string`) Optional domain name used in the global topology view. Default value is the domain manager's config name.
+        `poll`
+            (:any:`bool`) Enables domain polling.
+        `diff`
+            (:any:`bool`) Enables differential format. Works only with UNIFY-based domain managers (inherited from :any:`AbstractRemoteDomainManager`).
+        `adapters`
+            (:class:`dict`) Contains the domain adapter config given directly to the adapters at creation time. Each domain manager has the required set
+            of domain adapter types.
+
+Domain Adapters
+***************
+
+The domain adapter configurations contain the parameters of the different adapter objects splitted by its roles. The adapter objects are instantiated and
+configured by the container domain manager object. Each adapter class has its own role and parameter set. The defined adapter configuration is directly
+given to the constructor function of the adapter class by the container domain manager.
+
+Summarized configuration entries for domain adapters:
+
+    `<ROLE>`
+        Unique role of the defined domain adapter. Used in the ``adapters`` configuration entry of domain managers.
+
+        Defined roles: ``CONTROLLER``, ``MANAGEMENT``, ``TOPOLOGY``, ``REMOTE``
+
+        `module`
+            (:any:`string`) Python module name where `class` can be found, e.g. ``escape.adapt.adapters``
+        `class`
+            (:any:`string`) Python class name of the domain adapter, e.g. ``UnifyRESTAdapter``
+
+    *CONTROLLER*
+        Define domain adapter for controlling domain elements, typically SDN-capable switches.
+
+        `name`
+            (:any:`string`) Optional name for the OpenFlow controller instance used in the POX's core object, shouldn't be changed.
+        `address`
+            (:any:`string`) Address the OF controller instance bound to, e.g. ``0.0.0.0``
+        `port`
+            (:any:`int`) Port number the OF controller listens on, e.g. ``6653``
+        `keepalive`
+            (:any:`bool`) Enables internal keepalive mechanism for sending periodic OF Echo messages to switches.
+        `sap_if_prefix`
+            (:any:`string`) Defines the prefix of physical interfaces for SAPs, e.g. ``eth``.
+            Works only with :any:`InternalPOXAdapter`.
+        `binding`
+            (:any:`dict`) Defines static BiSBiS name --> DPID binding for OF switches as key-value pairs, e.g. ``{"MT1": 365441792307142}``.
+            Works only with :any:`SDNDomainPOXAdapter`.
+
+    *TOPOLOGY*
+        Define domain adapter for providing topology description of the actual domain.
+
+        `net`
+            (:any:`object`) Optional network object for :class:`mininet.net.Mininet`.
+            Works only with :any:`InternalMininetAdapter`. Only for development!
+        `path`
+            (:any:`string`) Path of the static topology description :any:`NFFG` file, e.g. ``examples/sdn-topo.nffg``.
+            Works only with ``SDNDomainTopoAdapter``.
+
+    *REMOTE*
+        Define domain adapter for communication with remote domain, typically through a REST-API.
+
+        `url`
+            (:any:`string`) URL of the remote domain agent, e.g. ``http://127.0.0.1:8899``
+        `prefix`
+            (:any:`string`) Specific prefix of the REST interface, e.g. ``/virtualizer``
+        `timeout`
+            (:any:`int`) Connection timeout in sec, e.g. ``5``
+        `unify_interface`
+            (:any:`bool`) Set the interface to use the Virtualizer format.
+
+    *MANAGEMENT*
+        Defines domain adapter for init/start/stop VNFs in the domain. Currently only NETCONF-based management is supported!
+
+        `server`
+            (:any:`string`) Server address of the NETCONF server in the domain, e.g. ``127.0.0.1``
+        `port`
+            (:any:`int`) Listening port ot the NETCONF server, e.g. ``830``
+        `username`
+            (:any:`string`) Username for the SSH connection, e.g. ``mininet``
+        `password`
+            (:any:`string`) Password for the SSH connection, e.g. ``mininet``
+        `timeout`
+            (:any:`int`) Connection timeout in sec, e.g. ``5``
+
+Generic adaptation layer configuration
+**************************************
+
+Among the Manager configurations the `adaptation` section contains several configuration parameters
+which are mostly general parameters and modify the overall behaviour of the Adaptation layer.
+
+    `RESET-DOMAINS-BEFORE-INSTALL`
+        (:any:`bool`) Enables to send the resetting topology before an service install is initiated.
+    `CLEAR-DOMAINS-AFTER-SHUTDOWN`
+        (:any:`bool`) Enables to send the resetting topology right before shutdown of ESCAPE.
+    `USE-REMERGE-UPDATE-STRATEGY`
+        (:any:`bool`) Use the `REMERGE` strategy for the global view update which stand of an explicit remove and add step
+          instead of a complex update step.
+    `USE-STATUS-BASED-UPDATE`
+        (:any:`bool`) Use status values for the service instead of imminent domain view rewriting.
+    `ENSURE-UNIQUE-ID`
+        (:any:`bool`) Generate unique id for every BiSBiS node in the detected domain using the original BiSBiS id and domain name.
+
+Infrastructure
 ^^^^^^^^^^^^^^
 
 The configuration of ``infrastructure`` layer controls the Mininet-based
@@ -936,267 +1173,54 @@ Other simple values can be added too to refine the control of the emulation such
 as enable/disable the xterm initiation for SAPs (``SAP-xterm``) or the cleanup
 task (``SHUTDOWN-CLEAN``).
 
-Default configuration
----------------------
+Summarized configuration entries:
 
-The following snippet represents the default configuration of ESCAPEv2
-in JSON format. An additional configuration file should be based on a subpart of
-this configurations structure.
+    `TOPO`
+        (:any:`string`) Path of the topology :any:`NFFG` used to build the emulated network, e.g. ``examples/escape-mn-topo.nffg``
+    `SHUTDOWN-CLEAN`
+        (:any:`bool`) Use the first received topologies to reset the detected domains before shutdown
+    `SHUTDOWN-CLEAN`
+        (:any:`bool`) Initiate xterm windows for the SAPs
+    `NETWORK-OPTS`
+        (:class:`dict`) Optional parameters directly given to the main :class:`Mininet` object at build time
+    `Controller`
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`Controller` object at build time
 
-.. code-block:: json
+        `ip`
+            (:any:`string`) IP address of the internal OpenFlow controller used for the Mininet's components, e.g. ``127.0.0.1``
+        `port`
+            (:any:`int`) Port the internal Openflow controller listens on, e.g. ``6653``
+    `EE`
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`EE` objects at build time
+    `Link`
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`Link` objects at build time
+    `SAP`
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`SAP` objects at build time
+    `Switch`
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`Switch` objects at build time
+    `FALLBACK-TOPO`
+        (:class:`dict`) Defines fallback topology for the Infrastructure layer (only for development)
 
-    {
-      "service":
-        {
-          "SERVICE-LAYER-ID": "ESCAPE-SERVICE",
-          "MAPPER":
-            {
-              "module": "escape.service.sas_mapping",
-              "class": "ServiceGraphMapper",
-              "mapping-config":
-                {
-                  "full_remap": true
-                },
-              "mapping-enabled": false
-            },
-          "STRATEGY":
-            {
-              "module": "escape.service.sas_mapping",
-              "class": "DefaultServiceMappingStrategy",
-              "THREADED": false
-            },
-          "PROCESSOR":
-            {
-              "module": "escape.util.mapping",
-              "class": "ProcessorSkipper",
-              "enabled": false
-            },
-          "REST-API":
-            {
-              "module": "escape.service.sas_API",
-              "class": "ServiceRequestHandler",
-              "prefix": "escape",
-              "address": "0.0.0.0",
-              "port": 8008,
-              "unify_interface": false
-            }
-        },
-      "orchestration":
-        {
-          "MAPPER":
-            {
-              "module": "escape.orchest.ros_mapping",
-              "class": "ResourceOrchestrationMapper",
-              "mapping-config":
-                {
-                  "full_remap": true
-                },
-              "mapping-enabled": true
-            },
-          "STRATEGY":
-            {
-              "module": "escape.orchest.ros_mapping",
-              "class": "ESCAPEMappingStrategy",
-              "THREADED": false
-            },
-          "PROCESSOR":
-            {
-              "module": "escape.util.mapping",
-              "class": "ProcessorSkipper",
-              "enabled": true
-            },
-          "ESCAPE-SERVICE":
-            {
-              "virtualizer_type": "SINGLE"
-            },
-          "Sl-Or":
-            {
-              "module": "escape.orchest.ros_API",
-              "class": "ROSAgentRequestHandler",
-              "prefix": "escape",
-              "address": "0.0.0.0",
-              "port": 8888,
-              "virtualizer_type": "GLOBAL",
-              "unify_interface": true
-            },
-          "Cf-Or":
-            {
-              "module": "escape.orchest.ros_API",
-              "class": "CfOrRequestHandler",
-              "prefix": "cfor",
-              "address": "0.0.0.0",
-              "port": 8889,
-              "virtualizer_type": "GLOBAL",
-              "unify_interface": true
-            }
-        },
-      "adaptation":
-        {
-          "MANAGERS": [
-          ],
-          "RESET-DOMAINS-BEFORE-INSTALL": false,
-          "CLEAR-DOMAINS-AFTER-SHUTDOWN": true,
-          "USE-REMERGE-UPDATE-STRATEGY": true,
-          "ENSURE-UNIQUE-ID": true,
-          "INTERNAL":
-            {
-              "module": "escape.adapt.managers",
-              "class": "InternalDomainManager",
-              "poll": false,
-              "adapters": {
-                "CONTROLLER":
-                  {
-                    "module": "escape.adapt.adapters",
-                    "class": "InternalPOXAdapter",
-                    "name": null,
-                    "address": "127.0.0.1",
-                    "port": 6653,
-                    "keepalive": false
-                  },
-                "TOPOLOGY":
-                  {
-                    "module": "escape.adapt.adapters",
-                    "class": "InternalMininetAdapter",
-                    "net": null
-                  },
-                "MANAGEMENT":
-                  {
-                    "module": "escape.adapt.adapters",
-                    "class": "VNFStarterAdapter",
-                    "username": "mininet",
-                    "password": "mininet",
-                    "server": "127.0.0.1",
-                    "port": 830,
-                    "timeout": 5
-                  }
-              }
-            },
-          "SDN": {
-            "module": "escape.adapt.managers",
-            "class": "SDNDomainManager",
-            "poll": false,
-            "domain_name": "SDN-MICROTIK",
-            "adapters": {
-              "CONTROLLER":
-                {
-                  "module": "escape.adapt.adapters",
-                  "class": "SDNDomainPOXAdapter",
-                  "name": null,
-                  "address": "0.0.0.0",
-                  "port": 6633,
-                  "keepalive": false,
-                  "binding": {
-                    "MT1": "0x14c5e0c376e24",
-                    "MT2": "0x14c5e0c376fc6"
-                  }
-                },
-              "TOPOLOGY":
-                {
-                  "module": "escape.adapt.adapters",
-                  "class": "SDNDomainTopoAdapter",
-                  "path": "examples/sdn-topo.nffg"
-                }
-            }
-          },
-          "REMOTE-ESCAPE":
-            {
-              "module": "escape.adapt.managers",
-              "class": "RemoteESCAPEDomainManager",
-              "poll": false,
-              "adapters": {
-                "REMOTE":
-                  {
-                    "module": "escape.adapt.adapters",
-                    "class": "RemoteESCAPEv2RESTAdapter",
-                    "url": "http://192.168.50.129:8888",
-                    "prefix": "escape",
-                    "unify_interface": true
-                  }
-              }
-            },
-          "REMOTE-ESCAPE-ext":
-            {
-              "module": "escape.adapt.managers",
-              "class": "RemoteESCAPEDomainManager",
-              "domain_name": "extESCAPE",
-              "poll": false,
-              "adapters": {
-                "REMOTE":
-                  {
-                    "module": "escape.adapt.adapters",
-                    "class": "RemoteESCAPEv2RESTAdapter",
-                    "url": "http://192.168.50.128:8888",
-                    "prefix": "escape",
-                    "unify_interface": true
-                  }
-              }
-            },
-          "OPENSTACK":
-            {
-              "module": "escape.adapt.managers",
-              "class": "OpenStackDomainManager",
-              "poll": false,
-              "adapters": {
-                "REMOTE":
-                  {
-                    "module": "escape.adapt.adapters",
-                    "class": "UnifyRESTAdapter",
-                    "url": "http://localhost:8081",
-                    "timeout": 5
-                  }
-              }
-            },
-          "UN":
-            {
-              "module": "escape.adapt.managers",
-              "class": "UniversalNodeDomainManager",
-              "poll": false,
-              "adapters": {
-                "REMOTE":
-                  {
-                    "module": "escape.adapt.adapters",
-                    "class": "UnifyRESTAdapter",
-                    "url": "http://localhost:8082"
-                  }
-              }
-            },
-          "DOCKER":
-            {
-              "module": "escape.adapt.managers",
-              "class": "DockerDomainManager",
-              "poll": false
-            }
-        },
-      "infrastructure":
-        {
-          "TOPO": "examples/escape-mn-topo.nffg",
-          "NETWORK-OPTS": {
-          },
-          "Controller": {
-            "ip": "127.0.0.1",
-            "port": 6653
-          },
-          "EE": null,
-          "Switch": null,
-          "SAP": null,
-          "Link": null,
-          "FALLBACK-TOPO":
-            {
-              "module": "escape.infr.topology",
-              "class": "FallbackDynamicTopology"
-            },
-          "SAP-xterms": true,
-          "SHUTDOWN-CLEAN": true
-        },
-      "additional-config-file": "escape.config",
-      "visualization":
-        {
-          "url": "http://localhost:8081",
-          "rpc": "edit-config",
-          "instance_id": null
-        }
-    }
+        `module`
+            (:any:`string`) Python module name where `class` can be found, e.g. ``escape.infr.topology``
+        `class`
+            (:any:`string`) Python class name of the *Topology*, e.g. ``FallbackDynamicTopology``
 
+Visualizations
+^^^^^^^^^^^^^^
+ESCAPE has an additional mechanism which collect the intermediate formats of a service request
+and send them to a remote database through a REST-API for visualization purposes.
+
+The visualization feature can be enabled with the ``--visualization`` command line argument.
+
+The `visualization` section contains the connection parameters for a remote visualization
+
+    `url`
+        (:any:`string`) Base URL of the remote database, e.g. ``http://localhost:8081``
+    `rpc`
+        (:any:`string`) The prefix of the collector RPC, e.g. ``edit-config``
+    `instance_id`
+        (:any:`string`) Optional distinguishing identification
 
 Development
 ===========
