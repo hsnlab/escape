@@ -19,14 +19,14 @@ The main scope of ESCAPE as a multi-domain orchestrator (MdO) is to discover,
 detect and manage the different administrative domains which can use different
 transport technologies, communication interfaces and message formats.
 
-ESCAPE may receive the specific service requests on it REST-like API, orchestrate
-the requested Network Functions on its global resource view, which collected from
+ESCAPE may receive the specific service requests on its REST-like API, orchestrate
+the requested Network Functions (NF) on the full resource view, which collected from
 the administrative domains, with the help of a dedicated resource mapping algorithm
-and propagate the calculated service parts to the managed Domain Orchestrators.
+and propagate the calculated service parts to the managed Domain Orchestrators (DO).
 
 In addition ESCAPE can be used in the role of a local Domain Orchestrator in which
-ESCAPE uses a modified version of the Mininet network emulation platform to realize
-the dataplane connectivity.
+ESCAPE uses a modified version of the Mininet network emulation platform to deploy the
+requested Network Functions and to realize the dataplane connectivity.
 
 .. tip::
 
@@ -68,10 +68,10 @@ For further information contact balazs.sonkoly@tmit.bme.hu
 Installation
 ============
 
-Because the core ESCAPEv2 relies on POX and written in Python there is no need
-for explicit compiling or installation. The required dependencies such as databases,
-external programs, system packages and the latest Python 2.7 interpreter are completely
-handled and installed by the main setup script: **install-dep.sh**
+As the core layers of ESCAPE relies on POX and written in Python there is no need
+for explicit compiling or installation. The required libraries and dependencies such as
+external databases and programs, system packages and the latest Python 2.7 interpreter
+are completely handled and installed by the main setup script: **install-dep.sh**
 
 The currently recommended Python version, in which the development and mostly the
 testing are performed, is the standard CPython **2.7.12**.
@@ -80,20 +80,19 @@ testing are performed, is the standard CPython **2.7.12**.
 
   Only the standard CPython interpreter is tested and supported!
 
-If you want to use a different and separated Python version check the Virtual
-Environment section below.
+If for some reason a different version of Python is desired, check the Virtual Environment section below.
 
-The best choice of platform on which ESCAPEv2 is recommended to be installed and
+The best choice of platform on which ESCAPE is recommended to be installed and
 the *install-dep.sh* installation script is tested is Ubuntu 14.04.5 and 16.04.1 LTS.
 
-However ESCAPEv2 is developed on Ubuntu 16.04, some issues are experienced
+However ESCAPE has been developed on Ubuntu 16.04, some issues are experienced
 related to SAP-xterm initiation in case ESCAPE was run on an Ubuntu 16.04 virtual
 machine through an SSH channel with X11 forwarding.
 
 .. important::
 
     Considering this limitation we recommend to use the older 14.04.5 LTS version
-    in case ESCAPEv2 is intended to run:
+    in case ESCAPE is intended to run:
 
       * on a VM
       * without any graphical interface
@@ -105,12 +104,11 @@ The preferred way
 -----------------
 
 1. Download one of pre-build Ubuntu LTS VM image, create one in your preferred VM
-manager or just use the default Docker image.
+manager or just use the default Docker image of Ubuntu.
 
 2. Create the ``~/.ssh`` folder in your environment and copy your private RSA key
 you have given on the *GitLab* site, with the name ``id_rsa``.
-If you use a VM image then the following commands can be used to copy your RSA
-key from your host:
+If you use a VM image then the following commands can be used to copy your RSA key from your host:
 
   .. code-block:: bash
 
@@ -119,8 +117,7 @@ key from your host:
     $ scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
     $ sudo chmod 700 .ssh && sudo chmod 600 .ssh/id_rsa
 
-3. Clone the shared escape repository
-(the default folder name will be: *escape*).
+3. Clone the shared escape repository (the default folder name will be: *escape*).
 
   .. code-block:: bash
 
@@ -155,57 +152,56 @@ and Python packages, OpenYuma with VNFStarter module, etc.):
 
 
 
-  In a high level the script above carries the following things:
+  In a high level, the script above carries the following things:
     * Install the necessary system and Python packages
     * Compile and install the `OpenYuma <https://github.com/OpenClovis/OpenYuma>`__
       tools with our `VNF_starter` module
     * Compile and install `Click <http://read.cs.ucla.edu/click/click>`__ modular
       router and The Click GUI: `Clicky <http://read.cs.ucla.edu/click/clicky>`__
     * Install `neo4j <http://neo4j.com/>`__ graph database for NFIB
+    * Install additional tool for development, helper scripts and our rudimentary GUI
     * If Mininet is not installed on the VM, install the ``mnexec`` utility and
       create a system user: **mininet** for NETCONF-based communication
 
-5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
-available arguments of the top starting script check the help menu:
+5. Run ESCAPE with one of the commands listed in a later section. To see the
+available arguments of the top starting script (*escape.py*), check the help menu:
 
   .. code-block:: bash
 
     $ ./escape.py --help
 
-To verify ESCAPEv2 in MdO role you can run without any command line flag. If ESCAPE
-is up and running, the following line is logged to the console:
+To verify ESCAPE in **MdO** role a dry-run can be performed without any command line flag.
+If ESCAPE is up and running, the following line should be logged to the console:
 
     .. code-block:: text
 
       > [core                   ] ESCAPEv2 is up.
 
-Tis final log entry means that each component was installed and configured successfully.
+This final log entry means that each component was installed and configured successfully.
 
-To verify ESCAPEv2 in DO role with all the components you can run the following
-command and test the reachability between the initiated service access points (SAP)
+To verify ESCAPE in **DO** role with all the components the following command can be run
+in order to test the reachability between the initiated service access points (SAP)
 represented by the ``xterm`` windows with the ``ping`` command:
 
   .. code-block:: bash
 
     $ ./escape.py -df -s examples/escape-mn-req.nffg
 
-    # SAP1 xterm
+    # in SAP1 xterm
     $ ping sap2
-    # SAP2 xterm
+    # in SAP2 xterm
     $ ping sap1
 
-This command starts the full stack ESCAPEv2 with the default topology
-(`examples/escape-mn-topo.nffg`) and initiate a service request consists of a
-*HeaderCompressor* and a *HeaderDecompressor* VNF for one direction and a simple
-*Forwarder* VNF for the backward direction between SAP1 and SAP2.
+This command starts the full stack ESCAPE with the default topology (`examples/escape-mn-topo.nffg`)
+and initiate a service request consists of a *HeaderCompressor* and a *HeaderDecompressor* VNF
+for one direction and a simple *Forwarder* VNF for the backward direction between SAP1 and SAP2.
 The two initiated SAP should reach each other after the service request has processed.
 
 .. important::
 
-    If you want to initiate more then 7 node (including switches and also Execution
-    Environments) in the Mininet-based Infrastructure layer you have to recompile and
-    reinstall the OpenSSH server from source to increase the number of possible listening
-    ports. In this case you can use the following commands:
+    If more then 7 node (including switches and also Execution Environments) is required in the Mininet-based
+    Infrastructure layer the OpenSSh server have to be recompiled and reinstalled from source to increase
+    the number of possible listening ports. In this case the necessary commands are the following:
 
      .. code-block:: bash
 
@@ -223,14 +219,14 @@ The two initiated SAP should reach each other after the service request has proc
 The hard way
 ------------
 
-Obviously you can install ESCAPEv2 on your host machine or on an different platform.
-For that you need to install the requirements manually.
+Obviously ESCAPE can be installed on a host machine or on a different platform too.
+If the install script fails on a newer OS for some reason, the installation steps need to be carried out manually.
 
 **Submodules**
 
 The project uses several dependent component as a Git submodule. To acquire these
-source codes a symlink have to be created in the project's root folder referring
-to the gitmodule config of the actual project at first:
+source codes a symlink have to be created in the project's root folder at first,
+referring to the gitmodules config of the actual project.
 
 .. code-block:: bash
 
@@ -239,7 +235,7 @@ to the gitmodule config of the actual project at first:
 
 **Dependencies**
 
-If you don't want to install the Python dependencies globally, you can follow the
+If ESCAPE's Python dependencies are not wanted to be installed globally, follow the
 hard way and setup a virtual environment step-by-step.
 
 For stability ESCAPE uses the dedicated version of the following packages:
@@ -247,7 +243,7 @@ For stability ESCAPE uses the dedicated version of the following packages:
     * cryptography 1.3.1
 
 neo4j requires Java 7 which can't be found in the official Ubuntu 14.04 repositories.
-To install the Java package and the latest Python 2.7 the following PPA repositories
+To install the Java package and the latest Python 2.7, the following PPA repositories
 can be used:
 
 .. code-block:: bash
@@ -308,9 +304,9 @@ In this case the authentication bypass needs to be done again.
     $ apt-get install -y neo4j=2.2.7
     $ apt-mark hold neo4j
 
-In extreme cases, e.g. the `install_dep.sh` ran into an error, you should install
-these dependencies one by one according to your OS, distro or development environment.
-For that you can check the steps in the install script and/or the online documentations
+In extreme cases, e.g. the `install_dep.sh` ran into an error, these dependencies should be installed
+one by one according to the used OS, distro or development environment.
+For that follow the steps in the install script and/or the online documentations
 referenced in entry 4. of the previous subsection.
 
 In case of the additional DO functionality other required programs (OpenYuma, click, neo4j, etc.),
@@ -318,13 +314,13 @@ which are installed by the `install_dep.sh` script by default, are also need to 
 The relevant command can be found in the ``install-dep.sh`` script's *install_mn_dep()* and
 *install_infra()* functions.
 
-To use the Infrastructure Layer of ESCAPEv2, Mininet must be installed on the
-host (more precisely the **Open vSwitch** implementation and the specific
-**mnexec** utility is only required to be installed globally).
+To use the Infrastructure Layer of ESCAPE, Mininet must be installed on the host machine
+(more precisely the **Open vSwitch** implementation and the specific **mnexec** utility
+is only required to be installed globally).
 
-If Mininet has already been installed, there should be nothing to do.
-ESCAPEv2 uses the specifically-modified Mininet files in the project folder (*Mininet v2.1.0mod-ESCAPE*)
-which use the globally installed Mininet utility scripts (mnexec).
+If Mininet has already been installed, there is nothing to do.
+ESCAPE always uses the specifically-modified Mininet files in the project folder (*Mininet v2.1.0mod-ESCAPE*)
+which will use the globally installed Mininet utility scripts (mnexec).
 
 Otherwise these assets have to be install manually which could be done from our
 Mininet folder (escape/mininet) or from the official Mininet git repository
@@ -336,15 +332,14 @@ the whole Mininet tool with unnecessary packages:
 
     $ sudo mininet/util/install.sh -n
 
-In this case you can run the following command to check whether the installation
-was correct or not:
+In this case you can run the following command to check whether the installation was correct or not:
 
 .. code-block:: bash
 
     $ sudo mn --test pingall
 
 But the script will install the whole Mininet package and additional dependencies.
-If you want to do a minimal install, compile the ``mnexec`` source by manual and
+For a minimal install, compile the ``mnexec`` source by manual and
 copy the binary into a folder which is in your ``PATH`` system variable.
 
 .. code-block:: bash
@@ -353,9 +348,8 @@ copy the binary into a folder which is in your ``PATH`` system variable.
     $ make mnexec
     $ sudo install mnexec /usr/bin
 
-If you want to develop on your host machine, you should take care of a user for
-the netconfd server. This user's name and password will be used for the
-connection establishment between ESCAPEv2 and the Execution Environments (EE).
+If ESCAPE is intended to be used on a host machine, it is recommended to create a separate user for the netconfd server.
+This user's name and password will be used for the connection establishment between ESCAPE and the Execution Environments (EE).
 
 .. note::
 
@@ -371,7 +365,7 @@ An another solution is to define a system user for the netconfd. To create a use
     $ sudo addgroup mininet sudo
     $ echo "mininet:mininet" | sudo chpasswd
 
-For security reasons it's highly recommended to limit the SSH connections for the
+For security reasons, it's highly recommended to limit the SSH connections for the
 `mininet` user only to localhost.
 
 .. code-block:: bash
@@ -388,9 +382,9 @@ Check the created user with the following command:
 Setup a Virtual environment (optional)
 --------------------------------------
 
-ESCAPEv2 also supports Python-based virtual environment in order to setup a
+ESCAPE also supports Python-based virtual environments in order to setup a
 different Python version or even a different interpreter (not recommended) for
-ESCAPEv2 or to separate dependent packages from system-wide Python.
+itself or to separate dependent packages from system-wide Python installation.
 
 To setup a virtual environment based on `virtualenv <https://virtualenv.readthedocs.org/en/latest/>`__
 Python package with a standalone CPython 2.7.10 interpreter run the following script:
@@ -399,7 +393,7 @@ Python package with a standalone CPython 2.7.10 interpreter run the following sc
 
     $ ./set_virtualenv.sh
 
-This script does the following steps:
+This script performs the following steps:
   * Install additional dependencies
   * Download, compile and install the 2.7.10 (currently the newest) Python
     interpreter in a separated directory
@@ -425,20 +419,19 @@ Usage:
 
 
 The ``escape.py`` script can detect the ``.use_virtualenv`` file automatically
-and activates the virtual environment transparently. If you want to disable the
-virtual environment then just delete the ``.use_virtualenv`` file.
+and activates the virtual environment transparently. To disable the virtual environment,
+delete the ``.use_virtualenv`` file.
 
-The virtualenv can also be enabled by the ``--environment`` flag of the topmost
-``escape.py`` script.
+The virtualenv can also be enabled by the ``--environment`` flag of the topmost ``escape.py`` script.
 
-In order to setup the environment manually, define other Python version/interpreter,
-enable system-wide Python / ``pip`` packages
+In order to setup the environment manually, define the Python version/interpreter;
+enable the system-wide Python / ``pip`` packages;
 
 .. code-block:: bash
 
     $ virtualenv -p=<python_dir> --no-site-packages/system-site-packages <...> escape
 
-or activate/deactivate the environment manually
+and then activate/deactivate the environment manually:
 
 .. code-block:: bash
 
@@ -446,20 +439,20 @@ or activate/deactivate the environment manually
     $ source bin/activate # activate virtual environment
     $ deactivate  # deactivate
 
-check the content of the setup script or see the
+For more information check the content of the setup script or see the
 `Virtualenv User Guide <https://virtualenv.readthedocs.org/en/latest/userguide.html>`_.
 
-ESCAPEv2 example commands
-=========================
+ESCAPE example commands
+=======================
 
-ESCAPEv2 can be started with the topmost ``escape.py`` script in the project's
-root directory or can be started calling the ``pox.py`` script directly with the
+ESCAPE can be started with the topmost ``escape.py`` script in the project's
+root directory (recommended) or can be started calling the ``pox.py`` script directly with the
 layer modules and necessary arguments under the `pox` directory.
 
 The simplest use-case
 ---------------------
 
-Run ESCAPEv2 with the Mininet-based Infrastructure layer and debug logging mode:
+Run ESCAPE with the Mininet-based Infrastructure layer and enabled debug logging mode:
 
 .. code-block:: bash
 
@@ -510,48 +503,46 @@ Usage:
       ...                   optional POX modules
 
 
-During a test or development the ``--debug`` flag is almost necessary.
+During a test or development the ``--debug`` flag is almost necessary for detailed logging.
 
-If you want to run a test topology, use the ``--full`` flag to initiate the
-Infrastructure layer also.
-ESCAPEv2 will parse the topology description form file (``escape-mn-topo.nffg``
-by default) and start the Infrastructure layer with the Mininet-based emulation.
+To run a test topology, use the ``--full`` flag to initiate the Mininet-based Infrastructure layer.
+ESCAPE will parse the topology description form file (``escape-mn-topo.nffg`` by default)
+and start the Infrastructure layer with the Mininet-based emulation.
 
-If the request is in a file it's more convenient to give it with the ``--service``
-initial parameter and not bother with the REST-API.
+If the request is in a file, it's more convenient to pass it to ESCAPE with the ``--service``
+initial parameter and avoid assembling the service request for the REST-API.
 
 .. warning::
 
     If the service request is given by the ``--service`` parameter,
     the topmost REST-API of the *Service* layer will not be started!
 
-If you want to initiate the Mininet-based infrastructure layer and use ESCAPE as
-the local orchestrator you can use the ``--agent`` flag.
+To initiate the Mininet-based infrastructure layer and use ESCAPE as
+the local orchestrator, set the ``--agent`` flag.
 
-With ``--agent`` flag ESCAPEv2 will initiate the ROS API for communication with
-upper layers instead of initiate the upper Service Layer.
-Note to mention that this flag also effects on different parts of the ESCAPEv2's
+With ``--agent`` flag ESCAPE will initiate the ROS API for communication with
+upper layers instead of initiating the whole Service Layer.
+Note to mention that this flag also effects on different parts of the ESCAPE's
 operation therefore it is not equivalent with the pair of ``--full --rosapi``!
 
 An additional configuration file can be given with the ``--config`` flag. The
-configuration file is loaded during initialization and ESCAPEv2 only updates
-the default configuration instead of replaces it in order to minimize the sizes
+configuration file is loaded during initialization and ESCAPE only updates
+the default configuration instead of replacing it in order to minimize the sizes
 of the additional parameters.
 
-The most common changes in the configurations is the file path of the initial
+One of the most common change in the configuration is the file path of the initial
 topology which is used by the Infrastructure layer to initiate the Mininet-emulated
-network. To simplify this case the topology file can be given with the ``--topo``
-parameter explicitly.
+network. To simplify this case the topology file can be explicitly given with
+the ``--topo`` parameter .
 
-If an error is occurred or need to observe the internal states you can start
-ESCAPEv2 with an interactive Python shell using the ``--interactive`` flag.
+With the ``--environment`` flag ESCAPE can be started in a pre-defined virtualenv
+environment whether the virtualenv is permanently enabled with the ``.use_virtualenv`` file or not.
 
-With the ``--environment`` flag ESCAPEv2 can be started in a pre-defined virtualenv
-environment whether the virtualenv is permanently enabled with the
-``.use_virtualenv`` file or not.
-
-With the ``--visualization`` flag ESCAPEv2 will send topologies in Virtualizer format
+With the ``--visualization`` flag ESCAPE will send topologies in Virtualizer format
 to a predefined remote server for the purpose of visualization.
+
+If an error is occurred or need to observe the internal states, ESCAPE can be started
+with an interactive Python shell using the ``--interactive`` flag.
 
 The main layers which grouping the entities are reachable through the main POX
 object called ``core`` with the names:
@@ -565,8 +556,8 @@ object called ``core`` with the names:
 
   In the interactive shell the tab-auto completion is working in most cases.
 
-So a possible scenario for testing ESCAPEv2 with a test request given in a file
-and check the state of the DoV:
+A possible scenario for testing ESCAPE with a test request given in a file
+and check the state of the DoV can be the following:
 
 .. code-block:: bash
 
@@ -594,17 +585,17 @@ and check the state of the DoV:
 Advanced start commands (mostly advisable for testing purposes)
 ---------------------------------------------------------------
 
-By default ESCAPE initiates the logging module with level *INFO*.
-To set the logging level to *DEBUG* the ``-d`` initial flag should be used.
+By default ESCAPE initiates the logging module with level: *INFO*.
+To set the logging level to *DEBUG* the ``-d`` initial flag needs to be used.
 
 .. code-block:: bash
 
     $ ./escape.py -d
 
 ESCAPE defines a lower and more detailed logging level with the name: *VERBOSE*
-which logs all the received, transmitted and calculated internal data as well.
+which logs all the received, transmitted and calculated internal data.
 
-In order to start ESCAPE with VERBOSE logging the debug initial flag have to be
+In order to start ESCAPE with VERBOSE logging the debug initial flag needs to be
 used multiple times e.g. ``-dd`` or ``-d -d``.
 
 .. code-block:: bash
@@ -614,12 +605,12 @@ used multiple times e.g. ``-dd`` or ``-d -d``.
 Lower level start commands (only advisable for developers)
 ----------------------------------------------------------
 
-For more flexible control ESCAPEv2 can be started directly with POX's starting
+For more flexible control ESCAPE can be started directly with POX's starting
 script under the ``pox`` folder.
 
 .. note::
 
-  The topmost ``escape.py`` script uses this ``pox.py`` script to start ESCAPEv2.
+  The topmost ``escape.py`` script uses this ``pox.py`` script to start ESCAPE.
   In debug mode the assembled POX command is printed also.
 
 Basic command:
@@ -635,8 +626,8 @@ One of a basic commands for debugging:
     $ ./pox.py --verbose unify py
 
 For forcing to log on DEBUG level the ``--verbose`` flag of the ``pox.py``
-script can be used. Or the *log.level* POX module can be used which would be the
-preferred way. E.g.:
+script can be used. Or the *log.level* POX module can be used (which would be the
+preferred way). Example:
 
 .. code-block:: bash
 
@@ -687,7 +678,7 @@ Start layers with graph-represented input contained in a specific file:
     $ ./pox.py orchestration --nffg_file=<path> ...
     $ ./pox.py adaptation --mapped_nffg=<path> ...
 
-Start ESCAPEv2 with built-in GUI:
+Start ESCAPE with built-in GUI:
 
 .. code-block:: bash
 
@@ -708,19 +699,19 @@ Start layer in standalone mode (no dependency check and handling) for test/debug
 REST APIs
 =========
 
-ESCAPEv2 has currently 3 REST-APIs.
+ESCAPE has currently 3 REST-APIs.
 
 The Service layer has a REST-API for communication with the users and/or a GUI.
-This API is initiated by default when the layer was started.
+This API is initiated by default when its layer is started.
 
 The Resource Orchestration layer has 2 API which are only initiated if the
 appropriate flag is given to the starting script.
 
 The ROS API can be used for communicating with other UNIFY layer e.g. a
-Controller Adaptation Sublayer of a standalone ESCAPEv2 in a multi-level
+Controller Adaptation Sublayer of a standalone ESCAPE in a multi-level
 scenario or with a GUI.
 
-The CfOr API realizes the interface for service elasticity feature.
+The CfOr API realizes the interface for UNIFY's service elasticity feature.
 
 Common API functions
 --------------------
@@ -730,7 +721,7 @@ Common API functions
 +-------------------+----------------+-------------------+----------------------------------------------+
 |      Path         |     Params     |     HTTP verbs    | Description                                  |
 +===================+================+===================+==============================================+
-| */version*        | ``None``       | GET               | Returns with the current version of ESCAPEv2 |
+| */version*        | ``None``       | GET               | Returns with the current version of ESCAPE   |
 +-------------------+----------------+-------------------+----------------------------------------------+
 | */ping*           | ``None``       | GET, POST         | Returns with the "OK" string                 |
 +-------------------+----------------+-------------------+----------------------------------------------+
@@ -740,9 +731,8 @@ Common API functions
 Service API specific functions
 ------------------------------
 
-The SAS API is automatically initiated by the Service layer. If the ``--service`` flag
-is used the service request is loaded from the given file and the REST-API
-initiation is skipped.
+The SAS API is automatically initiated by the Service layer. If the ``--service`` flag is used,
+the service request is loaded from the given file and the REST-API initiation is skipped.
 
 *Content Negotiation:* The Service layer's RESTful API can accept and return data
 in JSON format and in Virtualizer format too (need to set in the config).
@@ -792,23 +782,21 @@ The following functions are defined in :any:`CfOrRequestHandler`.
 Configuration
 =============
 
-ESCAPEv2 loads its default configuration from file from the poject's root directory: ``escape.config``.
+ESCAPE loads its default configuration from file placed in the project's root directory: ``escape.config``.
 This configuration contains the necessary information for manager/adapter initializations,
 remote connections, etc. and also provides the base for the internal running configuration.
 
-If you want to override some of the parameters, one option could be to change the values
+If some parameters need to be changed, one option could be to modify the values
 in the default configuration directly, which is highly not recommended.
 
 However, ESCAPE provides the opportunity to specify the minimal change set in an additional
-config file with the ``--config`` initial parameter and load it at boot time.
+config file and load it with the ``--config`` initial parameter at boot time.
 
 .. important::
 
-  The configuration is parsed at boot time. Changes in the config
-  file have no effect at runtime.
+  The configuration is parsed at boot time. Changes in the config file have no effect at runtime.
 
-Only the changed entries have to be defined in the additional configuration files with the
-hierarchical structure.
+Only the changed entries are required to be defined in the additional configuration files.
 The additional config can be added only in JSON format, but the structure of the
 configuration has to strictly follows the default configuration.
 
@@ -817,7 +805,7 @@ the running configuration held in the memory.
 This merging mechanism gives the possibility not just to define new config entries but also
 to override any part of the default config entry set in a straightforward way.
 
-The configuration units (coherent values, single boolean flags, paths, etc.) are
+The configuration entries (coherent values, single boolean flags, paths, etc.) are
 handled through the main :any:`ESCAPEConfig` class so every possible configuration
 entry has an assigned `getter` function in the main class.
 
@@ -829,9 +817,6 @@ configuration entries of the main layers and its subcomponents.
 
 As an example, several additional configuration files can be found under the ``config`` folder.
 
-An additional configuration file should be based on a subpart of
-this configurations structure.
-
 .. include:: escape.config
     :literal:
     :code: json
@@ -839,71 +824,62 @@ this configurations structure.
 Configuration structure
 -----------------------
 
-The configurations is divided to 4 parts according to the UNIFY's / ESCAPEv2's
-main layers, namely ``service``, ``orchestration``, ``adaptation`` and
-``infrastructure``.
+The configurations is divided into 4 parts according to the UNIFY's / ESCAPE's
+main layers, namely ``service``, ``orchestration``, ``adaptation`` and ``infrastructure``.
 
 Service and Orchestration
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The top 2 layer (``service`` and ``orchestration``) has similar configuration
-parameters. In both layers the core mapping process can be controlled with the following
-entries:
+The top 2 layer (``service`` and ``orchestration``) has similar configuration parameters.
+In both layers the core mapping process can be controlled with the following entries:
 
   * **MAPPER** defines the mapping class which controls the mapping process
     (inherited from :any:`AbstractMapper`)
   * **STRATEGY** defines the mapping strategy class which calls the actual mapping
     algorithm (inherited from :any:`AbstractMappingStrategy`)
   * **PROCESSOR** defines the Processor class which contains the pre/post mapping
-    functions for validation and other auxiliary functions (inherited from
-    :any:`AbstractMappingDataProcessor`)
+    functions for validation and other auxiliary functions (inherited from :any:`AbstractMappingDataProcessor`)
 
-The values of class configurations (such the entries above) always contains the
-**module** and **class** names of the actual class. With this approach ESCAPEv2 can
-also instantiate and use different implementations from external Python packages.
-The only requirement for these classes is to be included in the scope of ESCAPEv2
-(more precisely in the PYTHONPATH of the Python interpreter which runs ESCAPEv2).
+The values of the class configurations (such the entries above) always contains the **module** and **class** names.
+With this approach ESCAPE can also instantiate and use different implementations from external Python packages.
+The only requirement for these classes is to be included in the scope of ESCAPE
+(more precisely in the PYTHONPATH of the Python interpreter which runs ESCAPE).
 
 .. note::
 
   Every additional subdirectory in the project's root is always added to the search
-  path (scope) dynamically at initial time by the main ``escape`` module.
+  path (scope) dynamically by the main ``escape`` module at initial time.
 
 The mapping process and pre/post processing can be enabled/disabled with the
-``mapping-enabled`` (boolean) and ``enabled`` (boolean) values under the
-appropriate entries.
+``mapping-enabled`` (boolean) and ``enabled`` (boolean) values under the appropriate entries.
 
 The mapping algorithm called in the Strategy class can be initiated in a worker
-thread with the ``THREADED`` flag, but this feature is still in experimental phase.
+thread with the ``THREADED`` flag but this feature is still in experimental phase!
 
-These 2 layers can initiate REST-APIs also. The initial parameters are defined
+These 2 layers can also initiate REST-APIs. The initial parameters are defined
 under the names of the APIs:
 
   * **REST-API** - top REST-API in the SAS layer
   * **Sl-Or** - Sl-Or interface in the ROS layer for external components
-    i.e. for upper UNIFY entities, GUI or other ESCAPEv2 instance in a distributed,
-    multi-layered scenario
-  * **Cf-Or** - Cf-Or interface in the ROS layer for supporting service elasticity
-    feature
+    i.e. for upper UNIFY entities, GUI or other ESCAPE instance in a distributed, multi-layered scenario
+  * **Cf-Or** - Cf-Or interface in the ROS layer for supporting service elasticity feature
 
 These REST-API configurations consist of
 
   * a specific handler class which initiated for every request and handles the
-    requests (inherited from :any:`AbstractRequestHandler`) defined with the
-    ``module`` and ``class`` pair
-  * address of the REST-API defined with the ``address`` and ``port`` (integer)
-    pair
+    requests (inherited from :any:`AbstractRequestHandler`) defined with the ``module`` and ``class`` pair
+  * address of the REST-API defined with the ``address`` and ``port`` (integer) pair
   * ``prefix`` of the API which appears in the URL right before the REST functions
-  * optionally the type of used Virtualizer (``virtualizer_type``) which filters
-    the data flow of the API (currently only supported the global (`GLOBAL`) and
-    single BiS-BiS (`SINGLE`) Virtualizer)
+  * optionally the type of used Virtualizer (``virtualizer_type``) which filters the data flow of the API
+    (currently only supported the global (`GLOBAL`) and single BiS-BiS (`SINGLE`) Virtualizer)
   * flags mark the interface as UNIFY interface (``unify_interface``) with difference format (``diff``)
 
-Summarized configuration entries:
+Schematic config description:
 
 MAPPER
 ******
 Contains the configuration of the *Mapper* class responsible for managing the overall mapping process of the layer.
+
     `module`
         (:any:`string`) Python module name where `class` can be found, e.g. ``escape.orchest.ros_mapping``
     `class`
@@ -911,13 +887,14 @@ Contains the configuration of the *Mapper* class responsible for managing the ov
     `mapping-enabled`
         (:any:`bool`) Enables the mapping process in the actual layer
     `mapping config`
-        (:class:`dict`) Optional arguments directly given to the main entry point of the core
-        mapping function ``MappingAlgorithms.MAP()``, e.g ``mode="REMAP"`` force the algorithm
-        to use the *REMAP* orchestration approach in every case. See more in the function's documentation.
+        (:class:`dict`) Optional arguments directly given to the main entry point of the core mapping function
+        ``MappingAlgorithms.MAP()``, e.g ``mode="REMAP"`` force the algorithm to use the *REMAP* orchestration
+        approach in every case. See more in the function's documentation.
 
 STRATEGY
 ********
 Contains the configuration of the *Strategy* class responsible for running chosen orchestration algorithm.
+
     `module`
         (:any:`string`) Python module name where `class` can be found, e.g. ``escape.service.sas_mapping``
     `class`
@@ -928,6 +905,7 @@ Contains the configuration of the *Strategy* class responsible for running chose
 PROCESSOR
 *********
 Contains the configurations of the *Processor* class responsible for invoke pre/post mapping functionality.
+
     `module`
         (:any:`string`) Python module name where `class` can be found, e.g. ``escape.util.mapping``
     `class`
@@ -938,6 +916,7 @@ Contains the configurations of the *Processor* class responsible for invoke pre/
 REST-API, Sl-Or, Cf-Or
 **********************
 Contains the configuration of the *Handler* class responsible for processing requests *Sl-Or*, *Cf-Or* interface.
+
     `module`
         (:any:`string`) Python module name where `class` can be found, e.g. ``escape.orchest.ros_API``
     `class`
@@ -960,7 +939,7 @@ Contains the configuration of the *Handler* class responsible for processing req
 
 Other configuration entries
 ***************************
-Other configuration entries of the layers.
+Other configuration entries of these layers.
 
 *service*
   `SERVICE-LAYER-ID`
@@ -980,29 +959,31 @@ Other configuration entries of the layers.
 Adaptation
 ^^^^^^^^^^
 
-The ``adaptation`` layer contains the different Manager (inherited from :any:`AbstractDomainManager`)
+The ``adaptation`` layer contains the configuration of different Manager (inherited from :any:`AbstractDomainManager`)
 classes under their specific name which is defined in the ``name`` class attribute.
 
-These configurations are used by the :any:`ComponentConfigurator` to initiate the required
-components dynamically. Every Manager use different Adapters (inherited from :any:`AbstractESCAPEAdapter`)
+These configurations are used by the :any:`ComponentConfigurator` to initiate the required components dynamically.
+Every Manager use different Adapters (inherited from :any:`AbstractESCAPEAdapter`)
 to hide the specific protocol-agnostic steps in the communication between the ESCAPE orchestrator and network elements.
 
-The configurations of these Adapters can be found under the related Manager names
+The configurations of these Adapters can be found under the related Manager config (``adapters``)
 in order to be able to initiate multiple Managers based on the same class with different Adapter configurations.
 
 The class configurations can be given by the ``module`` and ``class`` pair similar way as so far.
-Other values such as path, url, keepalive, etc. will be forwarded to the constructor of the component
-at initialization time so the possible config names and types result from the constructor attributes.
+Other values such as ``path``, ``url``, ``keepalive``, etc. will be forwarded to the constructor of the component
+at initialization time so the possible configurations parameters and its types are derived from the parameters
+of the class' constructor.
 
 The ``MANAGERS`` list contains the configuration names of Managers need to be initiated.
 
-.. hint::
+In order to activate a manager and manage the specific domain add the config name of the DomainManager
+to the ``MANAGERS`` list. The manager will be initiated with other Managers at boot time of ESCAPE.
 
-  In order to activate a manager and manage the specific domain add the config
-  name of the DomainManager to the ``MANAGERS`` list. The manager will be
-  initiated with other Managers at boot time of ESCAPEv2.
+.. warning::
 
-Configuration entry:
+    If a Manager's name does not included in the ``MANAGERS`` list, the corresponding domain will NOT be managed!
+
+Schematic config description:
 
     `MANAGERS`
         (:any:`list`) Contains the name of the domain managers need to be initiated, e.g. `["SDN", "OPENSTACK"]`
@@ -1012,36 +993,34 @@ Domain Managers
 
 The domain manager configurations contain the parameters of the different manager objects.
 The defined manager configuration is directly given to the constructor function of the manager
-class by the container :any:`ComponentConfigurator`.
+class by the :any:`ComponentConfigurator` object.
 
-The default configuration defines the domain manager and the relevant adapter configurations
-for the Infrastructure layer by default with the name: `INTERNAL`. The internal domain manager
+The default configuration defines a default domain manager and the relevant adapter configurations
+for the Infrastructure layer with the name: `INTERNAL`. The internal domain manager
 is used for managing the Mininet-based emulated network initiated by the ``--full`` command line parameter.
 
 ESCAPE also has default configuration for other type of domain managers:
 
-* ``SDN`` entry defines a domain manager dedicated to manage external SDN-capable hardwere or
-  software switches with a singly-purpose domain manager realized by ``SDNDomainManager``.
-  This manager uses the available POX OpenFlow controller features and a static topology description file.
+* ``SDN`` entry defines a domain manager dedicated to manage external SDN-capable hardware or software switches
+  with a singly-purpose domain manager realized by ``SDNDomainManager``.
+  This manager uses the available POX OpenFlow controller features and a static topology description file to form the domain view.
 
-* ``OPENSTACK`` entry defines a more generic domain manager which uses the general ``UnifyDomainManager``
-  to manage UNIFY domains.
+* ``OPENSTACK`` entry defines a more generic domain manager which uses the general ``UnifyDomainManager`` to manage UNIFY domains.
 
-* ``REMOTE-ESCAPE`` entry defines a domain manager for another ESCAPE instance in the role of
-  local Domain Orchestrator. This domain manager also uses the UNIFY format some addition
-  for the DO's mapping algorithm to be more deterministic.
+* ``REMOTE-ESCAPE`` entry defines a domain manager for another ESCAPE instance in the role of local DO.
+  This domain manager also uses the UNIFY format with some additional data for the DO's mapping algorithm to be more deterministic.
 
 * ``BGP-LS-SPEAKER`` gives an example for an external domain manager which discovers other providers' domains
   with the help of different external tools instead of directly managing a local DO. External domain managers have
   the authority to initiate other domain managers for the detected domain.
 
 An additional configuration file typically contains these domain manager configurations along with the list (``MANAGERS``)
-of the enabled managers. Several example file can be found under the ``config`` folder.
+of the enabled managers. As an example several example file can be found under the ``config`` folder.
 
-Summarized configuration entries for domain managers:
+Schematic config description of domain managers:
 
     `NAME`
-        Unique domain manager name. Used in the ``MANAGERS`` list for enabling the defined domain manager.
+        Unique domain manager name. Used also in the ``MANAGERS`` list for enabling the defined domain manager.
 
         Default domain managers: ``INTERNAL``, ``SDN``, ``OPENSTACK``, ``REMOTE-ESCAPE``, ``BGP-LS-SPEAKER``.
 
@@ -1066,7 +1045,7 @@ The domain adapter configurations contain the parameters of the different adapte
 configured by the container domain manager object. Each adapter class has its own role and parameter set. The defined adapter configuration is directly
 given to the constructor function of the adapter class by the container domain manager.
 
-Summarized configuration entries for domain adapters:
+Schematic config description of domain adapters:
 
     `<ROLE>`
         Unique role of the defined domain adapter. Used in the ``adapters`` configuration entry of domain managers.
@@ -1119,7 +1098,7 @@ Summarized configuration entries for domain adapters:
             (:any:`bool`) Set the interface to use the Virtualizer format.
 
     *MANAGEMENT*
-        Defines domain adapter for init/start/stop VNFs in the domain. Currently only NETCONF-based management is supported!
+        Defines domain adapter for init/start/stop VNFs in the domain. Currently only NETCONF-based management is implemented!
 
         `server`
             (:any:`string`) Server address of the NETCONF server in the domain, e.g. ``127.0.0.1``
@@ -1135,8 +1114,10 @@ Summarized configuration entries for domain adapters:
 Generic adaptation layer configuration
 **************************************
 
-Among the Manager configurations the `adaptation` section contains several configuration parameters
-which are mostly general parameters and modify the overall behaviour of the Adaptation layer.
+Among the Manager configurations the `adaptation` section also contains several configuration parameters
+which are mostly general parameters and have effect on the overall behaviour of the Adaptation layer.
+
+Schematic config description of general parameters:
 
     `RESET-DOMAINS-BEFORE-INSTALL`
         (:any:`bool`) Enables to send the resetting topology before an service install is initiated.
@@ -1153,53 +1134,47 @@ which are mostly general parameters and modify the overall behaviour of the Adap
 Infrastructure
 ^^^^^^^^^^^^^^
 
-The configuration of ``infrastructure`` layer controls the Mininet-based
-emulation.
+The configuration of ``infrastructure`` layer controls the Mininet-based emulation.
 
-The ``TOPO`` path value defines the file which will be parsed and processed to
-build the Mininet structure.
+The ``TOPO`` path value defines the file which will be parsed and processed to build the Mininet structure.
 
-The ``FALLBACK-TOPO`` defines an inner class which can initiate a topology if
-the topology file is not found.
+The ``FALLBACK-TOPO`` defines an inner class which can initiate a topology if the topology file is not found.
 
-The ``NETWORK-OPTS`` is an optional data which can be added to override the
-default constructor parameters of the Mininet class.
+The ``NETWORK-OPTS`` is an optional data which can be added to override the default constructor parameters of the Mininet class.
 
-The ``Controller``, ``EE``, ``Switch``, ``SAP`` and ``Link`` dictionaries can
-contain optional parameters for the constructors of the internal Mininet-based
-representation. In most cases these parameters need to be left unchanged.
+The ``Controller``, ``EE``, ``Switch``, ``SAP`` and ``Link`` dictionaries can contain optional parameters for the constructors
+ of the internal Mininet-based representation. In most cases these parameters need to be left unchanged.
 
-Other simple values can be added too to refine the control of the emulation such
-as enable/disable the xterm initiation for SAPs (``SAP-xterm``) or the cleanup
-task (``SHUTDOWN-CLEAN``).
+Other simple values can be added too to refine the control of the emulation such as enable/disable the
+xterm initiation for SAPs (``SAP-xterm``) or the cleanup task (``SHUTDOWN-CLEAN``).
 
-Summarized configuration entries:
+Schematic config description:
 
     `TOPO`
         (:any:`string`) Path of the topology :any:`NFFG` used to build the emulated network, e.g. ``examples/escape-mn-topo.nffg``
     `SHUTDOWN-CLEAN`
-        (:any:`bool`) Use the first received topologies to reset the detected domains before shutdown
+        (:any:`bool`) Uses the first received topologies to reset the detected domains before shutdown.
     `SHUTDOWN-CLEAN`
-        (:any:`bool`) Initiate xterm windows for the SAPs
+        (:any:`bool`) Initiates xterm windows for the SAPs.
     `NETWORK-OPTS`
-        (:class:`dict`) Optional parameters directly given to the main :class:`Mininet` object at build time
+        (:class:`dict`) Optional parameters directly given to the main :class:`Mininet` object at build time.
     `Controller`
-        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`Controller` object at build time
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`Controller` object at build time.
 
         `ip`
             (:any:`string`) IP address of the internal OpenFlow controller used for the Mininet's components, e.g. ``127.0.0.1``
         `port`
             (:any:`int`) Port the internal Openflow controller listens on, e.g. ``6653``
     `EE`
-        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`EE` objects at build time
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`EE` objects at build time.
     `Link`
-        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`Link` objects at build time
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`Link` objects at build time.
     `SAP`
-        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`SAP` objects at build time
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`SAP` objects at build time.
     `Switch`
-        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`Switch` objects at build time
+        (:class:`dict`) Optional parameters directly given to the Mininet's :class:`Switch` objects at build time.
     `FALLBACK-TOPO`
-        (:class:`dict`) Defines fallback topology for the Infrastructure layer (only for development)
+        (:class:`dict`) Defines fallback topology for the Infrastructure layer (only for development).
 
         `module`
             (:any:`string`) Python module name where `class` can be found, e.g. ``escape.infr.topology``
@@ -1213,7 +1188,9 @@ and send them to a remote database through a REST-API for visualization purposes
 
 The visualization feature can be enabled with the ``--visualization`` command line argument.
 
-The `visualization` section contains the connection parameters for a remote visualization
+The `visualization` config section contains the connection parameters for the remote visualization.
+
+Schematic config description:
 
     `url`
         (:any:`string`) Base URL of the remote database, e.g. ``http://localhost:8081``
@@ -1243,19 +1220,16 @@ Coding conventions:
 Debugging
 =========
 
-You can use PyCharm for debugging. In this case you have to specify a new Python
-interpreter using the *python_root_debugger.sh* script to be able to run ESCAPE
-with root privileges.
+PyCharm can be a good choice for debugging.
+In this case a new Python interpreter have to be specified in order that PyCharm will be able to run ESCAPE with root privilege.
+The *python_root_debugger.sh* script under the ``tools`` folder emulates that kind of Python interpreter.
 
-You can use POX's *py* stock component also which open an interactive Python
-shell. With that you can observe the internal state of the running ESCAPE
-instance, experiment or even call different functions.
+For debugging POX's *py* stock component also can be used, which open an interactive Python shell after ESCAPE has started.
+That module allows to observe the internal state of the running ESCAPE instance, experiment with the internal objects or even call different functions.
 
-POX uses a topmost object called *core* which serves a rendezvous point between
-POX's components (e.g. our components representing the UNIFY layers). Through
-that object we can reach every registered object easily.
-E.g. to shut down the REST API of the Service layer manually we can enter the
-following function call:
+POX uses a topmost object called *core* which serves a rendezvous point between POX's components (e.g. our components representing the UNIFY layers).
+Through that object we can reach every registered object easily. For example to shut down the REST API of the Service layer manually the
+following function call can be invoked on-the-fly:
 
 .. code-block:: bash
 
@@ -1264,7 +1238,7 @@ following function call:
   $ ESCAPE> core.service.rest_api.stop()
 
 One instance of the *ESCAPEInteractiveHelper* is registered by default under the
-name: *helper*. An example to dump the running configuration of ESCAPEv2:
+name: *helper*. An example to dump the running configuration of ESCAPE:
 
 .. code-block:: bash
 
@@ -1277,19 +1251,15 @@ name: *helper*. An example to dump the running configuration of ESCAPEv2:
                 "module": "escape.infr.topology"
     ...
 
-More help and description about the useful helper functions and the *core*
-object is in the comments/documentation and on the POX's
-`wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`__
-site.
+More help and description about the useful helper functions and the *core* object is in the comments/documentation and on the POX's
+`wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`__ site.
 
 API documentation
 =================
 
-This documentation contains only the Python class structure and description of
-the multi-domain multi-level service orchestrator.
+The following documentation contains only the Python class structure and description of the ESCAPE framework.
 
-Our Mininet-based infrastructure, which is an extended version of
-Mininet, is not documented here.
+The Mininet-based infrastructure, which is an extended version of Mininet, the POX framework and our resource mapping algorithm is not documented here.
 
 ESCAPEv2 class structure
 ------------------------
