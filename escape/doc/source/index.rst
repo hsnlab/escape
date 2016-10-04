@@ -15,18 +15,21 @@ It is a realization of the UNIFY service programming and orchestration framework
 which enables the joint programming and virtualization of cloud and networking
 resources.
 
-The main scope of ESCAPE as a multi-domain orchestrator (MdO) is to discover,
-detect and manage the different administrative domains which can use different
-transport technologies, communication interfaces and message formats.
+The main scope of ESCAPE as a multi-domain orchestrator (MdO) is to
+discover, detect and manage infrastructure domains using different
+technologies.
 
-ESCAPE may receive the specific service requests on its REST-like API, orchestrate
-the requested Network Functions (NF) on the full resource view, which collected from
-the administrative domains, with the help of a dedicated resource mapping algorithm
-and propagate the calculated service parts to the managed Domain Orchestrators (DO).
+ESCAPE receives the specific service requests on its REST-like API,
+orchestrate the requested Service Function Chains on the full resource
+view (which is constructed automatically based on the information
+gathered from lower level domains) making use of a dedicated resource
+mapping algorithm and propagate the calculated service parts to the
+corresponding Domain Orchestrators (DO).
 
-In addition ESCAPE can be used in the role of a local Domain Orchestrator in which
-ESCAPE uses a modified version of the Mininet network emulation platform to deploy the
-requested Network Functions and to realize the dataplane connectivity.
+In addition, ESCAPE can be used in the role of a local Domain
+Orchestrator when an extended version of Mininet network emulation
+platform is used as an infrastructure which is able to run Network
+Functions and to realize dataplane connectivity.
 
 .. tip::
 
