@@ -198,7 +198,7 @@ represented by the ``xterm`` windows with the ``ping`` command:
 This command starts the full stack ESCAPE with the default topology (`examples/escape-mn-topo.nffg`)
 and initiate a service request consists of a *HeaderCompressor* and a *HeaderDecompressor* VNF
 for one direction and a simple *Forwarder* VNF for the backward direction between SAP1 and SAP2.
-The two initiated SAP should reach each other after the service request has processed.
+The two initiated SAP should reach each other after the service request has been processed.
 
 .. important::
 
@@ -260,7 +260,7 @@ Required system and Python packages:
 
 .. code-block:: bash
 
-    $ sudo apt-get -y installpython-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
+    $ sudo apt-get -y install python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
         libssl-dev libffi-dev python-crypto openvswitch-switch neo4j=2.2.7
 
     $ sudo -H pip install numpy jinja2 py2neo networkx requests ncclient cryptography==1.3.1
@@ -325,7 +325,7 @@ If Mininet has already been installed, there is nothing to do.
 ESCAPE always uses the specifically-modified Mininet files in the project folder (*Mininet v2.1.0mod-ESCAPE*)
 which will use the globally installed Mininet utility scripts (mnexec).
 
-Otherwise these assets have to be install manually which could be done from our
+Otherwise these assets have to be installed manually which could be done from our
 Mininet folder (escape/mininet) or from the official Mininet git repository
 (`<https://github.com/mininet/mininet/>`__). Mininet has an install script for
 the installations (see the help with the ``-h`` flag) but this script will install
@@ -359,7 +359,7 @@ This user's name and password will be used for the connection establishment betw
   These parameters can be changed conveniently in the global config under the
   config entry of *VNFStarter Adapter* .
 
-An another solution is to define a system user for the netconfd. To create a user
+Another solution is to define a system user for the netconfd. To create a user
 (advisable to use `mininet` as in the Mininet-based VM) use the following commands:
 
 .. code-block:: bash
@@ -536,7 +536,7 @@ of the additional parameters.
 One of the most common change in the configuration is the file path of the initial
 topology which is used by the Infrastructure layer to initiate the Mininet-emulated
 network. To simplify this case the topology file can be explicitly given with
-the ``--topo`` parameter .
+the ``--topo`` parameter.
 
 With the ``--environment`` flag ESCAPE can be started in a pre-defined virtualenv
 environment whether the virtualenv is permanently enabled with the ``.use_virtualenv`` file or not.
@@ -801,7 +801,7 @@ config file and load it with the ``--config`` initial parameter at boot time.
 
 Only the changed entries are required to be defined in the additional configuration files.
 The additional config can be added only in JSON format, but the structure of the
-configuration has to strictly follows the default configuration.
+configuration has to strictly follow the default configuration.
 
 ESCAPE merges the additional configuration with the basic configuration file to create
 the running configuration held in the memory.
@@ -827,7 +827,7 @@ As an example, several additional configuration files can be found under the ``c
 Configuration structure
 -----------------------
 
-The configurations is divided into 4 parts according to the UNIFY's / ESCAPE's
+The configuration is divided into 4 parts according to the UNIFY's / ESCAPE's
 main layers, namely ``service``, ``orchestration``, ``adaptation`` and ``infrastructure``.
 
 Service and Orchestration
@@ -891,7 +891,7 @@ Contains the configuration of the *Mapper* class responsible for managing the ov
         (:any:`bool`) Enables the mapping process in the actual layer
     `mapping config`
         (:class:`dict`) Optional arguments directly given to the main entry point of the core mapping function
-        ``MappingAlgorithms.MAP()``, e.g ``mode="REMAP"`` force the algorithm to use the *REMAP* orchestration
+        ``MappingAlgorithms.MAP()``, e.g. ``mode="REMAP"`` force the algorithm to use the *REMAP* orchestration
         approach in every case. See more in the function's documentation.
 
 STRATEGY
@@ -957,7 +957,7 @@ Other configuration entries of these layers.
 
           ``GLOBAL``: offer the whole domain view intact
   `manage-neo4j-service`
-    (:any:`bool`) Force ESCAPE to startand stop Neo4j service by itself
+    (:any:`bool`) Force ESCAPE to start and stop Neo4j service by itself
 
 Adaptation
 ^^^^^^^^^^
@@ -979,7 +979,7 @@ of the class' constructor.
 
 The ``MANAGERS`` list contains the configuration names of Managers need to be initiated.
 
-In order to activate a manager and manage the specific domain add the config name of the DomainManager
+In order to activate a manager and manage the specific domain, add the config name of the DomainManager
 to the ``MANAGERS`` list. The manager will be initiated with other Managers at boot time of ESCAPE.
 
 .. warning::
@@ -1005,7 +1005,7 @@ is used for managing the Mininet-based emulated network initiated by the ``--ful
 ESCAPE also has default configuration for other type of domain managers:
 
 * ``SDN`` entry defines a domain manager dedicated to manage external SDN-capable hardware or software switches
-  with a singly-purpose domain manager realized by ``SDNDomainManager``.
+  with a single-purpose domain manager realized by ``SDNDomainManager``.
   This manager uses the available POX OpenFlow controller features and a static topology description file to form the domain view.
 
 * ``OPENSTACK`` entry defines a more generic domain manager which uses the general ``UnifyDomainManager`` to manage UNIFY domains.
@@ -1106,7 +1106,7 @@ Schematic config description of domain adapters:
         `server`
             (:any:`string`) Server address of the NETCONF server in the domain, e.g. ``127.0.0.1``
         `port`
-            (:any:`int`) Listening port ot the NETCONF server, e.g. ``830``
+            (:any:`int`) Listening port of the NETCONF server, e.g. ``830``
         `username`
             (:any:`string`) Username for the SSH connection, e.g. ``mininet``
         `password`
@@ -1118,7 +1118,7 @@ Generic adaptation layer configuration
 **************************************
 
 Among the Manager configurations the `adaptation` section also contains several configuration parameters
-which are mostly general parameters and have effect on the overall behaviour of the Adaptation layer.
+which are mostly general parameters and have effect on the overall behavior of the Adaptation layer.
 
 Schematic config description of general parameters:
 
@@ -1127,7 +1127,7 @@ Schematic config description of general parameters:
     `CLEAR-DOMAINS-AFTER-SHUTDOWN`
         (:any:`bool`) Enables to send the resetting topology right before shutdown of ESCAPE.
     `USE-REMERGE-UPDATE-STRATEGY`
-        (:any:`bool`) Use the `REMERGE` strategy for the global view update which stand of an explicit remove and add step
+        (:any:`bool`) Use the `REMERGE` strategy for the global view updates which stand of an explicit remove and add step
           instead of a complex update step.
     `USE-STATUS-BASED-UPDATE`
         (:any:`bool`) Use status values for the service instead of imminent domain view rewriting.
@@ -1157,7 +1157,7 @@ Schematic config description:
         (:any:`string`) Path of the topology :any:`NFFG` used to build the emulated network, e.g. ``examples/escape-mn-topo.nffg``
     `SHUTDOWN-CLEAN`
         (:any:`bool`) Uses the first received topologies to reset the detected domains before shutdown.
-    `SHUTDOWN-CLEAN`
+    `SAP-xterms`
         (:any:`bool`) Initiates xterm windows for the SAPs.
     `NETWORK-OPTS`
         (:class:`dict`) Optional parameters directly given to the main :class:`Mininet` object at build time.
@@ -1167,7 +1167,7 @@ Schematic config description:
         `ip`
             (:any:`string`) IP address of the internal OpenFlow controller used for the Mininet's components, e.g. ``127.0.0.1``
         `port`
-            (:any:`int`) Port the internal Openflow controller listens on, e.g. ``6653``
+            (:any:`int`) Port the internal OpenFlow controller listens on, e.g. ``6653``
     `EE`
         (:class:`dict`) Optional parameters directly given to the Mininet's :class:`EE` objects at build time.
     `Link`
@@ -1186,8 +1186,8 @@ Schematic config description:
 
 Visualizations
 ^^^^^^^^^^^^^^
-ESCAPE has an additional mechanism which collect the intermediate formats of a service request
-and send them to a remote database through a REST-API for visualization purposes.
+ESCAPE has an additional mechanism which collects the intermediate formats of a service request
+and sends them to a remote database through a REST-API for visualization purposes.
 
 The visualization feature can be enabled with the ``--visualization`` command line argument.
 
@@ -1205,7 +1205,7 @@ Schematic config description:
 Development
 ===========
 
-Suggested IDE: `Pycharm Community Edition <https://www.jetbrains.com/pycharm/>`__
+Suggested IDE: `PyCharm Community Edition <https://www.jetbrains.com/pycharm/>`__
 
 Coding conventions:
 
@@ -1224,11 +1224,11 @@ Debugging
 =========
 
 PyCharm can be a good choice for debugging.
-In this case a new Python interpreter have to be specified in order that PyCharm will be able to run ESCAPE with root privilege.
+In this case a new Python interpreter has to be specified in order that PyCharm will be able to run ESCAPE with root privilege.
 The *python_root_debugger.sh* script under the ``tools`` folder emulates that kind of Python interpreter.
 
 For debugging POX's *py* stock component also can be used, which open an interactive Python shell after ESCAPE has started.
-That module allows to observe the internal state of the running ESCAPE instance, experiment with the internal objects or even call different functions.
+That module allows observing the internal state of the running ESCAPE instance, experimenting with the internal objects or even calling different functions.
 
 POX uses a topmost object called *core* which serves a rendezvous point between POX's components (e.g. our components representing the UNIFY layers).
 Through that object we can reach every registered object easily. For example to shut down the REST API of the Service layer manually the
