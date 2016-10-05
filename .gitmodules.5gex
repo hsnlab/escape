@@ -2,6 +2,10 @@
 	path = escape/escape/nffg_lib
 	url = git@5gexgit.tmit.bme.hu:unify/nffg.git
 	branch = master
+[submodule "mapping"]
+	path = mapping
+	url = git@5gexgit.tmit.bme.hu:unify/mapping.git
+	branch = master
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
 	url = git@5gexgit.tmit.bme.hu:unify/virtualizer.git
@@ -22,7 +26,3 @@
 	path = bgp-ls/netphony-topology
 	url = git@5gexgit.tmit.bme.hu:ogd/netphony-topology.git
 	branch = 5gex
-[submodule "mapping"]
-	path = mapping
-	url = git@5gexgit.tmit.bme.hu:unify/mapping.git
-	branch = master
