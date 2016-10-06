@@ -40,8 +40,17 @@ info "=== Deinit all the submodules ==="
 git submodule deinit -f .
 info "=== Resync main modules ==="
 ln -vfs .gitmodules.${PROJECT} .gitmodules
-git submodule sync
-info "=== Recreate symlinks ==="
+for dir in dummy-orchestrator escape/escape/nffg_lib mapping unify_virtualizer; do
+    git submodule init ${dir}
+done
+if [ ${PROJECT} = "5gex" ]; then
+    for dir in bgp-ls/netphony-network-protocols bgp-ls/netphony-topology tnova_connector; do
+        git submodule init ${dir}
+    done
+fi
+info "=== Initialize submodules ==="
+git submodule update
+info "=== Recreate recursive symlinks ==="
 for dir in mapping dummy-orchestrator; do
     echo -en "$ROOT_DIR/$dir\t\t\t"
     cd ${ROOT_DIR}/${dir}

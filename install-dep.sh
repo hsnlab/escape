@@ -93,7 +93,7 @@ function install_core {
     else
         on_error "Missing submodule file of project: $PROJECT for ESCAPE repo!"
     fi
-    git submodule update --init --remote --merge
+    git submodule update --init --remote
 
     info "=== Create symlinks for submodules ==="
     cd "$DIR/dummy-orchestrator"
@@ -101,6 +101,12 @@ function install_core {
         ln -vfs ".gitmodules.$PROJECT" .gitmodules
     else
         on_error "Missing submodule file of project: $PROJECT for dummy-orchestrator!"
+    fi
+    cd "$DIR/mapping"
+    if [ -f ".gitmodules.$PROJECT" ]; then
+        ln -vfs ".gitmodules.$PROJECT" .gitmodules
+    else
+        on_error "Missing submodule file of project: $PROJECT for mapping!"
     fi
     cd "$DIR"
     git submodule update --init --remote --recursive --merge
