@@ -645,7 +645,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     rewritten = []
     if domain_name is None:
-      local_mgr = CONFIG.get_local_manager()
+      local_mgr = CONFIG.get_internal_manager()
       if local_mgr is None:
         log.error("No local Manager has been initiated! "
                   "Skip domain rewriting!")

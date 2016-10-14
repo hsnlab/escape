@@ -355,9 +355,9 @@ class ComponentConfigurator(object):
         log.fatal("Missing DomainManager config: %s" % mgr_name)
         raise ConfigurationError(
           "Missing configuration for added DomainManager: %s" % mgr_name)
-      if mgr_class.IS_LOCAL_MANAGER:
+      if mgr_class.IS_INTERNAL_MANAGER:
         loaded_local_mgr = [name for name, mgr in self.__repository.iteritems()
-                            if mgr.IS_LOCAL_MANAGER]
+                            if mgr.IS_INTERNAL_MANAGER]
         if loaded_local_mgr:
           log.warning("A local DomainManager has already been initiated with "
                       "the name: %s! Skip initiating DomainManager: %s" %
@@ -374,7 +374,7 @@ class ComponentConfigurator(object):
     :return: None
     """
     loaded_local_mgr = [name for name, mgr in self.__repository.iteritems() if
-                        mgr.IS_LOCAL_MANAGER]
+                        mgr.IS_INTERNAL_MANAGER]
     if loaded_local_mgr:
       log.warning("A local DomainManager has already been initiated with the "
                   "name: %s! Skip initiation of default local DomainManager: %s"
@@ -560,7 +560,7 @@ class ControllerAdapter(object):
         continue
       # If the internalDM is the only initiated mgr, we can override the
       # whole DoV
-      if domain_mgr.IS_LOCAL_MANAGER:
+      if domain_mgr.IS_INTERNAL_MANAGER:
         if mapped_nffg.is_SBB():
           # If the request was a cleanup request, we can simply clean the DOV
           if mapped_nffg.is_bare():

@@ -587,13 +587,35 @@ class ESCAPEConfig(object):
     except KeyError:
       return ()
 
-  def get_local_manager (self):
+  def get_internal_manager (self):
     """
     Return with the Manager class which is detected as the Manager of the
     locally emulated Mininet-based network.
 
-    Based on the IS_LOCAL_MANAGER attribute of the defined DomainManager
+    Based on the IS_INTERNAL_MANAGER attribute of the defined DomainManager
     classes in the global config.
+
+    :return: local manager name(s)
+    :rtype: str
+    """
+    internal_mgrs = []
+    for item in self.__configuration[ADAPT].itervalues():
+      if isinstance(item, dict) and 'module' in item and 'class' in item:
+        try:
+          mgr_class = getattr(importlib.import_module(item['module']),
+                              item['class'])
+          if mgr_class.IS_INTERNAL_MANAGER:
+            internal_mgrs.append(
+              item['domain_name'] if "domain_name" in item else
+              mgr_class.DEFAULT_DOMAIN_NAME)
+        except (KeyError, AttributeError, TypeError):
+          return None
+    return internal_mgrs if internal_mgrs else None
+
+  def get_local_manager (self):
+    """
+    Return with the Manager classes which are detected by an configured
+    :any:`ExternalDomainManager`.
 
     :return: local manager name(s)
     :rtype: str
@@ -604,7 +626,7 @@ class ESCAPEConfig(object):
         try:
           mgr_class = getattr(importlib.import_module(item['module']),
                               item['class'])
-          if mgr_class.IS_LOCAL_MANAGER:
+          if mgr_class.IS_INTERNAL_MANAGER:
             local_mgrs.append(item['domain_name'] if "domain_name" in item else
                               mgr_class.DEFAULT_DOMAIN_NAME)
         except (KeyError, AttributeError, TypeError):

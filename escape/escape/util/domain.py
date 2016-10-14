@@ -141,7 +141,7 @@ class AbstractDomainManager(EventMixin):
   DEFAULT_DOMAIN_NAME = "UNDEFINED"
   """Default domain name"""
   # Signal that the Manager class is for the Local Mininet-based topology
-  IS_LOCAL_MANAGER = False
+  IS_INTERNAL_MANAGER = False
   """Signal that the Manager class is for the Local Mininet-based topology"""
   # Signal that the Manager class manages external domains
   IS_EXTERNAL_MANAGER = False

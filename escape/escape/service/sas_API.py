@@ -127,7 +127,7 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
 
   def result (self):
     """
-    Retspond the result of a request given by the id.
+    Respond the result of a request given by the id.
 
     :return: None
     """

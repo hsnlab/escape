@@ -46,8 +46,8 @@ class InternalDomainManager(AbstractDomainManager):
   name = "INTERNAL"
   # Default domain name
   DEFAULT_DOMAIN_NAME = "INTERNAL"
-  # Set the local manager status
-  IS_LOCAL_MANAGER = True
+  # Set the internal manager status
+  IS_INTERNAL_MANAGER = True
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
