@@ -596,7 +596,7 @@ class ESCAPEConfig(object):
     classes in the global config.
 
     :return: local manager name(s)
-    :rtype: str
+    :rtype: dict
     """
     internal_mgrs = []
     for item in self.__configuration[ADAPT].itervalues():
@@ -612,26 +612,29 @@ class ESCAPEConfig(object):
           return None
     return internal_mgrs if internal_mgrs else None
 
-  def get_local_manager (self):
+  def get_external_managers (self):
     """
-    Return with the Manager classes which are detected by an configured
-    :any:`ExternalDomainManager`.
+    Return with Manager classes which is detected as external managers.
 
-    :return: local manager name(s)
-    :rtype: str
+    Based on the IS_EXTERNAL_MANAGER attribute of the defined DomainManager
+    classes in the global config.
+
+    :return: external manager name(s)
+    :rtype: dict
     """
-    local_mgrs = []
+    external_mgrs = []
     for item in self.__configuration[ADAPT].itervalues():
       if isinstance(item, dict) and 'module' in item and 'class' in item:
         try:
           mgr_class = getattr(importlib.import_module(item['module']),
                               item['class'])
-          if mgr_class.IS_INTERNAL_MANAGER:
-            local_mgrs.append(item['domain_name'] if "domain_name" in item else
-                              mgr_class.DEFAULT_DOMAIN_NAME)
+          if mgr_class.IS_EXTERNAL_MANAGER:
+            external_mgrs.append(
+              item['domain_name'] if "domain_name" in item else
+              mgr_class.DEFAULT_DOMAIN_NAME)
         except (KeyError, AttributeError, TypeError):
           return None
-    return local_mgrs if local_mgrs else None
+    return external_mgrs if external_mgrs else None
 
   def clear_domains_after_shutdown (self):
     """

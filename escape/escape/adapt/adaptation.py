@@ -421,6 +421,7 @@ class ControllerAdapter(object):
   """
   EXTERNAL_MDO_META_NAME = 'unify-slor'
   """Attribute name used topology from TADS to identify external MdO URL"""
+  EXTERNAL_DOMAIN_NAME_JOINER = '-'
 
   def __init__ (self, layer_API, with_infr=False):
     """
@@ -754,7 +755,8 @@ class ControllerAdapter(object):
                     "Skip initialization...")
         return
       # Set domain name
-      mgr_cfg['domain_name'] = "%s@%s" % (id, domain_mgr.domain_name)
+      mgr_cfg['domain_name'] = "%s%s%s" % (
+        id, self.EXTERNAL_DOMAIN_NAME_JOINER, domain_mgr.domain_name)
       log.debug("Generated domain name: %s" % mgr_cfg['domain_name'])
       # Set URL and prefix
       try:

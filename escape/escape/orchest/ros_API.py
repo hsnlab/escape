@@ -121,7 +121,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   """Statically defined layer component to which this handler is bounded"""
   # Set special prefix to imitate OpenStack agent API
   static_prefix = "escape"
-  """ special prefix to imitate OpenStack agent API"""
+  """Special prefix to imitate OpenStack agent API"""
   # Logger name
   LOGGER_NAME = "Sl-Or"
   """Logger name"""
@@ -851,6 +851,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
                                                   api_name=event.sid)
     v = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid, type=virtualizer_type)
+    if v is None:
+      log.getChild('API').error("Missing Virtualizer for id: %s!" % event.sid)
+      return
     log.getChild('API').debug("Sending back <Virtual View>: %s..." % v)
     self.raiseEventNoErrors(VirtResInfoEvent, v)
 
