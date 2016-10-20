@@ -26,7 +26,8 @@ function print_help {
 }
 
 function setup () {
-    # git submodule deinit -f .
+    info "=== Deinit existing submodules ==="
+     git submodule deinit -f .
     info "==== Init top submodules ===="
     # Create symlink for main repo
     if [ -f ".gitmodules.$PROJECT" ]; then
@@ -64,7 +65,7 @@ function setup () {
         cd ..
     done
 
-    info "=== Sync and update  submodules recursively ==="
+    info "=== Sync and update submodules recursively ==="
     # Sync and update all the submodules
     git submodule sync --recursive
     git submodule update --remote --recursive
