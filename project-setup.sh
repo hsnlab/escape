@@ -27,7 +27,7 @@ function setup () {
     # Create symlink for main repo
     ln -vfs .gitmodules.${PROJECT} .gitmodules
     # Init submodules
-    git submodule init
+    git submodule update --init --recursive
 
     if [ ${PROJECT} = "sb" ]; then
         info "=== Deinit unnecessary modules ==="
@@ -39,7 +39,7 @@ function setup () {
 
     info "==== Sync and update top submodules ===="
     # Sync and update top submodules
-    git submodule sync
+    git submodule sync --recursive
     git submodule update --remote
 
     info "=== Init submodules recursively ==="
