@@ -17,11 +17,10 @@ function on_error() {
 }
 
 function print_help {
-    echo -e "Usage: $0 [-p project] [-h]"
+    echo -e "Usage: $0 [project]"
     echo -e "Setup submodules according to given project for ESCAPE.\n"
-    echo -e "optional parameters:"
-    echo -e "\t-p:   setup project [sb|5gex]"
-    echo -e "\t-h:   show this help message and exit"
+    echo -e "parameters:"
+    echo -e "\t project: setup project [sb|5gex]"
     exit 0
 }
 
@@ -78,14 +77,7 @@ if [ $# -lt 1 ]; then
     print_help
 fi
 # Read initial parameters
-while getopts "p:h" OPTION; do
-    case ${OPTION} in
-        p)
-            PROJECT=${OPTARG};;
-        h)
-            print_help;;
-    esac
-done
+PROJECT=$1
 
 # START script here
 
