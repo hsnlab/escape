@@ -32,8 +32,8 @@ function setup () {
     if [ ${PROJECT} = "sb" ]; then
         info "=== Deinit unnecessary modules ==="
         # Deinit only 5GEx submodules
-        for 5gex_submodule in "bgp-ls/netphony-topology" "bgp-ls/netphony-network-protocols" "tnova_connector"; do
-            git submodule deinit ${5gex_submodule}
+        for 5gex in bgp-ls/netphony-topology bgp-ls/netphony-network-protocols tnova_connector; do
+            git submodule deinit ${5gex}
         done
     fi
 
@@ -45,6 +45,7 @@ function setup () {
     info "=== Init submodules recursively ==="
     # Add symlink to the referenced submodules and init them
     for dir in "dummy-orchestrator" "mapping"; do
+        echo -en "$ROOT_DIR/$dir\t\t\t"
         cd ${dir}
         ln -vfs .gitmodules.${PROJECT} .gitmodules
         git submodule init
