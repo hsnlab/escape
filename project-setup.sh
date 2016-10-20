@@ -32,8 +32,8 @@ function setup () {
     if [ ${PROJECT} = "sb" ]; then
         info "=== Deinit unnecessary modules ==="
         # Deinit only 5GEx submodules
-        for 5gex in bgp-ls/netphony-topology bgp-ls/netphony-network-protocols tnova_connector; do
-            git submodule deinit ${5gex}
+        for i in bgp-ls/netphony-topology bgp-ls/netphony-network-protocols tnova_connector; do
+            git submodule deinit ${i}
         done
     fi
 
