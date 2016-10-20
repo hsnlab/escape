@@ -11,6 +11,11 @@ function info() {
     echo -e "${GREEN}$1${NC}"
 }
 
+function on_error() {
+    echo -e "\n${RED}Error during installation! ${1-}${NC}"
+    exit 1
+}
+
 function print_help {
     echo -e "Usage: $0 [-p project] [-h]"
     echo -e "Setup submodules according to given project for ESCAPE.\n"
@@ -22,10 +27,13 @@ function print_help {
 
 function setup () {
     # git submodule deinit -f .
-
     info "==== Init top submodules ===="
     # Create symlink for main repo
-    ln -vfs .gitmodules.${PROJECT} .gitmodules
+    if [ -f ".gitmodules.$PROJECT" ]; then
+        ln -vfs .gitmodules.${PROJECT} .gitmodules
+    else
+        on_error "Missing submodule file of project: $PROJECT for repo: $ROOT_DIR!"
+    fi
     # Init submodules
     git submodule update --init --recursive
 
@@ -47,7 +55,11 @@ function setup () {
     for dir in "dummy-orchestrator" "mapping"; do
         echo -en "$ROOT_DIR/$dir\t\t\t"
         cd ${dir}
-        ln -vfs .gitmodules.${PROJECT} .gitmodules
+        if [ -f ".gitmodules.$PROJECT" ]; then
+            ln -vfs .gitmodules.${PROJECT} .gitmodules
+        else
+            on_error "Missing submodule file of project: $PROJECT for repo: $dir!"
+        fi
         git submodule init
         cd ..
     done
