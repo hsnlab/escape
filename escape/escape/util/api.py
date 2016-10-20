@@ -514,8 +514,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     http_method = self.command.upper()
     real_path = urlparse.urlparse(self.path).path
     try:
-      if real_path.startswith('/%s/' % self.static_prefix):
-        self.func_name = real_path.split('/')[2]
+      prfx = '/%s/' % self.static_prefix
+      if real_path.startswith(prfx):
+        self.func_name = real_path[len(prfx):].split('/')[0]
         if self.rpc_mapper:
           try:
             self.func_name = self.rpc_mapper[self.func_name]

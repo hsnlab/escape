@@ -511,7 +511,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     params = CONFIG.get_ros_agent_params()
     # can override from global config
     if 'prefix' in params:
-      handler.prefix = params['prefix']
+      handler.static_prefix = params['prefix']
     if 'unify_interface' in params:
       handler.virtualizer_format_enabled = params['unify_interface']
     if 'diff' in params:
@@ -546,7 +546,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     params = CONFIG.get_cfor_agent_params()
     # can override from global config
     if 'prefix' in params:
-      handler.prefix = params['prefix']
+      handler.static_prefix = params['prefix']
     if 'unify_interface' in params:
       handler.virtualizer_format_enabled = params['unify_interface']
     if 'diff' in params:
