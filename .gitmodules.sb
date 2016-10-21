@@ -19,10 +19,10 @@
 
 [submodule "bgp-ls/netphony-network-protocols"]
 	path = bgp-ls/netphony-network-protocols
-	url = ssh://git@sb.tmit.bme.hu:42322/unify/5gex.git
+	url = ssh://git@sb.tmit.bme.hu:42322/unify/5gex-netphony-network-protocols.git
 [submodule "bgp-ls/netphony-topology"]
 	path = bgp-ls/netphony-topology
-	url = ssh://git@sb.tmit.bme.hu:42322/unify/5gex.git
+	url = ssh://git@sb.tmit.bme.hu:42322/unify/5gex-netphony-topology.git
 [submodule "tnova_connector"]
 	path = tnova_connector
-	url = ssh://git@sb.tmit.bme.hu:42322/unify/5gex.git
+	url = ssh://git@sb.tmit.bme.hu:42322/unify/5gex-tnova_connector.git
