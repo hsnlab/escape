@@ -25,30 +25,31 @@ function print_help {
 }
 
 function setup () {
-    info "=== Deinit existing submodules ==="
-     git submodule deinit -f .
-    info "==== Init top submodules ===="
-    # Create symlink for main repo
+    info "==== Set project module file ===="
     if [ -f ".gitmodules.$PROJECT" ]; then
+        # Create symlink for main repo
         ln -vfs .gitmodules.${PROJECT} .gitmodules
+        # Sync to other project
+        git submodule sync
     else
         on_error "Missing submodule file of project: $PROJECT for repo: $ROOT_DIR!"
     fi
-    # Init submodules
-    git submodule update --init --recursive
 
+    info "=== Reinitialize existing submodules ==="
+    git submodule deinit -f .
+    git submodule init
+
+    info "=== Deinit unnecessary modules ==="
     if [ ${PROJECT} = "sb" ]; then
-        info "=== Deinit unnecessary modules ==="
         # Deinit only 5GEx submodules
         for i in bgp-ls/netphony-topology bgp-ls/netphony-network-protocols tnova_connector; do
-            git submodule deinit ${i}
+            git submodule deinit -f ${i}
         done
     fi
 
-    info "==== Sync and update top submodules ===="
-    # Sync and update top submodules
-    git submodule sync --recursive
-    git submodule update --remote
+    info "=== Clone top submodules ==="
+    # Clone top submodules with default submodule
+    git submodule update --remote --recursive
 
     info "=== Init submodules recursively ==="
     # Add symlink to the referenced submodules and init them
@@ -67,7 +68,7 @@ function setup () {
     info "=== Sync and update submodules recursively ==="
     # Sync and update all the submodules
     git submodule sync --recursive
-    git submodule update --remote --recursive
+    git submodule update --remote --recursive --merge
 
     info "=== Defined submodules ==="
     git submodule status --recursive
