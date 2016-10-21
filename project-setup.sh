@@ -38,6 +38,8 @@ function setup () {
     info "=== Reinitialize existing submodules ==="
     git submodule deinit -f .
     git submodule init
+    # Init defualt submodules of submodules
+    git submodule update --init --remote --recursive
 
     info "=== Deinit unnecessary modules ==="
     if [ ${PROJECT} = "sb" ]; then
@@ -47,9 +49,9 @@ function setup () {
         done
     fi
 
-    info "=== Clone top submodules ==="
-    # Clone top submodules with default submodule
-    git submodule update --remote --recursive
+#    info "=== Clone top submodules ==="
+#    # Clone top submodules with default submodule
+#    git submodule update --remote --recursive
 
     info "=== Init submodules recursively ==="
     # Add symlink to the referenced submodules and init them
