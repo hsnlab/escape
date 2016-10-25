@@ -30,7 +30,6 @@ function setup () {
         # Create symlink for main repo
         ln -vfs .gitmodules.${PROJECT} .gitmodules
         # Sync to other project
-        git submodule sync
     else
         on_error "Missing submodule file of project: $PROJECT for repo: $ROOT_DIR!"
     fi
@@ -49,7 +48,7 @@ function setup () {
 
     info "=== Clone top submodules ==="
     # Clone top submodules with default submodule
-    git submodule update --remote --recursive
+    git submodule update --remote
 
     info "=== Init submodules recursively ==="
     # Add symlink to the referenced submodules and init them
@@ -61,13 +60,12 @@ function setup () {
         else
             on_error "Missing submodule file of project: $PROJECT for repo: $dir!"
         fi
-        git submodule init
         cd ..
     done
 
     info "=== Sync and update submodules recursively ==="
     # Sync and update all the submodules
-    git submodule sync --recursive
+    git submodule foreach git submodule init
     git submodule update --remote --recursive --merge
 
     info "=== Defined submodules ==="
