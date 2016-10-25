@@ -15,6 +15,8 @@
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
+import json
+
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest import LAYER_NAME, log as log  # Orchestration layer logger
@@ -206,7 +208,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       # Convert required NFFG if needed
       if self.virtualizer_format_enabled:
         self.log.debug("Convert internal NFFG to Virtualizer...")
-        converter = NFFGConverter(domain=None, logger=log)
+        converter = NFFGConverter(logger=log)
         v_topology = converter.dump_to_Virtualizer(nffg=resource_nffg)
         # Cache converted data for edit-config patching
         self.log.debug("Cache converted topology...")
@@ -272,7 +274,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
             # Convert required NFFG if needed
             if self.virtualizer_format_enabled:
               self.log.debug("Convert internal NFFG to Virtualizer...")
-              converter = NFFGConverter(domain=None, logger=log)
+              converter = NFFGConverter(logger=log)
               v_topology = converter.dump_to_Virtualizer(nffg=config)
               # Cache converted data for edit-config patching
               self.log.debug("Cache converted topology...")
@@ -421,6 +423,75 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
       self.send_acknowledge(id=nffg.id)
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
+
+
+class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
+  """
+  Extended handler class for UNIFY interface.
+  Contains RPCs for providing additional information.
+  """
+  # Bind HTTP verbs to UNIFY's API functions
+  request_perm = {
+    'GET': ('ping', 'version', 'operations', 'get_config', 'mapping_info'),
+    'POST': ('ping', 'get_config', 'edit_config'),
+    # 'DELETE': ('edit_config',),
+    'PUT': ('edit_config',)
+  }
+  # Name mapper to avoid Python naming constraint
+  rpc_mapper = {
+    'get-config': "get_config",
+    'edit-config': "edit_config",
+    'mapping-info': "mapping_info"
+  }
+  # Bound function
+  API_CALL_MAPPING_INFO = 'api_ros_mapping_info'
+
+  def mapping_info (self):
+    """
+    Respond the corresponding node IDs of a mapped request given by service ID.
+
+    :return: None
+    """
+    self.log.debug("Call %s function: mapping-info" % self.LOGGER_NAME)
+    service_id = self.__get_service_id()
+    if not service_id:
+      self.send_error(code=400, message="Service ID is missing!")
+      return
+    self.log.debug("Detected service id: %s" % service_id)
+    ret = self._proceed_API_call(self.API_CALL_MAPPING_INFO, service_id)
+    self.log.debug("Sending collected mapping info...")
+    self.__respond_info(ret)
+    self.log.debug("%s function: mapping-info ended!" % self.LOGGER_NAME)
+
+  def __get_service_id (self):
+    """
+    Return the service id given in the URL.
+
+    :return: service id
+    :rtype: str
+    """
+    splitted = str(self.path).split("/mapping-info/", 1)
+    if len(splitted) < 2:
+      return None
+    else:
+      return splitted[1]
+
+  def __respond_info (self, data=None):
+    """
+    Send back requested data.
+
+    :param data: raw info
+    :type data: dict
+    :return: None
+    """
+    data = json.dumps(data if data else {})
+    self.send_response(200)
+    self.send_header('Content-Type', 'application/json')
+    self.send_header('Content-Length', len(data))
+    self.end_headers()
+    self.wfile.write(data)
+    self.log.log(VERBOSE, "Responded mapping info:\n%s" % data)
+    return
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -659,6 +730,21 @@ class ResourceOrchestrationAPI(AbstractAPI):
       rewritten.append(infra.id)
     log.debug("Rewritten infrastructure nodes: %s" % rewritten)
     return nffg_part
+
+  def api_ros_mapping_info (self, service_id):
+    """
+    Return with collected information of mapping of a given service.
+
+    :param service_id: service request ID
+    :type service_id: str
+    :return: mapping info
+    :rtype: dict
+    """
+    # TODO - implement!
+    return {"instance ID": "067e6162-3b6f-4ae2-a171-2470b63dff00",
+            "resource IDs": ["54947df8-0e9e-4471-a2f9-9af509fb5889",
+                             "54947df8-0e9e-4471-a2f9-9af509fb5890",
+                             "54947df8-0e9e-4471-a2f9-9af509fb5900"]}
 
   ##############################################################################
   # Cf-Or API functions starts here
