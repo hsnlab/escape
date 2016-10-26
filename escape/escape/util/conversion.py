@@ -989,10 +989,12 @@ class NFFGConverter(object):
                                                vnode=vnode)
 
       # Copy metadata
+      self.log.debug("Parse Infra node metadata...")
       for key in vnode.metadata:  # Optional - node.metadata
         if key in ('bandwidth', 'delay'):
           pass
         elif key == "constraints":
+          self.log.debug("Constraints entry detected!")
           raw = virtualizer.metadata["constraints"].value.get_value()
           values = json.loads(raw.replace("'", '"'))
           bandwidth = path = delay = None
@@ -1657,7 +1659,7 @@ class NFFGConverter(object):
     :type virtualizer: Virtualizer
     :return: None
     """
-    self.log.debug("Converting requirements...")
+    self.log.debug("Converting requirement links...")
     # for req in nffg.reqs:
     # meta_key = "%s:%s" % (self.REQUIREMENT_PREFIX, req.id)
     # meta_value = json.dumps({
