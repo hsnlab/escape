@@ -995,7 +995,7 @@ class NFFGConverter(object):
           pass
         elif key == "constraints":
           self.log.debug("Constraints entry detected!")
-          raw = virtualizer.metadata["constraints"].value.get_value()
+          raw = vnode.metadata["constraints"].value.get_value()
           values = json.loads(raw.replace("'", '"'))
           bandwidth = path = delay = None
           if "bandwidth" in values:
