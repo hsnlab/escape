@@ -997,6 +997,7 @@ class NFFGConverter(object):
           self.log.debug("Constraints entry detected!")
           raw = vnode.metadata["constraints"].value.get_value()
           values = json.loads(raw.replace("'", '"'))
+          self.log.log(VERBOSE, "Parsed metadata:\n%s" % values)
           bandwidth = path = delay = None
           if "bandwidth" in values:
             try:
@@ -1019,34 +1020,27 @@ class NFFGConverter(object):
               continue
 
           src_port = dst_port = None
-          if path is not None:
-            try:
-              sg_id = int(path[0])
-            except ValueError:
-              self.log.warning("SG hop is/flowrule id cannot be converted "
-                               "to int: %s!" % path[0])
-              continue
-            for p in infra.ports:
-              for f in p.flowrules:
-                if f.id == sg_id:
-                  src_port = p
-                  break
-            try:
-              sg_id = int(path[-1])
-            except ValueError:
-              self.log.warning("SG hop is/flowrule id cannot be converted "
-                               "to int: %s!" % path[-1])
-              continue
-            for f in infra.flowrules():
+          if path is None:
+            continue
+          sg_id = int(path[0])
+          for p in infra.ports:
+            for f in p.flowrules:
               if f.id == sg_id:
-                dst_port_id = f.action.split(';')[0].split('=')[1]
-                dst_port = infra.ports[dst_port_id]
+                src_port = p
+                self.log.debug("Found src port: %s" % p.id)
                 break
+          sg_id = int(path[-1])
+          for f in infra.flowrules():
+            if f.id == sg_id:
+              dst_port_id = f.action.split(';')[0].split('=')[1]
+              dst_port = infra.ports[dst_port_id]
+              self.log.debug("Found dst port: %s" % dst_port_id)
+              break
 
-            if src_port is None or dst_port is None:
-              self.log.warning(
-                "Port reference is missing for Requirement link!")
-              continue
+          if src_port is None or dst_port is None:
+            self.log.warning(
+              "Port reference is missing for Requirement link!")
+            continue
 
           req = nffg.add_req(src_port=src_port,
                              dst_port=dst_port,

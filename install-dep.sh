@@ -157,6 +157,9 @@ function install_core {
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
 
+    info "=== Install ESCAPEv2 Python dependencies ==="
+    sudo -H pip install flask rainbow_logging_handler
+
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
     if [ -f /etc/neo4j/neo4j.conf ]; then
