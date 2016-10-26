@@ -80,11 +80,6 @@ class NFFGConverter(object):
   TYPE_ACTION = "ACTION"
   # Hard-coded constants
   REQUIREMENT_PREFIX = "REQ"
-  # Flowrule generation strategy constants
-  FR_ID_GEN_HOP = "HOP_ID"
-  FR_ID_GEN_GLOBAL = "GLOBAL_CNTR"
-  # Flowrule generation strategy
-  FR_ID_GEN_STRATEGY = None
 
   def __init__ (self, domain=None, logger=None, ensure_unique_id=None):
     """
@@ -103,7 +98,6 @@ class NFFGConverter(object):
     # If clarify_id is True, add domain name as a prefix to the node ids
     self.ensure_unique_id = ensure_unique_id
     self.log = logger if logger is not None else logging.getLogger(__name__)
-    self.FR_ID_GEN_STRATEGY = self.FR_ID_GEN_HOP
     self.log.debug('Created NFFGConverter with domain name: %s' % self.domain)
 
   @classmethod
@@ -871,30 +865,9 @@ class NFFGConverter(object):
       else:
         fr_bw = fr_delay = None
 
-      # Get hop_id
-      fr_hop_id = None
-      if flowentry.name.is_initialized():
-        if not flowentry.name.get_as_text().startswith(self.TAG_SG_HOP):
-          # self.log.warning(
-          #   "Flowrule's name: %s is not following the SG hop naming "
-          #   "convention! SG hop for %s is undefined..." % (
-          #     flowentry.name.get_as_text(), flowentry))
-          # fr_hop_id = None
-
-          # If hop_id is not set in the name field, use flowrule.id instead
-          fr_hop_id = flowentry.id.get_value()
-          self.log.debug("Use flowentry id for hop_id: %s" % fr_hop_id)
-        else:
-          try:
-            fr_hop_id = int(flowentry.name.get_as_text().split(':')[1])
-          except ValueError:
-            fr_hop_id = flowentry.name.get_as_text().split(':')[1]
-          self.log.debug("Detected hop_id in name field: %s" % fr_hop_id)
-
       # Add flowrule to port
       fr = vport.add_flowrule(id=fr_id, match=fr_match, action=fr_action,
-                              bandwidth=fr_bw, delay=fr_delay,
-                              hop_id=fr_hop_id)
+                              bandwidth=fr_bw, delay=fr_delay)
 
       # Handle operation tag
       if flowentry.get_operation() is not None:
@@ -999,12 +972,6 @@ class NFFGConverter(object):
       for sup_nf in vnode.capabilities.supported_NFs:
         infra.add_supported_type(sup_nf.type.get_value())
 
-      # Copy metadata
-      for key in vnode.metadata:  # Optional - node.metadata
-        if key not in ('bandwidth', 'delay'):
-          infra.add_metadata(name=key,
-                             value=vnode.metadata[key].value.get_value())
-
       # Handle operation tag
       if vnode.get_operation() is not None:
         self.log.debug("Found operation tag: %s for node: %s" % (
@@ -1020,6 +987,74 @@ class NFFGConverter(object):
       # Parse Flowentries
       self._parse_virtualizer_node_flowentries(nffg=nffg, infra=infra,
                                                vnode=vnode)
+
+      # Copy metadata
+      for key in vnode.metadata:  # Optional - node.metadata
+        if key in ('bandwidth', 'delay'):
+          pass
+        elif key == "constraints":
+          raw = virtualizer.metadata["constraints"].value.get_value()
+          values = json.loads(raw.replace("'", '"'))
+          bandwidth = path = delay = None
+          if "bandwidth" in values:
+            try:
+              bandwidth = float(values['bandwidth']['value'])
+            except ValueError:
+              self.log.warning("Bandwidth in requirement metadata: %s is not a "
+                               "valid float value!" % values['bandwidth'])
+            path = values['bandwidth']['path']
+
+          if "delay" in values:
+            try:
+              delay = float(values['delay']['value'])
+            except ValueError:
+              self.log.warning("Delay in requirement metadata: %s is not a "
+                               "valid float value!" % values['delay'])
+            if path != values['delay']['path']:
+              self.log.warning(
+                "Delay/bandwidth path entry is different in E2E requirement "
+                "metadata: %s!" % raw)
+              continue
+
+          src_port = dst_port = None
+          if path is not None:
+            try:
+              sg_id = int(path[0])
+            except ValueError:
+              self.log.warning("SG hop is/flowrule id cannot be converted "
+                               "to int: %s!" % path[0])
+              continue
+            for p in infra.ports:
+              for f in p.flowrules:
+                if f.id == sg_id:
+                  src_port = p
+                  break
+            try:
+              sg_id = int(path[-1])
+            except ValueError:
+              self.log.warning("SG hop is/flowrule id cannot be converted "
+                               "to int: %s!" % path[-1])
+              continue
+            for f in infra.flowrules():
+              if f.id == sg_id:
+                dst_port_id = f.action.split(';')[0].split('=')[1]
+                dst_port = infra.ports[dst_port_id]
+                break
+
+            if src_port is None or dst_port is None:
+              self.log.warning(
+                "Port reference is missing for Requirement link!")
+              continue
+
+          req = nffg.add_req(src_port=src_port,
+                             dst_port=dst_port,
+                             bandwidth=bandwidth,
+                             delay=delay,
+                             sg_path=path)
+          self.log.debug("Parsed Requirement link: %s" % req)
+        else:
+          infra.add_metadata(name=key,
+                             value=vnode.metadata[key].value.get_value())
 
   def _parse_virtualizer_links (self, nffg, virtualizer):
     """
@@ -1112,88 +1147,87 @@ class NFFGConverter(object):
     :return: None
     """
     for key in virtualizer.metadata:
-      # If it is a compressed Requirement links
-      if key.startswith(self.REQUIREMENT_PREFIX):
-        req_id = key.split(':')[1]
-        # Replace pre-converted ' to " to get valid JSON
-        raw = virtualizer.metadata[key].value.get_value().replace("'", '"')
-        values = json.loads(raw)
-        try:
-          values['bw'] = float(values['bw']) if 'bw' in values else None
-        except ValueError:
-          self.log.warning("Bandwidth in requirement metadata: %s is not a "
-                           "valid float value!" % values['bw'])
-        try:
-          values['delay'] = float(
-            values['delay']) if 'delay' in values else None
-        except ValueError:
-          self.log.warning("Delay in requirement metadata: %s is not a "
-                           "valid float value!" % values['delay'])
-        # Detect source port
-        try:
-          snode = nffg[values['snode']]
-          sport = snode.ports[values['sport']]
-          self.log.debug(
-            "Get source port for Requirement link: %s" % sport)
-        except KeyError:
-          # SAP port id cannot be transferred in Virtualizer
-          # If source port is not found, try to detect the only port in SAP
-          try:
-            if len(snode.ports) == 1:
-              sport = snode.ports.container[0]
-              self.log.debug(
-                "Port id mismatch! Detected source port for Requirement link: "
-                "%s" % sport)
-            else:
-              raise Exception()
-          except:
-            self.log.warning("Source port for Req link is not found! "
-                             "Skip conversion...")
-            continue
-        # Detect destination port
-        try:
-          dnode = nffg[values['dnode']]
-          dport = dnode.ports[values['dport']]
-          self.log.debug(
-            "Get destination port for Requirement link: %s" % sport)
-        except KeyError:
-          # SAP port id cannot be transferred in Virtualizer
-          # If source port is not found, try to detect the only port in SAP
-          try:
-            if len(dnode.ports) == 1:
-              dport = dnode.ports.container[0]
-              self.log.debug(
-                "Port id mismatch! Detected destination port for Requirement "
-                "link: %s" % dport)
-            else:
-              raise Exception()
-          except:
-            self.log.warning("Destination port for Req link is not found! "
-                             "Skip conversion...")
-            continue
-        # Create Requirement link
-        req = nffg.add_req(
-          id=req_id,
-          src_port=sport,
-          dst_port=dport,
-          delay=values['delay'],
-          bandwidth=values['bw'],
-          sg_path=values['sg_path'])
-        self.log.debug("Parsed Requirement link: %s" % req)
+      # # If it is a compressed Requirement links
+      # if key.startswith(self.REQUIREMENT_PREFIX):
+      #   req_id = key.split(':')[1]
+      #   # Replace pre-converted ' to " to get valid JSON
+      #   raw = virtualizer.metadata[key].value.get_value().replace("'", '"')
+      #   values = json.loads(raw)
+      #   try:
+      #     values['bw'] = float(values['bw']) if 'bw' in values else None
+      #   except ValueError:
+      #     self.log.warning("Bandwidth in requirement metadata: %s is not a "
+      #                      "valid float value!" % values['bw'])
+      #   try:
+      #     values['delay'] = float(
+      #       values['delay']) if 'delay' in values else None
+      #   except ValueError:
+      #     self.log.warning("Delay in requirement metadata: %s is not a "
+      #                      "valid float value!" % values['delay'])
+      #   # Detect source port
+      #   try:
+      #     snode = nffg[values['snode']]
+      #     sport = snode.ports[values['sport']]
+      #     self.log.debug(
+      #       "Get source port for Requirement link: %s" % sport)
+      #   except KeyError:
+      #     # SAP port id cannot be transferred in Virtualizer
+      #     # If source port is not found, try to detect the only port in SAP
+      #     try:
+      #       if len(snode.ports) == 1:
+      #         sport = snode.ports.container[0]
+      #         self.log.debug(
+      #           "Port id mismatch! Detected source port for Requirement
+      # link: "
+      #           "%s" % sport)
+      #       else:
+      #         raise Exception()
+      #     except:
+      #       self.log.warning("Source port for Req link is not found! "
+      #                        "Skip conversion...")
+      #       continue
+      #   # Detect destination port
+      #   try:
+      #     dnode = nffg[values['dnode']]
+      #     dport = dnode.ports[values['dport']]
+      #     self.log.debug(
+      #       "Get destination port for Requirement link: %s" % sport)
+      #   except KeyError:
+      #     # SAP port id cannot be transferred in Virtualizer
+      #     # If source port is not found, try to detect the only port in SAP
+      #     try:
+      #       if len(dnode.ports) == 1:
+      #         dport = dnode.ports.container[0]
+      #         self.log.debug(
+      #           "Port id mismatch! Detected destination port for Requirement "
+      #           "link: %s" % dport)
+      #       else:
+      #         raise Exception()
+      #     except:
+      #       self.log.warning("Destination port for Req link is not found! "
+      #                        "Skip conversion...")
+      #       continue
+      #   # Create Requirement link
+      #   req = nffg.add_req(
+      #     id=req_id,
+      #     src_port=sport,
+      #     dst_port=dport,
+      #     delay=values['delay'],
+      #     bandwidth=values['bw'],
+      #     sg_path=values['sg_path'])
+      #   self.log.debug("Parsed Requirement link: %s" % req)
       # If it is just a metadata
-      else:
-        nffg.add_metadata(name=key,
-                          value=virtualizer.metadata[key].value.get_value())
+      # else:
+      nffg.add_metadata(name=key,
+                        value=virtualizer.metadata[key].value.get_value())
 
-  def _parse_sghops_from_flowrules (self, nffg, virtualizer):
+  def _parse_sghops_from_flowrules (self, nffg):
     """
     Recreate the SG hop links based on the flowrules.
     Use the flowrule id as the is of the SG hop link.
 
     :param nffg: Container NFFG
     :type nffg: :any:`NFFG`
-    :param virtualizer: Virtualizer object
-    :type virtualizer: Virtualizer
     :return: None
     """
     if not nffg.is_SBB():
@@ -1205,7 +1239,7 @@ class NFFGConverter(object):
         # Get source port / in_port
         in_port = None
         flowclass = None
-        fr_id = flowrule.hop_id if flowrule.hop_id else flowrule.id
+        fr_id = flowrule.id
         for item in flowrule.match.split(';'):
           if item.startswith('in_port'):
             in_port = item.split('=')[1]
@@ -1262,7 +1296,8 @@ class NFFGConverter(object):
                              bandwidth=flowrule.bandwidth)
         self.log.debug("Recreated SG hop: %s" % sg)
 
-  def parse_from_Virtualizer (self, vdata, with_virt=False):
+  def parse_from_Virtualizer (self, vdata, with_virt=False,
+                              create_sg_hops=False):
     """
     Convert Virtualizer3-based XML str --> NFFGModel based NFFG object
 
@@ -1270,6 +1305,8 @@ class NFFGConverter(object):
     :type: vdata: str or Virtualizer
     :param with_virt: return with the Virtualizer object too (default: False)
     :type with_virt: bool
+    :param create_sg_hops: create the SG hops (default: False)
+    :type create_sg_hops: bool
     :return: created NF-FG
     :rtype: :any:`NFFG`
     """
@@ -1308,7 +1345,10 @@ class NFFGConverter(object):
     self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
     # If the received NFFG is a SingleBiSBiS, recreate the SG hop links
     # which are in compliance with flowrules in SBB node
-    self._parse_sghops_from_flowrules(nffg=nffg, virtualizer=virtualizer)
+    if create_sg_hops:
+      self._parse_sghops_from_flowrules(nffg=nffg)
+    else:
+      self.log.debug("Skip SG hop recreation...")
     self.log.debug("END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
       V_VERSION, NFFG.version))
     return (nffg, virtualizer) if with_virt else nffg
@@ -1609,7 +1649,7 @@ class NFFGConverter(object):
   def _convert_nffg_reqs (self, nffg, virtualizer):
     """
     Convert requirement links in the given :any:`NFFG` into given Virtualizer
-    using topmost metadata list.
+    using infra node's metadata list.
 
     :param nffg: NFFG object
     :type nffg: :any:`NFFG`
@@ -1618,19 +1658,27 @@ class NFFGConverter(object):
     :return: None
     """
     self.log.debug("Converting requirements...")
+    # for req in nffg.reqs:
+    # meta_key = "%s:%s" % (self.REQUIREMENT_PREFIX, req.id)
+    # meta_value = json.dumps({
+    #   "snode": req.src.node.id,
+    #   "sport": req.src.id,
+    #   "dnode": req.dst.node.id,
+    #   "dport": req.dst.id,
+    #   "delay": "%.3f" % req.delay,
+    #   "bw": "%.3f" % req.bandwidth,
+    #   "sg_path": req.sg_path}
+    #   # Replace " with ' to avoid ugly HTTP escaping and remove whitespaces
+    # ).translate(string.maketrans('"', "'"), string.whitespace)
+    # virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
+    #                                                         value=meta_value))
     for req in nffg.reqs:
-      meta_key = "%s:%s" % (self.REQUIREMENT_PREFIX, req.id)
       meta_value = json.dumps({
-        "snode": req.src.node.id,
-        "sport": req.src.id,
-        "dnode": req.dst.node.id,
-        "dport": req.dst.id,
-        "delay": "%.3f" % req.delay,
-        "bw": "%.3f" % req.bandwidth,
-        "sg_path": req.sg_path}
+        "bandwidth": {"value": "%.3f" % req.bandwidth, "path": req.sg_path},
+        "delay": {"value": "%.3f" % req.delay, "path": req.sg_path}
         # Replace " with ' to avoid ugly HTTP escaping and remove whitespaces
-      ).translate(string.maketrans('"', "'"), string.whitespace)
-      virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
+      }).translate(string.maketrans('"', "'"), string.whitespace)
+      virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key="constraints",
                                                               value=meta_value))
       self.log.debug('Converted requirement link: %s' % req)
 
@@ -1771,7 +1819,7 @@ class NFFGConverter(object):
                                        virtualizer.name.get_as_text()))
 
   # noinspection PyDefaultArgument
-  def _convert_nffg_flowrules (self, virtualizer, nffg, cntr=[0]):
+  def _convert_nffg_flowrules (self, virtualizer, nffg):
     """
     Convert flowrules in the given :any:`NFFG` into the given Virtualizer.
 
@@ -1796,26 +1844,13 @@ class NFFGConverter(object):
         continue
       # Get Infra node from Virtualizer
       v_node = virtualizer.nodes[v_node_id]
-      # Add flowrules to Virtualizer
-      fe_cntr = 0
       # traverse every port in the Infra node
       for port in infra.ports:
         # Check every flowrule
         for fr in port.flowrules:
           self.log.debug("Converting flowrule: %s..." % fr)
-          # Define id based on FR_ID_GEN_STRATEGY
-          if self.FR_ID_GEN_STRATEGY == self.FR_ID_GEN_HOP:
-            if fr.hop_id is not None:
-              fe_id = fr.hop_id
-            else:
-              # hop_id is not set
-              fe_id = str(fr.id)
-          elif self.FR_ID_GEN_STRATEGY == self.FR_ID_GEN_GLOBAL:
-            fe_id = "ESCAPE-flowentry" + str(cntr[0])
-            cntr[0] += 1
-          else:
-            fe_id = "ESCAPE-flowentry" + str(fe_cntr)
-            fe_cntr += 1
+          # Mandatory id
+          fe_id = str(fr.id)
           # Define constant priority
           fe_pri = str(100)
 
@@ -1896,11 +1931,8 @@ class NFFGConverter(object):
           v_fe_bw = str(fr.bandwidth) if fr.bandwidth is not None else None
           _resources = virt_lib.Link_resource(delay=v_fe_delay,
                                               bandwidth=v_fe_bw)
-          # Process hop_id field
-          if fr.hop_id is not None:
-            v_fe_name = "%s:%s" % (self.TAG_SG_HOP, fr.hop_id)
-          else:
-            v_fe_name = None
+          # Flowrule name is not used
+          v_fe_name = None
           # Add Flowentry with converted params
           virt_fe = virt_lib.Flowentry(id=fe_id, priority=fe_pri, port=in_port,
                                        match=match, action=action, out=out_port,
@@ -2046,6 +2078,8 @@ class UC3MNFFGConverter():
     :param filter_empty_nodes: skip nodes which only exist for valid
       inter-BiSBiS links (default: False)
     :type filter_empty_nodes: bool
+    :param level: optional logging level (default: DEBUG)
+    :type level: int
     :return: converted NFFG
     :rtype: :any:`NFFG`
     """

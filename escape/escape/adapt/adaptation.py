@@ -514,10 +514,10 @@ class ControllerAdapter(object):
                     "Skip install domain part..." % domain)
         deploy_result = False
         continue
-      # Temporarily rewrite/recreate TAGs here
-      NFFGToolBox.recreate_match_TAGs(nffg=part, log=log)
+      # Temporarily recreate TAGs originated from collocated link
+      NFFGToolBox.recreate_missing_match_TAGs(nffg=part, log=log)
       # Rebind requirement link fragments as e2e reqs
-      part = NFFGToolBox.rebind_e2e_req_links(nffg=part, log=log)
+      # part = NFFGToolBox.rebind_e2e_req_links(nffg=part, log=log)
       log.log(VERBOSE, "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       # Check if need to reset domain before install
       if CONFIG.reset_domains_before_install():

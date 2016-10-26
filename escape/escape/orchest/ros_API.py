@@ -842,8 +842,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
     elif mapping_mode != NFFG.MODE_REMAP:
       # Calculated ADD-DELETE difference
       log.debug("Calculate ADD - DELETE difference with mapping mode...")
+      # Recreate SG-hops for diff calc.
+      log.debug("Recreate SG hops for difference calculation...")
+      NFFGToolBox.recreate_all_sghops(nffg=nffg)
+      NFFGToolBox.recreate_all_sghops(nffg=resource_nffg)
       log.log(VERBOSE, "New NFFG:\n%s" % nffg.dump())
       log.log(VERBOSE, "Resource NFFG:\n%s" % resource_nffg.dump())
+      # Calculate difference
       add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
         old=resource_nffg, new=nffg)
       log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())

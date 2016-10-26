@@ -1596,6 +1596,8 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.error("Missing new topology!")
       return False
     # Calculate differences
+    # No need to recreate SG hop in this case, no SG is received in
+    # Virtualizer format
     add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
       old=self.last_topo, new=new_data)
     # If both NFFG are empty --> no difference
