@@ -674,6 +674,10 @@ class NFFGConverter(object):
     # Create Flowrules
     for flowentry in vnode.flowtable:
       fr_id = flowentry.id.get_value()  # Mandatory flowentry.id
+      try:
+        fr_id = int(fr_id)
+      except ValueError:
+        self.log.error("Parsed flowentry id is not valid integer!")
       # e.g. in_port=1(;TAG=SAP1|comp|1)
       try:
         v_fe_port = flowentry.port.get_target()
