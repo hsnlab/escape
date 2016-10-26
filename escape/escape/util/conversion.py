@@ -1675,13 +1675,19 @@ class NFFGConverter(object):
     # virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
     #                                                         value=meta_value))
     for req in nffg.reqs:
+      # Get container node
+      infra_id = req.src.node.id
+      if self.ensure_unique_id:
+        infra_id = str(infra_id).split(self.UNIQUE_ID_DELIMITER, 1)[0]
+      self.log.debug("Detected infra node: %s for requirement link: %s" %
+                     (infra_id, req))
       meta_value = json.dumps({
         "bandwidth": {"value": "%.3f" % req.bandwidth, "path": req.sg_path},
         "delay": {"value": "%.3f" % req.delay, "path": req.sg_path}
         # Replace " with ' to avoid ugly HTTP escaping and remove whitespaces
       }).translate(string.maketrans('"', "'"), string.whitespace)
-      virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key="constraints",
-                                                              value=meta_value))
+      virtualizer.nodes[infra_id].metadata.add(
+        item=virt_lib.MetadataMetadata(key="constraints", value=meta_value))
       self.log.debug('Converted requirement link: %s' % req)
 
   def _convert_nffg_nfs (self, virtualizer, nffg):
