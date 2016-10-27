@@ -34,6 +34,95 @@ class GetLocalDomainViewEvent(object):
   pass
 
 
+class BasicDomainManager(AbstractDomainManager):
+  """
+  Simple Manager class to provide topology information read from file.
+
+  .. note::
+    Uses :class:`InternalPOXAdapter` for controlling the network.
+  """
+  # Domain name
+  name = "SIMPLE-TOPO"
+  # Default domain name
+  DEFAULT_DOMAIN_NAME = "SIMPLE-TOPO"
+
+  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
+    """
+    Init.
+
+    :param domain_name: the domain name
+    :type domain_name: str
+    :param args: optional param list
+    :type args: list
+    :param kwargs: optional keywords
+    :type kwargs: dict
+    :return: None
+    """
+    log.debug("Create SimpleTopologyManager with domain name: %s" % domain_name)
+    super(BasicDomainManager, self).__init__(domain_name=domain_name, *args,
+                                             **kwargs)
+    self.topoAdapter = None  # SDN topology adapter - SDNDomainTopoAdapter
+
+  def init (self, configurator, **kwargs):
+    """
+    Initialize SDN domain manager.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :param kwargs: optional parameters
+    :type kwargs: dict
+    :return: None
+    """
+    # Call abstract init to execute common operations
+    super(BasicDomainManager, self).init(configurator, **kwargs)
+    self.log.info(
+      "DomainManager for %s domain has been initialized!" % self.domain_name)
+
+  def initiate_adapters (self, configurator):
+    """
+    Init Adapters.
+
+    :param configurator: component configurator for configuring adapters
+    :type configurator: :any:`ComponentConfigurator`
+    :return: None
+    """
+    # Init adapter for static domain topology
+    self.topoAdapter = configurator.load_component(
+      component_name=AbstractESCAPEAdapter.TYPE_TOPOLOGY,
+      parent=self._adapters_cfg)
+
+  def finit (self):
+    """
+    Stop polling and release dependent components.
+
+    :return: None
+    """
+    super(BasicDomainManager, self).finit()
+    self.topoAdapter.finit()
+
+  def install_nffg (self, nffg_part):
+    """
+    Install domain.
+
+    :param nffg_part: NF-FG need to be deployed
+    :type nffg_part: :any:`NFFG`
+    :return: installation was success or not
+    :rtype: bool
+    """
+    self.log.debug("%s domain has received install_domain invoke! "
+                   "SimpleTopologyManager skip the step by default...")
+
+  def clear_domain (self):
+    """
+    Clear domain.
+
+    :return: cleanup result
+    :rtype: bool
+    """
+    self.log.debug("%s domain has received clear_domain invoke! "
+                   "SimpleTopologyManager skip the step by default...")
+
+
 class InternalDomainManager(AbstractDomainManager):
   """
   Manager class to handle communication with internally emulated network.
