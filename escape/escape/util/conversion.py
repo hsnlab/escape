@@ -996,10 +996,11 @@ class NFFGConverter(object):
       self.log.debug("Parse Infra node metadata...")
       for key in vnode.metadata:  # Optional - node.metadata
         if key in ('bandwidth', 'delay'):
+          # Internally used metadata --> already processed
           pass
-        elif key == "constraints":
-          self.log.debug("Constraints entry detected!")
-          raw = vnode.metadata["constraints"].value.get_value()
+        elif str(key).startswith("constraint"):
+          self.log.debug("Constraint entry detected!")
+          raw = vnode.metadata[key].value.get_value()
           values = json.loads(raw.replace("'", '"'))
           self.log.log(VERBOSE, "Parsed metadata:\n%s" % values)
           bandwidth = path = delay = None
@@ -1045,8 +1046,9 @@ class NFFGConverter(object):
             self.log.warning(
               "Port reference is missing for Requirement link!")
             continue
-
-          req = nffg.add_req(src_port=src_port,
+          req_id = str(key).split(':')[1]
+          req = nffg.add_req(id=req_id,
+                             src_port=src_port,
                              dst_port=dst_port,
                              bandwidth=bandwidth,
                              delay=delay,
@@ -1673,7 +1675,12 @@ class NFFGConverter(object):
     # virtualizer.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
     #                                                         value=meta_value))
     for req in nffg.reqs:
+      self.log.debug('Converting requirement link: %s' % req)
       # Get container node
+      if req.src.node.id != req.dst.node.id:
+        self.log.warning("Requirement link has wrong format: src/dst port is "
+                         "not connected to the same BiSBiS node!")
+        continue
       infra_id = req.src.node.id
       if self.ensure_unique_id:
         infra_id = str(infra_id).split(self.UNIQUE_ID_DELIMITER, 1)[0]
@@ -1685,8 +1692,8 @@ class NFFGConverter(object):
         # Replace " with ' to avoid ugly HTTP escaping and remove whitespaces
       }).translate(string.maketrans('"', "'"), string.whitespace)
       virtualizer.nodes[infra_id].metadata.add(
-        item=virt_lib.MetadataMetadata(key="constraints", value=meta_value))
-      self.log.debug('Converted requirement link: %s' % req)
+        item=virt_lib.MetadataMetadata(key="constraint:%s" % req.id,
+                                       value=meta_value))
 
   def _convert_nffg_nfs (self, virtualizer, nffg):
     """
