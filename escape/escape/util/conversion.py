@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2015 Janos Czentye, Raphael Vicente Rosa
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -558,6 +559,8 @@ class NFFGConverter(object):
                        dep_type=nf_dep_type, cpu=nf_cpu, mem=nf_mem,
                        storage=nf_storage, delay=nf_delay,
                        bandwidth=nf_bandwidth)
+      if v_vnf.status.is_initialized():
+        nf.status = v_vnf.status.get_value()
 
       self.log.debug("Created NF: %s" % nf)
 
@@ -1742,6 +1745,7 @@ class NFFGConverter(object):
           v_nf = virt_lib.Node(id=str(nf.id),
                                name=str(nf.name) if nf.name else None,
                                type=str(nf.functional_type),
+                               status=str(nf.status),
                                resources=virt_lib.Software_resource(
                                  cpu=v_nf_cpu,
                                  mem=v_nf_mem,
@@ -2196,7 +2200,7 @@ class UC3MNFFGConverter():
     return node_id, port_id
 
 
-def test_NFFGConverter ():
+def test_NFFGConverter (path):
   """
   Test function for internal testing.
 
@@ -2224,12 +2228,10 @@ def test_NFFGConverter ():
   # log.debug(nffg.dump())
 
   # nffg = NFFG.parse_from_file("../../../examples/escape-sbb-mapped.nffg")
-  nffg = NFFG.parse_from_file(
-    "./escape_verification_request_req3_e2e_meta.nffg")
-  print nffg.dump()
+  nffg = NFFG.parse_from_file(path)
+  log.info("Parsed NFFG:\n%s" % nffg.dump())
   virt = c.dump_to_Virtualizer(nffg=nffg)
-  log.info("Reconverted Virtualizer:")
-  log.info("%s" % virt.xml())
+  log.info("Reconverted Virtualizer:\n%s" % virt.xml())
 
   # # v = virt_lib.Virtualizer.parse_from_file(
   # #   "../../../examples/escape-sbb-mapped.xml")
@@ -2251,5 +2253,38 @@ def test_UC3MNFFGConverter ():
 
 
 if __name__ == "__main__":
-  test_NFFGConverter()
+  # test_NFFGConverter()
   # test_UC3MNFFGConverter()
+  import argparse
+
+  logging.basicConfig(level=logging.DEBUG)
+  log = logging.getLogger(__name__)
+
+  parser = argparse.ArgumentParser(
+    description="Converter NFFG <--> Virtualizer",
+    add_help=True)
+  parser.add_argument("-p", "--path", metavar="path", type=str,
+                      help="file path")
+  parser.add_argument("-u", "--uc3m", action="store_true", default=False,
+                      help="set to convert UC3M format vice-versa")
+  args = parser.parse_args()
+
+  if args.uc3m:
+    print "Not implemented this parameter!"
+  else:
+    if str(args.path).endswith('.nffg'):
+      c = NFFGConverter(domain="TEST",
+                        # ensure_unique_id=True,
+                        logger=log)
+      nffg = NFFG.parse_from_file(args.path)
+      log.info("Parsed NFFG:\n%s" % nffg.dump())
+      virt = c.dump_to_Virtualizer(nffg=nffg)
+      log.info("Reconverted Virtualizer:\n%s" % virt.xml())
+    elif str(args.path).endswith('.xml'):
+      c = NFFGConverter(domain="TEST",
+                        # ensure_unique_id=True,
+                        logger=log)
+      virt = Virtualizer.parse_from_file(args.path)
+      log.info("Parsed Virtualizer:\n%s" % virt.xml())
+      nffg = c.parse_from_Virtualizer(vdata=virt.xml())
+      log.info("Reconverted NFFG:\n%s" % nffg.dump())
