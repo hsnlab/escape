@@ -447,6 +447,7 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
         log.debug("Load topology from file: %s" % path)
         self.topo = self.rewrite_domain(NFFG.parse(f.read()))
         self.topo.duplicate_static_links()
+        log.log(VERBOSE, "Loaded topology:\n%s" % self.topo.dump())
         # print self.topo.dump()
     except IOError:
       log.warning("Topology file not found: %s" % path)
@@ -492,7 +493,7 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
       virt = Virtualizer.parse_from_file(filename=path)
       nffg = self.converter.parse_from_Virtualizer(vdata=virt)
       self.topo = self.rewrite_domain(nffg)
-      # print self.topo.dump()
+      log.log(VERBOSE, "Loaded topology:\n%s" % self.topo.dump())
     except IOError:
       log.warning("Topology file not found: %s" % path)
     except ValueError as e:
