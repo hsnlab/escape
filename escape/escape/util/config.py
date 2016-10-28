@@ -134,9 +134,9 @@ class ESCAPEConfig(object):
       # Config is set directly
       log.info("Load explicitly given config file: %s" %
                os.path.basename(config))
-    elif hasattr(core, "config_file_name"):
+    elif hasattr(core, "CONFIG_FILE_NAME"):
       # Config is set through POX's core object by a topmost module (unify)
-      config = getattr(core, "config_file_name")
+      config = getattr(core, "CONFIG_FILE_NAME")
       log.info("Load explicitly given config file: %s" %
                os.path.basename(config))
     else:

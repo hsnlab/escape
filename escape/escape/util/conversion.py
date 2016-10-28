@@ -1056,7 +1056,7 @@ class NFFGConverter(object):
                              bandwidth=bandwidth,
                              delay=delay,
                              sg_path=path)
-          self.log.debug("Parsed Requirement link: %s" % req)
+          self.log.debug("Created Requirement link: %s" % req)
         else:
           infra.add_metadata(name=key,
                              value=vnode.metadata[key].value.get_value())
@@ -1694,6 +1694,7 @@ class NFFGConverter(object):
         "delay": {"value": "%.3f" % req.delay, "path": req.sg_path}
         # Replace " with ' to avoid ugly HTTP escaping and remove whitespaces
       }).translate(string.maketrans('"', "'"), string.whitespace)
+      self.log.debug("Generated metadata value: %s" % meta_value)
       virtualizer.nodes[infra_id].metadata.add(
         item=virt_lib.MetadataMetadata(key="constraint:%s" % req.id,
                                        value=meta_value))
