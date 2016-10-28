@@ -21,14 +21,13 @@ import os
 import pstats
 import re
 import socket
+import time
 import warnings
 import weakref
 from functools import wraps
 from subprocess import STDOUT, Popen, PIPE
 
 # Log level constant for additional VERBOSE level
-import time
-
 VERBOSE = 5
 """Verbose logging level"""
 
@@ -193,6 +192,55 @@ def quit_with_error (msg, logger=None, exception=None):
     logger.exception("Caught exception: %s" % exception)
   core.quit()
   os._exit(1)
+
+
+def quit_with_ok (msg=None, logger=None):
+  """
+  Helper function for quitting in case of an error.
+
+  :param msg: exit message
+  :type msg: str
+  :param logger: logger name or logger object (default: core)
+  :type logger: str or :any:`logging.Logger`
+  :return: None
+  """
+  from pox.core import core
+  if isinstance(logger, str):
+    logger = core.getLogger(logger)
+  elif not isinstance(logger, logging.Logger):
+    logger = core.getLogger("core")
+  logger.info(msg if msg else "Exiting from ESCAPE...")
+  core.quit()
+
+
+def set_global_parameter (name, value):
+  """
+  Set the given parameter globally based on the `core` object of POX.
+
+  Use the :any:`get_global_parameter`
+
+  :param name: global parameter name
+  :type name: str or int
+  :param value: parameter value
+  :type value: object
+  :return: None
+  """
+  from pox.core import core
+  setattr(core, name, value)
+
+
+def get_global_parameter (name):
+  """
+  Return with the value of the given parameter which has been set by
+  :any`set_global_parameter` else None.
+
+  :param name: global parameter name
+  :type name: str or int
+  :return: parameter value
+  :rtype: object
+  """
+  from pox.core import core
+  return getattr(core, name, None)
 
 
 class SimpleStandaloneHelper(object):

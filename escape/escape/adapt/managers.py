@@ -110,7 +110,9 @@ class BasicDomainManager(AbstractDomainManager):
     :rtype: bool
     """
     self.log.debug("%s domain has received install_domain invoke! "
-                   "SimpleTopologyManager skip the step by default...")
+                   "SimpleTopologyManager skip the step by default..."
+                   % self.domain_name)
+    self.log.log(VERBOSE, "Received NFFG:\n%s" % nffg_part.dump())
 
   def clear_domain (self):
     """
@@ -120,7 +122,8 @@ class BasicDomainManager(AbstractDomainManager):
     :rtype: bool
     """
     self.log.debug("%s domain has received clear_domain invoke! "
-                   "SimpleTopologyManager skip the step by default...")
+                   "SimpleTopologyManager skip the step by default..."
+                   % self.domain_name)
 
 
 class InternalDomainManager(AbstractDomainManager):

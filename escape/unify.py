@@ -43,7 +43,7 @@ def _start_components (event):
     # Launch Infrastructure Layer (IL) optionally
     from infrastructure import launch
 
-    launch(topo=init_param['topo'])
+    launch(topo=init_param['mininet'])
   # Launch Controller Adaptation Sublayer (CAS)
   from adaptation import launch
 
@@ -63,7 +63,7 @@ def _start_components (event):
 @poxutil.eval_args
 def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
             full=False, loglevel="INFO", cfor=False, visualization=False,
-            topo=None):
+            mininet=None, test=None):
   """
   Launch function called by POX core when core is up.
 
@@ -84,8 +84,10 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   :type cfor: bool
   :param visualization: send NFFGs to remote visualization server (optional)
   :type visualization: bool
-  :param topo: Path of the initial topology graph (optional)
-  :type topo: str
+  :param mininet: Path of the initial topology graph (optional)
+  :type mininet: str
+  :param test: Start ESCAPE in test mode (optional)
+  :type test: bool
   :return: None
   """
   global init_param
@@ -106,7 +108,12 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   # Save additional config file name into POX's core as an attribute to avoid to
   # confuse with POX's modules
   if config:
-    setattr(core, "config_file_name", config)
+    setattr(core, "CONFIG_FILE_NAME", config)
+
+  # Save test mode
+  if test:
+    setattr(core, "TEST_MODE", True)
+
   from escape.util.misc import get_escape_name_version
   log.info("Starting %s(version: %s) components..." % get_escape_name_version())
 

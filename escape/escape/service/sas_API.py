@@ -31,7 +31,8 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError
 from escape.util.misc import schedule_delayed_as_coop_task, \
-  schedule_as_coop_task, notify_remote_visualizer, VERBOSE
+  schedule_as_coop_task, notify_remote_visualizer, VERBOSE, quit_with_ok, \
+  get_global_parameter
 from pox.lib.revent.revent import Event
 
 
@@ -528,3 +529,6 @@ class ServiceLayerAPI(AbstractAPI):
     if hasattr(self, 'rest_api') and self.rest_api:
       self.rest_api.request_cache.set_result(id=event.id, result=event.result)
       log.getChild('API').debug("Cache request result...")
+    # Quit ESCAPE if test mode is active
+    if get_global_parameter(name="TEST_MODE"):
+      quit_with_ok("Detected TEST mode! Exiting ESCAPE...")

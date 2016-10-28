@@ -431,7 +431,7 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     :type path: str
     :return: None
     """
-    super(NFFGBasedStaticFileAdapter, self).__init__(*args, **kwargs)
+    super(NFFGBasedStaticFileAdapter, self).__init__(path=path, *args, **kwargs)
 
   def _read_topo_from_file (self, path):
     """
@@ -464,7 +464,7 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
   name = "STATIC-VIRTUALIZER-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
-  def __init__ (self, path=None, *args, **kwargs):
+  def __init__ (self, domain_name=None, path=None, *args, **kwargs):
     """
     Init.
 
@@ -473,9 +473,10 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     :return: None
     """
     # Converter object
-    self.converter = NFFGConverter(domain=self.domain_name, logger=log,
+    self.converter = NFFGConverter(domain=domain_name, logger=log,
                                    ensure_unique_id=CONFIG.ensure_unique_id())
-    super(VirtualizerBasedStaticFileAdapter, self).__init__(*args, **kwargs)
+    super(VirtualizerBasedStaticFileAdapter, self).__init__(
+      domain_name=domain_name, path=path, *args, **kwargs)
 
   def _read_topo_from_file (self, path):
     """
@@ -487,12 +488,11 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     :return: None
     """
     try:
-      with open(path, 'r') as f:
-        log.debug("Load topology from file: %s" % path)
-        virt = Virtualizer.parse_from_file(filename=path)
-        nffg = self.converter.parse_from_Virtualizer(vdata=virt)
-        self.topo = self.rewrite_domain(NFFG.parse(f.read()))
-        # print self.topo.dump()
+      log.debug("Load topology from file: %s" % path)
+      virt = Virtualizer.parse_from_file(filename=path)
+      nffg = self.converter.parse_from_Virtualizer(vdata=virt)
+      self.topo = self.rewrite_domain(nffg)
+      # print self.topo.dump()
     except IOError:
       log.warning("Topology file not found: %s" % path)
     except ValueError as e:
