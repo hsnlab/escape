@@ -106,13 +106,15 @@ class BasicDomainManager(AbstractDomainManager):
 
     :param nffg_part: NF-FG need to be deployed
     :type nffg_part: :any:`NFFG`
-    :return: installation was success or not
+    :return: successful installation step: True
     :rtype: bool
     """
     self.log.debug("%s domain has received install_domain invoke! "
                    "SimpleTopologyManager skip the step by default..."
                    % self.domain_name)
     self.log.log(VERBOSE, "Received NFFG:\n%s" % nffg_part.dump())
+    # Return with successful result by default
+    return True
 
   def clear_domain (self):
     """
