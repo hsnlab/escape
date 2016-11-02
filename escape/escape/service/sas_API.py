@@ -530,5 +530,5 @@ class ServiceLayerAPI(AbstractAPI):
       self.rest_api.request_cache.set_result(id=event.id, result=event.result)
       log.getChild('API').debug("Cache request result...")
     # Quit ESCAPE if test mode is active
-    if get_global_parameter(name="TEST_MODE"):
-      quit_with_ok("Detected TEST mode! Exiting ESCAPE...")
+    if get_global_parameter(name="QUIT_AFTER_PROCESS"):
+      quit_with_ok("Detected QUIT mode! Exiting ESCAPE...")

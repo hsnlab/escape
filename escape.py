@@ -63,6 +63,9 @@ def main ():
                            "service request from the given file")
   escape.add_argument("-t", "--test", action="store_true", default=False,
                       help="run in test mode")
+  escape.add_argument("-q", "--quit", action="store_true", default=False,
+                      help="quit right after the first service request has "
+                           "processed")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
@@ -129,6 +132,9 @@ def main ():
 
   if args.test:
     cmd.append("--test")
+
+  if args.quit:
+    cmd.append("--quit")
 
   # Initiate the rudimentary GUI
   if args.gui:

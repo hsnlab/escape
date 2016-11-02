@@ -63,7 +63,7 @@ def _start_components (event):
 @poxutil.eval_args
 def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
             full=False, loglevel="INFO", cfor=False, visualization=False,
-            mininet=None, test=None):
+            mininet=None, test=None, quit=None):
   """
   Launch function called by POX core when core is up.
 
@@ -88,6 +88,8 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   :type mininet: str
   :param test: Start ESCAPE in test mode (optional)
   :type test: bool
+  :param quit: Quit after the first service request has processed (optional)
+  :type quit: bool
   :return: None
   """
   global init_param
@@ -113,6 +115,10 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   # Save test mode
   if test:
     setattr(core, "TEST_MODE", True)
+
+  # Save quit mode
+  if quit:
+    setattr(core, "QUIT_AFTER_PROCESS", True)
 
   from escape.util.misc import get_escape_name_version
   log.info("Starting %s(version: %s) components..." % get_escape_name_version())
