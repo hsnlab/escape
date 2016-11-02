@@ -20,6 +20,7 @@ import logging
 
 import pox.log
 from pox.log import color, level
+from pox.core import log
 
 # Add new VERBOSE log level to root logger
 logging.addLevelName(5, 'VERBOSE')
@@ -37,3 +38,5 @@ def launch (test_mode=False, **kw):
   pox.log.launch(format=TEST_FORMAT if test_mode else DEFAULT_FORMAT)
   color.launch()
   level.launch(**kw)
+  log.info("Setup logger - formatter: %s, level: %s" % (
+    launch.__module__, logging.getLevelName(log.getEffectiveLevel())))

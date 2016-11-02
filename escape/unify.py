@@ -103,8 +103,6 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   else:
     # Launch pretty logger with specific log level
     launch(**{loglevel: True, 'test_mode': True if test else False})
-  log.info("Setup logger - formatter: %s, level: %s" % (
-    launch.__module__, logging.getLevelName(log.getEffectiveLevel())))
   # Save additional config file name into POX's core as an attribute to avoid to
   # confuse with POX's modules
   if config:

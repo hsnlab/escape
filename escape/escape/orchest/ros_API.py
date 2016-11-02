@@ -850,7 +850,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.log(VERBOSE, "Resource NFFG:\n%s" % resource_nffg.dump())
       # Calculate difference
       add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
-        old=resource_nffg, new=nffg)
+        old=resource_nffg, new=nffg, ignore_infras=True)
       log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
       log.log(VERBOSE, "Calculated DEL NFFG:\n%s" % del_nffg.dump())
       if not add_nffg.is_empty() and del_nffg.is_empty():
