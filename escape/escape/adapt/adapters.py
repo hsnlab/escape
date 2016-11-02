@@ -413,7 +413,7 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     :type path: str
     :return: None
     """
-    raise NotImplementedError("")
+    raise NotImplementedError("Not implemented yet!")
 
 
 class NFFGBasedStaticFileAdapter(StaticFileAdapter):
@@ -423,14 +423,17 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
   name = "STATIC-NFFG-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
-  def __init__ (self, path=None, *args, **kwargs):
+  def __init__ (self, path=None, backward_links=False, *args, **kwargs):
     """
     Init.
 
     :param path: file path offered as the domain topology
     :type path: str
+    :param backward_links: read NFFG contains dynamic links (default: false)
+    :type backward_links: bool
     :return: None
     """
+    self.backward_links = backward_links
     super(NFFGBasedStaticFileAdapter, self).__init__(path=path, *args, **kwargs)
 
   def _read_topo_from_file (self, path):
@@ -446,7 +449,11 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
       with open(path, 'r') as f:
         log.debug("Load topology from file: %s" % path)
         self.topo = self.rewrite_domain(NFFG.parse(f.read()))
-        self.topo.duplicate_static_links()
+        if self.backward_links:
+          log.debug(
+            "Topology contains backward links! Skip link duplication...")
+        else:
+          self.topo.duplicate_static_links()
         log.log(VERBOSE, "Loaded topology:\n%s" % self.topo.dump())
         # print self.topo.dump()
     except IOError:

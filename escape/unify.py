@@ -93,20 +93,18 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   :return: None
   """
   global init_param
-  # Add new VERBOSE log level to root logger
-  logging.addLevelName(5, 'VERBOSE')
   init_param.update(locals())
   # Import colourful logging
-  from pox.samples.pretty_log import launch
+  from escape_logger import launch
   if loglevel == 'VERBOSE':
-    launch()
+    launch(**{'test_mode': True if test else False})
     # Set the Root logger level explicitly
     logging.getLogger('').setLevel("VERBOSE")
   else:
     # Launch pretty logger with specific log level
-    launch(**{loglevel: True})
+    launch(**{loglevel: True, 'test_mode': True if test else False})
   log.info("Setup logger - formatter: %s, level: %s" % (
-    "pretty_log", logging.getLevelName(log.getEffectiveLevel())))
+    launch.__module__, logging.getLevelName(log.getEffectiveLevel())))
   # Save additional config file name into POX's core as an attribute to avoid to
   # confuse with POX's modules
   if config:
