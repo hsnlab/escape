@@ -351,40 +351,46 @@ class NFFGConverter(object):
 
         # Add port names
         if vport.name.is_initialized():
-          sap_port.name = vport.name.get_as_text()
-          infra_port.name = vport.name.get_value()
+          sap_port.name = infra_port.name = vport.name.get_as_text()
 
         # Fill SAP-specific data
         # Add infra port capabilities
         if vport.capability.is_initialized():
-          sap_port.capability = vport.capability.get_value()
+          sap_port.capability = infra_port.capability = \
+            vport.capability.get_value()
         if vport.sap_data.is_initialized():
-          sap_port.technology = vport.sap_data.technology.get_value()
+          sap_port.technology = infra_port.technology = \
+            vport.sap_data.technology.get_value()
           if vport.sap_data.resources.is_initialized():
             if vport.sap_data.resources.delay.is_initialized():
               try:
-                sap_port.delay = float(
+                sap_port.delay = infra_port.delay = float(
                   vport.sap_data.resources.delay.get_value())
               except ValueError:
-                sap_port.delay = vport.sap_data.resources.delay.get_value()
+                sap_port.delay = infra_port.delay = \
+                  vport.sap_data.resources.delay.get_value()
             if vport.sap_data.resources.bandwidth.is_initialized():
               try:
-                sap_port.bandwidth = float(
+                sap_port.bandwidth = infra_port.bandwidth = float(
                   vport.sap_data.resources.bandwidth.get_value())
               except ValueError:
-                sap_port.bandwidth = \
+                sap_port.bandwidth = infra_port.bandwidth = \
                   vport.sap_data.resources.bandwidth.get_value()
             if vport.sap_data.resources.cost.is_initialized():
               try:
-                sap_port.cost = float(vport.sap_data.resources.cost.get_value())
+                sap_port.cost = infra_port.cost = float(
+                  vport.sap_data.resources.cost.get_value())
               except ValueError:
-                sap_port.cost = vport.sap_data.resources.cost.get_value()
+                sap_port.cost = infra_port.cost = \
+                  vport.sap_data.resources.cost.get_value()
         if vport.control.is_initialized():
-          sap_port.controller = vport.control.controller.get_value()
-          sap_port.orchestrator = vport.control.orchestrator.get_value()
+          sap_port.controller = infra_port.controller = \
+            vport.control.controller.get_value()
+          sap_port.orchestrator = infra_port.orchestrator = \
+            vport.control.orchestrator.get_value()
         if vport.addresses.is_initialized():
-          sap_port.l2 = vport.addresses.l2.get_value()
-          sap_port.l4 = vport.addresses.l4.get_value()
+          sap_port.l2 = infra_port.l2 = vport.addresses.l2.get_value()
+          sap_port.l4 = infra_port.l4 = vport.addresses.l4.get_value()
           for l3 in vport.addresses.l3.itervalues():
             sap_port.l3.add_l3address(id=l3.id.get_value(),
                                       name=l3.name.get_value(),
@@ -392,11 +398,18 @@ class NFFGConverter(object):
                                       client=l3.client.get_value(),
                                       requested=l3.requested.get_value(),
                                       provided=l3.provided.get_value())
-
+            infra_port.l3.add_l3address(id=l3.id.get_value(),
+                                        name=l3.name.get_value(),
+                                        configure=l3.configure.get_value(),
+                                        client=l3.client.get_value(),
+                                        requested=l3.requested.get_value(),
+                                        provided=l3.provided.get_value())
         # Add metadata from infra port metadata to sap metadata
         for key in vport.metadata:  # Optional - port.metadata
           sap_port.add_metadata(name=key,
                                 value=vport.metadata[key].value.get_value())
+          infra_port.add_metadata(name=key,
+                                  value=vport.metadata[key].value.get_value())
         self.log.debug("Added port for SAP -> %s" % infra_port)
         # Add connection between infra - SAP
         # SAP-Infra is static link --> create link for both direction
@@ -1475,9 +1488,9 @@ class NFFGConverter(object):
         for i, port_pair in enumerate(combinations(
            (p.id.get_value() for p in v_node.ports), 2)):
           v_link_delay = v_link_bw = None
-          if infra.resources.delay:
+          if infra.resources.delay is not None:
             v_link_delay = str(infra.resources.delay)
-          if infra.resources.bandwidth:
+          if infra.resources.bandwidth is not None:
             v_link_bw = str(infra.resources.bandwidth)
           # Create link
           v_link = virt_lib.Link(id="resource-link%s" % i,
@@ -1493,9 +1506,9 @@ class NFFGConverter(object):
         # Only one port in infra - create loop-edge
         v_link_src = v_link_dst = iter(v_node.ports).next()
         v_link_delay = v_link_bw = None
-        if infra.resources.delay:
+        if infra.resources.delay is not None:
           v_link_delay = str(infra.resources.delay)
-        if infra.resources.bandwidth:
+        if infra.resources.bandwidth is not None:
           v_link_bw = str(infra.resources.bandwidth)
         v_link = virt_lib.Link(id="resource-link",
                                src=v_link_src,

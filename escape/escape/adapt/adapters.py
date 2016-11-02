@@ -491,9 +491,10 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     try:
       log.debug("Load topology from file: %s" % path)
       virt = Virtualizer.parse_from_file(filename=path)
+      log.log(VERBOSE, "Loaded topology:\n%s" % virt.xml())
       nffg = self.converter.parse_from_Virtualizer(vdata=virt)
       self.topo = self.rewrite_domain(nffg)
-      log.log(VERBOSE, "Loaded topology:\n%s" % self.topo.dump())
+      log.log(VERBOSE, "Converted topology:\n%s" % self.topo.dump())
     except IOError:
       log.warning("Topology file not found: %s" % path)
     except ValueError as e:
