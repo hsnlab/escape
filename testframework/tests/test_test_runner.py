@@ -4,7 +4,7 @@ from testframework.runner import TestRunner, Escape, TestRunnerConfig
 
 
 class TestRunnerTest(unittest.TestCase):
-  def test_given_an_nffg_file_calls_escape_with_correct_path (self):
+  def test_given_an_network_config_file_calls_escape_with_correct_path (self):
     escape = MockEscape()
     config = TestRunnerConfig("test_dir")
     runner = TestRunner(escape, config)
@@ -13,6 +13,5 @@ class TestRunnerTest(unittest.TestCase):
 
 
 class MockEscape(Escape):
-
   def run (self, filepath):
     self.got_filepath = filepath
