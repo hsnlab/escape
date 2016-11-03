@@ -363,9 +363,9 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
             "password": agent.passwd} if agent is not None else {}
 
 
-class StaticFileTopoAdapter(AbstractESCAPEAdapter):
+class StaticFileAdapter(AbstractESCAPEAdapter):
   """
-  Adapter class to return the topology description parsed from a static file.
+  Adapter class for the main functions of reading from file.
   """
   name = "STATIC-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
@@ -378,12 +378,13 @@ class StaticFileTopoAdapter(AbstractESCAPEAdapter):
     :type path: str
     :return: None
     """
-    super(StaticFileTopoAdapter, self).__init__(*args, **kwargs)
+    super(StaticFileAdapter, self).__init__(*args, **kwargs)
     self.topo = None
     try:
       self._read_topo_from_file(path=path)
     except TopologyLoadException as e:
-      log.error("StaticFileTopoAdapter is not initialized properly: %s" % e)
+      log.error(
+        "%s is not initialized properly: %s" % (self.__class__.__name__, e))
 
   def check_domain_reachable (self):
     """
@@ -412,11 +413,48 @@ class StaticFileTopoAdapter(AbstractESCAPEAdapter):
     :type path: str
     :return: None
     """
+    raise NotImplementedError("Not implemented yet!")
+
+
+class NFFGBasedStaticFileAdapter(StaticFileAdapter):
+  """
+  Adapter class to return the topology description parsed from a static file.
+  """
+  name = "STATIC-NFFG-TOPO"
+  type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
+
+  def __init__ (self, path=None, backward_links=False, *args, **kwargs):
+    """
+    Init.
+
+    :param path: file path offered as the domain topology
+    :type path: str
+    :param backward_links: read NFFG contains dynamic links (default: false)
+    :type backward_links: bool
+    :return: None
+    """
+    self.backward_links = backward_links
+    super(NFFGBasedStaticFileAdapter, self).__init__(path=path, *args, **kwargs)
+
+  def _read_topo_from_file (self, path):
+    """
+    Load a pre-defined topology from an NFFG stored in a file.
+    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
+
+    :param path: additional file path
+    :type path: str
+    :return: None
+    """
     try:
       with open(path, 'r') as f:
         log.debug("Load topology from file: %s" % path)
         self.topo = self.rewrite_domain(NFFG.parse(f.read()))
-        self.topo.duplicate_static_links()
+        if self.backward_links:
+          log.debug(
+            "Topology contains backward links! Skip link duplication...")
+        else:
+          self.topo.duplicate_static_links()
+        log.log(VERBOSE, "Loaded topology:\n%s" % self.topo.dump())
         # print self.topo.dump()
     except IOError:
       log.warning("Topology file not found: %s" % path)
@@ -426,7 +464,53 @@ class StaticFileTopoAdapter(AbstractESCAPEAdapter):
       raise TopologyLoadException("File parsing error!")
 
 
-class SDNDomainTopoAdapter(StaticFileTopoAdapter):
+class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
+  """
+  Adapter class to return the topology description parsed from a static file in
+  Virtualizer format.
+  """
+  name = "STATIC-VIRTUALIZER-TOPO"
+  type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
+
+  def __init__ (self, domain_name=None, path=None, *args, **kwargs):
+    """
+    Init.
+
+    :param path: file path offered as the domain topology
+    :type path: str
+    :return: None
+    """
+    # Converter object
+    self.converter = NFFGConverter(domain=domain_name, logger=log,
+                                   ensure_unique_id=CONFIG.ensure_unique_id())
+    super(VirtualizerBasedStaticFileAdapter, self).__init__(
+      domain_name=domain_name, path=path, *args, **kwargs)
+
+  def _read_topo_from_file (self, path):
+    """
+    Load a pre-defined topology from an NFFG stored in a file.
+    The file path is searched in CONFIG with tha name ``SDN-TOPO``.
+
+    :param path: additional file path
+    :type path: str
+    :return: None
+    """
+    try:
+      log.debug("Load topology from file: %s" % path)
+      virt = Virtualizer.parse_from_file(filename=path)
+      log.log(VERBOSE, "Loaded topology:\n%s" % virt.xml())
+      nffg = self.converter.parse_from_Virtualizer(vdata=virt)
+      self.topo = self.rewrite_domain(nffg)
+      log.log(VERBOSE, "Converted topology:\n%s" % self.topo.dump())
+    except IOError:
+      log.warning("Topology file not found: %s" % path)
+    except ValueError as e:
+      log.error("An error occurred when load topology from file: %s" %
+                e.message)
+      raise TopologyLoadException("File parsing error!")
+
+
+class SDNDomainTopoAdapter(NFFGBasedStaticFileAdapter):
   """
   Adapter class to return the topology description of the SDN domain.
 
@@ -1596,6 +1680,8 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.error("Missing new topology!")
       return False
     # Calculate differences
+    # No need to recreate SG hop in this case, no SG is received in
+    # Virtualizer format
     add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
       old=self.last_topo, new=new_data)
     # If both NFFG are empty --> no difference

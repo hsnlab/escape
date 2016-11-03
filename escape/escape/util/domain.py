@@ -167,6 +167,7 @@ class AbstractDomainManager(EventMixin):
     self.topoAdapter = None  # Special adapter which can handle the topology
     # description, request it, and install mapped NFs from internal NFFG
     self._adapters_cfg = adapters
+    self.log = log.getChild(domain_name)
 
   def __str__ (self):
     """
@@ -201,13 +202,13 @@ class AbstractDomainManager(EventMixin):
     :type kwargs: dict
     :return: None
     """
-    log.info("Init DomainManager for %s domain!" % self.domain_name)
+    self.log.info("Init DomainManager for %s domain!" % self.domain_name)
     if not self._adapters_cfg:
-      log.fatal("Missing Adapter configurations from DomainManager: %s" %
-                self.domain_name)
+      self.log.fatal("Missing Adapter configurations from DomainManager: %s" %
+                     self.domain_name)
       raise ConfigurationError("Missing configuration for %s" %
                                self.domain_name)
-    log.debug("Init Adapters for domain: %s - adapters: %s" % (
+    self.log.debug("Init Adapters for domain: %s - adapters: %s" % (
       self.domain_name,
       [a['class'] for a in self._adapters_cfg.itervalues()]))
     # Update Adapters's config with domain name
@@ -245,7 +246,8 @@ class AbstractDomainManager(EventMixin):
     self._load_adapters(configurator=configurator, **kwargs)
     # Try to request/parse/update Mininet topology
     if not self._detect_topology():
-      log.warning("%s domain not confirmed during init!" % self.domain_name)
+      self.log.warning(
+        "%s domain not confirmed during init!" % self.domain_name)
     else:
       # Notify all components for topology change --> this event causes
       # the DoV updating
@@ -260,7 +262,7 @@ class AbstractDomainManager(EventMixin):
 
     :return: None
     """
-    log.info("Start DomainManager for %s domain!" % self.domain_name)
+    self.log.info("Start DomainManager for %s domain!" % self.domain_name)
 
   def finit (self):
     """
@@ -268,7 +270,7 @@ class AbstractDomainManager(EventMixin):
 
     :return: None
     """
-    log.info("Stop DomainManager for %s domain!" % self.domain_name)
+    self.log.info("Stop DomainManager for %s domain!" % self.domain_name)
 
   def suspend (self):
     """
@@ -279,7 +281,7 @@ class AbstractDomainManager(EventMixin):
 
     :return: None
     """
-    log.info("Suspend DomainManager for %s domain!" % self.domain_name)
+    self.log.info("Suspend DomainManager for %s domain!" % self.domain_name)
 
   def resume (self):
     """
@@ -290,7 +292,7 @@ class AbstractDomainManager(EventMixin):
 
     :return: None
     """
-    log.info("Resume DomainManager for %s domain!" % self.domain_name)
+    self.log.info("Resume DomainManager for %s domain!" % self.domain_name)
 
   def info (self):
     """
@@ -323,17 +325,17 @@ class AbstractDomainManager(EventMixin):
     :rtype: bool
     """
     if self.topoAdapter.check_domain_reachable():
-      log.info(">>> %s domain confirmed!" % self.domain_name)
+      self.log.info(">>> %s domain confirmed!" % self.domain_name)
       self._detected = True
-      log.info("Requesting resource information from %s domain..." %
-               self.domain_name)
+      self.log.info("Requesting resource information from %s domain..." %
+                    self.domain_name)
       topo_nffg = self.topoAdapter.get_topology_resource()
       if topo_nffg is not None:
-        log.debug("Save detected topology: %s..." % topo_nffg)
+        self.log.debug("Save detected topology: %s..." % topo_nffg)
         # Update the received new topo
         self.internal_topo = topo_nffg
       else:
-        log.warning("Resource info is missing!")
+        self.log.warning("Resource info is missing!")
     return self._detected
 
   def install_nffg (self, nffg_part):
@@ -392,7 +394,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
       self._diff = bool(kwargs['diff'])
     else:
       self._diff = self.DEFAULT_DIFF_VALUE
-    log.debug("Enforced configuration for %s: poll: %s, diff: %s" % (
+    self.log.debug("Enforced configuration for %s: poll: %s, diff: %s" % (
       self.__class__.__name__, self._poll, self._diff))
 
   @property
@@ -425,7 +427,8 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     if not self._poll:
       # Try to request/parse/update Mininet topology
       if not self._detect_topology():
-        log.warning("%s domain not confirmed during init!" % self.domain_name)
+        self.log.warning(
+          "%s domain not confirmed during init!" % self.domain_name)
       else:
         # Notify all components for topology change --> this event causes
         # the DoV updating
@@ -434,7 +437,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
                                 data=self.internal_topo,
                                 cause=DomainChangedEvent.TYPE.DOMAIN_UP)
     else:
-      log.info("Start polling %s domain..." % self.domain_name)
+      self.log.info("Start polling %s domain..." % self.domain_name)
       self.start_polling(self.POLL_INTERVAL)
 
   def initiate_adapters (self, configurator):
@@ -529,14 +532,14 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
       # No changes
       if changed is False:
         # Nothing to do
-        log.log(VERBOSE,
-                "Remote domain: %s has not changed!" % self.domain_name)
+        self.log.log(VERBOSE,
+                     "Remote domain: %s has not changed!" % self.domain_name)
         return
       # Domain has changed
       elif isinstance(changed, NFFG):
-        log.info("Remote domain: %s has changed. Update global domain view..." %
-                 self.domain_name)
-        log.debug("Save changed topology: %s" % changed)
+        self.log.info("Remote domain: %s has changed! "
+                      "Update global domain view..." % self.domain_name)
+        self.log.debug("Save changed topology: %s" % changed)
         # Update the received new topo
         self.internal_topo = changed
         # Notify all components for topology change --> this event causes
@@ -549,23 +552,23 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
       # If changed is None something went wrong, probably remote domain is not
       # reachable. Step to the other half of the function
       elif changed is None:
-        log.warning("Lost connection with %s agent! Going to slow poll..." %
-                    self.domain_name)
+        self.log.warning("Lost connection with %s agent! "
+                         "Going to slow poll..." % self.domain_name)
         # Clear internal topology
-        log.debug("Clear topology from domain: %s" % self.domain_name)
+        self.log.debug("Clear topology from domain: %s" % self.domain_name)
         self.internal_topo = None
         self.raiseEventNoErrors(DomainChangedEvent,
                                 domain=self.domain_name,
                                 cause=DomainChangedEvent.TYPE.DOMAIN_DOWN)
       else:
-        log.warning(
+        self.log.warning(
           "Got unexpected return value from check_topology_changed(): %s" %
           type(changed))
         return
     # If this is the first call of poll()
     if self._detected is None:
-      log.warning("Local agent in domain: %s is not detected! Keep trying..." %
-                  self.domain_name)
+      self.log.warning("Local agent in domain: %s is not detected! "
+                       "Keep trying..." % self.domain_name)
       self._detected = False
     elif self._detected:
       # Detected before -> lost connection = big Problem
@@ -642,6 +645,7 @@ class AbstractESCAPEAdapter(EventMixin):
     self.domain_name = domain_name
     # Observed topology has been changed since the last query
     self.__dirty = False
+    self.log = log
 
   def rewrite_domain (self, nffg):
     """
@@ -652,10 +656,10 @@ class AbstractESCAPEAdapter(EventMixin):
     :return: the rewritten description
     :rtype: :any:`NFFG`
     """
-    log.debug(
+    self.log.debug(
       "Rewrite domain of Infrastructure nodes to: %s" % self.domain_name)
     if self.domain_name == "UNDEFINED":
-      log.warning(
+      self.log.warning(
         "Domain name is not set for Adapter(name: %s)! Skip domain rewrite "
         "for %s..." % (self.name, nffg))
     for infra in nffg.infras:
@@ -703,7 +707,7 @@ class AbstractESCAPEAdapter(EventMixin):
 
     :return: None
     """
-    log.debug("Finit ESCAPEAdapter name: %s, type: %s" % (self.name, self.type))
+    self.log.debug("Finit ESCAPEAdapter name: %s, type: %s" % (self.name, self.type))
 
 
 class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
