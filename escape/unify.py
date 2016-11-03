@@ -22,6 +22,7 @@ Follows POX module conventions.
 import logging
 
 import pox.lib.util as poxutil
+from escape_logging import setup_logging
 from pox.core import core, log
 
 # Initial parameters used for storing command line parameters.
@@ -95,14 +96,13 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   global init_param
   init_param.update(locals())
   # Import colourful logging
-  from escape_logger import launch
   if loglevel == 'VERBOSE':
-    launch(**{'test_mode': True if test else False})
+    setup_logging(**{'test_mode': True if test else False})
     # Set the Root logger level explicitly
     logging.getLogger('').setLevel("VERBOSE")
   else:
     # Launch pretty logger with specific log level
-    launch(**{loglevel: True, 'test_mode': True if test else False})
+    setup_logging(**{loglevel: True, 'test_mode': True if test else False})
   # Save additional config file name into POX's core as an attribute to avoid to
   # confuse with POX's modules
   if config:

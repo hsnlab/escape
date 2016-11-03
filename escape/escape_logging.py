@@ -45,7 +45,7 @@ FILE_LOGGER_FORMAT = "|%(levelname)s" \
 LOG_FILE = "escape.log"
 
 
-def launch (test_mode=False, **kw):
+def setup_logging (test_mode=False, **kw):
   """
   Launch and set parameters for logging.
 
@@ -76,5 +76,5 @@ def launch (test_mode=False, **kw):
     # Define default logger
     pox.log.launch(format=DEFAULT_LOGGER_FORMAT)
     log.info("Setup logger - formatter: %s, level: %s"
-             % (launch.__module__,
+             % (setup_logging.__module__,
                 logging.getLevelName(log.getEffectiveLevel())))
