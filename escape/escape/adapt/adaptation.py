@@ -530,21 +530,21 @@ class ControllerAdapter(object):
       # Update the DoV based on the mapping result covering some corner case
       if domain_install_result:
         log.info("Installation of %s in %s was successful!" % (part, domain))
-        log.debug("Update installed part with collective result: %s" %
-                  NFFG.STATUS_DEPLOY)
-        # Update successful status info of mapped elements in NFFG part for
-        # DoV update
-        NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_DEPLOY,
-                                       log=log)
+        if self.DoVManager.status_updates:
+          log.debug("Update installed part with collective result: %s" %
+                    NFFG.STATUS_DEPLOY)
+          # Update successful status info of mapped elements in NFFG part for
+          # DoV update
+          NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_DEPLOY,
+                                         log=log)
       else:
-        log.error("Installation of %s in %s was unsuccessful!" %
-                  (part, domain))
         log.debug("Update installed part with collective result: %s" %
                   NFFG.STATUS_FAIL)
         # Update failed status info of mapped elements in NFFG part for DoV
         # update
-        NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
-                                       log=log)
+        if self.DoVManager.status_updates:
+          NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
+                                         log=log)
       # Note result according to others before
       deploy_result = deploy_result and domain_install_result
       # If installation of the domain was performed without error
