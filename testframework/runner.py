@@ -18,7 +18,15 @@ class TestRunner:
 
   def run_testcase (self, filename):
     path = os.path.join(self._test_runner_config.test_case_directory, filename)
-    self.escape.run(path)
+    return self.escape.run(path)
+
+
+class Logger:
+  def log_start (self, message):
+    print (message)
+
+  def log_end_output (self, stderr):
+    print (stderr)
 
 
 class Escape():
@@ -38,18 +46,39 @@ class TestRunnerConfig():
 
 
 class CommandLineEscape(Escape):
-  def __init__ (self, escape_path="../escape.py"):
+  OPT_QUIT_ON_DEPLOY = "-q"
+  OPT_DEBUG = "-d"
+  OPT_TEST_OUTPUT = "-t"
+  OPT_RUN_INFRA = "-f"
+  OPT_SOURCE_FILE = "-s"
+
+  def __init__ (self, escape_path=__file__ + "/../../escape.py", logger=Logger()):
+    self.logger = logger
     self._escape_path = os.path.abspath(escape_path)
     self._cwd = os.path.dirname(self._escape_path)
 
   def run (self, filepath):
-    command = [self._escape_path, "-dft", "-s", filepath]
-    print (command)
-    proc = subprocess.check_output(args=command,
-                                   cwd=self._cwd
-                                   )
+    command = [
+      self._escape_path,
+      self.OPT_DEBUG,
+      self.OPT_TEST_OUTPUT,
+      self.OPT_RUN_INFRA,
+      self.OPT_QUIT_ON_DEPLOY,
+      self.OPT_SOURCE_FILE,
+      filepath,
+    ]
+    self.logger.log_start("Starting testcase " + filepath + " : " + ", ".join(command))
+    proc = subprocess.Popen(args=command,
+                            cwd=self._cwd,
+                            stderr=subprocess.PIPE,
+                            stdout=subprocess.PIPE
+                            )
+    stdout, stderr = proc.communicate()
+    self.logger.log_end_output(stderr)
+    return EscapeRunResult(stdout, stderr)
 
 
 class EscapeRunResult():
-  def __init__ (self):
-    pass
+  def __init__ (self, stdout="", stderr=""):
+    self.stdout = stderr
+    self.stderr = stderr
