@@ -14,6 +14,7 @@ old.*
 *~
 *.a
 *.out
+*.log
 Python-*
 bin/
 include/
@@ -26,3 +27,6 @@ Unify_ncagent/vnf_starter/lib/
 pip-selfcheck.json
 escape/doc/build
 click
+escape-test.config
+escape.log
+test_dov.nffg
