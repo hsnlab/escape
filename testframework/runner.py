@@ -1,9 +1,12 @@
+from __future__ import print_function
 import abc
 import os
 import subprocess
 import time
 import signal
 import pexpect
+from pexpect import fdpexpect
+from threading import Timer
 
 
 class TestRunner:
@@ -23,10 +26,13 @@ class TestRunner:
 
 class Logger:
   def log_start (self, message):
-    print (message)
+    print(message)
 
   def log_end_output (self, stderr):
-    print (stderr)
+    print(stderr)
+
+  def timed_out (self, pexpect_proc):
+    print("Timed out: " + pexpect_proc)
 
 
 class Escape():
@@ -57,6 +63,10 @@ class CommandLineEscape(Escape):
     self._escape_path = os.path.abspath(escape_path)
     self._cwd = os.path.dirname(self._escape_path)
 
+  def _kill_process (self, p):
+    self.logger.timed_out(p)
+    p.sendcontrol('c')
+
   def run (self, filepath):
     command = [
       self._escape_path,
@@ -67,14 +77,29 @@ class CommandLineEscape(Escape):
       self.OPT_SOURCE_FILE,
       filepath,
     ]
+
     self.logger.log_start("Starting testcase " + filepath + " : " + ", ".join(command))
-    proc = subprocess.Popen(args=command,
-                            cwd=self._cwd,
-                            stderr=subprocess.PIPE,
-                            stdout=subprocess.PIPE
-                            )
-    stdout, stderr = proc.communicate()
+    #
+    # proc = subprocess.Popen(args=command,
+    #                         cwd=self._cwd,
+    #                         stderr=subprocess.PIPE,
+    #                         stdout=subprocess.PIPE
+    #                         )
+
+    proc = pexpect.spawn(command[0],
+                         args=command[2:],
+                         timeout=120,
+                         cwd=self._cwd
+                         )
+
+    kill_timer = Timer(100, self._kill_process, [proc])
+    kill_timer.start()
+
+    proc.expect(pexpect.EOF)
+
+    stdout, stderr = "", proc.before
     self.logger.log_end_output(stderr)
+    kill_timer.cancel()
     return EscapeRunResult(stdout, stderr)
 
 
