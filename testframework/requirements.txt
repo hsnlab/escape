@@ -1,0 +1,2 @@
+pyexpect
+unittest-xml-reporting

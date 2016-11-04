@@ -1,3 +1,7 @@
+from unittest.case import TestCase
+
+from xmlrunner import unittest
+
 from testframework.testcases import EndToEndTestCase
 
 

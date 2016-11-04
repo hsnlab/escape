@@ -28,11 +28,12 @@ class Logger:
   def log_start (self, message):
     print(message)
 
-  def log_end_output (self, stderr):
-    print(stderr)
+  def log_end_output (self, output):
+    # print(output)
+    pass
 
   def timed_out (self, pexpect_proc):
-    print("Timed out: " + pexpect_proc)
+    print("Timed out: " + str(pexpect_proc))
 
 
 class Escape():
@@ -57,6 +58,7 @@ class CommandLineEscape(Escape):
   OPT_TEST_OUTPUT = "-t"
   OPT_RUN_INFRA = "-f"
   OPT_SOURCE_FILE = "-s"
+  KILL_TIMEOUT = 100
 
   def __init__ (self, escape_path=__file__ + "/../../escape.py", logger=Logger()):
     self.logger = logger
@@ -66,6 +68,10 @@ class CommandLineEscape(Escape):
   def _kill_process (self, p):
     self.logger.timed_out(p)
     p.sendcontrol('c')
+    raise AssertionError("Process timed out" +
+                         p.command + " " + str(p.args) +
+                         "\n" + str(p)
+                         )
 
   def run (self, filepath):
     command = [
@@ -83,21 +89,20 @@ class CommandLineEscape(Escape):
     proc = pexpect.spawn(command[0],
                          args=command[2:],
                          timeout=120,
-                         cwd=self._cwd
-                         )
+                         cwd=self._cwd)
 
-    kill_timer = Timer(100, self._kill_process, [proc])
+    kill_timer = Timer(self.KILL_TIMEOUT, self._kill_process, [proc])
     kill_timer.start()
 
     proc.expect(pexpect.EOF)
+    kill_timer.cancel()
 
     stdout, stderr = "", proc.before
     self.logger.log_end_output(stderr)
-    kill_timer.cancel()
-    return EscapeRunResult(stdout, stderr)
+    return EscapeRunResult(stderr)
 
 
 class EscapeRunResult():
-  def __init__ (self, stdout="", stderr=""):
-    self.stdout = stderr
-    self.stderr = stderr
+  def __init__ (self, output=""):
+    self.stdout = output
+    self.stderr = output
