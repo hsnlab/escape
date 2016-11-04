@@ -79,12 +79,6 @@ class CommandLineEscape(Escape):
     ]
 
     self.logger.log_start("Starting testcase " + filepath + " : " + ", ".join(command))
-    #
-    # proc = subprocess.Popen(args=command,
-    #                         cwd=self._cwd,
-    #                         stderr=subprocess.PIPE,
-    #                         stdout=subprocess.PIPE
-    #                         )
 
     proc = pexpect.spawn(command[0],
                          args=command[2:],
