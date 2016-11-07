@@ -16,6 +16,7 @@ Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
 import json
+import pprint
 
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
@@ -460,6 +461,10 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
     self.log.debug("Detected service id: %s" % service_id)
     ret = self._proceed_API_call(self.API_CALL_MAPPING_INFO, service_id)
     self.log.debug("Sending collected mapping info...")
+    if isinstance(ret, basestring):
+      # Got error message
+      self.send_error(code=400, message=ret)
+      return
     self.__respond_info(ret)
     self.log.debug("%s function: mapping-info ended!" % self.LOGGER_NAME)
 
@@ -741,10 +746,27 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: dict
     """
     # TODO - implement!
-    return {"instance ID": "067e6162-3b6f-4ae2-a171-2470b63dff00",
-            "resource IDs": ["54947df8-0e9e-4471-a2f9-9af509fb5889",
-                             "54947df8-0e9e-4471-a2f9-9af509fb5890",
-                             "54947df8-0e9e-4471-a2f9-9af509fb5900"]}
+    ret = {'service_id': service_id, 'mapping': []}
+    request = self.resource_orchestrator.nffgManager.get(service_id)
+    if request is None:
+      log.warning("Service request(id: %s) is not found!" % service_id)
+      return "Service request is not found!"
+    dov = self.resource_orchestrator.virtualizerManager.dov.get_resource_info()
+    # Collect NFs
+    nfs = [nf.id for nf in request.nfs]
+    log.debug("Collected mapped BiSBiS nodes for NFs: %s" % nfs)
+    for nf_id in nfs:
+      mapping = {'nf': nf_id}
+      bisbis = [n.id for n in dov.infra_neighbors(nf_id)]
+      if len(bisbis) != 1:
+        log.warning(
+          "Detected unexpected number of BiSBiS node for NF: %s!" % bisbis)
+      bisbis = str(bisbis.pop()).split('@')
+      mapping['bisbis'] = bisbis[0]
+      mapping['domain'] = bisbis[1] if len(bisbis) > 1 else 'INTERNAL'
+      ret['mapping'].append(mapping)
+    log.debug("Collected mapping info:\n%s" % pprint.pformat(ret))
+    return ret
 
   ##############################################################################
   # Cf-Or API functions starts here
