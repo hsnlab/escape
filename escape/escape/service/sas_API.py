@@ -518,6 +518,9 @@ class ServiceLayerAPI(AbstractAPI):
     :type event: :any:`InstantiationFinishedEvent`
     :return: None
     """
+    if hasattr(self, 'rest_api') and self.rest_api:
+      self.rest_api.request_cache.set_result(id=event.id, result=event.result)
+      log.getChild('API').debug("Cache request result...")
     if not BaseResultEvent.is_error(event.result):
       log.getChild('API').info(
         "Service request(id=%s) has been finished successfully with result: %s!"
@@ -526,9 +529,6 @@ class ServiceLayerAPI(AbstractAPI):
       log.getChild('API').error(
         "Service request(id=%s) has been finished with error result: %s!" %
         (event.id, event.result))
-    if hasattr(self, 'rest_api') and self.rest_api:
-      self.rest_api.request_cache.set_result(id=event.id, result=event.result)
-      log.getChild('API').debug("Cache request result...")
     # Quit ESCAPE if test mode is active
     if get_global_parameter(name="QUIT_AFTER_PROCESS"):
       quit_with_ok("Detected QUIT mode! Exiting ESCAPE...")
