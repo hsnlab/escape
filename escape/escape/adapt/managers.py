@@ -24,6 +24,7 @@ from ncclient import NCClientError
 from escape.adapt.adapters import RemoteESCAPEv2RESTAdapter, UnifyRESTAdapter
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
+from escape.util.misc import get_global_parameter
 from pox.lib.util import dpid_to_str
 
 
@@ -109,10 +110,12 @@ class BasicDomainManager(AbstractDomainManager):
     :return: successful installation step: True
     :rtype: bool
     """
-    self.log.debug("%s domain has received install_domain invoke! "
-                   "SimpleTopologyManager skip the step by default..."
+    self.log.debug("%s domain has received install_nffg invoke! "
                    % self.domain_name)
-    self.log.log(VERBOSE, "Received NFFG:\n%s" % nffg_part.dump())
+    if get_global_parameter(name='TEST_MODE'):
+      self.topoAdapter.dump_to_file(nffg=nffg_part)
+    else:
+      self.log.debug("SimpleTopologyManager skip the step by default...")
     # Return with successful result by default
     return True
 

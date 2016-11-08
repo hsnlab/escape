@@ -415,6 +415,34 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     """
     raise NotImplementedError("Not implemented yet!")
 
+  def dump_to_file (self, nffg):
+    """
+    Dump received :any:`NFFG` into a file.
+
+    :param nffg: received NFFG need to be deployed
+    :type nffg: :nay:`NFFG`
+    :return: successful install (True)
+    :rtype: bool
+    """
+    raise NotImplementedError("Not implemented yet!")
+
+  @staticmethod
+  def _fix_ownership (file_name):
+    """
+    Fix the file ownership if ESCAPE was started with root privileges.
+
+    :param file_name: file name
+    :type file_name: str
+    :return: None
+    """
+    import os
+    try:
+      uid = int(os.environ.get('SUDO_UID'))
+      gid = int(os.environ.get('SUDO_GID'))
+      os.chown(file_name, uid, gid)
+    except TypeError:
+      return None
+
 
 class NFFGBasedStaticFileAdapter(StaticFileAdapter):
   """
@@ -423,7 +451,8 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
   name = "STATIC-NFFG-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
-  def __init__ (self, path=None, backward_links=False, *args, **kwargs):
+  def __init__ (self, domain_name=None, path=None, backward_links=None, *args,
+                **kwargs):
     """
     Init.
 
@@ -433,8 +462,12 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     :type backward_links: bool
     :return: None
     """
+    log.debug("Init %s - type: %s, domain: %s, path: %s, backward_links: %s" % (
+      self.__class__.__name__, self.type, domain_name, path,
+      backward_links))
     self.backward_links = backward_links
-    super(NFFGBasedStaticFileAdapter, self).__init__(path=path, *args, **kwargs)
+    super(NFFGBasedStaticFileAdapter, self).__init__(domain_name=domain_name,
+                                                     path=path, *args, **kwargs)
 
   def _read_topo_from_file (self, path):
     """
@@ -463,6 +496,24 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
                 e.message)
       raise TopologyLoadException("File parsing error!")
 
+  def dump_to_file (self, nffg):
+    """
+    Dump received :any:`NFFG` into a file.
+
+    :param nffg: received NFFG need to be deployed
+    :type nffg: :nay:`NFFG`
+    :return: successful install (True)
+    :rtype: bool
+    """
+    file_name = '%s-edit_config.nffg' % self.domain_name
+    self.log.info("Dump received request into a file: %s..." % file_name)
+    self.log.log(VERBOSE, "Dumped NFFG:\n%s" % nffg.dump())
+    with open(file_name, mode='w') as f:
+      f.write(nffg.dump())
+    self._fix_ownership(file_name=file_name)
+    # Return with successful result by default
+    return True
+
 
 class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
   """
@@ -472,7 +523,7 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
   name = "STATIC-VIRTUALIZER-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
-  def __init__ (self, domain_name=None, path=None, *args, **kwargs):
+  def __init__ (self, domain_name=None, path=None, diff=None, *args, **kwargs):
     """
     Init.
 
@@ -480,11 +531,14 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     :type path: str
     :return: None
     """
+    log.debug("Init %s - type: %s, domain: %s, path: %s, diff: %s" % (
+      self.__class__.__name__, self.type, domain_name, path, diff))
     # Converter object
     self.converter = NFFGConverter(domain=domain_name, logger=log,
                                    ensure_unique_id=CONFIG.ensure_unique_id())
     super(VirtualizerBasedStaticFileAdapter, self).__init__(
       domain_name=domain_name, path=path, *args, **kwargs)
+    self.diff = diff
 
   def _read_topo_from_file (self, path):
     """
@@ -497,9 +551,9 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     """
     try:
       log.debug("Load topology from file: %s" % path)
-      virt = Virtualizer.parse_from_file(filename=path)
-      log.log(VERBOSE, "Loaded topology:\n%s" % virt.xml())
-      nffg = self.converter.parse_from_Virtualizer(vdata=virt)
+      self.virtualizer = Virtualizer.parse_from_file(filename=path)
+      log.log(VERBOSE, "Loaded topology:\n%s" % self.virtualizer.xml())
+      nffg = self.converter.parse_from_Virtualizer(vdata=self.virtualizer)
       self.topo = self.rewrite_domain(nffg)
       log.log(VERBOSE, "Converted topology:\n%s" % self.topo.dump())
     except IOError:
@@ -508,6 +562,48 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
       log.error("An error occurred when load topology from file: %s" %
                 e.message)
       raise TopologyLoadException("File parsing error!")
+
+  def __calculate_diff (self, changed):
+    """
+    Calculate the difference of the given Virtualizer compared to the most
+    recent Virtualizer acquired by get-config.
+
+    :param changed: Virtualizer containing new install
+    :type changed: Virtualizer
+    :return: the difference
+    :rtype: Virtualizer
+    """
+    # base = Virtualizer.parse_from_text(text=self.last_virtualizer.xml())
+    base = self.virtualizer
+    base.bind(relative=True)
+    changed.bind(relative=True)
+    # Use fail-safe workaround of diff to avoid bugs in Virtualizer library
+    # diff = base.diff(changed)
+    diff = base.diff_failsafe(changed)
+    return diff
+
+  def dump_to_file (self, nffg):
+    """
+    Dump received :any:`NFFG` into a file.
+
+    :param nffg: received NFFG need to be deployed
+    :type nffg: :nay:`NFFG`
+    :return: successful install (True)
+    :rtype: bool
+    """
+    file_name = '%s-edit_config.xml' % self.domain_name
+    self.log.info("Dump received request into a file: %s..." % file_name)
+    vdata = self.converter.adapt_mapping_into_Virtualizer(
+      virtualizer=self.virtualizer, nffg=nffg, reinstall=self.diff)
+    if self.diff:
+      log.debug("DIFF is enabled. Calculating difference of mapping changes...")
+      vdata = self.__calculate_diff(vdata)
+    self.log.log(VERBOSE, "Dumped Virtualizer:\n%s" % vdata.xml())
+    with open(file_name, mode='w') as f:
+      f.write(vdata.xml())
+    self._fix_ownership(file_name=file_name)
+    # Return with successful result by default
+    return True
 
 
 class SDNDomainTopoAdapter(NFFGBasedStaticFileAdapter):
