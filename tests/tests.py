@@ -1,23 +1,27 @@
 from __future__ import print_function
 
 import os
+import sys
+
 import unittest
 from unittest import loader
 from unittest.loader import TestLoader
 
 import xmlrunner
 
-
-def discoverTests (tests_dir, top_dir):
-  pass
+print(os.getenv("PYTHONPATH"))
 
 
 def main ():
+
+  print(os.getcwd())
+  top_level_dir = os.path.dirname(__file__) + "/../"
+
   results_xml = "results.xml"
   os.remove(results_xml)
+  results = []
   with open(results_xml, 'wb') as output:
     test_loader = TestLoader()
-    top_level_dir = os.path.dirname(__file__) + "/../"
     testframework_tests = test_loader.discover("../testframework/tests", top_level_dir=top_level_dir)
     endtoend_tests = test_loader.discover("../tests/endtoend", top_level_dir=".")
 
@@ -26,9 +30,19 @@ def main ():
       verbosity=2
     )
 
-    test_runner.run(testframework_tests)
-    test_runner.run(endtoend_tests)
+    suites = [
+      testframework_tests,
+      endtoend_tests
+    ]
+
+    for suite in suites:
+      results.append(test_runner.run(suite))
+
+  suite_successes = map(lambda result: result.wasSuccessful(), results)
+  was_success = all(suite_successes)
+
+  return 0 if was_success else 1
 
 
 if __name__ == "__main__":
-  main()
+  sys.exit(main())
