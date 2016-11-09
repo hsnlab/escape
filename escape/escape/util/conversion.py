@@ -1759,8 +1759,7 @@ class NFFGConverter(object):
           v_nf = virt_lib.Node(id=str(nf.id),
                                name=str(nf.name) if nf.name else None,
                                type=str(nf.functional_type),
-                               status=str(
-                                 nf.status) if nf.status is not None else None,
+                               status=nf.status,
                                resources=virt_lib.Software_resource(
                                  cpu=v_nf_cpu,
                                  mem=v_nf_mem,
