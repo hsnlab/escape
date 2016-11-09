@@ -5,7 +5,7 @@ timestamps {
         // The Dockerfile needs credentials to update submodules from Git
         sh '''
         mkdir -p docker/.ssh
-        rm docker/.ssh/*
+        rm -f docker/.ssh/*
         cp ~/.ssh/id_rsa* docker/.ssh
         ssh-keygen -F 5gexgit.tmit.bme.hu > docker/.ssh/known_hosts
         '''
