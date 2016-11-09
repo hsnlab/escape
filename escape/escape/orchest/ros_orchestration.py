@@ -170,4 +170,7 @@ class NFFGManager(object):
     :return: NF-Fg instance
     :rtype: :any:`NFFG`
     """
-    return self._nffgs.get(nffg_id, default=None)
+    return self._nffgs.get(nffg_id, None)
+
+  def __len__ (self):
+    return len(self._nffgs)
