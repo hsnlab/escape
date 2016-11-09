@@ -16,6 +16,7 @@ Contains components relevant to virtualization of resources and views.
 """
 import weakref
 
+from escape import CONFIG
 from escape.adapt import log as log
 from escape.adapt.policy_enforcement import PolicyEnforcementMetaClass
 from escape.nffg_lib.nffg import NFFGToolBox, NFFG
@@ -65,21 +66,20 @@ class AbstractVirtualizer(EventMixin):
   # Default domain type for Virtualizers
   DEFAULT_DOMAIN = "VIRTUAL"
   """Default domain type for Virtualizers"""
-  # Trivial Virtualizer types
-  DOMAIN_VIRTUALIZER = "DOV"
-  SINGLE_VIRTUALIZER = "SINGLE"
-  GLOBAL_VIRTUALIZER = "GLOBAL"
 
-  def __init__ (self, type):
+  # # Trivial Virtualizer types
+  # DOMAIN_VIRTUALIZER = "DOV"
+  # SINGLE_VIRTUALIZER = "SINGLE"
+  # GLOBAL_VIRTUALIZER = "GLOBAL"
+  TYPE = None
+
+  def __init__ (self):
     """
     Init.
 
-    :param type: Virtualizer type
-    :type type: str
     :return: None
     """
     super(AbstractVirtualizer, self).__init__()
-    self.type = type
 
   def __str__ (self):
     """
@@ -88,7 +88,7 @@ class AbstractVirtualizer(EventMixin):
     :return: string representation
     :rtype: str
     """
-    return "%s(type=%s)" % (self.__class__.__name__, self.type)
+    return "%s(type=%s)" % (self.__class__.__name__, self.TYPE)
 
   def get_resource_info (self):
     """
@@ -136,7 +136,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     :type type: str
     :return: None
     """
-    super(AbstractFilteringVirtualizer, self).__init__(type=type)
+    super(AbstractFilteringVirtualizer, self).__init__()
     self.id = id
     if global_view is not None:
       # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
@@ -154,7 +154,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     :rtype: str
     """
     return "%s(assigned:%s, type=%s)" % (
-      self.__class__.__name__, self.id, self.type)
+      self.__class__.__name__, self.id, self.TYPE)
 
   def is_changed (self):
     """
@@ -230,8 +230,9 @@ class DomainVirtualizer(AbstractVirtualizer):
   # Events raised by this class
   _eventMixin_events = {DoVChangedEvent}
   """Events raised by this class"""
+  TYPE = 'DOV'
 
-  def __init__ (self, mgr, global_res=None):
+  def __init__ (self, mgr, global_res=None, **kwargs):
     """
     Init.
 
@@ -239,9 +240,11 @@ class DomainVirtualizer(AbstractVirtualizer):
     :type mgr: :any:`GlobalResourceManager`
     :param global_res: initial global resource (optional)
     :type global_res: :any:`NFFG`
+    :param kwargs: optional parameters for Virtualizer
+    :type kwargs: dict
     :return: None
     """
-    super(DomainVirtualizer, self).__init__(type=self.DOMAIN_VIRTUALIZER)
+    super(DomainVirtualizer, self).__init__()
     log.debug("Init DomainVirtualizer with name: %s - initial resource: %s" % (
       DoV, global_res))
     # Garbage-collector safe
@@ -476,10 +479,8 @@ class DomainVirtualizer(AbstractVirtualizer):
 
   def remove_deployed_elements (self):
     """
-    Remove all the NFs, flowrules and dynamic ports from DoV.s
+    Remove all the NFs, flowrules and dynamic ports from DoV.
 
-    :param nffg: changed infrastructure info
-    :type nffg: :any:`NFFG`
     :return: updated Dov
     :rtype: :any:`NFFG`
     """
@@ -498,8 +499,10 @@ class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
 
   No filtering, just offer the whole global resource view.
   """
+  TYPE = 'GLOBAL'
+  """Type name of the Virtualizer"""
 
-  def __init__ (self, global_view, id):
+  def __init__ (self, global_view, id, **kwargs):
     """
     Init.
 
@@ -507,12 +510,14 @@ class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
     :type global_view: :any:`DomainVirtualizer`
     :param id: id of the assigned entity
     :type: id: str
+    :param kwargs: optional parameters for Virtualizer
+    :type kwargs: dict
     :return: None
     """
     log.debug("Initiate unfiltered/global <Virtual View>")
     super(GlobalViewVirtualizer, self).__init__(id=id,
                                                 global_view=global_view,
-                                                type=self.GLOBAL_VIRTUALIZER)
+                                                type=self.TYPE)
 
   def get_resource_info (self):
     """
@@ -525,7 +530,7 @@ class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
     self._dirty = False
     log.debug(
       "No filtering in Virtualizer: %s. Return full global resource..." %
-      self.type)
+      self.TYPE)
     # Currently we NOT filter the global view just propagate to other layers
     # and entities intact
     return self.global_view.get_resource_info()
@@ -540,8 +545,10 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
 
   Default virtualizer class which offer the trivial one BisBis view.
   """
+  TYPE = 'SINGLE'
+  """Type name of the Virtualizer"""
 
-  def __init__ (self, global_view, id):
+  def __init__ (self, global_view, id, **kwargs):
     """
     Init.
 
@@ -549,11 +556,14 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
     :type global_view: :any:`DomainVirtualizer`
     :param id: id of the assigned entity
     :type: id: str
+    :param kwargs: optional parameters for Virtualizer
+    :type kwargs: dict
+    :return: None
     """
-    log.debug("Initiate default SingleBiSBiS <Virtual View>")
+    log.debug("Initiate SingleBiSBiS <Virtual View>")
     super(SingleBiSBiSVirtualizer, self).__init__(id=id,
                                                   global_view=global_view,
-                                                  type=self.SINGLE_VIRTUALIZER)
+                                                  type=self.TYPE)
 
   def _acquire_resource (self):
     """
@@ -575,6 +585,82 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
       return NFFGToolBox.generate_SBB_representation(nffg=dov, log=log)
 
 
+class LocalSingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
+  """
+  Actual Virtualizer class for ESCAPEv2.
+
+  Virtualizer class which offer the trivial one BisBis view without the domains
+  detected by an :any:`ExternalDomainManager`.
+  """
+  TYPE = 'SINGLE-LOCAL'
+  """Type name of the Virtualizer"""
+
+  def __init__ (self, global_view, id, **kwargs):
+    """
+    Init.
+
+    :param global_view: virtualizer instance represents the global view
+    :type global_view: :any:`DomainVirtualizer`
+    :param id: id of the assigned entity
+    :type: id: str
+    :param kwargs: optional parameters for Virtualizer
+    :type kwargs: dict
+    :return: None
+    """
+    log.debug("Initiate only-local SingleBiSBiS <Virtual View>")
+    super(LocalSingleBiSBiSVirtualizer, self).__init__(id=id,
+                                                       global_view=global_view,
+                                                       type=self.TYPE)
+
+  @staticmethod
+  def __filter_external_domains (nffg):
+    """
+    Filter out domains detected by external DomainManagers.
+
+    :param nffg: filtered NFFG
+    :return: :any:`NFFG`
+    """
+    log.debug("Filtering domains detected from external DomainManagers...")
+    # Get External DomainManager names
+    ext_mgr = CONFIG.get_external_managers()
+    # Copy NFFG
+    filtered_nffg = nffg.copy()
+    # Remove the detected domains by External DomainManagers
+    for ext in ext_mgr:
+      # Get all the domains
+      domains = NFFGToolBox.detect_domains(nffg=filtered_nffg)
+      # Get domains detected and initiated by the External DomainManager
+      ext_domains = [d for d in domains if ext in d]
+      # Remove collected domains from NFFG
+      for domain in ext_domains:
+        log.debug(
+          "Remove domain: %s originated from external DomainManager: %s" % (
+            domain, ext))
+        NFFGToolBox.remove_domain(base=filtered_nffg, domain=domain, log=log)
+    filtered_nffg.name += "-filtered"
+    return filtered_nffg
+
+  def _acquire_resource (self):
+    """
+    Compute and return with the Single BiS-BiS view based on the global view.
+
+    :return: single BiSBiS representation of the global view
+    :rtype: :any:`NFFG`
+    """
+    dov = self.global_view.get_resource_info()
+    if dov.is_empty():
+      # DoV is not initialized yet! Probably only just remote Mgrs has been
+      # enabled! return with the default empty DoV
+      log.warning(
+        "Requested global resource view is empty! Return the default empty "
+        "topology!")
+      return dov
+    else:
+      filtered_dov = self.__filter_external_domains(nffg=dov)
+      # Generate the Single BiSBiS representation
+      return NFFGToolBox.generate_SBB_representation(nffg=filtered_dov, log=log)
+
+
 class VirtualizerManager(EventMixin):
   """
   Store, handle and organize instances of derived classes of
@@ -583,6 +669,14 @@ class VirtualizerManager(EventMixin):
   """
   # Events raised by this class
   _eventMixin_events = {MissingGlobalViewEvent}
+
+  VIRTUALIZERS = {
+    # DomainVirtualizer.TYPE: DomainVirtualizer,
+    GlobalViewVirtualizer.TYPE: GlobalViewVirtualizer,
+    SingleBiSBiSVirtualizer.TYPE: SingleBiSBiSVirtualizer,
+    LocalSingleBiSBiSVirtualizer.TYPE: LocalSingleBiSBiSVirtualizer
+  }
+  """Collection of the available Virtualizers type -> class"""
 
   def __init__ (self):
     """
@@ -638,7 +732,7 @@ class VirtualizerManager(EventMixin):
     """
     del self._virtualizers[DoV]
 
-  def get_virtual_view (self, virtualizer_id, type=None, cls=None):
+  def get_virtual_view (self, virtualizer_id, type=None, cls=None, **kwargs):
     """
     Return the Virtual View as a derived class of :class:`AbstractVirtualizer
     <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`.
@@ -649,6 +743,8 @@ class VirtualizerManager(EventMixin):
     :type type: str
     :param cls: specific Virtualizer class if type is not given
     :type cls: :any:`AbstractVirtualizer`
+    :param kwargs: optional parameters for Virtualizer
+    :type kwargs: dict
     :return: virtual view
     :rtype: :any:`AbstractVirtualizer`
     """
@@ -658,26 +754,37 @@ class VirtualizerManager(EventMixin):
     if virtualizer_id not in self._virtualizers:
       if type is not None:
         # SINGLE: generate a trivial Single BiS-BiS virtualizer
-        log.debug("Requested virtualizer type: %s" % type)
-        if type == AbstractVirtualizer.SINGLE_VIRTUALIZER:
-          self._generate_single_view(id=virtualizer_id)
-        # GLOBAL: generate a non-filtering Global View Virtualizer
-        elif type == AbstractVirtualizer.GLOBAL_VIRTUALIZER:
-          self._generate_global_view(id=virtualizer_id)
+        # log.debug("Requested virtualizer type: %s" % type)
+        # if type == AbstractVirtualizer.SINGLE_VIRTUALIZER:
+        #   self._generate_single_view(id=virtualizer_id)
+        # # GLOBAL: generate a non-filtering Global View Virtualizer
+        # elif type == AbstractVirtualizer.GLOBAL_VIRTUALIZER:
+        #   self._generate_global_view(id=virtualizer_id)
+        if type in self.VIRTUALIZERS:
+          virtualizer_class = self.VIRTUALIZERS[type]
+          self._virtualizers[virtualizer_id] = virtualizer_class(self.dov,
+                                                                 virtualizer_id,
+                                                                 **kwargs)
+          log.debug("Generated Virtualizer with type: %s id: %s" % (
+            type, virtualizer_id))
         # Not supported format
         else:
-          log.warning("Unsupported Virtualizer type: %s" % type)
+          log.error("Unsupported Virtualizer type: %s" % type)
           return
       # If a specific AbstractVirtualizer type was given
       elif cls is not None:
         log.debug("Generating Virtualizer type: %s with id: %s" %
                   (cls.__name__, virtualizer_id))
-        self._virtualizers[virtualizer_id] = cls(self.dov, virtualizer_id)
+        self._virtualizers[virtualizer_id] = cls(self.dov, virtualizer_id,
+                                                 **kwargs)
       # Generate a Single BiS-BiS Virtualizer by default
       else:
         # Virtualizer type is not defined: Use SingleBiSBiSVirtualizer by
         # default
-        self._generate_single_view(id=virtualizer_id)
+        log.error(
+          "Virtualizer type is missing for requested Virtualizer: %s!" %
+          virtualizer_id)
+        return None
     # Return Virtualizer
     return self._virtualizers[virtualizer_id]
 

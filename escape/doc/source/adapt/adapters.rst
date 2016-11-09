@@ -22,8 +22,12 @@ external SDN/OpenFlow switches.
 :any:`InternalMininetAdapter` implements Mininet related functionality
 transparently e.g. start/stop/clean topology built from an :any:'NFFG'.
 
-:any:`StaticFileTopoAdapter` implements a simple adapter which load the topology
-information from file.
+:any:`StaticFileAdapter` implements the main functions of reading from file.
+
+:any:`VirtualizerBasedStaticFileAdapter` reads the topology information from
+Virtualizer file.
+
+:any:`StaticFileAdapter` implements the main functions of reading from file.
 
 :any:`SDNDomainTopoAdapter` implements SDN topology related functions.
 

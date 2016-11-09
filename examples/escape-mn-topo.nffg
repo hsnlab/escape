@@ -10,12 +10,16 @@
       "name": "SAP14",
       "ports": [
         {
-          "id": 1
+          "id": 1,
+          "sap_data": {
+            "resources": {
+              "delay": 2.5,
+              "bandwidth": 10
+            }
+          }
         }
       ],
-      "binding": "eth0",
-      "delay": 1.5,
-      "bandwidth": 10
+      "binding": "eth0"
     },
     {
       "id": "SAP1",

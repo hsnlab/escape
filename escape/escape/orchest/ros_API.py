@@ -15,6 +15,9 @@
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
+import json
+import pprint
+
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest import LAYER_NAME, log as log  # Orchestration layer logger
@@ -121,7 +124,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   """Statically defined layer component to which this handler is bounded"""
   # Set special prefix to imitate OpenStack agent API
   static_prefix = "escape"
-  """ special prefix to imitate OpenStack agent API"""
+  """Special prefix to imitate OpenStack agent API"""
   # Logger name
   LOGGER_NAME = "Sl-Or"
   """Logger name"""
@@ -206,7 +209,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       # Convert required NFFG if needed
       if self.virtualizer_format_enabled:
         self.log.debug("Convert internal NFFG to Virtualizer...")
-        converter = NFFGConverter(domain=None, logger=log)
+        converter = NFFGConverter(logger=log)
         v_topology = converter.dump_to_Virtualizer(nffg=resource_nffg)
         # Cache converted data for edit-config patching
         self.log.debug("Cache converted topology...")
@@ -272,7 +275,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
             # Convert required NFFG if needed
             if self.virtualizer_format_enabled:
               self.log.debug("Convert internal NFFG to Virtualizer...")
-              converter = NFFGConverter(domain=None, logger=log)
+              converter = NFFGConverter(logger=log)
               v_topology = converter.dump_to_Virtualizer(nffg=config)
               # Cache converted data for edit-config patching
               self.log.debug("Cache converted topology...")
@@ -423,6 +426,79 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
 
+class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
+  """
+  Extended handler class for UNIFY interface.
+  Contains RPCs for providing additional information.
+  """
+  # Bind HTTP verbs to UNIFY's API functions
+  request_perm = {
+    'GET': ('ping', 'version', 'operations', 'get_config', 'mapping_info'),
+    'POST': ('ping', 'get_config', 'edit_config'),
+    # 'DELETE': ('edit_config',),
+    'PUT': ('edit_config',)
+  }
+  # Name mapper to avoid Python naming constraint
+  rpc_mapper = {
+    'get-config': "get_config",
+    'edit-config': "edit_config",
+    'mapping-info': "mapping_info"
+  }
+  # Bound function
+  API_CALL_MAPPING_INFO = 'api_ros_mapping_info'
+
+  def mapping_info (self):
+    """
+    Respond the corresponding node IDs of a mapped request given by service ID.
+
+    :return: None
+    """
+    self.log.debug("Call %s function: mapping-info" % self.LOGGER_NAME)
+    service_id = self.__get_service_id()
+    if not service_id:
+      self.send_error(code=400, message="Service ID is missing!")
+      return
+    self.log.debug("Detected service id: %s" % service_id)
+    ret = self._proceed_API_call(self.API_CALL_MAPPING_INFO, service_id)
+    self.log.debug("Sending collected mapping info...")
+    if isinstance(ret, basestring):
+      # Got error message
+      self.send_error(code=400, message=ret)
+      return
+    self.__respond_info(ret)
+    self.log.debug("%s function: mapping-info ended!" % self.LOGGER_NAME)
+
+  def __get_service_id (self):
+    """
+    Return the service id given in the URL.
+
+    :return: service id
+    :rtype: str
+    """
+    splitted = str(self.path).split("/mapping-info/", 1)
+    if len(splitted) < 2:
+      return None
+    else:
+      return splitted[1]
+
+  def __respond_info (self, data=None):
+    """
+    Send back requested data.
+
+    :param data: raw info
+    :type data: dict
+    :return: None
+    """
+    data = json.dumps(data if data else {})
+    self.send_response(200)
+    self.send_header('Content-Type', 'application/json')
+    self.send_header('Content-Length', len(data))
+    self.end_headers()
+    self.wfile.write(data)
+    self.log.log(VERBOSE, "Responded mapping info:\n%s" % data)
+    return
+
+
 class ResourceOrchestrationAPI(AbstractAPI):
   """
   Entry point for Resource Orchestration Sublayer (ROS).
@@ -511,7 +587,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     params = CONFIG.get_ros_agent_params()
     # can override from global config
     if 'prefix' in params:
-      handler.prefix = params['prefix']
+      handler.static_prefix = params['prefix']
     if 'unify_interface' in params:
       handler.virtualizer_format_enabled = params['unify_interface']
     if 'diff' in params:
@@ -546,7 +622,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     params = CONFIG.get_cfor_agent_params()
     # can override from global config
     if 'prefix' in params:
-      handler.prefix = params['prefix']
+      handler.static_prefix = params['prefix']
     if 'unify_interface' in params:
       handler.virtualizer_format_enabled = params['unify_interface']
     if 'diff' in params:
@@ -645,7 +721,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     rewritten = []
     if domain_name is None:
-      local_mgr = CONFIG.get_local_manager()
+      local_mgr = CONFIG.get_internal_manager()
       if local_mgr is None:
         log.error("No local Manager has been initiated! "
                   "Skip domain rewriting!")
@@ -659,6 +735,38 @@ class ResourceOrchestrationAPI(AbstractAPI):
       rewritten.append(infra.id)
     log.debug("Rewritten infrastructure nodes: %s" % rewritten)
     return nffg_part
+
+  def api_ros_mapping_info (self, service_id):
+    """
+    Return with collected information of mapping of a given service.
+
+    :param service_id: service request ID
+    :type service_id: str
+    :return: mapping info
+    :rtype: dict
+    """
+    # TODO - implement!
+    ret = {'service_id': service_id, 'mapping': []}
+    request = self.resource_orchestrator.nffgManager.get(service_id)
+    if request is None:
+      log.warning("Service request(id: %s) is not found!" % service_id)
+      return "Service request is not found!"
+    dov = self.resource_orchestrator.virtualizerManager.dov.get_resource_info()
+    # Collect NFs
+    nfs = [nf.id for nf in request.nfs]
+    log.debug("Collected mapped BiSBiS nodes for NFs: %s" % nfs)
+    for nf_id in nfs:
+      mapping = {'nf': nf_id}
+      bisbis = [n.id for n in dov.infra_neighbors(nf_id)]
+      if len(bisbis) != 1:
+        log.warning(
+          "Detected unexpected number of BiSBiS node for NF: %s!" % bisbis)
+      bisbis = str(bisbis.pop()).split('@')
+      mapping['bisbis'] = bisbis[0]
+      mapping['domain'] = bisbis[1] if len(bisbis) > 1 else 'INTERNAL'
+      ret['mapping'].append(mapping)
+    log.debug("Collected mapping info:\n%s" % pprint.pformat(ret))
+    return ret
 
   ##############################################################################
   # Cf-Or API functions starts here
@@ -756,10 +864,15 @@ class ResourceOrchestrationAPI(AbstractAPI):
     elif mapping_mode != NFFG.MODE_REMAP:
       # Calculated ADD-DELETE difference
       log.debug("Calculate ADD - DELETE difference with mapping mode...")
+      # Recreate SG-hops for diff calc.
+      log.debug("Recreate SG hops for difference calculation...")
+      NFFGToolBox.recreate_all_sghops(nffg=nffg)
+      NFFGToolBox.recreate_all_sghops(nffg=resource_nffg)
       log.log(VERBOSE, "New NFFG:\n%s" % nffg.dump())
       log.log(VERBOSE, "Resource NFFG:\n%s" % resource_nffg.dump())
+      # Calculate difference
       add_nffg, del_nffg = NFFGToolBox.generate_difference_of_nffgs(
-        old=resource_nffg, new=nffg)
+        old=resource_nffg, new=nffg, ignore_infras=True)
       log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
       log.log(VERBOSE, "Calculated DEL NFFG:\n%s" % del_nffg.dump())
       if not add_nffg.is_empty() and del_nffg.is_empty():
@@ -851,6 +964,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
                                                   api_name=event.sid)
     v = self.resource_orchestrator.virtualizerManager.get_virtual_view(
       event.sid, type=virtualizer_type)
+    if v is None:
+      log.getChild('API').error("Missing Virtualizer for id: %s!" % event.sid)
+      return
     log.getChild('API').debug("Sending back <Virtual View>: %s..." % v)
     self.raiseEventNoErrors(VirtResInfoEvent, v)
 

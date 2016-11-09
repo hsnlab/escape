@@ -86,30 +86,41 @@ function install_core {
     info "================================="
     echo "ESCAPEv2 version: 2.0.0"
 
-    # Create symlink to the appropriate .gitmodules file
-    info "=== Checkout submodules ==="
-    if [ -f ".gitmodules.$PROJECT" ]; then
-        ln -vfs ".gitmodules.$PROJECT" .gitmodules
-    else
-        on_error "Missing submodule file of project: $PROJECT for ESCAPE repo!"
-    fi
-    git submodule update --init --remote
+#    # Create symlink to the appropriate .gitmodules file
+#    info "=== Checkout submodules ==="
+#    if [ -f ".gitmodules.$PROJECT" ]; then
+#        ln -vfs ".gitmodules.$PROJECT" .gitmodules
+#    else
+#        on_error "Missing submodule file of project: $PROJECT for ESCAPE repo!"
+#    fi
+#    git submodule update --init --remote
+#
+#    info "=== Create symlinks for submodules ==="
+#    cd "$DIR/dummy-orchestrator"
+#    if [ -f ".gitmodules.$PROJECT" ]; then
+#        ln -vfs ".gitmodules.$PROJECT" .gitmodules
+#    else
+#        on_error "Missing submodule file of project: $PROJECT for dummy-orchestrator!"
+#    fi
+#    cd "$DIR/mapping"
+#    if [ -f ".gitmodules.$PROJECT" ]; then
+#        ln -vfs ".gitmodules.$PROJECT" .gitmodules
+#    else
+#        on_error "Missing submodule file of project: $PROJECT for mapping!"
+#    fi
+#    cd "$DIR"
+#    git submodule update --init --remote --recursive --merge
 
-    info "=== Create symlinks for submodules ==="
-    cd "$DIR/dummy-orchestrator"
-    if [ -f ".gitmodules.$PROJECT" ]; then
-        ln -vfs ".gitmodules.$PROJECT" .gitmodules
+    info "=== Setup project ==="
+    # Git return error during submodule change -> disable error catching
+    set +e
+    if [ -f "project-setup.sh" ]; then
+        . ./project-setup.sh "$PROJECT"
     else
-        on_error "Missing submodule file of project: $PROJECT for dummy-orchestrator!"
+        on_error "Project setup script is missing!"
     fi
-    cd "$DIR/mapping"
-    if [ -f ".gitmodules.$PROJECT" ]; then
-        ln -vfs ".gitmodules.$PROJECT" .gitmodules
-    else
-        on_error "Missing submodule file of project: $PROJECT for mapping!"
-    fi
-    cd "$DIR"
-    git submodule update --init --remote --recursive --merge
+    set -e
+
     # Remove ESCAPEv2 config file from index in git to untrack changes
     # git update-index --assume-unchanged escape.config
 
@@ -145,6 +156,9 @@ function install_core {
     sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
+
+    info "=== Install ESCAPEv2 Python dependencies ==="
+    sudo -H pip install flask rainbow_logging_handler
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
@@ -342,7 +356,7 @@ function print_usage {
     echo -e "\t-g:   install dependencies for our rudimentary (G)UI"
     echo -e "\t-h:   print this (H)elp message"
     echo -e "\t-i:   install components of (I)nfrastructure Layer for Local Orchestration"
-    echo -e "\t-p:   use specific project module files [unify|sb|5gex|ericsson] default: unify"
+    echo -e "\t-p:   use specific project module files [unify|sb|5gex|ericsson] default: sb"
     exit 2
 }
 

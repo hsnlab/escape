@@ -31,7 +31,8 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError
 from escape.util.misc import schedule_delayed_as_coop_task, \
-  schedule_as_coop_task, notify_remote_visualizer, VERBOSE
+  schedule_as_coop_task, notify_remote_visualizer, VERBOSE, quit_with_ok, \
+  get_global_parameter
 from pox.lib.revent.revent import Event
 
 
@@ -127,7 +128,7 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
 
   def result (self):
     """
-    Retspond the result of a request given by the id.
+    Respond the result of a request given by the id.
 
     :return: None
     """
@@ -517,6 +518,9 @@ class ServiceLayerAPI(AbstractAPI):
     :type event: :any:`InstantiationFinishedEvent`
     :return: None
     """
+    if hasattr(self, 'rest_api') and self.rest_api:
+      self.rest_api.request_cache.set_result(id=event.id, result=event.result)
+      log.getChild('API').debug("Cache request result...")
     if not BaseResultEvent.is_error(event.result):
       log.getChild('API').info(
         "Service request(id=%s) has been finished successfully with result: %s!"
@@ -525,6 +529,6 @@ class ServiceLayerAPI(AbstractAPI):
       log.getChild('API').error(
         "Service request(id=%s) has been finished with error result: %s!" %
         (event.id, event.result))
-    if hasattr(self, 'rest_api') and self.rest_api:
-      self.rest_api.request_cache.set_result(id=event.id, result=event.result)
-      log.getChild('API').debug("Cache request result...")
+    # Quit ESCAPE if test mode is active
+    if get_global_parameter(name="QUIT_AFTER_PROCESS"):
+      quit_with_ok("Detected QUIT mode! Exiting ESCAPE...")

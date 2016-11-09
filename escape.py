@@ -49,6 +49,8 @@ def main ():
   escape.add_argument("-i", "--interactive", action="store_true", default=False,
                       help="run an interactive shell for observing internal "
                            "states")
+  escape.add_argument("-m", "--mininet", metavar="file", type=str,
+                      help="read the Mininet topology from the given file")
   escape.add_argument("-p", "--POXlike", action="store_true", default=False,
                       help="start ESCAPEv2 in the actual interpreter using "
                            "./pox as working directory instead of using a "
@@ -59,8 +61,11 @@ def main ():
   escape.add_argument("-s", "--service", metavar="file", type=str,
                       help="skip the SAS REST-API initiation and read the "
                            "service request from the given file")
-  escape.add_argument("-t", "--topo", metavar="file", type=str,
-                      help="read the topology from the given file explicitly")
+  escape.add_argument("-t", "--test", action="store_true", default=False,
+                      help="run in test mode")
+  escape.add_argument("-q", "--quit", action="store_true", default=False,
+                      help="quit right after the first service request has "
+                           "processed")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
@@ -125,6 +130,12 @@ def main ():
     cmd.insert(0, "sudo")
     cmd.append("--full")
 
+  if args.test:
+    cmd.append("--test")
+
+  if args.quit:
+    cmd.append("--quit")
+
   # Initiate the rudimentary GUI
   if args.gui:
     cmd.append("--gui")
@@ -158,12 +169,12 @@ def main ():
     cmd.append("--visualization")
 
   # Add topology file if --full is set
-  if args.topo:
+  if args.mininet:
     if args.full or args.agent:
-      cmd.append("--topo=%s" % os.path.abspath(args.topo))
+      cmd.append("--mininet=%s" % os.path.abspath(args.mininet))
     else:
       parser.error(
-        message="-t/--topo can be used only with infrastructure layer! "
+        message="-m/--mininet can be used only with Infrastructure layer! "
                 "(with -f/--full or -a/--agent flag)")
 
   # Add the interactive shell if needed

@@ -11,56 +11,75 @@ function info() {
     echo -e "${GREEN}$1${NC}"
 }
 
+function on_error() {
+    echo -e "\n${RED}Error during installation! ${1-}${NC}"
+    exit 1
+}
+
 function print_help {
-    echo -e "Usage: $0 [-p project] [-h]"
+    echo -e "Usage: $0 [project]"
     echo -e "Setup submodules according to given project for ESCAPE.\n"
-    echo -e "optional parameters:"
-    echo -e "\t-p:   setup project [sb|5gex]"
-    echo -e "\t-h:   show this help message and exit"
-    echo -e "Example: ./set_virtualenv.sh -p 5gex"
+    echo -e "parameters:"
+    echo -e "\t project: setup project [sb|5gex]"
     exit 0
+}
+
+function setup () {
+    info "==== Set project module file ===="
+    if [ -f ".gitmodules.$PROJECT" ]; then
+        # Create symlink for main repo
+        ln -vfs .gitmodules.${PROJECT} .gitmodules
+        # Sync to other project
+    else
+        on_error "Missing submodule file of project: $PROJECT for repo: $ROOT_DIR!"
+    fi
+
+    info "=== Reinitialize existing submodules ==="
+    git submodule deinit -f .
+    git submodule init
+
+    info "=== Deinit unnecessary modules ==="
+    if [ ${PROJECT} = "sb" ]; then
+        # Deinit only 5GEx submodules
+        for i in bgp-ls/netphony-topology bgp-ls/netphony-network-protocols tnova_connector; do
+            git submodule deinit -f ${i}
+        done
+    fi
+
+    info "=== Clone top submodules ==="
+    # Clone top submodules with default submodule
+    git submodule update --remote
+
+    info "=== Init submodules recursively ==="
+    # Add symlink to the referenced submodules and init them
+    for dir in "dummy-orchestrator" "mapping"; do
+        echo -en "$ROOT_DIR/$dir\t\t\t"
+        cd ${dir}
+        if [ -f ".gitmodules.$PROJECT" ]; then
+            ln -vfs .gitmodules.${PROJECT} .gitmodules
+        else
+            on_error "Missing submodule file of project: $PROJECT for repo: $dir!"
+        fi
+        cd ..
+    done
+
+    info "=== Sync and update submodules recursively ==="
+    # Sync and update all the submodules
+    git submodule foreach git submodule init
+    git submodule update --remote --recursive --merge
+
+    info "=== Defined submodules ==="
+    git submodule status --recursive
 }
 
 if [ $# -lt 1 ]; then
     print_help
 fi
 # Read initial parameters
-while getopts "p:h" OPTION; do
-    case ${OPTION} in
-        p)
-            PROJECT=${OPTARG};;
-        h)
-            print_help;;
-    esac
-done
+PROJECT=$1
+
+# START script here
 
 info "Project: $PROJECT\n"
 cd ${ROOT_DIR}
-info "=== Deinit all the submodules ==="
-git submodule deinit -f .
-info "=== Resync main modules ==="
-ln -vfs .gitmodules.${PROJECT} .gitmodules
-for dir in dummy-orchestrator escape/escape/nffg_lib mapping unify_virtualizer; do
-    git submodule init ${dir}
-done
-if [ ${PROJECT} = "5gex" ]; then
-    for dir in bgp-ls/netphony-network-protocols bgp-ls/netphony-topology tnova_connector; do
-        git submodule init ${dir}
-    done
-fi
-info "=== Initialize submodules ==="
-git submodule update
-info "=== Recreate recursive symlinks ==="
-for dir in mapping dummy-orchestrator; do
-    echo -en "$ROOT_DIR/$dir\t\t\t"
-    cd ${ROOT_DIR}/${dir}
-    ln -vfs .gitmodules.${PROJECT} .gitmodules
-done
-
-cd ${ROOT_DIR}
-info "==== Sync submodules ===="
-git submodule sync --recursive
-info "=== Update submodules ==="
-git submodule update --remote --recursive --merge --init
-info "==== Submodules ===="
-git submodule status --recursive
+setup

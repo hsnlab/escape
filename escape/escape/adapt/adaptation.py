@@ -355,9 +355,9 @@ class ComponentConfigurator(object):
         log.fatal("Missing DomainManager config: %s" % mgr_name)
         raise ConfigurationError(
           "Missing configuration for added DomainManager: %s" % mgr_name)
-      if mgr_class.IS_LOCAL_MANAGER:
+      if mgr_class.IS_INTERNAL_MANAGER:
         loaded_local_mgr = [name for name, mgr in self.__repository.iteritems()
-                            if mgr.IS_LOCAL_MANAGER]
+                            if mgr.IS_INTERNAL_MANAGER]
         if loaded_local_mgr:
           log.warning("A local DomainManager has already been initiated with "
                       "the name: %s! Skip initiating DomainManager: %s" %
@@ -374,7 +374,7 @@ class ComponentConfigurator(object):
     :return: None
     """
     loaded_local_mgr = [name for name, mgr in self.__repository.iteritems() if
-                        mgr.IS_LOCAL_MANAGER]
+                        mgr.IS_INTERNAL_MANAGER]
     if loaded_local_mgr:
       log.warning("A local DomainManager has already been initiated with the "
                   "name: %s! Skip initiation of default local DomainManager: %s"
@@ -421,6 +421,7 @@ class ControllerAdapter(object):
   """
   EXTERNAL_MDO_META_NAME = 'unify-slor'
   """Attribute name used topology from TADS to identify external MdO URL"""
+  EXTERNAL_DOMAIN_NAME_JOINER = '-'
 
   def __init__ (self, layer_API, with_infr=False):
     """
@@ -513,10 +514,10 @@ class ControllerAdapter(object):
                     "Skip install domain part..." % domain)
         deploy_result = False
         continue
-      # Temporarily rewrite/recreate TAGs here
-      NFFGToolBox.recreate_match_TAGs(nffg=part, log=log)
+      # Temporarily recreate TAGs originated from collocated link
+      NFFGToolBox.recreate_missing_match_TAGs(nffg=part, log=log)
       # Rebind requirement link fragments as e2e reqs
-      part = NFFGToolBox.rebind_e2e_req_links(nffg=part, log=log)
+      # part = NFFGToolBox.rebind_e2e_req_links(nffg=part, log=log)
       log.log(VERBOSE, "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       # Check if need to reset domain before install
       if CONFIG.reset_domains_before_install():
@@ -529,21 +530,21 @@ class ControllerAdapter(object):
       # Update the DoV based on the mapping result covering some corner case
       if domain_install_result:
         log.info("Installation of %s in %s was successful!" % (part, domain))
-        log.debug("Update installed part with collective result: %s" %
-                  NFFG.STATUS_DEPLOY)
-        # Update successful status info of mapped elements in NFFG part for
-        # DoV update
-        NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_DEPLOY,
-                                       log=log)
+        if self.DoVManager.status_updates:
+          log.debug("Update installed part with collective result: %s" %
+                    NFFG.STATUS_DEPLOY)
+          # Update successful status info of mapped elements in NFFG part for
+          # DoV update
+          NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_DEPLOY,
+                                         log=log)
       else:
-        log.error("Installation of %s in %s was unsuccessful!" %
-                  (part, domain))
         log.debug("Update installed part with collective result: %s" %
                   NFFG.STATUS_FAIL)
         # Update failed status info of mapped elements in NFFG part for DoV
         # update
-        NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
-                                       log=log)
+        if self.DoVManager.status_updates:
+          NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
+                                         log=log)
       # Note result according to others before
       deploy_result = deploy_result and domain_install_result
       # If installation of the domain was performed without error
@@ -560,7 +561,7 @@ class ControllerAdapter(object):
         continue
       # If the internalDM is the only initiated mgr, we can override the
       # whole DoV
-      if domain_mgr.IS_LOCAL_MANAGER:
+      if domain_mgr.IS_INTERNAL_MANAGER:
         if mapped_nffg.is_SBB():
           # If the request was a cleanup request, we can simply clean the DOV
           if mapped_nffg.is_bare():
@@ -754,7 +755,8 @@ class ControllerAdapter(object):
                     "Skip initialization...")
         return
       # Set domain name
-      mgr_cfg['domain_name'] = "%s@%s" % (id, domain_mgr.domain_name)
+      mgr_cfg['domain_name'] = "%s%s%s" % (
+        id, self.EXTERNAL_DOMAIN_NAME_JOINER, domain_mgr.domain_name)
       log.debug("Generated domain name: %s" % mgr_cfg['domain_name'])
       # Set URL and prefix
       try:

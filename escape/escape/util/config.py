@@ -132,13 +132,11 @@ class ESCAPEConfig(object):
       return self
     if config:
       # Config is set directly
-      log.info("Load explicitly given config file: %s" %
-               os.path.basename(config))
-    elif hasattr(core, "config_file_name"):
+      log.info("Load explicitly given config file: %s" % config)
+    elif hasattr(core, "CONFIG_FILE_NAME"):
       # Config is set through POX's core object by a topmost module (unify)
-      config = getattr(core, "config_file_name")
-      log.info("Load explicitly given config file: %s" %
-               os.path.basename(config))
+      config = getattr(core, "CONFIG_FILE_NAME")
+      log.info("Load explicitly given config file: %s" % config)
     else:
       # No config file has been given
       log.debug("No additional configuration has been given!")
@@ -587,29 +585,54 @@ class ESCAPEConfig(object):
     except KeyError:
       return ()
 
-  def get_local_manager (self):
+  def get_internal_manager (self):
     """
     Return with the Manager class which is detected as the Manager of the
     locally emulated Mininet-based network.
 
-    Based on the IS_LOCAL_MANAGER attribute of the defined DomainManager
+    Based on the IS_INTERNAL_MANAGER attribute of the defined DomainManager
     classes in the global config.
 
     :return: local manager name(s)
-    :rtype: str
+    :rtype: dict
     """
-    local_mgrs = []
+    internal_mgrs = []
     for item in self.__configuration[ADAPT].itervalues():
       if isinstance(item, dict) and 'module' in item and 'class' in item:
         try:
           mgr_class = getattr(importlib.import_module(item['module']),
                               item['class'])
-          if mgr_class.IS_LOCAL_MANAGER:
-            local_mgrs.append(item['domain_name'] if "domain_name" in item else
-                              mgr_class.DEFAULT_DOMAIN_NAME)
+          if mgr_class.IS_INTERNAL_MANAGER:
+            internal_mgrs.append(
+              item['domain_name'] if "domain_name" in item else
+              mgr_class.DEFAULT_DOMAIN_NAME)
         except (KeyError, AttributeError, TypeError):
           return None
-    return local_mgrs if local_mgrs else None
+    return internal_mgrs if internal_mgrs else None
+
+  def get_external_managers (self):
+    """
+    Return with Manager classes which is detected as external managers.
+
+    Based on the IS_EXTERNAL_MANAGER attribute of the defined DomainManager
+    classes in the global config.
+
+    :return: external manager name(s)
+    :rtype: dict
+    """
+    external_mgrs = []
+    for item in self.__configuration[ADAPT].itervalues():
+      if isinstance(item, dict) and 'module' in item and 'class' in item:
+        try:
+          mgr_class = getattr(importlib.import_module(item['module']),
+                              item['class'])
+          if mgr_class.IS_EXTERNAL_MANAGER:
+            external_mgrs.append(
+              item['domain_name'] if "domain_name" in item else
+              mgr_class.DEFAULT_DOMAIN_NAME)
+        except (KeyError, AttributeError, TypeError):
+          return None
+    return external_mgrs if external_mgrs else None
 
   def clear_domains_after_shutdown (self):
     """
