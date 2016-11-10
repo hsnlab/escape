@@ -42,7 +42,7 @@ FILE_LOGGER_FORMAT = "|%(levelname)s" \
                      "|%(asctime)s" \
                      "| %(message)s"
 # Log file name
-LOG_FILE = "escape.log"
+LOG_FILE = "log/escape.log"
 
 
 def setup_logging (test_mode=False, **kw):
