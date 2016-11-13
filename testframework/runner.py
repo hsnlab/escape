@@ -104,5 +104,4 @@ class CommandLineEscape(Escape):
 
 class EscapeRunResult():
   def __init__ (self, output=""):
-    self.stdout = output
-    self.stderr = output
+    self.log_output = output
