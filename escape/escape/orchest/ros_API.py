@@ -901,13 +901,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
         old=resource_nffg, new=nffg, ignore_infras=True)
       log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
       log.log(VERBOSE, "Calculated DEL NFFG:\n%s" % del_nffg.dump())
-      if not add_nffg.is_empty() and del_nffg.is_empty():
+      if not add_nffg.is_bare() and del_nffg.is_bare():
         nffg = add_nffg
-        log.info("Calculated mapping mode: %s" % nffg.mode)
-      elif add_nffg.is_empty() and not del_nffg.is_empty():
+        log.info("DEL NFFG is bare! Calculated mapping mode: %s" % nffg.mode)
+      elif add_nffg.is_bare() and not del_nffg.is_bare():
         nffg = del_nffg
-        log.info("Calculated mapping mode: %s" % nffg.mode)
-      elif not add_nffg.is_empty() and not del_nffg.is_empty():
+        log.info("ADD NFFG is bare! Calculated mapping mode: %s" % nffg.mode)
+      elif not add_nffg.is_bare() and not del_nffg.is_bare():
         log.warning("Both ADD / DEL mode is not supported currently")
         return
       else:
