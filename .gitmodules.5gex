@@ -10,10 +10,10 @@
 	path = unify_virtualizer
 	url = git@5gexgit.tmit.bme.hu:unify/virtualizer.git
 	branch = master
-[submodule "dummy-orchestrator"]
-	path = dummy-orchestrator
-	url = git@5gexgit.tmit.bme.hu:unify/dummy-orchestrator.git
-	branch = master
+#[submodule "dummy-orchestrator"]
+#	path = dummy-orchestrator
+#	url = git@5gexgit.tmit.bme.hu:unify/dummy-orchestrator.git
+#	branch = master
 [submodule "tnova_connector"]
 	path = tnova_connector
 	url = git@5gexgit.tmit.bme.hu:unify/tnova_connector.git
