@@ -1821,14 +1821,14 @@ class NFFGConverter(object):
             if 'sap' in port.properties:
               v_nf_port.sap.set_value(port.properties['sap'])
             v_nf_port.capability.set_value(port.capability)
-            # v_nf_port.sap_data.technology.set_value(port.technology)
-            # v_nf_port.sap_data.resources.delay.set_value(port.delay)
-            # v_nf_port.sap_data.resources.bandwidth.set_value(
-            #   port.bandwidth)
-            # v_nf_port.sap_data.resources.cost.set_value(port.cost)
-            if v_nf_port.sap_data.is_initialized():
-              self.log.warning("Unexpected value: sap_data values of NF is not "
-                               "converted to <sap_data>!")
+            # if v_nf_port.sap_data.is_initialized():
+            #   self.log.warning("Unexpected value: sap_data values of NF is not "
+            #                    "converted to <sap_data>!")
+            v_nf_port.sap_data.technology.set_value(port.technology)
+            v_nf_port.sap_data.resources.delay.set_value(port.delay)
+            v_nf_port.sap_data.resources.bandwidth.set_value(
+              port.bandwidth)
+            v_nf_port.sap_data.resources.cost.set_value(port.cost)
             v_nf_port.control.controller.set_value(port.controller)
             v_nf_port.control.orchestrator.set_value(port.orchestrator)
             v_nf_port.addresses.l2.set_value(port.l2)
