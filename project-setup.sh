@@ -52,7 +52,7 @@ function setup () {
 
     info "=== Init submodules recursively ==="
     # Add symlink to the referenced submodules and init them
-    for dir in "dummy-orchestrator" "mapping"; do
+    for dir in "mapping"; do
         echo -en "$ROOT_DIR/$dir\t\t\t"
         cd ${dir}
         if [ -f ".gitmodules.$PROJECT" ]; then

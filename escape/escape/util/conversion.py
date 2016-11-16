@@ -602,6 +602,14 @@ class NFFGConverter(object):
         # Add port properties
         if vport.name.is_initialized():
           nf_port.name = vport.name.get_value()
+        # Store specific SAP port in NFs transparently
+        if vport.port_type.is_initialized():
+          if vport.port_type.get_value() == self.TYPE_VIRTUALIZER_PORT_SAP:
+            nf_port.properties['port-type'] = self.TYPE_VIRTUALIZER_PORT_SAP
+            if vport.sap.is_initialized():
+              nf_port.properties['sap'] = vport.sap.get_value()
+        else:
+          self.log.warning("Port type is missing from node: %s" % vport.id)
         # Add infra port capabilities
         if vport.capability.is_initialized():
           nf_port.capability = vport.capability.get_value()
@@ -1804,19 +1812,23 @@ class NFFGConverter(object):
           # Add NF ports
           for port in nf.ports:
             v_nf_port = virt_lib.Port(id=str(port.id),
-                                      port_type="port-abstract")
+                                      port_type=self.TYPE_VIRTUALIZER_PORT_ABSTRACT)
             v_node.NF_instances[str(nf.id)].ports.add(v_nf_port)
             # Convert other SAP-specific data
             v_nf_port.name.set_value(port.name)
+            if 'port-type' in port.properties:
+              v_nf_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
+            if 'sap' in port.properties:
+              v_nf_port.sap.set_value(port.properties['sap'])
             v_nf_port.capability.set_value(port.capability)
-            # v_nf_port.sap_data.technology.set_value(port.technology)
-            # v_nf_port.sap_data.resources.delay.set_value(port.delay)
-            # v_nf_port.sap_data.resources.bandwidth.set_value(
-            #   port.bandwidth)
-            # v_nf_port.sap_data.resources.cost.set_value(port.cost)
-            if v_nf_port.sap_data.is_initialized():
-              self.log.warning("Unexpected value: sap_data values of NF is not "
-                               "converted to <sap_data>!")
+            # if v_nf_port.sap_data.is_initialized():
+            #   self.log.warning("Unexpected value: sap_data values of NF is not "
+            #                    "converted to <sap_data>!")
+            v_nf_port.sap_data.technology.set_value(port.technology)
+            v_nf_port.sap_data.resources.delay.set_value(port.delay)
+            v_nf_port.sap_data.resources.bandwidth.set_value(
+              port.bandwidth)
+            v_nf_port.sap_data.resources.cost.set_value(port.cost)
             v_nf_port.control.controller.set_value(port.controller)
             v_nf_port.control.orchestrator.set_value(port.orchestrator)
             v_nf_port.addresses.l2.set_value(port.l2)

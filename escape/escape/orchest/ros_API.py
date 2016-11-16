@@ -15,8 +15,10 @@
 Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
+import ast
 import json
 import pprint
+from collections import OrderedDict
 
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
@@ -263,26 +265,27 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       if self.DEFAULT_DIFF:
         if self.server.last_response is None:
           self.log.info("Missing cached Virtualizer! Acquiring topology now...")
-          config = self._proceed_API_call(self.API_CALL_RESOURCE)
-          if config is None:
-            self.log.error("Requested resource info is missing!")
-            self.send_error(404, message="Resource info is missing!")
-            return
-          elif config is False:
-            self.log.warning("Requested info is unchanged but has not found!")
-            self.send_error(404, message="Resource info is missing!")
+        else:
+          self.log.debug("Check topology changes...")
+        config = self._proceed_API_call(self.API_CALL_RESOURCE)
+        if config is None:
+          self.log.error("Requested resource info is missing!")
+          self.send_error(404, message="Resource info is missing!")
+          return
+        elif config is False:
+          self.log.debug("Topo description is unchanged!")
+        else:
+          # Convert required NFFG if needed
+          if self.virtualizer_format_enabled:
+            self.log.debug("Convert internal NFFG to Virtualizer...")
+            converter = NFFGConverter(logger=log)
+            v_topology = converter.dump_to_Virtualizer(nffg=config)
+            # Cache converted data for edit-config patching
+            self.log.debug("Cache converted topology...")
+            self.server.last_response = v_topology
           else:
-            # Convert required NFFG if needed
-            if self.virtualizer_format_enabled:
-              self.log.debug("Convert internal NFFG to Virtualizer...")
-              converter = NFFGConverter(logger=log)
-              v_topology = converter.dump_to_Virtualizer(nffg=config)
-              # Cache converted data for edit-config patching
-              self.log.debug("Cache converted topology...")
-              self.server.last_response = v_topology
-            else:
-              self.log.debug("Cache acquired topology...")
-              self.server.last_response = config
+            self.log.debug("Cache acquired topology...")
+            self.server.last_response = config
         # Perform patching
         full_cfg = self.__recreate_full_request(diff=received_cfg)
       else:
@@ -746,25 +749,48 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: dict
     """
     # TODO - implement!
-    ret = {'service_id': service_id, 'mapping': []}
+    # Create base response structure
+    ret = {"service_id": service_id, "mapping": []}
+    # Get the service NFFG based on service ID
     request = self.resource_orchestrator.nffgManager.get(service_id)
     if request is None:
       log.warning("Service request(id: %s) is not found!" % service_id)
       return "Service request is not found!"
+    # Get the overall view a.k.a. DoV
     dov = self.resource_orchestrator.virtualizerManager.dov.get_resource_info()
     # Collect NFs
     nfs = [nf.id for nf in request.nfs]
     log.debug("Collected mapped BiSBiS nodes for NFs: %s" % nfs)
+    # Process NFs
     for nf_id in nfs:
-      mapping = {'nf': nf_id}
+      mapping = {}
+      # Get the connected infra node
       bisbis = [n.id for n in dov.infra_neighbors(nf_id)]
       if len(bisbis) != 1:
         log.warning(
           "Detected unexpected number of BiSBiS node for NF: %s!" % bisbis)
+        continue
+      # Add infra node ID and domain name
       bisbis = str(bisbis.pop()).split('@')
-      mapping['bisbis'] = bisbis[0]
-      mapping['domain'] = bisbis[1] if len(bisbis) > 1 else 'INTERNAL'
+      # Add NF id
+      nf = {"id": nf_id, "ports": []}
+      for dyn_link in dov.network[nf_id][bisbis[0]].itervalues():
+        port = OrderedDict(id=dyn_link.src.id)
+        if dyn_link.src.l4 is not None:
+          try:
+            port['management'] = ast.literal_eval(dyn_link.src.l4)
+          except SyntaxError:
+            log.warning("L4 address entry: %s is not valid Python expression! "
+                        "Add the original string..." % dyn_link.src.l4)
+            port['management'] = dyn_link.src.l4
+        nf['ports'].append(port)
+      mapping['nf'] = nf
+      mapping['bisbis'] = {"id": bisbis[0],
+                           "domain": bisbis[1] if len(bisbis) > 1
+                           else 'INTERNAL'}
       ret['mapping'].append(mapping)
+      # Collect NF management data
+
     log.debug("Collected mapping info:\n%s" % pprint.pformat(ret))
     return ret
 
@@ -875,13 +901,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
         old=resource_nffg, new=nffg, ignore_infras=True)
       log.log(VERBOSE, "Calculated ADD NFFG:\n%s" % add_nffg.dump())
       log.log(VERBOSE, "Calculated DEL NFFG:\n%s" % del_nffg.dump())
-      if not add_nffg.is_empty() and del_nffg.is_empty():
+      if not add_nffg.is_bare() and del_nffg.is_bare():
         nffg = add_nffg
-        log.info("Calculated mapping mode: %s" % nffg.mode)
-      elif add_nffg.is_empty() and not del_nffg.is_empty():
+        log.info("DEL NFFG is bare! Calculated mapping mode: %s" % nffg.mode)
+      elif add_nffg.is_bare() and not del_nffg.is_bare():
         nffg = del_nffg
-        log.info("Calculated mapping mode: %s" % nffg.mode)
-      elif not add_nffg.is_empty() and not del_nffg.is_empty():
+        log.info("ADD NFFG is bare! Calculated mapping mode: %s" % nffg.mode)
+      elif not add_nffg.is_bare() and not del_nffg.is_bare():
         log.warning("Both ADD / DEL mode is not supported currently")
         return
       else:
