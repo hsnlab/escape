@@ -52,8 +52,8 @@
   ],
   "node_infras": [
     {
-      "id": "EE1",
-      "name": "ee-infra-1",
+      "id": "EE11",
+      "name": "ee-infra-11",
       "ports": [
         {
           "id": 1
@@ -75,8 +75,8 @@
       }
     },
     {
-      "id": "SW2",
-      "name": "switch-2",
+      "id": "SW12",
+      "name": "switch-12",
       "ports": [
         {
           "id": 1
@@ -105,8 +105,8 @@
       }
     },
     {
-      "id": "SW1",
-      "name": "switch-1",
+      "id": "SW11",
+      "name": "switch-11",
       "ports": [
         {
           "id": 1
@@ -129,8 +129,8 @@
       }
     },
     {
-      "id": "EE2",
-      "name": "ee-infra-2",
+      "id": "EE12",
+      "name": "ee-infra-12",
       "ports": [
         {
           "id": 1
@@ -155,16 +155,16 @@
   "edge_links": [
     {
       "id": "mn-link1",
-      "src_node": "EE1",
+      "src_node": "EE11",
       "src_port": 1,
-      "dst_node": "SW1",
+      "dst_node": "SW11",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link6",
-      "src_node": "SW2",
+      "src_node": "SW12",
       "src_port": 4,
       "dst_node": "SAP14",
       "dst_port": 1,
@@ -173,7 +173,7 @@
     },
     {
       "id": "mn-link5",
-      "src_node": "SW2",
+      "src_node": "SW12",
       "src_port": 3,
       "dst_node": "SAP2",
       "dst_port": 1,
@@ -182,16 +182,16 @@
     },
     {
       "id": "mn-link3",
-      "src_node": "SW1",
+      "src_node": "SW11",
       "src_port": 2,
-      "dst_node": "SW2",
+      "dst_node": "SW12",
       "dst_port": 2,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link4",
-      "src_node": "SW1",
+      "src_node": "SW11",
       "src_port": 3,
       "dst_node": "SAP1",
       "dst_port": 1,
@@ -200,9 +200,9 @@
     },
     {
       "id": "mn-link2",
-      "src_node": "EE2",
+      "src_node": "EE12",
       "src_port": 1,
-      "dst_node": "SW2",
+      "dst_node": "SW12",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10

@@ -52,8 +52,8 @@
   ],
   "node_infras": [
     {
-      "id": "SW14",
-      "name": "switch-14",
+      "id": "SW24",
+      "name": "switch-24",
       "ports": [
         {
           "id": 1
@@ -79,8 +79,8 @@
       }
     },
     {
-      "id": "SW13",
-      "name": "switch-13",
+      "id": "SW23",
+      "name": "switch-23",
       "ports": [
         {
           "id": 1
@@ -103,8 +103,8 @@
       }
     },
     {
-      "id": "EE11",
-      "name": "ee-infra-11",
+      "id": "EE21",
+      "name": "ee-infra-21",
       "ports": [
         {
           "id": 1
@@ -126,8 +126,8 @@
       }
     },
     {
-      "id": "EE12",
-      "name": "ee-infra-12",
+      "id": "EE22",
+      "name": "ee-infra-22",
       "ports": [
         {
           "id": 1
@@ -152,7 +152,7 @@
   "edge_links": [
     {
       "id": "mn-link15",
-      "src_node": "SW14",
+      "src_node": "SW24",
       "src_port": 3,
       "dst_node": "SAP4",
       "dst_port": 1,
@@ -161,7 +161,7 @@
     },
     {
       "id": "mn-link16",
-      "src_node": "SW14",
+      "src_node": "SW24",
       "src_port": 4,
       "dst_node": "SAP14",
       "dst_port": 1,
@@ -170,16 +170,16 @@
     },
     {
       "id": "mn-link13",
-      "src_node": "SW13",
+      "src_node": "SW23",
       "src_port": 2,
-      "dst_node": "SW14",
+      "dst_node": "SW24",
       "dst_port": 2,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link14",
-      "src_node": "SW13",
+      "src_node": "SW23",
       "src_port": 3,
       "dst_node": "SAP3",
       "dst_port": 1,
@@ -188,18 +188,18 @@
     },
     {
       "id": "mn-link11",
-      "src_node": "EE11",
+      "src_node": "EE21",
       "src_port": 1,
-      "dst_node": "SW13",
+      "dst_node": "SW23",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
       "id": "mn-link12",
-      "src_node": "EE12",
+      "src_node": "EE22",
       "src_port": 1,
-      "dst_node": "SW14",
+      "dst_node": "SW24",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
