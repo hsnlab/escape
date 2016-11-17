@@ -445,7 +445,7 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     self.log.info("Dump received request into file: %s..." % file_name)
     self.log.log(VERBOSE, "Dumped data:\n%s" % data)
     try:
-      with open(file_name, mode='w') as f:
+      with open(file_name, mode='w+') as f:
         f.write(data)
       self._fix_ownership(file_name=file_name)
     except BaseException:
@@ -534,7 +534,7 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     :rtype: bool
     """
     return self._dump_to_file(
-      file_name='%s-edit_config.nffg' % self.domain_name,
+      file_name='out-%s-edit_config.nffg' % self.domain_name,
       data=nffg.dump())
 
 
@@ -619,8 +619,8 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     if self.diff:
       log.debug("DIFF is enabled. Calculating difference of mapping changes...")
       vdata = self.__calculate_diff(vdata)
-    return self._dump_to_file(file_name='%s-edit_config.xml' % self.domain_name,
-                              data=vdata.xml())
+    return self._dump_to_file(
+      file_name='out-%s-edit_config.xml' % self.domain_name, data=vdata.xml())
 
 
 class SDNDomainTopoAdapter(NFFGBasedStaticFileAdapter):
