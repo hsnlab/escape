@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y git wget && \
     ./install-dep.sh -${ESC_INSTALL_PARAMS} && \
 #    echo "/bin/bash /home/escape/docker/startup.sh" >> /etc/bash.bashrc && \
     rm -rf  /root/.ssh && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.ssh
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 # REST-APIs:  Service Layer  |  Resource Orchestration Layer  |  Cf-Or
 EXPOSE 8008 8888 8889
 # Set starting script which start required services and init a shell

@@ -1,29 +1,22 @@
 {
   "parameters": {
-    "id": "ESCAPE-LO2",
-    "name": "ESCAPE test topology for LO-2",
+    "id": "ESCAPE-DO1",
+    "name": "ESCAPE test topology for LO-1",
     "version": "1.0"
   },
   "node_saps": [
-    {
-      "id": "SAP4",
-      "name": "SAP4",
-      "ports": [
-        {
-          "id": 1,
-          "property": {
-            "ip": "10.0.0.4/24",
-            "mac": "00:00:00:00:00:04"
-          }
-        }
-      ]
-    },
     {
       "id": "SAP14",
       "name": "SAP14",
       "ports": [
         {
-          "id": 1
+          "id": 1,
+          "sap_data": {
+            "resources": {
+              "delay": 2.5,
+              "bandwidth": 10
+            }
+          }
         }
       ],
       "binding": "sap14_veth",
@@ -31,71 +24,33 @@
       "bandwidth": 10
     },
     {
-      "id": "SAP3",
-      "name": "SAP3",
+      "id": "SAP1",
+      "name": "SAP1",
       "ports": [
         {
           "id": 1,
           "property": {
-            "ip": "10.0.0.3/24",
-            "mac": "00:00:00:00:00:03"
+            "ip": "10.0.0.1/24",
+            "mac": "00:00:00:00:00:01"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAP2",
+      "name": "SAP2",
+      "ports": [
+        {
+          "id": 1,
+          "property": {
+            "ip": "10.0.0.2/24",
+            "mac": "00:00:00:00:00:02"
           }
         }
       ]
     }
   ],
   "node_infras": [
-    {
-      "id": "SW14",
-      "name": "switch-14",
-      "ports": [
-        {
-          "id": 1
-        },
-        {
-          "id": 2
-        },
-        {
-          "id": 3
-        },
-        {
-          "id": 4
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "SDN-SWITCH",
-      "resources": {
-        "cpu": 0,
-        "mem": 0,
-        "storage": 0,
-        "delay": 0.2,
-        "bandwidth": 10000
-      }
-    },
-    {
-      "id": "SW13",
-      "name": "switch-13",
-      "ports": [
-        {
-          "id": 1
-        },
-        {
-          "id": 2
-        },
-        {
-          "id": 3
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "SDN-SWITCH",
-      "resources": {
-        "cpu": 0,
-        "mem": 0,
-        "storage": 0,
-        "delay": 0.2,
-        "bandwidth": 10000
-      }
-    },
     {
       "id": "EE11",
       "name": "ee-infra-11",
@@ -114,9 +69,63 @@
       "resources": {
         "cpu": 5,
         "mem": 5,
-        "storage": 5,
+        "storage": 20,
         "delay": 0.9,
         "bandwidth": 5000
+      }
+    },
+    {
+      "id": "SW12",
+      "name": "switch-12",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 3
+        },
+        {
+          "id": 4,
+          "property": {
+            "type": "inter-domain"
+          }
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0,
+        "mem": 0,
+        "storage": 0,
+        "delay": 0.2,
+        "bandwidth": 10000
+      }
+    },
+    {
+      "id": "SW11",
+      "name": "switch-11",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 3
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0,
+        "mem": 0,
+        "storage": 0,
+        "delay": 0.2,
+        "bandwidth": 10000
       }
     },
     {
@@ -137,7 +146,7 @@
       "resources": {
         "cpu": 5,
         "mem": 5,
-        "storage": 5,
+        "storage": 20,
         "delay": 0.9,
         "bandwidth": 5000
       }
@@ -145,17 +154,17 @@
   ],
   "edge_links": [
     {
-      "id": "mn-link15",
-      "src_node": "SW14",
-      "src_port": 3,
-      "dst_node": "SAP4",
+      "id": "mn-link1",
+      "src_node": "EE11",
+      "src_port": 1,
+      "dst_node": "SW11",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
-      "id": "mn-link16",
-      "src_node": "SW14",
+      "id": "mn-link6",
+      "src_node": "SW12",
       "src_port": 4,
       "dst_node": "SAP14",
       "dst_port": 1,
@@ -163,37 +172,37 @@
       "bandwidth": 10
     },
     {
-      "id": "mn-link13",
-      "src_node": "SW13",
+      "id": "mn-link5",
+      "src_node": "SW12",
+      "src_port": 3,
+      "dst_node": "SAP2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10
+    },
+    {
+      "id": "mn-link3",
+      "src_node": "SW11",
       "src_port": 2,
-      "dst_node": "SW14",
+      "dst_node": "SW12",
       "dst_port": 2,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
-      "id": "mn-link14",
-      "src_node": "SW13",
+      "id": "mn-link4",
+      "src_node": "SW11",
       "src_port": 3,
-      "dst_node": "SAP3",
+      "dst_node": "SAP1",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10
     },
     {
-      "id": "mn-link11",
-      "src_node": "EE11",
-      "src_port": 1,
-      "dst_node": "SW13",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10
-    },
-    {
-      "id": "mn-link12",
+      "id": "mn-link2",
       "src_node": "EE12",
       "src_port": 1,
-      "dst_node": "SW14",
+      "dst_node": "SW12",
       "dst_port": 1,
       "delay": 1.5,
       "bandwidth": 10

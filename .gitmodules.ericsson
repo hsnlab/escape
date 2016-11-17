@@ -10,10 +10,10 @@
 	path = unify_virtualizer
 	url = ssh://git@213.16.101.153:/unify/virtualizer.git
 	branch = master
-[submodule "dummy-orchestrator"]
-	path = dummy-orchestrator
-	url = ssh://git@213.16.101.153:/unify/dummy-orchestrator.git
-	branch = master
+#[submodule "dummy-orchestrator"]
+#	path = dummy-orchestrator
+#	url = ssh://git@213.16.101.153:/unify/dummy-orchestrator.git
+#	branch = master
 
 # Placeholder for 5GEx submodules
 

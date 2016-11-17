@@ -1,7 +1,7 @@
 {
   "parameters": {
-    "id": "SG-request",
-    "name": "SG-name",
+    "id": "ServiceRequest01",
+    "name": "SG-comp-decomp-fwd",
     "version": "1.0",
     "mode": "ADD"
   },
@@ -11,10 +11,7 @@
       "name": "FORWARDER",
       "ports": [
         {
-          "id": 1,
-          "addresses": {
-            "l4": "{'22/tcp': ('0.0.0.0', 20000), '55555/udp': ('0.0.0.0', 55555)}"
-          }
+          "id": 1
         }
       ],
       "functional_type": "simpleForwarder",
@@ -120,7 +117,7 @@
   ],
   "edge_reqs": [
     {
-      "id": 29745296,
+      "id": "requirement-sap12",
       "src_node": "SAP1",
       "src_port": 1,
       "dst_node": "SAP2",
@@ -134,7 +131,7 @@
       ]
     },
     {
-      "id": 29745360,
+      "id": "requirement-sap21",
       "src_node": "SAP2",
       "src_port": 1,
       "dst_node": "SAP1",

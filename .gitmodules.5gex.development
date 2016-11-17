@@ -1,11 +1,11 @@
 [submodule "escape/escape/nffg_lib"]
 	path = escape/escape/nffg_lib
 	url = git@5gexgit.tmit.bme.hu:unify/nffg.git
-	branch = master
+	branch = development
 [submodule "mapping"]
 	path = mapping
 	url = git@5gexgit.tmit.bme.hu:unify/mapping.git
-	branch = master
+	branch = development
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
 	url = git@5gexgit.tmit.bme.hu:unify/virtualizer.git

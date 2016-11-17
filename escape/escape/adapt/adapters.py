@@ -16,6 +16,7 @@ Contains Adapter classes which contains protocol and technology specific
 details for the connections between ESCAPEv2 and other different domains.
 """
 import json
+import os
 import pprint
 from copy import deepcopy
 
@@ -369,8 +370,9 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
   """
   name = "STATIC-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
+  LOG_DIR = "log"
 
-  def __init__ (self, path=None, *args, **kwargs):
+  def __init__ (self, path=None, log_dir=None, **kwargs):
     """
     Init.
 
@@ -378,8 +380,10 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     :type path: str
     :return: None
     """
-    super(StaticFileAdapter, self).__init__(*args, **kwargs)
+    super(StaticFileAdapter, self).__init__(**kwargs)
     self.topo = None
+    if log_dir:
+      self.LOG_DIR = log_dir
     try:
       self._read_topo_from_file(path=path)
     except TopologyLoadException as e:
@@ -426,6 +430,30 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     """
     raise NotImplementedError("Not implemented yet!")
 
+  def _dump_to_file (self, file_name, data):
+    """
+    Dump received :any:`NFFG` into a file.
+
+    :param file_name: file name
+    :type file_name: str
+    :param data: received data
+    :type data: str
+    :return: write tu file was success or not
+    :rtype: bool
+    """
+    file_name = os.path.join(self.LOG_DIR, file_name)
+    self.log.info("Dump received request into file: %s..." % file_name)
+    self.log.log(VERBOSE, "Dumped data:\n%s" % data)
+    try:
+      with open(file_name, mode='w+') as f:
+        f.write(data)
+      self._fix_ownership(file_name=file_name)
+    except BaseException:
+      self.log.exception("Logging into a file was unsuccessful!")
+      return False
+    # Return with successful result by default
+    return True
+
   @staticmethod
   def _fix_ownership (file_name):
     """
@@ -451,23 +479,24 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
   name = "STATIC-NFFG-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
-  def __init__ (self, domain_name=None, path=None, backward_links=None, *args,
+  def __init__ (self, domain_name=None, path=None, check_backward_links=None,
                 **kwargs):
     """
     Init.
 
     :param path: file path offered as the domain topology
     :type path: str
-    :param backward_links: read NFFG contains dynamic links (default: false)
-    :type backward_links: bool
+    :param check_backward_links: check NFFG contains dynamic links (default:
+    false)
+    :type check_backward_links: bool
     :return: None
     """
     log.debug("Init %s - type: %s, domain: %s, path: %s, backward_links: %s" % (
       self.__class__.__name__, self.type, domain_name, path,
-      backward_links))
-    self.backward_links = backward_links
+      check_backward_links))
+    self.check_backward_links = check_backward_links
     super(NFFGBasedStaticFileAdapter, self).__init__(domain_name=domain_name,
-                                                     path=path, *args, **kwargs)
+                                                     path=path, **kwargs)
 
   def _read_topo_from_file (self, path):
     """
@@ -481,13 +510,22 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     try:
       with open(path, 'r') as f:
         log.debug("Load topology from file: %s" % path)
-        self.topo = self.rewrite_domain(NFFG.parse(f.read()))
-        if self.backward_links:
-          log.debug(
-            "Topology contains backward links! Skip link duplication...")
+        topo = self.rewrite_domain(NFFG.parse(f.read()))
+        if self.check_backward_links:
+          log.debug("Check backward links in loaded topology file...")
+          backward_links = sum(
+            [link.id for link in topo.links if link.backward is True])
+          if backward_links == 0:
+            log.debug("No backward link is detected! Duplicate static links...")
+            topo.duplicate_static_links()
+          else:
+            log.debug("Backward links are detected: %s! "
+                      "Skip static link duplication..." % backward_links)
         else:
-          self.topo.duplicate_static_links()
-        log.log(VERBOSE, "Loaded topology:\n%s" % self.topo.dump())
+          log.debug("Skip static link duplication...")
+        log.log(VERBOSE, "Loaded topology:\n%s" % topo.dump())
+        # Save topology file
+        self.topo = topo
         # print self.topo.dump()
     except IOError:
       log.warning("Topology file not found: %s" % path)
@@ -505,14 +543,9 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     :return: successful install (True)
     :rtype: bool
     """
-    file_name = '%s-edit_config.nffg' % self.domain_name
-    self.log.info("Dump received request into a file: %s..." % file_name)
-    self.log.log(VERBOSE, "Dumped NFFG:\n%s" % nffg.dump())
-    with open(file_name, mode='w') as f:
-      f.write(nffg.dump())
-    self._fix_ownership(file_name=file_name)
-    # Return with successful result by default
-    return True
+    return self._dump_to_file(
+      file_name='out-%s-edit_config.nffg' % self.domain_name,
+      data=nffg.dump())
 
 
 class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
@@ -523,7 +556,7 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
   name = "STATIC-VIRTUALIZER-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
-  def __init__ (self, domain_name=None, path=None, diff=None, *args, **kwargs):
+  def __init__ (self, domain_name=None, path=None, diff=None, **kwargs):
     """
     Init.
 
@@ -537,7 +570,7 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     self.converter = NFFGConverter(domain=domain_name, logger=log,
                                    ensure_unique_id=CONFIG.ensure_unique_id())
     super(VirtualizerBasedStaticFileAdapter, self).__init__(
-      domain_name=domain_name, path=path, *args, **kwargs)
+      domain_name=domain_name, path=path, **kwargs)
     self.diff = diff
 
   def _read_topo_from_file (self, path):
@@ -591,19 +624,13 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     :return: successful install (True)
     :rtype: bool
     """
-    file_name = '%s-edit_config.xml' % self.domain_name
-    self.log.info("Dump received request into a file: %s..." % file_name)
     vdata = self.converter.adapt_mapping_into_Virtualizer(
       virtualizer=self.virtualizer, nffg=nffg, reinstall=self.diff)
     if self.diff:
       log.debug("DIFF is enabled. Calculating difference of mapping changes...")
       vdata = self.__calculate_diff(vdata)
-    self.log.log(VERBOSE, "Dumped Virtualizer:\n%s" % vdata.xml())
-    with open(file_name, mode='w') as f:
-      f.write(vdata.xml())
-    self._fix_ownership(file_name=file_name)
-    # Return with successful result by default
-    return True
+    return self._dump_to_file(
+      file_name='out-%s-edit_config.xml' % self.domain_name, data=vdata.xml())
 
 
 class SDNDomainTopoAdapter(NFFGBasedStaticFileAdapter):
