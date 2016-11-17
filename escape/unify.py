@@ -23,7 +23,7 @@ import logging
 
 import pox.lib.util as poxutil
 from escape_logging import setup_logging
-from pox.core import core, log
+from pox.core import core, log as core_log
 
 # Initial parameters used for storing command line parameters.
 init_param = {}
@@ -62,9 +62,9 @@ def _start_components (event):
 
 
 @poxutil.eval_args
-def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
+def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
             full=False, loglevel="INFO", cfor=False, visualization=False,
-            mininet=None, test=None, quit=None):
+            mininet=None, test=False, log=None, quit=False):
   """
   Launch function called by POX core when core is up.
 
@@ -89,6 +89,8 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   :type mininet: str
   :param test: Start ESCAPE in test mode (optional)
   :type test: bool
+  :param log: add ESCAPE main log file for test mode (default: log/escape.log)
+  :type log: str
   :param quit: Quit after the first service request has processed (optional)
   :type quit: bool
   :return: None
@@ -97,12 +99,14 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
   init_param.update(locals())
   # Import colourful logging
   if loglevel == 'VERBOSE':
-    setup_logging(**{'test_mode': True if test else False})
+    setup_logging(**{'test_mode': True if test else False,
+                     'log_file': log})
     # Set the Root logger level explicitly
     logging.getLogger('').setLevel("VERBOSE")
   else:
     # Launch pretty logger with specific log level
-    setup_logging(**{loglevel: True, 'test_mode': True if test else False})
+    setup_logging(**{loglevel: True, 'test_mode': True if test else False,
+                     'log_file': log})
   # Save additional config file name into POX's core as an attribute to avoid to
   # confuse with POX's modules
   if config:
@@ -117,10 +121,11 @@ def launch (sg_file='', config=None, gui=False, agent=False, rosapi=False,
     setattr(core, "QUIT_AFTER_PROCESS", True)
 
   from escape.util.misc import get_escape_name_version
-  log.info("Starting %s(version: %s) components..." % get_escape_name_version())
+  core_log.info(
+    "Starting %s(version: %s) components..." % get_escape_name_version())
 
   if visualization:
-    log.debug("Enable remote visualization...")
+    core_log.debug("Enable remote visualization...")
     from escape.util.visualization import RemoteVisualizer
     core.register(RemoteVisualizer._core_name, RemoteVisualizer())
   # Register _start_components() to be called when POX is up

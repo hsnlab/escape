@@ -45,16 +45,19 @@ FILE_LOGGER_FORMAT = "|%(levelname)s" \
 LOG_FILE = "log/escape.log"
 
 
-def setup_logging (test_mode=False, **kw):
+def setup_logging (test_mode=False, log_file=None, **kw):
   """
   Launch and set parameters for logging.
 
   :param test_mode: use test mode logging (default: False)
   :type test_mode: bool
+  :param log_file: log file path
+  :type log_file: str
   :param kw: additional parameters for POX's logger
   :type kw: dict
   :return: None
   """
+  log_file = log_file if log_file is not None else LOG_FILE
   # Enable logging in specific logging level
   level.launch(**kw)
   # Launch colorful logging
@@ -67,11 +70,11 @@ def setup_logging (test_mode=False, **kw):
                 logging.getLevelName(log.getEffectiveLevel())))
 
     # Define additional logger for logging to file
-    pox.log.launch(format=FILE_LOGGER_FORMAT, file=LOG_FILE + ',w')
+    pox.log.launch(format=FILE_LOGGER_FORMAT, file=log_file + ',w')
     log.info("Setup Logger - formatter: %s, level: %s, file: %s"
              % (pox.log.launch.__module__,
                 logging.getLevelName(log.getEffectiveLevel()),
-                LOG_FILE))
+                log_file))
   else:
     # Define default logger
     pox.log.launch(format=DEFAULT_LOGGER_FORMAT)

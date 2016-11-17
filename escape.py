@@ -49,6 +49,9 @@ def main ():
   escape.add_argument("-i", "--interactive", action="store_true", default=False,
                       help="run an interactive shell for observing internal "
                            "states")
+  escape.add_argument("-l", "--log", metavar="file", type=str,
+                      help="add log file explicitly for test mode "
+                           "(default: log/escape.log)")
   escape.add_argument("-m", "--mininet", metavar="file", type=str,
                       help="read the Mininet topology from the given file")
   escape.add_argument("-p", "--POXlike", action="store_true", default=False,
@@ -132,6 +135,8 @@ def main ():
 
   if args.test:
     cmd.append("--test")
+    if args.log:
+      cmd.append("--log=%s" % args.log)
 
   if args.quit:
     cmd.append("--quit")
