@@ -97,9 +97,9 @@ class CommandLineEscape(Escape):
     proc.expect(pexpect.EOF)
     kill_timer.cancel()
 
-    stdout, stderr = "", proc.before
-    self.logger.log_end_output(stderr)
-    return EscapeRunResult(stderr)
+    _, log_output = "", proc.before
+    self.logger.log_end_output(log_output)
+    return EscapeRunResult(log_output)
 
 
 class EscapeRunResult():

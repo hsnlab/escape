@@ -13,12 +13,13 @@ print(os.getenv("PYTHONPATH"))
 
 
 def main ():
-
   print(os.getcwd())
   top_level_dir = os.path.dirname(__file__) + "/../"
 
   results_xml = "results.xml"
-  os.remove(results_xml)
+  if (os.path.isfile(results_xml)):
+    os.remove(results_xml)
+
   results = []
   with open(results_xml, 'wb') as output:
     test_loader = TestLoader()
