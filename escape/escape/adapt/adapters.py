@@ -479,21 +479,22 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
   name = "STATIC-NFFG-TOPO"
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
-  def __init__ (self, domain_name=None, path=None, backward_links=None,
+  def __init__ (self, domain_name=None, path=None, check_backward_links=None,
                 **kwargs):
     """
     Init.
 
     :param path: file path offered as the domain topology
     :type path: str
-    :param backward_links: read NFFG contains dynamic links (default: false)
-    :type backward_links: bool
+    :param check_backward_links: check NFFG contains dynamic links (default:
+    false)
+    :type check_backward_links: bool
     :return: None
     """
     log.debug("Init %s - type: %s, domain: %s, path: %s, backward_links: %s" % (
       self.__class__.__name__, self.type, domain_name, path,
-      backward_links))
-    self.backward_links = backward_links
+      check_backward_links))
+    self.check_backward_links = check_backward_links
     super(NFFGBasedStaticFileAdapter, self).__init__(domain_name=domain_name,
                                                      path=path, **kwargs)
 
@@ -509,13 +510,22 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     try:
       with open(path, 'r') as f:
         log.debug("Load topology from file: %s" % path)
-        self.topo = self.rewrite_domain(NFFG.parse(f.read()))
-        if self.backward_links:
-          log.debug(
-            "Topology contains backward links! Skip link duplication...")
+        topo = self.rewrite_domain(NFFG.parse(f.read()))
+        if self.check_backward_links:
+          log.debug("Check backward links in loaded topology file...")
+          backward_links = sum(
+            [link.id for link in topo.links if link.backward is True])
+          if backward_links == 0:
+            log.debug("No backward link is detected! Duplicate static links...")
+            topo.duplicate_static_links()
+          else:
+            log.debug("Backward links are detected: %s! "
+                      "Skip static link duplication..." % backward_links)
         else:
-          self.topo.duplicate_static_links()
-        log.log(VERBOSE, "Loaded topology:\n%s" % self.topo.dump())
+          log.debug("Skip static link duplication...")
+        log.log(VERBOSE, "Loaded topology:\n%s" % topo.dump())
+        # Save topology file
+        self.topo = topo
         # print self.topo.dump()
     except IOError:
       log.warning("Topology file not found: %s" % path)
