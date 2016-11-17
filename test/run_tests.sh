@@ -6,6 +6,5 @@ echo -e "======================================================================\
 
 cd ..
 for dir in ./test/case[0-9][0-9]; do
-    echo "$dir/run.sh"
     bash -vc "$dir/run.sh"
 done
