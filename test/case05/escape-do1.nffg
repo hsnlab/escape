@@ -1,7 +1,7 @@
 {
   "parameters": {
-    "id": "ESCAPE-DO1",
-    "name": "ESCAPE test topology for LO-1",
+    "id": "ESCAPE-DO1-SingleBiSBiS-NFFG",
+    "name": "Single-BiSBiS-View of DO-1",
     "version": "1.0"
   },
   "node_saps": [
@@ -19,9 +19,7 @@
           }
         }
       ],
-      "binding": "sap14_veth",
-      "delay": 1.5,
-      "bandwidth": 10
+      "binding": "sap14_veth"
     },
     {
       "id": "SAP1",
@@ -52,158 +50,90 @@
   ],
   "node_infras": [
     {
-      "id": "EE11",
-      "name": "ee-infra-11",
+      "id": "SingleBiSBiS1",
+      "name": "SingleBiSBiS",
       "ports": [
         {
-          "id": 1
+          "id": "port-SAP14"
+        },
+        {
+          "id": "port-SAP1"
+        },
+        {
+          "id": "port-SAP2"
         }
       ],
-      "domain": "INTERNAL",
-      "type": "EE",
+      "domain": "VIRTUAL",
+      "type": "BiSBiS",
       "supported": [
+        "simpleForwarder",
         "headerCompressor",
-        "headerDecompressor",
-        "simpleForwarder"
+        "headerDecompressor"
       ],
       "resources": {
-        "cpu": 5,
-        "mem": 5,
-        "storage": 20,
-        "delay": 0.9,
-        "bandwidth": 5000
-      }
-    },
-    {
-      "id": "SW12",
-      "name": "switch-12",
-      "ports": [
-        {
-          "id": 1
-        },
-        {
-          "id": 2
-        },
-        {
-          "id": 3
-        },
-        {
-          "id": 4,
-          "property": {
-            "type": "inter-domain"
-          }
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "SDN-SWITCH",
-      "resources": {
-        "cpu": 0,
-        "mem": 0,
-        "storage": 0,
+        "cpu": 10,
+        "mem": 10,
+        "storage": 40,
         "delay": 0.2,
-        "bandwidth": 10000
-      }
-    },
-    {
-      "id": "SW11",
-      "name": "switch-11",
-      "ports": [
-        {
-          "id": 1
-        },
-        {
-          "id": 2
-        },
-        {
-          "id": 3
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "SDN-SWITCH",
-      "resources": {
-        "cpu": 0,
-        "mem": 0,
-        "storage": 0,
-        "delay": 0.2,
-        "bandwidth": 10000
-      }
-    },
-    {
-      "id": "EE12",
-      "name": "ee-infra-12",
-      "ports": [
-        {
-          "id": 1
-        }
-      ],
-      "domain": "INTERNAL",
-      "type": "EE",
-      "supported": [
-        "headerCompressor",
-        "headerDecompressor",
-        "simpleForwarder"
-      ],
-      "resources": {
-        "cpu": 5,
-        "mem": 5,
-        "storage": 20,
-        "delay": 0.9,
-        "bandwidth": 5000
+        "bandwidth": 160000
       }
     }
   ],
   "edge_links": [
     {
-      "id": "mn-link1",
-      "src_node": "EE11",
-      "src_port": 1,
-      "dst_node": "SW11",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10
-    },
-    {
-      "id": "mn-link6",
-      "src_node": "SW12",
-      "src_port": 4,
+      "id": "mn-link6-back-back",
+      "src_node": "SingleBiSBiS1",
+      "src_port": "port-SAP14",
       "dst_node": "SAP14",
       "dst_port": 1,
       "delay": 1.5,
-      "bandwidth": 10
+      "bandwidth": 10,
+      "backward": true
     },
     {
-      "id": "mn-link5",
-      "src_node": "SW12",
-      "src_port": 3,
-      "dst_node": "SAP2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10
-    },
-    {
-      "id": "mn-link3",
-      "src_node": "SW11",
-      "src_port": 2,
-      "dst_node": "SW12",
-      "dst_port": 2,
-      "delay": 1.5,
-      "bandwidth": 10
-    },
-    {
-      "id": "mn-link4",
-      "src_node": "SW11",
-      "src_port": 3,
+      "id": "mn-link4-back-back",
+      "src_node": "SingleBiSBiS1",
+      "src_port": "port-SAP1",
       "dst_node": "SAP1",
       "dst_port": 1,
       "delay": 1.5,
+      "bandwidth": 10,
+      "backward": true
+    },
+    {
+      "id": "mn-link5-back-back",
+      "src_node": "SingleBiSBiS1",
+      "src_port": "port-SAP2",
+      "dst_node": "SAP2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10,
+      "backward": true
+    },
+    {
+      "id": "mn-link6-back",
+      "src_node": "SAP14",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS1",
+      "dst_port": "port-SAP14",
+      "delay": 1.5,
       "bandwidth": 10
     },
     {
-      "id": "mn-link2",
-      "src_node": "EE12",
+      "id": "mn-link4-back",
+      "src_node": "SAP1",
       "src_port": 1,
-      "dst_node": "SW12",
-      "dst_port": 1,
+      "dst_node": "SingleBiSBiS1",
+      "dst_port": "port-SAP1",
+      "delay": 1.5,
+      "bandwidth": 10
+    },
+    {
+      "id": "mn-link5-back",
+      "src_node": "SAP2",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS1",
+      "dst_port": "port-SAP2",
       "delay": 1.5,
       "bandwidth": 10
     }

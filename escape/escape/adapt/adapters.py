@@ -513,9 +513,9 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
         topo = self.rewrite_domain(NFFG.parse(f.read()))
         if self.check_backward_links:
           log.debug("Check backward links in loaded topology file...")
-          backward_links = sum(
-            [link.id for link in topo.links if link.backward is True])
-          if backward_links == 0:
+          backward_links = [link.id for link in topo.links if
+                            link.backward is True]
+          if len(backward_links) == 0:
             log.debug("No backward link is detected! Duplicate static links...")
             topo.duplicate_static_links()
           else:
