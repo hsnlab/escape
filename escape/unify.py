@@ -120,9 +120,12 @@ def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
   if quit:
     setattr(core, "QUIT_AFTER_PROCESS", True)
 
-  from escape.util.misc import get_escape_name_version
-  core_log.info(
-    "Starting %s(version: %s) components..." % get_escape_name_version())
+  from escape.util.misc import get_escape_revision
+  revision = get_escape_revision()
+  core_log.info("Starting %s" % revision[0])
+  core_log.info("Version: %s" % revision[1])
+  core_log.info("Current branch: %s" % revision[2])
+  core_log.info("Initializing main layer modules...")
 
   if visualization:
     core_log.debug("Enable remote visualization...")
