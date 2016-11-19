@@ -29,7 +29,7 @@ class Logger:
     print(message)
 
   def log_end_output (self, output):
-    # print(output)
+    print(output)
     pass
 
   def timed_out (self, pexpect_proc):
@@ -58,16 +58,21 @@ class CommandLineEscape(Escape):
   OPT_TEST_OUTPUT = "-t"
   OPT_RUN_INFRA = "-f"
   OPT_SOURCE_FILE = "-s"
-  KILL_TIMEOUT = 100
+  KILL_TIMEOUT = 30
 
-  def __init__ (self, escape_path=__file__ + "/../../escape.py", logger=Logger()):
+  def __init__ (self, escape_path=__file__ + "/../../escape.py", logger=Logger(), command_runner=None):
     self.logger = logger
     self._escape_path = os.path.abspath(escape_path)
     self._cwd = os.path.dirname(self._escape_path)
+    self.command_runner = CommandRunner(
+      cwd=self._cwd,
+      kill_timeout=self.KILL_TIMEOUT,
+      on_kill=
+      self._kill_process) if command_runner is None else command_runner
 
   def _kill_process (self, p):
     self.logger.timed_out(p)
-    p.sendcontrol('c')
+    self.logger.log_end_output(p.before)
     raise AssertionError("Process timed out" +
                          p.command + " " + str(p.args) +
                          "\n" + str(p)
@@ -86,16 +91,7 @@ class CommandLineEscape(Escape):
 
     self.logger.log_start("Starting testcase " + filepath + " : " + ", ".join(command))
 
-    proc = pexpect.spawn(command[0],
-                         args=command[2:],
-                         timeout=120,
-                         cwd=self._cwd)
-
-    kill_timer = Timer(self.KILL_TIMEOUT, self._kill_process, [proc])
-    kill_timer.start()
-
-    proc.expect(pexpect.EOF)
-    kill_timer.cancel()
+    proc = self.command_runner.execute(command)
 
     _, log_output = "", proc.before
     self.logger.log_end_output(log_output)
@@ -105,3 +101,69 @@ class CommandLineEscape(Escape):
 class EscapeRunResult():
   def __init__ (self, output=""):
     self.log_output = output
+
+
+class CommandRunner:
+  KILL_TIMEOUT = 30
+
+  def __init__ (self, cwd, kill_timeout=KILL_TIMEOUT, on_kill=None):
+    self._cwd = cwd
+    self.on_kill = on_kill
+    self.kill_timeout = kill_timeout
+
+  def _kill_process (self, proc):
+    proc.sendcontrol('c')
+    if self.on_kill:
+      self.on_kill(proc)
+    else:
+      self._default_on_kill_handler(proc)
+
+  def _default_on_kill_handler (self, process):
+    raise Exception(
+      "Command was killed after " + str(self.kill_timeout) + " seconds " +
+      "Command: " + str(process)
+    )
+
+  def execute (self, command):
+    proc = pexpect.spawn(command[0],
+                         args=command[1:],
+                         timeout=120,
+                         cwd=self._cwd)
+
+    kill_timer = Timer(self.KILL_TIMEOUT, self._kill_process, [proc])
+    kill_timer.start()
+
+    proc.expect(pexpect.EOF)
+    kill_timer.cancel()
+    return proc
+
+
+class TestReader:
+  TEST_DIR_PREFIX = "case"
+
+  def read_from (self, test_cases_dir):
+    dirs = os.listdir(test_cases_dir)
+
+    cases = [
+      RunnableTestCaseInfo(
+        testcase_dir_name=case_dir,
+        full_testcase_path=test_cases_dir + "/" + case_dir + "/"
+      )
+      for case_dir in dirs if case_dir.startswith(self.TEST_DIR_PREFIX)
+      ]
+    return cases
+
+
+class RunnableTestCaseInfo:
+  def __init__ (self, testcase_dir_name, full_testcase_path):
+    self._full_testcase_path = full_testcase_path
+    self._testcase_dir_name = testcase_dir_name
+
+  def testcase_dir_name (self):
+    return self._testcase_dir_name
+
+  def full_testcase_path (self):
+    return self._full_testcase_path
+
+  def __repr__ (self):
+    return "RunnableTestCase [" + self._testcase_dir_name + "]"
