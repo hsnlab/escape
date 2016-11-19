@@ -403,7 +403,45 @@ def get_ifaces ():
           not iface.startswith('Iface')]
 
 
-def get_escape_name_version ():
+def get_escape_version ():
+  """
+  Return the current ESCAPE version based on ``git describe``
+  in format: version-revision where version is the last found tag and revision
+  is the number of commits following the tag.
+
+  :return: version in format: vmajor.minor.patch[-revision-commit]
+  :rtype: str
+  """
+  # Only match version tag like v2.0.0
+  # cmd = "git describe --always --first-parent --tags --match v*"
+  cmd = "git describe --always --first-parent --tags"
+  desc = Popen(cmd.split(' '), stdout=PIPE).communicate()[0].strip()
+  # If Git is not installed or command is failed
+  if not desc:
+    import escape
+    return escape.__version__
+  else:
+    # If no tag is defined in the repo
+    if not desc.count('-'):
+      import escape
+      return escape.__version__
+    else:
+      return desc
+
+
+def get_escape_branch_name ():
+  """
+  Return the current branch name.
+
+  :return: current branch
+  :rtype: str
+  """
+  cmd = "git branch --points-at HEAD"
+  branch = Popen(cmd.split(' '), stdout=PIPE).communicate()[0]
+  return branch.strip().split(' ')[1] if branch else "N/A"
+
+
+def get_escape_revision ():
   """
   Return the initiation message for the current ESCAPE version.
   Acquiring information from escape package.
@@ -412,7 +450,7 @@ def get_escape_name_version ():
   :rtype: tuple
   """
   import escape
-  return escape.__project__, escape.__version__
+  return escape.__project__, get_escape_version(), get_escape_branch_name()
 
 
 def notify_remote_visualizer (data, id, url=None, **kwargs):

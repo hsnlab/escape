@@ -27,5 +27,5 @@ Unify_ncagent/vnf_starter/lib/
 pip-selfcheck.json
 escape/doc/build
 click
-log
+log/*
 /test/case*/out-*
