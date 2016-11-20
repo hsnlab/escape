@@ -2,6 +2,9 @@ from __future__ import print_function
 import abc
 import os
 import subprocess
+from unittest.case import TestCase
+
+import sys
 import time
 import signal
 import pexpect
@@ -135,6 +138,9 @@ class CommandRunner:
 
     proc.expect(pexpect.EOF)
     kill_timer.cancel()
+    if "No such file or directory" in proc.before:
+      raise Exception(proc.before)
+
     return proc
 
 
@@ -167,3 +173,17 @@ class RunnableTestCaseInfo:
 
   def __repr__ (self):
     return "RunnableTestCase [" + self._testcase_dir_name + "]"
+
+
+class SimpleTestCase(TestCase):
+  def __init__ (self, test_case_config, command_runner):
+    """
+
+    :type command_runner: CommandRunner
+    :type test_case_config: RunnableTestCaseInfo
+    """
+    self.command_runner = command_runner
+    self.test_case_config = test_case_config
+
+  def runTest (self):
+    self.result = self.command_runner.execute(self.test_case_config + "/run.sh")
