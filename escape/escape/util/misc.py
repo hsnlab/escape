@@ -438,7 +438,7 @@ def get_escape_branch_name ():
   """
   cmd = "git branch --points-at HEAD"
   branch = Popen(cmd.split(' '), stdout=PIPE).communicate()[0]
-  return branch.strip().split(' ')[1] if branch else "N/A"
+  return branch.split(' ')[1].strip() if branch else "N/A"
 
 
 def get_escape_revision ():
