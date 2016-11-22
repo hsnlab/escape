@@ -1,7 +1,7 @@
 {
   "parameters": {
     "id": "Internal-Mininet-topology",
-    "name": "MN-topo-2BiSBiS-2SW",
+    "name": "MN-topo-2EE-2SW",
     "version": "1.0"
   },
   "node_saps": [
