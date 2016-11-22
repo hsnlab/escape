@@ -6,7 +6,7 @@ CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Get test case name
 TEST_CASE="$( basename ${CWD} | tr '[:lower:]' '[:upper:]' )"
 # Get ESCAPE command
-ESCAPE="$( realpath ${CWD}/../../escape.py )"
+ESCAPE="$( readlink -f ${CWD}/../../escape.py )"
 # Print header
 echo -e "\n==============================================================================="
 echo -e "==                             TEST $TEST_CASE                                   =="
