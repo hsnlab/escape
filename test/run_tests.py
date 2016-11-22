@@ -2,13 +2,13 @@
 from __future__ import print_function
 
 import os
-from unittest.runner import TextTestRunner
 
 import sys
 
-escape_root_dir = os.path.dirname(__file__) + "/../"
+escape_root_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../")
 sys.path.insert(0, escape_root_dir)
 
+from unittest.runner import TextTestRunner
 from unittest.case import TestCase
 from xmlrunner import unittest
 
@@ -18,15 +18,14 @@ from unittest.suite import TestSuite
 
 import xmlrunner
 
-from testframework.runner import TestReader, CommandRunner, TestRunnerConfig, RunnableTestCaseInfo, parse_cmd_opts, \
-  get_cmd_arg_parser
+from testframework.runner import TestReader, CommandRunner, TestRunnerConfig, RunnableTestCaseInfo, parse_cmd_opts
 
 
 def main (argv):
   results_xml = "results.xml"
-  clean_result_file(results_xml)
+  delete_file(results_xml)
 
-  tests_dir = os.path.dirname(__file__)
+  tests_dir = escape_root_dir + "/test"
   cmd_settings = parse_cmd_opts(argv)
 
   test_suite = create_test_suite(tests_dir=tests_dir,
@@ -55,7 +54,7 @@ def main (argv):
   return 0 if was_success else 1
 
 
-def clean_result_file (results_xml):
+def delete_file (results_xml):
   if (os.path.isfile(results_xml)):
     os.remove(results_xml)
 

@@ -17,7 +17,10 @@ class OutputAssertions:
     :type escape_run_result: EscapeRunResult
     """
     if (self.ADAPTATION_SUCCESS not in escape_run_result.log_output):
-      raise AssertionError("Unsucessful run.")
+      raise AssertionError(
+        "\n".join(escape_run_result.log_output.split("\n")[-5:]) +
+        "Success message is missing from log output."
+      )
     else:
       return True
 
