@@ -18,7 +18,8 @@ from unittest.suite import TestSuite
 
 import xmlrunner
 
-from testframework.runner import TestReader, CommandRunner, TestRunnerConfig, RunnableTestCaseInfo, parse_cmd_opts
+from testframework.runner import TestReader, CommandRunner, TestRunnerConfig, RunnableTestCaseInfo, parse_cmd_opts, \
+  get_cmd_arg_parser
 
 
 def main (argv):
@@ -28,12 +29,12 @@ def main (argv):
   tests_dir = os.path.dirname(__file__)
   cmd_settings = parse_cmd_opts(argv)
 
-
   test_suite = create_test_suite(tests_dir=tests_dir,
-                                 show_output=cmd_settings["show_output"]
+                                 show_output=cmd_settings["show_output"],
+                                 run_only_tests=cmd_settings["testcases"]
                                  )
 
-  print("Found %d testcasses" % test_suite.countTestCases())
+  print("Found %d testcases" % test_suite.countTestCases())
 
   suites = [
     test_suite
@@ -41,7 +42,6 @@ def main (argv):
 
   results = []
   with open(results_xml, 'wb') as output:
-
     test_runner = xmlrunner.XMLTestRunner(
       output=output,
       verbosity=2,
@@ -66,7 +66,7 @@ def was_every_suite_successful (results):
   return was_success
 
 
-def create_test_suite (tests_dir, show_output=False):
+def create_test_suite (tests_dir, show_output=False, run_only_tests=None):
   # type: (str, bool) -> TestSuite
   command_runner = CommandRunner(cwd=escape_root_dir,
                                  output_stream=sys.stdout if show_output else None
@@ -74,6 +74,10 @@ def create_test_suite (tests_dir, show_output=False):
   test_reader = TestReader()
   test_case_builder = TestCaseBuilder(command_runner)
   test_configs = test_reader.read_from(tests_dir)
+
+  if run_only_tests:
+    test_configs = [config for config in test_configs if config.testcase_dir_name() in run_only_tests]
+
   test_suite = test_case_builder.to_suite(test_configs)
   return test_suite
 

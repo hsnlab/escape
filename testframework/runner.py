@@ -152,6 +152,11 @@ class TestReader:
   TEST_DIR_PREFIX = "case"
 
   def read_from (self, test_cases_dir):
+
+    """
+
+    :rtype: list[RunnableTestCaseInfo]
+    """
     dirs = os.listdir(test_cases_dir)
 
     cases = [
@@ -181,21 +186,28 @@ class RunnableTestCaseInfo:
 
 default_cmd_opts = {
   "show_output": False,
-  "run_only": None
+  "testcases": []
 }
 
 
 def parse_cmd_opts (argv):
+  parser = get_cmd_arg_parser()
+  args = parser.parse_args(argv)
+  kwargs = args._get_kwargs()
+  return dict(default_cmd_opts.items() + kwargs)
+
+
+def get_cmd_arg_parser ():
   parser = argparse.ArgumentParser(
     description="ESCAPE Test runner",
     add_help=True,
     prog="run_tests.py"
   )
-
   parser.add_argument("--show-output", "-o", action="store_true", help="Show ESCAPE output")
-  args = parser.parse_args(argv)
-  kwargs = args._get_kwargs()
-  return dict(default_cmd_opts.items() + kwargs)
+  parser.add_argument("testcases", nargs="*", help = "list test case names you want to run."
+                                                     "Example: ./run_tests.py case05 case03 --show-output"
+                      )
+  return parser
 
 
 class SimpleTestCase(TestCase):
