@@ -28,6 +28,7 @@ from ncclient.transport import TransportError
 from escape import CONFIG, __version__
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.nffg_lib.nffg import NFFGToolBox
+from escape.util.config import PROJECT_ROOT
 from escape.util.conversion import NFFGConverter, UC3MNFFGConverter
 from escape.util.domain import *
 from escape.util.misc import unicode_to_str
@@ -441,7 +442,7 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     :return: write tu file was success or not
     :rtype: bool
     """
-    file_name = os.path.join(self.LOG_DIR, file_name)
+    file_name = os.path.join(PROJECT_ROOT, self.LOG_DIR, file_name)
     self.log.info("Dump received request into file: %s..." % file_name)
     self.log.log(VERBOSE, "Dumped data:\n%s" % data)
     try:
@@ -508,6 +509,7 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     :return: None
     """
     try:
+      path = os.path.join(PROJECT_ROOT, path)
       with open(path, 'r') as f:
         log.debug("Load topology from file: %s" % path)
         topo = self.rewrite_domain(NFFG.parse(f.read()))
@@ -583,6 +585,7 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     :return: None
     """
     try:
+      path = os.path.join(PROJECT_ROOT, path)
       log.debug("Load topology from file: %s" % path)
       self.virtualizer = Virtualizer.parse_from_file(filename=path)
       log.log(VERBOSE, "Loaded topology:\n%s" % self.virtualizer.xml())
