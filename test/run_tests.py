@@ -1,88 +1,82 @@
+#!/usr/bin/python2.7
+from __future__ import print_function
+
 import os
-from unittest.util import strclass
+from unittest.runner import TextTestRunner
 
 import sys
-
-from testframework.testcases import OutputAssertions
 
 escape_root_dir = os.path.dirname(__file__) + "/../"
 sys.path.insert(0, escape_root_dir)
 
 from unittest.case import TestCase
+from xmlrunner import unittest
+
+from testframework.testcases import BasicSuccessfulTestCase, TestCaseBuilder
+
 from unittest.suite import TestSuite
 
 import xmlrunner
 
-from testframework.runner import TestReader, CommandRunner, EscapeRunResult
+from testframework.runner import TestReader, CommandRunner, TestRunnerConfig, RunnableTestCaseInfo, parse_cmd_opts
 
 
-class TestAroo(TestCase, OutputAssertions):
-  def __init__ (self, test_case_info, command_runner):
-    """
-
-    :type test_case_info: testframework.runner.RunnableTestCaseInfo
-    :type command_runner: CommandRunner
-    """
-    TestCase.__init__(self)
-    self.command_runner = command_runner
-    self.test_case_info = test_case_info
-
-  def runTest (self):
-    command = [self.test_case_info.full_testcase_path() + "/run.sh"]
-    proc = self.command_runner.execute(command)
-    result = EscapeRunResult(output=proc.before)
-
-    self.assert_successful_installation(result)
-
-  def __str__ (self):
-    return "%s (%s)" % (self.test_case_info.testcase_dir_name(), strclass(self.__class__))
-
-  def id (self):
-    return super(TestAroo, self).id() + str(self.test_case_info.full_testcase_path())
-
-
-def main ():
-  print(os.getcwd())
-  escape_root_dir = os.path.dirname(__file__) + "/../"
-
+def main (argv):
   results_xml = "results.xml"
-  if (os.path.isfile(results_xml)):
-    os.remove(results_xml)
-
-  test_reader = TestReader()
+  clean_result_file(results_xml)
 
   tests_dir = os.path.dirname(__file__)
+  cmd_settings = parse_cmd_opts(argv)
 
-  tests = test_reader.read_from(tests_dir)
 
-  command_runner = CommandRunner(cwd=escape_root_dir)
+  test_suite = create_test_suite(tests_dir=tests_dir,
+                                 show_output=cmd_settings["show_output"]
+                                 )
+
+  print("Found %d testcasses" % test_suite.countTestCases())
+
+  suites = [
+    test_suite
+  ]
 
   results = []
   with open(results_xml, 'wb') as output:
 
     test_runner = xmlrunner.XMLTestRunner(
       output=output,
-      verbosity=3,
-      buffer=True
+      verbosity=2,
     )
-
-    suites = [
-      TestSuite(
-        [TestAroo(config, command_runner) for config in tests]
-      )
-    ]
 
     for suite in suites:
       results.append(test_runner.run(suite))
 
-  suite_successes = map(lambda result: result.wasSuccessful(), results)
-  was_success = all(suite_successes)
-
-  for result in results:
-    print (result)
+  was_success = was_every_suite_successful(results)
 
   return 0 if was_success else 1
 
 
+def clean_result_file (results_xml):
+  if (os.path.isfile(results_xml)):
+    os.remove(results_xml)
+
+
+def was_every_suite_successful (results):
+  suite_successes = map(lambda result: result.wasSuccessful(), results)
+  was_success = all(suite_successes)
+  return was_success
+
+
+def create_test_suite (tests_dir, show_output=False):
+  # type: (str, bool) -> TestSuite
+  command_runner = CommandRunner(cwd=escape_root_dir,
+                                 output_stream=sys.stdout if show_output else None
+                                 )
+  test_reader = TestReader()
+  test_case_builder = TestCaseBuilder(command_runner)
+  test_configs = test_reader.read_from(tests_dir)
+  test_suite = test_case_builder.to_suite(test_configs)
+  return test_suite
+
+
 if __name__ == "__main__":
-  sys.exit(main())
+  sys.exit(main(sys.argv[1:]))

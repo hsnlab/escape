@@ -1,5 +1,6 @@
 from __future__ import print_function
 import abc
+import argparse
 import os
 import subprocess
 from unittest.case import TestCase
@@ -109,7 +110,8 @@ class EscapeRunResult():
 class CommandRunner:
   KILL_TIMEOUT = 30
 
-  def __init__ (self, cwd, kill_timeout=KILL_TIMEOUT, on_kill=None):
+  def __init__ (self, cwd, kill_timeout=KILL_TIMEOUT, on_kill=None, output_stream = None):
+    self.output_stream = output_stream
     self._cwd = cwd
     self.on_kill = on_kill
     self.kill_timeout = kill_timeout
@@ -131,7 +133,9 @@ class CommandRunner:
     proc = pexpect.spawn(command[0],
                          args=command[1:],
                          timeout=120,
-                         cwd=self._cwd)
+                         cwd=self._cwd,
+                         logfile=self.output_stream
+                         )
 
     kill_timer = Timer(self.KILL_TIMEOUT, self._kill_process, [proc])
     kill_timer.start()
@@ -139,7 +143,7 @@ class CommandRunner:
     proc.expect(pexpect.EOF)
     kill_timer.cancel()
     if "No such file or directory" in proc.before:
-      raise Exception(proc.before)
+      raise Exception("CommandRunner Error:" + proc.before)
 
     return proc
 
@@ -173,6 +177,25 @@ class RunnableTestCaseInfo:
 
   def __repr__ (self):
     return "RunnableTestCase [" + self._testcase_dir_name + "]"
+
+
+default_cmd_opts = {
+  "show_output": False,
+  "run_only": None
+}
+
+
+def parse_cmd_opts (argv):
+  parser = argparse.ArgumentParser(
+    description="ESCAPE Test runner",
+    add_help=True,
+    prog="run_tests.py"
+  )
+
+  parser.add_argument("--show-output", "-o", action="store_true", help="Show ESCAPE output")
+  args = parser.parse_args(argv)
+  kwargs = args._get_kwargs()
+  return dict(default_cmd_opts.items() + kwargs)
 
 
 class SimpleTestCase(TestCase):
