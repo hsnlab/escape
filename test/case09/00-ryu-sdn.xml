@@ -13,18 +13,36 @@
                     <name>SAP14</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP14</sap>
+                    <sap_data>
+                        <resources>
+                            <delay>2.5</delay>
+                            <bandwidth>10</bandwidth>
+                        </resources>
+                    </sap_data>
                 </port>
                 <port>
                     <id>2</id>
                     <name>SAP44</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP44</sap>
+                    <sap_data>
+                        <resources>
+                            <delay>2.5</delay>
+                            <bandwidth>10</bandwidth>
+                        </resources>
+                    </sap_data>
                 </port>
                 <port>
                     <id>3</id>
                     <name>SAP34</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP34</sap>
+                    <sap_data>
+                        <resources>
+                            <delay>2.5</delay>
+                            <bandwidth>10</bandwidth>
+                        </resources>
+                    </sap_data>
                 </port>
                 <port>
                     <id>4</id>
@@ -36,6 +54,12 @@
                     <name>SAP24</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP24</sap>
+                    <sap_data>
+                        <resources>
+                            <delay>2.5</delay>
+                            <bandwidth>10</bandwidth>
+                        </resources>
+                    </sap_data>
                 </port>
             </ports>
             <resources>
@@ -43,6 +67,62 @@
                 <mem>50721017856</mem>
                 <storage>25010147328</storage>
             </resources>
+            <links>
+                <link>
+                    <id>resource-link</id>
+                    <src>../../../ports/port[id=1]</src>
+                    <dst>../../../ports/port[id=2]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>5000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link</id>
+                    <src>../../../ports/port[id=1]</src>
+                    <dst>../../../ports/port[id=3]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>5000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link</id>
+                    <src>../../../ports/port[id=1]</src>
+                    <dst>../../../ports/port[id=4]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>5000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link</id>
+                    <src>../../../ports/port[id=2]</src>
+                    <dst>../../../ports/port[id=3]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>5000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link</id>
+                    <src>../../../ports/port[id=2]</src>
+                    <dst>../../../ports/port[id=4]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>5000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link</id>
+                    <src>../../../ports/port[id=3]</src>
+                    <dst>../../../ports/port[id=4]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>5000.0</bandwidth>
+                    </resources>
+                </link>
+            </links>
             <capabilities>
                 <supported_NFs>
                     <node>

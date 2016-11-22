@@ -4,7 +4,7 @@
 # Get directory path of current test case
 CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Get test case name
-TEST_CASE="$(basename ${CWD} | tr '[:lower:]' '[:upper:]')"
+TEST_CASE="$( basename ${CWD} | tr '[:lower:]' '[:upper:]' )"
 # Get ESCAPE command
 ESCAPE="$( realpath ${CWD}/../../escape.py )"
 # Print header
