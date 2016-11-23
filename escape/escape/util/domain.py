@@ -874,6 +874,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     if not conn:
       log.warning("Missing connection for node element: %s! Skip flowrule "
                   "installation..." % id)
+      return
     msg = of.ofp_flow_mod()
     msg.match.in_port = match['in_port']
     if 'vlan_id' in match:
