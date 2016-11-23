@@ -231,6 +231,20 @@ The project uses several dependent component as a Git submodule. To acquire thes
 source codes a symlink have to be created in the project's root folder at first,
 referring to the gitmodules config of the actual project.
 
+Moreover, the required submodules need to be configured with the related project's gitmodules file recursively.
+For this task the ``project-setup.sh`` wrapper script can be used with the referred project's name:
+
+.. code-block:: bash
+
+    $ ./project-setup.sh
+        Usage: ./project-setup.sh [project]
+        Setup submodules according to given project for ESCAPE.
+
+        parameters:
+             project: setup project [sb|5gex|ericsson]
+
+The submodule configuration can be set up and updated manually as well:
+
 .. code-block:: bash
 
     $ ln -s .gitmodules.<project_name> .gitmodules
@@ -466,8 +480,8 @@ Usage:
 .. code-block:: text
 
     $ ./escape.py -h
-    usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-g] [-i] [-p] [-r]
-                     [-s file] [-t file] [-x] [-V] [-4]
+    usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-g] [-i] [-l file]
+                     [-m file] [-p] [-r] [-s file] [-t] [-q] [-x] [-V] [-4]
                      ...
 
     ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet,
@@ -489,6 +503,10 @@ Usage:
       -g, --gui             initiate the graph-viewer GUI app which automatically
                             connects to the ROS REST-API
       -i, --interactive     run an interactive shell for observing internal states
+      -l file, --log file   add log file explicitly for test mode (default:
+                            log/escape.log)
+      -m file, --mininet file
+                            read the Mininet topology from the given file
       -p, --POXlike         start ESCAPEv2 in the actual interpreter using ./pox
                             as working directory instead of using a separate shell
                             process with POX's own PYTHON env
@@ -497,7 +515,9 @@ Usage:
       -s file, --service file
                             skip the SAS REST-API initiation and read the service
                             request from the given file
-      -t file, --topo file  read the topology from the given file explicitly
+      -t, --test            run in test mode
+      -q, --quit            quit right after the first service request has
+                            processed
       -x, --clean           run the cleanup task standalone and kill remained
                             programs, interfaces, veth parts and junk files
       -V, --visualization   run the visualization module to send data to a remote

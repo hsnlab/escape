@@ -136,7 +136,8 @@ class ESCAPEInteractiveHelper(object):
     :return: spec representation
     :rtype: str
     """
-    return "\n".join([f for f in dir(self) if not f.startswith('_')])
+    return "Available helper commands:\n" + "\n".join(
+      ["  -->    %s" % f for f in dir(self) if not f.startswith('_')])
 
   @staticmethod
   def init ():
@@ -234,7 +235,7 @@ class ESCAPEInteractiveHelper(object):
     #   'OPENSTACK'].rest_adapter._response.text
     pass
 
-  def config (self):
+  def _config (self):
     """
     Dump running config (CONFIG)
 
