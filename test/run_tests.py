@@ -18,7 +18,7 @@ from unittest.suite import TestSuite
 
 import xmlrunner
 
-from testframework.runner import TestReader, CommandRunner, TestRunnerConfig, RunnableTestCaseInfo, parse_cmd_opts
+from testframework.runner import TestReader, CommandRunner, TestRunnerConfig, RunnableTestCaseInfo, parse_cmd_args
 
 
 def main (argv):
@@ -26,7 +26,7 @@ def main (argv):
   delete_file(results_xml)
 
   tests_dir = escape_root_dir + "/test"
-  cmd_settings = parse_cmd_opts(argv)
+  cmd_settings = parse_cmd_args(argv)
 
   test_suite = create_test_suite(tests_dir=tests_dir,
                                  show_output=cmd_settings["show_output"],

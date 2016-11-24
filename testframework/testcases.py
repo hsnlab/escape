@@ -1,11 +1,10 @@
 import os
-from unittest import TestCase
 from unittest.case import TestCase
 from unittest.suite import TestSuite
 from unittest.util import strclass
 import imp
 
-from testframework.runner import CommandLineEscape, TestRunnerConfig, TestRunner, EscapeRunResult, RunnableTestCaseInfo
+from testframework.runner import CommandLineEscape, TestRunnerConfig, EscapeRunResult, RunnableTestCaseInfo
 
 
 class OutputAssertions:
@@ -34,18 +33,12 @@ class OutputAssertions:
       raise AssertionError("Virtualizer version mismatch")
 
 
-class EndToEndTestCase(TestCase, OutputAssertions):
-  escape = CommandLineEscape()
-  runner_config = TestRunnerConfig(
-    test_case_directory="tests/endtoend/testcases"
-  )
-  runner = TestRunner(escape, runner_config)
-
-
 class EscapeTestCase(TestCase, OutputAssertions):
   """
   EscapeTestCase is a test case for the case01, case02 structure. It will run ESCAPE
   then place the result into the self.result field.
+  You should implement the runTest method to verify the result
+  See BasicSuccessfulTestCase
   """
 
   def __init__ (self, test_case_info, command_runner):
@@ -98,9 +91,12 @@ class TestCaseBuilder():
     return BasicSuccessfulTestCase(test_case_config, self.command_runner)
 
   def _load_dynamic_test_case (self, test_case_config, test_py_file):
-    module = imp.load_source(test_case_config.testcase_dir_name(), test_py_file)
-    class_name = test_case_config.testcase_dir_name().capitalize()
-    return getattr(module, class_name)(test_case_config, self.command_runner)
+    try:
+      module = imp.load_source(test_case_config.testcase_dir_name(), test_py_file)
+      class_name = test_case_config.testcase_dir_name().capitalize()
+      return getattr(module, class_name)(test_case_config, self.command_runner)
+    except AttributeError:
+      raise Exception(("No %s class found in %s file." % (class_name, test_py_file)))
 
   def to_suite (self, tests):
     """

@@ -13,21 +13,6 @@ from pexpect import fdpexpect
 from threading import Timer
 
 
-class TestRunner:
-  def __init__ (self, escape, test_runner_config):
-    """
-
-    :type escape: Escape
-    :type test_runner_config: TestRunnerConfig
-    """
-    self._test_runner_config = test_runner_config
-    self.escape = escape
-
-  def run_testcase (self, filename):
-    path = os.path.join(self._test_runner_config.test_case_directory, filename)
-    return self.escape.run(path)
-
-
 class Logger:
   def log_start (self, message):
     print(message)
@@ -157,7 +142,7 @@ class TestReader:
 
     :rtype: list[RunnableTestCaseInfo]
     """
-    dirs = os.listdir(test_cases_dir)
+    dirs = sorted(os.listdir(test_cases_dir))
 
     cases = [
       RunnableTestCaseInfo(
@@ -191,7 +176,7 @@ default_cmd_opts = {
 }
 
 
-def parse_cmd_opts (argv):
+def parse_cmd_args (argv):
   parser = get_cmd_arg_parser()
   args = parser.parse_args(argv)
   kwargs = args._get_kwargs()

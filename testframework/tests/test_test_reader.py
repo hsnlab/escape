@@ -16,7 +16,7 @@ class TestTestReader(TestCase):
     self.assertListEqual([], self.read(self.empty_dir()))
 
   def test_given_testcases_in_dir_returns_testcase_objects (self):
-    dir = self.testcases_dir()
+    dir = self._testcases_dir()
     expected_case_names = ["case01", "case02", "case123123"]
     cases = self.read(dir)
 
@@ -26,15 +26,15 @@ class TestTestReader(TestCase):
 
   def test_given_a_testcase_returns_full_path (self):
     case = self.read_first_testcase()
-    self.assertEqual(self.testcases_dir() + "/case01/", case.full_testcase_path())
+    self.assertEqual(self._testcases_dir() + "/case01/", case.full_testcase_path())
 
   def read_first_testcase (self):
-    return [case for case in self.read(self.testcases_dir()) if case.testcase_dir_name() == "case01"][0]
+    return [case for case in self.read(self._testcases_dir()) if case.testcase_dir_name() == "case01"][0]
 
   def read (self, dir):
     return self._reader.read_from(dir)
 
-  def testcases_dir (self):
+  def _testcases_dir (self):
     dir = self.TESTS_DIR + "nonempty"
     return dir
 
