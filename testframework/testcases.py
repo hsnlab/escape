@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.case import TestCase
 from unittest.suite import TestSuite
 from unittest.util import strclass
+import imp
 
 from testframework.runner import CommandLineEscape, TestRunnerConfig, TestRunner, EscapeRunResult, RunnableTestCaseInfo
 
@@ -90,7 +91,16 @@ class TestCaseBuilder():
     if not os.path.isfile(dir + "/run.sh"):
       raise Exception("No run.sh in directory " + dir)
 
+    test_py_file = dir + "/" + test_case_config.testcase_dir_name() + ".py"
+    if os.path.isfile(test_py_file):
+      return self._load_dynamic_test_case(test_case_config, test_py_file)
+
     return BasicSuccessfulTestCase(test_case_config, self.command_runner)
+
+  def _load_dynamic_test_case (self, test_case_config, test_py_file):
+    module = imp.load_source(test_case_config.testcase_dir_name(), test_py_file)
+    class_name = test_case_config.testcase_dir_name().capitalize()
+    return getattr(module, class_name)(test_case_config, self.command_runner)
 
   def to_suite (self, tests):
     """

@@ -175,6 +175,7 @@ class RunnableTestCaseInfo:
     self._testcase_dir_name = testcase_dir_name
 
   def testcase_dir_name (self):
+    # type: () -> str
     return self._testcase_dir_name
 
   def full_testcase_path (self):

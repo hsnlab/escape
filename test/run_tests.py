@@ -66,7 +66,6 @@ def was_every_suite_successful (results):
 
 
 def create_test_suite (tests_dir, show_output=False, run_only_tests=None):
-  # type: (str, bool) -> TestSuite
   command_runner = CommandRunner(cwd=escape_root_dir,
                                  output_stream=sys.stdout if show_output else None
                                  )

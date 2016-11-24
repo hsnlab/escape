@@ -26,5 +26,10 @@ class TestTestCaseBuilder(TestCase):
     self.assertIsInstance(test_case, BasicSuccessfulTestCase)
     self.assertEqual(self.command_runner, test_case.command_runner)
 
+  def test_given_a_path_when_dir_contains_case02_py_returns_case02_class(self):
+    dir = self.test_cases_dir + "nonempty/case02"
+    test_case = self.read_case_from_dir(dir)
+    self.assertEqual("Case02", type(test_case).__name__)
+
   def read_case_from_dir (self, dir):
     return self.builder.build_from_config(RunnableTestCaseInfo(os.path.basename(dir), dir))
