@@ -359,8 +359,11 @@ class NFFGConverter(object):
           sap_port.capability = infra_port.capability = \
             vport.capability.get_value()
         if vport.sap_data.is_initialized():
-          sap_port.technology = infra_port.technology = \
-            vport.sap_data.technology.get_value()
+          if vport.sap_data.technology.is_initialized():
+            sap_port.technology = infra_port.technology = \
+              vport.sap_data.technology.get_value()
+          if vport.sap_data.role.is_initialized():
+            sap_port.role = infra_port.role = vport.role.get_value()
           if vport.sap_data.resources.is_initialized():
             if vport.sap_data.resources.delay.is_initialized():
               try:
@@ -462,31 +465,6 @@ class NFFGConverter(object):
                                       client=l3.client.get_value(),
                                       requested=l3.requested.get_value(),
                                       provided=l3.provided.get_value())
-        # if vport.sap_data.is_initialized():
-        #   sap_port.technology = vport.sap_data.technology.get_value()
-        #   if vport.sap_data.resources.is_initialized():
-        #     if vport.sap_data.resources.delay.is_initialized():
-        #       try:
-        #         sap_port.delay = float(
-        #           vport.sap_data.resources.delay.get_value())
-        #       except ValueError:
-        #         sap_port.delay = vport.sap_data.resources.delay.get_value()
-        #     if vport.sap_data.resources.bandwidth.is_initialized():
-        #       try:
-        #         sap_port.bandwidth = float(
-        #           vport.sap_data.resources.bandwidth.get_value())
-        #       except ValueError:
-        #         sap_port.bandwidth = \
-        #           vport.sap_data.resources.bandwidth.get_value()
-        #     if vport.sap_data.resources.cost.is_initialized():
-        #       try:
-        #         sap_port.cost = float(
-        # vport.sap_data.resources.cost.get_value())
-        #       except ValueError:
-        #         sap_port.cost = vport.sap_data.resources.cost.get_value()
-        # if vport.control.is_initialized():
-        #   sap_port.controller = vport.control.controller.get_value()
-        #   sap_port.orchestrator = vport.control.orchestrator.get_value()
         if vport.control.is_initialized() or vport.sap_data.is_initialized():
           self.log.warning(
             "Unexpected values: <sap_data> and <control> are not "
@@ -613,35 +591,36 @@ class NFFGConverter(object):
         # Add infra port capabilities
         if vport.capability.is_initialized():
           nf_port.capability = vport.capability.get_value()
-        # if vport.sap_data.is_initialized():
-        #   nf_port.technology = vport.sap_data.technology.get_value()
-        #   if vport.sap_data.resources.is_initialized():
-        #     if vport.sap_data.resources.delay.is_initialized():
-        #       try:
-        #         nf_port.delay = float(
-        #           vport.sap_data.resources.delay.get_value())
-        #       except ValueError:
-        #         nf_port.delay = vport.sap_data.resources.delay.get_value()
-        #     if vport.sap_data.resources.bandwidth.is_initialized():
-        #       try:
-        #         nf_port.bandwidth = float(
-        #           vport.sap_data.resources.bandwidth.get_value())
-        #       except ValueError:
-        #         nf_port.bandwidth = \
-        #           vport.sap_data.resources.bandwidth.get_value()
-        #     if vport.sap_data.resources.cost.is_initialized():
-        #       try:
-        #         nf_port.cost = float(
-        # vport.sap_data.resources.cost.get_value())
-        #       except ValueError:
-        #         nf_port.cost = vport.sap_data.resources.cost.get_value()
         if vport.sap_data.is_initialized():
-          self.log.warning(
-            "Unexpected value: <sap_data> and is not converted in "
-            "case of NF ports!")
+          if vport.sap_data.technology.is_initialized():
+            nf_port.technology = vport.sap_data.technology.get_value()
+          if vport.sap_data.role.is_initialized():
+            nf_port.role = vport.sap_data.role.get_value()
+          if vport.sap_data.resources.is_initialized():
+            if vport.sap_data.resources.delay.is_initialized():
+              try:
+                nf_port.delay = float(
+                  vport.sap_data.resources.delay.get_value())
+              except ValueError:
+                nf_port.delay = vport.sap_data.resources.delay.get_value()
+            if vport.sap_data.resources.bandwidth.is_initialized():
+              try:
+                nf_port.bandwidth = float(
+                  vport.sap_data.resources.bandwidth.get_value())
+              except ValueError:
+                nf_port.bandwidth = \
+                  vport.sap_data.resources.bandwidth.get_value()
+            if vport.sap_data.resources.cost.is_initialized():
+              try:
+                nf_port.cost = float(
+                  vport.sap_data.resources.cost.get_value())
+              except ValueError:
+                nf_port.cost = vport.sap_data.resources.cost.get_value()
         if vport.control.is_initialized():
-          nf_port.controller = vport.control.controller.get_value()
-          nf_port.orchestrator = vport.control.orchestrator.get_value()
+          if vport.control.controller.is_initialized():
+            nf_port.controller = vport.control.controller.get_value()
+          if vport.control.orchestrator.is_initialized():
+            nf_port.orchestrator = vport.control.orchestrator.get_value()
         if vport.addresses.is_initialized():
           nf_port.l2 = vport.addresses.l2.get_value()
           nf_port.l4 = vport.addresses.l4.get_value()
@@ -1557,16 +1536,6 @@ class NFFGConverter(object):
           infra_id = str(n)
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
         v_sap_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
-        # # Add SAP.name as name to port or use sap.id
-        # if sap.name:
-        #   v_sap_name = sap.name
-        # elif link.src.has_property("name"):
-        #   v_sap_name = link.src.get_property("name")
-        # else:
-        #   # Store SAP.id in the name attribute instead of SAP.name
-        #   # SAP.id <--> virtualizer.node.port.name
-        #   v_sap_name = str(sap.id)
-        # v_sap_port.name.set_value(v_sap_name)
 
         # Check if the SAP is an inter-domain SAP
         if sap_port.sap is not None:
@@ -1596,6 +1565,7 @@ class NFFGConverter(object):
         # Convert other SAP-port-specific data
         v_sap_port.capability.set_value(sap_port.capability)
         v_sap_port.sap_data.technology.set_value(sap_port.technology)
+        v_sap_port.sap_data.role.set_value(sap_port.role)
         v_sap_port.sap_data.resources.delay.set_value(sap_port.delay)
         v_sap_port.sap_data.resources.bandwidth.set_value(sap_port.bandwidth)
         v_sap_port.sap_data.resources.cost.set_value(sap_port.cost)
@@ -1821,10 +1791,8 @@ class NFFGConverter(object):
             if 'sap' in port.properties:
               v_nf_port.sap.set_value(port.properties['sap'])
             v_nf_port.capability.set_value(port.capability)
-            # if v_nf_port.sap_data.is_initialized():
-            #   self.log.warning("Unexpected value: sap_data values of NF is not "
-            #                    "converted to <sap_data>!")
             v_nf_port.sap_data.technology.set_value(port.technology)
+            v_nf_port.sap_data.role.set_value(port.role)
             v_nf_port.sap_data.resources.delay.set_value(port.delay)
             v_nf_port.sap_data.resources.bandwidth.set_value(
               port.bandwidth)
