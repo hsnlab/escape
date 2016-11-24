@@ -8,17 +8,11 @@ import sys
 escape_root_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../")
 sys.path.insert(0, escape_root_dir)
 
-from unittest.runner import TextTestRunner
-from unittest.case import TestCase
-from xmlrunner import unittest
-
-from testframework.testcases import BasicSuccessfulTestCase, TestCaseBuilder
-
-from unittest.suite import TestSuite
+from testframework.testcases import TestCaseBuilder
 
 import xmlrunner
 
-from testframework.runner import TestReader, CommandRunner, TestRunnerConfig, RunnableTestCaseInfo, parse_cmd_args
+from testframework.runner import TestReader, CommandRunner,  parse_cmd_args
 
 
 def main (argv):
@@ -26,11 +20,11 @@ def main (argv):
   delete_file(results_xml)
 
   tests_dir = escape_root_dir + "/test"
-  cmd_settings = parse_cmd_args(argv)
+  cmd_args = parse_cmd_args(argv)
 
   test_suite = create_test_suite(tests_dir=tests_dir,
-                                 show_output=cmd_settings["show_output"],
-                                 run_only_tests=cmd_settings["testcases"]
+                                 show_output=cmd_args["show_output"],
+                                 run_only_tests=cmd_args["testcases"]
                                  )
 
   print("Found %d testcases" % test_suite.countTestCases())

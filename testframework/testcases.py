@@ -4,7 +4,7 @@ from unittest.suite import TestSuite
 from unittest.util import strclass
 import imp
 
-from testframework.runner import CommandLineEscape, TestRunnerConfig, EscapeRunResult, RunnableTestCaseInfo
+from testframework.runner import EscapeRunResult, RunnableTestCaseInfo
 
 
 class OutputAssertions:
