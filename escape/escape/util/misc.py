@@ -436,9 +436,9 @@ def get_escape_branch_name ():
   :return: current branch
   :rtype: str
   """
-  cmd = "git branch --points-at HEAD"
+  cmd = "git symbolic-ref --short HEAD"
   branch = Popen(cmd.split(' '), stdout=PIPE).communicate()[0]
-  return branch.strip().split(' ')[1] if branch else "N/A"
+  return branch.strip() if branch else "N/A"
 
 
 def get_escape_revision ():

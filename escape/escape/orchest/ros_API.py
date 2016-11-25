@@ -320,6 +320,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       else:
         self.log.info('No mode parameter has benn defined in body!')
     self.log.debug("Parsed NFFG install request: %s" % nffg)
+    self.log.log(VERBOSE, "Full request:\n%s" % nffg.dump())
     return nffg
 
   def __recreate_full_request (self, diff):

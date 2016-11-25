@@ -104,7 +104,7 @@ class ESCAPEConfig(object):
     :return: None
     """
     # Load file
-    path = os.path.abspath(path)
+    path = os.path.join(PROJECT_ROOT, path)
     log.info("Load default config from file: %s" % path)
     try:
       with open(path, 'r') as f:
