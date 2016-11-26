@@ -42,11 +42,35 @@ class OutputAssertions:
 
 class WarningChecker():
   ACCEPTABLE_WARNINGS = [
+    "Mapping algorithm in Layer: service is disabled! Skip mapping step and forward service request to lower layer",
+    "No SGHops were given in the Service Graph! Could it be retreived? based on the Flowrules?",
+    "Resource parameter delay is not given in",
+    "Version are different!",
+    "Resource parameter bandwidth is not given in",
+      "If multiple infra nodes are present in the substrate graph and their VNF-Infra mapping is supposed to mean a "
+      "placement criterion on the (possibly decomposed) Infra node, it will not be considered, because it is NYI.",
+    "No SAP - SAP chain were given! All request links will be mapped as best effort links!",
+    "Physical interface: eth0 is not found! Skip binding",
+    "Skip starting xterms on SAPS according to global config"
 
   ]
 
+  def _filter_warnings (self, log_lines):
+    return [line for line in log_lines if line.startswith("|WARNING")]
 
-class EscapeTestCase(TestCase, OutputAssertions):
+  def assert_no_unusual_warnings (self, log_lines):
+    warnings = self._filter_warnings(log_lines)
+    for log_warn in warnings:
+      is_acceptable = False
+      for acceptable_warn in self.ACCEPTABLE_WARNINGS:
+        if acceptable_warn in log_warn:
+          is_acceptable = True
+          break
+      if not is_acceptable:
+        raise AssertionError("Got unusual warning: " + log_warn)
+
+
+class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
   """
   EscapeTestCase is a test case for the case01, case02 structure. It will run ESCAPE
   then place the result into the self.result field.
@@ -130,3 +154,4 @@ class TestCaseBuilder():
 class BasicSuccessfulTestCase(EscapeTestCase):
   def runTest (self):
     self.assert_successful_installation(self.result)
+    self.assert_no_unusual_warnings(self.result.log_output)
