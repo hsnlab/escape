@@ -16,9 +16,9 @@ class OutputAssertions:
 
     :type escape_run_result: EscapeRunResult
     """
-    if (self.ADAPTATION_SUCCESS not in escape_run_result.log_output):
+    if (not self._has_message(escape_run_result.log_output, self.ADAPTATION_SUCCESS)):
       raise AssertionError(
-        "\n".join(escape_run_result.log_output.split("\n")[-5:]) +
+        "\n".join(escape_run_result.log_output[-5:]) +
         "Success message is missing from log output."
       )
     else:
@@ -29,8 +29,21 @@ class OutputAssertions:
 
     :type escape_run_result: testframework.runner.EscapeRunResult
     """
-    if self.VIRTUALIZER_DIFFERENT_VERSION in escape_run_result.log_output:
+    if self._has_message(escape_run_result.log_output, self.VIRTUALIZER_DIFFERENT_VERSION):
       raise AssertionError("Virtualizer version mismatch")
+
+  def _has_message (self, log_content, expected_message):
+    for log_line in log_content:
+      if expected_message in log_line:
+        return True
+
+    return False
+
+
+class WarningChecker():
+  ACCEPTABLE_WARNINGS = [
+
+  ]
 
 
 class EscapeTestCase(TestCase, OutputAssertions):
@@ -53,7 +66,12 @@ class EscapeTestCase(TestCase, OutputAssertions):
   def run_escape (self):
     command = [self.test_case_info.full_testcase_path() + "/run.sh"]
     proc = self.command_runner.execute(command)
-    self.result = EscapeRunResult(output=proc.before)
+    log_contents = self._read_file(self.test_case_info.full_testcase_path() + "/escape.log");
+    self.result = EscapeRunResult(output=log_contents)
+
+  def _read_file (self, filename):
+    with open(filename) as f:
+      return f.readlines()
 
   def setUp (self):
     super(EscapeTestCase, self).setUp()

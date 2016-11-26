@@ -26,7 +26,8 @@ class TestOutputAssertions(TestCase):
     self.assertEqual("Virtualizer version mismatch", exception.exception.message)
 
   def _create_result (self, message):
-    return EscapeRunResult("Random result text"
-                           + message +
-                           "More random text"
-                           )
+    return EscapeRunResult([
+      "Random result text",
+      "Random Pre Text| " + message,
+      "More random text"
+    ])
