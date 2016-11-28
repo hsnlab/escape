@@ -363,7 +363,7 @@ class NFFGConverter(object):
             sap_port.technology = infra_port.technology = \
               vport.sap_data.technology.get_value()
           if vport.sap_data.role.is_initialized():
-            sap_port.role = infra_port.role = vport.role.get_value()
+            sap_port.role = infra_port.role = vport.sap_data.role.get_value()
           if vport.sap_data.resources.is_initialized():
             if vport.sap_data.resources.delay.is_initialized():
               try:
