@@ -213,7 +213,8 @@
 					<ports>
 						<port>
 							<id>1</id>
-							<port_type>port-abstract</port_type>
+							<port_type>port-sap</port_type>
+							<sap>SAP33</sap>
 							<sap_data>
 								<role>provider</role>
 							</sap_data>
@@ -486,7 +487,8 @@
 					<ports>
 						<port>
 							<id>1</id>
-							<port_type>port-abstract</port_type>
+							<port_type>port-sap</port_type>
+							<sap>SAP11</sap>
 							<sap_data>
 								<role>provider</role>
 							</sap_data>
