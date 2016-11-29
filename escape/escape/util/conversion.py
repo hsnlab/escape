@@ -113,35 +113,6 @@ class NFFGConverter(object):
     :return: splitted data structure
     :rtype: dict
     """
-    # match = {}
-    # action = {}
-    # # if re.search(r';', flowrule.match):
-    # #   # multiple elements in match field
-    # #   in_port = re.sub(r'.*in_port=(.*);.*', r'\1', flowrule.match)
-    # # else:
-    # #   # single element in match field
-    # #   in_port = re.sub(r'.*in_port=(.*)', r'\1', flowrule.match)
-    # match['in_port'] = port.id
-    # # Check match fields - currently only vlan_id
-    # # TODO: add further match fields
-    # if re.search(r'TAG', flowrule.match):
-    #   tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.match)
-    #   match['vlan_id'] = tag
-    #
-    # if re.search(r';', flowrule.action):
-    #   # multiple elements in action field
-    #   out = re.sub(r'.*output=(.*);.*', r'\1', flowrule.action)
-    # else:
-    #   # single element in action field
-    #   out = re.sub(r'.*output=(.*)', r'\1', flowrule.action)
-    # action['out'] = out
-    #
-    # if re.search(r'TAG', flowrule.action):
-    #   if re.search(r'UNTAG', flowrule.action):
-    #     action['vlan_pop'] = True
-    #   else:
-    #     push_tag = re.sub(r'.*TAG=.*\|(.*);?', r'\1', flowrule.action)
-    #     action['vlan_push'] = push_tag
     ret = {}
     parts = field.split(cls.OP_DELIMITER)
     if len(parts) < 1:
@@ -178,6 +149,29 @@ class NFFGConverter(object):
       else:
         raise RuntimeError("Unrecognizable key: %s" % kv[0])
     return ret
+
+  def generate_unique_id (self, id):
+    """
+    Generate a unique identifier based on original ID, delimiter and marker.
+
+    :param id: original ID
+    :type id: str
+    :return: unique ID
+    :rtype: str
+    """
+    return "%s%s%s" % (id, self.UNIQUE_ID_DELIMITER, self.domain)
+
+  @classmethod
+  def recreate_original_id (cls, id):
+    """
+    Recreate original ID based by removing trailing unique marker.
+
+    :param id: unique id
+    :type id: object
+    :return: original ID
+    :rtype: str
+    """
+    return str(id).rsplit(cls.UNIQUE_ID_DELIMITER, 1)[0]
 
   def _convert_flowrule_match (self, match):
     """
@@ -582,10 +576,8 @@ class NFFGConverter(object):
           nf_port.name = vport.name.get_value()
         # Store specific SAP port in NFs transparently
         if vport.port_type.is_initialized():
-          if vport.port_type.get_value() == self.TYPE_VIRTUALIZER_PORT_SAP:
-            nf_port.properties['port-type'] = self.TYPE_VIRTUALIZER_PORT_SAP
-            if vport.sap.is_initialized():
-              nf_port.properties['sap'] = vport.sap.get_value()
+          if vport.sap.is_initialized():
+            nf_port.sap = vport.sap.get_value()
         else:
           self.log.warning("Port type is missing from node: %s" % vport.id)
         # Add infra port capabilities
@@ -695,9 +687,7 @@ class NFFGConverter(object):
         v_src_node = v_src_nf.get_parent().get_parent()
         # Add domain name to the node id if unique_id is set
         if self.ensure_unique_id:
-          src_node = "%s%s%s" % (v_src_node.id.get_value(),
-                                 self.UNIQUE_ID_DELIMITER,
-                                 self.domain)
+          src_node = self.generate_unique_id(id=v_src_node.id.get_value())
         else:
           src_node = v_src_node.id.get_as_text()
         fr_match += self.LABEL_DELIMITER.join((src_node,
@@ -719,9 +709,7 @@ class NFFGConverter(object):
         v_dst_nf = v_fe_out.get_parent().get_parent()
         v_dst_node = v_dst_nf.get_parent().get_parent()
         if self.ensure_unique_id:
-          dst_node = "%s%s%s" % (v_dst_node.id.get_value(),
-                                 self.UNIQUE_ID_DELIMITER,
-                                 self.domain)
+          dst_node = self.generate_unique_id(id=v_dst_node.id.get_value())
         else:
           dst_node = v_dst_node.id.get_as_text()
         fr_action += self.LABEL_DELIMITER.join((dst_node,
@@ -899,9 +887,7 @@ class NFFGConverter(object):
       # Node params
       if self.ensure_unique_id:
         # Add domain name to the node id if unique_id is set
-        node_id = "%s%s%s" % (vnode.id.get_value(),
-                              self.UNIQUE_ID_DELIMITER,
-                              self.domain)
+        node_id = self.generate_unique_id(id=vnode.id.get_value())
       else:
         node_id = vnode.id.get_value()  # Mandatory - node.id
       if vnode.name.is_initialized():  # Optional - node.name
@@ -1083,9 +1069,7 @@ class NFFGConverter(object):
       src_node = src_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       if self.ensure_unique_id:
-        src_node_id = "%s%s%s" % (src_node.id.get_value(),
-                                  self.UNIQUE_ID_DELIMITER,
-                                  self.domain)
+        src_node_id = self.generate_unique_id(id=src_node.id.get_value())
       else:
         src_node_id = src_node.id.get_value()
       try:
@@ -1096,9 +1080,7 @@ class NFFGConverter(object):
       dst_node = dst_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       if self.ensure_unique_id:
-        dst_node_id = "%s%s%s" % (dst_node.id.get_value(),
-                                  self.UNIQUE_ID_DELIMITER,
-                                  self.domain)
+        dst_node_id = self.generate_unique_id(id=dst_node.id.get_value())
       else:
         dst_node_id = dst_node.id.get_value()
       try:
@@ -1372,7 +1354,7 @@ class NFFGConverter(object):
     for infra in nffg.infras:
       # Check in it's needed to remove domain from the end of id
       if self.ensure_unique_id:
-        v_node_id = str(infra.id).split(self.UNIQUE_ID_DELIMITER)[0]
+        v_node_id = self.recreate_original_id(id=infra.id)
       else:
         v_node_id = str(infra.id)
       v_node_name = str(infra.name) if infra.name else None  # optional
@@ -1531,7 +1513,7 @@ class NFFGConverter(object):
         sap_port = link.src
         # Rewrite port-type to port-sap
         if self.ensure_unique_id:
-          infra_id = str(n).split(self.UNIQUE_ID_DELIMITER)[0]
+          infra_id = self.recreate_original_id(id=n)
         else:
           infra_id = str(n)
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
@@ -1620,8 +1602,8 @@ class NFFGConverter(object):
         "Added link: Node: %s, port: %s <--> Node: %s, port: %s" % (
           link.src.node.id, link.src.id, link.dst.node.id, link.dst.id))
       if self.ensure_unique_id:
-        src_node_id = str(link.src.node.id).split(self.UNIQUE_ID_DELIMITER)[0]
-        dst_node_id = str(link.dst.node.id).split(self.UNIQUE_ID_DELIMITER)[0]
+        src_node_id = self.recreate_original_id(id=link.src.node.id)
+        dst_node_id = self.recreate_original_id(id=link.dst.node.id)
       else:
         src_node_id = str(link.src.node.id)
         dst_node_id = str(link.dst.node.id)
@@ -1677,7 +1659,7 @@ class NFFGConverter(object):
         continue
       infra_id = req.src.node.id
       if self.ensure_unique_id:
-        infra_id = str(infra_id).split(self.UNIQUE_ID_DELIMITER, 1)[0]
+        infra_id = self.recreate_original_id(id=infra_id)
       self.log.debug("Detected infra node: %s for requirement link: %s" %
                      (infra_id, req))
       meta_value = json.dumps({
@@ -1707,7 +1689,7 @@ class NFFGConverter(object):
       discovered_nfs = []
       # Recreate the original Node id
       if self.ensure_unique_id:
-        v_node_id = str(infra.id).split(self.UNIQUE_ID_DELIMITER)[0]
+        v_node_id = self.recreate_original_id(id=infra.id)
       else:
         v_node_id = str(infra.id)
       # Check in Infra exists in the Virtualizer
@@ -1787,9 +1769,13 @@ class NFFGConverter(object):
             # Convert other SAP-specific data
             v_nf_port.name.set_value(port.name)
             if 'port-type' in port.properties:
-              v_nf_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
+              self.log.warning("Unexpected inter-domain port in NF: %s" % port)
             if 'sap' in port.properties:
               v_nf_port.sap.set_value(port.properties['sap'])
+              v_nf_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
+            elif port.sap is not None:
+              v_nf_port.sap.set_value(port.sap)
+              v_nf_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
             v_nf_port.capability.set_value(port.capability)
             v_nf_port.sap_data.technology.set_value(port.technology)
             v_nf_port.sap_data.role.set_value(port.role)
@@ -1844,7 +1830,7 @@ class NFFGConverter(object):
     for infra in nffg.infras:
       # Recreate the original Node id
       if self.ensure_unique_id:
-        v_node_id = str(infra.id).split(self.UNIQUE_ID_DELIMITER)[0]
+        v_node_id = self.recreate_original_id(id=infra.id)
       else:
         v_node_id = str(infra.id)
       # Check in Infra exists in the Virtualizer
