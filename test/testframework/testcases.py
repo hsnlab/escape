@@ -32,9 +32,8 @@ class OutputAssertions(object):
     """
     if (not self._has_message(escape_run_result.log_output,
                               self.ADAPTATION_SUCCESS)):
-      raise AssertionError(
-        "\n".join(escape_run_result.log_output[-5:]) +
-        "Success message is missing from log output.")
+      raise AssertionError("Success message is missing from log output!\n%s" %
+                           "".join(escape_run_result.log_output[-5:]))
     else:
       return True
 
@@ -108,19 +107,17 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     self.test_case_info = test_case_info
 
   def run_escape (self):
-    command = [self.test_case_info.full_testcase_path() + "/run.sh"]
+    command = [self.test_case_info.full_testcase_path + "/run.sh"]
     try:
       self.command_runner.execute(command)
       self.save_run_result()
     except KeyboardInterrupt:
-      print "\n\nAborting test case: %s..." % \
-            self.test_case_info.testcase_dir_name().upper()
       self.command_runner.kill_process()
       self.save_run_result()
       raise
 
   def save_run_result (self):
-    log_file = self.test_case_info.full_testcase_path() + "/escape.log"
+    log_file = self.test_case_info.full_testcase_path + "/escape.log"
     with open(log_file) as f:
       self.result = EscapeRunResult(output=f.readlines())
 
@@ -130,11 +127,11 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
 
   def __str__ (self):
     return "%s (%s)" % (
-      self.test_case_info.testcase_dir_name(), strclass(self.__class__))
+      self.test_case_info.testcase_dir_name, strclass(self.__class__))
 
   def id (self):
     return super(EscapeTestCase, self).id() + str(
-      self.test_case_info.full_testcase_path())
+      self.test_case_info.full_testcase_path)
 
 
 class TestCaseBuilder(object):
@@ -151,11 +148,11 @@ class TestCaseBuilder(object):
     :type test_case_config: testframework.runner.RunnableTestCaseInfo
     :rtype: TestCase
     """
-    dir = test_case_config.full_testcase_path()
+    dir = test_case_config.full_testcase_path
     if not os.path.isfile(dir + "/run.sh"):
       raise Exception("No run.sh in directory " + dir)
 
-    test_py_file = dir + "/" + test_case_config.testcase_dir_name() + ".py"
+    test_py_file = dir + "/" + test_case_config.testcase_dir_name + ".py"
     if os.path.isfile(test_py_file):
       return self._load_dynamic_test_case(test_case_config, test_py_file)
 

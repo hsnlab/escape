@@ -13,7 +13,6 @@
 # limitations under the License.
 import argparse
 import os
-import time
 from threading import Timer
 from unittest.case import TestCase
 
@@ -26,7 +25,7 @@ class EscapeRunResult():
 
 
 class CommandRunner(object):
-  KILL_TIMEOUT = 30
+  KILL_TIMEOUT = 20
 
   def __init__ (self, cwd, kill_timeout=KILL_TIMEOUT, on_kill=None,
                 output_stream=None):
@@ -35,25 +34,13 @@ class CommandRunner(object):
     self.on_kill = on_kill
     self.kill_timeout = kill_timeout
     self.kill_timer = None
-    self.start_time = None
     self.proc = None
 
   def kill_process (self, *args, **kwargs):
     self.proc.sendcontrol('c')
     self.kill_timer.cancel()
     if self.on_kill:
-      self.on_kill(self.proc)
-    else:
-      self.__default_on_kill_handler(self.proc)
-
-  def __default_on_kill_handler (self, process):
-    """
-
-    :param process:
-    :return:
-    """
-    print "\nCommand: [%s] was killed after %.1f seconds." \
-          % (process.command, time.time() - self.start_time)
+      self.on_kill()
 
   def execute (self, command):
     self.proc = pexpect.spawn(command[0],
@@ -64,7 +51,6 @@ class CommandRunner(object):
 
     self.kill_timer = Timer(self.kill_timeout, self.kill_process, [self.proc])
     self.kill_timer.start()
-    self.start_time = time.time()
     self.proc.expect(pexpect.EOF)
     self.kill_timer.cancel()
     if "No such file or directory" in self.proc.before:
@@ -92,18 +78,20 @@ class TestReader(object):
 
 class RunnableTestCaseInfo(object):
   def __init__ (self, testcase_dir_name, full_testcase_path):
-    self.__full_testcase_path = full_testcase_path
-    self.__testcase_dir_name = testcase_dir_name
+    self._full_testcase_path = full_testcase_path
+    self._testcase_dir_name = testcase_dir_name
 
+  @property
   def testcase_dir_name (self):
     # type: () -> str
-    return self.__testcase_dir_name
+    return self._testcase_dir_name
 
+  @property
   def full_testcase_path (self):
-    return self.__full_testcase_path
+    return self._full_testcase_path
 
   def __repr__ (self):
-    return "RunnableTestCase [%s]" % self.__testcase_dir_name
+    return "RunnableTestCase [%s]" % self._testcase_dir_name
 
 
 default_cmd_opts = {"show_output": False,

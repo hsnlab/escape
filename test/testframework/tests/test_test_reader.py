@@ -20,16 +20,16 @@ class TestTestReader(TestCase):
     expected_case_names = ["case01", "case02", "case123123"]
     cases = self.read(dir)
 
-    case_names = [case.testcase_dir_name() for case in cases]
+    case_names = [case.testcase_dir_name for case in cases]
     case_names.sort()
     self.assertListEqual(expected_case_names, case_names)
 
   def test_given_a_testcase_returns_full_path (self):
     case = self.read_first_testcase()
-    self.assertEqual(self._testcases_dir() + "/case01/", case.full_testcase_path())
+    self.assertEqual(self._testcases_dir() + "/case01/", case.full_testcase_path)
 
   def read_first_testcase (self):
-    return [case for case in self.read(self._testcases_dir()) if case.testcase_dir_name() == "case01"][0]
+    return [case for case in self.read(self._testcases_dir()) if case.testcase_dir_name == "case01"][0]
 
   def read (self, dir):
     return self._reader.read_from(dir)
