@@ -11,10 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import print_function
-
 import argparse
 import os
+import time
 from threading import Timer
 from unittest.case import TestCase
 
@@ -35,35 +34,42 @@ class CommandRunner(object):
     self._cwd = cwd
     self.on_kill = on_kill
     self.kill_timeout = kill_timeout
+    self.kill_timer = None
+    self.start_time = None
+    self.proc = None
 
-  def _kill_process (self, proc):
-    proc.sendcontrol('c')
+  def kill_process (self, *args, **kwargs):
+    self.proc.sendcontrol('c')
+    self.kill_timer.cancel()
     if self.on_kill:
-      self.on_kill(proc)
+      self.on_kill(self.proc)
     else:
-      self._default_on_kill_handler(proc)
+      self.__default_on_kill_handler(self.proc)
 
-  def _default_on_kill_handler (self, process):
-    raise Exception("Command was killed after %d seconds.\nCommand: %s"
-                    % (self.kill_timeout, process.command))
+  def __default_on_kill_handler (self, process):
+    """
+
+    :param process:
+    :return:
+    """
+    print "\nCommand: [%s] was killed after %.1f seconds." \
+          % (process.command, time.time() - self.start_time)
 
   def execute (self, command):
-    proc = pexpect.spawn(command[0],
-                         args=command[1:],
-                         timeout=120,
-                         cwd=self._cwd,
-                         logfile=self.output_stream
-                         )
+    self.proc = pexpect.spawn(command[0],
+                              args=command[1:],
+                              timeout=120,
+                              cwd=self._cwd,
+                              logfile=self.output_stream)
 
-    kill_timer = Timer(self.KILL_TIMEOUT, self._kill_process, [proc])
-    kill_timer.start()
-
-    proc.expect(pexpect.EOF)
-    kill_timer.cancel()
-    if "No such file or directory" in proc.before:
-      raise Exception("CommandRunner Error:" + proc.before)
-
-    return proc
+    self.kill_timer = Timer(self.kill_timeout, self.kill_process, [self.proc])
+    self.kill_timer.start()
+    self.start_time = time.time()
+    self.proc.expect(pexpect.EOF)
+    self.kill_timer.cancel()
+    if "No such file or directory" in self.proc.before:
+      raise Exception("CommandRunner Error:" + self.proc.before)
+    return self.proc
 
 
 class TestReader(object):
@@ -75,28 +81,29 @@ class TestReader(object):
     :rtype: list[RunnableTestCaseInfo]
     """
     dirs = sorted(os.listdir(test_cases_dir))
-
-    cases = [RunnableTestCaseInfo(testcase_dir_name=case_dir,
-                                  full_testcase_path="%s/%s" % (test_cases_dir,
-                                                                 case_dir))
-             for case_dir in dirs if case_dir.startswith(self.TEST_DIR_PREFIX)]
+    cases = []
+    for case_dir in dirs:
+      if case_dir.startswith(self.TEST_DIR_PREFIX):
+        cases.append(RunnableTestCaseInfo(testcase_dir_name=case_dir,
+                                          full_testcase_path="%s/%s" % (
+                                            test_cases_dir, case_dir)))
     return cases
 
 
 class RunnableTestCaseInfo(object):
   def __init__ (self, testcase_dir_name, full_testcase_path):
-    self._full_testcase_path = full_testcase_path
-    self._testcase_dir_name = testcase_dir_name
+    self.__full_testcase_path = full_testcase_path
+    self.__testcase_dir_name = testcase_dir_name
 
   def testcase_dir_name (self):
     # type: () -> str
-    return self._testcase_dir_name
+    return self.__testcase_dir_name
 
   def full_testcase_path (self):
-    return self._full_testcase_path
+    return self.__full_testcase_path
 
   def __repr__ (self):
-    return "RunnableTestCase [%s]" % self._testcase_dir_name
+    return "RunnableTestCase [%s]" % self.__testcase_dir_name
 
 
 default_cmd_opts = {"show_output": False,
