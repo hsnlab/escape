@@ -29,7 +29,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import ProcessorError
 from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
-  VERBOSE
+  VERBOSE, quit_with_error
 from pox.lib.revent.revent import Event
 from virtualizer import Virtualizer
 
@@ -548,6 +548,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
                                      resource_view=dov.get_resource_info())
       except (ValueError, IOError, TypeError) as e:
         log.error("Can't load service request from file because of: " + str(e))
+        quit_with_error(msg=str(e), logger=log)
       else:
         log.info("Graph representation is loaded successfully!")
     # Initiate ROS REST-API if needed

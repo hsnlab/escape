@@ -1,6 +1,6 @@
 {
   "parameters": {
-    "id": "ServiceRequest10",
+    "id": "DoV",
     "name": "DoV",
     "version": "1.0",
     "mode": "REMAP"
@@ -21,7 +21,10 @@
               }
             ]
           },
-	  "sap": "SAP11"
+          "sap": "SAP11",
+          "sap_data": {
+            "role": "provider"
+          }
         }
       ],
       "metadata": {
@@ -209,7 +212,10 @@
             "sap": "SAP11"
           },
           "name": "SAP11",
-          "sap": "SAP11"
+          "sap": "SAP11",
+          "sap_data": {
+            "role": "provider"
+          }
         }
       ]
     }

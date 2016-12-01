@@ -1,0 +1,43 @@
+{
+  "parameters": {
+    "id": "DoV",
+    "name": "DoV",
+    "version": "1.0",
+    "mode": "ADD"
+  },
+  "node_nfs": [
+    {
+      "id": "camtest-consumer",
+      "status": "running",
+      "name": "camtest-consumer",
+      "ports": [
+        {
+          "id": 1,
+          "sap": "SAP33",
+          "sap_data": {
+            "role": "consumer"
+          },
+          "addresses": {
+            "l3": [
+              {
+                "id": "1",
+                "requested": "192.168.1.20/24"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "environment": "{'DAL_NODES': '192.168.1.23', 'VIDEO_PORT': '55555'}"
+      },
+      "functional_type": "camtest:1.0",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 128.0,
+          "storage": 1.0
+        }
+      }
+    }
+  ]
+}

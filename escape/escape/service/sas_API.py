@@ -32,7 +32,7 @@ from escape.util.domain import BaseResultEvent
 from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError
 from escape.util.misc import schedule_delayed_as_coop_task, \
   schedule_as_coop_task, notify_remote_visualizer, VERBOSE, quit_with_ok, \
-  get_global_parameter
+  get_global_parameter, quit_with_error
 from pox.lib.revent.revent import Event
 
 
@@ -253,6 +253,7 @@ class ServiceLayerAPI(AbstractAPI):
       except (ValueError, IOError, TypeError) as e:
         log.error(
           "Can't load service request from file because of: " + str(e))
+        quit_with_error(msg=str(e), logger=log)
     else:
       # Init REST-API if no input file is given
       self._initiate_rest_api()

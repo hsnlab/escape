@@ -20,7 +20,7 @@ function print_help {
     echo -e "Usage: $0 [project]"
     echo -e "Setup submodules according to given project for ESCAPE.\n"
     echo -e "parameters:"
-    echo -e "\t project: setup project [sb|5gex]"
+    echo -e "\t project: setup project [sb|5gex|ericsson]"
     exit 0
 }
 

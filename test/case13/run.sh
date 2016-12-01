@@ -20,4 +20,4 @@ echo
 
 # Invoke ESCAPE here with test parameters
 ${ESCAPE} --debug --test --quit --log ${CWD}/escape.log \
-            --config ${CWD}/test.config --service ${CWD}/request.nffg $@
+            --config ${CWD}/test.config --service ${CWD}/sapalias-test-req3.nffg $@

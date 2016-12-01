@@ -425,7 +425,7 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     Dump received :any:`NFFG` into a file.
 
     :param nffg: received NFFG need to be deployed
-    :type nffg: :nay:`NFFG`
+    :type nffg: :any:`NFFG`
     :return: successful install (True)
     :rtype: bool
     """
@@ -488,7 +488,7 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     :param path: file path offered as the domain topology
     :type path: str
     :param check_backward_links: check NFFG contains dynamic links (default:
-    false)
+      false)
     :type check_backward_links: bool
     :return: None
     """
@@ -541,7 +541,7 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     Dump received :any:`NFFG` into a file.
 
     :param nffg: received NFFG need to be deployed
-    :type nffg: :nay:`NFFG`
+    :type nffg: :any:`NFFG`
     :return: successful install (True)
     :rtype: bool
     """
@@ -623,7 +623,7 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     Dump received :any:`NFFG` into a file.
 
     :param nffg: received NFFG need to be deployed
-    :type nffg: :nay:`NFFG`
+    :type nffg: :any:`NFFG`
     :return: successful install (True)
     :rtype: bool
     """

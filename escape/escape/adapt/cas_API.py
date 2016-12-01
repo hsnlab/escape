@@ -22,7 +22,7 @@ from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
 from escape.util.api import AbstractAPI
 from escape.util.domain import BaseResultEvent
-from escape.util.misc import schedule_as_coop_task
+from escape.util.misc import schedule_as_coop_task, quit_with_error
 from pox.lib.revent.revent import Event
 
 
@@ -128,6 +128,7 @@ class ControllerAdaptationAPI(AbstractAPI):
         self.__proceed_installation(mapped_nffg=mapped_request)
       except (ValueError, IOError, TypeError) as e:
         log.error("Can't load service request from file because of: " + str(e))
+        quit_with_error(msg=str(e), logger=log)
       else:
         log.debug("Graph representation is loaded successfully!")
     log.info("Controller Adaptation Sublayer has been initialized!")

@@ -19,4 +19,5 @@ echo
 ## Test case header - END
 
 # Invoke ESCAPE here with test parameters
-sudo ${ESCAPE} --debug --test --quit --log ${CWD}/escape.log --full --config ${CWD}/test.config --service ${CWD}/request.nffg
+sudo ${ESCAPE} --debug --test --quit --log ${CWD}/escape.log --full \
+                --config ${CWD}/test.config --service ${CWD}/request.nffg $@
