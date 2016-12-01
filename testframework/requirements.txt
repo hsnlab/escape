@@ -1,2 +1,3 @@
 pyexpect
 unittest-xml-reporting
+xmlrunner
