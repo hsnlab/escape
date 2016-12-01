@@ -1,26 +1,36 @@
+# Copyright 2015 Lajos Gerecs
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 from __future__ import print_function
-import abc
+
 import argparse
 import os
-import subprocess
+from threading import Timer
 from unittest.case import TestCase
 
-import sys
-import time
-import signal
 import pexpect
-from pexpect import fdpexpect
-from threading import Timer
+
 
 class EscapeRunResult():
   def __init__ (self, output=""):
     self.log_output = output
 
 
-class CommandRunner:
+class CommandRunner(object):
   KILL_TIMEOUT = 30
 
-  def __init__ (self, cwd, kill_timeout=KILL_TIMEOUT, on_kill=None, output_stream = None):
+  def __init__ (self, cwd, kill_timeout=KILL_TIMEOUT, on_kill=None,
+                output_stream=None):
     self.output_stream = output_stream
     self._cwd = cwd
     self.on_kill = on_kill
@@ -34,10 +44,8 @@ class CommandRunner:
       self._default_on_kill_handler(proc)
 
   def _default_on_kill_handler (self, process):
-    raise Exception(
-      "Command was killed after " + str(self.kill_timeout) + " seconds " +
-      "Command: " + str(process)
-    )
+    raise Exception("Command was killed after %d seconds.\nCommand: %s"
+                    % (self.kill_timeout, process.command))
 
   def execute (self, command):
     proc = pexpect.spawn(command[0],
@@ -58,28 +66,24 @@ class CommandRunner:
     return proc
 
 
-class TestReader:
+class TestReader(object):
   TEST_DIR_PREFIX = "case"
 
   def read_from (self, test_cases_dir):
-
     """
 
     :rtype: list[RunnableTestCaseInfo]
     """
     dirs = sorted(os.listdir(test_cases_dir))
 
-    cases = [
-      RunnableTestCaseInfo(
-        testcase_dir_name=case_dir,
-        full_testcase_path=test_cases_dir + "/" + case_dir + "/"
-      )
-      for case_dir in dirs if case_dir.startswith(self.TEST_DIR_PREFIX)
-      ]
+    cases = [RunnableTestCaseInfo(testcase_dir_name=case_dir,
+                                  full_testcase_path="%s/%s" % (test_cases_dir,
+                                                                 case_dir))
+             for case_dir in dirs if case_dir.startswith(self.TEST_DIR_PREFIX)]
     return cases
 
 
-class RunnableTestCaseInfo:
+class RunnableTestCaseInfo(object):
   def __init__ (self, testcase_dir_name, full_testcase_path):
     self._full_testcase_path = full_testcase_path
     self._testcase_dir_name = testcase_dir_name
@@ -92,13 +96,11 @@ class RunnableTestCaseInfo:
     return self._full_testcase_path
 
   def __repr__ (self):
-    return "RunnableTestCase [" + self._testcase_dir_name + "]"
+    return "RunnableTestCase [%s]" % self._testcase_dir_name
 
 
-default_cmd_opts = {
-  "show_output": False,
-  "testcases": []
-}
+default_cmd_opts = {"show_output": False,
+                    "testcases": []}
 
 
 def parse_cmd_args (argv):
@@ -109,15 +111,14 @@ def parse_cmd_args (argv):
 
 
 def get_cmd_arg_parser ():
-  parser = argparse.ArgumentParser(
-    description="ESCAPE Test runner",
-    add_help=True,
-    prog="run_tests.py"
-  )
-  parser.add_argument("--show-output", "-o", action="store_true", help="Show ESCAPE output")
-  parser.add_argument("testcases", nargs="*", help = "list test case names you want to run."
-                                                     "Example: ./run_tests.py case05 case03 --show-output"
-                      )
+  parser = argparse.ArgumentParser(description="ESCAPE Test runner",
+                                   add_help=True,
+                                   prog="run_tests.py")
+  parser.add_argument("--show-output", "-o", action="store_true",
+                      help="Show ESCAPE output")
+  parser.add_argument("testcases", nargs="*",
+                      help="list test case names you want to run. Example: "
+                           "./run_tests.py case05 case03 --show-output")
   return parser
 
 
@@ -128,8 +129,10 @@ class SimpleTestCase(TestCase):
     :type command_runner: CommandRunner
     :type test_case_config: RunnableTestCaseInfo
     """
+    super(SimpleTestCase, self).__init__()
     self.command_runner = command_runner
     self.test_case_config = test_case_config
 
   def runTest (self):
-    self.result = self.command_runner.execute(self.test_case_config + "/run.sh")
+    self.result = self.command_runner.execute("%s/run.sh" %
+                                              self.test_case_config)
