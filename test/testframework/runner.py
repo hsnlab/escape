@@ -17,6 +17,8 @@ from threading import Timer
 
 import pexpect
 
+KILL_TIMEOUT = 5
+
 
 class EscapeRunResult():
   def __init__ (self, output=""):
@@ -24,8 +26,6 @@ class EscapeRunResult():
 
 
 class CommandRunner(object):
-  KILL_TIMEOUT = 20
-
   def __init__ (self, cwd, cmd, kill_timeout=KILL_TIMEOUT, on_kill=None,
                 output_stream=None):
     self.output_stream = output_stream
