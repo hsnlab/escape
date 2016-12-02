@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from collections import Iterable
 from threading import Timer
 
 import pexpect
@@ -25,36 +26,46 @@ class EscapeRunResult():
 class CommandRunner(object):
   KILL_TIMEOUT = 20
 
-  def __init__ (self, cwd, kill_timeout=KILL_TIMEOUT, on_kill=None,
+  def __init__ (self, cwd, cmd, kill_timeout=KILL_TIMEOUT, on_kill=None,
                 output_stream=None):
     self.output_stream = output_stream
     self._cwd = cwd
-    self.on_kill_hook = on_kill
+    self._command = self.__evaluate_cmd(cmd)
+    self.__process = None
     self.kill_timeout = kill_timeout
-    self.kill_timer = None
-    self.last_process = None
+    self.__kill_timer = None
+    self.on_kill_hook = on_kill
+
+  @staticmethod
+  def __evaluate_cmd (cmd):
+    if isinstance(cmd, basestring):
+      return cmd.split(' ')
+    elif isinstance(cmd, Iterable):
+      return list(cmd)
+    else:
+      return None
 
   def kill_process (self, *args, **kwargs):
-    self.last_process.sendcontrol('c')
-    self.kill_timer.cancel()
+    self.__process.sendcontrol('c')
+    self.__kill_timer.cancel()
     if self.on_kill_hook:
       self.on_kill_hook()
 
   def execute (self, command):
-    self.last_process = pexpect.spawn(command[0],
-                                      args=command[1:],
-                                      timeout=120,
-                                      cwd=self._cwd,
-                                      logfile=self.output_stream)
+    self.__process = pexpect.spawn(command[0],
+                                   args=command[1:],
+                                   timeout=120,
+                                   cwd=self._cwd,
+                                   logfile=self.output_stream)
 
-    self.kill_timer = Timer(self.kill_timeout, self.kill_process,
-                            [self.last_process])
-    self.kill_timer.start()
-    self.last_process.expect(pexpect.EOF)
-    self.kill_timer.cancel()
-    if "No such file or directory" in self.last_process.before:
-      raise Exception("CommandRunner Error: %s" % self.last_process.before)
-    return self.last_process
+    self.__kill_timer = Timer(self.kill_timeout, self.kill_process,
+                              [self.__process])
+    self.__kill_timer.start()
+    self.__process.expect(pexpect.EOF)
+    self.__kill_timer.cancel()
+    if "No such file or directory" in self.__process.before:
+      raise Exception("CommandRunner Error: %s" % self.__process.before)
+    return self.__process
 
 
 class TestReader(object):

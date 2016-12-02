@@ -49,10 +49,8 @@ def main (args):
 def create_test_suite (tests_dir, show_output=False, run_only_tests=None):
   test_cases = TestReader(tests_dir=tests_dir).read_from(run_only_tests)
   clear_test_environment(test_cases)
-  command_runner = CommandRunner(cwd=CWD,
-                                 output_stream=sys.stdout if show_output else
-                                 None)
-  test_suite = TestCaseBuilder(command_runner).to_suite(test_cases)
+  builder = TestCaseBuilder(cwd=CWD, show_output=show_output)
+  test_suite = builder.to_suite(test_cases)
   return test_suite
 
 

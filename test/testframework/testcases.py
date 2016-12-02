@@ -13,48 +13,62 @@
 # limitations under the License.
 import imp
 import os
+import sys
 from unittest.case import TestCase
 from unittest.suite import TestSuite
 from unittest.util import strclass
 
-from runner import EscapeRunResult, RunnableTestCaseInfo
+from runner import EscapeRunResult, RunnableTestCaseInfo, CommandRunner
 
 RUNNER_SCRIPT_NAME = "run.sh"
 
 
 class TestCaseBuilder(object):
-  def __init__ (self, command_runner):
+  def __init__ (self, cwd, show_output=False):
+    self.cwd = cwd
+    self.show_output = show_output
+
+  @staticmethod
+  def _get_test_command (case_config):
+    return os.path.join(case_config.full_testcase_path,
+                        RUNNER_SCRIPT_NAME)
+
+  def _create_command_runner (self, case_info):
+    return CommandRunner(cwd=self.cwd,
+                         cmd=self._get_test_command(case_info),
+                         output_stream=sys.stdout if self.show_output else None)
+
+  def build_from_config (self, case_info):
     """
 
-    :type command_runner: testframework.runner.CommandRunner
-    """
-    self.command_runner = command_runner
-
-  def build_from_config (self, test_case_config):
-    """
-
-    :type test_case_config: testframework.runner.RunnableTestCaseInfo
+    :type case_info: testframework.runner.RunnableTestCaseInfo
     :rtype: TestCase
     """
-    if not os.path.exists(os.path.join(test_case_config.full_testcase_path,
-                                       RUNNER_SCRIPT_NAME)):
+    runner_script = self._get_test_command(case_config=case_info)
+    if not os.path.exists(runner_script):
       raise Exception("No %s in directory: %s" %
-                      (RUNNER_SCRIPT_NAME, test_case_config.full_testcase_path))
+                      (RUNNER_SCRIPT_NAME, case_info.full_testcase_path))
 
-    test_py_file = os.path.join(test_case_config.full_testcase_path,
-                                "%s.py" % test_case_config.testcase_dir_name)
+    test_py_file = os.path.join(case_info.full_testcase_path,
+                                "%s.py" % case_info.testcase_dir_name)
 
+    cmd_runner = self._create_command_runner(case_info=case_info)
     if os.path.exists(test_py_file):
-      return self._load_dynamic_test_case(test_case_config, test_py_file)
+      return self._load_dynamic_test_case(case_info=case_info,
+                                          test_py_file=test_py_file)
     else:
-      return BasicSuccessfulTestCase(test_case_config, self.command_runner)
+      return BasicSuccessfulTestCase(test_case_info=case_info,
+                                     command_runner=cmd_runner)
 
-  def _load_dynamic_test_case (self, test_case_config, test_py_file):
+  def _load_dynamic_test_case (self, case_info, test_py_file):
     try:
-      module = imp.load_source(test_case_config.testcase_dir_name(),
+      module = imp.load_source(case_info.testcase_dir_name(),
                                test_py_file)
-      class_name = test_case_config.testcase_dir_name().capitalize()
-      return getattr(module, class_name)(test_case_config, self.command_runner)
+      class_name = case_info.testcase_dir_name().capitalize()
+      cmd_runner = CommandRunner(cwd=self.cwd,
+                                 cmd=self._get_test_command(case_info))
+      return getattr(module, class_name)(test_case_info=case_info,
+                                         command_runner=cmd_runner)
     except AttributeError:
       raise Exception("No class found in %s file." % test_py_file)
 
