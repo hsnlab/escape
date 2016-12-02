@@ -175,6 +175,7 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
                             RUNNER_SCRIPT_NAME)]
     try:
       self.command_runner.execute(command)
+      # print self.command_runner.last_process
       self.save_run_result()
     except KeyboardInterrupt:
       self.command_runner.kill_process()
@@ -183,8 +184,11 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
 
   def save_run_result (self):
     log_file = self.test_case_info.full_testcase_path + "/escape.log"
-    with open(log_file) as f:
-      self.result = EscapeRunResult(output=f.readlines())
+    try:
+      with open(log_file) as f:
+        self.result = EscapeRunResult(output=f.readlines())
+    except IOError as e:
+      self.result = EscapeRunResult(output=str(e))
 
   def setUp (self):
     super(EscapeTestCase, self).setUp()

@@ -30,7 +30,7 @@ def main (args):
   test_suite = create_test_suite(tests_dir=CWD,
                                  show_output=args.show_output,
                                  run_only_tests=args.testcases)
-  print "=" * 70
+  print "-" * 70
   print "Read %d test cases" % test_suite.countTestCases()
   results = []
   with open(REPORT_FILE, 'w') as output:
@@ -38,7 +38,8 @@ def main (args):
     try:
       results.append(test_runner.run(test_suite))
     except KeyboardInterrupt:
-      print "\n\nReceived KeyboardInterrupt from user! Abort test suite..."
+      print "\n\nReceived KeyboardInterrupt from user! " \
+            "Abort running test suite..."
   was_success = all(map(lambda result: result.wasSuccessful(), results))
   print "=" * 70
   print "End ESCAPE test"
