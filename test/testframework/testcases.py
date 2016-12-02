@@ -14,13 +14,14 @@
 import imp
 import os
 import sys
-from unittest.case import TestCase
+from unittest.case import TestCase, SkipTest
 from unittest.suite import TestSuite
 from unittest.util import strclass
 
 from runner import EscapeRunResult, RunnableTestCaseInfo, CommandRunner
 
 RUNNER_SCRIPT_NAME = "run.sh"
+ESCAPE_LOG_FILE_NAME = "escape.log"
 
 
 class TestCaseBuilder(object):
@@ -181,8 +182,10 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     :type command_runner: testframework.runner.CommandRunner
     """
     TestCase.__init__(self)
-    self.command_runner = command_runner
     self.test_case_info = test_case_info
+    self.command_runner = command_runner
+    self.result = None
+    """:type result: testframework.runner.EscapeRunResult"""
 
   def run_escape (self):
     command = [os.path.join(self.test_case_info.full_testcase_path,
@@ -190,19 +193,24 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     try:
       self.command_runner.execute(command)
       # print self.command_runner.last_process
-      self.save_run_result()
+      self.save_run_result_from_log()
     except KeyboardInterrupt:
       self.command_runner.kill_process()
-      self.save_run_result()
+      self.save_run_result_from_log()
       raise
 
-  def save_run_result (self):
-    log_file = self.test_case_info.full_testcase_path + "/escape.log"
+  def save_run_result_from_log (self):
+    log_file = os.path.join(self.test_case_info.full_testcase_path,
+                            ESCAPE_LOG_FILE_NAME)
     try:
       with open(log_file) as f:
         self.result = EscapeRunResult(output=f.readlines())
     except IOError as e:
-      self.result = EscapeRunResult(output=str(e))
+      self.result = EscapeRunResult(output=str(e), exception=e)
+
+  def get_result_from_stream (self):
+    output_stream = self.command_runner.get_process_output_stream()
+    return output_stream if output_stream else ""
 
   def setUp (self):
     super(EscapeTestCase, self).setUp()
@@ -218,6 +226,15 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
 
 
 class BasicSuccessfulTestCase(EscapeTestCase):
+
+  def check_errors(self):
+    if self.result.was_error():
+      output = self.get_result_from_stream()
+      for line in output.splitlines():
+        if line.startswith('[sudo]'):
+          self.skipTest(reason=line)
+
   def runTest (self):
+    self.check_errors()
     self.assert_successful_installation(self.result)
     self.assert_no_unusual_warnings(self.result.log_output)

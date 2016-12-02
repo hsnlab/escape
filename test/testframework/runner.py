@@ -17,12 +17,16 @@ from threading import Timer
 
 import pexpect
 
-KILL_TIMEOUT = 5
+KILL_TIMEOUT = 20
 
 
 class EscapeRunResult():
-  def __init__ (self, output=""):
+  def __init__ (self, output=None, exception=None):
     self.log_output = output
+    self.exception = exception
+
+  def was_error (self):
+    return self.exception is not None
 
 
 class CommandRunner(object):
@@ -50,6 +54,9 @@ class CommandRunner(object):
     self.__kill_timer.cancel()
     if self.on_kill_hook:
       self.on_kill_hook()
+
+  def get_process_output_stream (self):
+    return self.__process.before if self.__process.before else ""
 
   def execute (self, command):
     self.__process = pexpect.spawn(command[0],
