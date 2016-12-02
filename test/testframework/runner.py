@@ -11,10 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import argparse
 import os
 from threading import Timer
-from unittest.case import TestCase
 
 import pexpect
 
@@ -31,103 +29,66 @@ class CommandRunner(object):
                 output_stream=None):
     self.output_stream = output_stream
     self._cwd = cwd
-    self.on_kill = on_kill
+    self.on_kill_hook = on_kill
     self.kill_timeout = kill_timeout
     self.kill_timer = None
-    self.proc = None
+    self.last_process = None
 
   def kill_process (self, *args, **kwargs):
-    self.proc.sendcontrol('c')
+    self.last_process.sendcontrol('c')
     self.kill_timer.cancel()
-    if self.on_kill:
-      self.on_kill()
+    if self.on_kill_hook:
+      self.on_kill_hook()
 
   def execute (self, command):
-    self.proc = pexpect.spawn(command[0],
-                              args=command[1:],
-                              timeout=120,
-                              cwd=self._cwd,
-                              logfile=self.output_stream)
+    self.last_process = pexpect.spawn(command[0],
+                                      args=command[1:],
+                                      timeout=120,
+                                      cwd=self._cwd,
+                                      logfile=self.output_stream)
 
-    self.kill_timer = Timer(self.kill_timeout, self.kill_process, [self.proc])
+    self.kill_timer = Timer(self.kill_timeout, self.kill_process,
+                            [self.last_process])
     self.kill_timer.start()
-    self.proc.expect(pexpect.EOF)
+    self.last_process.expect(pexpect.EOF)
     self.kill_timer.cancel()
-    if "No such file or directory" in self.proc.before:
-      raise Exception("CommandRunner Error:" + self.proc.before)
-    return self.proc
+    if "No such file or directory" in self.last_process.before:
+      raise Exception("CommandRunner Error: %s" % self.last_process.before)
+    return self.last_process
 
 
 class TestReader(object):
   TEST_DIR_PREFIX = "case"
 
-  def read_from (self, test_cases_dir):
+  def __init__ (self, tests_dir):
+    self.tests_dir = tests_dir
+
+  def read_from (self, case_dirs=None):
     """
 
     :rtype: list[RunnableTestCaseInfo]
     """
-    dirs = sorted(os.listdir(test_cases_dir))
-    cases = []
-    for case_dir in dirs:
-      if case_dir.startswith(self.TEST_DIR_PREFIX):
-        cases.append(RunnableTestCaseInfo(testcase_dir_name=case_dir,
-                                          full_testcase_path="%s/%s" % (
-                                            test_cases_dir, case_dir)))
+    if not case_dirs:
+      case_dirs = sorted(os.listdir(self.tests_dir))
+    cases = [RunnableTestCaseInfo(full_path=os.path.join(self.tests_dir,
+                                                         case_dir))
+             for case_dir in case_dirs if
+             case_dir.startswith(self.TEST_DIR_PREFIX)]
     return cases
 
 
 class RunnableTestCaseInfo(object):
-  def __init__ (self, testcase_dir_name, full_testcase_path):
-    self._full_testcase_path = full_testcase_path
-    self._testcase_dir_name = testcase_dir_name
+  def __init__ (self, full_path):
+    # Removing trailing slash
+    self.__full_path = os.path.normpath(full_path)
 
   @property
   def testcase_dir_name (self):
-    # type: () -> str
-    return self._testcase_dir_name
+    return os.path.basename(self.__full_path)
 
   @property
   def full_testcase_path (self):
-    return self._full_testcase_path
+    return self.__full_path
 
   def __repr__ (self):
-    return "RunnableTestCase [%s]" % self._testcase_dir_name
-
-
-default_cmd_opts = {"show_output": False,
-                    "testcases": []}
-
-
-def parse_cmd_args (argv):
-  parser = get_cmd_arg_parser()
-  args = parser.parse_args(argv)
-  kwargs = args._get_kwargs()
-  return dict(default_cmd_opts.items() + kwargs)
-
-
-def get_cmd_arg_parser ():
-  parser = argparse.ArgumentParser(description="ESCAPE Test runner",
-                                   add_help=True,
-                                   prog="run_tests.py")
-  parser.add_argument("--show-output", "-o", action="store_true",
-                      help="Show ESCAPE output")
-  parser.add_argument("testcases", nargs="*",
-                      help="list test case names you want to run. Example: "
-                           "./run_tests.py case05 case03 --show-output")
-  return parser
-
-
-class SimpleTestCase(TestCase):
-  def __init__ (self, test_case_config, command_runner):
-    """
-
-    :type command_runner: CommandRunner
-    :type test_case_config: RunnableTestCaseInfo
-    """
-    super(SimpleTestCase, self).__init__()
-    self.command_runner = command_runner
-    self.test_case_config = test_case_config
-
-  def runTest (self):
-    self.result = self.command_runner.execute("%s/run.sh" %
-                                              self.test_case_config)
+    return "RunnableTestCase [%s]" % self.testcase_dir_name

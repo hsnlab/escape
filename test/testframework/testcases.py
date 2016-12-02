@@ -19,6 +19,70 @@ from unittest.util import strclass
 
 from runner import EscapeRunResult, RunnableTestCaseInfo
 
+RUNNER_SCRIPT_NAME = "run.sh"
+
+
+class TestCaseBuilder(object):
+  def __init__ (self, command_runner):
+    """
+
+    :type command_runner: testframework.runner.CommandRunner
+    """
+    self.command_runner = command_runner
+
+  def build_from_config (self, test_case_config):
+    """
+
+    :type test_case_config: testframework.runner.RunnableTestCaseInfo
+    :rtype: TestCase
+    """
+    if not os.path.exists(os.path.join(test_case_config.full_testcase_path,
+                                       RUNNER_SCRIPT_NAME)):
+      raise Exception("No %s in directory: %s" %
+                      (RUNNER_SCRIPT_NAME, test_case_config.full_testcase_path))
+
+    test_py_file = os.path.join(test_case_config.full_testcase_path,
+                                "%s.py" % test_case_config.testcase_dir_name)
+
+    if os.path.exists(test_py_file):
+      return self._load_dynamic_test_case(test_case_config, test_py_file)
+    else:
+      return BasicSuccessfulTestCase(test_case_config, self.command_runner)
+
+  def _load_dynamic_test_case (self, test_case_config, test_py_file):
+    try:
+      module = imp.load_source(test_case_config.testcase_dir_name(),
+                               test_py_file)
+      class_name = test_case_config.testcase_dir_name().capitalize()
+      return getattr(module, class_name)(test_case_config, self.command_runner)
+    except AttributeError:
+      raise Exception("No class found in %s file." % test_py_file)
+
+  def to_suite (self, tests):
+    """
+
+    :type tests: list[RunnableTestCaseInfo]
+    :rtype: TestSuite
+    """
+    test_cases = [self.build_from_config(case_info) for case_info in tests]
+    return TestSuite(test_cases)
+
+
+class SimpleTestCase(TestCase):
+  def __init__ (self, test_case_config, command_runner):
+    """
+
+    :type command_runner: CommandRunner
+    :type test_case_config: RunnableTestCaseInfo
+    """
+    super(SimpleTestCase, self).__init__()
+    self.command_runner = command_runner
+    self.test_case_config = test_case_config
+
+  def runTest (self):
+    self.result = self.command_runner.execute(
+      os.path.join(self.test_case_config, RUNNER_SCRIPT_NAME))
+
 
 class OutputAssertions(object):
   ADAPTATION_SUCCESS = "All installation process has been finished with " \
@@ -107,7 +171,8 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     self.test_case_info = test_case_info
 
   def run_escape (self):
-    command = [self.test_case_info.full_testcase_path + "/run.sh"]
+    command = [os.path.join(self.test_case_info.full_testcase_path,
+                            RUNNER_SCRIPT_NAME)]
     try:
       self.command_runner.execute(command)
       self.save_run_result()
@@ -132,50 +197,6 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
   def id (self):
     return super(EscapeTestCase, self).id() + str(
       self.test_case_info.full_testcase_path)
-
-
-class TestCaseBuilder(object):
-  def __init__ (self, command_runner):
-    """
-
-    :type command_runner: testframework.runner.CommandRunner
-    """
-    self.command_runner = command_runner
-
-  def build_from_config (self, test_case_config):
-    """
-
-    :type test_case_config: testframework.runner.RunnableTestCaseInfo
-    :rtype: TestCase
-    """
-    dir = test_case_config.full_testcase_path
-    if not os.path.isfile(dir + "/run.sh"):
-      raise Exception("No run.sh in directory " + dir)
-
-    test_py_file = dir + "/" + test_case_config.testcase_dir_name + ".py"
-    if os.path.isfile(test_py_file):
-      return self._load_dynamic_test_case(test_case_config, test_py_file)
-
-    return BasicSuccessfulTestCase(test_case_config, self.command_runner)
-
-  def _load_dynamic_test_case (self, test_case_config, test_py_file):
-    try:
-      module = imp.load_source(test_case_config.testcase_dir_name(),
-                               test_py_file)
-      class_name = test_case_config.testcase_dir_name().capitalize()
-      return getattr(module, class_name)(test_case_config, self.command_runner)
-    except AttributeError:
-      raise Exception("No class found in %s file." % test_py_file)
-
-  def to_suite (self, tests):
-    """
-
-    :type tests: list[RunnableTestCaseInfo]
-    :rtype: TestSuite
-    """
-    suite = [self.build_from_config(config) for config in tests]
-    test_suite = TestSuite(suite)
-    return test_suite
 
 
 class BasicSuccessfulTestCase(EscapeTestCase):

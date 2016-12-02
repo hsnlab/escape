@@ -12,25 +12,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import argparse
 import os
 import sys
 
 from xmlrunner import XMLTestRunner
 
-from testframework.runner import TestReader, CommandRunner, parse_cmd_args
+from testframework.runner import TestReader, CommandRunner
 from testframework.testcases import TestCaseBuilder
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 REPORT_FILE = "results.xml"
 
 
-def main (argv):
+def main (args):
   print "Start ESCAPE test"
-  cmd_args = parse_cmd_args(argv)
   test_suite = create_test_suite(tests_dir=CWD,
-                                 show_output=cmd_args["show_output"],
-                                 run_only_tests=cmd_args["testcases"])
+                                 show_output=args.show_output,
+                                 run_only_tests=args.testcases)
   print "=" * 70
   print "Read %d test cases" % test_suite.countTestCases()
   results = []
@@ -47,15 +46,12 @@ def main (argv):
 
 
 def create_test_suite (tests_dir, show_output=False, run_only_tests=None):
-  test_configs = TestReader().read_from(tests_dir)
-  if run_only_tests:
-    test_configs = [config for config in test_configs if
-                    config.testcase_dir_name in run_only_tests]
-  clear_test_environment(test_configs)
+  test_cases = TestReader(tests_dir=tests_dir).read_from(run_only_tests)
+  clear_test_environment(test_cases)
   command_runner = CommandRunner(cwd=CWD,
                                  output_stream=sys.stdout if show_output else
                                  None)
-  test_suite = TestCaseBuilder(command_runner).to_suite(test_configs)
+  test_suite = TestCaseBuilder(command_runner).to_suite(test_cases)
   return test_suite
 
 
@@ -69,5 +65,19 @@ def clear_test_environment (config):
       print "  DEL", log_file
 
 
+def parse_cmd_args ():
+  parser = argparse.ArgumentParser(description="ESCAPE Test runner",
+                                   add_help=True,
+                                   prog="run_tests.py")
+  parser.add_argument("--show-output", "-o", action="store_true", default=False,
+                      help="Show ESCAPE output")
+  parser.add_argument("testcases", nargs="*",
+                      help="list test case names you want to run. Example: "
+                           "./run_tests.py case05 case03 --show-output")
+  return parser.parse_args()
+
+
 if __name__ == "__main__":
-  sys.exit(main(sys.argv[1:]))
+  args = parse_cmd_args()
+  result = main(args)
+  sys.exit(result)
