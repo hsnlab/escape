@@ -14,7 +14,7 @@
 import imp
 import os
 import sys
-from unittest.case import TestCase, SkipTest
+from unittest.case import TestCase
 from unittest.suite import TestSuite
 from unittest.util import strclass
 
@@ -25,9 +25,11 @@ ESCAPE_LOG_FILE_NAME = "escape.log"
 
 
 class TestCaseBuilder(object):
-  def __init__ (self, cwd, show_output=False):
+  # TODO - check the possibility to refactor to unittest.TestLoader
+  def __init__ (self, cwd, show_output=False, kill_timeout=None):
     self.cwd = cwd
     self.show_output = show_output
+    self.kill_timeout = kill_timeout
 
   @staticmethod
   def _get_test_command (case_config):
@@ -37,6 +39,7 @@ class TestCaseBuilder(object):
   def _create_command_runner (self, case_info):
     return CommandRunner(cwd=self.cwd,
                          cmd=self._get_test_command(case_info),
+                         kill_timeout=self.kill_timeout,
                          output_stream=sys.stdout if self.show_output else None)
 
   def build_from_config (self, case_info):
@@ -93,6 +96,8 @@ class SimpleTestCase(TestCase):
     super(SimpleTestCase, self).__init__()
     self.command_runner = command_runner
     self.test_case_config = test_case_config
+
+    # TODO - implement test fixture setup to cleanup case dir
 
   def runTest (self):
     self.result = self.command_runner.execute(
@@ -226,8 +231,7 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
 
 
 class BasicSuccessfulTestCase(EscapeTestCase):
-
-  def check_errors(self):
+  def check_errors (self):
     if self.result.was_error():
       output = self.get_result_from_stream()
       for line in output.splitlines():
