@@ -18,8 +18,8 @@ import sys
 
 from xmlrunner import XMLTestRunner
 
-from testframework.runner import TestReader, CommandRunner
-from testframework.testcases import TestCaseBuilder
+from testframework.runner import TestReader, KILL_TIMEOUT
+from testframework.testcases import TestCaseBuilder, ESCAPE_LOG_FILE_NAME
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 REPORT_FILE = "results.xml"
@@ -29,8 +29,11 @@ def main (args):
   print "Start ESCAPE test"
   test_suite = create_test_suite(tests_dir=CWD,
                                  show_output=args.show_output,
-                                 run_only_tests=args.testcases)
+                                 run_only_tests=args.testcases,
+                                 kill_timeout=args.timeout)
   print "-" * 70
+  if args.timeout:
+    print "Set kill timeout for test cases: %ds\n" % args.timeout
   print "Read %d test cases" % test_suite.countTestCases()
   results = []
   with open(REPORT_FILE, 'w') as output:
@@ -46,10 +49,12 @@ def main (args):
   return 0 if was_success else 1
 
 
-def create_test_suite (tests_dir, show_output=False, run_only_tests=None):
+def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
+                       kill_timeout=None):
   test_cases = TestReader(tests_dir=tests_dir).read_from(run_only_tests)
   clear_test_environment(test_cases)
-  builder = TestCaseBuilder(cwd=CWD, show_output=show_output)
+  builder = TestCaseBuilder(cwd=CWD, show_output=show_output,
+                            kill_timeout=kill_timeout)
   test_suite = builder.to_suite(test_cases)
   return test_suite
 
@@ -58,7 +63,8 @@ def clear_test_environment (config):
   print "=" * 70
   print "Clear test environment:"
   for case_info in config:
-    log_file = os.path.join(CWD, case_info.testcase_dir_name, "escape.log")
+    log_file = os.path.join(CWD, case_info.testcase_dir_name,
+                            ESCAPE_LOG_FILE_NAME)
     if os.path.exists(log_file):
       os.remove(log_file)
       print "  DEL", log_file
@@ -73,6 +79,9 @@ def parse_cmd_args ():
   parser.add_argument("testcases", nargs="*",
                       help="list test case names you want to run. Example: "
                            "./run_tests.py case05 case03 --show-output")
+  parser.add_argument("--timeout", "-t", metavar="t", type=int,
+                      help="define explicit timeout in sec (default: %ss)" %
+                           KILL_TIMEOUT)
   return parser.parse_args()
 
 
