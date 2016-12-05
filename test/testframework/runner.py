@@ -30,13 +30,13 @@ class EscapeRunResult():
 
 
 class CommandRunner(object):
-  def __init__ (self, cwd, cmd, kill_timeout=KILL_TIMEOUT, on_kill=None,
+  def __init__ (self, cwd, cmd, kill_timeout=None, on_kill=None,
                 output_stream=None):
     self.output_stream = output_stream
     self._cwd = cwd
     self._command = self.__evaluate_cmd(cmd)
     self.__process = None
-    self.kill_timeout = kill_timeout
+    self.kill_timeout = kill_timeout if kill_timeout else KILL_TIMEOUT
     self.__kill_timer = None
     self.__killed = False
     self.on_kill_hook = on_kill
