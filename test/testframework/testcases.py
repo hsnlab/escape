@@ -24,24 +24,6 @@ RUNNER_SCRIPT_NAME = "run.sh"
 ESCAPE_LOG_FILE_NAME = "escape.log"
 
 
-class SimpleTestCase(TestCase):
-  def __init__ (self, test_case_config, command_runner):
-    """
-
-    :type command_runner: CommandRunner
-    :type test_case_config: RunnableTestCaseInfo
-    """
-    super(SimpleTestCase, self).__init__()
-    self.command_runner = command_runner
-    self.test_case_config = test_case_config
-
-    # TODO - implement test fixture setup to cleanup case dir
-
-  def runTest (self):
-    self.result = self.command_runner.execute(
-      os.path.join(self.test_case_config, RUNNER_SCRIPT_NAME))
-
-
 class OutputAssertions(object):
   ADAPTATION_SUCCESS = "All installation process has been finished with " \
                        "success!"
@@ -175,11 +157,9 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
       print self, "DEL", log_file
 
   def run_escape (self):
-    command = [os.path.join(self.test_case_info.full_testcase_path,
-                            RUNNER_SCRIPT_NAME)]
     try:
       # Run ESCAPE test
-      self.command_runner.execute(command)
+      self.command_runner.execute()
       # Collect result
       self.result = self.collect_result_from_log()
     except KeyboardInterrupt:

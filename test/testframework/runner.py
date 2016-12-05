@@ -33,16 +33,16 @@ class EscapeRunResult():
 
 
 class CommandRunner(object):
-  def __init__ (self, cwd, cmd, kill_timeout=None, on_kill=None,
+  def __init__ (self, cmd, cwd=None, kill_timeout=None, on_kill=None,
                 output_stream=None):
-    self.output_stream = output_stream
-    self._cwd = cwd
     self._command = self.__evaluate_cmd(cmd)
-    self.__process = None
+    self._cwd = cwd if cwd else os.path.abspath(__file__)
     self.kill_timeout = kill_timeout if kill_timeout else KILL_TIMEOUT
+    self.on_kill_hook = on_kill
+    self.output_stream = output_stream
+    self.__process = None
     self.__kill_timer = None
     self.__killed = False
-    self.on_kill_hook = on_kill
 
   @staticmethod
   def __evaluate_cmd (cmd):
@@ -57,7 +57,7 @@ class CommandRunner(object):
   def is_killed (self):
     return self.__killed
 
-  def kill_process (self, *args, **kwargs):
+  def kill_process (self):
     self.__process.sendcontrol('c')
     self.__kill_timer.cancel()
     self.__killed = True
@@ -67,9 +67,9 @@ class CommandRunner(object):
   def get_process_output_stream (self):
     return self.__process.before if self.__process.before else ""
 
-  def execute (self, command):
-    self.__process = pexpect.spawn(command[0],
-                                   args=command[1:],
+  def execute (self):
+    self.__process = pexpect.spawn(self._command[0],
+                                   args=self._command[1:],
                                    timeout=120,
                                    cwd=self._cwd,
                                    logfile=self.output_stream)
@@ -81,7 +81,7 @@ class CommandRunner(object):
     self.__kill_timer.cancel()
     if "No such file or directory" in self.__process.before:
       raise Exception("CommandRunner Error: %s" % self.__process.before)
-    return self.__process
+    return self.__killed
 
 
 class TestReader(object):
