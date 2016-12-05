@@ -15,9 +15,7 @@
 import argparse
 import os
 import sys
-import unittest
 
-import xmlrunner
 from xmlrunner import XMLTestRunner
 
 from testframework.runner import TestReader, KILL_TIMEOUT
@@ -39,7 +37,9 @@ def main (args):
   print "Read %d test cases" % test_suite.countTestCases()
   results = []
   with open(REPORT_FILE, 'w') as output:
-    test_runner = XMLTestRunner(output=output, verbosity=2)
+    test_runner = XMLTestRunner(output=output,
+                                verbosity=2,
+                                failfast=args.failfast)
     try:
       results.append(test_runner.run(test_suite))
     except KeyboardInterrupt:
@@ -66,6 +66,8 @@ def parse_cmd_args ():
                                    prog="run_tests.py")
   parser.add_argument("--show-output", "-o", action="store_true", default=False,
                       help="Show ESCAPE output")
+  parser.add_argument("--failfast", "-f", action="store_true", default=False,
+                      help="Stop on first failure")
   parser.add_argument("testcases", nargs="*",
                       help="list test case names you want to run. Example: "
                            "./run_tests.py case05 case03 --show-output")
