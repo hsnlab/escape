@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import imp
+import copy
+import importlib
+import json
 import os
 import sys
 from unittest.case import TestCase
@@ -21,6 +23,7 @@ from unittest.util import strclass
 from runner import EscapeRunResult, RunnableTestCaseInfo, CommandRunner
 
 RUNNER_SCRIPT_NAME = "run.sh"
+CONFIG_FILE_NAME = "test.config"
 ESCAPE_LOG_FILE_NAME = "escape.log"
 
 
@@ -73,6 +76,7 @@ class OutputAssertions(object):
 
 class WarningChecker(object):
   ACCEPTABLE_WARNINGS = [
+    "Unidentified layer name in loaded configuration",
     "Mapping algorithm in Layer: service is disabled! Skip mapping step and "
     "forward service request to lower layer",
     "No SGHops were given in the Service Graph! Could it be retreived? based "
@@ -219,6 +223,8 @@ class TestCaseBuilder(object):
   # TODO - check the possibility to refactor to unittest.TestLoader
 
   DEFAULT_TESTCASE_CLASS = BasicSuccessfulTestCase
+  CONFIG_CONTAINER_NAME = "test"
+
   # DEFAULT_TESTCASE_CLASS = RootPrivilegedSuccessfulTestCase
 
   def __init__ (self, cwd, show_output=False, kill_timeout=None):
@@ -247,29 +253,28 @@ class TestCaseBuilder(object):
     if not os.path.exists(runner_script):
       raise Exception("No %s in directory: %s" %
                       (RUNNER_SCRIPT_NAME, case_info.full_testcase_path))
-
-    test_py_file = os.path.join(case_info.full_testcase_path,
-                                "%s.py" % case_info.testcase_dir_name)
+    test_config = os.path.join(case_info.full_testcase_path,
+                               CONFIG_FILE_NAME)
 
     cmd_runner = self._create_command_runner(case_info=case_info)
-    if os.path.exists(test_py_file):
-      return self._load_dynamic_test_case(case_info=case_info,
-                                          test_py_file=test_py_file)
-    else:
-      return self.DEFAULT_TESTCASE_CLASS(test_case_info=case_info,
-                                         command_runner=cmd_runner)
+    if os.path.exists(test_config):
+      TESTCASE_CLASS = self._load_test_case_class(config_file=test_config)
+      if TESTCASE_CLASS:
+        return TESTCASE_CLASS(test_case_info=case_info,
+                              command_runner=cmd_runner)
+    return self.DEFAULT_TESTCASE_CLASS(test_case_info=case_info,
+                                       command_runner=cmd_runner)
 
-  def _load_dynamic_test_case (self, case_info, test_py_file):
-    try:
-      module = imp.load_source(case_info.testcase_dir_name(),
-                               test_py_file)
-      class_name = case_info.testcase_dir_name().capitalize()
-      cmd_runner = CommandRunner(cwd=self.cwd,
-                                 cmd=self._get_test_command(case_info))
-      return getattr(module, class_name)(test_case_info=case_info,
-                                         command_runner=cmd_runner)
-    except AttributeError:
-      raise Exception("No class found in %s file." % test_py_file)
+  def _load_test_case_class (self, config_file):
+    with open(config_file, 'r') as f:
+      config = json.load(f)
+      try:
+        test = copy.copy(config[self.CONFIG_CONTAINER_NAME])
+        m = test.pop('module')
+        c = test.pop('class')
+        return getattr(importlib.import_module(m), c)
+      except KeyError:
+        return None
 
   def to_suite (self, tests):
     """
