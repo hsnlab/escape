@@ -38,6 +38,7 @@ class CommandRunner(object):
     self.__process = None
     self.kill_timeout = kill_timeout
     self.__kill_timer = None
+    self.__killed = False
     self.on_kill_hook = on_kill
 
   @staticmethod
@@ -49,9 +50,14 @@ class CommandRunner(object):
     else:
       return None
 
+  @property
+  def is_killed(self):
+    return self.__killed
+
   def kill_process (self, *args, **kwargs):
     self.__process.sendcontrol('c')
     self.__kill_timer.cancel()
+    self.__killed = True
     if self.on_kill_hook:
       self.on_kill_hook()
 
