@@ -26,6 +26,9 @@ ESCAPE_LOG_FILE_NAME = "escape.log"
 
 class TestCaseBuilder(object):
   # TODO - check the possibility to refactor to unittest.TestLoader
+
+  DEFAULT_TESTCASE_CLASS = BasicSuccessfulTestCase
+
   def __init__ (self, cwd, show_output=False, kill_timeout=None):
     self.cwd = cwd
     self.show_output = show_output
@@ -61,8 +64,8 @@ class TestCaseBuilder(object):
       return self._load_dynamic_test_case(case_info=case_info,
                                           test_py_file=test_py_file)
     else:
-      return BasicSuccessfulTestCase(test_case_info=case_info,
-                                     command_runner=cmd_runner)
+      return self.DEFAULT_TESTCASE_CLASS(test_case_info=case_info,
+                                         command_runner=cmd_runner)
 
   def _load_dynamic_test_case (self, case_info, test_py_file):
     try:
