@@ -156,6 +156,7 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
 
   def setUp (self):
     super(EscapeTestCase, self).setUp()
+    # TODO - add root privilege checking
     # Call cleanup template method
     self.case_cleanup()
 
@@ -171,7 +172,7 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
                             ESCAPE_LOG_FILE_NAME)
     if os.path.exists(log_file):
       os.remove(log_file)
-      print "  DEL", log_file
+      print self, "DEL", log_file
 
   def run_escape (self):
     command = [os.path.join(self.test_case_info.full_testcase_path,
