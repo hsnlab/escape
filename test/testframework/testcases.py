@@ -47,28 +47,41 @@ class OutputAssertions(object):
                        "success!"
   VIRTUALIZER_DIFFERENT_VERSION = "Version is different!"
 
-  def assert_successful_installation (self, escape_run_result):
+  def check_successful_installation (self, result):
     """
 
-    :type escape_run_result: EscapeRunResult
+    :type result: EscapeRunResult
     """
-    if (not self._has_message(escape_run_result.log_output,
-                              self.ADAPTATION_SUCCESS)):
-      raise AssertionError("Success message is missing from log output!\n%s" %
-                           "".join(escape_run_result.log_output[-5:]))
-    else:
-      return True
+    # if (not self._has_message(escape_run_result.log_output,
+    #                           self.ADAPTATION_SUCCESS)):
+    #   raise AssertionError("Success message is missing from log output!\n%s" %
+    #                        "".join(escape_run_result.log_output[-5:]))
+    #
+    # else:
+    #   return True
+    success = self._has_message(result.log_output,
+                                self.ADAPTATION_SUCCESS)
+    return True if success else self.get_result_lines(result.log_output)
 
-  def assert_virtualizer_version_matches (self, escape_run_result):
+  def check_virtualizer_version_matches (self, result):
     """
 
-    :type escape_run_result: testframework.runner.EscapeRunResult
+    :type result: testframework.runner.EscapeRunResult
     """
-    if self._has_message(escape_run_result.log_output,
-                         self.VIRTUALIZER_DIFFERENT_VERSION):
-      raise AssertionError("Virtualizer version mismatch")
+    # if self._has_message(escape_run_result.log_output,
+    #                      self.VIRTUALIZER_DIFFERENT_VERSION):
+    #   raise AssertionError("Virtualizer version mismatch")
+    version_mismatch = self._has_message(result.log_output,
+                                         self.VIRTUALIZER_DIFFERENT_VERSION)
+    return True if not version_mismatch else "Got Virtualizer version mismatch!"
 
-  def _has_message (self, log_content, expected_message):
+  @staticmethod
+  def get_result_lines (log):
+    return "Success message is missing from log output!\n%s" % "".join(
+      log.log_output[-5:])
+
+  @staticmethod
+  def _has_message (log_content, expected_message):
     for log_line in log_content:
       if expected_message in log_line:
         return True
@@ -95,19 +108,22 @@ class WarningChecker(object):
     "Skip starting xterms on SAPS according to global config"
   ]
 
-  def _filter_warnings (self, log_lines):
-    return [line for line in log_lines if line.startswith("|WARNING")]
+  @staticmethod
+  def _filter_warnings (log):
+    return [line for line in log if line.startswith("|WARNING")]
 
-  def assert_no_unusual_warnings (self, log_lines):
-    warnings = self._filter_warnings(log_lines)
-    for log_warn in warnings:
-      is_acceptable = False
-      for acceptable_warn in self.ACCEPTABLE_WARNINGS:
-        if acceptable_warn in log_warn:
-          is_acceptable = True
-          break
-      if not is_acceptable:
-        raise AssertionError("Got unusual warning: " + log_warn)
+  def check_no_unusual_warnings (self, result):
+    warnings = self._filter_warnings(result.log_output)
+    for warn in warnings:
+      # for acceptable_warn in self.ACCEPTABLE_WARNINGS:
+      #   if acceptable_warn in log_warn:
+      #     is_acceptable = True
+      #     break
+      if warn not in self.ACCEPTABLE_WARNINGS:
+        return warn
+        # if not is_acceptable:
+        #   raise AssertionError("Got unusual warning: " + log_warn)
+    return True
 
 
 class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
@@ -130,35 +146,6 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     self.result = None
     """:type result: testframework.runner.EscapeRunResult"""
 
-  def run_escape (self):
-    command = [os.path.join(self.test_case_info.full_testcase_path,
-                            RUNNER_SCRIPT_NAME)]
-    try:
-      self.command_runner.execute(command)
-      # print self.command_runner.last_process
-      self.save_run_result_from_log()
-    except KeyboardInterrupt:
-      self.command_runner.kill_process()
-      self.save_run_result_from_log()
-      raise
-
-  def save_run_result_from_log (self):
-    log_file = os.path.join(self.test_case_info.full_testcase_path,
-                            ESCAPE_LOG_FILE_NAME)
-    try:
-      with open(log_file) as f:
-        self.result = EscapeRunResult(output=f.readlines())
-    except IOError as e:
-      self.result = EscapeRunResult(output=str(e), exception=e)
-
-  def get_result_from_stream (self):
-    output_stream = self.command_runner.get_process_output_stream()
-    return output_stream if output_stream else ""
-
-  def setUp (self):
-    super(EscapeTestCase, self).setUp()
-    self.run_escape()
-
   def __str__ (self):
     return "%s (%s)" % (
       self.test_case_info.testcase_dir_name, strclass(self.__class__))
@@ -166,6 +153,55 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
   def id (self):
     return super(EscapeTestCase, self).id() + str(
       self.test_case_info.full_testcase_path)
+
+  def setUp (self):
+    super(EscapeTestCase, self).setUp()
+    # Call cleanup template method
+    self.case_cleanup()
+
+  def runTest (self):
+    # Run test case
+    self.run_escape()
+    # Evaluate result
+    self.check_result()
+
+  def case_cleanup (self):
+    # Remove escape.log it exists
+    log_file = os.path.join(self.test_case_info.full_testcase_path,
+                            ESCAPE_LOG_FILE_NAME)
+    if os.path.exists(log_file):
+      os.remove(log_file)
+      print "  DEL", log_file
+
+  def run_escape (self):
+    command = [os.path.join(self.test_case_info.full_testcase_path,
+                            RUNNER_SCRIPT_NAME)]
+    try:
+      # Run ESCAPE test
+      self.command_runner.execute(command)
+      # Collect result
+      self.result = self.collect_result_from_log()
+    except KeyboardInterrupt:
+      self.command_runner.kill_process()
+      self.collect_result_from_log()
+      raise
+
+  def collect_result_from_log (self):
+    log_file = os.path.join(self.test_case_info.full_testcase_path,
+                            ESCAPE_LOG_FILE_NAME)
+    try:
+      with open(log_file) as f:
+        return EscapeRunResult(output=f.readlines())
+    except IOError as e:
+      return EscapeRunResult(output=str(e), exception=e)
+
+  def get_result_from_stream (self):
+    output_stream = self.command_runner.get_process_output_stream()
+    return output_stream if output_stream else ""
+
+  def check_result (self):
+    # Template method for analyzing run result
+    raise NotImplementedError('Not implemented yet!')
 
 
 class BasicSuccessfulTestCase(EscapeTestCase):
@@ -176,10 +212,14 @@ class BasicSuccessfulTestCase(EscapeTestCase):
         if line.startswith('[sudo]'):
           self.skipTest(reason=line)
 
-  def runTest (self):
+  def check_result (self):
     self.check_errors()
-    self.assert_successful_installation(self.result)
-    self.assert_no_unusual_warnings(self.result.log_output)
+
+    success = self.check_successful_installation(self.result)
+    self.assertTrue(success, msg=success)
+
+    no_warning = self.check_no_unusual_warnings(self.result)
+    self.assertTrue(no_warning, msg=no_warning)
 
 
 class TestCaseBuilder(object):

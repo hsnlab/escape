@@ -17,7 +17,7 @@ from threading import Timer
 
 import pexpect
 
-KILL_TIMEOUT = 20
+KILL_TIMEOUT = 10
 
 
 class EscapeRunResult():
@@ -27,6 +27,9 @@ class EscapeRunResult():
 
   def was_error (self):
     return self.exception is not None
+
+  def __iter__ (self):
+    return iter(self.log_output)
 
 
 class CommandRunner(object):
@@ -51,7 +54,7 @@ class CommandRunner(object):
       return None
 
   @property
-  def is_killed(self):
+  def is_killed (self):
     return self.__killed
 
   def kill_process (self, *args, **kwargs):
@@ -94,7 +97,7 @@ class TestReader(object):
     """
     if not case_dirs:
       case_dirs = sorted(os.listdir(self.tests_dir))
-    cases = [RunnableTestCaseInfo(full_path=os.path.join(self.tests_dir,
+    cases = [RunnableTestCaseInfo(case_path=os.path.join(self.tests_dir,
                                                          case_dir))
              for case_dir in case_dirs if
              case_dir.startswith(self.TEST_DIR_PREFIX)]
@@ -102,17 +105,17 @@ class TestReader(object):
 
 
 class RunnableTestCaseInfo(object):
-  def __init__ (self, full_path):
+  def __init__ (self, case_path):
     # Removing trailing slash
-    self.__full_path = os.path.normpath(full_path)
+    self.__case_path = os.path.normpath(case_path)
 
   @property
   def testcase_dir_name (self):
-    return os.path.basename(self.__full_path)
+    return os.path.basename(self.__case_path)
 
   @property
   def full_testcase_path (self):
-    return self.__full_path
+    return self.__case_path
 
   def __repr__ (self):
     return "RunnableTestCase [%s]" % self.testcase_dir_name

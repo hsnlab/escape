@@ -19,7 +19,7 @@ import sys
 from xmlrunner import XMLTestRunner
 
 from testframework.runner import TestReader, KILL_TIMEOUT
-from testframework.testcases import TestCaseBuilder, ESCAPE_LOG_FILE_NAME
+from testframework.testcases import TestCaseBuilder
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 REPORT_FILE = "results.xml"
@@ -52,22 +52,10 @@ def main (args):
 def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
                        kill_timeout=None):
   test_cases = TestReader(tests_dir=tests_dir).read_from(run_only_tests)
-  clear_test_environment(test_cases)
   builder = TestCaseBuilder(cwd=CWD, show_output=show_output,
                             kill_timeout=kill_timeout)
   test_suite = builder.to_suite(test_cases)
   return test_suite
-
-
-def clear_test_environment (config):
-  print "=" * 70
-  print "Clear test environment:"
-  for case_info in config:
-    log_file = os.path.join(CWD, case_info.testcase_dir_name,
-                            ESCAPE_LOG_FILE_NAME)
-    if os.path.exists(log_file):
-      os.remove(log_file)
-      print "  DEL", log_file
 
 
 def parse_cmd_args ():
