@@ -36,7 +36,7 @@ class CommandRunner(object):
   def __init__ (self, cmd, cwd=None, kill_timeout=None, on_kill=None,
                 output_stream=None):
     self._command = self.__evaluate_cmd(cmd)
-    self._cwd = cwd if cwd else os.path.abspath(__file__)
+    self._cwd = cwd if cwd else os.path.dirname(__file__)
     self.kill_timeout = kill_timeout if kill_timeout else KILL_TIMEOUT
     self.on_kill_hook = on_kill
     self.output_stream = output_stream
@@ -57,7 +57,7 @@ class CommandRunner(object):
   def is_killed (self):
     return self.__killed
 
-  def kill_process (self):
+  def kill_process (self, *args, **kwargs):
     self.__process.sendcontrol('c')
     self.__kill_timer.cancel()
     self.__killed = True
@@ -81,7 +81,7 @@ class CommandRunner(object):
     self.__kill_timer.cancel()
     if "No such file or directory" in self.__process.before:
       raise Exception("CommandRunner Error: %s" % self.__process.before)
-    return self.__killed
+    return self
 
 
 class TestReader(object):

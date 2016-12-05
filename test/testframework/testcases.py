@@ -138,17 +138,16 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
 
   def setUp (self):
     super(EscapeTestCase, self).setUp()
-    # TODO - add root privilege checking
     # Call cleanup template method
-    self.case_cleanup()
+    self.test_case_cleanup()
 
   def runTest (self):
     # Run test case
     self.run_escape()
     # Evaluate result
-    self.check_result()
+    self.verify_result()
 
-  def case_cleanup (self):
+  def test_case_cleanup (self):
     # Remove escape.log it exists
     log_file = os.path.join(self.test_case_info.full_testcase_path,
                             ESCAPE_LOG_FILE_NAME)
@@ -180,7 +179,7 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     output_stream = self.command_runner.get_process_output_stream()
     return output_stream if output_stream else ""
 
-  def check_result (self):
+  def verify_result (self):
     # Template method for analyzing run result
     raise NotImplementedError('Not implemented yet!')
 
@@ -193,7 +192,7 @@ class BasicSuccessfulTestCase(EscapeTestCase):
         if line.startswith('[sudo]'):
           self.skipTest(reason=line)
 
-  def check_result (self):
+  def verify_result (self):
     self.check_errors()
 
     success = self.check_successful_installation(self.result)
@@ -203,10 +202,24 @@ class BasicSuccessfulTestCase(EscapeTestCase):
     self.assertTrue(no_warning, msg=no_warning)
 
 
+class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
+  def check_root_privilege (self):
+    # Due to XMLTestRunner implementation test cannot skip in setUp()
+    if CommandRunner("sudo uname", kill_timeout=2).execute().is_killed:
+      self.skipTest("Root privilege is required to run the testcase: %s" %
+                    self.test_case_info.testcase_dir_name)
+
+  def runTest (self):
+    self.check_root_privilege()
+    # Run test case
+    super(RootPrivilegedSuccessfulTestCase, self).runTest()
+
+
 class TestCaseBuilder(object):
   # TODO - check the possibility to refactor to unittest.TestLoader
 
   DEFAULT_TESTCASE_CLASS = BasicSuccessfulTestCase
+  # DEFAULT_TESTCASE_CLASS = RootPrivilegedSuccessfulTestCase
 
   def __init__ (self, cwd, show_output=False, kill_timeout=None):
     self.cwd = cwd
