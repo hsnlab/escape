@@ -17,7 +17,14 @@
 Top starter script of ESCAPEv2 for convenient purposes
 """
 import argparse
+import imp
 import os
+
+
+def get_escape_version ():
+  misc = imp.load_source("misc", os.path.join(os.path.abspath(
+    os.path.dirname(__file__)), "escape/escape/util/misc.py"))
+  return getattr(misc, "get_escape_version")()
 
 
 def main ():
@@ -26,7 +33,7 @@ def main ():
     description="ESCAPEv2: Extensible Service ChAin Prototyping Environment "
                 "using Mininet, Click, NETCONF and POX",
     add_help=True,
-    version="2.0.0")
+    version=get_escape_version())
   # Add optional arguments
   escape = parser.add_argument_group("ESCAPEv2 arguments")
   escape.add_argument("-a", "--agent", action="store_true", default=False,
@@ -88,11 +95,10 @@ def main ():
     # Tailor Python path for importing mics functions without initialize
     # escape or util packages.
     import sys
-    mn = os.path.abspath(os.path.dirname(__file__) + "/mininet")
     # Import misc directly from util/ to avoid standard ESCAPE init steps
-    misc = os.path.abspath(os.path.dirname(__file__) + "/escape/escape/util")
-    sys.path.insert(0, mn)
-    sys.path.insert(0, misc)
+    sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/mininet"))
+    sys.path.insert(0, os.path.abspath(
+      os.path.dirname(__file__) + "/escape/escape/util"))
     if os.geteuid() != 0:
       print "Cleanup process requires root privilege!"
       return
