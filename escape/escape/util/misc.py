@@ -414,7 +414,7 @@ def get_escape_version ():
   """
   # Only match version tag like v2.0.0
   # cmd = "git describe --always --first-parent --tags --match v*"
-  cmd = "git describe --always --first-parent --tags"
+  cmd = "git describe --always --tags"
   desc = Popen(cmd.split(' '), stdout=PIPE).communicate()[0].strip()
   # If Git is not installed or command is failed
   if not desc:
