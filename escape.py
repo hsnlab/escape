@@ -141,8 +141,8 @@ def main ():
 
   if args.test:
     cmd.append("--test")
-    if args.log:
-      cmd.append("--log=%s" % args.log)
+  if args.log:
+    cmd.append("--log=%s" % args.log)
 
   if args.quit:
     cmd.append("--quit")

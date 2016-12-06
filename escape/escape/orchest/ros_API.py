@@ -762,21 +762,21 @@ class ResourceOrchestrationAPI(AbstractAPI):
     dov = self.resource_orchestrator.virtualizerManager.dov.get_resource_info()
     # Collect NFs
     nfs = [nf.id for nf in request.nfs]
-    log.debug("Collected mapped BiSBiS nodes for NFs: %s" % nfs)
+    log.log(VERBOSE, "Collected NFs: %s" % nfs)
     # Process NFs
     for nf_id in nfs:
       mapping = {}
       # Get the connected infra node
       bisbis = [n.id for n in dov.infra_neighbors(nf_id)]
+      log.log(VERBOSE, "Detected mapped BiSBiS node:" % bisbis)
       if len(bisbis) != 1:
         log.warning(
-          "Detected unexpected number of BiSBiS node for NF: %s!" % bisbis)
+          "Detected unexpected number of BiSBiS node: %s!" % bisbis)
         continue
-      # Add infra node ID and domain name
-      bisbis = str(bisbis.pop()).split('@')
+      bisbis = bisbis.pop()
       # Add NF id
       nf = {"id": nf_id, "ports": []}
-      for dyn_link in dov.network[nf_id][bisbis[0]].itervalues():
+      for dyn_link in dov.network[nf_id][bisbis].itervalues():
         port = OrderedDict(id=dyn_link.src.id)
         if dyn_link.src.l4 is not None:
           try:
@@ -787,9 +787,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
             port['management'] = dyn_link.src.l4
         nf['ports'].append(port)
       mapping['nf'] = nf
+      # Add infra node ID and domain name
+      bisbis = bisbis.split('@')
       mapping['bisbis'] = {"id": bisbis[0],
-                           "domain": bisbis[1] if len(bisbis) > 1
-                           else 'INTERNAL'}
+                           "domain": bisbis[1] if len(bisbis) > 1 else None}
       ret['mapping'].append(mapping)
       # Collect NF management data
 

@@ -418,13 +418,11 @@ def get_escape_version ():
   desc = Popen(cmd.split(' '), stdout=PIPE).communicate()[0].strip()
   # If Git is not installed or command is failed
   if not desc:
-    import escape
-    return escape.__version__
+    return "2.0.0"
   else:
     # If no tag is defined in the repo
     if not desc.count('-'):
-      import escape
-      return escape.__version__
+      return "2.0.0"
     else:
       return desc
 
