@@ -808,6 +808,8 @@ class NFFGConverter(object):
           # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
           elif op.startswith(self.ACTION_POP_TAG):
             fr_action += ";%s" % self.OP_UNTAG
+          else:
+            fr_action += ";%s" % op
 
       # Get the src (port where fr need to store) and dst port id
       try:
