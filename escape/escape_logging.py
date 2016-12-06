@@ -57,7 +57,6 @@ def setup_logging (test_mode=False, log_file=None, **kw):
   :type kw: dict
   :return: None
   """
-  log_file = log_file if log_file is not None else LOG_FILE
   # Enable logging in specific logging level
   level.launch(**kw)
   # Launch colorful logging
@@ -68,16 +67,18 @@ def setup_logging (test_mode=False, log_file=None, **kw):
     log.info("Setup Logger - formatter: %s, level: %s"
              % (pox.log.launch.__module__,
                 logging.getLevelName(log.getEffectiveLevel())))
-
-    # Define additional logger for logging to file
-    pox.log.launch(format=FILE_LOGGER_FORMAT, file=log_file + ',w')
-    log.info("Setup Logger - formatter: %s, level: %s, file: %s"
-             % (pox.log.launch.__module__,
-                logging.getLevelName(log.getEffectiveLevel()),
-                log_file))
+    # Set default log_file to log in file in test mode
+    log_file = log_file if log_file is not None else LOG_FILE
   else:
     # Define default logger
     pox.log.launch(format=DEFAULT_LOGGER_FORMAT)
     log.info("Setup logger - formatter: %s, level: %s"
              % (setup_logging.__module__,
                 logging.getLevelName(log.getEffectiveLevel())))
+  if log_file:
+    # Define additional logger for logging to file
+    pox.log.launch(format=FILE_LOGGER_FORMAT, file=log_file + ',w')
+    log.info("Setup Logger - formatter: %s, level: %s, file: %s"
+             % (pox.log.launch.__module__,
+                logging.getLevelName(log.getEffectiveLevel()),
+                log_file))
