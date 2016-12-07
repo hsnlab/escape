@@ -11,9 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import copy
-import importlib
-import json
 import os
 import sys
 from unittest.case import TestCase
@@ -22,8 +19,6 @@ from unittest.util import strclass
 
 from runner import EscapeRunResult, RunnableTestCaseInfo, CommandRunner
 
-RUNNER_SCRIPT_NAME = "run.sh"
-CONFIG_FILE_NAME = "test.config"
 ESCAPE_LOG_FILE_NAME = "escape.log"
 
 
@@ -121,7 +116,7 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
   See BasicSuccessfulTestCase
   """
 
-  def __init__ (self, test_case_info, command_runner):
+  def __init__ (self, test_case_info, command_runner, **kwargs):
     """
     :type test_case_info: testframework.runner.RunnableTestCaseInfo
     :type command_runner: testframework.runner.CommandRunner
@@ -133,8 +128,8 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     """:type result: testframework.runner.EscapeRunResult"""
 
   def __str__ (self):
-    return "Test: %s (%s)" % (
-      self.test_case_info.testcase_dir_name, strclass(self.__class__))
+    return "Test:\t%s\t(%s)" % (
+      self.test_case_info.testcase_dir_name, self.__class__.__name__)
 
   def id (self):
     return super(EscapeTestCase, self).id() + str(
@@ -154,14 +149,11 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     self.run_escape()
     # Evaluate result
     self.verify_result()
-    # Set success
-    self.result.success = True
 
   def tearDown (self):
     super(EscapeTestCase, self).tearDown()
     # Cleanup testcase objects if the result was success
-    if self.result is not None and self.result.success:
-      self.command_runner.cleanup()
+    self.command_runner.cleanup()
 
   def run_escape (self):
     try:
@@ -193,16 +185,11 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
 
 
 class BasicSuccessfulTestCase(EscapeTestCase):
-  def check_errors (self):
-    if self.result.was_error():
-      output = self.get_result_from_stream()
-      for line in output.splitlines():
-        if line.startswith('[sudo]'):
-          self.skipTest(reason=line)
+  """
+  Basic successful result and warning checking.
+  """
 
   def verify_result (self):
-    self.check_errors()
-
     success = self.check_successful_installation(self.result)
     self.assertTrue(success, msg=success)
 
@@ -211,6 +198,10 @@ class BasicSuccessfulTestCase(EscapeTestCase):
 
 
 class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
+  """
+  Skip the test if the root password is requested on the console.
+  """
+
   def check_root_privilege (self):
     # Due to XMLTestRunner implementation test cannot skip in setUp()
     if CommandRunner("sudo uname", kill_timeout=2).execute().is_killed:
@@ -229,60 +220,44 @@ class TestCaseBuilder(object):
   DEFAULT_TESTCASE_CLASS = BasicSuccessfulTestCase
   CONFIG_CONTAINER_NAME = "test"
 
-  # DEFAULT_TESTCASE_CLASS = RootPrivilegedSuccessfulTestCase
-
   def __init__ (self, cwd, show_output=False, kill_timeout=None):
     self.cwd = cwd
     self.show_output = show_output
     self.kill_timeout = kill_timeout
 
-  @staticmethod
-  def _get_test_command (case_config):
-    return os.path.join(case_config.full_testcase_path,
-                        RUNNER_SCRIPT_NAME)
-
   def _create_command_runner (self, case_info):
+    """
+    :type case_info: RunnableTestCaseInfo
+    :rtype: CommandRunner
+    """
     return CommandRunner(cwd=self.cwd,
-                         cmd=self._get_test_command(case_info),
+                         cmd=case_info.test_command,
                          kill_timeout=self.kill_timeout,
                          output_stream=sys.stdout if self.show_output else None)
 
   def build_from_config (self, case_info):
     """
-
-    :type case_info: testframework.runner.RunnableTestCaseInfo
-    :rtype: TestCase
+    :type case_info: RunnableTestCaseInfo
+    :rtype: EscapeTestCase
     """
-    runner_script = self._get_test_command(case_config=case_info)
-    if not os.path.exists(runner_script):
-      raise Exception("No %s in directory: %s" %
-                      (RUNNER_SCRIPT_NAME, case_info.full_testcase_path))
-    test_config = os.path.join(case_info.full_testcase_path,
-                               CONFIG_FILE_NAME)
-
+    # Check running script
+    if not os.path.exists(case_info.test_command):
+      raise Exception("Running script: %s for testcase: %s was not found"
+                      % (case_info.test_command, case_info.full_testcase_path))
+    # Create CommandRunner for test case
     cmd_runner = self._create_command_runner(case_info=case_info)
-    if os.path.exists(test_config):
-      TESTCASE_CLASS = self._load_test_case_class(config_file=test_config)
+    # Create TestCase class
+    if os.path.exists(case_info.config_file_name):
+      TESTCASE_CLASS, test_args = case_info.load_test_case_class()
       if TESTCASE_CLASS:
         return TESTCASE_CLASS(test_case_info=case_info,
-                              command_runner=cmd_runner)
+                              command_runner=cmd_runner,
+                              **test_args)
     return self.DEFAULT_TESTCASE_CLASS(test_case_info=case_info,
                                        command_runner=cmd_runner)
 
-  def _load_test_case_class (self, config_file):
-    with open(config_file, 'r') as f:
-      config = json.load(f)
-      try:
-        test = copy.copy(config[self.CONFIG_CONTAINER_NAME])
-        m = test.pop('module')
-        c = test.pop('class')
-        return getattr(importlib.import_module(m), c)
-      except KeyError:
-        return None
-
   def to_suite (self, tests):
     """
-
     :type tests: list[RunnableTestCaseInfo]
     :rtype: TestSuite
     """

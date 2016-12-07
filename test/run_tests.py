@@ -18,7 +18,7 @@ import sys
 
 from xmlrunner import XMLTestRunner
 
-from testframework.runner import TestReader, KILL_TIMEOUT, Tee
+from testframework.runner import TestReader, CommandRunner, Tee
 from testframework.testcases import TestCaseBuilder
 
 CWD = os.path.dirname(os.path.abspath(__file__))
@@ -26,21 +26,23 @@ REPORT_FILE = "results.xml"
 
 
 def main (args):
+  # Header
   print "Start ESCAPE test"
+  print "-" * 70
+  if args.timeout:
+    print "Set kill timeout for test cases: %ds\n" % args.timeout
+  # Create overall test suite
   test_suite = create_test_suite(tests_dir=CWD,
                                  show_output=args.show_output,
                                  run_only_tests=args.testcases,
                                  kill_timeout=args.timeout)
-  print "-" * 70
-  if args.timeout:
-    print "Set kill timeout for test cases: %ds\n" % args.timeout
   print "Read %d test cases" % test_suite.countTestCases()
+  # Run test suite in the specific context
   results = []
   if args.verbose:
     output_context_manager = Tee(filename=REPORT_FILE)
   else:
     output_context_manager = open(REPORT_FILE, 'w', buffering=0)
-  # Run test
   with output_context_manager as output:
     test_runner = XMLTestRunner(output=output,
                                 verbosity=2,
@@ -48,10 +50,10 @@ def main (args):
     try:
       results.append(test_runner.run(test_suite))
     except KeyboardInterrupt:
-      print "\n\nReceived KeyboardInterrupt from user! " \
-            "Abort running test suite..."
+      print "\n\nReceived KeyboardInterrupt! Abort running test suite..."
   # Evaluate results
   was_success = all(map(lambda res: res.wasSuccessful(), results))
+  # Footer
   print "=" * 70
   print "End ESCAPE test"
   return 0 if was_success else 1
@@ -79,7 +81,7 @@ def parse_cmd_args ():
                            "./run_tests.py case05 case03 --show-output")
   parser.add_argument("--timeout", "-t", metavar="t", type=int,
                       help="define explicit timeout in sec (default: %ss)" %
-                           KILL_TIMEOUT)
+                           CommandRunner.KILL_TIMEOUT)
   parser.add_argument("--verbose", "-v", action="store_true", default=False,
                       help="Run in verbose mode and show output")
   return parser.parse_args()
