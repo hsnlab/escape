@@ -186,7 +186,7 @@ class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
 
   def check_root_privilege (self):
     # Due to XMLTestRunner implementation test cannot skip in setUp()
-    if CommandRunner("sudo uname", kill_timeout=2).execute().is_killed:
+    if CommandRunner("sudo uname", kill_timeout=1).execute().is_killed:
       self.skipTest("Root privilege is required to run the testcase: %s" %
                     self.test_case_info.testcase_dir_name)
 
