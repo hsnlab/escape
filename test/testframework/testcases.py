@@ -15,7 +15,6 @@ import os
 import sys
 from unittest.case import TestCase
 from unittest.suite import TestSuite
-from unittest.util import strclass
 
 from runner import EscapeRunResult, RunnableTestCaseInfo, CommandRunner
 
@@ -29,16 +28,8 @@ class OutputAssertions(object):
 
   def check_successful_installation (self, result):
     """
-
     :type result: EscapeRunResult
     """
-    # if (not self._has_message(escape_run_result.log_output,
-    #                           self.ADAPTATION_SUCCESS)):
-    #   raise AssertionError("Success message is missing from log output!\n%s" %
-    #                        "".join(escape_run_result.log_output[-5:]))
-    #
-    # else:
-    #   return True
     success = self._has_message(result.log_output,
                                 self.ADAPTATION_SUCCESS)
     return True if success else self.get_result_lines(result.log_output)
@@ -46,11 +37,8 @@ class OutputAssertions(object):
   def check_virtualizer_version_matches (self, result):
     """
 
-    :type result: testframework.runner.EscapeRunResult
+    :type result: EscapeRunResult
     """
-    # if self._has_message(escape_run_result.log_output,
-    #                      self.VIRTUALIZER_DIFFERENT_VERSION):
-    #   raise AssertionError("Virtualizer version mismatch")
     version_mismatch = self._has_message(result.log_output,
                                          self.VIRTUALIZER_DIFFERENT_VERSION)
     return True if not version_mismatch else "Got Virtualizer version mismatch!"
@@ -96,14 +84,8 @@ class WarningChecker(object):
   def check_no_unusual_warnings (self, result):
     warnings = self._filter_warnings(result.log_output)
     for warn in warnings:
-      # for acceptable_warn in self.ACCEPTABLE_WARNINGS:
-      #   if acceptable_warn in log_warn:
-      #     is_acceptable = True
-      #     break
       if warn not in self.ACCEPTABLE_WARNINGS:
         return warn
-        # if not is_acceptable:
-        #   raise AssertionError("Got unusual warning: " + log_warn)
     return True
 
 
