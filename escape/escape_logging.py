@@ -40,7 +40,7 @@ TEST_LOGGER_FORMAT = "[@@@bold@@@level%(levelname)-18s@@@reset]" \
 FILE_LOGGER_FORMAT = "|%(levelname)s" \
                      "|%(name)s" \
                      "|%(asctime)s" \
-                     "| %(message)s"
+                     "|---|%(message)s"
 # Log file name
 LOG_FILE = "log/escape.log"
 
