@@ -22,8 +22,7 @@ ESCAPE_LOG_FILE_NAME = "escape.log"
 
 
 class OutputAssertions(object):
-  ADAPTATION_SUCCESS = "All installation process has been finished with " \
-                       "success!"
+  ADAPTATION_SUCCESS = "result: DEPLOYED"
   VIRTUALIZER_DIFFERENT_VERSION = "Version is different!"
 
   def check_successful_installation (self, result):
@@ -32,7 +31,7 @@ class OutputAssertions(object):
     """
     success = self._has_message(result.log_output,
                                 self.ADAPTATION_SUCCESS)
-    return True if success else self.get_result_lines(result.log_output)
+    return True if success else self.get_result_tail(result)
 
   def check_virtualizer_version_matches (self, result):
     """
@@ -44,49 +43,53 @@ class OutputAssertions(object):
     return True if not version_mismatch else "Got Virtualizer version mismatch!"
 
   @staticmethod
-  def get_result_lines (log):
+  def get_result_tail (log):
     return "Success message is missing from log output!\n%s" % "".join(
       log.log_output[-5:])
 
   @staticmethod
   def _has_message (log_content, expected_message):
-    for log_line in log_content:
+    for log_line in reversed(log_content):
       if expected_message in log_line:
         return True
-
     return False
 
 
 class WarningChecker(object):
   ACCEPTABLE_WARNINGS = [
     "Unidentified layer name in loaded configuration",
-    "Mapping algorithm in Layer: service is disabled! Skip mapping step and "
-    "forward service request to lower layer",
-    "No SGHops were given in the Service Graph! Could it be retreived? based "
-    "on the Flowrules?",
-    "Resource parameter delay is not given in",
+    "Mapping algorithm in Layer: service is disabled!",
+    "Mapping algorithm in Layer: orchestration is disabled!",
+    "No domain has been detected!",
+    "No SGHops were given in the Service Graph!",
+    "Resource parameter delay is not given",
     "Version are different!",
     "Resource parameter bandwidth is not given in",
-    "If multiple infra nodes are present in the substrate graph and their "
-    "VNF-Infra mapping is supposed to mean a "
-    "placement criterion on the (possibly decomposed) Infra node, it will not "
-    "be considered, because it is NYI.",
-    "No SAP - SAP chain were given! All request links will be mapped as best "
-    "effort links!",
-    "Physical interface: eth0 is not found! Skip binding",
+    "If multiple infra nodes are present in the substrate graph",
+    "No SAPs could be found,",
+    "No SAP - SAP chain were given!",
+    "Physical interface:",
     "Skip starting xterms on SAPS according to global config"
   ]
 
   @staticmethod
   def _filter_warnings (log):
-    return [line for line in log if line.startswith("|WARNING")]
+    return [line.split('|---|')[-1] for line in log if
+            line.startswith("|WARNING|")]
 
   def check_no_unusual_warnings (self, result):
     warnings = self._filter_warnings(result.log_output)
-    for warn in warnings:
-      if warn not in self.ACCEPTABLE_WARNINGS:
-        return warn
-    return True
+    for warning in warnings:
+      acceptable = False
+      for acc_warn in self.ACCEPTABLE_WARNINGS:
+        if warning.startswith(acc_warn):
+          acceptable = True
+          break
+      if acceptable:
+        continue
+      else:
+        return warning
+    return None
 
 
 class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
@@ -175,8 +178,9 @@ class BasicSuccessfulTestCase(EscapeTestCase):
     success = self.check_successful_installation(self.result)
     self.assertTrue(success, msg=success)
 
-    no_warning = self.check_no_unusual_warnings(self.result)
-    self.assertTrue(no_warning, msg=no_warning)
+    unusual_warning = self.check_no_unusual_warnings(self.result)
+    self.assertIsNone(unusual_warning, msg="Unexpected WARNING detected:\n%s" %
+                                           unusual_warning)
 
 
 class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
