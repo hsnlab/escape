@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import sys
 from collections import Iterable
 from threading import Timer
 
@@ -20,13 +21,42 @@ import pexpect
 KILL_TIMEOUT = 10
 
 
+class Tee(object):
+  """
+  Inspired by the bash command: tee
+
+  tee - read from standard input and write to standard output and files
+  """
+
+  def __init__ (self, filename):
+    super(Tee, self).__init__()
+    self.file = open(filename, mode="w", buffering=0)
+    self.stdout = sys.stdout
+    sys.stdout = self
+
+  def __del__ (self):
+    sys.stdout = self.stdout
+    self.file.close()
+
+  def write (self, data):
+    self.file.write(data)
+    self.stdout.write(data)
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    self.__del__()
+
+
 class EscapeRunResult():
   def __init__ (self, output=None, exception=None):
     self.log_output = output
     self.exception = exception
+    self.success = False if exception else None
 
   def was_error (self):
-    return self.exception is not None
+    return self.success
 
   def __iter__ (self):
     return iter(self.log_output)
@@ -82,6 +112,10 @@ class CommandRunner(object):
     if "No such file or directory" in self.__process.before:
       raise Exception("CommandRunner Error: %s" % self.__process.before)
     return self
+
+  def cleanup (self):
+    self.__process = None
+    self.__kill_timer = None
 
 
 class TestReader(object):

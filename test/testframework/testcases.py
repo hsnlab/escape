@@ -133,7 +133,7 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     """:type result: testframework.runner.EscapeRunResult"""
 
   def __str__ (self):
-    return "%s (%s)" % (
+    return "Test: %s (%s)" % (
       self.test_case_info.testcase_dir_name, strclass(self.__class__))
 
   def id (self):
@@ -143,21 +143,25 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
   def setUp (self):
     super(EscapeTestCase, self).setUp()
     # Call cleanup template method
-    self.test_case_cleanup()
+    # Remove escape.log it exists
+    log_file = os.path.join(self.test_case_info.full_testcase_path,
+                            ESCAPE_LOG_FILE_NAME)
+    if os.path.exists(log_file):
+      os.remove(log_file)
 
   def runTest (self):
     # Run test case
     self.run_escape()
     # Evaluate result
     self.verify_result()
+    # Set success
+    self.result.success = True
 
-  def test_case_cleanup (self):
-    # Remove escape.log it exists
-    log_file = os.path.join(self.test_case_info.full_testcase_path,
-                            ESCAPE_LOG_FILE_NAME)
-    if os.path.exists(log_file):
-      os.remove(log_file)
-      print self, "DEL", log_file
+  def tearDown (self):
+    super(EscapeTestCase, self).tearDown()
+    # Cleanup testcase objects if the result was success
+    if self.result is not None and self.result.success:
+      self.command_runner.cleanup()
 
   def run_escape (self):
     try:

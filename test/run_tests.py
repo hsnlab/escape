@@ -18,7 +18,7 @@ import sys
 
 from xmlrunner import XMLTestRunner
 
-from testframework.runner import TestReader, KILL_TIMEOUT
+from testframework.runner import TestReader, KILL_TIMEOUT, Tee
 from testframework.testcases import TestCaseBuilder
 
 CWD = os.path.dirname(os.path.abspath(__file__))
@@ -36,7 +36,12 @@ def main (args):
     print "Set kill timeout for test cases: %ds\n" % args.timeout
   print "Read %d test cases" % test_suite.countTestCases()
   results = []
-  with open(REPORT_FILE, 'w') as output:
+  if args.verbose:
+    output_context_manager = Tee(filename=REPORT_FILE)
+  else:
+    output_context_manager = open(REPORT_FILE, 'w', buffering=0)
+  # Run test
+  with output_context_manager as output:
     test_runner = XMLTestRunner(output=output,
                                 verbosity=2,
                                 failfast=args.failfast)
@@ -45,7 +50,8 @@ def main (args):
     except KeyboardInterrupt:
       print "\n\nReceived KeyboardInterrupt from user! " \
             "Abort running test suite..."
-  was_success = all(map(lambda result: result.wasSuccessful(), results))
+  # Evaluate results
+  was_success = all(map(lambda res: res.wasSuccessful(), results))
   print "=" * 70
   print "End ESCAPE test"
   return 0 if was_success else 1
@@ -64,16 +70,18 @@ def parse_cmd_args ():
   parser = argparse.ArgumentParser(description="ESCAPE Test runner",
                                    add_help=True,
                                    prog="run_tests.py")
-  parser.add_argument("--show-output", "-o", action="store_true", default=False,
-                      help="Show ESCAPE output")
   parser.add_argument("--failfast", "-f", action="store_true", default=False,
                       help="Stop on first failure")
+  parser.add_argument("--show-output", "-o", action="store_true", default=False,
+                      help="Show ESCAPE output")
   parser.add_argument("testcases", nargs="*",
                       help="list test case names you want to run. Example: "
                            "./run_tests.py case05 case03 --show-output")
   parser.add_argument("--timeout", "-t", metavar="t", type=int,
                       help="define explicit timeout in sec (default: %ss)" %
                            KILL_TIMEOUT)
+  parser.add_argument("--verbose", "-v", action="store_true", default=False,
+                      help="Run in verbose mode and show output")
   return parser.parse_args()
 
 
