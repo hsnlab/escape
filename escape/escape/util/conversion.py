@@ -475,8 +475,7 @@ class NFFGConverter(object):
 
         self.log.debug("Added static %s" % infra_port)
       else:
-        raise RuntimeError(
-          "Unsupported port type: %s" % vport.port_type.get_value())
+        self.log.warning("Port type for port: %s is not defined!" % vport)
 
   def _parse_virtualizer_node_nfs (self, nffg, infra, vnode):
     """
@@ -548,6 +547,35 @@ class NFFGConverter(object):
         nf.status = v_vnf.status.get_value()
 
       self.log.debug("Created NF: %s" % nf)
+
+      self.log.debug("Parse NF constraints...")
+      if v_vnf.constraints.is_initialized():
+        # Add affinity list
+        if v_vnf.constraints.affinity.is_initialized():
+          for aff in v_vnf.constraints.affinity.values():
+            aff = nf.constraints.add_affinity(
+              aff.object.get_target().id.get_value())
+            self.log.debug("Add affinity: %s to %s" % (aff, nf.id))
+        # Add antiaffinity list
+        if v_vnf.constraints.antiaffinity.is_initialized():
+          for naff in v_vnf.constraints.antiaffinity.values():
+            naff = nf.constraints.add_antiaffinity(
+              naff.object.get_target().id.get_value())
+            self.log.debug("Add antiaffinity: %s to %s" % (naff, nf.id))
+        # Add variables dict
+        if v_vnf.constraints.variable.is_initialized():
+          for var in v_vnf.constraints.variable:
+            var = nf.constraints.add_variable(
+              var,
+              v_vnf.constraints.variable[
+                var].object.get_target().id.get_value())
+            self.log.debug("Add variable: %s to %s" % (var, nf.id))
+        # Add constraint list
+        if v_vnf.constraints.constraint.is_initialized():
+          for constraint in v_vnf.constraints.constraint.values():
+            formula = nf.constraints.add_constraint(
+              constraint.formula.get_value())
+            self.log.debug("Add constraint: %s to %s" % (formula, nf.id))
 
       # Add NF metadata
       for key in v_vnf.metadata:
@@ -673,13 +701,14 @@ class NFFGConverter(object):
         fr_id = int(fr_id)
       except ValueError:
         self.log.error("Parsed flowentry id is not valid integer!")
+        continue
       # e.g. in_port=1(;TAG=SAP1|comp|1)
       try:
         v_fe_port = flowentry.port.get_target()
       except:
-        self.log.exception(
-          "Got unexpected exception during acquisition of FlowEntry's in Port!")
-        return
+        self.log.exception("Got unexpected exception during acquisition of IN "
+                           "Port in Flowentry: %s!" % flowentry.xml())
+        continue
       fr_match = "in_port="
       # Check if src port is a VNF port --> create the tagged port name
       if "NF_instances" in flowentry.port.get_as_text():
@@ -700,9 +729,9 @@ class NFFGConverter(object):
       try:
         v_fe_out = flowentry.out.get_target()
       except:
-        self.log.exception("Got unexpected exception during acquisition of "
-                           "FlowEntry's out Port!")
-        return
+        self.log.exception("Got unexpected exception during acquisition of OUT "
+                           "Port in Flowentry: %s!" % flowentry.xml())
+        continue
       fr_action = "output="
       # Check if dst port is a VNF port --> create the tagged port name
       if "NF_instances" in flowentry.out.get_as_text():
@@ -982,6 +1011,32 @@ class NFFGConverter(object):
       # Parse Flowentries
       self._parse_virtualizer_node_flowentries(nffg=nffg, infra=infra,
                                                vnode=vnode)
+
+      self.log.debug("Parse INFRA node constraints...")
+      if vnode.constraints.is_initialized():
+        # Add affinity list
+        if vnode.constraints.affinity.is_initialized():
+          for aff in vnode.constraints.affinity.values():
+            aff = infra.constraints.add_affinity(aff.object.get_value())
+            self.log.debug("Add affinity: %s to %s" % (aff, infra.id))
+        # Add antiaffinity list
+        if vnode.constraints.antiaffinity.is_initialized():
+          for naff in vnode.constraints.antiaffinity.values():
+            naff = infra.constraints.add_antiaffinity(naff.object.get_value())
+            self.log.debug("Add antiaffinity: %s to %s" % (naff, infra.id))
+        # Add variables dict
+        if vnode.constraints.variable.is_initialized():
+          for var in vnode.constraints.variable:
+            infra.constraints.add_variable(
+              var,
+              vnode.constraints.variable[var].object.get_value())
+            self.log.debug("Add variable: %s to %s" % (var, infra.id))
+        # Add constraint list
+        if vnode.constraints.constraint.is_initialized():
+          for constraint in vnode.constraints.constraint.values():
+            formula = infra.constraints.add_constraint(
+              constraint.formula.get_value())
+            self.log.debug("Add constraint: %s to %s" % (formula, infra.id))
 
       # Copy metadata
       self.log.debug("Parse Infra node metadata...")
@@ -1814,6 +1869,101 @@ class NFFGConverter(object):
               fr.operation, fr.id))
             virt_fe.set_operation(operation=str(fr.operation), recursive=False)
 
+  def _convert_nffg_constraints (self, virtualizer, nffg):
+    self.log.debug("Convert constraints...")
+    for infra in nffg.infras:
+      vnode = virtualizer.nodes[infra.id]
+      # Add affinity
+      for aff in infra.constraints.affinity:
+        v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
+        if v_aff_node is None:
+          self.log.warning("Referenced Node: %s is not found for affinity!"
+                           % aff)
+          continue
+        self.log.debug(
+          "Found reference for affinity: %s in Infra: %s" % (aff, infra.id))
+        vnode.constraints.affinity.add(
+          virt_lib.ConstraintsAffinity(object=v_aff_node.get_path()))
+      # Add antiaffinity
+      for naff in infra.constraints.antiaffinity:
+        v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
+        if v_naff_node is None:
+          self.log.warning("Referenced Node: %s is not found for affinity!"
+                           % naff)
+          continue
+        self.log.debug(
+          "Found reference for antiaffinity: %s in Infra: %s" % (
+            naff, infra.id))
+        vnode.constraints.antiaffinity.add(
+          virt_lib.ConstraintsAntiaffinity(object=v_naff_node.get_path()))
+      # Add variable
+      for key, value in infra.constraints.variable.iteritems():
+        v_var_node = self._get_vnode_by_id(virtualizer=virtualizer, id=value)
+        if v_var_node is None:
+          self.log.warning("Referenced Node: %s is not found for variable: "
+                           "%s!" % (value, key))
+          continue
+        self.log.debug(
+          "Found reference for variable: %s in Infra: %s" % (key, infra.id))
+        vnode.constraints.constraint.add(
+          virt_lib.ConstraintsVariable(id=key, object=v_var_node.get_path()))
+      # Add constraint
+      for cons in infra.constraints.constraint:
+        self.log.debug("Add formula: %s for Infra: %s" % (cons, infra.id))
+        vnode.constraints.constraint.add(
+          virt_lib.ConstraintsConstraint(formula=cons))
+
+      # Check connected NF constraints
+      for nf in nffg.running_nfs(infra.id):
+        vnf = vnode.NF_instances[nf.id]
+        # Add affinity
+        for aff in nf.constraints.affinity:
+          v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
+          if v_aff_node is None:
+            self.log.warning("Referenced Node: %s is not found for affinity!"
+                             % aff)
+            continue
+          self.log.debug(
+            "Found reference for affinity: %s in NF: %s" % (aff, nf.id))
+          vnf.constraints.affinity.add(
+            virt_lib.ConstraintsAffinity(object=v_aff_node.get_path()))
+        # Add antiaffinity
+        for naff in nf.constraints.antiaffinity:
+          v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
+          if v_naff_node is None:
+            self.log.warning("Referenced Node: %s is not found for affinity!"
+                             % naff)
+            continue
+          self.log.debug(
+            "Found reference for antiaffinity: %s in NF: %s" % (naff, nf.id))
+          vnf.constraints.antiaffinity.add(
+            virt_lib.ConstraintsAntiaffinity(object=v_naff_node.get_path()))
+        # Add variable
+        for key, value in nf.constraints.variable.iteritems():
+          v_var_node = self._get_vnode_by_id(virtualizer=virtualizer, id=value)
+          if v_var_node is None:
+            self.log.warning("Referenced Node: %s is not found for variable: "
+                             "%s!" % (value, key))
+            continue
+          self.log.debug(
+            "Found reference for variable: %s in NF: %s" % (key, nf.id))
+          vnf.constraints.constraint.add(
+            virt_lib.ConstraintsVariable(id=key, object=v_var_node.get_path()))
+        # Add constraint
+        for cons in nf.constraints.constraint:
+          self.log.debug("Add formula: %s for NF: %s" % (cons, nf.id))
+          vnf.constraints.constraint.add(
+            virt_lib.ConstraintsConstraint(formula=cons))
+
+  @staticmethod
+  def _get_vnode_by_id (virtualizer, id):
+    for vnode in virtualizer.nodes:
+      if vnode.id.get_as_text() == str(id):
+        return vnode
+      for vnf in vnode.NF_instances:
+        if vnf.id.get_value() == str(id):
+          return vnf
+
   def dump_to_Virtualizer (self, nffg):
     """
     Convert given :any:`NFFG` to Virtualizer format.
@@ -1851,8 +2001,10 @@ class NFFGConverter(object):
     self._convert_nffg_flowrules(nffg=nffg, virtualizer=virtualizer)
     # Convert requirement links as metadata
     self._convert_nffg_reqs(nffg=nffg, virtualizer=virtualizer)
+    # Convert constraints
+    self._convert_nffg_constraints(nffg=nffg, virtualizer=virtualizer)
     # explicitly call bind to resolve relative paths for safety reason
-    virtualizer.bind(relative=True)
+    # virtualizer.bind(relative=True)
     self.log.debug(
       "END conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
         NFFG.version, V_VERSION))
@@ -2137,6 +2289,7 @@ if __name__ == "__main__":
                         # ensure_unique_id=True,
                         logger=log)
       virt = Virtualizer.parse_from_file(args.path)
+      # virt.bind()
       log.info("Parsed Virtualizer:\n%s" % virt.xml())
       nffg = c.parse_from_Virtualizer(vdata=virt.xml())
       log.info("Reconverted NFFG:\n%s" % nffg.dump())
