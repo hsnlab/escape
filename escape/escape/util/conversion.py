@@ -2004,7 +2004,7 @@ class NFFGConverter(object):
     # Convert constraints
     self._convert_nffg_constraints(nffg=nffg, virtualizer=virtualizer)
     # explicitly call bind to resolve relative paths for safety reason
-    # virtualizer.bind(relative=True)
+    virtualizer.bind(relative=True)
     self.log.debug(
       "END conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
         NFFG.version, V_VERSION))
@@ -2289,7 +2289,7 @@ if __name__ == "__main__":
                         # ensure_unique_id=True,
                         logger=log)
       virt = Virtualizer.parse_from_file(args.path)
-      # virt.bind()
+      virt.bind()
       log.info("Parsed Virtualizer:\n%s" % virt.xml())
       nffg = c.parse_from_Virtualizer(vdata=virt.xml())
       log.info("Reconverted NFFG:\n%s" % nffg.dump())
