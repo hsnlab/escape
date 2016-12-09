@@ -554,27 +554,29 @@ class NFFGConverter(object):
         if v_vnf.constraints.affinity.is_initialized():
           for aff in v_vnf.constraints.affinity.values():
             aff = nf.constraints.add_affinity(
-              aff.object.get_target().id.get_value())
+              id=aff.id.get_value(),
+              value=aff.object.get_target().id.get_value())
             self.log.debug("Add affinity: %s to %s" % (aff, nf.id))
         # Add antiaffinity list
         if v_vnf.constraints.antiaffinity.is_initialized():
           for naff in v_vnf.constraints.antiaffinity.values():
             naff = nf.constraints.add_antiaffinity(
-              naff.object.get_target().id.get_value())
+              id=naff.id.get_value(),
+              value=naff.object.get_target().id.get_value())
             self.log.debug("Add antiaffinity: %s to %s" % (naff, nf.id))
         # Add variables dict
         if v_vnf.constraints.variable.is_initialized():
-          for var in v_vnf.constraints.variable:
+          for var in v_vnf.constraints.variable.values():
             var = nf.constraints.add_variable(
-              var,
-              v_vnf.constraints.variable[
-                var].object.get_target().id.get_value())
+              key=var.id.get_value(),
+              id=var.object.get_target().id.get_value())
             self.log.debug("Add variable: %s to %s" % (var, nf.id))
         # Add constraint list
         if v_vnf.constraints.constraint.is_initialized():
           for constraint in v_vnf.constraints.constraint.values():
             formula = nf.constraints.add_constraint(
-              constraint.formula.get_value())
+              id=constraint.id.get_value(),
+              formula=constraint.formula.get_value())
             self.log.debug("Add constraint: %s to %s" % (formula, nf.id))
 
       # Add NF metadata
@@ -1017,25 +1019,30 @@ class NFFGConverter(object):
         # Add affinity list
         if vnode.constraints.affinity.is_initialized():
           for aff in vnode.constraints.affinity.values():
-            aff = infra.constraints.add_affinity(aff.object.get_value())
+            aff = infra.constraints.add_affinity(
+              id=aff.id.get_value(),
+              value=aff.object.get_value())
             self.log.debug("Add affinity: %s to %s" % (aff, infra.id))
         # Add antiaffinity list
         if vnode.constraints.antiaffinity.is_initialized():
           for naff in vnode.constraints.antiaffinity.values():
-            naff = infra.constraints.add_antiaffinity(naff.object.get_value())
+            naff = infra.constraints.add_antiaffinity(
+              id=naff.id.get_value(),
+              value=naff.object.get_value())
             self.log.debug("Add antiaffinity: %s to %s" % (naff, infra.id))
         # Add variables dict
         if vnode.constraints.variable.is_initialized():
-          for var in vnode.constraints.variable:
+          for var in vnode.constraints.variable.values():
             infra.constraints.add_variable(
-              var,
-              vnode.constraints.variable[var].object.get_value())
+              key=var.id.get_value(),
+              id=var.object.get_value())
             self.log.debug("Add variable: %s to %s" % (var, infra.id))
         # Add constraint list
         if vnode.constraints.constraint.is_initialized():
           for constraint in vnode.constraints.constraint.values():
             formula = infra.constraints.add_constraint(
-              constraint.formula.get_value())
+              id=constraint.id.get_value(),
+              formula=constraint.formula.get_value())
             self.log.debug("Add constraint: %s to %s" % (formula, infra.id))
 
       # Copy metadata
@@ -1874,7 +1881,7 @@ class NFFGConverter(object):
     for infra in nffg.infras:
       vnode = virtualizer.nodes[infra.id]
       # Add affinity
-      for aff in infra.constraints.affinity:
+      for id, aff in infra.constraints.affinity.iteritems():
         v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
         if v_aff_node is None:
           self.log.warning("Referenced Node: %s is not found for affinity!"
@@ -1883,9 +1890,10 @@ class NFFGConverter(object):
         self.log.debug(
           "Found reference for affinity: %s in Infra: %s" % (aff, infra.id))
         vnode.constraints.affinity.add(
-          virt_lib.ConstraintsAffinity(object=v_aff_node.get_path()))
+          virt_lib.ConstraintsAffinity(id=str(id),
+                                       object=v_aff_node.get_path()))
       # Add antiaffinity
-      for naff in infra.constraints.antiaffinity:
+      for id, naff in infra.constraints.antiaffinity.iteritems():
         v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
         if v_naff_node is None:
           self.log.warning("Referenced Node: %s is not found for affinity!"
@@ -1895,7 +1903,8 @@ class NFFGConverter(object):
           "Found reference for antiaffinity: %s in Infra: %s" % (
             naff, infra.id))
         vnode.constraints.antiaffinity.add(
-          virt_lib.ConstraintsAntiaffinity(object=v_naff_node.get_path()))
+          virt_lib.ConstraintsAntiaffinity(id=str(id),
+                                           object=v_naff_node.get_path()))
       # Add variable
       for key, value in infra.constraints.variable.iteritems():
         v_var_node = self._get_vnode_by_id(virtualizer=virtualizer, id=value)
@@ -1906,18 +1915,20 @@ class NFFGConverter(object):
         self.log.debug(
           "Found reference for variable: %s in Infra: %s" % (key, infra.id))
         vnode.constraints.constraint.add(
-          virt_lib.ConstraintsVariable(id=key, object=v_var_node.get_path()))
+          virt_lib.ConstraintsVariable(id=str(key),
+                                       object=v_var_node.get_path()))
       # Add constraint
-      for cons in infra.constraints.constraint:
+      for id, cons in infra.constraints.constraint.iteritems():
         self.log.debug("Add formula: %s for Infra: %s" % (cons, infra.id))
         vnode.constraints.constraint.add(
-          virt_lib.ConstraintsConstraint(formula=cons))
+          virt_lib.ConstraintsConstraint(id=str(id),
+                                         formula=cons))
 
       # Check connected NF constraints
       for nf in nffg.running_nfs(infra.id):
         vnf = vnode.NF_instances[nf.id]
         # Add affinity
-        for aff in nf.constraints.affinity:
+        for id, aff in nf.constraints.affinity.iteritems():
           v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
           if v_aff_node is None:
             self.log.warning("Referenced Node: %s is not found for affinity!"
@@ -1926,9 +1937,10 @@ class NFFGConverter(object):
           self.log.debug(
             "Found reference for affinity: %s in NF: %s" % (aff, nf.id))
           vnf.constraints.affinity.add(
-            virt_lib.ConstraintsAffinity(object=v_aff_node.get_path()))
+            virt_lib.ConstraintsAffinity(id=str(id),
+                                         object=v_aff_node.get_path()))
         # Add antiaffinity
-        for naff in nf.constraints.antiaffinity:
+        for id, naff in nf.constraints.antiaffinity.iteritems():
           v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
           if v_naff_node is None:
             self.log.warning("Referenced Node: %s is not found for affinity!"
@@ -1937,7 +1949,8 @@ class NFFGConverter(object):
           self.log.debug(
             "Found reference for antiaffinity: %s in NF: %s" % (naff, nf.id))
           vnf.constraints.antiaffinity.add(
-            virt_lib.ConstraintsAntiaffinity(object=v_naff_node.get_path()))
+            virt_lib.ConstraintsAntiaffinity(id=str(id),
+                                             object=v_naff_node.get_path()))
         # Add variable
         for key, value in nf.constraints.variable.iteritems():
           v_var_node = self._get_vnode_by_id(virtualizer=virtualizer, id=value)
@@ -1948,12 +1961,14 @@ class NFFGConverter(object):
           self.log.debug(
             "Found reference for variable: %s in NF: %s" % (key, nf.id))
           vnf.constraints.constraint.add(
-            virt_lib.ConstraintsVariable(id=key, object=v_var_node.get_path()))
+            virt_lib.ConstraintsVariable(id=str(key),
+                                         object=v_var_node.get_path()))
         # Add constraint
-        for cons in nf.constraints.constraint:
+        for id, cons in nf.constraints.constraint.iteritems():
           self.log.debug("Add formula: %s for NF: %s" % (cons, nf.id))
           vnf.constraints.constraint.add(
-            virt_lib.ConstraintsConstraint(formula=cons))
+            virt_lib.ConstraintsConstraint(id=str(id),
+                                           formula=cons))
 
   @staticmethod
   def _get_vnode_by_id (virtualizer, id):
