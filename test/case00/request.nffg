@@ -24,17 +24,17 @@
       },
       "constraints": {
         "affinity": {
-          "aff1": "comp"
+          "aff1": "NF2"
         },
         "antiaffinity": {
-          "aaff1": "decomp"
+          "naff1": "NF3"
         },
         "variable": {
-          "$A": "fwd"
+          "$A": "NF3"
         },
-        "constraint": [
-          "$A>0"
-        ]
+        "constraint": {
+          "form1": "$A>0"
+        }
       }
     },
     {

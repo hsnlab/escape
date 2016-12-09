@@ -25,7 +25,8 @@ from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest import LAYER_NAME, log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
-from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
+from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler, \
+  RequestStatus
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import ProcessorError
@@ -838,11 +839,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: str
     """
     status = self.ros_api.request_cache.get_status(id=message_id)
-    if status == status.SUCCESS:
+    if status == RequestStatus.SUCCESS:
       return 200, None
-    elif status == status.UNKNOWN:
+    elif status == RequestStatus.UNKNOWN:
       return 404, None
-    elif status == status.ERROR:
+    elif status == RequestStatus.ERROR:
       return 500, "TODO"
     else:
       # PROCESSING or INITIATED
@@ -972,6 +973,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
         log.info("No change has been detected in request! Skip mapping...")
         log.getChild('API').debug("Invoked instantiate_nffg on %s is finished!"
                                   % self.__class__.__name__)
+        self.__handle_mapping_result(nffg_id=nffg.id, fail=False)
         return
     else:
       log.debug("Mode: %s detected from config! Skip difference calculation..."

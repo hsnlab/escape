@@ -26,7 +26,8 @@ from escape.orchest.ros_API import BasicUnifyRequestHandler, \
 from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
-from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
+from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler, \
+  RequestStatus
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError
@@ -487,11 +488,11 @@ class ServiceLayerAPI(AbstractAPI):
     :rtype: str
     """
     status = self.rest_api.request_cache.get_status(id=message_id)
-    if status == status.SUCCESS:
+    if status == RequestStatus.SUCCESS:
       return 200, None
-    elif status == status.UNKNOWN:
+    elif status == RequestStatus.UNKNOWN:
       return 404, None
-    elif status == status.ERROR:
+    elif status == RequestStatus.ERROR:
       return 500, "TODO"
     else:
       # PROCESSING or INITIATED

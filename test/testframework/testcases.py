@@ -55,7 +55,11 @@ class OutputAssertions(object):
     return False
 
 
-class WarningChecker(object):
+class BasicErrorChecker(object):
+  pass
+
+
+class WarningChecker(BasicErrorChecker):
   ACCEPTABLE_WARNINGS = [
     "Unidentified layer name in loaded configuration",
     "Mapping algorithm in Layer: service is disabled!",
@@ -92,7 +96,7 @@ class WarningChecker(object):
     return None
 
 
-class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
+class EscapeTestCase(TestCase):
   """
   EscapeTestCase is a test case for the case01, case02 structure. It will run
   ESCAPE
@@ -106,7 +110,7 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     :type test_case_info: testframework.runner.RunnableTestCaseInfo
     :type command_runner: testframework.runner.CommandRunner
     """
-    TestCase.__init__(self)
+    super(EscapeTestCase, self).__init__()
     self.test_case_info = test_case_info
     self.command_runner = command_runner
     self.result = None
@@ -169,7 +173,7 @@ class EscapeTestCase(TestCase, OutputAssertions, WarningChecker):
     raise NotImplementedError('Not implemented yet!')
 
 
-class BasicSuccessfulTestCase(EscapeTestCase):
+class BasicSuccessfulTestCase(EscapeTestCase, OutputAssertions, WarningChecker):
   """
   Basic successful result and warning checking.
   """
