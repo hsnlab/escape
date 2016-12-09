@@ -23,12 +23,12 @@
         }
       },
       "constraints": {
-        "affinity": [
-          "comp"
-        ],
-        "antiaffinity": [
-          "decomp"
-        ],
+        "affinity": {
+          "aff1": "comp"
+        },
+        "antiaffinity": {
+          "aaff1": "decomp"
+        },
         "variable": {
           "$A": "fwd"
         },
