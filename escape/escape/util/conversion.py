@@ -1879,7 +1879,20 @@ class NFFGConverter(object):
   def _convert_nffg_constraints (self, virtualizer, nffg):
     self.log.debug("Convert constraints...")
     for infra in nffg.infras:
-      vnode = virtualizer.nodes[infra.id]
+      # Recreate the original Node id
+      if self.ensure_unique_id:
+        v_node_id = self.recreate_original_id(id=infra.id)
+      else:
+        v_node_id = str(infra.id)
+      # Check if Infra exists in the Virtualizer
+      if v_node_id not in virtualizer.nodes.node.keys():
+        self.log.warning(
+          "InfraNode: %s is not in the Virtualizer(nodes: %s)! Skip related "
+          "initiations..." % (infra, virtualizer.nodes.node.keys()))
+        continue
+      # Get Infra node from Virtualizer
+      vnode = virtualizer.nodes[v_node_id]
+
       # Add affinity
       for id, aff in infra.constraints.affinity.iteritems():
         v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
@@ -2067,7 +2080,7 @@ class NFFGConverter(object):
     self._convert_nffg_nfs(virtualizer=virt, nffg=nffg)
     self._convert_nffg_flowrules(virtualizer=virt, nffg=nffg)
     self._convert_nffg_reqs(virtualizer=virt, nffg=nffg)
-    self._convert_nffg_constraints(nffg=nffg, virtualizer=virtualizer)
+    self._convert_nffg_constraints(virtualizer=virt, nffg=nffg)
     # explicitly call bind to resolve absolute paths for safety reason
     virtualizer.bind(relative=True)
     self.log.debug(
