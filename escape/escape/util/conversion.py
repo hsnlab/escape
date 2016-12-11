@@ -2067,6 +2067,7 @@ class NFFGConverter(object):
     self._convert_nffg_nfs(virtualizer=virt, nffg=nffg)
     self._convert_nffg_flowrules(virtualizer=virt, nffg=nffg)
     self._convert_nffg_reqs(virtualizer=virt, nffg=nffg)
+    self._convert_nffg_constraints(nffg=nffg, virtualizer=virtualizer)
     # explicitly call bind to resolve absolute paths for safety reason
     virtualizer.bind(relative=True)
     self.log.debug(
