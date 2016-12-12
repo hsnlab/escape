@@ -1,31 +1,24 @@
 [submodule "escape/escape/nffg_lib"]
 	path = escape/escape/nffg_lib
 	url = ssh://git@213.16.101.153:/unify/nffg.git
-	branch = master
 [submodule "mapping"]
 	path = mapping
 	url = ssh://git@213.16.101.153:/unify/mapping.git
-	branch = master
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
 	url = ssh://git@213.16.101.153:/unify/virtualizer.git
-	branch = master
 #[submodule "dummy-orchestrator"]
 #	path = dummy-orchestrator
 #	url = ssh://git@213.16.101.153:/unify/dummy-orchestrator.git
-#	branch = master
 
 # Placeholder for 5GEx submodules
 
 #[submodule "bgp-ls/netphony-network-protocols"]
 #	path = bgp-ls/netphony-network-protocols
 #	url = ssh://git@213.16.101.153:/unify/virtualizer.git
-#	branch = master
 #[submodule "bgp-ls/netphony-topology"]
 #	path = bgp-ls/netphony-topology
 #	url = ssh://git@213.16.101.153:/unify/virtualizer.git
-#	branch = master
 #[submodule "tnova_connector"]
 #	path = tnova_connector
 #	url = ssh://git@213.16.101.153:/unify/virtualizer.git
-#	branch = master
