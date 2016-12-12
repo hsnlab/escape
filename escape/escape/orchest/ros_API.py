@@ -929,6 +929,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.debug("Got resource view for difference calculation: %s" %
               resource_nffg)
     if hasattr(self, 'ros_api') and self.ros_api:
+      log.getChild('API').debug("Store received NFFG request info...")
       msg_id = self.ros_api.request_cache.cache_request(nffg=nffg)
       self.ros_api.request_cache.set_in_progress(id=msg_id)
     # Check if mapping mode is set globally in CONFIG

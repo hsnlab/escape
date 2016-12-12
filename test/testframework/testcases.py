@@ -256,10 +256,12 @@ class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
   """
   Skip the test if the root password is requested on the console.
   """
+  SUDO_KILL_TIMEOUT = 2
 
   def check_root_privilege (self):
     # Due to XMLTestRunner implementation test cannot skip in setUp()
-    if CommandRunner("sudo uname", kill_timeout=1).execute().is_killed:
+    if CommandRunner("sudo uname",
+                     kill_timeout=self.SUDO_KILL_TIMEOUT).execute().is_killed:
       self.skipTest("Root privilege is required to run the testcase: %s" %
                     self.test_case_info.testcase_dir_name)
 
