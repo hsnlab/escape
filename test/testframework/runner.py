@@ -51,6 +51,9 @@ class Tee(object):
 
 
 class EscapeRunResult():
+  """
+  Container class for storing the result of the test run.
+  """
   def __init__ (self, output=None, exception=None):
     self.log_output = output
     self.exception = exception
@@ -63,7 +66,11 @@ class EscapeRunResult():
 
 
 class CommandRunner(object):
-  KILL_TIMEOUT = 10
+  """
+  Main runner class which capable of running the test script and kill the
+  process explicitly or based on the timeout value.
+  """
+  KILL_TIMEOUT = 15
 
   def __init__ (self, cmd, cwd=None, kill_timeout=None, on_kill=None,
                 output_stream=None):
@@ -78,6 +85,12 @@ class CommandRunner(object):
 
   @staticmethod
   def __evaluate_cmd (cmd):
+    """
+    Split command to list for pexpect.
+
+    :param cmd: str or list
+    :rtype: list[str]
+    """
     if isinstance(cmd, basestring):
       return cmd.split(' ')
     elif isinstance(cmd, Iterable):
@@ -90,16 +103,27 @@ class CommandRunner(object):
     return self.__killed
 
   def kill_process (self, *args, **kwargs):
-    self.__process.sendcontrol('c')
+    """
+    Kill the process and call the optional hook function.
+    """
+    if self.__process:
+      self.__process.sendcontrol('c')
     self.__kill_timer.cancel()
     self.__killed = True
     if self.on_kill_hook:
       self.on_kill_hook()
 
   def get_process_output_stream (self):
+    """
+    :return: Return with the process buffer.
+    """
     return self.__process.before if self.__process.before else ""
 
   def execute (self):
+    """
+    Create and start the process. Block until the process ends or timeout is
+    exceeded.
+    """
     self.__process = pexpect.spawn(self._command[0],
                                    args=self._command[1:],
                                    timeout=120,
@@ -121,14 +145,25 @@ class CommandRunner(object):
 
 
 class TestReader(object):
+  """
+  Parse the test directory and return the assebled test case config objects
+  for the individual test cases.
+  """
   TEST_DIR_PREFIX = "case"
 
   def __init__ (self, tests_dir):
+    """
+    :type tests_dir: str
+    """
     self.tests_dir = tests_dir
 
   def read_from (self, case_dirs=None):
     """
+    Load the test case info from the test directory.
 
+    :param case_dirs: filter the test cases based on the given case list
+    :type case_dirs: list[str]
+    :return: created test case config objects
     :rtype: list[RunnableTestCaseInfo]
     """
     if not case_dirs:
@@ -143,6 +178,10 @@ class TestReader(object):
 
 
 class RunnableTestCaseInfo(object):
+  """
+  Container class for storing the relevant information and config values of a
+  test case.
+  """
   CONFIG_FILE_NAME = "test.config"
   CONFIG_CONTAINER_NAME = "test"
   RUNNER_SCRIPT_NAME = "run.sh"
@@ -154,23 +193,43 @@ class RunnableTestCaseInfo(object):
 
   @property
   def testcase_dir_name (self):
+    """
+    :return: directory name of the test case
+    :rtype: str
+    """
     return os.path.basename(self.__case_path)
 
   @property
   def full_testcase_path (self):
+    """
+    :return: absolute path of the test case directory.
+    :rtype: str
+    """
     return self.__case_path
 
   @property
   def test_command (self):
+    """
+    :return: absolute command path of the test case runner script.
+    :rtype: str
+    """
     return os.path.join(self.full_testcase_path,
                         self.RUNNER_SCRIPT_NAME)
 
   @property
   def config_file_name (self):
+    """
+    :return: absolute path of the test case config file.
+    :rtype: str
+    """
     return os.path.join(self.full_testcase_path,
                         self.CONFIG_FILE_NAME)
 
   def readme (self):
+    """
+    :return: load the README file
+    :rtype: str
+    """
     with open(os.path.join(self.full_testcase_path,
                            self.README_FILE_NAME)) as f:
       readme = f.read()
@@ -178,6 +237,8 @@ class RunnableTestCaseInfo(object):
 
   def load_test_case_class (self):
     """
+    :return: Return the TestCase class and it's parameters defined in the
+      test case config file
     :rtype: tuple(object, dict)
     """
     with open(self.config_file_name, 'r') as f:

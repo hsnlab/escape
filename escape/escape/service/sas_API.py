@@ -376,6 +376,7 @@ class ServiceLayerAPI(AbstractAPI):
                              (self.__class__.__name__, service_nffg))
     # Store request if it is received on REST-API
     if hasattr(self, 'rest_api') and self.rest_api:
+      log.getChild('API').debug("Store received NFFG request info...")
       msg_id = self.rest_api.request_cache.cache_request(nffg=service_nffg)
       self.rest_api.request_cache.set_in_progress(id=msg_id)
     # Check if mapping mode is set globally in CONFIG
