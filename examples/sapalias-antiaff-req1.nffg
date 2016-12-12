@@ -28,12 +28,13 @@
         }
       ], 
       "constraints": {
-        "affinity": [
-          "NF2"
-        ],
-        "antiaffinity": [
-          "controller2", "camtest"
-        ],
+        "affinity": {
+          "11": "NF2"
+        },
+        "antiaffinity": {
+          "312555": "controller2", 
+	  "456": "camtest"
+        },
         "variable": {
           "$A": "NF3"
         },
@@ -100,12 +101,12 @@
         }
       ], 
       "constraints": {
-        "affinity": [
-          "NF2"
-        ],
-        "antiaffinity": [
-	  "javacontroller"
-        ],
+        "affinity": {
+          "567": "NF2"
+        },
+        "antiaffinity": {
+	  "2314": "javacontroller"
+        },
         "variable": {
           "$A": "NF3"
         },
@@ -143,12 +144,12 @@
         }
       ],
       "constraints": {
-        "affinity": [
-          "NF2"
-        ],
-        "antiaffinity": [
-          "javacontroller"
-        ],
+        "affinity": {
+          "987": "NF2"
+        },
+        "antiaffinity": {
+          "678": "javacontroller"
+        },
         "variable": {
           "$A": "NF3"
         },
