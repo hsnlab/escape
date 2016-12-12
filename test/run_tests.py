@@ -26,7 +26,13 @@ REPORT_FILE = "results.xml"
 
 
 def main (args):
-  # Header
+  """
+  Main function which runs the tests and generate the result file.
+
+  :return: result value for the CI environments
+  :rtype: int
+  """
+  # Print header
   print "Start ESCAPE test"
   print "-" * 70
   if args.timeout:
@@ -36,7 +42,13 @@ def main (args):
                                  show_output=args.show_output,
                                  run_only_tests=args.testcases,
                                  kill_timeout=args.timeout)
-  print "Read %d test cases" % test_suite.countTestCases()
+  sum_test_cases = test_suite.countTestCases()
+  print "Read %d test cases" % sum_test_cases
+  if not sum_test_cases:
+    # Footer
+    print "=" * 70
+    print "End ESCAPE test"
+    return 0
   # Run test suite in the specific context
   results = []
   if args.verbose:
@@ -44,16 +56,19 @@ def main (args):
   else:
     output_context_manager = open(REPORT_FILE, 'w', buffering=0)
   with output_context_manager as output:
+    # Create the Runner class which runs the test cases collected in a
+    # TestSuite object
     test_runner = XMLTestRunner(output=output,
                                 verbosity=2,
                                 failfast=args.failfast)
     try:
+      # Run the test cases and collect the reslts
       results.append(test_runner.run(test_suite))
     except KeyboardInterrupt:
       print "\n\nReceived KeyboardInterrupt! Abort running test suite..."
-  # Evaluate results
+  # Evaluate results values
   was_success = all(map(lambda res: res.wasSuccessful(), results))
-  # Footer
+  # Print footer
   print "=" * 70
   print "End ESCAPE test"
   return 0 if was_success else 1
@@ -61,6 +76,20 @@ def main (args):
 
 def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
                        kill_timeout=None):
+  """
+  Create the container TestSuite class based on the config values.
+
+  :param tests_dir: main test dir containes the test cases
+  :type tests_dir: str
+  :param show_output: print te test oputput on the console
+  :type show_output: bool
+  :param run_only_tests: only run the given test cases
+  :type run_only_tests: list[str]
+  :param kill_timeout: kill timeout
+  :type kill_timeout: int
+  :return: created test suite object
+  :rtype: unittest.TestSuite
+  """
   test_cases = TestReader(tests_dir=tests_dir).read_from(run_only_tests)
   builder = TestCaseBuilder(cwd=CWD, show_output=show_output,
                             kill_timeout=kill_timeout)
@@ -69,6 +98,9 @@ def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
 
 
 def parse_cmd_args ():
+  """
+  Parse the commandline arguments.
+  """
   parser = argparse.ArgumentParser(description="ESCAPE Test runner",
                                    add_help=True,
                                    prog="run_tests.py")

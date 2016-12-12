@@ -184,6 +184,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     self.log.debug("Call %s function: edit-config" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
     params = self._get_request_params()
+    self.log.debug("Detected request parameters: %s" % params)
     if 'message-id' in params:
       self.log.debug("Detected message id: %s" % params['message-id'])
     else:
@@ -1121,12 +1122,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     if not InstantiationFinishedEvent.is_error(event.result):
       log.getChild('API').info(
-        "NF-FG instantiation has been finished successfully with result: %s!" %
-        event.result)
+        "NF-FG(%s) instantiation has been finished successfully with result: "
+        "%s!" % (event.id, event.result))
     else:
       log.getChild('API').error(
-        "NF-FG instantiation has been finished with error result: %s!" %
-        event.result)
+        "NF-FG(%s) instantiation has been finished with error result: %s!" %
+        (event.id, event.result))
     self.__handle_mapping_result(nffg_id=event.id,
                                  fail=BaseResultEvent.is_error(event.result))
     self.raiseEventNoErrors(InstantiationFinishedEvent,
