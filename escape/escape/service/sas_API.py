@@ -15,8 +15,8 @@
 Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer.
 """
-import json
 import os
+import uuid
 from subprocess import Popen
 
 from escape import CONFIG
@@ -26,7 +26,8 @@ from escape.orchest.ros_API import BasicUnifyRequestHandler, \
 from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
-from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
+from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler, \
+  RequestStatus
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError
@@ -87,8 +88,8 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {
-    'GET': ('ping', 'version', 'operations', 'topology'),
-    'POST': ('ping', 'result', 'sg', 'topology'),
+    'GET': ('ping', 'version', 'operations', 'topology', 'status'),
+    'POST': ('ping', 'sg', 'topology'),
     # 'DELETE': ('sg',),
     'PUT': ('sg',)
   }
@@ -126,19 +127,19 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
     """
     AbstractRequestHandler.__init__(self, request, client_address, server)
 
-  def result (self):
-    """
-    Respond the result of a request given by the id.
-
-    :return: None
-    """
-    params = json.loads(self._get_body())
-    try:
-      id = params["id"]
-    except:
-      id = None
-    res = self._proceed_API_call('get_result', id)
-    self._send_json_response({'id': id, 'result': res})
+  def status (self):
+    params = self._get_request_params()
+    message_id = params.get('message-id')
+    if not message_id:
+      self.send_error(code=400, message="message-id is missing")
+      return
+    code, result = self._proceed_API_call('api_sas_status', message_id)
+    if not result:
+      self.send_acknowledge(code=code, message_id=message_id)
+      self.log.debug("Responded status code: %s" % code)
+    else:
+      self.send_json_response(code=code, data=result)
+      self.log.debug("Responded status code: %s, data: %s" % (code, result))
 
   def topology (self):
     """
@@ -166,9 +167,19 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
     """
     self.log.debug("Call %s function: sg" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
+    params = self._get_request_params()
+    if 'message-id' in params:
+      self.log.debug("Detected message id: %s" % params['message-id'])
+    else:
+      params['message-id'] = str(uuid.uuid1())
+      self.log.debug("No message-id! Generated id: %s" % params['message-id'])
     if nffg:
-      self._proceed_API_call(self.API_CALL_REQUEST, nffg)
-      self.send_acknowledge(id=nffg.id)
+      nffg.id = "%s@message-id=%s" % (nffg.id, params['message-id'])
+      nffg.metadata['params'] = params
+      self._proceed_API_call(self.API_CALL_REQUEST,
+                             service_nffg=nffg,
+                             params=params)
+      self.send_acknowledge(message_id=params['message-id'])
     self.log.debug("%s function: sg ended!" % self.LOGGER_NAME)
 
 
@@ -206,6 +217,7 @@ class ServiceLayerAPI(AbstractAPI):
     self.__sid = None
     self.elementManager = None
     self.service_orchestrator = None
+    """:type ServiceOrchestrator"""
     self.gui_proc = None
     super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
 
@@ -295,7 +307,7 @@ class ServiceLayerAPI(AbstractAPI):
     address = (params.get('address'), params.get('port'))
     self.rest_api = RESTServer(handler, *address)
     self.rest_api.api_id = handler.LOGGER_NAME = "U-Sl"
-    handler.log.debug("Init REST-API for %s on %s:%s!" % (
+    handler.log.info("Init REST-API for %s on %s:%s!" % (
       self.rest_api.api_id, address[0], address[1]))
     self.rest_api.start()
     handler.log.debug("Enforced configuration for %s: interface: %s" % (
@@ -331,7 +343,7 @@ class ServiceLayerAPI(AbstractAPI):
   ##############################################################################
 
   @schedule_as_coop_task
-  def api_sas_sg_request (self, service_nffg):
+  def api_sas_sg_request (self, service_nffg, *args, **kwargs):
     """
     Initiate service graph in a cooperative micro-task.
 
@@ -342,7 +354,7 @@ class ServiceLayerAPI(AbstractAPI):
     self.__proceed_sg_request(service_nffg)
 
   @schedule_delayed_as_coop_task(delay=3)
-  def api_sas_sg_request_delayed (self, service_nffg):
+  def api_sas_sg_request_delayed (self, service_nffg, *args, **kwargs):
     """
     Initiate service graph in a cooperative micro-task.
 
@@ -360,12 +372,13 @@ class ServiceLayerAPI(AbstractAPI):
     :type service_nffg: :any:`NFFG`
     :return: None
     """
-    # Store request if it is received on REST-API
-    if hasattr(self, 'rest_api') and self.rest_api:
-      self.rest_api.request_cache.add_request(id=service_nffg.id)
-      self.rest_api.request_cache.set_in_progress(id=service_nffg.id)
     log.getChild('API').info("Invoke request_service on %s with SG: %s " %
                              (self.__class__.__name__, service_nffg))
+    # Store request if it is received on REST-API
+    if hasattr(self, 'rest_api') and self.rest_api:
+      log.getChild('API').debug("Store received NFFG request info...")
+      msg_id = self.rest_api.request_cache.cache_request(nffg=service_nffg)
+      self.rest_api.request_cache.set_in_progress(id=msg_id)
     # Check if mapping mode is set globally in CONFIG
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:
@@ -399,16 +412,41 @@ class ServiceLayerAPI(AbstractAPI):
       else:
         log.warning("Something went wrong in service request initiation: "
                     "mapped service data is missing!")
+        self.__handle_mapping_result(nffg_id=service_nffg.id, fail=True)
         self._handle_InstantiationFinishedEvent(
           event=InstantiationFinishedEvent(
             id=service_nffg.id,
             result=InstantiationFinishedEvent.MAPPING_ERROR))
     except ProcessorError as e:
+      self.__handle_mapping_result(nffg_id=service_nffg.id, fail=True)
       self._handle_InstantiationFinishedEvent(
         event=InstantiationFinishedEvent(
           id=service_nffg.id,
           result=InstantiationFinishedEvent.REFUSED_BY_VERIFICATION,
           error=e))
+
+  def __handle_mapping_result (self, nffg_id, fail):
+    if hasattr(self, 'rest_api') and self.rest_api:
+      log.getChild('API').debug("Cache request status...")
+      req_status = self.rest_api.request_cache.get_request_by_nffg_id(nffg_id)
+      if req_status is None:
+        log.getChild('API').debug("Request status is missing for NFFG: %s! "
+                                  "Skipping notifications." % nffg_id)
+        return
+      log.getChild('API').debug("Process mapping result...")
+      message_id = req_status.message_id
+      if message_id is not None:
+        if fail:
+          self.rest_api.request_cache.set_error_result(id=message_id)
+        else:
+          self.rest_api.request_cache.set_success_result(id=message_id)
+        ret = self.rest_api.invoke_callback(message_id=message_id)
+        if ret is None:
+          log.getChild('API').debug("No callback has defined!")
+        else:
+          log.getChild('API').debug(
+            "Callback: %s has invoked with return value: %s" % (
+              req_status.get_callback(), ret))
 
   def __get_sas_resource_view (self):
     """
@@ -438,16 +476,28 @@ class ServiceLayerAPI(AbstractAPI):
         "Virtualizer(id=%s) assigned to REST-API is not found!" %
         self.rest_api.api_id)
 
-  def get_result (self, id):
+  def api_sas_status (self, message_id):
     """
-    Return the state of a request given by ``id``.
+    Return the state of a request given by ``message_id``.
 
-    :param id: request id
-    :type id: str or int
+    Function is not invoked in coop-microtask, only write-type operations
+    must not be used.
+
+    :param message_id: request id
+    :type message_id: str or int
     :return: state
     :rtype: str
     """
-    return self.rest_api.request_cache.get_result(id=id)
+    status = self.rest_api.request_cache.get_status(id=message_id)
+    if status == RequestStatus.SUCCESS:
+      return 200, None
+    elif status == RequestStatus.UNKNOWN:
+      return 404, None
+    elif status == RequestStatus.ERROR:
+      return 500, "TODO"
+    else:
+      # PROCESSING or INITIATED
+      return 202, None
 
   def _proceed_to_instantiate_NFFG (self, mapped_nffg):
     """
@@ -519,9 +569,6 @@ class ServiceLayerAPI(AbstractAPI):
     :type event: :any:`InstantiationFinishedEvent`
     :return: None
     """
-    if hasattr(self, 'rest_api') and self.rest_api:
-      self.rest_api.request_cache.set_result(id=event.id, result=event.result)
-      log.getChild('API').debug("Cache request result...")
     if not BaseResultEvent.is_error(event.result):
       log.getChild('API').info(
         "Service request(id=%s) has been finished successfully with result: %s!"
@@ -530,6 +577,8 @@ class ServiceLayerAPI(AbstractAPI):
       log.getChild('API').error(
         "Service request(id=%s) has been finished with error result: %s!" %
         (event.id, event.result))
+    self.__handle_mapping_result(nffg_id=event.id,
+                                 fail=BaseResultEvent.is_error(event.result))
     # Quit ESCAPE if test mode is active
     if get_global_parameter(name="QUIT_AFTER_PROCESS"):
       quit_with_ok("Detected QUIT mode! Exiting ESCAPE...")

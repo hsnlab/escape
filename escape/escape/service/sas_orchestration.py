@@ -143,12 +143,12 @@ class SGManager(object):
     :return: computed id of given Service Graph
     :rtype: int
     """
-    sg_id = sg.id
-    self._service_graphs[sg_id] = sg.copy()
+    sg = sg.copy()
+    self._service_graphs[sg.id] = sg
     self._last = sg
     log.debug("SG: %s is saved by %s with id: %s" % (
-      sg, self.__class__.__name__, sg_id))
-    return sg_id
+      sg, self.__class__.__name__, sg.id))
+    return sg.id
 
   def get (self, graph_id):
     """

@@ -15,14 +15,20 @@
 Contains abstract classes for concrete layer API modules.
 """
 import json
+import logging
 import os.path
 import threading
+import urllib
 import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SocketServer import ThreadingMixIn
 
-from escape import __version__, CONFIG, __project__
-from escape.util.misc import SimpleStandaloneHelper, quit_with_error
+import requests
+from requests.exceptions import Timeout, RequestException
+
+from escape import __project__, CONFIG
+from escape.util.misc import SimpleStandaloneHelper, quit_with_error, \
+  get_escape_version
 from pox.core import core
 from pox.lib.revent import EventMixin
 
@@ -202,16 +208,31 @@ class AbstractAPI(EventMixin):
        not f.startswith('_')])
 
 
+class RequestStatus(object):
+  # State constants
+  INITIATED = "INITIATED"
+  PROCESSING = "PROCESSING"
+  SUCCESS = "SUCCESS"
+  ERROR = "ERROR"
+  UNKNOWN = "UNKNOWN"
+
+  def __init__ (self, message_id, nffg_id, status, params=None):
+    self.message_id = message_id
+    self.nffg_id = nffg_id
+    self.status = status
+    self.params = params if params else {}
+
+  def get_callback (self):
+    if 'call-back' in self.params:
+      return urllib.unquote(self.params['call-back'])
+    else:
+      return None
+
+
 class RequestCache(object):
   """
   Store HTTP request states.
   """
-  # State constants
-  INITIATED = "INITIATED"
-  IN_PROGRESS = "IN_PROGRESS"
-  SUCCESS = "SUCCESS"
-  ERROR = "ERROR"
-  UNKNOWN = "UNKNOWN"
 
   def __init__ (self):
     """
@@ -220,16 +241,21 @@ class RequestCache(object):
     :return: None
     """
     super(RequestCache, self).__init__()
-    self.cache = dict()
+    self.__cache = dict()
 
-  def add_request (self, id):
+  def cache_request (self, nffg):
     """
     Add a request to the cache.
 
-    :param id: request id
-    :type id: str or int
+    :param nffg: request id
+    :type nffg: :any:`NFFG`
     """
-    self.cache[id] = self.INITIATED
+    key = nffg.metadata['params']['message-id']
+    self.__cache[key] = RequestStatus(message_id=key,
+                                      nffg_id=nffg.id,
+                                      status=RequestStatus.INITIATED,
+                                      params=nffg.metadata.pop('params'))
+    return key
 
   def set_in_progress (self, id):
     """
@@ -239,7 +265,7 @@ class RequestCache(object):
     :type id: str or int
     """
     try:
-      self.cache[id] = self.IN_PROGRESS
+      self.__cache[id].status = RequestStatus.PROCESSING
     except KeyError:
       pass
 
@@ -250,19 +276,50 @@ class RequestCache(object):
     :param id: request id
     :type id: str or int
     :param result: the result
-    :type result: bool
+    :type result: bool or basestring
     """
     try:
       if type(result) is bool:
-        self.cache[id] = self.SUCCESS if result else self.ERROR
+        if result:
+          self.__cache[id].status = RequestStatus.SUCCESS
+        else:
+          self.__cache[id].status = RequestStatus.ERROR
       elif isinstance(result, basestring):
-        self.cache[id] = result
+        self.__cache[id].status = result
       else:
-        self.cache[id] = self.UNKNOWN
+        self.__cache[id] = RequestStatus.UNKNOWN
     except KeyError:
       pass
 
-  def get_result (self, id):
+  def set_success_result (self, id):
+    return self.set_result(id=id, result=RequestStatus.SUCCESS)
+
+  def set_error_result (self, id):
+    return self.set_result(id=id, result=RequestStatus.ERROR)
+
+  def get_request (self, message_id):
+    """
+
+    :param message_id:
+    :rtype: RequestStatus
+    """
+    try:
+      return self.__cache[message_id]
+    except KeyError:
+      return None
+
+  def get_request_by_nffg_id (self, nffg_id):
+    """
+
+    :param nffg_id:
+    :rtype: RequestStatus
+    """
+    for req in self.__cache.itervalues():
+      if req.nffg_id == nffg_id:
+        return req
+    return None
+
+  def get_status (self, id):
     """
     Return the requested result.
 
@@ -270,9 +327,9 @@ class RequestCache(object):
     :type id: str or int
     """
     try:
-      return self.cache[id]
+      return self.__cache[id].status
     except KeyError:
-      return self.UNKNOWN
+      return RequestStatus.UNKNOWN
 
 
 class RESTServer(ThreadingMixIn, HTTPServer):
@@ -339,6 +396,33 @@ class RESTServer(ThreadingMixIn, HTTPServer):
       # print "stop"
       # self.RequestHandlerClass.log.debug(
       #   "REST-API on %s:%d is shutting down..." % self.server_address)
+
+  def invoke_callback (self, message_id):
+    status = self.get_status_by_message_id(message_id=message_id)
+    if "call-back" not in status.params:
+      return None
+    callback_url = status.get_callback()
+    params = {'message-id': status.message_id}
+    if status.status == status.SUCCESS:
+      params['response-code'] = 200
+      body = "OK"
+    else:
+      params['response-code'] = 500
+      body = "TODO"
+    try:
+      logging.getLogger("requests").setLevel(logging.WARNING)
+      ret = requests.post(url=callback_url, params=params, data=body, timeout=1)
+      return ret.status_code
+    except (RequestException, Timeout):
+      return -1
+
+  def get_status_by_message_id (self, message_id):
+    """
+
+    :param message_id:
+    :rtype: RequestStatus
+    """
+    return self.request_cache.get_request(message_id)
 
 
 class RESTError(Exception):
@@ -409,7 +493,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     :mod:`escape.util.misc` on the called function!
   """
   # For HTTP Response messages
-  server_version = "ESCAPE/" + __version__
+  server_version = "ESCAPE/" + get_escape_version()
   """server version for HTTP Response messages"""
   static_prefix = "escape"
   # Bound HTTP verbs to UNIFY's API functions
@@ -514,9 +598,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     http_method = self.command.upper()
     real_path = urlparse.urlparse(self.path).path
     try:
-      prfx = '/%s/' % self.static_prefix
-      if real_path.startswith(prfx):
-        self.func_name = real_path[len(prfx):].split('/')[0]
+      prefix = '/%s/' % self.static_prefix
+      if real_path.startswith(prefix):
+        self.func_name = real_path[len(prefix):].split('/')[0]
         if self.rpc_mapper:
           try:
             self.func_name = self.rpc_mapper[self.func_name]
@@ -550,6 +634,23 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
       self.func_name = None
       self.wfile.flush()
       self.wfile.close()
+
+  def _get_request_params (self):
+    params = {}
+    query = urlparse.urlparse(self.path).query
+    if query:
+      query = query.split('&')
+      for param in query:
+        if '=' in param:
+          name, value = param.split('=', 1)
+          params[name] = value
+        else:
+          params[param] = True
+    # Check message-id in headers as backup
+    if 'message-id' not in params:
+      if 'message-id' in self.headers:
+        params['message-id'] = self.headers['message-id']
+    return params
 
   def _get_body (self):
     """
@@ -612,25 +713,45 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     except KeyError:
       pass
 
-  def send_acknowledge (self, id, msg=None):
+  def send_acknowledge (self, code=None, message_id=None):
     """
     Send back acknowledge message.
 
-    :param msg: response body
-    :param msg: dict
+    :param message_id: response body
+    :param message_id: dict
     :return: None
     """
-    if msg is None:
-      msg = '{"result": "Accepted", "id": "%s"}' % id
-    msg.encode("UTF-8")
-    self.send_response(202)
-    self.send_header('Content-Type', 'text/json; charset=UTF-8')
-    self.send_header('Content-Length', len(msg))
+    if code:
+      self.send_response(int(code))
+    else:
+      self.send_response(202)
+    if message_id:
+      self.send_header('message-id', message_id)
     self.send_REST_headers()
     self.end_headers()
-    self.wfile.write(msg)
 
-  def _send_json_response (self, data, encoding='utf-8'):
+  def send_raw_response (self, raw_data, code=None, content="text/plain",
+                         encoding='utf-8'):
+    """
+    Send requested data.
+
+    :param raw_data: data in JSON format
+    :type raw_data: dict
+    :param encoding: Set data encoding (optional)
+    :type encoding: str
+    :return: None
+    """
+    if code:
+      self.send_response(int(code))
+    else:
+      self.send_response(200)
+    self.send_header('Content-Type', '%s; charset=%s' % (content, encoding))
+    self.send_header('Content-Length', len(raw_data))
+    self.send_REST_headers()
+    self.end_headers()
+    self.wfile.write(raw_data)
+
+  def send_json_response (self, data, code=None, encoding='utf-8'):
     """
     Send requested data in JSON format.
 
@@ -641,13 +762,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     :return: None
     """
     response_body = json.dumps(data, encoding=encoding)
-    self.send_response(200)
-    self.send_header('Content-Type', 'text/json; charset=' + encoding)
-    self.send_header('Content-Length', len(response_body))
-    self.send_REST_headers()
-    self.end_headers()
-    self.wfile.write(response_body)
-    # self.wfile.flush()
+    return self.send_raw_response(raw_data=response_body,
+                                  code=code,
+                                  content="application/json",
+                                  encoding=encoding)
 
   error_content_type = "text/json"
   """Content-Type for error responses"""
@@ -772,7 +890,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     :return: None
     """
     self.log.debug("Call REST-API function: version")
-    self._send_json_response({"name": __project__, "version": __version__})
+    self.send_json_response({"name": __project__,
+                             "version": get_escape_version()})
 
   def operations (self):
     """
@@ -781,4 +900,4 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     :return: None
     """
     self.log.debug("Call REST-API function: operations")
-    self._send_json_response(self.request_perm)
+    self.send_json_response(self.request_perm)

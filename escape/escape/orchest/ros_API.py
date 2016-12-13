@@ -18,13 +18,15 @@ Sublayer.
 import ast
 import json
 import pprint
+import uuid
 from collections import OrderedDict
 
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest import LAYER_NAME, log as log  # Orchestration layer logger
 from escape.orchest.ros_orchestration import ResourceOrchestrator
-from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler
+from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler, \
+  RequestStatus
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import ProcessorError
@@ -115,7 +117,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {
-    'GET': ('ping', 'version', 'operations', 'get_config'),
+    'GET': ('ping', 'version', 'operations', 'get_config', 'status'),
     'POST': ('ping', 'get_config', 'edit_config'),
     # 'DELETE': ('edit_config',),
     'PUT': ('edit_config',)
@@ -142,7 +144,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     'get-config': "get_config",
     'edit-config': "edit_config"
   }
-  """ Name mapper to avoid Python naming constraint"""
+  """Name mapper to avoid Python naming constraint"""
   # Bound function
   API_CALL_RESOURCE = 'api_ros_get_config'
   API_CALL_REQUEST = 'api_ros_edit_config'
@@ -181,12 +183,39 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     """
     self.log.debug("Call %s function: edit-config" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
+    params = self._get_request_params()
+    self.log.debug("Detected request parameters: %s" % params)
+    if 'message-id' in params:
+      self.log.debug("Detected message id: %s" % params['message-id'])
+    else:
+      params['message-id'] = str(uuid.uuid1())
+      self.log.debug("No message-id! Generated id: %s" % params['message-id'])
     if nffg:
-      self._proceed_API_call(self.API_CALL_REQUEST, nffg)
-      self.send_acknowledge(id=nffg.id)
+      nffg.id = "%s@message-id=%s" % (nffg.id, params['message-id'])
+      nffg.metadata['params'] = params
+      self._proceed_API_call(self.API_CALL_REQUEST,
+                             nffg=nffg,
+                             params=params)
+      self.send_acknowledge(message_id=params['message-id'])
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
-  def _topology_view_responder (self, resource_nffg):
+  def status (self):
+    params = self._get_request_params()
+    message_id = params.get('message-id')
+    if not message_id:
+      self.send_error(code=400, message="message-id is missing")
+      return
+    code, result = self._proceed_API_call('api_ros_status', message_id)
+    if not result:
+      self.send_acknowledge(code=code, message_id=message_id)
+      self.log.debug("Responded status code: %s" % code)
+    else:
+      # TODO collect bad NFFG
+      self.send_raw_response(raw_data=result, code=code,
+                             content="application/xml")
+      self.log.debug("Responded status code: %s, data: %s" % (code, result))
+
+  def _topology_view_responder (self, resource_nffg, message_id=None):
     """
     Process the required topology data and sent back to the REST client.
 
@@ -229,6 +258,8 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       self.send_header('Content-Type', 'application/json')
     # Setup length for HTTP response
     self.send_header('Content-Length', len(data))
+    self.send_header('message-id',
+                     message_id if message_id else str(uuid.uuid1()))
     self.end_headers()
     self.log.debug("Send back topology description...")
     self.wfile.write(data)
@@ -318,7 +349,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         self.log.debug(
           'Add mapping mode: %s based on HTTP verb: %s' % (nffg.mode, command))
       else:
-        self.log.info('No mode parameter has benn defined in body!')
+        self.log.info('No mode parameter has been defined in body!')
     self.log.debug("Parsed NFFG install request: %s" % nffg)
     self.log.log(VERBOSE, "Full request:\n%s" % nffg.dump())
     return nffg
@@ -426,7 +457,7 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
     nffg = self._service_request_parser()
     if nffg:
       self._proceed_API_call(self.API_CALL_REQUEST, nffg)
-      self.send_acknowledge(id=nffg.id)
+      self.send_acknowledge(message_id=nffg.id)
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
 
@@ -437,7 +468,8 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
   """
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {
-    'GET': ('ping', 'version', 'operations', 'get_config', 'mapping_info'),
+    'GET': ('ping', 'version', 'operations', 'get_config', 'mapping_info',
+            'status'),
     'POST': ('ping', 'get_config', 'edit_config'),
     # 'DELETE': ('edit_config',),
     'PUT': ('edit_config',)
@@ -530,6 +562,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.info("Starting Resource Orchestration Sublayer...")
     # Mandatory super() call
     self.resource_orchestrator = None
+    """:type: ResourceOrchestrator"""
     super(ResourceOrchestrationAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
@@ -696,7 +729,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
                 self.ros_api.api_id)
 
-  def api_ros_edit_config (self, nffg):
+  def api_ros_edit_config (self, nffg, params):
     """
     Implementation of REST-API RPC: edit-config
 
@@ -797,6 +830,26 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.debug("Collected mapping info:\n%s" % pprint.pformat(ret))
     return ret
 
+  def api_ros_status (self, message_id):
+    """
+    Return the state of a request given by ``message_id``.
+
+    :param message_id: request id
+    :type message_id: str or int
+    :return: state
+    :rtype: str
+    """
+    status = self.ros_api.request_cache.get_status(id=message_id)
+    if status == RequestStatus.SUCCESS:
+      return 200, None
+    elif status == RequestStatus.UNKNOWN:
+      return 404, None
+    elif status == RequestStatus.ERROR:
+      return 500, "TODO"
+    else:
+      # PROCESSING or INITIATED
+      return 202, None
+
   ##############################################################################
   # Cf-Or API functions starts here
   ##############################################################################
@@ -875,6 +928,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
       return
     log.debug("Got resource view for difference calculation: %s" %
               resource_nffg)
+    if hasattr(self, 'ros_api') and self.ros_api:
+      log.getChild('API').debug("Store received NFFG request info...")
+      msg_id = self.ros_api.request_cache.cache_request(nffg=nffg)
+      self.ros_api.request_cache.set_in_progress(id=msg_id)
     # Check if mapping mode is set globally in CONFIG
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:
@@ -918,6 +975,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
         log.info("No change has been detected in request! Skip mapping...")
         log.getChild('API').debug("Invoked instantiate_nffg on %s is finished!"
                                   % self.__class__.__name__)
+        self.__handle_mapping_result(nffg_id=nffg.id, fail=False)
         return
     else:
       log.debug("Mode: %s detected from config! Skip difference calculation..."
@@ -942,14 +1000,39 @@ class ResourceOrchestrationAPI(AbstractAPI):
       else:
         log.warning("Something went wrong in service request instantiation: "
                     "mapped service request is missing!")
+        self.__handle_mapping_result(nffg_id=nffg.id, fail=True)
         self.raiseEventNoErrors(InstantiationFinishedEvent,
                                 id=nffg.id,
                                 result=InstantiationFinishedEvent.MAPPING_ERROR)
     except ProcessorError as e:
+      self.__handle_mapping_result(nffg_id=nffg.id, fail=True)
       self.raiseEventNoErrors(InstantiationFinishedEvent,
                               id=nffg.id,
                               result=InstantiationFinishedEvent.REFUSED_BY_VERIFICATION,
                               error=e)
+
+  def __handle_mapping_result (self, nffg_id, fail):
+    if hasattr(self, 'ros_api') and self.ros_api:
+      log.getChild('API').debug("Cache request status...")
+      req_status = self.ros_api.request_cache.get_request_by_nffg_id(nffg_id)
+      if req_status is None:
+        log.getChild('API').debug("Request status is missing for NFFG: %s! "
+                                  "Skipping notifications." % nffg_id)
+        return
+      log.getChild('API').debug("Process mapping result...")
+      message_id = req_status.message_id
+      if message_id is not None:
+        if fail:
+          self.ros_api.request_cache.set_error_result(id=message_id)
+        else:
+          self.ros_api.request_cache.set_success_result(id=message_id)
+        ret = self.ros_api.invoke_callback(message_id=message_id)
+        if ret is None:
+          log.getChild('API').debug("No callback has defined!")
+        else:
+          log.getChild('API').debug(
+            "Callback: %s has invoked with return value: %s" % (
+              req_status.get_callback(), ret))
 
   def _proceed_to_install_NFFG (self, mapped_nffg):
     """
@@ -1040,12 +1123,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     if not InstantiationFinishedEvent.is_error(event.result):
       log.getChild('API').info(
-        "NF-FG instantiation has been finished successfully with result: %s!" %
-        event.result)
+        "NF-FG(%s) instantiation has been finished successfully with result: "
+        "%s!" % (event.id, event.result))
     else:
       log.getChild('API').error(
-        "NF-FG instantiation has been finished with error result: %s!" %
-        event.result)
+        "NF-FG(%s) instantiation has been finished with error result: %s!" %
+        (event.id, event.result))
+    self.__handle_mapping_result(nffg_id=event.id,
+                                 fail=BaseResultEvent.is_error(event.result))
     self.raiseEventNoErrors(InstantiationFinishedEvent,
                             id=event.id,
                             result=event.result)

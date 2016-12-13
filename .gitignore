@@ -29,3 +29,4 @@ escape/doc/build
 click
 log/*
 /test/case*/out-*
+/test/results.xml

@@ -98,7 +98,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
         "Mapping algorithm fails due to implementation error or conceptual "
         "error! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s is aborted!" % graph)
-      raise
+      return
     except:
       log.exception("Got unexpected error during mapping process!")
 

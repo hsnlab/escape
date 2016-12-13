@@ -18,6 +18,19 @@ echo -e "\n=====================================================================
 echo
 ## Test case header - END
 
-# Invoke ESCAPE here with test parameters
-sudo ${ESCAPE} --debug --test --quit --log ${CWD}/escape.log --full \
-                --config ${CWD}/test.config --service ${CWD}/request.nffg $@
+# Print test case description
+cat ${CWD}/README.txt
+echo -e "\n=============================== START TEST CASE ===============================\n"
+echo
+## Test case header - END
+
+# Define run command here
+ESCAPE_CMD="sudo ${ESCAPE} --debug --test --quit --log ${CWD}/escape.log --full \
+                --config ${CWD}/test.config --service ${CWD}/request.nffg"
+
+# Invoke ESCAPE with test parameters
+time ${ESCAPE_CMD} $@
+
+## Test case footer - START
+echo -e "\n===================================== END =====================================\n"
+## Test case footer - END
