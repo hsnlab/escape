@@ -19,7 +19,7 @@ import unittest
 
 from xmlrunner import XMLTestRunner
 
-from testframework.builder import TestCaseBuilder, TestReader
+from testframework.builder import TestSuitBuilder, TestCaseReader
 from testframework.runner import CommandRunner, Tee
 
 CWD = os.path.dirname(os.path.abspath(__file__))
@@ -91,10 +91,11 @@ def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
   :return: created test suite object
   :rtype: unittest.TestSuite
   """
-  test_cases = TestReader(tests_dir=tests_dir).read_from(run_only_tests)
-  builder = TestCaseBuilder(cwd=CWD, show_output=show_output,
+  reader = TestCaseReader(tests_dir=tests_dir)
+  builder = TestSuitBuilder(cwd=CWD,
+                            show_output=show_output,
                             kill_timeout=kill_timeout)
-  test_suite = builder.to_suite(test_cases)
+  test_suite = builder.to_suite(reader.read_from(run_only_tests))
   return test_suite
 
 

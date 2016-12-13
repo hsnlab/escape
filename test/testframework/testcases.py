@@ -269,3 +269,18 @@ class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
     self.check_root_privilege()
     # Run test case
     super(RootPrivilegedSuccessfulTestCase, self).runTest()
+
+
+class DynamicSuccessfulTestCase(BasicSuccessfulTestCase):
+  """
+  Test case class which generates the required resource and request files for
+  the actual testcase on the fly based on the given parameters.
+  """
+
+  def setUp(self):
+    super(DynamicSuccessfulTestCase, self).setUp()
+    # TODO - generate required request/topology files
+
+  def tearDown(self):
+    # TODO - remove generated files from the CWD
+    super(DynamicSuccessfulTestCase, self).tearDown()
