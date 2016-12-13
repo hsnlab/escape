@@ -54,6 +54,7 @@ class EscapeRunResult():
   """
   Container class for storing the result of the test run.
   """
+
   def __init__ (self, output=None, exception=None):
     self.log_output = output
     self.exception = exception
@@ -142,39 +143,6 @@ class CommandRunner(object):
   def cleanup (self):
     self.__process = None
     self.__kill_timer = None
-
-
-class TestReader(object):
-  """
-  Parse the test directory and return the assebled test case config objects
-  for the individual test cases.
-  """
-  TEST_DIR_PREFIX = "case"
-
-  def __init__ (self, tests_dir):
-    """
-    :type tests_dir: str
-    """
-    self.tests_dir = tests_dir
-
-  def read_from (self, case_dirs=None):
-    """
-    Load the test case info from the test directory.
-
-    :param case_dirs: filter the test cases based on the given case list
-    :type case_dirs: list[str]
-    :return: created test case config objects
-    :rtype: list[RunnableTestCaseInfo]
-    """
-    if not case_dirs:
-      case_dirs = sorted(os.listdir(self.tests_dir))
-    # TODO - add every info from test to this RunnableTestCase class from
-    # case dirs (migrate functions from TestCaseBuilder)
-    cases = [RunnableTestCaseInfo(case_path=os.path.join(self.tests_dir,
-                                                         case_dir))
-             for case_dir in case_dirs if
-             case_dir.startswith(self.TEST_DIR_PREFIX)]
-    return cases
 
 
 class RunnableTestCaseInfo(object):

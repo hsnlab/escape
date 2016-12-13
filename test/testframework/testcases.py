@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import sys
 from unittest.case import TestCase
-from unittest.suite import TestSuite
 
 from runner import EscapeRunResult, RunnableTestCaseInfo, CommandRunner
 
@@ -260,8 +258,9 @@ class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
 
   def check_root_privilege (self):
     # Due to XMLTestRunner implementation test cannot skip in setUp()
-    if CommandRunner("sudo uname",
-                     kill_timeout=self.SUDO_KILL_TIMEOUT).execute().is_killed:
+    test_run = CommandRunner(cmd="sudo uname",
+                             kill_timeout=self.SUDO_KILL_TIMEOUT).execute()
+    if test_run.is_killed:
       self.skipTest("Root privilege is required to run the testcase: %s" %
                     self.test_case_info.testcase_dir_name)
 
@@ -270,69 +269,3 @@ class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
     self.check_root_privilege()
     # Run test case
     super(RootPrivilegedSuccessfulTestCase, self).runTest()
-
-
-class TestCaseBuilder(object):
-  """
-  Builder class for creating the overall TestSuite object.
-  """
-  # TODO - check the possibility to refactor to unittest.TestLoader
-
-  DEFAULT_TESTCASE_CLASS = BasicSuccessfulTestCase
-  CONFIG_CONTAINER_NAME = "test"
-
-  def __init__ (self, cwd, show_output=False, kill_timeout=None):
-    self.cwd = cwd
-    self.show_output = show_output
-    self.kill_timeout = kill_timeout
-
-  def _create_command_runner (self, case_info):
-    """
-    Create the specific runner object which runs and optionally kills ESCAPE.
-
-    :type case_info: RunnableTestCaseInfo
-    :rtype: CommandRunner
-    """
-    return CommandRunner(cwd=self.cwd,
-                         cmd=case_info.test_command,
-                         kill_timeout=self.kill_timeout,
-                         output_stream=sys.stdout if self.show_output else None)
-
-  def build_from_config (self, case_info):
-    """
-    Build a Testcase object based on the test config file and the given test
-    case info object.
-
-    :param case_info: config object contains the test case data
-    :type case_info: RunnableTestCaseInfo
-    :return: instantiated specific TestCase class
-    :rtype: EscapeTestCase
-    """
-    # Check running script
-    if not os.path.exists(case_info.test_command):
-      raise Exception("Running script: %s for testcase: %s was not found"
-                      % (case_info.test_command, case_info.full_testcase_path))
-    # Create CommandRunner for test case
-    cmd_runner = self._create_command_runner(case_info=case_info)
-    # Create TestCase class
-    if os.path.exists(case_info.config_file_name):
-      TESTCASE_CLASS, test_args = case_info.load_test_case_class()
-      if TESTCASE_CLASS:
-        return TESTCASE_CLASS(test_case_info=case_info,
-                              command_runner=cmd_runner,
-                              **test_args)
-    return self.DEFAULT_TESTCASE_CLASS(test_case_info=case_info,
-                                       command_runner=cmd_runner)
-
-  def to_suite (self, tests):
-    """
-    Creates the container TestSuite object and populate with the TestCase
-    objects based on the given test config objects.
-
-    :param tests: test case config objects
-    :type tests: list[RunnableTestCaseInfo]
-    :return: overall TestSuite object
-    :rtype: TestSuite
-    """
-    test_cases = [self.build_from_config(case_info) for case_info in tests]
-    return TestSuite(test_cases)

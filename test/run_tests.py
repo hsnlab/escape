@@ -15,11 +15,12 @@
 import argparse
 import os
 import sys
+import unittest
 
 from xmlrunner import XMLTestRunner
 
-from testframework.runner import TestReader, CommandRunner, Tee
-from testframework.testcases import TestCaseBuilder
+from testframework.builder import TestCaseBuilder, TestReader
+from testframework.runner import CommandRunner, Tee
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 REPORT_FILE = "results.xml"
@@ -62,7 +63,7 @@ def main (args):
                                 verbosity=2,
                                 failfast=args.failfast)
     try:
-      # Run the test cases and collect the reslts
+      # Run the test cases and collect the results
       results.append(test_runner.run(test_suite))
     except KeyboardInterrupt:
       print "\n\nReceived KeyboardInterrupt! Abort running test suite..."
