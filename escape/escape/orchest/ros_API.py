@@ -931,7 +931,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if hasattr(self, 'ros_api') and self.ros_api:
       log.getChild('API').debug("Store received NFFG request info...")
       msg_id = self.ros_api.request_cache.cache_request(nffg=nffg)
-      self.ros_api.request_cache.set_in_progress(id=msg_id)
+      if msg_id is not None:
+        self.ros_api.request_cache.set_in_progress(id=msg_id)
+      else:
+        log.getChild('API').debug("No request info detected.")
     # Check if mapping mode is set globally in CONFIG
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:
@@ -1017,7 +1020,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       req_status = self.ros_api.request_cache.get_request_by_nffg_id(nffg_id)
       if req_status is None:
         log.getChild('API').debug("Request status is missing for NFFG: %s! "
-                                  "Skipping notifications." % nffg_id)
+                                  "Skip result processing..." % nffg_id)
         return
       log.getChild('API').debug("Process mapping result...")
       message_id = req_status.message_id

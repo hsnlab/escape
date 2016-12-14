@@ -250,12 +250,15 @@ class RequestCache(object):
     :param nffg: request id
     :type nffg: :any:`NFFG`
     """
-    key = nffg.metadata['params']['message-id']
-    self.__cache[key] = RequestStatus(message_id=key,
-                                      nffg_id=nffg.id,
-                                      status=RequestStatus.INITIATED,
-                                      params=nffg.metadata.pop('params'))
-    return key
+    try:
+      key = nffg.metadata['params']['message-id']
+      self.__cache[key] = RequestStatus(message_id=key,
+                                        nffg_id=nffg.id,
+                                        status=RequestStatus.INITIATED,
+                                        params=nffg.metadata.pop('params'))
+      return key
+    except KeyError:
+      return
 
   def set_in_progress (self, id):
     """
