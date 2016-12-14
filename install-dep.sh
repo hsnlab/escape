@@ -176,8 +176,8 @@ function install_core {
     # Freeze neo4j version
     echo "Mark current version of neo4j: $NEO4J_VERSION as held back..."
     sudo apt-mark hold neo4j
-    info "=== Install dependencies for testing ==="
-    sudo apt-get install -y openvswitch-switch
+    # info "=== Install dependencies for testing ==="
+    # sudo apt-get install -y openvswitch-switch
 }
 
 function install_mn_dep {
