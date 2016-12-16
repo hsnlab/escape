@@ -66,6 +66,7 @@ def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
   rnd.seed(seed)
   nffg = NFFG(id="8loops-req")
   nf_types = list(string.ascii_uppercase)[:abc_nf_types_len]
+  i = 1
   for j in xrange(0,eightloops):
     sap = rnd.choice(saps)
     if sap not in nffg:
@@ -86,7 +87,6 @@ def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
       vnfs2.remove(nfmiddle.functional_type)
     except ValueError:
       pass
-    i = 1
     once = True
     for vnf_list in (vnfs1, vnfs2):
       nf0 = nfmiddle
@@ -109,6 +109,7 @@ def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
                     flowclass="HTTP", id=i)
     nffg.add_sglink(src_port=sapp, dst_port=nfmiddle.add_port(id = getName("port")), 
                     flowclass="HTTP", id=i+1)
+    i+=2
   return nffg
 
 
