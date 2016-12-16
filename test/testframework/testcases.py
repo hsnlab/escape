@@ -74,7 +74,7 @@ class BasicErrorChecker(object):
           return None
         else:
           return line
-    return None
+    return "No result line detected!"
 
 
 class WarningChecker(BasicErrorChecker):
