@@ -154,10 +154,10 @@ class EscapeTestCase(TestCase):
     self.run_result = None
     """:type result: testframework.runner.EscapeRunResult"""
     self.success = False
-    print "Init %r" % self
+    print "Init  %r" % self
 
   def __str__ (self):
-    return "Test:\t%s\t(%s)" % (
+    return "Test: %s     (%s)" % (
       self.test_case_info.name, self.__class__.__name__)
 
   def __repr__ (self):
@@ -322,7 +322,6 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
 
   def __init__ (self, request_cfg=None, topology_cfg=None, **kwargs):
     """
-
     :type request_cfg: dict
     :type topology_cfg: dict
     :type kwargs: dict
@@ -333,16 +332,9 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
     self.new_topo = False
     super(DynamicallyGeneratedTestCase, self).__init__(**kwargs)
 
-  # def __repr__ (self):
-  #   return "%s[name: %s, request_cfg: %s, topology_cfg: %s]" \
-  #          % (self.__class__.__name__, self.test_case_info.name,
-  #             self.request_cfg is not None,
-  #             self.topology_cfg is not None)
-
   @classmethod
   def __generate_nffg (cls, cfg):
     """
-
     :type cfg: dict
     :rtype: :any:`NFFG`
     """
@@ -359,7 +351,6 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
 
   def dump_generated_nffg (self, cfg, file_name):
     """
-
     :type file_name: str
     :return: generation was successful
     :rtype: bool
@@ -450,7 +441,6 @@ class DynamicTestGenerator(BaseTestSuite):
     self.num_of_requests = num_of_requests
     self.num_of_topos = num_of_topos
     self._create_test_cases()
-    # sys.exit()
 
   def __get_seed_generator (self):
     """
