@@ -308,8 +308,8 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
   """
   GENERATOR_MODULE = "testframework.generator.generator"
   GENERATOR_ENTRY_NAME = "generator"
-  REQUEST_FILE_NAME = "request.nffg"
-  TOPOLOGY_FILE_NAME = "topology.nffg"
+  REQUEST_FILE_NAME = "gen-request.nffg"
+  TOPOLOGY_FILE_NAME = "gen-topology.nffg"
 
   def __init__ (self, request_cfg=None, topology_cfg=None, **kwargs):
     """

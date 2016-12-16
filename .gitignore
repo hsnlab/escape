@@ -29,4 +29,5 @@ escape/doc/build
 click
 log/*
 /test/case*/out-*
+/test/case*/gen-*
 /test/results.xml
