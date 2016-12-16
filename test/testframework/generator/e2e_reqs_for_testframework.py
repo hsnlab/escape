@@ -86,7 +86,7 @@ def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
     sc_count = rnd.randint(2,max_sc_count)
   while len(all_saps_ending) > sc_count and len(all_saps_beginning) > sc_count:
     nffg = NFFG(id="E2e_req_test_nffg")
-    nffg.mode = MODE_ADD
+    nffg.mode = NFFG.MODE_ADD
     # newly added NF-s of one request
     current_nfs = []
     for scid in xrange(0,sc_count):
@@ -115,7 +115,11 @@ def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
             tmpid = all_saps_ending.pop() if use_saps_once else \
                     rnd.choice(all_saps_ending)
       sg_path = []
-      sap1port = sap1.add_port(id = getName("port"))
+      if len(sap1.ports) > 0:
+        for sap1port in sap1.ports:
+          break
+      else:
+        sap1port = sap1.add_port(id = getName("port"))
       last_req_port = sap1port
       # generate some VNF-s connecting the two SAP-s
       vnf_cnt = next(gen_seq()) % chain_maxlen + 1
@@ -151,7 +155,11 @@ def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
         sg_path.append(sglink.id)
         last_req_port = nf.add_port(id=getName("port"))
 
-      sap2port = sap2.add_port(id=getName("port"))
+      if len(sap2.ports) > 0:
+        for sap2port in sap2.ports:
+          break
+      else:
+        sap2port = sap2.add_port(id=getName("port"))
       sglink = nffg.add_sglink(last_req_port, sap2port, id=getName("link"))
       sg_path.append(sglink.id)
 
@@ -262,7 +270,7 @@ if __name__ == '__main__':
       topo_name = arg
   """
   
-  nffg = main(substrate="augmented-dfn-gwin.nffg", loops=True, vnf_sharing=0.5, 
+  nffg = main(substrate="../../case14/topology.nffg", loops=True, vnf_sharing=0.5, 
               seed = 1, multiple_scs=True, chain_maxlen = 30,
               use_saps_once = False, max_sc_count = 30)
   
