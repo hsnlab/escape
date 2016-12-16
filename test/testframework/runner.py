@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import copy
+import imp
 import importlib
 import json
 import os
@@ -125,6 +126,9 @@ class CommandRunner(object):
     Create and start the process. Block until the process ends or timeout is
     exceeded.
     """
+    if not os.path.exists(self._command[0]):
+      raise Exception(
+        "CommandRunner Error: Missing runner script: %s" % self._command[0])
     self.__process = pexpect.spawn(self._command[0],
                                    args=self._command[1:],
                                    timeout=120,
@@ -136,8 +140,6 @@ class CommandRunner(object):
     self.__kill_timer.start()
     self.__process.expect(pexpect.EOF)
     self.__kill_timer.cancel()
-    if "No such file or directory" in self.__process.before:
-      raise Exception("CommandRunner Error: %s" % self.__process.before)
     return self
 
   def cleanup (self):
@@ -213,8 +215,10 @@ class RunnableTestCaseInfo(object):
       test case config file
     :rtype: tuple(object, dict)
     """
+    misc = imp.load_source("misc", os.path.join(os.path.abspath(
+      os.path.dirname(__file__)), "../../escape/escape/util/misc.py"))
     with open(self.config_file_name, 'r') as f:
-      config = json.load(f)
+      config = json.load(f, object_hook=misc.unicode_to_str)
       try:
         test_args = copy.copy(config[self.CONFIG_CONTAINER_NAME])
         m = test_args.pop('module')

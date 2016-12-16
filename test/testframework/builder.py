@@ -13,10 +13,10 @@
 # limitations under the License.
 import os
 import sys
-from unittest.suite import TestSuite, BaseTestSuite
+from unittest.suite import TestSuite
 
 from runner import RunnableTestCaseInfo, CommandRunner
-from testcases import BasicSuccessfulTestCase, DynamicSuccessfulTestCase
+from testcases import BasicSuccessfulTestCase
 
 ESCAPE_LOG_FILE_NAME = "escape.log"
 
@@ -118,27 +118,3 @@ class TestSuitBuilder(object):
     """
     test_cases = [self.build_from_config(case_info) for case_info in tests]
     return TestSuite(test_cases)
-
-
-class DynamicTestGenerator(BaseTestSuite):
-  """
-  Special TestSuite class which populate itself with TestCases based on the
-  given parameters.
-
-  The generated TestCases
-  """
-  DEFAULT_TEST_CASE_CLASS = DynamicSuccessfulTestCase
-
-  def __init__ (self, test_case_info, command_runner, **kwargs):
-    """
-    :type test_case_info: RunnableTestCaseInfo
-    :type command_runner: CommandRunner
-    """
-    super(DynamicTestGenerator, self).__init__()
-    self.test_case_info = test_case_info
-    self.command_runner = command_runner
-    self._create_test_cases()
-
-  def _create_test_cases (self):
-    # TODO - create test cases based on params in kwargs
-    pass

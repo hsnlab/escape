@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import importlib
 import os
+from unittest import BaseTestSuite
 from unittest.case import TestCase
 from unittest.util import strclass
 
@@ -176,6 +178,8 @@ class EscapeTestCase(TestCase):
     # Remove escape.log it exists
     if os.path.exists(log_file):
       os.remove(log_file)
+    # Add cleanup of commandRunner
+    self.addCleanup(function=self.command_runner.cleanup)
 
   def runTest (self):
     """
@@ -189,10 +193,10 @@ class EscapeTestCase(TestCase):
   def tearDown (self):
     """
     Tear down test fixture.
+
+    It will be invoked only if the test is successful.
     """
     super(EscapeTestCase, self).tearDown()
-    # Cleanup testcase objects if the result was success
-    self.command_runner.cleanup()
 
   def run_escape (self):
     """
@@ -279,16 +283,145 @@ class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
     super(RootPrivilegedSuccessfulTestCase, self).runTest()
 
 
-class DynamicSuccessfulTestCase(BasicSuccessfulTestCase):
+class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
   """
   Test case class which generates the required resource and request files for
   the actual testcase on the fly based on the given parameters.
+  Example config:
+
+  "test": {
+    "module": "testframework.testcases",
+    "class": "DynamicallyGeneratedTestCase",
+    "request_cfg": {
+      "generator": "xxx",
+      "seed": 11,
+      ...
+    },
+    "topology_cfg": {
+      "generator": "xxx",
+      "seed": 15,
+      ...
+    }
+  }
+
   """
+  GENERATOR_MODULE = "testframework.generator.generator"
+  GENERATOR_ENTRY_NAME = "generator"
+  REQUEST_FILE_NAME = "request.nffg"
+  TOPOLOGY_FILE_NAME = "topology.nffg"
+
+  def __init__ (self, request_cfg=None, topology_cfg=None, **kwargs):
+    """
+
+    :type request_cfg: dict
+    :type topology_cfg: dict
+    :type kwargs: dict
+    """
+    super(DynamicallyGeneratedTestCase, self).__init__(**kwargs)
+    self.request_cfg = request_cfg
+    self.new_req = False
+    self.topology_cfg = topology_cfg
+    self.new_topo = False
+
+  @classmethod
+  def __generate_nffg (cls, cfg):
+    """
+
+    :type cfg: dict
+    :rtype: :any:`NFFG`
+    """
+    # If config is not empty and testcase is properly configured
+    if not cfg or cls.GENERATOR_ENTRY_NAME not in cfg:
+      return None
+    params = cfg.copy()
+    try:
+      generator_func = getattr(importlib.import_module(cls.GENERATOR_MODULE),
+                               params.pop(cls.GENERATOR_ENTRY_NAME))
+      return generator_func(**params)
+    except AttributeError as e:
+      raise Exception("Generator function is not found: %s" % e.message)
+
+  def dump_generated_nffg (self, cfg, file_name):
+    """
+
+    :type file_name: str
+    :return: generation was successful
+    :rtype: bool
+    """
+    nffg = self.__generate_nffg(cfg=cfg)
+    if nffg is not None:
+      req_file_name = os.path.join(self.test_case_info.full_testcase_path,
+                                   file_name)
+      with open(req_file_name, "w") as f:
+        # f.write(nffg.dump_to_json())
+        f.write(str(nffg))
 
   def setUp (self):
-    super(DynamicSuccessfulTestCase, self).setUp()
-    # TODO - generate required request/topology files
+    super(DynamicallyGeneratedTestCase, self).setUp()
+    # Generate request
+    self.new_req = self.dump_generated_nffg(cfg=self.request_cfg,
+                                            file_name=self.REQUEST_FILE_NAME)
+    # Generate topology
+    self.new_topo = self.dump_generated_nffg(cfg=self.topology_cfg,
+                                             file_name=self.TOPOLOGY_FILE_NAME)
 
   def tearDown (self):
-    # TODO - remove generated files from the CWD
-    super(DynamicSuccessfulTestCase, self).tearDown()
+    # Delete request if it is generated
+    if self.new_req:
+      try:
+        os.remove(os.path.join(self.test_case_info.full_testcase_path,
+                               self.REQUEST_FILE_NAME))
+      except OSError:
+        pass
+    # Delete topology if it is generated
+    if self.new_topo:
+      try:
+        os.remove(os.path.join(self.test_case_info.full_testcase_path,
+                               self.TOPOLOGY_FILE_NAME))
+      except OSError:
+        pass
+    super(DynamicallyGeneratedTestCase, self).tearDown()
+
+  def verify_result (self):
+    pass
+
+
+class DynamicTestGenerator(BaseTestSuite):
+  """
+  Special TestSuite class which populate itself with TestCases based on the
+  given parameters.
+  Example config:
+
+  "test": {
+    "module": "testframework.testcases",
+    "class": "DynamicTestGenerator",
+    "mode": "",
+    "#oftopo": 10,
+    "#ofrequest": 10,
+    "testcase": {
+      "module": "testframework.testcases",
+      "class": "DynamicallyGeneratedTestCase",
+      "request_cfg": {
+        "generator": "xxx",
+        "seed": 11
+      },
+      "topology_cfg": {
+        "generator": "xxx",
+        "seed": 15
+      }
+    }
+  }
+  """
+  DEFAULT_TEST_CASE_CLASS = DynamicallyGeneratedTestCase
+
+  def __init__ (self, **kwargs):
+    """
+    :type test_case_info: RunnableTestCaseInfo
+    :type command_runner: CommandRunner
+    """
+    super(DynamicTestGenerator, self).__init__(**kwargs)
+    self._create_test_cases()
+
+  def _create_test_cases (self):
+    # TODO - create test cases based on params in kwargs
+    pass
