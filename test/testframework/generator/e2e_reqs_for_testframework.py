@@ -86,7 +86,7 @@ def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
     sc_count = rnd.randint(2,max_sc_count)
   while len(all_saps_ending) > sc_count and len(all_saps_beginning) > sc_count:
     nffg = NFFG(id="E2e_req_test_nffg")
-    nffg.mode = MODE_ADD
+    nffg.mode = NFFG.MODE_ADD
     # newly added NF-s of one request
     current_nfs = []
     for scid in xrange(0,sc_count):
