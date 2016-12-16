@@ -74,7 +74,11 @@ def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
       sapo = nffg.add_sap(id=sap, name=sap+"_name")
     else:
       sapo = nffg.network.node[sap]
-    sapp = sapo.add_port(id = getName("port"))
+    if len(sapo.ports) > 0:
+      for sapp in sapo.ports:
+        break
+    else:
+      sapp = sapo.add_port(id = getName("port"))
     vnfs1 = rnd.sample(nf_types, rnd.randint(1,len(nf_types)))
     vnfs2 = rnd.sample(nf_types, rnd.randint(1,len(nf_types)))
     nfmiddle = nffg.add_nf(id="nf0"+str(j), name="nf_middle"+str(j), 
