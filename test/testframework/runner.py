@@ -168,6 +168,10 @@ class RunnableTestCaseInfo(object):
     return os.path.basename(self.__case_path)
 
   @property
+  def name (self):
+    return self.testcase_dir_name
+
+  @property
   def full_testcase_path (self):
     """
     :return: absolute path of the test case directory.

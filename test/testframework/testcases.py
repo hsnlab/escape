@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 from unittest.case import TestCase
+from unittest.util import strclass
 
 from runner import EscapeRunResult, RunnableTestCaseInfo, CommandRunner
 
@@ -147,14 +148,21 @@ class EscapeTestCase(TestCase):
     self.command_runner = command_runner
     self.result = None
     """:type result: testframework.runner.EscapeRunResult"""
+    # print "Initiate testcase: %s" % self.test_case_info.testcase_dir_name
 
   def __str__ (self):
     return "Test:\t%s\t(%s)" % (
-      self.test_case_info.testcase_dir_name, self.__class__.__name__)
+      self.test_case_info.name, self.__class__.__name__)
 
   def id (self):
-    return super(EscapeTestCase, self).id() + str(
-      self.test_case_info.full_testcase_path)
+    """
+    Generate ID in specific format for XMLRunner to detect testcase class and
+    name correctly.
+
+    :return: id
+    :rtype: str
+    """
+    return "%s.%s" % (strclass(self.__class__), self.test_case_info.name)
 
   def setUp (self):
     """
@@ -277,10 +285,10 @@ class DynamicSuccessfulTestCase(BasicSuccessfulTestCase):
   the actual testcase on the fly based on the given parameters.
   """
 
-  def setUp(self):
+  def setUp (self):
     super(DynamicSuccessfulTestCase, self).setUp()
     # TODO - generate required request/topology files
 
-  def tearDown(self):
+  def tearDown (self):
     # TODO - remove generated files from the CWD
     super(DynamicSuccessfulTestCase, self).tearDown()
