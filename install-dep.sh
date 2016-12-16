@@ -86,31 +86,6 @@ function install_core {
     info "================================="
     echo "ESCAPEv2 version: 2.0.0"
 
-#    # Create symlink to the appropriate .gitmodules file
-#    info "=== Checkout submodules ==="
-#    if [ -f ".gitmodules.$PROJECT" ]; then
-#        ln -vfs ".gitmodules.$PROJECT" .gitmodules
-#    else
-#        on_error "Missing submodule file of project: $PROJECT for ESCAPE repo!"
-#    fi
-#    git submodule update --init --remote
-#
-#    info "=== Create symlinks for submodules ==="
-#    cd "$DIR/dummy-orchestrator"
-#    if [ -f ".gitmodules.$PROJECT" ]; then
-#        ln -vfs ".gitmodules.$PROJECT" .gitmodules
-#    else
-#        on_error "Missing submodule file of project: $PROJECT for dummy-orchestrator!"
-#    fi
-#    cd "$DIR/mapping"
-#    if [ -f ".gitmodules.$PROJECT" ]; then
-#        ln -vfs ".gitmodules.$PROJECT" .gitmodules
-#    else
-#        on_error "Missing submodule file of project: $PROJECT for mapping!"
-#    fi
-#    cd "$DIR"
-#    git submodule update --init --remote --recursive --merge
-
     info "=== Setup project ==="
     # Git return error during submodule change -> disable error catching
     set +e
@@ -176,8 +151,6 @@ function install_core {
     # Freeze neo4j version
     echo "Mark current version of neo4j: $NEO4J_VERSION as held back..."
     sudo apt-mark hold neo4j
-    # info "=== Install dependencies for testing ==="
-    # sudo apt-get install -y openvswitch-switch
 }
 
 function install_mn_dep {
