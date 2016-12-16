@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import importlib
+import itertools
 import json
 import os
 from unittest import BaseTestSuite
@@ -19,6 +20,7 @@ from unittest.case import TestCase
 from unittest.util import strclass
 
 from runner import EscapeRunResult, RunnableTestCaseInfo, CommandRunner
+from testframework.generator.generator import DEFAULT_SEED
 
 ESCAPE_LOG_FILE_NAME = "escape.log"
 
@@ -152,10 +154,14 @@ class EscapeTestCase(TestCase):
     self.run_result = None
     """:type result: testframework.runner.EscapeRunResult"""
     self.success = False
+    print "Init %r" % self
 
   def __str__ (self):
     return "Test:\t%s\t(%s)" % (
       self.test_case_info.name, self.__class__.__name__)
+
+  def __repr__ (self):
+    return "%s[name: %s]" % (self.__class__.__name__, self.test_case_info.name)
 
   def id (self):
     """
@@ -296,9 +302,10 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
     "module": "testframework.testcases",
     "class": "DynamicallyGeneratedTestCase",
     "request_cfg": {
-      "generator": "xxx",
-      "seed": 11,
-      ...
+      "generator": "eight_loop_requests",
+      "abc_nf_types_len": 10,
+      "seed": 0,
+      "eightloops": 3
     },
     "topology_cfg": {
       "generator": "xxx",
@@ -320,11 +327,17 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
     :type topology_cfg: dict
     :type kwargs: dict
     """
-    super(DynamicallyGeneratedTestCase, self).__init__(**kwargs)
     self.request_cfg = request_cfg
     self.new_req = False
     self.topology_cfg = topology_cfg
     self.new_topo = False
+    super(DynamicallyGeneratedTestCase, self).__init__(**kwargs)
+
+  # def __repr__ (self):
+  #   return "%s[name: %s, request_cfg: %s, topology_cfg: %s]" \
+  #          % (self.__class__.__name__, self.test_case_info.name,
+  #             self.request_cfg is not None,
+  #             self.topology_cfg is not None)
 
   @classmethod
   def __generate_nffg (cls, cfg):
@@ -400,33 +413,130 @@ class DynamicTestGenerator(BaseTestSuite):
   "test": {
     "module": "testframework.testcases",
     "class": "DynamicTestGenerator",
-    "mode": "",
-    "#oftopo": 10,
-    "#ofrequest": 10,
-    "testcase": {
+    "full_combination": true,
+    "num_of_requests": 3,
+    "num_of_topos": 5,
+    "testcase_cfg": {
       "module": "testframework.testcases",
       "class": "DynamicallyGeneratedTestCase",
       "request_cfg": {
-        "generator": "xxx",
-        "seed": 11
+        "generator": "eight_loop_requests",
+        "seed": 0
       },
       "topology_cfg": {
         "generator": "xxx",
-        "seed": 15
+        "seed": 0
       }
     }
   }
   """
-  DEFAULT_TEST_CASE_CLASS = DynamicallyGeneratedTestCase
+  DEFAULT_TESTCASE_CLASS = DynamicallyGeneratedTestCase
+  REQUEST_CFG_NAME = "request_cfg"
+  TOPOLOGY_CFG_NAME = "topology_cfg"
+  SEED_NAME = "seed"
 
-  def __init__ (self, **kwargs):
+  def __init__ (self, test_case_info, command_runner, testcase_cfg=None,
+                full_combination=False, num_of_requests=1, num_of_topos=1,
+                **kwargs):
     """
     :type test_case_info: RunnableTestCaseInfo
     :type command_runner: CommandRunner
     """
     super(DynamicTestGenerator, self).__init__(**kwargs)
+    self.test_case_info = test_case_info
+    self.command_runner = command_runner
+    self.testcase_cfg = testcase_cfg
+    self.full_combination = full_combination
+    self.num_of_requests = num_of_requests
+    self.num_of_topos = num_of_topos
     self._create_test_cases()
+    # sys.exit()
+
+  def __get_seed_generator (self):
+    """
+    Return an iterator which generates the tuple (request, topology) of seed
+    values for test cases based on the config values:
+      * number of generated request/topology
+      * test generation mode (full_combination or ordered pairs of request/topo)
+
+    Generation modes (full_combination, num_of_requests, num_of_topos):
+
+    False, 0, 0,    -->  1          testcase WITHOUT generation
+    False, N>0, 0   -->  1          testcase with ONLY request generation
+    False, 0, M>0   -->  1          testcase with ONLY topology generation
+    False, N>0, M>0 -->  min(N, M)  testcase with generated ordered pairs
+    ---------------------------------------------------------------------
+    True, 0, 0,     -->  1          testcase WITHOUT generation
+    True, N>0, 0    -->  N          testcase with ONLY request generation
+    True, 0, M>0    -->  M          testcase with ONLY topology generation
+    True, N>0, M>0  -->  N x M      testcase with generated input (cartesian)
+
+    :return: iterator
+    """
+    seed_iterators = []
+    if not self.testcase_cfg:
+      return
+    if self.num_of_requests > 0 and self.REQUEST_CFG_NAME in self.testcase_cfg:
+      if self.SEED_NAME in self.testcase_cfg[self.REQUEST_CFG_NAME]:
+        seed = self.testcase_cfg[self.REQUEST_CFG_NAME][self.SEED_NAME]
+        seed_iterators.append(xrange(seed, seed + self.num_of_requests))
+      else:
+        seed_iterators.append(
+          xrange(DEFAULT_SEED, DEFAULT_SEED + self.num_of_requests))
+    else:
+      seed_iterators.append((None,))
+    if self.num_of_topos > 0 and self.TOPOLOGY_CFG_NAME in self.testcase_cfg:
+      if self.SEED_NAME in self.testcase_cfg[self.TOPOLOGY_CFG_NAME]:
+        seed = self.testcase_cfg[self.TOPOLOGY_CFG_NAME][self.SEED_NAME]
+        seed_iterators.append(xrange(seed, seed + self.num_of_topos))
+      else:
+        seed_iterators.append(
+          xrange(DEFAULT_SEED, DEFAULT_SEED + self.num_of_topos))
+    else:
+      seed_iterators.append((None,))
+    if self.full_combination:
+      return itertools.product(*seed_iterators)
+    else:
+      return itertools.izip(*seed_iterators)
 
   def _create_test_cases (self):
-    # TODO - create test cases based on params in kwargs
-    pass
+
+    # Get testcase class
+    if "module" in self.testcase_cfg and 'class' in self.testcase_cfg:
+      TestCaseClass = getattr(importlib.import_module(
+        self.testcase_cfg['module']),
+        self.testcase_cfg['class'])
+    else:
+      print "No testcase class was defined to testcase: %s! " \
+            "Use default testcase class: %s" % (self.test_case_info.name,
+                                                self.DEFAULT_TESTCASE_CLASS)
+      TestCaseClass = self.DEFAULT_TESTCASE_CLASS
+    # Get generation config
+    for req_seed, topo_seed in self.__get_seed_generator():
+      testcase_cfg = self.testcase_cfg.copy() if self.testcase_cfg else {}
+      # Create request config based on config file and generated seed value
+      if req_seed is not None and testcase_cfg and \
+            self.REQUEST_CFG_NAME in testcase_cfg:
+        req_cfg = testcase_cfg[self.REQUEST_CFG_NAME].copy()
+        req_cfg[self.SEED_NAME] = req_seed
+      else:
+        req_cfg = None
+      # Create topology config based on config file and generated seed value
+      if topo_seed is not None and testcase_cfg and \
+            self.TOPOLOGY_CFG_NAME in testcase_cfg:
+        topo_cfg = testcase_cfg.pop(self.TOPOLOGY_CFG_NAME).copy()
+        topo_cfg[self.SEED_NAME] = topo_seed
+      else:
+        topo_cfg = None
+      # Del unnecessary params
+      for name in ('class', 'name',
+                   self.REQUEST_CFG_NAME, self.TOPOLOGY_CFG_NAME):
+        testcase_cfg.pop(name, None)
+      tci = self.test_case_info.clone()
+      tci.sub_name = self.countTestCases()
+      # Create TestCase instance
+      self.addTest(TestCaseClass(test_case_info=tci,
+                                 command_runner=self.command_runner,
+                                 request_cfg=req_cfg,
+                                 topology_cfg=topo_cfg,
+                                 **testcase_cfg))
