@@ -27,11 +27,10 @@ import math
 import random
 import traceback
 import string
+import networkx as nx
+import copy
 
-import CarrierTopoBuilder
-import MappingAlgorithms
-import UnifyExceptionTypes as uet
-
+from sg_generator import getName
 from collections import OrderedDict
 
 try:
@@ -39,7 +38,7 @@ try:
 except ImportError:
   import sys, os
   sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                  "../escape/escape/nffg_lib/")))
+                                  "../../../escape/escape/nffg_lib/")))
   from nffg import NFFG, NFFGToolBox
 
 log = logging.getLogger("StressTest")
@@ -51,101 +50,53 @@ def gen_seq():
   while True:
     yield int(math.floor(rnd.random() * 999999999))
 
-
 helpmsg = """StressTest.py options are:
    -h                Print this message help message.
    --loops           All Service Chains will be loops.
    --vnf_sharing=p   Sets the ratio of shared and not shared VNF-s.
-   --request_seed=i  Provides seed for the random generator.
-   --multiple_scs           One request will contain at least 2 chains with vnf sharing
-                            probability defined by "--vnf_sharing_same_sg" option.
-   --vnf_sharing_same_sg=p  The conditional probablilty of sharing a VNF with the
-                            current Service Graph, if we need to share a VNF 
-                            determined by "--vnf_sharing"
+   --seed=i  Provides seed for the random generator.
+   --multiple_scs           One request will contain at least 2 chains.
    --max_sc_count=i         Determines how many chains should one request contain
                             at most.
 
-   --batch_length=f  The number of time units to wait for Service Graphs, that 
-                     should be batched and mapped together by the algorithm. The
-                     expected arrival time difference is 1.0 between SG-s.
-   --shareable_sg_count=i   The number of last 'i' Service Graphs which could
-                            be used for sharing VNFs. Default value is unlimited.
-   --sliding_share   If not set, the set of shareable SG-s is emptied after 
-                     successfull batched mapping.
    --use_saps_once   If set, all SAPs can only be used once as SC origin and 
                      once as SC destination.
  
    --substrate=<<path>>    Substrate Network NFFG to be used for mapping the 
-                           requests.
+                           requests. Compulsory to give!
 """
 
-def _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc, p):
-  sumlen = sum([l*i for l,i in zip([len(running_nfs[n]) for n in running_nfs], 
-                                   xrange(1,len(running_nfs)+1))])
-  i = 0
-  ratio = float(len(running_nfs.values()[i])) / sumlen
-  while ratio < p:
-    i += 1
-    ratio += float((i+1)*len(running_nfs.values()[i])) / sumlen
-  nf = rnd.choice(running_nfs.values()[i])
-  if reduce(lambda a,b: a and b, [v in nfs_this_sc for v 
-                                  in running_nfs.values()[i]]):
-    # failing to add a VNF due to this criteria infuences the provided 
-    # vnf_sharing_probabilty, but it is estimated to be insignificant, 
-    # otherwise the generation can run into infinite loop!
-    log.warn("All the VNF-s of the subchain selected for VNF sharing are"
-             " already in the current chain under construction! Skipping"
-             " VNF sharing...")
-    return False, None
-  else:
-    while nf in nfs_this_sc:
-      nf = rnd.choice(running_nfs.values()[i])
-  if nf in nffg.nfs:
-    return False, nf
-  else:
-    nffg.add_node(nf)
-    return True, nf
-
-
-def generateRequestForCarrierTopo(test_lvl, all_saps_beginning, 
-                                  all_saps_ending,
-                                  running_nfs, loops=False, 
-                                  use_saps_once=True,
+def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning, 
+                                  avg_shp_len, nf_types,
+                                  max_e2e_lat_multiplier=20,
+                                  loops=False, use_saps_once=True,
                                   vnf_sharing_probabilty=0.0,
-                                  vnf_sharing_same_sg=0.0,
-                                  shareable_sg_count=9999999999999999,
-                                  multiSC=False, max_sc_count=2):
+                                  multiSC=False, max_sc_count=2,  
+                                  chain_maxlen=8, max_cpu=4, max_mem=1600, 
+                                  max_storage=3, max_bw=7):
   """
   By default generates VNF-disjoint SC-s starting/ending only once in each SAP.
   With the 'loops' option, only loop SC-s are generated.
   'vnf_sharing_probabilty' determines the ratio of 
      #(VNF-s used by at least two SC-s)/#(not shared VNF-s).
-  NOTE: some kind of periodicity is included to make the effect of batching 
-  visible. But it is (and must be) independent of the batch_length.
-
-  WARNING!! batch_length meaining is changed if --poisson is set!
-
-  Generate exponential arrival time for VNF-s to make Batching more reasonable.
-  inter arrival time is Exp(1) so if we are batching for 4 time units, the 
-  expected SG count is 4, because the sum of 4 Exp(1) is Exp(4).
-  BUT we wait for 1 SG at least, but if by that time 4 units has already passed,
-  map the SG alone (unbatched).
   """
-  chain_maxlen = 8
   sc_count=1
   # maximal possible bandwidth for chains
-  max_bw = 7.0
   if multiSC:
     sc_count = rnd.randint(2,max_sc_count)
   while len(all_saps_ending) > sc_count and len(all_saps_beginning) > sc_count:
-    nffg = NFFG(id="Benchmark-Req-"+str(test_lvl)+"-Piece")
+    nffg = NFFG(id="E2e_req_test_nffg")
     # newly added NF-s of one request
     current_nfs = []
     for scid in xrange(0,sc_count):
       # find two SAP-s for chain ends.
       nfs_this_sc = []
-      sap1 = nffg.add_sap(id = all_saps_beginning.pop() if use_saps_once else \
-                          rnd.choice(all_saps_beginning))
+      sapid = all_saps_beginning.pop() if use_saps_once else \
+              rnd.choice(all_saps_beginning)
+      if sapid not in nffg:
+        sap1 = nffg.add_sap(id = sapid)
+      else:
+        sap1 = nffg.network.node[sapid]
       sap2 = None
       if loops:
         sap2 = sap1
@@ -154,13 +105,16 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
                 rnd.choice(all_saps_ending)
         while True:
           if tmpid != sap1.id:
-            sap2 = nffg.add_sap(id = tmpid)
+            if tmpid not in nffg:
+              sap2 = nffg.add_sap(id = tmpid)
+            else:
+              sap2 = nffg.network.node[tmpid]
             break
           else:
             tmpid = all_saps_ending.pop() if use_saps_once else \
                     rnd.choice(all_saps_ending)
       sg_path = []
-      sap1port = sap1.add_port()
+      sap1port = sap1.add_port(id = getName("port"))
       last_req_port = sap1port
       # generate some VNF-s connecting the two SAP-s
       vnf_cnt = next(gen_seq()) % chain_maxlen + 1
@@ -168,64 +122,47 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
         # in the first case p is used to determine which previous chain should 
         # be used to share the VNF, in the latter case it is used to determine
         # whether we should share now.
-        vnf_added = False
         p = rnd.random()
-        if rnd.random() < vnf_sharing_probabilty and len(running_nfs) > 0 \
-           and not multiSC:
-          vnf_added, nf = _shareVNFFromEarlierSG(nffg, running_nfs, nfs_this_sc,
-                                                 p)
-        elif multiSC and \
-             p < vnf_sharing_probabilty and len(current_nfs) > 0 \
-             and len(running_nfs) > 0:
+        if multiSC and \
+             p < vnf_sharing_probabilty and len(current_nfs) > 0:
           # this influences the the given VNF sharing probability...
           if reduce(lambda a,b: a and b, [v in nfs_this_sc for 
                                           v in current_nfs]):
             log.warn("All shareable VNF-s are already added to this chain! "
                      "Skipping VNF sharing...")
-          elif rnd.random() < vnf_sharing_same_sg:
+            continue
+          else:
             nf = rnd.choice(current_nfs)
             while nf in nfs_this_sc:
               nf = rnd.choice(current_nfs)
             # the VNF is already in the subchain, we just need to add the links
             # vnf_added = True
-          else:
-            # this happens when VNF sharing is needed but not with the actual SG
-            vnf_added, nf = _shareVNFFromEarlierSG(nffg, running_nfs, 
-                                                   nfs_this_sc, p)
         else:
-          nf = nffg.add_nf(id="-".join(("Test",str(test_lvl),"SC",str(scid),
-                                        "VNF",str(vnf))),
+          nf = nffg.add_nf(id="-".join(("SC",str(scid), "VNF",str(vnf))),
                            func_type=rnd.choice(nf_types), 
-                           cpu=rnd.randint(1, 4),
-                           mem=rnd.random()*1600,
-                           storage=rnd.random()*3)
-          vnf_added = True
-        if vnf_added:
-          # add olny the newly added VNF-s, not the shared ones.
-          nfs_this_sc.append(nf)
-          newport = nf.add_port()
-          sglink = nffg.add_sglink(last_req_port, newport)
-          sg_path.append(sglink.id)
-          last_req_port = nf.add_port()
+                           cpu=rnd.random()*max_cpu,
+                           mem=rnd.random()*max_mem,
+                           storage=rnd.random()*max_storage)
 
-      sap2port = sap2.add_port()
-      sglink = nffg.add_sglink(last_req_port, sap2port)
+        nfs_this_sc.append(nf)
+        newport = nf.add_port(id=getName("port"))
+        sglink = nffg.add_sglink(last_req_port, newport, id=getName("link"))
+        sg_path.append(sglink.id)
+        last_req_port = nf.add_port(id=getName("port"))
+
+      sap2port = sap2.add_port(id=getName("port"))
+      sglink = nffg.add_sglink(last_req_port, sap2port, id=getName("link"))
       sg_path.append(sglink.id)
 
       # WARNING: this is completly a wild guess! Failing due to this doesn't 
       # necessarily mean algorithm failure
       # Bandwidth maximal random value should be min(SAP1acces_bw, SAP2access_bw)
       # MAYBE: each SAP can only be once in the reqgraph? - this is the case now.
-      if multiSC:
-        minlat = 5.0 * (len(nfs_this_sc) + 2)
-        maxlat = 13.0 * (len(nfs_this_sc) + 2)
-      else:
-        # nfcnt = len([i for i in nffg.nfs])
-        minlat = 60.0
-        maxlat = 220.0
+      minlat = avg_shp_len*1.1
+      maxlat = avg_shp_len*20.0
       nffg.add_req(sap1port, sap2port, delay=rnd.uniform(minlat,maxlat), 
                    bandwidth=rnd.random()*max_bw, 
-                   sg_path = sg_path)
+                   sg_path = sg_path, id = getName("req"))
       log.info("Service Chain on NF-s added: %s"%[nf.id for nf in nfs_this_sc])
       # this prevents loops in the chains and makes new and old NF-s equally 
       # preferable in total for NF sharing
@@ -233,40 +170,84 @@ def generateRequestForCarrierTopo(test_lvl, all_saps_beginning,
       for tmp in xrange(0, scid+1):
         current_nfs.extend(new_nfs)
       if not multiSC:
-        return nffg, all_saps_beginning, all_saps_ending
+        return nffg
     if multiSC:
-      return nffg, all_saps_beginning, all_saps_ending
-  return None, all_saps_beginning, all_saps_ending
+      return nffg
+  return None
 
-def main(argv):
+
+def main(substrate, loops = False, vnf_sharing = 0.0, 
+         seed = 0, multiple_scs = False, 
+         use_saps_once = False, max_sc_count = 2, 
+         chain_maxlen=8,
+         max_cpu=4, max_mem=1600, max_storage=3, max_bw=7,
+         max_e2e_lat_multiplier=20):
+    
+  nf_types = []
+  request = None
+  rnd.seed(seed)
+  with open(substrate, "r") as f:
+    substrate_nffg = NFFG.parse(f.read())
+    for infra in substrate_nffg.infras:
+      nf_types.extend(infra.supported)
+      
+    nf_types = list(set(nf_types))
+    
+    all_saps_ending = [s.id for s in substrate_nffg.saps]
+    all_saps_beginning = [s.id for s in substrate_nffg.saps]
+
+    bare_substrate_nffg = copy.deepcopy(substrate_nffg)
+    for n in substrate_nffg.nfs:
+      bare_substrate_nffg.del_node(n)
+    path_calc_graph = nx.MultiDiGraph()
+    for l in bare_substrate_nffg.links:
+      path_calc_graph.add_edge(l.src.node.id, l.dst.node.id, l.id, delay=l.delay)
+
+    avg_shp_len = nx.average_shortest_path_length(path_calc_graph, 
+                                                  weight='delay')
+
+    request = generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning, 
+              avg_shp_len, nf_types, loops=loops, use_saps_once=use_saps_once, 
+                                            vnf_sharing_probabilty=vnf_sharing,
+                                            multiSC=multiple_scs,
+                                            max_sc_count=max_sc_count,
+                                            chain_maxlen=chain_maxlen,
+                                            max_cpu=max_cpu, max_mem=max_mem, 
+                                            max_storage=max_storage, 
+                                            max_bw=max_bw, 
+              max_e2e_lat_multiplier=max_e2e_lat_multiplier)
+    
+  return request
+
+
+if __name__ == '__main__':
+  
+  """
+  argv = sys.argv[1:]
+  
   try:
-    opts, args = getopt.getopt(argv,"h",["loops", "request_seed=",
+    opts, args = getopt.getopt(argv,"h",["loops", "seed=",
                                "vnf_sharing=", "multiple_scs",
-                               "vnf_sharing_same_sg=", "max_sc_count=",
-                               "shareable_sg_count=", "batch_length=",
-                               "sliding_share", "use_saps_once",
+                               "max_sc_count=", 
+                               "use_saps_once",
                                "substrate="])
   except getopt.GetoptError:
     print helpmsg
     sys.exit()
   loops = False
   vnf_sharing = 0.0
-  vnf_sharing_same_sg = 0.0
   seed = 3
   multiple_scs = False
-  sliding_share = False
   use_saps_once = False
   max_sc_count = 2
-  shareable_sg_count = 99999999999999
-  batch_length = 1
-  substrate = "dfn-gwin.gml"
+  substrate = ""
   for opt, arg in opts:
     if opt == '-h':
       print helpmsg
       sys.exit()
     elif opt == "--loops":
       loops = True
-    elif opt == "--request_seed":
+    elif opt == "--seed":
       seed = int(arg)
     elif opt == "--vnf_sharing":
       vnf_sharing = float(arg)
@@ -274,24 +255,14 @@ def main(argv):
       multiple_scs = True
     elif opt == "--max_sc_count":
       max_sc_count = int(arg)
-    elif opt == "--vnf_sharing_same_sg":
-      vnf_sharing_same_sg = float(arg)
-    elif opt == "--shareable_sg_count":
-      shareable_sg_count = int(arg)
-    elif opt == "--batch_length":
-      batch_length = float(arg)
-    elif opt == "--sliding_share":
-      sliding_share = True
     elif opt == "--use_saps_once":
       use_saps_once = True
     elif opt == "--substrate":
       topo_name = arg
-    
-  nf_types = []
-  # TODO: this is NOT an NFFG
-  with open(substrate, "r") as f:
-    substrate_nffg = NFFG.parse(f.read())
-    
-
-if __name__ == '__main__':
-  main(sys.argv[1:])
+  """
+  
+  nffg = main(substrate="augmented-dfn-gwin.nffg", loops=True, vnf_sharing=0.5, 
+              seed = 1, multiple_scs=True, chain_maxlen = 30,
+              use_saps_once = False, max_sc_count = 30)
+  
+  print nffg.dump()

@@ -26,17 +26,32 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
 from nffg import NFFG, NFFGToolBox
 import random
 import string
-import NetworkX as nx
+import networkx as nx
 
-def get_8loop_request (gml_path, abc_nf_types_len=5, seed=0, eightloops=1):
+def getGenForName(prefix):
+   number = 0
+   while True:
+     yield prefix+str(number)
+     number += 1
+ 
+prefixes = {}
+def getName(prefix):
+  # WARNING! this function is not thread safe!!
+  global prefixes
+  while True:
+    if prefix in prefixes:
+      return prefixes[prefix].next()
+    else:
+      prefixes[prefix] = getGenForName(prefix)
+      return prefixes[prefix].next()
+
+def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
   """
   Generates simple request NFFGs in all combinations of sap1-->vnf1-->...-->
-  vnfn-->sap1. 
-
-  :param saps: list of sap ID-s from the network
-  :type saps: list
-  :param nf_types: list of VNF **Types** which should be instantiated
-  :type nf_types: list
+  vnfn-->sap1. Creates the requests for augmented-dfn-gwin.nffg
+  
+  :param abc_nf_types_len: list of VNF **Types** which should be instantiated
+  :type abc_nf_types_len: list
   :param seed: seed for random generator
   :type seed: int
   :param eightloops: the number of eight loops
@@ -44,20 +59,20 @@ def get_8loop_request (gml_path, abc_nf_types_len=5, seed=0, eightloops=1):
   :return: an 8loop NFFG
   :rtype: :any:`NFFG`
   """
-  gml_graph = nx.read_gml(gml_path)
   saps = []
-  # TODO: solve SAP name convention!
+  for i in xrange(0,20):
+    saps.append("sap"+str(i))
   rnd = random.Random()
   rnd.seed(seed)
-  nffg = NFFG(id=gml_path+"req")
+  nffg = NFFG(id="8loops-req")
   nf_types = list(string.ascii_uppercase)[:abc_nf_types_len]
   for j in xrange(0,eightloops):
-    sap = saps[j%len(saps)]
+    sap = rnd.choice(saps)
     if sap not in nffg:
       sapo = nffg.add_sap(id=sap, name=sap+"_name")
     else:
       sapo = nffg.network.node[sap]
-    sapp = sapo.add_port()
+    sapp = sapo.add_port(id = getName("port"))
     vnfs1 = rnd.sample(nf_types, rnd.randint(1,len(nf_types)))
     vnfs2 = rnd.sample(nf_types, rnd.randint(1,len(nf_types)))
     nfmiddle = nffg.add_nf(id="nf0"+str(j), name="nf_middle"+str(j), 
@@ -76,49 +91,27 @@ def get_8loop_request (gml_path, abc_nf_types_len=5, seed=0, eightloops=1):
     for vnf_list in (vnfs1, vnfs2):
       nf0 = nfmiddle
       for vnf in vnf_list:
-        nf1 = nffg.add_nf(id="-".join("nf",str(j),str(i)), 
+        nf1 = nffg.add_nf(id="-".join(("nf",str(j),str(i))), 
                           name="nf"+str(i)+"_"+vnf, func_type=vnf, 
                           cpu=1, mem=1, storage=1)
-        nffg.add_sglink(src_port=nf0.add_port(), dst_port=nf1.add_port(), 
+        nffg.add_sglink(src_port=nf0.add_port(id=getName("port")), 
+                        dst_port=nf1.add_port(id=getName("port")), 
                         flowclass="HTTP", id=i)
         nf0 = nf1
         i+=1
       if once:
-        nffg.add_sglink(src_port=nf0.add_port(), dst_port=nfmiddle.add_port(), 
+        nffg.add_sglink(src_port=nf0.add_port(id=getName("port")), 
+                        dst_port=nfmiddle.add_port(id=getName("port")), 
                         flowclass="HTTP", id=i)
         once = False
       i+=1 
-    nffg.add_sglink(src_port=nf1.add_port(), dst_port=sapp, 
+    nffg.add_sglink(src_port=nf1.add_port(id = getName("port")), dst_port=sapp, 
                     flowclass="HTTP", id=i)
-    nffg.add_sglink(src_port=sapp, dst_port=nfmiddle.add_port(), 
+    nffg.add_sglink(src_port=sapp, dst_port=nfmiddle.add_port(id = getName("port")), 
                     flowclass="HTTP", id=i+1)
   return nffg
 
-def gen_simple_oneloop_tests (saps, vnfs):
-  """
-  Generates simple request NFFGs in all combinations of sap1-->vnf1-->sap1.
-  With a loop requirement
 
-  :param saps: list of sap ID-s from the network
-  :type saps: list
-  :param vnfs: list of VNF **Types** which should be instantiated
-  :type vnfs: list
-  :return: a generator over :any:`NFFG`
-  :rtype: generator
-  """
-  for sap in saps:
-    for vnf in vnfs:
-      nffg = NFFG()
-      sapo = nffg.add_sap(id=sap, name=sap+"_name")
-      nfo = nffg.add_nf(id="nf", name="nf_"+vnf, func_type=vnf,
-                        cpu=1, mem=1, storage=1)
-      sapp = sapo.add_port()
-      nffg.add_sglink(src_port=sapp, dst_port=nfo.add_port(), 
-                      flowclass="HTTP", id=1)
-      nffg.add_sglink(src_port=nfo.add_port(), dst_port=sapp, 
-                      flowclass="HTTP", id=2)
-
-      nffg.add_req(src_port=sapp, dst_port=sapp, delay=50, bandwidth=1, 
-                   sg_path=[1,2])
-      yield nffg
-
+if __name__ == '__main__':
+  nffg = get_8loop_request(eightloops=3)
+  print nffg.dump()

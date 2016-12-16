@@ -1,0 +1,2501 @@
+{
+  "parameters": {
+    "id": "dfn-gwin", 
+    "name": "NFFG-dfn-gwin", 
+    "version": "1.0"
+  }, 
+  "node_saps": [
+    {
+      "id": "sap19", 
+      "name": "sap19", 
+      "ports": [
+        {
+          "id": "2cec21da-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap16", 
+      "name": "sap16", 
+      "ports": [
+        {
+          "id": "2ceaf68e-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap17", 
+      "name": "sap17", 
+      "ports": [
+        {
+          "id": "2ceb41c0-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap12", 
+      "name": "sap12", 
+      "ports": [
+        {
+          "id": "2ce97e30-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap13", 
+      "name": "sap13", 
+      "ports": [
+        {
+          "id": "2ce99a28-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap10", 
+      "name": "sap10", 
+      "ports": [
+        {
+          "id": "2ce91ee0-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap11", 
+      "name": "sap11", 
+      "ports": [
+        {
+          "id": "2ce96634-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap15", 
+      "name": "sap15", 
+      "ports": [
+        {
+          "id": "2cea414e-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap7", 
+      "name": "sap7", 
+      "ports": [
+        {
+          "id": "2ce8b7ac-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap14", 
+      "name": "sap14", 
+      "ports": [
+        {
+          "id": "2cea0d32-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap18", 
+      "name": "sap18", 
+      "ports": [
+        {
+          "id": "2ceb5ef8-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap8", 
+      "name": "sap8", 
+      "ports": [
+        {
+          "id": "2ce8d99e-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap9", 
+      "name": "sap9", 
+      "ports": [
+        {
+          "id": "2ce8fd70-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap4", 
+      "name": "sap4", 
+      "ports": [
+        {
+          "id": "2ce7f0ba-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap5", 
+      "name": "sap5", 
+      "ports": [
+        {
+          "id": "2ce81748-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap6", 
+      "name": "sap6", 
+      "ports": [
+        {
+          "id": "2ce87792-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap0", 
+      "name": "sap0", 
+      "ports": [
+        {
+          "id": "2ce6e652-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap1", 
+      "name": "sap1", 
+      "ports": [
+        {
+          "id": "2ce70a74-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap2", 
+      "name": "sap2", 
+      "ports": [
+        {
+          "id": "2ce72a9a-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }, 
+    {
+      "id": "sap3", 
+      "name": "sap3", 
+      "ports": [
+        {
+          "id": "2ce77554-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ]
+    }
+  ], 
+  "node_infras": [
+    {
+      "id": "BerlinHost0", 
+      "name": "BerlinHost0", 
+      "ports": [
+        {
+          "id": "2ce5cf74-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "C", 
+        "G", 
+        "E", 
+        "B", 
+        "F", 
+        "H"
+      ], 
+      "resources": {
+        "cpu": 400, 
+        "mem": 320000, 
+        "storage": 1500, 
+        "delay": 1.0, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "HamburgHost0", 
+      "name": "HamburgHost0", 
+      "ports": [
+        {
+          "id": "2ce5a242-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "H", 
+        "C", 
+        "D", 
+        "E", 
+        "F", 
+        "I"
+      ], 
+      "resources": {
+        "cpu": 400, 
+        "mem": 320000, 
+        "storage": 1500, 
+        "delay": 1.0, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "IPSw0", 
+      "name": "IPSw0", 
+      "ports": [
+        {
+          "id": "2ce9f1da-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2cea1548-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ceac89e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ceafe90-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "MuenchenHost0", 
+      "name": "MuenchenHost0", 
+      "ports": [
+        {
+          "id": "2ce5ec70-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "I", 
+        "J", 
+        "C", 
+        "F", 
+        "G", 
+        "D"
+      ], 
+      "resources": {
+        "cpu": 400, 
+        "mem": 320000, 
+        "storage": 1500, 
+        "delay": 1.0, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "MuenchenHost1", 
+      "name": "MuenchenHost1", 
+      "ports": [
+        {
+          "id": "2ce6558e-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "H", 
+        "D", 
+        "G", 
+        "E", 
+        "A", 
+        "C"
+      ], 
+      "resources": {
+        "cpu": 400, 
+        "mem": 320000, 
+        "storage": 1500, 
+        "delay": 1.0, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Koeln", 
+      "name": "Koeln", 
+      "ports": [
+        {
+          "id": "2cde8a0c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce02d94-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce0e0d6-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce0fe40-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce11a60-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce140ee-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce1eee0-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce3d49e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce4938e-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Frank", 
+      "name": "Frank", 
+      "ports": [
+        {
+          "id": "2cdfede8-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce0c3f8-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce1477e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce192f6-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce25fc4-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce35956-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce3a186-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce42264-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce534ba-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce57506-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce6062e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce75722-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "FrankSw0", 
+      "name": "FrankSw0", 
+      "ports": [
+        {
+          "id": "2ce75ede-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce7801c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce7fa4c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce83aca-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce88264-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Erlangen", 
+      "name": "Erlangen", 
+      "ports": [
+        {
+          "id": "2cdea8c0-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce04df6-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce0e978-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce20c36-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce31608-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce333ea-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce350aa-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce3eaec-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce4d18c-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Berlin", 
+      "name": "Berlin", 
+      "ports": [
+        {
+          "id": "2cdee326-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce073bc-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce108a4-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce22680-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce31e5a-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce3708a-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce399a2-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce4019e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce4f23e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce5c506-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Hamburg", 
+      "name": "Hamburg", 
+      "ports": [
+        {
+          "id": "2ce29f70-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce45752-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce470ca-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce48ca4-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce4c2b4-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce4ea1e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce513f4-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce52dee-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce54a5e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce59a9a-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce66d1c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce939ac-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "LeipzigHost0", 
+      "name": "LeipzigHost0", 
+      "ports": [
+        {
+          "id": "2ce62f46-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "E", 
+        "H", 
+        "C", 
+        "F", 
+        "D", 
+        "A"
+      ], 
+      "resources": {
+        "cpu": 400, 
+        "mem": 320000, 
+        "storage": 1500, 
+        "delay": 1.0, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "HamburgSw0", 
+      "name": "HamburgSw0", 
+      "ports": [
+        {
+          "id": "2ce6741a-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce6f354-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce711cc-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce7360c-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "HamburgSw1", 
+      "name": "HamburgSw1", 
+      "ports": [
+        {
+          "id": "2ce941b8-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce96c38-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce9877c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce9a16c-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Hannover", 
+      "name": "Hannover", 
+      "ports": [
+        {
+          "id": "2cdc72d0-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2cde71ca-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2cdea1ae-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2cded962-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2cdef870-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2cdf153a-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce00b34-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce176cc-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce1ad40-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce45f5e-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "IP", 
+      "name": "IP", 
+      "ports": [
+        {
+          "id": "2ce16c68-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce18b6c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce9e85c-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "EssenSw0", 
+      "name": "EssenSw0", 
+      "ports": [
+        {
+          "id": "2ce89dda-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce8c06c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce8e0a6-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce90464-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce9258e-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Muenchen", 
+      "name": "Muenchen", 
+      "ports": [
+        {
+          "id": "2cdce33c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce024fc-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce044d2-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce06a16-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce09cca-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce0bd0e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce1cc08-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce3bbf8-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce4773c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce5e5ea-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce64828-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "FrankHost0", 
+      "name": "FrankHost0", 
+      "ports": [
+        {
+          "id": "2ce60e30-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "EE", 
+      "supported": [
+        "E", 
+        "A", 
+        "D", 
+        "J", 
+        "F", 
+        "G"
+      ], 
+      "resources": {
+        "cpu": 400, 
+        "mem": 320000, 
+        "storage": 1500, 
+        "delay": 1.0, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Leipzig", 
+      "name": "Leipzig", 
+      "ports": [
+        {
+          "id": "2ce1a688-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce1c3ac-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce1de00-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce2022c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce21f50-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce23cf6-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce2559c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce28dc8-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce2ba46-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce6285c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ceb1f74-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "LeipzigSw0", 
+      "name": "LeipzigSw0", 
+      "ports": [
+        {
+          "id": "2ceb2bb8-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ceb48c8-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ceb67e0-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2cec2d06-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Stutt", 
+      "name": "Stutt", 
+      "ports": [
+        {
+          "id": "2cdefdb6-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce24444-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce3b586-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce3cc9c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce3e48e-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce3fb72-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce41792-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce43b50-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce51bec-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }, 
+    {
+      "id": "Essen", 
+      "name": "Essen", 
+      "ports": [
+        {
+          "id": "2ce0123c-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce0a634-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce128ca-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce2c9b4-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce33ae8-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce373b4-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce445d2-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce551ca-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce56b24-c37b-11e6-a0b1-080027c4e4df"
+        }, 
+        {
+          "id": "2ce8977c-c37b-11e6-a0b1-080027c4e4df"
+        }
+      ], 
+      "domain": "VIRTUAL", 
+      "type": "SDN-SWITCH", 
+      "resources": {
+        "cpu": 0, 
+        "mem": 0, 
+        "storage": 0, 
+        "delay": 0.5, 
+        "bandwidth": 40000
+      }
+    }
+  ], 
+  "edge_links": [
+    {
+      "id": "2ce5dbf4-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "BerlinHost0", 
+      "src_port": "2ce5cf74-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2ce5c506-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce5b96c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "HamburgHost0", 
+      "src_port": "2ce5a242-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce59a9a-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ceb0b4c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "IPSw0", 
+      "src_port": "2ceafe90-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap16", 
+      "dst_port": "2ceaf68e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce9f9be-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "IPSw0", 
+      "src_port": "2ce9f1da-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "IP", 
+      "dst_port": "2ce9e85c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000, 
+      "backward": true
+    }, 
+    {
+      "id": "2cea342e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "IPSw0", 
+      "src_port": "2cea1548-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap14", 
+      "dst_port": "2cea0d32-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ceae284-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "IPSw0", 
+      "src_port": "2ceac89e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap15", 
+      "dst_port": "2cea414e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2cec37ec-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap19", 
+      "src_port": "2cec21da-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "LeipzigSw0", 
+      "dst_port": "2cec2d06-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ceb05ac-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap16", 
+      "src_port": "2ceaf68e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "IPSw0", 
+      "dst_port": "2ceafe90-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ceb4f80-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap17", 
+      "src_port": "2ceb41c0-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "LeipzigSw0", 
+      "dst_port": "2ceb48c8-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce5f936-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "MuenchenHost0", 
+      "src_port": "2ce5ec70-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce5e5ea-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce660b0-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "MuenchenHost1", 
+      "src_port": "2ce6558e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce64828-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce98da8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap12", 
+      "src_port": "2ce97e30-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "HamburgSw1", 
+      "dst_port": "2ce9877c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce9c9ee-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap13", 
+      "src_port": "2ce99a28-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "HamburgSw1", 
+      "dst_port": "2ce9a16c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce92bec-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap10", 
+      "src_port": "2ce91ee0-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "EssenSw0", 
+      "dst_port": "2ce9258e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce97228-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap11", 
+      "src_port": "2ce96634-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "HamburgSw1", 
+      "dst_port": "2ce96c38-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ceadc58-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap15", 
+      "src_port": "2cea414e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "IPSw0", 
+      "dst_port": "2ceac89e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2cde9c22-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Koeln", 
+      "src_port": "2cde8a0c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2cde71ca-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce03dfc-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Koeln", 
+      "src_port": "2ce02d94-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce024fc-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce1611e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Koeln", 
+      "src_port": "2ce140ee-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce1477e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce4a0ea-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Koeln", 
+      "src_port": "2ce4938e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce48ca4-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce1fd40-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Koeln", 
+      "src_port": "2ce1eee0-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce1de00-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce0f22e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Koeln", 
+      "src_port": "2ce0e0d6-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Erlangen", 
+      "dst_port": "2ce0e978-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce10fe8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Koeln", 
+      "src_port": "2ce0fe40-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2ce108a4-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce3dff2-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Koeln", 
+      "src_port": "2ce3d49e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Stutt", 
+      "dst_port": "2ce3cc9c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce13702-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Koeln", 
+      "src_port": "2ce11a60-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce128ca-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce005a8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2cdfede8-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2cdf153a-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce0d7b2-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce0c3f8-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce0bd0e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce166d2-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce1477e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Koeln", 
+      "dst_port": "2ce140ee-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce1a142-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce192f6-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "IP", 
+      "dst_port": "2ce18b6c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce54464-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce534ba-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce52dee-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce286b6-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce25fc4-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce2559c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce76622-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce75722-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "FrankSw0", 
+      "dst_port": "2ce75ede-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": "2ce366ee-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce35956-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Erlangen", 
+      "dst_port": "2ce350aa-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce3afd2-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce3a186-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2ce399a2-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce43588-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce42264-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Stutt", 
+      "dst_port": "2ce41792-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce5844c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce57506-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce56b24-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce61484-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Frank", 
+      "src_port": "2ce6062e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "FrankHost0", 
+      "dst_port": "2ce60e30-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce80d16-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "FrankSw0", 
+      "src_port": "2ce7fa4c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap4", 
+      "dst_port": "2ce7f0ba-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce76b72-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "FrankSw0", 
+      "src_port": "2ce75ede-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce75722-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce88e62-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "FrankSw0", 
+      "src_port": "2ce88264-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap6", 
+      "dst_port": "2ce87792-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce85118-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "FrankSw0", 
+      "src_port": "2ce83aca-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap5", 
+      "dst_port": "2ce81748-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce7dde6-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "FrankSw0", 
+      "src_port": "2ce7801c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap3", 
+      "dst_port": "2ce77554-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2cded1ba-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Erlangen", 
+      "src_port": "2cdea8c0-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2cdea1ae-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce062dc-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Erlangen", 
+      "src_port": "2ce04df6-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce044d2-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce0f850-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Erlangen", 
+      "src_port": "2ce0e978-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Koeln", 
+      "dst_port": "2ce0e0d6-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce360fe-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Erlangen", 
+      "src_port": "2ce350aa-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce35956-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce4e190-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Erlangen", 
+      "src_port": "2ce4d18c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce4c2b4-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce21a64-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Erlangen", 
+      "src_port": "2ce20c36-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce2022c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce328fa-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Erlangen", 
+      "src_port": "2ce31608-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2ce31e5a-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce3f6f4-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Erlangen", 
+      "src_port": "2ce3eaec-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Stutt", 
+      "dst_port": "2ce3e48e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce34182-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Erlangen", 
+      "src_port": "2ce333ea-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce33ae8-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2cdef302-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2cdee326-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2cded962-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce5d6d6-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2ce5c506-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "BerlinHost0", 
+      "dst_port": "2ce5cf74-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce095b8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2ce073bc-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce06a16-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce114fc-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2ce108a4-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Koeln", 
+      "dst_port": "2ce0fe40-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce3a834-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2ce399a2-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce3a186-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce50134-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2ce4f23e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce4ea1e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce237a6-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2ce22680-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce21f50-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce32e68-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2ce31e5a-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Erlangen", 
+      "dst_port": "2ce31608-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce40c7a-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2ce4019e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Stutt", 
+      "dst_port": "2ce3fb72-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce38458-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Berlin", 
+      "src_port": "2ce3708a-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce373b4-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce6d50e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce66d1c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "HamburgSw0", 
+      "dst_port": "2ce6741a-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": "2ce949d8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce939ac-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "HamburgSw1", 
+      "dst_port": "2ce941b8-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": "2ce466b6-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce45752-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2ce45f5e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce47eee-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce470ca-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce4773c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce49b5e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce48ca4-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Koeln", 
+      "dst_port": "2ce4938e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce53eba-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce52dee-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce534ba-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce2b4a6-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce29f70-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce28dc8-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce5acba-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce59a9a-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "HamburgHost0", 
+      "dst_port": "2ce5a242-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce4dc0e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce4c2b4-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Erlangen", 
+      "dst_port": "2ce4d18c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce4f9e6-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce4ea1e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2ce4f23e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce5236c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce513f4-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Stutt", 
+      "dst_port": "2ce51bec-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce55a26-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hamburg", 
+      "src_port": "2ce54a5e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce551ca-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce63bd0-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "LeipzigHost0", 
+      "src_port": "2ce62f46-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce6285c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce70150-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "HamburgSw0", 
+      "src_port": "2ce6f354-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap0", 
+      "dst_port": "2ce6e652-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce720fe-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "HamburgSw0", 
+      "src_port": "2ce711cc-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap1", 
+      "dst_port": "2ce70a74-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce7484a-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "HamburgSw0", 
+      "src_port": "2ce7360c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap2", 
+      "dst_port": "2ce72a9a-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce6dba8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "HamburgSw0", 
+      "src_port": "2ce6741a-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce66d1c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce976e2-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "HamburgSw1", 
+      "src_port": "2ce96c38-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap11", 
+      "dst_port": "2ce96634-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce99244-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "HamburgSw1", 
+      "src_port": "2ce9877c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap12", 
+      "dst_port": "2ce97e30-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce9db0a-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "HamburgSw1", 
+      "src_port": "2ce9a16c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap13", 
+      "dst_port": "2ce99a28-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce949d9-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "HamburgSw1", 
+      "src_port": "2ce941b8-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce939ac-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce185b8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2ce176cc-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "IP", 
+      "dst_port": "2ce16c68-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2cdd5ad8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2cdc72d0-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2cdce33c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2cde9510-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2cde71ca-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Koeln", 
+      "dst_port": "2cde8a0c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2cdffd9c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2cdf153a-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2cdfede8-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce46bf2-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2ce45f5e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce45752-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce1b934-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2ce1ad40-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce1a688-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2cdeb518-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2cdea1ae-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Erlangen", 
+      "dst_port": "2cdea8c0-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2cdeeb6e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2cded962-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2cdee326-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2cdf0a54-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2cdef870-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Stutt", 
+      "dst_port": "2cdefdb6-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce01980-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Hannover", 
+      "src_port": "2ce00b34-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce0123c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce19c06-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "IP", 
+      "src_port": "2ce18b6c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce192f6-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce17fbe-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "IP", 
+      "src_port": "2ce16c68-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2ce176cc-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce9f8ce-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "IP", 
+      "src_port": "2ce9e85c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "IPSw0", 
+      "dst_port": "2ce9f1da-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": "2ce8ad7a-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "EssenSw0", 
+      "src_port": "2ce89dda-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce8977c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce8ecb8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "EssenSw0", 
+      "src_port": "2ce8e0a6-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap8", 
+      "dst_port": "2ce8d99e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce9154e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "EssenSw0", 
+      "src_port": "2ce90464-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap9", 
+      "dst_port": "2ce8fd70-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce930ce-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "EssenSw0", 
+      "src_port": "2ce9258e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap10", 
+      "dst_port": "2ce91ee0-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce8d0d4-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "EssenSw0", 
+      "src_port": "2ce8c06c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap7", 
+      "dst_port": "2ce8b7ac-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce8c896-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap7", 
+      "src_port": "2ce8b7ac-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "EssenSw0", 
+      "dst_port": "2ce8c06c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2cddda6c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2cdce33c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2cdc72d0-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce03744-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce024fc-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Koeln", 
+      "dst_port": "2ce02d94-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce0ca9c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce0bd0e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce0c3f8-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce48740-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce4773c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce470ca-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce1d7a2-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce1cc08-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce1c3ac-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce65bba-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce64828-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "MuenchenHost1", 
+      "dst_port": "2ce6558e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce05bf2-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce044d2-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Erlangen", 
+      "dst_port": "2ce04df6-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce07c68-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce06a16-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2ce073bc-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce3c77e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce3bbf8-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Stutt", 
+      "dst_port": "2ce3b586-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce5f3f0-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce5e5ea-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "MuenchenHost0", 
+      "dst_port": "2ce5ec70-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce0ae72-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Muenchen", 
+      "src_port": "2ce09cca-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce0a634-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce61c36-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "FrankHost0", 
+      "src_port": "2ce60e30-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce6062e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2cea2dda-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap14", 
+      "src_port": "2cea0d32-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "IPSw0", 
+      "dst_port": "2cea1548-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce1b402-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce1a688-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2ce1ad40-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce1d2c0-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce1c3ac-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce1cc08-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce1f7c8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce1de00-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Koeln", 
+      "dst_port": "2ce1eee0-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce25fc5-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce2559c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce25fc4-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce2ade4-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce28dc8-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce29f70-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ceb322a-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ceb1f74-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "LeipzigSw0", 
+      "dst_port": "2ceb2bb8-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": "2ce214c4-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce2022c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Erlangen", 
+      "dst_port": "2ce20c36-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce22dba-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce21f50-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2ce22680-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce24a98-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce23cf6-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Stutt", 
+      "dst_port": "2ce24444-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce63626-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce6285c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "LeipzigHost0", 
+      "dst_port": "2ce62f46-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce30910-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Leipzig", 
+      "src_port": "2ce2ba46-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce2c9b4-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ceb5570-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "LeipzigSw0", 
+      "src_port": "2ceb48c8-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap17", 
+      "dst_port": "2ceb41c0-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ceb3806-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "LeipzigSw0", 
+      "src_port": "2ceb2bb8-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ceb1f74-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ceb73d4-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "LeipzigSw0", 
+      "src_port": "2ceb67e0-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap18", 
+      "dst_port": "2ceb5ef8-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2cec3e18-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "LeipzigSw0", 
+      "src_port": "2cec2d06-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "sap19", 
+      "dst_port": "2cec21da-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100, 
+      "backward": true
+    }, 
+    {
+      "id": "2ceb6e7a-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap18", 
+      "src_port": "2ceb5ef8-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "LeipzigSw0", 
+      "dst_port": "2ceb67e0-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce8e772-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap8", 
+      "src_port": "2ce8d99e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "EssenSw0", 
+      "dst_port": "2ce8e0a6-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce90acc-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap9", 
+      "src_port": "2ce8fd70-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "EssenSw0", 
+      "dst_port": "2ce90464-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2cdf1008-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Stutt", 
+      "src_port": "2cdefdb6-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2cdef870-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce3c2ce-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Stutt", 
+      "src_port": "2ce3b586-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce3bbf8-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce3db4c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Stutt", 
+      "src_port": "2ce3cc9c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Koeln", 
+      "dst_port": "2ce3d49e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce4299e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Stutt", 
+      "src_port": "2ce41792-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce42264-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce24fde-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Stutt", 
+      "src_port": "2ce24444-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce23cf6-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce3f140-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Stutt", 
+      "src_port": "2ce3e48e-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Erlangen", 
+      "dst_port": "2ce3eaec-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce407ac-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Stutt", 
+      "src_port": "2ce3fb72-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2ce4019e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce528bc-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Stutt", 
+      "src_port": "2ce51bec-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce513f4-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce44c44-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Stutt", 
+      "src_port": "2ce43b50-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Essen", 
+      "dst_port": "2ce445d2-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce806f4-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap4", 
+      "src_port": "2ce7f0ba-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "FrankSw0", 
+      "dst_port": "2ce7fa4c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce8481c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap5", 
+      "src_port": "2ce81748-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "FrankSw0", 
+      "dst_port": "2ce83aca-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce8899e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap6", 
+      "src_port": "2ce87792-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "FrankSw0", 
+      "dst_port": "2ce88264-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce01f8e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce0123c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hannover", 
+      "dst_port": "2ce00b34-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce0b76e-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce0a634-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Muenchen", 
+      "dst_port": "2ce09cca-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce13c20-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce128ca-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Koeln", 
+      "dst_port": "2ce11a60-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce56250-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce551ca-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Hamburg", 
+      "dst_port": "2ce54a5e-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce31040-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce2c9b4-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Leipzig", 
+      "dst_port": "2ce2ba46-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce348f8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce33ae8-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Erlangen", 
+      "dst_port": "2ce333ea-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce38c64-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce373b4-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Berlin", 
+      "dst_port": "2ce3708a-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce57ccc-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce56b24-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Frank", 
+      "dst_port": "2ce57506-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000
+    }, 
+    {
+      "id": "2ce44cee-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce445d2-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "Stutt", 
+      "dst_port": "2ce43b50-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 10000, 
+      "backward": true
+    }, 
+    {
+      "id": "2ce8a49c-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "Essen", 
+      "src_port": "2ce8977c-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "EssenSw0", 
+      "dst_port": "2ce89dda-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 5.0, 
+      "bandwidth": 1000
+    }, 
+    {
+      "id": "2ce6fbce-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap0", 
+      "src_port": "2ce6e652-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "HamburgSw0", 
+      "dst_port": "2ce6f354-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce71ac8-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap1", 
+      "src_port": "2ce70a74-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "HamburgSw0", 
+      "dst_port": "2ce711cc-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce74098-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap2", 
+      "src_port": "2ce72a9a-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "HamburgSw0", 
+      "dst_port": "2ce7360c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }, 
+    {
+      "id": "2ce7d3be-c37b-11e6-a0b1-080027c4e4df", 
+      "src_node": "sap3", 
+      "src_port": "2ce77554-c37b-11e6-a0b1-080027c4e4df", 
+      "dst_node": "FrankSw0", 
+      "dst_port": "2ce7801c-c37b-11e6-a0b1-080027c4e4df", 
+      "delay": 1.0, 
+      "bandwidth": 100
+    }
+  ]
+}
