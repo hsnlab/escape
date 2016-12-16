@@ -44,6 +44,7 @@ def main (args):
                                  run_only_tests=args.testcases,
                                  kill_timeout=args.timeout)
   sum_test_cases = test_suite.countTestCases()
+  print "-" * 70
   print "Read %d test cases" % sum_test_cases
   if not sum_test_cases:
     # Footer
