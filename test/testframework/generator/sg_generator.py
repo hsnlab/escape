@@ -65,6 +65,7 @@ def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
   rnd = random.Random()
   rnd.seed(seed)
   nffg = NFFG(id="8loops-req")
+  nffg.mode = NFFG.MODE_ADD
   nf_types = list(string.ascii_uppercase)[:abc_nf_types_len]
   i = 1
   for j in xrange(0,eightloops):

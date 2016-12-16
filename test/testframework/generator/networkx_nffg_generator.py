@@ -49,6 +49,7 @@ def networkx_request_generator (func_name, seed=0, max_cpu=4, max_mem=1600,
   nf_types = list(string.ascii_uppercase)[:abc_nf_types_len]
 
   nffg = NFFG(id="req-"+func_name+"-seed"+str(seed))
+  nffg.mode = NFFG.MODE_ADD
   for nf_id in nx_graph.nodes_iter():
     nf = nffg.add_nf(id=nf_id,
                      func_type=rnd.choice(nf_types), 
