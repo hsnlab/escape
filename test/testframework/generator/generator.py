@@ -12,24 +12,30 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with POX. If not, see <http://www.gnu.org/licenses/>.
+from functools import partial
 
-import e2e_reqs_for_testframework as e2e_reqs
+import e2e_reqs_for_testframework
 import networkx_nffg_generator as nrg
 import sg_generator
 
+eight_loop_requests = partial(sg_generator.get_8loop_request,
+                              abc_nf_types_len=10,
+                              seed=0,
+                              eightloops=1)
 
-def eight_loop_requests (seed=0, **kwargs):
-  """
-  Request is generated for augmented-dfn-gwin.nffg.
-  """
-  return sg_generator.get_8loop_request(seed=seed, **kwargs)
-
-
-def complex_e2e_reqs (seed=0, **kwargs):
-  """
-  Request is generated for the given NFFG substrate network.
-  """
-  return e2e_reqs.main(seed=seed, **kwargs)
+complex_e2e_reqs = partial(e2e_reqs_for_testframework.main,
+                           loops=False,
+                           vnf_sharing=0.0,
+                           seed=0,
+                           multiple_scs=False,
+                           use_saps_once=False,
+                           max_sc_count=2,
+                           chain_maxlen=8,
+                           max_cpu=4,
+                           max_mem=1600,
+                           max_storage=3,
+                           max_bw=7,
+                           max_e2e_lat_multiplier=20)
 
 
 def networkx_request_generator (gen_func, seed=0, **kwargs):
