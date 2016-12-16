@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import importlib
+import json
 import os
 from unittest import BaseTestSuite
 from unittest.case import TestCase
@@ -354,7 +355,7 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
                                    file_name)
       with open(req_file_name, "w") as f:
         # f.write(nffg.dump_to_json())
-        f.write(str(nffg))
+        json.dump(nffg.dump_to_json(), f, indent=2)
 
   def setUp (self):
     super(DynamicallyGeneratedTestCase, self).setUp()
@@ -382,8 +383,8 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
         pass
     super(DynamicallyGeneratedTestCase, self).tearDown()
 
-  def verify_result (self):
-    pass
+  # def verify_result (self):
+  #   pass
 
 
 class DynamicTestGenerator(BaseTestSuite):
