@@ -36,7 +36,7 @@ class BasicErrorChecker(object):
   PRE_CONTEXT = 5
   POST_CONTEXT = 5
 
-  RESULT_LOG = "NF-FG instantiation has been finished"
+  RESULT_LOG = "instantiation has been finished"
   SUCCESS_RESULT = "DEPLOYED"
   ERROR_RESULT = "DEPLOYMENT_ERROR"
 
@@ -70,7 +70,7 @@ class BasicErrorChecker(object):
     for line in reversed(result.log_output):
       if cls.RESULT_LOG in line:
         if cls.SUCCESS_RESULT in line:
-          print "Successful result detected: %s" % line
+          # print "Successful result detected: %s" % line
           return None
         else:
           return line
@@ -149,9 +149,9 @@ class EscapeTestCase(TestCase):
     super(EscapeTestCase, self).__init__()
     self.test_case_info = test_case_info
     self.command_runner = command_runner
-    self.result = None
+    self.run_result = None
     """:type result: testframework.runner.EscapeRunResult"""
-    # print "Initiate testcase: %s" % self.test_case_info.testcase_dir_name
+    self.success = False
 
   def __str__ (self):
     return "Test:\t%s\t(%s)" % (
@@ -190,6 +190,8 @@ class EscapeTestCase(TestCase):
     self.run_escape()
     # Evaluate result
     self.verify_result()
+    # Mark test case as success
+    self.success = True
 
   def tearDown (self):
     """
@@ -207,7 +209,7 @@ class EscapeTestCase(TestCase):
       # Run ESCAPE test
       self.command_runner.execute()
       # Collect result
-      self.result = self.collect_result_from_log()
+      self.run_result = self.collect_result_from_log()
     except KeyboardInterrupt:
       self.command_runner.kill_process()
       self.collect_result_from_log()
@@ -250,15 +252,15 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
 
   def verify_result (self):
     # Detect ERROR messages first
-    detected_error = self.detect_error(self.result)
+    detected_error = self.detect_error(self.run_result)
     self.assertIsNone(detected_error,
                       msg="ERROR detected:\n%s" % detected_error)
     # Search for successful orchestration message
-    error_result = self.detect_unsuccessful_result(self.result)
+    error_result = self.detect_unsuccessful_result(self.run_result)
     self.assertIsNone(error_result,
                       msg="Unsuccessful result detected:\n%s" % error_result)
     # Detect unexpected WARNINGs that possibly means abnormal behaviour
-    warning = self.detect_unexpected_warning(self.result)
+    warning = self.detect_unexpected_warning(self.run_result)
     self.assertIsNone(warning,
                       msg="Unexpected WARNING detected:\n%s" % warning)
 
@@ -355,7 +357,8 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
                                    file_name)
       with open(req_file_name, "w") as f:
         # f.write(nffg.dump_to_json())
-        json.dump(nffg.dump_to_json(), f, indent=2)
+        json.dump(nffg.dump_to_json(), f, indent=2, sort_keys=True)
+    return True
 
   def setUp (self):
     super(DynamicallyGeneratedTestCase, self).setUp()
@@ -367,6 +370,10 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
                                              file_name=self.TOPOLOGY_FILE_NAME)
 
   def tearDown (self):
+    # Skip input deletion if the test case was unsuccessful for further
+    # investigation
+    if not self.success:
+      return
     # Delete request if it is generated
     if self.new_req:
       try:
@@ -382,9 +389,6 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
       except OSError:
         pass
     super(DynamicallyGeneratedTestCase, self).tearDown()
-
-  # def verify_result (self):
-  #   pass
 
 
 class DynamicTestGenerator(BaseTestSuite):
