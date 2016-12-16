@@ -126,9 +126,6 @@ class CommandRunner(object):
     Create and start the process. Block until the process ends or timeout is
     exceeded.
     """
-    if not os.path.exists(self._command[0]):
-      raise Exception(
-        "CommandRunner Error: Missing runner script: %s" % self._command[0])
     self.__process = pexpect.spawn(self._command[0],
                                    args=self._command[1:],
                                    timeout=120,
@@ -141,6 +138,9 @@ class CommandRunner(object):
     self.__process.expect(pexpect.EOF)
     self.__kill_timer.cancel()
     return self
+
+  def clone (self):
+    return copy.deepcopy(self)
 
   def cleanup (self):
     self.__process = None
@@ -160,6 +160,7 @@ class RunnableTestCaseInfo(object):
   def __init__ (self, case_path):
     # Removing trailing slash
     self.__case_path = os.path.normpath(case_path)
+    self.sub_name = None
 
   @property
   def testcase_dir_name (self):
@@ -171,7 +172,10 @@ class RunnableTestCaseInfo(object):
 
   @property
   def name (self):
-    return self.testcase_dir_name
+    if self.sub_name is not None:
+      return "%s-%s" % (self.testcase_dir_name, self.sub_name)
+    else:
+      return self.testcase_dir_name
 
   @property
   def full_testcase_path (self):
@@ -230,3 +234,6 @@ class RunnableTestCaseInfo(object):
 
   def __repr__ (self):
     return "RunnableTestCase [%s]" % self.testcase_dir_name
+
+  def clone (self):
+    return copy.deepcopy(self)
