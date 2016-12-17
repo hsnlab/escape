@@ -21,13 +21,13 @@ most/all functionalities of ESCAPE.
 """
 
 import os
+import random
+import string
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              "../../../escape/escape/nffg_lib/")))
 from nffg import NFFG
-import random
-import string
 
 
 def getGenForName (prefix):

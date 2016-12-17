@@ -16,17 +16,17 @@
 # along with POX. If not, see <http://www.gnu.org/licenses/>.
 
 
+import importlib
 import os
+import random
+import string
 import sys
+
+import networkx as nx
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              "../../../escape/escape/nffg_lib/")))
 from nffg import NFFG
-
-import importlib
-import networkx as nx
-import string
-import random
 
 
 def get_networkx_func (func_name, seed=0, **kwargs):

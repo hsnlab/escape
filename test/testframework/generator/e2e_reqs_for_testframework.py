@@ -17,18 +17,19 @@
 Generates request graphs for ESCAPE Test Framework's mapping focused tests.
 """
 
+import copy
+import logging
+import math
 import os
+import random
 import sys
+
+import networkx as nx
+
+from sg_generator import getName
 
 # Needed to run the Algorithm scripts in the parent folder.
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-import logging
-import math
-import random
-import networkx as nx
-import copy
-
-from sg_generator import getName
 
 try:
   from escape.nffg_lib.nffg import NFFG, NFFGToolBox
@@ -177,7 +178,7 @@ def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
       nffg.add_req(sap1port, sap2port, delay=rnd.uniform(minlat, maxlat),
                    bandwidth=rnd.random() * max_bw,
                    sg_path=sg_path, id=getName("req"))
-      log.info(
+      log.debug(
         "Service Chain on NF-s added: %s" % [nf.id for nf in nfs_this_sc])
       # this prevents loops in the chains and makes new and old NF-s equally 
       # preferable in total for NF sharing
