@@ -130,5 +130,7 @@ def parse_cmd_args ():
 
 if __name__ == "__main__":
   args = parse_cmd_args()
+  if args.verbose:
+    log.setLevel(logging.DEBUG)
   result = main(args)
   sys.exit(result)
