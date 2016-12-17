@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import logging
 import os
 import sys
 import unittest
@@ -21,6 +22,10 @@ from xmlrunner import XMLTestRunner
 
 from testframework.builder import TestSuitBuilder, TestCaseReader
 from testframework.runner import CommandRunner, Tee
+
+logging.basicConfig(format="%(message)s",
+                    level=logging.INFO)
+log = logging.getLogger()
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 REPORT_FILE = "results.xml"
@@ -34,22 +39,22 @@ def main (args):
   :rtype: int
   """
   # Print header
-  print "Start ESCAPE test"
-  print "-" * 70
+  log.info("Start ESCAPE test")
+  log.info("-" * 70)
   if args.timeout:
-    print "Set kill timeout for test cases: %ds\n" % args.timeout
+    log.info("Set kill timeout for test cases: %ds\n" % args.timeout)
   # Create overall test suite
   test_suite = create_test_suite(tests_dir=CWD,
                                  show_output=args.show_output,
                                  run_only_tests=args.testcases,
                                  kill_timeout=args.timeout)
   sum_test_cases = test_suite.countTestCases()
-  print "-" * 70
-  print "Read %d test cases" % sum_test_cases
+  log.info("-" * 70)
+  log.info("Read %d test cases" % sum_test_cases)
   if not sum_test_cases:
     # Footer
-    print "=" * 70
-    print "End ESCAPE test"
+    log.info("-" * 70)
+    log.info("End ESCAPE test")
     return 0
   # Run test suite in the specific context
   results = []
@@ -67,12 +72,12 @@ def main (args):
       # Run the test cases and collect the results
       results.append(test_runner.run(test_suite))
     except KeyboardInterrupt:
-      print "\n\nReceived KeyboardInterrupt! Abort running test suite..."
+      log.warning("\n\nReceived KeyboardInterrupt! Abort running test suite...")
   # Evaluate results values
   was_success = all(map(lambda res: res.wasSuccessful(), results))
   # Print footer
-  print "=" * 70
-  print "End ESCAPE test"
+  log.info("-" * 70)
+  log.info("End ESCAPE test")
   return 0 if was_success else 1
 
 
@@ -92,6 +97,7 @@ def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
   :return: created test suite object
   :rtype: unittest.TestSuite
   """
+  log.info("Loading test cases...\n")
   reader = TestCaseReader(tests_dir=tests_dir)
   builder = TestSuitBuilder(cwd=CWD,
                             show_output=show_output,

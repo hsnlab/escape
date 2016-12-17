@@ -151,9 +151,6 @@ class ESCAPEConfig(object):
           if layer in self.__configuration:
             if self.__parse_part(self.__configuration[layer], cfg[layer]):
               changed = True
-          else:
-            log.warning("Unidentified layer name in loaded configuration: %s" %
-                        layer)
         if changed:
           log.info("Running configuration has been updated from file!")
     except IOError:

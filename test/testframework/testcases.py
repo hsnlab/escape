@@ -14,6 +14,7 @@
 import importlib
 import itertools
 import json
+import logging
 import os
 from unittest import BaseTestSuite
 from unittest.case import TestCase
@@ -22,6 +23,7 @@ from unittest.util import strclass
 from runner import EscapeRunResult, RunnableTestCaseInfo, CommandRunner
 from testframework.generator.generator import DEFAULT_SEED
 
+log = logging.getLogger()
 ESCAPE_LOG_FILE_NAME = "escape.log"
 
 
@@ -72,7 +74,6 @@ class BasicErrorChecker(object):
     for line in reversed(result.log_output):
       if cls.RESULT_LOG in line:
         if cls.SUCCESS_RESULT in line:
-          # print "Successful result detected: %s" % line
           return None
         else:
           return line
@@ -84,7 +85,6 @@ class WarningChecker(BasicErrorChecker):
   Container class for the unexpected warning detection functions.
   """
   ACCEPTABLE_WARNINGS = [
-    "Unidentified layer name in loaded configuration",
     "Mapping algorithm in Layer: service is disabled!",
     "Mapping algorithm in Layer: orchestration is disabled!",
     "No domain has been detected!",
@@ -154,10 +154,10 @@ class EscapeTestCase(TestCase):
     self.run_result = None
     """:type result: testframework.runner.EscapeRunResult"""
     self.success = False
-    print "Init  %r" % self
+    log.debug("Init  %r" % self)
 
   def __str__ (self):
-    return "Test: %s     (%s)" % (
+    return "Test:   %s\t(%s)" % (
       self.test_case_info.name, self.__class__.__name__)
 
   def __repr__ (self):
@@ -497,9 +497,9 @@ class DynamicTestGenerator(BaseTestSuite):
         self.testcase_cfg['module']),
         self.testcase_cfg['class'])
     else:
-      print "No testcase class was defined to testcase: %s! " \
-            "Use default testcase class: %s" % (self.test_case_info.name,
-                                                self.DEFAULT_TESTCASE_CLASS)
+      log.warning("No testcase class was defined to testcase: %s! "
+                  "Use default testcase class: %s" %
+                  (self.test_case_info.name, self.DEFAULT_TESTCASE_CLASS))
       TestCaseClass = self.DEFAULT_TESTCASE_CLASS
     # Get generation config
     for req_seed, topo_seed in self.__get_seed_generator():
