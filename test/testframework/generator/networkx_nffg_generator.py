@@ -16,16 +16,18 @@
 # along with POX. If not, see <http://www.gnu.org/licenses/>.
 
 
-import sys, os
+import os
+import sys
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                "../../../escape/escape/nffg_lib/")))
-from nffg import NFFG, NFFGToolBox
+                                             "../../../escape/escape/nffg_lib/")))
+from nffg import NFFG
 
 import importlib
 import networkx as nx
 import string
-from sg_generator import getName
 import random
+
 
 def get_networkx_func (func_name, seed=0, **kwargs):
   """
@@ -36,31 +38,29 @@ def get_networkx_func (func_name, seed=0, **kwargs):
   generated_graph = nx_func(seed=seed, **kwargs)
   return generated_graph
 
-def networkx_request_generator (func_name, seed=0, max_cpu=4, max_mem=1600, 
-                                max_storage=3, max_bw=7, abc_nf_types_len=10, 
+
+def networkx_request_generator (func_name, seed=0, max_cpu=4, max_mem=1600,
+                                max_storage=3, max_bw=7, abc_nf_types_len=10,
                                 **kwargs):
   """
   Uses a NetworkX graph to create a request NFFG.
   """
   rnd = random.Random()
   rnd.seed(seed)
-  nx_graph = get_networkx_func (func_name, seed=seed, **kwargs)
-  
+  nx_graph = get_networkx_func(func_name, seed=seed, **kwargs)
+
   nf_types = list(string.ascii_uppercase)[:abc_nf_types_len]
 
-  nffg = NFFG(id="req-"+func_name+"-seed"+str(seed))
+  nffg = NFFG(id="req-" + func_name + "-seed" + str(seed))
   nffg.mode = NFFG.MODE_ADD
   for nf_id in nx_graph.nodes_iter():
     nf = nffg.add_nf(id=nf_id,
-                     func_type=rnd.choice(nf_types), 
-                     cpu=rnd.random()*max_cpu,
-                     mem=rnd.random()*max_mem,
-                     storage=rnd.random()*max_storage)
+                     func_type=rnd.choice(nf_types),
+                     cpu=rnd.random() * max_cpu,
+                     mem=rnd.random() * max_mem,
+                     storage=rnd.random() * max_storage)
 
-  for i,j,k in nx_graph.edges_iter(keys=True):
+  for i, j, k in nx_graph.edges_iter(keys=True):
     pass
-    
+
   return nffg
-    
- 
-    

@@ -19,36 +19,36 @@ Generates request graphs for ESCAPE Test Framework's mapping focused tests.
 
 import os
 import sys
+
 # Needed to run the Algorithm scripts in the parent folder.
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-import getopt
 import logging
 import math
 import random
-import traceback
-import string
 import networkx as nx
 import copy
 
 from sg_generator import getName
-from collections import OrderedDict
 
 try:
   from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 except ImportError:
   import sys, os
+
   sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                  "../../../escape/escape/nffg_lib/")))
+                                               "../../../escape/escape/nffg_lib/")))
   from nffg import NFFG, NFFGToolBox
 
 log = logging.getLogger("StressTest")
-log.setLevel(logging.DEBUG)
-logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
+# log.setLevel(logging.DEBUG)
+# logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s')
 rnd = random.Random()
 
-def gen_seq():
+
+def gen_seq ():
   while True:
     yield int(math.floor(rnd.random() * 999999999))
+
 
 helpmsg = """StressTest.py options are:
    -h                Print this message help message.
@@ -56,7 +56,8 @@ helpmsg = """StressTest.py options are:
    --vnf_sharing=p   Sets the ratio of shared and not shared VNF-s.
    --seed=i  Provides seed for the random generator.
    --multiple_scs           One request will contain at least 2 chains.
-   --max_sc_count=i         Determines how many chains should one request contain
+   --max_sc_count=i         Determines how many chains should one request
+   contain
                             at most.
 
    --use_saps_once   If set, all SAPs can only be used once as SC origin and 
@@ -66,36 +67,37 @@ helpmsg = """StressTest.py options are:
                            requests. Compulsory to give!
 """
 
-def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning, 
-                                  avg_shp_len, nf_types,
-                                  max_e2e_lat_multiplier=20,
-                                  loops=False, use_saps_once=True,
-                                  vnf_sharing_probabilty=0.0,
-                                  multiSC=False, max_sc_count=2,  
-                                  chain_maxlen=8, max_cpu=4, max_mem=1600, 
-                                  max_storage=3, max_bw=7):
+
+def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
+                                   avg_shp_len, nf_types,
+                                   max_e2e_lat_multiplier=20,
+                                   loops=False, use_saps_once=True,
+                                   vnf_sharing_probabilty=0.0,
+                                   multiSC=False, max_sc_count=2,
+                                   chain_maxlen=8, max_cpu=4, max_mem=1600,
+                                   max_storage=3, max_bw=7):
   """
   By default generates VNF-disjoint SC-s starting/ending only once in each SAP.
   With the 'loops' option, only loop SC-s are generated.
   'vnf_sharing_probabilty' determines the ratio of 
      #(VNF-s used by at least two SC-s)/#(not shared VNF-s).
   """
-  sc_count=1
+  sc_count = 1
   # maximal possible bandwidth for chains
   if multiSC:
-    sc_count = rnd.randint(2,max_sc_count)
+    sc_count = rnd.randint(2, max_sc_count)
   while len(all_saps_ending) > sc_count and len(all_saps_beginning) > sc_count:
     nffg = NFFG(id="E2e_req_test_nffg")
     nffg.mode = NFFG.MODE_ADD
     # newly added NF-s of one request
     current_nfs = []
-    for scid in xrange(0,sc_count):
+    for scid in xrange(0, sc_count):
       # find two SAP-s for chain ends.
       nfs_this_sc = []
       sapid = all_saps_beginning.pop() if use_saps_once else \
-              rnd.choice(all_saps_beginning)
+        rnd.choice(all_saps_beginning)
       if sapid not in nffg:
-        sap1 = nffg.add_sap(id = sapid)
+        sap1 = nffg.add_sap(id=sapid)
       else:
         sap1 = nffg.network.node[sapid]
       sap2 = None
@@ -103,23 +105,23 @@ def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
         sap2 = sap1
       else:
         tmpid = all_saps_ending.pop() if use_saps_once else \
-                rnd.choice(all_saps_ending)
+          rnd.choice(all_saps_ending)
         while True:
           if tmpid != sap1.id:
             if tmpid not in nffg:
-              sap2 = nffg.add_sap(id = tmpid)
+              sap2 = nffg.add_sap(id=tmpid)
             else:
               sap2 = nffg.network.node[tmpid]
             break
           else:
             tmpid = all_saps_ending.pop() if use_saps_once else \
-                    rnd.choice(all_saps_ending)
+              rnd.choice(all_saps_ending)
       sg_path = []
       if len(sap1.ports) > 0:
         for sap1port in sap1.ports:
           break
       else:
-        sap1port = sap1.add_port(id = getName("port"))
+        sap1port = sap1.add_port(id=getName("port"))
       last_req_port = sap1port
       # generate some VNF-s connecting the two SAP-s
       vnf_cnt = next(gen_seq()) % chain_maxlen + 1
@@ -129,10 +131,10 @@ def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
         # whether we should share now.
         p = rnd.random()
         if multiSC and \
-             p < vnf_sharing_probabilty and len(current_nfs) > 0:
+              p < vnf_sharing_probabilty and len(current_nfs) > 0:
           # this influences the the given VNF sharing probability...
-          if reduce(lambda a,b: a and b, [v in nfs_this_sc for 
-                                          v in current_nfs]):
+          if reduce(lambda a, b: a and b, [v in nfs_this_sc for
+                                           v in current_nfs]):
             log.warn("All shareable VNF-s are already added to this chain! "
                      "Skipping VNF sharing...")
             continue
@@ -140,14 +142,15 @@ def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
             nf = rnd.choice(current_nfs)
             while nf in nfs_this_sc:
               nf = rnd.choice(current_nfs)
-            # the VNF is already in the subchain, we just need to add the links
-            # vnf_added = True
+              # the VNF is already in the subchain, we just need to add the
+              # links
+              # vnf_added = True
         else:
-          nf = nffg.add_nf(id="-".join(("SC",str(scid), "VNF",str(vnf))),
-                           func_type=rnd.choice(nf_types), 
-                           cpu=rnd.random()*max_cpu,
-                           mem=rnd.random()*max_mem,
-                           storage=rnd.random()*max_storage)
+          nf = nffg.add_nf(id="-".join(("SC", str(scid), "VNF", str(vnf))),
+                           func_type=rnd.choice(nf_types),
+                           cpu=rnd.random() * max_cpu,
+                           mem=rnd.random() * max_mem,
+                           storage=rnd.random() * max_storage)
 
         nfs_this_sc.append(nf)
         newport = nf.add_port(id=getName("port"))
@@ -165,18 +168,21 @@ def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
 
       # WARNING: this is completly a wild guess! Failing due to this doesn't 
       # necessarily mean algorithm failure
-      # Bandwidth maximal random value should be min(SAP1acces_bw, SAP2access_bw)
-      # MAYBE: each SAP can only be once in the reqgraph? - this is the case now.
-      minlat = avg_shp_len*1.1
-      maxlat = avg_shp_len*20.0
-      nffg.add_req(sap1port, sap2port, delay=rnd.uniform(minlat,maxlat), 
-                   bandwidth=rnd.random()*max_bw, 
-                   sg_path = sg_path, id = getName("req"))
-      log.info("Service Chain on NF-s added: %s"%[nf.id for nf in nfs_this_sc])
+      # Bandwidth maximal random value should be min(SAP1acces_bw,
+      # SAP2access_bw)
+      # MAYBE: each SAP can only be once in the reqgraph? - this is the case
+      # now.
+      minlat = avg_shp_len * 1.1
+      maxlat = avg_shp_len * 20.0
+      nffg.add_req(sap1port, sap2port, delay=rnd.uniform(minlat, maxlat),
+                   bandwidth=rnd.random() * max_bw,
+                   sg_path=sg_path, id=getName("req"))
+      log.info(
+        "Service Chain on NF-s added: %s" % [nf.id for nf in nfs_this_sc])
       # this prevents loops in the chains and makes new and old NF-s equally 
       # preferable in total for NF sharing
       new_nfs = [vnf for vnf in nfs_this_sc if vnf not in current_nfs]
-      for tmp in xrange(0, scid+1):
+      for tmp in xrange(0, scid + 1):
         current_nfs.extend(new_nfs)
       if not multiSC:
         return nffg
@@ -185,13 +191,12 @@ def generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
   return None
 
 
-def main(substrate, loops = False, vnf_sharing = 0.0, 
-         seed = 0, multiple_scs = False, 
-         use_saps_once = False, max_sc_count = 2, 
-         chain_maxlen=8,
-         max_cpu=4, max_mem=1600, max_storage=3, max_bw=7,
-         max_e2e_lat_multiplier=20):
-    
+def main (substrate, loops=False, vnf_sharing=0.0,
+          seed=0, multiple_scs=False,
+          use_saps_once=False, max_sc_count=2,
+          chain_maxlen=8,
+          max_cpu=4, max_mem=1600, max_storage=3, max_bw=7,
+          max_e2e_lat_multiplier=20):
   nf_types = []
   request = None
   rnd.seed(seed)
@@ -199,9 +204,9 @@ def main(substrate, loops = False, vnf_sharing = 0.0,
     substrate_nffg = NFFG.parse(f.read())
     for infra in substrate_nffg.infras:
       nf_types.extend(infra.supported)
-      
+
     nf_types = list(set(nf_types))
-    
+
     all_saps_ending = [s.id for s in substrate_nffg.saps]
     all_saps_beginning = [s.id for s in substrate_nffg.saps]
 
@@ -210,27 +215,28 @@ def main(substrate, loops = False, vnf_sharing = 0.0,
       bare_substrate_nffg.del_node(n)
     path_calc_graph = nx.MultiDiGraph()
     for l in bare_substrate_nffg.links:
-      path_calc_graph.add_edge(l.src.node.id, l.dst.node.id, l.id, delay=l.delay)
+      path_calc_graph.add_edge(l.src.node.id, l.dst.node.id, l.id,
+                               delay=l.delay)
 
-    avg_shp_len = nx.average_shortest_path_length(path_calc_graph, 
+    avg_shp_len = nx.average_shortest_path_length(path_calc_graph,
                                                   weight='delay')
 
-    request = generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning, 
-              avg_shp_len, nf_types, loops=loops, use_saps_once=use_saps_once, 
+    request = generateRequestForCarrierTopo(all_saps_ending, all_saps_beginning,
+                                            avg_shp_len, nf_types, loops=loops,
+                                            use_saps_once=use_saps_once,
                                             vnf_sharing_probabilty=vnf_sharing,
                                             multiSC=multiple_scs,
                                             max_sc_count=max_sc_count,
                                             chain_maxlen=chain_maxlen,
-                                            max_cpu=max_cpu, max_mem=max_mem, 
-                                            max_storage=max_storage, 
-                                            max_bw=max_bw, 
-              max_e2e_lat_multiplier=max_e2e_lat_multiplier)
-    
+                                            max_cpu=max_cpu, max_mem=max_mem,
+                                            max_storage=max_storage,
+                                            max_bw=max_bw,
+                                            max_e2e_lat_multiplier=max_e2e_lat_multiplier)
+
   return request
 
 
 if __name__ == '__main__':
-  
   """
   argv = sys.argv[1:]
   
@@ -269,9 +275,10 @@ if __name__ == '__main__':
     elif opt == "--substrate":
       topo_name = arg
   """
-  
-  nffg = main(substrate="../../case14/topology.nffg", loops=True, vnf_sharing=0.5, 
-              seed = 1, multiple_scs=True, chain_maxlen = 30,
-              use_saps_once = False, max_sc_count = 30)
-  
+
+  nffg = main(substrate="../../case14/topology.nffg", loops=True,
+              vnf_sharing=0.5,
+              seed=1, multiple_scs=True, chain_maxlen=30,
+              use_saps_once=False, max_sc_count=30)
+
   print nffg.dump()

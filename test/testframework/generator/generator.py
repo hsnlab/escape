@@ -19,7 +19,6 @@ import e2e_reqs_for_testframework
 import networkx_nffg_generator as nrg
 import sg_generator
 
-logging.disable(logging.WARNING)
 DEFAULT_SEED = 0
 
 eight_loop_requests = partial(sg_generator.get_8loop_request,
