@@ -128,7 +128,7 @@ class CommandRunner(object):
     """
     self.__process = pexpect.spawn(self._command[0],
                                    args=self._command[1:],
-                                   timeout=120,
+                                   timeout=60,
                                    cwd=self._cwd,
                                    logfile=self.output_stream)
 

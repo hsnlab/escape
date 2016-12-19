@@ -36,6 +36,8 @@ from escape.util.misc import schedule_delayed_as_coop_task, \
   get_global_parameter, quit_with_error
 from pox.lib.revent.revent import Event
 
+SCHEDULED_SERVICE_REQUEST_DELAY = CONFIG.get_sas_request_delay()
+
 
 class InstantiateNFFGEvent(Event):
   """
@@ -260,7 +262,8 @@ class ServiceLayerAPI(AbstractAPI):
           nffg.mode = NFFG.MODE_ADD
           log.info("No mapping mode has been detected in NFFG! "
                    "Set default mode: %s" % nffg.mode)
-        log.info("Schedule service request delayed by 3 seconds...")
+        log.info("Schedule service request delayed by %d seconds..."
+                 % SCHEDULED_SERVICE_REQUEST_DELAY)
         self.api_sas_sg_request_delayed(service_nffg=nffg)
       except (ValueError, IOError, TypeError) as e:
         log.error(
@@ -353,7 +356,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     self.__proceed_sg_request(service_nffg)
 
-  @schedule_delayed_as_coop_task(delay=3)
+  @schedule_delayed_as_coop_task(delay=SCHEDULED_SERVICE_REQUEST_DELAY)
   def api_sas_sg_request_delayed (self, service_nffg, *args, **kwargs):
     """
     Initiate service graph in a cooperative micro-task.

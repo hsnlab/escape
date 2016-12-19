@@ -460,6 +460,19 @@ class ESCAPEConfig(object):
     except KeyError:
       return {}
 
+  def get_sas_request_delay (self):
+    """
+    Return the default delay value for service request parsing from file.
+
+    :return: delay
+    :rtype: int
+    """
+    try:
+      return int(
+        self.__configuration[SERVICE]["SCHEDULED_SERVICE_REQUEST_DELAY"])
+    except (KeyError, ValueError):
+      return 0
+
   ##############################################################################
   # ORCHESTRATION layer getters
   ##############################################################################

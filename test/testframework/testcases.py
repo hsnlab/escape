@@ -87,6 +87,7 @@ class WarningChecker(BasicErrorChecker):
   ACCEPTABLE_WARNINGS = [
     "Mapping algorithm in Layer: service is disabled!",
     "Mapping algorithm in Layer: orchestration is disabled!",
+    "Scheduler didn't quit in time",
     "No domain has been detected!",
     "No SGHops were given in the Service Graph!",
     "Resource parameter delay is not given",
@@ -345,7 +346,7 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
     try:
       generator_func = getattr(importlib.import_module(cls.GENERATOR_MODULE),
                                params.pop(cls.GENERATOR_ENTRY_NAME))
-      return generator_func(**params)
+      return generator_func(**params) if generator_func else None
     except AttributeError as e:
       raise Exception("Generator function is not found: %s" % e.message)
 
