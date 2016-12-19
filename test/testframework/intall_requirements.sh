@@ -3,4 +3,4 @@
 #unittest-xml-reporting
 #xmlrunner
 
-sudo -H pip install pyexpect unittest-xml-reporting
+sudo -H pip install pexpect unittest-xml-reporting
