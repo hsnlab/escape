@@ -72,6 +72,7 @@ helpmsg = """StressTest.py options are:
 def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
                                    avg_shp_len, nf_types,
                                    max_e2e_lat_multiplier=20,
+                                   min_e2e_lat_multiplier=1.1,
                                    loops=False, use_saps_once=True,
                                    vnf_sharing_probabilty=0.0,
                                    multiSC=False, max_sc_count=2,
@@ -173,8 +174,8 @@ def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
       # SAP2access_bw)
       # MAYBE: each SAP can only be once in the reqgraph? - this is the case
       # now.
-      minlat = avg_shp_len * 1.1
-      maxlat = avg_shp_len * 20.0
+      minlat = avg_shp_len * min_e2e_lat_multiplier
+      maxlat = avg_shp_len * max_e2e_lat_multiplier
       nffg.add_req(sap1port, sap2port, delay=rnd.uniform(minlat, maxlat),
                    bandwidth=rnd.random() * max_bw,
                    sg_path=sg_path, id=getName("req"))
@@ -197,7 +198,7 @@ def main (substrate, loops=False, vnf_sharing=0.0,
           use_saps_once=False, max_sc_count=2,
           chain_maxlen=8,
           max_cpu=4, max_mem=1600, max_storage=3, max_bw=7,
-          max_e2e_lat_multiplier=20):
+          max_e2e_lat_multiplier=20, min_e2e_lat_multiplier=1.1):
   nf_types = []
   request = None
   rnd.seed(seed)
@@ -232,7 +233,10 @@ def main (substrate, loops=False, vnf_sharing=0.0,
                                             max_cpu=max_cpu, max_mem=max_mem,
                                             max_storage=max_storage,
                                             max_bw=max_bw,
-                                            max_e2e_lat_multiplier=max_e2e_lat_multiplier)
+                                            max_e2e_lat_multiplier=
+                                            max_e2e_lat_multiplier,
+                                            min_e2e_lat_multiplier=
+                                            min_e2e_lat_multiplier)
 
   return request
 

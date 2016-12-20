@@ -37,7 +37,8 @@ complex_e2e_reqs = partial(e2e_reqs_for_testframework.main,
                            max_mem=1600,
                            max_storage=3,
                            max_bw=7,
-                           max_e2e_lat_multiplier=20)
+                           max_e2e_lat_multiplier=20,
+                           min_e2e_lat_multiplier=1.1)
 
 
 def networkx_request_generator (gen_func, seed=0, **kwargs):
