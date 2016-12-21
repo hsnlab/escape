@@ -11,14 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 import os
 import sys
 from unittest.suite import TestSuite
 
 from runner import RunnableTestCaseInfo, CommandRunner
-from testcases import BasicSuccessfulTestCase
+from testframework.testcases.basic import BasicSuccessfulTestCase
 
-ESCAPE_LOG_FILE_NAME = "escape.log"
+log = logging.getLogger()
 
 
 class TestCaseReader(object):
@@ -99,6 +100,7 @@ class TestSuitBuilder(object):
     # Create TestCase class
     if os.path.exists(case_info.config_file_name):
       TESTCASE_CLASS, test_args = case_info.load_test_case_class()
+      log.debug("Loaded class: %s, arguments: %s" % (TESTCASE_CLASS, test_args))
       if TESTCASE_CLASS:
         return TESTCASE_CLASS(test_case_info=case_info,
                               command_runner=cmd_runner,

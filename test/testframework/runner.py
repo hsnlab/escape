@@ -15,12 +15,16 @@ import copy
 import imp
 import importlib
 import json
+import logging
 import os
 import sys
 from collections import Iterable
 from threading import Timer
 
 import pexpect
+from pexpect import ExceptionPexpect
+
+log = logging.getLogger()
 
 
 class Tee(object):
@@ -110,7 +114,8 @@ class CommandRunner(object):
     """
     if self.__process:
       self.__process.sendcontrol('c')
-    self.__kill_timer.cancel()
+    if self.__kill_timer:
+      self.__kill_timer.cancel()
     self.__killed = True
     if self.on_kill_hook:
       self.on_kill_hook()
@@ -126,17 +131,23 @@ class CommandRunner(object):
     Create and start the process. Block until the process ends or timeout is
     exceeded.
     """
-    self.__process = pexpect.spawn(self._command[0],
-                                   args=self._command[1:],
-                                   timeout=60,
-                                   cwd=self._cwd,
-                                   logfile=self.output_stream)
+    try:
+      self.__process = pexpect.spawn(self._command[0],
+                                     args=self._command[1:],
+                                     timeout=self.KILL_TIMEOUT + 1,
+                                     cwd=self._cwd,
+                                     logfile=self.output_stream)
 
-    self.__kill_timer = Timer(self.kill_timeout, self.kill_process,
-                              [self.__process])
-    self.__kill_timer.start()
-    self.__process.expect(pexpect.EOF)
-    self.__kill_timer.cancel()
+      self.__kill_timer = Timer(self.kill_timeout, self.kill_process,
+                                [self.__process])
+      self.__kill_timer.start()
+      self.__process.expect(pexpect.EOF)
+    except ExceptionPexpect as e:
+      log.error("Got exception during execution of ESCAPE: %s" % e)
+      self.kill_process()
+    else:
+      if self.__kill_timer:
+        self.__kill_timer.cancel()
     return self
 
   def clone (self):

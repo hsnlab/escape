@@ -1,0 +1,861 @@
+{
+  "parameters": {
+    "id": "DoV",
+    "name": "Mover topology with mapped NFs",
+    "version": "1.0"
+  },
+  "node_nfs": [
+    {
+      "id": "javacontroller",
+      "status": "running",
+      "name": "javacontroller",
+      "ports": [
+        {
+          "id": 1,
+          "addresses": {
+            "l3": [
+              {
+                "id": "1",
+                "requested": "192.168.1.24/24"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "environment": "{'ROBOT_IP': '192.168.1.102', 'CONTROLLER1_IP': '192.168.1.21'}"
+      },
+      "functional_type": "javacontroller:1.0",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 128.0,
+          "storage": 1.0
+        }
+      }
+    },
+    {
+      "id": "dal",
+      "status": "running",
+      "name": "dal",
+      "ports": [
+        {
+          "id": 1,
+          "addresses": {
+            "l3": [
+              {
+                "id": "1",
+                "requested": "192.168.1.23/24"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "environment": "{'DAL_SERVER_IP': '192.168.1.23'}"
+      },
+      "functional_type": "dal:1.0",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 128.0,
+          "storage": 1.0
+        }
+      }
+    },
+    {
+      "id": "camtest",
+      "status": "running",
+      "name": "camtest",
+      "ports": [
+        {
+          "id": 1,
+          "addresses": {
+            "l3": [
+              {
+                "id": "1",
+                "requested": "192.168.1.20/24"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "environment": "{'DAL_NODES': '192.168.1.23', 'VIDEO_PORT': '55555'}"
+      },
+      "functional_type": "camtest:1.0",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 128.0,
+          "storage": 1.0
+        }
+      }
+    },
+    {
+      "id": "controller2",
+      "status": "running",
+      "name": "controller2",
+      "ports": [
+        {
+          "id": 1,
+          "addresses": {
+            "l3": [
+              {
+                "id": "1",
+                "requested": "192.168.1.22/24"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "environment": "{'DAL_NODES': '192.168.1.23', 'JAR_IP': '192.168.1.24', 'JAR_PORT': '50001', 'ROBOT_IP': '192.168.1.102'}"
+      },
+      "functional_type": "controller2:1.0",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 128.0,
+          "storage": 1.0
+        }
+      }
+    },
+    {
+      "id": "controller1",
+      "status": "running",
+      "name": "controller1",
+      "ports": [
+        {
+          "id": 1,
+          "addresses": {
+            "l3": [
+              {
+                "id": "1",
+                "requested": "192.168.1.21/24"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "environment": "{'DAL_NODES': '192.168.1.23', 'UDP_LISTEN_PORT': '50000'}"
+      },
+      "functional_type": "controller1:1.0",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 128.0,
+          "storage": 1.0
+        }
+      }
+    },
+    {
+      "id": "mover",
+      "status": "stopped",
+      "name": "mover",
+      "ports": [
+        {
+          "id": 1,
+          "addresses": {
+            "l3": [
+              {
+                "id": "1",
+                "requested": "192.168.1.25/24"
+              }
+            ]
+          }
+        }
+      ],
+      "metadata": {
+        "environment": "{'DAL_NODES': '192.168.1.23'}"
+      },
+      "functional_type": "mover:1.0",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 128.0,
+          "storage": 1.0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "SAP33",
+      "name": "SAP33",
+      "ports": [
+        {
+          "id": 2,
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAP33"
+          },
+          "name": "SAP33",
+          "sap": "SAP33"
+        }
+      ]
+    },
+    {
+      "id": "SAP11",
+      "name": "SAP11",
+      "ports": [
+        {
+          "id": 1,
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAP11"
+          },
+          "name": "SAP11",
+          "sap": "SAP11"
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "SingleBiSBiS@UN3",
+      "name": "Unify DOCKER 3 domain single node representation",
+      "ports": [
+        {
+          "id": 1,
+          "property": {
+            "sap": "SAP23",
+            "type": "inter-domain"
+          },
+          "name": "SAP23",
+          "sap": "SAP23",
+          "flowrules": [
+            {
+              "id": 16,
+              "match": "in_port=1;flowclass=dl_type=0x806,nw_dst=192.168.1.23;TAG=camtest|dal|16",
+              "action": "output=SingleBiSBiS@UN3|dal|1;UNTAG"
+            },
+            {
+              "id": 15,
+              "match": "in_port=1;flowclass=dl_type=0x800,nw_dst=192.168.1.23;TAG=camtest|dal|15",
+              "action": "output=SingleBiSBiS@UN3|dal|1;UNTAG"
+            },
+            {
+              "id": 3,
+              "match": "in_port=1;flowclass=dl_type=0x800,nw_dst=192.168.1.24;TAG=SAP11|javacontroller|3",
+              "action": "output=SingleBiSBiS@UN3|javacontroller|1;UNTAG"
+            },
+            {
+              "id": 4,
+              "match": "in_port=1;flowclass=dl_type=0x806,nw_dst=192.168.1.24;TAG=SAP11|javacontroller|4",
+              "action": "output=SingleBiSBiS@UN3|javacontroller|1;UNTAG"
+            },
+            {
+              "id": 27,
+              "match": "in_port=1;flowclass=dl_type=0x800,nw_dst=192.168.1.22;TAG=SAP11|controller2|27",
+              "action": "output=SingleBiSBiS@UN3|controller2|1;UNTAG"
+            },
+            {
+              "id": 28,
+              "match": "in_port=1;flowclass=dl_type=0x806,nw_dst=192.168.1.22;TAG=SAP11|controller2|28",
+              "action": "output=SingleBiSBiS@UN3|controller2|1;UNTAG"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "property": {
+            "sap": "SAP33"
+          },
+          "name": "SAP33",
+          "sap": "SAP33"
+        },
+        {
+          "id": "SingleBiSBiS@UN3|controller2|1",
+          "flowrules": [
+            {
+              "id": 11,
+              "match": "in_port=SingleBiSBiS@UN3|controller2|1;flowclass=dl_type=0x800,nw_dst=192.168.1.23",
+              "action": "output=SingleBiSBiS@UN3|dal|1"
+            },
+            {
+              "id": 12,
+              "match": "in_port=SingleBiSBiS@UN3|controller2|1;flowclass=dl_type=0x806,nw_dst=192.168.1.23",
+              "action": "output=SingleBiSBiS@UN3|dal|1"
+            },
+            {
+              "id": 24,
+              "match": "in_port=SingleBiSBiS@UN3|controller2|1;flowclass=dl_type=0x806,nw_dst=192.168.1.24",
+              "action": "output=SingleBiSBiS@UN3|javacontroller|1"
+            },
+            {
+              "id": 23,
+              "match": "in_port=SingleBiSBiS@UN3|controller2|1;flowclass=dl_type=0x800,nw_dst=192.168.1.24",
+              "action": "output=SingleBiSBiS@UN3|javacontroller|1"
+            },
+            {
+              "id": 25,
+              "match": "in_port=SingleBiSBiS@UN3|controller2|1;flowclass=dl_type=0x800,nw_dst=192.168.1.102",
+              "action": "output=1;TAG=controller2|SAP11|25"
+            },
+            {
+              "id": 26,
+              "match": "in_port=SingleBiSBiS@UN3|controller2|1;flowclass=dl_type=0x806,nw_dst=192.168.1.102",
+              "action": "output=1;TAG=controller2|SAP11|26"
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS@UN3|dal|1",
+          "flowrules": [
+            {
+              "id": 9,
+              "match": "in_port=SingleBiSBiS@UN3|dal|1;flowclass=dl_type=0x800,nw_dst=192.168.1.22",
+              "action": "output=SingleBiSBiS@UN3|controller2|1"
+            },
+            {
+              "id": 10,
+              "match": "in_port=SingleBiSBiS@UN3|dal|1;flowclass=dl_type=0x806,nw_dst=192.168.1.22",
+              "action": "output=SingleBiSBiS@UN3|controller2|1"
+            },
+            {
+              "id": 5,
+              "match": "in_port=SingleBiSBiS@UN3|dal|1;flowclass=dl_type=0x800,nw_dst=192.168.1.21",
+              "action": "output=SingleBiSBiS@UN3|controller1|1"
+            },
+            {
+              "id": 6,
+              "match": "in_port=SingleBiSBiS@UN3|dal|1;flowclass=dl_type=0x806,nw_dst=192.168.1.21",
+              "action": "output=SingleBiSBiS@UN3|controller1|1"
+            },
+            {
+              "id": 33,
+              "match": "in_port=SingleBiSBiS@UN3|dal|1;flowclass=dl_type=0x800,nw_dst=192.168.1.25",
+              "action": "output=SingleBiSBiS@UN3|mover|1"
+            },
+            {
+              "id": 34,
+              "match": "in_port=SingleBiSBiS@UN3|dal|1;flowclass=dl_type=0x806,nw_dst=192.168.1.25",
+              "action": "output=SingleBiSBiS@UN3|mover|1"
+            },
+            {
+              "id": 13,
+              "match": "in_port=SingleBiSBiS@UN3|dal|1;flowclass=dl_type=0x800,nw_dst=192.168.1.20",
+              "action": "output=1;TAG=dal|camtest|13"
+            },
+            {
+              "id": 14,
+              "match": "in_port=SingleBiSBiS@UN3|dal|1;flowclass=dl_type=0x806,nw_dst=192.168.1.20",
+              "action": "output=1;TAG=dal|camtest|14"
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS@UN3|javacontroller|1",
+          "flowrules": [
+            {
+              "id": 21,
+              "match": "in_port=SingleBiSBiS@UN3|javacontroller|1;flowclass=dl_type=0x800,nw_dst=192.168.1.22",
+              "action": "output=SingleBiSBiS@UN3|controller2|1"
+            },
+            {
+              "id": 22,
+              "match": "in_port=SingleBiSBiS@UN3|javacontroller|1;flowclass=dl_type=0x806,nw_dst=192.168.1.22",
+              "action": "output=SingleBiSBiS@UN3|controller2|1"
+            },
+            {
+              "id": 17,
+              "match": "in_port=SingleBiSBiS@UN3|javacontroller|1;flowclass=dl_type=0x800,nw_dst=192.168.1.21",
+              "action": "output=SingleBiSBiS@UN3|controller1|1"
+            },
+            {
+              "id": 18,
+              "match": "in_port=SingleBiSBiS@UN3|javacontroller|1;flowclass=dl_type=0x806,nw_dst=192.168.1.21",
+              "action": "output=SingleBiSBiS@UN3|controller1|1"
+            },
+            {
+              "id": 1,
+              "match": "in_port=SingleBiSBiS@UN3|javacontroller|1;flowclass=dl_type=0x800,nw_dst=192.168.1.102",
+              "action": "output=1;TAG=javacontroller|SAP11|1"
+            },
+            {
+              "id": 2,
+              "match": "in_port=SingleBiSBiS@UN3|javacontroller|1;flowclass=dl_type=0x806,nw_dst=192.168.1.102",
+              "action": "output=1;TAG=javacontroller|SAP11|2"
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS@UN3|controller1|1",
+          "flowrules": [
+            {
+              "id": 8,
+              "match": "in_port=SingleBiSBiS@UN3|controller1|1;flowclass=dl_type=0x806,nw_dst=192.168.1.23",
+              "action": "output=SingleBiSBiS@UN3|dal|1"
+            },
+            {
+              "id": 7,
+              "match": "in_port=SingleBiSBiS@UN3|controller1|1;flowclass=dl_type=0x800,nw_dst=192.168.1.23",
+              "action": "output=SingleBiSBiS@UN3|dal|1"
+            },
+            {
+              "id": 19,
+              "match": "in_port=SingleBiSBiS@UN3|controller1|1;flowclass=dl_type=0x800,nw_dst=192.168.1.24",
+              "action": "output=SingleBiSBiS@UN3|javacontroller|1"
+            },
+            {
+              "id": 20,
+              "match": "in_port=SingleBiSBiS@UN3|controller1|1;flowclass=dl_type=0x806,nw_dst=192.168.1.24",
+              "action": "output=SingleBiSBiS@UN3|javacontroller|1"
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS@UN3|mover|1",
+          "flowrules": [
+            {
+              "id": 35,
+              "match": "in_port=SingleBiSBiS@UN3|mover|1;flowclass=dl_type=0x800,nw_dst=192.168.1.23",
+              "action": "output=SingleBiSBiS@UN3|dal|1"
+            },
+            {
+              "id": 36,
+              "match": "in_port=SingleBiSBiS@UN3|mover|1;flowclass=dl_type=0x806,nw_dst=192.168.1.23",
+              "action": "output=SingleBiSBiS@UN3|dal|1"
+            }
+          ]
+        }
+      ],
+      "domain": "UN3",
+      "type": "BiSBiS",
+      "supported": [
+        "analytics_registry",
+        "ark_elasticsearch",
+        "ark_grafana",
+        "ark_hadoop",
+        "ark_influxdb",
+        "ark_kibana",
+        "ark_mgr_yarn_rm",
+        "ark_nodemanager",
+        "ark_redis",
+        "camtest:1.0",
+        "controller1:1.0",
+        "controller2:1.0",
+        "dal:1.0",
+        "javacontroller:1.0",
+        "mover:1.0",
+        "volmapper"
+      ],
+      "resources": {
+        "cpu": 10.0,
+        "mem": 51200.0,
+        "storage": 1024.0,
+        "delay": 0
+      }
+    },
+    {
+      "id": "SingleBiSBiS@UN2",
+      "name": "Unify DOCKER 2 domain single node representation",
+      "ports": [
+        {
+          "id": 1,
+          "property": {
+            "sap": "SAP12",
+            "type": "inter-domain"
+          },
+          "name": "SAP12",
+          "sap": "SAP12",
+          "flowrules": [
+            {
+              "id": 3,
+              "match": "in_port=1;flowclass=dl_type=0x800,nw_dst=192.168.1.24;TAG=SAP11|javacontroller|3",
+              "action": "output=2"
+            },
+            {
+              "id": 4,
+              "match": "in_port=1;flowclass=dl_type=0x806,nw_dst=192.168.1.24;TAG=SAP11|javacontroller|4",
+              "action": "output=2"
+            },
+            {
+              "id": 27,
+              "match": "in_port=1;flowclass=dl_type=0x800,nw_dst=192.168.1.22;TAG=SAP11|controller2|27",
+              "action": "output=2"
+            },
+            {
+              "id": 28,
+              "match": "in_port=1;flowclass=dl_type=0x806,nw_dst=192.168.1.22;TAG=SAP11|controller2|28",
+              "action": "output=2"
+            },
+            {
+              "id": 29,
+              "match": "in_port=1;flowclass=dl_type=0x800,nw_dst=192.168.1.20;TAG=SAP11|camtest|29",
+              "action": "output=SingleBiSBiS@UN2|camtest|1;UNTAG"
+            },
+            {
+              "id": 30,
+              "match": "in_port=1;flowclass=dl_type=0x806,nw_dst=192.168.1.20;TAG=SAP11|camtest|30",
+              "action": "output=SingleBiSBiS@UN2|camtest|1;UNTAG"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "property": {
+            "sap": "SAP23",
+            "type": "inter-domain"
+          },
+          "name": "SAP23",
+          "sap": "SAP23",
+          "flowrules": [
+            {
+              "id": 1,
+              "match": "in_port=2;flowclass=dl_type=0x800,nw_dst=192.168.1.102;TAG=javacontroller|SAP11|1",
+              "action": "output=1"
+            },
+            {
+              "id": 2,
+              "match": "in_port=2;flowclass=dl_type=0x806,nw_dst=192.168.1.102;TAG=javacontroller|SAP11|2",
+              "action": "output=1"
+            },
+            {
+              "id": 13,
+              "match": "in_port=2;flowclass=dl_type=0x800,nw_dst=192.168.1.20;TAG=dal|camtest|13",
+              "action": "output=SingleBiSBiS@UN2|camtest|1;UNTAG"
+            },
+            {
+              "id": 14,
+              "match": "in_port=2;flowclass=dl_type=0x806,nw_dst=192.168.1.20;TAG=dal|camtest|14",
+              "action": "output=SingleBiSBiS@UN2|camtest|1;UNTAG"
+            },
+            {
+              "id": 25,
+              "match": "in_port=2;flowclass=dl_type=0x800,nw_dst=192.168.1.102;TAG=controller2|SAP11|25",
+              "action": "output=1"
+            },
+            {
+              "id": 26,
+              "match": "in_port=2;flowclass=dl_type=0x806,nw_dst=192.168.1.102;TAG=controller2|SAP11|26",
+              "action": "output=1"
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS@UN2|camtest|1",
+          "flowrules": [
+            {
+              "id": 16,
+              "match": "in_port=SingleBiSBiS@UN2|camtest|1;flowclass=dl_type=0x806,nw_dst=192.168.1.23",
+              "action": "output=2;TAG=camtest|dal|16"
+            },
+            {
+              "id": 15,
+              "match": "in_port=SingleBiSBiS@UN2|camtest|1;flowclass=dl_type=0x800,nw_dst=192.168.1.23",
+              "action": "output=2;TAG=camtest|dal|15"
+            },
+            {
+              "id": 32,
+              "match": "in_port=SingleBiSBiS@UN2|camtest|1;flowclass=dl_type=0x806,nw_dst=192.168.1.90",
+              "action": "output=1;TAG=camtest|SAP11|32"
+            },
+            {
+              "id": 31,
+              "match": "in_port=SingleBiSBiS@UN2|camtest|1;flowclass=dl_type=0x800,nw_dst=192.168.1.90",
+              "action": "output=1;TAG=camtest|SAP11|31"
+            }
+          ]
+        }
+      ],
+      "domain": "UN2",
+      "type": "BiSBiS",
+      "supported": [
+        "analytics_registry",
+        "ark_elasticsearch",
+        "ark_grafana",
+        "ark_hadoop",
+        "ark_influxdb",
+        "ark_kibana",
+        "ark_mgr_yarn_rm",
+        "ark_nodemanager",
+        "ark_redis",
+        "camtest:1.0",
+        "controller1:1.0",
+        "controller2:1.0",
+        "dal:1.0",
+        "javacontroller:1.0",
+        "mover:1.0",
+        "volmapper"
+      ],
+      "resources": {
+        "cpu": 10.0,
+        "mem": 51200.0,
+        "storage": 1024.0,
+        "delay": 0
+      }
+    },
+    {
+      "id": "SingleBiSBiS@UN1",
+      "name": "Unify DOCKER 1 domain single node representation",
+      "ports": [
+        {
+          "id": 1,
+          "property": {
+            "sap": "SAP11"
+          },
+          "name": "SAP11",
+          "sap": "SAP11",
+          "flowrules": [
+            {
+              "id": 3,
+              "match": "in_port=1;flowclass=dl_type=0x800,nw_dst=192.168.1.24",
+              "action": "output=2;TAG=SAP11|javacontroller|3"
+            },
+            {
+              "id": 4,
+              "match": "in_port=1;flowclass=dl_type=0x806,nw_dst=192.168.1.24",
+              "action": "output=2;TAG=SAP11|javacontroller|4"
+            },
+            {
+              "id": 27,
+              "match": "in_port=1;flowclass=dl_type=0x800,nw_dst=192.168.1.22",
+              "action": "output=2;TAG=SAP11|controller2|27"
+            },
+            {
+              "id": 28,
+              "match": "in_port=1;flowclass=dl_type=0x806,nw_dst=192.168.1.22",
+              "action": "output=2;TAG=SAP11|controller2|28"
+            },
+            {
+              "id": 29,
+              "match": "in_port=1;flowclass=dl_type=0x800,nw_dst=192.168.1.20",
+              "action": "output=2;TAG=SAP11|camtest|29"
+            },
+            {
+              "id": 30,
+              "match": "in_port=1;flowclass=dl_type=0x806,nw_dst=192.168.1.20",
+              "action": "output=2;TAG=SAP11|camtest|30"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "property": {
+            "sap": "SAP12",
+            "type": "inter-domain"
+          },
+          "name": "SAP12",
+          "sap": "SAP12",
+          "flowrules": [
+            {
+              "id": 1,
+              "match": "in_port=2;flowclass=dl_type=0x800,nw_dst=192.168.1.102;TAG=javacontroller|SAP11|1",
+              "action": "output=1"
+            },
+            {
+              "id": 2,
+              "match": "in_port=2;flowclass=dl_type=0x806,nw_dst=192.168.1.102;TAG=javacontroller|SAP11|2",
+              "action": "output=1"
+            },
+            {
+              "id": 32,
+              "match": "in_port=2;flowclass=dl_type=0x806,nw_dst=192.168.1.90;TAG=camtest|SAP11|32",
+              "action": "output=1"
+            },
+            {
+              "id": 31,
+              "match": "in_port=2;flowclass=dl_type=0x800,nw_dst=192.168.1.90;TAG=camtest|SAP11|31",
+              "action": "output=1"
+            },
+            {
+              "id": 25,
+              "match": "in_port=2;flowclass=dl_type=0x800,nw_dst=192.168.1.102;TAG=controller2|SAP11|25",
+              "action": "output=1"
+            },
+            {
+              "id": 26,
+              "match": "in_port=2;flowclass=dl_type=0x806,nw_dst=192.168.1.102;TAG=controller2|SAP11|26",
+              "action": "output=1"
+            }
+          ]
+        }
+      ],
+      "domain": "UN1",
+      "type": "BiSBiS",
+      "supported": [
+        "analytics_registry",
+        "ark_elasticsearch",
+        "ark_grafana",
+        "ark_hadoop",
+        "ark_influxdb",
+        "ark_kibana",
+        "ark_mgr_yarn_rm",
+        "ark_nodemanager",
+        "ark_redis",
+        "camtest:1.0",
+        "controller1:1.0",
+        "controller2:1.0",
+        "dal:1.0",
+        "javacontroller:1.0",
+        "mover:1.0",
+        "volmapper"
+      ],
+      "resources": {
+        "cpu": 10.0,
+        "mem": 51200.0,
+        "storage": 1024.0,
+        "delay": 0
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "4df33dc7-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "javacontroller",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS@UN3",
+      "dst_port": "SingleBiSBiS@UN3|javacontroller|1",
+      "backward": true
+    },
+    {
+      "id": "SAP33-SingleBiSBiS@UN3-link",
+      "src_node": "SAP33",
+      "src_port": 2,
+      "dst_node": "SingleBiSBiS@UN3",
+      "dst_port": 2,
+      "delay": 0
+    },
+    {
+      "id": "4df33dc5-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "dal",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS@UN3",
+      "dst_port": "SingleBiSBiS@UN3|dal|1",
+      "backward": true
+    },
+    {
+      "id": "4df33dcb-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "camtest",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS@UN2",
+      "dst_port": "SingleBiSBiS@UN2|camtest|1",
+      "backward": true
+    },
+    {
+      "id": "4df33dc3-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "controller2",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS@UN3",
+      "dst_port": "SingleBiSBiS@UN3|controller2|1",
+      "backward": true
+    },
+    {
+      "id": "4df33dc9-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "controller1",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS@UN3",
+      "dst_port": "SingleBiSBiS@UN3|controller1|1",
+      "backward": true
+    },
+    {
+      "id": "SAP33-SingleBiSBiS@UN3-link-back",
+      "src_node": "SingleBiSBiS@UN3",
+      "src_port": 2,
+      "dst_node": "SAP33",
+      "dst_port": 2,
+      "delay": 0,
+      "backward": true
+    },
+    {
+      "id": "4df33dc4-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "SingleBiSBiS@UN3",
+      "src_port": "SingleBiSBiS@UN3|dal|1",
+      "dst_node": "dal",
+      "dst_port": 1
+    },
+    {
+      "id": "4df33dc2-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "SingleBiSBiS@UN3",
+      "src_port": "SingleBiSBiS@UN3|controller2|1",
+      "dst_node": "controller2",
+      "dst_port": 1
+    },
+    {
+      "id": "4df33dc8-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "SingleBiSBiS@UN3",
+      "src_port": "SingleBiSBiS@UN3|controller1|1",
+      "dst_node": "controller1",
+      "dst_port": 1
+    },
+    {
+      "id": "inter-domain-link-SAP23-back",
+      "src_node": "SingleBiSBiS@UN3",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS@UN2",
+      "dst_port": 2,
+      "backward": true
+    },
+    {
+      "id": "4df33dc6-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "SingleBiSBiS@UN3",
+      "src_port": "SingleBiSBiS@UN3|javacontroller|1",
+      "dst_node": "javacontroller",
+      "dst_port": 1
+    },
+    {
+      "id": "4df33dcc-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "SingleBiSBiS@UN3",
+      "src_port": "SingleBiSBiS@UN3|mover|1",
+      "dst_node": "mover",
+      "dst_port": 1
+    },
+    {
+      "id": "inter-domain-link-SAP23",
+      "src_node": "SingleBiSBiS@UN2",
+      "src_port": 2,
+      "dst_node": "SingleBiSBiS@UN3",
+      "dst_port": 1
+    },
+    {
+      "id": "4df33dca-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "SingleBiSBiS@UN2",
+      "src_port": "SingleBiSBiS@UN2|camtest|1",
+      "dst_node": "camtest",
+      "dst_port": 1
+    },
+    {
+      "id": "inter-domain-link-SAP12-back",
+      "src_node": "SingleBiSBiS@UN2",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS@UN1",
+      "dst_port": 2,
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAP12",
+      "src_node": "SingleBiSBiS@UN1",
+      "src_port": 2,
+      "dst_node": "SingleBiSBiS@UN2",
+      "dst_port": 1
+    },
+    {
+      "id": "SAP11-SingleBiSBiS@UN1-link-back",
+      "src_node": "SingleBiSBiS@UN1",
+      "src_port": 1,
+      "dst_node": "SAP11",
+      "dst_port": 1,
+      "delay": 0,
+      "backward": true
+    },
+    {
+      "id": "4df33dcd-ab17-11e6-97d9-645106b16e7d",
+      "src_node": "mover",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS@UN3",
+      "dst_port": "SingleBiSBiS@UN3|mover|1",
+      "backward": true
+    },
+    {
+      "id": "SAP11-SingleBiSBiS@UN1-link",
+      "src_node": "SAP11",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS@UN1",
+      "dst_port": 1,
+      "delay": 0
+    }
+  ]
+}
