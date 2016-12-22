@@ -19,7 +19,7 @@ echo
 ## Test case header - END
 
 # Define run command here
-ESCAPE_CMD="${ESCAPE} --debug --test --quit --log ${CWD}/escape.log \
+ESCAPE_CMD="${ESCAPE} --debug --test --log ${CWD}/escape.log \
             --config ${CWD}/test.config"
 
 # Invoke ESCAPE with test parameters

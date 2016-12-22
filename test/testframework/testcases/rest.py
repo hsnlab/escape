@@ -47,9 +47,10 @@ class RESTBasedServiceMixIn(EscapeTestCase):
   RPC_REQUEST_NFFG = "sg"
   RPC_REQUEST_VIRTUALIZER = "edit-config"
 
-  def __init__ (self, url=None, **kwargs):
+  def __init__ (self, url=None, delay=None, **kwargs):
     super(RESTBasedServiceMixIn, self).__init__(**kwargs)
     self.url = url if url else self.DEFAULT_URL
+    self.delay = delay if delay is not None else self.REQUEST_DELAY
     self.thread = None
     self._suppress_requests_logging()
 
@@ -59,24 +60,22 @@ class RESTBasedServiceMixIn(EscapeTestCase):
 
   def runTest (self):
     try:
+      # Init ESCAPE process in separate thread to send request through its
+      # REST API and be able to wait for the result
       self.thread = Thread(target=self.run_escape)
       self.thread.setDaemon(True)
       self.thread.start()
-
-      time.sleep(self.REQUEST_DELAY)
-
       self.send_requests()
-
       self.thread.join(timeout=self.command_runner.kill_timeout + 1)
     except KeyboardInterrupt:
-      log.error("Received KeyboardInterrupt! Abort running thread...")
+      log.error("\nReceived KeyboardInterrupt! Abort running thread...")
       self.command_runner.kill_process()
       raise
-
     if self.thread.isAlive():
       self.command_runner.kill_process()
       raise RuntimeError("ESCAPE's runner thread has got TIMEOUT!")
-
+    # Verify result here because logging in file is slow comapred to the
+    # testframework
     self.verify_result()
     # TODO - Move validation into loop of send requests
     # TODO - handle buffered file logging and do not crash if escape-log is
@@ -85,28 +84,50 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     self.success = True
 
   def send_requests (self):
+    """
+    Send all request started with a prefix in the test case folder to the
+    REST API of ESCAPE.
+
+    :return: None
+    """
     testcase_dir = self.test_case_info.testcase_dir_name
     reqs = sorted([os.path.join(testcase_dir, file_name)
                    for file_name in os.listdir(testcase_dir)
                    if file_name.startswith(self.REQUEST_PREFIX)])
     for request_file in reqs:
-      with open(request_file, 'r') as f:
+      # Wait for ESCAPE coming up, flushing to file - no callback yet
+      time.sleep(self.delay)
+      with open(request_file) as f:
         ext = request_file.rsplit('.', 1)[-1]
         ret = self._send_request(data=f.read(), ext=ext)
-        self.assertTrue(ret, msg="Request: %s - ESCAPE responded with ERROR "
-                                 "status!" % request_file)
+        self.assertTrue(ret, msg="Got error while sending request: %s"
+                                 % request_file)
+    # Wait for last orchestration step before stop ESCAPE
+    time.sleep(self.delay)
+    self.command_runner.stop()
 
   def _send_request (self, data, ext):
+    """
+    Send one request read from file to the configured URL.
+
+    :param data: raw request data
+    :type data: str
+    :param ext: file extension to define request format
+    :type ext: str
+    :return: request sending was successful or not
+    :rtype: bool
+    """
     headers = dict()
     if ext.upper() == 'XML':
       headers['Content-Type'] = "application/xml"
     elif ext.upper() == 'NFFG':
       headers['Content-Type'] = "application/json"
-    ret = requests.post(url=self.url, data=data, headers=headers,
-                        timeout=self.REQUEST_TIMEOUT)
-    if ret.status_code == self.REQUEST_SUCCESS_CODE:
-      return True
-    else:
+    try:
+      ret = requests.post(url=self.url, data=data, headers=headers,
+                          timeout=self.REQUEST_TIMEOUT)
+      return True if ret.status_code == self.REQUEST_SUCCESS_CODE else False
+    except requests.RequestException as e:
+      log.error("FAIL\nFailed to send request to ESCAPE: %s" % e.message)
       return False
 
 

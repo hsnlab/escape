@@ -89,6 +89,10 @@ class CommandRunner(object):
     self.__kill_timer = None
     self.__killed = False
 
+  @property
+  def is_killed (self):
+    return self.__killed
+
   @staticmethod
   def __evaluate_cmd (cmd):
     """
@@ -103,28 +107,6 @@ class CommandRunner(object):
       return list(cmd)
     else:
       return None
-
-  @property
-  def is_killed (self):
-    return self.__killed
-
-  def kill_process (self, *args, **kwargs):
-    """
-    Kill the process and call the optional hook function.
-    """
-    if self.__process:
-      self.__process.sendcontrol('c')
-    if self.__kill_timer:
-      self.__kill_timer.cancel()
-    self.__killed = True
-    if self.on_kill_hook:
-      self.on_kill_hook()
-
-  def get_process_output_stream (self):
-    """
-    :return: Return with the process buffer.
-    """
-    return self.__process.before if self.__process.before else ""
 
   def execute (self):
     """
@@ -149,6 +131,32 @@ class CommandRunner(object):
       if self.__kill_timer:
         self.__kill_timer.cancel()
     return self
+
+  def kill_process (self, *args, **kwargs):
+    """
+    Kill the process and call the optional hook function.
+    """
+    self.stop()
+    self.__killed = True
+    if self.on_kill_hook:
+      self.on_kill_hook()
+
+  def stop (self):
+    """
+    Stop the process.
+
+    :return: None
+    """
+    if self.__process:
+      self.__process.sendcontrol('c')
+    if self.__kill_timer:
+      self.__kill_timer.cancel()
+
+  def get_process_output_stream (self):
+    """
+    :return: Return with the process buffer.
+    """
+    return self.__process.before if self.__process.before else ""
 
   def clone (self):
     return copy.deepcopy(self)
