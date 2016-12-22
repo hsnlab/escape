@@ -187,7 +187,7 @@ class AbstractAPI(EventMixin):
     """
     if graph_file and not graph_file.startswith('/'):
       graph_file = os.path.abspath(graph_file)
-    with open(graph_file, 'r') as f:
+    with open(graph_file) as f:
       graph = f.read()
     return graph
 

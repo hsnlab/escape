@@ -239,7 +239,7 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
       # Collect result
       self.run_result = self.collect_result_from_log()
     except KeyboardInterrupt:
-      log.error("Received KeyboardInterrupt! Abort running testcase...")
+      log.error("\nReceived KeyboardInterrupt! Abort running testcase...")
       self.terminate_testcase()
       self.collect_result_from_log()
       raise

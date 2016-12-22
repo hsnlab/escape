@@ -107,7 +107,7 @@ class ESCAPEConfig(object):
     path = os.path.join(PROJECT_ROOT, path)
     log.info("Load default config from file: %s" % path)
     try:
-      with open(path, 'r') as f:
+      with open(path) as f:
         self.__configuration = json.load(f, object_hook=unicode_to_str)
     except IOError:
       log.warning('Default config file: %s is not found!' % path)

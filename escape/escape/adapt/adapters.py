@@ -510,7 +510,7 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
     """
     try:
       path = os.path.join(PROJECT_ROOT, path)
-      with open(path, 'r') as f:
+      with open(path) as f:
         log.debug("Load topology from file: %s" % path)
         topo = self.rewrite_domain(NFFG.parse(f.read()))
         if self.check_backward_links:

@@ -753,7 +753,7 @@ class ESCAPENetworkBuilder(object):
       log.error("Missing file path of Topology description")
       return
     try:
-      with open(path, 'r') as f:
+      with open(path) as f:
         log.info("Load topology from file: %s" % path)
         if format == self.DEFAULT_NFFG_FORMAT:
           log.debug("Using file format: %s" % format)
