@@ -15,7 +15,7 @@
 from functools import partial
 
 import e2e_reqs_for_testframework
-import networkx_nffg_generator as nrg
+import networkx_nffg_generator
 import sg_generator
 
 DEFAULT_SEED = 0
@@ -40,10 +40,28 @@ complex_e2e_reqs = partial(e2e_reqs_for_testframework.main,
                            max_e2e_lat_multiplier=20,
                            min_e2e_lat_multiplier=1.1)
 
+networkx_resource_generator = partial(networkx_nffg_generator
+                                      .networkx_resource_generator,
+                                      seed=DEFAULT_SEED,
+                                      max_cpu=40, max_mem=16000,
+                                      max_storage=30, max_link_bw=70,
+                                      abc_nf_types_len=10,
+                                      supported_nf_cnt=6, max_link_delay=1,
+                                      sap_cnt=10)
+
+balanced_tree_request = partial(sg_generator.get_balanced_tree, r=2, h=3,
+                                seed=DEFAULT_SEED,
+                                max_cpu=4, max_mem=1600,
+                                max_storage=3,
+                                max_link_bw=5,
+                                min_link_delay=2,
+                                abc_nf_types_len=10,
+                                max_link_delay=4)
 
 def networkx_request_generator (gen_func, seed=0, **kwargs):
   """
   Chooses a built-in NetworkX topology generator which creates 
   request graph NFFG.
   """
-  return nrg.networkx_request_generator(gen_func, seed=0, **kwargs)
+  return networkx_nffg_generator.networkx_request_generator(gen_func, seed=0,
+                                                            **kwargs)

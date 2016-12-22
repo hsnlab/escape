@@ -26,7 +26,7 @@ import sys
 
 import networkx as nx
 
-from sg_generator import getName
+from sg_generator import NameGenerator
 
 # Needed to run the Algorithm scripts in the parent folder.
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -85,6 +85,7 @@ def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
      #(VNF-s used by at least two SC-s)/#(not shared VNF-s).
   """
   sc_count = 1
+  gen = NameGenerator()
   # maximal possible bandwidth for chains
   if multiSC:
     sc_count = rnd.randint(2, max_sc_count)
@@ -123,7 +124,7 @@ def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
         for sap1port in sap1.ports:
           break
       else:
-        sap1port = sap1.add_port(id=getName("port"))
+        sap1port = sap1.add_port(id=gen.get_name("port"))
       last_req_port = sap1port
       # generate some VNF-s connecting the two SAP-s
       vnf_cnt = next(gen_seq()) % chain_maxlen + 1
@@ -155,17 +156,17 @@ def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
                            storage=rnd.random() * max_storage)
 
         nfs_this_sc.append(nf)
-        newport = nf.add_port(id=getName("port"))
-        sglink = nffg.add_sglink(last_req_port, newport, id=getName("link"))
+        newport = nf.add_port(id=gen.get_name("port"))
+        sglink = nffg.add_sglink(last_req_port, newport, id=gen.get_name("link"))
         sg_path.append(sglink.id)
-        last_req_port = nf.add_port(id=getName("port"))
+        last_req_port = nf.add_port(id=gen.get_name("port"))
 
       if len(sap2.ports) > 0:
         for sap2port in sap2.ports:
           break
       else:
-        sap2port = sap2.add_port(id=getName("port"))
-      sglink = nffg.add_sglink(last_req_port, sap2port, id=getName("link"))
+        sap2port = sap2.add_port(id=gen.get_name("port"))
+      sglink = nffg.add_sglink(last_req_port, sap2port, id=gen.get_name("link"))
       sg_path.append(sglink.id)
 
       # WARNING: this is completly a wild guess! Failing due to this doesn't 
@@ -178,7 +179,7 @@ def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
       maxlat = avg_shp_len * max_e2e_lat_multiplier
       nffg.add_req(sap1port, sap2port, delay=rnd.uniform(minlat, maxlat),
                    bandwidth=rnd.random() * max_bw,
-                   sg_path=sg_path, id=getName("req"))
+                   sg_path=sg_path, id=gen.get_name("req"))
       log.debug(
         "Service Chain on NF-s added: %s" % [nf.id for nf in nfs_this_sc])
       # this prevents loops in the chains and makes new and old NF-s equally 
