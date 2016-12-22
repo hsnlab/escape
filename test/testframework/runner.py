@@ -116,10 +116,9 @@ class CommandRunner(object):
     try:
       self.__process = pexpect.spawn(self._command[0],
                                      args=self._command[1:],
-                                     timeout=self.KILL_TIMEOUT + 1,
+                                     timeout=self.kill_timeout + 1,
                                      cwd=self._cwd,
                                      logfile=self.output_stream)
-
       self.__kill_timer = Timer(self.kill_timeout, self.kill_process,
                                 [self.__process])
       self.__kill_timer.start()
