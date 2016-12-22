@@ -30,25 +30,26 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
 from nffg import NFFG
 
 
-def getGenForName (prefix):
-  number = 0
-  while True:
-    yield prefix + str(number)
-    number += 1
+class NameGenerator(object):
+  def __init__ (self):
+    self.prefixes = {}
 
+  def _get_gen_for_name (self, prefix):
+    number = 0
+    while True:
+      yield prefix + str(number)
+      number += 1
 
-prefixes = {}
-
-
-def getName (prefix):
-  # WARNING! this function is not thread safe!!
-  global prefixes
-  while True:
-    if prefix in prefixes:
-      return prefixes[prefix].next()
+  def get_name (self, prefix):
+    if prefix in self.prefixes:
+      return self.prefixes[prefix].next()
     else:
-      prefixes[prefix] = getGenForName(prefix)
-      return prefixes[prefix].next()
+      self.prefixes[prefix] = self._get_gen_for_name(prefix)
+      return self.prefixes[prefix].next()
+
+  def reset_name (self, prefix):
+    if prefix in self.prefixes:
+      del self.prefixes[prefix]
 
 
 def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
@@ -70,6 +71,7 @@ def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
     saps.append("sap" + str(i))
   rnd = random.Random()
   rnd.seed(seed)
+  gen = NameGenerator()
   nffg = NFFG(id="8loops-req")
   nffg.mode = NFFG.MODE_ADD
   nf_types = list(string.ascii_uppercase)[:abc_nf_types_len]
@@ -84,7 +86,7 @@ def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
       for sapp in sapo.ports:
         break
     else:
-      sapp = sapo.add_port(id=getName("port"))
+      sapp = sapo.add_port(id=gen.get_name("port"))
     vnfs1 = rnd.sample(nf_types, rnd.randint(1, len(nf_types)))
     vnfs2 = rnd.sample(nf_types, rnd.randint(1, len(nf_types)))
     nfmiddle = nffg.add_nf(id="nf0" + str(j), name="nf_middle" + str(j),
@@ -105,26 +107,72 @@ def get_8loop_request (abc_nf_types_len=10, seed=0, eightloops=1):
         nf1 = nffg.add_nf(id="-".join(("nf", str(j), str(i))),
                           name="nf" + str(i) + "_" + vnf, func_type=vnf,
                           cpu=1, mem=1, storage=1)
-        nffg.add_sglink(src_port=nf0.add_port(id=getName("port")),
-                        dst_port=nf1.add_port(id=getName("port")),
+        nffg.add_sglink(src_port=nf0.add_port(id=gen.get_name("port")),
+                        dst_port=nf1.add_port(id=gen.get_name("port")),
                         flowclass="HTTP", id=i)
         nf0 = nf1
         i += 1
       if once:
-        nffg.add_sglink(src_port=nf0.add_port(id=getName("port")),
-                        dst_port=nfmiddle.add_port(id=getName("port")),
+        nffg.add_sglink(src_port=nf0.add_port(id=gen.get_name("port")),
+                        dst_port=nfmiddle.add_port(id=gen.get_name("port")),
                         flowclass="HTTP", id=i)
         once = False
       i += 1
-    nffg.add_sglink(src_port=nf1.add_port(id=getName("port")), dst_port=sapp,
+    nffg.add_sglink(src_port=nf1.add_port(id=gen.get_name("port")),
+                    dst_port=sapp,
                     flowclass="HTTP", id=i)
     nffg.add_sglink(src_port=sapp,
-                    dst_port=nfmiddle.add_port(id=getName("port")),
+                    dst_port=nfmiddle.add_port(id=gen.get_name("port")),
                     flowclass="HTTP", id=i + 1)
     i += 2
   return nffg
 
 
+def get_balanced_tree (r=2, h=3, seed=0, max_cpu=4, max_mem=1600,
+                       max_storage=3, max_link_bw=5, min_link_delay=2,
+                       abc_nf_types_len=10, max_link_delay=4):
+  """
+  Gets a balanced tree which has SAPs in the root and the leaves, directed
+  from the root to the leaves.
+
+  :param r: branching factor of the tree
+  :param h: height of the tree
+  :return: NFFG
+  """
+  nf_types = list(string.ascii_uppercase)[:abc_nf_types_len]
+  nffg = NFFG(id="req-tree-branching-" + str(r) + "-height-" + str(h))
+  nffg.mode = NFFG.MODE_ADD
+
+  rnd = random.Random()
+  rnd.seed(seed)
+  gen = NameGenerator()
+  sap_obj = nffg.add_sap(id=gen.get_name("sap"))
+
+  prev_level_nf_ports = [sap_obj.add_port(id=gen.get_name("port"))]
+  for level in xrange(0, h):
+    curr_level_nf_ports = []
+    for prev_level_port in prev_level_nf_ports:
+      for j in xrange(0, r):
+        nf = nffg.add_nf(id=gen.get_name("nf"), func_type=rnd.choice(nf_types),
+                         cpu=rnd.random() * max_cpu,
+                         mem=rnd.random() * max_mem,
+                         storage=rnd.random() * max_storage)
+        nffg.add_sglink(prev_level_port, nf.add_port(gen.get_name("port")),
+                        id=gen.get_name("sghop"))
+        curr_level_nf_ports.append(nf.add_port(gen.get_name("port")))
+    prev_level_nf_ports = curr_level_nf_ports
+
+  for port in prev_level_nf_ports:
+    sap = nffg.add_sap(id=gen.get_name("sap"))
+    nffg.add_sglink(port, sap.add_port(id=gen.get_name("port")),
+                    id=gen.get_name("delay_sghop"),
+                    delay=rnd.uniform(min_link_delay, max_link_delay),
+                    bandwidth=rnd.random() * max_link_bw)
+
+  return nffg
+
+
 if __name__ == '__main__':
-  nffg = get_8loop_request(eightloops=3)
+  # nffg = get_8loop_request(eightloops=3)
+  nffg = get_balanced_tree(r=2, h=2)
   print nffg.dump()
