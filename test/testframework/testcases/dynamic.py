@@ -211,35 +211,46 @@ class DynamicTestGenerator(BaseTestSuite):
     :return: iterator
     """
     seed_iterators = []
+    # If config is missing, return with no seed pairs
     if not self.testcase_cfg:
-      return
+      return ()
     if self.num_of_requests > 0 and self.REQUEST_CFG_NAME in self.testcase_cfg:
+      # If seed value is given
       if self.SEED_NAME in self.testcase_cfg[self.REQUEST_CFG_NAME]:
         seed = self.testcase_cfg[self.REQUEST_CFG_NAME][self.SEED_NAME]
+        # If seed list is explicitly given
         if isinstance(seed, list):
           seed_iterators.append(iter(seed))
         else:
           seed_iterators.append(xrange(seed, seed + self.num_of_requests))
       else:
+        # Use default seed value for seed list
         seed_iterators.append(
           xrange(DEFAULT_SEED, DEFAULT_SEED + self.num_of_requests))
     else:
+      # Use specific tuple with None value to feed the pair generator function
       seed_iterators.append((None,))
     if self.num_of_topos > 0 and self.TOPOLOGY_CFG_NAME in self.testcase_cfg:
+      # If seed value is given
       if self.SEED_NAME in self.testcase_cfg[self.TOPOLOGY_CFG_NAME]:
         seed = self.testcase_cfg[self.TOPOLOGY_CFG_NAME][self.SEED_NAME]
+        # If seed list is explicitly given
         if isinstance(seed, list):
           seed_iterators.append(iter(seed))
         else:
           seed_iterators.append(xrange(seed, seed + self.num_of_topos))
       else:
+        # Use default seed value for seed list
         seed_iterators.append(
           xrange(DEFAULT_SEED, DEFAULT_SEED + self.num_of_topos))
     else:
+      # Use specific tuple with None value to feed the pair generator function
       seed_iterators.append((None,))
     if self.full_combination:
+      # Generate Cartesian product
       return itertools.product(*seed_iterators)
     else:
+      # Generate pairs based on the value position in the lists
       return itertools.izip(*seed_iterators)
 
   def _create_test_cases (self):
