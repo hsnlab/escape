@@ -100,8 +100,9 @@ class TestSuitBuilder(object):
     # Create TestCase class
     if os.path.exists(case_info.config_file_name):
       TESTCASE_CLASS, test_args = case_info.load_test_case_class()
-      log.debug("Loaded class: %s, arguments: %s" % (TESTCASE_CLASS, test_args))
       if TESTCASE_CLASS:
+        # log.debug(
+        #   "Loaded class: %s, arguments: %s" % (TESTCASE_CLASS, test_args))
         return TESTCASE_CLASS(test_case_info=case_info,
                               command_runner=cmd_runner,
                               **test_args)

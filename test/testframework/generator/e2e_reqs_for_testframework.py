@@ -179,8 +179,8 @@ def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
       nffg.add_req(sap1port, sap2port, delay=rnd.uniform(minlat, maxlat),
                    bandwidth=rnd.random() * max_bw,
                    sg_path=sg_path, id=getName("req"))
-      log.debug(
-        "Service Chain on NF-s added: %s" % [nf.id for nf in nfs_this_sc])
+      # log.debug(
+      #   "Service Chain on NF-s added: %s" % [nf.id for nf in nfs_this_sc])
       # this prevents loops in the chains and makes new and old NF-s equally 
       # preferable in total for NF sharing
       new_nfs = [vnf for vnf in nfs_this_sc if vnf not in current_nfs]

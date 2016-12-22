@@ -16,6 +16,7 @@ import itertools
 import json
 import logging
 import os
+from pprint import pformat
 from unittest import BaseTestSuite
 
 from testframework.generator.generator import DEFAULT_SEED
@@ -59,11 +60,14 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
     :type topology_cfg: dict
     :type kwargs: dict
     """
+    super(DynamicallyGeneratedTestCase, self).__init__(**kwargs)
     self.request_cfg = request_cfg
     self.new_req = False
     self.topology_cfg = topology_cfg
     self.new_topo = False
-    super(DynamicallyGeneratedTestCase, self).__init__(**kwargs)
+    log.debug("request_cfg:\n%s\ntopology_cfg:\n%s"
+              % (pformat(self.request_cfg, indent=2),
+                 pformat(self.topology_cfg, indent=2)))
 
   @classmethod
   def __generate_nffg (cls, cfg):

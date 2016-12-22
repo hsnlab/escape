@@ -151,7 +151,7 @@ class EscapeTestCase(TestCase):
     self.run_result = None
     """:type result: testframework.runner.EscapeRunResult"""
     self.success = False
-    log.debug("Init  %r" % self)
+    log.debug(">>> Init  %r" % self)
 
   def __str__ (self):
     return "Test:   %s\t(%s)" % (
