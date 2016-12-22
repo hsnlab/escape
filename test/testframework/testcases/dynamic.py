@@ -183,8 +183,18 @@ class DynamicTestGenerator(BaseTestSuite):
     """
     Return an iterator which generates the tuple (request, topology) of seed
     values for test cases based on the config values:
+      * default seed value which can be a number or a list of seed values
       * number of generated request/topology
       * test generation mode (full_combination or ordered pairs of request/topo)
+
+    If the seed value is a number, this generator considers it as the first
+    value of the used seed interval.
+    If the seed value is a list, this generator considers it as the seed
+    interval and the number_of_* parameters mark out the used values from the
+    beginning of the seed intervals.
+
+    Based on the request and topology seed intervals this function generates
+    the pairs of seeds using the full_combination flag.
 
     Generation modes (full_combination, num_of_requests, num_of_topos):
 
@@ -206,7 +216,10 @@ class DynamicTestGenerator(BaseTestSuite):
     if self.num_of_requests > 0 and self.REQUEST_CFG_NAME in self.testcase_cfg:
       if self.SEED_NAME in self.testcase_cfg[self.REQUEST_CFG_NAME]:
         seed = self.testcase_cfg[self.REQUEST_CFG_NAME][self.SEED_NAME]
-        seed_iterators.append(xrange(seed, seed + self.num_of_requests))
+        if isinstance(seed, list):
+          seed_iterators.append(iter(seed))
+        else:
+          seed_iterators.append(xrange(seed, seed + self.num_of_requests))
       else:
         seed_iterators.append(
           xrange(DEFAULT_SEED, DEFAULT_SEED + self.num_of_requests))
@@ -215,7 +228,10 @@ class DynamicTestGenerator(BaseTestSuite):
     if self.num_of_topos > 0 and self.TOPOLOGY_CFG_NAME in self.testcase_cfg:
       if self.SEED_NAME in self.testcase_cfg[self.TOPOLOGY_CFG_NAME]:
         seed = self.testcase_cfg[self.TOPOLOGY_CFG_NAME][self.SEED_NAME]
-        seed_iterators.append(xrange(seed, seed + self.num_of_topos))
+        if isinstance(seed, list):
+          seed_iterators.append(iter(seed))
+        else:
+          seed_iterators.append(xrange(seed, seed + self.num_of_topos))
       else:
         seed_iterators.append(
           xrange(DEFAULT_SEED, DEFAULT_SEED + self.num_of_topos))
