@@ -129,7 +129,7 @@ function install_core {
     info "=== Install ESCAPEv2 Python dependencies ==="
     sudo -H pip install --upgrade setuptools
     sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
-    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient
+    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient pyyaml
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
 
     info "=== Install ESCAPEv2 Python dependencies ==="
@@ -298,6 +298,8 @@ function install_dev {
     # texlive-latex-extra for doc generation in PDF format
     sudo apt-get install -y graphviz texlive-latex-extra
     sudo -H pip install tornado sphinx
+    # Install test requirements
+    . ./test/install_requirements.sh
 }
 
 # Install GUI dependencies
