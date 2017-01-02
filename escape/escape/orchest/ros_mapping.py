@@ -14,6 +14,8 @@
 """
 Contains classes which implement :any:`NFFG` mapping functionality.
 """
+import cProfile
+import pstats
 
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import *
@@ -29,6 +31,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
   """
   Implement a strategy to map initial :any:`NFFG` into extended :any:`NFFG`.
   """
+  LAYER_NAME = LAYER_NAME
 
   def __init__ (self):
     """
@@ -37,6 +40,48 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :return: None
     """
     super(ESCAPEMappingStrategy, self).__init__()
+
+  @classmethod
+  def call_mapping_algorithm (cls, request, topology, **params):
+    """
+    Template function to call the main algorithm.
+    Provide an easy way to change the algorithm easily in child classes.
+
+    Contains profiling to measure basic performance of the algorithm.
+
+    :param request: request graph
+    :type request: :any:`NFFG`
+    :param topology: topology graph
+    :type topology: :any:`NFFG`
+    :param params: additional mapping parameters
+    :type params: dict
+    :return: mapping result
+    :rtype: :any:`NFFG`
+    """
+    profile = cProfile.Profile(builtins=False, subcalls=False)
+    try:
+      profile.enable()
+      res = MAP(request=request, network=topology, **params)
+    finally:
+      profile.disable()
+      cls.__process_profile_result(profile=profile)
+      profile.create_stats()
+    return res
+
+  @classmethod
+  def __process_profile_result (cls, profile):
+    """
+    Process profiling data.
+
+    :param profile: main Profile object
+    :type profile: cProfile.Profile
+    :return: None
+    """
+    profile.create_stats()
+    stat = pstats.Stats(profile)
+    log.info("Mapping algorithm finished with %d function calls "
+              "(%d primitive calls) in %.3f seconds!" %
+              (stat.total_calls, stat.prim_calls, stat.total_tt))
 
   @classmethod
   def map (cls, graph, resource):
@@ -60,7 +105,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       return
     try:
       # Copy mapping config
-      mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME).copy()
+      mapper_params = CONFIG.get_mapping_config(layer=cls.LAYER_NAME).copy()
       if 'mode' in mapper_params and mapper_params['mode']:
         log.debug("Setup mapping mode from configuration: %s" %
                   mapper_params['mode'])
@@ -68,12 +113,13 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
         mapper_params['mode'] = graph.mode
         log.debug("Setup mapping mode based on request: %s" %
                   mapper_params['mode'])
-      mapped_nffg = MAP(request=graph.copy(),
-                        network=resource.copy(),
-                        **mapper_params)
+      mapped_nffg = cls.call_mapping_algorithm(request=graph.copy(),
+                                               topology=resource.copy(),
+                                               **mapper_params)
       # Set mapped NFFG id for original SG request tracking
+      log.debug("Move request metadata into mapping result...")
       mapped_nffg.id = graph.id
-      mapped_nffg.name = graph.name + "-ros-mapped"
+      mapped_nffg.name = "%s-%s-mapped" % (graph.name, cls.LAYER_NAME)
       # Explicitly copy metadata
       mapped_nffg.metadata = graph.metadata.copy()
       # Explicit copy of SAP data
@@ -81,8 +127,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
         if sap.id in mapped_nffg:
           mapped_nffg[sap.id].metadata = graph[sap.id].metadata.copy()
       log.info("Mapping algorithm: %s is finished on NF-FG: %s" %
-               (cls.__name__, graph))
-      # print mapped_nffg.dump()
+               (cls.__name__, mapped_nffg))
       return mapped_nffg
     except MappingException as e:
       log.error(
@@ -95,8 +140,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       return
     except InternalAlgorithmException as e:
       log.critical(
-        "Mapping algorithm fails due to implementation error or conceptual "
-        "error! Cause:\n%s" % e.msg)
+        "Mapping algorithm fails due to internal error! Cause:\n%s" % e.msg)
       log.warning("Mapping algorithm on %s is aborted!" % graph)
       return
     except:
