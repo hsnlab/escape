@@ -21,11 +21,13 @@ import os
 import pprint
 from distutils.util import strtobool
 
+from yaml.parser import ParserError
+
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.infr import LAYER_NAME as INFR
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
-from escape.util.misc import Singleton, VERBOSE, unicode_to_str
+from escape.util.misc import Singleton, VERBOSE, unicode_to_str, quit_with_error
 from pox.core import log, core
 
 # Store the project root where escape.py is started in
@@ -55,7 +57,7 @@ class ESCAPEConfig(object):
   LAYERS = (SERVICE, ORCHEST, ADAPT, INFR)
   """Predefined layer names"""
   # Default additional config name
-  DEFAULT_CONFIG_FILE = "escape.config"  # relative to project root
+  DEFAULT_CONFIG_FILE = "escape-config.json"  # relative to project root
   """Path of the default config file"""
 
   def __init__ (self, default=None):
@@ -95,6 +97,31 @@ class ESCAPEConfig(object):
     if isinstance(cfg, dict) and cfg:
       self.__configuration = cfg
 
+  @staticmethod
+  def _load_cfg_file (path):
+    """
+    Load external configuration from file. Support JSON and YAML format.
+
+    :param path: file path
+    :type path: str
+    :return: loaded configuration
+    :rtype: dict
+    """
+    try:
+      with open(path) as f:
+        if path.endswith('yml'):
+          import yaml
+          return yaml.safe_load(f)
+        elif path.endswith('json') or path.endswith('config'):
+          return json.load(f, object_hook=unicode_to_str)
+        else:
+          raise ConfigurationError(
+            "Unsupported configuration extension: %s" % path)
+    except IOError:
+      quit_with_error('Default config file: %s is not found!' % path)
+    except Exception as e:
+      quit_with_error("An error occurred when load configuration: %s" % e)
+
   def __initialize_from_file (self, path):
     """
     Initialize the config from a file given by ``path``.
@@ -106,12 +133,7 @@ class ESCAPEConfig(object):
     # Load file
     path = os.path.join(PROJECT_ROOT, path)
     log.info("Load default config from file: %s" % path)
-    try:
-      with open(path) as f:
-        self.__configuration = json.load(f, object_hook=unicode_to_str)
-    except IOError:
-      log.warning('Default config file: %s is not found!' % path)
-      self.__configuration = dict.fromkeys(self.LAYERS, {})
+    self.__configuration = self._load_cfg_file(path=path)
 
   def load_config (self, config=None):
     """
@@ -143,8 +165,7 @@ class ESCAPEConfig(object):
     try:
       if config:
         # Load file
-        with open(os.path.abspath(config), 'r') as f:
-          cfg = json.load(f, object_hook=unicode_to_str)
+        cfg = self._load_cfg_file(path=os.path.abspath(config))
         # Iterate over layer config
         changed = False
         for layer in cfg:
@@ -155,8 +176,6 @@ class ESCAPEConfig(object):
           log.info("Running configuration has been updated from file!")
     except IOError:
       log.error("Additional configuration file not found: %s" % config)
-    except ValueError as e:
-      log.error("An error occurred when load configuration: %s" % e)
     # Register config into pox.core to be reachable for other future
     # components -not used currently
     self.__initiated = True
