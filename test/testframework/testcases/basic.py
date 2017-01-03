@@ -245,7 +245,8 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
       raise
 
   def terminate_testcase (self):
-    self.command_runner.kill_process()
+    if self.command_runner.is_alive:
+      self.command_runner.kill_process()
 
   def collect_result_from_log (self):
     """
@@ -259,6 +260,7 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
       with open(log_file) as f:
         return EscapeRunResult(output=f.readlines())
     except IOError as e:
+      log.warning("Got exception during result processing: %s" % e.message)
       return EscapeRunResult(output=str(e), exception=e)
 
   def get_result_from_stream (self):

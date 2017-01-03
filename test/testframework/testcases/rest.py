@@ -72,9 +72,10 @@ class RESTBasedServiceMixIn(EscapeTestCase):
       self.command_runner.kill_process()
       raise
     if self.thread.isAlive():
+      log.error("ESCAPE process is still alive!")
       self.command_runner.kill_process()
       raise RuntimeError("ESCAPE's runner thread has got TIMEOUT!")
-    # Verify result here because logging in file is slow comapred to the
+    # Verify result here because logging in file is slow compared to the
     # testframework
     self.verify_result()
     # TODO - Move validation into loop of send requests

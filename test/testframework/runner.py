@@ -93,6 +93,10 @@ class CommandRunner(object):
   def is_killed (self):
     return self.__killed
 
+  @property
+  def is_alive(self):
+    return self.__process and self.__process.isalive()
+
   @staticmethod
   def __evaluate_cmd (cmd):
     """
@@ -135,6 +139,7 @@ class CommandRunner(object):
     """
     Kill the process and call the optional hook function.
     """
+    log.warning("Kill process...")
     self.stop()
     self.__killed = True
     if self.on_kill_hook:
