@@ -61,6 +61,7 @@ class TestSuitBuilder(object):
 
   DEFAULT_TESTCASE_CLASS = BasicSuccessfulTestCase
   CONFIG_CONTAINER_NAME = "test"
+  CONFIG_TIMEOUT_NAME = "timeout"
 
   def __init__ (self, cwd, show_output=False, kill_timeout=None):
     self.cwd = cwd
@@ -98,6 +99,10 @@ class TestSuitBuilder(object):
     # Create TestCase class
     if os.path.exists(case_info.config_file_name):
       TESTCASE_CLASS, test_args = case_info.load_test_case_class()
+      # Override kill timeout if it is set in the config file
+      if self.CONFIG_TIMEOUT_NAME in test_args:
+        cmd_runner.kill_timeout = max(self.kill_timeout,
+                                      test_args[self.CONFIG_TIMEOUT_NAME])
       if TESTCASE_CLASS:
         # log.debug(
         #   "Loaded class: %s, arguments: %s" % (TESTCASE_CLASS, test_args))
@@ -124,4 +129,3 @@ class TestSuitBuilder(object):
       except Exception as e:
         log.error("Testcase loading failed: %s" % e.message)
     return TestSuite(test_cases)
-
