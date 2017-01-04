@@ -273,6 +273,9 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
     return output_stream if output_stream else ""
 
   def verify_result (self):
+    log.debug("\nVerifying logs...")
+    if self.run_result.log_output is None:
+      raise RuntimeError("log_output is missing!")
     # Detect ERROR messages first
     detected_error = self.detect_error(self.run_result)
     self.assertIsNone(detected_error,
@@ -295,9 +298,8 @@ class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
 
   def check_root_privilege (self):
     # Due to XMLTestRunner implementation test cannot skip in setUp()
-    test_run = CommandRunner(cmd="sudo uname",
-                             kill_timeout=self.SUDO_KILL_TIMEOUT).execute()
-    if test_run.is_killed:
+    sudo_enabled = CommandRunner("sudo uname").test(self.SUDO_KILL_TIMEOUT)
+    if not sudo_enabled:
       self.skipTest("Root privilege is required to run the testcase: %s" %
                     self.test_case_info.testcase_dir_name)
 

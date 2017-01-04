@@ -46,8 +46,6 @@ class TestCaseReader(object):
     """
     if not case_dirs:
       case_dirs = sorted(os.listdir(self.tests_dir))
-    # TODO - add every info from test to this RunnableTestCase class from
-    # case dirs (migrate functions from TestCaseBuilder)
     cases = [RunnableTestCaseInfo(case_path=os.path.join(self.tests_dir,
                                                          case_dir))
              for case_dir in case_dirs if
@@ -119,5 +117,11 @@ class TestSuitBuilder(object):
     :return: overall TestSuite object
     :rtype: TestSuite
     """
-    test_cases = [self.build_from_config(case_info) for case_info in tests]
+    test_cases = list()
+    for case_info in tests:
+      try:
+        test_cases.append(self.build_from_config(case_info=case_info))
+      except Exception as e:
+        log.error("Testcase loading failed: %s" % e.message)
     return TestSuite(test_cases)
+

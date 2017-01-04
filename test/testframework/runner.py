@@ -94,7 +94,7 @@ class CommandRunner(object):
     return self.__killed
 
   @property
-  def is_alive(self):
+  def is_alive (self):
     return self.__process and self.__process.isalive()
 
   @staticmethod
@@ -123,8 +123,7 @@ class CommandRunner(object):
                                      timeout=self.kill_timeout + 1,
                                      cwd=self._cwd,
                                      logfile=self.output_stream)
-      self.__kill_timer = Timer(self.kill_timeout, self.kill_process,
-                                [self.__process])
+      self.__kill_timer = Timer(self.kill_timeout, self.kill_process)
       self.__kill_timer.start()
       self.__process.expect(pexpect.EOF)
     except ExceptionPexpect as e:
@@ -135,7 +134,27 @@ class CommandRunner(object):
         self.__kill_timer.cancel()
     return self
 
-  def kill_process (self, *args, **kwargs):
+  def test (self, timeout=KILL_TIMEOUT):
+    """
+    Start a presumably simple process and test if the process is executed
+    successfully within the timeout interval or been killed.
+
+    :param timeout: use the given timeout instead of the default kill timeout
+    :type timeout: int
+    :return: the process is stopped successfully
+    :rtype: bool
+    """
+    try:
+      proc = pexpect.spawn(self._command[0],
+                           args=self._command[1:],
+                           cwd=self._cwd,
+                           timeout=timeout)
+      proc.expect(pexpect.EOF)
+      return True
+    except pexpect.TIMEOUT:
+      return False
+
+  def kill_process (self):
     """
     Kill the process and call the optional hook function.
     """
