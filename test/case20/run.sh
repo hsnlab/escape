@@ -14,19 +14,13 @@ echo -e "=======================================================================
 
 # Print test case description
 cat ${CWD}/README.txt
-echo -e "\n===============================================================================\n"
-echo
-## Test case header - END
-
-# Print test case description
-cat ${CWD}/README.txt
 echo -e "\n=============================== START TEST CASE ===============================\n"
 echo
 ## Test case header - END
 
 # Define run command here
-ESCAPE_CMD="${ESCAPE} --debug --test --quit --log ${CWD}/escape.log --config \
-            ${CWD}/test.config --service ${CWD}/gen-request.nffg"
+ESCAPE_CMD="${ESCAPE} --debug --test --log ${CWD}/escape.log \
+            --config ${CWD}/test.config"
 
 # Invoke ESCAPE with test parameters
 time ${ESCAPE_CMD} $@
