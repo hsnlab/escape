@@ -19,10 +19,8 @@ import logging
 import os
 import sys
 from collections import Iterable
-from threading import Timer
 
 import pexpect
-from pexpect import ExceptionPexpect
 
 log = logging.getLogger()
 
@@ -86,7 +84,6 @@ class CommandRunner(object):
     self.on_kill_hook = on_kill
     self.output_stream = output_stream
     self.__process = None
-    self.__kill_timer = None
     self.__killed = False
 
   @property
@@ -120,19 +117,17 @@ class CommandRunner(object):
     try:
       self.__process = pexpect.spawn(self._command[0],
                                      args=self._command[1:],
-                                     timeout=self.kill_timeout + 1,
+                                     timeout=self.kill_timeout,
                                      cwd=self._cwd,
                                      logfile=self.output_stream)
-      self.__kill_timer = Timer(self.kill_timeout, self.kill_process)
-      self.__kill_timer.start()
       self.__process.expect(pexpect.EOF)
-    except ExceptionPexpect as e:
-      log.error("Got exception during execution of ESCAPE: %s" % e)
+      return self
+    except pexpect.TIMEOUT:
+      log.debug("ESCAPE running timeout(%ss) is exceeded!" % self.kill_timeout)
       self.kill_process()
-    else:
-      if self.__kill_timer:
-        self.__kill_timer.cancel()
-    return self
+    except pexpect.ExceptionPexpect as e:
+      log.error("Got unexpected error:\n%s" % e)
+      self.kill_process()
 
   def test (self, timeout=KILL_TIMEOUT):
     """
@@ -172,8 +167,6 @@ class CommandRunner(object):
     """
     if self.__process:
       self.__process.sendcontrol('c')
-    if self.__kill_timer:
-      self.__kill_timer.cancel()
 
   def get_process_output_stream (self):
     """
@@ -186,7 +179,6 @@ class CommandRunner(object):
 
   def cleanup (self):
     self.__process = None
-    self.__kill_timer = None
 
 
 class RunnableTestCaseInfo(object):
