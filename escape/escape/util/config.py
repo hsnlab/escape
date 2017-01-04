@@ -21,8 +21,6 @@ import os
 import pprint
 from distutils.util import strtobool
 
-from yaml.parser import ParserError
-
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.infr import LAYER_NAME as INFR
 from escape.orchest import LAYER_NAME as ORCHEST
