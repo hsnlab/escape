@@ -76,7 +76,7 @@ class CommandRunner(object):
   Main runner class which capable of running the test script and kill the
   process explicitly or based on the timeout value.
   """
-  KILL_TIMEOUT = 15
+  KILL_TIMEOUT = 30
 
   def __init__ (self, cmd, cwd=None, kill_timeout=None, on_kill=None,
                 output_stream=None):
