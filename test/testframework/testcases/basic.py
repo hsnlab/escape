@@ -17,7 +17,7 @@ from unittest.case import TestCase
 from unittest.util import strclass
 
 from testframework.runner import EscapeRunResult, RunnableTestCaseInfo, \
-  CommandRunner
+  ESCAPECommandRunner
 
 log = logging.getLogger()
 ESCAPE_LOG_FILE_NAME = "escape.log"
@@ -143,7 +143,7 @@ class EscapeTestCase(TestCase):
   def __init__ (self, test_case_info, command_runner, **kwargs):
     """
     :type test_case_info: RunnableTestCaseInfo
-    :type command_runner: CommandRunner
+    :type command_runner: ESCAPECommandRunner
     """
     super(EscapeTestCase, self).__init__()
     self.test_case_info = test_case_info
@@ -298,8 +298,8 @@ class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
 
   def check_root_privilege (self):
     # Due to XMLTestRunner implementation test cannot skip in setUp()
-    sudo_enabled = CommandRunner("sudo uname").test(self.SUDO_KILL_TIMEOUT)
-    if not sudo_enabled:
+    enabled = ESCAPECommandRunner("sudo uname").test(self.SUDO_KILL_TIMEOUT)
+    if not enabled:
       self.skipTest("Root privilege is required to run the testcase: %s" %
                     self.test_case_info.testcase_dir_name)
 

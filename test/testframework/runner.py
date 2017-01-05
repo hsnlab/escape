@@ -123,7 +123,7 @@ class CommandRunner(object):
       self.__process.expect(pexpect.EOF)
       return self
     except pexpect.TIMEOUT:
-      log.debug("ESCAPE running timeout(%ss) is exceeded!" % self.kill_timeout)
+      log.debug("Process running timeout(%ss) is exceeded!" % self.kill_timeout)
       self.kill_process()
     except pexpect.ExceptionPexpect as e:
       log.error("Got unexpected error:\n%s" % e)
@@ -179,6 +179,11 @@ class CommandRunner(object):
 
   def cleanup (self):
     self.__process = None
+
+
+class ESCAPECommandRunner(CommandRunner):
+  def __init__ (self, *args, **kwargs):
+    super(ESCAPECommandRunner, self).__init__(*args, **kwargs)
 
 
 class RunnableTestCaseInfo(object):

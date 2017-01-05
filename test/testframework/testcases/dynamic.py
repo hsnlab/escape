@@ -20,7 +20,7 @@ from pprint import pformat
 from unittest import BaseTestSuite
 
 from testframework.generator.generator import DEFAULT_SEED
-from testframework.runner import RunnableTestCaseInfo, CommandRunner
+from testframework.runner import RunnableTestCaseInfo
 from testframework.testcases.basic import BasicSuccessfulTestCase
 
 log = logging.getLogger()
@@ -168,7 +168,7 @@ class DynamicTestGenerator(BaseTestSuite):
                 **kwargs):
     """
     :type test_case_info: RunnableTestCaseInfo
-    :type command_runner: CommandRunner
+    :type command_runner: ESCAPECommandRunner
     """
     super(DynamicTestGenerator, self).__init__(**kwargs)
     self.test_case_info = test_case_info

@@ -16,7 +16,7 @@ import os
 import sys
 from unittest.suite import TestSuite
 
-from runner import RunnableTestCaseInfo, CommandRunner
+from runner import RunnableTestCaseInfo, ESCAPECommandRunner
 from testframework.testcases.basic import BasicSuccessfulTestCase
 
 log = logging.getLogger()
@@ -75,10 +75,11 @@ class TestSuitBuilder(object):
     :type case_info: RunnableTestCaseInfo
     :rtype: CommandRunner
     """
-    return CommandRunner(cwd=self.cwd,
-                         cmd=case_info.test_command,
-                         kill_timeout=self.kill_timeout,
-                         output_stream=sys.stdout if self.show_output else None)
+    return ESCAPECommandRunner(cwd=self.cwd,
+                               cmd=case_info.test_command,
+                               kill_timeout=self.kill_timeout,
+                               output_stream=sys.stdout if self.show_output
+                               else None)
 
   def build_from_config (self, case_info):
     """
