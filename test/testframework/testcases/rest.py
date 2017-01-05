@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import httplib
 import logging
 import os
 import sys
@@ -40,8 +41,8 @@ class RESTBasedServiceMixIn(EscapeTestCase):
   through one of its REST-API.
   """
   REQUEST_DELAY = 3
-  REQUEST_TIMEOUT = 1
-  REQUEST_SUCCESS_CODE = 202
+  REQUEST_TIMEOUT = 1.0
+  REQUEST_SUCCESS_CODE = httplib.ACCEPTED
   REQUEST_PREFIX = "request"
   DEFAULT_URL = "http://localhost:8008/escape"
   RPC_REQUEST_NFFG = "sg"
@@ -51,7 +52,6 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     super(RESTBasedServiceMixIn, self).__init__(**kwargs)
     self.url = url if url else self.DEFAULT_URL
     self.delay = delay if delay is not None else self.REQUEST_DELAY
-    self.thread = None
     self._suppress_requests_logging()
 
   @staticmethod
@@ -62,16 +62,16 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     try:
       # Init ESCAPE process in separate thread to send request through its
       # REST API and be able to wait for the result
-      self.thread = Thread(target=self.run_escape)
-      self.thread.setDaemon(True)
-      self.thread.start()
+      thread = Thread(target=self.run_escape)
+      thread.daemon = True
+      thread.start()
       self.send_requests()
-      self.thread.join(timeout=self.command_runner.kill_timeout + 1)
+      thread.join(timeout=self.command_runner.kill_timeout + 1.0)
     except KeyboardInterrupt:
       log.error("\nReceived KeyboardInterrupt! Abort running thread...")
       self.command_runner.kill_process()
       raise
-    if self.thread.isAlive():
+    if thread.isAlive():
       log.error("ESCAPE process is still alive!")
       self.command_runner.kill_process()
       raise RuntimeError("ESCAPE's runner thread has got TIMEOUT!")
@@ -79,8 +79,6 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     # testframework
     self.verify_result()
     # TODO - Move validation into loop of send requests
-    # TODO - handle buffered file logging and do not crash if escape-log is
-    # empty
     # Mark test case as success
     self.success = True
 

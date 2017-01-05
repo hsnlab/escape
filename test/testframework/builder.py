@@ -100,7 +100,7 @@ class TestSuitBuilder(object):
     if os.path.exists(case_info.config_file_name):
       TESTCASE_CLASS, test_args = case_info.load_test_case_class()
       # Override kill timeout if it is set in the config file
-      if self.CONFIG_TIMEOUT_NAME in test_args:
+      if test_args and self.CONFIG_TIMEOUT_NAME in test_args:
         cmd_runner.kill_timeout = max(self.kill_timeout,
                                       test_args[self.CONFIG_TIMEOUT_NAME])
       if TESTCASE_CLASS:
@@ -128,4 +128,5 @@ class TestSuitBuilder(object):
         test_cases.append(self.build_from_config(case_info=case_info))
       except Exception as e:
         log.error("Testcase loading failed: %s" % e.message)
+        raise
     return TestSuite(test_cases)
