@@ -341,6 +341,7 @@ class RESTServer(ThreadingMixIn, HTTPServer):
 
   Initiate an :class:`HTTPServer` and run it in different thread.
   """
+  CALLBACK_TIMEOUT = 1.0
 
   def __init__ (self, RequestHandlerClass, address='127.0.0.1', port=8008):
     """
@@ -414,7 +415,8 @@ class RESTServer(ThreadingMixIn, HTTPServer):
       body = "TODO"
     try:
       logging.getLogger("requests").setLevel(logging.WARNING)
-      ret = requests.post(url=callback_url, params=params, data=body, timeout=1)
+      ret = requests.post(url=callback_url, params=params, data=body,
+                          timeout=self.CALLBACK_TIMEOUT)
       return ret.status_code
     except (RequestException, Timeout):
       return -1

@@ -448,7 +448,7 @@ class ServiceLayerAPI(AbstractAPI):
           self.rest_api.request_cache.set_success_result(id=message_id)
         ret = self.rest_api.invoke_callback(message_id=message_id)
         if ret is None:
-          log.getChild('API').debug("No callback has defined!")
+          log.getChild('API').debug("No callback was defined!")
         else:
           log.getChild('API').debug(
             "Callback: %s has invoked with return value: %s" % (

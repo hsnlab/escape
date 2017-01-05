@@ -16,7 +16,9 @@ import logging
 import os
 import sys
 import time
-from threading import Thread
+import urlparse
+from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+from threading import Thread, Event
 
 import requests
 
@@ -34,6 +36,82 @@ except:
 log = logging.getLogger()
 
 
+class CallbackHandler(BaseHTTPRequestHandler):
+  RESULT_PARAM_NAME = "response-code"
+
+  def do_POST (self):
+    self.__process_request()
+    self.server.callback_event.set()
+    self.send_response(200)
+    self.send_header('Connection', 'close')
+    self.end_headers()
+
+  def do_GET (self):
+    self.do_POST()
+
+  def __process_request (self):
+    result_code = self.__get_request_params().get(self.RESULT_PARAM_NAME, None)
+    self.server._result = result_code
+
+  def __get_request_params (self):
+    params = {}
+    query = urlparse.urlparse(self.path).query
+    if query:
+      query = query.split('&')
+      for param in query:
+        if '=' in param:
+          name, value = param.split('=', 1)
+          params[name] = value
+        else:
+          params[param] = True
+    # Check message-id in headers as backup
+    if 'message-id' not in params:
+      if 'message-id' in self.headers:
+        params['message-id'] = self.headers['message-id']
+    return params
+
+
+class CallbackManager(HTTPServer, Thread):
+  DEFAULT_SERVER_ADDRESS = "localhost"
+  DEFAULT_PORT = 9000
+  DEFAULT_WAIT_TIMEOUT = 30
+
+  def __init__ (self, address=DEFAULT_SERVER_ADDRESS, port=DEFAULT_PORT):
+    Thread.__init__(self)
+    HTTPServer.__init__(self, (address, port), CallbackHandler)
+    self.name = "%s(%s:%s)" % (self.__class__.__name__,
+                               self.DEFAULT_SERVER_ADDRESS,
+                               self.DEFAULT_PORT)
+    self.daemon = True
+    self.callback_event = Event()
+    self._result = None
+
+  @property
+  def url (self):
+    return "http://%s:%s/callback" % self.server_address
+
+  @property
+  def last_result (self):
+    return self._result
+
+  def run (self):
+    try:
+      self.serve_forever()
+    except KeyboardInterrupt:
+      pass
+    except Exception as e:
+      log.error("Got exception in %s: %s" % (self.__class__.__name__, e))
+    finally:
+      self.server_close()
+
+  def wait_for_callback (self, timeout=DEFAULT_WAIT_TIMEOUT):
+    # Always use a timeout value because without timeout wait() is not
+    # interruptable by KeyboardInterrupt
+    self.callback_event.wait(timeout=timeout)
+    self.callback_event.clear()
+    return str(self.last_result) == str(httplib.OK)
+
+
 # noinspection PyAbstractClass
 class RESTBasedServiceMixIn(EscapeTestCase):
   """
@@ -48,10 +126,11 @@ class RESTBasedServiceMixIn(EscapeTestCase):
   RPC_REQUEST_NFFG = "sg"
   RPC_REQUEST_VIRTUALIZER = "edit-config"
 
-  def __init__ (self, url=None, delay=None, **kwargs):
+  def __init__ (self, url=None, delay=None, callback=False, **kwargs):
     super(RESTBasedServiceMixIn, self).__init__(**kwargs)
     self.url = url if url else self.DEFAULT_URL
     self.delay = delay if delay is not None else self.REQUEST_DELAY
+    self.callback = callback
     self._suppress_requests_logging()
 
   @staticmethod
@@ -65,7 +144,10 @@ class RESTBasedServiceMixIn(EscapeTestCase):
       thread = Thread(target=self.run_escape)
       thread.daemon = True
       thread.start()
-      self.send_requests()
+      if self.callback:
+        self.send_requests_with_callback()
+      else:
+        self.send_requests_with_delay()
       thread.join(timeout=self.command_runner.kill_timeout + 1.0)
     except KeyboardInterrupt:
       log.error("\nReceived KeyboardInterrupt! Abort running thread...")
@@ -78,11 +160,10 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     # Verify result here because logging in file is slow compared to the
     # testframework
     self.verify_result()
-    # TODO - Move validation into loop of send requests
     # Mark test case as success
     self.success = True
 
-  def send_requests (self):
+  def send_requests_with_delay (self):
     """
     Send all request started with a prefix in the test case folder to the
     REST API of ESCAPE.
@@ -105,7 +186,34 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     time.sleep(self.delay)
     self.command_runner.stop()
 
-  def _send_request (self, data, ext):
+  def send_requests_with_callback (self):
+    """
+    Send all request started with a prefix in the test case folder to the
+    REST API of ESCAPE.
+
+    :return: None
+    """
+    testcase_dir = self.test_case_info.testcase_dir_name
+    reqs = sorted([os.path.join(testcase_dir, file_name)
+                   for file_name in os.listdir(testcase_dir)
+                   if file_name.startswith(self.REQUEST_PREFIX)])
+    cbmanager = CallbackManager()
+    cbmanager.start()
+    cb_url = cbmanager.url if self.callback else None
+    # Wait for ESCAPE coming up
+    time.sleep(self.delay)
+    for request in reqs:
+      with open(request) as f:
+        ext = request.rsplit('.', 1)[-1]
+        ret = self._send_request(data=f.read(), ext=ext, callback_url=cb_url)
+        self.assertTrue(ret,
+                        msg="Got error while sending request: %s" % request)
+      success = cbmanager.wait_for_callback()
+      self.assertTrue(success, msg="Callback returned with error: %s" %
+                                   cbmanager.last_result)
+    self.command_runner.stop()
+
+  def _send_request (self, data, ext, callback_url=None):
     """
     Send one request read from file to the configured URL.
 
@@ -116,13 +224,17 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     :return: request sending was successful or not
     :rtype: bool
     """
+    url = self.url
     headers = dict()
     if ext.upper() == 'XML':
       headers['Content-Type'] = "application/xml"
+      url = urlparse.urljoin(url, self.RPC_REQUEST_VIRTUALIZER)
     elif ext.upper() == 'NFFG':
       headers['Content-Type'] = "application/json"
+      url = urlparse.urljoin(url, self.RPC_REQUEST_NFFG)
+    params = {"call-back": callback_url} if callback_url else {}
     try:
-      ret = requests.post(url=self.url, data=data, headers=headers,
+      ret = requests.post(url=url, data=data, headers=headers, params=params,
                           timeout=self.REQUEST_TIMEOUT)
       return True if ret.status_code == self.REQUEST_SUCCESS_CODE else False
     except requests.RequestException as e:
