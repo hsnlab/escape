@@ -172,6 +172,11 @@ class ESCAPECommandRunner(CommandRunner):
   def __init__ (self, *args, **kwargs):
     super(ESCAPECommandRunner, self).__init__(*args, **kwargs)
     self.__ready = threading.Event()
+    self.timeout = False
+
+  @property
+  def timeout_exceeded (self):
+    return self.timeout
 
   def execute (self, wait_for_up=True):
     """
@@ -192,6 +197,7 @@ class ESCAPECommandRunner(CommandRunner):
     except pexpect.TIMEOUT:
       log.debug("Process running timeout(%ss) is exceeded!" % self.kill_timeout)
       self.kill_process()
+      self.timeout = True
     except pexpect.ExceptionPexpect as e:
       log.error("Got unexpected error:\n%s" % e)
       self.kill_process()
