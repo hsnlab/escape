@@ -76,7 +76,8 @@ class CallbackManager(HTTPServer, Thread):
   DEFAULT_PORT = 9000
   DEFAULT_WAIT_TIMEOUT = 30
 
-  def __init__ (self, address=DEFAULT_SERVER_ADDRESS, port=DEFAULT_PORT):
+  def __init__ (self, address=DEFAULT_SERVER_ADDRESS, port=DEFAULT_PORT,
+                wait_timeout=DEFAULT_WAIT_TIMEOUT):
     Thread.__init__(self)
     HTTPServer.__init__(self, (address, port), CallbackHandler)
     self.name = "%s(%s:%s)" % (self.__class__.__name__,
@@ -84,6 +85,7 @@ class CallbackManager(HTTPServer, Thread):
                                self.DEFAULT_PORT)
     self.daemon = True
     self.callback_event = Event()
+    self.wait_timeout = wait_timeout
     self._result = None
 
   @property
@@ -98,16 +100,16 @@ class CallbackManager(HTTPServer, Thread):
     try:
       self.serve_forever()
     except KeyboardInterrupt:
-      pass
+      raise
     except Exception as e:
       log.error("Got exception in %s: %s" % (self.__class__.__name__, e))
     finally:
       self.server_close()
 
-  def wait_for_callback (self, timeout=DEFAULT_WAIT_TIMEOUT):
+  def wait_for_callback (self):
     # Always use a timeout value because without timeout wait() is not
     # interruptable by KeyboardInterrupt
-    self.callback_event.wait(timeout=timeout)
+    self.callback_event.wait(timeout=self.wait_timeout)
     self.callback_event.clear()
     return str(self.last_result) == str(httplib.OK)
 
@@ -197,11 +199,10 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     reqs = sorted([os.path.join(testcase_dir, file_name)
                    for file_name in os.listdir(testcase_dir)
                    if file_name.startswith(self.REQUEST_PREFIX)])
-    cbmanager = CallbackManager()
+    cbmanager = CallbackManager(wait_timeout=self.command_runner.kill_timeout)
     cbmanager.start()
+    self.command_runner.wait_for_ready()
     cb_url = cbmanager.url if self.callback else None
-    # Wait for ESCAPE coming up
-    time.sleep(self.delay)
     for request in reqs:
       with open(request) as f:
         ext = request.rsplit('.', 1)[-1]

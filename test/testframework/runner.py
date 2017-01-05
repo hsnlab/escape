@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import sys
+import threading
 from collections import Iterable
 
 import pexpect
@@ -76,14 +77,12 @@ class CommandRunner(object):
   """
   KILL_TIMEOUT = 30
 
-  def __init__ (self, cmd, cwd=None, kill_timeout=None, on_kill=None,
-                output_stream=None):
+  def __init__ (self, cmd, cwd=None, kill_timeout=None, output_stream=None):
     self._command = self.__evaluate_cmd(cmd)
     self._cwd = cwd if cwd else os.path.dirname(__file__)
     self.kill_timeout = kill_timeout if kill_timeout else self.KILL_TIMEOUT
-    self.on_kill_hook = on_kill
     self.output_stream = output_stream
-    self.__process = None
+    self._process = None
     self.__killed = False
 
   @property
@@ -92,7 +91,7 @@ class CommandRunner(object):
 
   @property
   def is_alive (self):
-    return self.__process and self.__process.isalive()
+    return self._process and self._process.isalive()
 
   @staticmethod
   def __evaluate_cmd (cmd):
@@ -115,12 +114,12 @@ class CommandRunner(object):
     exceeded.
     """
     try:
-      self.__process = pexpect.spawn(self._command[0],
-                                     args=self._command[1:],
-                                     timeout=self.kill_timeout,
-                                     cwd=self._cwd,
-                                     logfile=self.output_stream)
-      self.__process.expect(pexpect.EOF)
+      self._process = pexpect.spawn(self._command[0],
+                                    args=self._command[1:],
+                                    timeout=self.kill_timeout,
+                                    cwd=self._cwd,
+                                    logfile=self.output_stream)
+      self._process.expect(pexpect.EOF)
       return self
     except pexpect.TIMEOUT:
       log.debug("Process running timeout(%ss) is exceeded!" % self.kill_timeout)
@@ -129,7 +128,75 @@ class CommandRunner(object):
       log.error("Got unexpected error:\n%s" % e)
       self.kill_process()
 
-  def test (self, timeout=KILL_TIMEOUT):
+  def kill_process (self):
+    """
+    Kill the process and call the optional hook function.
+    """
+    log.debug("Kill process...")
+    self.stop()
+    self.__killed = True
+    if self.is_alive:
+      self._process.terminate(force=True)
+
+  def stop (self):
+    """
+    Stop the process.
+
+    :return: None
+    """
+    if self._process:
+      self._process.sendcontrol('c')
+    if self.is_alive:
+      self._process.terminate()
+
+  def get_process_output_stream (self):
+    """
+    :return: Return with the process buffer.
+    """
+    return self._process.before if self._process.before else ""
+
+  def clone (self):
+    return copy.deepcopy(self)
+
+  def cleanup (self):
+    # self.__process = None
+    pass
+
+
+class ESCAPECommandRunner(CommandRunner):
+  """
+  Extended CommandRunner class for ESCAPE.
+  Use threading.Event for signalling ESCAPE is up.
+  """
+
+  def __init__ (self, *args, **kwargs):
+    super(ESCAPECommandRunner, self).__init__(*args, **kwargs)
+    self.__ready = threading.Event()
+
+  def execute (self, wait_for_up=True):
+    """
+    Create and start the process. Block until the process ends or timeout is
+    exceeded.
+    """
+    try:
+      self._process = pexpect.spawn(self._command[0],
+                                    args=self._command[1:],
+                                    timeout=self.kill_timeout,
+                                    cwd=self._cwd,
+                                    logfile=self.output_stream)
+      if wait_for_up:
+        self._process.expect(pattern="ESCAPEv2 is up")
+        self.__ready.set()
+      self._process.expect(pexpect.EOF)
+      return self
+    except pexpect.TIMEOUT:
+      log.debug("Process running timeout(%ss) is exceeded!" % self.kill_timeout)
+      self.kill_process()
+    except pexpect.ExceptionPexpect as e:
+      log.error("Got unexpected error:\n%s" % e)
+      self.kill_process()
+
+  def test (self, timeout=CommandRunner.KILL_TIMEOUT):
     """
     Start a presumably simple process and test if the process is executed
     successfully within the timeout interval or been killed.
@@ -149,41 +216,18 @@ class CommandRunner(object):
     except pexpect.TIMEOUT:
       return False
 
+  def wait_for_ready (self):
+    self.__ready.wait(timeout=self.kill_timeout)
+
   def kill_process (self):
-    """
-    Kill the process and call the optional hook function.
-    """
-    log.warning("Kill process...")
-    self.stop()
-    self.__killed = True
-    if self.on_kill_hook:
-      self.on_kill_hook()
+    # Call super explicitly because _process is defined in the parent class
+    # so from child class process cannot be terminated
+    super(ESCAPECommandRunner, self).kill_process()
 
   def stop (self):
-    """
-    Stop the process.
-
-    :return: None
-    """
-    if self.__process:
-      self.__process.sendcontrol('c')
-
-  def get_process_output_stream (self):
-    """
-    :return: Return with the process buffer.
-    """
-    return self.__process.before if self.__process.before else ""
-
-  def clone (self):
-    return copy.deepcopy(self)
-
-  def cleanup (self):
-    self.__process = None
-
-
-class ESCAPECommandRunner(CommandRunner):
-  def __init__ (self, *args, **kwargs):
-    super(ESCAPECommandRunner, self).__init__(*args, **kwargs)
+    # Call super explicitly because _process is defined in the parent class
+    # so from child class process cannot be terminated
+    super(ESCAPECommandRunner, self).stop()
 
 
 class RunnableTestCaseInfo(object):
