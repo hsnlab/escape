@@ -392,14 +392,10 @@ class RESTServer(ThreadingMixIn, HTTPServer):
     :return: None
     """
     # Start API loop
-    # print "start"
     try:
       self.serve_forever()
     except Exception:
       pass
-      # print "stop"
-      # self.RequestHandlerClass.log.debug(
-      #   "REST-API on %s:%d is shutting down..." % self.server_address)
 
   def invoke_callback (self, message_id):
     status = self.get_status_by_message_id(message_id=message_id)
