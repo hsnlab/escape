@@ -53,7 +53,7 @@ class AbstractMappingStrategy(object):
     :return: mapped graph
     :rtype: :any:`NFFG`
     """
-    raise NotImplementedError("Derived class must override this function!")
+    raise NotImplementedError
 
 
 class ProcessorError(Exception):
@@ -104,7 +104,7 @@ class AbstractMappingDataProcessor(object):
     :return: need to abort the mapping process
     :rtype: bool or None
     """
-    raise NotImplementedError("Derived class must override this function!")
+    raise NotImplementedError
 
   def post_mapping_exec (self, input_graph, resource_graph, result_graph):
     """
@@ -127,7 +127,7 @@ class AbstractMappingDataProcessor(object):
     :return: need to abort the mapping process
     :rtype: bool or None
     """
-    raise NotImplementedError("Derived class must override this function!")
+    raise NotImplementedError
 
 
 class ProcessorSkipper(AbstractMappingDataProcessor):
@@ -350,7 +350,7 @@ class AbstractMapper(EventMixin):
     :return: mapped graph
     :rtype: :any:`NFFG`
     """
-    raise NotImplementedError("Derived class must override this function!")
+    raise NotImplementedError
 
   def orchestrate (self, input_graph, resource_view):
     """
@@ -445,7 +445,7 @@ class AbstractMapper(EventMixin):
     :type mapped_nffg: :any:`NFFG`
     :return: None
     """
-    raise NotImplementedError("Derived class must override this function!")
+    raise NotImplementedError
 
 
 class AbstractOrchestrator(object):

@@ -73,7 +73,7 @@ class AbstractTopology(Topo):
 
     :param builder: optional builder object
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   @staticmethod
   def get_topo_desc ():
@@ -83,7 +83,7 @@ class AbstractTopology(Topo):
     :return: topology description
     :rtype: :any`NFFG`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
 
 class FallbackStaticTopology(AbstractTopology):

@@ -229,8 +229,7 @@ class AbstractDomainManager(EventMixin):
     :type configurator: :any:`ComponentConfigurator`
     :return: None
     """
-    raise NotImplementedError(
-      "Managers must override this function to initiate Adapters!")
+    raise NotImplementedError
 
   def init (self, configurator, **kwargs):
     """
@@ -347,13 +346,13 @@ class AbstractDomainManager(EventMixin):
     :return: status if the install process was success
     :rtype: bool
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def clear_domain (self):
     """
     Clear the Domain according to the first received config.
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
 
 class AbstractRemoteDomainManager(AbstractDomainManager):
@@ -451,8 +450,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     :type configurator: :any:`ComponentConfigurator`
     :return: None
     """
-    raise NotImplementedError(
-      "Managers must override this function to initiate Adapters!")
+    raise NotImplementedError
 
   def finit (self):
     """
@@ -592,7 +590,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     :return: status if the install process was success
     :rtype: bool
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def clear_domain (self):
     """
@@ -601,7 +599,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     :raise: :any:`exceptions.NotImplementedError`
     :return: None
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
 
 class AbstractESCAPEAdapter(EventMixin):
@@ -675,7 +673,7 @@ class AbstractESCAPEAdapter(EventMixin):
     :return: the remote domain is detected or not
     :rtype: bool
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def get_topology_resource (self):
     """
@@ -685,7 +683,7 @@ class AbstractESCAPEAdapter(EventMixin):
     :return: the topology description
     :rtype: :any:`NFFG`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def check_topology_changed (self):
     """
@@ -830,7 +828,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
 
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def check_domain_reachable (self):
     """
@@ -838,7 +836,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
 
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def delete_flowrules (self, id):
     """
@@ -1002,7 +1000,7 @@ class VNFStarterAPI(object):
     :rtype: dict
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def connectVNF (self, vnf_id, vnf_port, switch_id):
     """
@@ -1018,7 +1016,7 @@ class VNFStarterAPI(object):
     :rtype: dict
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def disconnectVNF (self, vnf_id, vnf_port):
     """
@@ -1032,7 +1030,7 @@ class VNFStarterAPI(object):
     :rtype: dict
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def startVNF (self, vnf_id):
     """
@@ -1044,7 +1042,7 @@ class VNFStarterAPI(object):
     :rtype: dict
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def stopVNF (self, vnf_id):
     """
@@ -1056,7 +1054,7 @@ class VNFStarterAPI(object):
     :rtype: dict
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def getVNFInfo (self, vnf_id=None):
     """
@@ -1068,7 +1066,7 @@ class VNFStarterAPI(object):
     :rtype: dict
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
 
 class DefaultUnifyDomainAPI(object):
@@ -1086,7 +1084,7 @@ class DefaultUnifyDomainAPI(object):
     :rtype: str
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def get_config (self, filter=None):
     """
@@ -1101,7 +1099,7 @@ class DefaultUnifyDomainAPI(object):
     :return: infrastructure view in the original format
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def edit_config (self, data, diff=False):
     """
@@ -1115,7 +1113,7 @@ class DefaultUnifyDomainAPI(object):
     :rtype: str
     :raise: :any:`exceptions.NotImplementedError`
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
 
 class OpenStackAPI(DefaultUnifyDomainAPI):

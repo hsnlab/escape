@@ -209,16 +209,16 @@ class EscapeTestCase(TestCase):
     """
     Template method for analyzing run result.
     """
-    raise NotImplementedError('Not implemented yet!')
+    raise NotImplementedError
 
   def run_escape (self):
     """
     Run ESCAPE with the prepared test config.
     """
-    raise NotImplementedError('Not implemented yet!')
+    raise NotImplementedError
 
   def terminate_testcase (self):
-    raise NotImplementedError('Not implemented yet!')
+    raise NotImplementedError
 
 
 class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):

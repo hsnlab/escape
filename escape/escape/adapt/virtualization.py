@@ -102,7 +102,7 @@ class AbstractVirtualizer(EventMixin):
     :return: resource info
     :rtype: :any:`NFFG`
     """
-    raise NotImplementedError("Derived class have to override this function")
+    raise NotImplementedError
 
   def sanity_check (self, nffg):
     """
@@ -215,7 +215,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     :return: resource info
     :rtype: :any:`NFFG`
     """
-    raise NotImplementedError("Derived class have to override this function")
+    raise NotImplementedError
 
 
 class DomainVirtualizer(AbstractVirtualizer):

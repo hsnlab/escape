@@ -418,7 +418,7 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     :type path: str
     :return: None
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def dump_to_file (self, nffg):
     """
@@ -429,7 +429,7 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     :return: successful install (True)
     :rtype: bool
     """
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
   def _dump_to_file (self, file_name, data):
     """
@@ -1580,7 +1580,7 @@ class OpenStackRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.get_config()
 
   def check_topology_changed (self):
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
 
 class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
@@ -1666,7 +1666,7 @@ class UniversalNodeRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return self.get_config()
 
   def check_topology_changed (self):
-    raise NotImplementedError("Not implemented yet!")
+    raise NotImplementedError
 
 
 class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
