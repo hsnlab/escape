@@ -769,7 +769,7 @@ The following functions are defined in :any:`ServiceRequestHandler`.
 +-------------------+------------------+-------------------+----------------------------------------------------------------+
 | */sg*             | ``NFFG``         | POST              | Initiate given NFFG. Returns the initiation is accepted or not |
 +-------------------+------------------+-------------------+----------------------------------------------------------------+
-| */result*         |``{"id": "..."}`` | POST              | Returns with the overall result of the given Service request   |
+| */status*         | ``message-id``   | GET               | Returns with the service status                                |
 +-------------------+------------------+-------------------+----------------------------------------------------------------+
 
 ROS API specific functions
@@ -835,12 +835,12 @@ entry has an assigned `getter` function in the main class.
 Default configuration (JSON)
 ----------------------------
 
-The following JSON-based configuration (``escape.config``) contains the default (and possible)
+The following JSON-based configuration (``escape-config.json``) contains the default (and possible)
 configuration entries of the main layers and its subcomponents.
 
 As an example, several additional configuration files can be found under the ``config`` folder.
 
-.. include:: escape.config
+.. include:: escape-config.json
     :literal:
     :code: json
 
