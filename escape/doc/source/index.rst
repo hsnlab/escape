@@ -736,13 +736,22 @@ scenario or with a GUI.
 
 The CfOr API realizes the interface for UNIFY's service elasticity feature.
 
+All the REST function path should contain the prefix value which is ``escape``
+by default and can be changed in the APIs' configuration. See more in
+`REST-API, Sl-Or, Cf-Or`_.
+
+.. note::
+
+    The required format of the REST calls is the following: `http://<ip>:<port>/<prefix>/<operation>`
+
+
 Common API functions
 --------------------
 
 *Operations:*   Every API has the following 3 function (defined in :any:`AbstractRequestHandler`):
 
 +-------------------+----------------+-------------------+----------------------------------------------+
-|      Path         |     Params     |     HTTP verbs    | Description                                  |
+|    Operation      |     Params     |     HTTP verbs    | Description                                  |
 +===================+================+===================+==============================================+
 | */version*        | ``None``       | GET               | Returns with the current version of ESCAPE   |
 +-------------------+----------------+-------------------+----------------------------------------------+
@@ -763,7 +772,7 @@ in JSON format and in Virtualizer format too (need to set in the config).
 The following functions are defined in :any:`ServiceRequestHandler`.
 
 +-------------------+------------------+-------------------+----------------------------------------------------------------+
-|      Path         |     Params       |     HTTP verbs    | Description                                                    |
+|    Operation      |     Params       |     HTTP verbs    | Description                                                    |
 +===================+==================+===================+================================================================+
 | */topology*       | ``None``         | GET, POST         | Returns with the resource view of the Service layer            |
 +-------------------+------------------+-------------------+----------------------------------------------------------------+
@@ -780,7 +789,7 @@ Can be started with the ``--agent`` or ``--rosapi`` initial flags.
 The following functions are defined in :any:`BasicUnifyRequestHandler`.
 
 +-------------------+----------------+-------------------+-------------------------------------------+
-|      Path         |     Params     |     HTTP verbs    | Description                               |
+|    Operation      |     Params     |     HTTP verbs    | Description                               |
 +===================+================+===================+===========================================+
 | */get-config*     | ``None``       | GET, POST         | Returns with the resource view of the ROS |
 +-------------------+----------------+-------------------+-------------------------------------------+
@@ -795,7 +804,7 @@ Can be started with the ``--cfor`` flag.
 The following functions are defined in :any:`CfOrRequestHandler`.
 
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
-|      Path         |     Params     |     HTTP verbs    | Description                                                               |
+|    Operation      |     Params     |     HTTP verbs    | Description                                                               |
 +===================+================+===================+===========================================================================+
 | */get-config*     | ``None``       | GET, POST         | Returns with the resource view from the assigned Virtualizer              |
 +-------------------+----------------+-------------------+---------------------------------------------------------------------------+
