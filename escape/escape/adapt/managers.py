@@ -1221,6 +1221,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   DEFAULT_DOMAIN_NAME = "UNIFY"
   CALLBACK_CONFIG_NAME = "CALLBACK"
   CALLBACK_ENABLED_NAME = "enabled"
+  CALLBACK_EXPLICIT_DOMAIN_UPDATE = "explicit_update"
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
@@ -1358,17 +1359,24 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
 
   @schedule_as_coop_task
   def callback_hook (self, msg_id, result_code):
-    if 200 <= result_code < 300:
-      nffg_part = self.callback_manager.unregister_hook(id=msg_id)
-      if nffg_part is None:
-        log.error("Missing installed NFFG part for message-id: %s!" % msg_id)
-        return
-      self.raiseEventNoErrors(DomainChangedEvent,
-                              domain=self.domain_name,
-                              data=nffg_part,
-                              cause=DomainChangedEvent.TYPE.DOMAIN_CHANGED)
+    if 300 <= result_code:
+      self.log.warning(
+        "Received error result from domain: %s" % self.domain_name)
+      # TODO - handle error in orchestration
+    if self._adapters_cfg.get(self.CALLBACK_CONFIG_NAME, {}).get(
+       self.CALLBACK_EXPLICIT_DOMAIN_UPDATE, False):
+      self.log.debug("Request updated topology from domain...")
+      nffg_part = self.topoAdapter.get_topology_resource()
     else:
-      pass
+      self.log.debug("Use splitted NFFG part to update DoV...")
+      nffg_part = self.callback_manager.unregister_hook(id=msg_id)
+    if nffg_part is None:
+      self.log.error("Missing installed NFFG part for message-id: %s!" % msg_id)
+      return
+    self.raiseEventNoErrors(DomainChangedEvent,
+                            domain=self.domain_name,
+                            data=nffg_part,
+                            cause=DomainChangedEvent.TYPE.DOMAIN_CHANGED)
 
 
 class OpenStackDomainManager(UnifyDomainManager):

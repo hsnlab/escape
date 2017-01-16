@@ -76,13 +76,14 @@ class CallbackManager(HTTPServer, Thread):
   DEFAULT_WAIT_TIMEOUT = 3
 
   def __init__ (self, domain_manager, address=DEFAULT_SERVER_ADDRESS,
-                port=DEFAULT_PORT, wait_timeout=DEFAULT_WAIT_TIMEOUT, **kwargs):
+                port=DEFAULT_PORT, wait_timeout=DEFAULT_WAIT_TIMEOUT,
+                **kwargs):
     Thread.__init__(self, name=self.__class__.__name__)
     HTTPServer.__init__(self, (address, port), CallbackHandler)
     self.domain_manager = domain_manager
-    self.daemon = True
     self.wait_timeout = wait_timeout
     self._hooks = {}
+    self.daemon = True
 
   @property
   def url (self):
