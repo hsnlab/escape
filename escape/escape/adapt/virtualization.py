@@ -198,8 +198,9 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     :type event: :any:`DomainChangedEvent`
     :return: None
     """
-    log.debug("Received DoVChanged notification for %s! Cause: %s" % (
-      self, DoVChangedEvent.TYPE.reversed[event.cause]))
+    log.debug("Received DoVChanged notification for %s! Cause: %s -> "
+              "Set dirty flag!" % (self,
+                                   DoVChangedEvent.TYPE.reversed[event.cause]))
     # Topology is changed, set dirty flag
     self._dirty = True
 

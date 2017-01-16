@@ -159,7 +159,7 @@ def enum (*sequential, **named):
     'TWO'
 
   :param sequential: support automatic enumeration
-  :type sequential: list
+  :type sequential: str
   :param named: support definition with unique keys
   :type named: dict
   :return: Enum object
