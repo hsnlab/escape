@@ -1049,6 +1049,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   name = "UNIFY-REST"
   # type of the Adapter class - use this name for searching Adapter config
   type = AbstractESCAPEAdapter.TYPE_REMOTE
+  MESSAGE_ID_NAME = "message-id"
+  CALLBACK_NAME = "call-back"
 
   def __init__ (self, url, prefix="", **kwargs):
     """
@@ -1123,7 +1125,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                 self._base_url)
       return
 
-  def edit_config (self, data, diff=False):
+  def edit_config (self, data, diff=False, message_id=None, callback=None):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 
@@ -1133,7 +1135,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type data: :any::`NFFG`
     :param diff: send the diff of the mapping request (default: False)
     :param diff: bool
-    :return: status code
+    :param message_id: optional message id
+    :type message_id: str
+    :return: status code or the returned message-id if it is set
     :rtype: str
     """
     log.debug("Prepare edit-config request for remote agent at: %s" %
@@ -1162,16 +1166,35 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("Send request to %s domain agent at %s..." %
               (self.domain_name, self._base_url))
     log.log(VERBOSE, "Generated Virtualizer:\n%s" % plain_data)
+    params = {}
+    if message_id is not None:
+      params[self.MESSAGE_ID_NAME] = message_id
+      log.debug("Using explicit message-id: %s" % message_id)
+    if callback is not None:
+      params[self.CALLBACK_NAME] = callback
+      log.debug("Using explicit callback: %s" % callback)
     try:
-      status = self.send_with_timeout(self.POST, 'edit-config', plain_data)
+      status = self.send_with_timeout(method=self.POST,
+                                      url='edit-config',
+                                      body=plain_data,
+                                      params=params)
     except Timeout:
       log.warning("Reached timeout(%ss) while waiting for edit-config response!"
                   " Ignore exception..." % self.CONNECTION_TIMEOUT)
       # Ignore exception - assume the request was successful -> return True
       return True
-    if status:
-      log.debug("Topology description has been sent!")
+    if status is not None:
+      log.debug("Topology description has been sent successfully!")
+      msg_id = self.get_last_message_id()
+      if msg_id is not None:
+        log.debug("Detected message-id from response: %s" % msg_id)
     return status
+
+  def get_last_message_id (self):
+    if self._response is not None:
+      return self._response.headers.get(self.MESSAGE_ID_NAME, None)
+    else:
+      return None
 
   def get_original_topology (self):
     """

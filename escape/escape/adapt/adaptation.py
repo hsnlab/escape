@@ -442,6 +442,19 @@ class ControllerAdapter(object):
     # Set virtualizer-related components
     self.DoVManager = GlobalResourceManager()
     self.domains = ComponentConfigurator(self)
+    self.init_managers(with_infr=with_infr)
+    # Here every domainManager is up and running
+    # Notify the remote visualizer about collected data if it's needed
+    notify_remote_visualizer(
+      data=self.DoVManager.dov.get_resource_info(),
+      id=LAYER_NAME)
+
+  def init_managers (self, with_infr=False):
+    """
+    :param with_infr: using emulated infrastructure (default: False)
+    :type with_infr: bool
+    :return: None
+    """
     try:
       if with_infr:
         # Init internal domain manager if Infrastructure Layer is started
@@ -452,11 +465,6 @@ class ControllerAdapter(object):
       from escape.util.misc import quit_with_error
       quit_with_error(msg="Shutting down ESCAPEv2 due to an unexpected error!",
                       logger=log, exception=e)
-    # Here every domainManager is up and running
-    # Notify the remote visualizer about collected data if it's needed
-    notify_remote_visualizer(
-      data=self.DoVManager.dov.get_resource_info(),
-      id=LAYER_NAME)
 
   def shutdown (self):
     """
@@ -558,6 +566,12 @@ class ControllerAdapter(object):
                     AbstractRemoteDomainManager) and domain_mgr._poll:
         log.info("Skip explicit DoV update for domain: %s. "
                  "Cause: polling enabled!" % domain)
+        continue
+
+      if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
+         domain_mgr.callback_manager:
+        log.info("Skip explicit DoV update for domain: %s. "
+                 "Cause: callback registered!" % domain)
         continue
       # If the internalDM is the only initiated mgr, we can override the
       # whole DoV
@@ -899,8 +913,8 @@ class GlobalResourceManager(object):
       # Add detected domain to cached domains
       self.__tracked_domains.add(domain)
     else:
-      log.error("New domain: %s has already tracked: %s! Abort adding..."
-                % (domain, self.__tracked_domains))
+      log.error("New domain: %s has already tracked in domains: %s! "
+                "Abort adding..." % (domain, self.__tracked_domains))
 
   def update_domain (self, domain, nffg):
     """
