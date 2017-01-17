@@ -383,6 +383,7 @@ class ServiceLayerAPI(AbstractAPI):
       msg_id = self.rest_api.request_cache.cache_request(nffg=service_nffg)
       if msg_id is not None:
         self.rest_api.request_cache.set_in_progress(id=msg_id)
+        log.getChild('API').debug("Request is stored with id: %s" % msg_id)
       else:
         log.getChild('API').debug("No request info detected.")
     # Check if mapping mode is set globally in CONFIG

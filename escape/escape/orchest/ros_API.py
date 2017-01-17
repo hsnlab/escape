@@ -933,6 +933,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       msg_id = self.ros_api.request_cache.cache_request(nffg=nffg)
       if msg_id is not None:
         self.ros_api.request_cache.set_in_progress(id=msg_id)
+        log.getChild('API').debug("Request is stored with id: %s" % msg_id)
       else:
         log.getChild('API').debug("No request info detected.")
     # Check if mapping mode is set globally in CONFIG

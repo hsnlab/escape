@@ -1252,12 +1252,12 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :return: None
     """
     super(UnifyDomainManager, self).init(configurator, **kwargs)
-    self.log.info("DomainManager for %s domain has been initialized!" %
-                  self.domain_name)
     cb_cfg = self._adapters_cfg.get(self.CALLBACK_CONFIG_NAME, None)
     if cb_cfg and cb_cfg.get(self.CALLBACK_ENABLED_NAME, None):
-      self.callback_manager = CallbackManager(domain_manager=self, **cb_cfg)
+      self.callback_manager = CallbackManager(hook=self.callback_hook, **cb_cfg)
       self.callback_manager.start()
+    self.log.info("DomainManager for %s domain has been initialized!" %
+                  self.domain_name)
 
   def initiate_adapters (self, configurator):
     """
@@ -1313,8 +1313,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
           if msg_id is None:
             log.warning("message-id is missing for callback registration!")
             return
-          self.callback_manager.register_hook(id=msg_id, data=nffg_part)
-          log.debug("Register callback for response: %s" % msg_id)
+          self.callback_manager.subscribe_callback(id=msg_id, data=nffg_part)
         return True
       else:
         return False
@@ -1369,7 +1368,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       nffg_part = self.topoAdapter.get_topology_resource()
     else:
       self.log.debug("Use splitted NFFG part to update DoV...")
-      nffg_part = self.callback_manager.unregister_hook(id=msg_id)
+      nffg_part = self.callback_manager.unsubscribe_callback(id=msg_id)
     if nffg_part is None:
       self.log.error("Missing installed NFFG part for message-id: %s!" % msg_id)
       return
