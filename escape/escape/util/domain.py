@@ -147,7 +147,7 @@ class AbstractDomainManager(EventMixin):
   IS_EXTERNAL_MANAGER = False
   """Signal that the Manager class manages external domains"""
 
-  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, adapters=None, **kwargs):
+  def __init__ (self, domain_name=None, adapters=None, **kwargs):
     """
     Init.
 
@@ -161,13 +161,13 @@ class AbstractDomainManager(EventMixin):
     """
     super(AbstractDomainManager, self).__init__()
     # Name of the domain
-    self.domain_name = domain_name
+    self.domain_name = domain_name if domain_name else self.DEFAULT_DOMAIN_NAME
     self._detected = None  # Actual domain is detected or not
     self.internal_topo = None  # Description of the domain topology as an NFFG
     self.topoAdapter = None  # Special adapter which can handle the topology
     # description, request it, and install mapped NFs from internal NFFG
     self._adapters_cfg = adapters
-    self.log = log.getChild(domain_name)
+    self.log = log.getChild(self.domain_name)
 
   def __str__ (self):
     """
@@ -210,7 +210,7 @@ class AbstractDomainManager(EventMixin):
                                self.domain_name)
     self.log.debug("Init Adapters for domain: %s - adapters: %s" % (
       self.domain_name,
-      [a['class'] for a in self._adapters_cfg.itervalues()]))
+      [a.get('class', None) for a in self._adapters_cfg.itervalues()]))
     # Update Adapters's config with domain name
     for adapter in self._adapters_cfg.itervalues():
       adapter['domain_name'] = self.domain_name
@@ -1197,6 +1197,8 @@ class AbstractRESTAdapter(Session):
     :return: None
     """
     super(AbstractRESTAdapter, self).__init__()
+    if not base_url:
+      return
     if base_url.endswith('/'):
       self._base_url = urlparse.urljoin(base_url, prefix + "/")
     else:
@@ -1279,7 +1281,7 @@ class AbstractRESTAdapter(Session):
     # Raise an exception in case of bad request (4xx <= status code <= 5xx)
     self._response.raise_for_status()
     # Return with body content
-    return self._response.text
+    return self._response.text if self._response is not None else None
 
   def send_no_error (self, method, url=None, body=None, **kwargs):
     """
@@ -1321,10 +1323,7 @@ class AbstractRESTAdapter(Session):
     try:
       if timeout is not None:
         kwargs['timeout'] = timeout
-      self.send_request(method, url, body, **kwargs)
-      # return self._response.status_code if self._response is not None else
-      # None
-      return self._response.text if self._response is not None else None
+      return self.send_request(method, url, body, **kwargs)
     except ConnectionError:
       log.error("Remote agent(adapter: %s, url: %s) is not reachable!"
                 % (self.name, self._base_url))
@@ -1362,8 +1361,7 @@ class AbstractRESTAdapter(Session):
     try:
       if timeout is not None:
         kwargs['timeout'] = timeout
-      self.send_request(method, url, body, **kwargs)
-      return self._response.text if self._response is not None else None
+      return self.send_request(method, url, body, **kwargs)
     except Timeout:
       log.log(VERBOSE,
               "Remote agent(adapter: %s, url: %s) reached timeout limit!"

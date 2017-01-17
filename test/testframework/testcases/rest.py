@@ -46,6 +46,19 @@ class CallbackHandler(BaseHTTPRequestHandler):
     self.send_header('Connection', 'close')
     self.end_headers()
 
+  def log_message (self, format, *args):
+    """
+    Disable logging of incoming messages.
+
+    :param mformat: message format
+    :type mformat: str
+    :return: None
+    """
+    log.debug("%s - - [%s] %s\n" %
+              (self.client_address[0],
+               self.log_date_time_string(),
+               format % args))
+
   def do_GET (self):
     self.do_POST()
 
@@ -78,11 +91,10 @@ class CallbackManager(HTTPServer, Thread):
 
   def __init__ (self, address=DEFAULT_SERVER_ADDRESS, port=DEFAULT_PORT,
                 wait_timeout=DEFAULT_WAIT_TIMEOUT):
-    Thread.__init__(self)
+    Thread.__init__(self, name="%s(%s:%s)" % (self.__class__.__name__,
+                                              self.DEFAULT_SERVER_ADDRESS,
+                                              self.DEFAULT_PORT))
     HTTPServer.__init__(self, (address, port), CallbackHandler)
-    self.name = "%s(%s:%s)" % (self.__class__.__name__,
-                               self.DEFAULT_SERVER_ADDRESS,
-                               self.DEFAULT_PORT)
     self.daemon = True
     self.callback_event = Event()
     self.wait_timeout = wait_timeout

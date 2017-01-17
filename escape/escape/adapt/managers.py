@@ -22,9 +22,10 @@ import re
 from ncclient import NCClientError
 
 from escape.adapt.adapters import RemoteESCAPEv2RESTAdapter, UnifyRESTAdapter
+from escape.adapt.callback import CallbackManager
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
-from escape.util.misc import get_global_parameter
+from escape.util.misc import get_global_parameter, schedule_as_coop_task
 from pox.lib.util import dpid_to_str
 
 
@@ -1218,6 +1219,9 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   name = "UNIFY"
   # Default domain name - Must override child classes to define the domain
   DEFAULT_DOMAIN_NAME = "UNIFY"
+  CALLBACK_CONFIG_NAME = "CALLBACK"
+  CALLBACK_ENABLED_NAME = "enabled"
+  CALLBACK_EXPLICIT_DOMAIN_UPDATE = "explicit_update"
 
   def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
     """
@@ -1234,6 +1238,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     log.debug("Create UnifyDomainManager with domain name: %s" % domain_name)
     super(UnifyDomainManager, self).__init__(domain_name=domain_name, *args,
                                              **kwargs)
+    self.callback_manager = None
+    """:type: CallbackManager"""
 
   def init (self, configurator, **kwargs):
     """
@@ -1248,6 +1254,10 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     super(UnifyDomainManager, self).init(configurator, **kwargs)
     self.log.info("DomainManager for %s domain has been initialized!" %
                   self.domain_name)
+    cb_cfg = self._adapters_cfg.get(self.CALLBACK_CONFIG_NAME, None)
+    if cb_cfg and cb_cfg.get(self.CALLBACK_ENABLED_NAME, None):
+      self.callback_manager = CallbackManager(domain_manager=self, **cb_cfg)
+      self.callback_manager.start()
 
   def initiate_adapters (self, configurator):
     """
@@ -1269,6 +1279,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     super(UnifyDomainManager, self).finit()
     self.topoAdapter.finit()
+    if self.callback_manager:
+      self.callback_manager.shutdown()
 
   def install_nffg (self, nffg_part):
     """
@@ -1289,8 +1301,23 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         # Request the most recent topo, which will update the cached
         # last_virtualizer for the diff calculation
         self.topoAdapter.get_config()
-      status = self.topoAdapter.edit_config(nffg_part, diff=self._diff)
-      return True if status is not None else False
+      request_params = {"diff": self._diff}
+      if self.callback_manager is not None:
+        cb_url = self.callback_manager.url
+        log.debug("Set callback URL: %s" % cb_url)
+        request_params["callback"] = cb_url
+      status = self.topoAdapter.edit_config(nffg_part, **request_params)
+      if status is not None:
+        if self.callback_manager is not None:
+          msg_id = self.topoAdapter.get_last_message_id()
+          if msg_id is None:
+            log.warning("message-id is missing for callback registration!")
+            return
+          self.callback_manager.register_hook(id=msg_id, data=nffg_part)
+          log.debug("Register callback for response: %s" % msg_id)
+        return True
+      else:
+        return False
     except:
       self.log.exception("Got exception during NFFG installation into: %s." %
                          self.domain_name)
@@ -1329,6 +1356,27 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     else:
       status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
     return True if status is not None else False
+
+  @schedule_as_coop_task
+  def callback_hook (self, msg_id, result_code):
+    if 300 <= result_code:
+      self.log.warning(
+        "Received error result from domain: %s" % self.domain_name)
+      # TODO - handle error in orchestration
+    if self._adapters_cfg.get(self.CALLBACK_CONFIG_NAME, {}).get(
+       self.CALLBACK_EXPLICIT_DOMAIN_UPDATE, False):
+      self.log.debug("Request updated topology from domain...")
+      nffg_part = self.topoAdapter.get_topology_resource()
+    else:
+      self.log.debug("Use splitted NFFG part to update DoV...")
+      nffg_part = self.callback_manager.unregister_hook(id=msg_id)
+    if nffg_part is None:
+      self.log.error("Missing installed NFFG part for message-id: %s!" % msg_id)
+      return
+    self.raiseEventNoErrors(DomainChangedEvent,
+                            domain=self.domain_name,
+                            data=nffg_part,
+                            cause=DomainChangedEvent.TYPE.DOMAIN_CHANGED)
 
 
 class OpenStackDomainManager(UnifyDomainManager):
