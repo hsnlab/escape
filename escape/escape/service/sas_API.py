@@ -176,7 +176,9 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
       params['message-id'] = str(uuid.uuid1())
       self.log.debug("No message-id! Generated id: %s" % params['message-id'])
     if nffg:
-      nffg.id = "%s@message-id=%s" % (nffg.id, params['message-id'])
+      if nffg.service_id is None:
+        nffg.service_id = nffg.id
+      nffg.id = params['message-id']
       nffg.metadata['params'] = params
       self._proceed_API_call(self.API_CALL_REQUEST,
                              service_nffg=nffg,
@@ -501,7 +503,7 @@ class ServiceLayerAPI(AbstractAPI):
     elif status == RequestStatus.UNKNOWN:
       return 404, None
     elif status == RequestStatus.ERROR:
-      return 500, "TODO"
+      return 500, status
     else:
       # PROCESSING or INITIATED
       return 202, None
