@@ -209,8 +209,7 @@ class AbstractDomainManager(EventMixin):
       raise ConfigurationError("Missing configuration for %s" %
                                self.domain_name)
     self.log.debug("Init Adapters for domain: %s - adapters: %s" % (
-      self.domain_name,
-      [a.get('class', None) for a in self._adapters_cfg.itervalues()]))
+      self.domain_name, [a for a in self._adapters_cfg]))
     # Update Adapters's config with domain name
     for adapter in self._adapters_cfg.itervalues():
       adapter['domain_name'] = self.domain_name
@@ -705,7 +704,8 @@ class AbstractESCAPEAdapter(EventMixin):
 
     :return: None
     """
-    self.log.debug("Finit ESCAPEAdapter name: %s, type: %s" % (self.name, self.type))
+    self.log.debug(
+      "Finit ESCAPEAdapter name: %s, type: %s" % (self.name, self.type))
 
 
 class AbstractOFControllerAdapter(AbstractESCAPEAdapter):

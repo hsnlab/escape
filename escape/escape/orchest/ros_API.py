@@ -191,7 +191,9 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       params['message-id'] = str(uuid.uuid1())
       self.log.debug("No message-id! Generated id: %s" % params['message-id'])
     if nffg:
-      nffg.id = "%s@message-id=%s" % (nffg.id, params['message-id'])
+      if nffg.service_id is None:
+        nffg.service_id = nffg.id
+      nffg.id = params['message-id']
       nffg.metadata['params'] = params
       self._proceed_API_call(self.API_CALL_REQUEST,
                              nffg=nffg,
@@ -845,7 +847,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     elif status == RequestStatus.UNKNOWN:
       return 404, None
     elif status == RequestStatus.ERROR:
-      return 500, "TODO"
+      return 500, status
     else:
       # PROCESSING or INITIATED
       return 202, None
@@ -933,6 +935,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       msg_id = self.ros_api.request_cache.cache_request(nffg=nffg)
       if msg_id is not None:
         self.ros_api.request_cache.set_in_progress(id=msg_id)
+        log.getChild('API').debug("Request is stored with id: %s" % msg_id)
       else:
         log.getChild('API').debug("No request info detected.")
     # Check if mapping mode is set globally in CONFIG

@@ -75,14 +75,15 @@ class CallbackManager(HTTPServer, Thread):
   DEFAULT_PORT = 9000
   DEFAULT_WAIT_TIMEOUT = 3
 
-  def __init__ (self, domain_manager, address=DEFAULT_SERVER_ADDRESS,
+  def __init__ (self, hook, domain_name, address=DEFAULT_SERVER_ADDRESS,
                 port=DEFAULT_PORT, wait_timeout=DEFAULT_WAIT_TIMEOUT,
                 **kwargs):
     Thread.__init__(self, name=self.__class__.__name__)
     HTTPServer.__init__(self, (address, port), CallbackHandler)
-    self.domain_manager = domain_manager
+    self.__hook = hook
+    self.domain_name = domain_name
     self.wait_timeout = wait_timeout
-    self._hooks = {}
+    self.__register = {}
     self.daemon = True
 
   @property
@@ -91,8 +92,10 @@ class CallbackManager(HTTPServer, Thread):
 
   def run (self):
     try:
-      log.debug(
-        "Start %s on %s" % (self.__class__.__name__, self.server_address))
+      log.debug("Start %s for domain: %s on %s:%s" % (self.__class__.__name__,
+                                                      self.domain_name,
+                                                      self.server_address[0],
+                                                      self.server_address[1]))
       self.serve_forever()
     except KeyboardInterrupt:
       raise
@@ -101,14 +104,19 @@ class CallbackManager(HTTPServer, Thread):
     finally:
       self.server_close()
 
-  def register_hook (self, id, data):
-    if id not in self._hooks:
-      self._hooks[id] = data
+  def subscribe_callback (self, id, data):
+    log.debug("Register callback for response: %s on domain: %s" %
+              (id, self.domain_name))
+    if id not in self.__register:
+      self.__register[id] = data
     else:
-      log.warning("Hook is already registered for id: %s" % id)
+      log.warning("Hook is already registered for id: %s on domain: %s"
+                  % (id, self.domain_name))
 
-  def unregister_hook (self, id):
-    return self._hooks.pop(id, None)
+  def unsubscribe_callback (self, id):
+    log.debug("Unregister callback for response: %s from domain: %s"
+              % (id, self.domain_name))
+    return self.__register.pop(id, None)
 
   def invoke_hook (self, msg_id, result):
     try:
@@ -117,6 +125,10 @@ class CallbackManager(HTTPServer, Thread):
       log.error("Received response code is not valid: %s! Abort callback..."
                 % result)
       return
-    log.debug("Received valid callback with message-id: %s, result: %s" %
-              (msg_id, result))
-    self.domain_manager.callback_hook(msg_id, result)
+    if msg_id not in self.__register:
+      log.warning("Received unregistered callback with id: %s from domain: %s"
+                  % (msg_id, self.domain_name))
+      return
+    log.debug("Received valid callback with id: %s, result: %s from domain: %s"
+              % (msg_id, result, self.domain_name))
+    self.__hook(msg_id, result)

@@ -30,7 +30,8 @@ logging.getLogger('').setLevel("VERBOSE")
 color.LEVEL_COLORS['VERBOSE'] = 'white'
 
 # Use logger format from pretty_logger
-DEFAULT_LOGGER_FORMAT = "[@@@bold@@@level%(name)-23s@@@reset] " \
+DEFAULT_LOGGER_FORMAT = "[@@@bold@@@level%(levelname)0.8s@@@reset]" \
+                        "[@@@bold@@@level%(name)-23s@@@reset] " \
                         "@@@bold%(message)s@@@normal"
 # Add logger level to the log entries in test mode
 TEST_LOGGER_FORMAT = "[@@@bold@@@level%(levelname)-18s@@@reset]" \
