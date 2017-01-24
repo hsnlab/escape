@@ -36,9 +36,10 @@ class BasicErrorChecker(object):
   PRE_CONTEXT = 5
   POST_CONTEXT = 5
 
+  ADAPTATION_ENDED = "All installation process has been finished!"
   RESULT_LOG = "instantiation has been finished"
-  SUCCESS_RESULT = "DEPLOYED"
-  ERROR_RESULT = "DEPLOYMENT_ERROR"
+  SUCCESS_RESULTS = ("SUCCESS", "DEPLOYED")
+  ERROR_RESULTS = "DEPLOYMENT_ERROR"
 
   @classmethod
   def detect_error (cls, result):
@@ -68,9 +69,12 @@ class BasicErrorChecker(object):
     :rtype: str or None
     """
     for line in reversed(result.log_output):
+      if cls.ADAPTATION_ENDED in line:
+        break
       if cls.RESULT_LOG in line:
-        if cls.SUCCESS_RESULT in line:
-          return None
+        for sr in cls.ERROR_RESULTS:
+          if sr in line:
+            return None
         else:
           return line
     return "No result line detected!"
