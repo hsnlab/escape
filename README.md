@@ -28,12 +28,12 @@ for explicit compiling or installation. The only requirement need to be
 pre-installed is a Python interpreter.
 
 The recommended Python version, in which the development and mostly the testing
-are performed, is the standard CPython **2.7.11**.
+are performed, is the standard CPython **2.7.12**.
 
 The best choice of platform on wich ESCAPEv2 is recommended to install and the
 *install-dep.sh* is tested is **Ubuntu 14.04.4 LTS**.
 
-However ESCAPEv2 is developed on Kubuntu 16.04, some issues are experienced
+However ESCAPEv2 is developed on Xubuntu 16.04, some issues are experienced
 related to SAP-xterm initiation in case the platform was an Ubuntu 16.04 server
 image and ESCAPEv2 was started through an SSH channel.
 Considering this limitation we recommend to use the older 14.04 LTS version in
@@ -88,14 +88,18 @@ The preferred way:
 
 5. Run ESCAPEv2 with one of the commands listed in a later section. To see the
     available arguments of the top stating script check the help menu:
+    
     ```bash
     ./escape.py --help
     ```
+    
     To verify ESCAPEv2's components are installed and set up correctly you can run
     the following command and test the reachability of the initiated SAPs (``xterm``)
     with `ping`:
+    
     ```bash
     ./escape.py -df -s examples/escape-mn-req.nffg
+ 
     # on SAP1 xterm
     $ ping sap2
     # on SAP2 xterm
@@ -104,6 +108,7 @@ The preferred way:
 
 To setup virtualizer library as a subtree module manually, use the following commands from
 the project's root directory:
+
 ```bash
 git submodule update --init --recursive --merge
 ```

@@ -16,6 +16,7 @@ Contains classes which implement :any:`NFFG` mapping functionality.
 """
 import cProfile
 import pstats
+import time
 
 from MappingAlgorithms import MAP
 from UnifyExceptionTypes import *
@@ -42,7 +43,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     super(ESCAPEMappingStrategy, self).__init__()
 
   @classmethod
-  def call_mapping_algorithm (cls, request, topology, **params):
+  def call_mapping_algorithm (cls, request, topology, profiling=False,
+                              **params):
     """
     Template function to call the main algorithm.
     Provide an easy way to change the algorithm easily in child classes.
@@ -53,35 +55,42 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :type request: :any:`NFFG`
     :param topology: topology graph
     :type topology: :any:`NFFG`
+    :param profiling: enables cProfile for mapping which bring big overhead
+    :type profiling: bool
     :param params: additional mapping parameters
     :type params: dict
     :return: mapping result
     :rtype: :any:`NFFG`
     """
-    profile = cProfile.Profile(builtins=False, subcalls=False)
+    if profiling:
+      return cls.cprofiler_decorator(MAP, request, topology, **params)
+    else:
+      return cls.timer_decorator(MAP, request, topology, **params)
+
+  @staticmethod
+  def cprofiler_decorator (func, *args, **kwargs):
+    profiler = cProfile.Profile(builtins=False, subcalls=False)
     try:
-      profile.enable()
-      res = MAP(request=request, network=topology, **params)
+      profiler.enable()
+      result = func(*args, **kwargs)
     finally:
-      profile.disable()
-      cls.__process_profile_result(profile=profile)
-      profile.create_stats()
-    return res
+      profiler.disable()
+      profiler.create_stats()
+      stat = pstats.Stats(profiler)
+      log.info("Mapping algorithm finished with %d function calls "
+               "(%d primitive calls) in %.3f seconds!" %
+               (stat.total_calls, stat.prim_calls, stat.total_tt))
+    return result
 
-  @classmethod
-  def __process_profile_result (cls, profile):
-    """
-    Process profiling data.
-
-    :param profile: main Profile object
-    :type profile: cProfile.Profile
-    :return: None
-    """
-    profile.create_stats()
-    stat = pstats.Stats(profile)
-    log.info("Mapping algorithm finished with %d function calls "
-              "(%d primitive calls) in %.3f seconds!" %
-              (stat.total_calls, stat.prim_calls, stat.total_tt))
+  @staticmethod
+  def timer_decorator (func, *args, **kwargs):
+    start = time.time()
+    try:
+      result = func(*args, **kwargs)
+    finally:
+      delta = time.time() - start
+      log.info("Mapping algorithm finished in %.3f seconds!" % delta)
+    return result
 
   @classmethod
   def map (cls, graph, resource):

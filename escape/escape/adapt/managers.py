@@ -29,7 +29,7 @@ from escape.util.misc import get_global_parameter, schedule_as_coop_task
 from pox.lib.util import dpid_to_str
 
 
-class GetLocalDomainViewEvent(object):
+class GetLocalDomainViewEvent(Event):
   """
   Event for requesting the Global View (DoV).
   """
@@ -1204,6 +1204,17 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     return True if status is not None else False
 
 
+class CallbackEvent(Event):
+  STATUS_OK = "OK"
+  STATUS_ERROR = "ERROR"
+
+  def __init__ (self, domain, status, callback=None):
+    super(CallbackEvent, self).__init__()
+    self.domain = domain
+    self.status = status
+    self.callback = callback
+
+
 class UnifyDomainManager(AbstractRemoteDomainManager):
   """
   Manager class for unified handling of different domains using the Unify
@@ -1215,6 +1226,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   .. note::
     Uses :class:`UnifyDomainAdapter` for communicate with the remote domain.
   """
+  # Events raised by this class
+  _eventMixin_events = {DomainChangedEvent, CallbackEvent}
   # DomainManager name
   name = "UNIFY"
   # Default domain name - Must override child classes to define the domain
@@ -1311,9 +1324,12 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         if self.callback_manager is not None:
           msg_id = self.topoAdapter.get_last_message_id()
           if msg_id is None:
-            log.warning("message-id is missing for callback registration!")
+            log.warning("message-id is missing from 'edit-config' response "
+                        "for callback registration!")
             return
-          self.callback_manager.subscribe_callback(id=msg_id, data=nffg_part)
+          self.callback_manager.subscribe_callback(cb_id=msg_id,
+                                                   req_id=nffg_part.id,
+                                                   data=nffg_part)
         return True
       else:
         return False
@@ -1358,24 +1374,24 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
 
   @schedule_as_coop_task
   def callback_hook (self, msg_id, result_code):
+    callback = self.callback_manager.unsubscribe_callback(cb_id=msg_id)
     if 300 <= result_code:
       self.log.warning(
-        "Received error result from domain: %s" % self.domain_name)
-      # TODO - handle error in orchestration
+        "Detected error result from domain: %s" % self.domain_name)
+      self.raiseEventNoErrors(CallbackEvent,
+                              domain=self.domain_name,
+                              status=CallbackEvent.STATUS_ERROR,
+                              callback=callback)
     if self._adapters_cfg.get(self.CALLBACK_CONFIG_NAME, {}).get(
        self.CALLBACK_EXPLICIT_DOMAIN_UPDATE, False):
       self.log.debug("Request updated topology from domain...")
-      nffg_part = self.topoAdapter.get_topology_resource()
+      callback.data = self.topoAdapter.get_topology_resource()
     else:
       self.log.debug("Use splitted NFFG part to update DoV...")
-      nffg_part = self.callback_manager.unsubscribe_callback(id=msg_id)
-    if nffg_part is None:
-      self.log.error("Missing installed NFFG part for message-id: %s!" % msg_id)
-      return
-    self.raiseEventNoErrors(DomainChangedEvent,
+    self.raiseEventNoErrors(CallbackEvent,
                             domain=self.domain_name,
-                            data=nffg_part,
-                            cause=DomainChangedEvent.TYPE.DOMAIN_CHANGED)
+                            status=CallbackEvent.STATUS_OK,
+                            callback=callback)
 
 
 class OpenStackDomainManager(UnifyDomainManager):

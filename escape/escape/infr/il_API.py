@@ -124,26 +124,3 @@ class InfrastructureLayerAPI(AbstractAPI):
         self.topology.start_network()
       else:
         log.error("Mininet topology is missing! Skip network starting...")
-
-  ##############################################################################
-  # UNIFY Co - Rm API functions starts here
-  ##############################################################################
-
-  @schedule_as_coop_task
-  def _handle_DeployNFFGEvent (self, event):
-    """
-    Install mapped NFFG part into the emulated network.
-
-    :param event: event object
-    :type event: :class:`DeployNFFGEvent`
-    :return: :any:`DeployNFFGEvent`
-    """
-    log.getChild('API').info("Received mapped NF-FG: %s from %s Layer" % (
-      event.nffg_part, str(event.source._core_name).title()))
-    # TODO - implement static deployment
-    # TODO - probably will not be supported in the future
-    log.getChild('API').info(
-      "NF-FG: %s deployment has been finished successfully!" % event.nffg_part)
-    self.raiseEventNoErrors(DeploymentFinishedEvent,
-                            id=event.nffg_part.id,
-                            success=DeploymentFinishedEvent.DEPLOYED)

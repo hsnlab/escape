@@ -5,6 +5,7 @@
       "class": "ServiceGraphMapper",
       "mapping-enabled": false,
       "mapping-config": {
+        "profiling": false
       }
     },
     "STRATEGY": {
@@ -34,6 +35,7 @@
       "class": "ResourceOrchestrationMapper",
       "mapping-enabled": true,
       "mapping-config": {
+        "profiling": false
       }
     },
     "STRATEGY": {
@@ -202,7 +204,8 @@
         "CALLBACK": {
           "enabled": true,
           "address": "0.0.0.0",
-          "port": 9000
+          "port": 9000,
+          "explicit_update": false
         }
       }
     },
