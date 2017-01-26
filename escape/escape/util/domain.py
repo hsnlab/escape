@@ -76,6 +76,7 @@ class DomainChangedEvent(Event):
   # Causes of possible changes
   TYPE = enum('DOMAIN_UP',  # new domain has detected
               "DOMAIN_CHANGED",  # detected domain has changed
+              "CALLBACK",  # received callback of a deploy task
               'DOMAIN_DOWN',  # detected domain got down
               'NODE_UP',  # one Node/BiSBiS gone up
               'NODE_DOWN',  # one Node/BiSBiS got down

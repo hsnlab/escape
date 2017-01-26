@@ -69,6 +69,13 @@ class CallbackHandler(BaseHTTPRequestHandler):
     return params
 
 
+class Callback(object):
+  def __init__ (self, callback_id, request_id, data):
+    self.callback_id = callback_id
+    self.request_id = request_id
+    self.data = data
+
+
 class CallbackManager(HTTPServer, Thread):
   DEFAULT_SERVER_ADDRESS = "localhost"
   DEFAULT_PREFIX = "callbacks"
@@ -104,19 +111,20 @@ class CallbackManager(HTTPServer, Thread):
     finally:
       self.server_close()
 
-  def subscribe_callback (self, id, data):
+  def subscribe_callback (self, cb_id, req_id, data):
     log.debug("Register callback for response: %s on domain: %s" %
-              (id, self.domain_name))
-    if id not in self.__register:
-      self.__register[id] = data
+              (cb_id, self.domain_name))
+    if cb_id not in self.__register:
+      self.__register[cb_id] = Callback(callback_id=cb_id, request_id=req_id,
+                                        data=data)
     else:
       log.warning("Hook is already registered for id: %s on domain: %s"
                   % (id, self.domain_name))
 
-  def unsubscribe_callback (self, id):
+  def unsubscribe_callback (self, cb_id):
     log.debug("Unregister callback for response: %s from domain: %s"
-              % (id, self.domain_name))
-    return self.__register.pop(id, None)
+              % (cb_id, self.domain_name))
+    return self.__register.pop(cb_id, None)
 
   def invoke_hook (self, msg_id, result):
     try:

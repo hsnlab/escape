@@ -30,6 +30,34 @@ from escape.util.domain import DomainChangedEvent, AbstractDomainManager, \
 from escape.util.misc import notify_remote_visualizer, VERBOSE
 
 
+class InstallationFinishedEvent(mgrs.BaseResultEvent):
+  """
+  Event for signalling end of mapping process.
+  """
+
+  def __init__ (self, id, result):
+    """
+    Init.
+
+    :param result: result of the installation
+    :type: result: str
+    """
+    super(InstallationFinishedEvent, self).__init__()
+    self.id = id
+    self.result = result
+
+  @classmethod
+  def get_result_from_status (cls, deploy_status):
+    if deploy_status.success:
+      return cls.DEPLOYED
+    elif deploy_status.still_pending:
+      return cls.IN_PROGRESS
+    elif deploy_status.failed:
+      return cls.DEPLOY_ERROR
+    else:
+      return cls.UNKNOWN
+
+
 class ComponentConfigurator(object):
   """
   Initialize, configure and store DomainManager objects.
@@ -442,6 +470,7 @@ class ControllerAdapter(object):
     # Set virtualizer-related components
     self.DoVManager = GlobalResourceManager()
     self.domains = ComponentConfigurator(self)
+    self.status_mgr = DeployStatusManager()
     self.init_managers(with_infr=with_infr)
     # Here every domainManager is up and running
     # Notify the remote visualizer about collected data if it's needed
@@ -488,10 +517,12 @@ class ControllerAdapter(object):
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: NFFG
     :return: deploy result
-    :rtype: bool
+    :rtype: DeployStatus
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
+    # Register mapped NFFG for managing statuses of install steps
+    deploy_status = self.status_mgr.register_service(mapped_nffg)
     # If DoV update is based on status updates, rewrite the whole DoV as the
     # first step
     if self.DoVManager.status_updates:
@@ -505,13 +536,10 @@ class ControllerAdapter(object):
       log.warning("Given mapped NFFG: %s can not be sliced! "
                   "Skip domain notification steps" % mapped_nffg)
       # Return with deploy result: fail
-      return False
+      return deploy_status
+    NFFGToolBox.rewrite_interdomain_tags(slices)
     log.info("Notify initiated domains: %s" %
              [d for d in self.domains.initiated])
-    # TODO - abstract/inter-domain tag rewrite
-    NFFGToolBox.rewrite_interdomain_tags(slices)
-    # Set deploy result True by default
-    deploy_result = True
     # Perform domain installations
     for domain, part in slices:
       log.debug("Search DomainManager for domain: %s" % domain)
@@ -520,7 +548,7 @@ class ControllerAdapter(object):
       if domain_mgr is None:
         log.warning("No DomainManager has been initialized for domain: %s! "
                     "Skip install domain part..." % domain)
-        deploy_result = False
+        deploy_status.set_domain_failed(domain=domain)
         continue
       # Temporarily recreate TAGs originated from collocated link
       # NFFGToolBox.recreate_missing_match_TAGs(nffg=part, log=log)
@@ -548,13 +576,12 @@ class ControllerAdapter(object):
       else:
         log.debug("Update installed part with collective result: %s" %
                   NFFG.STATUS_FAIL)
+        deploy_status.set_domain_failed(domain=domain)
         # Update failed status info of mapped elements in NFFG part for DoV
         # update
         if self.DoVManager.status_updates:
           NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
                                          log=log)
-      # Note result according to others before
-      deploy_result = deploy_result and domain_install_result
       # If installation of the domain was performed without error
       if not domain_install_result and not self.DoVManager.status_updates:
         log.warning("Skip DoV update with domain: %s! Cause: "
@@ -566,59 +593,73 @@ class ControllerAdapter(object):
                     AbstractRemoteDomainManager) and domain_mgr._poll:
         log.info("Skip explicit DoV update for domain: %s. "
                  "Cause: polling enabled!" % domain)
+        deploy_status.set_domain_waiting(domain=domain)
         continue
-
       if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
          domain_mgr.callback_manager:
         log.info("Skip explicit DoV update for domain: %s. "
                  "Cause: callback registered!" % domain)
+        deploy_status.set_domain_waiting(domain=domain)
         continue
-      # If the internalDM is the only initiated mgr, we can override the
-      # whole DoV
       if domain_mgr.IS_INTERNAL_MANAGER:
-        if mapped_nffg.is_SBB():
-          # If the request was a cleanup request, we can simply clean the DOV
-          if mapped_nffg.is_bare():
-            log.debug("Detected cleanup topology (no NF/Flowrule/SG_hop)! "
-                      "Clean DoV...")
-            self.DoVManager.clean_domain(domain=domain)
-          # If the reset contains some VNF, cannot clean or override
-          else:
-            log.warning(
-              "Detected SingleBiSBiS topology! Local domain has been already "
-              "cleared, skip DoV update...")
-        # If the the topology was a GLOBAL view
-        elif not mapped_nffg.is_virtualized():
-          if self.DoVManager.status_updates:
-            # In case of status updates, the DOV update has been done
-            # In role of Local Orchestrator each element is up and running
-            # update DoV with status RUNNING
-            if mapped_nffg.is_bare():
-              log.debug("Detected cleanup topology! "
-                        "No need for status update...")
-            else:
-              log.debug("Detected new deployment!")
-              self.DoVManager.update_global_view_status(status=NFFG.STATUS_RUN)
-          else:
-            # Override the whole DoV by default
-            self.DoVManager.set_global_view(nffg=mapped_nffg)
-        else:
-          log.warning("Detected virtualized Infrastructure node in mapped NFFG!"
-                      " Skip DoV update...")
+        self.perform_internal_mgr_update(mapped_nffg=mapped_nffg, domain=domain)
         # In case of Local manager skip the rest of the update
         continue
       # Explicit domain update
       self.DoVManager.update_domain(domain=domain, nffg=part)
+      self.status_mgr.get_status(mapped_nffg.id).set_domain_deployed(domain)
     log.info("NF-FG installation is finished by %s" % self.__class__.__name__)
     # Post-mapping steps
-    if deploy_result:
+    if deploy_status.success:
       log.info("All installation process has been finished with success! ")
       # Notify remote visualizer about the installation result if it's needed
       notify_remote_visualizer(
         data=self.DoVManager.dov.get_resource_info(), id=LAYER_NAME)
-    else:
+    elif deploy_status.failed:
       log.error("%s installation was not successful!" % mapped_nffg)
-    return deploy_result
+    elif deploy_status.still_pending:
+      log.info(
+        "All installation process has been finished! Waiting for results...")
+    else:
+      log.info("All installation process has been finished!")
+    log.debug("Installation status: %s" % deploy_status)
+    return deploy_status
+
+  def perform_internal_mgr_update (self, mapped_nffg, domain):
+    # If the internalDM is the only initiated mgr, we can override the
+    # whole DoV
+    if mapped_nffg.is_SBB():
+      # If the request was a cleanup request, we can simply clean the DOV
+      if mapped_nffg.is_bare():
+        log.debug("Detected cleanup topology (no NF/Flowrule/SG_hop)! "
+                  "Clean DoV...")
+        self.DoVManager.clean_domain(domain=domain)
+        self.status_mgr.get_status(mapped_nffg.id).set_domain_deployed(domain)
+      # If the reset contains some VNF, cannot clean or override
+      else:
+        log.warning(
+          "Detected SingleBiSBiS topology! Local domain has been already "
+          "cleared, skip DoV update...")
+    # If the the topology was a GLOBAL view
+    elif not mapped_nffg.is_virtualized():
+      if self.DoVManager.status_updates:
+        # In case of status updates, the DOV update has been done
+        # In role of Local Orchestrator each element is up and running
+        # update DoV with status RUNNING
+        if mapped_nffg.is_bare():
+          log.debug("Detected cleanup topology! "
+                    "No need for status update...")
+        else:
+          log.debug("Detected new deployment!")
+          self.DoVManager.update_global_view_status(status=NFFG.STATUS_RUN)
+          self.status_mgr.get_status(mapped_nffg.id).set_domain_deployed(domain)
+      else:
+        # Override the whole DoV by default
+        self.DoVManager.set_global_view(nffg=mapped_nffg)
+        self.status_mgr.get_status(mapped_nffg.id).set_domain_deployed(domain)
+    else:
+      log.warning("Detected virtualized Infrastructure node in mapped NFFG!"
+                  " Skip DoV update...")
 
   def _handle_DomainChangedEvent (self, event):
     """
@@ -651,6 +692,33 @@ class ControllerAdapter(object):
     # If domain has got down
     elif event.cause == DomainChangedEvent.TYPE.DOMAIN_DOWN:
       self.DoVManager.remove_domain(domain=event.domain)
+
+  def _handle_CallbackEvent (self, event):
+    """
+
+    :param event:
+    :type event: escape.adapt.managers.CallbackEvent
+    :return:
+    """
+    request_id = event.callback.request_id
+    deploy_status = self.status_mgr.get_status(sid=request_id)
+    if event.status == event.STATUS_ERROR:
+      log.warning("Update status for service request: %s..." % request_id)
+      deploy_status.set_domain_failed(domain=event.domain)
+    else:
+      log.debug("Update status for service request: %s..." % request_id)
+      deploy_status.set_domain_deployed(domain=event.domain)
+      if isinstance(event.callback.data, NFFG):
+        log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
+      self.DoVManager.update_domain(domain=event.domain,
+                                    nffg=event.callback.data)
+    log.debug("Installation status: %s" % deploy_status)
+    if not deploy_status.still_pending:
+      log.info("All installation process has been finished!")
+      result = InstallationFinishedEvent.get_result_from_status(deploy_status)
+      self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
+                                         id=request_id,
+                                         result=result)
 
   def _handle_GetLocalDomainViewEvent (self, event):
     """
@@ -792,6 +860,109 @@ class ControllerAdapter(object):
       self.domains.register_mgr(name=ext_mgr.domain_name,
                                 mgr=ext_mgr,
                                 autostart=True)
+
+
+class DeployStatus(object):
+  INITIALIZED = "INITIALIZED"
+  DEPLOYED = "DEPLOYED"
+  WAITING = "WAITING"
+  FAILED = "FAILED"
+
+  def __init__ (self, id, domains):
+    self.__id = id
+    self.__statuses = {}.fromkeys(domains, self.INITIALIZED)
+
+  @property
+  def id (self):
+    return self.__id
+
+  @property
+  def still_pending (self):
+    if self.__statuses:
+      return any(map(lambda s: s in (self.INITIALIZED, self.WAITING),
+                     self.__statuses.itervalues()))
+    else:
+      return False
+
+  @property
+  def success (self):
+    if self.__statuses:
+      return all(map(lambda s: s == self.DEPLOYED,
+                     self.__statuses.itervalues()))
+    else:
+      return False
+
+  @property
+  def failed (self):
+    return any(map(lambda s: s == self.FAILED,
+                   self.__statuses.itervalues()))
+
+  @property
+  def domains (self):
+    return self.__statuses.keys()
+
+  @property
+  def statuses (self):
+    return self.__statuses.values()
+
+  def __str__ (self):
+    return "%s(id=%s) => %s" % (self.__class__.__name__,
+                                self.__id, str(self.__statuses))
+
+  def set_domain (self, domain, status):
+    if domain not in self.__statuses:
+      raise RuntimeError("Updated domain: %s is not registered!" % domain)
+    self.__statuses[domain] = status
+    return self
+
+  def set_domain_deployed (self, domain):
+    log.debug("Set install status: %s for domain: %s" % (self.DEPLOYED, domain))
+    return self.set_domain(domain=domain, status=self.DEPLOYED)
+
+  def set_domain_waiting (self, domain):
+    log.debug("Set install status: %s for domain: %s" % (self.WAITING, domain))
+    return self.set_domain(domain=domain, status=self.WAITING)
+
+  def set_domain_failed (self, domain):
+    log.debug("Set install status: %s for domain: %s" % (self.FAILED, domain))
+    return self.set_domain(domain=domain, status=self.FAILED)
+
+
+class DeployStatusManager(object):
+  def __init__ (self):
+    self._services = []
+
+  def register_service (self, nffg):
+    """
+
+    :param nffg:
+    :return:
+    :rtype: DeployStatus
+    """
+    sid = nffg.id
+    domains = NFFGToolBox.detect_domains(nffg=nffg)
+    for s in self._services:
+      if s.id == sid:
+        log.error("Service request: %s is already registered in %s" %
+                  (sid, self.__class__.__name__))
+        return
+    status = DeployStatus(id=sid, domains=domains)
+    self._services.append(status)
+    log.debug("Service instance: %s is registered for status management!" % sid)
+    return status
+
+  def get_status (self, sid):
+    """
+
+    :param sid:
+    :return:
+    :rtype: DeployStatus
+    """
+    for status in self._services:
+      if status.id == sid:
+        return status
+    else:
+      log.error("Service status for service: %s is missing!" % sid)
 
 
 class GlobalResourceManager(object):
