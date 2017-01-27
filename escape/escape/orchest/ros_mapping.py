@@ -18,8 +18,8 @@ import cProfile
 import pstats
 import time
 
-from MappingAlgorithms import MAP
-from UnifyExceptionTypes import *
+from alg1.MappingAlgorithms import MAP
+from alg1.UnifyExceptionTypes import *
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log, LAYER_NAME
