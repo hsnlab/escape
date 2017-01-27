@@ -14,9 +14,12 @@
 import logging
 import os
 import pprint
+import urllib
 import urlparse
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-from threading import Thread
+from threading import Thread, Lock, Timer
+
+import requests
 
 from testframework.testcases.basic import BasicSuccessfulTestCase
 
@@ -91,7 +94,8 @@ class DORequestHandler(BaseHTTPRequestHandler):
   RPC_PING = "ping"
   RPC_GET_CONFIG = "get-config"
   RPC_EDIT_CONFIG = "edit-config"
-  REQUEST_HEADER_MSG_ID = 'message-id'
+  MSG_ID_NAME = 'message-id'
+  CALLBACK_NAME = "call-back"
 
   server_version = "DomainAPIMocker"
 
@@ -99,7 +103,7 @@ class DORequestHandler(BaseHTTPRequestHandler):
     """
     Disable default logging of incoming messages.
     """
-    log.debug("%s - - [%s] %s\n" %
+    log.debug("%s - - [%s] %s" %
               (self.__class__.__name__,
                self.log_date_time_string(),
                format % args))
@@ -153,9 +157,9 @@ class DORequestHandler(BaseHTTPRequestHandler):
         else:
           params[param] = True
     # Check message-id in headers as backup
-    if 'message-id' not in params:
-      if 'message-id' in self.headers:
-        params['message-id'] = self.headers['message-id']
+    if self.MSG_ID_NAME not in params:
+      if self.MSG_ID_NAME in self.headers:
+        params[self.MSG_ID_NAME] = self.headers[self.MSG_ID_NAME]
     return params
 
   def _return_default (self, call):
@@ -186,16 +190,26 @@ class DORequestHandler(BaseHTTPRequestHandler):
     :type body: str
     :return: None
     """
+    self.server.msg_cntr += 1
+    params = self.__get_request_params()
+    if self.MSG_ID_NAME in params:
+      msg_id = params[self.MSG_ID_NAME]
+    else:
+      msg_id = self.server.msg_cntr
+    if self.CALLBACK_NAME in params:
+      cb_url = urllib.unquote(params[self.CALLBACK_NAME])
+      self.server.setup_callback(url=cb_url, code=code, msg_id=msg_id)
     self.send_response(code=code)
-    if self.REQUEST_HEADER_MSG_ID in self.headers:
-      self.send_header(self.REQUEST_HEADER_MSG_ID,
-                       self.headers[self.REQUEST_HEADER_MSG_ID])
     if body:
       self.send_header("Content-Type", "application/xml")
+    self.send_header(self.MSG_ID_NAME, msg_id)
     self.end_headers()
     if body:
       self.wfile.write(body)
       self.wfile.flush()
+    log.debug("%s - - response: %s, message-id: %s" % (self.__class__.__name__,
+                                                       code,
+                                                       msg_id))
     return
 
 
@@ -203,6 +217,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
   DEFAULT_PORT = 7000
   FILE_PATH_SEPARATOR = "_"
   RESPONSE_PREFIX = "response"
+  CALLBACK_DELAY = 5.0
 
   def __init__ (self, address="localhost", port=DEFAULT_PORT, daemon=True,
                 **kwargs):
@@ -211,6 +226,17 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     HTTPServer.__init__(self, (address, port), DORequestHandler)
     self.daemon = daemon
     self.responses = {}
+    self.msg_cntr = 0
+    self.__callback_lock = Lock()
+    self._suppress_requests_logging()
+
+  @staticmethod
+  def _suppress_requests_logging ():
+    if log.getEffectiveLevel() < logging.INFO:
+      level = log.getEffectiveLevel()
+    else:
+      level = logging.WARNING
+    logging.getLogger("requests").setLevel(level)
 
   def register_responses_from_dir (self, dirname):
     """
@@ -296,6 +322,31 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
       log.error("Got exception in %s: %s" % (self.__class__.__name__, e))
     finally:
       self.server_close()
+
+  def setup_callback (self, url, code, msg_id):
+    log.debug("Setup callback: %s %s message-id: %s" % (url, code, msg_id))
+    t = Timer(self.CALLBACK_DELAY, self.callback_hook,
+              kwargs={"url": url, "code": code, "msg_id": msg_id})
+    t.start()
+
+  def callback_hook (self, url, code, msg_id):
+    """
+    Send back a registered callback to the tested ESCAPE process ina
+    synchronized way.
+
+    :param url: callback URL
+    :type utl: str
+    :param code: response-code
+    :type code: int
+    :param msg_id: message-id
+    :type msg_id: str or int
+    :return: None
+    """
+    with self.__callback_lock:
+      params = {"message-id": msg_id,
+                "response-code": 200 if code < 300 else 500}
+      log.debug("Invoke callback: %s - %s" % (url, params))
+      requests.post(url=url, params=params)
 
 
 class DomainMockingSuccessfulTestCase(BasicSuccessfulTestCase):

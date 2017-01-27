@@ -175,7 +175,11 @@ class RESTBasedServiceMixIn(EscapeTestCase):
 
   @staticmethod
   def _suppress_requests_logging ():
-    logging.getLogger("requests").setLevel(logging.WARNING)
+    if log.getEffectiveLevel() < logging.INFO:
+      level = log.getEffectiveLevel()
+    else:
+      level = logging.WARNING
+    logging.getLogger("requests").setLevel(level)
 
   def runTest (self):
     try:

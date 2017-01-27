@@ -1225,18 +1225,18 @@ class AbstractRESTAdapter(Session):
     return self._base_url
 
   @staticmethod
-  def __suppress_requests_logging (level=None):
+  def __suppress_requests_logging ():
     """
     Suppress annoying and detailed logging of `requests` and `urllib3` packages.
 
-    :param level: level of logging (default: WARNING)
-    :type level: str
     :return: None
     """
     import logging
-    level = level if level is not None else logging.WARNING
+    if log.getEffectiveLevel() < logging.INFO:
+      level = log.getEffectiveLevel()
+    else:
+      level = logging.WARNING
     logging.getLogger("requests").setLevel(level)
-    logging.getLogger("urllib3").setLevel(level)
 
   def send_request (self, method, url=None, body=None, **kwargs):
     """
