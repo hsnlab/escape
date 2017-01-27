@@ -55,7 +55,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
     :return: None
     """
     log.debug("%s - - [%s] %s\n" %
-              (self.client_address[0],
+              (self.__class__.__name__,
                self.log_date_time_string(),
                format % args))
 
@@ -92,8 +92,7 @@ class CallbackManager(HTTPServer, Thread):
   def __init__ (self, address=DEFAULT_SERVER_ADDRESS, port=DEFAULT_PORT,
                 wait_timeout=DEFAULT_WAIT_TIMEOUT):
     Thread.__init__(self, name="%s(%s:%s)" % (self.__class__.__name__,
-                                              self.DEFAULT_SERVER_ADDRESS,
-                                              self.DEFAULT_PORT))
+                                              address, port))
     HTTPServer.__init__(self, (address, port), CallbackHandler)
     self.daemon = True
     self.callback_event = Event()
