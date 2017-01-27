@@ -217,14 +217,15 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
   DEFAULT_PORT = 7000
   FILE_PATH_SEPARATOR = "_"
   RESPONSE_PREFIX = "response"
-  CALLBACK_DELAY = 5.0
+  CALLBACK_DELAY = 1.0
 
-  def __init__ (self, address="localhost", port=DEFAULT_PORT, daemon=True,
-                **kwargs):
+  def __init__ (self, address="localhost", port=DEFAULT_PORT,
+                callback_delay=CALLBACK_DELAY, **kwargs):
     Thread.__init__(self, name="%s(%s:%s)" % (self.__class__.__name__,
                                               address, port))
     HTTPServer.__init__(self, (address, port), DORequestHandler)
-    self.daemon = daemon
+    self.callback_delay = float(callback_delay)
+    self.daemon = True
     self.responses = {}
     self.msg_cntr = 0
     self.__callback_lock = Lock()
@@ -324,8 +325,19 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
       self.server_close()
 
   def setup_callback (self, url, code, msg_id):
+    """
+    Schedule a callback with the given parameters.
+
+    :param url: callback URL
+    :type url: str
+    :param code: response code calculated for the original request
+    :type code: int
+    :param msg_id: message-id of the response
+    :type msg_id: str
+    :return: None
+    """
     log.debug("Setup callback: %s %s message-id: %s" % (url, code, msg_id))
-    t = Timer(self.CALLBACK_DELAY, self.callback_hook,
+    t = Timer(self.callback_delay, self.callback_hook,
               kwargs={"url": url, "code": code, "msg_id": msg_id})
     t.start()
 
