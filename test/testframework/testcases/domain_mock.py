@@ -14,7 +14,6 @@
 import logging
 import os
 import pprint
-import time
 import urlparse
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread
@@ -24,7 +23,71 @@ from testframework.testcases.basic import BasicSuccessfulTestCase
 log = logging.getLogger()
 
 
+class RPCCallMock(object):
+  """
+  A mock class for an RPC call.
+  """
+
+  def __init__ (self, rpc_name, response_path=None, code=200):
+    """
+    :param rpc_name: name of the rpc call e.g get-config
+    :type rpc_name: str
+    :param response_path: path of the response body file
+    :type response_path: str
+    :param code: return code
+    :type code: int
+    """
+    self.call = rpc_name
+    self.response_path = response_path
+    self.code = code
+
+  def __repr__ (self):
+    return "CallMock(response: %s, code: %s)" % (self.response_path, self.code)
+
+  def get_response_body (self):
+    if not self.response_path:
+      return
+    with open(self.response_path) as f:
+      return f.read()
+
+
+class DomainMock(object):
+  """
+  Main mock class wich represent a domain aka a Domain Orchestrator REST-API.
+  Contains call mock objects for registered mocked responses.
+  """
+  DEFAULT_RESPONSE_CODE = 200
+
+  def __init__ (self, domain):
+    self.domain = domain
+    self.calls = {}
+
+  def add_call (self, rpc_name, **kwargs):
+    """
+    Register a mocked call object.
+
+    :param rpc_name: rpc name e.g. get-config
+    :type rpc_name: str
+    :param kwargs: params for :class:`PRCCallMock` class
+    :type kwargs: dict
+    :return: None
+    """
+    self.calls[rpc_name] = RPCCallMock(rpc_name=rpc_name, **kwargs)
+
+  def get_call (self, rpc_name):
+    """
+    :rtype: RPCCallMock
+    """
+    return self.calls.get(rpc_name, None)
+
+  def __repr__ (self):
+    return "ResponseMock(domain: %s, calls: %s)" % (self.domain, self.calls)
+
+
 class DORequestHandler(BaseHTTPRequestHandler):
+  """
+  Handler class to handle received request.
+  """
   RPC_PING = "ping"
   RPC_GET_CONFIG = "get-config"
   RPC_EDIT_CONFIG = "edit-config"
@@ -34,7 +97,7 @@ class DORequestHandler(BaseHTTPRequestHandler):
 
   def log_message (self, format, *args):
     """
-    Disable logging of incoming messages.
+    Disable default logging of incoming messages.
     """
     log.debug("%s - - [%s] %s\n" %
               (self.__class__.__name__,
@@ -48,6 +111,12 @@ class DORequestHandler(BaseHTTPRequestHandler):
     self.process_request()
 
   def process_request (self):
+    """
+    Process the received request and respond according to registered response
+    mocks or the default response policy.
+
+    :return: None
+    """
     p = urlparse.urlparse(self.path).path
     try:
       domain, call = p.strip('/').split('/', 1)
@@ -66,6 +135,13 @@ class DORequestHandler(BaseHTTPRequestHandler):
                           body=call_mock.get_response_body())
 
   def __get_request_params (self):
+    """
+    Examine callback request params and header field to construct a parameter
+    dict.
+
+    :return: parameters of the callback call
+    :rtype: dict
+    """
     params = {}
     query = urlparse.urlparse(self.path).query
     if query:
@@ -83,6 +159,14 @@ class DORequestHandler(BaseHTTPRequestHandler):
     return params
 
   def _return_default (self, call):
+    """
+    Defined the default response behaviour if a received RPC request is not
+    pre-defined.
+
+    :param call: rpc call name e.g. get-config
+    :type call. str
+    :return: None
+    """
     if call == self.RPC_PING:
       self._return_response(code=200, body="OK")
     if call == self.RPC_GET_CONFIG:
@@ -93,6 +177,15 @@ class DORequestHandler(BaseHTTPRequestHandler):
       self._return_response(code=501)
 
   def _return_response (self, code, body=None):
+    """
+    Generic function to response to an RPC call with related HTTP headers.
+
+    :param code: response code
+    :type code: int
+    :param body: responded body:
+    :type body: str
+    :return: None
+    """
     self.send_response(code=code)
     if self.REQUEST_HEADER_MSG_ID in self.headers:
       self.send_header(self.REQUEST_HEADER_MSG_ID,
@@ -104,39 +197,6 @@ class DORequestHandler(BaseHTTPRequestHandler):
       self.wfile.write(body)
       self.wfile.flush()
     return
-
-
-class CallMock(object):
-  def __init__ (self, call, response_path=None, code=200):
-    self.call = call
-    self.response_path = response_path
-    self.code = code
-
-  def __repr__ (self):
-    return "CallMock(response: %s, code: %s)" % (self.response_path, self.code)
-
-  def get_response_body (self):
-    if not self.response_path:
-      return
-    with open(self.response_path) as f:
-      return f.read()
-
-
-class DomainMock(object):
-  DEFAULT_RESPONSE_CODE = 200
-
-  def __init__ (self, domain):
-    self.domain = domain
-    self.calls = {}
-
-  def add_call (self, call, **kwargs):
-    self.calls[call] = CallMock(call=call, **kwargs)
-
-  def get_call (self, call):
-    return self.calls.get(call, None)
-
-  def __repr__ (self):
-    return "ResponseMock(domain: %s, calls: %s)" % (self.domain, self.calls)
 
 
 class DomainOrchestratorAPIMocker(HTTPServer, Thread):
@@ -153,6 +213,24 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     self.responses = {}
 
   def register_responses_from_dir (self, dirname):
+    """
+    Register responses from the testcase dir.
+
+    The defined response file names must follow the syntax:
+
+    <dedicated_response_prefix>_<domain_name>_<rpc_call_name>.xml
+
+    e.g. response_docker1_edit-config.xml
+
+    Dedicated response code can not be defined with this function.
+
+    If a received RPC or domain is not registered the default responder
+    function will be invoked to response to the tested ESCAPE process.
+
+    :param dirname: testcase dir path
+    :type dirname: str
+    :return: None
+    """
     for f in os.listdir(dirname):
       if f.startswith(self.RESPONSE_PREFIX):
         parts = f.split(self.FILE_PATH_SEPARATOR, 2)
@@ -162,16 +240,33 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
         domain, call = parts[1:]
         if domain not in self.responses:
           self.responses[domain] = DomainMock(domain=domain)
-        self.responses[domain].add_call(call=call.rsplit('.', 1)[0],
+        self.responses[domain].add_call(rpc_name=call.rsplit('.', 1)[0],
                                         response_path=os.path.join(dirname, f),
                                         code=202)
     log.debug("Registered responses: %s" % pprint.pformat(self.responses))
 
   def register_responses (self, dirname, responses):
     """
+    Register responses for Domain Orchestrators from a 3-element tuple.
 
-    :param responses: (domain, call, returned)
-    :return:
+    A response schema must contain the elements in that order:
+      - domain name e.g. mininet
+      - rpc call name e.g. edit-config
+      - file name of the responded data relative to `dirname` or response
+      code e.g. response1.xml or 404
+
+    The used URL path for a mocked domain follows the syntax:
+
+    http://localhost:<configured_port>/<domain_name>/<rpc_call_name>
+
+    If a received RPC or domain is not registered the default responder
+    function will be invoked to response to the tested ESCAPE process.
+
+    :param dirname: testcase dir path
+    :type dirname: str
+    :param responses: list of (domain, call, return value)
+    :type responses: list of tuples
+    :return: None
     """
     for resp in responses:
       if len(resp) != 3:
@@ -180,13 +275,19 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
       if domain not in self.responses:
         self.responses[domain] = DomainMock(domain=domain)
       if isinstance(ret, int):
-        self.responses[domain].add_call(call=call, code=ret)
+        self.responses[domain].add_call(rpc_name=call, code=ret)
       else:
         path = os.path.join(dirname, ret)
-        self.responses[domain].add_call(call=call, response_path=path, code=202)
+        self.responses[domain].add_call(rpc_name=call, response_path=path,
+                                        code=202)
     log.debug("Registered responses: %s" % pprint.pformat(self.responses))
 
   def run (self):
+    """
+    Entry point of the worker thread.
+
+    :return: None
+    """
     try:
       self.serve_forever()
     except KeyboardInterrupt:
@@ -198,6 +299,11 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
 
 
 class DomainMockingSuccessfulTestCase(BasicSuccessfulTestCase):
+  """
+  Dedicated TestCase class with basic successful testing and mocked
+  DomainOrchestrators.
+  """
+
   def __init__ (self, responses=None, **kwargs):
     super(DomainMockingSuccessfulTestCase, self).__init__(**kwargs)
     self.domain_mocker = DomainOrchestratorAPIMocker(**kwargs)
@@ -213,10 +319,11 @@ class DomainMockingSuccessfulTestCase(BasicSuccessfulTestCase):
 
 
 if __name__ == '__main__':
+  # Some tests
   doam = DomainOrchestratorAPIMocker(daemon=False)
   dm = DomainMock(domain="escape")
-  cm1 = CallMock(call="edit-config", code=500)
-  cm2 = CallMock(call="get-config", code=200)
+  cm1 = RPCCallMock(rpc_name="edit-config", code=500)
+  cm2 = RPCCallMock(rpc_name="get-config", code=200)
   cm2.get_response_body = lambda: "<TEST>testbody<TEST>"
   dm.calls["edit-config"] = cm1
   dm.calls["get-config"] = cm2
