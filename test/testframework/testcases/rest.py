@@ -254,6 +254,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
       success = cbmanager.wait_for_callback()
       self.assertTrue(success, msg="Callback returned with error: %s" %
                                    cbmanager.last_result)
+    cbmanager.shutdown()
     self.command_runner.stop()
 
   def _send_request (self, data, ext, callback_url=None):

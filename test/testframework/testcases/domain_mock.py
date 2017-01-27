@@ -223,7 +223,10 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
                 callback_delay=CALLBACK_DELAY, **kwargs):
     Thread.__init__(self, name="%s(%s:%s)" % (self.__class__.__name__,
                                               address, port))
-    HTTPServer.__init__(self, (address, port), DORequestHandler)
+    # do not bind the socket in the constructor when the class is expected to be
+    # initialized multiple times
+    HTTPServer.__init__(self, (address, port), DORequestHandler,
+                        bind_and_activate=False)
     self.callback_delay = float(callback_delay)
     self.daemon = True
     self.responses = {}
@@ -238,6 +241,18 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     else:
       level = logging.WARNING
     logging.getLogger("requests").setLevel(level)
+
+  def bind_and_activate (self):
+    """
+    Bind the listening socket and activate the HTTPServer.
+    Moved from the constructor of :class:`HTTPServer`.
+    """
+    try:
+      self.server_bind()
+      self.server_activate()
+    except:
+      self.server_close()
+      raise
 
   def register_responses_from_dir (self, dirname):
     """
@@ -315,6 +330,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
 
     :return: None
     """
+    self.bind_and_activate()
     try:
       self.serve_forever()
     except KeyboardInterrupt:
@@ -347,7 +363,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     synchronized way.
 
     :param url: callback URL
-    :type utl: str
+    :type url: str
     :param code: response-code
     :type code: int
     :param msg_id: message-id
@@ -376,9 +392,13 @@ class DomainMockingSuccessfulTestCase(BasicSuccessfulTestCase):
     else:
       self.domain_mocker.register_responses_from_dir(dirname=dir)
 
-  def runTest (self):
+  def setUp(self):
+    super(DomainMockingSuccessfulTestCase, self).setUp()
     self.domain_mocker.start()
-    return super(DomainMockingSuccessfulTestCase, self).runTest()
+
+  def tearDown(self):
+    super(DomainMockingSuccessfulTestCase, self).tearDown()
+    self.domain_mocker.shutdown()
 
 
 if __name__ == '__main__':
