@@ -763,10 +763,16 @@ class ResourceOrchestrationAPI(AbstractAPI):
         log.getChild('[Sl-Or]').debug("Generate topo description...")
         res = slor_virt.get_resource_info()
         return res
-      # If resource has not been changed return False
-      # This causes to response with the cached topology
+      elif not self.ros_api.last_response:
+        # If the topology has already been queried but not sent back and stored
+        log.debug("Last responded topology is missing! "
+                  "Requesting cached topology...")
+        return slor_virt.get_cached_resource_info()
       else:
+        # If resource has not been changed return False
+        # This causes to response with the cached topology
         return False
+
     else:
       log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
                 self.ros_api.api_id)
