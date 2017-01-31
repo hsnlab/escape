@@ -14,7 +14,9 @@
 """
 Contains components relevant to virtualization of resources and views.
 """
+import threading
 import weakref
+from wrapt.decorators import synchronized
 
 from escape import CONFIG
 from escape.adapt import log as log
@@ -143,8 +145,8 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
       self.global_view = weakref.proxy(global_view)
       # Subscribe DoV events
       global_view.addListeners(self)
-    self._dirty = None  # Set None to signal domain has not changed yet
-    self._cache = None  # Cache for computed topology
+    self.__dirty = None  # Set None to signal domain has not changed yet
+    self.__cache = None  # Cache for computed topology
 
   def __str__ (self):
     """
@@ -164,7 +166,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     :return: view has been changed or not
     :rtype: bool
     """
-    return self._dirty is not False
+    return self.__dirty is not False
 
   def get_resource_info (self):
     """
@@ -174,20 +176,32 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     :rtype: :any:`NFFG`
     """
     # If topology has not changed -> return with cached resource
-    if self._dirty is False:
+    if self.__dirty is False:
       log.debug("DoV is unchanged! Return cached NFFG...")
-      return self._cache
+      return self.__cache
     # If Virtualizer dirty resource info is changed since last request or has
     # never queried yet -> acquire resource info with template method
-    if self._dirty is True:
+    if self.__dirty is True:
       log.debug("DoV has been changed! Requesting new resource NFFG...")
     # Acquire resource
     resource = self._acquire_resource()
     # Cache new resource
-    self._cache = resource
+    self.__cache = resource
     # Clear dirty flag
-    self._dirty = False
+    self.__dirty = False
     return resource
+
+  def get_cached_resource_info (self):
+    """
+    Return the cached resource info object. If the cached topo is missing it
+    returns with None.
+    This function will not acquire the latest topology and has not affect to
+    the dirty flag.
+
+    :return: cached topology
+    :rtype: NFFG
+    """
+    return self.__cache
 
   def _handle_DoVChangedEvent (self, event):
     """
@@ -202,7 +216,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
               "Set dirty flag!" % (self,
                                    DoVChangedEvent.TYPE.reversed[event.cause]))
     # Topology is changed, set dirty flag
-    self._dirty = True
+    self.__dirty = True
 
   def _acquire_resource (self):
     """
@@ -232,6 +246,8 @@ class DomainVirtualizer(AbstractVirtualizer):
   _eventMixin_events = {DoVChangedEvent}
   """Events raised by this class"""
   TYPE = 'DOV'
+  # Reentrant lock to synchronize the access to the DoV
+  __DoV_lock = threading.RLock()
 
   def __init__ (self, mgr, global_res=None, **kwargs):
     """
@@ -287,6 +303,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     """
     return super(DomainVirtualizer, self).__repr__()
 
+  @synchronized(__DoV_lock)
   def is_empty (self):
     """
     Return True if the stored topology is empty.
@@ -303,15 +320,17 @@ class DomainVirtualizer(AbstractVirtualizer):
     else:
       return False
 
+  @synchronized(__DoV_lock)
   def get_resource_info (self):
     """
-    Return the global resource info represented this class.
+    Return the copy of the global resource info represented this class.
 
     :return: global resource info
     :rtype: :any:`NFFG`
     """
-    return self.__global_nffg
+    return self.__global_nffg.copy()
 
+  @synchronized(__DoV_lock)
   def set_domain_as_global_view (self, domain, nffg):
     """
     Set the copy of given NFFG as the global view of DoV.
@@ -335,6 +354,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.UPDATE)
     return self.__global_nffg
 
+  @synchronized(__DoV_lock)
   def update_full_global_view (self, nffg):
     """
     Update the merged Global view with the given probably modified global view.
@@ -354,6 +374,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.UPDATE)
     return self.__global_nffg
 
+  @synchronized(__DoV_lock)
   def merge_new_domain_into_dov (self, nffg):
     """
     Add a newly detected domain to DoV.
@@ -373,6 +394,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.EXTEND)
     return self.__global_nffg
 
+  @synchronized(__DoV_lock)
   def remerge_domain_in_dov (self, domain, nffg):
     """
     Update the existing domain in the merged Global view with explicit domain
@@ -396,6 +418,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
 
+  @synchronized(__DoV_lock)
   def update_domain_in_dov (self, domain, nffg):
     """
     Update the existing domain in the merged Global view.
@@ -416,6 +439,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
 
+  @synchronized(__DoV_lock)
   def remove_domain_from_dov (self, domain):
     """
     Remove the nodes and edges with the given from Global view.
@@ -434,6 +458,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.REDUCE)
     return self.__global_nffg
 
+  @synchronized(__DoV_lock)
   def clean_domain_from_dov (self, domain):
     """
     Clean domain by removing initiated NFs and flowrules related to BiSBiS
@@ -456,6 +481,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
 
+  @synchronized(__DoV_lock)
   def update_domain_status_in_dov (self, domain, nffg):
     """
     Set status of initiated NFs and flowrules related to BiSBiS nodes of the
@@ -478,6 +504,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
 
+  @synchronized(__DoV_lock)
   def remove_deployed_elements (self):
     """
     Remove all the NFs, flowrules and dynamic ports from DoV.
