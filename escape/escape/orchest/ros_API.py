@@ -17,7 +17,9 @@ Sublayer.
 """
 import ast
 import json
+import os
 import pprint
+import re
 import uuid
 from collections import OrderedDict
 
@@ -34,6 +36,7 @@ from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
   VERBOSE, quit_with_error
 from pox.lib.revent.revent import Event
 from virtualizer import Virtualizer
+from virtualizer_mappings import Mappings
 
 
 class InstallNFFGEvent(Event):
@@ -228,12 +231,14 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     if resource_nffg is None:
       self.send_error(404, message="Resource info is missing!")
       return
-    # Setup OK status for HTTP response
-    self.send_response(200)
     # Global resource has not changed -> respond with the cached topo
     if resource_nffg is False:
       self.log.debug(
         "Global resource has not changed! Respond with cached topology...")
+      if self.server.last_response is None:
+        log.warning("Cached topology is missing!")
+        self.send_error(404, message="Cached info is missing from API!")
+        return
       if self.virtualizer_format_enabled:
         data = self.server.last_response.xml()
       else:
@@ -254,6 +259,8 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         self.log.debug("Cache acquired topology...")
         self.server.last_response = resource_nffg
         data = resource_nffg.dump()
+    # Setup OK status for HTTP response
+    self.send_response(200)
     if self.virtualizer_format_enabled:
       self.send_header('Content-Type', 'application/xml')
     else:
@@ -472,7 +479,7 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
   request_perm = {
     'GET': ('ping', 'version', 'operations', 'get_config', 'mapping_info',
             'status'),
-    'POST': ('ping', 'get_config', 'edit_config'),
+    'POST': ('ping', 'get_config', 'edit_config', 'mappings'),
     # 'DELETE': ('edit_config',),
     'PUT': ('edit_config',)
   }
@@ -484,6 +491,7 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
   }
   # Bound function
   API_CALL_MAPPING_INFO = 'api_ros_mapping_info'
+  API_CALL_MAPPINGS = 'api_ros_mappings'
 
   def mapping_info (self):
     """
@@ -535,6 +543,38 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
     self.wfile.write(data)
     self.log.log(VERBOSE, "Responded mapping info:\n%s" % data)
     return
+
+  def mappings (self):
+    """
+    Respond the mapping of requested NFs and corresponding node IDs.
+
+    :return: None
+    """
+    self.log.debug("Call %s function: mappings" % self.LOGGER_NAME)
+    self.log.debug("Detected message format: %s" %
+                   self.headers.get("Content-Type"))
+    raw_body = self._get_body()
+    # log.getChild("REST-API").debug("Request body:\n%s" % body)
+    if raw_body is None or not raw_body:
+      log.warning("Received data is empty!")
+      self.send_error(400, "Missing body!")
+      return
+    mappings = Mappings.parse_from_text(text=raw_body)
+    self.log.log(VERBOSE, "Full request:\n%s" % mappings.xml())
+    ret = self._proceed_API_call(self.API_CALL_MAPPINGS, mappings)
+    if ret is None:
+      log.warning("Calculated mapping data is missing!")
+      self.send_error(500)
+      return
+    self.log.debug("Sending collected mapping info...")
+    response_data = ret.xml()
+    self.send_response(200)
+    self.send_header('Content-Type', 'application/xml')
+    self.send_header('Content-Length', len(response_data))
+    self.end_headers()
+    self.wfile.write(response_data)
+    self.log.log(VERBOSE, "Responded mapping info:\n%s" % response_data)
+    self.log.debug("%s function: mapping-info ended!" % self.LOGGER_NAME)
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -776,6 +816,26 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.debug("Rewritten infrastructure nodes: %s" % rewritten)
     return nffg_part
 
+  def api_ros_status (self, message_id):
+    """
+    Return the state of a request given by ``message_id``.
+
+    :param message_id: request id
+    :type message_id: str or int
+    :return: state
+    :rtype: str
+    """
+    status = self.ros_api.request_cache.get_status(id=message_id)
+    if status == RequestStatus.SUCCESS:
+      return 200, None
+    elif status == RequestStatus.UNKNOWN:
+      return 404, None
+    elif status == RequestStatus.ERROR:
+      return 500, status
+    else:
+      # PROCESSING or INITIATED
+      return 202, None
+
   def api_ros_mapping_info (self, service_id):
     """
     Return with collected information of mapping of a given service.
@@ -787,7 +847,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     # TODO - implement!
     # Create base response structure
-    ret = {"service_id": service_id, "mapping": []}
+    ret = {"service_id": service_id}
     # Get the service NFFG based on service ID
     request = self.resource_orchestrator.nffgManager.get(service_id)
     if request is None:
@@ -798,6 +858,50 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Collect NFs
     nfs = [nf.id for nf in request.nfs]
     log.log(VERBOSE, "Collected NFs: %s" % nfs)
+    mapping = self.__collect_binding(dov=dov, nfs=nfs)
+    ret['mapping'] = mapping
+    # Collect NF management data
+    log.debug("Collected mapping info:\n%s" % pprint.pformat(ret))
+    return ret
+
+  @staticmethod
+  def __collect_binding (dov, nfs):
+    """
+    Collect mapping of given NFs on the global view(DoV) with the structure:
+
+    .. code-block:: json
+
+    [
+      {
+        "bisbis": {
+          "domain": null,
+          "id": "EE2"
+        },
+        "nf": {
+          "id": "fwd",
+          "ports": [
+            {
+              "id": 1,
+              "management": {
+                "22/tcp": [
+                  "0.0.0.0",
+                  20000
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+
+    :param dov: global topology
+    :type dov: NFFG
+    :param nfs: list of NFs
+    :type nfs: list
+    :return: mapping
+    :rtype: list of dict
+    """
+    mappings = []
     # Process NFs
     for nf_id in nfs:
       mapping = {}
@@ -826,31 +930,73 @@ class ResourceOrchestrationAPI(AbstractAPI):
       bisbis = bisbis.split('@')
       mapping['bisbis'] = {"id": bisbis[0],
                            "domain": bisbis[1] if len(bisbis) > 1 else None}
-      ret['mapping'].append(mapping)
-      # Collect NF management data
+      mappings.append(mapping)
+    return mappings
 
-    log.debug("Collected mapping info:\n%s" % pprint.pformat(ret))
-    return ret
-
-  def api_ros_status (self, message_id):
+  def api_ros_mappings (self, mappings):
     """
-    Return the state of a request given by ``message_id``.
+    Calculate the mappings of NFs given in the mappings structure.
 
-    :param message_id: request id
-    :type message_id: str or int
-    :return: state
+    :param mappings: requested mappings
+    :type mappings: Mappings
+    :return: new mappings with extended info
+    :rtype: Mappings
+    """
+    mapping_regex = re.compile(r'.*\[id=(.*)\].*\[id=(.*)\]')
+    slor_topo = self.__get_slor_resource_view().get_resource_info()
+    dov = self.resource_orchestrator.virtualizerManager.dov.get_resource_info()
+    response = mappings.full_copy()
+    log.debug("Start checking mappings...")
+    for mapping in response:
+      match = mapping_regex.match(mapping.object.get_value())
+      if match is None:
+        log.warning("Wrong object format: %s" % mapping.object.xml())
+        continue
+      bb, nf = mapping_regex.match(mapping.object.get_value()).group(1, 2)
+      if bb not in slor_topo or nf not in slor_topo:
+        log.warning("Missing requested element: %s@%s from topo!" % (nf, bb))
+        continue
+      log.debug("Detected NF: %s@%s" % (nf, bb))
+      m_result = self.__collect_binding(dov=dov, nfs=[nf])
+      if not m_result:
+        log.warning("Mapping is not found for NF: %s!" % nf)
+        continue
+      try:
+        node = m_result[0]['bisbis']['id']
+        domain = m_result[0]['bisbis']['domain']
+      except KeyError:
+        log.warning("Missing mapping element from: %s" % m_result)
+        continue
+      domain = self.__get_domain_url(domain=domain)
+      log.debug("Found mapping: %s@%s (domain: %s)" % (nf, node, domain))
+      mapping.target.object.set_value(str(node))
+      mapping.target.domain.set_value(str(domain) if domain else "localhost")
+    return response
+
+  @staticmethod
+  def __get_domain_url (domain=None):
+    """
+    Assemble the URL of the given domain based on the global configuration.
+
+    :param domain: domain name
+    :type domain: str
+    :return: url
     :rtype: str
     """
-    status = self.ros_api.request_cache.get_status(id=message_id)
-    if status == RequestStatus.SUCCESS:
-      return 200, None
-    elif status == RequestStatus.UNKNOWN:
-      return 404, None
-    elif status == RequestStatus.ERROR:
-      return 500, status
-    else:
-      # PROCESSING or INITIATED
-      return 202, None
+    if domain is None:
+      slor = CONFIG.get_ros_agent_params()
+      return "http://%s:%s/%s" % (slor.get("address", "localhost"),
+                                  slor.get("port", ''),
+                                  slor.get("prefix", ''))
+    mgr = CONFIG.get_manager_by_domain(domain=domain)
+    if mgr is None:
+      log.warning("DomainManager config is not found for domain: %s" % domain)
+      return
+    try:
+      ra = mgr['adapters']['REMOTE']
+      return os.path.join(ra['url'], ra['prefix'])
+    except KeyError:
+      return
 
   ##############################################################################
   # Cf-Or API functions starts here

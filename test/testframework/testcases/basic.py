@@ -282,7 +282,7 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
       raise RuntimeError("log_output is missing!")
     # Detect TIMEOUT error
     self.assertFalse(self.command_runner.timeout_exceeded,
-                     msg="Running timeout(%ss) of ESCAPE process is exceeded!" %
+                     msg="Running timeout(%ss) is exceeded!" %
                          self.command_runner.kill_timeout)
     # Detect ERROR messages first
     detected_error = self.detect_error(self.run_result)
