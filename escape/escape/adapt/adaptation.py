@@ -702,11 +702,12 @@ class ControllerAdapter(object):
     """
     request_id = event.callback.request_id
     deploy_status = self.status_mgr.get_status(sid=request_id)
-    if event.status == event.STATUS_ERROR:
-      log.warning("Update status for service request: %s..." % request_id)
+    if event.status in (event.STATUS_ERROR, event.STATUS_TIMEOUT):
+      log.warning("Update failed status for service request: %s..." %
+                  request_id)
       deploy_status.set_domain_failed(domain=event.domain)
     else:
-      log.debug("Update status for service request: %s..." % request_id)
+      log.debug("Update success status for service request: %s..." % request_id)
       deploy_status.set_domain_deployed(domain=event.domain)
       if isinstance(event.callback.data, NFFG):
         log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
