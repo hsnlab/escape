@@ -604,13 +604,30 @@ class ESCAPEConfig(object):
     """
     Return the default DomainManagers for initialization on start.
 
-    :return: list of :any:`AbstractDomainManager`
+    :return: list of :any:`AbstractDomainManager` names
     :rtype: list
     """
     try:
       return self.__configuration[ADAPT]['MANAGERS']
     except KeyError:
       return ()
+
+  def get_manager_by_domain(self, domain):
+    """
+    Return the manager configuration belongs to the given domain.
+
+    :param domain: domain name
+    :type domain: str
+    :return: domain manager config
+    :rtype: dict
+    """
+    if domain in self.__configuration[ADAPT]:
+      return self.__configuration[ADAPT][domain]
+    for mgr in self.__configuration[ADAPT]:
+      if type(mgr) is not dict:
+        continue
+      if mgr.get('domain_name', None) == domain:
+        return mgr
 
   def get_internal_manager (self):
     """

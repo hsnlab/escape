@@ -13,7 +13,7 @@
 # limitations under the License.
 import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from threading import Thread
+from threading import Thread, Timer
 
 from escape.adapt import log as log
 
@@ -74,22 +74,39 @@ class Callback(object):
     self.callback_id = callback_id
     self.request_id = request_id
     self.data = data
+    self.timer = None
+
+  def setup_timer (self, timeout, hook, **kwargs):
+    if not timeout:
+      log.debug("Timeout disabled for request callback: %s" % self.request_id)
+      return
+    if not self.timer:
+      log.debug("Setup timer for callback: %s" % self.callback_id)
+      self.timer = Timer(timeout, hook, kwargs=kwargs)
+      self.timer.start()
+    else:
+      log.warning("Callback timer has already been set up!")
+
+  def stop_timer (self):
+    if self.timer:
+      self.timer.cancel()
+      self.timer = None
 
 
 class CallbackManager(HTTPServer, Thread):
   DEFAULT_SERVER_ADDRESS = "localhost"
   DEFAULT_PREFIX = "callbacks"
   DEFAULT_PORT = 9000
-  DEFAULT_WAIT_TIMEOUT = 3
+  DEFAULT_WAIT_TIMEOUT = 5.0
 
   def __init__ (self, hook, domain_name, address=DEFAULT_SERVER_ADDRESS,
-                port=DEFAULT_PORT, wait_timeout=DEFAULT_WAIT_TIMEOUT,
+                port=DEFAULT_PORT, timeout=DEFAULT_WAIT_TIMEOUT,
                 **kwargs):
     Thread.__init__(self, name=self.__class__.__name__)
     HTTPServer.__init__(self, (address, port), CallbackHandler)
     self.__hook = hook
     self.domain_name = domain_name
-    self.wait_timeout = wait_timeout
+    self.wait_timeout = float(timeout)
     self.__register = {}
     self.daemon = True
 
@@ -115,8 +132,10 @@ class CallbackManager(HTTPServer, Thread):
     log.debug("Register callback for response: %s on domain: %s" %
               (cb_id, self.domain_name))
     if cb_id not in self.__register:
-      self.__register[cb_id] = Callback(callback_id=cb_id, request_id=req_id,
-                                        data=data)
+      cb = Callback(callback_id=cb_id, request_id=req_id, data=data)
+      cb.setup_timer(self.wait_timeout, self.invoke_hook, msg_id=cb_id,
+                     result=0)
+      self.__register[cb_id] = cb
     else:
       log.warning("Hook is already registered for id: %s on domain: %s"
                   % (id, self.domain_name))
@@ -124,7 +143,9 @@ class CallbackManager(HTTPServer, Thread):
   def unsubscribe_callback (self, cb_id):
     log.debug("Unregister callback for response: %s from domain: %s"
               % (cb_id, self.domain_name))
-    return self.__register.pop(cb_id, None)
+    cb = self.__register.pop(cb_id, None)
+    cb.stop_timer()
+    return cb
 
   def invoke_hook (self, msg_id, result):
     try:

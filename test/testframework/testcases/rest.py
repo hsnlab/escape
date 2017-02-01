@@ -37,6 +37,9 @@ log = logging.getLogger()
 
 
 class CallbackHandler(BaseHTTPRequestHandler):
+  """
+  Handler class to handle received callback request.
+  """
   RESULT_PARAM_NAME = "response-code"
 
   def do_POST (self):
@@ -46,12 +49,15 @@ class CallbackHandler(BaseHTTPRequestHandler):
     self.send_header('Connection', 'close')
     self.end_headers()
 
+  def do_GET (self):
+    self.do_POST()
+
   def log_message (self, format, *args):
     """
     Disable logging of incoming messages.
 
-    :param mformat: message format
-    :type mformat: str
+    :param format: message format
+    :type format: str
     :return: None
     """
     log.debug("%s - - [%s] %s\n" %
@@ -59,14 +65,18 @@ class CallbackHandler(BaseHTTPRequestHandler):
                self.log_date_time_string(),
                format % args))
 
-  def do_GET (self):
-    self.do_POST()
-
   def __process_request (self):
     result_code = self.__get_request_params().get(self.RESULT_PARAM_NAME, None)
     self.server._result = result_code
 
   def __get_request_params (self):
+    """
+    Examine callback request params and header field to construct a parameter
+    dict.
+
+    :return: parameters of the callback call
+    :rtype: dict
+    """
     params = {}
     query = urlparse.urlparse(self.path).query
     if query:
@@ -85,6 +95,12 @@ class CallbackHandler(BaseHTTPRequestHandler):
 
 
 class CallbackManager(HTTPServer, Thread):
+  """
+  Manage callback initiated from tested ESCAPE process.
+  Initiates a HTTP server on a separate thread and accept every received
+  callback call with success.
+  Can wait for a callback in a blocking manner.
+  """
   DEFAULT_SERVER_ADDRESS = "localhost"
   DEFAULT_PORT = 9000
   DEFAULT_WAIT_TIMEOUT = 30
@@ -108,6 +124,11 @@ class CallbackManager(HTTPServer, Thread):
     return self._result
 
   def run (self):
+    """
+    Entry point of the worker thread.
+
+    :return: None
+    """
     try:
       self.serve_forever()
     except KeyboardInterrupt:
@@ -118,7 +139,13 @@ class CallbackManager(HTTPServer, Thread):
       self.server_close()
 
   def wait_for_callback (self):
-    # Always use a timeout value because without timeout wait() is not
+    """
+    Block-wait for the next callback with timeout.
+
+    :return: callback is received with OK result
+    :rtype: bool
+    """
+    # Always use a timeout value because without timeout wait() func is not
     # interruptable by KeyboardInterrupt
     self.callback_event.wait(timeout=self.wait_timeout)
     self.callback_event.clear()
@@ -148,7 +175,11 @@ class RESTBasedServiceMixIn(EscapeTestCase):
 
   @staticmethod
   def _suppress_requests_logging ():
-    logging.getLogger("requests").setLevel(logging.WARNING)
+    if log.getEffectiveLevel() < logging.INFO:
+      level = log.getEffectiveLevel()
+    else:
+      level = logging.WARNING
+    logging.getLogger("requests").setLevel(level)
 
   def runTest (self):
     try:
@@ -223,6 +254,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
       success = cbmanager.wait_for_callback()
       self.assertTrue(success, msg="Callback returned with error: %s" %
                                    cbmanager.last_result)
+    cbmanager.shutdown()
     self.command_runner.stop()
 
   def _send_request (self, data, ext, callback_url=None):
@@ -256,5 +288,10 @@ class RESTBasedServiceMixIn(EscapeTestCase):
 
 class RESTBasedSuccessfulTestCase(BasicSuccessfulTestCase,
                                   RESTBasedServiceMixIn):
+  """
+  Dedicated Testcase class for basic successful testing and iterated request
+  feeding.
+  """
+
   def __init__ (self, **kwargs):
     super(RESTBasedSuccessfulTestCase, self).__init__(**kwargs)
