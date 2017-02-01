@@ -1207,6 +1207,7 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
 class CallbackEvent(Event):
   STATUS_OK = "OK"
   STATUS_ERROR = "ERROR"
+  STATUS_TIMEOUT = "TIMEOUT"
 
   def __init__ (self, domain, status, callback=None):
     super(CallbackEvent, self).__init__()
@@ -1375,7 +1376,16 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   @schedule_as_coop_task
   def callback_hook (self, msg_id, result_code):
     callback = self.callback_manager.unsubscribe_callback(cb_id=msg_id)
-    if 300 <= result_code:
+    if result_code == 0:
+      self.log.warning(
+        "Registered callback for request: %s, domain: %s exceeded timeout(%s)!"
+        % (msg_id, self.domain_name, self.callback_manager.wait_timeout))
+      self.raiseEventNoErrors(CallbackEvent,
+                              domain=self.domain_name,
+                              status=CallbackEvent.STATUS_TIMEOUT,
+                              callback=callback)
+      return
+    elif 300 <= result_code:
       self.log.warning(
         "Detected error result from domain: %s" % self.domain_name)
       self.raiseEventNoErrors(CallbackEvent,
@@ -1388,10 +1398,10 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       callback.data = self.topoAdapter.get_topology_resource()
     else:
       self.log.debug("Use splitted NFFG part to update DoV...")
-    self.raiseEventNoErrors(CallbackEvent,
-                            domain=self.domain_name,
-                            status=CallbackEvent.STATUS_OK,
-                            callback=callback)
+      self.raiseEventNoErrors(CallbackEvent,
+                              domain=self.domain_name,
+                              status=CallbackEvent.STATUS_OK,
+                              callback=callback)
 
 
 class OpenStackDomainManager(UnifyDomainManager):
