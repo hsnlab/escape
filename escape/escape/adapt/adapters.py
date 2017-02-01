@@ -1051,15 +1051,21 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   type = AbstractESCAPEAdapter.TYPE_REMOTE
   MESSAGE_ID_NAME = "message-id"
   CALLBACK_NAME = "call-back"
+  FEATURE_ANTIAFFINITY = "antiaffinity"
 
-  def __init__ (self, url, prefix="", **kwargs):
+  def __init__ (self, url, prefix="", features=None, **kwargs):
     """
     Init.
 
     :param url: url of RESTful API
     :type url: str
+    :param prefix: URL prefix
+    :type prefix: str
+    :param features: limitation anf filter parameters for the Adapter class
+    :type features: dict
     :return: None
     """
+    print locals()
     AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
     AbstractESCAPEAdapter.__init__(self, **kwargs)
     log.debug("Init %s - type: %s, domain: %s, URL: %s" % (
@@ -1067,6 +1073,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     # Converter object
     self.converter = NFFGConverter(domain=self.domain_name, logger=log,
                                    ensure_unique_id=CONFIG.ensure_unique_id())
+    self.features = features if features is not None else {}
     # Cache for parsed Virtualizer
     self.last_virtualizer = None
     self.original_virtualizer = None
@@ -1231,6 +1238,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return
     # Convert from XML-based Virtualizer to NFFG
     nffg = self.converter.parse_from_Virtualizer(vdata=virt)
+    self.__process_features(nffg=nffg)
     log.log(VERBOSE, "Converted NFFG of 'get-config' response:\n%s" %
             nffg.dump())
     # If first get-config
@@ -1242,6 +1250,20 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     # # Cache virtualizer
     # self.last_virtualizer = virt
     return nffg
+
+  def __process_features (self, nffg):
+    """
+    Process features config and transform collected topo according to these.
+
+    :param nffg:
+    :return:
+    """
+    self.log.debug("Checking features...")
+    if self.features.get(self.FEATURE_ANTIAFFINITY, False):
+      self.log.debug("Adding %s feature to infra nodes"
+                     % self.FEATURE_ANTIAFFINITY)
+      for infra in nffg.infras:
+        infra.mapping_features[self.FEATURE_ANTIAFFINITY] = True
 
   def check_topology_changed (self):
     """

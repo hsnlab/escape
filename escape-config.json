@@ -148,7 +148,10 @@
           "class": "UnifyRESTAdapter",
           "prefix": "ro/os",
           "url": "http://127.0.0.1:8899",
-          "timeout": 1
+          "timeout": 1,
+          "features": {
+            "antiaffinity": true
+          }
         }
       }
     },
