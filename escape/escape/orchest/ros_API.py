@@ -478,7 +478,7 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
   # Bind HTTP verbs to UNIFY's API functions
   request_perm = {
     'GET': ('ping', 'version', 'operations', 'get_config', 'mapping_info',
-            'status'),
+            'status', 'info'),
     'POST': ('ping', 'get_config', 'edit_config', 'mappings'),
     # 'DELETE': ('edit_config',),
     'PUT': ('edit_config',)
@@ -492,6 +492,7 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
   # Bound function
   API_CALL_MAPPING_INFO = 'api_ros_mapping_info'
   API_CALL_MAPPINGS = 'api_ros_mappings'
+  API_CALL_INFO = 'api_ros_info'
 
   def mapping_info (self):
     """
@@ -575,6 +576,13 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
     self.wfile.write(response_data)
     self.log.log(VERBOSE, "Responded mapping info:\n%s" % response_data)
     self.log.debug("%s function: mapping-info ended!" % self.LOGGER_NAME)
+
+  def info(self):
+    self.log.debug("Call %s function: info" % self.LOGGER_NAME)
+    self.send_response(200)
+    self.end_headers()
+    # self.log.log(VERBOSE, "Responded mapping info:\n%s" % response_data)
+    self.log.debug("%s function: info ended!" % self.LOGGER_NAME)
 
 
 class ResourceOrchestrationAPI(AbstractAPI):
@@ -949,6 +957,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: Mappings
     """
     mapping_regex = re.compile(r'.*\[id=(.*)\].*\[id=(.*)\]')
+    target_template = "/virtualizer/nodes/node[id=%s]/NF_instances/node[id=%s]"
     slor_topo = self.__get_slor_resource_view().get_resource_info()
     dov = self.resource_orchestrator.virtualizerManager.dov.get_resource_info()
     response = mappings.full_copy()
@@ -961,22 +970,27 @@ class ResourceOrchestrationAPI(AbstractAPI):
       bb, nf = mapping_regex.match(mapping.object.get_value()).group(1, 2)
       if bb not in slor_topo or nf not in slor_topo:
         log.warning("Missing requested element: %s@%s from topo!" % (nf, bb))
+        # mapping.target.object.set_value("NOT_FOUND")
+        mapping.target.domain.set_value("N/A")
         continue
       log.debug("Detected NF: %s@%s" % (nf, bb))
       m_result = self.__collect_binding(dov=dov, nfs=[nf])
       if not m_result:
         log.warning("Mapping is not found for NF: %s!" % nf)
+        # mapping.target.object.set_value("NOT_FOUND")
+        mapping.target.domain.set_value("N/A")
         continue
       try:
         node = m_result[0]['bisbis']['id']
         domain = m_result[0]['bisbis']['domain']
       except KeyError:
         log.warning("Missing mapping element from: %s" % m_result)
+        # mapping.target.object.set_value("NOT_FOUND")
+        mapping.target.domain.set_value("N/A")
         continue
-      domain = self.__get_domain_url(domain=domain)
       log.debug("Found mapping: %s@%s (domain: %s)" % (nf, node, domain))
-      mapping.target.object.set_value(str(node))
-      mapping.target.domain.set_value(str(domain) if domain else "localhost")
+      mapping.target.object.set_value(target_template % (node, nf))
+      mapping.target.domain.set_value(self.__get_domain_url(domain=domain))
     return response
 
   @staticmethod
@@ -1003,6 +1017,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
       return os.path.join(ra['url'], ra['prefix'])
     except KeyError:
       return
+
+  def api_ros_info(self):
+    pass
 
   ##############################################################################
   # Cf-Or API functions starts here
