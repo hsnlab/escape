@@ -77,12 +77,15 @@ class Callback(object):
     self.timer = None
 
   def setup_timer (self, timeout, hook, **kwargs):
+    if not timeout:
+      log.debug("Timeout disabled for request callback: %s" % self.request_id)
+      return
     if not self.timer:
       log.debug("Setup timer for callback: %s" % self.callback_id)
       self.timer = Timer(timeout, hook, kwargs=kwargs)
+      self.timer.start()
     else:
       log.warning("Callback timer has already been set up!")
-    self.timer.start()
 
   def stop_timer (self):
     if self.timer:
