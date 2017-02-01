@@ -64,7 +64,7 @@
     "Sl-Or": {
       "module": "escape.orchest.ros_API",
       "class": "ExtendedUnifyRequestHandler",
-      "virtualizer_type": "SINGLE",
+      "virtualizer_type": "ZERO-DELAYED-SBB",
       "diff": true,
       "address": "0.0.0.0",
       "port": 8888,

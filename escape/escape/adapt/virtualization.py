@@ -613,6 +613,21 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
       return NFFGToolBox.generate_SBB_representation(nffg=dov, log=log)
 
 
+class ZeroDelayedSBBVirtualizer(SingleBiSBiSVirtualizer):
+  """
+  Single BiSBiS Virtualizer generating SBB node with 0 delay.
+  """
+  TYPE = 'ZERO-DELAYED-SBB'
+  """Type name of the Virtualizer"""
+
+  def _acquire_resource (self):
+    sbb = super(ZeroDelayedSBBVirtualizer, self)._acquire_resource()
+    for infra in sbb.infras:
+      log.debug("Set %s delay: 0" % infra.id)
+      infra.resources.delay = 0
+    return sbb
+
+
 class LocalSingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
   """
   Actual Virtualizer class for ESCAPEv2.
@@ -702,7 +717,8 @@ class VirtualizerManager(EventMixin):
     # DomainVirtualizer.TYPE: DomainVirtualizer,
     GlobalViewVirtualizer.TYPE: GlobalViewVirtualizer,
     SingleBiSBiSVirtualizer.TYPE: SingleBiSBiSVirtualizer,
-    LocalSingleBiSBiSVirtualizer.TYPE: LocalSingleBiSBiSVirtualizer
+    LocalSingleBiSBiSVirtualizer.TYPE: LocalSingleBiSBiSVirtualizer,
+    ZeroDelayedSBBVirtualizer.TYPE: ZeroDelayedSBBVirtualizer
   }
   """Collection of the available Virtualizers type -> class"""
 
