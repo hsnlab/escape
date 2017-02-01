@@ -949,6 +949,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: Mappings
     """
     mapping_regex = re.compile(r'.*\[id=(.*)\].*\[id=(.*)\]')
+    target_template = "/virtualizer/nodes/node[id=%s]/NF_instances/node[id=%s]"
     slor_topo = self.__get_slor_resource_view().get_resource_info()
     dov = self.resource_orchestrator.virtualizerManager.dov.get_resource_info()
     response = mappings.full_copy()
@@ -973,10 +974,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
       except KeyError:
         log.warning("Missing mapping element from: %s" % m_result)
         continue
-      domain = self.__get_domain_url(domain=domain)
       log.debug("Found mapping: %s@%s (domain: %s)" % (nf, node, domain))
-      mapping.target.object.set_value(str(node))
-      mapping.target.domain.set_value(str(domain) if domain else "localhost")
+      mapping.target.object.set_value(target_template % (node, nf))
+      mapping.target.domain.set_value(self.__get_domain_url(domain=domain))
     return response
 
   @staticmethod
