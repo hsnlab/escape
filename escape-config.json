@@ -63,7 +63,7 @@
     },
     "Sl-Or": {
       "module": "escape.orchest.ros_API",
-      "class": "ExtendedUnifyRequestHandler",
+      "class": "Extended5GExRequestHandler",
       "virtualizer_type": "ZERO-DELAYED-SBB",
       "diff": true,
       "address": "0.0.0.0",

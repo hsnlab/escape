@@ -31,3 +31,4 @@ log/*
 /test/case*/out-*
 /test/case*/gen-*
 /test/results.xml
+unify_virtualizer/yang

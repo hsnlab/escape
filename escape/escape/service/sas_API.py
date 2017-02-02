@@ -15,6 +15,7 @@
 Implements the platform and POX dependent logic for the Service Adaptation
 Sublayer.
 """
+import httplib
 import os
 import uuid
 from subprocess import Popen
@@ -133,7 +134,7 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
     params = self._get_request_params()
     message_id = params.get('message-id')
     if not message_id:
-      self.send_error(code=400, message="message-id is missing")
+      self.send_error(code=httplib.BAD_REQUEST, message="message-id is missing")
       return
     code, result = self._proceed_API_call('api_sas_status', message_id)
     if not result:

@@ -16,6 +16,7 @@ Implements the platform and POX dependent logic for the Resource Orchestration
 Sublayer.
 """
 import ast
+import httplib
 import json
 import os
 import pprint
@@ -36,6 +37,7 @@ from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
   VERBOSE, quit_with_error
 from pox.lib.revent.revent import Event
 from virtualizer import Virtualizer
+from virtualizer_info import Info
 from virtualizer_mappings import Mappings
 
 
@@ -208,7 +210,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     params = self._get_request_params()
     message_id = params.get('message-id')
     if not message_id:
-      self.send_error(code=400, message="message-id is missing")
+      self.send_error(code=httplib.BAD_REQUEST, message="message-id is missing")
       return
     code, result = self._proceed_API_call('api_ros_status', message_id)
     if not result:
@@ -229,7 +231,8 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     :return: None
     """
     if resource_nffg is None:
-      self.send_error(404, message="Resource info is missing!")
+      self.send_error(code=httplib.NOT_FOUND,
+                      message="Resource info is missing!")
       return
     # Global resource has not changed -> respond with the cached topo
     if resource_nffg is False:
@@ -237,7 +240,8 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         "Global resource has not changed! Respond with cached topology...")
       if self.server.last_response is None:
         log.warning("Cached topology is missing!")
-        self.send_error(404, message="Cached info is missing from API!")
+        self.send_error(code=httplib.NOT_FOUND,
+                        message="Cached info is missing from API!")
         return
       if self.virtualizer_format_enabled:
         data = self.server.last_response.xml()
@@ -260,7 +264,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         self.server.last_response = resource_nffg
         data = resource_nffg.dump()
     # Setup OK status for HTTP response
-    self.send_response(200)
+    self.send_response(httplib.OK)
     if self.virtualizer_format_enabled:
       self.send_header('Content-Type', 'application/xml')
     else:
@@ -288,7 +292,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     if raw_body is None or not raw_body:
       log.warning("Received data is empty!")
-      self.send_error(400, "Missing body!")
+      self.send_error(code=httplib.BAD_REQUEST, message="Missing body!")
       return
     # Expect XML format --> need to convert first
     if self.virtualizer_format_enabled:
@@ -296,7 +300,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
          not raw_body.startswith("<?xml version="):
         self.log.error("Received data is not in XML format despite of the "
                        "UNIFY interface is enabled!")
-        self.send_error(415)
+        self.send_error(code=httplib.UNSUPPORTED_MEDIA_TYPE)
         return
       # Get received Virtualizer
       received_cfg = Virtualizer.parse_from_text(text=raw_body)
@@ -310,7 +314,8 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         config = self._proceed_API_call(self.API_CALL_RESOURCE)
         if config is None:
           self.log.error("Requested resource info is missing!")
-          self.send_error(404, message="Resource info is missing!")
+          self.send_error(code=httplib.NOT_FOUND,
+                          message="Resource info is missing!")
           return
         elif config is False:
           self.log.debug("Topo description is unchanged!")
@@ -339,7 +344,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       if self.headers.get("Content-Type") != "application/json":
         self.log.error("Received data is not in JSON format despite of the "
                        "UNIFY interface is disabled!")
-        self.send_error(415)
+        self.send_error(code=httplib.UNSUPPORTED_MEDIA_TYPE)
         return
       # Initialize NFFG from JSON representation
       self.log.info("Parsing request into internal NFFG format...")
@@ -470,7 +475,7 @@ class CfOrRequestHandler(BasicUnifyRequestHandler):
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
 
-class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
+class Extended5GExRequestHandler(BasicUnifyRequestHandler):
   """
   Extended handler class for UNIFY interface.
   Contains RPCs for providing additional information.
@@ -503,14 +508,15 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
     self.log.debug("Call %s function: mapping-info" % self.LOGGER_NAME)
     service_id = self.__get_service_id()
     if not service_id:
-      self.send_error(code=400, message="Service ID is missing!")
+      self.send_error(code=httplib.BAD_REQUEST,
+                      message="Service ID is missing!")
       return
     self.log.debug("Detected service id: %s" % service_id)
     ret = self._proceed_API_call(self.API_CALL_MAPPING_INFO, service_id)
     self.log.debug("Sending collected mapping info...")
     if isinstance(ret, basestring):
       # Got error message
-      self.send_error(code=400, message=ret)
+      self.send_error(code=httplib.BAD_REQUEST, message=ret)
       return
     self.__respond_info(ret)
     self.log.debug("%s function: mapping-info ended!" % self.LOGGER_NAME)
@@ -537,7 +543,7 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
     :return: None
     """
     data = json.dumps(data if data else {})
-    self.send_response(200)
+    self.send_response(httplib.OK)
     self.send_header('Content-Type', 'application/json')
     self.send_header('Content-Length', len(data))
     self.end_headers()
@@ -558,18 +564,18 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
     # log.getChild("REST-API").debug("Request body:\n%s" % body)
     if raw_body is None or not raw_body:
       log.warning("Received data is empty!")
-      self.send_error(400, "Missing body!")
+      self.send_error(httplib.BAD_REQUEST, "Missing body!")
       return
     mappings = Mappings.parse_from_text(text=raw_body)
     self.log.log(VERBOSE, "Full request:\n%s" % mappings.xml())
     ret = self._proceed_API_call(self.API_CALL_MAPPINGS, mappings)
     if ret is None:
       log.warning("Calculated mapping data is missing!")
-      self.send_error(500)
+      self.send_error(httplib.INTERNAL_SERVER_ERROR)
       return
     self.log.debug("Sending collected mapping info...")
     response_data = ret.xml()
-    self.send_response(200)
+    self.send_response(httplib.OK)
     self.send_header('Content-Type', 'application/xml')
     self.send_header('Content-Length', len(response_data))
     self.end_headers()
@@ -579,9 +585,17 @@ class ExtendedUnifyRequestHandler(BasicUnifyRequestHandler):
 
   def info(self):
     self.log.debug("Call %s function: info" % self.LOGGER_NAME)
-    self.send_response(200)
+    raw_body = self._get_body()
+    if raw_body is None or not raw_body:
+      log.warning("Received data is empty!")
+      self.send_error(httplib.BAD_REQUEST, "Missing body!")
+      return
+    info = Info.parse_from_text(text=raw_body)
+    self.log.log(VERBOSE, "Full request:\n%s" % mappings.xml())
+    ret = self._proceed_API_call(self.API_CALL_INFO, info)
+    # Return accepted code due to async mode
+    self.send_response(httplib.ACCEPTED)
     self.end_headers()
-    # self.log.log(VERBOSE, "Responded mapping info:\n%s" % response_data)
     self.log.debug("%s function: info ended!" % self.LOGGER_NAME)
 
 
@@ -1018,7 +1032,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     except KeyError:
       return
 
-  def api_ros_info(self):
+  def api_ros_info(self, info):
     pass
 
   ##############################################################################
