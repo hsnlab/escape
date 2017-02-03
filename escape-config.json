@@ -52,7 +52,7 @@
       "virtualizer_type": "SINGLE"
     },
     "Cf-Or": {
-      "module": "escape.orchest.ros_API",
+      "module": "escape.orchest.provisioning",
       "class": "CfOrRequestHandler",
       "virtualizer_type": "SINGLE-LOCAL",
       "diff": false,

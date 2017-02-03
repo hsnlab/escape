@@ -22,6 +22,92 @@ from virtualizer_info import Info
 from virtualizer_mappings import Mappings
 
 
+class CfOrRequestHandler(BasicUnifyRequestHandler):
+  """
+  Request Handler for the Cf-OR interface.
+
+  .. warning::
+    This class is out of the context of the recoco's co-operative thread
+    context! While you don't need to worry much about synchronization between
+    recoco tasks, you do need to think about synchronization between recoco task
+    and normal threads. Synchronisation is needed to take care manually: use
+    relevant helper function of core object: `callLater`/`raiseLater` or use
+    `schedule_as_coop_task` decorator defined in util.misc on the called
+    function.
+
+  Contains handler functions for REST-API.
+  """
+  # Bind HTTP verbs to UNIFY's API functions
+  request_perm = {
+    'GET': ('ping', 'version', 'operations', 'get_config'),
+    'POST': ('ping', 'get_config', 'edit_config')
+  }
+  """Bind HTTP verbs to UNIFY's API functions"""
+  # Statically defined layer component to which this handler is bounded
+  # Need to be set by container class
+  bounded_layer = 'orchestration'
+  """Statically defined layer component to which this handler is bounded"""
+  static_prefix = "cfor"
+  # Logger name
+  LOGGER_NAME = "Cf-Or"
+  """Logger name"""
+  log = log.getChild("[%s]" % LOGGER_NAME)
+  # Use Virtualizer format
+  virtualizer_format_enabled = True
+  """Use Virtualizer format"""
+  # Default communication approach
+  DEFAULT_DIFF = True
+  """Default communication approach"""
+  # Name mapper to avoid Python naming constraint
+  rpc_mapper = {
+    'get-config': "get_config",
+    'edit-config': "edit_config"
+  }
+  """Name mapper to avoid Python naming constraint"""
+  # Bound function
+  API_CALL_RESOURCE = 'api_cfor_get_config'
+  API_CALL_REQUEST = 'api_cfor_edit_config'
+
+  def __init__ (self, request, client_address, server):
+    """
+    Init.
+
+    :param request: request type
+    :type request: str
+    :param client_address: client address
+    :type client_address: str
+    :param server: server object
+    :type server: :any:`BaseHTTPServer.HTTPServer`
+    :return: None
+    """
+    BasicUnifyRequestHandler.__init__(self, request, client_address, server)
+
+  def get_config (self):
+    """
+    Response configuration.
+
+    :return: None
+    """
+    self.log.debug("Call %s function: get-config" % self.LOGGER_NAME)
+    # Forward call to main layer class
+    resource = self._proceed_API_call(self.API_CALL_RESOURCE)
+    self._topology_view_responder(resource_nffg=resource)
+    self.log.debug("%s function: get-config ended!" % self.LOGGER_NAME)
+
+  def edit_config (self):
+    """
+    Receive configuration and initiate orchestration.
+
+    :return: None
+    """
+    self.log.debug("Call %s function: edit-config" % self.LOGGER_NAME)
+    nffg = self._service_request_parser()
+    if nffg:
+      self._proceed_API_call(self.API_CALL_REQUEST, nffg)
+      self.send_acknowledge(message_id=nffg.id)
+    self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
+
+
 class Extended5GExRequestHandler(BasicUnifyRequestHandler):
   """
   Extended handler class for UNIFY interface.

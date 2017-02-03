@@ -335,7 +335,7 @@ class RequestCache(object):
       return RequestStatus.UNKNOWN
 
 
-class RESTServer(ThreadingMixIn, HTTPServer):
+class RESTServer(ThreadingMixIn, HTTPServer, object):
   """
   Base HTTP server for RESTful API.
 
