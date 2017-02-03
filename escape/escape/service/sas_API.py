@@ -22,8 +22,8 @@ from subprocess import Popen
 
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
-from escape.orchest.ros_API import BasicUnifyRequestHandler, \
-  InstantiationFinishedEvent
+from escape.orchest.provisioning import BasicUnifyRequestHandler
+from escape.orchest.ros_API import InstantiationFinishedEvent
 from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator

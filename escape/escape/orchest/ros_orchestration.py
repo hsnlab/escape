@@ -14,9 +14,16 @@
 """
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
+import ast
+import os
+import re
+from collections import OrderedDict
+
+from escape import CONFIG
 from escape.adapt.virtualization import AbstractVirtualizer, VirtualizerManager
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
+from escape.orchest.provisioning import MonitoringManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
 from escape.util.misc import notify_remote_visualizer, VERBOSE
@@ -49,6 +56,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     # Init NFIB manager
     self.nfibManager = NFIBManager()
     self.nfibManager.initialize()
+    self.monitor = MonitoringManager()
 
   def finalize (self):
     """
@@ -119,6 +127,157 @@ class ResourceOrchestrator(AbstractOrchestrator):
       log.warning("Global view is not acquired correctly!")
     log.error("Abort orchestration process!")
 
+  def collect_mapping_info (self, service_id):
+    """
+    Return with collected information of mapping of a given service.
+
+    :param service_id: service request ID
+    :type service_id: str
+    :return: mapping info
+    :rtype: dict
+    """
+    # Get the service NFFG based on service ID
+    request = self.nffgManager.get(service_id)
+    if request is None:
+      log.warning("Service request(id: %s) is not found!" % service_id)
+      return "Service request is not found!"
+    # Get the overall view a.k.a. DoV
+    dov = self.virtualizerManager.dov.get_resource_info()
+    # Collect NFs
+    nfs = [nf.id for nf in request.nfs]
+    log.log(VERBOSE, "Collected NFs: %s" % nfs)
+    return self.__collect_binding(dov=dov, nfs=nfs)
+
+  @staticmethod
+  def __collect_binding (dov, nfs):
+    """
+    Collect mapping of given NFs on the global view(DoV) with the structure:
+
+    .. code-block:: json
+
+    [
+      {
+        "bisbis": {
+          "domain": null,
+          "id": "EE2"
+        },
+        "nf": {
+          "id": "fwd",
+          "ports": [
+            {
+              "id": 1,
+              "management": {
+                "22/tcp": [
+                  "0.0.0.0",
+                  20000
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+
+    :param dov: global topology
+    :type dov: NFFG
+    :param nfs: list of NFs
+    :type nfs: list
+    :return: mapping
+    :rtype: list of dict
+    """
+    mappings = []
+    # Process NFs
+    for nf_id in nfs:
+      mapping = {}
+      # Get the connected infra node
+      bisbis = [n.id for n in dov.infra_neighbors(nf_id)]
+      log.log(VERBOSE, "Detected mapped BiSBiS node:" % bisbis)
+      if len(bisbis) != 1:
+        log.warning(
+          "Detected unexpected number of BiSBiS node: %s!" % bisbis)
+        continue
+      bisbis = bisbis.pop()
+      # Add NF id
+      nf = {"id": nf_id, "ports": []}
+      for dyn_link in dov.network[nf_id][bisbis].itervalues():
+        port = OrderedDict(id=dyn_link.src.id)
+        if dyn_link.src.l4 is not None:
+          try:
+            port['management'] = ast.literal_eval(dyn_link.src.l4)
+          except SyntaxError:
+            log.warning("L4 address entry: %s is not valid Python expression! "
+                        "Add the original string..." % dyn_link.src.l4)
+            port['management'] = dyn_link.src.l4
+        nf['ports'].append(port)
+      mapping['nf'] = nf
+      # Add infra node ID and domain name
+      bisbis = bisbis.split('@')
+      mapping['bisbis'] = {"id": bisbis[0],
+                           "domain": bisbis[1] if len(bisbis) > 1 else None}
+      mappings.append(mapping)
+    return mappings
+
+  def collect_mappings (self, mappings, slor_topo):
+    target_template = "/virtualizer/nodes/node[id=%s]/NF_instances/node[id=%s]"
+    dov = self.virtualizerManager.dov.get_resource_info()
+    response = mappings.full_copy()
+    log.debug("Start checking mappings...")
+    for mapping in response:
+      nf = self.__detect_nf_from_path(path=mapping.object.get_value(),
+                                      topo=slor_topo)
+      if not nf:
+        # mapping.target.object.set_value("NOT_FOUND")
+        mapping.target.domain.set_value("N/A")
+        continue
+      m_result = self.__collect_binding(dov=dov, nfs=[nf])
+      if not m_result:
+        log.warning("Mapping is not found for NF: %s!" % nf)
+        # mapping.target.object.set_value("NOT_FOUND")
+        mapping.target.domain.set_value("N/A")
+        continue
+      try:
+        node = m_result[0]['bisbis']['id']
+        domain = m_result[0]['bisbis']['domain']
+      except KeyError:
+        log.warning("Missing mapping element from: %s" % m_result)
+        # mapping.target.object.set_value("NOT_FOUND")
+        mapping.target.domain.set_value("N/A")
+        continue
+      log.debug("Found mapping: %s@%s (domain: %s)" % (nf, node, domain))
+      mapping.target.object.set_value(target_template % (node, nf))
+      mapping.target.domain.set_value(CONFIG.get_domain_url(domain=domain))
+    return response
+
+  @staticmethod
+  def __detect_nf_from_path (path, topo):
+    mapping_regex = re.compile(r'.*\[id=(.*)\].*\[id=(.*)\]')
+    match = mapping_regex.match(path)
+    if match is None:
+      log.warning("Wrong object format: %s" % path)
+      return
+    bb, nf = mapping_regex.match(path).group(1, 2)
+    if bb not in topo or nf not in topo:
+      log.warning("Missing requested element: %s@%s from topo!" % (nf, bb))
+      return
+    log.debug("Detected NF: %s@%s" % (nf, bb))
+    return nf
+
+  def filter_info_request (self, info, slor_topo):
+    log.debug("Filter info request based on layer view: %s..." % slor_topo.id)
+    info = info.full_copy()
+    for attr in (getattr(info, e) for e in info._sorted_children):
+      deletable = []
+      for element in attr:
+        if hasattr(element, "object"):
+          nf = self.__detect_nf_from_path(element.object.get_value(),
+                                          slor_topo)
+          if not nf:
+            log.debug("NF: %s is not in the layer view! Remove from request...")
+            deletable.append(nf)
+      for d in deletable:
+        attr.remove(d)
+    return info
+
 
 class NFFGManager(object):
   """
@@ -166,7 +325,7 @@ class NFFGManager(object):
     Return NF-FG with given id.
 
     :param nffg_id: ID of NF-FG
-    :type nffg_id: int
+    :type nffg_id: int or str
     :return: NF-Fg instance
     :rtype: :any:`NFFG`
     """

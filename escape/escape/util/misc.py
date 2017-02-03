@@ -585,3 +585,12 @@ def port_tester (host, port, interval=1, period=5,
       s.close()
       time.sleep(interval)
   return False
+
+
+def get_nf_from_path (path, log=logging.getLogger("EXTRACT")):
+  mapping_regex = re.compile(r'.*/NF_instances/node\[id=(.*)\]')
+  match = mapping_regex.match(path)
+  if match is None:
+    log.warning("Wrong object format: %s" % path)
+    return
+  return mapping_regex.match(path).group(1)

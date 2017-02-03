@@ -612,7 +612,7 @@ class ESCAPEConfig(object):
     except KeyError:
       return ()
 
-  def get_manager_by_domain(self, domain):
+  def get_manager_by_domain (self, domain):
     """
     Return the manager configuration belongs to the given domain.
 
@@ -948,3 +948,27 @@ class ESCAPEConfig(object):
       return self.__configuration["visualization"]["instance_id"]
     except KeyError:
       return None
+
+  def get_domain_url (self, domain=None):
+    """
+    Assemble the URL of the given domain based on the global configuration.
+
+    :param domain: domain name
+    :type domain: str
+    :return: url
+    :rtype: str
+    """
+    if domain is None:
+      slor = self.get_ros_agent_params()
+      return "http://%s:%s/%s" % (slor.get("address", "localhost"),
+                                  slor.get("port", ''),
+                                  slor.get("prefix", ''))
+    mgr = self.get_manager_by_domain(domain=domain)
+    if mgr is None:
+      log.warning("DomainManager config is not found for domain: %s" % domain)
+      return
+    try:
+      ra = mgr['adapters']['REMOTE']
+      return os.path.join(ra['url'], ra['prefix'])
+    except KeyError:
+      return
