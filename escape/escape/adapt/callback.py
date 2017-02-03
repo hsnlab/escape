@@ -70,10 +70,12 @@ class CallbackHandler(BaseHTTPRequestHandler):
 
 
 class Callback(object):
-  def __init__ (self, callback_id, request_id, data):
+  def __init__ (self, callback_id, request_id, hook=None, data=None):
     self.callback_id = callback_id
     self.request_id = request_id
+    self.hook = hook
     self.data = data
+    self.result_code = None
     self.timer = None
 
   def setup_timer (self, timeout, hook, **kwargs):
@@ -128,19 +130,26 @@ class CallbackManager(HTTPServer, Thread):
     finally:
       self.server_close()
 
-  def subscribe_callback (self, cb_id, req_id, data):
+  def subscribe_callback (self, cb_id, req_id, data=None, hook=None,
+                          timeout=None):
     log.debug("Register callback for response: %s on domain: %s" %
               (cb_id, self.domain_name))
     if cb_id not in self.__register:
-      cb = Callback(callback_id=cb_id, request_id=req_id, data=data)
-      cb.setup_timer(self.wait_timeout, self.invoke_hook, msg_id=cb_id,
-                     result=0)
+      cb = Callback(callback_id=cb_id, request_id=req_id, hook=hook, data=data)
+      _timeout = timeout if timeout is not None else self.wait_timeout
+      cb.setup_timer(_timeout, self.invoke_hook, msg_id=cb_id, result=0)
       self.__register[cb_id] = cb
     else:
       log.warning("Hook is already registered for id: %s on domain: %s"
                   % (id, self.domain_name))
 
   def unsubscribe_callback (self, cb_id):
+    """
+
+    :param cb_id:
+    :return:
+    :rtype: Callback
+    """
     log.debug("Unregister callback for response: %s from domain: %s"
               % (cb_id, self.domain_name))
     cb = self.__register.pop(cb_id, None)
@@ -160,4 +169,13 @@ class CallbackManager(HTTPServer, Thread):
       return
     log.debug("Received valid callback with id: %s, result: %s from domain: %s"
               % (msg_id, result, self.domain_name))
-    self.__hook(msg_id, result)
+    # cb = self.unsubscribe_callback(cb_id=msg_id)
+    cb = self.__register.get(msg_id)
+    if cb is None:
+      log.error("Missing callback: %s from register!" % msg_id)
+      return
+    cb.result = result
+    if cb.hook is not None:
+      cb.hook(callback=cb)
+    else:
+      self.__hook(callback=cb)
