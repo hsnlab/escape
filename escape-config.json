@@ -62,7 +62,7 @@
       "unify_interface": true
     },
     "Sl-Or": {
-      "module": "escape.orchest.ros_API",
+      "module": "escape.orchest.provisioning",
       "class": "Extended5GExRequestHandler",
       "virtualizer_type": "ZERO-DELAYED-SBB",
       "diff": true,
