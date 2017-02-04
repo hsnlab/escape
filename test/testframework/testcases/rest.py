@@ -60,7 +60,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
     :type format: str
     :return: None
     """
-    log.debug("%s - - [%s] %s\n" %
+    log.debug("%s - - Received callback [%s] %s\n" %
               (self.__class__.__name__,
                self.log_date_time_string(),
                format % args))
@@ -114,6 +114,9 @@ class CallbackManager(HTTPServer, Thread):
     self.callback_event = Event()
     self.wait_timeout = wait_timeout
     self._result = None
+    log.debug("\nInit %s(listen: %s:%s, wait_timeout: %s)" % (
+      self.__class__.__name__, self.server_name, self.server_port,
+      self.wait_timeout))
 
   @property
   def url (self):
@@ -129,6 +132,7 @@ class CallbackManager(HTTPServer, Thread):
 
     :return: None
     """
+    log.debug("Start %s to wait callbacks..." % self.__class__.__name__)
     try:
       self.serve_forever()
     except KeyboardInterrupt:
@@ -137,6 +141,7 @@ class CallbackManager(HTTPServer, Thread):
       log.error("Got exception in %s: %s" % (self.__class__.__name__, e))
     finally:
       self.server_close()
+    log.debug("%s is stopped!" % self.__class__.__name__)
 
   def wait_for_callback (self):
     """
@@ -182,6 +187,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     logging.getLogger("requests").setLevel(level)
 
   def runTest (self):
+    log.debug("\nSTART test")
     try:
       # Init ESCAPE process in separate thread to send request through its
       # REST API and be able to wait for the result
@@ -203,6 +209,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
       raise RuntimeError("ESCAPE's runner thread has got TIMEOUT!")
     # Verify result here because logging in file is slow compared to the
     # testframework
+    log.debug("\nSTOP test")
     self.verify_result()
     # Mark test case as success
     self.success = True
@@ -218,6 +225,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     reqs = sorted([os.path.join(testcase_dir, file_name)
                    for file_name in os.listdir(testcase_dir)
                    if file_name.startswith(self.REQUEST_PREFIX)])
+    log.debug("Sending requests with explicit backoff time: %s..." % self.delay)
     for request_file in reqs:
       # Wait for ESCAPE coming up, flushing to file - no callback yet
       time.sleep(self.delay)
@@ -245,6 +253,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     cbmanager.start()
     self.command_runner.wait_for_ready()
     cb_url = cbmanager.url if self.callback else None
+    log.debug("Sending requests and waiting for callbacks...")
     for request in reqs:
       with open(request) as f:
         ext = request.rsplit('.', 1)[-1]

@@ -85,6 +85,10 @@ class CommandRunner(object):
     self._process = None
     self.__killed = False
 
+  def __str__ (self):
+    return "%s(cmd: %s, timeout: %s)" % (
+      self.__class__.__name__, self._command, self.kill_timeout)
+
   @property
   def is_killed (self):
     return self.__killed
@@ -144,6 +148,7 @@ class CommandRunner(object):
 
     :return: None
     """
+    log.debug("Terminate program under test...")
     if self._process:
       self._process.sendcontrol('c')
     if self.is_alive:
@@ -172,17 +177,18 @@ class ESCAPECommandRunner(CommandRunner):
   def __init__ (self, *args, **kwargs):
     super(ESCAPECommandRunner, self).__init__(*args, **kwargs)
     self.__ready = threading.Event()
-    self.timeout = False
+    self.timeouted = False
 
   @property
   def timeout_exceeded (self):
-    return self.timeout
+    return self.timeouted
 
   def execute (self, wait_for_up=True):
     """
     Create and start the process. Block until the process ends or timeout is
     exceeded.
     """
+    log.debug("\nStart program under test...")
     try:
       self._process = pexpect.spawn(self._command[0],
                                     args=self._command[1:],
@@ -197,7 +203,7 @@ class ESCAPECommandRunner(CommandRunner):
     except pexpect.TIMEOUT:
       log.debug("Process running timeout(%ss) is exceeded!" % self.kill_timeout)
       self.kill_process()
-      self.timeout = True
+      self.timeouted = True
     except pexpect.ExceptionPexpect as e:
       log.error("Got unexpected error:\n%s" % e)
       self.kill_process()
@@ -223,7 +229,9 @@ class ESCAPECommandRunner(CommandRunner):
       return False
 
   def wait_for_ready (self):
+    log.debug("Waiting for ESCAPE...")
     self.__ready.wait(timeout=self.kill_timeout)
+    log.debug("ESCAPE is up! ")
 
   def kill_process (self):
     # Call super explicitly because _process is defined in the parent class
@@ -250,6 +258,7 @@ class RunnableTestCaseInfo(object):
     # Removing trailing slash
     self.__case_path = os.path.normpath(case_path)
     self.sub_name = None
+    log.debug("Reading testcase cfg from: %s" % self.full_testcase_path)
 
   @property
   def testcase_dir_name (self):

@@ -180,6 +180,7 @@ class EscapeTestCase(TestCase):
 
     :return:
     """
+    log.debug("\nSetup fixture...")
     super(EscapeTestCase, self).setUp()
     log_file = os.path.join(self.test_case_info.full_testcase_path,
                             ESCAPE_LOG_FILE_NAME)
@@ -206,6 +207,7 @@ class EscapeTestCase(TestCase):
 
     It will be invoked only if the test is successful.
     """
+    log.debug("\nTear down fixture...")
     self.terminate_testcase()
     super(EscapeTestCase, self).tearDown()
 
@@ -213,7 +215,7 @@ class EscapeTestCase(TestCase):
     """
     Template method for analyzing run result.
     """
-    raise NotImplementedError
+    log.debug("\nVerifying results...")
 
   def run_escape (self):
     """
@@ -229,9 +231,6 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
   """
   Basic successful result and warning checking.
   """
-
-  def __init__ (self, **kwargs):
-    super(BasicSuccessfulTestCase, self).__init__(**kwargs)
 
   def run_escape (self):
     """
@@ -277,7 +276,7 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
     return output_stream if output_stream else ""
 
   def verify_result (self):
-    log.debug("\nVerifying logs...")
+    super(BasicSuccessfulTestCase, self).verify_result()
     if self.run_result.log_output is None:
       raise RuntimeError("log_output is missing!")
     # Detect TIMEOUT error
