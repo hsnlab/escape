@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import httplib
 import logging
 import os
 import pprint
@@ -25,13 +26,21 @@ from testframework.testcases.basic import BasicSuccessfulTestCase
 
 log = logging.getLogger()
 
+# Virtualizer interface RPC names
+RPC_PING = "ping"
+RPC_GET_CONFIG = "get-config"
+RPC_EDIT_CONFIG = "edit-config"
+# Extended RPC names
+RPC_MAPPINGS = "mappings"
+RPC_INFO = "info"
+
 
 class RPCCallMock(object):
   """
   A mock class for an RPC call.
   """
 
-  def __init__ (self, rpc_name, response_path=None, code=200):
+  def __init__ (self, rpc_name, response_path=None, code=None, timeout=None):
     """
     :param rpc_name: name of the rpc call e.g get-config
     :type rpc_name: str
@@ -42,10 +51,12 @@ class RPCCallMock(object):
     """
     self.call = rpc_name
     self.response_path = response_path
-    self.code = code
+    self.code = code if code else httplib.OK
+    self.timeout = timeout
 
   def __repr__ (self):
-    return "CallMock(response: %s, code: %s)" % (self.response_path, self.code)
+    return "CallMock(response: %s, code: %s, timeout=%s)" \
+           % (self.response_path, self.code, self.timeout)
 
   def get_response_body (self):
     if not self.response_path:
@@ -59,7 +70,7 @@ class DomainMock(object):
   Main mock class wich represent a domain aka a Domain Orchestrator REST-API.
   Contains call mock objects for registered mocked responses.
   """
-  DEFAULT_RESPONSE_CODE = 200
+  DEFAULT_RESPONSE_CODE = httplib.OK
 
   def __init__ (self, domain):
     self.domain = domain
@@ -91,19 +102,16 @@ class DORequestHandler(BaseHTTPRequestHandler):
   """
   Handler class to handle received request.
   """
-  RPC_PING = "ping"
-  RPC_GET_CONFIG = "get-config"
-  RPC_EDIT_CONFIG = "edit-config"
   MSG_ID_NAME = 'message-id'
   CALLBACK_NAME = "call-back"
-
+  # Override server name for HTTP response header: Server
   server_version = "DomainAPIMocker"
 
   def log_message (self, format, *args):
     """
     Disable default logging of incoming messages.
     """
-    log.debug("%s - - [%s] %s" %
+    log.debug("%s - - [%s] Sending %s" %
               (self.__class__.__name__,
                self.log_date_time_string(),
                format % args))
@@ -121,12 +129,16 @@ class DORequestHandler(BaseHTTPRequestHandler):
 
     :return: None
     """
+    log.debug("\n%s - - [%s] Received %s" %
+              (self.__class__.__name__,
+               self.log_date_time_string(),
+               self.path))
     p = urlparse.urlparse(self.path).path
     try:
       domain, call = p.strip('/').split('/', 1)
     except:
       log.error("Wrong URL: %s" % self.path)
-      self.send_error(406)
+      self.send_error(httplib.NOT_ACCEPTABLE)
       return
     if domain not in self.server.responses:
       self._return_default(call=call)
@@ -136,7 +148,8 @@ class DORequestHandler(BaseHTTPRequestHandler):
       self._return_default(call=call)
       return
     self._return_response(code=call_mock.code,
-                          body=call_mock.get_response_body())
+                          body=call_mock.get_response_body(),
+                          timeout=call_mock.timeout)
 
   def __get_request_params (self):
     """
@@ -171,16 +184,17 @@ class DORequestHandler(BaseHTTPRequestHandler):
     :type call. str
     :return: None
     """
-    if call == self.RPC_PING:
-      self._return_response(code=200, body="OK")
-    if call == self.RPC_GET_CONFIG:
-      self._return_response(code=404)
-    elif call == self.RPC_EDIT_CONFIG:
-      self._return_response(code=202)
+    log.debug("Unregistered call! Sending default response...")
+    if call == RPC_PING:
+      self._return_response(code=httplib.OK, body="OK")
+    elif call == RPC_GET_CONFIG:
+      self._return_response(code=httplib.NOT_FOUND)
+    elif call == RPC_EDIT_CONFIG:
+      self._return_response(code=httplib.ACCEPTED)
     else:
-      self._return_response(code=501)
+      self._return_response(code=httplib.NOT_IMPLEMENTED)
 
-  def _return_response (self, code, body=None):
+  def _return_response (self, code, body=None, timeout=None):
     """
     Generic function to response to an RPC call with related HTTP headers.
 
@@ -198,7 +212,10 @@ class DORequestHandler(BaseHTTPRequestHandler):
       msg_id = self.server.msg_cntr
     if self.CALLBACK_NAME in params:
       cb_url = urllib.unquote(params[self.CALLBACK_NAME])
-      self.server.setup_callback(url=cb_url, code=code, msg_id=msg_id)
+      self.server.setup_callback(url=cb_url,
+                                 code=code,
+                                 msg_id=msg_id,
+                                 timeout=timeout)
     self.send_response(code=code)
     if body:
       self.send_header("Content-Type", "application/xml")
@@ -207,20 +224,19 @@ class DORequestHandler(BaseHTTPRequestHandler):
     if body:
       self.wfile.write(body)
       self.wfile.flush()
-    log.debug("%s - - response: %s, message-id: %s" % (self.__class__.__name__,
-                                                       code,
-                                                       msg_id))
+    log.debug("%s - - End request with response: %s, message-id: %s"
+              % (self.__class__.__name__, code, msg_id))
     return
 
 
 class DomainOrchestratorAPIMocker(HTTPServer, Thread):
   DEFAULT_PORT = 7000
   FILE_PATH_SEPARATOR = "_"
-  RESPONSE_PREFIX = "response"
-  CALLBACK_DELAY = 1.0
+  FILE_RESPONSE_PREFIX = "response"
+  DEFAULT_CALLBACK_DELAY = 1.0
 
   def __init__ (self, address="localhost", port=DEFAULT_PORT,
-                callback_delay=CALLBACK_DELAY, **kwargs):
+                callback_delay=DEFAULT_CALLBACK_DELAY, **kwargs):
     Thread.__init__(self, name="%s(%s:%s)" % (self.__class__.__name__,
                                               address, port))
     # do not bind the socket in the constructor when the class is expected to be
@@ -231,7 +247,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     self.daemon = True
     self.responses = {}
     self.msg_cntr = 0
-    self.__callback_lock = Lock()
+    self.__callback_lock = Lock()  # Synchronize callback's Timer hook calls
     self._suppress_requests_logging()
 
   @staticmethod
@@ -274,7 +290,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     :return: None
     """
     for f in os.listdir(dirname):
-      if f.startswith(self.RESPONSE_PREFIX):
+      if f.startswith(self.FILE_RESPONSE_PREFIX):
         parts = f.split(self.FILE_PATH_SEPARATOR, 2)
         if len(parts) < 3:
           log.error("Wrong filename: %s!")
@@ -282,9 +298,12 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
         domain, call = parts[1:]
         if domain not in self.responses:
           self.responses[domain] = DomainMock(domain=domain)
-        self.responses[domain].add_call(rpc_name=call.rsplit('.', 1)[0],
-                                        response_path=os.path.join(dirname, f),
-                                        code=202)
+        rpc = call.rsplit('.', 1)[0]
+        path = os.path.join(dirname, f)
+        code = httplib.ACCEPTED if rpc == RPC_EDIT_CONFIG else httplib.OK
+        self.responses[domain].add_call(rpc_name=rpc,
+                                        response_path=path,
+                                        code=code)
     log.debug("Registered responses: %s" % pprint.pformat(self.responses))
 
   def register_responses (self, dirname, responses):
@@ -311,17 +330,22 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     :return: None
     """
     for resp in responses:
-      if len(resp) != 3:
+      if not {"domain", "rpc", "return"}.issubset(set(resp)):
         log.error("Defined response is malformed: %s!" % resp)
-      domain, call, ret = resp
+      domain, rpc, ret = resp.get("domain"), resp.get("rpc"), resp.get("return")
       if domain not in self.responses:
         self.responses[domain] = DomainMock(domain=domain)
       if isinstance(ret, int):
-        self.responses[domain].add_call(rpc_name=call, code=ret)
+        self.responses[domain].add_call(rpc_name=rpc,
+                                        code=ret,
+                                        timeout=resp.get('timeout'))
       else:
         path = os.path.join(dirname, ret)
-        self.responses[domain].add_call(rpc_name=call, response_path=path,
-                                        code=202)
+        code = httplib.ACCEPTED if rpc == RPC_EDIT_CONFIG else httplib.OK
+        self.responses[domain].add_call(rpc_name=rpc,
+                                        response_path=path,
+                                        code=code,
+                                        timeout=resp.get('timeout'))
     log.debug("Registered responses: %s" % pprint.pformat(self.responses))
 
   def run (self):
@@ -340,7 +364,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     finally:
       self.server_close()
 
-  def setup_callback (self, url, code, msg_id):
+  def setup_callback (self, url, code, msg_id, timeout=None):
     """
     Schedule a callback with the given parameters.
 
@@ -352,8 +376,10 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     :type msg_id: str
     :return: None
     """
-    log.debug("Setup callback: %s %s message-id: %s" % (url, code, msg_id))
-    t = Timer(self.callback_delay, self.callback_hook,
+    timeout = timeout if timeout is not None else self.callback_delay
+    log.debug("Setup callback: %s, code: %s, message-id: %s, timeout: %s"
+              % (url, code, msg_id, timeout))
+    t = Timer(timeout, self.callback_hook,
               kwargs={"url": url, "code": code, "msg_id": msg_id})
     t.start()
 
@@ -373,7 +399,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     with self.__callback_lock:
       params = {"message-id": msg_id,
                 "response-code": 200 if code < 300 else 500}
-      log.debug("Invoke callback: %s - %s" % (url, params))
+      log.debug("\nInvoke callback: %s - %s" % (url, params))
       requests.post(url=url, params=params)
 
 
@@ -392,11 +418,11 @@ class DomainMockingSuccessfulTestCase(BasicSuccessfulTestCase):
     else:
       self.domain_mocker.register_responses_from_dir(dirname=dir)
 
-  def setUp(self):
+  def setUp (self):
     super(DomainMockingSuccessfulTestCase, self).setUp()
     self.domain_mocker.start()
 
-  def tearDown(self):
+  def tearDown (self):
     super(DomainMockingSuccessfulTestCase, self).tearDown()
     self.domain_mocker.shutdown()
 
