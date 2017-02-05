@@ -14,12 +14,14 @@
 """
 Contains abstract classes for concrete layer API modules.
 """
+import httplib
 import json
 import logging
 import os.path
 import threading
 import urllib
 import urlparse
+import uuid
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SocketServer import ThreadingMixIn
 
@@ -216,10 +218,10 @@ class RequestStatus(object):
   ERROR = "ERROR"
   UNKNOWN = "UNKNOWN"
 
-  def __init__ (self, message_id, nffg_id, status, params=None):
+  def __init__ (self, message_id, status, nffg_id=None, params=None):
     self.message_id = message_id
-    self.nffg_id = nffg_id
     self.status = status
+    self.nffg_id = nffg_id
     self.params = params if params else {}
 
   def get_callback (self):
@@ -243,7 +245,13 @@ class RequestCache(object):
     super(RequestCache, self).__init__()
     self.__cache = dict()
 
-  def cache_request (self, nffg):
+  def cache_request (self, message_id, status=None, params=None):
+    status = status if status else RequestStatus.INITIATED
+    self.__cache[message_id] = RequestStatus(message_id=message_id,
+                                             status=status,
+                                             params=params)
+
+  def cache_request_by_nffg (self, nffg):
     """
     Add a request to the cache.
 
@@ -397,18 +405,21 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
     except Exception:
       pass
 
-  def invoke_callback (self, message_id):
+  def invoke_callback (self, message_id, body=None):
     status = self.get_status_by_message_id(message_id=message_id)
     if "call-back" not in status.params:
       return None
     callback_url = status.get_callback()
     params = {'message-id': status.message_id}
     if status.status == status.SUCCESS:
-      params['response-code'] = 200
-      body = "OK"
+      params['response-code'] = httplib.OK
+      if not body:
+        body = "OK"
     else:
-      params['response-code'] = 500
-      body = "TODO"
+      params['response-code'] = httplib.INTERNAL_SERVER_ERROR
+      if not body:
+        # TODO - return with failed part of the request??
+        body = "TODO"
     try:
       logging.getLogger("requests").setLevel(logging.WARNING)
       ret = requests.post(url=callback_url, params=params, data=body,
@@ -519,6 +530,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
   # Default communication approach
   format = "FULL"
   """Default communication approach"""
+  MESSAGE_ID_NAME = "message-id"
 
   def do_GET (self):
     """
@@ -558,7 +570,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
     :return: None
     """
-    self.send_error(501)
+    self.send_error(httplib.NOT_IMPLEMENTED)
     self.wfile.close()
 
   def do_HEAD (self):
@@ -576,7 +588,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
     :return: None
     """
-    self.send_error(501)
+    self.send_error(httplib.NOT_IMPLEMENTED)
     self.wfile.close()
 
   def do_CONNECT (self):
@@ -585,8 +597,33 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
     :return: None
     """
-    self.send_error(501)
+    self.send_error(httplib.NOT_IMPLEMENTED)
     self.wfile.close()
+
+  def get_request_params (self):
+    params = {}
+    query = urlparse.urlparse(self.path).query
+    if query:
+      query = query.split('&')
+      for param in query:
+        if '=' in param:
+          name, value = param.split('=', 1)
+          params[name] = value
+        else:
+          params[param] = True
+    # Check message-id in headers as backup
+    if self.MESSAGE_ID_NAME not in params:
+      if self.MESSAGE_ID_NAME in self.headers:
+        params[self.MESSAGE_ID_NAME] = self.headers[self.MESSAGE_ID_NAME]
+        self.log.debug("Detected message id: %s" % params[self.MESSAGE_ID_NAME])
+      else:
+        params[self.MESSAGE_ID_NAME] = str(uuid.uuid1())
+        self.log.debug("No message-id! Generated id: %s"
+                       % params[self.MESSAGE_ID_NAME])
+    else:
+      self.log.debug("Detected message id: %s" % params[self.MESSAGE_ID_NAME])
+    self.log.debug("Detected request parameters: %s" % params)
+    return params
 
   def _process_url (self):
     """
@@ -612,46 +649,32 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
           if self.func_name in self.request_perm[http_method]:
             if hasattr(self, self.func_name):
               # Response is assembled, and sent back by handler functions
-              getattr(self, self.func_name)()
+              params = self.get_request_params()
+              getattr(self, self.func_name)(params=params)
             else:
-              self.send_error(500, "Missing handler for actual request")
+              self.send_error(httplib.INTERNAL_SERVER_ERROR,
+                              "Missing handler for actual request!")
           else:
-            self.send_error(406)
+            self.send_error(httplib.NOT_ACCEPTABLE)
         else:
-          self.send_error(501)
+          self.send_error(httplib.NOT_IMPLEMENTED)
       else:
-        self.send_error(404, "URL path is not valid or misconfigured")
+        self.send_error(httplib.NOT_FOUND,
+                        "URL path is not valid or misconfigured!")
     except RESTError as e:
       # Handle all the errors
       if e.code:
         self.send_error(e.code, e.msg)
       else:
-        self.send_error(500, e.msg)
+        self.send_error(httplib.INTERNAL_SERVER_ERROR, e.msg)
     except:
       # Got unexpected exception
-      self.send_error(500)
+      self.send_error(httplib.INTERNAL_SERVER_ERROR)
       raise
     finally:
       self.func_name = None
       self.wfile.flush()
       self.wfile.close()
-
-  def _get_request_params (self):
-    params = {}
-    query = urlparse.urlparse(self.path).query
-    if query:
-      query = query.split('&')
-      for param in query:
-        if '=' in param:
-          name, value = param.split('=', 1)
-          params[name] = value
-        else:
-          params[param] = True
-    # Check message-id in headers as backup
-    if 'message-id' not in params:
-      if 'message-id' in self.headers:
-        params['message-id'] = self.headers['message-id']
-    return params
 
   def _get_body (self):
     """
@@ -691,14 +714,15 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
         self.log.warning("Missing header from request: %s" % e.args[0])
       if e.args[0] == 'Content-Length':
         # 411: ('Length Required', 'Client must specify Content-Length.'),
-        raise RESTError(code=411)
+        raise RESTError(code=httplib.LENGTH_REQUIRED)
       else:
-        raise RESTError(code=412,
+        raise RESTError(code=httplib.PRECONDITION_FAILED,
                         msg="Missing header from request: %s" % e.args[0])
     except ValueError as e:
       # Failed to parse request body to JSON
       self.log_error("Request parsing failed: %s", e)
-      raise RESTError(code=415, msg="Request parsing failed: %s" % e)
+      raise RESTError(code=httplib.UNSUPPORTED_MEDIA_TYPE,
+                      msg="Request parsing failed: %s" % e)
 
   def send_REST_headers (self):
     """
@@ -725,7 +749,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     if code:
       self.send_response(int(code))
     else:
-      self.send_response(202)
+      self.send_response(httplib.ACCEPTED)
     if message_id:
       self.send_header('message-id', message_id)
     self.send_REST_headers()
@@ -745,7 +769,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     if code:
       self.send_response(int(code))
     else:
-      self.send_response(200)
+      self.send_response(httplib.OK)
     self.send_header('Content-Type', '%s; charset=%s' % (content, encoding))
     self.send_header('Content-Length', len(raw_data))
     self.send_REST_headers()
@@ -869,21 +893,21 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
   # Basic REST-API functions
   ##############################################################################
 
-  def ping (self):
+  def ping (self, params):
     """
     For testing REST API aliveness and reachability.
 
     :return: None
     """
     response_body = "OK"
-    self.send_response(200)
+    self.send_response(httplib.OK)
     self.send_header('Content-Type', 'text/plain')
     self.send_header('Content-Length', len(response_body))
     self.send_REST_headers()
     self.end_headers()
     self.wfile.write(response_body)
 
-  def version (self):
+  def version (self, params):
     """
     Return with version
 
@@ -893,7 +917,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     self.send_json_response({"name": __project__,
                              "version": get_escape_version()})
 
-  def operations (self):
+  def operations (self, params):
     """
     Return with allowed operations
 
