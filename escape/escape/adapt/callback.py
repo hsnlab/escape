@@ -44,12 +44,56 @@ class CallbackHandler(BaseHTTPRequestHandler):
     self.end_headers()
 
   def __process_request (self):
+    log.debug("Received callback request with path: %s" % self.path)
     params = self.__get_request_params()
     if self.RESULT_PARAM_NAME in params and self.MESSAGE_ID_NAME in params:
+      body = self._get_body()
+      if body:
+        log.debug("Received callback body size: %s" % len(body))
+      else:
+        log.debug("No callback body")
       self.server.invoke_hook(msg_id=params.get(self.MESSAGE_ID_NAME),
-                              result=params.get(self.RESULT_PARAM_NAME))
+                              result=params.get(self.RESULT_PARAM_NAME),
+                              body=body)
     else:
       log.warning("Received callback with missing params: %s" % params)
+
+  def _get_body (self):
+    """
+    Parse HTTP request body as a plain text.
+
+    .. note::
+
+      Call only once by HTTP request.
+
+    .. note::
+
+      Parsed JSON object is Unicode.
+
+    GET, DELETE messages don't have body - return empty dict by default.
+
+    :return: request body in str format
+    :rtype: str
+    """
+    charset = 'utf-8'
+    try:
+      splitted_type = self.headers['Content-Type'].split('charset=')
+      if len(splitted_type) > 1:
+        charset = splitted_type[1]
+      content_len = int(self.headers['Content-Length'])
+      raw_data = self.rfile.read(size=content_len).encode(charset)
+      # Avoid missing param exception by hand over an empty json data
+      return raw_data if content_len else ""
+    except KeyError as e:
+      # Content-Length header is not defined
+      # or charset is not defined in Content-Type header.
+      if e.args[0] == 'Content-Type':
+        log.warning("Missing header from request: %s" % e.args[0])
+      if e.args[0] == 'Content-Length':
+        log.warning("Missing content-type from request: %s" % e.args[0])
+    except ValueError as e:
+      # Failed to parse request body to JSON
+      self.log_error("Request parsing failed: %s", e)
 
   def __get_request_params (self):
     params = {}
@@ -74,25 +118,27 @@ class Callback(object):
     self.callback_id = callback_id
     self.request_id = request_id
     self.hook = hook
+    self.__timer = None
     self.data = data
     self.result_code = None
-    self.timer = None
+    self.body = None
 
   def setup_timer (self, timeout, hook, **kwargs):
     if not timeout:
       log.debug("Timeout disabled for request callback: %s" % self.request_id)
       return
-    if not self.timer:
-      log.debug("Setup timer for callback: %s" % self.callback_id)
-      self.timer = Timer(timeout, hook, kwargs=kwargs)
-      self.timer.start()
+    if not self.__timer:
+      log.debug("Setup timeout: %s for callback: %s"
+                % (timeout, self.callback_id))
+      self.__timer = Timer(timeout, hook, kwargs=kwargs)
+      self.__timer.start()
     else:
       log.warning("Callback timer has already been set up!")
 
   def stop_timer (self):
-    if self.timer:
-      self.timer.cancel()
-      self.timer = None
+    if self.__timer:
+      self.__timer.cancel()
+      self.__timer = None
 
 
 class CallbackManager(HTTPServer, Thread):
@@ -101,12 +147,11 @@ class CallbackManager(HTTPServer, Thread):
   DEFAULT_PORT = 9000
   DEFAULT_WAIT_TIMEOUT = 5.0
 
-  def __init__ (self, hook, domain_name, address=DEFAULT_SERVER_ADDRESS,
+  def __init__ (self, domain_name, address=DEFAULT_SERVER_ADDRESS,
                 port=DEFAULT_PORT, timeout=DEFAULT_WAIT_TIMEOUT,
                 **kwargs):
     Thread.__init__(self, name=self.__class__.__name__)
     HTTPServer.__init__(self, (address, port), CallbackHandler)
-    self.__hook = hook
     self.domain_name = domain_name
     self.wait_timeout = float(timeout)
     self.__register = {}
@@ -156,7 +201,7 @@ class CallbackManager(HTTPServer, Thread):
     cb.stop_timer()
     return cb
 
-  def invoke_hook (self, msg_id, result):
+  def invoke_hook (self, msg_id, result, body=None):
     try:
       result = int(result)
     except ValueError:
@@ -174,8 +219,10 @@ class CallbackManager(HTTPServer, Thread):
     if cb is None:
       log.error("Missing callback: %s from register!" % msg_id)
       return
-    cb.result = result
-    if cb.hook is not None:
+    cb.result_code = result
+    cb.body = body
+    if cb.hook is not None and callable(cb.hook):
       cb.hook(callback=cb)
     else:
-      self.__hook(callback=cb)
+      log.warning("No callable hoo was defined for the received callback: %s!"
+                  % msg_id)
