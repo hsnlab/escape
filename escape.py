@@ -33,7 +33,8 @@ def main ():
     description="ESCAPEv2: Extensible Service ChAin Prototyping Environment "
                 "using Mininet, Click, NETCONF and POX",
     add_help=True,
-    version=get_escape_version())
+    version=get_escape_version(),
+    prefix_chars="-+")
   # Add optional arguments
   escape = parser.add_argument_group("ESCAPEv2 arguments")
   escape.add_argument("-a", "--agent", action="store_true", default=False,
@@ -76,6 +77,8 @@ def main ():
   escape.add_argument("-q", "--quit", action="store_true", default=False,
                       help="quit right after the first service request has "
                            "processed")
+  escape.add_argument("+q", "++quit", action="store_false", default=False,
+                      help="explicitly disable quit mode")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
@@ -90,7 +93,7 @@ def main ():
                       help="optional POX modules")
   # Parsing arguments
   args = parser.parse_args()
-
+  print args
   if args.clean:
     # Tailor Python path for importing mics functions without initialize
     # escape or util packages.
