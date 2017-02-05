@@ -1491,60 +1491,6 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                    callback.callback_id)
 
 
-class OpenStackDomainManager(UnifyDomainManager):
-  """
-  Manager class to handle communication with OpenStack domain.
-  """
-  # DomainManager name
-  name = "OPENSTACK"
-  # Default domain name
-  DEFAULT_DOMAIN_NAME = "OPENSTACK"
-
-  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
-    """
-    Init.
-
-    :param domain_name: the domain name
-    :type domain_name: str
-    :param args: optional param list
-    :type args: list
-    :param kwargs: optional keywords
-    :type kwargs: dict
-    :return: None
-    """
-    log.debug(
-      "Create OpenStackDomainManager wrapper for domain: %s" % domain_name)
-    super(OpenStackDomainManager, self).__init__(domain_name=domain_name,
-                                                 *args, **kwargs)
-
-
-class UniversalNodeDomainManager(UnifyDomainManager):
-  """
-  Manager class to handle communication with Universal Node (UN) domain.
-  """
-  # DomainManager name
-  name = "UN"
-  # Default domain name
-  DEFAULT_DOMAIN_NAME = "UNIVERSAL_NODE"
-
-  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
-    """
-    Init.
-
-    :param domain_name: the domain name
-    :type domain_name: str
-    :param args: optional param list
-    :type args: list
-    :param kwargs: optional keywords
-    :type kwargs: dict
-    :return: None
-    """
-    log.debug(
-      "Create UniversalNodeDomainManager wrapper for domain: %s" % domain_name)
-    super(UniversalNodeDomainManager, self).__init__(domain_name=domain_name,
-                                                     *args, **kwargs)
-
-
 class ExternalDomainManager(AbstractRemoteDomainManager):
   """
   Main Abstract class for handling external domains.
