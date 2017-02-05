@@ -63,10 +63,12 @@ class TestSuitBuilder(object):
   CONFIG_CONTAINER_NAME = "test"
   CONFIG_TIMEOUT_NAME = "timeout"
 
-  def __init__ (self, cwd, show_output=False, kill_timeout=None):
+  def __init__ (self, cwd, show_output=False, kill_timeout=None,
+                standalone=None):
     self.cwd = cwd
     self.show_output = show_output
     self.kill_timeout = kill_timeout
+    self.standalone = standalone
 
   def _create_command_runner (self, case_info):
     """
@@ -100,8 +102,11 @@ class TestSuitBuilder(object):
     # Create TestCase class
     if os.path.exists(case_info.config_file_name):
       TESTCASE_CLASS, test_args = case_info.load_test_case_class()
+      if self.standalone:
+        log.info("Standalone mode: disable testcase timeout!")
+        cmd_runner.setup_standalone_mode()
       # Override kill timeout if it is set in the config file
-      if test_args and self.CONFIG_TIMEOUT_NAME in test_args:
+      elif test_args and self.CONFIG_TIMEOUT_NAME in test_args:
         cmd_runner.kill_timeout = max(self.kill_timeout,
                                       test_args[self.CONFIG_TIMEOUT_NAME])
       log.debug("Using %s" % cmd_runner)

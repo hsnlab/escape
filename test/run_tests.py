@@ -47,7 +47,8 @@ def main (args):
   test_suite = create_test_suite(tests_dir=CWD,
                                  show_output=args.show_output,
                                  run_only_tests=args.testcases,
-                                 kill_timeout=args.timeout)
+                                 kill_timeout=args.timeout,
+                                 standalone=args.standalone)
   sum_test_cases = test_suite.countTestCases()
   log.info("-" * 70)
   log.info("Read %d test cases" % sum_test_cases)
@@ -82,13 +83,13 @@ def main (args):
 
 
 def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
-                       kill_timeout=None):
+                       kill_timeout=None, standalone=None):
   """
   Create the container TestSuite class based on the config values.
 
-  :param tests_dir: main test dir containes the test cases
+  :param tests_dir: main test dir contains the test cases
   :type tests_dir: str
-  :param show_output: print te test oputput on the console
+  :param show_output: print te test output on the console
   :type show_output: bool
   :param run_only_tests: only run the given test cases
   :type run_only_tests: list[str]
@@ -101,8 +102,14 @@ def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
   reader = TestCaseReader(tests_dir=tests_dir)
   builder = TestSuitBuilder(cwd=CWD,
                             show_output=show_output,
-                            kill_timeout=kill_timeout)
-  test_suite = builder.to_suite(reader.read_from(run_only_tests))
+                            kill_timeout=kill_timeout,
+                            standalone=standalone)
+  tests = reader.read_from(run_only_tests)
+  if standalone:
+    tests = tests[0:1]
+    log.info("Detected standalone mode! "
+             "Run only the first testcase: %s" % tests)
+  test_suite = builder.to_suite(tests=tests)
   return test_suite
 
 
@@ -123,6 +130,8 @@ def parse_cmd_args ():
   parser.add_argument("--timeout", "-t", metavar="t", type=int,
                       help="define explicit timeout in sec (default: %ss)" %
                            CommandRunner.KILL_TIMEOUT)
+  parser.add_argument("--standalone", "-s", action="store_true", default=False,
+                      help="run standalone mode: no timeout, no quitting")
   parser.add_argument("--verbose", "-v", action="store_true", default=False,
                       help="Run in verbose mode and show output")
   return parser.parse_args()

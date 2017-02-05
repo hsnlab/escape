@@ -173,6 +173,8 @@ class ESCAPECommandRunner(CommandRunner):
   Extended CommandRunner class for ESCAPE.
   Use threading.Event for signalling ESCAPE is up.
   """
+  ESC_PARAM_QUIT = "--quit"
+  ESC_PARAM_SERVICE = "--service"
 
   def __init__ (self, *args, **kwargs):
     super(ESCAPECommandRunner, self).__init__(*args, **kwargs)
@@ -183,12 +185,20 @@ class ESCAPECommandRunner(CommandRunner):
   def timeout_exceeded (self):
     return self.timeouted
 
+  def setup_standalone_mode (self):
+    log.debug("Detected standalone mode!")
+    log.debug("Disable timeout")
+    self.kill_timeout = None
+    log.debug("Remove quit mode, add ROS-API")
+    self._command.extend(("++quit", "--rosapi"))
+
   def execute (self, wait_for_up=True):
     """
     Create and start the process. Block until the process ends or timeout is
     exceeded.
     """
     log.debug("\nStart program under test...")
+    log.debug(self._command)
     try:
       self._process = pexpect.spawn(self._command[0],
                                     args=self._command[1:],
