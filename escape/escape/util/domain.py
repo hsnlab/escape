@@ -1102,7 +1102,7 @@ class DefaultUnifyDomainAPI(object):
     """
     raise NotImplementedError
 
-  def edit_config (self, data, diff=False):
+  def edit_config (self, data, diff=False, message_id=None, callback=None):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 
@@ -1110,6 +1110,10 @@ class DefaultUnifyDomainAPI(object):
     :type data: :any::`NFFG`
     :param diff: send the diff of the mapping request (default: False)
     :param diff: bool
+    :param message_id: optional message id
+    :type message_id: str
+    :param callback: callback URL
+    :type callback: str
     :return: status code
     :rtype: str
     :raise: :any:`exceptions.NotImplementedError`

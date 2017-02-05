@@ -22,8 +22,8 @@ from subprocess import Popen
 
 from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
-from escape.orchest.provisioning import BasicUnifyRequestHandler
-from escape.orchest.ros_API import InstantiationFinishedEvent
+from escape.orchest.ros_API import InstantiationFinishedEvent, \
+  BasicUnifyRequestHandler
 from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
@@ -130,8 +130,13 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
     """
     AbstractRequestHandler.__init__(self, request, client_address, server)
 
-  def status (self):
-    params = self._get_request_params()
+  def status (self, params):
+    """
+    Return status of the given request.
+
+    :param params:
+    :return:
+    """
     message_id = params.get('message-id')
     if not message_id:
       self.send_error(code=httplib.BAD_REQUEST, message="message-id is missing")
@@ -144,7 +149,7 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
       self.send_json_response(code=code, data=result)
       self.log.debug("Responded status code: %s, data: %s" % (code, result))
 
-  def topology (self):
+  def topology (self, params):
     """
     Provide internal topology description
 
@@ -155,10 +160,11 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
     self.log.debug("Call %s function: topology" % self.LOGGER_NAME)
     # Forward call to main layer class
     resource = self._proceed_API_call(self.API_CALL_RESOURCE)
-    self._topology_view_responder(resource_nffg=resource)
+    self._topology_view_responder(resource_nffg=resource,
+                                  message_id=params.get(self.MESSAGE_ID_NAME))
     self.log.debug("%s function: topology ended!" % self.LOGGER_NAME)
 
-  def sg (self):
+  def sg (self, params):
     """
     Main API function for Service Graph initiation.
 
@@ -170,21 +176,15 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
     """
     self.log.debug("Call %s function: sg" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
-    params = self._get_request_params()
-    if 'message-id' in params:
-      self.log.debug("Detected message id: %s" % params['message-id'])
-    else:
-      params['message-id'] = str(uuid.uuid1())
-      self.log.debug("No message-id! Generated id: %s" % params['message-id'])
     if nffg:
       if nffg.service_id is None:
         nffg.service_id = nffg.id
-      nffg.id = params['message-id']
+      nffg.id = params[self.MESSAGE_ID_NAME]
       nffg.metadata['params'] = params
       self._proceed_API_call(self.API_CALL_REQUEST,
                              service_nffg=nffg,
                              params=params)
-      self.send_acknowledge(message_id=params['message-id'])
+      self.send_acknowledge(message_id=params[self.MESSAGE_ID_NAME])
     self.log.debug("%s function: sg ended!" % self.LOGGER_NAME)
 
 
@@ -383,7 +383,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Store request if it is received on REST-API
     if hasattr(self, 'rest_api') and self.rest_api:
       log.getChild('API').debug("Store received NFFG request info...")
-      msg_id = self.rest_api.request_cache.cache_request(nffg=service_nffg)
+      msg_id = self.rest_api.request_cache.cache_request_by_nffg(nffg=service_nffg)
       if msg_id is not None:
         self.rest_api.request_cache.set_in_progress(id=msg_id)
         log.getChild('API').debug("Request is stored with id: %s" % msg_id)

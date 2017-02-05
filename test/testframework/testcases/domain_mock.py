@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import httplib
+import json
 import logging
 import os
 import pprint
@@ -21,16 +22,21 @@ from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread, Lock, Timer
 
 import requests
+from requests import ConnectionError
 
 from testframework.testcases.basic import BasicSuccessfulTestCase
 
 log = logging.getLogger()
 
-# Virtualizer interface RPC names
+# Basic REST interface calls
 RPC_PING = "ping"
+RPC_VERSION = "version"
+RPC_OPERATIONS = "operations"
+# Virtualizer interface RPC names
 RPC_GET_CONFIG = "get-config"
 RPC_EDIT_CONFIG = "edit-config"
 # Extended RPC names
+RPC_STATUS = "status"
 RPC_MAPPINGS = "mappings"
 RPC_INFO = "info"
 
@@ -186,13 +192,49 @@ class DORequestHandler(BaseHTTPRequestHandler):
     """
     log.debug("Unregistered call! Sending default response...")
     if call == RPC_PING:
-      self._return_response(code=httplib.OK, body="OK")
+      self._return_ping()
+    elif call == RPC_VERSION:
+      self._return_version()
+    elif call == RPC_OPERATIONS:
+      self._response_operations()
     elif call == RPC_GET_CONFIG:
       self._return_response(code=httplib.NOT_FOUND)
     elif call == RPC_EDIT_CONFIG:
       self._return_response(code=httplib.ACCEPTED)
+    elif call == RPC_MAPPINGS:
+      # TODO - assemble body
+      self._return_response(code=httplib.OK)
+    elif call == RPC_INFO:
+      # TODO - assemble body
+      self._return_response(code=httplib.OK)
     else:
       self._return_response(code=httplib.NOT_IMPLEMENTED)
+
+  def _return_ping (self):
+    _body = "OK"
+    self.send_response(code=httplib.OK)
+    self.send_header('Content-Type', 'text/plain')
+    self.send_header('Content-Length', len(_body))
+    self.end_headers()
+    self.wfile.write(_body)
+
+  def _return_version (self):
+    _body = json.dumps({"name": "ESCAPE Test Framework", "version": 1.0})
+    self.send_response(code=httplib.OK)
+    self.send_header('Content-Type', 'text/json')
+    self.send_header('Content-Length', len(_body))
+    self.end_headers()
+    self.wfile.write(_body)
+
+  def _response_operations (self):
+    ops = [o for o in globals() if o.startswith("RPC_")]
+    _body = {"GET": ops,
+             "POST": ops}
+    self.send_response(code=httplib.OK)
+    self.send_header('Content-Type', 'text/json')
+    self.send_header('Content-Length', len(_body))
+    self.end_headers()
+    self.wfile.write(_body)
 
   def _return_response (self, code, body=None, timeout=None):
     """
@@ -400,7 +442,10 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
       params = {"message-id": msg_id,
                 "response-code": 200 if code < 300 else 500}
       log.debug("\nInvoke callback: %s - %s" % (url, params))
-      requests.post(url=url, params=params)
+      try:
+        requests.post(url=url, params=params)
+      except ConnectionError as e:
+        log.error("Received exception during calling hook: %s" % e)
 
 
 class DomainMockingSuccessfulTestCase(BasicSuccessfulTestCase):

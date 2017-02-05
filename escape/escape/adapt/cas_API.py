@@ -17,7 +17,8 @@ Sublayer.
 """
 from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
-from escape.adapt.adaptation import ControllerAdapter, InstallationFinishedEvent
+from escape.adapt.adaptation import ControllerAdapter, InstallationFinishedEvent, \
+  InfoRequestFinishedEvent
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
 from escape.util.api import AbstractAPI
@@ -72,7 +73,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   _core_name = LAYER_NAME
   # Events raised by this class
   _eventMixin_events = {GlobalResInfoEvent, InstallationFinishedEvent,
-                        DeployNFFGEvent}
+                        DeployNFFGEvent, InfoRequestFinishedEvent}
 
   # Dependencies
   # None
@@ -162,6 +163,28 @@ class ControllerAdaptationAPI(AbstractAPI):
       id = mapped_nffg.id
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
       self.raiseEventNoErrors(InstallationFinishedEvent, id=id, result=result)
+
+  @schedule_as_coop_task
+  def _handle_CollectMonitoringDataEvent (self, event):
+    """
+
+    :param event:
+    :return:
+    """
+    log.getChild('API').info("Received recursive monitoring request from %s "
+                             "Layer" % event.source._core_name.title())
+    try:
+      status = self.controller_adapter.propagate_info_requests(id=event.id,
+                                                               info=event.info)
+    except Exception:
+      log.error("Something went wrong during info request processing!")
+      self.raiseEventNoErrors(InfoRequestFinishedEvent,
+                              result=InfoRequestFinishedEvent.ERROR)
+      return
+    log.getChild('API').debug("Invoked 'info' on %s is finished!" %
+                              self.__class__.__name__)
+    if not status.still_pending:
+      self.raiseEventNoErrors(InfoRequestFinishedEvent, status=status)
 
   ##############################################################################
   # UNIFY ( Ca - ) Co - Rm API functions starts here

@@ -22,12 +22,14 @@ import weakref
 import escape.adapt.managers as mgrs
 from escape import CONFIG
 from escape.adapt import log as log, LAYER_NAME
+from escape.adapt.managers import UnifyDomainManager
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.util.config import ConfigurationError
 from escape.util.domain import DomainChangedEvent, AbstractDomainManager, \
   AbstractRemoteDomainManager
-from escape.util.misc import notify_remote_visualizer, VERBOSE
+from escape.util.misc import notify_remote_visualizer, VERBOSE, get_nf_from_path
+from virtualizer_info import Info
 
 
 class InstallationFinishedEvent(mgrs.BaseResultEvent):
@@ -54,6 +56,24 @@ class InstallationFinishedEvent(mgrs.BaseResultEvent):
       return cls.IN_PROGRESS
     elif deploy_status.failed:
       return cls.DEPLOY_ERROR
+    else:
+      return cls.UNKNOWN
+
+
+class InfoRequestFinishedEvent(mgrs.BaseResultEvent):
+  def __init__ (self, result, status=None):
+    super(InfoRequestFinishedEvent, self).__init__()
+    self.result = result
+    self.status = status
+
+  @classmethod
+  def get_result_from_status (cls, req_status):
+    if req_status.success:
+      return cls.SUCCESS
+    elif req_status.still_pending:
+      return cls.IN_PROGRESS
+    elif req_status.failed:
+      return cls.ERROR
     else:
       return cls.UNKNOWN
 
@@ -470,7 +490,7 @@ class ControllerAdapter(object):
     # Set virtualizer-related components
     self.DoVManager = GlobalResourceManager()
     self.domains = ComponentConfigurator(self)
-    self.status_mgr = DeployStatusManager()
+    self.status_mgr = DomainRequestManager()
     self.init_managers(with_infr=with_infr)
     # Here every domainManager is up and running
     # Notify the remote visualizer about collected data if it's needed
@@ -517,12 +537,12 @@ class ControllerAdapter(object):
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: NFFG
     :return: deploy result
-    :rtype: DeployStatus
+    :rtype: DomainRequestStatus
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
     # Register mapped NFFG for managing statuses of install steps
-    deploy_status = self.status_mgr.register_service(mapped_nffg)
+    deploy_status = self.status_mgr.register_service(nffg=mapped_nffg)
     # If DoV update is based on status updates, rewrite the whole DoV as the
     # first step
     if self.DoVManager.status_updates:
@@ -607,11 +627,11 @@ class ControllerAdapter(object):
         continue
       # Explicit domain update
       self.DoVManager.update_domain(domain=domain, nffg=part)
-      self.status_mgr.get_status(mapped_nffg.id).set_domain_deployed(domain)
+      self.status_mgr.get_status(mapped_nffg.id).set_domain_ok(domain)
     log.info("NF-FG installation is finished by %s" % self.__class__.__name__)
     # Post-mapping steps
     if deploy_status.success:
-      log.info("All installation process has been finished with success! ")
+      log.info("All installation processes have been finished with success! ")
       # Notify remote visualizer about the installation result if it's needed
       notify_remote_visualizer(
         data=self.DoVManager.dov.get_resource_info(), id=LAYER_NAME)
@@ -619,9 +639,9 @@ class ControllerAdapter(object):
       log.error("%s installation was not successful!" % mapped_nffg)
     elif deploy_status.still_pending:
       log.info(
-        "All installation process has been finished! Waiting for results...")
+        "All installation processes have been finished! Waiting for results...")
     else:
-      log.info("All installation process has been finished!")
+      log.info("All installation processes have been finished!")
     log.debug("Installation status: %s" % deploy_status)
     return deploy_status
 
@@ -634,7 +654,7 @@ class ControllerAdapter(object):
         log.debug("Detected cleanup topology (no NF/Flowrule/SG_hop)! "
                   "Clean DoV...")
         self.DoVManager.clean_domain(domain=domain)
-        self.status_mgr.get_status(mapped_nffg.id).set_domain_deployed(domain)
+        self.status_mgr.get_status(mapped_nffg.id).set_domain_ok(domain)
       # If the reset contains some VNF, cannot clean or override
       else:
         log.warning(
@@ -652,11 +672,11 @@ class ControllerAdapter(object):
         else:
           log.debug("Detected new deployment!")
           self.DoVManager.update_global_view_status(status=NFFG.STATUS_RUN)
-          self.status_mgr.get_status(mapped_nffg.id).set_domain_deployed(domain)
+          self.status_mgr.get_status(mapped_nffg.id).set_domain_ok(domain)
       else:
         # Override the whole DoV by default
         self.DoVManager.set_global_view(nffg=mapped_nffg)
-        self.status_mgr.get_status(mapped_nffg.id).set_domain_deployed(domain)
+        self.status_mgr.get_status(mapped_nffg.id).set_domain_ok(domain)
     else:
       log.warning("Detected virtualized Infrastructure node in mapped NFFG!"
                   " Skip DoV update...")
@@ -693,22 +713,23 @@ class ControllerAdapter(object):
     elif event.cause == DomainChangedEvent.TYPE.DOMAIN_DOWN:
       self.DoVManager.remove_domain(domain=event.domain)
 
-  def _handle_CallbackEvent (self, event):
+  def _handle_CallbackHookEvent (self, event):
     """
 
     :param event:
-    :type event: escape.adapt.managers.CallbackEvent
+    :type event: escape.adapt.managers.CallbackHookEvent
     :return:
     """
+    log.debug("Handle %s event..." % event.__class__.__name__)
     request_id = event.callback.request_id
-    deploy_status = self.status_mgr.get_status(sid=request_id)
-    if event.status in (event.STATUS_ERROR, event.STATUS_TIMEOUT):
+    deploy_status = self.status_mgr.get_status(id=request_id)
+    if event.was_error():
       log.warning("Update failed status for service request: %s..." %
                   request_id)
       deploy_status.set_domain_failed(domain=event.domain)
     else:
       log.debug("Update success status for service request: %s..." % request_id)
-      deploy_status.set_domain_deployed(domain=event.domain)
+      deploy_status.set_domain_ok(domain=event.domain)
       if isinstance(event.callback.data, NFFG):
         log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
       self.DoVManager.update_domain(domain=event.domain,
@@ -720,6 +741,123 @@ class ControllerAdapter(object):
       self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                          id=request_id,
                                          result=result)
+
+  def _handle_InfoHookEvent (self, event):
+    """
+
+    :param event:
+    :type event: escape.adapt.managers.InfoHookEvent
+    :return:
+    """
+    log.debug("Handle %s event..." % event.__class__.__name__)
+    request_id = event.callback.request_id
+    req_status = self.status_mgr.get_status(id=request_id)
+    if event.was_error():
+      log.warning("Update failed status for info request: %s..." % request_id)
+      req_status.set_domain_failed(domain=event.domain)
+    else:
+      log.debug("Update success status for info request: %s..." % request_id)
+      req_status.set_domain_ok(domain=event.domain)
+      # Update Info XML with the received callback body
+      try:
+        log.debug("Parsing received callback data...")
+        body = event.callback.body if event.callback.body else ""
+        new_info = Info.parse_from_text(body)
+        req_status.data.merge(new_info)
+      except Exception as e:
+        log.error(str(e))
+        req_status.set_domain_failed(domain=event.domain)
+    log.debug("Info request status: %s" % req_status)
+    if not req_status.still_pending:
+      log.info("All info processes have been finished!")
+      result = InfoRequestFinishedEvent.get_result_from_status(req_status)
+      self._layer_API.raiseEventNoErrors(InfoRequestFinishedEvent,
+                                         result=result,
+                                         status=req_status)
+
+  def split_info_request_by_domain (self, info):
+    dov = self.DoVManager.dov.get_resource_info()
+    vnfs = self.__get_nfs_from_info(info=info)
+    if not vnfs:
+      log.debug("No NF has been detected from info request!")
+      return
+    splitted = NFFGToolBox.split_nfs_by_domain(nffg=dov, nfs=vnfs, log=log)
+    for domain, nfs in splitted.items():
+      log.debug("Splitted domain: %s --> %s" % (domain, nfs))
+      info_part = self.__strip_info_by_nfs(info, nfs)
+      log.log(VERBOSE, "Splitted info part:\n%s" % info_part.xml())
+      splitted[domain] = info_part
+    return splitted
+
+  @staticmethod
+  def __get_nfs_from_info (info):
+    nfs = set()
+    log.debug("Extract NFs from info request...")
+    for attr in (getattr(info, e) for e in info._sorted_children):
+      for element in attr:
+        if hasattr(element, "object"):
+          nf = get_nf_from_path(element.object.get_value(), log=log)
+          if nf is not None:
+            nfs.add(nf)
+          else:
+            log.warning("Missing NF from element:\n%s" % element.object.xml())
+        else:
+          log.warning("Missing 'object' from element:\n%s" % element.xml())
+    return nfs
+
+  @staticmethod
+  def __strip_info_by_nfs (info, nfs):
+    info = info.full_copy()
+    for attr in (getattr(info, e) for e in info._sorted_children):
+      deletable = []
+      for element in attr:
+        if hasattr(element, "object"):
+          nf_id = get_nf_from_path(element.object.get_value(), log=log)
+          if nf_id not in nfs:
+            deletable.append(element)
+      for d in deletable:
+        attr.remove(d)
+    return info
+
+  def propagate_info_requests (self, id, info):
+    """
+    :return:
+    """
+    splitted = self.split_info_request_by_domain(info)
+    if not splitted:
+      log.debug("No valid request has been remained after splitting!")
+      return
+    status = self.status_mgr.register_request(id=id,
+                                              domains=splitted.keys(),
+                                              data=info)
+    for domain, info_part in splitted.iteritems():
+      log.debug("Search DomainManager for domain: %s" % domain)
+      # Get Domain Manager
+      domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
+      if domain_mgr is None:
+        log.warning("No DomainManager has been initialized for domain: %s! "
+                    "Skip install domain part..." % domain)
+        status.set_domain_failed(domain=domain)
+        continue
+      if not isinstance(domain_mgr, UnifyDomainManager):
+        log.warning("Domain manager: %s does not support info request! Skip...")
+        status.set_domain_failed(domain=domain)
+        continue
+      log.log(VERBOSE, "Splitted info request: %s part:\n%s"
+              % (domain, info_part.xml()))
+      success = domain_mgr.request_info_from_domain(req_id=id,
+                                                    info_part=info_part)
+      if not success:
+        log.warning("Request was unsuccessful!")
+        status.set_domain_failed(domain=domain)
+    if status.success:
+      log.info("All 'info' requests were successful!")
+    elif status.failed:
+      log.error("Info request: %s was unsuccessful!" % status.id)
+    elif status.still_pending:
+      log.info("All 'info' request have been finished! Waiting for results...")
+    log.debug("Info request status: %s" % status)
+    return status
 
   def _handle_GetLocalDomainViewEvent (self, event):
     """
@@ -863,15 +1001,16 @@ class ControllerAdapter(object):
                                 autostart=True)
 
 
-class DeployStatus(object):
+class DomainRequestStatus(object):
   INITIALIZED = "INITIALIZED"
-  DEPLOYED = "DEPLOYED"
+  OK = "OK"
   WAITING = "WAITING"
   FAILED = "FAILED"
 
-  def __init__ (self, id, domains):
+  def __init__ (self, id, domains, data=None):
     self.__id = id
     self.__statuses = {}.fromkeys(domains, self.INITIALIZED)
+    self.data = data
 
   @property
   def id (self):
@@ -888,7 +1027,7 @@ class DeployStatus(object):
   @property
   def success (self):
     if self.__statuses:
-      return all(map(lambda s: s == self.DEPLOYED,
+      return all(map(lambda s: s == self.OK,
                      self.__statuses.itervalues()))
     else:
       return False
@@ -916,9 +1055,9 @@ class DeployStatus(object):
     self.__statuses[domain] = status
     return self
 
-  def set_domain_deployed (self, domain):
-    log.debug("Set install status: %s for domain: %s" % (self.DEPLOYED, domain))
-    return self.set_domain(domain=domain, status=self.DEPLOYED)
+  def set_domain_ok (self, domain):
+    log.debug("Set install status: %s for domain: %s" % (self.OK, domain))
+    return self.set_domain(domain=domain, status=self.OK)
 
   def set_domain_waiting (self, domain):
     log.debug("Set install status: %s for domain: %s" % (self.WAITING, domain))
@@ -929,41 +1068,44 @@ class DeployStatus(object):
     return self.set_domain(domain=domain, status=self.FAILED)
 
 
-class DeployStatusManager(object):
+class DomainRequestManager(object):
   def __init__ (self):
     self._services = []
+
+  def register_request (self, id, domains, data=None):
+    for s in self._services:
+      if s.id == id:
+        log.error("Service request: %s is already registered in %s" %
+                  (id, self.__class__.__name__))
+        return
+    status = DomainRequestStatus(id=id, domains=domains, data=data)
+    self._services.append(status)
+    log.debug("Request with id: %s is registered for status management!" % id)
+    log.debug("Status: %s" % status)
+    return status
 
   def register_service (self, nffg):
     """
 
     :param nffg:
     :return:
-    :rtype: DeployStatus
+    :rtype: DomainRequestStatus
     """
-    sid = nffg.id
     domains = NFFGToolBox.detect_domains(nffg=nffg)
-    for s in self._services:
-      if s.id == sid:
-        log.error("Service request: %s is already registered in %s" %
-                  (sid, self.__class__.__name__))
-        return
-    status = DeployStatus(id=sid, domains=domains)
-    self._services.append(status)
-    log.debug("Service instance: %s is registered for status management!" % sid)
-    return status
+    return self.register_request(id=nffg.id, domains=domains)
 
-  def get_status (self, sid):
+  def get_status (self, id):
     """
 
-    :param sid:
+    :param id:
     :return:
-    :rtype: DeployStatus
+    :rtype: DomainRequestStatus
     """
     for status in self._services:
-      if status.id == sid:
+      if status.id == id:
         return status
     else:
-      log.error("Service status for service: %s is missing!" % sid)
+      log.error("Service status for service: %s is missing!" % id)
 
 
 class GlobalResourceManager(object):

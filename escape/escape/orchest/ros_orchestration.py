@@ -15,7 +15,6 @@
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
 import ast
-import os
 import re
 from collections import OrderedDict
 
@@ -23,7 +22,6 @@ from escape import CONFIG
 from escape.adapt.virtualization import AbstractVirtualizer, VirtualizerManager
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
-from escape.orchest.provisioning import MonitoringManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
 from escape.util.misc import notify_remote_visualizer, VERBOSE
@@ -56,7 +54,6 @@ class ResourceOrchestrator(AbstractOrchestrator):
     # Init NFIB manager
     self.nfibManager = NFIBManager()
     self.nfibManager.initialize()
-    self.monitor = MonitoringManager()
 
   def finalize (self):
     """
@@ -272,8 +269,8 @@ class ResourceOrchestrator(AbstractOrchestrator):
           nf = self.__detect_nf_from_path(element.object.get_value(),
                                           slor_topo)
           if not nf:
-            log.debug("NF: %s is not in the layer view! Remove from request...")
-            deletable.append(nf)
+            log.debug("Remove element: %s from request..." % element._tag)
+            deletable.append(element)
       for d in deletable:
         attr.remove(d)
     return info

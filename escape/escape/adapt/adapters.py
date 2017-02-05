@@ -1065,7 +1065,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type features: dict
     :return: None
     """
-    print locals()
     AbstractRESTAdapter.__init__(self, base_url=url, prefix=prefix, **kwargs)
     AbstractESCAPEAdapter.__init__(self, **kwargs)
     log.debug("Init %s - type: %s, domain: %s, URL: %s" % (
@@ -1144,6 +1143,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param diff: bool
     :param message_id: optional message id
     :type message_id: str
+    :param callback: callback URL
+    :type callback: str
     :return: status code or the returned message-id if it is set
     :rtype: str
     """
@@ -1186,15 +1187,16 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                                       body=plain_data,
                                       params=params)
     except Timeout:
-      log.warning("Reached timeout(%ss) while waiting for edit-config response!"
-                  " Ignore exception..." % self.CONNECTION_TIMEOUT)
+      log.warning(
+        "Reached timeout(%ss) while waiting for 'edit-config' response!"
+        " Ignore exception..." % self.CONNECTION_TIMEOUT)
       # Ignore exception - assume the request was successful -> return True
       return True
     if status is not None:
       log.debug("Topology description has been sent successfully!")
-      msg_id = self.get_last_message_id()
-      if msg_id is not None:
-        log.debug("Detected message-id from response: %s" % msg_id)
+      # msg_id = self.get_last_message_id()
+      # if msg_id is not None:
+      #   log.debug("Detected message-id from response: %s" % msg_id)
     return status
 
   def get_last_message_id (self):
@@ -1202,6 +1204,33 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return self._response.headers.get(self.MESSAGE_ID_NAME, None)
     else:
       return None
+
+  def info (self, info, callback=None, message_id=None):
+    log.log(VERBOSE, "Generated Info:\n%s" % info.xml())
+    params = {}
+    if message_id is not None:
+      params[self.MESSAGE_ID_NAME] = message_id
+      log.debug("Using explicit message-id: %s" % message_id)
+    if callback is not None:
+      params[self.CALLBACK_NAME] = callback
+      log.debug("Using explicit callback: %s" % callback)
+    try:
+      status = self.send_with_timeout(method=self.POST,
+                                      url='info',
+                                      body=info.xml(),
+                                      params=params)
+    except Timeout:
+      log.warning(
+        "Reached timeout(%ss) while waiting for 'info' response!"
+        " Ignore exception..." % self.CONNECTION_TIMEOUT)
+      # Ignore exception - assume the request was successful -> return True
+      return True
+    if status is not None:
+      log.debug("Info request has been sent successfully!")
+      # msg_id = self.get_last_message_id()
+      # if msg_id is not None:
+      #   log.debug("Detected message-id from response: %s" % msg_id)
+    return status
 
   def get_original_topology (self):
     """
@@ -1428,7 +1457,7 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
                 self._base_url)
       return
 
-  def edit_config (self, data, diff=False):
+  def edit_config (self, data, diff=False, message_id=None, callback=None):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 
@@ -1438,6 +1467,10 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
     :type data: :any::`NFFG`
     :param diff: send the diff of the mapping request (default: False)
     :param diff: bool
+    :param message_id: optional message id
+    :type message_id: str
+    :param callback: callback URL
+    :type callback: str
     :return: status code
     :rtype: str
     """
