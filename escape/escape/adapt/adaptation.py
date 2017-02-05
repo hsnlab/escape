@@ -26,9 +26,13 @@ from escape.adapt.managers import UnifyDomainManager
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.util.config import ConfigurationError
+from escape.util.conversion import NFFGConverter
 from escape.util.domain import DomainChangedEvent, AbstractDomainManager, \
   AbstractRemoteDomainManager
-from escape.util.misc import notify_remote_visualizer, VERBOSE, get_nf_from_path
+from escape.util.misc import notify_remote_visualizer, VERBOSE
+from escape.util.virtualizer_helper import get_nfs_from_info, \
+  strip_info_by_nfs, \
+  NF_PATH_TEMPLATE, get_nf_from_path
 from virtualizer_info import Info
 
 
@@ -775,55 +779,52 @@ class ControllerAdapter(object):
                                          result=result,
                                          status=req_status)
 
-  def split_info_request_by_domain (self, info):
+  def __resolve_nodes_in_info (self, info):
+    log.debug("Resolve NF paths...")
     dov = self.DoVManager.dov.get_resource_info()
-    vnfs = self.__get_nfs_from_info(info=info)
+    for attr in (getattr(info, e) for e in info._sorted_children):
+      rewrite = []
+      for element in attr:
+        if hasattr(element, "object"):
+          nf = get_nf_from_path(path=element.object.get_value())
+          new_bb = [bb.id for bb in dov.infra_neighbors(node_id=nf)]
+          if len(new_bb) != 1:
+            log.warning("Original BiSBiS for NF: %s was not found "
+                        "in neighbours: %s" % (nf, new_bb))
+            continue
+          sep = NFFGConverter.UNIQUE_ID_DELIMITER
+          new_bb = str(new_bb.pop()).rsplit(sep, 1)[0]
+          new_path = NF_PATH_TEMPLATE % (new_bb, nf)
+          # element.object.set_value(new_path)
+          rewrite.append((element, new_path))
+      # Tricky override because object is key in yang -> del and readd
+      for e, p in rewrite:
+        attr.remove(e)
+        e.object.set_value(new_path)
+        attr.add(e)
+        log.debug("Override new path for NF: %s --> %s" % (nf, new_path))
+    return info
+
+  def __split_info_request_by_domain (self, info):
+    dov = self.DoVManager.dov.get_resource_info()
+    vnfs = get_nfs_from_info(info=info)
     if not vnfs:
       log.debug("No NF has been detected from info request!")
       return
     splitted = NFFGToolBox.split_nfs_by_domain(nffg=dov, nfs=vnfs, log=log)
     for domain, nfs in splitted.items():
       log.debug("Splitted domain: %s --> %s" % (domain, nfs))
-      info_part = self.__strip_info_by_nfs(info, nfs)
+      info_part = strip_info_by_nfs(info, nfs)
       log.log(VERBOSE, "Splitted info part:\n%s" % info_part.xml())
       splitted[domain] = info_part
     return splitted
-
-  @staticmethod
-  def __get_nfs_from_info (info):
-    nfs = set()
-    log.debug("Extract NFs from info request...")
-    for attr in (getattr(info, e) for e in info._sorted_children):
-      for element in attr:
-        if hasattr(element, "object"):
-          nf = get_nf_from_path(element.object.get_value(), log=log)
-          if nf is not None:
-            nfs.add(nf)
-          else:
-            log.warning("Missing NF from element:\n%s" % element.object.xml())
-        else:
-          log.warning("Missing 'object' from element:\n%s" % element.xml())
-    return nfs
-
-  @staticmethod
-  def __strip_info_by_nfs (info, nfs):
-    info = info.full_copy()
-    for attr in (getattr(info, e) for e in info._sorted_children):
-      deletable = []
-      for element in attr:
-        if hasattr(element, "object"):
-          nf_id = get_nf_from_path(element.object.get_value(), log=log)
-          if nf_id not in nfs:
-            deletable.append(element)
-      for d in deletable:
-        attr.remove(d)
-    return info
 
   def propagate_info_requests (self, id, info):
     """
     :return:
     """
-    splitted = self.split_info_request_by_domain(info)
+    info = self.__resolve_nodes_in_info(info=info)
+    splitted = self.__split_info_request_by_domain(info=info)
     if not splitted:
       log.debug("No valid request has been remained after splitting!")
       return

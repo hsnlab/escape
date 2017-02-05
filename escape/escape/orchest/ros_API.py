@@ -680,7 +680,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if hasattr(self, 'ros_api') and self.ros_api:
       log.getChild('API').debug("Cache collected 'info' request status...")
       req_status = self.ros_api.request_cache.get_request(message_id=status.id)
-      print req_status
       if req_status is None:
         log.getChild('API').debug("Request status is missing: %s! "
                                   "Skip result processing..." % status.id)

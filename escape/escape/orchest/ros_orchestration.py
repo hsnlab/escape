@@ -15,7 +15,6 @@
 Contains classes relevant to Resource Orchestration Sublayer functionality.
 """
 import ast
-import re
 from collections import OrderedDict
 
 from escape import CONFIG
@@ -25,6 +24,8 @@ from escape.orchest.nfib_mgmt import NFIBManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
 from escape.util.misc import notify_remote_visualizer, VERBOSE
+from escape.util.virtualizer_helper import detect_bb_nf_from_path, \
+  NF_PATH_TEMPLATE
 
 
 class ResourceOrchestrator(AbstractOrchestrator):
@@ -215,12 +216,11 @@ class ResourceOrchestrator(AbstractOrchestrator):
     return mappings
 
   def collect_mappings (self, mappings, slor_topo):
-    target_template = "/virtualizer/nodes/node[id=%s]/NF_instances/node[id=%s]"
     dov = self.virtualizerManager.dov.get_resource_info()
     response = mappings.full_copy()
     log.debug("Start checking mappings...")
     for mapping in response:
-      nf = self.__detect_nf_from_path(path=mapping.object.get_value(),
+      bb, nf = detect_bb_nf_from_path(path=mapping.object.get_value(),
                                       topo=slor_topo)
       if not nf:
         # mapping.target.object.set_value("NOT_FOUND")
@@ -241,23 +241,9 @@ class ResourceOrchestrator(AbstractOrchestrator):
         mapping.target.domain.set_value("N/A")
         continue
       log.debug("Found mapping: %s@%s (domain: %s)" % (nf, node, domain))
-      mapping.target.object.set_value(target_template % (node, nf))
+      mapping.target.object.set_value(NF_PATH_TEMPLATE % (node, nf))
       mapping.target.domain.set_value(CONFIG.get_domain_url(domain=domain))
     return response
-
-  @staticmethod
-  def __detect_nf_from_path (path, topo):
-    mapping_regex = re.compile(r'.*\[id=(.*)\].*\[id=(.*)\]')
-    match = mapping_regex.match(path)
-    if match is None:
-      log.warning("Wrong object format: %s" % path)
-      return
-    bb, nf = mapping_regex.match(path).group(1, 2)
-    if bb not in topo or nf not in topo:
-      log.warning("Missing requested element: %s@%s from topo!" % (nf, bb))
-      return
-    log.debug("Detected NF: %s@%s" % (nf, bb))
-    return nf
 
   def filter_info_request (self, info, slor_topo):
     log.debug("Filter info request based on layer view: %s..." % slor_topo.id)
@@ -266,7 +252,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
       deletable = []
       for element in attr:
         if hasattr(element, "object"):
-          nf = self.__detect_nf_from_path(element.object.get_value(),
+          bb, nf = detect_bb_nf_from_path(element.object.get_value(),
                                           slor_topo)
           if not nf:
             log.debug("Remove element: %s from request..." % element._tag)

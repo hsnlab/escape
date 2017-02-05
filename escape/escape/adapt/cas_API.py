@@ -177,7 +177,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       status = self.controller_adapter.propagate_info_requests(id=event.id,
                                                                info=event.info)
     except Exception:
-      log.error("Something went wrong during info request processing!")
+      log.exception("Something went wrong during info request processing!")
       self.raiseEventNoErrors(InfoRequestFinishedEvent,
                               result=InfoRequestFinishedEvent.ERROR)
       return
