@@ -145,7 +145,7 @@ class CallbackManager(HTTPServer, Thread):
   DEFAULT_SERVER_ADDRESS = "localhost"
   DEFAULT_PREFIX = "callbacks"
   DEFAULT_PORT = 9000
-  DEFAULT_WAIT_TIMEOUT = 5.0
+  DEFAULT_WAIT_TIMEOUT = 10.0
 
   def __init__ (self, domain_name, address=DEFAULT_SERVER_ADDRESS,
                 port=DEFAULT_PORT, timeout=DEFAULT_WAIT_TIMEOUT,
