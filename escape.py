@@ -93,7 +93,6 @@ def main ():
                       help="optional POX modules")
   # Parsing arguments
   args = parser.parse_args()
-  print args
   if args.clean:
     # Tailor Python path for importing mics functions without initialize
     # escape or util packages.
