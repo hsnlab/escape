@@ -30,9 +30,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import DomainChangedEvent, AbstractDomainManager, \
   AbstractRemoteDomainManager
 from escape.util.misc import notify_remote_visualizer, VERBOSE
-from escape.util.virtualizer_helper import get_nfs_from_info, \
-  strip_info_by_nfs, \
-  get_bb_nf_from_path
+from escape.util.virtualizer_helper import *
 from virtualizer_info import Info
 
 
@@ -772,9 +770,12 @@ class ControllerAdapter(object):
         log.debug("Parsing received callback data...")
         body = event.callback.body if event.callback.body else ""
         new_info = Info.parse_from_text(body)
+        log.log(VERBOSE, "Received data:\n%s" % new_info.xml())
+        log.debug("Update collected info with parsed data...")
         req_status.data.merge(new_info)
-      except Exception as e:
-        log.error(str(e))
+        log.log(VERBOSE, "Updated Info data:\n%s" % req_status.data.xml())
+      except Exception:
+        log.exception("Got error while processing Info data!")
         req_status.set_domain_failed(domain=event.domain)
     log.debug("Info request status: %s" % req_status)
     if not req_status.still_pending:

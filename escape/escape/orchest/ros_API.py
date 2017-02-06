@@ -694,11 +694,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
         body = body.xml() if isinstance(body, Info) else str(body)
       log.info("Set request status: %s for message: %s"
                 % (req_status.status, req_status.message_id))
+      log.log(VERBOSE, "Collected Info data:\n%s" % body)
       ret = self.ros_api.invoke_callback(message_id=status.id, body=body)
       if ret is None:
         log.getChild('API').debug("No callback was defined!")
       else:
-        log.getChild('API').debug(
+        log.getChild('API').info(
           "Callback: %s has invoked with return value: %s" % (
             req_status.get_callback(), ret))
         # TODO - handle remained request-cache -> remove or store for a while??
