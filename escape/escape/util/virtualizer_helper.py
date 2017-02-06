@@ -18,29 +18,40 @@ import re
 log = logging.getLogger("virt_helper")
 NF_PATH_TEMPLATE = "/virtualizer/nodes/node[id=%s]/NF_instances/node[id=%s]"
 NODE_NF_PATTERN = r'.*nodes/node\[id=(.*)\]/NF_instances/node\[id=(.*)\]'
-NF_PATTERN = r'.*/NF_instances/node\[id=(.*)\]'
+NODE_NF_PORT_PATTERN = \
+  r'.*nodes/node\[id=(.*)\]/NF_instances/node\[id=(.*)\]/ports/port\[id=(.*)\]'
 
 
 def get_nf_from_path (path):
-  mapping_regex = re.compile(NF_PATTERN)
+  if 'ports' in path:
+    mapping_regex = re.compile(NODE_NF_PORT_PATTERN)
+  else:
+    mapping_regex = re.compile(NODE_NF_PATTERN)
   match = mapping_regex.match(path)
   if match is None:
     log.warning("Wrong object format: %s" % path)
     return
-  return mapping_regex.match(path).group(1)
+  return mapping_regex.match(path).group(2)
+
+
+def get_bb_nf_from_path (path):
+  if "ports" in path:
+    mapping_regex = re.compile(NODE_NF_PORT_PATTERN)
+  else:
+    mapping_regex = re.compile(NODE_NF_PATTERN)
+  match = mapping_regex.match(path)
+  if match is None:
+    log.warning("Wrong object format: %s" % path)
+    return
+  return mapping_regex.match(path).group(1, 2)
 
 
 def detect_bb_nf_from_path (path, topo):
-  mapping_regex = re.compile(NODE_NF_PATTERN)
-  match = mapping_regex.match(path)
-  if match is None:
-    log.warning("Wrong object format: %s" % path)
-    return
-  bb, nf = mapping_regex.match(path).group(1, 2)
+  bb, nf = get_bb_nf_from_path(path=path)
   if bb not in topo or nf not in topo:
     log.warning("Missing requested element: %s@%s from topo!" % (nf, bb))
     return None, None
-  log.debug("Detected NF: %s@%s" % (nf, bb))
+  log.debug("Detected NF: %s on %s" % (nf, bb))
   return bb, nf
 
 
@@ -51,6 +62,7 @@ def get_nfs_from_info (info):
     for element in attr:
       if hasattr(element, "object"):
         nf = get_nf_from_path(element.object.get_value())
+        print nf
         if nf is not None:
           nfs.add(nf)
         else:
@@ -62,7 +74,6 @@ def get_nfs_from_info (info):
 
 def strip_info_by_nfs (info, nfs):
   info = info.full_copy()
-  print info.xml()
   for attr in (getattr(info, e) for e in info._sorted_children):
     deletable = []
     for element in attr:

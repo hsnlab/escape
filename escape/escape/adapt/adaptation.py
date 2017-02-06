@@ -32,7 +32,7 @@ from escape.util.domain import DomainChangedEvent, AbstractDomainManager, \
 from escape.util.misc import notify_remote_visualizer, VERBOSE
 from escape.util.virtualizer_helper import get_nfs_from_info, \
   strip_info_by_nfs, \
-  NF_PATH_TEMPLATE, get_nf_from_path
+  get_bb_nf_from_path
 from virtualizer_info import Info
 
 
@@ -791,7 +791,8 @@ class ControllerAdapter(object):
       rewrite = []
       for element in attr:
         if hasattr(element, "object"):
-          nf = get_nf_from_path(path=element.object.get_value())
+          path = element.object.get_value()
+          bb, nf = get_bb_nf_from_path(path=path)
           new_bb = [bb.id for bb in dov.infra_neighbors(node_id=nf)]
           if len(new_bb) != 1:
             log.warning("Original BiSBiS for NF: %s was not found "
@@ -799,15 +800,18 @@ class ControllerAdapter(object):
             continue
           sep = NFFGConverter.UNIQUE_ID_DELIMITER
           new_bb = str(new_bb.pop()).rsplit(sep, 1)[0]
-          new_path = NF_PATH_TEMPLATE % (new_bb, nf)
-          # element.object.set_value(new_path)
+          old_path = element.object.get_value()
+          new_path = str(old_path).replace("/node[id=%s]" % bb,
+                                           "/node[id=%s]" % new_bb)
+          # new_path = NF_PATH_TEMPLATE % (new_bb, nf)
+          element.object.set_value(new_path)
           rewrite.append((element, new_path))
       # Tricky override because object is key in yang -> del and readd
       for e, p in rewrite:
         attr.remove(e)
         e.object.set_value(new_path)
         attr.add(e)
-        log.debug("Override new path for NF: %s --> %s" % (nf, new_path))
+        log.debug("Override new path for NF --> %s" % new_path)
     return info
 
   def __split_info_request_by_domain (self, info):
