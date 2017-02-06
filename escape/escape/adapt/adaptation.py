@@ -467,6 +467,11 @@ class ComponentConfigurator(object):
     self.__repository.clear()
 
 
+class RollBackException(Exception):
+  def __init__ (self, status):
+    self.status = status
+
+
 class ControllerAdapter(object):
   """
   Higher-level class for :any:`NFFG` adaptation between multiple domains.

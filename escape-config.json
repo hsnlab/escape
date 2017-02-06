@@ -80,6 +80,7 @@
     "USE-REMERGE-UPDATE-STRATEGY": true,
     "USE-STATUS-BASED-UPDATE": false,
     "ENSURE-UNIQUE-ID": true,
+    "ROLLBACK-ON-FAILURE": true,
     "INTERNAL": {
       "module": "escape.adapt.managers",
       "class": "InternalDomainManager",
