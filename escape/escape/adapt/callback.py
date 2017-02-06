@@ -77,7 +77,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
     """
     charset = 'utf-8'
     try:
-      splitted_type = self.headers['Content-Type'].split('charset=')
+      splitted_type = self.headers.get('Content-Type', "").split('charset=')
       if len(splitted_type) > 1:
         charset = splitted_type[1]
       content_len = int(self.headers['Content-Length'])
@@ -87,8 +87,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
     except KeyError as e:
       # Content-Length header is not defined
       # or charset is not defined in Content-Type header.
-      if e.args[0] == 'Content-Type':
-        log.warning("Missing header from request: %s" % e.args[0])
+      log.warning(str(e))
       if e.args[0] == 'Content-Length':
         log.warning("Missing content-type from request: %s" % e.args[0])
     except ValueError as e:
