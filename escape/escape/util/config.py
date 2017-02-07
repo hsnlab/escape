@@ -706,7 +706,6 @@ class ESCAPEConfig(object):
 
   def rollback_on_failure (self):
     """
-    :return: reset domain before install or not (default: False)
     :rtype: bool
     """
     try:
@@ -754,6 +753,15 @@ class ESCAPEConfig(object):
       return self.__configuration[ADAPT]['DOV']['ENSURE-UNIQUE-ID']
     except KeyError:
       return False
+
+  def one_step_update (self):
+    """
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT]['DOV']['ONE-STEP-UPDATE']
+    except KeyError:
+      return True
 
   def get_sdn_topology (self):
     """

@@ -113,10 +113,11 @@ class CallbackHandler(BaseHTTPRequestHandler):
 
 
 class Callback(object):
-  def __init__ (self, callback_id, request_id, hook=None, data=None):
-    self.callback_id = callback_id
-    self.request_id = request_id
+  def __init__ (self, hook, callback_id, type, request_id=None, data=None):
     self.hook = hook
+    self.callback_id = callback_id
+    self.type = type
+    self.request_id = request_id
     self.__timer = None
     self.data = data
     self.result_code = None
@@ -138,6 +139,10 @@ class Callback(object):
     if self.__timer:
       self.__timer.cancel()
       self.__timer = None
+
+  def short (self):
+    return "Callback(id: %s, request_id: %s, result: %s)" \
+           % (self.callback_id, self.request_id, self.result_code)
 
 
 class CallbackManager(HTTPServer, Thread):
@@ -174,12 +179,13 @@ class CallbackManager(HTTPServer, Thread):
     finally:
       self.server_close()
 
-  def subscribe_callback (self, cb_id, req_id, data=None, hook=None,
+  def subscribe_callback (self, hook, cb_id, type, req_id=None, data=None,
                           timeout=None):
     log.debug("Register callback for response: %s on domain: %s" %
               (cb_id, self.domain_name))
     if cb_id not in self.__register:
-      cb = Callback(callback_id=cb_id, request_id=req_id, hook=hook, data=data)
+      cb = Callback(hook=hook, callback_id=cb_id, type=type,
+                    request_id=req_id, data=data)
       _timeout = timeout if timeout is not None else self.wait_timeout
       cb.setup_timer(_timeout, self.invoke_hook, msg_id=cb_id, result=0)
       self.__register[cb_id] = cb
@@ -223,5 +229,5 @@ class CallbackManager(HTTPServer, Thread):
     if cb.hook is not None and callable(cb.hook):
       cb.hook(callback=cb)
     else:
-      log.warning("No callable hoo was defined for the received callback: %s!"
+      log.warning("No callable hook was defined for the received callback: %s!"
                   % msg_id)

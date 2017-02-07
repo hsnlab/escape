@@ -261,6 +261,8 @@ class DORequestHandler(BaseHTTPRequestHandler):
                                  body=body,
                                  msg_id=msg_id,
                                  timeout=timeout)
+      log.debug("Request accepted by default if callback is used")
+      code = httplib.OK if body else httplib.ACCEPTED
     self.send_response(code=code)
     if body:
       self.send_header("Content-Type", "application/xml")
@@ -441,6 +443,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     :type msg_id: str or int
     :return: None
     """
+    log.debug(str())
     with self.__callback_lock:
       params = {"message-id": msg_id,
                 "response-code": 200 if code < 300 else 500}

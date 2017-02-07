@@ -78,7 +78,8 @@
     "DOV": {
       "ENSURE-UNIQUE-ID": true,
       "USE-REMERGE-UPDATE-STRATEGY": true,
-      "USE-STATUS-BASED-UPDATE": false
+      "USE-STATUS-BASED-UPDATE": false,
+      "ONE-STEP_UPDATE": true
     },
     "deployment": {
       "RESET-DOMAINS-BEFORE-INSTALL": false,

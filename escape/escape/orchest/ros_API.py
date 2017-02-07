@@ -369,7 +369,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: state
     :rtype: str
     """
-    status = self.ros_api.request_cache.get_status(id=message_id)
+    status = self.ros_api.request_cache.get_domain_status(id=message_id)
     if status == RequestStatus.SUCCESS:
       return httplib.OK, None
     elif status == RequestStatus.UNKNOWN:

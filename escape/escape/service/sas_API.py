@@ -498,7 +498,7 @@ class ServiceLayerAPI(AbstractAPI):
     :return: state
     :rtype: str
     """
-    status = self.rest_api.request_cache.get_status(id=message_id)
+    status = self.rest_api.request_cache.get_domain_status(id=message_id)
     if status == RequestStatus.SUCCESS:
       return 200, None
     elif status == RequestStatus.UNKNOWN:
