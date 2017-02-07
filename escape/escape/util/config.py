@@ -153,9 +153,9 @@ class ESCAPEConfig(object):
     if config:
       # Config is set directly
       log.info("Load explicitly given config file: %s" % config)
-    elif hasattr(core, "CONFIG_FILE_NAME"):
+    elif hasattr(core, 'CONFIG_FILE_NAME'):
       # Config is set through POX's core object by a topmost module (unify)
-      config = getattr(core, "CONFIG_FILE_NAME")
+      config = getattr(core, 'CONFIG_FILE_NAME')
       log.info("Load explicitly given config file: %s" % config)
     else:
       # No config file has been given
@@ -177,7 +177,7 @@ class ESCAPEConfig(object):
     # Register config into pox.core to be reachable for other future
     # components -not used currently
     self.__initiated = True
-    core.register("CONFIG", self)
+    core.register('CONFIG', self)
     log.log(VERBOSE, "Running config:\n" + pprint.pformat(self.__configuration))
     return self
 
@@ -428,7 +428,7 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     try:
-      return self.__configuration[layer_name][api_name]["virtualizer_type"]
+      return self.__configuration[layer_name][api_name]['virtualizer_type']
     except (KeyError, AttributeError, TypeError):
       return None
 
@@ -444,7 +444,7 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     try:
-      return self.__configuration[SERVICE]["SERVICE-LAYER-ID"]
+      return self.__configuration[SERVICE]['SERVICE-LAYER-ID']
     except KeyError:
       return None
 
@@ -457,8 +457,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-        self.__configuration[SERVICE]["REST-API"]['module']),
-        self.__configuration[SERVICE]["REST-API"]['class'], None)
+        self.__configuration[SERVICE]['REST-API']['module']),
+        self.__configuration[SERVICE]['REST-API']['class'], None)
     except KeyError:
       return None
 
@@ -470,7 +470,7 @@ class ESCAPEConfig(object):
     :rtype: dict
     """
     try:
-      params = self.__configuration[SERVICE]["REST-API"].copy()
+      params = self.__configuration[SERVICE]['REST-API'].copy()
       del params['module']
       del params['class']
       return params
@@ -486,7 +486,7 @@ class ESCAPEConfig(object):
     """
     try:
       return int(
-        self.__configuration[SERVICE]["SCHEDULED_SERVICE_REQUEST_DELAY"])
+        self.__configuration[SERVICE]['SCHEDULED_SERVICE_REQUEST_DELAY'])
     except (KeyError, ValueError):
       return 0
 
@@ -503,8 +503,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-        self.__configuration[ORCHEST]["Sl-Or"]['module']),
-        self.__configuration[ORCHEST]["Sl-Or"]['class'], None)
+        self.__configuration[ORCHEST]['Sl-Or']['module']),
+        self.__configuration[ORCHEST]['Sl-Or']['class'], None)
     except KeyError:
       return None
 
@@ -516,7 +516,7 @@ class ESCAPEConfig(object):
     :rtype: dict
     """
     try:
-      params = self.__configuration[ORCHEST]["Sl-Or"].copy()
+      params = self.__configuration[ORCHEST]['Sl-Or'].copy()
       del params['module']
       del params['class']
       return params
@@ -532,8 +532,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-        self.__configuration[ORCHEST]["Cf-Or"]['module']),
-        self.__configuration[ORCHEST]["Cf-Or"]['class'], None)
+        self.__configuration[ORCHEST]['Cf-Or']['module']),
+        self.__configuration[ORCHEST]['Cf-Or']['class'], None)
     except KeyError:
       return None
 
@@ -545,7 +545,7 @@ class ESCAPEConfig(object):
     :rtype: dict
     """
     try:
-      params = self.__configuration[ORCHEST]["Cf-Or"].copy()
+      params = self.__configuration[ORCHEST]['Cf-Or'].copy()
       del params['module']
       del params['class']
       return params
@@ -648,7 +648,7 @@ class ESCAPEConfig(object):
                               item['class'])
           if mgr_class.IS_INTERNAL_MANAGER:
             internal_mgrs.append(
-              item['domain_name'] if "domain_name" in item else
+              item['domain_name'] if 'domain_name' in item else
               mgr_class.DEFAULT_DOMAIN_NAME)
         except (KeyError, AttributeError, TypeError):
           return None
@@ -672,7 +672,7 @@ class ESCAPEConfig(object):
                               item['class'])
           if mgr_class.IS_EXTERNAL_MANAGER:
             external_mgrs.append(
-              item['domain_name'] if "domain_name" in item else
+              item['domain_name'] if 'domain_name' in item else
               mgr_class.DEFAULT_DOMAIN_NAME)
         except (KeyError, AttributeError, TypeError):
           return None
@@ -686,7 +686,8 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[ADAPT]['CLEAR-DOMAINS-AFTER-SHUTDOWN']
+      return self.__configuration[ADAPT]['deployment'][
+        'CLEAR-DOMAINS-AFTER-SHUTDOWN']
     except KeyError:
       return True
 
@@ -698,7 +699,18 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[ADAPT]['RESET-DOMAINS-BEFORE-INSTALL']
+      return self.__configuration[ADAPT]['deployment'][
+        'RESET-DOMAINS-BEFORE-INSTALL']
+    except KeyError:
+      return False
+
+  def rollback_on_failure (self):
+    """
+    :return: reset domain before install or not (default: False)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT]['deployment']['ROLLBACK-ON-FAILURE']
     except KeyError:
       return False
 
@@ -711,7 +723,7 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[ADAPT]['USE-REMERGE-UPDATE-STRATEGY']
+      return self.__configuration[ADAPT]['DOV']['USE-REMERGE-UPDATE-STRATEGY']
     except KeyError:
       return True
 
@@ -725,7 +737,7 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[ADAPT]['USE-STATUS-BASED-UPDATE']
+      return self.__configuration[ADAPT]['DOV']['USE-STATUS-BASED-UPDATE']
     except KeyError:
       return False
 
@@ -739,7 +751,7 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[ADAPT]['ENSURE-UNIQUE-ID']
+      return self.__configuration[ADAPT]['DOV']['ENSURE-UNIQUE-ID']
     except KeyError:
       return False
 
@@ -755,7 +767,7 @@ class ESCAPEConfig(object):
       # util/escape/ext/pox/root
       return os.path.abspath(
         os.path.join(self.get_project_root_dir(),
-                     self.__configuration[ADAPT]["SDN"]["TOPOLOGY"]["path"]))
+                     self.__configuration[ADAPT]['SDN']['TOPOLOGY']['path']))
     except KeyError:
       return None
 
@@ -785,7 +797,7 @@ class ESCAPEConfig(object):
     try:
       # Project root dir relative to this module which is/must be under pox/ext
       return os.path.abspath(os.path.join(self.get_project_root_dir(),
-                                          self.__configuration[INFR]["TOPO"]))
+                                          self.__configuration[INFR]['TOPO']))
     except KeyError:
       return None
 
@@ -798,8 +810,8 @@ class ESCAPEConfig(object):
     """
     try:
       return getattr(importlib.import_module(
-        self.__configuration[INFR]["FALLBACK-TOPO"]['module']),
-        self.__configuration[INFR]["FALLBACK-TOPO"]['class'], None)
+        self.__configuration[INFR]['FALLBACK-TOPO']['module']),
+        self.__configuration[INFR]['FALLBACK-TOPO']['class'], None)
     except KeyError:
       return None
 
@@ -823,7 +835,7 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[INFR]["SAP-xterms"]
+      return self.__configuration[INFR]['SAP-xterms']
     except (KeyError, AttributeError, TypeError):
       return True
 
@@ -835,7 +847,7 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[ORCHEST]["manage-neo4j-service"]
+      return self.__configuration[ORCHEST]['manage-neo4j-service']
     except (KeyError, AttributeError, TypeError):
       return False
 
@@ -848,7 +860,7 @@ class ESCAPEConfig(object):
     :rtype: dict
     """
     try:
-      cfg = self.__configuration[INFR]["Controller"]
+      cfg = self.__configuration[INFR]['Controller']
       return cfg if cfg is not None else {}
     except (KeyError, AttributeError, TypeError):
       return {}
@@ -862,7 +874,7 @@ class ESCAPEConfig(object):
     :rtype: dict
     """
     try:
-      cfg = self.__configuration[INFR]["EE"]
+      cfg = self.__configuration[INFR]['EE']
       return cfg if cfg is not None else {}
     except (KeyError, AttributeError, TypeError):
       return {}
@@ -876,7 +888,7 @@ class ESCAPEConfig(object):
     :rtype: dict
     """
     try:
-      cfg = self.__configuration[INFR]["Switch"]
+      cfg = self.__configuration[INFR]['Switch']
       return cfg if cfg is not None else {}
     except (KeyError, AttributeError, TypeError):
       return {}
@@ -890,7 +902,7 @@ class ESCAPEConfig(object):
     :rtype: dict
     """
     try:
-      cfg = self.__configuration[INFR]["SAP"]
+      cfg = self.__configuration[INFR]['SAP']
       return cfg if cfg is not None else {}
     except (KeyError, AttributeError, TypeError):
       return {}
@@ -904,7 +916,7 @@ class ESCAPEConfig(object):
     :rtype: dict
     """
     try:
-      cfg = self.__configuration[INFR]["Link"]
+      cfg = self.__configuration[INFR]['Link']
       return cfg if cfg is not None else {}
     except (KeyError, AttributeError, TypeError):
       return {}
@@ -921,7 +933,7 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     try:
-      return self.__configuration["visualization"]["url"]
+      return self.__configuration['visualization']['url']
     except KeyError:
       return None
 
@@ -933,7 +945,7 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     try:
-      return self.__configuration["visualization"]["rpc"]
+      return self.__configuration['visualization']['rpc']
     except KeyError:
       return None
 
@@ -945,7 +957,7 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     try:
-      return self.__configuration["visualization"]["instance_id"]
+      return self.__configuration['visualization']['instance_id']
     except KeyError:
       return None
 

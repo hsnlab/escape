@@ -75,12 +75,16 @@
   },
   "adaptation": {
     "MANAGERS": [],
-    "RESET-DOMAINS-BEFORE-INSTALL": false,
-    "CLEAR-DOMAINS-AFTER-SHUTDOWN": false,
-    "USE-REMERGE-UPDATE-STRATEGY": true,
-    "USE-STATUS-BASED-UPDATE": false,
-    "ENSURE-UNIQUE-ID": true,
-    "ROLLBACK-ON-FAILURE": true,
+    "DOV": {
+      "ENSURE-UNIQUE-ID": true,
+      "USE-REMERGE-UPDATE-STRATEGY": true,
+      "USE-STATUS-BASED-UPDATE": false
+    },
+    "deployment": {
+      "RESET-DOMAINS-BEFORE-INSTALL": false,
+      "CLEAR-DOMAINS-AFTER-SHUTDOWN": false,
+      "ROLLBACK-ON-FAILURE": true
+    },
     "INTERNAL": {
       "module": "escape.adapt.managers",
       "class": "InternalDomainManager",
