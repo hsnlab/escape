@@ -227,6 +227,7 @@ class CallbackManager(HTTPServer, Thread):
     cb.result_code = result
     cb.body = body
     if cb.hook is not None and callable(cb.hook):
+      log.debug("Schedule callback hook: %s" % cb.short())
       cb.hook(callback=cb)
     else:
       log.warning("No callable hook was defined for the received callback: %s!"

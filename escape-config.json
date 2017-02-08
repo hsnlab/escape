@@ -84,7 +84,7 @@
     "deployment": {
       "RESET-DOMAINS-BEFORE-INSTALL": false,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": false,
-      "ROLLBACK-ON-FAILURE": true
+      "ROLLBACK-ON-FAILURE": false
     },
     "INTERNAL": {
       "module": "escape.adapt.managers",

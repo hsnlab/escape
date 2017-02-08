@@ -787,8 +787,9 @@ class ControllerAdapter(object):
         log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
       if CONFIG.one_step_update():
         log.debug("One-step-update is enabled. Skip explicit domain update!")
-      self.DoVManager.update_domain(domain=event.domain,
-                                    nffg=event.callback.data)
+      else:
+        self.DoVManager.update_domain(domain=event.domain,
+                                      nffg=event.callback.data)
     log.debug("Installation status: %s" % deploy_status)
     if not deploy_status.still_pending:
       log.info("All installation process has been finished! Result: %s" %
@@ -884,27 +885,25 @@ class ControllerAdapter(object):
       rewrite = []
       for element in attr:
         if hasattr(element, "object"):
-          path = element.object.get_value()
-          bb, nf = get_bb_nf_from_path(path=path)
-          new_bb = [bb.id for bb in dov.infra_neighbors(node_id=nf)]
+          old_path = element.object.get_value()
+          bb, nf = get_bb_nf_from_path(path=old_path)
+          new_bb = [node.id for node in dov.infra_neighbors(node_id=nf)]
           if len(new_bb) != 1:
             log.warning("Original BiSBiS for NF: %s was not found "
                         "in neighbours: %s" % (nf, new_bb))
             continue
           sep = NFFGConverter.UNIQUE_ID_DELIMITER
           new_bb = str(new_bb.pop()).rsplit(sep, 1)[0]
-          old_path = element.object.get_value()
-          new_path = str(old_path).replace("/node[id=%s]" % bb,
-                                           "/node[id=%s]" % new_bb)
-          # new_path = NF_PATH_TEMPLATE % (new_bb, nf)
-          element.object.set_value(new_path)
+          old_bb, new_bb = "/node[id=%s]" % bb, "/node[id=%s]" % new_bb
+          log.debug("Find BiSBiS node remapping: %s --> %s" % (old_bb, new_bb))
+          new_path = str(old_path).replace(old_bb, new_bb)
           rewrite.append((element, new_path))
-      # Tricky override because object is key in yang -> del and readd
+      # Tricky override because object is key in yang -> del and re-add
       for e, p in rewrite:
         attr.remove(e)
-        e.object.set_value(new_path)
+        e.object.set_value(p)
         attr.add(e)
-        log.debug("Override new path for NF --> %s" % new_path)
+        log.debug("Overrided new path for NF --> %s" % e.object.get_value())
     return info
 
   def __split_info_request_by_domain (self, info):
@@ -1142,14 +1141,13 @@ class DomainRequestStatus(object):
                    self.__statuses.itervalues()))
 
   @property
-  def status(self):
+  def status (self):
     for s in self.statuses:
       if s == self.FAILED:
         return self.FAILED
       elif s == self.WAITING:
         return self.WAITING
     return self.OK
-
 
   @property
   def domains (self):
