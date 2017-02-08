@@ -855,6 +855,8 @@ class ControllerAdapter(object):
     log.debug("Received %s event..." % event.__class__.__name__)
     request_id = event.callback.request_id
     req_status = self.status_mgr.get_status(id=request_id)
+    original_info, binding = req_status.data
+    log.log(VERBOSE, "Original Info:\n%s" % original_info.xml())
     if event.was_error():
       log.warning("Update failed status for info request: %s..." % request_id)
       req_status.set_domain_failed(domain=event.domain)
@@ -868,14 +870,16 @@ class ControllerAdapter(object):
         new_info = Info.parse_from_text(body)
         log.log(VERBOSE, "Received data:\n%s" % new_info.xml())
         log.debug("Update collected info with parsed data...")
-        req_status.data.merge(new_info)
-        log.log(VERBOSE, "Updated Info data:\n%s" % req_status.data.xml())
+        log.debug("Merging received data...")
+        original_info.merge(new_info)
+        log.log(VERBOSE, "Updated Info data:\n%s" % original_info.xml())
       except Exception:
         log.exception("Got error while processing Info data!")
         req_status.set_domain_failed(domain=event.domain)
     log.debug("Info request status: %s" % req_status)
     if not req_status.still_pending:
       log.info("All info processes have been finished!")
+      self.__reset_node_ids(info=original_info, binding=binding)
       result = InfoRequestFinishedEvent.get_result_from_status(req_status)
       self._layer_API.raiseEventNoErrors(InfoRequestFinishedEvent,
                                          result=result,
@@ -883,6 +887,7 @@ class ControllerAdapter(object):
 
   def __resolve_nodes_in_info (self, info):
     log.debug("Resolve NF paths...")
+    reverse_binding = {}
     dov = self.DoVManager.dov.get_resource_info()
     for attr in (getattr(info, e) for e in info._sorted_children):
       rewrite = []
@@ -897,6 +902,7 @@ class ControllerAdapter(object):
             continue
           sep = NFFGConverter.UNIQUE_ID_DELIMITER
           new_bb = str(new_bb.pop()).rsplit(sep, 1)[0]
+          reverse_binding[new_bb] = bb
           old_bb, new_bb = "/node[id=%s]" % bb, "/node[id=%s]" % new_bb
           log.debug("Find BiSBiS node remapping: %s --> %s" % (old_bb, new_bb))
           new_path = str(old_path).replace(old_bb, new_bb)
@@ -907,6 +913,31 @@ class ControllerAdapter(object):
         e.object.set_value(p)
         attr.add(e)
         log.debug("Overrided new path for NF --> %s" % e.object.get_value())
+    return reverse_binding
+
+  def __reset_node_ids (self, info, binding):
+    log.debug("Reset NF paths...")
+    for attr in (getattr(info, e) for e in info._sorted_children):
+      rewrite = []
+      for element in attr:
+        if hasattr(element, "object"):
+          old_path = element.object.get_value()
+          bb, nf = get_bb_nf_from_path(path=old_path)
+          if bb not in binding:
+            log.warning("Missing binding for node: %s" % bb)
+            continue
+          new_bb = binding.get(bb)
+          log.debug("Find BiSBiS node remapping: %s --> %s" % (bb, new_bb))
+          old_bb, new_bb = "/node[id=%s]" % bb, "/node[id=%s]" % new_bb
+          new_path = str(old_path).replace(old_bb, new_bb)
+          rewrite.append((element, new_path))
+      # Tricky override because object is key in yang -> del and re-add
+      for e, p in rewrite:
+        attr.remove(e)
+        e.object.set_value(p)
+        attr.add(e)
+        log.debug("Overrided new path for NF --> %s" % e.object.get_value())
+    print info.xml()
     return info
 
   def __split_info_request_by_domain (self, info):
@@ -927,14 +958,14 @@ class ControllerAdapter(object):
     """
     :return:
     """
-    info = self.__resolve_nodes_in_info(info=info)
+    binding = self.__resolve_nodes_in_info(info=info)
     splitted = self.__split_info_request_by_domain(info=info)
     if not splitted:
       log.debug("No valid request has been remained after splitting!")
       return
     status = self.status_mgr.register_request(id=id,
                                               domains=splitted.keys(),
-                                              data=info)
+                                              data=(info, binding))
     for domain, info_part in splitted.iteritems():
       log.debug("Search DomainManager for domain: %s" % domain)
       # Get Domain Manager

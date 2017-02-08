@@ -690,7 +690,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
         body = None
       else:
         self.ros_api.request_cache.set_success_result(id=status.id)
-        body = status.data
+        body = status.data[0]
         body = body.xml() if isinstance(body, Info) else str(body)
       log.info("Set request status: %s for message: %s"
                 % (req_status.status, req_status.message_id))
