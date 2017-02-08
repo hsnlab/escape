@@ -791,10 +791,16 @@ class ControllerAdapter(object):
                                     nffg=event.callback.data)
     log.debug("Installation status: %s" % deploy_status)
     if not deploy_status.still_pending:
-      log.info("All installation process has been finished!")
+      log.info("All installation process has been finished! Result: %s" %
+               deploy_status.status)
       if CONFIG.one_step_update():
-        log.debug("One-step-update is enabled. Update DoV now...")
-        self.DoVManager.set_global_view(nffg=deploy_status.data)
+        if deploy_status.success:
+          log.debug("One-step-update is enabled. Update DoV now...")
+          self.DoVManager.set_global_view(nffg=deploy_status.data)
+        else:
+          log.debug("One-step-update is enabled. "
+                    "Skip update due to failed request...")
+
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
       self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                          id=request_id,
@@ -1134,6 +1140,16 @@ class DomainRequestStatus(object):
   def failed (self):
     return any(map(lambda s: s == self.FAILED,
                    self.__statuses.itervalues()))
+
+  @property
+  def status(self):
+    for s in self.statuses:
+      if s == self.FAILED:
+        return self.FAILED
+      elif s == self.WAITING:
+        return self.WAITING
+    return self.OK
+
 
   @property
   def domains (self):
