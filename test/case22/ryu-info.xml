@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<info>
+    <logs>
+        <log>
+            <object>
+                /virtualizer/nodes/node[id=SingleBiSBiS]/NF_instances/node[id=splitter1]
+            </object>
+            <data>
+                Waiting for eth1
+                Sleeping 5 seconds
+                Configuring interfaces eth1
+                * Deconfiguring network interfaces...
+                ...done.
+                * Configuring network interfaces...
+                ...done.
+                Configured eth1 - IP: 192.168.1.156 MAC: 12:6f:70:ff:81:91
+                arp for balancer server
+                sudo: unable to resolve host ad07b6703500
+                SIOCSARP: Invalid argument
+                Running /home/balancer_server
+                Reseting history
+                Reseting history
+                Server #95 starting
+            </data>
+        </log>
+    </logs>
+</info>

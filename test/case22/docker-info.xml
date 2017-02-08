@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<info>
+    <tops>
+        <top>
+            <object>
+                /virtualizer/nodes/node[id=SingleBiSBiS]/NF_instances/node[id=balance_server2]
+            </object>
+            <data>{u'Processes': [[u'root', u'9786', u'9768', u'0', u'10:41',
+                u'?', u'00:00:00', u'/bin/bash /home/start.sh 192.168.1.156
+                12:6f:70:ff:81:91 /home/balancer_server'], [u'root', u'10068',
+                u'9786', u'0', u'10:42', u'?', u'00:00:00',
+                u'/home/balancer_server']], u'Titles': [u'UID', u'PID', u'PPID',
+                u'C', u'STIME', u'TTY', u'TIME', u'CMD']}
+            </data>
+        </top>
+    </tops>
+    <connections>
+        <connection>
+            <object>
+                /virtualizer/nodes/node[id=SingleBiSBiS]/NF_instances/node[id=balance_server4]/ports/port[id=1]
+            </object>
+            <objects>
+                <object>
+                    /virtualizer/nodes/node[id=SingleBiSBiS]/NF_instances/node[id=balance_server4]/ports/port[id=1]
+                </object>
+            </objects>
+        </connection>
+    </connections>
+</info>

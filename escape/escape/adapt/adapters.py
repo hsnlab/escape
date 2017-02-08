@@ -18,7 +18,6 @@ details for the connections between ESCAPEv2 and other different domains.
 import json
 import os
 import pprint
-from copy import deepcopy
 
 from ncclient import NCClientError
 from ncclient.operations import OperationError
@@ -1074,8 +1073,17 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                                    ensure_unique_id=CONFIG.ensure_unique_id())
     self.features = features if features is not None else {}
     # Cache for parsed Virtualizer
-    self.last_virtualizer = None
-    self.original_virtualizer = None
+    self.__last_virtualizer = None
+    self.__last_request = None
+    self.__original_virtualizer = None
+
+  @property
+  def last_virtualizer (self):
+    return self.__last_virtualizer
+
+  @property
+  def last_request (self):
+    return self.__last_request
 
   def ping (self):
     """
@@ -1122,9 +1130,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       virt = Virtualizer.parse_from_text(text=data)
       log.log(VERBOSE,
               "Received message to 'get-config' request:\n%s" % virt.xml())
-      log.debug("Cache received Virtualizer...")
-      self.__cache(virt)
-      # self.last_virtualizer = virt.copy()
+      self.__cache_topology(virt)
       return virt
     else:
       log.error("No data has been received from remote agent at %s!" %
@@ -1163,6 +1169,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       raise RuntimeError("Not supported config format: %s for 'edit-config'!" %
                          type(data))
+    self.__cache_request(data=vdata)
     if diff:
       log.debug("DIFF is enabled. Calculating difference of mapping changes...")
       vdata = self.__calculate_diff(vdata)
@@ -1193,7 +1200,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # Ignore exception - assume the request was successful -> return True
       return True
     if status is not None:
-      log.debug("Topology description has been sent successfully!")
+      log.debug("Request has been sent successfully!")
       # msg_id = self.get_last_message_id()
       # if msg_id is not None:
       #   log.debug("Detected message-id from response: %s" % msg_id)
@@ -1239,7 +1246,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: the original topology
     :rtype: Virtualizer
     """
-    return self.original_virtualizer
+    return self.__original_virtualizer
 
   def check_domain_reachable (self):
     """
@@ -1271,13 +1278,11 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.log(VERBOSE, "Converted NFFG of 'get-config' response:\n%s" %
             nffg.dump())
     # If first get-config
-    if self.original_virtualizer is None:
+    if self.__original_virtualizer is None:
       log.debug("Store Virtualizer(id: %s, name: %s) as the original domain "
                 "config..." % (virt.id.get_value(), virt.name.get_value()))
-      self.original_virtualizer = virt.full_copy()
+      self.__original_virtualizer = virt.full_copy()
     log.debug("Used domain name for conversion: %s" % self.domain_name)
-    # # Cache virtualizer
-    # self.last_virtualizer = virt
     return nffg
 
   def __process_features (self, nffg):
@@ -1333,22 +1338,31 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.log(VERBOSE, "Changed domain topology from: %s:\n%s" % (
         self.domain_name, virt.xml()))
       # Cache new topo
-      self.__cache(virt)
+      self.__cache_topology(virt)
       # Return with the changed topo in NFFG
       return self.converter.parse_from_Virtualizer(vdata=virt)
 
-  def __cache (self, data):
+  def __cache_topology (self, data):
     """
-    Cache last received Virtualizer topology
+    Cache last received Virtualizer topology.
 
     :param data: received Virtualizer
     :type data: Virtualizer
     :return: None
     """
-    # Little hack to cache the data as a completely new object structure to
-    # avoid cyclic reference errors and infinite loops
-    # self.last_virtualizer = Virtualizer.parse_from_text(text=data.xml())
-    self.last_virtualizer = data.full_copy()
+    log.debug("Cache received 'get-config' response...")
+    self.__last_virtualizer = data.full_copy()
+
+  def __cache_request (self, data):
+    """
+    Cache calculated and converted request.
+
+    :param data: request Virtualizer
+    :type data: Virtualizer
+    :return: None
+    """
+    log.debug("Cache generated 'edit-config' request...")
+    self.__last_request = data.full_copy()
 
   def __is_changed (self, new_data):
     """
@@ -1501,7 +1515,7 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
       # Ignore exception - assume the request was successful -> return True
       return True
     if status:
-      log.debug("Topology description has been sent!")
+      log.debug("Request has been sent!")
     return status
 
   def get_topology_resource (self):
@@ -1537,7 +1551,7 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
     :return: the original topology
     :rtype: :any:`NFFG` or Virtualizer
     """
-    return self.original_virtualizer if self._unify_interface else \
+    return self.__original_virtualizer if self._unify_interface else \
       self._original_nffg
 
   def check_topology_changed (self):

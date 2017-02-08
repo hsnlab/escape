@@ -31,8 +31,7 @@ from escape.util.domain import DomainChangedEvent, AbstractDomainManager, \
   AbstractRemoteDomainManager
 from escape.util.misc import notify_remote_visualizer, VERBOSE
 from escape.util.virtualizer_helper import get_nfs_from_info, \
-  strip_info_by_nfs, \
-  get_bb_nf_from_path
+  strip_info_by_nfs, get_bb_nf_from_path
 from virtualizer_info import Info
 
 
@@ -301,7 +300,7 @@ class ComponentConfigurator(object):
     :param domain_name: name of the domain used in :any:`NFFG` descriptions
     :type domain_name: str
     :return: the initiated domain Manager
-    :rtype: :any:`AbstractDomainManager`
+    :rtype: AbstractDomainManager
     """
     for component in self.__repository.itervalues():
       if component.domain_name == domain_name:
@@ -467,11 +466,6 @@ class ComponentConfigurator(object):
     self.__repository.clear()
 
 
-class RollBackException(Exception):
-  def __init__ (self, status):
-    self.status = status
-
-
 class ControllerAdapter(object):
   """
   Higher-level class for :any:`NFFG` adaptation between multiple domains.
@@ -551,7 +545,9 @@ class ControllerAdapter(object):
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
     # Register mapped NFFG for managing statuses of install steps
+    log.debug("Store mapped NFFG for domain status tracking...")
     deploy_status = self.status_mgr.register_service(nffg=mapped_nffg)
+    self.DoVManager.backup_dov_state()
     # If DoV update is based on status updates, rewrite the whole DoV as the
     # first step
     if self.DoVManager.status_updates:
@@ -603,6 +599,7 @@ class ControllerAdapter(object):
           NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_DEPLOY,
                                          log=log)
       else:
+        log.error("Installation of %s in %s was unsuccessful!" % (part, domain))
         log.debug("Update installed part with collective result: %s" %
                   NFFG.STATUS_FAIL)
         deploy_status.set_domain_failed(domain=domain)
@@ -611,6 +608,11 @@ class ControllerAdapter(object):
         if self.DoVManager.status_updates:
           NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
                                          log=log)
+        if CONFIG.rollback_on_failure():
+          log.debug("Restore original DoV state for late update...")
+          deploy_status.data = self.DoVManager.get_backup_state()
+          self.__do_rollback(status=deploy_status)
+          return deploy_status
       # If installation of the domain was performed without error
       if not domain_install_result and not self.DoVManager.status_updates:
         log.warning("Skip DoV update with domain: %s! Cause: "
@@ -634,13 +636,20 @@ class ControllerAdapter(object):
         self.perform_internal_mgr_update(mapped_nffg=mapped_nffg, domain=domain)
         # In case of Local manager skip the rest of the update
         continue
-      # Explicit domain update
-      self.DoVManager.update_domain(domain=domain, nffg=part)
+      if CONFIG.one_step_update():
+        log.debug("One-step-update is enabled. Skip explicit domain update!")
+      else:
+        # Explicit domain update
+        self.DoVManager.update_domain(domain=domain, nffg=part)
       self.status_mgr.get_status(mapped_nffg.id).set_domain_ok(domain)
     log.info("NF-FG installation is finished by %s" % self.__class__.__name__)
+    log.debug("Installation status: %s" % deploy_status)
     # Post-mapping steps
     if deploy_status.success:
       log.info("All installation processes have been finished with success! ")
+      if CONFIG.one_step_update():
+        log.debug("One-step-update is enabled. Update DoV now...")
+        self.DoVManager.set_global_view(nffg=deploy_status.data)
       # Notify remote visualizer about the installation result if it's needed
       notify_remote_visualizer(
         data=self.DoVManager.dov.get_resource_info(), id=LAYER_NAME)
@@ -651,7 +660,6 @@ class ControllerAdapter(object):
         "All installation processes have been finished! Waiting for results...")
     else:
       log.info("All installation processes have been finished!")
-    log.debug("Installation status: %s" % deploy_status)
     return deploy_status
 
   def perform_internal_mgr_update (self, mapped_nffg, domain):
@@ -690,6 +698,41 @@ class ControllerAdapter(object):
       log.warning("Detected virtualized Infrastructure node in mapped NFFG!"
                   " Skip DoV update...")
 
+  def __do_rollback (self, status):
+    """
+
+    :type status: DomainRequestStatus
+    :return:
+    """
+    if not CONFIG.rollback_on_failure():
+      return
+    log.info("Rollback mode is enabled! "
+             "Skip install process and reset previous state....")
+    log.debug("Current status: %s" % status)
+    for domain in status.domains:
+      domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
+      if domain_mgr is None:
+        log.error("DomainManager for domain: %s is not found!" % domain)
+        continue
+      if isinstance(domain_mgr, UnifyDomainManager):
+        ds = status.get_domain_status(domain=domain)
+        # Skip rollback if the domain skipped by rollback interrupt
+        if ds != status.INITIALIZED:
+          result = domain_mgr.rollback_install(request_id=status.id)
+          if not result:
+            log.debug("RESET request has been failed!")
+            status.set_domain_failed(domain=domain)
+            continue
+          if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
+             domain_mgr.callback_manager:
+            status.set_domain_waiting(domain=domain)
+          else:
+            status.set_domain_ok(domain=domain)
+        else:
+          log.debug("Domain: %s is not affected. Skip rollback..." % domain)
+      else:
+        log.warning("%s does not support rollback! Skip rollback step...")
+
   def _handle_DomainChangedEvent (self, event):
     """
     Handle DomainChangedEvents, dispatch event according to the cause to
@@ -722,30 +765,71 @@ class ControllerAdapter(object):
     elif event.cause == DomainChangedEvent.TYPE.DOMAIN_DOWN:
       self.DoVManager.remove_domain(domain=event.domain)
 
-  def _handle_CallbackHookEvent (self, event):
+  def _handle_EditConfigHookEvent (self, event):
     """
 
     :param event:
-    :type event: escape.adapt.managers.CallbackHookEvent
+    :type event: escape.adapt.managers.EditConfigHookEvent
     :return:
     """
-    log.debug("Handle %s event..." % event.__class__.__name__)
+    log.debug("Received %s event..." % event.__class__.__name__)
     request_id = event.callback.request_id
     deploy_status = self.status_mgr.get_status(id=request_id)
     if event.was_error():
-      log.warning("Update failed status for service request: %s..." %
-                  request_id)
+      log.debug("Update failed status for service request: %s..." %
+                request_id)
       deploy_status.set_domain_failed(domain=event.domain)
+      self.__do_rollback(status=deploy_status)
     else:
       log.debug("Update success status for service request: %s..." % request_id)
       deploy_status.set_domain_ok(domain=event.domain)
       if isinstance(event.callback.data, NFFG):
         log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
+      if CONFIG.one_step_update():
+        log.debug("One-step-update is enabled. Skip explicit domain update!")
       self.DoVManager.update_domain(domain=event.domain,
                                     nffg=event.callback.data)
     log.debug("Installation status: %s" % deploy_status)
     if not deploy_status.still_pending:
       log.info("All installation process has been finished!")
+      if CONFIG.one_step_update():
+        log.debug("One-step-update is enabled. Update DoV now...")
+        self.DoVManager.set_global_view(nffg=deploy_status.data)
+      result = InstallationFinishedEvent.get_result_from_status(deploy_status)
+      self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
+                                         id=request_id,
+                                         result=result)
+
+  def _handle_ResetHookEvent (self, event):
+    """
+
+    :param event:
+    :type event: escape.adapt.managers.EditConfigHookEvent
+    :return:
+    """
+    log.debug("Received %s event..." % event.__class__.__name__)
+    request_id = event.callback.request_id
+    deploy_status = self.status_mgr.get_status(id=request_id)
+    if event.was_error():
+      log.error("Reset request: %s has been failed!" % request_id)
+      deploy_status.set_domain_failed(domain=event.domain)
+    else:
+      log.debug("Update success status for service request: %s..." % request_id)
+      deploy_status.set_domain_reset(domain=event.domain)
+      # if isinstance(event.callback.data, NFFG):
+      #   log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
+      # self.DoVManager.update_domain(domain=event.domain,
+      #                               nffg=event.callback.data)
+      # TODO domain update
+      if CONFIG.one_step_update():
+        log.debug("One-step-update is enabled. Skip explicit domain update!")
+    log.debug("Installation status: %s" % deploy_status)
+    if not deploy_status.still_pending:
+      log.info("All RESET process has been finished!")
+      if CONFIG.one_step_update():
+        log.debug("One-step-update is enabled. Restore DoV state now...")
+        backup = self.DoVManager.get_backup_state()
+        self.DoVManager.set_global_view(nffg=backup)
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
       self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                          id=request_id,
@@ -758,7 +842,7 @@ class ControllerAdapter(object):
     :type event: escape.adapt.managers.InfoHookEvent
     :return:
     """
-    log.debug("Handle %s event..." % event.__class__.__name__)
+    log.debug("Received %s event..." % event.__class__.__name__)
     request_id = event.callback.request_id
     req_status = self.status_mgr.get_status(id=request_id)
     if event.was_error():
@@ -772,9 +856,12 @@ class ControllerAdapter(object):
         log.debug("Parsing received callback data...")
         body = event.callback.body if event.callback.body else ""
         new_info = Info.parse_from_text(body)
+        log.log(VERBOSE, "Received data:\n%s" % new_info.xml())
+        log.debug("Update collected info with parsed data...")
         req_status.data.merge(new_info)
-      except Exception as e:
-        log.error(str(e))
+        log.log(VERBOSE, "Updated Info data:\n%s" % req_status.data.xml())
+      except Exception:
+        log.exception("Got error while processing Info data!")
         req_status.set_domain_failed(domain=event.domain)
     log.debug("Info request status: %s" % req_status)
     if not req_status.still_pending:
@@ -1016,6 +1103,7 @@ class DomainRequestStatus(object):
   OK = "OK"
   WAITING = "WAITING"
   FAILED = "FAILED"
+  RESET = "RESET"
 
   def __init__ (self, id, domains, data=None):
     self.__id = id
@@ -1037,7 +1125,7 @@ class DomainRequestStatus(object):
   @property
   def success (self):
     if self.__statuses:
-      return all(map(lambda s: s == self.OK,
+      return all(map(lambda s: s in (self.OK, self.RESET),
                      self.__statuses.itervalues()))
     else:
       return False
@@ -1059,6 +1147,9 @@ class DomainRequestStatus(object):
     return "%s(id=%s) => %s" % (self.__class__.__name__,
                                 self.__id, str(self.__statuses))
 
+  def get_domain_status (self, domain):
+    return self.__statuses.get(domain)
+
   def set_domain (self, domain, status):
     if domain not in self.__statuses:
       raise RuntimeError("Updated domain: %s is not registered!" % domain)
@@ -1076,6 +1167,10 @@ class DomainRequestStatus(object):
   def set_domain_failed (self, domain):
     log.debug("Set install status: %s for domain: %s" % (self.FAILED, domain))
     return self.set_domain(domain=domain, status=self.FAILED)
+
+  def set_domain_reset (self, domain):
+    log.debug("Set install status: %s for domain: %s" % (self.RESET, domain))
+    return self.set_domain(domain=domain, status=self.RESET)
 
 
 class DomainRequestManager(object):
@@ -1102,7 +1197,7 @@ class DomainRequestManager(object):
     :rtype: DomainRequestStatus
     """
     domains = NFFGToolBox.detect_domains(nffg=nffg)
-    return self.register_request(id=nffg.id, domains=domains)
+    return self.register_request(id=nffg.id, domains=domains, data=nffg)
 
   def get_status (self, id):
     """
@@ -1133,6 +1228,7 @@ class GlobalResourceManager(object):
     self.__tracked_domains = set()  # Cache for detected and stored domains
     self.status_updates = CONFIG.use_status_based_update()
     self.remerge_strategy = CONFIG.use_remerge_update_strategy()
+    self.__backup = None
 
   @property
   def dov (self):
@@ -1153,6 +1249,13 @@ class GlobalResourceManager(object):
     :rtype: tuple
     """
     return tuple(self.tracked)
+
+  def backup_dov_state (self):
+    log.debug("Backup current DoV state...")
+    self.__backup = self.dov.get_resource_info()
+
+  def get_backup_state (self):
+    return self.__backup
 
   def set_global_view (self, nffg):
     """

@@ -68,6 +68,7 @@ class RPCCallMock(object):
     if not self.response_path:
       return
     with open(self.response_path) as f:
+      log.debug("Read response from file: %s" % self.response_path)
       return f.read()
 
 
@@ -154,7 +155,7 @@ class DORequestHandler(BaseHTTPRequestHandler):
       self._return_default(call=call)
       return
     self._return_response(code=call_mock.code,
-                          body=call_mock.get_response_body(),
+                          mock=call_mock,
                           timeout=call_mock.timeout)
 
   def __get_request_params (self):
@@ -202,10 +203,10 @@ class DORequestHandler(BaseHTTPRequestHandler):
     elif call == RPC_EDIT_CONFIG:
       self._return_response(code=httplib.ACCEPTED)
     elif call == RPC_MAPPINGS:
-      # TODO - assemble body
+      # TODO - assemble default body ??
       self._return_response(code=httplib.OK)
     elif call == RPC_INFO:
-      # TODO - assemble body
+      # TODO - assemble default body ??
       self._return_response(code=httplib.OK)
     else:
       self._return_response(code=httplib.NOT_IMPLEMENTED)
@@ -236,7 +237,7 @@ class DORequestHandler(BaseHTTPRequestHandler):
     self.end_headers()
     self.wfile.write(_body)
 
-  def _return_response (self, code, body=None, timeout=None):
+  def _return_response (self, code, body=None, mock=None, timeout=None):
     """
     Generic function to response to an RPC call with related HTTP headers.
 
@@ -252,12 +253,16 @@ class DORequestHandler(BaseHTTPRequestHandler):
       msg_id = params[self.MSG_ID_NAME]
     else:
       msg_id = self.server.msg_cntr
+    body = mock.get_response_body() if mock else None
     if self.CALLBACK_NAME in params:
       cb_url = urllib.unquote(params[self.CALLBACK_NAME])
       self.server.setup_callback(url=cb_url,
                                  code=code,
+                                 body=body,
                                  msg_id=msg_id,
                                  timeout=timeout)
+      log.debug("Request accepted by default if callback is used")
+      code = httplib.OK if body else httplib.ACCEPTED
     self.send_response(code=code)
     if body:
       self.send_header("Content-Type", "application/xml")
@@ -406,7 +411,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     finally:
       self.server_close()
 
-  def setup_callback (self, url, code, msg_id, timeout=None):
+  def setup_callback (self, url, code, msg_id, body=None, timeout=None):
     """
     Schedule a callback with the given parameters.
 
@@ -422,10 +427,10 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     log.debug("Setup callback: %s, code: %s, message-id: %s, timeout: %s"
               % (url, code, msg_id, timeout))
     t = Timer(timeout, self.callback_hook,
-              kwargs={"url": url, "code": code, "msg_id": msg_id})
+              kwargs={"url": url, "code": code, "msg_id": msg_id, "body": body})
     t.start()
 
-  def callback_hook (self, url, code, msg_id):
+  def callback_hook (self, url, code, msg_id, body):
     """
     Send back a registered callback to the tested ESCAPE process ina
     synchronized way.
@@ -438,12 +443,13 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     :type msg_id: str or int
     :return: None
     """
+    log.debug(str())
     with self.__callback_lock:
       params = {"message-id": msg_id,
                 "response-code": 200 if code < 300 else 500}
       log.debug("\nInvoke callback: %s - %s" % (url, params))
       try:
-        requests.post(url=url, params=params)
+        requests.post(url=url, data=body, params=params)
       except ConnectionError as e:
         log.error("Received exception during calling hook: %s" % e)
 

@@ -17,16 +17,12 @@ import re
 
 log = logging.getLogger("virt_helper")
 NF_PATH_TEMPLATE = "/virtualizer/nodes/node[id=%s]/NF_instances/node[id=%s]"
-NODE_NF_PATTERN = r'.*nodes/node\[id=(.*)\]/NF_instances/node\[id=(.*)\]'
-NODE_NF_PORT_PATTERN = \
-  r'.*nodes/node\[id=(.*)\]/NF_instances/node\[id=(.*)\]/ports/port\[id=(.*)\]'
+# Use ? modifier after .* to define a non-greedy matching and skip ports
+NODE_NF_PATTERN = r'.*nodes/node\[id=(.*?)\]/NF_instances/node\[id=(.*?)\]'
 
 
 def get_nf_from_path (path):
-  if 'ports' in path:
-    mapping_regex = re.compile(NODE_NF_PORT_PATTERN)
-  else:
-    mapping_regex = re.compile(NODE_NF_PATTERN)
+  mapping_regex = re.compile(NODE_NF_PATTERN)
   match = mapping_regex.match(path)
   if match is None:
     log.warning("Wrong object format: %s" % path)
@@ -35,10 +31,7 @@ def get_nf_from_path (path):
 
 
 def get_bb_nf_from_path (path):
-  if "ports" in path:
-    mapping_regex = re.compile(NODE_NF_PORT_PATTERN)
-  else:
-    mapping_regex = re.compile(NODE_NF_PATTERN)
+  mapping_regex = re.compile(NODE_NF_PATTERN)
   match = mapping_regex.match(path)
   if match is None:
     log.warning("Wrong object format: %s" % path)
@@ -62,7 +55,6 @@ def get_nfs_from_info (info):
     for element in attr:
       if hasattr(element, "object"):
         nf = get_nf_from_path(element.object.get_value())
-        print nf
         if nf is not None:
           nfs.add(nf)
         else:
