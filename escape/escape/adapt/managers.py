@@ -1349,7 +1349,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         log.warning("message-id is missing from 'edit-config' response "
                     "for callback registration!")
         return
-      self.log.debug("Received msg-id from 'edit-config' response: %s"
+      self.log.debug("Used message-id for callback: %s"
                      % msg_id)
       self.callback_manager.subscribe_callback(hook=hook,
                                                type=type,
@@ -1366,14 +1366,14 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     self.log.debug("Request monitoring info from domain: %s" % self.domain_name)
     try:
-      request_params = {"message_id": req_id}
+      request_params = {"message_id": "info-%s" % req_id}
       if self.callback_manager is not None:
         cb_url = self.callback_manager.url
         log.debug("Set callback URL: %s" % cb_url)
         request_params["callback"] = cb_url
         self._setup_callback(hook=self.info_hook,
                              req_id=req_id,
-                             msg_id=req_id,
+                             msg_id=request_params.get('message_id'),
                              type=self.CALLBACK_TYPE_INFO)
       status = self.topoAdapter.info(info_part, **request_params)
       return True if status is not None else False
@@ -1402,14 +1402,14 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         # last_virtualizer for the diff calculation
         self.topoAdapter.get_config()
       request_params = {"diff": self._diff,
-                        "message_id": nffg_part.id}
+                        "message_id": "edit-config-%s" % nffg_part.id}
       if self.callback_manager is not None:
         cb_url = self.callback_manager.url
         log.debug("Set callback URL: %s" % cb_url)
         request_params["callback"] = cb_url
         self._setup_callback(hook=self.edit_config_hook,
                              req_id=nffg_part.id,
-                             msg_id=nffg_part.id,
+                             msg_id=request_params.get('message_id'),
                              type=self.CALLBACK_TYPE_INSTALL,
                              data=nffg_part)
       status = self.topoAdapter.edit_config(nffg_part, **request_params)
@@ -1425,7 +1425,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :param request_id:
     :return:
     """
-    self.log.info("Rollback domain: %s" % self.domain_name)
+    self.log.info(">>> Rollback domain: %s" % self.domain_name)
     self.enable_reset_mode()
     try:
       v_topo = self.topoAdapter.get_config()
@@ -1434,19 +1434,18 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       reset_request = v_request.diff_failsafe(v_topo)
       # log.log(VERBOSE, "Calculated reset request:\n%s" % reset_request.xml())
       log.debug("Calculated reset request:\n%s" % reset_request.xml())
-      request_params = {"diff": self._diff}
+      request_params = {"diff": self._diff,
+                        "message_id": "edit-config-%s" % request_id}
       if self.callback_manager is not None:
         cb_url = self.callback_manager.url
         log.debug("Set callback URL: %s" % cb_url)
         request_params["callback"] = cb_url
-      status = self.topoAdapter.edit_config(reset_request, **request_params)
-      if status is not None:
         self._setup_callback(hook=self.edit_config_hook,
                              req_id=request_id,
+                             msg_id=request_params.get('message_id'),
                              type=self.CALLBACK_TYPE_RESET)
-        return True
-      else:
-        return False
+      status = self.topoAdapter.edit_config(reset_request, **request_params)
+      return True if status is not None else False
     except:
       self.log.exception("Got exception during NFFG installation into: %s." %
                          self.domain_name)

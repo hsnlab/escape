@@ -1016,10 +1016,11 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     """
     self.log.info("Patching cached topology with received diff...")
     full_request = self.server.last_response.full_copy()
-    full_request.bind(relative=True)
+    # full_request.bind(relative=True)
     # Do not call bind on diff to avoid resolve error in Virtualizer
     # diff.bind(relative=True)
     # Adapt changes on  the local config
+    # print full_request.xml()
     full_request.patch(source=diff)
     # full_request.bind(relative=True)
     # return full_request

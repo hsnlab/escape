@@ -410,6 +410,10 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
     if "call-back" not in status.params:
       return None
     callback_url = status.get_callback()
+    if 'message-id' in status.params:
+      msg_id = status.params.get('message-id')
+    else:
+      msg_id = status.message_id
     params = {'message-id': status.message_id}
     if status.status == status.SUCCESS:
       params['response-code'] = httplib.OK

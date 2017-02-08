@@ -79,7 +79,7 @@
       "ENSURE-UNIQUE-ID": true,
       "USE-REMERGE-UPDATE-STRATEGY": true,
       "USE-STATUS-BASED-UPDATE": false,
-      "ONE-STEP_UPDATE": true
+      "ONE-STEP-UPDATE": true
     },
     "deployment": {
       "RESET-DOMAINS-BEFORE-INSTALL": false,

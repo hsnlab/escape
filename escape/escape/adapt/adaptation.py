@@ -609,9 +609,8 @@ class ControllerAdapter(object):
           NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
                                          log=log)
         if CONFIG.rollback_on_failure():
-          log.debug("Restore original DoV state for late update...")
-          deploy_status.data = self.DoVManager.get_backup_state()
-          self.__do_rollback(status=deploy_status)
+          self.__do_rollback(status=deploy_status,
+                             previous_state=self.DoVManager.get_backup_state())
           return deploy_status
       # If installation of the domain was performed without error
       if not domain_install_result and not self.DoVManager.status_updates:
@@ -698,7 +697,7 @@ class ControllerAdapter(object):
       log.warning("Detected virtualized Infrastructure node in mapped NFFG!"
                   " Skip DoV update...")
 
-  def __do_rollback (self, status):
+  def __do_rollback (self, status, previous_state):
     """
 
     :type status: DomainRequestStatus
@@ -708,6 +707,8 @@ class ControllerAdapter(object):
       return
     log.info("Rollback mode is enabled! "
              "Skip install process and reset previous state....")
+    log.debug("Restore original DoV state for late update...")
+    status.data = previous_state
     log.debug("Current status: %s" % status)
     for domain in status.domains:
       domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
@@ -727,7 +728,7 @@ class ControllerAdapter(object):
              domain_mgr.callback_manager:
             status.set_domain_waiting(domain=domain)
           else:
-            status.set_domain_ok(domain=domain)
+            status.set_domain_reset(domain=domain)
         else:
           log.debug("Domain: %s is not affected. Skip rollback..." % domain)
       else:
@@ -779,7 +780,9 @@ class ControllerAdapter(object):
       log.debug("Update failed status for service request: %s..." %
                 request_id)
       deploy_status.set_domain_failed(domain=event.domain)
-      self.__do_rollback(status=deploy_status)
+      if CONFIG.rollback_on_failure():
+        self.__do_rollback(status=deploy_status,
+                           previous_state=self.DoVManager.get_backup_state())
     else:
       log.debug("Update success status for service request: %s..." % request_id)
       deploy_status.set_domain_ok(domain=event.domain)
@@ -821,7 +824,7 @@ class ControllerAdapter(object):
       log.error("Reset request: %s has been failed!" % request_id)
       deploy_status.set_domain_failed(domain=event.domain)
     else:
-      log.debug("Update success status for service request: %s..." % request_id)
+      log.debug("Update success status for RESET request: %s..." % request_id)
       deploy_status.set_domain_reset(domain=event.domain)
       # if isinstance(event.callback.data, NFFG):
       #   log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
