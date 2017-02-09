@@ -159,7 +159,7 @@ class ControllerAdaptationAPI(AbstractAPI):
       raise
     log.getChild('API').debug("Invoked install_nffg on %s is finished!" %
                               self.__class__.__name__)
-    if not deploy_status.still_pending:
+    if not deploy_status.still_pending and deploy_status.reset:
       id = mapped_nffg.id
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
       self.raiseEventNoErrors(InstallationFinishedEvent, id=id, result=result)
