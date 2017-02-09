@@ -1173,7 +1173,7 @@ class DomainRequestStatus(object):
   @property
   def success (self):
     if self.__statuses:
-      return all(map(lambda s: s in (self.OK),
+      return all(map(lambda s: s == self.OK,
                      self.__statuses.itervalues()))
     else:
       return False
@@ -1181,7 +1181,7 @@ class DomainRequestStatus(object):
   @property
   def reset (self):
     if self.__statuses:
-      return all(map(lambda s: s in (self.RESET),
+      return all(map(lambda s: s == self.RESET,
                      self.__statuses.itervalues()))
     else:
       return False
