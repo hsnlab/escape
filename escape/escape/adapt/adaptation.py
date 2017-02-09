@@ -735,6 +735,8 @@ class ControllerAdapter(object):
           log.debug("Domain: %s is not affected. Skip rollback..." % domain)
       else:
         log.warning("%s does not support rollback! Skip rollback step...")
+      log.debug("Installation status: %s" % status)
+    log.debug("Rollback process has been finished!")
 
   def _handle_DomainChangedEvent (self, event):
     """
@@ -808,6 +810,7 @@ class ControllerAdapter(object):
           self.__do_rollback(status=deploy_status,
                              previous_state=self.DoVManager.get_backup_state())
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
+      log.debug("Overall installation result: %s" % result)
       self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                          id=request_id,
                                          result=result)
@@ -850,6 +853,7 @@ class ControllerAdapter(object):
           log.warning("One-step-update is enabled. "
                       "Skip restore state due to failed request...")
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
+      log.debug("Overall installation result: %s" % result)
       self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                          id=request_id,
                                          result=result)
@@ -890,6 +894,7 @@ class ControllerAdapter(object):
       log.info("All info processes have been finished!")
       self.__reset_node_ids(info=original_info, binding=binding)
       result = InfoRequestFinishedEvent.get_result_from_status(req_status)
+      log.debug("Overall info result: %s" % result)
       self._layer_API.raiseEventNoErrors(InfoRequestFinishedEvent,
                                          result=result,
                                          status=req_status)

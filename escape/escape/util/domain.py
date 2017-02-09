@@ -60,7 +60,14 @@ class BaseResultEvent(Event):
     :rtype: bool
     """
     if result in (cls.ERROR, cls.MAPPING_ERROR, cls.DEPLOY_ERROR, cls.RESET,
-                  cls.REFUSED_BY_VERIFICATION, cls.ABORTED):
+                  cls.REFUSED_BY_VERIFICATION, cls.ABORTED, cls.UNKNOWN):
+      return True
+    else:
+      return False
+
+  @classmethod
+  def is_pending (cls, result):
+    if result in (cls.INITIATED, cls.IN_PROGRESS):
       return True
     else:
       return False

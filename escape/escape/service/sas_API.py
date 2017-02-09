@@ -587,7 +587,7 @@ class ServiceLayerAPI(AbstractAPI):
       log.getChild('API').error(
         "Service request(id=%s) has been finished with error result: %s!" %
         (event.id, event.result))
-    if not event.result == event.IN_PROGRESS:
+    if not event.is_pending(event.result):
       self.__handle_mapping_result(nffg_id=event.id,
                                    fail=event.is_error(event.result))
     # Quit ESCAPE if test mode is active

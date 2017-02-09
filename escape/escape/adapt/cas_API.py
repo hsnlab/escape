@@ -159,9 +159,10 @@ class ControllerAdaptationAPI(AbstractAPI):
       raise
     log.getChild('API').debug("Invoked install_nffg on %s is finished!" %
                               self.__class__.__name__)
-    if not deploy_status.still_pending and not deploy_status.reset:
+    if not deploy_status.still_pending:
       id = mapped_nffg.id
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
+      log.debug("Overall installation result: %s" % result)
       self.raiseEventNoErrors(InstallationFinishedEvent, id=id, result=result)
 
   @schedule_as_coop_task
@@ -203,6 +204,5 @@ class ControllerAdaptationAPI(AbstractAPI):
         event.source._core_name).title())
     # Currently global view is a reference to the DoV to keep ESCAPE fast
     dov = self.controller_adapter.DoVManager.dov
-    log.getChild('API').debug(
-      "Sending back DoV: %s..." % dov)
+    log.getChild('API').debug("Sending back DoV: %s..." % dov)
     self.raiseEventNoErrors(GlobalResInfoEvent, dov)

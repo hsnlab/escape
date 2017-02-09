@@ -751,7 +751,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.getChild('API').error(
         "NF-FG(%s) instantiation has been finished with error result: %s!" %
         (event.id, event.result))
-    if not event.result == event.IN_PROGRESS:
+    if not event.is_pending(event.result):
       self.__process_mapping_result(nffg_id=event.id,
                                     fail=event.is_error(event.result))
     self.raiseEventNoErrors(InstantiationFinishedEvent,
