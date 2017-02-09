@@ -17,7 +17,6 @@ Sublayer.
 """
 import httplib
 import os
-import uuid
 from subprocess import Popen
 
 from escape import CONFIG
@@ -383,7 +382,8 @@ class ServiceLayerAPI(AbstractAPI):
     # Store request if it is received on REST-API
     if hasattr(self, 'rest_api') and self.rest_api:
       log.getChild('API').debug("Store received NFFG request info...")
-      msg_id = self.rest_api.request_cache.cache_request_by_nffg(nffg=service_nffg)
+      msg_id = self.rest_api.request_cache.cache_request_by_nffg(
+        nffg=service_nffg)
       if msg_id is not None:
         self.rest_api.request_cache.set_in_progress(id=msg_id)
         log.getChild('API').debug("Request is stored with id: %s" % msg_id)
@@ -587,8 +587,9 @@ class ServiceLayerAPI(AbstractAPI):
       log.getChild('API').error(
         "Service request(id=%s) has been finished with error result: %s!" %
         (event.id, event.result))
-    self.__handle_mapping_result(nffg_id=event.id,
-                                 fail=BaseResultEvent.is_error(event.result))
+    if not event.status == event.IN_PROGRESS:
+      self.__handle_mapping_result(nffg_id=event.id,
+                                   fail=event.is_error(event.result))
     # Quit ESCAPE if test mode is active
     if get_global_parameter(name="QUIT_AFTER_PROCESS"):
       quit_with_ok("Detected QUIT mode! Exiting ESCAPE...")

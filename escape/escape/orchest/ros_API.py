@@ -693,7 +693,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
         body = status.data[0]
         body = body.xml() if isinstance(body, Info) else str(body)
       log.info("Set request status: %s for message: %s"
-                % (req_status.status, req_status.message_id))
+               % (req_status.status, req_status.message_id))
       log.log(VERBOSE, "Collected Info data:\n%s" % body)
       ret = self.ros_api.invoke_callback(message_id=status.id, body=body)
       if ret is None:
@@ -751,8 +751,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.getChild('API').error(
         "NF-FG(%s) instantiation has been finished with error result: %s!" %
         (event.id, event.result))
-    self.__process_mapping_result(nffg_id=event.id,
-                                  fail=BaseResultEvent.is_error(event.result))
+    if not event.status == event.IN_PROGRESS:
+      self.__process_mapping_result(nffg_id=event.id,
+                                    fail=event.is_error(event.result))
     self.raiseEventNoErrors(InstantiationFinishedEvent,
                             id=event.id,
                             result=event.result)
