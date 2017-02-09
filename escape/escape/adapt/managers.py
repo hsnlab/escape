@@ -931,7 +931,7 @@ class SDNDomainManager(AbstractDomainManager):
     :return: installation was success or not
     :rtype: bool
     """
-    self.log.info("Install %s domain part..." % self.domain_name)
+    self.log.info(">>> Install %s domain part..." % self.domain_name)
     try:
       result = (self._delete_flowrules(nffg_part=nffg_part),
                 self._deploy_flowrules(nffg_part=nffg_part))
@@ -1148,7 +1148,7 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     :return: installation was success or not
     :rtype: bool
     """
-    self.log.info("Install %s domain part..." % self.domain_name)
+    self.log.info(">>> Install %s domain part..." % self.domain_name)
     try:
       if not self._poll and self._diff:
         self.log.debug(
@@ -1283,6 +1283,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     self.callback_manager = None
     """:type: CallbackManager"""
     self.__reset_mode = False
+    self.__last_success_state = None
 
   def enable_reset_mode (self):
     self.log.debug("Enable reset mode for: %s" % self)
@@ -1351,11 +1352,11 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         return
       self.log.debug("Used message-id for callback: %s"
                      % msg_id)
-      self.callback_manager.subscribe_callback(hook=hook,
-                                               type=type,
-                                               cb_id=msg_id,
-                                               req_id=req_id,
-                                               data=data)
+      return self.callback_manager.subscribe_callback(hook=hook,
+                                                      type=type,
+                                                      cb_id=msg_id,
+                                                      req_id=req_id,
+                                                      data=data)
 
   def request_info_from_domain (self, info_part, req_id):
     """
@@ -1392,28 +1393,32 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :return: status if the installation was success
     :rtype: bool
     """
-    self.log.info("Install %s domain part..." % self.domain_name)
+    self.log.info(">>> Install %s domain part..." % self.domain_name)
     try:
-      if not self._poll and self._diff:
-        self.log.debug(
-          "Polling is disabled. Requesting the most recent topology "
-          "from domain: %s for installation..." % self.domain_name)
-        # Request the most recent topo, which will update the cached
-        # last_virtualizer for the diff calculation
-        self.topoAdapter.get_config()
+      log.debug("Request and store the most recent domain topology....")
+      topo = self.topoAdapter.get_config()
+      if topo:
+        self.__last_success_state = topo
+        log.log(VERBOSE,
+                "Last successful state:\n%s" % self.__last_success_state.xml())
       request_params = {"diff": self._diff,
                         "message_id": "edit-config-%s" % nffg_part.id}
       if self.callback_manager is not None:
         cb_url = self.callback_manager.url
         log.debug("Set callback URL: %s" % cb_url)
         request_params["callback"] = cb_url
-        self._setup_callback(hook=self.edit_config_hook,
-                             req_id=nffg_part.id,
-                             msg_id=request_params.get('message_id'),
-                             type=self.CALLBACK_TYPE_INSTALL,
-                             data=nffg_part)
+        cb = self._setup_callback(hook=self.edit_config_hook,
+                                  req_id=nffg_part.id,
+                                  msg_id=request_params.get('message_id'),
+                                  type=self.CALLBACK_TYPE_INSTALL,
+                                  data=nffg_part)
       status = self.topoAdapter.edit_config(nffg_part, **request_params)
-      return True if status is not None else False
+      if status is None:
+        if self.callback_manager is not None:
+          self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id)
+          return False
+      else:
+        return True
     except:
       self.log.exception("Got exception during NFFG installation into: %s." %
                          self.domain_name)
@@ -1428,24 +1433,29 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     self.log.info(">>> Rollback domain: %s" % self.domain_name)
     self.enable_reset_mode()
     try:
-      v_topo = self.topoAdapter.get_config()
-      v_request = self.topoAdapter.last_request
-      log.debug("Calculate request for domain reset...")
-      reset_request = v_request.diff_failsafe(v_topo)
-      # log.log(VERBOSE, "Calculated reset request:\n%s" % reset_request.xml())
-      log.debug("Calculated reset request:\n%s" % reset_request.xml())
+      log.debug("Request for the most recent domain topology....")
+      self.topoAdapter.get_config()
+      reset_state = self.__last_success_state
+      log.log(VERBOSE,
+              "Full RESET topology:\n%s" % reset_state)
       request_params = {"diff": self._diff,
-                        "message_id": "edit-config-%s" % request_id}
+                        "message_id": "rollback-%s" % request_id}
       if self.callback_manager is not None:
         cb_url = self.callback_manager.url
         log.debug("Set callback URL: %s" % cb_url)
         request_params["callback"] = cb_url
-        self._setup_callback(hook=self.edit_config_hook,
-                             req_id=request_id,
-                             msg_id=request_params.get('message_id'),
-                             type=self.CALLBACK_TYPE_RESET)
-      status = self.topoAdapter.edit_config(reset_request, **request_params)
-      return True if status is not None else False
+        cb = self._setup_callback(hook=self.edit_config_hook,
+                                  req_id=request_id,
+                                  msg_id=request_params.get('message_id'),
+                                  type=self.CALLBACK_TYPE_RESET)
+      status = self.topoAdapter.edit_config(reset_state, **request_params)
+      if status is None:
+        if self.callback_manager is not None:
+          self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id)
+          self.disable_reset_mode()
+          return False
+      else:
+        return True
     except:
       self.log.exception("Got exception during NFFG installation into: %s." %
                          self.domain_name)
@@ -1492,8 +1502,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :param callback:
     :return:
     """
-    self.log.debug("Callback hook (edit-config) invoked with callback id: %s" %
-                   callback.callback_id)
+    self.log.debug("Callback hook (%s) invoked with callback id: %s" %
+                   (callback.type, callback.callback_id))
     self.callback_manager.unsubscribe_callback(cb_id=callback.callback_id)
     if callback.type == self.CALLBACK_TYPE_INSTALL:
       event_class = EditConfigHookEvent
@@ -1552,8 +1562,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :param callback:
     :return:
     """
-    self.log.debug("Callback hook (info) invoked with callback id: %s" %
-                   callback.callback_id)
+    self.log.debug("Callback hook (%d) invoked with callback id: %s" %
+                   (callback.type, callback.callback_id))
     self.callback_manager.unsubscribe_callback(cb_id=callback.callback_id)
     if callback.result_code == 0:
       self.log.warning(

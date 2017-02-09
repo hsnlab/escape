@@ -59,6 +59,8 @@ class InstallationFinishedEvent(mgrs.BaseResultEvent):
       return cls.IN_PROGRESS
     elif deploy_status.failed:
       return cls.DEPLOY_ERROR
+    elif deploy_status.reset:
+      return cls.RESET
     else:
       return cls.UNKNOWN
 
@@ -575,10 +577,6 @@ class ControllerAdapter(object):
                     "Skip install domain part..." % domain)
         deploy_status.set_domain_failed(domain=domain)
         continue
-      # Temporarily recreate TAGs originated from collocated link
-      # NFFGToolBox.recreate_missing_match_TAGs(nffg=part, log=log)
-      # Rebind requirement link fragments as e2e reqs
-      # part = NFFGToolBox.rebind_e2e_req_links(nffg=part, log=log)
       log.log(VERBOSE, "Splitted domain: %s part:\n%s" % (domain, part.dump()))
       # Check if need to reset domain before install
       if CONFIG.reset_domains_before_install():
@@ -609,9 +607,9 @@ class ControllerAdapter(object):
           NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_FAIL,
                                          log=log)
         if CONFIG.rollback_on_failure():
-          self.__do_rollback(status=deploy_status,
-                             previous_state=self.DoVManager.get_backup_state())
-          return deploy_status
+          # Stop deploying remained nffg_parts and initiate delayed rollback
+          log.info("Rollback mode is enabled! Skip installation process...")
+          break
       # If installation of the domain was performed without error
       if not domain_install_result and not self.DoVManager.status_updates:
         log.warning("Skip DoV update with domain: %s! Cause: "
@@ -632,7 +630,8 @@ class ControllerAdapter(object):
         deploy_status.set_domain_waiting(domain=domain)
         continue
       if domain_mgr.IS_INTERNAL_MANAGER:
-        self.perform_internal_mgr_update(mapped_nffg=mapped_nffg, domain=domain)
+        self.__perform_internal_mgr_update(mapped_nffg=mapped_nffg,
+                                           domain=domain)
         # In case of Local manager skip the rest of the update
         continue
       if CONFIG.one_step_update():
@@ -652,16 +651,19 @@ class ControllerAdapter(object):
       # Notify remote visualizer about the installation result if it's needed
       notify_remote_visualizer(
         data=self.DoVManager.dov.get_resource_info(), id=LAYER_NAME)
+    elif deploy_status.still_pending:
+      log.info("Installation process is still pending! Waiting for results...")
     elif deploy_status.failed:
       log.error("%s installation was not successful!" % mapped_nffg)
-    elif deploy_status.still_pending:
-      log.info(
-        "All installation processes have been finished! Waiting for results...")
+      # No pending install part here
+      if CONFIG.rollback_on_failure():
+        self.__do_rollback(status=deploy_status,
+                           previous_state=self.DoVManager.get_backup_state())
     else:
       log.info("All installation processes have been finished!")
     return deploy_status
 
-  def perform_internal_mgr_update (self, mapped_nffg, domain):
+  def __perform_internal_mgr_update (self, mapped_nffg, domain):
     # If the internalDM is the only initiated mgr, we can override the
     # whole DoV
     if mapped_nffg.is_SBB():
@@ -706,8 +708,8 @@ class ControllerAdapter(object):
     if not CONFIG.rollback_on_failure():
       return
     log.info("Rollback mode is enabled! "
-             "Skip install process and reset previous state....")
-    log.debug("Restore original DoV state for late update...")
+             "Abort install process and reset previous state....")
+    log.debug("Store previous DoV state for late update...")
     status.data = previous_state
     log.debug("Current status: %s" % status)
     for domain in status.domains:
@@ -780,9 +782,6 @@ class ControllerAdapter(object):
       log.debug("Update failed status for service request: %s..." %
                 request_id)
       deploy_status.set_domain_failed(domain=event.domain)
-      if CONFIG.rollback_on_failure():
-        self.__do_rollback(status=deploy_status,
-                           previous_state=self.DoVManager.get_backup_state())
     else:
       log.debug("Update success status for service request: %s..." % request_id)
       deploy_status.set_domain_ok(domain=event.domain)
@@ -795,16 +794,19 @@ class ControllerAdapter(object):
                                       nffg=event.callback.data)
     log.debug("Installation status: %s" % deploy_status)
     if not deploy_status.still_pending:
-      log.info("All installation process has been finished! Result: %s" %
-               deploy_status.status)
-      if CONFIG.one_step_update():
-        if deploy_status.success:
+      log.info("All installation process has been finished for request: %s! "
+               "Result: %s" % (deploy_status.id, deploy_status.status))
+      if deploy_status.success:
+        if CONFIG.one_step_update():
           log.debug("One-step-update is enabled. Update DoV now...")
           self.DoVManager.set_global_view(nffg=deploy_status.data)
-        else:
-          log.debug("One-step-update is enabled. "
-                    "Skip update due to failed request...")
-
+      elif deploy_status.failed:
+        if CONFIG.one_step_update():
+          log.warning("One-step-update is enabled. "
+                      "Skip update due to failed request...")
+        if CONFIG.rollback_on_failure():
+          self.__do_rollback(status=deploy_status,
+                             previous_state=self.DoVManager.get_backup_state())
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
       self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                          id=request_id,
@@ -821,10 +823,11 @@ class ControllerAdapter(object):
     request_id = event.callback.request_id
     deploy_status = self.status_mgr.get_status(id=request_id)
     if event.was_error():
-      log.error("Reset request: %s has been failed!" % request_id)
+      log.error("ROLLBACK request: %s has been failed!" % request_id)
       deploy_status.set_domain_failed(domain=event.domain)
     else:
-      log.debug("Update success status for RESET request: %s..." % request_id)
+      log.debug(
+        "Update success status for ROLLBACK request: %s..." % request_id)
       deploy_status.set_domain_reset(domain=event.domain)
       # if isinstance(event.callback.data, NFFG):
       #   log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
@@ -833,13 +836,19 @@ class ControllerAdapter(object):
       # TODO domain update
       if CONFIG.one_step_update():
         log.debug("One-step-update is enabled. Skip explicit domain update!")
-    log.debug("Installation status: %s" % deploy_status)
+    log.debug("Rollback status: %s" % deploy_status)
     if not deploy_status.still_pending:
-      log.info("All RESET process has been finished!")
-      if CONFIG.one_step_update():
-        log.debug("One-step-update is enabled. Restore DoV state now...")
-        backup = self.DoVManager.get_backup_state()
-        self.DoVManager.set_global_view(nffg=backup)
+      log.info("All ROLLBACK process has been finished! Result: %s" %
+               deploy_status.status)
+      if deploy_status.reset:
+        if CONFIG.one_step_update():
+          log.debug("One-step-update is enabled. Restore DoV state now...")
+          backup = self.DoVManager.get_backup_state()
+          self.DoVManager.set_global_view(nffg=backup)
+      elif deploy_status.failed:
+        if CONFIG.one_step_update():
+          log.warning("One-step-update is enabled. "
+                      "Skip restore state due to failed request...")
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
       self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                          id=request_id,
@@ -1164,7 +1173,15 @@ class DomainRequestStatus(object):
   @property
   def success (self):
     if self.__statuses:
-      return all(map(lambda s: s in (self.OK, self.RESET),
+      return all(map(lambda s: s in (self.OK),
+                     self.__statuses.itervalues()))
+    else:
+      return False
+
+  @property
+  def reset (self):
+    if self.__statuses:
+      return all(map(lambda s: s in (self.RESET),
                      self.__statuses.itervalues()))
     else:
       return False
@@ -1181,7 +1198,12 @@ class DomainRequestStatus(object):
         return self.FAILED
       elif s == self.WAITING:
         return self.WAITING
-    return self.OK
+    if self.reset:
+      return self.RESET
+    elif self.success:
+      return self.OK
+    else:
+      return self.INITIALIZED
 
   @property
   def domains (self):

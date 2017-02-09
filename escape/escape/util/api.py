@@ -636,7 +636,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
     :return: None
     """
-    self.log.debug("Got HTTP request: %s" % str(self.raw_requestline).rstrip())
+    self.log.debug(">>> Got HTTP request: %s" % str(self.raw_requestline).rstrip())
     http_method = self.command.upper()
     real_path = urlparse.urlparse(self.path).path
     try:
@@ -679,6 +679,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
       self.func_name = None
       self.wfile.flush()
       self.wfile.close()
+    self.log.debug(
+      ">>> HTTP request: %s ended!" % str(self.raw_requestline).rstrip())
 
   def _get_body (self):
     """

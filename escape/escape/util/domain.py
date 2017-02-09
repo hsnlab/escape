@@ -44,6 +44,7 @@ class BaseResultEvent(Event):
   ERROR = "ERROR"
   MAPPING_ERROR = "MAPPING_ERROR"
   DEPLOY_ERROR = "DEPLOYMENT_ERROR"
+  RESET = "RESET"
   REFUSED_BY_VERIFICATION = "DEPLOYMENT_REFUSED_BY_VERIGRAPH"
   ABORTED = "ABORTED"
   UNKNOWN = "UNKNOWN"
@@ -58,7 +59,7 @@ class BaseResultEvent(Event):
     :return: the result is an error type or note
     :rtype: bool
     """
-    if result in (cls.ERROR, cls.MAPPING_ERROR, cls.DEPLOY_ERROR,
+    if result in (cls.ERROR, cls.MAPPING_ERROR, cls.DEPLOY_ERROR, cls.RESET,
                   cls.REFUSED_BY_VERIFICATION, cls.ABORTED):
       return True
     else:
@@ -1329,9 +1330,9 @@ class AbstractRESTAdapter(Session):
       if timeout is not None:
         kwargs['timeout'] = timeout
       return self.send_request(method, url, body, **kwargs)
-    except ConnectionError:
-      log.error("Remote agent(adapter: %s, url: %s) is not reachable!"
-                % (self.name, self._base_url))
+    except ConnectionError as e:
+      log.error("Remote agent(adapter: %s, url: %s) is not reachable: %s!"
+                % (self.name, self._base_url, e))
       return None
     except HTTPError as e:
       log.error("Remote agent(adapter: %s, url: %s) responded with an error: %s"

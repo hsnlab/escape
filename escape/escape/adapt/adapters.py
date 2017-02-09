@@ -1160,8 +1160,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.debug("Convert NFFG to XML/Virtualizer format...")
       vdata = self.converter.adapt_mapping_into_Virtualizer(
         virtualizer=self.last_virtualizer, nffg=data, reinstall=diff)
-      # virtualizer=self.original_virtualizer, nffg=data, reinstall=diff)
-      # vdata = self.converter.dump_to_Virtualizer(nffg=data)
       log.log(VERBOSE, "Adapted Virtualizer:\n%s" % vdata.xml())
     elif isinstance(data, Virtualizer):
       # Nothing to do
@@ -1175,8 +1173,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       vdata = self.__calculate_diff(vdata)
     else:
       log.debug("Using given Virtualizer as full mapping request")
-    # Force relative path explicitly
-    # vdata.bind(relative=True)
     plain_data = vdata.xml()
     log.debug("Send request to %s domain agent at %s..." %
               (self.domain_name, self._base_url))
@@ -1201,9 +1197,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return True
     if status is not None:
       log.debug("Request has been sent successfully!")
-      # msg_id = self.get_last_message_id()
-      # if msg_id is not None:
-      #   log.debug("Detected message-id from response: %s" % msg_id)
     return status
 
   def get_last_message_id (self):
@@ -1352,6 +1345,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     log.debug("Cache received 'get-config' response...")
     self.__last_virtualizer = data.full_copy()
+
+  def get_topo_cache(self):
+    return self.__last_virtualizer
 
   def __cache_request (self, data):
     """

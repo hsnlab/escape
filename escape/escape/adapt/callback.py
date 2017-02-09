@@ -189,6 +189,7 @@ class CallbackManager(HTTPServer, Thread):
       _timeout = timeout if timeout is not None else self.wait_timeout
       cb.setup_timer(_timeout, self.invoke_hook, msg_id=cb_id, result=0)
       self.__register[cb_id] = cb
+      return cb
     else:
       log.warning("Hook is already registered for id: %s on domain: %s"
                   % (cb_id, self.domain_name))
