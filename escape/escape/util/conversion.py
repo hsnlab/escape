@@ -553,10 +553,13 @@ class NFFGConverter(object):
         # Add affinity list
         if v_vnf.constraints.affinity.is_initialized():
           for aff in v_vnf.constraints.affinity.values():
-            aff = nf.constraints.add_affinity(
-              id=aff.id.get_value(),
-              value=aff.object.get_target().id.get_value())
-            self.log.debug("Add affinity: %s to %s" % (aff, nf.id))
+            try:
+              aff = nf.constraints.add_affinity(
+                id=aff.id.get_value(),
+                value=aff.object.get_target().id.get_value())
+              self.log.debug("Add affinity: %s to %s" % (aff, nf.id))
+            except ValueError as e:
+              log.warning("Skip anti-affinity conversion due to error: %s" % e)
         # Add antiaffinity list
         if v_vnf.constraints.antiaffinity.is_initialized():
           for naff in v_vnf.constraints.antiaffinity.values():
