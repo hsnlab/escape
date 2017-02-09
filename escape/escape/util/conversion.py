@@ -559,28 +559,41 @@ class NFFGConverter(object):
                 value=aff.object.get_target().id.get_value())
               self.log.debug("Add affinity: %s to %s" % (aff, nf.id))
             except ValueError as e:
-              log.warning("Skip anti-affinity conversion due to error: %s" % e)
+              self.log.warning(
+                "Skip affinity conversion due to error: %s" % e)
         # Add antiaffinity list
         if v_vnf.constraints.antiaffinity.is_initialized():
           for naff in v_vnf.constraints.antiaffinity.values():
-            naff = nf.constraints.add_antiaffinity(
-              id=naff.id.get_value(),
-              value=naff.object.get_target().id.get_value())
-            self.log.debug("Add antiaffinity: %s to %s" % (naff, nf.id))
+            try:
+              naff = nf.constraints.add_antiaffinity(
+                id=naff.id.get_value(),
+                value=naff.object.get_target().id.get_value())
+              self.log.debug("Add antiaffinity: %s to %s" % (naff, nf.id))
+            except ValueError as e:
+              self.log.warning(
+                "Skip anti-affinity conversion due to error: %s" % e)
         # Add variables dict
         if v_vnf.constraints.variable.is_initialized():
           for var in v_vnf.constraints.variable.values():
-            var = nf.constraints.add_variable(
-              key=var.id.get_value(),
-              id=var.object.get_target().id.get_value())
-            self.log.debug("Add variable: %s to %s" % (var, nf.id))
+            try:
+              var = nf.constraints.add_variable(
+                key=var.id.get_value(),
+                id=var.object.get_target().id.get_value())
+              self.log.debug("Add variable: %s to %s" % (var, nf.id))
+            except ValueError as e:
+              self.log.warning(
+                "Skip variable conversion due to error: %s" % e)
         # Add constraint list
         if v_vnf.constraints.constraint.is_initialized():
           for constraint in v_vnf.constraints.constraint.values():
-            formula = nf.constraints.add_constraint(
-              id=constraint.id.get_value(),
-              formula=constraint.formula.get_value())
-            self.log.debug("Add constraint: %s to %s" % (formula, nf.id))
+            try:
+              formula = nf.constraints.add_constraint(
+                id=constraint.id.get_value(),
+                formula=constraint.formula.get_value())
+              self.log.debug("Add constraint: %s to %s" % (formula, nf.id))
+            except ValueError as e:
+              self.log.warning(
+                "Skip constraint conversion due to error: %s" % e)
 
       # Add NF metadata
       for key in v_vnf.metadata:
@@ -1912,7 +1925,7 @@ class NFFGConverter(object):
       for id, naff in infra.constraints.antiaffinity.iteritems():
         v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
         if v_naff_node is None:
-          self.log.warning("Referenced Node: %s is not found for affinity!"
+          self.log.warning("Referenced Node: %s is not found for anti-affinity!"
                            % naff)
           continue
         self.log.debug(
@@ -1959,7 +1972,7 @@ class NFFGConverter(object):
         for id, naff in nf.constraints.antiaffinity.iteritems():
           v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
           if v_naff_node is None:
-            self.log.warning("Referenced Node: %s is not found for affinity!"
+            self.log.warning("Referenced Node: %s is not found for anti-affinity!"
                              % naff)
             continue
           self.log.debug(
