@@ -191,7 +191,7 @@ class CallbackManager(HTTPServer, Thread):
       self.__register[cb_id] = cb
     else:
       log.warning("Hook is already registered for id: %s on domain: %s"
-                  % (id, self.domain_name))
+                  % (cb_id, self.domain_name))
 
   def unsubscribe_callback (self, cb_id):
     """

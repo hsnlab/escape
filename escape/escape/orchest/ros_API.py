@@ -828,7 +828,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     """
     self.log.debug("Call %s function: edit-config" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
-    if nffg:
+    if nffg is not None:
       if nffg.service_id is None:
         nffg.service_id = nffg.id
       nffg.id = params.get(self.MESSAGE_ID_NAME)
@@ -837,6 +837,10 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
                              nffg=nffg,
                              params=params)
       self.send_acknowledge(message_id=params[self.MESSAGE_ID_NAME])
+    else:
+      self.log.error("Parsed and converted NFFG of 'edit-config' is missing!")
+      self.send_error(code=httplib.INTERNAL_SERVER_ERROR,
+                      message="Request body processing was failed!")
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
   def status (self, params):
