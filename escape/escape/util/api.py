@@ -414,7 +414,7 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
       msg_id = status.params.get('message-id')
     else:
       msg_id = status.message_id
-    params = {'message-id': status.message_id}
+    params = {'message-id': msg_id}
     if status.status == status.SUCCESS:
       params['response-code'] = httplib.OK
       if not body:
@@ -425,7 +425,6 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
         # TODO - return with failed part of the request??
         body = "TODO"
     try:
-      logging.getLogger("requests").setLevel(logging.WARNING)
       ret = requests.post(url=callback_url, params=params, data=body,
                           timeout=self.CALLBACK_TIMEOUT)
       return ret.status_code
