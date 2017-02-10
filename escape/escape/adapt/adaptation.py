@@ -974,12 +974,12 @@ class ControllerAdapter(object):
     """
     binding = self.__resolve_nodes_in_info(info=info)
     splitted = self.__split_info_request_by_domain(info=info)
-    if not splitted:
-      log.debug("No valid request has been remained after splitting!")
-      return
     status = self.status_mgr.register_request(id=id,
                                               domains=splitted.keys(),
                                               data=(info, binding))
+    if not splitted:
+      log.debug("No valid request has been remained after splitting!")
+      return status
     for domain, info_part in splitted.iteritems():
       log.debug("Search DomainManager for domain: %s" % domain)
       # Get Domain Manager
