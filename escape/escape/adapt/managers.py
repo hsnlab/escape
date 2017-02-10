@@ -1562,7 +1562,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :param callback:
     :return:
     """
-    self.log.debug("Callback hook (%d) invoked with callback id: %s" %
+    self.log.debug("Callback hook (%s) invoked with callback id: %s" %
                    (callback.type, callback.callback_id))
     self.callback_manager.unsubscribe_callback(cb_id=callback.callback_id)
     if callback.result_code == 0:

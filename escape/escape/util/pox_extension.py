@@ -129,7 +129,7 @@ class ESCAPEInteractiveHelper(object):
   POX's py module.
   """
 
-  def __repr__ (self):
+  def __str__ (self):
     """
     Return with defined helper functions.
 
