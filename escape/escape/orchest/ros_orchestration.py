@@ -153,28 +153,28 @@ class ResourceOrchestrator(AbstractOrchestrator):
 
     .. code-block:: json
 
-    [
-      {
-        "bisbis": {
-          "domain": null,
-          "id": "EE2"
-        },
-        "nf": {
-          "id": "fwd",
-          "ports": [
-            {
-              "id": 1,
-              "management": {
-                "22/tcp": [
-                  "0.0.0.0",
-                  20000
-                ]
+      [
+        {
+          "bisbis": {
+            "domain": null,
+            "id": "EE2"
+          },
+          "nf": {
+            "id": "fwd",
+            "ports": [
+              {
+                "id": 1,
+                "management": {
+                  "22/tcp": [
+                    "0.0.0.0",
+                    20000
+                  ]
+                }
               }
-            }
-          ]
+            ]
+          }
         }
-      }
-    ]
+      ]
 
     :param dov: global topology
     :type dov: NFFG
