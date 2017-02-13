@@ -20,6 +20,8 @@ import argparse
 import imp
 import os
 
+MAIN_CONTAINER_LAYER_NAME = "ESCAPE"
+
 
 def get_escape_version ():
   misc = imp.load_source("misc", os.path.join(os.path.abspath(
@@ -108,7 +110,7 @@ def main ():
       print "Run full cleaning process..."
       # Kill stacked ESCAPE processes
       from misc import run_cmd
-      run_cmd('sudo -S pkill -f "unify"')
+      run_cmd('sudo -S pkill -f "%s"' % MAIN_CONTAINER_LAYER_NAME)
       from misc import remove_junks_at_shutdown, remove_junks_at_boot
       # Remove remained temporarily files
       remove_junks_at_shutdown()
@@ -123,7 +125,7 @@ def main ():
   # Create absolute path for the pox.py initial script
   # Construct POX init command according to argument
   # basic command
-  cmd = [os.path.join(base_dir, "pox/pox.py"), "unify"]
+  cmd = [os.path.join(base_dir, "pox/pox.py"), MAIN_CONTAINER_LAYER_NAME]
 
   # Run ESCAPE in VERBOSE logging level if it is needed
   if args.debug == 1:
