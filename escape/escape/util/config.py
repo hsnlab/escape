@@ -69,7 +69,7 @@ class ESCAPEConfig(object):
     :return: None
     """
     # Store copy of project root directory
-    self.project_root = str(PROJECT_ROOT)
+    self.project_root = PROJECT_ROOT
     self.__initiated = False
     if default:
       self.__configuration = default
