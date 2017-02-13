@@ -77,7 +77,7 @@ external databases and programs, system packages and the latest Python 2.7 inter
 are completely handled and installed by the main setup script: **install-dep.sh**
 
 The currently recommended Python version, in which the development and mostly the
-testing are performed, is the standard CPython **2.7.12**.
+testing are performed, is the standard CPython **2.7.13**.
 
 .. important::
 
@@ -256,7 +256,7 @@ If ESCAPE's Python dependencies are not wanted to be installed globally, follow 
 hard way and setup a virtual environment step-by-step.
 
 For stability ESCAPE uses the dedicated version of the following packages:
-    * neo4j: 2.2.7
+    * neo4j: 2.2.7 (Ubuntu 14.04) or 3.1.1 (Ubuntu 16.04)
     * cryptography 1.3.1
 
 neo4j requires Java 7 which can't be found in the official Ubuntu 14.04 repositories.
@@ -267,7 +267,7 @@ can be used:
 
     $ sudo apt-get install -y software-properties-common
     $ sudo add-apt-repository -y ppa:openjdk-r/ppa
-    $ sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
+    $ sudo add-apt-repository -y ppa:jonathonf/python-2.7
     $ sudo apt-get install openjdk-7-jdk python2.7
 
 Required system and Python packages:
@@ -404,7 +404,7 @@ different Python version or even a different interpreter (not recommended) for
 itself or to separate dependent packages from system-wide Python installation.
 
 To setup a virtual environment based on `virtualenv <https://virtualenv.readthedocs.org/en/latest/>`__
-Python package with a standalone CPython 2.7.10 interpreter run the following script:
+Python package with a standalone CPython 2.7.13 interpreter run the following script:
 
 .. code-block:: bash
 
@@ -412,7 +412,7 @@ Python package with a standalone CPython 2.7.10 interpreter run the following sc
 
 This script performs the following steps:
   * Install additional dependencies
-  * Download, compile and install the 2.7.10 (currently the newest) Python
+  * Download, compile and install the 2.7.13 (currently the newest) Python
     interpreter in a separated directory
   * Setup a virtual environment in the main project directory independently from
     the system-wide Python packages
@@ -429,9 +429,9 @@ Usage:
       Install script for ESCAPEv2 to setup virtual environment
 
       optional parameters:
-        -p   set Python version (default: 2.7.10)
+        -p   set Python version (default: 2.7.13)
         -h   show this help message and exit
-      Example: ./set_virtualenv.sh -p 2.7.9
+      Example: ./set_virtualenv.sh -p 2.7.10
       Based on virtualenv. More information: virtualenv -h
 
 

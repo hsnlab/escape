@@ -25,13 +25,13 @@ function print_usage {
     echo -e "optional parameters:"
     echo -e "\t-p:   set Python version (default: $VERSION)"
     echo -e "\t-h:   show this help message and exit"
-    echo -e "Example: ./set_virtualenv.sh -p 2.7.9"
+    echo -e "Example: ./set_virtualenv.sh -p 2.7.13"
     echo -e "Based on virtualenv. More information: virtualenv -h"
     exit 0
 }
 
 # Default variables
-VERSION=2.7.10
+VERSION=2.7.13
 ENABLE=".use_virtualenv"
 
 # Read initial parameters
@@ -60,7 +60,8 @@ info "=== Download Python in a separate folder ==="
 wget "https://www.python.org/ftp/python/${VERSION}/Python-${VERSION}.tar.xz"
 
 info "=== Installing dependencies ==="
-sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev
+sudo apt-get update && sudo apt-get install -y python-dev python-pip zlib1g-dev \
+libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto
 sudo pip install virtualenv
 
 info "=== Compile and install Python ==="
@@ -80,7 +81,7 @@ virtualenv --python="${PYTHON_DIR}/bin/python" --no-site-packages ${PROJECT_DIR}
 info "=== Install Python dependencies into virtual environment ==="
 cd ${PROJECT_DIR}
 source ./bin/activate
-pip install ncclient pycrypto ecdsa networkx jinja2 py2neo
+pip install numpy jinja2 py2neo networkx requests ncclient pyyaml cryptography==1.3.1
 deactivate
 
 info "=== Enable virtualenv for 'escape.py' script ==="

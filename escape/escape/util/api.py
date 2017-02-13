@@ -16,13 +16,13 @@ Contains abstract classes for concrete layer API modules.
 """
 import httplib
 import json
-import logging
 import os.path
 import threading
 import urllib
 import urlparse
 import uuid
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from Queue import Queue
 from SocketServer import ThreadingMixIn
 
 import requests
@@ -374,6 +374,7 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
     self.virtualizer_type = None
     # Cache for the last response to avoid topo recreation
     self.last_response = None
+    self.scheduler = RequestScheduler()
 
   def start (self):
     """
@@ -635,7 +636,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
     :return: None
     """
-    self.log.debug(">>> Got HTTP request: %s" % str(self.raw_requestline).rstrip())
+    self.log.debug(
+      ">>> Got HTTP request: %s" % str(self.raw_requestline).rstrip())
     http_method = self.command.upper()
     real_path = urlparse.urlparse(self.path).path
     try:
@@ -930,3 +932,117 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     """
     self.log.debug("Call REST-API function: operations")
     self.send_json_response(self.request_perm)
+
+
+class POXCoreRegisterMetaClass(type):
+  """
+  Enhanced metaclass for Singleton design pattern that use pox.core object to
+  store the only instance.
+  """
+  CORE_NAME = "_core_name"
+
+  def __call__ (cls, _core_name=None, *args, **kwargs):
+    """
+    Override object creation. Use `_core_name` as the identifier in POXCore
+    to store the created instance is it hasn't instantiated yet.
+
+    :param _core_name: optional core name
+    :type _core_name: str
+    :param args: optional args of the calling constructor
+    :type args: list
+    :param kwargs: optional kwargs of the calling constructor
+    :type kwargs: dict
+    :return: only instance of 'cls'
+    """
+    name = _core_name if _core_name is not None else getattr(cls, cls.CORE_NAME)
+    if name is None:
+      raise RuntimeError("'_core_name' was not given in class or in parameter!")
+    if not core.core.hasComponent(name):
+      _instance = super(POXCoreRegisterMetaClass, cls).__call__(*args)
+      core.core.register(name, _instance)
+    return core.core.components[name]
+
+
+class APIRequest(object):
+  def __init__ (self, id, layer, function, kwargs):
+    self.id = id
+    self.layer = layer
+    self.function = function
+    self.kwargs = kwargs
+
+  def __str__ (self):
+    return "Request(id: %s, %s  -->  %s, params: %s)" % (
+      self.id, self.layer, self.function, self.kwargs.keys())
+
+
+class RequestScheduler(threading.Thread):
+  """
+  """
+  __metaclass__ = POXCoreRegisterMetaClass
+  _core_name = "RequestScheduler"
+
+  def __init__ (self):
+    super(RequestScheduler, self).__init__(name=self._core_name)
+    self.daemon = True
+    self.__queue = Queue()
+    self.__hooks = {}
+    self.__condition = threading.Condition()
+    self.__progress = None
+    self.log = core.getLogger("SCHEDULER")
+    self.start()
+    self.log.info('Init %s' % self)
+
+  @property
+  def orchestration_in_progress (self):
+    return self.__progress is not None
+
+  def set_orchestration_finished (self, id):
+    if self.__progress is None:
+      self.log.debug("No orchestration in progress!")
+    elif self.__progress != id:
+      self.log.debug("Another request is in progress...")
+    else:
+      self.log.info("Set orchestration status of request: %s --> FINISHED"
+                    % self.__progress)
+      with self.__condition:
+        self.__progress = None
+        self.__condition.notify()
+
+  def schedule_request (self, id, layer, function, **kwargs):
+    self.__queue.put(APIRequest(id=id,
+                                layer=layer,
+                                function=function,
+                                kwargs=kwargs))
+    self.log.info("Schedule request on %s --> %s..." % (layer, function))
+    self.log.debug("Remained requests: %s" % self.__queue.qsize())
+
+  def _proceed_API_call (self, request):
+    """
+    Fail-safe method to call API function.
+    The cooperative micro-task context is handled by actual APIs.
+    Should call this with params, not directly the function of actual API.
+
+    :param request: scheduled request container object
+    :type request: APIRequest
+    :return: None
+    """
+    self.log.info("Start request processing in coop-task: %s" % request)
+    if core.core.hasComponent(request.layer):
+      layer = core.components[request.layer]
+      if hasattr(layer, request.function):
+        return getattr(layer, request.function)(**request.kwargs)
+      else:
+        raise RESTError(msg='Mistyped or not implemented API function call: %s '
+                            % request.function)
+    else:
+      raise RESTError(msg='Error: No component has registered with name: %s, '
+                          'ABORT function call!' % request.layer)
+
+  def run (self):
+    while True:
+      with self.__condition:
+        if self.__progress:
+          self.__condition.wait()
+        request = self.__queue.get()
+        self.__progress = request.id
+        self._proceed_API_call(request=request)

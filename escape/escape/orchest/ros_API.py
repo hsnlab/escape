@@ -26,7 +26,8 @@ from escape.nffg_lib.nffg import NFFGToolBox
 from escape.orchest import LAYER_NAME  # Orchestration layer logger
 from escape.orchest import log as log
 from escape.orchest.ros_orchestration import ResourceOrchestrator
-from escape.util.api import AbstractAPI, RESTServer, RequestStatus
+from escape.util.api import AbstractAPI, RESTServer, RequestStatus, \
+  RequestScheduler
 from escape.util.api import AbstractRequestHandler
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
@@ -585,29 +586,31 @@ class ResourceOrchestrationAPI(AbstractAPI):
                               error=e)
 
   def __process_mapping_result (self, nffg_id, fail):
-    if hasattr(self, 'ros_api') and self.ros_api:
-      log.getChild('API').debug("Cache request status...")
-      req_status = self.ros_api.request_cache.get_request_by_nffg_id(nffg_id)
-      if req_status is None:
-        log.getChild('API').debug("Request status is missing for NFFG: %s! "
-                                  "Skip result processing..." % nffg_id)
-        return
-      log.getChild('API').debug("Process mapping result...")
-      message_id = req_status.message_id
-      if message_id is not None:
-        if fail:
-          self.ros_api.request_cache.set_error_result(id=message_id)
-        else:
-          self.ros_api.request_cache.set_success_result(id=message_id)
-        log.info("Set request status: %s for message: %s"
-                 % (req_status.status, req_status.message_id))
-        ret = self.ros_api.invoke_callback(message_id=message_id)
-        if ret is None:
-          log.getChild('API').debug("No callback was defined!")
-        else:
-          log.getChild('API').debug(
-            "Callback: %s has invoked with return value: %s" % (
-              req_status.get_callback(), ret))
+    if not (hasattr(self, 'ros_api') and self.ros_api):
+      return
+    log.getChild('API').debug("Cache request status...")
+    req_status = self.ros_api.request_cache.get_request_by_nffg_id(nffg_id)
+    if req_status is None:
+      log.getChild('API').debug("Request status is missing for NFFG: %s! "
+                                "Skip result processing..." % nffg_id)
+      return
+    log.getChild('API').debug("Process mapping result...")
+    message_id = req_status.message_id
+    if message_id is not None:
+      if fail:
+        self.ros_api.request_cache.set_error_result(id=message_id)
+      else:
+        self.ros_api.request_cache.set_success_result(id=message_id)
+      log.info("Set request status: %s for message: %s"
+               % (req_status.status, req_status.message_id))
+      ret = self.ros_api.invoke_callback(message_id=message_id)
+      if ret is None:
+        log.getChild('API').debug("No callback was defined!")
+      else:
+        log.getChild('API').debug(
+          "Callback: %s has invoked with return value: %s" % (
+            req_status.get_callback(), ret))
+    RequestScheduler().set_orchestration_finished(id=nffg_id)
 
   def _proceed_to_install_NFFG (self, mapped_nffg):
     """
@@ -718,8 +721,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`MissingGlobalViewEvent`
     :return: None
     """
-    log.getChild('API').debug(
-      "Send DoV request to Adaptation layer...")
+    log.getChild('API').debug("Send DoV request to Adaptation layer...")
     self.raiseEventNoErrors(GetGlobalResInfoEvent)
 
   def _handle_GlobalResInfoEvent (self, event):
@@ -730,9 +732,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`GlobalResInfoEvent`
     :return: None
     """
-    log.getChild('API').debug(
-      "Received DoV from %s Layer" % str(
-        event.source._core_name).title())
+    log.getChild('API').debug("Received DoV from %s Layer" % str(
+      event.source._core_name).title())
     self.orchestrator.virtualizerManager.dov = event.dov
 
   def _handle_InstallationFinishedEvent (self, event):
@@ -834,9 +835,13 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         nffg.service_id = nffg.id
       nffg.id = params.get(self.MESSAGE_ID_NAME)
       nffg.metadata['params'] = params
-      self._proceed_API_call(self.API_CALL_REQUEST,
-                             nffg=nffg,
-                             params=params)
+      # self._proceed_API_call(self.API_CALL_REQUEST,
+      #                        nffg=nffg,
+      #                        params=params)
+      self.server.scheduler.schedule_request(id=nffg.id,
+                                             layer=self.bounded_layer,
+                                             function=self.API_CALL_REQUEST,
+                                             nffg=nffg, params=params)
       self.send_acknowledge(message_id=params[self.MESSAGE_ID_NAME])
     else:
       self.log.error("Parsed and converted NFFG of 'edit-config' is missing!")
