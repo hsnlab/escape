@@ -58,6 +58,7 @@ PROJECT="sb"
 # Component versions
 JAVA_VERSION=7
 NEO4J_VERSION=2.2.7
+# Force cryptography package installation prior to avoid issues in 1.3.2
 CRYPTOGRAPHY_VERSION=1.3.1
 
 # Other constants
@@ -112,27 +113,26 @@ function install_core {
 
     if [ "$DISTRIB_ID" = "Ubuntu" -a "$DISTRIB_VER" = "14.04" ]; then
         info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
-        sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
+        sudo add-apt-repository -y ppa:jonathonf/python-2.7
     fi
 
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install Java 8 explicitly
     sudo apt-get install -y openjdk-${JAVA_VERSION}-jdk
-    # Install Python 2.7.11 explicitly
+    # Install Python 2.7.13 explicitly
     sudo apt-get install -y python2.7
     # Install dependencies
     sudo apt-get install -y python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
                             libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
 
-    # Force cryptography package installation prior to avoid issues in 1.3.2
     info "=== Install ESCAPEv2 Python dependencies ==="
+    # Update setuptools explicitly to workaround a bug related to 3.x.x version
     sudo -H pip install --upgrade setuptools
     sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
     sudo -H pip install numpy jinja2 py2neo networkx requests ncclient pyyaml
-    # Update setuptools explicitly to workaround a bug related to 3.x.x version
 
-    info "=== Install ESCAPEv2 Python dependencies ==="
+    info "=== Install DummyOrchestrator Python dependencies ==="
     sudo -H pip install flask rainbow_logging_handler
 
     info "=== Configure neo4j graph database ==="
