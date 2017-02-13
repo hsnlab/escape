@@ -25,7 +25,8 @@ from escape.adapt import LAYER_NAME as ADAPT
 from escape.infr import LAYER_NAME as INFR
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
-from escape.util.misc import Singleton, VERBOSE, unicode_to_str, quit_with_error
+from escape.util.misc import VERBOSE, unicode_to_str, quit_with_error
+from escape.util.pox_extension import POXCoreRegisterMetaClass
 from pox.core import log, core
 
 # Store the project root where escape.py is started in
@@ -49,8 +50,9 @@ class ESCAPEConfig(object):
   Should be instantiated once!
   """
   # Singleton
-  __metaclass__ = Singleton
+  __metaclass__ = POXCoreRegisterMetaClass
   """Singleton"""
+  _core_name = "CONFIG"
   # Predefined layer names
   LAYERS = (SERVICE, ORCHEST, ADAPT, INFR)
   """Predefined layer names"""
@@ -177,7 +179,7 @@ class ESCAPEConfig(object):
     # Register config into pox.core to be reachable for other future
     # components -not used currently
     self.__initiated = True
-    core.register('CONFIG', self)
+    # core.register('CONFIG', self)
     log.log(VERBOSE, "Running config:\n" + pprint.pformat(self.__configuration))
     return self
 
