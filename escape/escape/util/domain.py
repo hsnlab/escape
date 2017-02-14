@@ -1237,18 +1237,22 @@ class AbstractRESTAdapter(Session):
     return self._base_url
 
   @staticmethod
-  def __suppress_requests_logging ():
+  def __suppress_requests_logging (level=None):
     """
     Suppress annoying and detailed logging of `requests` and `urllib3` packages.
 
     :return: None
     """
     import logging
-    if log.getEffectiveLevel() < logging.INFO:
+    if level is not None:
+      level = level
+    elif log.getEffectiveLevel() < logging.INFO:
       level = log.getEffectiveLevel()
     else:
       level = logging.WARNING
     logging.getLogger("requests").setLevel(level)
+    logging.getLogger("urllib3").setLevel(level)
+
 
   def send_request (self, method, url=None, body=None, **kwargs):
     """

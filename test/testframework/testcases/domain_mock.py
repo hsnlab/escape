@@ -298,12 +298,15 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     self._suppress_requests_logging()
 
   @staticmethod
-  def _suppress_requests_logging ():
-    if log.getEffectiveLevel() < logging.INFO:
+  def _suppress_requests_logging (level=None):
+    if level is not None:
+      level = level
+    elif log.getEffectiveLevel() < logging.INFO:
       level = log.getEffectiveLevel()
     else:
       level = logging.WARNING
     logging.getLogger("requests").setLevel(level)
+    logging.getLogger("urllib3").setLevel(level)
 
   def bind_and_activate (self):
     """
@@ -443,7 +446,6 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     :type msg_id: str or int
     :return: None
     """
-    log.debug(str())
     with self.__callback_lock:
       params = {"message-id": msg_id,
                 "response-code": 200 if code < 300 else 500}

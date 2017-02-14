@@ -31,7 +31,7 @@ function info() {
 
 function warn() {
     echo -e "\n${YELLOW}WARNING: ${1-WARNING}${NC}"
-    read -rsp $'Press ENTER to continue...\n'
+    #read -rsp $'Press ENTER to continue...\n'
 }
 
 function env_setup {
@@ -71,9 +71,10 @@ MNPASSWD=mininet
 
 # Distributor constants
 if [ -f /etc/lsb-release ]; then
-    DISTRIB_ID=$(lsb_release -si)
-    DISTRIB_VER=$(lsb_release -sr)
-    info "Detected platform is $DISTRIB_ID, version: $DISTRIB_VER!"
+    source /etc/lsb-release
+    #DISTRIB_ID=$(lsb_release -si)   # /etc/lsb-release --> DISTRIB_ID
+    #DISTRIB_VER=$(lsb_release -sr)  # /etc/lsb-release --> DISTRIB_RELEASE
+    info "Detected platform is $DISTRIB_ID, version: $DISTRIB_RELEASE!"
 else
     warn "Detected platform is NOT Ubuntu! This may lead to skip some installation steps!"
 fi
@@ -111,9 +112,16 @@ function install_core {
         sudo add-apt-repository -y ppa:openjdk-r/ppa
     fi
 
-    if [ "$DISTRIB_ID" = "Ubuntu" -a "$DISTRIB_VER" = "14.04" ]; then
-        info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
-        sudo add-apt-repository -y ppa:jonathonf/python-2.7
+    if [ "$DISTRIB_ID" = "Ubuntu" ]; then
+        if [ "$DISTRIB_RELEASE" = "14.04" ]; then
+            info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
+            sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
+        elif [ "$DISTRIB_RELEASE" = "16.04" ]; then
+            info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
+            sudo add-apt-repository -y ppa:jonathonf/python-2.7
+        else
+            warn "Unsupported Ubuntu version: $DISTRIB_RELEASE"
+        fi
     fi
 
     info "=== Install ESCAPEv2 core dependencies ==="
@@ -121,19 +129,20 @@ function install_core {
     # Install Java 8 explicitly
     sudo apt-get install -y openjdk-${JAVA_VERSION}-jdk
     # Install Python 2.7.13 explicitly
-    sudo apt-get install -y python2.7
+    sudo apt-get install -y python2.7 python-dev python-pip
     # Install dependencies
-    sudo apt-get install -y python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
-                            libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
+    sudo apt-get install -y python-crypto zlib1g-dev libxml2-dev libxslt1-dev \
+                            libssl-dev libffi-dev neo4j=${NEO4J_VERSION}
 
     info "=== Install ESCAPEv2 Python dependencies ==="
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
+    sudo -H pip install --upgrade pip
     sudo -H pip install --upgrade setuptools
     sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
-    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient pyyaml
+    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient pyyaml wrapt
 
-    info "=== Install DummyOrchestrator Python dependencies ==="
-    sudo -H pip install flask rainbow_logging_handler
+#    info "=== Install DummyOrchestrator Python dependencies ==="
+#    sudo -H pip install flask rainbow_logging_handler
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
@@ -173,7 +182,7 @@ function install_mn_dep {
         sudo addgroup ${MNUSER} sudo
         echo "$MNUSER:$MNPASSWD" | sudo chpasswd
     fi
-    if [ "$DISTRIB_VER" = "14.04" ]; then
+    if [ "$DISTRIB_RELEASE" = "14.04" ]; then
         if grep -Fxq "# --- ESCAPE-mininet ---" "/etc/ssh/sshd_config"; then
             info "=== Remove previous ESCAPEv2-related mininet config ==="
             sudo sed -in '/.*ESCAPE-mininet.*/,/.*ESCAPE-mininet END.*/d' "/etc/ssh/sshd_config"

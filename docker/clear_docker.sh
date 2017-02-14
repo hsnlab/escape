@@ -2,6 +2,6 @@
 
 # Clear containers
 sudo docker rm $(docker ps --no-trunc -aq)
-# Clear imaged
+# Clear images
 sudo docker rmi $(docker images -q -f "dangling=true")
-sudo docker rmi escape/mdo
+sudo docker rmi escape/mdo escape/lo

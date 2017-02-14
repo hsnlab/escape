@@ -48,7 +48,8 @@ function setup () {
 
     info "=== Clone top submodules ==="
     # Clone top submodules with default submodule
-    git submodule update --remote
+#    git submodule update --remote
+    git submodule update    # Following commits
 
     info "=== Init submodules recursively ==="
     # Add symlink to the referenced submodules and init them
@@ -66,7 +67,8 @@ function setup () {
     info "=== Sync and update submodules recursively ==="
     # Sync and update all the submodules
     git submodule foreach git submodule init
-    git submodule update --remote --recursive --merge
+#    git submodule update --remote --recursive --merge
+    git submodule update    # Following commits
 
     info "=== Defined submodules ==="
     git submodule status --recursive

@@ -215,7 +215,8 @@ class ESCAPECommandRunner(CommandRunner):
       self.kill_process()
       self.timeouted = True
     except pexpect.ExceptionPexpect as e:
-      log.error("Got unexpected error:\n%s" % e)
+      log.error("Got unexpected error:\n%s" % e.message)
+      log.debug("Error details:\n%s" % e)
       self.kill_process()
 
   def test (self, timeout=CommandRunner.KILL_TIMEOUT):
@@ -235,7 +236,7 @@ class ESCAPECommandRunner(CommandRunner):
                            timeout=timeout)
       proc.expect(pexpect.EOF)
       return True
-    except pexpect.TIMEOUT:
+    except pexpect.ExceptionPexpect:
       return False
 
   def wait_for_ready (self):
