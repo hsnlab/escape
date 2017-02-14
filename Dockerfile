@@ -9,7 +9,7 @@ FROM ubuntu:16.04
 MAINTAINER Janos Czentye <czentye@tmit.bme.hu>
 LABEL Description="ESCAPE: Multi-domain Orchestrator" Project="5GEx" version="2.0.0"
 # Default install parameter
-ARG ESC_INSTALL_PARAMS=c
+ARG ESC_INSTALL_PARAMS="c -p 5gex"
 # Copy escape files (without submodules and binaries defined in .dockerignore)
 COPY . /home/escape/
 COPY docker/.ssh/ /root/.ssh/
