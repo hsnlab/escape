@@ -167,7 +167,7 @@ function install_mn_dep {
     info "=== Install Mininet dependencies ==="
     # Copied from /mininet/util/install.sh
     sudo apt-get install -y gcc make socat psmisc xterm ssh iperf iproute telnet \
-    python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8
+    python-setuptools cgroup-bin ethtool net-tools xorg help2man pyflakes pylint pep8
     info "=== Install Open vSwitch ==="
     sudo apt-get install -y openvswitch-switch
     info "=== Compile and install 'mnexec' execution utility  ==="
