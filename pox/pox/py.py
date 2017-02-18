@@ -106,7 +106,10 @@ class Interactive (object):
 
     import code
     import sys
+    # Changes by Janos Czentye
+    # Add ESCAPE as the promt in interactive mode to avoid ambiguity
     sys.ps1 = "ESCAPE> "
+    # Addition END
     sys.ps2 = " ... "
     self.running = True
     code.interact('Ready.', local=self.variables)

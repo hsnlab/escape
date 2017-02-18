@@ -1,18 +1,17 @@
 #!/usr/bin/python -u
+# Copyright 2017 Balazs Nemeth
 #
-# Copyright (c) 2016 Balazs Nemeth
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
 #
-# This file is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# http://www.apache.org/licenses/LICENSE-2.0
 #
-# This file is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.nse
 # along with POX. If not, see <http://www.gnu.org/licenses/>.
 
 """
@@ -25,16 +24,17 @@ try:
   from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 except ImportError:
   import os
+
   sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                  "../escape/escape/nffg_lib/")))
+                                               "../escape/escape/nffg_lib/")))
   from nffg import NFFG, NFFGToolBox
 
 if __name__ == '__main__':
   argv = sys.argv[1:]
   if "-h" in argv or "--help" in argv:
-      print """
+    print """
 Reads an input NFFG object into memory and starts an interactive Python
 interpreter to edit the NFFG object. The object can be accessed by 'nffg' name.
 """
   with open(argv[0], "r") as f:
-      nffg = NFFG.parse(f.read())
+    nffg = NFFG.parse(f.read())
