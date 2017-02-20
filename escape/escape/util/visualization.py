@@ -1,4 +1,4 @@
-# Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

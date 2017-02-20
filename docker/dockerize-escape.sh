@@ -1,7 +1,20 @@
 #!/usr/bin/env bash
-# Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2015 Janos Czentye
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Install ESCAPE with all the dependencies into a Docker container
-# based on Ubuntu 14.04.5 LTS
+# based on Ubuntu 16.04 LTS
 
 # Constants for colorful logging
 RED='\033[0;31m'
@@ -33,7 +46,8 @@ CONTAINER_NAME="ESCAPE"
 function docker-dep {
     # Install docker and related packages is it's necessary
     if [ -f /etc/lsb-release ]; then
-        DISTRIB_VER=$(lsb_release -sr)
+        #DISTRIB_VER=$(lsb_release -sr)
+        source /etc/lsb-release
     else
         on_error "Missing distributor version! Maybe the current platform is not Ubuntu?"
     fi
@@ -42,12 +56,12 @@ function docker-dep {
         # Install dependencies
         sudo apt-get install apt-transport-https ca-certificates
         sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-        if [ "$DISTRIB_VER" = "14.04" ]; then
+        if [ "$DISTRIB_RELEASE" = "14.04" ]; then
             echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" | sudo tee /etc/apt/sources.list.d/docker.list
-        elif [ "$DISTRIB_VER" = "16.04" ]; then
+        elif [ "$DISTRIB_RELEASE" = "16.04" ]; then
             echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" | sudo tee /etc/apt/sources.list.d/docker.list
         else
-            on_error "Only Ubuntu 14.04 and 16.104 LTS are supported! This version: $DISTRIB_VER"
+            on_error "Only Ubuntu 14.04 and 16.104 LTS are supported! This version: $DISTRIB_RELEASE"
         fi
         sudo apt-get update
         sudo apt-get install -y docker-engine
@@ -71,7 +85,7 @@ function lo {
     docker-dep
     cp -R ~/.ssh .ssh
     sudo docker build --rm --no-cache -f ../Dockerfile --build-arg ESC_INSTALL_PARAMS=ci -t "$IMAGE_NAME/lo" ..
-    sudo docker create --name "lo$CONTAINER_NAME" -p 8008:8008 -p 8888:8888 -p 8889:8889 -e DISPLAY=$DISPLAY --privileged --cap-add NET_ADMIN -it "$IMAGE_NAME/lo"
+    sudo docker create --name "lo$CONTAINER_NAME" -p 8008:8008 -p 8888:8888 -p 8889:8889 -e DISPLAY=${DISPLAY} --privileged --cap-add NET_ADMIN -it "$IMAGE_NAME/lo"
     rm -rf .ssh
     info "To start the default container use the following command: sudo docker start -i lo$CONTAINER_NAME"
 }

@@ -506,9 +506,12 @@ def boot (argv = None):
 
   # Add pox directory to path
   base = sys.path[0]
+  # Changed by Janos Czentye
+  # Add ESCAPE's code folder to PYTHONPATH as a first step
   sys.path.insert(0, os.path.abspath(os.path.join(base, 'pox')))
   # sys.path.insert(0, os.path.abspath(os.path.join(base, 'ext')))
   sys.path.insert(0, os.path.abspath(os.path.join(base, '../escape')))
+  # Addition END
 
   thread_count = threading.active_count()
 

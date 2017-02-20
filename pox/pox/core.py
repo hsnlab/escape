@@ -187,10 +187,8 @@ class POXCore (EventMixin):
     RereadConfiguration,
   ])
 
-  # version = (0,5,0)
-  version = (2,0,0)
-  # version_name = "eel"
-  version_name = "PoC"
+  version = (0,5,0)
+  version_name = "eel"
 
   def __init__ (self, threaded_selecthub=True, epoll_selecthub=False,
                 handle_signals=True):
@@ -205,7 +203,10 @@ class POXCore (EventMixin):
     import threading
     self.quit_condition = threading.Condition()
 
-    print(self.banner)
+    # Commented out by Janos Czentye
+    # Remove banner to avoid ambiguity
+    # print(self.banner)
+    # Comment END
 
     self.scheduler = recoco.Scheduler(daemon=True,
                                       threaded_selecthub=threaded_selecthub,
@@ -350,8 +351,11 @@ class POXCore (EventMixin):
     self.raiseLater(core, RereadConfiguration)
 
   def goUp (self):
+    # Commented out by Janos Czentye
+    # Remove confusing POX name and use ESCAPE instead
     # log.debug(self.version_string + " going up...")
     log.debug("ESCAPEv2 going up...")
+    # Comment END
 
     log.debug("Running on " + self._get_python_version())
     log.debug("Platform is " + self._get_platform_info())
@@ -377,7 +381,10 @@ class POXCore (EventMixin):
     self._waiter_notify()
 
     if self.running:
+      # Commented by Janos Czentye
+      # Remove confusing POX name and use ESCAPE instead
       log.info("ESCAPEv2 is up.")
+      # Comment END
 
   def _waiter_notify (self):
     if len(self._waiters):
