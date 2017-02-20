@@ -210,8 +210,16 @@ class ResourceOrchestrator(AbstractOrchestrator):
       mapping['nf'] = nf
       # Add infra node ID and domain name
       bisbis = bisbis.split('@')
-      mapping['bisbis'] = {"id": bisbis[0],
-                           "domain": bisbis[1] if len(bisbis) > 1 else None}
+      bb_mapping = {"id": bisbis[0],
+                    "domain": bisbis[1] if len(bisbis) > 1 else None}
+      if bb_mapping.get("domain"):
+        log.debug("Checking URL ...")
+        domain_url = CONFIG.get_domain_url(domain=bb_mapping.get("domain"))
+        if domain_url is not None:
+          bb_mapping["url"] = domain_url
+        else:
+          log.warning("Missing URL for domain: %s!" % bb_mapping["domain"])
+      mapping['bisbis'] = bb_mapping
       mappings.append(mapping)
     return mappings
 
