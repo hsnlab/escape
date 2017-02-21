@@ -29,7 +29,7 @@ from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, RequestStatus, \
   RequestScheduler
 from escape.util.api import AbstractRequestHandler
-from escape.util.com_logger import dump_to_file
+from escape.util.com_logger import MessageDumper
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import ProcessorError
@@ -926,8 +926,9 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     self.log.debug("Send back topology description...")
     self.wfile.write(data)
     self.log.log(VERBOSE, "Responded topology:\n%s" % data)
-    dump_to_file(data=data, unique="ESCAPEp%s-get-config" %
-                                       self.server.server_address[1])
+    MessageDumper().dump_to_file(data=data,
+                                 unique="ESCAPEp%s-get-config" %
+                                        self.server.server_address[1])
 
   def _service_request_parser (self):
     """
@@ -946,8 +947,9 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       self.send_error(code=httplib.BAD_REQUEST, message="Missing body!")
       return
     # Expect XML format --> need to convert first
-    dump_to_file(data=raw_body, unique="ESCAPEp%s-edit-config" %
-                                       self.server.server_address[1])
+    MessageDumper().dump_to_file(data=raw_body,
+                                 unique="ESCAPEp%s-edit-config" %
+                                        self.server.server_address[1])
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type") != "application/xml" and \
          not raw_body.startswith("<?xml version="):
@@ -1200,8 +1202,9 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
     self.end_headers()
     self.wfile.write(data)
     self.log.log(VERBOSE, "Responded mapping info:\n%s" % data)
-    dump_to_file(data=data, unique="ESCAPEp%s-mapping-info" %
-                                   self.server.server_address[1])
+    MessageDumper().dump_to_file(data=data,
+                                 unique="ESCAPEp%s-mapping-info" %
+                                        self.server.server_address[1])
     return
 
   def mappings (self, params):
@@ -1219,8 +1222,9 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
       log.warning("Received data is empty!")
       self.send_error(httplib.BAD_REQUEST, "Missing body!")
       return
-    dump_to_file(data=raw_body,
-                 unique="ESCAPEp%s-mappings" % self.server.server_address[1])
+    MessageDumper().dump_to_file(data=raw_body,
+                                 unique="ESCAPEp%s-mappings" %
+                                        self.server.server_address[1])
     mappings = Mappings.parse_from_text(text=raw_body)
     self.log.log(VERBOSE, "Full request:\n%s" % mappings.xml())
     ret = self._proceed_API_call(self.API_CALL_MAPPINGS, mappings)
@@ -1238,8 +1242,9 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
     self.wfile.write(response_data)
     self.log.log(VERBOSE, "Responded mapping info:\n%s" % response_data)
     self.log.debug("%s function: mapping-info ended!" % self.LOGGER_NAME)
-    dump_to_file(data=response_data,
-                 unique="ESCAPEp%s-mappings" % self.server.server_address[1])
+    MessageDumper().dump_to_file(data=response_data,
+                                 unique="ESCAPEp%s-mappings" %
+                                        self.server.server_address[1])
 
   def info (self, params):
     """
@@ -1253,8 +1258,9 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
       log.warning("Received data is empty!")
       self.send_error(httplib.BAD_REQUEST, "Missing body!")
       return
-    dump_to_file(data=raw_body,
-                 unique="ESCAPEp%s-info" % self.server.server_address[1])
+    MessageDumper().dump_to_file(data=raw_body,
+                                 unique="ESCAPEp%s-info" %
+                                        self.server.server_address[1])
     info = Info.parse_from_text(text=raw_body)
     msg_id = params.get(self.MESSAGE_ID_NAME)
     self.log.log(VERBOSE, "Full request:\n%s" % info.xml())

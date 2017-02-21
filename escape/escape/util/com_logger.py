@@ -165,17 +165,31 @@ class RemoteVisualizer(Session):
       return True
 
 
-def dump_to_file (data, unique, dir="log/trails", __cntr=[0]):
-  if not isinstance(data, basestring):
-    log.error("Data is not str: %s" % type(data))
-    return
-  trails = os.path.join(PROJECT_ROOT, dir)
-  date = time.strftime("%Y%m%d%H%M")
-  __cntr[0] += 1
-  file_path = os.path.join(trails,
-                           "%s_%s_%s.log" % (date, __cntr[0], unique))
-  if os.path.exists(file_path):
-    log.warning("File path exist! %s" % file_path)
-  log.debug("Logging data to file: %s..." % file_path)
-  with open(file_path, "w+") as f:
-    f.write(data)
+class MessageDumper(object):
+  __metaclass__ = Singleton
+  DIR = "log/trails"
+
+  def __init__ (self):
+    self.__cntr = 0
+    self.__clear_trails()
+
+  def __clear_trails (self):
+    log.debug("Remove trails...")
+    for f in os.listdir(os.path.join(os.getcwd(), self.DIR)):
+      if f != ".placeholder":
+        os.remove(os.path.join(os.getcwd(), self.DIR, f))
+
+  def dump_to_file (self, data, unique):
+    if not isinstance(data, basestring):
+      log.error("Data is not str: %s" % type(data))
+      return
+    trails = os.path.join(PROJECT_ROOT, self.DIR)
+    date = time.strftime("%Y%m%d%H%M")
+    self.__cntr += 1
+    file_path = os.path.join(trails,
+                             "%s_%s_%s.log" % (date, self.__cntr, unique))
+    if os.path.exists(file_path):
+      log.warning("File path exist! %s" % file_path)
+    log.debug("Logging data to file: %s..." % file_path)
+    with open(file_path, "w") as f:
+      f.write(data)

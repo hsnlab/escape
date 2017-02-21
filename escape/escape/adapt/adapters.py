@@ -27,7 +27,7 @@ from ncclient.transport import TransportError
 from escape import CONFIG, __version__
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.nffg_lib.nffg import NFFGToolBox
-from escape.util.com_logger import dump_to_file
+from escape.util.com_logger import MessageDumper
 from escape.util.config import PROJECT_ROOT
 from escape.util.conversion import NFFGConverter, UC3MNFFGConverter
 from escape.util.domain import *
@@ -1128,7 +1128,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
          not data.startswith("<?xml version="):
         log.error("Received data is not in XML format!")
         return
-      dump_to_file(data=data, unique="%s-get-config" % self.domain_name)
+      MessageDumper().dump_to_file(data=data,
+                                   unique="%s-get-config" % self.domain_name)
       virt = Virtualizer.parse_from_text(text=data)
       log.log(VERBOSE,
               "Received message to 'get-config' request:\n%s" % virt.xml())
@@ -1186,8 +1187,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if callback is not None:
       params[self.CALLBACK_NAME] = callback
       log.debug("Using explicit callback: %s" % callback)
-    dump_to_file(data=plain_data,
-                 unique="%s-edit-config" % self.domain_name)
+    MessageDumper().dump_to_file(data=plain_data,
+                                 unique="%s-edit-config" % self.domain_name)
     try:
       status = self.send_with_timeout(method=self.POST,
                                       url='edit-config',
@@ -1218,7 +1219,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if callback is not None:
       params[self.CALLBACK_NAME] = callback
       log.debug("Using explicit callback: %s" % callback)
-    dump_to_file(data=info.xml(), unique="%s-info" % self.domain_name)
+    MessageDumper().dump_to_file(data=info.xml(),
+                                 unique="%s-info" % self.domain_name)
     try:
       status = self.send_with_timeout(method=self.POST,
                                       url='info',
