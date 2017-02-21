@@ -19,7 +19,6 @@ Based on pretty_logger: /pox/pox/samples/pretty_log.py
 import logging
 
 import pox.log
-from escape.util.com_logger import MessageDumper
 from pox.core import log
 from pox.log import color, level
 
@@ -84,5 +83,3 @@ def setup_logging (test_mode=False, log_file=None, **kw):
              % (pox.log.launch.__module__,
                 logging.getLevelName(log.getEffectiveLevel()),
                 log_file))
-  # Initiate MessageDumper to clear trails dir
-  MessageDumper()
