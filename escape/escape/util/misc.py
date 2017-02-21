@@ -386,6 +386,10 @@ def remove_junks_at_boot (log=logging.getLogger("cleanup")):
     return
   log.debug("Remove remained log files of VNF, agent and netconfd instances "
             "from previous run...")
+  log.debug("Remove trails...")
+  for f in os.listdir(os.getcwd() + "/log/trails"):
+    if f != ".placeholder":
+      os.remove(os.path.join(os.getcwd(), "log/trails", f))
   run_cmd('rm -f /tmp/*.log')
   for f in os.listdir('/tmp'):
     if re.search('.*-startup-cfg.xml|ncxserver_.*', f):

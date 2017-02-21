@@ -15,12 +15,14 @@
 Contains functions and classes for remote visualization.
 """
 import logging
+import os
+import time
 import urlparse
 
 from requests import Session, ConnectionError, HTTPError, Timeout
 
 import virtualizer as Virtualizer
-from escape import CONFIG, __version__
+from escape import CONFIG, PROJECT_ROOT, __version__
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import LAYER_NAME as ORCHEST
@@ -28,6 +30,8 @@ from escape.service import LAYER_NAME as SERVICE
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import Singleton
 from pox.core import core
+
+log = core.getLogger("logger")
 
 
 class RemoteVisualizer(Session):
@@ -159,3 +163,19 @@ class RemoteVisualizer(Session):
       self.log.warning(
         "Got timeout(%ss) during notify remote Visualizer!" % kwargs['timeout'])
       return True
+
+
+def dump_to_file (data, unique, dir="log/trails", __cntr=[0]):
+  if not isinstance(data, basestring):
+    log.error("Data is not str: %s" % type(data))
+    return
+  trails = os.path.join(PROJECT_ROOT, dir)
+  date = time.strftime("%Y%m%d%H%M")
+  __cntr[0] += 1
+  file_path = os.path.join(trails,
+                           "%s_%s_%s.log" % (date, __cntr[0], unique))
+  if os.path.exists(file_path):
+    log.warning("File path exist! %s" % file_path)
+  log.debug("Logging data to file: %s..." % file_path)
+  with open(file_path, "w+") as f:
+    f.write(data)
