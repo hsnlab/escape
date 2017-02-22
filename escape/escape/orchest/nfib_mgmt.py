@@ -722,7 +722,7 @@ class NFIBManager(object):
           "in /etc/neo4j/neoj4-server.properties!" % e)
         return
       except SocketError as e:
-        log.error("NFIBManager has not been initialized!" % e)
+        log.warning("NFIBManager has not been initialized!")
         return
       self.__initialize()
     except SocketError as e:

@@ -1,0 +1,83 @@
+{
+  "parameters": {
+    "id": "SSSAreq1",
+    "name": "SSSA connectivity request SAP1<->2",
+    "version": "1.0"
+  },
+
+ "node_nfs": [
+        {
+            "id": "Transport",
+            "name": "TRANSPORT",
+            "ports": [
+                {
+                    "id": 1
+                },
+
+               {
+                    "id": 2
+                }
+            ],
+            "functional_type": "Transport",
+            "specification": {
+                "resources": {
+                    "cpu": 0,
+                    "mem": 0,
+                    "storage": 0
+                }
+            }
+        }
+],
+  "node_saps": [
+    {
+      "id": "SAP1",
+      "name": "SAP1",
+      "ports": [
+        {
+          "id": "port-SAP1"
+        }
+      ]
+    },
+    {
+      "id": "SAP2",
+      "name": "SAP2",
+      "ports": [
+        {
+          "id": "port-SAP2"
+        }
+      ]
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": "sg1",
+      "src_node": "SAP1",
+      "src_port": "port-SAP1",
+      "dst_node": "Transport",
+      "dst_port": 1
+    },
+    {
+      "id": "sg2",
+      "src_node": "Transport",
+      "src_port": 2,
+      "dst_node": "SAP2",
+      "dst_port": "port-SAP2"
+    },
+
+{
+      "id": "sg3",
+      "src_node": "SAP2",
+      "src_port": "port-SAP2",
+      "dst_node": "Transport",
+      "dst_port": 2
+    },
+    {
+      "id": "sg4",
+      "src_node": "Transport",
+      "src_port": 1,
+      "dst_node": "SAP1",
+      "dst_port": "port-SAP1"
+    }
+  ]
+ 
+}
