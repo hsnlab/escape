@@ -53,7 +53,9 @@ class NFIBManager(object):
     self.__manage_neo4j_service()
     self.graph_db = None
     try:
-      self.graph_db = Graph(host=self.DB_HOST, http_port=self.DB_PORT)
+      host, port = CONFIG.get_neo4j_host_port()
+      self.graph_db = Graph(host=host if host else self.DB_HOST,
+                            http_port=port if port else self.DB_PORT)
     except Unauthorized as e:
       quit_with_error(
         "Got Unauthorized error on: %s from neo4j! Disable the authorization "

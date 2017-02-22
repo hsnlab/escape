@@ -850,6 +850,19 @@ class ESCAPEConfig(object):
     except (KeyError, AttributeError, TypeError):
       return True
 
+  def get_neo4j_host_port (self):
+    """
+    Return the host and port values for the Neo4j server.
+
+    :return: manage_neo4j_service
+    :rtype: bool
+    """
+    try:
+      return (self.__configuration[ORCHEST]['neo4j'].get("host"),
+              self.__configuration[ORCHEST]['neo4j'].get("port"))
+    except (KeyError, AttributeError, TypeError):
+      return False
+
   def get_manage_neo4j_service (self):
     """
     Return the value if neo4j needs to be managed by ESCAPE.
@@ -858,7 +871,7 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[ORCHEST]['manage-neo4j-service']
+      return self.__configuration[ORCHEST]['neo4j']['manage-neo4j-service']
     except (KeyError, AttributeError, TypeError):
       return False
 
