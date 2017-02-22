@@ -213,8 +213,9 @@ class ResourceOrchestrator(AbstractOrchestrator):
       bb_mapping = {"id": bisbis[0],
                     "domain": bisbis[1] if len(bisbis) > 1 else None}
       if bb_mapping.get("domain"):
-        log.debug("Checking URL ...")
         domain_url = CONFIG.get_domain_url(domain=bb_mapping.get("domain"))
+        log.debug("Domain: %s - Detected URL: %s" % (bb_mapping.get("domain"),
+                                                     domain_url))
         if domain_url is not None:
           bb_mapping["url"] = domain_url
         else:

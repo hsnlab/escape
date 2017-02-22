@@ -19,6 +19,7 @@ import importlib
 import json
 import os
 import pprint
+import urlparse
 from distutils.util import strtobool
 
 from escape.adapt import LAYER_NAME as ADAPT
@@ -991,6 +992,7 @@ class ESCAPEConfig(object):
       return
     try:
       ra = mgr['adapters']['REMOTE']
-      return os.path.join(ra['url'], ra['prefix'])
+      # return os.path.join(ra['url'], ra['prefix'])
+      return urlparse.urljoin(ra['url'], ra['prefix'])
     except KeyError:
       return
