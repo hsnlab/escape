@@ -175,9 +175,9 @@ class MessageDumper(object):
 
   def __clear_trails (self):
     log.debug("Remove trails...")
-    for f in os.listdir(os.path.join(os.getcwd(), self.DIR)):
+    for f in os.listdir(os.path.join(PROJECT_ROOT, self.DIR)):
       if f != ".placeholder":
-        os.remove(os.path.join(os.getcwd(), self.DIR, f))
+        os.remove(os.path.join(PROJECT_ROOT, self.DIR, f))
 
   def dump_to_file (self, data, unique):
     if not isinstance(data, basestring):

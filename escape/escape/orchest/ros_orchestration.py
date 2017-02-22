@@ -143,7 +143,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     dov = self.virtualizerManager.dov.get_resource_info()
     # Collect NFs
     nfs = [nf.id for nf in request.nfs]
-    log.log(VERBOSE, "Collected NFs: %s" % nfs)
+    log.debug("Collected NFs: %s" % nfs)
     return self.__collect_binding(dov=dov, nfs=nfs)
 
   @staticmethod
