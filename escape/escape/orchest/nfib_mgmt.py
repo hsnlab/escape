@@ -1,4 +1,4 @@
-# Copyright 2017 Sahel Sahhaf
+# Copyright 2017 Sahel Sahhaf, Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,17 +52,6 @@ class NFIBManager(object):
     self.service_name = self.__detect_neo4j_service_name()
     self.__manage_neo4j_service()
     self.graph_db = None
-    try:
-      host, port = CONFIG.get_neo4j_host_port()
-      self.graph_db = Graph(host=host if host else self.DB_HOST,
-                            http_port=port if port else self.DB_PORT)
-    except Unauthorized as e:
-      quit_with_error(
-        "Got Unauthorized error on: %s from neo4j! Disable the authorization "
-        "in /etc/neo4j/neoj4-server.properties!" % e)
-    except SocketError as e:
-      log.error(
-        "Got connection error: %s! NFIBManager has not been initialized!" % e)
 
   def finalize (self):
     """
@@ -608,7 +597,7 @@ class NFIBManager(object):
     """
     Initialize NFIB with test data.
     """
-    log.info("Initializing NF database with NFs and decompositions...")
+    log.debug("Initializing NF database with NFs and decompositions...")
     # start clean - all the existing info is removed from the DB
     self.removeGraphDB()
     # add new high-level NF to the DB, all the information related to the NF
@@ -720,10 +709,22 @@ class NFIBManager(object):
     Initialize NFIB with test data.
     """
     try:
-      if self.graph_db:
-        self.__initialize()
-      else:
-        log.warning("NFIB initialization has been skipped!")
+      try:
+        host, port = CONFIG.get_neo4j_host_port()
+        host = host if host else self.DB_HOST
+        port = port if port else self.DB_PORT
+        log.debug("Initiating Graph database connection[%s:%s]..." % (host,
+                                                                      port))
+        self.graph_db = Graph(host=host, http_port=port)
+      except Unauthorized as e:
+        quit_with_error(
+          "Got Unauthorized error on: %s from neo4j! Disable the authorization "
+          "in /etc/neo4j/neoj4-server.properties!" % e)
+        return
+      except SocketError as e:
+        log.error("NFIBManager has not been initialized!" % e)
+        return
+      self.__initialize()
     except SocketError as e:
       log.error(
         "NFIB is not reachable due to failed neo4j service! Cause: " + str(e))
@@ -741,6 +742,7 @@ class NFIBManager(object):
         raise
     except:
       log.exception("Got unexpected error during NFIB initialization!")
+    return self
 
   @staticmethod
   def __detect_neo4j_service_name ():

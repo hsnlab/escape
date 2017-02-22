@@ -53,8 +53,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     self.virtualizerManager = VirtualizerManager()
     self.virtualizerManager.addListeners(layer_API, weak=True)
     # Init NFIB manager
-    self.nfibManager = NFIBManager()
-    self.nfibManager.initialize()
+    self.nfibManager = NFIBManager().initialize()
 
   def finalize (self):
     """
