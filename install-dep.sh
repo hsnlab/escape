@@ -321,7 +321,7 @@ function install_dev {
     sudo apt-get install -y graphviz texlive-latex-extra
     sudo -H pip install tornado sphinx
     # Install test requirements
-    . ./test/install_requirements.sh
+    . ${DIR}/test/install_requirements.sh
 }
 
 # Install GUI dependencies
