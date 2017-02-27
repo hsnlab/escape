@@ -149,10 +149,11 @@ function install_core {
 
     info "=== Install ESCAPEv2 Python dependencies ==="
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
-    sudo -H pip install --upgrade pip
-    sudo -H pip install --upgrade setuptools
-    sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
-    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient pyyaml wrapt
+#    sudo -H pip install --upgrade pip
+#    sudo -H pip install --upgrade setuptools
+#    sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
+#    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient pyyaml wrapt
+    sudo -H pip install --upgrade -r requirements.txt
 
 #    info "=== Install DummyOrchestrator Python dependencies ==="
 #    sudo -H pip install flask rainbow_logging_handler
