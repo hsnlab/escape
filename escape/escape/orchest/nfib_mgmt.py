@@ -720,10 +720,11 @@ class NFIBManager(object):
         quit_with_error(
           "Got Unauthorized error on: %s from neo4j! Disable the authorization "
           "in /etc/neo4j/neoj4-server.properties!" % e)
-        return
-      except SocketError as e:
-        log.warning("NFIBManager has not been initialized!")
-        return
+        return self
+      except SocketError:
+        log.warning("NFIBManager has not been initialized! "
+                    "Only cause problem if ESCAPE is used as a LO!")
+        return self
       self.__initialize()
     except SocketError as e:
       log.error(
