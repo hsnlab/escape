@@ -9,15 +9,16 @@ The core ESCAPE development team:
     * Balazs Nemeth <balazs.nemeth@tmit.bme.hu>
     * Balazs Sonkoly <balazs.sonkoly@tmit.bme.hu>
 
-The team members who developed the first version of ESCAPE that lot's of code parts
-were lifted from.
+The Mininet based infrastructure layer comes from the first version of
+ESCAPE. The team members were:
 
     * Attila Csoma
     * Levente Csikor
     * Felician Nemeth
     * Andras Gulyas
+    * Balazs Sonkoly
 
-Additional contributors who submitted us features, bugfixes and advices
+Additional contributors who submitted features, bugfixes and advices
 (in alphabetical order):
 
     * Lajos Gerecs
@@ -28,17 +29,18 @@ Additional contributors who submitted us features, bugfixes and advices
     * Robert Szabo
     * Gabor Vaszkun
 
-The ESCAPE uses several open source frameworks, libraries and tools which are
-under different software license. These dependencies are the follows:
+ESCAPE uses several submodules, open source frameworks, libraries and
+tools which are under different software licenses. These dependencies
+are the following:
 
-* OpenYuma              BSD license
-* NFFG                  Apache 2.0 license
-* Embedding algorithm   Apache 2.0 license
-* Mininet               Mininet 2.1.0+ License
-* POX                   Apache 2.0 license
-* Virtualizer           Apache 2.0 License
+* mapping (our embedding engine)    Apache 2.0 license
+* nffg (ESCAPE's internal NF-FG)    Apache 2.0 license
+* unify_virtualizer (Virtualizer)   Apache 2.0 License
+* Mininet                           Mininet 2.1.0+ License
+* POX                               Apache 2.0 license
+* OpenYuma                          BSD license
 
-The codes are used without modification except the Mininet and the POX tools:
+The codes are used without modification except from Mininet and POX tools:
 
 ESCAPE uses the Mininet framework to emulate an SDN-based domain for its
 Infrastructure layer. The code contains additional type of changes and extensions
@@ -49,12 +51,12 @@ laptop and run Click-based VNFs on these EE nodes.
 ESCAPE sits on top of POX as its layers are defined as POX modules.
 ESCAPE exploits POX's cooperative task environment to leverage serialized,
 lock-free task execution. Also with cooperation of Mininet-based Infrastructure
-ESCAPE play the role of the SDN (OpenFlow) controller and manages the flowrules
-internally to steer Network Function Chains.
+ESCAPE plays the role of the SDN (OpenFlow) controller and manages the flowrules
+internally to steer Service Function Chains.
 Due to the module-based implementation, ESCAPE's source code is well separated
 from POX.
-However, there are some minimal refinement in POX, mostly commenting print
-statements and logs entries, to avoid ambiguity on the console.
+However, there are some minimal refinements in POX mainly addressing print
+statements and logs entries to avoid ambiguity on the console.
 Followed the Apache license restrictions, every change is marked in place.
 
 
