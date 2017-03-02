@@ -1,28 +1,9 @@
 [submodule "escape/escape/nffg_lib"]
 	path = escape/escape/nffg_lib
 	url = git@5gexgit.tmit.bme.hu:unify/nffg.git
-	branch = master
 [submodule "mapping"]
 	path = mapping
 	url = git@5gexgit.tmit.bme.hu:unify/mapping.git
-	branch = master
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
 	url = git@5gexgit.tmit.bme.hu:unify/virtualizer.git
-	branch = master
-#[submodule "dummy-orchestrator"]
-#	path = dummy-orchestrator
-#	url = git@5gexgit.tmit.bme.hu:unify/dummy-orchestrator.git
-#	branch = master
-#[submodule "tnova_connector"]
-#	path = tnova_connector
-#	url = git@5gexgit.tmit.bme.hu:unify/tnova_connector.git
-#	branch = master
-[submodule "bgp-ls/netphony-network-protocols"]
-	path = bgp-ls/netphony-network-protocols
-	url = git@5gexgit.tmit.bme.hu:ogd/netphony-network-protocols.git
-	branch = 5gex
-[submodule "bgp-ls/netphony-topology"]
-	path = bgp-ls/netphony-topology
-	url = git@5gexgit.tmit.bme.hu:ogd/netphony-topology.git
-	branch = 5gex

@@ -7,18 +7,3 @@
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
 	url = ssh://git@213.16.101.153:/unify/virtualizer.git
-#[submodule "dummy-orchestrator"]
-#	path = dummy-orchestrator
-#	url = ssh://git@213.16.101.153:/unify/dummy-orchestrator.git
-
-# Placeholder for 5GEx submodules
-
-#[submodule "bgp-ls/netphony-network-protocols"]
-#	path = bgp-ls/netphony-network-protocols
-#	url = ssh://git@213.16.101.153:/unify/virtualizer.git
-#[submodule "bgp-ls/netphony-topology"]
-#	path = bgp-ls/netphony-topology
-#	url = ssh://git@213.16.101.153:/unify/virtualizer.git
-#[submodule "tnova_connector"]
-#	path = tnova_connector
-#	url = ssh://git@213.16.101.153:/unify/virtualizer.git
