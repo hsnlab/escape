@@ -212,6 +212,15 @@ Match Host *,!localhost
 # --- ESCAPE-mininet END---
 EOF
     # sudo sh -c 'echo "# --- ESCAPE-mininet ---\n# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet\n# --- ESCAPE-mininet END---" | tee -a /etc/ssh/sshd_config'
+    elif [ "$DISTRIB_RELEASE" = "14.04" ]; then
+        info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
+        cat <<EOF | sudo tee -a /etc/ssh/sshd_config
+# --- ESCAPE-mininet ---
+# Restrict mininet user to be able to login only from localhost
+Match User mininet
+	AllowUsers mininet@127.0.0.1
+# --- ESCAPE-mininet END---
+EOF
     else
         warn "\nIf this installation was not performed on an Ubuntu 14.04 VM, limit the SSH connections only to localhost due to security issues!\n"
     fi
