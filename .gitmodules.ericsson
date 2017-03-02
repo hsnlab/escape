@@ -1,12 +1,12 @@
 [submodule "escape/escape/nffg_lib"]
 	path = escape/escape/nffg_lib
-	url = ssh://git@213.16.101.153:/unify/nffg.git
+	url = ssh://git@213.16.101.140:/unify/escape_nffg.git
 [submodule "mapping"]
 	path = mapping
-	url = ssh://git@213.16.101.153:/unify/mapping.git
+	url = ssh://git@213.16.101.140:/unify/escape_mapping.git
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
-	url = ssh://git@213.16.101.153:/unify/virtualizer.git
+	url = ssh://git@213.16.101.140:/unify/virtualizer.git
 #[submodule "dummy-orchestrator"]
 #	path = dummy-orchestrator
 #	url = ssh://git@213.16.101.153:/unify/dummy-orchestrator.git
