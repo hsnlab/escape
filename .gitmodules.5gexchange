@@ -1,0 +1,9 @@
+[submodule "escape/escape/nffg_lib"]
+	path = escape/escape/nffg_lib
+	url = ssh://git@github.com:5GExchange/nffg.git
+[submodule "mapping"]
+	path = mapping
+	url = ssh://git@github.com:5GExchange/mapping.git
+[submodule "unify_virtualizer"]
+	path = unify_virtualizer
+	url = ssh://git@github.com:5GExchange/virtualizer.git

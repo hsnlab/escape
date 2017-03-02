@@ -30,10 +30,12 @@ function on_error() {
 }
 
 function print_help {
-    echo -e "Usage: $0 [project]"
     echo -e "Setup submodules according to given project for ESCAPE.\n"
+    echo -e "Usage: $0 [-h] [-p project]"
     echo -e "parameters:"
-    echo -e "\t project: setup project [sb|5gex|ericsson]"
+    echo -e "\t -h, --help      show this help message and exit"
+    echo -e "\t -p, --project   setup project name based on: .gitmodules.<name>"
+    echo -e "\nExample: $0 -p 5gex"
     exit 0
 }
 
@@ -87,14 +89,32 @@ function setup () {
     git submodule status --recursive
 }
 
-if [ $# -lt 1 ]; then
-    print_help
-fi
-# Read initial parameters
-PROJECT=$1
+while getopts ':hp:' OPTION; do
+    case ${OPTION} in
+        p|--project)  PROJECT=$OPTARG;;
+        h)  print_help;;
+    esac
+done
 
 # START script here
+if [ -z ${PROJECT} ]; then
+    echo "Detecting project name..."
+    origin_url=$(git config --get remote.origin.url)
 
+    if [[ ${origin_url} == *"sb.tmit.bme.hu"* ]]; then
+        PROJECT="sb"
+    elif [[ ${origin_url} == *"5gexgit.tmit.bme.hu"* ]]; then
+        PROJECT="5gex"
+    elif [[ ${origin_url} == *"213.16.101.153"* ]]; then
+        PROJECT="ericsson"
+    elif [[ ${origin_url} == *"github.com:hsnlab"* ]]; then
+        PROJECT="hsnlab"
+    elif [[ ${origin_url} == *"github.com:5GExchange"* ]]; then
+        PROJECT="5gexchange"
+    else
+        on_error "Repo URL is not recognized: $origin_url!"
+    fi
+fi
 info "Project: $PROJECT\n"
 cd ${ROOT_DIR}
 setup
