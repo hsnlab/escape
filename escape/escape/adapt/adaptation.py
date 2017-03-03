@@ -299,7 +299,7 @@ class ComponentConfigurator(object):
     Return with the initiated Domain Manager configured with the given
     domain_name.
 
-    :param domain_name: name of the domain used in :any:`NFFG` descriptions
+    :param domain_name: name of the domain used in :class:`NFFG` descriptions
     :type domain_name: str
     :return: the initiated domain Manager
     :rtype: AbstractDomainManager
@@ -313,7 +313,7 @@ class ComponentConfigurator(object):
     Return with the initiated Domain Manager name configured with the given
     domain_name.
 
-    :param domain_name: name of the domain used in :any:`NFFG` descriptions
+    :param domain_name: name of the domain used in :class:`NFFG` descriptions
     :type domain_name: str
     :return: the initiated domain Manager name
     :rtype: str
@@ -470,7 +470,7 @@ class ComponentConfigurator(object):
 
 class ControllerAdapter(object):
   """
-  Higher-level class for :any:`NFFG` adaptation between multiple domains.
+  Higher-level class for :class:`NFFG` adaptation between multiple domains.
   """
   EXTERNAL_MDO_META_NAME = 'unify-slor'
   """Attribute name used topology from TADS to identify external MdO URL"""
@@ -536,11 +536,11 @@ class ControllerAdapter(object):
     """
     Start NF-FG installation.
 
-    Process given :any:`NFFG`, slice information self.__global_nffg on
+    Process given :class:`NFFG`, slice information self.__global_nffg on
     domains and invoke DomainManagers to install domain specific parts.
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
-    :type mapped_nffg: NFFG
+    :type mapped_nffg: :class:`NFFG`
     :return: deploy result
     :rtype: DomainRequestStatus
     """
@@ -1050,7 +1050,7 @@ class ControllerAdapter(object):
     :param domain: domain name
     :type domain: str
     :param topo_nffg: topology description
-    :type topo_nffg: :any:`NFFG`
+    :type topo_nffg: :class:`NFFG`
     :return: external domain IDs
     :rtype: set
     """
@@ -1337,7 +1337,7 @@ class GlobalResourceManager(object):
     Replace the global view with the given topology.
 
     :param nffg: new global topology
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     log.debug("Update the whole Global view (DoV) with the NFFG: %s..." % nffg)
@@ -1363,7 +1363,7 @@ class GlobalResourceManager(object):
     elements.
 
     :param nffg: new global topology
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     if not nffg.is_infrastructure():
@@ -1394,7 +1394,7 @@ class GlobalResourceManager(object):
     :param domain: domain name
     :type domain: str
     :param nffg: infrastructure info collected from the domain
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     # If the domain is not tracked
@@ -1425,7 +1425,7 @@ class GlobalResourceManager(object):
     :param domain: domain name
     :type domain: str
     :param nffg: changed infrastructure info
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     if domain in self.__tracked_domains:

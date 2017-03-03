@@ -60,9 +60,9 @@ class ServiceOrchestrator(AbstractOrchestrator):
     Main function for initiating Service Graphs.
 
     :param sg: service graph stored in NFFG instance
-    :type sg: :any:`NFFG`
+    :type sg: :class:`NFFG`
     :return: NF-FG description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     log.debug("Invoke %s to initiate SG(id=%s)" %
               (self.__class__.__name__, sg.id))
@@ -139,7 +139,7 @@ class SGManager(object):
     Save SG in a dict.
 
     :param sg: Service Graph
-    :type sg: :any:`NFFG`
+    :type sg: :class:`NFFG`
     :return: computed id of given Service Graph
     :rtype: int
     """
@@ -157,16 +157,16 @@ class SGManager(object):
     :param graph_id: graph ID
     :type graph_id: int
     :return: stored Service Graph
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     return self._service_graphs.get(graph_id, None)
 
   def get_last_request (self):
     """
-    Return with the last saved :any:`NFFG`:
+    Return with the last saved :class:`NFFG`:
 
     :return: last saved NFFG
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     return self._last
 

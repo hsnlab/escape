@@ -49,7 +49,7 @@ class InstantiateNFFGEvent(Event):
     Init.
 
     :param nffg: NF-FG need to be initiated
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     super(InstantiateNFFGEvent, self).__init__()
@@ -357,7 +357,7 @@ class ServiceLayerAPI(AbstractAPI):
     Initiate service graph in a cooperative micro-task.
 
     :param service_nffg: service graph instance
-    :type service_nffg: :any:`NFFG`
+    :type service_nffg: :class:`NFFG`
     :return: None
     """
     self.__proceed_sg_request(service_nffg)
@@ -368,7 +368,7 @@ class ServiceLayerAPI(AbstractAPI):
     Initiate service graph in a cooperative micro-task.
 
     :param service_nffg: service graph instance
-    :type service_nffg: :any:`NFFG`
+    :type service_nffg: :class:`NFFG`
     :return: None
     """
     return self.__proceed_sg_request(service_nffg)
@@ -378,7 +378,7 @@ class ServiceLayerAPI(AbstractAPI):
     Initiate a Service Graph (UNIFY U-Sl API).
 
     :param service_nffg: service graph instance
-    :type service_nffg: :any:`NFFG`
+    :type service_nffg: :class:`NFFG`
     :return: None
     """
     log.getChild('API').info("Invoke request_service on %s with SG: %s " %
@@ -478,7 +478,7 @@ class ServiceLayerAPI(AbstractAPI):
     Return with the topology description.
 
     :return: topology description requested from the layer's Virtualizer
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     log.getChild('[U-Sl]').debug("Requesting Virtualizer for REST-API...")
     # Get or if not available then request the layer's Virtualizer
@@ -526,7 +526,7 @@ class ServiceLayerAPI(AbstractAPI):
     to the next layer.
 
     :param mapped_nffg: mapped Service Graph
-    :type mapped_nffg: :any:`NFFG`
+    :type mapped_nffg: :class:`NFFG`
     :return: None
     """
     # Rebind requirement link fragments for lower layer mapping

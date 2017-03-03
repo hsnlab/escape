@@ -48,7 +48,7 @@ class SGMappingFinishedEvent(Event):
     Init.
 
     :param nffg: NF-FG need to be initiated
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     super(SGMappingFinishedEvent, self).__init__()
@@ -81,11 +81,11 @@ class ServiceGraphMapper(AbstractMapper):
     Orchestrate mapping of given service graph on given virtual resource.
 
     :param input_graph: Service Graph
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_view: virtual resource view
     :param resource_view: :any:`AbstractVirtualizer`
     :return: Network Function Forwarding Graph
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     if input_graph is None:
       log.error("Missing service request information! Abort mapping process!")
@@ -139,7 +139,7 @@ class ServiceGraphMapper(AbstractMapper):
     Called from a separate thread when the mapping process is finished.
 
     :param mapped_nffg: generated NF-FG
-    :type mapped_nffg: :any:`NFFG`
+    :type mapped_nffg: :class:`NFFG`
     :return: None
     """
     # TODO - rethink threaded/non-threaded function call paths to call port

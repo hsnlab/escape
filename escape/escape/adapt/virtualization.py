@@ -95,14 +95,14 @@ class AbstractVirtualizer(EventMixin):
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource object derived from
-    :any:`NFFG`.
+    :class:`NFFG`.
 
     .. warning::
       Derived class have to override this function!
 
     :raise: NotImplementedError
     :return: resource info
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     raise NotImplementedError
 
@@ -112,7 +112,7 @@ class AbstractVirtualizer(EventMixin):
     :class:`PolicyEnforcement`.
 
     :param nffg: NFFG instance
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     pass
@@ -173,7 +173,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     Hides object's mechanism and return with a resource info.
 
     :return: resource info
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     # If topology has not changed -> return with cached resource
     if self.__dirty is False:
@@ -199,7 +199,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     the dirty flag.
 
     :return: cached topology
-    :rtype: NFFG
+    :rtype: :class:`NFFG`
     """
     return self.__cache
 
@@ -228,7 +228,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
 
     :raise: NotImplementedError
     :return: resource info
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     raise NotImplementedError
 
@@ -240,7 +240,7 @@ class DomainVirtualizer(AbstractVirtualizer):
   Implement the same interface as :class:`AbstractVirtualizer
   <escape.orchest.virtualization_mgmt.AbstractVirtualizer>`
 
-  Use :any:`NFFG` format to store the global infrastructure info.
+  Use :class:`NFFG` format to store the global infrastructure info.
   """
   # Events raised by this class
   _eventMixin_events = {DoVChangedEvent}
@@ -256,7 +256,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :param mgr: global domain resource manager
     :type mgr: :any:`GlobalResourceManager`
     :param global_res: initial global resource (optional)
-    :type global_res: :any:`NFFG`
+    :type global_res: :class:`NFFG`
     :param kwargs: optional parameters for Virtualizer
     :type kwargs: dict
     :return: None
@@ -326,7 +326,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     Return the copy of the global resource info represented this class.
 
     :return: global resource info
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     return self.__global_nffg.copy()
 
@@ -338,11 +338,11 @@ class DomainVirtualizer(AbstractVirtualizer):
     Add the specific :attr:`DoV` id and generated name to the global view.
 
     :param nffg: NFFG instance intended to use as the global view
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param domain: name of the merging domain
     :type domain: str
     :return: updated Dov
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     log.debug("Set domain: %s as the global view!" % domain)
     if not self.__global_nffg.is_empty():
@@ -362,9 +362,9 @@ class DomainVirtualizer(AbstractVirtualizer):
     Reserve id, name values of the global view.
 
     :param nffg: updated global view which replace the stored one
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: updated Dov
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     dov_id = self.__global_nffg.id
     dov_name = self.__global_nffg.name
@@ -382,9 +382,9 @@ class DomainVirtualizer(AbstractVirtualizer):
     Based on the feature: escape.util.nffg.NFFGToolBox#merge_domains
 
     :param nffg: NFFG object need to be merged into DoV
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: updated Dov
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     # Using general merging function from NFFGToolBox and return the updated
     # NFFG
@@ -401,11 +401,11 @@ class DomainVirtualizer(AbstractVirtualizer):
     remove and re-add.
 
     :param nffg: changed infrastructure info
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param domain: name of the merging domain
     :type domain: str
     :return: updated Dov
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     NFFGToolBox.remove_domain(base=self.__global_nffg, domain=domain, log=log)
     # log.log(VERBOSE, "Reduced Dov:\n%s" % self.__global_nffg.dump())
@@ -424,11 +424,11 @@ class DomainVirtualizer(AbstractVirtualizer):
     Update the existing domain in the merged Global view.
 
     :param nffg: changed infrastructure info
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param domain: name of the merging domain
     :type domain: str
     :return: updated Dov
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     NFFGToolBox.update_domain(base=self.__global_nffg, updated=nffg, log=log)
     if self.__global_nffg.is_empty():
@@ -447,7 +447,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :param domain: domain name
     :type domain: str
     :return: updated Dov
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     NFFGToolBox.remove_domain(base=self.__global_nffg, domain=domain, log=log)
     if self.__global_nffg.is_empty():
@@ -467,7 +467,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     :param domain: domain name
     :type domain: str
     :return: updated Dov
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     if self.__global_nffg.is_empty():
       log.debug("DoV is empty! Skip cleanup domain: %s" % domain)
@@ -490,9 +490,9 @@ class DomainVirtualizer(AbstractVirtualizer):
     :param domain: domain name
     :type domain: str
     :param nffg: changed infrastructure info
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: updated Dov
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     if self.__global_nffg.is_empty():
       log.debug("DoV is empty! Skip cleanup domain: %s" % domain)
@@ -510,7 +510,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     Remove all the NFs, flowrules and dynamic ports from DoV.
 
     :return: updated Dov
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     if self.__global_nffg.is_empty():
       log.debug("DoV is empty! Skip DoV cleanup")
@@ -552,7 +552,7 @@ class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
     Return with the unfiltered global view.
 
     :return: Virtual resource info
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     # Leave the dirty mechanism operational
     self._dirty = False
@@ -598,7 +598,7 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
     Compute and return with the Single BiS-BiS view based on the global view.
 
     :return: single BiSBiS representation of the global view
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     dov = self.global_view.get_resource_info()
     if dov.is_empty():
@@ -661,7 +661,7 @@ class LocalSingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
     Filter out domains detected by external DomainManagers.
 
     :param nffg: filtered NFFG
-    :return: :any:`NFFG`
+    :return: :class:`NFFG`
     """
     log.debug("Filtering domains detected from external DomainManagers...")
     # Get External DomainManager names
@@ -688,7 +688,7 @@ class LocalSingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
     Compute and return with the Single BiS-BiS view based on the global view.
 
     :return: single BiSBiS representation of the global view
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     dov = self.global_view.get_resource_info()
     if dov.is_empty():

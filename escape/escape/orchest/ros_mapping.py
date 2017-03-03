@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Contains classes which implement :any:`NFFG` mapping functionality.
+Contains classes which implement :class:`NFFG` mapping functionality.
 """
 import cProfile
 import pstats
@@ -30,7 +30,7 @@ from pox.lib.revent.revent import Event
 
 class ESCAPEMappingStrategy(AbstractMappingStrategy):
   """
-  Implement a strategy to map initial :any:`NFFG` into extended :any:`NFFG`.
+  Implement a strategy to map initial :class:`NFFG` into extended :class:`NFFG`.
   """
   LAYER_NAME = LAYER_NAME
 
@@ -52,15 +52,15 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     Contains profiling to measure basic performance of the algorithm.
 
     :param request: request graph
-    :type request: :any:`NFFG`
+    :type request: :class:`NFFG`
     :param topology: topology graph
-    :type topology: :any:`NFFG`
+    :type topology: :class:`NFFG`
     :param profiling: enables cProfile for mapping which bring big overhead
     :type profiling: bool
     :param params: additional mapping parameters
     :type params: dict
     :return: mapping result
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     if profiling:
       return cls.cprofiler_decorator(MAP, request, topology, **params)
@@ -98,11 +98,11 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     Default mapping algorithm of ESCAPEv2.
 
     :param graph: Network Function forwarding Graph
-    :type graph: :any:`NFFG`
+    :type graph: :class:`NFFG`
     :param resource: global virtual resource info
-    :type resource: :any:`NFFG`
+    :type resource: :class:`NFFG`
     :return: mapped Network Function Forwarding Graph
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     log.info("Invoke mapping algorithm: %s - request: %s resource: %s" % (
       cls.__name__, graph, resource))
@@ -166,7 +166,7 @@ class NFFGMappingFinishedEvent(Event):
     Init.
 
     :param nffg: NF-FG need to be installed
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     super(NFFGMappingFinishedEvent, self).__init__()
@@ -200,11 +200,11 @@ class ResourceOrchestrationMapper(AbstractMapper):
     Orchestrate mapping of given NF-FG on given global resource.
 
     :param input_graph: Network Function Forwarding Graph
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_view: global resource view
     :type resource_view: :any:`DomainVirtualizer`
     :return: mapped Network Function Forwarding Graph
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     if input_graph is None:
       log.error("Missing mapping request information! Abort mapping process!")
@@ -260,7 +260,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     Called from a separate thread when the mapping process is finished.
 
     :param mapped_nffg: mapped NF-FG
-    :type mapped_nffg: :any:`NFFG`
+    :type mapped_nffg: :class:`NFFG`
     :return: None
     """
     # TODO - rethink threaded/non-threaded function call paths to call port

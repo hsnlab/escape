@@ -1,7 +1,7 @@
-The *unify.py* top module
-=========================
+The *ESCAPE.py* top module
+==========================
 
-.. automodule:: unify
+.. automodule:: ESCAPE
    :members:
    :private-members:
    :special-members:

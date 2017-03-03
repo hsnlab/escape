@@ -49,6 +49,15 @@ The `install_dep.sh` script is responsible for managing the dependencies. It set
 the required sym-links, updates the related submodules and installs only the 
 necessary packages regarding the given install parameters.
 
+If you don't want to use the complex install script or the included project setup script
+then just create a sym-link to the relevant gitmodules file with the name `.gitmodules` 
+and update the submodule manually.
+
+```bash
+ln -vfs .gitmodules.<PROJECT> .gitmodules
+git submodules update --init
+```
+
 Because the core ESCAPE relies on POX and written in Python there is no need
 for explicit compiling or installation. The only requirement need to be
 pre-installed is a Python interpreter.
@@ -127,7 +136,7 @@ case ESCAPE is intended to run on a VM without any graphical interface.
     ```
     
     To verify ESCAPE in **MdO** role a dry-run can be performed without any command line flag.
-    If ESCAPE is up and running, the following line should be logged to the console:
+    If ESCAPE is up and running, the following line will be logged to the console:
     
     ```text
        > [core                   ] ESCAPEv2 is up.
@@ -137,7 +146,7 @@ case ESCAPE is intended to run on a VM without any graphical interface.
     
     To verify ESCAPE in **DO** role with the embedding engine and all of it's components,
     the following command can be run in order to test the reachability between the initiated
-    service access points (SAP) represented by the(``xterm``)windows with the ``ping`` command:
+    service access points (SAP) represented by the(``xterm``) windows with the ``ping`` command:
     
     ```bash
     ./escape.py -df -s examples/escape-mn-req.nffg
@@ -154,7 +163,7 @@ case ESCAPE is intended to run on a VM without any graphical interface.
 
 ## Tests
 
-ESCAPE has several testcases formed as Unit test. These test can be found under
+ESCAPE has several testcases formed as Unit tests. These tests can be found under
 the `test` folder.
 
 Dependent packages for the test can be installed with the `install_requirements.sh` script.

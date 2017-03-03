@@ -71,9 +71,18 @@ For further information contact balazs.sonkoly@tmit.bme.hu
 Installation
 ============
 
-The **install_dep.sh** script is responsible for managing the dependencies. It sets up
+The ``install_dep.sh`` script is responsible for managing the dependencies. It sets up
 the required sym-links, updates the related submodules and installs only the necessary
 packages regarding the given install parameters.
+
+If you don't want to use the complex install script or the included project setup script
+then just create a sym-link to the relevant gitmodules file with the name ``.gitmodules``
+and update the submodule manually.
+
+.. code-block:: bash
+
+    ln -vfs .gitmodules.<PROJECT> .gitmodules
+    git submodules update --init
 
 As the core layers of ESCAPE relies on POX and written in Python there is no need
 for explicit compiling or installation. The required libraries and dependencies such as
@@ -90,7 +99,7 @@ testing are performed, is the standard CPython **2.7.13**.
 If for some reason a different version of Python is desired, check the Virtual Environment section below.
 
 The best choice of platform on which ESCAPE is recommended to be installed and
-the *install-dep.sh* installation script is tested is Ubuntu 14.04.5 and 16.04.2 LTS.
+the ``install-dep.sh`` installation script is tested is Ubuntu 14.04.5 and 16.04.2 LTS.
 
 However ESCAPE has been developed on Ubuntu 16.04, some issues are experienced
 related to SAP-xterm initiation in case ESCAPE was run on an Ubuntu 16.04 virtual
@@ -128,7 +137,7 @@ If you use a VM image then the following commands can be used to copy your RSA k
 
   .. code-block:: bash
 
-    $ git clone <git repo URL>
+    $ git clone <git repo URL> escape
 
 4. Install the necessary dependencies with the ``install_dep.sh`` script (system
     and Python packages, optionally the OpenYuma with VNFStarter module, etc.):
@@ -168,7 +177,7 @@ If you use a VM image then the following commands can be used to copy your RSA k
       create a system user: **mininet** for NETCONF-based communication
 
 5. Run ESCAPE with one of the commands listed in a later section. To see the
-available arguments of the top starting script (*escape.py*), check the help menu:
+available arguments of the top starting script (``escape.py``), check the help menu:
 
   .. code-block:: bash
 
@@ -1115,7 +1124,7 @@ Schematic config description of domain adapters:
             (:any:`object`) Optional network object for :class:`mininet.net.Mininet`.
             Works only with :any:`InternalMininetAdapter`. Only for development!
         `path`
-            (:any:`string`) Path of the static topology description :any:`NFFG` file, e.g. ``examples/sdn-topo.nffg``.
+            (:any:`string`) Path of the static topology description :class:`NFFG` file, e.g. ``examples/sdn-topo.nffg``.
             Works only with ``SDNDomainTopoAdapter``.
 
     *REMOTE*
@@ -1184,7 +1193,7 @@ xterm initiation for SAPs (``SAP-xterm``) or the cleanup task (``SHUTDOWN-CLEAN`
 Schematic config description:
 
     `TOPO`
-        (:any:`string`) Path of the topology :any:`NFFG` used to build the emulated network, e.g. ``examples/escape-mn-topo.nffg``
+        (:any:`string`) Path of the topology :class:`NFFG` used to build the emulated network, e.g. ``examples/escape-mn-topo.nffg``
     `SHUTDOWN-CLEAN`
         (:any:`bool`) Uses the first received topologies to reset the detected domains before shutdown.
     `SAP-xterms`
@@ -1290,32 +1299,32 @@ More help and description about the useful helper functions and the *core* objec
 Tests
 =====
 
-ESCAPE has several testcases formed as Unit test. These test can be found under
+ESCAPE has several testcases formed as Unit tests. These tests can be found under
 the `test` folder.
 
 Dependent packages for the test can be installed with the `install_requirements.sh` script.
 To run the test see the main running script:
 
-```text
-$ ./run_tests.py -h
-usage: run_tests.py [-h] [--failfast] [--show-output] [--timeout t]
-                    [--standalone] [--verbose]
-                    [testcases [testcases ...]]
+.. code-block:: text
 
-ESCAPE Test runner
+    $ ./run_tests.py -h
+    usage: run_tests.py [-h] [--failfast] [--show-output] [--timeout t]
+                        [--standalone] [--verbose]
+                        [testcases [testcases ...]]
 
-positional arguments:
-  testcases          list test case names you want to run. Example:
-                     ./run_tests.py case05 case03 --show-output
+    ESCAPE Test runner
 
-optional arguments:
-  -h, --help         show this help message and exit
-  --failfast, -f     Stop on first failure
-  --show-output, -o  Show ESCAPE output
-  --timeout t, -t t  define explicit timeout in sec (default: 30s)
-  --standalone, -s   run standalone mode: no timeout, no quitting
-  --verbose, -v      Run in verbose mode and show output
-```
+    positional arguments:
+      testcases          list test case names you want to run. Example:
+                         ./run_tests.py case05 case03 --show-output
+
+    optional arguments:
+      -h, --help         show this help message and exit
+      --failfast, -f     Stop on first failure
+      --show-output, -o  Show ESCAPE output
+      --timeout t, -t t  define explicit timeout in sec (default: 30s)
+      --standalone, -s   run standalone mode: no timeout, no quitting
+      --verbose, -v      Run in verbose mode and show output
 
 Documentation
 =============
@@ -1345,14 +1354,14 @@ ESCAPEv2 class structure
 
     escape
 
-Topmost POX modules for UNIFY's layers/sublayers
-------------------------------------------------
+Topmost POX modules for ESCAPE's layers/sublayers
+-------------------------------------------------
 
 .. toctree::
     :maxdepth: 2
     :titlesonly:
 
-    UNIFY <unify>
+    ESCAPE <ESCAPE>
 
 License and Contacts
 ====================
@@ -1360,9 +1369,10 @@ License and Contacts
 Licensed under the Apache License, Version 2.0, see LICENSE file.
 
     Copyright (C) 2017 by
-    János Czentye - janos.czentye@tmit.bme.hu
-    Balázs Németh - balazs.nemeth@tmit.bme.hu
-    Balázs Sonkoly - balazs.sonkoly@tmit.bme.hu
+
+    - János Czentye - janos.czentye@tmit.bme.hu
+    - Balázs Németh - balazs.nemeth@tmit.bme.hu
+    - Balázs Sonkoly - balazs.sonkoly@tmit.bme.hu
 
 Indices and tables
 ==================

@@ -259,7 +259,7 @@ class NFFGConverter(object):
     Parse ports from a Virtualizer node into an :any:`NodeInfra` node.
 
     :param nffg: Container NFFG
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param infra: infrastructure node
     :type infra: :any:`NodeInfra`
     :param vnode: Virtualizer node
@@ -482,7 +482,7 @@ class NFFGConverter(object):
     Parse VNFs from a Virtualizer nodes into :any:`NodeNF` list.
 
     :param nffg: Container NFFG
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param infra: infrastructure node
     :type infra: :any:`NodeInfra`
     :param vnode: Virtualizer node
@@ -705,7 +705,7 @@ class NFFGConverter(object):
     Parse FlowEntries from a Virtualizer Node into an :any:`InfraPort`.
 
     :param nffg: Container NFFG
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param infra: infrastructure node
     :type infra: :any:`NodeInfra`
     :param vnode: Virtualizer node
@@ -926,7 +926,7 @@ class NFFGConverter(object):
     Parse Infrastructure node from Virtualizer.
 
     :param nffg: Container NFFG
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param virtualizer: Virtualizer object
     :type virtualizer: Virtualizer
     :return: None
@@ -1132,7 +1132,7 @@ class NFFGConverter(object):
     Parse links from Virtualizer.
 
     :param nffg: Container NFFG
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param virtualizer: Virtualizer object
     :type virtualizer: Virtualizer
     :return: None
@@ -1208,7 +1208,7 @@ class NFFGConverter(object):
     Optionally can parse requirement links if they are stored in metadata.
 
     :param nffg: Container NFFG
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param virtualizer: Virtualizer object
     :type virtualizer: Virtualizer
     :return: None
@@ -1223,7 +1223,7 @@ class NFFGConverter(object):
     Use the flowrule id as the is of the SG hop link.
 
     :param nffg: Container NFFG
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     if not nffg.is_SBB():
@@ -1304,7 +1304,7 @@ class NFFGConverter(object):
     :param create_sg_hops: create the SG hops (default: False)
     :type create_sg_hops: bool
     :return: created NF-FG
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     self.log.debug(
       "START conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
@@ -1351,10 +1351,10 @@ class NFFGConverter(object):
 
   def _convert_nffg_infras (self, nffg, virtualizer):
     """
-    Convert infras in the given :any:`NFFG` into the given Virtualizer.
+    Convert infras in the given :class:`NFFG` into the given Virtualizer.
 
     :param nffg: NFFG object
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param virtualizer: Virtualizer object
     :type virtualizer: Virtualizer
     :return: None
@@ -1473,10 +1473,10 @@ class NFFGConverter(object):
 
   def _convert_nffg_saps (self, nffg, virtualizer):
     """
-    Convert SAPs in the given :any:`NFFG` into the given Virtualizer.
+    Convert SAPs in the given :class:`NFFG` into the given Virtualizer.
 
     :param nffg: NFFG object
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param virtualizer: Virtualizer object
     :type virtualizer: Virtualizer
     :return: None
@@ -1554,10 +1554,10 @@ class NFFGConverter(object):
 
   def _convert_nffg_edges (self, nffg, virtualizer):
     """
-    Convert edge links in the given :any:`NFFG` into the given Virtualizer.
+    Convert edge links in the given :class:`NFFG` into the given Virtualizer.
 
     :param nffg: NFFG object
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param virtualizer: Virtualizer object
     :type virtualizer: Virtualizer
     :return: None
@@ -1599,11 +1599,11 @@ class NFFGConverter(object):
 
   def _convert_nffg_reqs (self, nffg, virtualizer):
     """
-    Convert requirement links in the given :any:`NFFG` into given Virtualizer
+    Convert requirement links in the given :class:`NFFG` into given Virtualizer
     using infra node's metadata list.
 
     :param nffg: NFFG object
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :param virtualizer: Virtualizer object
     :type virtualizer: Virtualizer
     :return: None
@@ -1637,7 +1637,7 @@ class NFFGConverter(object):
 
   def _convert_nffg_nfs (self, virtualizer, nffg):
     """
-    Convert NFs in the given :any:`NFFG` into the given Virtualizer.
+    Convert NFs in the given :class:`NFFG` into the given Virtualizer.
 
     :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
     :param nffg: splitted NFFG (not necessarily in valid syntax)
@@ -1770,7 +1770,7 @@ class NFFGConverter(object):
   # noinspection PyDefaultArgument
   def _convert_nffg_flowrules (self, virtualizer, nffg):
     """
-    Convert flowrules in the given :any:`NFFG` into the given Virtualizer.
+    Convert flowrules in the given :class:`NFFG` into the given Virtualizer.
 
     :param virtualizer: Virtualizer object based on ETH's XML/Yang version.
     :param nffg: splitted NFFG (not necessarily in valid syntax)
@@ -2010,10 +2010,10 @@ class NFFGConverter(object):
 
   def dump_to_Virtualizer (self, nffg):
     """
-    Convert given :any:`NFFG` to Virtualizer format.
+    Convert given :class:`NFFG` to Virtualizer format.
 
     :param nffg: topology description
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: topology in Virtualizer format
     :rtype: Virtualizer
     """
@@ -2112,7 +2112,7 @@ class NFFGConverter(object):
 
 class UC3MNFFGConverter():
   """
-  Convert JSON-based UC3M format to :any:`NFFG`.
+  Convert JSON-based UC3M format to :class:`NFFG`.
 
   Currently the format contains limited information therefore the conversion
   is very rudimentary.
@@ -2147,7 +2147,7 @@ class UC3MNFFGConverter():
     :param level: optional logging level (default: DEBUG)
     :type level: int
     :return: converted NFFG
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     try:
       topo = json.loads(raw_data, object_hook=unicode_to_str)
@@ -2169,7 +2169,7 @@ class UC3MNFFGConverter():
     :type filter_empty_nodes: bool
     :param level: logging level
     :return: converted NFFG
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     self.log.log(level, "START conversion: TADS topology --> NFFG")
     try:

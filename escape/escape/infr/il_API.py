@@ -33,7 +33,7 @@ class DeploymentFinishedEvent(BaseResultEvent):
     """
     Init.
 
-    :param id: id of the :any:`NFFG`
+    :param id: id of the :class:`NFFG`
     :type id: str
     :param success: te result is a success or not
     :type success: bool

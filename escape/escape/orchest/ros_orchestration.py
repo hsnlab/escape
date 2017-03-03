@@ -68,9 +68,9 @@ class ResourceOrchestrator(AbstractOrchestrator):
     Main API function for NF-FG instantiation.
 
     :param nffg: NFFG instance
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: mapped NFFG instance
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     log.debug("Invoke %s to instantiate given NF-FG" % self.__class__.__name__)
     # Store newly created NF-FG
@@ -176,7 +176,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
       ]
 
     :param dov: global topology
-    :type dov: NFFG
+    :type dov: :class:`NFFG`
     :param nfs: list of NFs
     :type nfs: list
     :return: mapping
@@ -291,7 +291,7 @@ class NFFGManager(object):
     Save NF-FG in a dict.
 
     :param nffg: Network Function Forwarding Graph
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: generated ID of given NF-FG
     :rtype: int
     """
@@ -304,10 +304,10 @@ class NFFGManager(object):
 
   def get_last_request (self):
     """
-    Return with the last saved :any:`NFFG`:
+    Return with the last saved :class:`NFFG`:
 
     :return: last saved NFFG
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     return self._last
 
@@ -318,7 +318,7 @@ class NFFGManager(object):
     :param nffg_id: ID of NF-FG
     :type nffg_id: int or str
     :return: NF-Fg instance
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     return self._nffgs.get(nffg_id, None)
 

@@ -107,7 +107,7 @@ class BasicDomainManager(AbstractDomainManager):
     Install domain.
 
     :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: successful installation step: True
     :rtype: bool
     """
@@ -292,10 +292,10 @@ class InternalDomainManager(AbstractDomainManager):
 
   def install_nffg (self, nffg_part):
     """
-    Install an :any:`NFFG` related to the internal domain.
+    Install an :class:`NFFG` related to the internal domain.
 
     :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: installation was success or not
     :rtype: bool
     """
@@ -355,7 +355,7 @@ class InternalDomainManager(AbstractDomainManager):
     and remove all non-existent NF by default.
 
     :param nffg: the last mapped NFFG part
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: deletion was successful or not
     :rtype: bool
     """
@@ -439,7 +439,7 @@ class InternalDomainManager(AbstractDomainManager):
     running then the actual NF's initiation will be skipped!
 
     :param nffg: container NF-FG part need to be deployed
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: deploy was successful or not
     :rtype: bool
     """
@@ -637,7 +637,7 @@ class InternalDomainManager(AbstractDomainManager):
     Delete all flowrules from the first (default) table of all infras.
 
     :param nffg: last mapped NFFG part
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: deletion was successful or not
     :rtype: bool
     """
@@ -697,7 +697,7 @@ class InternalDomainManager(AbstractDomainManager):
     If a flowrule is already defined it will be updated.
 
     :param nffg_part: NF-FG part need to be deployed
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: deploy was successful or not
     :rtype: bool
     """
@@ -924,10 +924,10 @@ class SDNDomainManager(AbstractDomainManager):
 
   def install_nffg (self, nffg_part):
     """
-    Install an :any:`NFFG` related to the SDN domain.
+    Install an :class:`NFFG` related to the SDN domain.
 
     :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: installation was success or not
     :rtype: bool
     """
@@ -946,7 +946,7 @@ class SDNDomainManager(AbstractDomainManager):
     Delete all flowrules from the first (default) table of all infras.
 
     :param nffg_part: last mapped NFFG part
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: deletion was successful or not
     :rtype: bool
     """
@@ -984,7 +984,7 @@ class SDNDomainManager(AbstractDomainManager):
     If a flowrule is already defined it will be updated.
 
     :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: deploy was successful or not
     :rtype: bool
     """
@@ -1141,10 +1141,10 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
 
   def install_nffg (self, nffg_part):
     """
-    Install an :any:`NFFG` related to the internal domain.
+    Install an :class:`NFFG` related to the internal domain.
 
     :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: installation was success or not
     :rtype: bool
     """
@@ -1385,11 +1385,11 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
 
   def install_nffg (self, nffg_part):
     """
-    Install :any:`NFFG` part into the domain using the specific REST-API
+    Install :class:`NFFG` part into the domain using the specific REST-API
     function and Virtualizer format.
 
-    :param nffg_part: domain related part of the mapped :any:`NFFG`
-    :type nffg_part: :any:`NFFG`
+    :param nffg_part: domain related part of the mapped :class:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: status if the installation was success
     :rtype: bool
     """

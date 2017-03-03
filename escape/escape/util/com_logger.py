@@ -113,7 +113,7 @@ class RemoteVisualizer(Session):
     Convert given NFFG into Virtualizer format if needed.
 
     :param data: topology description need to send
-    :type data: :any:`NFFG` or Virtualizer
+    :type data: :class:`NFFG` or Virtualizer
     :param id: id of the data, needs for the remote server
     :type id: str
     :param url: additional URL (optional)

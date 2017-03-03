@@ -46,12 +46,12 @@ class AbstractMappingStrategy(object):
       Derived class have to override this function
 
     :param graph: Input graph which need to be mapped
-    :type graph: :any:`NFFG`
+    :type graph: :class:`NFFG`
     :param resource: resource info
-    :type resource: :any:`NFFG`
+    :type resource: :class:`NFFG`
     :raise: :any:`exceptions.NotImplementedError`
     :return: mapped graph
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     raise NotImplementedError
 
@@ -85,7 +85,7 @@ class AbstractMappingDataProcessor(object):
     """
     Invoked right before the mapping algorithm.
 
-    The given attributes are direct reference to the :any:`NFFG` objects
+    The given attributes are direct reference to the :class:`NFFG` objects
     which are forwarded to the algorithm.
 
     If there is a return value considering True (True, not-empty container,
@@ -98,9 +98,9 @@ class AbstractMappingDataProcessor(object):
     a persistent way to cache data between validations.
 
     :param input_graph: graph representation which need to be mapped
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_graph: resource information
-    :type resource_graph: :any:`NFFG`
+    :type resource_graph: :class:`NFFG`
     :return: need to abort the mapping process
     :rtype: bool or None
     """
@@ -110,7 +110,7 @@ class AbstractMappingDataProcessor(object):
     """
     Invoked right after if the mapping algorithm is completed without an error.
 
-    The given attributes are direct reference to the :any:`NFFG` objects
+    The given attributes are direct reference to the :class:`NFFG` objects
     the mapping algorithm is worked on.
 
     If there is a return value considering True (e.g. True, not-empty
@@ -119,11 +119,11 @@ class AbstractMappingDataProcessor(object):
     will be aborted.
 
     :param input_graph: graph representation which need to be mapped
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_graph: resource information
-    :type resource_graph: :any:`NFFG`
+    :type resource_graph: :class:`NFFG`
     :param result_graph: result of the mapping process
-    :type result_graph: :any:`NFFG`
+    :type result_graph: :class:`NFFG`
     :return: need to abort the mapping process
     :rtype: bool or None
     """
@@ -167,9 +167,9 @@ class PrePostMapNotifier(AbstractMappingDataProcessor):
     skip validation.
 
     :param input_graph: graph representation which need to be mapped
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_graph: resource information
-    :type resource_graph: :any:`NFFG`
+    :type resource_graph: :class:`NFFG`
     :return: successful result (False)
     :rtype: bool
     """
@@ -186,11 +186,11 @@ class PrePostMapNotifier(AbstractMappingDataProcessor):
     skip validation.
 
     :param input_graph: graph representation which need to be mapped
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_graph: resource information
-    :type resource_graph: :any:`NFFG`
+    :type resource_graph: :class:`NFFG`
     :param result_graph: result of the mapping process
-    :type result_graph: :any:`NFFG`
+    :type result_graph: :class:`NFFG`
     :return: successful result (False)
     :rtype: bool
     """
@@ -216,9 +216,9 @@ class PreMapEvent(Event):
     Init.
 
     :param input_graph: graph representation which need to be mapped
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_graph: resource information
-    :type resource_graph: :any:`NFFG`
+    :type resource_graph: :class:`NFFG`
     :return: None
     """
     super(PreMapEvent, self).__init__()
@@ -231,7 +231,7 @@ class PreMapEvent(Event):
     For support backward compatibility.
 
     :return: input graph
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     return self.input_graph
 
@@ -248,11 +248,11 @@ class PostMapEvent(Event):
     Init.
 
     :param input_graph: graph representation which need to be mapped
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_graph: resource information
-    :type resource_graph: :any:`NFFG`
+    :type resource_graph: :class:`NFFG`
     :param result_graph: result of the mapping process
-    :type result_graph: :any:`NFFG`
+    :type result_graph: :class:`NFFG`
     :return: None
     """
     super(PostMapEvent, self).__init__()
@@ -343,12 +343,12 @@ class AbstractMapper(EventMixin):
     Follows the Template Method design pattern.
 
     :param input_graph: graph representation which need to be mapped
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_view: resource information
     :type resource_view: :any:`AbstractVirtualizer`
     :raise: NotImplementedError
     :return: mapped graph
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     raise NotImplementedError
 
@@ -366,12 +366,12 @@ class AbstractMapper(EventMixin):
     raised on the main API class of the layer!
 
     :param input_graph: graph representation which need to be mapped
-    :type input_graph: :any:`NFFG`
+    :type input_graph: :class:`NFFG`
     :param resource_view: resource information
     :type resource_view: :any:`AbstractVirtualizer`
     :raise: NotImplementedError
     :return: mapped graph
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     # Get resource info
     resource_graph = resource_view.get_resource_info()
@@ -415,9 +415,9 @@ class AbstractMapper(EventMixin):
     threaded is enabled!
 
     :param graph: Network Function Forwarding Graph
-    :type graph: :any:`NFFG`
+    :type graph: :class:`NFFG`
     :param resource: global resource
-    :type resource: :any:`NFFG`
+    :type resource: :class:`NFFG`
     :return: None
     """
 
@@ -442,7 +442,7 @@ class AbstractMapper(EventMixin):
       Derived class have to override this function!
 
     :param mapped_nffg: generated NF-FG
-    :type mapped_nffg: :any:`NFFG`
+    :type mapped_nffg: :class:`NFFG`
     :return: None
     """
     raise NotImplementedError

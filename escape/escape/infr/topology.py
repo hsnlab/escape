@@ -156,7 +156,7 @@ class FallbackStaticTopology(AbstractTopology):
     Return the topology description.
 
     :return: topo description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     # Create NFFG
     nffg = NFFG(id="STATIC-FALLBACK-TOPO", name="fallback-static")
@@ -240,7 +240,7 @@ class FallbackDynamicTopology(AbstractTopology):
     Return the topology description.
 
     :return: topo description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     # Create NFFG
     nffg = NFFG(id="DYNAMIC-FALLBACK-TOPO", name="fallback-dynamic")
@@ -331,7 +331,7 @@ class ESCAPENetworkBridge(object):
     Use network as the hided Mininet topology if it's given.
 
     :param topo_desc: static topology description e.g. the related NFFG
-    :type topo_desc: :any:`NFFG`
+    :type topo_desc: :class:`NFFG`
     :param network: use this specific Mininet object for init (default: None)
     :type network: :class:`mininet.net.MininetWithControlNet`
     :return: None
@@ -575,10 +575,10 @@ class ESCAPENetworkBuilder(object):
 
   def __init_from_NFFG (self, nffg):
     """
-    Initialize topology from an :any:`NFFG` representation.
+    Initialize topology from an :class:`NFFG` representation.
 
     :param nffg: topology object structure
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     # pprint(nffg.network.__dict__)
@@ -957,12 +957,12 @@ class ESCAPENetworkBuilder(object):
 
   def bind_inter_domain_SAPs (self, nffg):
     """
-    Search for inter-domain SAPs in given :any:`NFFG`, create them as a
+    Search for inter-domain SAPs in given :class:`NFFG`, create them as a
     switch port and bind them to a physical interface given in sap.domain
     attribute.
 
     :param nffg: topology description
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     log.debug("Search for inter-domain SAPs...")
@@ -1055,7 +1055,7 @@ class ESCAPENetworkBuilder(object):
 
 
     :param topo: optional topology representation
-    :type topo: :any:`NFFG` or :any:`AbstractTopology` or ``None``
+    :type topo: :class:`NFFG` or :any:`AbstractTopology` or ``None``
     :return: object representing the emulated network
     :rtype: :any:`ESCAPENetworkBridge`
     """

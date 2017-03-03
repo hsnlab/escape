@@ -122,10 +122,10 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG`.
+    Return with the topology description as an :class:`NFFG`.
 
     :return: the emulated topology description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     return None
 
@@ -256,10 +256,10 @@ class SDNDomainPOXAdapter(InternalPOXAdapter):
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG`.
+    Return with the topology description as an :class:`NFFG`.
 
     :return: the emulated topology description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     super(SDNDomainPOXAdapter, self).get_topology_resource()
 
@@ -340,10 +340,10 @@ class InternalMininetAdapter(AbstractESCAPEAdapter):
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG`.
+    Return with the topology description as an :class:`NFFG`.
 
     :return: the emulated topology description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     # Direct access to IL's Mininet wrapper <-- Internal Domain
     return self.rewrite_domain(
@@ -402,10 +402,10 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG` parsed from file.
+    Return with the topology description as an :class:`NFFG` parsed from file.
 
     :return: the static topology description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     return self.topo
 
@@ -422,10 +422,10 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
 
   def dump_to_file (self, nffg):
     """
-    Dump received :any:`NFFG` into a file.
+    Dump received :class:`NFFG` into a file.
 
     :param nffg: received NFFG need to be deployed
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: successful install (True)
     :rtype: bool
     """
@@ -433,7 +433,7 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
 
   def _dump_to_file (self, file_name, data):
     """
-    Dump received :any:`NFFG` into a file.
+    Dump received :class:`NFFG` into a file.
 
     :param file_name: file name
     :type file_name: str
@@ -538,10 +538,10 @@ class NFFGBasedStaticFileAdapter(StaticFileAdapter):
 
   def dump_to_file (self, nffg):
     """
-    Dump received :any:`NFFG` into a file.
+    Dump received :class:`NFFG` into a file.
 
     :param nffg: received NFFG need to be deployed
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: successful install (True)
     :rtype: bool
     """
@@ -620,10 +620,10 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
 
   def dump_to_file (self, nffg):
     """
-    Dump received :any:`NFFG` into a file.
+    Dump received :class:`NFFG` into a file.
 
     :param nffg: received NFFG need to be deployed
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: successful install (True)
     :rtype: bool
     """
@@ -730,10 +730,10 @@ class VNFStarterAdapter(AbstractNETCONFAdapter, AbstractESCAPEAdapter,
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG`.
+    Return with the topology description as an :class:`NFFG`.
 
     :return: the emulated topology description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     raise RuntimeError("VNFStarterAdapter does not support this function: "
                        "get_topology_resource() !")
@@ -1262,10 +1262,10 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG`.
+    Return with the topology description as an :class:`NFFG`.
 
     :return: the topology description of the remote domain
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     # Get full topology as a Virtualizer
     virt = self.get_config()
@@ -1309,7 +1309,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     ``Virtualizer``.
 
     :return: the received topology is different from cached one
-    :rtype: bool or None or :any:`NFFG`
+    :rtype: bool or None or :class:`NFFG`
     """
     # Get full topology as a Virtualizer
     data = self.send_no_error(self.POST, 'get-config')
@@ -1443,7 +1443,7 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
     :param filter: request a filtered description instead of full
     :type filter: str
     :return: infrastructure view in the original format
-    :rtype: :class:`virtualizer.Virtualizer` or :any:`NFFG`
+    :rtype: :class:`virtualizer.Virtualizer` or :class:`NFFG`
     """
     # If UNIFY interface is enabled, use the super class from UNIFYAdapter
     if self._unify_interface:
@@ -1523,10 +1523,10 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG`.
+    Return with the topology description as an :class:`NFFG`.
 
     :return: the topology description of the remote domain
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     if self._unify_interface:
       return super(RemoteESCAPEv2RESTAdapter, self).get_topology_resource()
@@ -1552,7 +1552,7 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
     Return the original according to the Unify interface is enabled or not.
 
     :return: the original topology
-    :rtype: :any:`NFFG` or Virtualizer
+    :rtype: :class:`NFFG` or Virtualizer
     """
     return self.__original_virtualizer if self._unify_interface else \
       self._original_nffg
@@ -1567,7 +1567,7 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
     ``Virtualizer``.
 
     :return: the received topology is different from cached one
-    :rtype: bool or None or :any:`NFFG`
+    :rtype: bool or None or :class:`NFFG`
     """
     if self._unify_interface:
       return super(RemoteESCAPEv2RESTAdapter, self).check_topology_changed()
@@ -1629,7 +1629,7 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     Cache last received topology.
 
     :param nffg: received NFFG
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     self.last_topo = nffg.copy()
@@ -1668,10 +1668,10 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG`.
+    Return with the topology description as an :class:`NFFG`.
 
     :return: the emulated topology description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     topo_data = self.request_bgp_ls_virtualizer()
     log.debug("Process BGP-LS-based JSON...")
@@ -1690,7 +1690,7 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     the domain changed.
 
     :return: the received topology is different from cached one
-    :rtype: bool or None or :any:`NFFG`
+    :rtype: bool or None or :class:`NFFG`
     """
     raw_data = self.send_quietly(self.GET, 'virtualizer')
     if raw_data is None:
@@ -1719,7 +1719,7 @@ class BGPLSRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     ``last_topo``.
 
     :param new_data: received new data
-    :type new_data: :any:`NFFG`
+    :type new_data: :class:`NFFG`
     :return: changed or not
     :rtype: bool
     """

@@ -257,7 +257,7 @@ class RequestCache(object):
     Add a request to the cache.
 
     :param nffg: request id
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     """
     try:
       key = nffg.metadata['params']['message-id']

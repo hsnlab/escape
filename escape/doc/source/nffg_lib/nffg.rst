@@ -12,9 +12,9 @@ Classes of the module:
 
 :any:`AbstractNFFG` represents the common function for an NFFG representation.
 
-:any:`NFFG` is the internal representation of an NFFG.
+:class:`NFFG` is the internal representation of an NFFG.
 
-:any:`NFFGToolBox` contains helper functions for :any:`NFFG` handling and
+:class:`NFFGToolBox` contains helper functions for :class:`NFFG` handling and
 operations.
 
 Module contents

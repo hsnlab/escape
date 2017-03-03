@@ -16,5 +16,5 @@ Submodules
     :titlesonly:
 
     nffg
+    nffg_diff
     nffg_elements
-    diff

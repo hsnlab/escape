@@ -44,7 +44,7 @@ from virtualizer_mappings import Mappings
 
 class InstallNFFGEvent(Event):
   """
-  Event for passing mapped :any:`NFFG` to Controller
+  Event for passing mapped :class:`NFFG` to Controller
   Adaptation Sublayer.
   """
 
@@ -53,7 +53,7 @@ class InstallNFFGEvent(Event):
     Init
 
     :param mapped_nffg: NF-FG graph need to be installed
-    :type mapped_nffg: NFFG
+    :type mapped_nffg: :class:`NFFG`
     :return: None
     """
     super(InstallNFFGEvent, self).__init__()
@@ -289,11 +289,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
   def api_ros_get_config (self):
     """
     Implementation of REST-API RPC: get-config. Return with the global
-    resource as an :any:`NFFG` if it has been changed otherwise return with
+    resource as an :class:`NFFG` if it has been changed otherwise return with
     False.
 
     :return: global resource view (DoV)
-    :rtype: :any:`NFFG` or False
+    :rtype: :class:`NFFG` or False
     """
     log.getChild('[Sl-Or]').debug("Requesting Virtualizer for REST-API")
     slor_virt = self.__get_slor_resource_view()
@@ -322,7 +322,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     Implementation of REST-API RPC: edit-config
 
     :param nffg: NFFG need to deploy
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     """
     log.getChild('[Sl-Or]').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
@@ -341,9 +341,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     Update domain descriptor of infras: REMOTE -> INTERNAL
 
     :param nffg_part: NF-FG need to be updated
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: updated NFFG
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     rewritten = []
     if domain_name is None:
@@ -457,7 +457,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     Implementation of Cf-Or REST-API RPC: edit-config
 
     :param nffg: NFFG need to deploy
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     """
     log.getChild('[Cf-Or]').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
@@ -488,7 +488,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     Helper function to instantiate the NFFG mapping from different source.
 
     :param nffg: pre-mapped service request
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: None
     """
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
@@ -615,7 +615,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def _proceed_to_install_NFFG (self, mapped_nffg):
     """
-    Send mapped :any:`NFFG` to Controller Adaptation Sublayer in an
+    Send mapped :class:`NFFG` to Controller Adaptation Sublayer in an
     implementation-specific way.
 
     General function which is used from microtask and Python thread also.
@@ -624,7 +624,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     to the next layer.
 
     :param mapped_nffg: mapped NF-FG
-    :type mapped_nffg: :any:`NFFG`
+    :type mapped_nffg: :class:`NFFG`
     :return: None
     """
     # Non need to rebind req links --> it will be done in Adaptation layer
@@ -935,7 +935,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     Process the received service request.
 
     :return: Parsed service request
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     # Obtain NFFG from request body
     self.log.debug("Detected message format: %s" %
@@ -1029,7 +1029,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     topology config and received diff request.
 
     :return: recreated request
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     self.log.info("Patching cached topology with received diff...")
     # full_request = self.server.last_response.full_copy()

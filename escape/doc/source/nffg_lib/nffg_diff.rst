@@ -1,12 +1,12 @@
-*diff.py* module
-================
+*nffg_diff.py* module
+=====================
 
-Calculate and print the difference of the two :any:`NFFG` given by it"s path.
+Calculate and print the difference of the two :class:`NFFG` given by it"s path.
 
 Module contents
 ---------------
 
-.. automodule:: escape.nffg_lib.diff
+.. automodule:: escape.nffg_lib.nffg_diff
    :members:
    :private-members:
    :special-members:

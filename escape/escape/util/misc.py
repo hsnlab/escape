@@ -462,7 +462,7 @@ def notify_remote_visualizer (data, id, url=None, **kwargs):
   global config.
 
   :param data: data need to send
-  :type data: :any:`NFFG` or Virtualizer
+  :type data: :class:`NFFG` or Virtualizer
   :param id: id of the data, needs for the remote server
   :type id: str
   :param url: additional URL (acquired from config by default)

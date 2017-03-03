@@ -45,7 +45,7 @@ class GlobalResInfoEvent(Event):
 
 class DeployNFFGEvent(Event):
   """
-  Event for passing mapped :any:`NFFG` to internally emulated network based on
+  Event for passing mapped :class:`NFFG` to internally emulated network based on
   Mininet for testing.
   """
 
@@ -54,7 +54,7 @@ class DeployNFFGEvent(Event):
     Init.
 
     :param nffg_part: NFFG needs to deploy
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: None
     """
     super(DeployNFFGEvent, self).__init__()
@@ -145,7 +145,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     Helper function to instantiate the NFFG mapping from different source.
 
     :param mapped_nffg: pre-mapped service request
-    :type mapped_nffg: :any:`NFFG`
+    :type mapped_nffg: :class:`NFFG`
     :return: None
     """
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (

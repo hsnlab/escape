@@ -102,7 +102,7 @@ class DomainChangedEvent(Event):
     :param cause: type of the domain change: :any:`DomainChangedEvent.TYPE`
     :type cause: str
     :param data: data connected to the change (optional)
-    :type data: :any:`NFFG` or str
+    :type data: :class:`NFFG` or str
     :return: None
     """
     super(DomainChangedEvent, self).__init__()
@@ -123,7 +123,7 @@ class DeployEvent(Event):
     Init.
 
     :param nffg_part: NFFG object needs to deploy
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: None
     """
     super(DeployEvent, self).__init__()
@@ -348,10 +348,10 @@ class AbstractDomainManager(EventMixin):
 
   def install_nffg (self, nffg_part):
     """
-    Install an :any:`NFFG` related to the specific domain.
+    Install an :class:`NFFG` related to the specific domain.
 
     :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: status if the install process was success
     :rtype: bool
     """
@@ -591,11 +591,11 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
 
   def install_nffg (self, nffg_part):
     """
-    Install an :any:`NFFG` related to the specific domain.
+    Install an :class:`NFFG` related to the specific domain.
 
     :raise: :any:`exceptions.NotImplementedError`
     :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :any:`NFFG`
+    :type nffg_part: :class:`NFFG`
     :return: status if the install process was success
     :rtype: bool
     """
@@ -656,12 +656,12 @@ class AbstractESCAPEAdapter(EventMixin):
 
   def rewrite_domain (self, nffg):
     """
-    Rewrite the DOMAIN information in nodes of the given :any:`NFFG`.
+    Rewrite the DOMAIN information in nodes of the given :class:`NFFG`.
 
     :param nffg: topology description
-    :type nffg: :any:`NFFG`
+    :type nffg: :class:`NFFG`
     :return: the rewritten description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     self.log.debug(
       "Rewrite domain of Infrastructure nodes to: %s" % self.domain_name)
@@ -686,11 +686,11 @@ class AbstractESCAPEAdapter(EventMixin):
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG`.
+    Return with the topology description as an :class:`NFFG`.
 
     :raise: :any:`exceptions.NotImplementedError`
     :return: the topology description
-    :rtype: :any:`NFFG`
+    :rtype: :class:`NFFG`
     """
     raise NotImplementedError
 
@@ -834,7 +834,7 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
 
   def get_topology_resource (self):
     """
-    Return with the topology description as an :any:`NFFG`.
+    Return with the topology description as an :class:`NFFG`.
 
     :raise: :any:`exceptions.NotImplementedError`
     """
@@ -1266,7 +1266,7 @@ class AbstractRESTAdapter(Session):
     :param url: valid URL or relevant part follows ``self.base_url``
     :type url: str
     :param body: request body
-    :type body: :any:`NFFG` or dict or bytes or str
+    :type body: :class:`NFFG` or dict or bytes or str
     :return: raw response data
     :rtype: str
     """
@@ -1310,7 +1310,7 @@ class AbstractRESTAdapter(Session):
     :param url: valid URL or relevant part follows ``self.base_url``
     :type url: str
     :param body: request body
-    :type body: :any:`NFFG` or dict or bytes or str
+    :type body: :class:`NFFG` or dict or bytes or str
     :return: raw response data
     :rtype: str
     """
@@ -1331,7 +1331,7 @@ class AbstractRESTAdapter(Session):
     :param url: valid URL or relevant part follows ``self.base_url``
     :type url: str
     :param body: request body
-    :type body: :any:`NFFG` or dict or bytes or str
+    :type body: :class:`NFFG` or dict or bytes or str
     :param timeout: optional timeout param can be given also here
     :type timeout: int
     :raises: :any:`requests.Timeout`
@@ -1369,7 +1369,7 @@ class AbstractRESTAdapter(Session):
     :param url: valid URL or relevant part follows ``self.base_url``
     :type url: str
     :param body: request body
-    :type body: :any:`NFFG` or dict or bytes or str
+    :type body: :class:`NFFG` or dict or bytes or str
     :param timeout: optional timeout param can be given also here
     :type timeout: int
     :raises: :any:`requests.Timeout`

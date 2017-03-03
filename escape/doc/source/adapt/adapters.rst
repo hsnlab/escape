@@ -41,12 +41,6 @@ and the "Virtualizer" XML-based format.
 :any:`RemoteESCAPEv2RESTAdapter` is a wrapper class for REST-based communication
 with an another ESCAPE instance started in agent mode.
 
-:any:`OpenStackRESTAdapter` is a wrapper class for OpenStack-REST-like API
-functions.
-
-:any:`UniversalNodeRESTAdapter` is a wrapper class for REST-like communication
-with the Universal Node domain.
-
 :any:`BGPLSRESTAdapter` is a wrapper class for communicating with an external
 component called TopologyManager using BGP-LS protocol with special extensions.
 
