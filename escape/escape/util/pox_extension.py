@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,35 @@ Override and extend internal POX components to achieve ESCAPE-desired behaviour.
 """
 from pox.core import core
 from pox.openflow import OpenFlowConnectionArbiter, OpenFlowNexus, ConnectionIn
+
+
+class POXCoreRegisterMetaClass(type):
+  """
+  Enhanced metaclass for Singleton design pattern that use pox.core object to
+  store the only instance.
+  """
+  CORE_NAME = "_core_name"
+
+  def __call__ (cls, _core_name=None, *args, **kwargs):
+    """
+    Override object creation. Use `_core_name` as the identifier in POXCore
+    to store the created instance is it hasn't instantiated yet.
+
+    :param _core_name: optional core name
+    :type _core_name: str
+    :param args: optional args of the calling constructor
+    :type args: list
+    :param kwargs: optional kwargs of the calling constructor
+    :type kwargs: dict
+    :return: only instance of 'cls'
+    """
+    name = _core_name if _core_name is not None else getattr(cls, cls.CORE_NAME)
+    if name is None:
+      raise RuntimeError("'_core_name' was not given in class or in parameter!")
+    if not core.core.hasComponent(name):
+      _instance = super(POXCoreRegisterMetaClass, cls).__call__(*args)
+      core.core.register(name, _instance)
+    return core.core.components[name]
 
 
 class OpenFlowBridge(OpenFlowNexus):
@@ -129,7 +158,7 @@ class ESCAPEInteractiveHelper(object):
   POX's py module.
   """
 
-  def __repr__ (self):
+  def __str__ (self):
     """
     Return with defined helper functions.
 

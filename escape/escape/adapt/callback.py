@@ -1,4 +1,4 @@
-# Copyright 2017 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -153,17 +153,23 @@ class CallbackManager(HTTPServer, Thread):
 
   def __init__ (self, domain_name, address=DEFAULT_SERVER_ADDRESS,
                 port=DEFAULT_PORT, timeout=DEFAULT_WAIT_TIMEOUT,
-                **kwargs):
+                callback_url=None, **kwargs):
     Thread.__init__(self, name=self.__class__.__name__)
     HTTPServer.__init__(self, (address, port), CallbackHandler)
     self.domain_name = domain_name
     self.wait_timeout = float(timeout)
     self.__register = {}
     self.daemon = True
+    self.__callback = callback_url
 
   @property
   def url (self):
-    return "http://%s:%s/callback" % self.server_address
+    if self.__callback:
+      log.debug("Using explicit URL for callback: %s" % self.__callback)
+      return self.__callback
+    else:
+      log.debug("Using generated callback URL...")
+      return "http://%s:%s/callback" % self.server_address
 
   def run (self):
     try:
@@ -189,9 +195,10 @@ class CallbackManager(HTTPServer, Thread):
       _timeout = timeout if timeout is not None else self.wait_timeout
       cb.setup_timer(_timeout, self.invoke_hook, msg_id=cb_id, result=0)
       self.__register[cb_id] = cb
+      return cb
     else:
       log.warning("Hook is already registered for id: %s on domain: %s"
-                  % (id, self.domain_name))
+                  % (cb_id, self.domain_name))
 
   def unsubscribe_callback (self, cb_id):
     """
@@ -203,7 +210,8 @@ class CallbackManager(HTTPServer, Thread):
     log.debug("Unregister callback for response: %s from domain: %s"
               % (cb_id, self.domain_name))
     cb = self.__register.pop(cb_id, None)
-    cb.stop_timer()
+    if cb:
+      cb.stop_timer()
     return cb
 
   def invoke_hook (self, msg_id, result, body=None):
@@ -227,6 +235,7 @@ class CallbackManager(HTTPServer, Thread):
     cb.result_code = result
     cb.body = body
     if cb.hook is not None and callable(cb.hook):
+      log.debug("Schedule callback hook: %s" % cb.short())
       cb.hook(callback=cb)
     else:
       log.warning("No callable hook was defined for the received callback: %s!"

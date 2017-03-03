@@ -71,7 +71,11 @@
       "prefix": "escape",
       "unify_interface": true
     },
-    "manage-neo4j-service": false
+    "neo4j": {
+      "host": "localhost",
+      "port": 7474,
+      "manage-neo4j-service": false
+    }
   },
   "adaptation": {
     "MANAGERS": [],
@@ -79,7 +83,7 @@
       "ENSURE-UNIQUE-ID": true,
       "USE-REMERGE-UPDATE-STRATEGY": true,
       "USE-STATUS-BASED-UPDATE": false,
-      "ONE-STEP_UPDATE": true
+      "ONE-STEP-UPDATE": true
     },
     "deployment": {
       "RESET-DOMAINS-BEFORE-INSTALL": false,
@@ -214,6 +218,7 @@
           "enabled": true,
           "address": "0.0.0.0",
           "port": 9000,
+          "callback_url": "http://localhost:9000/callback2",
           "explicit_update": false
         }
       }

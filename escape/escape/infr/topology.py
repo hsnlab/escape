@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1083,13 +1083,17 @@ class ESCAPENetworkBuilder(object):
       quit_with_error(msg="Mininet exited unexpectedly!", logger=log,
                       exception=e)
     except TopologyBuilderException:
-      if self.fallback:
-        # Search for fallback topology
-        fallback = CONFIG.get_fallback_topology()
-        if fallback:
-          log.info("Load topo from fallback topology description...")
-          self.__init_from_AbstractTopology(fallback)
-          return self.get_network()
+      try:
+        if self.fallback:
+          # Search for fallback topology
+          fallback = CONFIG.get_fallback_topology()
+          if fallback:
+            log.info("Load topo from fallback topology description...")
+            self.__init_from_AbstractTopology(fallback)
+            return self.get_network()
+      except SystemExit as e:
+        quit_with_error(msg="Mininet exited unexpectedly!", logger=log,
+                        exception=e)
       # fallback topo is not found or set
       if self.run_dry:
         # Return with the bare Mininet object

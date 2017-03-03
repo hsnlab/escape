@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -386,6 +386,10 @@ def remove_junks_at_boot (log=logging.getLogger("cleanup")):
     return
   log.debug("Remove remained log files of VNF, agent and netconfd instances "
             "from previous run...")
+  log.debug("Remove trails...")
+  for f in os.listdir(os.getcwd() + "/log/trails"):
+    if f != ".placeholder":
+      os.remove(os.path.join(os.getcwd(), "log/trails", f))
   run_cmd('rm -f /tmp/*.log')
   for f in os.listdir('/tmp'):
     if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
@@ -418,11 +422,11 @@ def get_escape_version ():
   desc = Popen(cmd.split(' '), stdout=PIPE).communicate()[0].strip()
   # If Git is not installed or command is failed
   if not desc:
-    return "2.0.0"
+    return "N/A"
   else:
     # If no tag is defined in the repo
     if not desc.count('-'):
-      return "2.0.0"
+      return "2.0.0-%s" % desc
     else:
       return desc
 

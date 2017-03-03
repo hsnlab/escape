@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -162,6 +162,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     if not deploy_status.still_pending:
       id = mapped_nffg.id
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
+      log.debug("Overall installation result: %s" % result)
       self.raiseEventNoErrors(InstallationFinishedEvent, id=id, result=result)
 
   @schedule_as_coop_task
@@ -203,6 +204,5 @@ class ControllerAdaptationAPI(AbstractAPI):
         event.source._core_name).title())
     # Currently global view is a reference to the DoV to keep ESCAPE fast
     dov = self.controller_adapter.DoVManager.dov
-    log.getChild('API').debug(
-      "Sending back DoV: %s..." % dov)
+    log.getChild('API').debug("Sending back DoV: %s..." % dov)
     self.raiseEventNoErrors(GlobalResInfoEvent, dov)

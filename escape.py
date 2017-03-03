@@ -1,6 +1,5 @@
 #!/usr/bin/python -u
-#
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +18,8 @@ Top starter script of ESCAPEv2 for convenient purposes
 import argparse
 import imp
 import os
+
+MAIN_CONTAINER_LAYER_NAME = "ESCAPE"
 
 
 def get_escape_version ():
@@ -108,7 +109,7 @@ def main ():
       print "Run full cleaning process..."
       # Kill stacked ESCAPE processes
       from misc import run_cmd
-      run_cmd('sudo -S pkill -f "unify"')
+      run_cmd('sudo -S pkill -f "%s"' % MAIN_CONTAINER_LAYER_NAME)
       from misc import remove_junks_at_shutdown, remove_junks_at_boot
       # Remove remained temporarily files
       remove_junks_at_shutdown()
@@ -123,7 +124,7 @@ def main ():
   # Create absolute path for the pox.py initial script
   # Construct POX init command according to argument
   # basic command
-  cmd = [os.path.join(base_dir, "pox/pox.py"), "unify"]
+  cmd = [os.path.join(base_dir, "pox/pox.py"), MAIN_CONTAINER_LAYER_NAME]
 
   # Run ESCAPE in VERBOSE logging level if it is needed
   if args.debug == 1:

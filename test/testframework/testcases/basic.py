@@ -1,4 +1,4 @@
-# Copyright 2015 Lajos Gerecs, Janos Czentye
+# Copyright 2017 Lajos Gerecs, Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,6 +41,9 @@ class BasicErrorChecker(object):
   SUCCESS_RESULTS = ("SUCCESS", "DEPLOYED")
   ERROR_RESULTS = "DEPLOYMENT_ERROR"
 
+  SKIPPED_ERRORS = ("No configuration file was found for neo4j service!",
+                    "! SocketError: Connection refused")
+
   @classmethod
   def detect_error (cls, result):
     """
@@ -54,6 +57,9 @@ class BasicErrorChecker(object):
     for i, line in enumerate(reversed(result.log_output)):
       if line.startswith(cls.ERROR_PREFIX) or \
          line.startswith(cls.CRITICAL_PREFIX):
+        err_msg = line.split(cls.SEPARATOR, 1)[1]
+        if not any(map(lambda x: x.startswith(err_msg), cls.SKIPPED_ERRORS)):
+          continue
         pos = len(result.log_output) - i
         return ''.join(
           result.log_output[pos - cls.PRE_CONTEXT:pos + cls.POST_CONTEXT])
@@ -97,7 +103,8 @@ class WarningChecker(BasicErrorChecker):
     "No SAPs could be found,",
     "No SAP - SAP chain were given!",
     "Physical interface:",
-    "Skip starting xterms on SAPS according to global config"
+    "Skip starting xterms on SAPS according to global config",
+    "NFIBManager has not been initialized!"
   ]
 
   @classmethod

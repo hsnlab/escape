@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,8 +53,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     self.virtualizerManager = VirtualizerManager()
     self.virtualizerManager.addListeners(layer_API, weak=True)
     # Init NFIB manager
-    self.nfibManager = NFIBManager()
-    self.nfibManager.initialize()
+    self.nfibManager = NFIBManager().initialize()
 
   def finalize (self):
     """
@@ -143,7 +142,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     dov = self.virtualizerManager.dov.get_resource_info()
     # Collect NFs
     nfs = [nf.id for nf in request.nfs]
-    log.log(VERBOSE, "Collected NFs: %s" % nfs)
+    log.debug("Collected NFs: %s" % nfs)
     return self.__collect_binding(dov=dov, nfs=nfs)
 
   @staticmethod
@@ -153,28 +152,28 @@ class ResourceOrchestrator(AbstractOrchestrator):
 
     .. code-block:: json
 
-    [
-      {
-        "bisbis": {
-          "domain": null,
-          "id": "EE2"
-        },
-        "nf": {
-          "id": "fwd",
-          "ports": [
-            {
-              "id": 1,
-              "management": {
-                "22/tcp": [
-                  "0.0.0.0",
-                  20000
-                ]
+      [
+        {
+          "bisbis": {
+            "domain": null,
+            "id": "EE2"
+          },
+          "nf": {
+            "id": "fwd",
+            "ports": [
+              {
+                "id": 1,
+                "management": {
+                  "22/tcp": [
+                    "0.0.0.0",
+                    20000
+                  ]
+                }
               }
-            }
-          ]
+            ]
+          }
         }
-      }
-    ]
+      ]
 
     :param dov: global topology
     :type dov: NFFG
@@ -210,8 +209,17 @@ class ResourceOrchestrator(AbstractOrchestrator):
       mapping['nf'] = nf
       # Add infra node ID and domain name
       bisbis = bisbis.split('@')
-      mapping['bisbis'] = {"id": bisbis[0],
-                           "domain": bisbis[1] if len(bisbis) > 1 else None}
+      bb_mapping = {"id": bisbis[0],
+                    "domain": bisbis[1] if len(bisbis) > 1 else None}
+      if bb_mapping.get("domain"):
+        domain_url = CONFIG.get_domain_url(domain=bb_mapping.get("domain"))
+        log.debug("Domain: %s - Detected URL: %s" % (bb_mapping.get("domain"),
+                                                     domain_url))
+        if domain_url is not None:
+          bb_mapping["url"] = domain_url
+        else:
+          log.warning("Missing URL for domain: %s!" % bb_mapping["domain"])
+      mapping['bisbis'] = bb_mapping
       mappings.append(mapping)
     return mappings
 

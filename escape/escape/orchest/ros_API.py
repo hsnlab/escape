@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,8 +26,10 @@ from escape.nffg_lib.nffg import NFFGToolBox
 from escape.orchest import LAYER_NAME  # Orchestration layer logger
 from escape.orchest import log as log
 from escape.orchest.ros_orchestration import ResourceOrchestrator
-from escape.util.api import AbstractAPI, RESTServer, RequestStatus
+from escape.util.api import AbstractAPI, RESTServer, RequestStatus, \
+  RequestScheduler
 from escape.util.api import AbstractRequestHandler
+from escape.util.com_logger import MessageDumper
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import ProcessorError
@@ -585,29 +587,31 @@ class ResourceOrchestrationAPI(AbstractAPI):
                               error=e)
 
   def __process_mapping_result (self, nffg_id, fail):
-    if hasattr(self, 'ros_api') and self.ros_api:
-      log.getChild('API').debug("Cache request status...")
-      req_status = self.ros_api.request_cache.get_request_by_nffg_id(nffg_id)
-      if req_status is None:
-        log.getChild('API').debug("Request status is missing for NFFG: %s! "
-                                  "Skip result processing..." % nffg_id)
-        return
-      log.getChild('API').debug("Process mapping result...")
-      message_id = req_status.message_id
-      if message_id is not None:
-        if fail:
-          self.ros_api.request_cache.set_error_result(id=message_id)
-        else:
-          self.ros_api.request_cache.set_success_result(id=message_id)
-        log.info("Set request status: %s for message: %s"
-                 % (req_status.status, req_status.message_id))
-        ret = self.ros_api.invoke_callback(message_id=message_id)
-        if ret is None:
-          log.getChild('API').debug("No callback was defined!")
-        else:
-          log.getChild('API').debug(
-            "Callback: %s has invoked with return value: %s" % (
-              req_status.get_callback(), ret))
+    if not (hasattr(self, 'ros_api') and self.ros_api):
+      return
+    log.getChild('API').debug("Cache request status...")
+    req_status = self.ros_api.request_cache.get_request_by_nffg_id(nffg_id)
+    if req_status is None:
+      log.getChild('API').debug("Request status is missing for NFFG: %s! "
+                                "Skip result processing..." % nffg_id)
+      return
+    log.getChild('API').debug("Process mapping result...")
+    message_id = req_status.message_id
+    if message_id is not None:
+      if fail:
+        self.ros_api.request_cache.set_error_result(id=message_id)
+      else:
+        self.ros_api.request_cache.set_success_result(id=message_id)
+      log.info("Set request status: %s for message: %s"
+               % (req_status.status, req_status.message_id))
+      ret = self.ros_api.invoke_callback(message_id=message_id)
+      if ret is None:
+        log.getChild('API').debug("No callback was defined!")
+      else:
+        log.getChild('API').debug(
+          "Callback: %s has invoked with return value: %s" % (
+            req_status.get_callback(), ret))
+    RequestScheduler().set_orchestration_finished(id=nffg_id)
 
   def _proceed_to_install_NFFG (self, mapped_nffg):
     """
@@ -690,10 +694,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
         body = None
       else:
         self.ros_api.request_cache.set_success_result(id=status.id)
-        body = status.data
+        body = status.data[0]
         body = body.xml() if isinstance(body, Info) else str(body)
       log.info("Set request status: %s for message: %s"
-                % (req_status.status, req_status.message_id))
+               % (req_status.status, req_status.message_id))
       log.log(VERBOSE, "Collected Info data:\n%s" % body)
       ret = self.ros_api.invoke_callback(message_id=status.id, body=body)
       if ret is None:
@@ -718,8 +722,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`MissingGlobalViewEvent`
     :return: None
     """
-    log.getChild('API').debug(
-      "Send DoV request to Adaptation layer...")
+    log.getChild('API').debug("Send DoV request to Adaptation layer...")
     self.raiseEventNoErrors(GetGlobalResInfoEvent)
 
   def _handle_GlobalResInfoEvent (self, event):
@@ -730,9 +733,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type event: :any:`GlobalResInfoEvent`
     :return: None
     """
-    log.getChild('API').debug(
-      "Received DoV from %s Layer" % str(
-        event.source._core_name).title())
+    log.getChild('API').debug("Received DoV from %s Layer" % str(
+      event.source._core_name).title())
     self.orchestrator.virtualizerManager.dov = event.dov
 
   def _handle_InstallationFinishedEvent (self, event):
@@ -751,8 +753,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.getChild('API').error(
         "NF-FG(%s) instantiation has been finished with error result: %s!" %
         (event.id, event.result))
-    self.__process_mapping_result(nffg_id=event.id,
-                                  fail=BaseResultEvent.is_error(event.result))
+    if not event.is_pending(event.result):
+      self.__process_mapping_result(nffg_id=event.id,
+                                    fail=event.is_error(event.result))
     self.raiseEventNoErrors(InstantiationFinishedEvent,
                             id=event.id,
                             result=event.result)
@@ -828,15 +831,23 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     """
     self.log.debug("Call %s function: edit-config" % self.LOGGER_NAME)
     nffg = self._service_request_parser()
-    if nffg:
+    if nffg is not None:
       if nffg.service_id is None:
         nffg.service_id = nffg.id
       nffg.id = params.get(self.MESSAGE_ID_NAME)
       nffg.metadata['params'] = params
-      self._proceed_API_call(self.API_CALL_REQUEST,
-                             nffg=nffg,
-                             params=params)
+      # self._proceed_API_call(self.API_CALL_REQUEST,
+      #                        nffg=nffg,
+      #                        params=params)
+      self.server.scheduler.schedule_request(id=nffg.id,
+                                             layer=self.bounded_layer,
+                                             function=self.API_CALL_REQUEST,
+                                             nffg=nffg, params=params)
       self.send_acknowledge(message_id=params[self.MESSAGE_ID_NAME])
+    else:
+      self.log.error("Parsed and converted NFFG of 'edit-config' is missing!")
+      self.send_error(code=httplib.INTERNAL_SERVER_ERROR,
+                      message="Request body processing was failed!")
     self.log.debug("%s function: edit-config ended!" % self.LOGGER_NAME)
 
   def status (self, params):
@@ -915,6 +926,9 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     self.log.debug("Send back topology description...")
     self.wfile.write(data)
     self.log.log(VERBOSE, "Responded topology:\n%s" % data)
+    MessageDumper().dump_to_file(data=data,
+                                 unique="ESCAPEp%s-get-config" %
+                                        self.server.server_address[1])
 
   def _service_request_parser (self):
     """
@@ -933,6 +947,9 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       self.send_error(code=httplib.BAD_REQUEST, message="Missing body!")
       return
     # Expect XML format --> need to convert first
+    MessageDumper().dump_to_file(data=raw_body,
+                                 unique="ESCAPEp%s-edit-config" %
+                                        self.server.server_address[1])
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type") != "application/xml" and \
          not raw_body.startswith("<?xml version="):
@@ -1015,13 +1032,9 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     :rtype: :any:`NFFG`
     """
     self.log.info("Patching cached topology with received diff...")
-    full_request = self.server.last_response.full_copy()
-    full_request.bind(relative=True)
-    # Do not call bind on diff to avoid resolve error in Virtualizer
-    # diff.bind(relative=True)
-    # Adapt changes on  the local config
+    # full_request = self.server.last_response.full_copy()
+    full_request = Virtualizer.parse_from_text(self.server.last_response.xml())
     full_request.patch(source=diff)
-    # full_request.bind(relative=True)
     # return full_request
     # Perform hack to resolve inconsistency
     return Virtualizer.parse_from_text(full_request.xml())
@@ -1189,6 +1202,9 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
     self.end_headers()
     self.wfile.write(data)
     self.log.log(VERBOSE, "Responded mapping info:\n%s" % data)
+    MessageDumper().dump_to_file(data=data,
+                                 unique="ESCAPEp%s-mapping-info" %
+                                        self.server.server_address[1])
     return
 
   def mappings (self, params):
@@ -1206,6 +1222,9 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
       log.warning("Received data is empty!")
       self.send_error(httplib.BAD_REQUEST, "Missing body!")
       return
+    MessageDumper().dump_to_file(data=raw_body,
+                                 unique="ESCAPEp%s-mappings" %
+                                        self.server.server_address[1])
     mappings = Mappings.parse_from_text(text=raw_body)
     self.log.log(VERBOSE, "Full request:\n%s" % mappings.xml())
     ret = self._proceed_API_call(self.API_CALL_MAPPINGS, mappings)
@@ -1223,6 +1242,9 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
     self.wfile.write(response_data)
     self.log.log(VERBOSE, "Responded mapping info:\n%s" % response_data)
     self.log.debug("%s function: mapping-info ended!" % self.LOGGER_NAME)
+    MessageDumper().dump_to_file(data=response_data,
+                                 unique="ESCAPEp%s-mappings" %
+                                        self.server.server_address[1])
 
   def info (self, params):
     """
@@ -1236,6 +1258,9 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
       log.warning("Received data is empty!")
       self.send_error(httplib.BAD_REQUEST, "Missing body!")
       return
+    MessageDumper().dump_to_file(data=raw_body,
+                                 unique="ESCAPEp%s-info" %
+                                        self.server.server_address[1])
     info = Info.parse_from_text(text=raw_body)
     msg_id = params.get(self.MESSAGE_ID_NAME)
     self.log.log(VERBOSE, "Full request:\n%s" % info.xml())

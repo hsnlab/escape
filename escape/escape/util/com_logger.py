@@ -1,4 +1,4 @@
-# Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
 Contains functions and classes for remote visualization.
 """
 import logging
+import os
+import time
 import urlparse
 
 from requests import Session, ConnectionError, HTTPError, Timeout
 
 import virtualizer as Virtualizer
-from escape import CONFIG, __version__
+from escape import CONFIG, PROJECT_ROOT, __version__
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import LAYER_NAME as ORCHEST
@@ -28,6 +30,8 @@ from escape.service import LAYER_NAME as SERVICE
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import Singleton
 from pox.core import core
+
+log = core.getLogger("logger")
 
 
 class RemoteVisualizer(Session):
@@ -159,3 +163,33 @@ class RemoteVisualizer(Session):
       self.log.warning(
         "Got timeout(%ss) during notify remote Visualizer!" % kwargs['timeout'])
       return True
+
+
+class MessageDumper(object):
+  __metaclass__ = Singleton
+  DIR = "log/trails"
+
+  def __init__ (self):
+    self.__cntr = 0
+    self.__clear_trails()
+
+  def __clear_trails (self):
+    log.debug("Remove trails...")
+    for f in os.listdir(os.path.join(PROJECT_ROOT, self.DIR)):
+      if f != ".placeholder":
+        os.remove(os.path.join(PROJECT_ROOT, self.DIR, f))
+
+  def dump_to_file (self, data, unique):
+    if not isinstance(data, basestring):
+      log.error("Data is not str: %s" % type(data))
+      return
+    trails = os.path.join(PROJECT_ROOT, self.DIR)
+    date = time.strftime("%Y%m%d%H%M")
+    self.__cntr += 1
+    file_path = os.path.join(trails,
+                             "%s_%s_%s.log" % (date, self.__cntr, unique))
+    if os.path.exists(file_path):
+      log.warning("File path exist! %s" % file_path)
+    log.debug("Logging data to file: %s..." % file_path)
+    with open(file_path, "w") as f:
+      f.write(data)

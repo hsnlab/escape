@@ -19,13 +19,15 @@ import importlib
 import json
 import os
 import pprint
+import urlparse
 from distutils.util import strtobool
 
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.infr import LAYER_NAME as INFR
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
-from escape.util.misc import Singleton, VERBOSE, unicode_to_str, quit_with_error
+from escape.util.misc import VERBOSE, unicode_to_str, quit_with_error
+from escape.util.pox_extension import POXCoreRegisterMetaClass
 from pox.core import log, core
 
 # Store the project root where escape.py is started in
@@ -49,8 +51,9 @@ class ESCAPEConfig(object):
   Should be instantiated once!
   """
   # Singleton
-  __metaclass__ = Singleton
+  __metaclass__ = POXCoreRegisterMetaClass
   """Singleton"""
+  _core_name = "CONFIG"
   # Predefined layer names
   LAYERS = (SERVICE, ORCHEST, ADAPT, INFR)
   """Predefined layer names"""
@@ -67,7 +70,7 @@ class ESCAPEConfig(object):
     :return: None
     """
     # Store copy of project root directory
-    self.project_root = str(PROJECT_ROOT)
+    self.project_root = PROJECT_ROOT
     self.__initiated = False
     if default:
       self.__configuration = default
@@ -177,7 +180,7 @@ class ESCAPEConfig(object):
     # Register config into pox.core to be reachable for other future
     # components -not used currently
     self.__initiated = True
-    core.register('CONFIG', self)
+    # core.register('CONFIG', self)
     log.log(VERBOSE, "Running config:\n" + pprint.pformat(self.__configuration))
     return self
 
@@ -847,6 +850,19 @@ class ESCAPEConfig(object):
     except (KeyError, AttributeError, TypeError):
       return True
 
+  def get_neo4j_host_port (self):
+    """
+    Return the host and port values for the Neo4j server.
+
+    :return: manage_neo4j_service
+    :rtype: bool
+    """
+    try:
+      return (self.__configuration[ORCHEST]['neo4j'].get("host"),
+              self.__configuration[ORCHEST]['neo4j'].get("port"))
+    except (KeyError, AttributeError, TypeError):
+      return False
+
   def get_manage_neo4j_service (self):
     """
     Return the value if neo4j needs to be managed by ESCAPE.
@@ -855,7 +871,7 @@ class ESCAPEConfig(object):
     :rtype: bool
     """
     try:
-      return self.__configuration[ORCHEST]['manage-neo4j-service']
+      return self.__configuration[ORCHEST]['neo4j']['manage-neo4j-service']
     except (KeyError, AttributeError, TypeError):
       return False
 
@@ -989,6 +1005,7 @@ class ESCAPEConfig(object):
       return
     try:
       ra = mgr['adapters']['REMOTE']
-      return os.path.join(ra['url'], ra['prefix'])
+      # return os.path.join(ra['url'], ra['prefix'])
+      return urlparse.urljoin(ra['url'], ra['prefix'])
     except KeyError:
       return

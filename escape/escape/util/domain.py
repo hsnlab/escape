@@ -1,4 +1,5 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at:
@@ -44,6 +45,7 @@ class BaseResultEvent(Event):
   ERROR = "ERROR"
   MAPPING_ERROR = "MAPPING_ERROR"
   DEPLOY_ERROR = "DEPLOYMENT_ERROR"
+  RESET = "RESET"
   REFUSED_BY_VERIFICATION = "DEPLOYMENT_REFUSED_BY_VERIGRAPH"
   ABORTED = "ABORTED"
   UNKNOWN = "UNKNOWN"
@@ -58,8 +60,15 @@ class BaseResultEvent(Event):
     :return: the result is an error type or note
     :rtype: bool
     """
-    if result in (cls.ERROR, cls.MAPPING_ERROR, cls.DEPLOY_ERROR,
-                  cls.REFUSED_BY_VERIFICATION, cls.ABORTED):
+    if result in (cls.ERROR, cls.MAPPING_ERROR, cls.DEPLOY_ERROR, cls.RESET,
+                  cls.REFUSED_BY_VERIFICATION, cls.ABORTED, cls.UNKNOWN):
+      return True
+    else:
+      return False
+
+  @classmethod
+  def is_pending (cls, result):
+    if result in (cls.INITIATED, cls.IN_PROGRESS):
       return True
     else:
       return False
@@ -1229,18 +1238,22 @@ class AbstractRESTAdapter(Session):
     return self._base_url
 
   @staticmethod
-  def __suppress_requests_logging ():
+  def __suppress_requests_logging (level=None):
     """
     Suppress annoying and detailed logging of `requests` and `urllib3` packages.
 
     :return: None
     """
     import logging
-    if log.getEffectiveLevel() < logging.INFO:
+    if level is not None:
+      level = level
+    elif log.getEffectiveLevel() < logging.INFO:
       level = log.getEffectiveLevel()
     else:
       level = logging.WARNING
     logging.getLogger("requests").setLevel(level)
+    logging.getLogger("urllib3").setLevel(level)
+
 
   def send_request (self, method, url=None, body=None, **kwargs):
     """
@@ -1329,9 +1342,9 @@ class AbstractRESTAdapter(Session):
       if timeout is not None:
         kwargs['timeout'] = timeout
       return self.send_request(method, url, body, **kwargs)
-    except ConnectionError:
-      log.error("Remote agent(adapter: %s, url: %s) is not reachable!"
-                % (self.name, self._base_url))
+    except ConnectionError as e:
+      log.error("Remote agent(adapter: %s, url: %s) is not reachable: %s!"
+                % (self.name, self._base_url, e))
       return None
     except HTTPError as e:
       log.error("Remote agent(adapter: %s, url: %s) responded with an error: %s"

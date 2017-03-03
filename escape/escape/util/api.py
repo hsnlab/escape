@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@ Contains abstract classes for concrete layer API modules.
 """
 import httplib
 import json
-import logging
 import os.path
 import threading
 import urllib
 import urlparse
 import uuid
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from Queue import Queue
 from SocketServer import ThreadingMixIn
 
 import requests
@@ -31,6 +31,7 @@ from requests.exceptions import Timeout, RequestException
 from escape import __project__, CONFIG
 from escape.util.misc import SimpleStandaloneHelper, quit_with_error, \
   get_escape_version
+from escape.util.pox_extension import POXCoreRegisterMetaClass
 from pox.core import core
 from pox.lib.revent import EventMixin
 
@@ -374,6 +375,7 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
     self.virtualizer_type = None
     # Cache for the last response to avoid topo recreation
     self.last_response = None
+    self.scheduler = RequestScheduler()
 
   def start (self):
     """
@@ -410,7 +412,11 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
     if "call-back" not in status.params:
       return None
     callback_url = status.get_callback()
-    params = {'message-id': status.message_id}
+    if 'message-id' in status.params:
+      msg_id = status.params.get('message-id')
+    else:
+      msg_id = status.message_id
+    params = {'message-id': msg_id}
     if status.status == status.SUCCESS:
       params['response-code'] = httplib.OK
       if not body:
@@ -421,7 +427,6 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
         # TODO - return with failed part of the request??
         body = "TODO"
     try:
-      logging.getLogger("requests").setLevel(logging.WARNING)
       ret = requests.post(url=callback_url, params=params, data=body,
                           timeout=self.CALLBACK_TIMEOUT)
       return ret.status_code
@@ -632,7 +637,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
     :return: None
     """
-    self.log.debug("Got HTTP request: %s" % str(self.raw_requestline).rstrip())
+    self.log.debug(
+      ">>> Got HTTP request: %s" % str(self.raw_requestline).rstrip())
     http_method = self.command.upper()
     real_path = urlparse.urlparse(self.path).path
     try:
@@ -675,6 +681,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
       self.func_name = None
       self.wfile.flush()
       self.wfile.close()
+    self.log.debug(
+      ">>> HTTP request: %s ended!" % str(self.raw_requestline).rstrip())
 
   def _get_body (self):
     """
@@ -925,3 +933,88 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     """
     self.log.debug("Call REST-API function: operations")
     self.send_json_response(self.request_perm)
+
+
+class APIRequest(object):
+  def __init__ (self, id, layer, function, kwargs):
+    self.id = id
+    self.layer = layer
+    self.function = function
+    self.kwargs = kwargs
+
+  def __str__ (self):
+    return "Request(id: %s, %s  -->  %s, params: %s)" % (
+      self.id, self.layer, self.function, self.kwargs.keys())
+
+
+class RequestScheduler(threading.Thread):
+  """
+  """
+  __metaclass__ = POXCoreRegisterMetaClass
+  _core_name = "RequestScheduler"
+
+  def __init__ (self):
+    super(RequestScheduler, self).__init__(name=self._core_name)
+    self.daemon = True
+    self.__queue = Queue()
+    self.__hooks = {}
+    self.__condition = threading.Condition()
+    self.__progress = None
+    self.log = core.getLogger("SCHEDULER")
+    self.start()
+    self.log.info('Init %s' % self)
+
+  @property
+  def orchestration_in_progress (self):
+    return self.__progress is not None
+
+  def set_orchestration_finished (self, id):
+    if self.__progress is None:
+      self.log.debug("No orchestration in progress!")
+    elif self.__progress != id:
+      self.log.debug("Another request is in progress...")
+    else:
+      self.log.info("Set orchestration status of request: %s --> FINISHED"
+                    % self.__progress)
+      with self.__condition:
+        self.__progress = None
+        self.__condition.notify()
+
+  def schedule_request (self, id, layer, function, **kwargs):
+    self.__queue.put(APIRequest(id=id,
+                                layer=layer,
+                                function=function,
+                                kwargs=kwargs))
+    self.log.info("Schedule request on %s --> %s..." % (layer, function))
+    self.log.debug("Remained requests: %s" % self.__queue.qsize())
+
+  def _proceed_API_call (self, request):
+    """
+    Fail-safe method to call API function.
+    The cooperative micro-task context is handled by actual APIs.
+    Should call this with params, not directly the function of actual API.
+
+    :param request: scheduled request container object
+    :type request: APIRequest
+    :return: None
+    """
+    self.log.info("Start request processing in coop-task: %s" % request)
+    if core.core.hasComponent(request.layer):
+      layer = core.components[request.layer]
+      if hasattr(layer, request.function):
+        return getattr(layer, request.function)(**request.kwargs)
+      else:
+        raise RESTError(msg='Mistyped or not implemented API function call: %s '
+                            % request.function)
+    else:
+      raise RESTError(msg='Error: No component has registered with name: %s, '
+                          'ABORT function call!' % request.layer)
+
+  def run (self):
+    while True:
+      with self.__condition:
+        if self.__progress:
+          self.__condition.wait()
+        request = self.__queue.get()
+        self.__progress = request.id
+        self._proceed_API_call(request=request)

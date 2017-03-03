@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+# Copyright 2017 Janos Czentye
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # Install script for ESCAPEv2 to setup virtual environment
 # Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
@@ -25,13 +38,13 @@ function print_usage {
     echo -e "optional parameters:"
     echo -e "\t-p:   set Python version (default: $VERSION)"
     echo -e "\t-h:   show this help message and exit"
-    echo -e "Example: ./set_virtualenv.sh -p 2.7.9"
+    echo -e "Example: ./set_virtualenv.sh -p 2.7.13"
     echo -e "Based on virtualenv. More information: virtualenv -h"
     exit 0
 }
 
 # Default variables
-VERSION=2.7.10
+VERSION=2.7.13
 ENABLE=".use_virtualenv"
 
 # Read initial parameters
@@ -60,7 +73,8 @@ info "=== Download Python in a separate folder ==="
 wget "https://www.python.org/ftp/python/${VERSION}/Python-${VERSION}.tar.xz"
 
 info "=== Installing dependencies ==="
-sudo apt-get update && sudo apt-get install -y libsqlite3-dev libssl-dev
+sudo apt-get update && sudo apt-get install -y python-dev python-pip zlib1g-dev \
+libxml2-dev libxslt1-dev libssl-dev libffi-dev python-crypto
 sudo pip install virtualenv
 
 info "=== Compile and install Python ==="
@@ -80,7 +94,7 @@ virtualenv --python="${PYTHON_DIR}/bin/python" --no-site-packages ${PROJECT_DIR}
 info "=== Install Python dependencies into virtual environment ==="
 cd ${PROJECT_DIR}
 source ./bin/activate
-pip install ncclient pycrypto ecdsa networkx jinja2 py2neo
+pip install numpy jinja2 py2neo networkx requests ncclient pyyaml cryptography==1.3.1
 deactivate
 
 info "=== Enable virtualenv for 'escape.py' script ==="

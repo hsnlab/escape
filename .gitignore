@@ -32,3 +32,4 @@ log/*
 /test/case*/gen-*
 /test/results.xml
 unify_virtualizer/yang
+trails

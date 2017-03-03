@@ -25,15 +25,6 @@ aggregated into a separate domain.
 :any:`RemoteESCAPEDomainManager` ensures the connection with a different ESCAPE
 instance started in agent mode.
 
-:any:`UnifyDomainManager` is a common parent class for DomainManagers
-supervising "Unify" domains.
-
-:any:`OpenStackDomainManager` implements the related functionality for managing
-the OpenStack-based domain.
-
-:any:`UniversalNodeDomainManager` implements the related functionality for
-managing the domain based on the Universal Node conception.
-
 :any:`ExternalDomainManager` implements the related functionality for
 managing/detecting external domain from other providers.
 

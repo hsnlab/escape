@@ -17,7 +17,6 @@ Sublayer.
 """
 import httplib
 import os
-import uuid
 from subprocess import Popen
 
 from escape import CONFIG
@@ -28,7 +27,7 @@ from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler, \
-  RequestStatus
+  RequestStatus, RequestScheduler
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError
@@ -181,9 +180,13 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
         nffg.service_id = nffg.id
       nffg.id = params[self.MESSAGE_ID_NAME]
       nffg.metadata['params'] = params
-      self._proceed_API_call(self.API_CALL_REQUEST,
-                             service_nffg=nffg,
-                             params=params)
+      # self._proceed_API_call(self.API_CALL_REQUEST,
+      #                        service_nffg=nffg,
+      #                        params=params)
+      self.server.scheduler.schedule_request(id=nffg.id,
+                                             layer=self.bounded_layer,
+                                             function=self.API_CALL_REQUEST,
+                                             service_nffg=nffg, params=params)
       self.send_acknowledge(message_id=params[self.MESSAGE_ID_NAME])
     self.log.debug("%s function: sg ended!" % self.LOGGER_NAME)
 
@@ -383,7 +386,8 @@ class ServiceLayerAPI(AbstractAPI):
     # Store request if it is received on REST-API
     if hasattr(self, 'rest_api') and self.rest_api:
       log.getChild('API').debug("Store received NFFG request info...")
-      msg_id = self.rest_api.request_cache.cache_request_by_nffg(nffg=service_nffg)
+      msg_id = self.rest_api.request_cache.cache_request_by_nffg(
+        nffg=service_nffg)
       if msg_id is not None:
         self.rest_api.request_cache.set_in_progress(id=msg_id)
         log.getChild('API').debug("Request is stored with id: %s" % msg_id)
@@ -436,27 +440,29 @@ class ServiceLayerAPI(AbstractAPI):
           error=e))
 
   def __handle_mapping_result (self, nffg_id, fail):
-    if hasattr(self, 'rest_api') and self.rest_api:
-      log.getChild('API').debug("Cache request status...")
-      req_status = self.rest_api.request_cache.get_request_by_nffg_id(nffg_id)
-      if req_status is None:
-        log.getChild('API').debug("Request status is missing for NFFG: %s! "
-                                  "Skip result processing..." % nffg_id)
-        return
-      log.getChild('API').debug("Process mapping result...")
-      message_id = req_status.message_id
-      if message_id is not None:
-        if fail:
-          self.rest_api.request_cache.set_error_result(id=message_id)
-        else:
-          self.rest_api.request_cache.set_success_result(id=message_id)
-        ret = self.rest_api.invoke_callback(message_id=message_id)
-        if ret is None:
-          log.getChild('API').debug("No callback was defined!")
-        else:
-          log.getChild('API').debug(
-            "Callback: %s has invoked with return value: %s" % (
-              req_status.get_callback(), ret))
+    if not (hasattr(self, 'rest_api') and self.rest_api):
+      return
+    log.getChild('API').debug("Cache request status...")
+    req_status = self.rest_api.request_cache.get_request_by_nffg_id(nffg_id)
+    if req_status is None:
+      log.getChild('API').debug("Request status is missing for NFFG: %s! "
+                                "Skip result processing..." % nffg_id)
+      return
+    log.getChild('API').debug("Process mapping result...")
+    message_id = req_status.message_id
+    if message_id is not None:
+      if fail:
+        self.rest_api.request_cache.set_error_result(id=message_id)
+      else:
+        self.rest_api.request_cache.set_success_result(id=message_id)
+      ret = self.rest_api.invoke_callback(message_id=message_id)
+      if ret is None:
+        log.getChild('API').debug("No callback was defined!")
+      else:
+        log.getChild('API').debug(
+          "Callback: %s has invoked with return value: %s" % (
+            req_status.get_callback(), ret))
+    RequestScheduler().set_orchestration_finished(id=nffg_id)
 
   def __get_sas_resource_view (self):
     """
@@ -587,8 +593,9 @@ class ServiceLayerAPI(AbstractAPI):
       log.getChild('API').error(
         "Service request(id=%s) has been finished with error result: %s!" %
         (event.id, event.result))
-    self.__handle_mapping_result(nffg_id=event.id,
-                                 fail=BaseResultEvent.is_error(event.result))
+    if not event.is_pending(event.result):
+      self.__handle_mapping_result(nffg_id=event.id,
+                                   fail=event.is_error(event.result))
     # Quit ESCAPE if test mode is active
     if get_global_parameter(name="QUIT_AFTER_PROCESS"):
       quit_with_ok("Detected QUIT mode! Exiting ESCAPE...")

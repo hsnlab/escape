@@ -1,161 +1,288 @@
 {
-  "parameters": {
-    "id": "ServiceRequest00",
-    "name": "SG-comp-decomp-fwd",
-    "version": "1.0",
-    "mode": "ADD"
-  },
-  "node_nfs": [
-    {
-      "id": "fwd",
-      "name": "FORWARDER",
-      "ports": [
-        {
-          "id": 1
-        }
-      ],
-      "functional_type": "simpleForwarder",
-      "specification": {
-        "resources": {
-          "cpu": 1,
-          "mem": 1,
-          "storage": 0
-        }
-      },
-      "constraints": {
-        "affinity": {
-          "aff1": "NF2"
-        },
-        "antiaffinity": {
-          "naff1": "NF3"
-        },
-        "variable": {
-          "$A": "NF3"
-        },
-        "constraint": {
-          "form1": "$A>0"
-        }
-      }
-    },
-    {
-      "id": "comp",
-      "name": "COMPRESSOR",
-      "ports": [
-        {
-          "id": 1
-        }
-      ],
-      "functional_type": "headerCompressor",
-      "specification": {
-        "resources": {
-          "cpu": 1,
-          "mem": 1,
-          "storage": 0
-        }
-      }
-    },
-    {
-      "id": "decomp",
-      "name": "DECOMPRESSOR",
-      "ports": [
-        {
-          "id": 1
-        }
-      ],
-      "functional_type": "headerDecompressor",
-      "specification": {
-        "resources": {
-          "cpu": 1,
-          "mem": 1,
-          "storage": 0
-        }
-      }
-    }
-  ],
-  "node_saps": [
-    {
-      "id": "SAP1",
-      "name": "SAP1",
-      "ports": [
-        {
-          "id": 1
-        }
-      ]
-    },
-    {
-      "id": "SAP2",
-      "name": "SAP2",
-      "ports": [
-        {
-          "id": 1
-        }
-      ]
-    }
-  ],
-  "edge_sg_nexthops": [
-    {
-      "id": 5,
-      "src_node": "fwd",
-      "src_port": 1,
-      "dst_node": "SAP1",
-      "dst_port": 1
-    },
-    {
-      "id": 2,
-      "src_node": "comp",
-      "src_port": 1,
-      "dst_node": "decomp",
-      "dst_port": 1
-    },
-    {
-      "id": 3,
-      "src_node": "decomp",
-      "src_port": 1,
-      "dst_node": "SAP2",
-      "dst_port": 1
-    },
-    {
-      "id": 1,
-      "src_node": "SAP1",
-      "src_port": 1,
-      "dst_node": "comp",
-      "dst_port": 1
-    },
-    {
-      "id": 4,
-      "src_node": "SAP2",
-      "src_port": 1,
-      "dst_node": "fwd",
-      "dst_port": 1
-    }
-  ],
-  "edge_reqs": [
-    {
-      "id": "requirement-sap12",
-      "src_node": "SAP1",
-      "src_port": 1,
-      "dst_node": "SAP2",
-      "dst_port": 1,
-      "delay": 30,
-      "bandwidth": 4,
-      "sg_path": [
-        1,
-        2,
-        3
-      ]
-    },
-    {
-      "id": "requirement-sap21",
-      "src_node": "SAP2",
-      "src_port": 1,
-      "dst_node": "SAP1",
-      "dst_port": 1,
-      "delay": 30,
-      "bandwidth": 4,
-      "sg_path": [
-        4,
-        5
-      ]
-    }
-  ]
+	"parameters": {
+		"id": "SingleBiSBiS",
+		"name": "Single-BiSBiS-View",
+		"version": "1.0"
+	},
+	"node_nfs": [
+		{
+			"id": "comp",
+			"name": "COMPRESSOR",
+			"ports": [
+				{
+					"id": 1
+				}
+			],
+			"functional_type": "headerCompressor",
+			"specification": {
+				"resources": {
+					"cpu": 1.0,
+					"mem": 1.0,
+					"storage": 0.0
+				}
+			}
+		},
+		{
+			"id": "fwd",
+			"name": "FORWARDER",
+			"ports": [
+				{
+					"id": 1
+				}
+			],
+			"functional_type": "simpleForwarder",
+			"specification": {
+				"resources": {
+					"cpu": 1.0,
+					"mem": 1.0,
+					"storage": 0.0
+				}
+			}
+		},
+		{
+			"id": "decomp",
+			"name": "DECOMPRESSOR",
+			"ports": [
+				{
+					"id": 1
+				}
+			],
+			"functional_type": "headerDecompressor",
+			"specification": {
+				"resources": {
+					"cpu": 1.0,
+					"mem": 1.0,
+					"storage": 0.0
+				}
+			}
+		}
+	],
+	"node_saps": [
+		{
+			"id": "SAP2",
+			"name": "SAP2",
+			"ports": [
+				{
+					"id": 1,
+					"property": {
+						"ip": "10.0.0.2/24",
+						"mac": "00:00:00:00:00:02"
+					}
+				}
+			]
+		},
+		{
+			"id": "SAP14",
+			"name": "SAP14",
+			"ports": [
+				{
+					"id": 1,
+					"sap_data": {
+						"resources": {
+							"delay": 2.5,
+							"bandwidth": 10
+						}
+					}
+				}
+			],
+			"binding": "eth0"
+		},
+		{
+			"id": "SAP1",
+			"name": "SAP1",
+			"ports": [
+				{
+					"id": 1,
+					"property": {
+						"ip": "10.0.0.1/24",
+						"mac": "00:00:00:00:00:01"
+					}
+				}
+			]
+		}
+	],
+	"node_infras": [
+		{
+			"id": "SingleBiSBiS",
+			"name": "SingleBiSBiS",
+			"ports": [
+				{
+					"id": "EE2|fwd|1",
+					"flowrules": [
+						{
+							"id": 5,
+							"match": "in_port=EE2|fwd|1",
+							"action": "output=port-SAP1",
+							"bandwidth": 4.0
+						}
+					]
+				},
+				{
+					"id": "EE1|comp|1",
+					"flowrules": [
+						{
+							"id": 2,
+							"match": "in_port=EE1|comp|1",
+							"action": "output=EE1|decomp|1",
+							"bandwidth": 4.0
+						}
+					]
+				},
+				{
+					"id": "EE1|decomp|1",
+					"flowrules": [
+						{
+							"id": 3,
+							"match": "in_port=EE1|decomp|1",
+							"action": "output=port-SAP2",
+							"bandwidth": 4.0
+						}
+					]
+				},
+				{
+					"id": "port-SAP14"
+				},
+				{
+					"id": "port-SAP1",
+					"flowrules": [
+						{
+							"id": 1,
+							"match": "in_port=port-SAP1",
+							"action": "output=EE1|comp|1",
+							"bandwidth": 4.0
+						}
+					]
+				},
+				{
+					"id": "port-SAP2",
+					"flowrules": [
+						{
+							"id": 4,
+							"match": "in_port=port-SAP2",
+							"action": "output=EE2|fwd|1",
+							"bandwidth": 4.0
+						}
+					]
+				}
+			],
+			"domain": "MININET",
+			"type": "BiSBiS",
+			"supported": [
+				"simpleForwarder",
+				"headerCompressor",
+				"headerDecompressor"
+			],
+			"resources": {
+				"cpu": 10.0,
+				"mem": 10.0,
+				"storage": 40.0,
+				"delay": 0.2,
+				"bandwidth": 220000.0
+			}
+		}
+	],
+	"edge_links": [
+		{
+			"id": "8db6bc01-f1e3-11e6-a9fa-645106b16e7d-back",
+			"src_node": "SingleBiSBiS",
+			"src_port": "EE2|fwd|1",
+			"dst_node": "fwd",
+			"dst_port": 1,
+			"backward": true
+		},
+		{
+			"id": "8db6bc03-f1e3-11e6-a9fa-645106b16e7d-back",
+			"src_node": "SingleBiSBiS",
+			"src_port": "EE1|comp|1",
+			"dst_node": "comp",
+			"dst_port": 1,
+			"backward": true
+		},
+		{
+			"id": "8db6bc05-f1e3-11e6-a9fa-645106b16e7d-back",
+			"src_node": "SingleBiSBiS",
+			"src_port": "EE1|decomp|1",
+			"dst_node": "decomp",
+			"dst_port": 1,
+			"backward": true
+		},
+		{
+			"id": "mn-link6-back-back",
+			"src_node": "SingleBiSBiS",
+			"src_port": "port-SAP14",
+			"dst_node": "SAP14",
+			"dst_port": 1,
+			"delay": 1.5,
+			"bandwidth": 10.0,
+			"backward": true
+		},
+		{
+			"id": "mn-link4-back-back",
+			"src_node": "SingleBiSBiS",
+			"src_port": "port-SAP1",
+			"dst_node": "SAP1",
+			"dst_port": 1,
+			"delay": 1.5,
+			"bandwidth": 10.0,
+			"backward": true
+		},
+		{
+			"id": "mn-link5-back-back",
+			"src_node": "SingleBiSBiS",
+			"src_port": "port-SAP2",
+			"dst_node": "SAP2",
+			"dst_port": 1,
+			"delay": 1.5,
+			"bandwidth": 10.0,
+			"backward": true
+		},
+		{
+			"id": "8db6bc03-f1e3-11e6-a9fa-645106b16e7d",
+			"src_node": "comp",
+			"src_port": 1,
+			"dst_node": "SingleBiSBiS",
+			"dst_port": "EE1|comp|1"
+		},
+		{
+			"id": "8db6bc01-f1e3-11e6-a9fa-645106b16e7d",
+			"src_node": "fwd",
+			"src_port": 1,
+			"dst_node": "SingleBiSBiS",
+			"dst_port": "EE2|fwd|1"
+		},
+		{
+			"id": "mn-link5-back",
+			"src_node": "SAP2",
+			"src_port": 1,
+			"dst_node": "SingleBiSBiS",
+			"dst_port": "port-SAP2",
+			"delay": 1.5,
+			"bandwidth": 10.0
+		},
+		{
+			"id": "mn-link6-back",
+			"src_node": "SAP14",
+			"src_port": 1,
+			"dst_node": "SingleBiSBiS",
+			"dst_port": "port-SAP14",
+			"delay": 1.5,
+			"bandwidth": 10.0
+		},
+		{
+			"id": "mn-link4-back",
+			"src_node": "SAP1",
+			"src_port": 1,
+			"dst_node": "SingleBiSBiS",
+			"dst_port": "port-SAP1",
+			"delay": 1.5,
+			"bandwidth": 10.0
+		},
+		{
+			"id": "8db6bc05-f1e3-11e6-a9fa-645106b16e7d",
+			"src_node": "decomp",
+			"src_port": 1,
+			"dst_node": "SingleBiSBiS",
+			"dst_port": "EE1|decomp|1"
+		}
+	]
 }

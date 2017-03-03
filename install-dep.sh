@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
-# Copyright 2016 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Install Python and system-wide packages, required programs and configurations
 # for ESCAPEv2 on pre-installed Mininet VM
 # Tested on: Ubuntu 14.04.4 LTS and 16.04 LTS
@@ -31,7 +44,7 @@ function info() {
 
 function warn() {
     echo -e "\n${YELLOW}WARNING: ${1-WARNING}${NC}"
-    read -rsp $'Press ENTER to continue...\n'
+    #read -rsp $'Press ENTER to continue...\n'
 }
 
 function env_setup {
@@ -58,6 +71,7 @@ PROJECT="sb"
 # Component versions
 JAVA_VERSION=7
 NEO4J_VERSION=2.2.7
+# Force cryptography package installation prior to avoid issues in 1.3.2
 CRYPTOGRAPHY_VERSION=1.3.1
 
 # Other constants
@@ -70,9 +84,10 @@ MNPASSWD=mininet
 
 # Distributor constants
 if [ -f /etc/lsb-release ]; then
-    DISTRIB_ID=$(lsb_release -si)
-    DISTRIB_VER=$(lsb_release -sr)
-    info "Detected platform is $DISTRIB_ID, version: $DISTRIB_VER!"
+    source /etc/lsb-release
+    #DISTRIB_ID=$(lsb_release -si)   # /etc/lsb-release --> DISTRIB_ID
+    #DISTRIB_VER=$(lsb_release -sr)  # /etc/lsb-release --> DISTRIB_RELEASE
+    info "Detected platform is $DISTRIB_ID, version: $DISTRIB_RELEASE!"
 else
     warn "Detected platform is NOT Ubuntu! This may lead to skip some installation steps!"
 fi
@@ -110,30 +125,38 @@ function install_core {
         sudo add-apt-repository -y ppa:openjdk-r/ppa
     fi
 
-    if [ "$DISTRIB_ID" = "Ubuntu" -a "$DISTRIB_VER" = "14.04" ]; then
-        info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
-        sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
+    if [ "$DISTRIB_ID" = "Ubuntu" ]; then
+        if [ "$DISTRIB_RELEASE" = "14.04" ]; then
+            info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
+            sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
+        elif [ "$DISTRIB_RELEASE" = "16.04" ]; then
+            info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
+            sudo add-apt-repository -y ppa:jonathonf/python-2.7
+        else
+            warn "Unsupported Ubuntu version: $DISTRIB_RELEASE"
+        fi
     fi
 
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
     # Install Java 8 explicitly
     sudo apt-get install -y openjdk-${JAVA_VERSION}-jdk
-    # Install Python 2.7.11 explicitly
-    sudo apt-get install -y python2.7
+    # Install Python 2.7.13 explicitly
+    sudo apt-get install -y python2.7 python-dev python-pip
     # Install dependencies
-    sudo apt-get install -y python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
-                            libssl-dev libffi-dev python-crypto neo4j=${NEO4J_VERSION}
+    sudo apt-get install -y python-crypto zlib1g-dev libxml2-dev libxslt1-dev \
+                            libssl-dev libffi-dev neo4j=${NEO4J_VERSION}
 
-    # Force cryptography package installation prior to avoid issues in 1.3.2
     info "=== Install ESCAPEv2 Python dependencies ==="
-    sudo -H pip install --upgrade setuptools
-    sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
-    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient pyyaml
     # Update setuptools explicitly to workaround a bug related to 3.x.x version
+#    sudo -H pip install --upgrade pip
+#    sudo -H pip install --upgrade setuptools
+#    sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
+#    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient pyyaml wrapt
+    sudo -H pip install --upgrade -r requirements.txt
 
-    info "=== Install ESCAPEv2 Python dependencies ==="
-    sudo -H pip install flask rainbow_logging_handler
+#    info "=== Install DummyOrchestrator Python dependencies ==="
+#    sudo -H pip install flask rainbow_logging_handler
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
@@ -158,7 +181,7 @@ function install_mn_dep {
     info "=== Install Mininet dependencies ==="
     # Copied from /mininet/util/install.sh
     sudo apt-get install -y gcc make socat psmisc xterm ssh iperf iproute telnet \
-    python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8
+    python-setuptools cgroup-bin ethtool net-tools xorg help2man pyflakes pylint pep8
     info "=== Install Open vSwitch ==="
     sudo apt-get install -y openvswitch-switch
     info "=== Compile and install 'mnexec' execution utility  ==="
@@ -173,7 +196,7 @@ function install_mn_dep {
         sudo addgroup ${MNUSER} sudo
         echo "$MNUSER:$MNPASSWD" | sudo chpasswd
     fi
-    if [ "$DISTRIB_VER" = "14.04" ]; then
+    if [ "$DISTRIB_RELEASE" = "14.04" ]; then
         if grep -Fxq "# --- ESCAPE-mininet ---" "/etc/ssh/sshd_config"; then
             info "=== Remove previous ESCAPEv2-related mininet config ==="
             sudo sed -in '/.*ESCAPE-mininet.*/,/.*ESCAPE-mininet END.*/d' "/etc/ssh/sshd_config"
@@ -299,7 +322,7 @@ function install_dev {
     sudo apt-get install -y graphviz texlive-latex-extra
     sudo -H pip install tornado sphinx
     # Install test requirements
-    . ./test/install_requirements.sh
+    . ${DIR}/test/install_requirements.sh
 }
 
 # Install GUI dependencies

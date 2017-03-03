@@ -1,4 +1,4 @@
-# Copyright 2015 Lajos Gerecs, Janos Czentye
+# Copyright 2017 Lajos Gerecs, Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -179,12 +179,15 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     self._suppress_requests_logging()
 
   @staticmethod
-  def _suppress_requests_logging ():
-    if log.getEffectiveLevel() < logging.INFO:
+  def _suppress_requests_logging (level=None):
+    if level is not None:
+      level = level
+    elif log.getEffectiveLevel() < logging.INFO:
       level = log.getEffectiveLevel()
     else:
       level = logging.WARNING
     logging.getLogger("requests").setLevel(level)
+    logging.getLogger("urllib3").setLevel(level)
 
   def runTest (self):
     log.debug("\nSTART test")

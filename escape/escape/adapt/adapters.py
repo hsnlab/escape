@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ from ncclient.transport import TransportError
 from escape import CONFIG, __version__
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.nffg_lib.nffg import NFFGToolBox
+from escape.util.com_logger import MessageDumper
 from escape.util.config import PROJECT_ROOT
 from escape.util.conversion import NFFGConverter, UC3MNFFGConverter
 from escape.util.domain import *
@@ -1127,6 +1128,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
          not data.startswith("<?xml version="):
         log.error("Received data is not in XML format!")
         return
+      MessageDumper().dump_to_file(data=data,
+                                   unique="%s-get-config" % self.domain_name)
       virt = Virtualizer.parse_from_text(text=data)
       log.log(VERBOSE,
               "Received message to 'get-config' request:\n%s" % virt.xml())
@@ -1160,8 +1163,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.debug("Convert NFFG to XML/Virtualizer format...")
       vdata = self.converter.adapt_mapping_into_Virtualizer(
         virtualizer=self.last_virtualizer, nffg=data, reinstall=diff)
-      # virtualizer=self.original_virtualizer, nffg=data, reinstall=diff)
-      # vdata = self.converter.dump_to_Virtualizer(nffg=data)
       log.log(VERBOSE, "Adapted Virtualizer:\n%s" % vdata.xml())
     elif isinstance(data, Virtualizer):
       # Nothing to do
@@ -1175,8 +1176,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       vdata = self.__calculate_diff(vdata)
     else:
       log.debug("Using given Virtualizer as full mapping request")
-    # Force relative path explicitly
-    # vdata.bind(relative=True)
     plain_data = vdata.xml()
     log.debug("Send request to %s domain agent at %s..." %
               (self.domain_name, self._base_url))
@@ -1188,6 +1187,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if callback is not None:
       params[self.CALLBACK_NAME] = callback
       log.debug("Using explicit callback: %s" % callback)
+    MessageDumper().dump_to_file(data=plain_data,
+                                 unique="%s-edit-config" % self.domain_name)
     try:
       status = self.send_with_timeout(method=self.POST,
                                       url='edit-config',
@@ -1201,9 +1202,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return True
     if status is not None:
       log.debug("Request has been sent successfully!")
-      # msg_id = self.get_last_message_id()
-      # if msg_id is not None:
-      #   log.debug("Detected message-id from response: %s" % msg_id)
     return status
 
   def get_last_message_id (self):
@@ -1221,6 +1219,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if callback is not None:
       params[self.CALLBACK_NAME] = callback
       log.debug("Using explicit callback: %s" % callback)
+    MessageDumper().dump_to_file(data=info.xml(),
+                                 unique="%s-info" % self.domain_name)
     try:
       status = self.send_with_timeout(method=self.POST,
                                       url='info',
@@ -1352,6 +1352,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     log.debug("Cache received 'get-config' response...")
     self.__last_virtualizer = data.full_copy()
+
+  def get_topo_cache (self):
+    return self.__last_virtualizer
 
   def __cache_request (self, data):
     """

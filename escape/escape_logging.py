@@ -1,4 +1,4 @@
-# Copyright 2015 Janos Czentye <czentye@tmit.bme.hu>
+# Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -69,13 +69,13 @@ def setup_logging (test_mode=False, log_file=None, **kw):
              % (pox.log.launch.__module__,
                 logging.getLevelName(log.getEffectiveLevel())))
     # Set default log_file to log in file in test mode
-    log_file = log_file if log_file is not None else LOG_FILE
   else:
     # Define default logger
     pox.log.launch(format=DEFAULT_LOGGER_FORMAT)
     log.info("Setup logger - formatter: %s, level: %s"
              % (setup_logging.__module__,
                 logging.getLevelName(log.getEffectiveLevel())))
+  log_file = log_file if log_file is not None else LOG_FILE
   if log_file:
     # Define additional logger for logging to file
     pox.log.launch(format=FILE_LOGGER_FORMAT, file=log_file + ',w')
