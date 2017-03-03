@@ -45,7 +45,7 @@ sudo pip -H install numpy jinja2 py2neo networkx requests ncclient cryptography=
     sphinx networkx_viewer
 ```
 
-The *install_dep.sh* script is responsible for managing the dependencies. It sets
+The `install_dep.sh` script is responsible for managing the dependencies. It sets
 the required sym-links, updates the related submodules and installs only the 
 necessary packages regarding the given install parameters.
 
@@ -57,7 +57,7 @@ The recommended Python version, in which the development and mostly the testing
 are performed, is the standard CPython **2.7.13**.
 
 The best choice of platform on wich ESCAPE is recommended to install and the
-*install-dep.sh* is tested is **Ubuntu 16.04.2 LTS**.
+`install-dep.sh` is tested is **Ubuntu 16.04.2 LTS**.
 
 However ESCAPE is developed on Xubuntu 16.04, some issues are experienced
 related to SAP-xterm initiation in case the platform was an Ubuntu 16.04 server
@@ -70,7 +70,7 @@ case ESCAPE is intended to run on a VM without any graphical interface.
 1. Download one of pre-build Ubuntu LTS VM image, create one in your preferred VM
     manager or just use the default Docker image of Ubuntu.
 
-2. Create the *.ssh* folder in the home directory and copy your private RSA key
+2. Create the `.ssh` folder in the home directory and copy your private RSA key
     into the VM with the name `id_rsa`. If you use a VM image then the following
     commands can be used in the VM to copy your RSA key from your host:
     
@@ -80,18 +80,18 @@ case ESCAPE is intended to run on a VM without any graphical interface.
     scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
     sudo chmod 700 .ssh && sudo chmod 600 .ssh/id_rsa
     ```
-3. Clone the shared escape repository (the default folder name will be: *escape*).
+3. Clone the shared escape repository (the default folder name will be: `escape`).
 
     ```bash
-    git clone <git repo URL>
+    git clone <git repo URL> escape
     ```
 
-4. Install the necessary dependencies with the *install_dep.sh* script (system
+4. Install the necessary dependencies with the `install_dep.sh` script (system
     and Python packages, optionally the OpenYuma with VNFStarter module, etc.):
 
     ```bash
     cd escape
-    escape$ ./install_dep.sh
+    ./install_dep.sh
     ```
     
     In a high level the script above takes care of the following things:
@@ -103,7 +103,7 @@ case ESCAPE is intended to run on a VM without any graphical interface.
     * Install `neo4j` graph database for NFIB
       
     See help menu for further parameters:
-
+    
     ```text
     ./install-dep.sh -h
     Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i] [-p project]
@@ -135,9 +135,9 @@ case ESCAPE is intended to run on a VM without any graphical interface.
     
     This final log entry means that each component was installed and configured successfully.
     
-    To verify ESCAPE in **DO** role with all the components the following command can be run
-    in order to test the reachability between the initiated service access points (SAP)
-    represented by the(``xterm``)windows with the ``ping`` command:
+    To verify ESCAPE in **DO** role with the embedding engine and all of it's components,
+    the following command can be run in order to test the reachability between the initiated
+    service access points (SAP) represented by the(``xterm``)windows with the ``ping`` command:
     
     ```bash
     ./escape.py -df -s examples/escape-mn-req.nffg
@@ -158,12 +158,11 @@ ESCAPE has several testcases formed as Unit test. These test can be found under
 the `test` folder.
 
 Dependent packages for the test can be installed with the `install_requirements.sh` script.
-To run the test see the main running script:
+To run the test see the main test runner script:
 
 ```text
-$ ./run_tests.py -h
-usage: run_tests.py [-h] [--failfast] [--show-output] [--timeout t]
-                    [--standalone] [--verbose]
+$ ./test/run_tests.py -h
+usage: run_tests.py [-h] [-f] [-o] [-t t] [-s] [-v]
                     [testcases [testcases ...]]
 
 ESCAPE Test runner
@@ -174,11 +173,11 @@ positional arguments:
 
 optional arguments:
   -h, --help         show this help message and exit
-  --failfast, -f     Stop on first failure
-  --show-output, -o  Show ESCAPE output
-  --timeout t, -t t  define explicit timeout in sec (default: 30s)
-  --standalone, -s   run standalone mode: no timeout, no quitting
-  --verbose, -v      Run in verbose mode and show output
+  -f, --failfast     Stop on first failure
+  -o, --show-output  Show ESCAPE output
+  -t t, --timeout t  define explicit timeout in sec (default: 30s)
+  -s, --standalone   run standalone mode: no timeout, no quitting
+  -v, --verbose      Run in verbose mode and show output
 ```
 
 ## Documentation
@@ -186,6 +185,10 @@ optional arguments:
 The documentation can be generated from source code with `generate-docs.sh` script
 or directly with the `Makefile` in `escape/doc` directory.
 The generated doc can be found in `escape/doc/build/`.
+
+```bash
+./escape/doc/generate-doc.sh
+```
 
 Requirements:
     

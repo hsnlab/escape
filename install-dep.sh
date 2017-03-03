@@ -44,7 +44,6 @@ function info() {
 
 function warn() {
     echo -e "\n${YELLOW}WARNING: ${1-WARNING}${NC}"
-    #read -rsp $'Press ENTER to continue...\n'
 }
 
 function env_setup {
@@ -65,14 +64,9 @@ function env_setup {
 
 ### Constants
 
-# Project - unify | 5gex | ericsson | sb
-PROJECT="sb"
-
 # Component versions
 JAVA_VERSION=7
 NEO4J_VERSION=2.2.7
-# Force cryptography package installation prior to avoid issues in 1.3.2
-CRYPTOGRAPHY_VERSION=1.3.1
 
 # Other constants
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -84,9 +78,7 @@ MNPASSWD=mininet
 
 # Distributor constants
 if [ -f /etc/lsb-release ]; then
-    source /etc/lsb-release
-    #DISTRIB_ID=$(lsb_release -si)   # /etc/lsb-release --> DISTRIB_ID
-    #DISTRIB_VER=$(lsb_release -sr)  # /etc/lsb-release --> DISTRIB_RELEASE
+    source /etc/lsb-release # DISTRIB_ID, DISTRIB_RELEASE
     info "Detected platform is $DISTRIB_ID, version: $DISTRIB_RELEASE!"
 else
     warn "Detected platform is NOT Ubuntu! This may lead to skip some installation steps!"
@@ -105,14 +97,15 @@ function install_core {
     # Git return error during submodule change -> disable error catching
     set +e
     if [ -f "project-setup.sh" ]; then
-        . ./project-setup.sh "$PROJECT"
+        if [ -z "$PROJECT" ]; then
+            . ./project-setup.sh -p "$PROJECT"
+        else
+            . ./project-setup.sh
+        fi
     else
         on_error "Project setup script is missing!"
     fi
     set -e
-
-    # Remove ESCAPEv2 config file from index in git to untrack changes
-    # git update-index --assume-unchanged escape.config
 
     info "=== Add neo4j repository ==="
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
@@ -148,15 +141,7 @@ function install_core {
                             libssl-dev libffi-dev neo4j=${NEO4J_VERSION}
 
     info "=== Install ESCAPEv2 Python dependencies ==="
-    # Update setuptools explicitly to workaround a bug related to 3.x.x version
-#    sudo -H pip install --upgrade pip
-#    sudo -H pip install --upgrade setuptools
-#    sudo -H pip install cryptography==${CRYPTOGRAPHY_VERSION}
-#    sudo -H pip install numpy jinja2 py2neo networkx requests ncclient pyyaml wrapt
     sudo -H pip install --upgrade -r requirements.txt
-
-#    info "=== Install DummyOrchestrator Python dependencies ==="
-#    sudo -H pip install flask rainbow_logging_handler
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
@@ -201,7 +186,6 @@ function install_mn_dep {
             info "=== Remove previous ESCAPEv2-related mininet config ==="
             sudo sed -in '/.*ESCAPE-mininet.*/,/.*ESCAPE-mininet END.*/d' "/etc/ssh/sshd_config"
         fi
-
         info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
         # Only works with OpenSSH_6.6.1p1 and tested on Ubuntu 14.04
         cat <<EOF | sudo tee -a /etc/ssh/sshd_config
@@ -211,8 +195,8 @@ Match Host *,!localhost
   DenyUsers  mininet
 # --- ESCAPE-mininet END---
 EOF
-    # sudo sh -c 'echo "# --- ESCAPE-mininet ---\n# Restrict mininet user to be able to login only from localhost\nMatch Host *,!localhost\n  DenyUsers  mininet\n# --- ESCAPE-mininet END---" | tee -a /etc/ssh/sshd_config'
-    elif [ "$DISTRIB_RELEASE" = "14.04" ]; then
+    # Restrict mininet user to be able to login only from localhost
+    elif [ "$DISTRIB_RELEASE" = "16.04" ]; then
         info "=== Restrict user: mininet to be able to establish SSH connection only from: localhost ==="
         cat <<EOF | sudo tee -a /etc/ssh/sshd_config
 # --- ESCAPE-mininet ---
@@ -263,7 +247,6 @@ Subsystem netconf /usr/sbin/netconf-subsystem
 EOF
 
     info "=== Restart sshd ==="
-    #sudo /etc/init.d/ssh restart
     sudo service ssh restart
 
     # sudo apt-get install libglib2.0-dev
@@ -304,8 +287,8 @@ EOF
     sudo make install
 
     # Remove click codes
-    # cd ${DIR}
-    # rm -rf click
+     cd ${DIR}
+     rm -rf click
 
     info "=== Install clickhelper.py ==="
     # install clickhelper.py to be available from netconfd
@@ -324,12 +307,8 @@ function install_dev {
     info "=========================================================="
     info "==  Installing additional dependencies for development  =="
     info "=========================================================="
-    # tornado for domain emulating scripts under ./tools
-    # sphinx for doc generation
-    # graphviz for UML class diagram generation
-    # texlive-latex-extra for doc generation in PDF format
     sudo apt-get install -y graphviz texlive-latex-extra
-    sudo -H pip install tornado sphinx
+    sudo -H pip install sphinx
     # Install test requirements
     . ${DIR}/test/install_requirements.sh
 }
@@ -363,7 +342,7 @@ function print_usage {
     echo -e "\t-g:   install dependencies for our rudimentary (G)UI"
     echo -e "\t-h:   print this (H)elp message"
     echo -e "\t-i:   install components of (I)nfrastructure Layer for Local Orchestration"
-    echo -e "\t-p:   use specific project module files [unify|sb|5gex|ericsson] default: sb"
+    echo -e "\t-p:   explicitly setup project name based on: .gitmodules.<name>"
     exit 2
 }
 
@@ -378,7 +357,7 @@ else
         esac
     done
     OPTIND=1    # Reset getopts
-    info "User project config: $PROJECT"
+    info "User project config: ${PROJECT:-N/A}"
     while getopts 'acdghip:' OPTION; do
         case ${OPTION} in
             a)  all;;

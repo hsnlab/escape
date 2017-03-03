@@ -29,7 +29,7 @@ corresponding Domain Orchestrators (DO).
 In addition, ESCAPE can be used in the role of a local Domain
 Orchestrator when an extended version of Mininet network emulation
 platform is used as an infrastructure which is able to run Network
-Functions and to realize dataplane connectivity.
+Functions and realize dataplane connectivity.
 
 .. tip::
 
@@ -71,10 +71,14 @@ For further information contact balazs.sonkoly@tmit.bme.hu
 Installation
 ============
 
+The **install_dep.sh** script is responsible for managing the dependencies. It sets up
+the required sym-links, updates the related submodules and installs only the necessary
+packages regarding the given install parameters.
+
 As the core layers of ESCAPE relies on POX and written in Python there is no need
 for explicit compiling or installation. The required libraries and dependencies such as
 external databases and programs, system packages and the latest Python 2.7 interpreter
-are completely handled and installed by the main setup script: **install-dep.sh**
+are completely handled and installed by the main setup script.
 
 The currently recommended Python version, in which the development and mostly the
 testing are performed, is the standard CPython **2.7.13**.
@@ -86,7 +90,7 @@ testing are performed, is the standard CPython **2.7.13**.
 If for some reason a different version of Python is desired, check the Virtual Environment section below.
 
 The best choice of platform on which ESCAPE is recommended to be installed and
-the *install-dep.sh* installation script is tested is Ubuntu 14.04.5 and 16.04.1 LTS.
+the *install-dep.sh* installation script is tested is Ubuntu 14.04.5 and 16.04.2 LTS.
 
 However ESCAPE has been developed on Ubuntu 16.04, some issues are experienced
 related to SAP-xterm initiation in case ESCAPE was run on an Ubuntu 16.04 virtual
@@ -124,10 +128,10 @@ If you use a VM image then the following commands can be used to copy your RSA k
 
   .. code-block:: bash
 
-    $ git clone git@5gexgit.tmit.bme.hu:unify/escape.git
+    $ git clone <git repo URL>
 
 4. Install the necessary dependencies with the ``install_dep.sh`` script (system
-and Python packages, OpenYuma with VNFStarter module, etc.):
+    and Python packages, optionally the OpenYuma with VNFStarter module, etc.):
 
   .. code-block:: bash
 
@@ -139,8 +143,6 @@ and Python packages, OpenYuma with VNFStarter module, etc.):
   .. code-block:: text
 
     $ ./install-dep.sh -h
-    Detected platform is Ubuntu, version: 16.04!
-    User project config: sb
     Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i] [-p project]
     Install script for ESCAPEv2
 
@@ -151,11 +153,10 @@ and Python packages, OpenYuma with VNFStarter module, etc.):
         -g:   install dependencies for our rudimentary (G)UI
         -h:   print this (H)elp message
         -i:   install components of (I)nfrastructure Layer for Local Orchestration
-        -p:   use specific project module files [unify|sb|5gex|ericsson] default: unify
+        -p:   explicitly setup project name based on: .gitmodules.<name>
 
 
-
-  In a high level, the script above carries the following things:
+  In a high level, the script above takes care of the following things:
     * Install the necessary system and Python packages
     * Compile and install the `OpenYuma <https://github.com/OpenClovis/OpenYuma>`__
       tools with our `VNF_starter` module
@@ -1286,6 +1287,48 @@ name: *helper*. An example to dump the running configuration of ESCAPE:
 More help and description about the useful helper functions and the *core* object is in the comments/documentation and on the POX's
 `wiki <https://openflow.stanford.edu/display/ONL/POX+Wiki#POXWiki-POXAPIs>`__ site.
 
+Tests
+=====
+
+ESCAPE has several testcases formed as Unit test. These test can be found under
+the `test` folder.
+
+Dependent packages for the test can be installed with the `install_requirements.sh` script.
+To run the test see the main running script:
+
+```text
+$ ./run_tests.py -h
+usage: run_tests.py [-h] [--failfast] [--show-output] [--timeout t]
+                    [--standalone] [--verbose]
+                    [testcases [testcases ...]]
+
+ESCAPE Test runner
+
+positional arguments:
+  testcases          list test case names you want to run. Example:
+                     ./run_tests.py case05 case03 --show-output
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --failfast, -f     Stop on first failure
+  --show-output, -o  Show ESCAPE output
+  --timeout t, -t t  define explicit timeout in sec (default: 30s)
+  --standalone, -s   run standalone mode: no timeout, no quitting
+  --verbose, -v      Run in verbose mode and show output
+```
+
+Documentation
+=============
+
+The documentation can be generated from source code with `generate-docs.sh` script
+or directly with the `Makefile` in `escape/doc` directory.
+The generated doc can be found in `escape/doc/build/`.
+
+Requirements:
+
+    * sphinx (sudo -H pip install sphinx)
+    * texlive-latex-extra (sudo apt install -y texlive-latex-extra)
+
 API documentation
 =================
 
@@ -1311,14 +1354,15 @@ Topmost POX modules for UNIFY's layers/sublayers
 
     UNIFY <unify>
 
-Contacts
-========
+License and Contacts
+====================
 
-János Czentye - janos.czentye@tmit.bme.hu
+Licensed under the Apache License, Version 2.0, see LICENSE file.
 
-Balázs Sonkoly - balazs.sonkoly@tmit.bme.hu
-
-Balázs Németh - balazs.nemeth@tmit.bme.hu
+    Copyright (C) 2017 by
+    János Czentye - janos.czentye@tmit.bme.hu
+    Balázs Németh - balazs.nemeth@tmit.bme.hu
+    Balázs Sonkoly - balazs.sonkoly@tmit.bme.hu
 
 Indices and tables
 ==================

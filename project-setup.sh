@@ -30,13 +30,15 @@ function on_error() {
 }
 
 function print_help {
-    echo -e "Setup submodules according to given project for ESCAPE.\n"
+    echo -e "Setup submodules according to given project for ESCAPEe."
+    echo -e "If project name is not given the script tries to detect it"
+    echo -e "from the git's local configurations.\n"
     echo -e "Usage: $0 [-h] [-p project]"
-    echo -e "parameters:"
+    echo -e "Parameters:"
     echo -e "\t -h, --help      show this help message and exit"
     echo -e "\t -p, --project   setup project name based on: .gitmodules.<name>"
     echo -e "\nExample: $0 -p 5gex"
-    exit 0
+    exit 2
 }
 
 function setup () {

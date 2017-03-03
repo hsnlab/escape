@@ -120,19 +120,19 @@ def parse_cmd_args ():
   parser = argparse.ArgumentParser(description="ESCAPE Test runner",
                                    add_help=True,
                                    prog="run_tests.py")
-  parser.add_argument("--failfast", "-f", action="store_true", default=False,
+  parser.add_argument("-f", "--failfast", action="store_true", default=False,
                       help="Stop on first failure")
-  parser.add_argument("--show-output", "-o", action="store_true", default=False,
+  parser.add_argument("-o", "--show-output", action="store_true", default=False,
                       help="Show ESCAPE output")
   parser.add_argument("testcases", nargs="*",
                       help="list test case names you want to run. Example: "
                            "./run_tests.py case05 case03 --show-output")
-  parser.add_argument("--timeout", "-t", metavar="t", type=int,
+  parser.add_argument("-t", "--timeout",  metavar="t", type=int,
                       help="define explicit timeout in sec (default: %ss)" %
                            CommandRunner.KILL_TIMEOUT)
-  parser.add_argument("--standalone", "-s", action="store_true", default=False,
+  parser.add_argument("-s", "--standalone",  action="store_true", default=False,
                       help="run standalone mode: no timeout, no quitting")
-  parser.add_argument("--verbose", "-v", action="store_true", default=False,
+  parser.add_argument("-v", "--verbose", action="store_true", default=False,
                       help="Run in verbose mode and show output")
   return parser.parse_args()
 
