@@ -1,9 +1,9 @@
 [submodule "escape/escape/nffg_lib"]
 	path = escape/escape/nffg_lib
-	url = ssh://git@213.16.101.140:/escape/nffg.git
+	url = git@213.16.101.140:/escape/nffg.git
 [submodule "mapping"]
 	path = mapping
-	url = ssh://git@213.16.101.140:/escape/mapping.git
+	url = git@213.16.101.140:/escape/mapping.git
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
-	url = ssh://git@213.16.101.140:/virtualizer/virtualizer.git
+	url = git@213.16.101.140:/virtualizer/virtualizer.git
