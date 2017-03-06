@@ -107,7 +107,7 @@ if [ -z ${PROJECT} ]; then
         PROJECT="sb"
     elif [[ ${origin_url} == *"5gexgit.tmit.bme.hu"* ]]; then
         PROJECT="5gex"
-    elif [[ ${origin_url} == *"213.16.101.153"* ]]; then
+    elif [[ ${origin_url} == *"213.16.101.140"* ]]; then
         PROJECT="ericsson"
     elif [[ ${origin_url} == *"github.com:hsnlab"* ]]; then
         PROJECT="hsnlab"
