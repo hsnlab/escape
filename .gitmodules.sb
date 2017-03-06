@@ -1,9 +1,9 @@
 [submodule "escape/escape/nffg_lib"]
 	path = escape/escape/nffg_lib
-	url = git@sb.tmit.bme.hu:42322/unify/nffg.git
+	url = ssh://git@sb.tmit.bme.hu:42322/unify/nffg.git
 [submodule "mapping"]
 	path = mapping
-	url = git@sb.tmit.bme.hu:42322/unify/mapping.git
+	url = ssh://git@sb.tmit.bme.hu:42322/unify/mapping.git
 [submodule "unify_virtualizer"]
 	path = unify_virtualizer
-	url = git@sb.tmit.bme.hu:42322/unify/virtualizer.git
+	url = ssh://git@sb.tmit.bme.hu:42322/unify/virtualizer.git

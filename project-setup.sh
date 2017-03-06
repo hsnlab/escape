@@ -57,17 +57,7 @@ function setup () {
     git submodule deinit -f .
     git submodule init
 
-    info "=== Deinit unnecessary modules ==="
-    if [ ${PROJECT} = "sb" ]; then
-        # Deinit only 5GEx submodules
-        for i in bgp-ls/netphony-topology bgp-ls/netphony-network-protocols tnova_connector; do
-            git submodule deinit -f ${i}
-        done
-    fi
-
     info "=== Clone top submodules ==="
-    # Clone top submodules with default submodule
-#    git submodule update --remote
     git submodule update    # Following commits
 
     info "=== Init submodules recursively ==="
@@ -86,7 +76,6 @@ function setup () {
     info "=== Sync and update submodules recursively ==="
     # Sync and update all the submodules
     git submodule foreach git submodule init
-#    git submodule update --remote --recursive --merge
     git submodule update    # Following commits
 
     info "=== Defined submodules ==="
