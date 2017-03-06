@@ -11,7 +11,7 @@ timestamps {
             ssh-keygen -F 5gexgit.tmit.bme.hu > docker/.ssh/known_hosts
             '''
             docker.withRegistry('https://5gex.tmit.bme.hu') {
-                def image = docker.build("escape:2.0.0.${env.BUILD_NUMBER}", '--build-arg "ESC_INSTALL_PARAMS=c -p 5gex" .')
+                def image = docker.build("escape:2.0.0.${env.BUILD_NUMBER}", '.')
                 image.push()
                 image.push('latest')
             }
