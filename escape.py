@@ -53,7 +53,7 @@ def main ():
   escape.add_argument("-f", "--full", action="store_true", default=False,
                       help="run the infrastructure layer also")
   escape.add_argument("-g", "--gui", action="store_true", default=False,
-                      help="initiate the graph-viewer GUI app which "
+                      help="(OBSOLETE) initiate the graph-viewer GUI app which "
                            "automatically connects to the ROS REST-API")
   escape.add_argument("-i", "--interactive", action="store_true", default=False,
                       help="run an interactive shell for observing internal "

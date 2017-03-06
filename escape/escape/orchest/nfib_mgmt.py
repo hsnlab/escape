@@ -759,7 +759,7 @@ class NFIBManager(object):
     elif os.path.isfile('/etc/neo4j/neo4j-server.properties'):
       return "neo4j-service"
     else:
-      log.error("No configuration file was found for neo4j service!")
+      log.warning("No configuration file was found for neo4j service!")
 
   def __manage_neo4j_service (self):
     """

@@ -33,3 +33,4 @@ log/*
 /test/results.xml
 unify_virtualizer/yang
 trails
+gui/

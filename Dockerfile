@@ -8,4 +8,6 @@ LABEL Description="ESCAPE: Multi-domain Orchestrator" Project="5GEx" version="2.
 COPY . /home/escape/
 WORKDIR /home/escape
 RUN pip install --upgrade -r requirements.txt
-ENTRYPOINT ["/bin/bash"]
+EXPOSE 8008 8888
+ENTRYPOINT ["./escape.py"]
+CMD ["-drc", "config/escape-static-dummy.config"]
