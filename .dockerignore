@@ -1,4 +1,7 @@
+# Ignore git files
+**/.git*
 # Ignore all the non-required codes, tools and packages for mininal ESCAPE in MdO
+Jenkinsfile
 OpenYuma
 Unify_ncagent
 bgp-ls
