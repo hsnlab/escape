@@ -1,0 +1,10 @@
+Build:
+    docker build --rm --no-cache -t mdo/ro .
+Run:
+    docker run --rm -P -ti mdo/ro
+    docker run --rm -p 8008:8008 -p 8888:8888 -ti mdo/ro
+Test:
+    docker run --rm --entrypoint bash -ti mdo/ro
+    docker run --rm -v /home/czentye/escape/:/home/escape -ti mdo/ro
+    docker run --rm --entrypoint bash -v /home/czentye/escape/:/home/escape -ti mdo/ro
+

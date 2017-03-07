@@ -40,8 +40,8 @@ function info() {
 }
 
 ### Constants
-IMAGE_NAME="escape"
-CONTAINER_NAME="ESCAPE"
+IMAGE_NAME="mdo"
+CONTAINER_NAME="escape"
 
 function docker-dep {
     # Install docker and related packages is it's necessary
@@ -70,12 +70,12 @@ function docker-dep {
 }
 
 
-function mdo {
+function ro {
     # Create image and container for Global Orchestrator
     docker-dep
     cp -R ~/.ssh .ssh
-    sudo docker build --rm --no-cache -f ../Dockerfile -t "$IMAGE_NAME/mdo" ..
-    sudo docker create --name "mdo$CONTAINER_NAME" -p 8008:8008 -p 8888:8888 -p 8889:8889 -it "$IMAGE_NAME/mdo"
+    sudo docker build --rm --no-cache -f ./Dockerfile -t "$IMAGE_NAME/ro" ..
+    sudo docker create --name "$CONTAINER_NAME-ro" -p 8008:8008 -p 8888:8888 -p 8889:8889 -it "$IMAGE_NAME/mdo"
     rm -rf .ssh
     info "To start the default container use the following command: sudo docker start -i mdo$CONTAINER_NAME"
 }
@@ -84,8 +84,8 @@ function lo {
     # Create image and container for Local Orchestrator
     docker-dep
     cp -R ~/.ssh .ssh
-    sudo docker build --rm --no-cache -f ../Dockerfile --build-arg ESC_INSTALL_PARAMS=ci -t "$IMAGE_NAME/lo" ..
-    sudo docker create --name "lo$CONTAINER_NAME" -p 8008:8008 -p 8888:8888 -p 8889:8889 -e DISPLAY=${DISPLAY} --privileged --cap-add NET_ADMIN -it "$IMAGE_NAME/lo"
+    sudo docker build --rm --no-cache -f ./Dockerfile --build-arg ESC_INSTALL_PARAMS=ci -t "$IMAGE_NAME/lo" ..
+    sudo docker create --name "$CONTAINER_NAME-lo" -p 8008:8008 -p 8888:8888 -p 8889:8889 -e DISPLAY=${DISPLAY} --privileged --cap-add NET_ADMIN -it "$IMAGE_NAME/lo"
     rm -rf .ssh
     info "To start the default container use the following command: sudo docker start -i lo$CONTAINER_NAME"
 }
@@ -94,18 +94,18 @@ function lo {
 function all {
     # Create all the images and containers
     docker-dep
+    ro
     lo
-    mdo
 }
 
 function print_usage {
     # Print help
-    echo -e "Usage: $0 [-a] [-g] [-l] [-h]"
+    echo -e "Usage: $0 [-a] [-r] [-l] [-h]"
     echo -e "Dockerize ESCAPE as a Multi-Domain(MdO) or a Local Orchestrator(LO).\n"
     echo -e "options:"
     echo -e "\t-a:   (default) create all the images and containers"
-    echo -e "\t-g:   create the image and a default container from ESCAPE as a MdO"
-    echo -e "\t-l:   create the image and the specific container from ESCAPE as a LO"
+    echo -e "\t-r:   create the image and a default container from ESCAPE as RO"
+    echo -e "\t-l:   create the image and the specific container from ESCAPE as LO"
     echo -e "\t-h:   print this help message"
     exit 2
 }
@@ -114,10 +114,10 @@ if [ $# -eq 0 ]; then
     # No param was given
     all
 else
-    while getopts 'aglh' OPTION; do
+    while getopts 'arlh' OPTION; do
         case ${OPTION} in
         a)  all;;
-        g)  mdo;;
+        r)  ro;;
         l)  lo;;
         h)  print_usage;;
         \?)  print_usage;;
