@@ -49,7 +49,24 @@ The `install_dep.sh` script is responsible for managing the dependencies. It set
 the required sym-links, updates the related submodules and installs only the 
 necessary packages regarding the given install parameters.
 
-If you don't want to use the complex install script or the included project setup script
+For automatically setting up the submodules and its submodules recursively, 
+the `project-setup.sh` script has been added to the project.
+
+```text
+$ ./project-setup.sh -h
+Setup submodules according to given project for ESCAPEe.
+If project name is not given the script tries to detect it
+from the git's local configurations.
+
+Usage: ./project-setup.sh [-h] [-p project]
+Parameters:
+	 -h, --help      show this help message and exit
+	 -p, --project   setup project name based on: .gitmodules.<name>
+
+Example: ./project-setup.sh -p 5gex
+```
+
+If you don't want to use the complex install script or the included project setup script either
 then just create a sym-link to the relevant gitmodules file with the name `.gitmodules` 
 and update the submodule manually.
 
@@ -160,6 +177,33 @@ case ESCAPE is intended to run on a VM without any graphical interface.
     and initiate a service request consists of a *HeaderCompressor* and a *HeaderDecompressor* VNF
     for one direction and a simple *Forwarder* VNF for the backward direction between SAP1 and SAP2.
     The two initiated SAP should reach each other after the service request has been processed.
+
+## ESCAPE as a Docker container
+
+ESCAPE can be run in a Docker container. To create the basic image, issue the following command 
+in the project root:
+
+```bash
+$ docker build --rm --no-cache -t mdo/ro .
+```
+
+This command creates a minimal image based on the official Python image with the name: _mdo/ro_, 
+installs the required Python dependencies listen in `requirement.txt` and sets the entry point.
+
+To create and start a persistent container based on the _mdo/ro_ image, use the following commands:
+
+```bash
+$ docker create --name escape -p 8008:8008 -p 8888:8888 -it mdo/ro
+$ docker start -i escape
+```
+
+To create a one-time container, use the following command:
+
+```bash
+$ docker run --rm -p 8008:8008 -p 8888:8888 -ti mdo/ro
+```
+
+Other helper scripts for the dockerization can be found under the ``docker`` folder.
 
 ## Tests
 

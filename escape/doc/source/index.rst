@@ -469,6 +469,31 @@ and then activate/deactivate the environment manually:
 For more information check the content of the setup script or see the
 `Virtualenv User Guide <https://virtualenv.readthedocs.org/en/latest/userguide.html>`_.
 
+ESCAPE as a Docker container
+----------------------------
+
+ESCAPE can be run in a Docker container. To create the basic image, issue the following command
+in the project root:
+
+.. code-block:: bash
+    $ docker build --rm --no-cache -t mdo/ro .
+
+This command creates a minimal image based on the official Python image with the name: _mdo/ro_,
+installs the required Python dependencies listen in `requirement.txt` and sets the entry point.
+
+To create and start a persistent container based on the _mdo/ro_ image, use the following commands:
+
+.. code-block:: bash
+    $ docker create --name escape -p 8008:8008 -p 8888:8888 -it mdo/ro
+    $ docker start -i escape
+
+To create a one-time container, use the following command:
+
+.. code-block:: bash
+    $ docker run --rm -p 8008:8008 -p 8888:8888 -ti escape
+
+Other helper scripts for the dockerization can be found under the ``docker`` folder.
+
 ESCAPE example commands
 =======================
 
