@@ -14,10 +14,10 @@
 """
 Contains classes which implement SG mapping functionality.
 """
-from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest.ros_mapping import ESCAPEMappingStrategy
 from escape.service import log as log, LAYER_NAME
+from escape.util.config import CONFIG
 from escape.util.mapping import AbstractMapper
 from escape.util.misc import call_as_coop_task, VERBOSE
 from pox.lib.revent.revent import Event

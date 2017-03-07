@@ -156,10 +156,6 @@ class ESCAPEConfig(object):
     if config:
       # Config is set directly
       log.info("Load explicitly given config file: %s" % config)
-    elif hasattr(core, 'CONFIG_FILE_NAME'):
-      # Config is set through POX's core object by a topmost module (unify)
-      config = getattr(core, 'CONFIG_FILE_NAME')
-      log.info("Load explicitly given config file: %s" % config)
     else:
       # No config file has been given
       log.debug("No additional configuration has been given!")
@@ -1009,3 +1005,7 @@ class ESCAPEConfig(object):
       return urlparse.urljoin(ra['url'], ra['prefix'])
     except KeyError:
       return
+
+
+# Load default config right after import
+CONFIG = ESCAPEConfig()

@@ -16,12 +16,13 @@ Contains components relevant to virtualization of resources and views.
 """
 import threading
 import weakref
+
 from wrapt.decorators import synchronized
 
-from escape import CONFIG
 from escape.adapt import log as log
 from escape.adapt.policy_enforcement import PolicyEnforcementMetaClass
 from escape.nffg_lib.nffg import NFFGToolBox, NFFG
+from escape.util.config import CONFIG
 from escape.util.misc import enum, VERBOSE
 from pox.lib.revent.revent import EventMixin, Event
 

@@ -24,10 +24,11 @@ from ncclient.operations import OperationError
 from ncclient.operations.rpc import RPCError
 from ncclient.transport import TransportError
 
-from escape import CONFIG, __version__
+from escape import __version__
 from escape.infr.il_API import InfrastructureLayerAPI
 from escape.nffg_lib.nffg import NFFGToolBox
 from escape.util.com_logger import MessageDumper
+from escape.util.config import CONFIG
 from escape.util.config import PROJECT_ROOT
 from escape.util.conversion import NFFGConverter, UC3MNFFGConverter
 from escape.util.domain import *

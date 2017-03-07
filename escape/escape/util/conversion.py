@@ -25,7 +25,7 @@ try:
   from escape.nffg_lib.nffg import AbstractNFFG, NFFG
   from escape.util.misc import VERBOSE, unicode_to_str, remove_units
 except (ImportError, AttributeError):
-  import os, inspect
+  import os
 
   for p in ("../nffg_lib/",
             "../util/"):
@@ -39,7 +39,7 @@ try:
   import virtualizer as virt_lib
   from virtualizer import __version__ as V_VERSION, Virtualizer
 except (ImportError, AttributeError):
-  import os, inspect
+  import os
 
   sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../../../unify_virtualizer/")))

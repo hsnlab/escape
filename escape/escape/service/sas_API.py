@@ -19,7 +19,6 @@ import httplib
 import os
 from subprocess import Popen
 
-from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest.ros_API import InstantiationFinishedEvent, \
   BasicUnifyRequestHandler
@@ -28,6 +27,7 @@ from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
 from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler, \
   RequestStatus, RequestScheduler
+from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError

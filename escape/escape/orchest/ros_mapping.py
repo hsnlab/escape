@@ -20,9 +20,9 @@ import time
 
 from alg1.MappingAlgorithms import MAP
 from alg1.UnifyExceptionTypes import *
-from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log, LAYER_NAME
+from escape.util.config import CONFIG
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.util.misc import call_as_coop_task, VERBOSE
 from pox.lib.revent.revent import Event

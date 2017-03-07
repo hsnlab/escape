@@ -20,11 +20,11 @@ import urlparse
 import weakref
 
 import escape.adapt.managers as mgrs
-from escape import CONFIG
 from escape.adapt import log as log, LAYER_NAME
 from escape.adapt.managers import UnifyDomainManager
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
+from escape.util.config import CONFIG
 from escape.util.config import ConfigurationError
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import DomainChangedEvent, AbstractDomainManager, \

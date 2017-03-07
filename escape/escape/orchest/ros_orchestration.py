@@ -17,11 +17,11 @@ Contains classes relevant to Resource Orchestration Sublayer functionality.
 import ast
 from collections import OrderedDict
 
-from escape import CONFIG
 from escape.adapt.virtualization import AbstractVirtualizer, VirtualizerManager
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
+from escape.util.config import CONFIG
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
 from escape.util.misc import notify_remote_visualizer, VERBOSE
 from escape.util.virtualizer_helper import detect_bb_nf_from_path, \

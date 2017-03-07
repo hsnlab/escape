@@ -22,11 +22,12 @@ import urlparse
 from requests import Session, ConnectionError, HTTPError, Timeout
 
 import virtualizer as Virtualizer
-from escape import CONFIG, PROJECT_ROOT, __version__
+from escape import __version__
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
+from escape.util.config import CONFIG, PROJECT_ROOT
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import Singleton
 from pox.core import core

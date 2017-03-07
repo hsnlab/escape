@@ -16,7 +16,7 @@ Contains abstract classes for NFFG mapping.
 """
 import threading
 
-from escape import CONFIG
+from escape.util.config import CONFIG
 from escape.util.misc import call_as_coop_task
 from pox.core import core
 from pox.lib.revent.revent import EventMixin, Event

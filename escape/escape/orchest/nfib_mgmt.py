@@ -22,9 +22,9 @@ import py2neo
 from py2neo import Graph, Relationship, Unauthorized
 from py2neo.packages.httpstream.http import SocketError
 
-from escape import CONFIG
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest import log as log
+from escape.util.config import CONFIG
 from escape.util.misc import quit_with_error, check_service_status, run_cmd, \
   VERBOSE, port_tester
 

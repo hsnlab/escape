@@ -19,6 +19,9 @@ Initiate appropriate layer APIs.
 Follows POX module conventions.
 """
 import logging
+import os
+import site
+import sys
 
 import pox.lib.util as poxutil
 from escape_logging import setup_logging
@@ -60,6 +63,77 @@ def _start_components (event):
     launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
 
 
+def __init_loggers (loglevel, log, test):
+  """
+  Init loggers.
+
+  :param loglevel: run on specific run level  (default: INFO)
+  :type loglevel: str
+  :param log: add ESCAPE main log file for test mode (default: log/escape.log)
+  :type log: str
+  :param test: Start ESCAPE in test mode (optional)
+  :type test: bool
+  :return: None
+  """
+  # Import colourful logging
+  if loglevel == 'VERBOSE':
+    setup_logging(**{'test_mode': True if test else False,
+                     'log_file': log})
+    # Set the Root logger level explicitly
+    logging.getLogger('').setLevel("VERBOSE")
+  else:
+    # Launch pretty logger with specific log level
+    setup_logging(**{loglevel: True, 'test_mode': True if test else False,
+                     'log_file': log})
+
+
+def __init_config (config, test, quit):
+  """
+  Init configuration.
+
+  :param config: additional config file with different name
+  :type config: str
+  :param test: Start ESCAPE in test mode (optional)
+  :type test: bool
+  :param quit: Quit after the first service request has processed (optional)
+  :type quit: bool
+  :return:
+  """
+  # Save test mode
+  if test:
+    setattr(core, "TEST_MODE", True)
+
+  # Save quit mode
+  if quit:
+    setattr(core, "QUIT_AFTER_PROCESS", True)
+  from escape.util.config import ESCAPEConfig
+  # Define global configuration and try to load additions from file
+  ESCAPEConfig().load_config(config=config)
+
+
+def __print_header ():
+  from escape.util.misc import get_escape_revision
+  revision = get_escape_revision()
+  core_log.info("Starting %s" % revision[0])
+  core_log.info("Version: %s" % revision[1])
+  core_log.info("Current branch: %s" % revision[2])
+  core_log.info("Initializing main layer modules...")
+
+
+def __setup_pythonpath ():
+  """
+  Setup PYTHONPATH if ESCAPE was stated in a subshell.
+
+  :return: None
+  """
+  # Detect and add dependency directories in case it run in a subshell
+  PROJECT_ROOT = os.path.normpath(os.path.abspath(__file__) + "/../../..")
+  print PROJECT_ROOT
+  site.addsitedir(sitedir=PROJECT_ROOT)
+  # Remove project root to avoid name collision
+  sys.path.remove(PROJECT_ROOT)
+
+
 @poxutil.eval_args
 def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
             full=False, loglevel="INFO", cfor=False, visualization=False,
@@ -94,41 +168,19 @@ def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
   :type quit: bool
   :return: None
   """
+  # Store args into this module file
   global init_param
   init_param.update(locals())
-  # Import colourful logging
-  if loglevel == 'VERBOSE':
-    setup_logging(**{'test_mode': True if test else False,
-                     'log_file': log})
-    # Set the Root logger level explicitly
-    logging.getLogger('').setLevel("VERBOSE")
-  else:
-    # Launch pretty logger with specific log level
-    setup_logging(**{loglevel: True, 'test_mode': True if test else False,
-                     'log_file': log})
-  # Save additional config file name into POX's core as an attribute to avoid to
-  # confuse with POX's modules
-  if config:
-    setattr(core, "CONFIG_FILE_NAME", config)
 
-  # Save test mode
-  if test:
-    setattr(core, "TEST_MODE", True)
-
-  # Save quit mode
-  if quit:
-    setattr(core, "QUIT_AFTER_PROCESS", True)
-
-  from escape.util.misc import get_escape_revision
-  revision = get_escape_revision()
-  core_log.info("Starting %s" % revision[0])
-  core_log.info("Version: %s" % revision[1])
-  core_log.info("Current branch: %s" % revision[2])
-  core_log.info("Initializing main layer modules...")
+  __setup_pythonpath()
+  __init_loggers(loglevel=loglevel, log=log, test=test)
+  __init_config(config=config, test=test, quit=quit)
+  __print_header()
 
   if visualization:
     core_log.debug("Enable remote visualization...")
-    from escape.util.visualization import RemoteVisualizer
+    from escape.util.com_logger import RemoteVisualizer
     core.register(RemoteVisualizer._core_name, RemoteVisualizer())
+
   # Register _start_components() to be called when POX is up
   core.addListenerByName("GoingUpEvent", _start_components)

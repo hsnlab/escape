@@ -17,10 +17,6 @@ Unifying package for ESCAPEv2 functions.
 `CONFIG` contains the ESCAPEv2 dependent configuration as an
 :any:`ESCAPEConfig`.
 """
-import site
-
-from escape.util.config import ESCAPEConfig, PROJECT_ROOT
-
 __project__ = "ESCAPE"
 __authors__ = ['Janos Czentye', 'Balazs Nemeth', 'Balazs Sonkoly']
 __maintainer__ = "Janos Czentye"
@@ -31,11 +27,5 @@ __credits__ = ['Janos Czentye', 'Balazs Nemeth', 'Balazs Sonkoly',
 __copyright__ = "Copyright 2015, under Apache License Version 2.0"
 __license__ = "Apache License, Version 2.0"
 # ESCAPE version - format: vmajor.minor.patch
-__version__ = "v2.0.0"
+__version__ = "v2.0.0+"
 __status__ = "prototype"
-
-# Detect and add dependency directories
-site.addsitedir(sitedir=PROJECT_ROOT)
-# Define global configuration and try to load additions from file
-CONFIG = ESCAPEConfig().load_config()
-"""Default configuration object"""

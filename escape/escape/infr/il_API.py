@@ -14,13 +14,12 @@
 """
 Emulate UNIFY's Infrastructure Layer for testing purposes based on Mininet.
 """
-from escape import CONFIG
 from escape.infr import LAYER_NAME
 from escape.infr import log as log  # Infrastructure layer logger
 from escape.infr.topology import ESCAPENetworkBuilder
 from escape.util.api import AbstractAPI
+from escape.util.config import CONFIG
 from escape.util.domain import BaseResultEvent
-from escape.util.misc import schedule_as_coop_task
 from pox.openflow.of_01 import OpenFlow_01_Task
 
 

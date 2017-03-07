@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/env python
 # Copyright 2017 Janos Czentye
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,23 @@
 Top starter script of ESCAPEv2 for convenient purposes
 """
 import argparse
-import imp
 import os
+import site
+import sys
 
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 MAIN_CONTAINER_LAYER_NAME = "ESCAPE"
+
+# Detect and add dependency directories
+site.addsitedir(sitedir=PROJECT_ROOT)
+# Remove the default root path from the beginning of the PYTHONPATH to avoid
+# name collision of escape.py wrapper and escape package
+sys.path.remove(PROJECT_ROOT)
 
 
 def get_escape_version ():
-  misc = imp.load_source("misc", os.path.join(os.path.abspath(
-    os.path.dirname(__file__)), "escape/escape/util/misc.py"))
-  return getattr(misc, "get_escape_version")()
+  from escape.util.misc import get_escape_version
+  return get_escape_version()
 
 
 def main ():
@@ -59,14 +66,18 @@ def main ():
                       help="run an interactive shell for observing internal "
                            "states")
   escape.add_argument("-l", "--log", metavar="file", type=str,
-                      help="add log file explicitly for test mode "
+                      help="define log file path explicitly"
                            "(default: log/escape.log)")
   escape.add_argument("-m", "--mininet", metavar="file", type=str,
                       help="read the Mininet topology from the given file")
-  escape.add_argument("-p", "--POXlike", action="store_true", default=False,
-                      help="start ESCAPEv2 in the actual interpreter using "
-                           "./pox as working directory instead of using a "
-                           "separate shell process with POX's own PYTHON env")
+  escape.add_argument("-n", "--nosignal", action="store_true", default=False,
+                      help="run ESCAPE in a sub-shell that prevents propagation"
+                           "of received SIGNALs")
+  escape.add_argument("-q", "--quit", action="store_true", default=False,
+                      help="quit right after the first service request has "
+                           "processed")
+  escape.add_argument("+q", "++quit", action="store_false", default=False,
+                      help="explicitly disable quit mode")
   escape.add_argument("-r", "--rosapi", action="store_true", default=False,
                       help="start the REST-API for the Resource Orchestration "
                            "sublayer (ROS)")
@@ -75,11 +86,6 @@ def main ():
                            "service request from the given file")
   escape.add_argument("-t", "--test", action="store_true", default=False,
                       help="run in test mode")
-  escape.add_argument("-q", "--quit", action="store_true", default=False,
-                      help="quit right after the first service request has "
-                           "processed")
-  escape.add_argument("+q", "++quit", action="store_false", default=False,
-                      help="explicitly disable quit mode")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
                       help="run the cleanup task standalone and kill remained "
                            "programs, interfaces, veth parts and junk files")
@@ -99,9 +105,8 @@ def main ():
     # escape or util packages.
     import sys
     # Import misc directly from util/ to avoid standard ESCAPE init steps
-    sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/mininet"))
-    sys.path.insert(0, os.path.abspath(
-      os.path.dirname(__file__) + "/escape/escape/util"))
+    sys.path.insert(0, PROJECT_ROOT + "/mininet")
+    sys.path.insert(0, PROJECT_ROOT + "/escape/escape/util")
     if os.geteuid() != 0:
       print "Cleanup process requires root privilege!"
       return
@@ -118,13 +123,8 @@ def main ():
       print "Cleaned."
       return
 
-  # Get base dir of this script
-  base_dir = os.path.abspath(os.path.dirname(__file__))
-
-  # Create absolute path for the pox.py initial script
-  # Construct POX init command according to argument
-  # basic command
-  cmd = [os.path.join(base_dir, "pox/pox.py"), MAIN_CONTAINER_LAYER_NAME]
+  # Construct POX init command according to argument basic command
+  cmd = [os.path.join(PROJECT_ROOT, "pox/pox.py"), MAIN_CONTAINER_LAYER_NAME]
 
   # Run ESCAPE in VERBOSE logging level if it is needed
   if args.debug == 1:
@@ -206,7 +206,7 @@ def main ():
     :return: None
     """
     try:
-      activate_this = os.path.join(base_dir, 'bin/activate_this.py')
+      activate_this = PROJECT_ROOT + '/bin/activate_this.py'
       execfile(activate_this, dict(__file__=activate_this))
     except IOError as e:
       print "Virtualenv is not set properly:\n%s" % e
@@ -217,7 +217,7 @@ def main ():
   if args.environment:
     __activate_virtualenv()
   else:
-    for entry in os.listdir(base_dir):
+    for entry in os.listdir(PROJECT_ROOT):
       if entry.upper().startswith(".USE_VIRTUALENV"):
         __activate_virtualenv()
         break
@@ -225,26 +225,20 @@ def main ():
   # Starting ESCAPEv2 (as a POX module)
   print "Starting %s..." % parser.description
 
-  if args.POXlike:
-    pox_base = os.path.realpath((os.path.dirname(__file__) + "/pox"))
-    # Change working directory
-    os.chdir(pox_base)
-    # Override first path element
-    # POX use the first element of path to add pox directories to PYTHONPATH
-    import sys
-    sys.path[0] = pox_base
-    pox_params = cmd[2:] if cmd[0] == "sudo" else cmd[1:]
-    if args.debug:
-      print "POX base: %s" % pox_base
-      print "POX parameters: %s" % pox_params
-    from pox.boot import boot
-    boot(argv=pox_params)
-  else:
+  if args.nosignal:
     # Create command
     cmd = " ".join(cmd)
     if args.debug:
       print "Command: %s" % cmd
-    os.system(cmd)
+    return os.system(cmd)
+  else:
+    # sys.path[0] = pox_base
+    pox_params = cmd[2:] if cmd[0] == "sudo" else cmd[1:]
+    if args.debug:
+      print "POX parameters: %s" % pox_params
+    # Start POX
+    from pox.boot import boot
+    return boot(argv=pox_params)
 
 
 if __name__ == '__main__':

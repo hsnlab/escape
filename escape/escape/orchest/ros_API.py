@@ -19,7 +19,6 @@ import httplib
 import json
 import pprint
 
-from escape import CONFIG
 from escape.adapt.adaptation import InfoRequestFinishedEvent
 from escape.nffg_lib.nffg import NFFG
 from escape.nffg_lib.nffg import NFFGToolBox
@@ -30,12 +29,12 @@ from escape.util.api import AbstractAPI, RESTServer, RequestStatus, \
   RequestScheduler
 from escape.util.api import AbstractRequestHandler
 from escape.util.com_logger import MessageDumper
+from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import ProcessorError
-from escape.util.misc import VERBOSE
-from escape.util.misc import schedule_as_coop_task, notify_remote_visualizer, \
-  quit_with_error
+from escape.util.misc import VERBOSE, schedule_as_coop_task, \
+  notify_remote_visualizer, quit_with_error
 from pox.lib.revent.revent import Event
 from virtualizer import Virtualizer
 from virtualizer_info import Info

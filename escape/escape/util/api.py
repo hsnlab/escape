@@ -28,7 +28,8 @@ from SocketServer import ThreadingMixIn
 import requests
 from requests.exceptions import Timeout, RequestException
 
-from escape import __project__, CONFIG
+from escape import __project__
+from escape.util.config import CONFIG
 from escape.util.misc import SimpleStandaloneHelper, quit_with_error, \
   get_escape_version
 from escape.util.pox_extension import POXCoreRegisterMetaClass
