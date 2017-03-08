@@ -188,7 +188,7 @@ $ docker build --rm --no-cache -t mdo/ro .
 ```
 
 This command creates a minimal image based on the official Python image with the name: _mdo/ro_, 
-installs the required Python dependencies listen in `requirement.txt` and sets the entry point.
+installs the required Python dependencies listed in `requirement.txt` and sets the entry point.
 
 To create and start a persistent container based on the _mdo/ro_ image, use the following commands:
 
