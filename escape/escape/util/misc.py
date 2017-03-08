@@ -419,10 +419,14 @@ def get_escape_version ():
   # Only match version tag like v2.0.0
   # cmd = "git describe --always --first-parent --tags --match v*"
   cmd = "git describe --always --tags"
-  desc = Popen(cmd.split(' '), stdout=PIPE).communicate()[0].strip()
+  with open(os.devnull, 'wb') as DEVNULL:
+    desc = Popen(cmd.split(' '),
+                 stdout=PIPE,
+                 stderr=DEVNULL).communicate()[0].strip()
   # If Git is not installed or command is failed
   if not desc:
-    return "N/A"
+    from escape import __version__
+    return __version__
   else:
     # If no tag is defined in the repo
     if not desc.count('-'):
@@ -439,7 +443,10 @@ def get_escape_branch_name ():
   :rtype: str
   """
   cmd = "git symbolic-ref --short HEAD"
-  branch = Popen(cmd.split(' '), stdout=PIPE).communicate()[0]
+  with open(os.devnull, 'wb') as DEVNULL:
+    branch = Popen(cmd.split(' '),
+                   stdout=PIPE,
+                   stderr=DEVNULL).communicate()[0]
   return branch.strip() if branch else "N/A"
 
 

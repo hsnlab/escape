@@ -128,7 +128,6 @@ def __setup_pythonpath ():
   """
   # Detect and add dependency directories in case it run in a subshell
   PROJECT_ROOT = os.path.normpath(os.path.abspath(__file__) + "/../../..")
-  print PROJECT_ROOT
   site.addsitedir(sitedir=PROJECT_ROOT)
   # Remove project root to avoid name collision
   sys.path.remove(PROJECT_ROOT)
