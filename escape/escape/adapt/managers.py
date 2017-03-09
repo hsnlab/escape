@@ -1150,7 +1150,7 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     """
     self.log.info(">>> Install %s domain part..." % self.domain_name)
     try:
-      if not self._poll and self._diff:
+      if not self.polling and self._diff:
         self.log.debug(
           "Polling is disabled. Requesting the most recent topology "
           "from domain: %s for installation..." % self.domain_name)
@@ -1181,7 +1181,7 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
-    if not self._poll and self._diff:
+    if not self.polling and self._diff:
       self.log.debug("Polling is disabled. Requesting the most recent topology "
                      "from domain: %s for domain clearing..." %
                      self.domain_name)
@@ -1334,6 +1334,9 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     if self.callback_manager:
       self.callback_manager.shutdown()
 
+  def get_last_request(self):
+    return self.topoAdapter.last_request
+
   def _setup_callback (self, hook, type, req_id, msg_id=None, data=None):
     """
 
@@ -1478,7 +1481,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute
     # diff if it is necessary
-    if not self._poll and self._diff:
+    if not self.polling and self._diff:
       self.log.debug("Polling is disabled. Requesting the most recent topology "
                      "from domain: %s for domain clearing..." %
                      self.domain_name)

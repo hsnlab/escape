@@ -511,6 +511,10 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
       self.__timer.cancel()
     self.__timer = None
 
+  @property
+  def polling (self):
+    return self._poll
+
   def poll (self):
     """
     Poll the defined domain agent. Handle different connection errors and go
@@ -702,8 +706,7 @@ class AbstractESCAPEAdapter(EventMixin):
     :rtype: bool or None
     """
     # Implement a very simple change detection based on dirty flag
-    tmp = self.__dirty
-    self.__dirty = False
+    tmp, self.__dirty = self.__dirty, False
     return tmp
 
   def finit (self):
@@ -1253,7 +1256,6 @@ class AbstractRESTAdapter(Session):
       level = logging.WARNING
     logging.getLogger("requests").setLevel(level)
     logging.getLogger("urllib3").setLevel(level)
-
 
   def send_request (self, method, url=None, body=None, **kwargs):
     """
