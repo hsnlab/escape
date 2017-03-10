@@ -187,6 +187,9 @@ class ResourceOrchestrator(AbstractOrchestrator):
     for nf_id in nfs:
       mapping = {}
       # Get the connected infra node
+      if nf_id not in dov:
+        log.warning("NF: %s in to in the global topology(DoV)!" % nf_id)
+        continue
       bisbis = [n.id for n in dov.infra_neighbors(nf_id)]
       log.log(VERBOSE, "Detected mapped BiSBiS node:" % bisbis)
       if len(bisbis) != 1:
