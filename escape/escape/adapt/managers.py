@@ -36,6 +36,42 @@ class GetLocalDomainViewEvent(Event):
   pass
 
 
+class AbstractHookEvent(Event):
+  STATUS_OK = "OK"
+  STATUS_ERROR = "ERROR"
+  STATUS_TIMEOUT = "TIMEOUT"
+
+  def __init__ (self, domain, status, callback=None):
+    """
+
+    :param domain: domain name
+    :type domain: str
+    :param status: callback result
+    :type status: str
+    :param callback: callback object
+    :type callback: escape.adapt.callback.Callback
+    """
+    super(AbstractHookEvent, self).__init__()
+    self.domain = domain
+    self.status = status
+    self.callback = callback
+
+  def was_error (self):
+    return self.status in (self.STATUS_ERROR, self.STATUS_TIMEOUT)
+
+
+class EditConfigHookEvent(AbstractHookEvent):
+  pass
+
+
+class InfoHookEvent(AbstractHookEvent):
+  pass
+
+
+class ResetHookEvent(AbstractHookEvent):
+  pass
+
+
 class BasicDomainManager(AbstractDomainManager):
   """
   Simple Manager class to provide topology information read from file.
@@ -1204,42 +1240,6 @@ class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
     return True if status is not None else False
 
 
-class AbstractHookEvent(Event):
-  STATUS_OK = "OK"
-  STATUS_ERROR = "ERROR"
-  STATUS_TIMEOUT = "TIMEOUT"
-
-  def __init__ (self, domain, status, callback=None):
-    """
-
-    :param domain: domain name
-    :type domain: str
-    :param status: callback result
-    :type status: str
-    :param callback: callback object
-    :type callback: escape.adapt.callback.Callback
-    """
-    super(AbstractHookEvent, self).__init__()
-    self.domain = domain
-    self.status = status
-    self.callback = callback
-
-  def was_error (self):
-    return self.status in (self.STATUS_ERROR, self.STATUS_TIMEOUT)
-
-
-class EditConfigHookEvent(AbstractHookEvent):
-  pass
-
-
-class InfoHookEvent(AbstractHookEvent):
-  pass
-
-
-class ResetHookEvent(AbstractHookEvent):
-  pass
-
-
 class UnifyDomainManager(AbstractRemoteDomainManager):
   """
   Manager class for unified handling of different domains using the Unify
@@ -1334,7 +1334,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     if self.callback_manager:
       self.callback_manager.shutdown()
 
-  def get_last_request(self):
+  def get_last_request (self):
     return self.topoAdapter.last_request
 
   def _setup_callback (self, hook, type, req_id, msg_id=None, data=None):

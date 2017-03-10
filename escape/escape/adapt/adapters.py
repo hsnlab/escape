@@ -1378,8 +1378,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: is different or not
     :rtype: bool
     """
-    changes = new_data.copy()
-    changes.reduce(self.last_virtualizer)
+    # changes = new_data.copy()
+    # changes.reduce(self.last_virtualizer)
+    changes = self.last_virtualizer.diff(new_data)
     element = changes.get_next()
     if element is None:
       return False
