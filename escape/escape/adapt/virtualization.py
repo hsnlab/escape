@@ -611,7 +611,9 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
       return dov
     else:
       # Generate the Single BiSBiS representation
-      return NFFGToolBox.generate_SBB_representation(nffg=dov, log=log)
+      sbb = NFFGToolBox.generate_SBB_representation(nffg=dov, log=log)
+      log.log(VERBOSE, "Generated SBB:\n%s" % sbb.dump())
+      return sbb
 
 
 class ZeroDelayedSBBVirtualizer(SingleBiSBiSVirtualizer):
@@ -702,7 +704,9 @@ class LocalSingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
     else:
       filtered_dov = self.__filter_external_domains(nffg=dov)
       # Generate the Single BiSBiS representation
-      return NFFGToolBox.generate_SBB_representation(nffg=filtered_dov, log=log)
+      sbb = NFFGToolBox.generate_SBB_representation(nffg=filtered_dov, log=log)
+      log.log(VERBOSE, "Generated SBB:\n%s" % sbb.dump())
+      return sbb
 
 
 class VirtualizerManager(EventMixin):

@@ -1738,15 +1738,24 @@ class NFFGConverter(object):
             elif port.sap is not None:
               v_nf_port.sap.set_value(port.sap)
               v_nf_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
+            if port.capability:
+              self.log.debug("Translate capability...")
             v_nf_port.capability.set_value(port.capability)
+            if any((port.technology, port.role, port.delay, port.bandwidth,
+                    port.cost)):
+              self.log.debug("Translate sap_data...")
             v_nf_port.sap_data.technology.set_value(port.technology)
             v_nf_port.sap_data.role.set_value(port.role)
             v_nf_port.sap_data.resources.delay.set_value(port.delay)
             v_nf_port.sap_data.resources.bandwidth.set_value(
               port.bandwidth)
             v_nf_port.sap_data.resources.cost.set_value(port.cost)
+            if any((port.controller, port.orchestrator)):
+              self.log.debug("Translate controller...")
             v_nf_port.control.controller.set_value(port.controller)
             v_nf_port.control.orchestrator.set_value(port.orchestrator)
+            if any((port.l2, port.l4, len(port.l3))):
+              self.log.debug("Translate addresses...")
             v_nf_port.addresses.l2.set_value(port.l2)
             v_nf_port.addresses.l4.set_value(port.l4)
             for l3 in port.l3:
@@ -1757,6 +1766,8 @@ class NFFGConverter(object):
                                     requested=l3.requested,
                                     provided=l3.provided))
             # Migrate metadata
+            if len(port.metadata):
+              self.log.debug("Translate metadata...")
             for property, value in port.metadata.iteritems():
               v_nf_port.metadata.add(virt_lib.MetadataMetadata(key=property,
                                                                value=value))
@@ -1980,8 +1991,9 @@ class NFFGConverter(object):
         for id, naff in nf.constraints.antiaffinity.iteritems():
           v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
           if v_naff_node is None:
-            self.log.warning("Referenced Node: %s is not found for anti-affinity!"
-                             % naff)
+            self.log.warning(
+              "Referenced Node: %s is not found for anti-affinity!"
+              % naff)
             continue
           self.log.debug(
             "Found reference for antiaffinity: %s in NF: %s" % (naff, nf.id))
