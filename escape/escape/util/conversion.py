@@ -295,8 +295,8 @@ class NFFGConverter(object):
         else:
           # Backup SAP id generation
           # sap_id = "SAP%s" % len([s for s in nffg.saps])
-          sap_id = "SAP_%s" % vport.id.get_value()
-          self.log.warning(
+          sap_id = "%s" % vport.id.get_value()
+          self.log.debug(
             "No explicit SAP id was detected! Generated: %s" % sap_id)
 
         # Add port names
@@ -352,12 +352,15 @@ class NFFGConverter(object):
         if vport.capability.is_initialized():
           sap_port.capability = infra_port.capability = \
             vport.capability.get_value()
+          self.log.debug("Added capability: %s" % sap_port.capability)
         if vport.sap_data.is_initialized():
           if vport.sap_data.technology.is_initialized():
             sap_port.technology = infra_port.technology = \
               vport.sap_data.technology.get_value()
+            self.log.debug("Added technology: %s" % sap_port.technology)
           if vport.sap_data.role.is_initialized():
             sap_port.role = infra_port.role = vport.sap_data.role.get_value()
+            self.log.debug("Added role: %s" % sap_port.role)
           if vport.sap_data.resources.is_initialized():
             if vport.sap_data.resources.delay.is_initialized():
               try:
@@ -383,9 +386,12 @@ class NFFGConverter(object):
         if vport.control.is_initialized():
           sap_port.controller = infra_port.controller = \
             vport.control.controller.get_value()
+          self.log.debug("Added controller: %s" % sap_port.controller)
           sap_port.orchestrator = infra_port.orchestrator = \
             vport.control.orchestrator.get_value()
+          self.log.debug("Added orchestrator: %s" % sap_port.orchestrator)
         if vport.addresses.is_initialized():
+          self.log.debug("Translate addresses...")
           sap_port.l2 = infra_port.l2 = vport.addresses.l2.get_value()
           sap_port.l4 = infra_port.l4 = vport.addresses.l4.get_value()
           for l3 in vport.addresses.l3.itervalues():
@@ -449,7 +455,9 @@ class NFFGConverter(object):
           infra_port.sap = vport.sap.get_value()
         if vport.capability.is_initialized():
           infra_port.capability = vport.capability.get_value()
+          self.log.debug("Added capability: %s" % sap_port.capability)
         if vport.addresses.is_initialized():
+          self.log.debug("Translate addresses...")
           sap_port.l2 = vport.addresses.l2.get_value()
           sap_port.l4 = vport.addresses.l4.get_value()
           for l3 in vport.addresses.l3.itervalues():
