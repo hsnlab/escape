@@ -980,11 +980,17 @@ class ControllerAdapter(object):
     return info
 
   def __split_info_request_by_domain (self, info):
+    """
+
+    :param info:
+    :return:
+    :rtype: dict
+    """
     dov = self.DoVManager.dov.get_resource_info()
     vnfs = get_nfs_from_info(info=info)
     if not vnfs:
       log.debug("No NF has been detected from info request!")
-      return
+      return {}
     splitted = NFFGToolBox.split_nfs_by_domain(nffg=dov, nfs=vnfs, log=log)
     for domain, nfs in splitted.items():
       log.debug("Splitted domain: %s --> %s" % (domain, nfs))
@@ -1003,7 +1009,7 @@ class ControllerAdapter(object):
                                               domains=splitted.keys(),
                                               data=(info, binding))
     if not splitted:
-      log.debug("No valid request has been remained after splitting!")
+      log.warning("No valid request has been remained after splitting!")
       return status
     for domain, info_part in splitted.iteritems():
       log.debug("Search DomainManager for domain: %s" % domain)

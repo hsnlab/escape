@@ -17,7 +17,8 @@ Sublayer.
 """
 from escape.adapt import LAYER_NAME
 from escape.adapt import log as log  # Adaptation layer logger
-from escape.adapt.adaptation import ControllerAdapter, InstallationFinishedEvent, \
+from escape.adapt.adaptation import ControllerAdapter, \
+  InstallationFinishedEvent, \
   InfoRequestFinishedEvent
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
@@ -185,7 +186,10 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.getChild('API').debug("Invoked 'info' on %s is finished!" %
                               self.__class__.__name__)
     if not status.still_pending:
-      self.raiseEventNoErrors(InfoRequestFinishedEvent, status=status)
+      result = InfoRequestFinishedEvent.get_result_from_status(status)
+      self.raiseEventNoErrors(InfoRequestFinishedEvent,
+                              result=result,
+                              status=status)
 
   ##############################################################################
   # UNIFY ( Ca - ) Co - Rm API functions starts here

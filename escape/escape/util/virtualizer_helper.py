@@ -42,7 +42,7 @@ def get_bb_nf_from_path (path):
 def detect_bb_nf_from_path (path, topo):
   bb, nf = get_bb_nf_from_path(path=path)
   if bb not in topo or nf not in topo:
-    log.warning("Missing requested element: %s@%s from topo!" % (nf, bb))
+    log.warning("Missing requested element: %s on %s from topo!" % (nf, bb))
     return None, None
   log.debug("Detected NF: %s on %s" % (nf, bb))
   return bb, nf
