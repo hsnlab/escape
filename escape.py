@@ -35,7 +35,11 @@ def _sigterm_handler (sig, stack):
   :param stack: stack frame
   :return: None
   """
-  os.kill(os.getpid(), signal.SIGINT)
+  try:
+    os.kill(os.getpid(), signal.SIGINT)
+  except KeyboardInterrupt:
+    # Skip KeyboardInterrupt in case script wants to kill itself with -x
+    pass
 
 
 # Register handler
@@ -132,12 +136,14 @@ def main ():
       print "Run full cleaning process..."
       # Kill stacked ESCAPE processes
       from misc import run_cmd
-      run_cmd('sudo -S pkill -f "%s"' % MAIN_CONTAINER_LAYER_NAME)
       from misc import remove_junks_at_shutdown, remove_junks_at_boot
       # Remove remained temporarily files
       remove_junks_at_shutdown()
       # Remove log files from /tmp
       remove_junks_at_boot()
+      for pid in run_cmd('pgrep -f "python %s"' % __file__).splitlines():
+        if pid != os.getpid():
+          run_cmd("sudo -S kill %s" % pid)
       print "Cleaned."
       return
 
