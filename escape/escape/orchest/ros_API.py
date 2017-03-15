@@ -297,21 +297,23 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.getChild('[Sl-Or]').debug("Requesting Virtualizer for REST-API")
     slor_virt = self.__get_slor_resource_view()
     if slor_virt is not None:
-      # Check if the resource is changed
-      if slor_virt.is_changed():
-        log.getChild('[Sl-Or]').debug("Generate topo description...")
-        res = slor_virt.get_resource_info()
-        return res
-      elif not self.ros_api.last_response:
-        # If the topology has already been queried but not sent back and stored
-        log.debug("Last responded topology is missing! "
-                  "Requesting cached topology...")
-        return slor_virt.get_cached_resource_info()
+      # Check the topology is initialized
+      if slor_virt.revision is None:
+        log.getChild('[Sl-Or]').debug("DoV has not initialized yet! "
+                                      "Force to get default topology...")
       else:
-        # If resource has not been changed return False
-        # This causes to response with the cached topology
-        return False
-
+        # Check if the resource is changed
+        if self.ros_api.topology_revision == slor_virt.revision:
+          # If resource has not been changed return False
+          # This causes to response with the cached topology
+          return False
+        else:
+          log.getChild('[Sl-Or]').debug("Response cache is outdated "
+                                        "(new revision: %s)!"
+                                        % slor_virt.revision)
+      res = slor_virt.get_resource_info()
+      self.ros_api.topology_revision = slor_virt.revision
+      return res
     else:
       log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
                 self.ros_api.api_id)
@@ -883,7 +885,8 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     # Global resource has not changed -> respond with the cached topo
     if resource_nffg is False:
       self.log.debug(
-        "Global resource has not changed! Respond with cached topology...")
+        "Global resource has not changed (revision: %s)! "
+        "Respond with cached topology..." % self.server.topology_revision)
       if self.server.last_response is None:
         log.warning("Cached topology is missing!")
         self.send_error(code=httplib.NOT_FOUND,

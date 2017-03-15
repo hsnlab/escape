@@ -127,6 +127,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
   Contains template methods, dirty flag and event mechanism to handle
   resource changes in the observed and filtered :any:`DomainVirtualizer`.
   """
+  REVISION_SEED = 1
 
   def __init__ (self, id, global_view, type):
     """
@@ -142,13 +143,14 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     """
     super(AbstractFilteringVirtualizer, self).__init__()
     self.id = id
+    self.__dirty = None  # Set None to signal domain has not changed yet
+    self.__revision = None  # Revision number of view, changed by every update
+    self.__cache = None  # Cache for computed topology
     if global_view is not None:
       # Save the Global view (a.k.a DoV) reference and offer a filtered NFFG
       self.global_view = weakref.proxy(global_view)
       # Subscribe DoV events
       global_view.addListeners(self)
-    self.__dirty = None  # Set None to signal domain has not changed yet
-    self.__cache = None  # Cache for computed topology
 
   def __str__ (self):
     """
@@ -170,6 +172,18 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     """
     return self.__dirty is not False
 
+  @property
+  def revision (self):
+    return self.__revision
+
+  def __roll_next_revision (self):
+    if self.__revision is None:
+      self.__revision = self.REVISION_SEED
+    else:
+      self.__revision += 1
+    log.debug("New topology revision: %s" % self.__revision)
+    return self.__revision
+
   def get_resource_info (self):
     """
     Hides object's mechanism and return with a resource info.
@@ -179,11 +193,13 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     """
     # If topology has not changed -> return with cached resource
     if self.__dirty is False:
-      log.debug("DoV is unchanged! Return cached NFFG...")
+      log.debug("DoV is unchanged (revision: %s)! Return cached NFFG..." %
+                self.__revision)
     else:
       if self.__dirty is None:
         log.debug("Virtual view is uninitialized! "
                   "Requesting resource NFFG...")
+        self.__roll_next_revision()
       else:
         log.debug("DoV has been changed! Requesting new resource NFFG...")
       # If Virtualizer dirty resource info is changed since last request or has
@@ -220,6 +236,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
               "Set dirty flag!" % (self,
                                    DoVChangedEvent.TYPE.reversed[event.cause]))
     # Topology is changed, set dirty flag
+    self.__roll_next_revision()
     self.__dirty = True
 
   def _acquire_resource (self):

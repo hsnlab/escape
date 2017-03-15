@@ -376,6 +376,7 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
     self.virtualizer_type = None
     # Cache for the last response to avoid topo recreation
     self.last_response = None
+    self.topology_revision = None
     self.scheduler = RequestScheduler()
 
   def start (self):
