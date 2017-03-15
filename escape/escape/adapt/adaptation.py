@@ -976,7 +976,7 @@ class ControllerAdapter(object):
         e.object.set_value(p)
         attr.add(e)
         log.debug("Overrided new path for NF --> %s" % e.object.get_value())
-    print info.xml()
+    log.log(VERBOSE, info.xml())
     return info
 
   def __split_info_request_by_domain (self, info):
@@ -1036,7 +1036,7 @@ class ControllerAdapter(object):
     elif status.failed:
       log.error("Info request: %s was unsuccessful!" % status.id)
     elif status.still_pending:
-      log.info("All 'info' request have been finished! Waiting for results...")
+      log.info("All 'info' requests have been finished! Waiting for results...")
     log.debug("Info request status: %s" % status)
     return status
 
@@ -1377,7 +1377,7 @@ class GlobalResourceManager(object):
     :return: None
     """
     log.debug("Update the whole Global view (DoV) with the NFFG: %s..." % nffg)
-    self.dov.update_full_global_view(nffg=nffg)
+    self.__dov.update_full_global_view(nffg=nffg)
     self.__tracked_domains.clear()
     self.__tracked_domains.update(NFFGToolBox.detect_domains(nffg))
 

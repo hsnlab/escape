@@ -19,7 +19,7 @@ import weakref
 
 from wrapt.decorators import synchronized
 
-from escape.adapt import log as log
+import escape.adapt
 from escape.adapt.policy_enforcement import PolicyEnforcementMetaClass
 from escape.nffg_lib.nffg import NFFGToolBox, NFFG
 from escape.util.config import CONFIG
@@ -29,6 +29,7 @@ from pox.lib.revent.revent import EventMixin, Event
 # Common reference name for the DomainVirtualizer
 DoV = "DoV"
 """Common reference name for the DomainVirtualizer"""
+log = escape.adapt.log.getChild("view")
 
 
 class DoVChangedEvent(Event):
@@ -179,18 +180,20 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
     # If topology has not changed -> return with cached resource
     if self.__dirty is False:
       log.debug("DoV is unchanged! Return cached NFFG...")
-      return self.__cache
-    # If Virtualizer dirty resource info is changed since last request or has
-    # never queried yet -> acquire resource info with template method
-    if self.__dirty is True:
-      log.debug("DoV has been changed! Requesting new resource NFFG...")
-    # Acquire resource
-    resource = self._acquire_resource()
-    # Cache new resource
-    self.__cache = resource
-    # Clear dirty flag
-    self.__dirty = False
-    return resource
+    else:
+      if self.__dirty is None:
+        log.debug("Virtual view is uninitialized! "
+                  "Requesting resource NFFG...")
+      else:
+        log.debug("DoV has been changed! Requesting new resource NFFG...")
+      # If Virtualizer dirty resource info is changed since last request or has
+      # never queried yet -> acquire resource info with template method
+      # Acquire and cache new resource
+      self.__cache = self._acquire_resource()
+      log.debug("Clear dirty flag...")
+      # Clear dirty flag
+      self.__dirty = False
+    return self.__cache
 
   def get_cached_resource_info (self):
     """
@@ -802,13 +805,6 @@ class VirtualizerManager(EventMixin):
     # If this is the first request, need to generate the view
     if virtualizer_id not in self._virtualizers:
       if type is not None:
-        # SINGLE: generate a trivial Single BiS-BiS virtualizer
-        # log.debug("Requested virtualizer type: %s" % type)
-        # if type == AbstractVirtualizer.SINGLE_VIRTUALIZER:
-        #   self._generate_single_view(id=virtualizer_id)
-        # # GLOBAL: generate a non-filtering Global View Virtualizer
-        # elif type == AbstractVirtualizer.GLOBAL_VIRTUALIZER:
-        #   self._generate_global_view(id=virtualizer_id)
         if type in self.VIRTUALIZERS:
           virtualizer_class = self.VIRTUALIZERS[type]
           self._virtualizers[virtualizer_id] = virtualizer_class(self.dov,

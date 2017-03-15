@@ -835,9 +835,6 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         nffg.service_id = nffg.id
       nffg.id = params.get(self.MESSAGE_ID_NAME)
       nffg.metadata['params'] = params
-      # self._proceed_API_call(self.API_CALL_REQUEST,
-      #                        nffg=nffg,
-      #                        params=params)
       self.server.scheduler.schedule_request(id=nffg.id,
                                              layer=self.bounded_layer,
                                              function=self.API_CALL_REQUEST,
