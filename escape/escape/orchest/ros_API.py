@@ -633,7 +633,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.log(VERBOSE, "Mapping result of Orchestration Layer:\n%s" %
             mapped_nffg.dump())
     # Notify remote visualizer about the mapping result if it's needed
-    notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
+    # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending NF-FG to Adaptation layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)

@@ -288,7 +288,10 @@
   },
   "visualization": {
     "url": "http://localhost:8081",
-    "rpc": "edit-config",
-    "instance_id": null
+    "rpc": "virtualizer/notification",
+    "params": {
+      "instance": "ESCAPE"
+    },
+    "headers": {}
   }
 }

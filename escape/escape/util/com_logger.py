@@ -108,7 +108,7 @@ class RemoteVisualizer(Session):
     logging.getLogger("requests").setLevel(level)
     logging.getLogger("urllib3").setLevel(level)
 
-  def send_notification (self, data, id, url=None, **kwargs):
+  def send_notification (self, data, url=None, **kwargs):
     """
     Send given data to a remote server for visualization.
     Convert given NFFG into Virtualizer format if needed.
@@ -142,15 +142,16 @@ class RemoteVisualizer(Session):
         self.log.warning(
           "Unsupported data type: %s! Skip notification..." % type(data))
         return
-      _id = self.ID_MAPPER.get(id, "UNDEFINED")
-      if self.instance_id is not None:
-        _id += "-%s" % self.instance_id
-      data.id.set_value(_id)
       # If additional params is not empty dict -> override the basic params
-      if 'headers' not in kwargs:
-        kwargs['headers'] = self.basic_headers
+      if 'headers' in kwargs:
+        kwargs['headers'].update(self.basic_headers)
       else:
-        kwargs['headers'] = self.basic_headers.copy().update(kwargs['headers'])
+        kwargs['headers'] = self.basic_headers.copy()
+      kwargs['headers'].update(CONFIG.get_visualization_headers())
+      if "params" in kwargs:
+        kwargs['params'].update(CONFIG.get_visualization_params())
+      else:
+        kwargs['params'] = CONFIG.get_visualization_params()
       self.log.debug("Sending visualization notification...")
       self._response = self.request(method='POST', url=url, data=data.xml(),
                                     **kwargs)

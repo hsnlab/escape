@@ -981,6 +981,30 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
+  def get_visualization_params (self):
+    """
+    Return the instance id of the current ESCAPEv2.
+
+    :return: url
+    :rtype: str
+    """
+    try:
+      return self.__configuration['visualization']['params']
+    except KeyError:
+      return {}
+
+  def get_visualization_headers (self):
+    """
+    Return the instance id of the current ESCAPEv2.
+
+    :return: url
+    :rtype: str
+    """
+    try:
+      return self.__configuration['visualization']['headers']
+    except KeyError:
+      return {}
+
   def get_domain_url (self, domain=None):
     """
     Assemble the URL of the given domain based on the global configuration.

@@ -20,7 +20,7 @@ import urlparse
 import weakref
 
 import escape.adapt.managers as mgrs
-from escape.adapt import log as log, LAYER_NAME
+from escape.adapt import log as log
 from escape.adapt.managers import UnifyDomainManager
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
@@ -499,9 +499,8 @@ class ControllerAdapter(object):
     self.init_managers(with_infr=with_infr)
     # Here every domainManager is up and running
     # Notify the remote visualizer about collected data if it's needed
-    notify_remote_visualizer(
-      data=self.DoVManager.dov.get_resource_info(),
-      id=LAYER_NAME)
+    notify_remote_visualizer(data=self.DoVManager.dov.get_resource_info(),
+                             params={"event": "create"})
 
   def init_managers (self, with_infr=False):
     """
@@ -648,9 +647,9 @@ class ControllerAdapter(object):
       if CONFIG.one_step_update():
         log.debug("One-step-update is enabled. Update DoV now...")
         self.DoVManager.set_global_view(nffg=deploy_status.data)
-      # Notify remote visualizer about the installation result if it's needed
-      notify_remote_visualizer(
-        data=self.DoVManager.dov.get_resource_info(), id=LAYER_NAME)
+        # Notify remote visualizer about the installation result if it's needed
+        # notify_remote_visualizer(
+        #   data=self.DoVManager.dov.get_resource_info(), id=LAYER_NAME)
     elif deploy_status.still_pending:
       log.info("Installation process is still pending! Waiting for results...")
     elif deploy_status.failed:
@@ -1380,6 +1379,8 @@ class GlobalResourceManager(object):
     self.__dov.update_full_global_view(nffg=nffg)
     self.__tracked_domains.clear()
     self.__tracked_domains.update(NFFGToolBox.detect_domains(nffg))
+    notify_remote_visualizer(data=self.__dov.get_resource_info(),
+                             params={"event": "response"})
 
   def update_global_view_status (self, status):
     """
@@ -1450,6 +1451,8 @@ class GlobalResourceManager(object):
         self.__dov.set_domain_as_global_view(domain=domain, nffg=nffg)
       # Add detected domain to cached domains
       self.__tracked_domains.add(domain)
+      notify_remote_visualizer(data=self.__dov.get_resource_info(),
+                               params={"event": "response"})
     else:
       log.error("New domain: %s has already tracked in domains: %s! "
                 "Abort adding..." % (domain, self.__tracked_domains))
@@ -1475,6 +1478,8 @@ class GlobalResourceManager(object):
       else:
         log.debug("Using UPDATE strategy for DoV update...")
         self.__dov.update_domain_in_dov(domain=domain, nffg=nffg)
+      notify_remote_visualizer(data=self.__dov.get_resource_info(),
+                               params={"event": "response"})
     else:
       log.error(
         "Detected domain: %s is not included in tracked domains: %s! Abort "
@@ -1492,6 +1497,8 @@ class GlobalResourceManager(object):
       log.info("Remove domain: %s from DoV..." % domain)
       self.__dov.remove_domain_from_dov(domain=domain)
       self.__tracked_domains.remove(domain)
+      notify_remote_visualizer(data=self.__dov.get_resource_info(),
+                               params={"event": "response"})
     else:
       log.warning("Removing domain: %s is not included in tracked domains: %s! "
                   "Skip removing..." % (domain, self.__tracked_domains))
@@ -1508,6 +1515,8 @@ class GlobalResourceManager(object):
       log.info(
         "Remove initiated VNFs and flowrules from the domain: %s" % domain)
       self.__dov.clean_domain_from_dov(domain=domain)
+      notify_remote_visualizer(data=self.__dov.get_resource_info(),
+                               params={"event": "response"})
     else:
       log.error(
         "Detected domain: %s is not included in tracked domains: %s! Abort "

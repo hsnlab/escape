@@ -71,8 +71,8 @@ class ServiceOrchestrator(AbstractOrchestrator):
     # Get virtual resource info as a Virtualizer
     virtual_view = self.virtResManager.virtual_view
     # Notify remote visualizer about resource view of this layer if it's needed
-    notify_remote_visualizer(data=virtual_view.get_resource_info(),
-                             id=LAYER_NAME)
+    # notify_remote_visualizer(data=virtual_view.get_resource_info(),
+    #                          id=LAYER_NAME)
     # Log verbose service request
     log.log(VERBOSE, "Service layer request graph:\n%s" % sg.dump())
     if virtual_view is not None:

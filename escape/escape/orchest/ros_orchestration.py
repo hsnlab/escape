@@ -78,8 +78,8 @@ class ResourceOrchestrator(AbstractOrchestrator):
     # Get Domain Virtualizer to acquire global domain view
     global_view = self.virtualizerManager.dov
     # Notify remote visualizer about resource view of this layer if it's needed
-    notify_remote_visualizer(data=global_view.get_resource_info(),
-                             id=LAYER_NAME)
+    # notify_remote_visualizer(data=global_view.get_resource_info(),
+    #                          id=LAYER_NAME)
     # Log verbose mapping request
     log.log(VERBOSE, "Orchestration Layer request graph:\n%s" % nffg.dump())
     # Start Orchestrator layer mapping

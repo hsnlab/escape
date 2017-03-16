@@ -535,7 +535,7 @@ class ServiceLayerAPI(AbstractAPI):
     log.log(VERBOSE,
             "Mapping result of Service Layer:\n%s" % mapped_nffg.dump())
     # Notify remote visualizer about the mapping result if it's needed
-    notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
+    # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     sas_res = self.__get_sas_resource_view().get_resource_info()
     # Sending mapped SG / NF-FG to Orchestration layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
