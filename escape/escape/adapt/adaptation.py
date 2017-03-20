@@ -777,17 +777,12 @@ class ControllerAdapter(object):
       if not deploy_status.still_pending:
         log.info("All installation process has been finished for request: %s! "
                  "Result: %s" % (deploy_status.id, deploy_status.status))
-        if deploy_status.success:
-          if CONFIG.one_step_update():
-            log.debug("One-step-update is enabled. Update DoV now...")
-            self.DoVManager.set_global_view(nffg=deploy_status.data)
-        elif deploy_status.failed:
-          if CONFIG.one_step_update():
-            log.warning("One-step-update is enabled. "
-                        "Skip update due to failed request...")
-          if CONFIG.rollback_on_failure():
-            self.__do_rollback(status=deploy_status,
-                               previous_state=self.DoVManager.get_backup_state())
+        if CONFIG.one_step_update():
+          log.warning("One-step-update is enabled with domain polling! "
+                      "Skip update...")
+        elif deploy_status.failed and CONFIG.rollback_on_failure():
+          self.__do_rollback(status=deploy_status,
+                             previous_state=self.DoVManager.get_backup_state())
         result = InstallationFinishedEvent.get_result_from_status(deploy_status)
         log.debug("Overall installation result: %s" % result)
         self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,

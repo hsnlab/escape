@@ -36,6 +36,7 @@ def _sigterm_handler (sig, stack):
   :return: None
   """
   try:
+    print "\nReceived SIGTERM\n"
     os.kill(os.getpid(), signal.SIGINT)
   except KeyboardInterrupt:
     # Skip KeyboardInterrupt in case script wants to kill itself with -x

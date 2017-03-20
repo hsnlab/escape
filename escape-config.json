@@ -87,7 +87,7 @@
     },
     "deployment": {
       "RESET-DOMAINS-BEFORE-INSTALL": false,
-      "CLEAR-DOMAINS-AFTER-SHUTDOWN": false,
+      "CLEAR-DOMAINS-AFTER-SHUTDOWN": true,
       "ROLLBACK-ON-FAILURE": true
     },
     "INTERNAL": {
@@ -287,8 +287,8 @@
     }
   },
   "visualization": {
-    "url": "http://localhost:8081",
-    "rpc": "virtualizer/notification",
+    "url": "http://127.0.0.1:9999",
+    "rpc": "notification",
     "params": {
       "instance": "ESCAPE"
     },
