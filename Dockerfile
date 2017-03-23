@@ -8,5 +8,6 @@ WORKDIR /opt/escape
 COPY . ./
 RUN pip install --upgrade -r requirements.txt
 EXPOSE 8008 8888
+ENV PYTHONUNBUFFERED 1
 ENTRYPOINT ["python", "escape.py"]
 CMD ["--debug", "--rosapi", "--config", "config/escape-static-dummy.config"]
