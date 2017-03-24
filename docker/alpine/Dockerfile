@@ -1,5 +1,8 @@
 ################################################################################
-# Dockerfile to build minimal ESCAPE MdO Container
+# Dockerfile to build minimal ESCAPE MdO Container on Alpine Linux
+#   - Numpy package is installed from Alpine's apk repository
+#   - cryptography and ncclient is installed with pip where backend code is
+#     compiled on-the-fly with explicitly installed gcc
 ################################################################################
 FROM python:2.7.13-alpine
 MAINTAINER Janos Czentye <czentye@tmit.bme.hu>
