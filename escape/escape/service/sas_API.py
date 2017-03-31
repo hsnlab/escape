@@ -32,7 +32,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError
 from escape.util.misc import schedule_delayed_as_coop_task, \
-  schedule_as_coop_task, notify_remote_visualizer, VERBOSE, quit_with_ok, \
+  schedule_as_coop_task, VERBOSE, quit_with_ok, \
   get_global_parameter, quit_with_error
 from pox.lib.revent.revent import Event
 
@@ -383,16 +383,6 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke request_service on %s with SG: %s " %
                              (self.__class__.__name__, service_nffg))
-    # Store request if it is received on REST-API
-    if hasattr(self, 'rest_api') and self.rest_api:
-      log.getChild('API').debug("Store received NFFG request info...")
-      msg_id = self.rest_api.request_cache.cache_request_by_nffg(
-        nffg=service_nffg)
-      if msg_id is not None:
-        self.rest_api.request_cache.set_in_progress(id=msg_id)
-        log.getChild('API').debug("Request is stored with id: %s" % msg_id)
-      else:
-        log.getChild('API').debug("No request info detected.")
     # Check if mapping mode is set globally in CONFIG
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:
@@ -404,6 +394,17 @@ class ServiceLayerAPI(AbstractAPI):
     else:
       mapping_mode = None
       log.info("No mapping mode was detected!")
+    self.__sg_preprocessing(nffg=service_nffg)
+    # Store request if it is received on REST-API
+    if hasattr(self, 'rest_api') and self.rest_api:
+      log.getChild('API').debug("Store received NFFG request info...")
+      msg_id = self.rest_api.request_cache.cache_request_by_nffg(
+        nffg=service_nffg)
+      if msg_id is not None:
+        self.rest_api.request_cache.set_in_progress(id=msg_id)
+        log.getChild('API').debug("Request is stored with id: %s" % msg_id)
+      else:
+        log.getChild('API').debug("No request info detected.")
     try:
       # Initiate service request mapping
       mapped_nffg = self.service_orchestrator.initiate_service_graph(
@@ -438,6 +439,13 @@ class ServiceLayerAPI(AbstractAPI):
           id=service_nffg.id,
           result=InstantiationFinishedEvent.REFUSED_BY_VERIFICATION,
           error=e))
+
+  def __sg_preprocessing (self, nffg):
+    if nffg.mode == NFFG.MODE_DEL:
+      log.debug("Explicitly mark NF nodes in DELETE request...")
+      for nf in nffg.nfs:
+        nf.operation = NFFG.MODE_DEL
+        log.debug("%s --> %s" % (nf.id, NFFG.MODE_DEL))
 
   def __handle_mapping_result (self, nffg_id, fail):
     if not (hasattr(self, 'rest_api') and self.rest_api):
