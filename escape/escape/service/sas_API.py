@@ -444,8 +444,8 @@ class ServiceLayerAPI(AbstractAPI):
     if nffg.mode == NFFG.MODE_DEL:
       log.debug("Explicitly mark NF nodes in DELETE request...")
       for nf in nffg.nfs:
-        nf.operation = NFFG.MODE_DEL
-        log.debug("%s --> %s" % (nf.id, NFFG.MODE_DEL))
+        nf.operation = NFFG.OP_DELETE
+        log.debug("%s --> %s" % (nf.id, nf.operation))
 
   def __handle_mapping_result (self, nffg_id, fail):
     if not (hasattr(self, 'rest_api') and self.rest_api):
