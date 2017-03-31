@@ -1,26 +1,27 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 ## Test case header - START
 # Get directory path of current test case
-CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CWD="$(dirname $(readlink -f "$0"))"
 # Get test case name
 TEST_CASE="$( basename ${CWD} | tr '[:lower:]' '[:upper:]' )"
 # Get ESCAPE command
 ESCAPE="$( readlink -f ${CWD}/../../escape.py )"
+if which time >> /dev/null; then
+    RUN_WITH_MEASUREMENT="$(which time) -v"
+elif which bash >> /dev/null; then
+    RUN_WITH_MEASUREMENT=""
+fi
 # Print header
-echo -e "\n==============================================================================="
-echo -e "==                             TEST $TEST_CASE                                   =="
-echo -e "===============================================================================\n"
-
-# Print test case description
-cat ${CWD}/README.txt
-echo -e "\n===============================================================================\n"
 echo
-## Test case header - END
-
+echo "==============================================================================="
+echo "==                             TEST $TEST_CASE                                   =="
+echo "==============================================================================="
+echo
 # Print test case description
 cat ${CWD}/README.txt
-echo -e "\n=============================== START TEST CASE ===============================\n"
+echo
+echo "=============================== START TEST CASE ==============================="
 echo
 ## Test case header - END
 
@@ -29,8 +30,10 @@ ESCAPE_CMD="sudo ${ESCAPE} --debug --test --quit --log ${CWD}/escape.log --full 
                 --config ${CWD}/test.config --service ${CWD}/request.nffg"
 
 # Invoke ESCAPE with test parameters
-time ${ESCAPE_CMD} $@
+${RUN_WITH_MEASUREMENT} ${ESCAPE_CMD} $@
 
 ## Test case footer - START
-echo -e "\n===================================== END =====================================\n"
+echo
+echo "===================================== END ====================================="
+echo
 ## Test case footer - END

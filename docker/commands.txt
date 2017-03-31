@@ -5,8 +5,8 @@ Run:
     docker run --rm -p 8008:8008 -p 8888:8888 -ti mdo/ro
 Test:
     docker run --rm --entrypoint bash -ti mdo/ro
-    docker run --rm -v ~/escape/:/home/escape -ti mdo/ro
-    docker run --rm --entrypoint bash -v ~/escape/:/home/escape -ti mdo/ro
+    docker run --rm -v ~/escape/:/opt/escape -ti mdo/ro
+    docker run --rm --entrypoint bash -v ~/escape/:/opt/escape -ti mdo/ro
 
 Alpine:
     docker build --rm --no-cache -t mdo/ro-alpine -f docker/alpine/Dockerfile .
