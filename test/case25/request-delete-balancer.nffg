@@ -1,0 +1,65 @@
+{
+  "parameters": {
+    "id": "956068bd-161b-11e7-965f-0242ac120003",
+    "service_id": "58dd42e0e4b01d5a7b80e381",
+    "name": "test",
+    "version": "1.0",
+    "mode": "DELETE"
+  },
+  "node_saps": [
+    {
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "id": "SAP11",
+      "name": "SAP11"
+    }
+  ],
+  "node_nfs": [
+    {
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "specification": {
+        "resources": {
+          "mem": 2.0,
+          "storage": 8.0,
+          "cpu": 1.0
+        }
+      },
+      "functional_type": "balance_server",
+      "id": "balance_server",
+      "name": "balance_server"
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "dst_node": "SAP11",
+      "src_node": "balance_server",
+      "src_port": 1,
+      "id": 3,
+      "dst_port": 1
+    },
+    {
+      "src_node": "SAP11",
+      "src_port": 1,
+      "flowclass": "dl_src=bc:ee:7b:e6:8c:07,dl_type=0x0800,nw_dst=192.168.1.156",
+      "dst_node": "balance_server",
+      "delay": 20.0,
+      "dst_port": 1,
+      "id": 1
+    },
+    {
+      "src_node": "SAP11",
+      "src_port": 1,
+      "flowclass": "dl_src=bc:ee:7b:e6:8c:07,dl_type=0x0806,nw_dst=192.168.1.156",
+      "dst_node": "balance_server",
+      "dst_port": 1,
+      "id": 2
+    }
+  ]
+}

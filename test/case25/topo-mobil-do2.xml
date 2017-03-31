@@ -1,0 +1,55 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>v11</id>
+	<nodes>
+		<node>
+			<id>DOCKER_HOST</id>
+			<name>node1-Linux</name>
+			<type>Linux-4.4.0-45-generic-#66-Ubuntu SMP Wed Oct 19 14:12:37 UTC 2016</type>
+			<ports>
+				<port>
+					<id>1</id>
+					<name>SAPBMEERICSSON1</name>
+					<port_type>port-sap</port_type>
+					<sap>SAPBMEERICSSON1</sap>
+				</port>
+				<port>
+					<id>2</id>
+					<name>SAP12</name>
+					<port_type>port-sap</port_type>
+				</port>
+			</ports>
+			<resources>
+				<cpu>30</cpu>
+				<mem>65630363648</mem>
+				<storage>33590239232</storage>
+			</resources>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<id>balance_serverx</id>
+						<name>balance_server</name>
+						<type>balance_server</type>
+						<metadata>
+							<key>image</key>
+							<value>5gex.tmit.bme.hu/balance_server:latest</value>
+						</metadata>
+						<metadata>
+							<key>password</key>
+							<value>5GEXplorer17</value>
+						</metadata>
+						<metadata>
+							<key>user</key>
+							<value>fgxuser</value>
+						</metadata>
+					</node>
+					<node>
+						<id>splitter</id>
+						<name>splitter</name>
+						<type>splitter</type>
+					</node>
+				</supported_NFs>
+			</capabilities>
+		</node>
+	</nodes>
+</virtualizer>
