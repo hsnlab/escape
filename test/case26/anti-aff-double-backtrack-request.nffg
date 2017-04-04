@@ -1,0 +1,450 @@
+{
+  "parameters": {
+    "id": "4d3093f4-1862-11e7-9ebc-d05099c14011",
+    "name": "Single-BiSBiS-View",
+    "service_id": "SingleBiSBiS",
+    "version": "1.0",
+    "mode": "ADD"
+  },
+  "node_nfs": [
+    {
+      "id": "3-SPLITTER4",
+      "name": "3-SPLITTER4",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 3
+        }
+      ],
+      "functional_type": "splitter",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0
+        }
+      }
+    },
+    {
+      "id": "3-PID5",
+      "name": "3-PID5",
+      "ports": [
+        {
+          "id": 1,
+          "sap": "PIDSAP",
+          "sap_data": {
+            "role": "provider"
+          }
+        }
+      ],
+      "constraints": {
+        "antiaffinity": {
+          "1": "1-PID13"
+        }
+      },
+      "functional_type": "balance_server:latest",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "SAPgreen",
+      "name": "SAPgreen",
+      "ports": [
+        {
+          "id": "port-SAPgreen",
+          "name": "SAPgreen"
+        }
+      ]
+    },
+    {
+      "id": "SAPred",
+      "name": "SAPred",
+      "ports": [
+        {
+          "id": "port-SAPred",
+          "name": "SAPred"
+        }
+      ]
+    },
+    {
+      "id": "SAPblue",
+      "name": "SAPblue",
+      "ports": [
+        {
+          "id": "port-SAPblue",
+          "name": "SAPblue"
+        }
+      ]
+    },
+    {
+      "id": "SAPssh",
+      "name": "SAPssh",
+      "ports": [
+        {
+          "id": "port-SAPssh",
+          "name": "SAPssh"
+        }
+      ]
+    },
+    {
+      "id": "SAPbme",
+      "name": "SAPbme",
+      "ports": [
+        {
+          "id": "port-SAPbme",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAPbme"
+          },
+          "name": "SAPbme",
+          "sap": "SAPbme",
+          "sap_data": {
+            "technology": "('vxlan')"
+          },
+          "metadata": {
+            "vxlan_key": "10",
+            "vxlan_localip": "192.168.50.6",
+            "vxlan_remoteip": "10.11.0.3"
+          }
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "SingleBiSBiS",
+      "name": "SingleBiSBiS",
+      "ports": [
+        {
+          "id": "port-SAPblue",
+          "name": "SAPblue"
+        },
+        {
+          "id": "port-SAPbme",
+          "property": {
+            "sap": "SAPbme"
+          },
+          "name": "SAPbme",
+          "sap": "SAPbme",
+          "sap_data": {
+            "technology": "('vxlan')"
+          },
+          "metadata": {
+            "vxlan_key": "10",
+            "vxlan_localip": "192.168.50.6",
+            "vxlan_remoteip": "10.11.0.3"
+          }
+        },
+        {
+          "id": "port-SAPgreen",
+          "name": "SAPgreen",
+          "flowrules": [
+            {
+              "id": 432,
+              "match": "in_port=port-SAPgreen;flowclass=dl_src=9c:5c:8e:af:2e:e0,dl_type=0x0800,nw_dst=192.168.1.156",
+              "action": "output=SingleBiSBiS|3-SPLITTER4|1",
+              "delay": 9.0
+            },
+            {
+              "id": 433,
+              "match": "in_port=port-SAPgreen;flowclass=dl_src=9c:5c:8e:af:2e:e0,dl_type=0x0806,nw_dst=192.168.1.156",
+              "action": "output=SingleBiSBiS|3-SPLITTER4|1",
+              "delay": 9.0
+            }
+          ]
+        },
+        {
+          "id": "port-SAPred",
+          "name": "SAPred"
+        },
+        {
+          "id": "port-SAPssh",
+          "name": "SAPssh"
+        },
+        {
+          "id": "SingleBiSBiS|1-PID13|1"
+        },
+        {
+          "id": "SingleBiSBiS|1-PID23|1"
+        },
+        {
+          "id": "SingleBiSBiS|1-SPLITTER3|1"
+        },
+        {
+          "id": "SingleBiSBiS|1-SPLITTER3|2"
+        },
+        {
+          "id": "SingleBiSBiS|1-SPLITTER3|3"
+        },
+        {
+          "id": "SingleBiSBiS|3-PID5|1",
+          "flowrules": [
+            {
+              "id": 537,
+              "match": "in_port=SingleBiSBiS|3-PID5|1;flowclass=dl_dst=9c:5c:8e:af:2e:e0,dl_type=0x0800",
+              "action": "output=port-SAPgreen",
+              "delay": 9.0
+            },
+            {
+              "id": 538,
+              "match": "in_port=SingleBiSBiS|3-PID5|1;flowclass=dl_dst=9c:5c:8e:af:2e:e0,dl_type=0x0806",
+              "action": "output=port-SAPgreen",
+              "delay": 9.0
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS|3-SPLITTER4|1"
+        },
+        {
+          "id": "SingleBiSBiS|3-SPLITTER4|2",
+          "flowrules": [
+            {
+              "id": 536,
+              "match": "in_port=SingleBiSBiS|3-SPLITTER4|2",
+              "action": "output=SingleBiSBiS|3-PID5|1"
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS|3-SPLITTER4|3"
+        },
+        {
+          "id": "SingleBiSBiS|color_vision|0"
+        },
+        {
+          "id": "SingleBiSBiS|color_vision|1"
+        },
+        {
+          "id": "SingleBiSBiS|splitter_ssh|1"
+        },
+        {
+          "id": "SingleBiSBiS|splitter_ssh|2"
+        },
+        {
+          "id": "SingleBiSBiS|splitter_ssh|3"
+        },
+        {
+          "id": "SingleBiSBiS|splitter_ssh|4"
+        }
+      ],
+      "domain": "REMOTE",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_color_vision",
+        "balance_color_vision:latest",
+        "balance_server:latest",
+        "dpi",
+        "fe2sap",
+        "splitter",
+        "webserver"
+      ],
+      "resources": {
+        "cpu": 70.0,
+        "mem": 253605294080.0,
+        "storage": 125050740712.0,
+        "delay": 0.0,
+        "bandwidth": 140000.0
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "SAPgreen-SingleBiSBiS-link",
+      "src_node": "SAPgreen",
+      "src_port": "port-SAPgreen",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "port-SAPgreen"
+    },
+    {
+      "id": "SAPred-SingleBiSBiS-link",
+      "src_node": "SAPred",
+      "src_port": "port-SAPred",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "port-SAPred"
+    },
+    {
+      "id": "SAPgreen-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "port-SAPgreen",
+      "dst_node": "SAPgreen",
+      "dst_port": "port-SAPgreen",
+      "backward": true
+    },
+    {
+      "id": "SAPred-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "port-SAPred",
+      "dst_node": "SAPred",
+      "dst_port": "port-SAPred",
+      "backward": true
+    },
+    {
+      "id": "SAPssh-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "port-SAPssh",
+      "dst_node": "SAPssh",
+      "dst_port": "port-SAPssh",
+      "backward": true
+    },
+    {
+      "id": "SAPblue-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "port-SAPblue",
+      "dst_node": "SAPblue",
+      "dst_port": "port-SAPblue",
+      "backward": true
+    },
+    {
+      "id": "4e24638f-1862-11e7-9ebc-d05099c14011",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|3-SPLITTER4|2",
+      "dst_node": "3-SPLITTER4",
+      "dst_port": 2,
+      "backward": true
+    },
+    {
+      "id": "4e24638d-1862-11e7-9ebc-d05099c14011",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|3-SPLITTER4|1",
+      "dst_node": "3-SPLITTER4",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "4e246391-1862-11e7-9ebc-d05099c14011",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|3-SPLITTER4|3",
+      "dst_node": "3-SPLITTER4",
+      "dst_port": 3,
+      "backward": true
+    },
+    {
+      "id": "SAPbme-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "port-SAPbme",
+      "dst_node": "SAPbme",
+      "dst_port": "port-SAPbme",
+      "backward": true
+    },
+    {
+      "id": "4e24638b-1862-11e7-9ebc-d05099c14011",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|3-PID5|1",
+      "dst_node": "3-PID5",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "SAPblue-SingleBiSBiS-link",
+      "src_node": "SAPblue",
+      "src_port": "port-SAPblue",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "port-SAPblue"
+    },
+    {
+      "id": "SAPssh-SingleBiSBiS-link",
+      "src_node": "SAPssh",
+      "src_port": "port-SAPssh",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "port-SAPssh"
+    },
+    {
+      "id": "4e24638c-1862-11e7-9ebc-d05099c14011",
+      "src_node": "3-SPLITTER4",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|3-SPLITTER4|1"
+    },
+    {
+      "id": "4e246390-1862-11e7-9ebc-d05099c14011",
+      "src_node": "3-SPLITTER4",
+      "src_port": 3,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|3-SPLITTER4|3"
+    },
+    {
+      "id": "4e24638e-1862-11e7-9ebc-d05099c14011",
+      "src_node": "3-SPLITTER4",
+      "src_port": 2,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|3-SPLITTER4|2"
+    },
+    {
+      "id": "SAPbme-SingleBiSBiS-link",
+      "src_node": "SAPbme",
+      "src_port": "port-SAPbme",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "port-SAPbme"
+    },
+    {
+      "id": "4e24638a-1862-11e7-9ebc-d05099c14011",
+      "src_node": "3-PID5",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|3-PID5|1"
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": 432,
+      "src_node": "SAPgreen",
+      "src_port": "port-SAPgreen",
+      "dst_node": "3-SPLITTER4",
+      "dst_port": 1,
+      "flowclass": "dl_src=9c:5c:8e:af:2e:e0,dl_type=0x0800,nw_dst=192.168.1.156",
+      "delay": 9.0,
+      "bandwidth": 0.0
+    },
+    {
+      "id": 433,
+      "src_node": "SAPgreen",
+      "src_port": "port-SAPgreen",
+      "dst_node": "3-SPLITTER4",
+      "dst_port": 1,
+      "flowclass": "dl_src=9c:5c:8e:af:2e:e0,dl_type=0x0806,nw_dst=192.168.1.156",
+      "delay": 9.0,
+      "bandwidth": 0.0
+    },
+    {
+      "id": 536,
+      "src_node": "3-SPLITTER4",
+      "src_port": 2,
+      "dst_node": "3-PID5",
+      "dst_port": 1,
+      "bandwidth": 0.0
+    },
+    {
+      "id": 537,
+      "src_node": "3-PID5",
+      "src_port": 1,
+      "dst_node": "SAPgreen",
+      "dst_port": "port-SAPgreen",
+      "flowclass": "dl_dst=9c:5c:8e:af:2e:e0,dl_type=0x0800",
+      "delay": 9.0,
+      "bandwidth": 0.0
+    },
+    {
+      "id": 538,
+      "src_node": "3-PID5",
+      "src_port": 1,
+      "dst_node": "SAPgreen",
+      "dst_port": "port-SAPgreen",
+      "flowclass": "dl_dst=9c:5c:8e:af:2e:e0,dl_type=0x0806",
+      "delay": 9.0,
+      "bandwidth": 0.0
+    }
+  ]
+}
