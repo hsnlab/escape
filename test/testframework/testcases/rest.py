@@ -191,6 +191,10 @@ class RESTBasedServiceMixIn(EscapeTestCase):
 
   def runTest (self):
     log.debug("\nSTART test")
+    if self.command_runner.kill_timeout:
+      timeout = self.command_runner.kill_timeout + 1.0
+    else:
+      timeout = None
     try:
       # Init ESCAPE process in separate thread to send request through its
       # REST API and be able to wait for the result
@@ -198,10 +202,14 @@ class RESTBasedServiceMixIn(EscapeTestCase):
       thread.daemon = True
       thread.start()
       if self.callback:
-        self.send_requests_with_callback()
+        self.send_requests_with_callback(shutdown=True if timeout else False)
       else:
-        self.send_requests_with_delay()
-      thread.join(timeout=self.command_runner.kill_timeout + 1.0)
+        self.send_requests_with_delay(shutdown=True if timeout else False)
+      if timeout:
+        thread.join(timeout=timeout)
+      else:
+        while thread.isAlive():
+          thread.join(timeout=1.0)
     except KeyboardInterrupt:
       log.error("\nReceived KeyboardInterrupt! Abort running thread...")
       self.command_runner.kill_process()
@@ -217,7 +225,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     # Mark test case as success
     self.success = True
 
-  def send_requests_with_delay (self):
+  def send_requests_with_delay (self, shutdown=True):
     """
     Send all request started with a prefix in the test case folder to the
     REST API of ESCAPE.
@@ -239,9 +247,10 @@ class RESTBasedServiceMixIn(EscapeTestCase):
                                  % request_file)
     # Wait for last orchestration step before stop ESCAPE
     time.sleep(self.delay)
-    self.command_runner.stop()
+    if shutdown:
+      self.command_runner.stop()
 
-  def send_requests_with_callback (self):
+  def send_requests_with_callback (self, shutdown=True):
     """
     Send all request started with a prefix in the test case folder to the
     REST API of ESCAPE.
@@ -266,8 +275,9 @@ class RESTBasedServiceMixIn(EscapeTestCase):
       success = cbmanager.wait_for_callback()
       self.assertTrue(success, msg="Callback returned with error: %s" %
                                    cbmanager.last_result)
-    cbmanager.shutdown()
-    self.command_runner.stop()
+    if shutdown:
+      cbmanager.shutdown()
+      self.command_runner.stop()
 
   def _send_request (self, data, ext, callback_url=None):
     """

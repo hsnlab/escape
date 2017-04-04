@@ -186,8 +186,7 @@ class ESCAPECommandRunner(CommandRunner):
     return self.timeouted
 
   def setup_standalone_mode (self):
-    log.debug("Detected standalone mode!")
-    log.debug("Disable timeout")
+    log.debug("Detected standalone mode --> Disable timeout")
     self.kill_timeout = None
     log.debug("Remove quit mode, add ROS-API")
     self._command.extend(("++quit", "--rosapi"))
