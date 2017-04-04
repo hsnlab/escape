@@ -1,0 +1,28 @@
+{
+  "parameters": {
+    "id": "e0294678-1949-11e7-8eaa-0242ac120002",
+    "name": "single ws",
+    "service_id": "58e3b900e4b05d709a931e44",
+    "version": "1.0",
+    "mode": "DELETE"
+  },
+  "node_nfs": [
+    {
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "specification": {
+        "resources": {
+          "mem": 2.0,
+          "storage": 8.0,
+          "cpu": 1.0
+        }
+      },
+      "functional_type": "webserver",
+      "id": "Webserver",
+      "name": "Webserver"
+    }
+  ]
+}
