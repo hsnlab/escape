@@ -184,7 +184,7 @@ ESCAPE can be run in a Docker container. To create the basic image, issue the fo
 in the project root:
 
 ```bash
-$ docker build --rm --no-cache -t mdo/ro .
+$ sudo docker build --rm --no-cache -t mdo/ro .
 ```
 
 This command creates a minimal image based on the official Python image with the name: _mdo/ro_, 
@@ -193,14 +193,14 @@ installs the required Python dependencies listed in `requirement.txt` and sets t
 To create and start a persistent container based on the _mdo/ro_ image, use the following commands:
 
 ```bash
-$ docker create --name escape -p 8008:8008 -p 8888:8888 -it mdo/ro
-$ docker start -i escape
+$ sudo docker create --name escape -p 8008:8008 -p 8888:8888 -it mdo/ro
+$ sudo docker start -i escape
 ```
 
 To create a one-time container, use the following command:
 
 ```bash
-$ docker run --rm -p 8008:8008 -p 8888:8888 -ti mdo/ro
+$ sudo docker run --rm -p 8008:8008 -p 8888:8888 -ti mdo/ro
 ```
 
 Other helper scripts for the dockerization can be found under the ``docker`` folder.
