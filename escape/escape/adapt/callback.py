@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import threading
 import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread, Timer
@@ -161,6 +162,7 @@ class CallbackManager(HTTPServer, Thread):
     self.__register = {}
     self.daemon = True
     self.__callback = callback_url
+    self.__blocking_mutex = threading.Event()
 
   @property
   def url (self):
@@ -226,17 +228,31 @@ class CallbackManager(HTTPServer, Thread):
                   % (msg_id, self.domain_name))
       return
     log.debug("Received valid callback with id: %s, result: %s from domain: %s"
-              % (msg_id, result, self.domain_name))
-    # cb = self.unsubscribe_callback(cb_id=msg_id)
+              % (msg_id, "TIMEOUT" if not result else result, self.domain_name))
     cb = self.__register.get(msg_id)
     if cb is None:
       log.error("Missing callback: %s from register!" % msg_id)
       return
     cb.result_code = result
     cb.body = body
-    if cb.hook is not None and callable(cb.hook):
+    if cb.hook is None:
+      log.debug("No hook was defined!")
+      self.__blocking_mutex.set()
+      return
+    elif callable(cb.hook):
       log.debug("Schedule callback hook: %s" % cb.short())
       cb.hook(callback=cb)
     else:
       log.warning("No callable hook was defined for the received callback: %s!"
                   % msg_id)
+
+  def wait_for_callback (self, cb_id, type, req_id=None, data=None,
+                         timeout=None):
+    cb = self.subscribe_callback(hook=None, cb_id=cb_id, type=type,
+                                 req_id=req_id,
+                                 data=data, timeout=timeout)
+    _timeout = timeout if timeout is not None else self.wait_timeout + 1
+    log.debug("Waiting for callback result...")
+    self.__blocking_mutex.wait(timeout=_timeout)
+    self.__blocking_mutex.clear()
+    return self.unsubscribe_callback(cb_id=cb.callback_id)
