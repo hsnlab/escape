@@ -2175,7 +2175,7 @@ class NFFGConverter(object):
       self.log.debug("Added SAP port: %s" % v_sap_port.id.get_value())
     return base
 
-  def convert_service_request (self, request, base=None, reinstall=False):
+  def convert_service_request_init (self, request, base=None, reinstall=False):
     """
     Convert service requests (given in NFFG format) into Virtualizer format 
     using the given `base` Virtualizer.
@@ -2208,7 +2208,7 @@ class NFFGConverter(object):
     sbb = base.nodes.node[base.nodes.node.keys().pop()]
     self.log.debug("Detected SBB node: %s" % sbb.id.get_value())
     # Add NFs
-    self.log.debug("Convert NFs...")
+    self.log.debug("Converting NFs...")
     for nf in request.nfs:
       if str(nf.id) in sbb.NF_instances.node.keys():
         self.log.error("%s already exists in the Virtualizer!" % nf.id)
@@ -2227,7 +2227,7 @@ class NFFGConverter(object):
                        (port, v_nf.id.get_as_text()))
       self.log.log(VERBOSE, "Created NF:\n%s" % v_nf.xml())
     # Add flowrules
-    self.log.debug("Convert SG hops into flowrules...")
+    self.log.debug("Converting SG hops into flowrules...")
     for hop in request.sg_hops:
       # Get src port
       if isinstance(hop.src.node, NodeSAP):
@@ -2251,7 +2251,7 @@ class NFFGConverter(object):
     # Add requirements
     self._convert_nffg_reqs(nffg=request, virtualizer=base)
     # Check connected NF constraints
-    self.log.debug("Convert constraints...")
+    self.log.debug("Converting constraints...")
     for nf in request.nfs:
       self.__set_vnf_constraints(vnode=sbb,
                                  nf=nf,
@@ -2263,7 +2263,44 @@ class NFFGConverter(object):
       base.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
                                                        value=meta_value))
     base.bind(relative=True)
-    self.log.log(VERBOSE, "Converted service request:\n%s" % base.xml())
+    return base
+
+  def convert_service_request_del (self, request, base):
+    """
+    Delete given service request from given virtualizer.
+
+    :param request: service request
+    :type request: :class:`NFFG`
+    :param base: base Virtualizer
+    :type base: :class:`Virtualizer`
+    :return: generated delete request
+    :rtype: :class:`Virtualizer`
+    """
+    self.log.debug("Using given base Virtualizer: %s" % base.id.get_value())
+    base = base.full_copy()
+    self.log.debug("Transfer service request ID...")
+    base.id.set_value(request.id)
+    base.name.set_value(request.name)
+    if base.nodes.node.length() > 1:
+      self.log.warning("Multiple BiSBiS node detected in the Virtualizer!")
+    sbb = base.nodes.node[base.nodes.node.keys().pop()]
+    self.log.debug("Detected SBB node: %s" % sbb.id.get_value())
+    # Add NFs
+    self.log.debug("Removing NFs...")
+    for nf in request.nfs:
+      if str(nf.id) not in sbb.NF_instances.node.keys():
+        self.log.error("NF: %s is missing from Virtualizer!" % nf.id)
+        continue
+      deleted = sbb.NF_instances.remove(nf.id)
+      self.log.debug("Removed NF: %s" % deleted.id.get_value())
+    # Add flowrules
+    self.log.debug("Removing flowrules...")
+    for hop in request.sg_hops:
+      if str(hop.id) not in sbb.flowtable.flowentry.keys():
+        self.log.error("Flowrule: %s is missing from Virtualizer!" % hop.id)
+        continue
+      deleted = sbb.flowtable.remove(str(hop.id))
+      self.log.debug("Removed flowrule: %s" % deleted.id.get_value())
     return base
 
 
