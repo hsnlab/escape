@@ -22,7 +22,7 @@ import sys
 
 try:
   # Import for ESCAPEv2
-  from escape.nffg_lib.nffg import AbstractNFFG, NFFG
+  from escape.nffg_lib.nffg import AbstractNFFG, NFFG, NodeSAP
   from escape.util.misc import VERBOSE, unicode_to_str, remove_units
 except (ImportError, AttributeError):
   import os
@@ -984,7 +984,7 @@ class NFFGConverter(object):
         node_bw = [
           float(vlink.resources.bandwidth.get_value())
           for vlink in vnode.links if vlink.resources.is_initialized() and
-          vlink.resources.bandwidth.is_initialized()]
+                                      vlink.resources.bandwidth.is_initialized()]
         # Default value: None
         node_bw = min(node_bw) if node_bw else None
       try:
@@ -1001,7 +1001,7 @@ class NFFGConverter(object):
         node_delay = [
           float(vlink.resources.delay.get_value())
           for vlink in vnode.links if vlink.resources.is_initialized() and
-          vlink.resources.delay.is_initialized()]
+                                      vlink.resources.delay.is_initialized()]
         # Default value: None
         node_delay = max(node_delay) if node_delay else None
       try:
@@ -1479,6 +1479,38 @@ class NFFGConverter(object):
           "No port has been detected in %s. Can not store internal "
           "bandwidth/delay value!" % infra)
 
+  def __set_vsap_port (self, v_sap_port, sap_port):
+    # Set sap.name if it has not used for storing SAP.id
+    if sap_port.name is not None:
+      v_sap_port.name.set_value(sap_port.name)
+    # Convert other SAP-port-specific data
+    v_sap_port.capability.set_value(sap_port.capability)
+    v_sap_port.sap_data.technology.set_value(sap_port.technology)
+    v_sap_port.sap_data.role.set_value(sap_port.role)
+    v_sap_port.sap_data.resources.delay.set_value(sap_port.delay)
+    v_sap_port.sap_data.resources.bandwidth.set_value(sap_port.bandwidth)
+    v_sap_port.sap_data.resources.cost.set_value(sap_port.cost)
+    v_sap_port.control.controller.set_value(sap_port.controller)
+    v_sap_port.control.orchestrator.set_value(sap_port.orchestrator)
+    v_sap_port.addresses.l2.set_value(sap_port.l2)
+    v_sap_port.addresses.l4.set_value(sap_port.l4)
+    for l3 in sap_port.l3:
+      v_sap_port.addresses.l3.add(
+        virt_lib.L3_address(id=l3.id,
+                            name=l3.name,
+                            configure=l3.configure,
+                            requested=l3.requested,
+                            provided=l3.provided))
+    # Migrate metadata
+    for key, value in sap_port.metadata.iteritems():
+      v_sap_port.metadata.add(virt_lib.MetadataMetadata(key=key,
+                                                        value=value))
+    if sap_port.operation is not None:
+      self.log.debug("Convert operation tag: %s for port: %s" % (
+        sap_port.operation, sap_port.id))
+      v_sap_port.set_operation(operation=sap_port.operation,
+                               recursive=False)
+
   def _convert_nffg_saps (self, nffg, virtualizer):
     """
     Convert SAPs in the given :class:`NFFG` into the given Virtualizer.
@@ -1525,38 +1557,7 @@ class NFFGConverter(object):
         else:
           # If sap is not inter-domain SAP, use name field to store sap id and
           v_sap_port.name.set_value("%s:%s" % (self.SAP_NAME_PREFIX, sap.id))
-
-        # Set sap.name if it has not used for storing SAP.id
-        if sap_port.name is not None:
-          v_sap_port.name.set_value(sap_port.name)
-        # Convert other SAP-port-specific data
-        v_sap_port.capability.set_value(sap_port.capability)
-        v_sap_port.sap_data.technology.set_value(sap_port.technology)
-        v_sap_port.sap_data.role.set_value(sap_port.role)
-        v_sap_port.sap_data.resources.delay.set_value(sap_port.delay)
-        v_sap_port.sap_data.resources.bandwidth.set_value(sap_port.bandwidth)
-        v_sap_port.sap_data.resources.cost.set_value(sap_port.cost)
-        v_sap_port.control.controller.set_value(sap_port.controller)
-        v_sap_port.control.orchestrator.set_value(sap_port.orchestrator)
-        v_sap_port.addresses.l2.set_value(sap_port.l2)
-        v_sap_port.addresses.l4.set_value(sap_port.l4)
-        for l3 in sap_port.l3:
-          v_sap_port.addresses.l3.add(
-            virt_lib.L3_address(id=l3.id,
-                                name=l3.name,
-                                configure=l3.configure,
-                                requested=l3.requested,
-                                provided=l3.provided))
-        # Migrate metadata
-        for key, value in sap_port.metadata.iteritems():
-          v_sap_port.metadata.add(virt_lib.MetadataMetadata(key=key,
-                                                            value=value))
-        if sap_port.operation is not None:
-          self.log.debug("Convert operation tag: %s for port: %s" % (
-            sap_port.operation, sap_port.id))
-          v_sap_port.set_operation(operation=sap_port.operation,
-                                   recursive=False)
-
+        self.__set_vsap_port(v_sap_port=v_sap_port, sap_port=sap_port)
         self.log.debug(
           "Convert %s to port: %s in infra: %s" % (sap, link.dst.id, n))
 
@@ -1643,6 +1644,96 @@ class NFFGConverter(object):
         item=virt_lib.MetadataMetadata(key="constraint:%s" % req.id,
                                        value=meta_value))
 
+  def __assemble_virt_nf (self, nf):
+    # Create Node object for NF
+    v_nf = virt_lib.Node(id=nf.id,
+                         name=nf.name,
+                         type=nf.functional_type,
+                         status=nf.status,
+                         resources=virt_lib.Software_resource(
+                           cpu=nf.resources.cpu,
+                           mem=nf.resources.mem,
+                           storage=nf.resources.storage))
+    # Set deployment type, delay, bandwidth as a metadata
+    if nf.deployment_type is not None:
+      v_nf.metadata.add(
+        virt_lib.MetadataMetadata(key='deployment_type',
+                                  value=nf.deployment_type))
+    if nf.resources.delay is not None:
+      v_nf.metadata.add(
+        virt_lib.MetadataMetadata(key='delay',
+                                  value=nf.resources.delay))
+    if nf.resources.bandwidth is not None:
+      v_nf.metadata.add(
+        virt_lib.MetadataMetadata(key='bandwidth',
+                                  value=nf.resources.bandwidth))
+    # Migrate metadata
+    for key, value in nf.metadata.iteritems():
+      if key not in ('deployment_type', 'delay', 'bandwidth'):
+        v_nf.metadata.add(
+          virt_lib.MetadataMetadata(key=key, value=value))
+
+    # Handle operation tag
+    if nf.operation is not None:
+      self.log.debug("Convert operation tag: %s for NF: %s" %
+                     (nf.operation, nf.id))
+      v_nf.set_operation(operation=nf.operation, recursive=False)
+    return v_nf
+
+  def __assemble_virt_nf_port (self, port):
+    v_nf_port = virt_lib.Port(id=str(port.id),
+                              port_type=self.TYPE_VIRTUALIZER_PORT_ABSTRACT)
+    # Convert other SAP-specific data
+    v_nf_port.name.set_value(port.name)
+    if 'port-type' in port.properties:
+      self.log.warning("Unexpected inter-domain port in NF: %s" % port)
+    if 'sap' in port.properties:
+      v_nf_port.sap.set_value(port.properties['sap'])
+      v_nf_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
+    elif port.sap is not None:
+      v_nf_port.sap.set_value(port.sap)
+      v_nf_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
+    if port.capability:
+      self.log.debug("Translate capability...")
+    v_nf_port.capability.set_value(port.capability)
+    if any((port.technology, port.role, port.delay, port.bandwidth,
+            port.cost)):
+      self.log.debug("Translate sap_data...")
+    v_nf_port.sap_data.technology.set_value(port.technology)
+    v_nf_port.sap_data.role.set_value(port.role)
+    v_nf_port.sap_data.resources.delay.set_value(port.delay)
+    v_nf_port.sap_data.resources.bandwidth.set_value(
+      port.bandwidth)
+    v_nf_port.sap_data.resources.cost.set_value(port.cost)
+    if any((port.controller, port.orchestrator)):
+      self.log.debug("Translate controller...")
+    v_nf_port.control.controller.set_value(port.controller)
+    v_nf_port.control.orchestrator.set_value(port.orchestrator)
+    if any((port.l2, port.l4, len(port.l3))):
+      self.log.debug("Translate addresses...")
+    v_nf_port.addresses.l2.set_value(port.l2)
+    v_nf_port.addresses.l4.set_value(port.l4)
+    for l3 in port.l3:
+      v_nf_port.addresses.l3.add(
+        virt_lib.L3_address(id=l3.id,
+                            name=l3.name,
+                            configure=l3.configure,
+                            requested=l3.requested,
+                            provided=l3.provided))
+    # Migrate metadata
+    if len(port.metadata):
+      self.log.debug("Translate metadata...")
+    for property, value in port.metadata.iteritems():
+      v_nf_port.metadata.add(virt_lib.MetadataMetadata(key=property,
+                                                       value=value))
+    # Handle operation tag
+    if port.operation is not None:
+      self.log.debug("Convert operation tag: %s for port: %s" % (
+        port.operation, port.id))
+      v_nf_port.set_operation(operation=port.operation,
+                              recursive=False)
+    return v_nf_port
+
   def _convert_nffg_nfs (self, virtualizer, nffg):
     """
     Convert NFs in the given :class:`NFFG` into the given Virtualizer.
@@ -1680,109 +1771,24 @@ class NFFGConverter(object):
         if str(nf.id) not in v_node.NF_instances.node.keys():
           self.log.debug("Found uninitiated NF: %s in mapped NFFG" % nf)
           # Create Node object for NF
-          v_nf = virt_lib.Node(id=nf.id,
-                               name=nf.name,
-                               type=nf.functional_type,
-                               status=nf.status,
-                               resources=virt_lib.Software_resource(
-                                 cpu=nf.resources.cpu,
-                                 mem=nf.resources.mem,
-                                 storage=nf.resources.storage))
-          # Set deployment type, delay, bandwidth as a metadata
-          if nf.deployment_type is not None:
-            v_nf.metadata.add(
-              virt_lib.MetadataMetadata(key='deployment_type',
-                                        value=nf.deployment_type))
-          if nf.resources.delay is not None:
-            v_nf.metadata.add(
-              virt_lib.MetadataMetadata(key='delay',
-                                        value=nf.resources.delay))
-          if nf.resources.bandwidth is not None:
-            v_nf.metadata.add(
-              virt_lib.MetadataMetadata(key='bandwidth',
-                                        value=nf.resources.bandwidth))
-          # Migrate metadata
-          for key, value in nf.metadata.iteritems():
-            if key not in ('deployment_type', 'delay', 'bandwidth'):
-              v_nf.metadata.add(
-                virt_lib.MetadataMetadata(key=key, value=value))
-
-          # Handle operation tag
-          if nf.operation is not None:
-            self.log.debug("Convert operation tag: %s for NF: %s" %
-                           (nf.operation, nf.id))
-            v_nf.set_operation(operation=nf.operation, recursive=False)
+          v_nf = self.__assemble_virt_nf(nf=nf)
           # Add NF to Infra object
           v_node.NF_instances.add(v_nf)
           # Cache discovered NF
           discovered_nfs.append(nf.id)
-
           self.log.debug(
             "Added NF: %s to Infra node(id=%s, name=%s, type=%s)" % (
               nf, v_node.id.get_as_text(),
               v_node.name.get_as_text(),
               v_node.type.get_as_text()))
-
           # Add NF ports
           for port in nf.ports:
-            v_nf_port = virt_lib.Port(id=str(port.id),
-                                      port_type=self.TYPE_VIRTUALIZER_PORT_ABSTRACT)
+            v_nf_port = self.__assemble_virt_nf_port(port=port)
             v_node.NF_instances[str(nf.id)].ports.add(v_nf_port)
-            # Convert other SAP-specific data
-            v_nf_port.name.set_value(port.name)
-            if 'port-type' in port.properties:
-              self.log.warning("Unexpected inter-domain port in NF: %s" % port)
-            if 'sap' in port.properties:
-              v_nf_port.sap.set_value(port.properties['sap'])
-              v_nf_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
-            elif port.sap is not None:
-              v_nf_port.sap.set_value(port.sap)
-              v_nf_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
-            if port.capability:
-              self.log.debug("Translate capability...")
-            v_nf_port.capability.set_value(port.capability)
-            if any((port.technology, port.role, port.delay, port.bandwidth,
-                    port.cost)):
-              self.log.debug("Translate sap_data...")
-            v_nf_port.sap_data.technology.set_value(port.technology)
-            v_nf_port.sap_data.role.set_value(port.role)
-            v_nf_port.sap_data.resources.delay.set_value(port.delay)
-            v_nf_port.sap_data.resources.bandwidth.set_value(
-              port.bandwidth)
-            v_nf_port.sap_data.resources.cost.set_value(port.cost)
-            if any((port.controller, port.orchestrator)):
-              self.log.debug("Translate controller...")
-            v_nf_port.control.controller.set_value(port.controller)
-            v_nf_port.control.orchestrator.set_value(port.orchestrator)
-            if any((port.l2, port.l4, len(port.l3))):
-              self.log.debug("Translate addresses...")
-            v_nf_port.addresses.l2.set_value(port.l2)
-            v_nf_port.addresses.l4.set_value(port.l4)
-            for l3 in port.l3:
-              v_nf_port.addresses.l3.add(
-                virt_lib.L3_address(id=l3.id,
-                                    name=l3.name,
-                                    configure=l3.configure,
-                                    requested=l3.requested,
-                                    provided=l3.provided))
-            # Migrate metadata
-            if len(port.metadata):
-              self.log.debug("Translate metadata...")
-            for property, value in port.metadata.iteritems():
-              v_nf_port.metadata.add(virt_lib.MetadataMetadata(key=property,
-                                                               value=value))
-
-            # Handle operation tag
-            if port.operation is not None:
-              self.log.debug("Convert operation tag: %s for port: %s" % (
-                port.operation, port.id))
-              v_nf_port.set_operation(operation=port.operation,
-                                      recursive=False)
-
-            self.log.debug(
-              "Added Port: %s to NF node: %s" % (port, v_nf.id.get_as_text()))
+            self.log.debug("Added Port: %s to NF node: %s" %
+                           (port, v_nf.id.get_as_text()))
         else:
-          self.log.debug("%s is already exist in the Virtualizer(id=%s, "
+          self.log.debug("%s already exists in the Virtualizer(id=%s, "
                          "name=%s)" % (nf, virtualizer.id.get_as_text(),
                                        virtualizer.name.get_as_text()))
 
@@ -1911,6 +1917,106 @@ class NFFGConverter(object):
               fr.operation, fr.id))
             virt_fe.set_operation(operation=str(fr.operation), recursive=False)
 
+  @staticmethod
+  def _get_vnode_by_id (virtualizer, id):
+    for vnode in virtualizer.nodes:
+      if vnode.id.get_as_text() == str(id):
+        return vnode
+      for vnf in vnode.NF_instances:
+        if vnf.id.get_value() == str(id):
+          return vnf
+
+  def __set_vnode_constraints (self, vnode, infra, virtualizer):
+    # Add affinity
+    for id, aff in infra.constraints.affinity.iteritems():
+      v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
+      if v_aff_node is None:
+        self.log.warning("Referenced Node: %s is not found for affinity!"
+                         % aff)
+        continue
+      self.log.debug(
+        "Found reference for affinity: %s in Infra: %s" % (aff, infra.id))
+      vnode.constraints.affinity.add(
+        virt_lib.ConstraintsAffinity(id=str(id),
+                                     object=v_aff_node.get_path()))
+    # Add antiaffinity
+    for id, naff in infra.constraints.antiaffinity.iteritems():
+      v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
+      if v_naff_node is None:
+        self.log.warning("Referenced Node: %s is not found for anti-affinity!"
+                         % naff)
+        continue
+      self.log.debug(
+        "Found reference for antiaffinity: %s in Infra: %s" % (
+          naff, infra.id))
+      vnode.constraints.antiaffinity.add(
+        virt_lib.ConstraintsAntiaffinity(id=str(id),
+                                         object=v_naff_node.get_path()))
+    # Add variable
+    for key, value in infra.constraints.variable.iteritems():
+      v_var_node = self._get_vnode_by_id(virtualizer=virtualizer, id=value)
+      if v_var_node is None:
+        self.log.warning("Referenced Node: %s is not found for variable: "
+                         "%s!" % (value, key))
+        continue
+      self.log.debug(
+        "Found reference for variable: %s in Infra: %s" % (key, infra.id))
+      vnode.constraints.constraint.add(
+        virt_lib.ConstraintsVariable(id=str(key),
+                                     object=v_var_node.get_path()))
+    # Add constraint
+    for id, cons in infra.constraints.constraint.iteritems():
+      self.log.debug("Add formula: %s for Infra: %s" % (cons, infra.id))
+      vnode.constraints.constraint.add(
+        virt_lib.ConstraintsConstraint(id=str(id),
+                                       formula=cons))
+
+  def __set_vnf_constraints (self, vnode, nf, virtualizer):
+    vnf = vnode.NF_instances[nf.id]
+    # Add affinity
+    for id, aff in nf.constraints.affinity.iteritems():
+      v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
+      if v_aff_node is None:
+        self.log.warning("Referenced Node: %s is not found for affinity!"
+                         % aff)
+        continue
+      self.log.debug(
+        "Found reference for affinity: %s in NF: %s" % (aff, nf.id))
+      vnf.constraints.affinity.add(
+        virt_lib.ConstraintsAffinity(id=str(id),
+                                     object=v_aff_node.get_path()))
+    # Add antiaffinity
+    for id, naff in nf.constraints.antiaffinity.iteritems():
+      v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
+      if v_naff_node is None:
+        self.log.warning(
+          "Referenced Node: %s is not found for anti-affinity!"
+          % naff)
+        continue
+      self.log.debug(
+        "Found reference for antiaffinity: %s in NF: %s" % (naff, nf.id))
+      vnf.constraints.antiaffinity.add(
+        virt_lib.ConstraintsAntiaffinity(id=str(id),
+                                         object=v_naff_node.get_path()))
+    # Add variable
+    for key, value in nf.constraints.variable.iteritems():
+      v_var_node = self._get_vnode_by_id(virtualizer=virtualizer, id=value)
+      if v_var_node is None:
+        self.log.warning("Referenced Node: %s is not found for variable: "
+                         "%s!" % (value, key))
+        continue
+      self.log.debug(
+        "Found reference for variable: %s in NF: %s" % (key, nf.id))
+      vnf.constraints.constraint.add(
+        virt_lib.ConstraintsVariable(id=str(key),
+                                     object=v_var_node.get_path()))
+    # Add constraint
+    for id, cons in nf.constraints.constraint.iteritems():
+      self.log.debug("Add formula: %s for NF: %s" % (cons, nf.id))
+      vnf.constraints.constraint.add(
+        virt_lib.ConstraintsConstraint(id=str(id),
+                                       formula=cons))
+
   def _convert_nffg_constraints (self, virtualizer, nffg):
     self.log.debug("Convert constraints...")
     for infra in nffg.infras:
@@ -1927,106 +2033,14 @@ class NFFGConverter(object):
         continue
       # Get Infra node from Virtualizer
       vnode = virtualizer.nodes[v_node_id]
-
-      # Add affinity
-      for id, aff in infra.constraints.affinity.iteritems():
-        v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
-        if v_aff_node is None:
-          self.log.warning("Referenced Node: %s is not found for affinity!"
-                           % aff)
-          continue
-        self.log.debug(
-          "Found reference for affinity: %s in Infra: %s" % (aff, infra.id))
-        vnode.constraints.affinity.add(
-          virt_lib.ConstraintsAffinity(id=str(id),
-                                       object=v_aff_node.get_path()))
-      # Add antiaffinity
-      for id, naff in infra.constraints.antiaffinity.iteritems():
-        v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
-        if v_naff_node is None:
-          self.log.warning("Referenced Node: %s is not found for anti-affinity!"
-                           % naff)
-          continue
-        self.log.debug(
-          "Found reference for antiaffinity: %s in Infra: %s" % (
-            naff, infra.id))
-        vnode.constraints.antiaffinity.add(
-          virt_lib.ConstraintsAntiaffinity(id=str(id),
-                                           object=v_naff_node.get_path()))
-      # Add variable
-      for key, value in infra.constraints.variable.iteritems():
-        v_var_node = self._get_vnode_by_id(virtualizer=virtualizer, id=value)
-        if v_var_node is None:
-          self.log.warning("Referenced Node: %s is not found for variable: "
-                           "%s!" % (value, key))
-          continue
-        self.log.debug(
-          "Found reference for variable: %s in Infra: %s" % (key, infra.id))
-        vnode.constraints.constraint.add(
-          virt_lib.ConstraintsVariable(id=str(key),
-                                       object=v_var_node.get_path()))
-      # Add constraint
-      for id, cons in infra.constraints.constraint.iteritems():
-        self.log.debug("Add formula: %s for Infra: %s" % (cons, infra.id))
-        vnode.constraints.constraint.add(
-          virt_lib.ConstraintsConstraint(id=str(id),
-                                         formula=cons))
-
+      self.__set_vnode_constraints(vnode=vnode,
+                                   infra=infra,
+                                   virtualizer=virtualizer)
       # Check connected NF constraints
       for nf in nffg.running_nfs(infra.id):
-        vnf = vnode.NF_instances[nf.id]
-        # Add affinity
-        for id, aff in nf.constraints.affinity.iteritems():
-          v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
-          if v_aff_node is None:
-            self.log.warning("Referenced Node: %s is not found for affinity!"
-                             % aff)
-            continue
-          self.log.debug(
-            "Found reference for affinity: %s in NF: %s" % (aff, nf.id))
-          vnf.constraints.affinity.add(
-            virt_lib.ConstraintsAffinity(id=str(id),
-                                         object=v_aff_node.get_path()))
-        # Add antiaffinity
-        for id, naff in nf.constraints.antiaffinity.iteritems():
-          v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
-          if v_naff_node is None:
-            self.log.warning(
-              "Referenced Node: %s is not found for anti-affinity!"
-              % naff)
-            continue
-          self.log.debug(
-            "Found reference for antiaffinity: %s in NF: %s" % (naff, nf.id))
-          vnf.constraints.antiaffinity.add(
-            virt_lib.ConstraintsAntiaffinity(id=str(id),
-                                             object=v_naff_node.get_path()))
-        # Add variable
-        for key, value in nf.constraints.variable.iteritems():
-          v_var_node = self._get_vnode_by_id(virtualizer=virtualizer, id=value)
-          if v_var_node is None:
-            self.log.warning("Referenced Node: %s is not found for variable: "
-                             "%s!" % (value, key))
-            continue
-          self.log.debug(
-            "Found reference for variable: %s in NF: %s" % (key, nf.id))
-          vnf.constraints.constraint.add(
-            virt_lib.ConstraintsVariable(id=str(key),
-                                         object=v_var_node.get_path()))
-        # Add constraint
-        for id, cons in nf.constraints.constraint.iteritems():
-          self.log.debug("Add formula: %s for NF: %s" % (cons, nf.id))
-          vnf.constraints.constraint.add(
-            virt_lib.ConstraintsConstraint(id=str(id),
-                                           formula=cons))
-
-  @staticmethod
-  def _get_vnode_by_id (virtualizer, id):
-    for vnode in virtualizer.nodes:
-      if vnode.id.get_as_text() == str(id):
-        return vnode
-      for vnf in vnode.NF_instances:
-        if vnf.id.get_value() == str(id):
-          return vnf
+        self.__set_vnf_constraints(vnode=vnode,
+                                   nf=nf,
+                                   virtualizer=virtualizer)
 
   def dump_to_Virtualizer (self, nffg):
     """
@@ -2128,6 +2142,129 @@ class NFFGConverter(object):
   @staticmethod
   def unescape_output_hack (data):
     return data.replace("&lt;", "<").replace("&gt;", ">")
+
+  def _generate_sbb_base (self, request):
+    """
+    Generate a SingleBiSBiS node for service request conversion utilize the 
+    topology specific data and SAPs from the given `request`.
+
+    :param request: utilized service request
+    :type request: :class:`NFFG`
+    :return: generated SBB
+    :rtype: :class:`Virtualizer`
+    """
+    # Generate base SBB node
+    self.log.debug("Add main Virtualizer...")
+    base = Virtualizer(id="SingleBiSBiS", name="Single-BiSBiS-View")
+    self.log.debug("Add SBB node...")
+    sbb = base.nodes.add(item=virt_lib.Infra_node(id="SingleBiSBiS",
+                                                  name="SingleBiSBiS",
+                                                  type="BiSBiS"))
+    sbb.metadata.add(virt_lib.MetadataMetadata(key="generated", value=True))
+    self.log.debug("Add SAPs from request...")
+    # Add topology specific SAPs from request
+    for sap in request.saps:
+      v_sap_port = sbb.ports.add(
+        virt_lib.Port(id=sap.id,
+                      name=sap.name,
+                      port_type=self.TYPE_VIRTUALIZER_PORT_SAP))
+      if len(sap.ports) > 1:
+        self.log.warning("Multiple SAP port detected!")
+      sap_port = sap.ports.container[0]
+      self.__set_vsap_port(v_sap_port=v_sap_port, sap_port=sap_port)
+      self.log.debug("Added SAP port: %s" % v_sap_port.id.get_value())
+    return base
+
+  def convert_service_request (self, request, base=None, reinstall=False):
+    """
+    Convert service requests (given in NFFG format) into Virtualizer format 
+    using the given `base` Virtualizer.
+
+    :param request: service request
+    :type request: :class:`NFFG`
+    :param base: base Virtualizer
+    :type base: :class:`Virtualizer`
+    :param reinstall: need to clear every NF/flowrules from given virtualizer
+    :type reinstall: bool
+    :return: converted service request
+    :rtype: :class:`Virtualizer`
+    """
+    if base is not None:
+      self.log.debug("Using given base Virtualizer: %s" % base.id.get_value())
+      base = base.full_copy()
+      # Remove previously installed NFs and flowrules from Virtualizer for
+      # e.g. correct diff calculation
+      if reinstall:
+        self.log.debug("Remove pre-installed NFs/flowrules...")
+        self.clear_installed_elements(virtualizer=base)
+    else:
+      self.log.debug("No base Virtualizer is given! Generating SingleBiSBiS...")
+      base = self._generate_sbb_base(request=request)
+    self.log.debug("Transfer service request ID...")
+    base.id.set_value(request.id)
+    base.name.set_value(request.name)
+    if base.nodes.node.length() > 1:
+      self.log.warning("Multiple BiSBiS node detected in the Virtualizer!")
+    sbb = base.nodes.node[base.nodes.node.keys().pop()]
+    self.log.debug("Detected SBB node: %s" % sbb.id.get_value())
+    # Add NFs
+    self.log.debug("Convert NFs...")
+    for nf in request.nfs:
+      if str(nf.id) in sbb.NF_instances.node.keys():
+        self.log.error("%s already exists in the Virtualizer!" % nf.id)
+        continue
+      # Create Node object for NF
+      v_nf = self.__assemble_virt_nf(nf=nf)
+      # Add NF to Infra object
+      sbb.NF_instances.add(v_nf)
+      self.log.debug("Added NF: %s to Infra node(id=%s)"
+                     % (nf.id, sbb.id.get_as_text()))
+      # Add NF ports
+      for port in nf.ports:
+        v_nf_port = self.__assemble_virt_nf_port(port=port)
+        sbb.NF_instances[str(nf.id)].ports.add(v_nf_port)
+        self.log.debug("Added Port: %s to NF node: %s" %
+                       (port, v_nf.id.get_as_text()))
+      self.log.log(VERBOSE, "Created NF:\n%s" % v_nf.xml())
+    # Add flowrules
+    self.log.debug("Convert SG hops into flowrules...")
+    for hop in request.sg_hops:
+      # Get src port
+      if isinstance(hop.src.node, NodeSAP):
+        v_src = sbb.ports[str(hop.src.node.id)]
+      else:
+        v_src = sbb.NF_instances[str(hop.src.node.id)].ports[str(hop.src.id)]
+      # Get dst port
+      if isinstance(hop.dst.node, NodeSAP):
+        v_dst = sbb.ports[str(hop.dst.node.id)]
+      else:
+        v_dst = sbb.NF_instances[str(hop.dst.node.id)].ports[str(hop.dst.id)]
+      fe = sbb.flowtable.add(item=virt_lib.Flowentry(id=hop.id,
+                                                     priority=100,
+                                                     port=v_src,
+                                                     out=v_dst,
+                                                     match=hop.flowclass))
+      fe.resources.delay.set_value(hop.delay)
+      fe.resources.bandwidth.set_value(hop.bandwidth)
+      self.log.debug("Added flowrule: %s" % fe.id.get_value())
+      self.log.log(VERBOSE, "Created Flowrule:\n%s" % fe.xml())
+    # Add requirements
+    self._convert_nffg_reqs(nffg=request, virtualizer=base)
+    # Check connected NF constraints
+    self.log.debug("Convert constraints...")
+    for nf in request.nfs:
+      self.__set_vnf_constraints(vnode=sbb,
+                                 nf=nf,
+                                 virtualizer=base)
+    # Convert NFFG metadata
+    for key, value in request.metadata.iteritems():
+      meta_key = str(key)
+      meta_value = str(value) if value is not None else None
+      base.metadata.add(item=virt_lib.MetadataMetadata(key=meta_key,
+                                                       value=meta_value))
+    base.bind(relative=True)
+    self.log.log(VERBOSE, "Converted service request:\n%s" % base.xml())
+    return base
 
 
 class UC3MNFFGConverter():
