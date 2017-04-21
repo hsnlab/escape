@@ -6,7 +6,7 @@ MAINTAINER Janos Czentye <czentye@tmit.bme.hu>
 LABEL Description="ESCAPE" Project="5GEx" version="2.0.0+"
 WORKDIR /opt/escape
 COPY . ./
-RUN pip install --upgrade -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 EXPOSE 8008 8888
 ENV PYTHONUNBUFFERED 1
 ENTRYPOINT ["python", "escape.py"]
