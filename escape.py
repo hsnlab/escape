@@ -58,6 +58,34 @@ def get_escape_version ():
   return get_escape_version()
 
 
+def clean ():
+  # Tailor Python path for importing mics functions without initialize
+  # escape or util packages.
+  import sys
+  # Reset SIGTERM signal handler
+  signal.signal(signal.SIGTERM, signal.SIG_DFL)
+  # Import misc directly from util/ to avoid standard ESCAPE init steps
+  sys.path.insert(0, PROJECT_ROOT + "/mininet")
+  sys.path.insert(0, PROJECT_ROOT + "/escape/escape/util")
+  if os.geteuid() != 0:
+    print "Cleanup process requires root privilege!"
+    return
+  else:
+    print "Run full cleaning process..."
+    # Kill stacked ESCAPE processes
+    from misc import run_cmd
+    from misc import remove_junks_at_shutdown, remove_junks_at_boot
+    # Remove remained temporarily files
+    remove_junks_at_shutdown()
+    # Remove log files from /tmp
+    remove_junks_at_boot()
+    for pid in run_cmd('pgrep -af "python %s"' % __file__).splitlines():
+      if str(pid) != str(os.getpid()):
+        run_cmd("sudo -S kill %s" % pid)
+    print "Cleaned."
+    return
+
+
 def main ():
   # Implement parser options
   parser = argparse.ArgumentParser(
@@ -124,30 +152,7 @@ def main ():
   # Parsing arguments
   args = parser.parse_args()
   if args.clean:
-    # Tailor Python path for importing mics functions without initialize
-    # escape or util packages.
-    import sys
-    # Import misc directly from util/ to avoid standard ESCAPE init steps
-    sys.path.insert(0, PROJECT_ROOT + "/mininet")
-    sys.path.insert(0, PROJECT_ROOT + "/escape/escape/util")
-    if os.geteuid() != 0:
-      print "Cleanup process requires root privilege!"
-      return
-    else:
-      print "Run full cleaning process..."
-      # Kill stacked ESCAPE processes
-      from misc import run_cmd
-      from misc import remove_junks_at_shutdown, remove_junks_at_boot
-      # Remove remained temporarily files
-      remove_junks_at_shutdown()
-      # Remove log files from /tmp
-      remove_junks_at_boot()
-      for pid in run_cmd('pgrep -f "python %s"' % __file__).splitlines():
-        if pid != os.getpid():
-          run_cmd("sudo -S kill %s" % pid)
-      print "Cleaned."
-      return
-
+    return clean()
   # Construct POX init command according to argument basic command
   cmd = [os.path.join(PROJECT_ROOT, "pox/pox.py"), MAIN_CONTAINER_LAYER_NAME]
 
