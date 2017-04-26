@@ -21,6 +21,7 @@ import sys
 # sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))  # escape dir
 sys.path.insert(0, os.path.abspath('../../../pox'))  # pox dir to handle lib/...
+sys.path.insert(0, os.path.abspath('../../../pox/ext'))  # ESCAPE ext files
 root = os.path.abspath(os.path.dirname(__file__) + "../../../..")
 ADD_DEP = ("escape", "unify_virtualizer", "mapping", "mininet")
 for item in os.listdir(root):  # Dependency dirs like mininet
@@ -36,7 +37,8 @@ for item in os.listdir(root):  # Dependency dirs like mininet
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx',
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.intersphinx',
               'sphinx.ext.autosummary',
               'sphinx.ext.inheritance_diagram',
               'sphinx.ext.ifconfig']  # 'sphinx.ext.viewcode'

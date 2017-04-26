@@ -85,7 +85,6 @@
 
 # index.rst --> insert
 #    modules.rst
-
-make html
-make latexpdf
+make clean
+make html latexpdf
 #sphinx-build -b html -d build/doctrees   source build/html

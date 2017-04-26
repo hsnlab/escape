@@ -73,16 +73,23 @@ Installation
 
 The ``install_dep.sh`` script is responsible for managing the dependencies. It sets up
 the required sym-links, updates the related submodules and installs only the necessary
-packages regarding the given install parameters.
+packages regarding the given install parameters in one step.
+
+.. note::
+
+    The installation steps are detailed in the following chapter: :ref:`install_steps`.
 
 If you don't want to use the complex install script or the included project setup script
-then just create a sym-link to the relevant gitmodules file with the name ``.gitmodules``
-and update the submodule manually.
+then just create a sym-link to the relevant gitmodules file with the name ``.gitmodules``,
+update the submodules
 
 .. code-block:: bash
 
-    ln -vfs .gitmodules.<PROJECT> .gitmodules
-    git submodules update --init
+    $ ln -vfs .gitmodules.<PROJECT> .gitmodules
+    $ git submodules update --init
+
+and install the dependencies manually.
+
 
 As the core layers of ESCAPE relies on POX and written in Python there is no need
 for explicit compiling or installation. The required libraries and dependencies such as
@@ -115,6 +122,8 @@ machine through an SSH channel with X11 forwarding.
       * as a local Domain Orchestrator.
 
 Nevertheless the install script (``install-dep.sh``) supports both LTS version.
+
+.. _install_steps:
 
 The preferred way
 -----------------
@@ -406,6 +415,36 @@ Check the created user with the following command:
 
     $ ssh mininet@localhost
 
+ESCAPE as a Docker container
+----------------------------
+
+ESCAPE can be run in a Docker container. To create the basic image, issue the following command
+in the project root:
+
+.. code-block:: bash
+
+    $ docker build --rm --no-cache -t mdo/ro .
+
+This command creates a minimal image based on the official Python image with the name: ``mdo/ro``,
+installs the required Python dependencies listen in `requirement.txt` and sets the entry point.
+
+To create and start a persistent container based on the ``mdo/ro`` image, use the following commands:
+
+.. code-block:: bash
+
+    $ docker create --name escape -p 8008:8008 -p 8888:8888 -it mdo/ro
+    $ docker start -i escape
+
+To create a one-time container, use the following command:
+
+.. code-block:: bash
+
+    $ docker run --rm -p 8008:8008 -p 8888:8888 -ti escape
+
+Dockerfiles for other type of images such as minimal ESCAPE images based on
+Alpine Linux or super-container image containing the Mininet-based dataplane
+emulation can be found under the ``docker`` folder with several helper scripts.
+
 Setup a Virtual environment (optional)
 --------------------------------------
 
@@ -468,31 +507,6 @@ and then activate/deactivate the environment manually:
 
 For more information check the content of the setup script or see the
 `Virtualenv User Guide <https://virtualenv.readthedocs.org/en/latest/userguide.html>`_.
-
-ESCAPE as a Docker container
-----------------------------
-
-ESCAPE can be run in a Docker container. To create the basic image, issue the following command
-in the project root:
-
-.. code-block:: bash
-    $ docker build --rm --no-cache -t mdo/ro .
-
-This command creates a minimal image based on the official Python image with the name: _mdo/ro_,
-installs the required Python dependencies listen in `requirement.txt` and sets the entry point.
-
-To create and start a persistent container based on the _mdo/ro_ image, use the following commands:
-
-.. code-block:: bash
-    $ docker create --name escape -p 8008:8008 -p 8888:8888 -it mdo/ro
-    $ docker start -i escape
-
-To create a one-time container, use the following command:
-
-.. code-block:: bash
-    $ docker run --rm -p 8008:8008 -p 8888:8888 -ti escape
-
-Other helper scripts for the dockerization can be found under the ``docker`` folder.
 
 ESCAPE example commands
 =======================
