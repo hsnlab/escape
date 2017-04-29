@@ -1324,7 +1324,7 @@ class NFFGConverter(object):
     elif isinstance(vdata, basestring):
       try:
         self.log.debug("Converting data to graph-based NFFG structure...")
-        virtualizer = virt_lib.Virtualizer().parse_from_text(text=vdata)
+        virtualizer = virt_lib.Virtualizer.parse_from_text(text=vdata)
       except Exception as e:
         self.log.error("Got ParseError during XML->Virtualizer conversion!")
         raise RuntimeError('ParseError: %s' % e.message)
@@ -2132,7 +2132,8 @@ class NFFGConverter(object):
     self._convert_nffg_reqs(virtualizer=virt, nffg=nffg)
     self._convert_nffg_constraints(virtualizer=virt, nffg=nffg)
     # explicitly call bind to resolve absolute paths for safety reason
-    virtualizer.bind(relative=True)
+    virt.bind(relative=True)
+    # virt.bind(relative=True)
     self.log.debug(
       "END adapting modifications from %s into Virtualizer(id=%s, name=%s)" % (
         nffg, virt.id.get_as_text(), virt.name.get_as_text()))
