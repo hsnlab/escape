@@ -3,6 +3,8 @@
 ################################################################################
 FROM python:2.7.13
 MAINTAINER Janos Czentye <czentye@tmit.bme.hu>
+ARG GIT_REVISION=unknown
+LABEL git-revision=$GIT_REVISION    
 LABEL Description="ESCAPE" Project="5GEx" version="2.0.0+"
 WORKDIR /opt/escape
 COPY . ./
