@@ -722,8 +722,8 @@ class NFIBManager(object):
           "in /etc/neo4j/neoj4-server.properties!" % e)
         return self
       except SocketError:
-        log.warning("NFIBManager has not been initialized! "
-                    "Only cause problem if ESCAPE is used as a LO!")
+        log.warning("NFIBManager has not been initialized! Only cause problem "
+                    "if ESCAPE is used as a Local Orchestrator!")
         return self
       self.__initialize()
     except SocketError as e:
