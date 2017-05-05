@@ -1,7 +1,7 @@
-The *ESCAPE.py* top module
-==========================
+*escape* package
+================
 
-.. automodule:: ESCAPE
+.. automodule:: escape
    :members:
    :private-members:
    :special-members:
@@ -10,12 +10,16 @@ The *ESCAPE.py* top module
    :show-inheritance:
 
 Submodules
-++++++++++
+----------
 
 .. toctree::
-    :maxdepth: 1
+    :titlesonly:
 
-    Service Layer (SL) <service>
-    Resource Orchestration Sublayer (ROS) <orchestration>
-    Controller Adaptation Sublayer (CAS) <adaptation>
-    Infrastructure Layer (IL) <infrastructure>
+    service/service
+    orchest/orchest
+    adapt/adapt
+    infr/infr
+    nffg_lib/nffg_lib
+    util/util
+
+
