@@ -189,7 +189,7 @@ class MessageDumper(object):
     date = time.strftime("%Y%m%d%H%M")
     self.__cntr += 1
     file_path = os.path.join(trails,
-                             "%s_%s_%s.log" % (date, self.__cntr, unique))
+                             "%s_%03d_%s.log" % (date, self.__cntr, unique))
     if os.path.exists(file_path):
       log.warning("File path exist! %s" % file_path)
     log.debug("Logging data to file: %s..." % file_path)
