@@ -1826,7 +1826,8 @@ class NFFGConverter(object):
           # Mandatory id
           fe_id = fr.id
           # Define constant priority
-          fe_pri = str(100)
+          # fe_pri = str(100)
+          fe_pri = None
 
           # Check if match starts with in_port
           fe = fr.match.split(';')
