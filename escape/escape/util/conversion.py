@@ -950,7 +950,7 @@ class NFFGConverter(object):
       if vnode.name.is_initialized():  # Optional - node.name
         node_name = vnode.name.get_value()
       else:
-        node_name = "name-" + node_id
+        node_name = None
       node_domain = self.domain  # Set domain as the domain of the Converter
       node_type = vnode.type.get_value()  # Mandatory - virtualizer.type
       # Node-resources params
@@ -1336,7 +1336,7 @@ class NFFGConverter(object):
     if virtualizer.name.is_initialized():  # Optional - virtualizer.name
       nffg_name = virtualizer.name.get_value()
     else:
-      nffg_name = "NFFG-domain-%s" % self.domain
+      nffg_name = None
     self.log.debug("Construct NFFG based on Virtualizer(id=%s, name=%s)" % (
       nffg_id, nffg_name))
     # Create NFFG
