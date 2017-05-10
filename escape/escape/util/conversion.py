@@ -766,6 +766,10 @@ class NFFGConverter(object):
         vport.sap = ext_port
         vport.add_property("domain", ext_domain)
         vport.add_property("node", ext_node)
+        try:
+          ext_port = int(ext_port)
+        except ValueError:
+          pass
         vport.add_property("port", ext_port)
         fr_match += vport_id
         self.log.debug("Added external in port: %s" % vport)
@@ -812,6 +816,10 @@ class NFFGConverter(object):
         ext_vport.sap = ext_port
         ext_vport.add_property("domain", ext_domain)
         ext_vport.add_property("node", ext_node)
+        try:
+          ext_port = int(ext_port)
+        except ValueError:
+          pass
         ext_vport.add_property("port", ext_port)
         fr_action += ext_port_id
         self.log.debug("Added external out port: %s" % ext_vport)
