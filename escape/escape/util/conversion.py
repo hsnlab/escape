@@ -17,6 +17,7 @@ Contains helper classes for conversion between different NF-FG representations.
 """
 import json
 import logging
+import re
 import string
 import sys
 
@@ -708,6 +709,19 @@ class NFFGConverter(object):
         self.log.debug("Added dynamic VNF-Infra connection: %s" % l1)
         self.log.debug("Added dynamic Infra-VNF connection: %s" % l2)
 
+  @staticmethod
+  def __parse_external_port (flowentry):
+    """
+    
+    :param flowentry: 
+    :return: 
+    """
+    res = re.match(r"(.*)://.*node\[id=(.*?)\].*port\[id=(.*?)\].*", flowentry)
+    if len(res.groups()) != 3:
+      log.error("Missing id from external flowrule: %s" % flowentry)
+      return None, None, None
+    return res.groups()
+
   def _parse_virtualizer_node_flowentries (self, nffg, infra, vnode):
     """
     Parse FlowEntries from a Virtualizer Node into an :any:`InfraPort`.
@@ -722,57 +736,107 @@ class NFFGConverter(object):
     """
     # Create Flowrules
     for flowentry in vnode.flowtable:
+      vport = vport_id = None
+      fr_external = False
       fr_id = flowentry.id.get_value()  # Mandatory flowentry.id
       try:
         fr_id = int(fr_id)
       except ValueError:
         self.log.error("Parsed flowentry id is not valid integer!")
         continue
-      # e.g. in_port=1(;TAG=SAP1|comp|1)
-      try:
-        v_fe_port = flowentry.port.get_target()
-      except:
-        self.log.exception("Got unexpected exception during acquisition of IN "
-                           "Port in Flowentry: %s!" % flowentry.xml())
-        continue
-      fr_match = "in_port="
-      # Check if src port is a VNF port --> create the tagged port name
-      if "NF_instances" in flowentry.port.get_as_text():
-        v_src_nf = v_fe_port.get_parent().get_parent()
-        v_src_node = v_src_nf.get_parent().get_parent()
-        # Add domain name to the node id if unique_id is set
-        if self.ensure_unique_id:
-          src_node = self.generate_unique_id(id=v_src_node.id.get_value())
-        else:
-          src_node = v_src_node.id.get_as_text()
-        fr_match += self.LABEL_DELIMITER.join((src_node,
-                                               v_src_nf.id.get_as_text(),
-                                               v_fe_port.id.get_as_text()))
-      else:
-        # Else just Infra port --> add only the port number
-        fr_match += v_fe_port.id.get_as_text()
 
-      try:
-        v_fe_out = flowentry.out.get_target()
-      except:
-        self.log.exception("Got unexpected exception during acquisition of OUT "
-                           "Port in Flowentry: %s!" % flowentry.xml())
-        continue
-      fr_action = "output="
-      # Check if dst port is a VNF port --> create the tagged port name
-      if "NF_instances" in flowentry.out.get_as_text():
-        v_dst_nf = v_fe_out.get_parent().get_parent()
-        v_dst_node = v_dst_nf.get_parent().get_parent()
+      # e.g. in_port=1(;TAG=SAP1|comp|1)
+      fr_match = "in_port="
+      # Check if the in port is an external port (that does not exist)
+      if "://" in flowentry.port.get_as_text():
+        self.log.debug("Detected external in port reference: %s"
+                       % flowentry.out.get_as_text())
+        # Mark flowrule as external so SG recreation can skip it
+        fr_external = True
+        ext_domain, ext_node, ext_port = self.__parse_external_port(
+          flowentry.port.get_value())
+        vport_id = "%s:%s@%s" % (ext_node, ext_port, ext_domain)
         if self.ensure_unique_id:
-          dst_node = self.generate_unique_id(id=v_dst_node.id.get_value())
+          bb_node = nffg[self.generate_unique_id(id=vnode.id.get_value())]
         else:
-          dst_node = v_dst_node.id.get_as_text()
-        fr_action += self.LABEL_DELIMITER.join((dst_node,
-                                                v_dst_nf.id.get_as_text(),
-                                                v_fe_out.id.get_as_text()))
+          bb_node = nffg[vnode.id.get_value()]
+        vport = bb_node.add_port(id=vport_id)
+        # Mark dynamic port as external for later processing
+        vport.role  = "EXTERNAL"
+        vport.sap = ext_port
+        vport.add_property("domain", ext_domain)
+        vport.add_property("node", ext_node)
+        vport.add_property("port", ext_port)
+        fr_match += vport_id
+        self.log.debug("Added external in port: %s" % vport)
       else:
-        # Else just Infra port --> add only the port number
-        fr_action += v_fe_out.id.get_as_text()
+        try:
+          v_fe_port = flowentry.port.get_target()
+        except:
+          self.log.exception("Got unexpected exception during acquisition of "
+                             "IN Port in Flowentry: %s!" % flowentry.xml())
+          continue
+        # Check if src port is a VNF port --> create the tagged port name
+        if "NF_instances" in flowentry.port.get_as_text():
+          v_src_nf = v_fe_port.get_parent().get_parent()
+          v_src_node = v_src_nf.get_parent().get_parent()
+          # Add domain name to the node id if unique_id is set
+          if self.ensure_unique_id:
+            src_node = self.generate_unique_id(id=v_src_node.id.get_value())
+          else:
+            src_node = v_src_node.id.get_as_text()
+          fr_match += self.LABEL_DELIMITER.join((src_node,
+                                                 v_src_nf.id.get_as_text(),
+                                                 v_fe_port.id.get_as_text()))
+        else:
+          # Else just Infra port --> add only the port number
+          fr_match += v_fe_port.id.get_as_text()
+
+      # Pre-check target-less dst port flowrule
+      fr_action = "output="
+      if "://" in flowentry.out.get_as_text():
+        self.log.debug("Detected external out port reference: %s"
+                       % flowentry.out.get_as_text())
+        # Mark flowrule as external so SG recreation can skip it
+        fr_external = True
+        ext_domain, ext_node, ext_port = self.__parse_external_port(
+          flowentry.out.get_value())
+        ext_port_id = "%s:%s@%s" % (ext_node, ext_port, ext_domain)
+        if self.ensure_unique_id:
+          bb_node = nffg[self.generate_unique_id(id=vnode.id.get_value())]
+        else:
+          bb_node = nffg[vnode.id.get_value()]
+        ext_vport = bb_node.add_port(id=ext_port_id)
+        # Mark dynamic port as external for later processing
+        ext_vport.role = "EXTERNAL"
+        ext_vport.sap = ext_port
+        ext_vport.add_property("domain", ext_domain)
+        ext_vport.add_property("node", ext_node)
+        ext_vport.add_property("port", ext_port)
+        fr_action += ext_port_id
+        self.log.debug("Added external out port: %s" % ext_vport)
+      else:
+        try:
+          v_fe_out = flowentry.out.get_target()
+        except:
+          self.log.exception(
+            "Got unexpected exception during acquisition of OUT "
+            "Port in Flowentry: %s!" % flowentry.xml())
+          continue
+        # Check if dst port is a VNF port --> create the tagged port name
+        if "NF_instances" in flowentry.out.get_as_text():
+          v_dst_nf = v_fe_out.get_parent().get_parent()
+          v_dst_node = v_dst_nf.get_parent().get_parent()
+          if self.ensure_unique_id:
+            dst_node = self.generate_unique_id(id=v_dst_node.id.get_value())
+          else:
+            dst_node = v_dst_node.id.get_as_text()
+          fr_action += self.LABEL_DELIMITER.join((dst_node,
+                                                  v_dst_nf.id.get_as_text(),
+                                                  v_fe_out.id.get_as_text()))
+        else:
+          # Else just Infra port --> add only the port number
+          fr_action += v_fe_out.id.get_as_text()
 
       # Check if there is a matching operation -> currently just TAG is used
       if flowentry.match.is_initialized() and flowentry.match.get_value():
@@ -867,36 +931,38 @@ class NFFGConverter(object):
             fr_action += ";%s" % op
 
       # Get the src (port where fr need to store) and dst port id
-      try:
-        vport_id = int(v_fe_port.id.get_value())
-      except ValueError:
-        vport_id = v_fe_port.id.get_value()
+      if vport_id is None:
+        try:
+          vport_id = int(v_fe_port.id.get_value())
+        except ValueError:
+          vport_id = v_fe_port.id.get_value()
 
       # Get port from NFFG in which need to store the fr
-      try:
-        # If the port is an Infra port
-        if "NF_instances" not in flowentry.port.get_as_text():
-          vport = nffg[infra.id].ports[vport_id]
-        # If the port is a VNF port -> get the dynamic port in the Infra
-        else:
-          _vnf_id = v_fe_port.get_parent().get_parent().id.get_value()
-          _dyn_port = [l.dst.id for u, v, l in
-                       nffg.network.edges_iter([_vnf_id], data=True) if
-                       l.type == NFFG.TYPE_LINK_DYNAMIC and str(l.src.id) ==
-                       str(vport_id)]
-          if len(_dyn_port) > 1:
-            self.log.warning("Multiple dynamic link detected for NF(id: %s) "
-                             "Use first link ..." % _vnf_id)
-          elif len(_dyn_port) < 1:
-            raise RuntimeError("Missing infra-vnf dynamic link for vnf: %s" %
-                               _vnf_id)
-          # Get dynamic port from infra
-          vport = nffg[infra.id].ports[_dyn_port[0]]
-      except RuntimeError as e:
-        self.log.error("Port: %s is not found in the NFFG: "
-                       "%s from the flowrule:\n%s" %
-                       (vport_id, e.message, flowentry))
-        continue
+      if vport is None:
+        try:
+          # If the port is an Infra port
+          if "NF_instances" not in flowentry.port.get_as_text():
+            vport = nffg[infra.id].ports[vport_id]
+          # If the port is a VNF port -> get the dynamic port in the Infra
+          else:
+            _vnf_id = v_fe_port.get_parent().get_parent().id.get_value()
+            _dyn_port = [l.dst.id for u, v, l in
+                         nffg.network.edges_iter([_vnf_id], data=True) if
+                         l.type == NFFG.TYPE_LINK_DYNAMIC and str(l.src.id) ==
+                         str(vport_id)]
+            if len(_dyn_port) > 1:
+              self.log.warning("Multiple dynamic link detected for NF(id: %s) "
+                               "Use first link ..." % _vnf_id)
+            elif len(_dyn_port) < 1:
+              raise RuntimeError("Missing infra-vnf dynamic link for vnf: %s" %
+                                 _vnf_id)
+            # Get dynamic port from infra
+            vport = nffg[infra.id].ports[_dyn_port[0]]
+        except RuntimeError as e:
+          self.log.error("Port: %s is not found in the NFFG: "
+                         "%s from the flowrule:\n%s" %
+                         (vport_id, e.message, flowentry))
+          continue
 
       # Get resource values
       if flowentry.resources.is_initialized():
@@ -919,7 +985,8 @@ class NFFGConverter(object):
 
       # Add flowrule to port
       fr = vport.add_flowrule(id=fr_id, match=fr_match, action=fr_action,
-                              bandwidth=fr_bw, delay=fr_delay)
+                              bandwidth=fr_bw, delay=fr_delay,
+                              external=fr_external)
 
       # Handle operation tag
       if flowentry.get_operation() is not None:

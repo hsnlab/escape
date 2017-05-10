@@ -989,7 +989,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         full_cfg = self.__recreate_full_request(diff=received_cfg)
       else:
         full_cfg = received_cfg
-      self.log.log(VERBOSE, "Generated request:\n%s" % full_cfg.xml())
+      self.log.log(VERBOSE, "Received full request:\n%s" % full_cfg.xml())
       # Convert response's body to NFFG
       self.log.info("Converting full request data...")
       converter = NFFGConverter(domain="REMOTE", logger=log)
