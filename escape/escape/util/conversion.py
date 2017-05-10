@@ -329,7 +329,7 @@ class NFFGConverter(object):
           # layer
           sap_port.add_property("type", "inter-domain")
           sap_port.add_property("sap", vport.sap.get_value())
-          sap_port.sap = vport.sap.get_value()
+          sap_port.sap = str(vport.sap.get_value())
 
         # Create and add the port of the opposite Infra node
         try:

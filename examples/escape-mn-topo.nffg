@@ -11,6 +11,7 @@
       "ports": [
         {
           "id": 1,
+          "sap": "SAP14",
           "sap_data": {
             "resources": {
               "delay": 2.5,
@@ -87,6 +88,7 @@
         },
         {
           "id": 4,
+          "sap": "SAP14",
           "property": {
             "type": "inter-domain"
           }

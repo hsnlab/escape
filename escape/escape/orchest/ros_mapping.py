@@ -113,6 +113,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       log.error("Missing resource NFFG! Abort mapping process...")
       return
     try:
+      # Run pre-mapping step to resolve target-less flowrules
+      cls._resolve_external_ports(graph, resource)
       # Copy mapping config
       mapper_params = CONFIG.get_mapping_config(layer=cls.LAYER_NAME).copy()
       if 'mode' in mapper_params and mapper_params['mode']:
@@ -155,6 +157,42 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     except:
       log.exception("Got unexpected error during mapping process!")
 
+  @classmethod
+  def _resolve_external_ports (cls, graph, resource):
+    log.debug("Resolving optional target-less flowrules...")
+    for infra in graph.infras:
+      for port in infra.ports:
+          if port.role == "EXTERNAL":
+            if not str(port.id).upper().startswith("SAP"):
+              log.warning("External port: %s is probably not a SAP port! "
+                          "Skip SAP recreation..." % port.id)
+              continue
+            log.debug("Detected external port: %s" % port)
+            # Add SAP baser on external port
+            ext_sap = graph.add_sap(id=port.id)
+            ext_sap_port = ext_sap.add_port(id=port.id)
+            ext_sap_port.sap = port.sap
+            ext_sap_port.role = port.role
+            ext_sap_port.properties.update(port.properties)
+            graph.add_undirected_link(port1=port, port2=ext_sap_port)
+            log.debug("Created external SAP: %s" % ext_sap)
+            # Add ext SAP to resource graph as well
+            res_sap = ext_sap.copy()
+            res_sap_port = res_sap.ports.container[0]
+            bb_node = resource[res_sap_port.properties["node"]]
+            bb_node_port = None
+            for p in bb_node.ports:
+              if p.sap == res_sap_port.properties["port"]:
+                bb_node_port = p
+                break
+            if not bb_node_port:
+              log.error("Resource port(SAP: %s) is not found in: %s"
+                        % (res_sap_port.properties["port"], bb_node.id))
+              continue
+            resource.add_sap(sap_obj=res_sap)
+            resource.add_undirected_link(port1=bb_node_port, port2=res_sap_port)
+            log.debug("Created external resource SAP: %s" % res_sap)
+    print graph.dump()
 
 class NFFGMappingFinishedEvent(Event):
   """
