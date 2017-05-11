@@ -186,22 +186,28 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
         else:
           log.debug("Detected SAP tag: %s for external port: %s" % (bb_port.sap,
                                                                     bb_port_id))
-        # Add ext SAP based on external port to resource graph
+        # Update SAP tag in request from resource port
+        port.sap = bb_port.sap
+        log.debug("Updated external SAP tag: %s" % port.sap)
+        # Add ext SAP/SAP port/BB port based on external port to resource graph
         res_sap = resource.add_sap(id=port.id)
         res_sap_port = res_sap.add_port(id=port.id)
         res_sap_port.sap = bb_port.sap
         res_sap_port.role = port.role
         res_sap_port.properties.update(port.properties)
-        resource.add_undirected_link(port1=bb_port, port2=res_sap_port)
+        res_port = bb_node.add_port(id=port.id)
+        res_port.sap = bb_port.sap
+        res_port.role = port.role
+        res_port.properties.update(port.properties)
+        resource.add_undirected_link(port1=res_port, port2=res_sap_port)
         log.debug("Created external resource SAP: %s" % res_sap)
-        # Add SAP to request as well
+        # Update SAP port in request as well
         ext_sap = graph[res_sap.id]
         ext_sap_port = ext_sap.ports.container[0]
         ext_sap_port.sap = res_sap_port.sap
         ext_sap_port.role = res_sap_port.role
         ext_sap_port.properties.update(res_sap_port.properties)
         log.debug("Updated external SAP: %s" % ext_sap)
-    print graph.dump()
 
 
 class NFFGMappingFinishedEvent(Event):
