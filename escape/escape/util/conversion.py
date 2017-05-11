@@ -760,24 +760,38 @@ class NFFGConverter(object):
           bb_node = nffg[self.generate_unique_id(id=vnode.id.get_value())]
         else:
           bb_node = nffg[vnode.id.get_value()]
-        vport = bb_node.add_port(id=vport_id)
-        # Mark dynamic port as external for later processing
-        try:
-          ext_port = int(ext_port)
-        except ValueError:
-          pass
-        vport.role  = "EXTERNAL"
-        vport.add_property("domain", ext_domain)
-        vport.add_property("node", ext_node)
-        vport.add_property("port", ext_port)
+        if vport_id in bb_node.ports:
+          self.log.debug("External port: %s already exits! Skip creating..."
+                    % vport_id)
+          vport = bb_node.ports[vport_id]
+        else:
+          vport = bb_node.add_port(id=vport_id)
+          self.log.debug("Added external in port: %s" % vport)
+          # Mark dynamic port as external for later processing
+          try:
+            ext_port = int(ext_port)
+          except ValueError:
+            pass
+          vport.role = "EXTERNAL"
+          vport.add_property("domain", ext_domain)
+          vport.add_property("node", ext_node)
+          vport.add_property("port", ext_port)
         fr_match += vport_id
-        self.log.debug("Added external in port: %s" % vport)
         # Add SAP to request
-        ext_sap = nffg.add_sap(id=vport_id)
-        ext_sap_port = ext_sap.add_port(id=vport_id)
-        ext_sap_port.role = "EXTERNAL"
-        nffg.add_undirected_link(port1=vport, port2=ext_sap_port)
-        log.debug("Created external SAP: %s" % ext_sap)
+        if vport_id in nffg and vport_id in nffg[vport_id].ports:
+          # SAP with port already exist
+          if nffg[vport_id].ports[vport_id].role != "EXTERNAL":
+            self.log.error("SAP: %s already exists but it is not an external "
+                           "SAP!" % nffg[vport_id].ports[vport_id])
+          else:
+            self.log.debug("External SAP: %s already exists! Skip creation..."
+                           % nffg[vport_id].ports[vport_id])
+        else:
+          ext_sap = nffg.add_sap(id=vport_id)
+          ext_sap_port = ext_sap.add_port(id=vport_id)
+          ext_sap_port.role = "EXTERNAL"
+          nffg.add_undirected_link(port1=vport, port2=ext_sap_port)
+          self.log.debug("Created external SAP: %s" % ext_sap)
       else:
         try:
           v_fe_port = flowentry.port.get_target()
@@ -815,25 +829,39 @@ class NFFGConverter(object):
           bb_node = nffg[self.generate_unique_id(id=vnode.id.get_value())]
         else:
           bb_node = nffg[vnode.id.get_value()]
-        ext_vport = bb_node.add_port(id=ext_port_id)
-        # Mark dynamic port as external for later processing
-        try:
-          ext_port = int(ext_port)
-        except ValueError:
-          pass
-        ext_vport.role = "EXTERNAL"
-        # ext_vport.sap = ext_port
-        ext_vport.add_property("domain", ext_domain)
-        ext_vport.add_property("node", ext_node)
-        ext_vport.add_property("port", ext_port)
+        if ext_port_id in bb_node.ports:
+          self.log.debug("External port: %s already exits! Skip creatiing..." %
+                         ext_port_id)
+          ext_vport = bb_node.ports[ext_port_id]
+        else:
+          ext_vport = bb_node.add_port(id=ext_port_id)
+          self.log.debug("Added external out port: %s" % ext_vport)
+          # Mark dynamic port as external for later processing
+          try:
+            ext_port = int(ext_port)
+          except ValueError:
+            pass
+          ext_vport.role = "EXTERNAL"
+          # ext_vport.sap = ext_port
+          ext_vport.add_property("domain", ext_domain)
+          ext_vport.add_property("node", ext_node)
+          ext_vport.add_property("port", ext_port)
         fr_action += ext_port_id
-        self.log.debug("Added external out port: %s" % ext_vport)
         # Add SAP to request
-        ext_sap = nffg.add_sap(id=ext_port_id)
-        ext_sap_port = ext_sap.add_port(id=ext_port_id)
-        ext_sap_port.role = "EXTERNAL"
-        nffg.add_undirected_link(port1=ext_vport, port2=ext_sap_port)
-        self.log.debug("Created external SAP: %s" % ext_sap)
+        if ext_port_id in nffg and ext_port_id in nffg[ext_port_id].ports:
+          # SAP with port already exist
+          if nffg[ext_port_id].ports[ext_port_id].role != "EXTERNAL":
+            self.log.error("SAP: %s already exists but it is not an external "
+                           "SAP!" % nffg[ext_port_id].ports[ext_port_id])
+          else:
+            self.log.debug("External SAP: %s already exists! Skip creating..."
+                      % nffg[ext_port_id].ports[ext_port_id])
+        else:
+          ext_sap = nffg.add_sap(id=ext_port_id)
+          ext_sap_port = ext_sap.add_port(id=ext_port_id)
+          ext_sap_port.role = "EXTERNAL"
+          nffg.add_undirected_link(port1=ext_vport, port2=ext_sap_port)
+          self.log.debug("Created external SAP: %s" % ext_sap)
       else:
         try:
           v_fe_out = flowentry.out.get_target()
