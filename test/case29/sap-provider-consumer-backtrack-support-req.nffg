@@ -1,0 +1,428 @@
+{
+  "parameters": {
+    "id": "20170405-130323", 
+    "name": "Single-BiSBiS-View", 
+    "service_id": "SingleBiSBiS", 
+    "version": "1.0", 
+    "mode": "ADD"
+  }, 
+  "node_nfs": [
+    {
+      "id": "2-PIDHELPER10__3090", 
+      "name": "2-PIDHELPER10__3090", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2, 
+          "sap": "PIDSAP", 
+          "sap_data": {
+            "role": "consumer"
+          }
+        }
+      ], 
+      "constraints": {
+        "antiaffinity": {
+          "1": "2-PIDHELPER20__3090"
+        }
+      }, 
+      "functional_type": "fe2sap", 
+      "specification": {
+        "resources": {
+          "cpu": 1.0, 
+          "mem": 1.0, 
+          "storage": 0.0
+        }
+      }
+    }, 
+    {
+      "id": "2-PIDHELPER20__3090", 
+      "name": "2-PIDHELPER20__3090", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2, 
+          "sap": "PIDSAP", 
+          "sap_data": {
+            "role": "consumer"
+          }
+        }
+      ], 
+      "constraints": {
+        "antiaffinity": {
+          "1": "2-PIDHELPER10__3090"
+        }
+      }, 
+      "functional_type": "fe2sap", 
+      "specification": {
+        "resources": {
+          "cpu": 1.0, 
+          "mem": 1.0, 
+          "storage": 0.0
+        }
+      }
+    }, 
+    {
+      "id": "2-SPLITTER0__3090", 
+      "name": "2-SPLITTER0__3090", 
+      "ports": [
+        {
+          "id": 1
+        }, 
+        {
+          "id": 2
+        }, 
+        {
+          "id": 3
+        }
+      ], 
+      "functional_type": "splitter", 
+      "specification": {
+        "resources": {
+          "cpu": 1.0, 
+          "mem": 1.0, 
+          "storage": 0.0
+        }
+      }
+    }
+  ], 
+  "node_saps": [
+    {
+      "id": "SAPgreen", 
+      "name": "SAPgreen", 
+      "ports": [
+        {
+          "id": "port-SAPgreen", 
+          "name": "SAPgreen"
+        }
+      ]
+    }, 
+    {
+      "id": "SAPred", 
+      "name": "SAPred", 
+      "ports": [
+        {
+          "id": "port-SAPred", 
+          "name": "SAPred"
+        }
+      ]
+    }, 
+    {
+      "id": "SAPblue", 
+      "name": "SAPblue", 
+      "ports": [
+        {
+          "id": "port-SAPblue", 
+          "name": "SAPblue"
+        }
+      ]
+    }
+  ], 
+  "node_infras": [
+    {
+      "id": "SingleBiSBiS", 
+      "name": "SingleBiSBiS", 
+      "ports": [
+        {
+          "id": "port-SAPblue", 
+          "name": "SAPblue"
+        }, 
+        {
+          "id": "port-SAPgreen", 
+          "name": "SAPgreen"
+        }, 
+        {
+          "id": "port-SAPred", 
+          "name": "SAPred", 
+          "flowrules": [
+            {
+              "id": 11976, 
+              "match": "in_port=port-SAPred;flowclass=dl_src=bc:ee:7b:e6:8c:08,dl_type=0x0800,nw_dst=192.168.1.156", 
+              "action": "output=SingleBiSBiS|2-SPLITTER0__3090|1"
+            }
+          ]
+        }, 
+        {
+          "id": "SingleBiSBiS|1-PID13__3090|1"
+        }, 
+        {
+          "id": "SingleBiSBiS|1-PID23__3090|1"
+        }, 
+        {
+          "id": "SingleBiSBiS|1-SPLITTER3__3090|1"
+        }, 
+        {
+          "id": "SingleBiSBiS|1-SPLITTER3__3090|2"
+        }, 
+        {
+          "id": "SingleBiSBiS|1-SPLITTER3__3090|3"
+        }, 
+        {
+          "id": "SingleBiSBiS|2-PIDHELPER10__3090|1"
+        }, 
+        {
+          "id": "SingleBiSBiS|2-PIDHELPER10__3090|2", 
+          "flowrules": [
+            {
+              "id": 9204, 
+              "match": "in_port=SingleBiSBiS|2-PIDHELPER10__3090|2;flowclass=dl_dst=bc:ee:7b:e6:8c:08", 
+              "action": "output=port-SAPred", 
+              "delay": 9.0
+            }
+          ]
+        }, 
+        {
+          "id": "SingleBiSBiS|2-PIDHELPER20__3090|1"
+        }, 
+        {
+          "id": "SingleBiSBiS|2-PIDHELPER20__3090|2", 
+          "flowrules": [
+            {
+              "id": 8478, 
+              "match": "in_port=SingleBiSBiS|2-PIDHELPER20__3090|2;flowclass=dl_dst=bc:ee:7b:e6:8c:08", 
+              "action": "output=port-SAPred", 
+              "delay": 50.0
+            }
+          ]
+        }, 
+        {
+          "id": "SingleBiSBiS|2-SPLITTER0__3090|1"
+        }, 
+        {
+          "id": "SingleBiSBiS|2-SPLITTER0__3090|2", 
+          "flowrules": [
+            {
+              "id": 12306, 
+              "match": "in_port=SingleBiSBiS|2-SPLITTER0__3090|2", 
+              "action": "output=SingleBiSBiS|2-PIDHELPER10__3090|1"
+            }
+          ]
+        }, 
+        {
+          "id": "SingleBiSBiS|2-SPLITTER0__3090|3", 
+          "flowrules": [
+            {
+              "id": 17231, 
+              "match": "in_port=SingleBiSBiS|2-SPLITTER0__3090|3", 
+              "action": "output=SingleBiSBiS|2-PIDHELPER20__3090|1"
+            }
+          ]
+        }
+      ], 
+      "domain": "REMOTE", 
+      "type": "BiSBiS", 
+      "supported": [
+        "balance_color_vision", 
+        "balance_color_vision:latest", 
+        "balance_server:latest", 
+        "dpi", 
+        "fe2sap", 
+        "splitter", 
+        "webserver"
+      ], 
+      "resources": {
+        "cpu": 62.0, 
+        "mem": 152163258368.0, 
+        "storage": 75030446056.0, 
+        "delay": 0.0
+      }
+    }
+  ], 
+  "edge_links": [
+    {
+      "id": "SAPgreen-SingleBiSBiS-link", 
+      "src_node": "SAPgreen", 
+      "src_port": "port-SAPgreen", 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "port-SAPgreen"
+    }, 
+    {
+      "id": "SAPred-SingleBiSBiS-link", 
+      "src_node": "SAPred", 
+      "src_port": "port-SAPred", 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "port-SAPred"
+    }, 
+    {
+      "id": "SAPgreen-SingleBiSBiS-link-back", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "port-SAPgreen", 
+      "dst_node": "SAPgreen", 
+      "dst_port": "port-SAPgreen", 
+      "backward": true
+    }, 
+    {
+      "id": "SAPred-SingleBiSBiS-link-back", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "port-SAPred", 
+      "dst_node": "SAPred", 
+      "dst_port": "port-SAPred", 
+      "backward": true
+    }, 
+    {
+      "id": "SAPblue-SingleBiSBiS-link-back", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "port-SAPblue", 
+      "dst_node": "SAPblue", 
+      "dst_port": "port-SAPblue", 
+      "backward": true
+    }, 
+    {
+      "id": "7ca40831-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "SingleBiSBiS|2-PIDHELPER10__3090|1", 
+      "dst_node": "2-PIDHELPER10__3090", 
+      "dst_port": 1, 
+      "backward": true
+    }, 
+    {
+      "id": "7ca40833-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "SingleBiSBiS|2-PIDHELPER10__3090|2", 
+      "dst_node": "2-PIDHELPER10__3090", 
+      "dst_port": 2, 
+      "backward": true
+    }, 
+    {
+      "id": "7ca40837-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "SingleBiSBiS|2-PIDHELPER20__3090|2", 
+      "dst_node": "2-PIDHELPER20__3090", 
+      "dst_port": 2, 
+      "backward": true
+    }, 
+    {
+      "id": "7ca40835-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "SingleBiSBiS|2-PIDHELPER20__3090|1", 
+      "dst_node": "2-PIDHELPER20__3090", 
+      "dst_port": 1, 
+      "backward": true
+    }, 
+    {
+      "id": "7ca40839-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "SingleBiSBiS|2-SPLITTER0__3090|1", 
+      "dst_node": "2-SPLITTER0__3090", 
+      "dst_port": 1, 
+      "backward": true
+    }, 
+    {
+      "id": "7ca4083d-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "SingleBiSBiS|2-SPLITTER0__3090|3", 
+      "dst_node": "2-SPLITTER0__3090", 
+      "dst_port": 3, 
+      "backward": true
+    }, 
+    {
+      "id": "7ca4083b-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "SingleBiSBiS", 
+      "src_port": "SingleBiSBiS|2-SPLITTER0__3090|2", 
+      "dst_node": "2-SPLITTER0__3090", 
+      "dst_port": 2, 
+      "backward": true
+    }, 
+    {
+      "id": "SAPblue-SingleBiSBiS-link", 
+      "src_node": "SAPblue", 
+      "src_port": "port-SAPblue", 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "port-SAPblue"
+    }, 
+    {
+      "id": "7ca40832-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "2-PIDHELPER10__3090", 
+      "src_port": 2, 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "SingleBiSBiS|2-PIDHELPER10__3090|2"
+    }, 
+    {
+      "id": "7ca40830-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "2-PIDHELPER10__3090", 
+      "src_port": 1, 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "SingleBiSBiS|2-PIDHELPER10__3090|1"
+    }, 
+    {
+      "id": "7ca40834-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "2-PIDHELPER20__3090", 
+      "src_port": 1, 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "SingleBiSBiS|2-PIDHELPER20__3090|1"
+    }, 
+    {
+      "id": "7ca40836-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "2-PIDHELPER20__3090", 
+      "src_port": 2, 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "SingleBiSBiS|2-PIDHELPER20__3090|2"
+    }, 
+    {
+      "id": "7ca4083a-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "2-SPLITTER0__3090", 
+      "src_port": 2, 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "SingleBiSBiS|2-SPLITTER0__3090|2"
+    }, 
+    {
+      "id": "7ca40838-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "2-SPLITTER0__3090", 
+      "src_port": 1, 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "SingleBiSBiS|2-SPLITTER0__3090|1"
+    }, 
+    {
+      "id": "7ca4083c-19ef-11e7-8c57-1002b584f43b", 
+      "src_node": "2-SPLITTER0__3090", 
+      "src_port": 3, 
+      "dst_node": "SingleBiSBiS", 
+      "dst_port": "SingleBiSBiS|2-SPLITTER0__3090|3"
+    }
+  ], 
+  "edge_sg_nexthops": [
+    {
+      "id": 11976, 
+      "src_node": "SAPred", 
+      "src_port": "port-SAPred", 
+      "dst_node": "2-SPLITTER0__3090", 
+      "dst_port": 1, 
+      "flowclass": "dl_src=bc:ee:7b:e6:8c:08,dl_type=0x0800,nw_dst=192.168.1.156"
+    }, 
+    {
+      "id": 9204, 
+      "src_node": "2-PIDHELPER10__3090", 
+      "src_port": 2, 
+      "dst_node": "SAPred", 
+      "dst_port": "port-SAPred", 
+      "flowclass": "dl_dst=bc:ee:7b:e6:8c:08", 
+      "delay": 9.0
+    }, 
+    {
+      "id": 8478, 
+      "src_node": "2-PIDHELPER20__3090", 
+      "src_port": 2, 
+      "dst_node": "SAPred", 
+      "dst_port": "port-SAPred", 
+      "flowclass": "dl_dst=bc:ee:7b:e6:8c:08", 
+      "delay": 50.0
+    }, 
+    {
+      "id": 12306, 
+      "src_node": "2-SPLITTER0__3090", 
+      "src_port": 2, 
+      "dst_node": "2-PIDHELPER10__3090", 
+      "dst_port": 1
+    }, 
+    {
+      "id": 17231, 
+      "src_node": "2-SPLITTER0__3090", 
+      "src_port": 3, 
+      "dst_node": "2-PIDHELPER20__3090", 
+      "dst_port": 1
+    }
+  ]
+}
