@@ -8,6 +8,7 @@ LABEL git-revision=$GIT_REVISION
 LABEL Description="ESCAPE" Project="5GEx" version="2.0.0+"
 WORKDIR /opt/escape
 COPY . ./
+RUN apt-get install git
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 EXPOSE 8008 8888
 ENV PYTHONUNBUFFERED 1

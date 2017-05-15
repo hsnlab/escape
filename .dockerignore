@@ -1,5 +1,6 @@
 # Ignore git files
-**/.git*
+# Add .git folder to be able to use git describe command for versioning
+#**/.git*
 # Ignore all the non-required codes, tools and packages for mininal ESCAPE in MdO
 Jenkinsfile
 OpenYuma
