@@ -1551,10 +1551,10 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       callback.data = self.topoAdapter.get_topology_resource()
     else:
       self.log.debug("Use splitted NFFG part to update DoV...")
-      self.raiseEventNoErrors(event=event_class,
-                              domain=self.domain_name,
-                              status=event_class.STATUS_OK,
-                              callback=callback)
+    self.raiseEventNoErrors(event=event_class,
+                            domain=self.domain_name,
+                            status=event_class.STATUS_OK,
+                            callback=callback)
     self.log.debug("Callback hook (edit-config) ended with callback id: %s" %
                    callback.callback_id)
 
