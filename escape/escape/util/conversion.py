@@ -1569,8 +1569,10 @@ class NFFGConverter(object):
         # There are valid port-pairs
         for i, port_pair in enumerate(combinations(
            (p.id.get_value() for p in v_node.ports), 2)):
+          link_id = "link-%s-%s" % (v_node.ports[port_pair[0]].id.get_value(),
+                               v_node.ports[port_pair[1]].id.get_value())
           # Create link
-          v_link = virt_lib.Link(id="resource-link%s" % i,
+          v_link = virt_lib.Link(id=link_id,
                                  src=v_node.ports[port_pair[0]],
                                  dst=v_node.ports[port_pair[1]],
                                  resources=virt_lib.Link_resource(
