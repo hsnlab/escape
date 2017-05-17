@@ -531,7 +531,7 @@ class ControllerAdapter(object):
     # Stop initiated DomainManagers
     self.domains.stop_initiated_mgrs()
 
-  def install_nffg (self, mapped_nffg):
+  def install_nffg (self, mapped_nffg, original_request=None):
     """
     Start NF-FG installation.
 

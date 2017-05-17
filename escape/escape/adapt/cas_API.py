@@ -138,10 +138,11 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.getChild('API').info("Received mapped NF-FG: %s from %s Layer" % (
       event.mapped_nffg, str(event.source._core_name).title()))
-    self.__proceed_installation(mapped_nffg=event.mapped_nffg)
+    self.__proceed_installation(mapped_nffg=event.mapped_nffg,
+                                original_request=event.original_request)
 
   @schedule_as_coop_task
-  def __proceed_installation (self, mapped_nffg):
+  def __proceed_installation (self, mapped_nffg, original_request=None):
     """
     Helper function to instantiate the NFFG mapping from different source.
 
@@ -152,7 +153,8 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, mapped_nffg))
     try:
-      deploy_status = self.controller_adapter.install_nffg(mapped_nffg)
+      deploy_status = self.controller_adapter.install_nffg(mapped_nffg,
+                                                           original_request)
     except Exception:
       log.error("Something went wrong during NFFG installation!")
       self.raiseEventNoErrors(InstallationFinishedEvent,

@@ -33,8 +33,7 @@ from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import ProcessorError
-from escape.util.misc import VERBOSE, schedule_as_coop_task, \
-  notify_remote_visualizer, quit_with_error
+from escape.util.misc import VERBOSE, schedule_as_coop_task, quit_with_error
 from pox.lib.revent.revent import Event
 from virtualizer import Virtualizer
 from virtualizer_info import Info
@@ -47,7 +46,7 @@ class InstallNFFGEvent(Event):
   Adaptation Sublayer.
   """
 
-  def __init__ (self, mapped_nffg):
+  def __init__ (self, mapped_nffg, original_request=None):
     """
     Init
 
@@ -57,6 +56,7 @@ class InstallNFFGEvent(Event):
     """
     super(InstallNFFGEvent, self).__init__()
     self.mapped_nffg = mapped_nffg
+    self.original_request = original_request
 
 
 class VirtResInfoEvent(Event):
@@ -570,9 +570,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.getChild('API').debug("Invoked instantiate_nffg on %s is finished!" %
                                 self.__class__.__name__)
       # If mapping is not threaded and finished with OK
-      if mapped_nffg is not None and not \
-         self.orchestrator.mapper.threaded:
-        self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg)
+      if mapped_nffg is not None and not self.orchestrator.mapper.threaded:
+        self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg,
+                                      original_request=nffg)
       else:
         log.warning("Something went wrong in service request instantiation: "
                     "mapped service request is missing!")
@@ -614,7 +614,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
             req_status.get_callback(), ret))
     RequestScheduler().set_orchestration_finished(id=nffg_id)
 
-  def _proceed_to_install_NFFG (self, mapped_nffg):
+  def _proceed_to_install_NFFG (self, mapped_nffg, original_request=None):
     """
     Send mapped :class:`NFFG` to Controller Adaptation Sublayer in an
     implementation-specific way.
@@ -636,7 +636,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending NF-FG to Adaptation layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
-    self.raiseEventNoErrors(InstallNFFGEvent, mapped_nffg)
+    self.raiseEventNoErrors(InstallNFFGEvent,
+                            mapped_nffg=mapped_nffg,
+                            original_request=original_request)
     log.getChild('API').info("Mapped NF-FG: %s has been sent to Adaptation..." %
                              mapped_nffg)
 
