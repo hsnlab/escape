@@ -762,7 +762,7 @@ class NFFGConverter(object):
           bb_node = nffg[vnode.id.get_value()]
         if vport_id in bb_node.ports:
           self.log.debug("External port: %s already exits! Skip creating..."
-                    % vport_id)
+                         % vport_id)
           vport = bb_node.ports[vport_id]
         else:
           vport = bb_node.add_port(id=vport_id)
@@ -855,7 +855,7 @@ class NFFGConverter(object):
                            "SAP!" % nffg[ext_port_id].ports[ext_port_id])
           else:
             self.log.debug("External SAP: %s already exists! Skip creating..."
-                      % nffg[ext_port_id].ports[ext_port_id])
+                           % nffg[ext_port_id].ports[ext_port_id])
         else:
           ext_sap = nffg.add_sap(id=ext_port_id)
           ext_sap_port = ext_sap.add_port(id=ext_port_id)
@@ -1570,7 +1570,7 @@ class NFFGConverter(object):
         for i, port_pair in enumerate(combinations(
            (p.id.get_value() for p in v_node.ports), 2)):
           link_id = "link-%s-%s" % (v_node.ports[port_pair[0]].id.get_value(),
-                               v_node.ports[port_pair[1]].id.get_value())
+                                    v_node.ports[port_pair[1]].id.get_value())
           # Create link
           v_link = virt_lib.Link(id=link_id,
                                  src=v_node.ports[port_pair[0]],
@@ -2321,8 +2321,12 @@ class NFFGConverter(object):
     self.log.debug("Transfer service request ID...")
     base.id.set_value(request.id)
     base.name.set_value(request.name)
-    if base.nodes.node.length() > 1:
-      self.log.warning("Multiple BiSBiS node detected in the Virtualizer!")
+    if base.nodes.node.length() < 1:
+      self.log.warning("No BiSBiS node was detected!")
+      return base
+    elif base.nodes.node.length() > 1:
+      self.log.warning(
+        "Multiple BiSBiS nodes were detected in the Virtualizer!")
     sbb = base.nodes.node[base.nodes.node.keys().pop()]
     self.log.debug("Detected SBB node: %s" % sbb.id.get_value())
     # Add NFs
