@@ -178,6 +178,15 @@
 				"storage": 40.0,
 				"delay": 0.2,
 				"bandwidth": 220000.0
+			},
+			"delay_matrix": {
+				"port-SAP14": {
+					"port-SAP2": 1.0,
+					"EE1|comp|1": 2.0
+				},
+				"EE1|comp|1": {
+					"port-SAP1": 3.0
+				}
 			}
 		}
 	],
