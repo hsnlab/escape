@@ -1128,9 +1128,17 @@ class NFFGConverter(object):
                              infra_type=node_type, cpu=node_cpu, mem=node_mem,
                              storage=node_storage, delay=node_delay,
                              bandwidth=node_bw)
-
       self.log.debug("Created INFRA node: %s" % infra)
       self.log.debug("Parsed resources: %s" % infra.resources)
+      for vlink in vnode.links:
+        if vlink.resources.is_initialized() and \
+           vlink.resources.delay.is_initialized():
+          dm_src = vlink.src.get_target().id.get_value()
+          dm_dst = vlink.dst.get_target().id.get_value()
+          dm_delay = float(vlink.resources.delay.get_value())
+          infra.delay_matrix.add_delay(src=dm_src, dst=dm_dst, delay=dm_delay)
+          self.log.debug("Added delay: %s to delay matrix [%s --> %s]"
+                         % (dm_delay, dm_src, dm_dst))
 
       # Add supported types shrinked from the supported NF list
       for sup_nf in vnode.capabilities.supported_NFs:
@@ -1562,38 +1570,57 @@ class NFFGConverter(object):
 
       # Define full-mesh intra-links for nodes to set bandwidth and delay
       # values
-      from itertools import combinations
       # Detect the number of ports
-      port_num = len(v_node.ports.port._data)
-      if port_num > 1:
-        # There are valid port-pairs
-        for i, port_pair in enumerate(combinations(
-           (p.id.get_value() for p in v_node.ports), 2)):
-          link_id = "link-%s-%s" % (v_node.ports[port_pair[0]].id.get_value(),
-                                    v_node.ports[port_pair[1]].id.get_value())
-          # Create link
-          v_link = virt_lib.Link(id=link_id,
-                                 src=v_node.ports[port_pair[0]],
-                                 dst=v_node.ports[port_pair[1]],
-                                 resources=virt_lib.Link_resource(
-                                   delay=infra.resources.delay,
-                                   bandwidth=infra.resources.bandwidth))
-          v_node.links.add(v_link)
-      elif port_num == 1:
-        # Only one port in infra - create loop-edge
-        v_link_src = v_link_dst = iter(v_node.ports).next()
-        v_link = virt_lib.Link(id="resource-link",
+      # port_num = len(v_node.ports.port._data)
+      # if port_num > 1:
+      #   # There are valid port-pairs
+      #   for i, port_pair in enumerate(itertools.permutations(
+      #      (p.id.get_value() for p in v_node.ports), 2)):
+      #     link_id = "link-%s-%s" % (v_node.ports[port_pair[0]].id.get_value(),
+      #                               v_node.ports[port_pair[1]].id.get_value())
+      #     # Create link
+      #     v_link = virt_lib.Link(id=link_id,
+      #                            src=v_node.ports[port_pair[0]],
+      #                            dst=v_node.ports[port_pair[1]])
+      #     delay = infra.delay_matrix.get_delay(src=port_pair[0],
+      #                                          dst=port_pair[1])
+      #     if delay is not None:
+      #       v_link.resources.delay.set_value(delay)
+      #     v_node.links.add(v_link)
+      # elif port_num == 1:
+      #   # Only one port in infra - create loop-edge
+      #   v_link_src = v_link_dst = iter(v_node.ports).next()
+      #   v_link = virt_lib.Link(id="resource-link",
+      #                          src=v_link_src,
+      #                          dst=v_link_dst,
+      #                          resources=virt_lib.Link_resource(
+      #                            delay=infra.resources.delay,
+      #                            bandwidth=infra.resources.bandwidth))
+      #   v_node.links.add(v_link)
+
+      # Add intra-node link based on delay_matrix
+      for src, dst, delay in infra.delay_matrix:
+        if src in v_node.ports.port.keys():
+          v_link_src = v_node.ports[src]
+        else:
+          self.log.warning("Missing port: %s from Virtualizer node: %s"
+                           % (src, v_node_id))
+          continue
+        if dst in v_node.ports.port.keys():
+          v_link_dst = v_node.ports[dst]
+        else:
+          self.log.warning("Missing port: %s from Virtualizer node: %s"
+                           % (dst, v_node_id))
+          continue
+        v_link = virt_lib.Link(id="link-%s-%s" % (v_link_src.id.get_value(),
+                                                  v_link_dst.id.get_value()),
                                src=v_link_src,
                                dst=v_link_dst,
                                resources=virt_lib.Link_resource(
-                                 delay=infra.resources.delay,
-                                 bandwidth=infra.resources.bandwidth))
+                                 delay=delay))
         v_node.links.add(v_link)
-      else:
-        # No port in Infra - unusual but acceptable
-        self.log.warning(
-          "No port has been detected in %s. Can not store internal "
-          "bandwidth/delay value!" % infra)
+        self.log.debug("Added intra-BiSBiS resource link [%s --> %s] "
+                       "with delay: %s" % (src, dst, delay))
 
   def __set_vsap_port (self, v_sap_port, sap_port):
     # Set sap.name if it has not used for storing SAP.id
