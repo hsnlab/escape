@@ -57,6 +57,33 @@
                         <bandwidth>1120000.0</bandwidth>
                     </resources>
                 </link>
+                <link>
+                    <id>resource-link01</id>
+                    <src>../../../ports/port[id=port-SAP1]</src>
+                    <dst>../../../ports/port[id=port-SAP14]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>1120000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link11</id>
+                    <src>../../../ports/port[id=port-SAP2]</src>
+                    <dst>../../../ports/port[id=port-SAP14]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>1120000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link21</id>
+                    <src>../../../ports/port[id=port-SAP2]</src>
+                    <dst>../../../ports/port[id=port-SAP1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>1120000.0</bandwidth>
+                    </resources>
+                </link>
             </links>
             <resources>
                 <cpu>10.0</cpu>

@@ -152,6 +152,33 @@
                         <bandwidth>10000.0</bandwidth>
                     </resources>
                 </link>
+                <link>
+                    <id>resource-link011</id>
+                    <src>../../../ports/port[id=2]</src>
+                    <dst>../../../ports/port[id=1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link101</id>
+                    <src>../../../ports/port[id=3]</src>
+                    <dst>../../../ports/port[id=1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link251</id>
+                    <src>../../../ports/port[id=3]</src>
+                    <dst>../../../ports/port[id=2]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
             </links>
             <resources>
                 <cpu>0.0</cpu>
@@ -244,9 +271,63 @@
                     </resources>
                 </link>
                 <link>
-                    <id>resource-link5</id>
+                    <id>resource-link31</id>
+                    <src>../../../ports/port[id=2]</src>
+                    <dst>../../../ports/port[id=1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link51</id>
                     <src>../../../ports/port[id=3]</src>
                     <dst>../../../ports/port[id=4]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link52</id>
+                    <src>../../../ports/port[id=3]</src>
+                    <dst>../../../ports/port[id=1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link53</id>
+                    <src>../../../ports/port[id=3]</src>
+                    <dst>../../../ports/port[id=2]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link54</id>
+                    <src>../../../ports/port[id=4]</src>
+                    <dst>../../../ports/port[id=1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link55</id>
+                    <src>../../../ports/port[id=4]</src>
+                    <dst>../../../ports/port[id=2]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link56</id>
+                    <src>../../../ports/port[id=4]</src>
+                    <dst>../../../ports/port[id=3]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
