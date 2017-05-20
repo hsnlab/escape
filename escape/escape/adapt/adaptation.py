@@ -773,21 +773,25 @@ class ControllerAdapter(object):
          and not event.source.polling:
         return
       deploy_status = self.status_mgr.get_last_status()
-      deploy_status.set_domain_ok(event.domain)
-      if not deploy_status.still_pending:
-        log.info("All installation process has been finished for request: %s! "
-                 "Result: %s" % (deploy_status.id, deploy_status.status))
-        if CONFIG.one_step_update():
-          log.warning("One-step-update is enabled with domain polling! "
-                      "Skip update...")
-        elif deploy_status.failed and CONFIG.rollback_on_failure():
-          self.__do_rollback(status=deploy_status,
-                             previous_state=self.DoVManager.get_backup_state())
-        result = InstallationFinishedEvent.get_result_from_status(deploy_status)
-        log.debug("Overall installation result: %s" % result)
-        self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
-                                           id=deploy_status.id,
-                                           result=result)
+      if deploy_status:
+        deploy_status.set_domain_ok(event.domain)
+        if not deploy_status.still_pending:
+          log.info("All installation process has been finished for request: %s!"
+                   " Result: %s" % (deploy_status.id, deploy_status.status))
+          if CONFIG.one_step_update():
+            log.warning("One-step-update is enabled with domain polling! "
+                        "Skip update...")
+          elif deploy_status.failed and CONFIG.rollback_on_failure():
+            self.__do_rollback(status=deploy_status,
+                               previous_state=self.DoVManager.get_backup_state())
+          result = InstallationFinishedEvent.get_result_from_status(
+            deploy_status)
+          log.debug("Overall installation result: %s" % result)
+          self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
+                                             id=deploy_status.id,
+                                             result=result)
+      else:
+        log.warning("No deploy-status could be retrieved from manager!")
 
   def _handle_EditConfigHookEvent (self, event):
     """
