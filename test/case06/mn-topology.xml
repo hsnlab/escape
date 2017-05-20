@@ -9,15 +9,15 @@
             <type>EE</type>
             <ports>
                 <port>
-                    <id>1</id>
+                    <id>p1</id>
                     <port_type>port-abstract</port_type>
                 </port>
             </ports>
             <links>
                 <link>
                     <id>resource-link</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=1]</dst>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
                     <resources>
                         <delay>0.9</delay>
                         <bandwidth>5000.0</bandwidth>
@@ -60,15 +60,15 @@
             <type>EE</type>
             <ports>
                 <port>
-                    <id>1</id>
+                    <id>p1</id>
                     <port_type>port-abstract</port_type>
                 </port>
             </ports>
             <links>
                 <link>
                     <id>resource-link</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=1]</dst>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
                     <resources>
                         <delay>0.9</delay>
                         <bandwidth>5000.0</bandwidth>
@@ -111,15 +111,15 @@
             <type>SDN-SWITCH</type>
             <ports>
                 <port>
-                    <id>1</id>
+                    <id>p1</id>
                     <port_type>port-abstract</port_type>
                 </port>
                 <port>
-                    <id>2</id>
+                    <id>p2</id>
                     <port_type>port-abstract</port_type>
                 </port>
                 <port>
-                    <id>3</id>
+                    <id>p3</id>
                     <name>SAP:SAP1</name>
                     <port_type>port-sap</port_type>
                 </port>
@@ -127,8 +127,8 @@
             <links>
                 <link>
                     <id>resource-link0</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=2]</dst>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p2]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
@@ -136,8 +136,8 @@
                 </link>
                 <link>
                     <id>resource-link1</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=3]</dst>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p3]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
@@ -145,8 +145,35 @@
                 </link>
                 <link>
                     <id>resource-link2</id>
-                    <src>../../../ports/port[id=2]</src>
-                    <dst>../../../ports/port[id=3]</dst>
+                    <src>../../../ports/port[id=p2]</src>
+                    <dst>../../../ports/port[id=p3]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link011</id>
+                    <src>../../../ports/port[id=p2]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link101</id>
+                    <src>../../../ports/port[id=p3]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link251</id>
+                    <src>../../../ports/port[id=p3]</src>
+                    <dst>../../../ports/port[id=p2]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
@@ -173,20 +200,20 @@
             <type>SDN-SWITCH</type>
             <ports>
                 <port>
-                    <id>1</id>
+                    <id>p1</id>
                     <port_type>port-abstract</port_type>
                 </port>
                 <port>
-                    <id>2</id>
+                    <id>p2</id>
                     <port_type>port-abstract</port_type>
                 </port>
                 <port>
-                    <id>3</id>
+                    <id>p3</id>
                     <name>SAP:SAP2</name>
                     <port_type>port-sap</port_type>
                 </port>
                 <port>
-                    <id>4</id>
+                    <id>p4</id>
                     <port_type>port-sap</port_type>
                     <sap>SAP14</sap>
                     <sap_data>
@@ -200,8 +227,8 @@
             <links>
                 <link>
                     <id>resource-link0</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=2]</dst>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p2]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
@@ -209,8 +236,8 @@
                 </link>
                 <link>
                     <id>resource-link1</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=3]</dst>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p3]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
@@ -218,8 +245,8 @@
                 </link>
                 <link>
                     <id>resource-link2</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=4]</dst>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p4]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
@@ -227,8 +254,8 @@
                 </link>
                 <link>
                     <id>resource-link3</id>
-                    <src>../../../ports/port[id=2]</src>
-                    <dst>../../../ports/port[id=3]</dst>
+                    <src>../../../ports/port[id=p2]</src>
+                    <dst>../../../ports/port[id=p3]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
@@ -236,17 +263,71 @@
                 </link>
                 <link>
                     <id>resource-link4</id>
-                    <src>../../../ports/port[id=2]</src>
-                    <dst>../../../ports/port[id=4]</dst>
+                    <src>../../../ports/port[id=p2]</src>
+                    <dst>../../../ports/port[id=p4]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
                     </resources>
                 </link>
                 <link>
-                    <id>resource-link5</id>
-                    <src>../../../ports/port[id=3]</src>
-                    <dst>../../../ports/port[id=4]</dst>
+                    <id>resource-link31</id>
+                    <src>../../../ports/port[id=p2]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link51</id>
+                    <src>../../../ports/port[id=p3]</src>
+                    <dst>../../../ports/port[id=p4]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link52</id>
+                    <src>../../../ports/port[id=p3]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link53</id>
+                    <src>../../../ports/port[id=p3]</src>
+                    <dst>../../../ports/port[id=p2]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link54</id>
+                    <src>../../../ports/port[id=p4]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link55</id>
+                    <src>../../../ports/port[id=p4]</src>
+                    <dst>../../../ports/port[id=p2]</dst>
+                    <resources>
+                        <delay>0.2</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link56</id>
+                    <src>../../../ports/port[id=p4]</src>
+                    <dst>../../../ports/port[id=p3]</dst>
                     <resources>
                         <delay>0.2</delay>
                         <bandwidth>10000.0</bandwidth>
@@ -271,8 +352,8 @@
     <links>
         <link>
             <id>mn-link1</id>
-            <src>../../../nodes/node[id=EE1]/ports/port[id=1]</src>
-            <dst>../../../nodes/node[id=SW1]/ports/port[id=1]</dst>
+            <src>../../../nodes/node[id=EE1]/ports/port[id=p1]</src>
+            <dst>../../../nodes/node[id=SW1]/ports/port[id=p1]</dst>
             <resources>
                 <delay>1.5</delay>
                 <bandwidth>10.0</bandwidth>
@@ -280,8 +361,8 @@
         </link>
         <link>
             <id>mn-link1-back</id>
-            <src>../../../nodes/node[id=SW1]/ports/port[id=1]</src>
-            <dst>../../../nodes/node[id=EE1]/ports/port[id=1]</dst>
+            <src>../../../nodes/node[id=SW1]/ports/port[id=p1]</src>
+            <dst>../../../nodes/node[id=EE1]/ports/port[id=p1]</dst>
             <resources>
                 <delay>1.5</delay>
                 <bandwidth>10.0</bandwidth>
@@ -289,8 +370,8 @@
         </link>
         <link>
             <id>mn-link2</id>
-            <src>../../../nodes/node[id=EE2]/ports/port[id=1]</src>
-            <dst>../../../nodes/node[id=SW2]/ports/port[id=1]</dst>
+            <src>../../../nodes/node[id=EE2]/ports/port[id=p1]</src>
+            <dst>../../../nodes/node[id=SW2]/ports/port[id=p1]</dst>
             <resources>
                 <delay>1.5</delay>
                 <bandwidth>10.0</bandwidth>
@@ -298,8 +379,8 @@
         </link>
         <link>
             <id>mn-link2-back</id>
-            <src>../../../nodes/node[id=SW2]/ports/port[id=1]</src>
-            <dst>../../../nodes/node[id=EE2]/ports/port[id=1]</dst>
+            <src>../../../nodes/node[id=SW2]/ports/port[id=p1]</src>
+            <dst>../../../nodes/node[id=EE2]/ports/port[id=p1]</dst>
             <resources>
                 <delay>1.5</delay>
                 <bandwidth>10.0</bandwidth>
@@ -307,8 +388,8 @@
         </link>
         <link>
             <id>mn-link3</id>
-            <src>../../../nodes/node[id=SW1]/ports/port[id=2]</src>
-            <dst>../../../nodes/node[id=SW2]/ports/port[id=2]</dst>
+            <src>../../../nodes/node[id=SW1]/ports/port[id=p2]</src>
+            <dst>../../../nodes/node[id=SW2]/ports/port[id=p2]</dst>
             <resources>
                 <delay>1.5</delay>
                 <bandwidth>10.0</bandwidth>
@@ -316,8 +397,8 @@
         </link>
         <link>
             <id>mn-link3-back</id>
-            <src>../../../nodes/node[id=SW2]/ports/port[id=2]</src>
-            <dst>../../../nodes/node[id=SW1]/ports/port[id=2]</dst>
+            <src>../../../nodes/node[id=SW2]/ports/port[id=p2]</src>
+            <dst>../../../nodes/node[id=SW1]/ports/port[id=p2]</dst>
             <resources>
                 <delay>1.5</delay>
                 <bandwidth>10.0</bandwidth>

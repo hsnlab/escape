@@ -9,7 +9,7 @@
             <type>BiSBiS</type>
             <ports>
                 <port>
-                    <id>1</id>
+                    <id>p1</id>
                     <name>SAP14</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP14</sap>
@@ -21,7 +21,7 @@
                     </sap_data>
                 </port>
                 <port>
-                    <id>2</id>
+                    <id>p2</id>
                     <name>SAP44</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP44</sap>
@@ -33,7 +33,7 @@
                     </sap_data>
                 </port>
                 <port>
-                    <id>3</id>
+                    <id>p3</id>
                     <name>SAP34</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP34</sap>
@@ -45,12 +45,12 @@
                     </sap_data>
                 </port>
                 <port>
-                    <id>4</id>
+                    <id>p4</id>
                     <name>SAP54</name>
                     <port_type>port-sap</port_type>
                 </port>
                 <port>
-                    <id>5</id>
+                    <id>p5</id>
                     <name>SAP24</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP24</sap>
@@ -69,57 +69,111 @@
             </resources>
             <links>
                 <link>
-                    <id>resource-link</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=2]</dst>
+                    <id>resource-link1</id>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p2]</dst>
                     <resources>
                         <delay>0.9</delay>
                         <bandwidth>5000.0</bandwidth>
                     </resources>
                 </link>
                 <link>
-                    <id>resource-link</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=3]</dst>
+                    <id>resource-link2</id>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p3]</dst>
                     <resources>
                         <delay>0.9</delay>
                         <bandwidth>5000.0</bandwidth>
                     </resources>
                 </link>
                 <link>
-                    <id>resource-link</id>
-                    <src>../../../ports/port[id=1]</src>
-                    <dst>../../../ports/port[id=4]</dst>
+                    <id>resource-link3</id>
+                    <src>../../../ports/port[id=p1]</src>
+                    <dst>../../../ports/port[id=p4]</dst>
                     <resources>
                         <delay>0.9</delay>
                         <bandwidth>5000.0</bandwidth>
                     </resources>
                 </link>
                 <link>
-                    <id>resource-link</id>
-                    <src>../../../ports/port[id=2]</src>
-                    <dst>../../../ports/port[id=3]</dst>
+                    <id>resource-link4</id>
+                    <src>../../../ports/port[id=p2]</src>
+                    <dst>../../../ports/port[id=p3]</dst>
                     <resources>
                         <delay>0.9</delay>
                         <bandwidth>5000.0</bandwidth>
                     </resources>
                 </link>
                 <link>
-                    <id>resource-link</id>
-                    <src>../../../ports/port[id=2]</src>
-                    <dst>../../../ports/port[id=4]</dst>
+                    <id>resource-link5</id>
+                    <src>../../../ports/port[id=p2]</src>
+                    <dst>../../../ports/port[id=p4]</dst>
                     <resources>
                         <delay>0.9</delay>
                         <bandwidth>5000.0</bandwidth>
                     </resources>
                 </link>
                 <link>
-                    <id>resource-link</id>
-                    <src>../../../ports/port[id=3]</src>
-                    <dst>../../../ports/port[id=4]</dst>
+                    <id>resource-link6</id>
+                    <src>../../../ports/port[id=p3]</src>
+                    <dst>../../../ports/port[id=p4]</dst>
                     <resources>
                         <delay>0.9</delay>
                         <bandwidth>5000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link31</id>
+                    <src>../../../ports/port[id=p2]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link52</id>
+                    <src>../../../ports/port[id=p3]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link53</id>
+                    <src>../../../ports/port[id=p3]</src>
+                    <dst>../../../ports/port[id=p2]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link54</id>
+                    <src>../../../ports/port[id=p4]</src>
+                    <dst>../../../ports/port[id=p1]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link55</id>
+                    <src>../../../ports/port[id=p4]</src>
+                    <dst>../../../ports/port[id=p2]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>10000.0</bandwidth>
+                    </resources>
+                </link>
+                <link>
+                    <id>resource-link56</id>
+                    <src>../../../ports/port[id=p4]</src>
+                    <dst>../../../ports/port[id=p3]</dst>
+                    <resources>
+                        <delay>0.9</delay>
+                        <bandwidth>10000.0</bandwidth>
                     </resources>
                 </link>
             </links>
