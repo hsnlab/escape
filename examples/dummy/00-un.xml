@@ -5,7 +5,9 @@
     <nodes>
         <node>
             <id>UUID-UniversalNode-01</id>
-            <name>single Bis-Bis node representing the whole UniversalNode domain-packaged</name>
+            <name>single Bis-Bis node representing the whole UniversalNode
+                domain-packaged
+            </name>
             <type>BisBis</type>
             <ports>
                 <port>
@@ -13,6 +15,12 @@
                     <name>SAP54</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP54</sap>
+                </port>
+                <port>
+                    <id>1</id>
+                    <name>SAP100</name>
+                    <port_type>port-sap</port_type>
+                    <sap>SAP100</sap>
                 </port>
             </ports>
             <resources>
