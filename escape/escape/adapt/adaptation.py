@@ -627,6 +627,7 @@ class ControllerAdapter(object):
           # deploy_status.set_domain_waiting(domain=domain)
           log.debug("Consider every deploy into a polled domain OK...")
           deploy_status.set_domain_ok(domain=domain)
+          log.debug("Installation status: %s" % deploy_status)
         continue
       if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
          domain_mgr.callback_manager:
@@ -781,6 +782,9 @@ class ControllerAdapter(object):
         return
       deploy_status = self.status_mgr.get_last_status()
       if deploy_status:
+        if deploy_status.get_domain_status(event.domain) == deploy_status.OK:
+          log.debug("Domain: %s is already set OK. Skip overall status check..")
+          return
         deploy_status.set_domain_ok(event.domain)
         if not deploy_status.still_pending:
           log.info("All installation process has been finished for request: %s!"
