@@ -624,7 +624,9 @@ class ControllerAdapter(object):
           log.info("Deploy request is bare! Consider deploy status OK.")
           deploy_status.set_domain_ok(domain=domain)
         else:
-          deploy_status.set_domain_waiting(domain=domain)
+          # deploy_status.set_domain_waiting(domain=domain)
+          log.debug("Consider every deploy into a polled domain OK...")
+          deploy_status.set_domain_ok(domain=domain)
         continue
       if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
          domain_mgr.callback_manager:
