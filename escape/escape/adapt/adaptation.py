@@ -620,7 +620,11 @@ class ControllerAdapter(object):
                     AbstractRemoteDomainManager) and domain_mgr.polling:
         log.info("Skip explicit DoV update for domain: %s. "
                  "Cause: polling enabled!" % domain)
-        deploy_status.set_domain_waiting(domain=domain)
+        if part.is_bare():
+          log.info("Deploy request is bare! Consider deploy status OK.")
+          deploy_status.set_domain_ok(domain=domain)
+        else:
+          deploy_status.set_domain_waiting(domain=domain)
         continue
       if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
          domain_mgr.callback_manager:
@@ -651,7 +655,8 @@ class ControllerAdapter(object):
         # notify_remote_visualizer(
         #   data=self.DoVManager.dov.get_resource_info(), id=LAYER_NAME)
     elif deploy_status.still_pending:
-      log.info("Installation process is still pending! Waiting for results...")
+      log.warning("Installation process is still pending!"
+                  "Waiting for results...")
     elif deploy_status.failed:
       log.error("%s installation was not successful!" % mapped_nffg)
       # No pending install part here
