@@ -371,6 +371,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     self.__global_nffg = nffg.copy()
     self.__global_nffg.id = DoV
     self.__global_nffg.name = DoV
+    log.debug("DoV stat:\n%s" % self.__global_nffg.get_stat())
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.UPDATE)
     return self.__global_nffg
@@ -391,6 +392,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     dov_name = self.__global_nffg.name
     self.__global_nffg = nffg.copy()
     self.__global_nffg.id, self.__global_nffg.name = dov_id, dov_name
+    log.debug("DoV stat:\n%s" % self.__global_nffg.get_stat())
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.UPDATE)
     return self.__global_nffg
@@ -411,6 +413,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     # NFFG
     NFFGToolBox.merge_new_domain(base=self.__global_nffg, nffg=nffg, log=log)
     # Raise event for observing Virtualizers about topology change
+    log.debug("DoV stat:\n%s" % self.__global_nffg.get_stat())
     log.log(VERBOSE, "Merged Dov:\n%s" % self.__global_nffg.dump())
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.EXTEND)
     return self.__global_nffg
@@ -431,6 +434,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     NFFGToolBox.remove_domain(base=self.__global_nffg, domain=domain, log=log)
     # log.log(VERBOSE, "Reduced Dov:\n%s" % self.__global_nffg.dump())
     NFFGToolBox.merge_new_domain(base=self.__global_nffg, nffg=nffg, log=log)
+    log.debug("DoV stat:\n%s" % self.__global_nffg.get_stat())
     log.log(VERBOSE, "Re-merged DoV:\n%s" % self.__global_nffg.dump())
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
@@ -455,6 +459,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
                   "%s! DoV is empty!" % domain)
+    log.debug("DoV stat:\n%s" % self.__global_nffg.get_stat())
     log.log(VERBOSE, "Updated DoV:\n%s" % self.__global_nffg.dump())
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
@@ -474,6 +479,7 @@ class DomainVirtualizer(AbstractVirtualizer):
     if self.__global_nffg.is_empty():
       log.warning("No Node had been remained after updating the domain part: "
                   "%s! DoV is empty!" % domain)
+    log.debug("DoV stat:\n%s" % self.__global_nffg.get_stat())
     log.log(VERBOSE, "Reduced Dov:\n%s" % self.__global_nffg.dump())
     # Raise event for observing Virtualizers about topology change
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.REDUCE)
@@ -498,6 +504,7 @@ class DomainVirtualizer(AbstractVirtualizer):
                 "Skip cleanup domain: %s" % domain)
       return self.__global_nffg
     NFFGToolBox.clear_domain(base=self.__global_nffg, domain=domain, log=log)
+    log.debug("DoV stat:\n%s" % self.__global_nffg.get_stat())
     log.log(VERBOSE, "Cleaned Dov:\n%s" % self.__global_nffg.dump())
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
@@ -537,6 +544,7 @@ class DomainVirtualizer(AbstractVirtualizer):
       log.debug("DoV is empty! Skip DoV cleanup")
       return self.__global_nffg
     NFFGToolBox.remove_deployed_services(nffg=self.__global_nffg, log=log)
+    log.debug("DoV stat:\n%s" % self.__global_nffg.get_stat())
     log.log(VERBOSE, "Cleared Dov:\n%s" % self.__global_nffg.dump())
     self.raiseEventNoErrors(DoVChangedEvent, cause=DoVChangedEvent.TYPE.CHANGE)
     return self.__global_nffg
