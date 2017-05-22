@@ -927,7 +927,9 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     self.log.debug("Send back topology description...")
     self.wfile.write(data)
     self.log.log(VERBOSE, "Responded topology:\n%s" % data)
-    MessageDumper().dump_to_file(data=data,
+    # Dump get-config topology only in case of changed view
+    if resource_nffg is not False:
+      MessageDumper().dump_to_file(data=data,
                                  unique="ESCAPEp%s-get-config" %
                                         self.server.server_address[1])
 
