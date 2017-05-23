@@ -549,6 +549,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
         self.raiseEventNoErrors(InstantiationFinishedEvent,
                                 id=nffg.id,
                                 result=InstantiationFinishedEvent.ABORTED)
+        return
       else:
         log.debug("Difference calculation resulted empty subNFFGs!")
         log.info("No change has been detected in request! Skip mapping...")
