@@ -545,7 +545,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
         log.info("ADD NFFG is bare! Calculated mapping mode: %s" % nffg.mode)
       elif not add_nffg.is_bare() and not del_nffg.is_bare():
         log.warning("Both ADD / DEL mode is not supported currently")
-        return
+        self.__process_mapping_result(nffg_id=nffg.id, fail=True)
+        self.raiseEventNoErrors(InstantiationFinishedEvent,
+                                id=nffg.id,
+                                result=InstantiationFinishedEvent.ABORTED)
       else:
         log.debug("Difference calculation resulted empty subNFFGs!")
         log.info("No change has been detected in request! Skip mapping...")
