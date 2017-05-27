@@ -80,6 +80,10 @@ MNPASSWD=mininet
 if [ -f /etc/lsb-release ]; then
     source /etc/lsb-release # DISTRIB_ID, DISTRIB_RELEASE
     info "Detected platform is $DISTRIB_ID, version: $DISTRIB_RELEASE!"
+    if [ "$DISTRIB_RELEASE" = "14.04" ]; then
+        warn "Platform: Ubuntu $DISTRIB_RELEASE is no longer supported!"
+        read "Press any key to continue..."
+    fi
 else
     warn "Detected platform is NOT Ubuntu! This may lead to skip some installation steps!"
 fi
