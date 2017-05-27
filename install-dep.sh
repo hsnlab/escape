@@ -95,17 +95,17 @@ function install_core {
 
     info "=== Setup project ==="
     # Git return error during submodule change -> disable error catching
-    set +e
+    set +ue
     if [ -f "project-setup.sh" ]; then
         if [ -z "$PROJECT" ]; then
-            . ./project-setup.sh -p "$PROJECT"
-        else
             . ./project-setup.sh
+        else
+            . ./project-setup.sh -p "$PROJECT"
         fi
     else
         on_error "Project setup script is missing!"
     fi
-    set -e
+    set -ue
 
     info "=== Add neo4j repository ==="
     sudo sh -c "wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -"
