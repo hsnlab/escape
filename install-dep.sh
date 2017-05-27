@@ -91,7 +91,7 @@ function install_core {
     info "================================="
     info "==  Install core dependencies  =="
     info "================================="
-    echo "ESCAPEv2 version: 2.0.0"
+    echo "ESCAPEv2 version: $(./escape.py -v 2>&1)"
 
     info "=== Setup project ==="
     # Git return error during submodule change -> disable error catching
