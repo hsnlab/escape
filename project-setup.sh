@@ -100,9 +100,9 @@ if [ -z ${PROJECT} ]; then
         PROJECT="5gex"
     elif [[ ${origin_url} == *"213.16.101.140"* ]]; then
         PROJECT="ericsson"
-    elif [[ ${origin_url} == *"github.com:hsnlab"* ]]; then
+    elif [[ ${origin_url} == *"hsnlab"* ]]; then
         PROJECT="hsnlab"
-    elif [[ ${origin_url} == *"github.com:5GExchange"* ]]; then
+    elif [[ ${origin_url} == *"5GExchange"* ]]; then
         PROJECT="5gexchange"
     else
         on_error "Repo URL is not recognized: $origin_url!"
