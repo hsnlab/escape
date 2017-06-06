@@ -1230,7 +1230,7 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
       self.send_error(httplib.BAD_REQUEST, "Missing body!")
       return
     MessageDumper().dump_to_file(data=raw_body,
-                                 unique="ESCAPEp%s-mappings" %
+                                 unique="ESCAPEp%s-mappings-request" %
                                         self.server.server_address[1])
     mappings = Mappings.parse_from_text(text=raw_body)
     self.log.log(VERBOSE, "Full request:\n%s" % mappings.xml())
@@ -1250,7 +1250,7 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
     self.log.log(VERBOSE, "Responded mapping info:\n%s" % response_data)
     self.log.debug("%s function: mapping-info ended!" % self.LOGGER_NAME)
     MessageDumper().dump_to_file(data=response_data,
-                                 unique="ESCAPEp%s-mappings" %
+                                 unique="ESCAPEp%s-mappings-response" %
                                         self.server.server_address[1])
 
   def info (self, params):

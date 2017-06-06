@@ -1129,8 +1129,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
          not data.startswith("<?xml version="):
         log.error("Received data is not in XML format!")
         return
-      MessageDumper().dump_to_file(data=data,
-                                   unique="%s-get-config" % self.domain_name)
       virt = Virtualizer.parse_from_text(text=data)
       log.log(VERBOSE,
               "Received message to 'get-config' request:\n%s" % virt.xml())
@@ -1206,12 +1204,23 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     return status
 
   def get_last_message_id (self):
+    """
+
+    :return:
+    """
     if self._response is not None:
       return self._response.headers.get(self.MESSAGE_ID_NAME, None)
     else:
       return None
 
   def info (self, info, callback=None, message_id=None):
+    """
+
+    :param info:
+    :param callback:
+    :param message_id:
+    :return:
+    """
     log.log(VERBOSE, "Generated Info:\n%s" % info.xml())
     params = {}
     if message_id is not None:
@@ -1273,6 +1282,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     # If not data is received or converted return with None
     if virt is None:
       return
+    MessageDumper().dump_to_file(data=virt.xml(),
+                                 unique="%s-get-config" % self.domain_name)
     # Convert from XML-based Virtualizer to NFFG
     nffg = self.converter.parse_from_Virtualizer(vdata=virt)
     self.__process_features(nffg=nffg)
@@ -1338,6 +1349,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       log.info("Received changed topology from domain: %s" % self.domain_name)
       log.log(VERBOSE, "Changed domain topology from: %s:\n%s" % (
         self.domain_name, virt.xml()))
+      MessageDumper().dump_to_file(data=virt.xml(),
+                                   unique="%s-get-config-changed" %
+                                          self.domain_name)
       # Cache new topo
       self.__cache_topology(virt)
       # Return with the changed topo in NFFG
