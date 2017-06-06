@@ -16,9 +16,11 @@ Contains functions and classes for remote visualization.
 """
 import logging
 import os
+import threading
 import time
 import urlparse
 
+import wrapt
 from requests import Session, ConnectionError, HTTPError, Timeout
 
 import virtualizer as Virtualizer
@@ -170,10 +172,16 @@ class RemoteVisualizer(Session):
 class MessageDumper(object):
   __metaclass__ = Singleton
   DIR = "log/trails"
+  __lock = threading.Lock()
 
   def __init__ (self):
     self.__cntr = 0
     self.__clear_trails()
+
+  @wrapt.synchronized(__lock)
+  def increase_cntr (self):
+    self.__cntr += 1
+    return self.__cntr
 
   def __clear_trails (self):
     log.debug("Remove trails...")
@@ -187,9 +195,9 @@ class MessageDumper(object):
       return
     trails = os.path.join(PROJECT_ROOT, self.DIR)
     date = time.strftime("%Y%m%d%H%M")
-    self.__cntr += 1
+    cntr = self.increase_cntr()
     file_path = os.path.join(trails,
-                             "%s_%03d_%s.log" % (date, self.__cntr, unique))
+                             "%s_%03d_%s.log" % (date, cntr, unique))
     if os.path.exists(file_path):
       log.warning("File path exist! %s" % file_path)
     log.debug("Logging data to file: %s..." % file_path)
