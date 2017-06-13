@@ -24,6 +24,7 @@ from escape.adapt import log as log
 from escape.adapt.managers import UnifyDomainManager
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
+from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
 from escape.util.config import ConfigurationError
 from escape.util.conversion import NFFGConverter
@@ -1135,6 +1136,8 @@ class ControllerAdapter(object):
     for id in (domain_mgr.managed_domain_ids - new_ids):
       log.info("Detected disconnected domain from external DomainManager! "
                "BGP id: %s" % id)
+      MessageDumper().dump_to_file(data=topo_nffg,
+                                   unique="%s-changed" % event.domain)
       # Remove lost domain
       if id in domain_mgr.managed_domain_ids:
         domain_mgr.managed_domain_ids.remove(id)
@@ -1157,6 +1160,8 @@ class ControllerAdapter(object):
         return
       log.info("New domain detected from external DomainManager! "
                "BGP id: %s, Orchestrator URL: %s" % (id, orchestrator_url))
+      MessageDumper().dump_to_file(data=topo_nffg,
+                                   unique="%s-changed" % event.domain)
       # Track new domain
       domain_mgr.managed_domain_ids.add(id)
       # Get RemoteDM config
@@ -1166,8 +1171,9 @@ class ControllerAdapter(object):
                     "Skip initialization...")
         return
       # Set domain name
-      mgr_cfg['domain_name'] = "%s%s%s" % (
-        id, self.EXTERNAL_DOMAIN_NAME_JOINER, domain_mgr.domain_name)
+      mgr_cfg['domain_name'] = "%s%s%s" % (id,
+                                           self.EXTERNAL_DOMAIN_NAME_JOINER,
+                                           domain_mgr.domain_name)
       log.debug("Generated domain name: %s" % mgr_cfg['domain_name'])
       # Set URL and prefix
       try:
@@ -1178,8 +1184,8 @@ class ControllerAdapter(object):
         log.warning("Missing required config entry %s from "
                     "RemoteDomainManager: %s" % (e, domain_mgr.prototype))
       log.log(VERBOSE, "Used configuration:\n%s" % pprint.pformat(mgr_cfg))
-      log.info("Initiate DomainManager for detected external domain: %s" %
-               mgr_cfg['domain_name'])
+      log.info("Initiate DomainManager for detected external domain: %s, "
+               "URL: %s" % (mgr_cfg['domain_name'], orchestrator_url))
       # Initialize DomainManager for detected domain
       ext_mgr = self.domains.load_component(component_name=domain_mgr.prototype,
                                             params=mgr_cfg)
