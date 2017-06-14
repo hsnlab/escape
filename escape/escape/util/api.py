@@ -154,6 +154,9 @@ class AbstractAPI(EventMixin):
     except Exception as e:
       quit_with_error(msg="Abort ESCAPEv2 initialization...", exception=e)
 
+  def get_dependent_component (self, name):
+    return getattr(self, "_%s_" % name) if name in self.dependencies else None
+
   def initialize (self):
     """
     Init function for child API classes to simplify dynamic initialization.
