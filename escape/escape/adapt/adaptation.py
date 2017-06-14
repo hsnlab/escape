@@ -672,6 +672,12 @@ class ControllerAdapter(object):
     return deploy_status
 
   def __perform_internal_mgr_update (self, mapped_nffg, domain):
+    """
+
+    :param mapped_nffg:
+    :param domain:
+    :return:
+    """
     # If the internalDM is the only initiated mgr, we can override the
     # whole DoV
     if mapped_nffg.is_SBB():
@@ -933,6 +939,44 @@ class ControllerAdapter(object):
       self._layer_API.raiseEventNoErrors(InfoRequestFinishedEvent,
                                          result=result,
                                          status=req_status)
+
+  def collect_domain_urls (self, mapping):
+    """
+
+    :param mapping:
+    :return:
+    """
+    for map in mapping:
+      try:
+        domain = map['bisbis']['domain']
+      except KeyError:
+        log.error("Missing domain from mapping:\n%s" % map)
+        continue
+      url = self.get_domain_url(domain=domain)
+      if url:
+        log.debug("Found URL: %s for domain: %s" % (url, domain))
+      else:
+        log.error("URL is missing from domain: %s!" % domain)
+        url = "N/A"
+      map['bisbis']['url'] = url
+    return mapping
+
+  def get_domain_url (self, domain):
+    """
+
+    :param domain:
+    :return:
+    """
+    mgr = self.domains.get_component_by_domain(domain_name=domain)
+    if not mgr:
+      log.error("Domain Manager for domain: %s is not found!" % domain)
+      return
+    elif not isinstance(mgr, AbstractRemoteDomainManager):
+      log.warning("Domain Manager for domain %s is not a remote domain manager!"
+                  % domain)
+      return
+    else:
+      return mgr.get_domain_url()
 
   def __resolve_nodes_in_info (self, info):
     log.debug("Resolve NF paths...")

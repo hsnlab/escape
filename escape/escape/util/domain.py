@@ -415,6 +415,10 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     """
     return self._detected
 
+  def get_domain_url (self):
+    if isinstance(self.topoAdapter, AbstractRESTAdapter):
+      return self.topoAdapter.URL
+
   ##############################################################################
   # Abstract functions for component control
   ##############################################################################

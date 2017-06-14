@@ -591,7 +591,7 @@ class ESCAPEConfig(object):
     except KeyError:
       return {}
     try:
-      # FIXME - what if there are not module and class???
+      # FIXME - what if there are no module and class???
       params = params.copy()
       del params['module']
       del params['class']

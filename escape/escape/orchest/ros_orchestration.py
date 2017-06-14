@@ -21,9 +21,8 @@ from escape.adapt.virtualization import AbstractVirtualizer, VirtualizerManager
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
-from escape.util.config import CONFIG
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
-from escape.util.misc import notify_remote_visualizer, VERBOSE
+from escape.util.misc import VERBOSE
 from escape.util.virtualizer_helper import detect_bb_nf_from_path, \
   NF_PATH_TEMPLATE
 
@@ -136,7 +135,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     # Get the service NFFG based on service ID
     request = self.nffgManager.get(service_id)
     if request is None:
-      log.warning("Service request(id: %s) is not found!" % service_id)
+      log.error("Service request(id: %s) is not found!" % service_id)
       return "Service request is not found!"
     # Get the overall view a.k.a. DoV
     dov = self.virtualizerManager.dov.get_resource_info()
@@ -188,7 +187,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
       mapping = {}
       # Get the connected infra node
       if nf_id not in dov:
-        log.warning("NF: %s in to in the global topology(DoV)!" % nf_id)
+        log.warning("NF: %s is not found in the global topology(DoV)!" % nf_id)
         continue
       bisbis = [n.id for n in dov.infra_neighbors(nf_id)]
       log.log(VERBOSE, "Detected mapped BiSBiS node:" % bisbis)
@@ -214,19 +213,17 @@ class ResourceOrchestrator(AbstractOrchestrator):
       bisbis = bisbis.split('@')
       bb_mapping = {"id": bisbis[0],
                     "domain": bisbis[1] if len(bisbis) > 1 else None}
-      if bb_mapping.get("domain"):
-        domain_url = CONFIG.get_domain_url(domain=bb_mapping.get("domain"))
-        log.debug("Domain: %s - Detected URL: %s" % (bb_mapping.get("domain"),
-                                                     domain_url))
-        if domain_url is not None:
-          bb_mapping["url"] = domain_url
-        else:
-          log.warning("Missing URL for domain: %s!" % bb_mapping["domain"])
       mapping['bisbis'] = bb_mapping
       mappings.append(mapping)
     return mappings
 
   def collect_mappings (self, mappings, slor_topo):
+    """
+
+    :param mappings:
+    :param slor_topo:
+    :return:
+    """
     dov = self.virtualizerManager.dov.get_resource_info()
     response = mappings.full_copy()
     log.debug("Start checking mappings...")
@@ -234,29 +231,37 @@ class ResourceOrchestrator(AbstractOrchestrator):
       bb, nf = detect_bb_nf_from_path(path=mapping.object.get_value(),
                                       topo=slor_topo)
       if not nf:
-        # mapping.target.object.set_value("NOT_FOUND")
+        mapping.target.object.set_value("NOT_FOUND")
         mapping.target.domain.set_value("N/A")
         continue
       m_result = self.__collect_binding(dov=dov, nfs=[nf])
       if not m_result:
         log.warning("Mapping is not found for NF: %s!" % nf)
-        # mapping.target.object.set_value("NOT_FOUND")
+        mapping.target.object.set_value("NOT_FOUND")
         mapping.target.domain.set_value("N/A")
         continue
       try:
         node = m_result[0]['bisbis']['id']
+      except KeyError:
+        log.warning("Missing mapping node element from: %s" % m_result)
+        node = "NOT_FOUND"
+      try:
         domain = m_result[0]['bisbis']['domain']
       except KeyError:
-        log.warning("Missing mapping element from: %s" % m_result)
-        # mapping.target.object.set_value("NOT_FOUND")
-        mapping.target.domain.set_value("N/A")
-        continue
+        log.warning("Missing mapping domain element from: %s" % m_result)
+        domain = "N/A"
       log.debug("Found mapping: %s@%s (domain: %s)" % (nf, node, domain))
       mapping.target.object.set_value(NF_PATH_TEMPLATE % (node, nf))
-      mapping.target.domain.set_value(CONFIG.get_domain_url(domain=domain))
+      mapping.target.domain.set_value(domain)
     return response
 
   def filter_info_request (self, info, slor_topo):
+    """
+
+    :param info:
+    :param slor_topo:
+    :return:
+    """
     log.debug("Filter info request based on layer view: %s..." % slor_topo.id)
     info = info.full_copy()
     for attr in (getattr(info, e) for e in info._sorted_children):

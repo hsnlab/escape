@@ -262,17 +262,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
                     "UNIFY" if handler.virtualizer_format_enabled else
                     "Internal-NFFG", handler.DEFAULT_DIFF))
 
-  def _handle_NFFGMappingFinishedEvent (self, event):
-    """
-    Handle NFFGMappingFinishedEvent and proceed with  :class:`NFFG
-    <escape.util.nffg.NFFG>` installation.
-
-    :param event: event object
-    :type event: :any:`NFFGMappingFinishedEvent`
-    :return: None
-    """
-    self._proceed_to_install_NFFG(event.nffg)
-
   ##############################################################################
   # Agent API functions starts here
   ##############################################################################
@@ -394,7 +383,16 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     # Create base response structure
     ret = {"service_id": service_id}
+    log.debug("Collecting mapping info...")
     mapping = self.orchestrator.collect_mapping_info(service_id=service_id)
+    if isinstance(mapping, basestring):
+      return ret
+    log.debug("Resolving domain URLs...")
+    adaptation = self.get_dependent_component("adaptation")
+    if adaptation is None:
+      log.error("Adaptation Layer is missing!")
+    else:
+      adaptation.controller_adapter.collect_domain_urls(mapping=mapping)
     ret['mapping'] = mapping
     # Collect NF management data
     log.debug("Collected mapping info:\n%s" % pprint.pformat(ret))
@@ -410,8 +408,23 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: Mappings
     """
     slor_topo = self.__get_slor_resource_view().get_resource_info()
+    log.debug("Collecting mapping info...")
     response = self.orchestrator.collect_mappings(mappings=mappings,
                                                   slor_topo=slor_topo)
+    log.debug("Resolving domain URLs...")
+    adaptation = self.get_dependent_component("adaptation")
+    if adaptation is None:
+      log.error("Adaptation Layer is missing!")
+    else:
+      for mapping in response:
+        domain = mapping.target.domain.get_value()
+        url = adaptation.controller_adapter.get_domain_url(domain=domain)
+        if url:
+          log.debug("Found URL: %s for domain: %s" % (url, domain))
+        else:
+          log.error("URL is missing from domain: %s!" % domain)
+          url = "N/A"
+        mapping.target.domain.set_value(url)
     return response
 
   @schedule_as_coop_task
@@ -715,6 +728,17 @@ class ResourceOrchestrationAPI(AbstractAPI):
             req_status.get_callback(), ret))
         # TODO - handle remained request-cache -> remove or store for a while??
 
+  def _handle_NFFGMappingFinishedEvent (self, event):
+    """
+    Handle NFFGMappingFinishedEvent and proceed with  :class:`NFFG
+    <escape.util.nffg.NFFG>` installation.
+
+    :param event: event object
+    :type event: :any:`NFFGMappingFinishedEvent`
+    :return: None
+    """
+    self._proceed_to_install_NFFG(event.nffg)
+
   ##############################################################################
   # UNIFY Or - Ca API functions starts here
   ##############################################################################
@@ -934,8 +958,8 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     # Dump get-config topology only in case of changed view
     if resource_nffg is not False:
       MessageDumper().dump_to_file(data=data,
-                                 unique="ESCAPEp%s-get-config" %
-                                        self.server.server_address[1])
+                                   unique="ESCAPEp%s-get-config" %
+                                          self.server.server_address[1])
 
   def _service_request_parser (self):
     """
