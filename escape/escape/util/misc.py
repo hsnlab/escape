@@ -99,9 +99,7 @@ def call_as_coop_task (func, *args, **kwargs):
   :param func: function need to run
   :type func: func
   :param args: nameless arguments
-  :type args: tuple
   :param kwargs: named arguments
-  :type kwargs: dict
   :return: None
   """
   from pox.core import core
@@ -161,7 +159,7 @@ def enum (*sequential, **named):
   :param sequential: support automatic enumeration
   :type sequential: str
   :param named: support definition with unique keys
-  :type named: dict
+  :type named: object
   :return: Enum object
   :rtype: dict
   """

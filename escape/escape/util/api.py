@@ -33,6 +33,7 @@ from escape.util.config import CONFIG
 from escape.util.misc import SimpleStandaloneHelper, quit_with_error, \
   get_escape_version
 from escape.util.pox_extension import POXCoreRegisterMetaClass
+from escape.util.stat import stats
 from pox.core import core
 from pox.lib.revent import EventMixin
 
@@ -981,6 +982,7 @@ class RequestScheduler(threading.Thread):
     else:
       self.log.info("Set orchestration status of request: %s --> FINISHED"
                     % self.__progress)
+      stats.finish_request_measurement()
       with self.__condition:
         self.__progress = None
         self.__condition.notify()
@@ -1004,6 +1006,7 @@ class RequestScheduler(threading.Thread):
     :return: None
     """
     self.log.info("Start request processing in coop-task: %s" % request)
+    stats.init_request_measurement(request.id)
     if core.core.hasComponent(request.layer):
       layer = core.components[request.layer]
       if hasattr(layer, request.function):

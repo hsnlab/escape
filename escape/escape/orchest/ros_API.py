@@ -34,6 +34,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import BaseResultEvent
 from escape.util.mapping import ProcessorError
 from escape.util.misc import VERBOSE, schedule_as_coop_task, quit_with_error
+from escape.util.stat import stats
 from pox.lib.revent.revent import Event
 from virtualizer import Virtualizer
 from virtualizer_info import Info
@@ -57,6 +58,8 @@ class InstallNFFGEvent(Event):
     super(InstallNFFGEvent, self).__init__()
     self.mapped_nffg = mapped_nffg
     self.original_request = original_request
+    stats.add_measurement_end_entry(type=stats.TYPE_ORCHESTRATION,
+                                    info=LAYER_NAME)
 
 
 class VirtResInfoEvent(Event):
@@ -507,6 +510,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, nffg.name))
+    stats.add_measurement_start_entry(type=stats.TYPE_ORCHESTRATION,
+                                      info=LAYER_NAME)
     # Get shown topology view
     if resource_nffg is None:
       log.error("Missing resource for difference calculation!")
@@ -649,8 +654,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Log verbose mapping result in unified way (threaded/non-threaded)
     log.log(VERBOSE, "Mapping result of Orchestration Layer:\n%s" %
             mapped_nffg.dump())
-    # Notify remote visualizer about the mapping result if it's needed
-    # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
     # Sending NF-FG to Adaptation layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
     self.raiseEventNoErrors(InstallNFFGEvent,

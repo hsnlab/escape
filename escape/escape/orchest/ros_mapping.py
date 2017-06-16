@@ -25,6 +25,7 @@ from escape.orchest import log as log, LAYER_NAME
 from escape.util.config import CONFIG
 from escape.util.mapping import AbstractMapper, AbstractMappingStrategy
 from escape.util.misc import call_as_coop_task, VERBOSE
+from escape.util.stat import stats
 from pox.lib.revent.revent import Event
 
 
@@ -44,6 +45,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
 
   @classmethod
   def call_mapping_algorithm (cls, request, topology, profiling=False,
+                              stats_type=stats.TYPE_ORCHESTRATION_MAPPING,
+                              stat_level=None,
                               **params):
     """
     Template function to call the main algorithm.
@@ -62,10 +65,14 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :return: mapping result
     :rtype: :class:`NFFG`
     """
+    stat_level = stat_level if stat_level else cls.__name__
+    stats.add_measurement_start_entry(type=stats_type, info=stat_level)
     if profiling:
-      return cls.cprofiler_decorator(MAP, request, topology, **params)
+      ret = cls.cprofiler_decorator(MAP, request, topology, **params)
     else:
-      return cls.timer_decorator(MAP, request, topology, **params)
+      ret = cls.timer_decorator(MAP, request, topology, **params)
+    stats.add_measurement_end_entry(type=stats_type, info=stat_level)
+    return ret
 
   @staticmethod
   def cprofiler_decorator (func, *args, **kwargs):

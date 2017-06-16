@@ -34,6 +34,7 @@ from escape.util.mapping import PreMapEvent, PostMapEvent, ProcessorError
 from escape.util.misc import schedule_delayed_as_coop_task, \
   schedule_as_coop_task, VERBOSE, quit_with_ok, \
   get_global_parameter, quit_with_error
+from escape.util.stat import stats
 from pox.lib.revent.revent import Event
 
 SCHEDULED_SERVICE_REQUEST_DELAY = CONFIG.get_sas_request_delay()
@@ -55,6 +56,7 @@ class InstantiateNFFGEvent(Event):
     super(InstantiateNFFGEvent, self).__init__()
     self.nffg = nffg
     self.resource_nffg = resource_nffg
+    stats.add_measurement_end_entry(type=stats.TYPE_SERVICE, info=LAYER_NAME)
 
 
 class GetVirtResInfoEvent(Event):
@@ -383,6 +385,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke request_service on %s with SG: %s " %
                              (self.__class__.__name__, service_nffg))
+    stats.add_measurement_start_entry(type=stats.TYPE_SERVICE, info=LAYER_NAME)
     # Check if mapping mode is set globally in CONFIG
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:
@@ -542,11 +545,9 @@ class ServiceLayerAPI(AbstractAPI):
     # Log verbose mapping result in unified way (threaded/non-threaded)
     log.log(VERBOSE,
             "Mapping result of Service Layer:\n%s" % mapped_nffg.dump())
-    # Notify remote visualizer about the mapping result if it's needed
-    # notify_remote_visualizer(data=mapped_nffg, id=LAYER_NAME)
-    sas_res = self.__get_sas_resource_view().get_resource_info()
     # Sending mapped SG / NF-FG to Orchestration layer as an Event
     # Exceptions in event handlers are caught by default in a non-blocking way
+    sas_res = self.__get_sas_resource_view().get_resource_info()
     self.raiseEventNoErrors(InstantiateNFFGEvent, mapped_nffg, sas_res)
     log.getChild('API').info(
       "Generated NF-FG: %s has been sent to Orchestration..." % mapped_nffg)
