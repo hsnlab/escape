@@ -24,6 +24,7 @@ from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
 from escape.util.api import AbstractAPI
 from escape.util.misc import schedule_as_coop_task, quit_with_error
+from escape.util.stat import stats
 from pox.lib.revent.revent import Event
 
 
@@ -152,6 +153,8 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, mapped_nffg))
+    stats.add_measurement_start_entry(type=stats.TYPE_DEPLOY,
+                                      info=LAYER_NAME)
     try:
       deploy_status = self.controller_adapter.install_nffg(mapped_nffg,
                                                            original_request)

@@ -31,6 +31,7 @@ from escape.util.conversion import NFFGConverter
 from escape.util.domain import DomainChangedEvent, AbstractDomainManager, \
   AbstractRemoteDomainManager
 from escape.util.misc import notify_remote_visualizer, VERBOSE
+from escape.util.stat import stats
 from escape.util.virtualizer_helper import get_nfs_from_info, \
   strip_info_by_nfs, get_bb_nf_from_path
 from virtualizer_info import Info
@@ -51,6 +52,8 @@ class InstallationFinishedEvent(mgrs.BaseResultEvent):
     super(InstallationFinishedEvent, self).__init__()
     self.id = id
     self.result = result
+    stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY,
+                                    info=log.name)
 
   @classmethod
   def get_result_from_status (cls, deploy_status):
@@ -569,6 +572,8 @@ class ControllerAdapter(object):
              [d for d in self.domains.initiated])
     # Perform domain installations
     for domain, part in slices:
+      stats.add_measurement_start_entry(type=stats.TYPE_DEPLOY_DOMAIN,
+                                        info=domain)
       log.debug("Search DomainManager for domain: %s" % domain)
       # Get Domain Manager
       domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
@@ -1319,6 +1324,9 @@ class DomainRequestStatus(object):
     if domain not in self.__statuses:
       raise RuntimeError("Updated domain: %s is not registered!" % domain)
     self.__statuses[domain] = status
+    if status in (self.OK, self.FAILED, self.RESET):
+      stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_DOMAIN,
+                                      info="%s-->%s" % (domain, status))
     return self
 
   def set_domain_ok (self, domain):

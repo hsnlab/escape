@@ -14,12 +14,14 @@
 """
 Contains classes which implement SG mapping functionality.
 """
+
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest.ros_mapping import ESCAPEMappingStrategy
 from escape.service import log as log, LAYER_NAME
 from escape.util.config import CONFIG
 from escape.util.mapping import AbstractMapper
 from escape.util.misc import call_as_coop_task, VERBOSE
+from escape.util.stat import stats
 from pox.lib.revent.revent import Event
 
 
@@ -36,6 +38,34 @@ class DefaultServiceMappingStrategy(ESCAPEMappingStrategy):
     :return: None
     """
     super(DefaultServiceMappingStrategy, self).__init__()
+
+  @classmethod
+  def call_mapping_algorithm (cls, request, topology, profiling=False,
+                              **params):
+    """
+    Template function to call the main algorithm.
+    Provide an easy way to change the algorithm easily in child classes.
+
+    Contains profiling to measure basic performance of the algorithm.
+
+    :param request: request graph
+    :type request: :class:`NFFG`
+    :param topology: topology graph
+    :type topology: :class:`NFFG`
+    :param profiling: enables cProfile for mapping which bring big overhead
+    :type profiling: bool
+    :param params: additional mapping parameters
+    :type params: dict
+    :return: mapping result
+    :rtype: :class:`NFFG`
+    """
+    return ESCAPEMappingStrategy.call_mapping_algorithm(
+      request=request,
+      topology=topology,
+      profiling=profiling,
+      stats_type=stats.TYPE_SERVICE_MAPPING,
+      stats_level=ESCAPEMappingStrategy.__name__,
+      **params)
 
 
 class SGMappingFinishedEvent(Event):
