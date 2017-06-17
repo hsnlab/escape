@@ -982,6 +982,7 @@ class RequestScheduler(threading.Thread):
     else:
       self.log.info("Set orchestration status of request: %s --> FINISHED"
                     % self.__progress)
+      stats.add_measurement_end_entry(stats.TYPE_SCHEDULED, id)
       stats.finish_request_measurement()
       with self.__condition:
         self.__progress = None
@@ -1006,7 +1007,7 @@ class RequestScheduler(threading.Thread):
     :return: None
     """
     self.log.info("Start request processing in coop-task: %s" % request)
-    stats.init_request_measurement(request.id)
+    stats.add_measurement_start_entry(stats.TYPE_SCHEDULED, request.id)
     if core.core.hasComponent(request.layer):
       layer = core.components[request.layer]
       if hasattr(layer, request.function):

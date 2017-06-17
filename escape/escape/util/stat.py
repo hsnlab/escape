@@ -39,12 +39,13 @@ class OrchestrationStatCollector(object):
 
   PREFIX = 'TYPE_'
   TYPE_OVERALL = 0
-  TYPE_SERVICE = 1
-  TYPE_SERVICE_MAPPING = 11
-  TYPE_ORCHESTRATION = 2
-  TYPE_ORCHESTRATION_MAPPING = 21
-  TYPE_DEPLOY = 3
-  TYPE_DEPLOY_DOMAIN = 31
+  TYPE_SCHEDULED = 1
+  TYPE_SERVICE = 2
+  TYPE_SERVICE_MAPPING = 21
+  TYPE_ORCHESTRATION = 3
+  TYPE_ORCHESTRATION_MAPPING = 31
+  TYPE_DEPLOY = 4
+  TYPE_DEPLOY_DOMAIN = 41
   CMD_START = "START"
   CMD_STOP = "END"
 
@@ -53,10 +54,13 @@ class OrchestrationStatCollector(object):
     log.debug("Setup stat collector with folder: %s" % stat_folder)
     self.__cntr = 0
     self.__measured_values = []
-    self.request_id = None
+    self.__request_id = None
     if not os.path.exists(self.stat_folder):
       os.mkdir(self.stat_folder)
     self.clear_stats()
+
+  def set_request_id(self, request_id):
+    self.__request_id = request_id
 
   @classmethod
   def get_type_name (cls, number):
@@ -75,19 +79,19 @@ class OrchestrationStatCollector(object):
         os.remove(os.path.join(PROJECT_ROOT, self.stat_folder, f))
 
   def init_request_measurement (self, request_id):
-    if self.request_id != request_id:
+    if self.__request_id != request_id:
       self.reset()
-    self.request_id = request_id
+    self.__request_id = request_id
     self.add_measurement_start_entry(type=self.TYPE_OVERALL,
-                                     info=self.request_id)
+                                     info=self.__request_id)
 
   def finish_request_measurement (self):
     self.add_measurement_end_entry(type=self.TYPE_OVERALL,
-                                   info=self.request_id)
+                                   info=self.__request_id)
     self.dump_to_file()
 
   def reset (self):
-    self.request_id = None
+    self.__request_id = None
     del self.__measured_values[:]
 
   def add_measurement_start_entry (self, type, info=None):
@@ -137,7 +141,7 @@ class OrchestrationStatCollector(object):
 
   def dump_to_file (self, file_name=None, raw=True, calculated=False):
     if not file_name:
-      file_name = "%s/%s.stat" % (self.stat_folder, self.request_id)
+      file_name = "%s/%s.stat" % (self.stat_folder, self.__request_id)
     if os.path.exists(file_name):
       log.warning("Stat file for request: %s already exists! Overriding...")
     with open(file_name, "w") as f:

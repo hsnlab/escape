@@ -980,10 +980,10 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       log.warning("Received data is empty!")
       self.send_error(code=httplib.BAD_REQUEST, message="Missing body!")
       return
+    unique = "ESCAPEp%s-edit-config" % self.server.server_address[1]
+    stats.init_request_measurement(request_id=unique)
     # Expect XML format --> need to convert first
-    MessageDumper().dump_to_file(data=raw_body,
-                                 unique="ESCAPEp%s-edit-config" %
-                                        self.server.server_address[1])
+    MessageDumper().dump_to_file(data=raw_body, unique=unique)
     if self.virtualizer_format_enabled:
       if self.headers.get("Content-Type") != "application/xml" and \
          not raw_body.startswith("<?xml version="):
@@ -1054,6 +1054,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       else:
         self.log.info('No mode parameter has been defined in body!')
     self.log.debug("Parsed NFFG install request: %s" % nffg)
+    stats.set_request_id(request_id=nffg.id)
     self.log.log(VERBOSE, "Full request:\n%s" % nffg.dump())
     return nffg
 

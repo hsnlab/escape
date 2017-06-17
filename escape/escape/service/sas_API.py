@@ -252,6 +252,7 @@ class ServiceLayerAPI(AbstractAPI):
     # Read input from file if it's given and initiate SG
     if self._sg_file:
       try:
+        stats.init_request_measurement(request_id=self._sg_file)
         service_request = self._read_data_from_file(self._sg_file)
         log.info("Graph representation is loaded successfully!")
         if service_request.startswith('{'):
@@ -272,7 +273,7 @@ class ServiceLayerAPI(AbstractAPI):
                    "Set default mode: %s" % nffg.mode)
         log.info("Schedule service request delayed by %d seconds..."
                  % SCHEDULED_SERVICE_REQUEST_DELAY)
-        stats.init_request_measurement(nffg.id)
+        stats.set_request_id(request_id=nffg.id)
         self.api_sas_sg_request_delayed(service_nffg=nffg)
       except (ValueError, IOError, TypeError) as e:
         log.error(
