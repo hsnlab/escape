@@ -18,6 +18,7 @@ import shutil
 import time
 
 from testframework.testcases.basic import BasicSuccessfulTestCase
+from testframework.testcases.domain_mock import DomainOrchestratorAPIMocker
 from testframework.testcases.dynamic import DynamicallyGeneratedTestCase, \
   DynamicTestGenerator
 
@@ -40,16 +41,15 @@ class PerformanceTestCase(BasicSuccessfulTestCase):
       target_dir = os.path.join(self.result_folder, self.test_case_info.name)
       if not os.path.exists(target_dir):
         os.makedirs(target_dir)
-      if self.success:
-        log.debug("Store files into: %s" % target_dir)
-        log.debug(self.stat_folder)
-        if self.stat_folder is not None:
-          distutils.dir_util.copy_tree(src=self.stat_folder, dst=target_dir)
-        shutil.copytree(src=self.test_case_info.full_testcase_path,
-                        dst=os.path.join(target_dir, "output"),
-                        ignore=shutil.ignore_patterns('*.txt',
-                                                      '*.sh',
-                                                      '*.config'))
+      log.debug("Store files into: %s" % target_dir)
+      log.debug(self.stat_folder)
+      if self.stat_folder is not None:
+        distutils.dir_util.copy_tree(src=self.stat_folder, dst=target_dir)
+      shutil.copytree(src=self.test_case_info.full_testcase_path,
+                      dst=os.path.join(target_dir, "output"),
+                      ignore=shutil.ignore_patterns('*.txt',
+                                                    '*.sh',
+                                                    '*.config'))
     super(PerformanceTestCase, self).tearDown()
 
 
@@ -69,17 +69,38 @@ class DynamicPerformanceTestCase(DynamicallyGeneratedTestCase):
       target_dir = os.path.join(self.result_folder, self.test_case_info.name)
       if not os.path.exists(target_dir):
         os.makedirs(target_dir)
-      if self.success:
-        log.debug("Store files into: %s" % target_dir)
-        log.debug(self.stat_folder)
-        if self.stat_folder is not None:
-          distutils.dir_util.copy_tree(src=self.stat_folder, dst=target_dir)
-        shutil.copytree(src=self.test_case_info.full_testcase_path,
-                        dst=os.path.join(target_dir, "output"),
-                        ignore=shutil.ignore_patterns('*.txt',
-                                                      '*.sh',
-                                                      '*.config'))
+      log.debug("Store files into: %s" % target_dir)
+      log.debug(self.stat_folder)
+      if self.stat_folder is not None:
+        distutils.dir_util.copy_tree(src=self.stat_folder, dst=target_dir)
+      shutil.copytree(src=self.test_case_info.full_testcase_path,
+                      dst=os.path.join(target_dir, "output"),
+                      ignore=shutil.ignore_patterns('*.txt',
+                                                    '*.sh',
+                                                    '*.config'))
     super(DynamicPerformanceTestCase, self).tearDown()
+
+
+class DynamicMockingPerformanceTestCase(DynamicPerformanceTestCase):
+  """
+  """
+
+  def __init__ (self, responses=None, *args, **kwargs):
+    super(DynamicMockingPerformanceTestCase, self).__init__(*args, **kwargs)
+    self.domain_mocker = DomainOrchestratorAPIMocker(**kwargs)
+    dir = self.test_case_info.full_testcase_path
+    if responses:
+      self.domain_mocker.register_responses(dirname=dir, responses=responses)
+    else:
+      self.domain_mocker.register_responses_from_dir(dirname=dir)
+
+  def setUp (self):
+    super(DynamicMockingPerformanceTestCase, self).setUp()
+    self.domain_mocker.start()
+
+  def tearDown (self):
+    super(DynamicMockingPerformanceTestCase, self).tearDown()
+    self.domain_mocker.shutdown()
 
 
 class DynamicPerformanceTestGenerator(DynamicTestGenerator):
