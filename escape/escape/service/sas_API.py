@@ -272,6 +272,7 @@ class ServiceLayerAPI(AbstractAPI):
                    "Set default mode: %s" % nffg.mode)
         log.info("Schedule service request delayed by %d seconds..."
                  % SCHEDULED_SERVICE_REQUEST_DELAY)
+        stats.init_request_measurement(nffg.id)
         self.api_sas_sg_request_delayed(service_nffg=nffg)
       except (ValueError, IOError, TypeError) as e:
         log.error(
@@ -607,4 +608,5 @@ class ServiceLayerAPI(AbstractAPI):
                                    fail=event.is_error(event.result))
     # Quit ESCAPE if test mode is active
     if get_global_parameter(name="QUIT_AFTER_PROCESS"):
+      stats.finish_request_measurement()
       quit_with_ok("Detected QUIT mode! Exiting ESCAPE...")
