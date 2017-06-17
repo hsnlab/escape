@@ -135,19 +135,19 @@ class OrchestrationStatCollector(object):
                                              e.timestamp - dd.timestamp))
     return processed
 
-  def dump_to_file (self, file_name=None, raw=True):
+  def dump_to_file (self, file_name=None, raw=True, calculated=False):
     if not file_name:
       file_name = "%s/%s.stat" % (self.stat_folder, self.request_id)
     if os.path.exists(file_name):
       log.warning("Stat file for request: %s already exists! Overriding...")
     with open(file_name, "w") as f:
+      if raw:
+        for line in self.raw_stat():
+          f.write(line.dump() + '\n')
       f.write('=' * 80 + '\n')
-      for line in self.raw_stat():
-        f.write(line.dump() + '\n')
-      f.write('=' * 80 + '\n')
-      for line in self.calculate_stat_values():
-        f.write(line + '\n')
-      f.write('=' * 80 + '\n')
+      if calculated:
+        for line in self.calculate_stat_values():
+          f.write(line + '\n')
     log.info("Stat for service request is dumped into: %s" % file_name)
 
 
