@@ -67,11 +67,13 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     """
     stat_level = stat_level if stat_level else cls.__name__
     stats.add_measurement_start_entry(type=stats_type, info=stat_level)
-    if profiling:
-      ret = cls.cprofiler_decorator(MAP, request, topology, **params)
-    else:
-      ret = cls.timer_decorator(MAP, request, topology, **params)
-    stats.add_measurement_end_entry(type=stats_type, info=stat_level)
+    try:
+      if profiling:
+        ret = cls.cprofiler_decorator(MAP, request, topology, **params)
+      else:
+        ret = cls.timer_decorator(MAP, request, topology, **params)
+    finally:
+      stats.add_measurement_end_entry(type=stats_type, info=stat_level)
     return ret
 
   @staticmethod
