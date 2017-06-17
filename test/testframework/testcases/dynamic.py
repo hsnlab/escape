@@ -179,7 +179,7 @@ class DynamicTestGenerator(BaseTestSuite):
     self.num_of_topos = num_of_topos
     self._create_test_cases()
 
-  def __get_seed_generator (self):
+  def _get_seed_generator (self):
     """
     Return an iterator which generates the tuple (request, topology) of seed
     values for test cases based on the config values:
@@ -266,7 +266,7 @@ class DynamicTestGenerator(BaseTestSuite):
                   (self.test_case_info.name, self.DEFAULT_TESTCASE_CLASS))
       TestCaseClass = self.DEFAULT_TESTCASE_CLASS
     # Get generation config
-    for req_seed, topo_seed in self.__get_seed_generator():
+    for req_seed, topo_seed in self._get_seed_generator():
       testcase_cfg = self.testcase_cfg.copy() if self.testcase_cfg else {}
       # Create request config based on config file and generated seed value
       if req_seed is not None and testcase_cfg and \
