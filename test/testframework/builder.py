@@ -14,6 +14,7 @@
 import logging
 import os
 import sys
+import traceback
 from unittest.suite import TestSuite
 
 from runner import RunnableTestCaseInfo, ESCAPECommandRunner
@@ -132,6 +133,7 @@ class TestSuitBuilder(object):
       try:
         test_cases.append(self.build_from_config(case_info=case_info))
       except Exception as e:
-        log.error("Testcase loading failed: %s" % e.message)
+        # log.error("Testcase loading failed: %s" % e.message)
+        log.error(traceback.format_exc())
         continue
     return TestSuite(test_cases)
