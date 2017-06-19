@@ -109,7 +109,8 @@ class WarningChecker(BasicErrorChecker):
     "Physical interface:",
     "Skip starting xterms on SAPS according to global config",
     "NFIBManager has not been initialized!",
-    "No configuration file was found for neo4j service!"
+    "No configuration file was found for neo4j service!",
+    "Installation process is still pending!Waiting for results..."
   ]
 
   @classmethod
