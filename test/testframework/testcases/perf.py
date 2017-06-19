@@ -31,9 +31,12 @@ class PerformanceTestCase(BasicSuccessfulTestCase):
 
   def __init__ (self, result_folder=None, stat_folder=None, *args, **kwargs):
     super(PerformanceTestCase, self).__init__(*args, **kwargs)
-    self.result_folder = os.path.join(
-      result_folder if result_folder else os.getcwd(),
-      time.strftime("%Y%m%d%H%M%S"))
+    if not result_folder:
+      result_folder = os.getcwd()
+      log.warning("Result folder is missing! Using working dir: %s"
+                  % result_folder)
+    self.result_folder = os.path.join(result_folder,
+                                      time.strftime("%Y%m%d%H%M%S"))
     self.stat_folder = stat_folder
 
   def tearDown (self):
@@ -59,9 +62,12 @@ class DynamicPerformanceTestCase(DynamicallyGeneratedTestCase):
 
   def __init__ (self, result_folder=None, stat_folder=None, *args, **kwargs):
     super(DynamicPerformanceTestCase, self).__init__(*args, **kwargs)
-    self.result_folder = os.path.join(
-      result_folder if result_folder else os.getcwd(),
-      time.strftime("%Y%m%d%H%M%S"))
+    if not result_folder:
+      result_folder = os.getcwd()
+      log.warning("Result folder is missing! Using working dir: %s"
+                  % result_folder)
+    self.result_folder = os.path.join(result_folder,
+                                      time.strftime("%Y%m%d%H%M%S"))
     self.stat_folder = stat_folder
 
   def tearDown (self):
@@ -108,9 +114,12 @@ class DynamicPerformanceTestGenerator(DynamicTestGenerator):
   """
 
   def __init__ (self, result_folder=None, stat_folder=None, *args, **kwargs):
-    self.result_folder = os.path.join(
-      result_folder if result_folder else os.getcwd(),
-      time.strftime("%Y%m%d%H%M%S"))
+    if not result_folder:
+      result_folder = os.getcwd()
+      log.warning("Result folder is missing! Using working dir: %s"
+                  % result_folder)
+    self.result_folder = os.path.join(result_folder,
+                                      time.strftime("%Y%m%d%H%M%S"))
     self.stat_folder = stat_folder
     super(DynamicPerformanceTestGenerator, self).__init__(*args, **kwargs)
 
