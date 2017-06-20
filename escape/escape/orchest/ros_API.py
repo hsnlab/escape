@@ -627,7 +627,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg,
                                     original_request=nffg)
     else:
-      log.warning("Something went wrong in trial_and_error instantiation: "
+      log.error("Something went wrong in trial_and_error instantiation: "
                   "mapped service request is missing!")
       self.__process_mapping_result(nffg_id=nffg.id, fail=True)
       self.raiseEventNoErrors(InstantiationFinishedEvent,

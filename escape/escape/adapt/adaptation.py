@@ -1398,7 +1398,7 @@ class DomainRequestManager(object):
   def register_request (self, id, domains, data=None):
     for s in self._services:
       if s.id == id:
-        log.warning("Service request: %s is already registered in %s! "
+        log.warning("Detected already registered service request: %s in %s! "
                     "Reset deploy statuses..." % (id, self.__class__.__name__))
       s.reset_statuses()
       return s

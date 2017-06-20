@@ -164,16 +164,16 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     except MappingException as e:
       log.error(
         "Mapping algorithm unable to map given request! Cause:\n%s" % e.msg)
-      log.warning("Mapping algorithm on %s is aborted!" % graph)
+      log.error("Mapping algorithm on %s is aborted!" % graph)
       return
     except BadInputException as e:
       log.error("Mapping algorithm refuse given input! Cause:\n%s" % e.msg)
-      log.warning("Mapping algorithm on %s is aborted!" % graph)
+      log.error("Mapping algorithm on %s is aborted!" % graph)
       return
     except InternalAlgorithmException as e:
       log.critical(
         "Mapping algorithm fails due to internal error! Cause:\n%s" % e.msg)
-      log.warning("Mapping algorithm on %s is aborted!" % graph)
+      log.error("Mapping algorithm on %s is aborted!" % graph)
       return
     except:
       log.exception("Got unexpected error during mapping process!")
@@ -346,6 +346,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
         # Steps after mapping (optional)
         log.info("NF-FG: %s orchestration is finished by %s successfully!" % (
           input_graph, self.__class__.__name__))
+      log.debug("Last mapping state: %s" % self.last_mapping_state)
       return mapped_nffg
 
   def _mapping_finished (self, mapped_nffg):

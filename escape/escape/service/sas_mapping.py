@@ -179,6 +179,7 @@ class ServiceGraphMapper(AbstractMapper):
       else:
         log.info("SG: %s orchestration is finished by %s successfully!" % (
           input_graph, self.__class__.__name__))
+      log.debug("Last mapping state: %s" % self.last_mapping_state)
       return mapped_nffg
 
   def _mapping_finished (self, mapped_nffg):
