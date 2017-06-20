@@ -338,6 +338,20 @@ class ESCAPEConfig(object):
     except (KeyError, AttributeError):
       return {}
 
+  def get_trial_and_error (self, layer):
+    """
+    Return the mapping config for the ``layer`` or not.
+
+    :param layer: layer name
+    :type layer: str
+    :return: config parameters for trial_and_error function (default: false)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[layer]['MAPPER']['trial_and_error']
+    except (KeyError, AttributeError):
+      return False
+
   def get_strategy (self, layer):
     """
     Return with the Strategy class of the given layer.
@@ -711,6 +725,15 @@ class ESCAPEConfig(object):
       return self.__configuration[ADAPT]['deployment']['ROLLBACK-ON-FAILURE']
     except KeyError:
       return False
+
+  def domain_deploy_delay (self):
+    """
+    :rtype: int
+    """
+    try:
+      return self.__configuration[ADAPT]['deployment']['DOMAIN-DEPLOY-DELAY']
+    except KeyError:
+      return 0
 
   def use_remerge_update_strategy (self):
     """

@@ -38,14 +38,17 @@ class BaseResultEvent(Event):
   Base class for deploy result signalling Events.
   """
   # State constants
+  ## Expected results
   INITIATED = "INITIATED"
   IN_PROGRESS = "IN_PROGRESS"
   DEPLOYED = "DEPLOYED"
   SUCCESS = "SUCCESS"
+  ## Errors
   ERROR = "ERROR"
   MAPPING_ERROR = "MAPPING_ERROR"
   DEPLOY_ERROR = "DEPLOYMENT_ERROR"
   RESET = "RESET"
+  RESET_ERROR = "RESET_ERROR"
   REFUSED_BY_VERIFICATION = "DEPLOYMENT_REFUSED_BY_VERIGRAPH"
   ABORTED = "ABORTED"
   UNKNOWN = "UNKNOWN"
@@ -60,18 +63,16 @@ class BaseResultEvent(Event):
     :return: the result is an error type or note
     :rtype: bool
     """
-    if result in (cls.ERROR, cls.MAPPING_ERROR, cls.DEPLOY_ERROR, cls.RESET,
-                  cls.REFUSED_BY_VERIFICATION, cls.ABORTED, cls.UNKNOWN):
-      return True
-    else:
-      return False
+    return result not in (
+      cls.INITIATED, cls.IN_PROGRESS, cls.DEPLOYED, cls.SUCCESS)
+
+  @classmethod
+  def is_deploy_error (cls, result):
+    return result in (cls.DEPLOY_ERROR, cls.RESET, cls.RESET_ERROR, cls.ERROR)
 
   @classmethod
   def is_pending (cls, result):
-    if result in (cls.INITIATED, cls.IN_PROGRESS):
-      return True
-    else:
-      return False
+    return result in (cls.INITIATED, cls.IN_PROGRESS)
 
 
 class DomainChangedEvent(Event):

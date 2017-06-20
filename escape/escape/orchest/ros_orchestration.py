@@ -17,7 +17,7 @@ Contains classes relevant to Resource Orchestration Sublayer functionality.
 import ast
 from collections import OrderedDict
 
-from escape.adapt.virtualization import AbstractVirtualizer, VirtualizerManager
+from escape.adapt.virtualization import VirtualizerManager
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.nfib_mgmt import NFIBManager
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
@@ -62,7 +62,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
     """
     self.nfibManager.finalize()
 
-  def instantiate_nffg (self, nffg):
+  def instantiate_nffg (self, nffg, continued_request_id=False):
     """
     Main API function for NF-FG instantiation.
 
@@ -72,8 +72,13 @@ class ResourceOrchestrator(AbstractOrchestrator):
     :rtype: :class:`NFFG`
     """
     log.debug("Invoke %s to instantiate given NF-FG" % self.__class__.__name__)
-    # Store newly created NF-FG
-    self.nffgManager.save(nffg)
+    if not continued_request_id:
+      # Store newly created NF-FG
+      self.nffgManager.save(nffg)
+    else:
+      # Use the original NFFG requested for getting the original request
+      nffg = self.nffgManager.get(nffg_id=continued_request_id)
+      log.info("Using original request for remapping: %s" % nffg)
     # Get Domain Virtualizer to acquire global domain view
     global_view = self.virtualizerManager.dov
     # Notify remote visualizer about resource view of this layer if it's needed
@@ -83,10 +88,10 @@ class ResourceOrchestrator(AbstractOrchestrator):
     log.log(VERBOSE, "Orchestration Layer request graph:\n%s" % nffg.dump())
     # Start Orchestrator layer mapping
     if global_view is not None:
-      if isinstance(global_view, AbstractVirtualizer):
-        # If the request is a bare NFFG, it is probably an empty topo for domain
-        # deletion --> skip mapping to avoid BadInputException and forward
-        # topo to adaptation layer
+      # If the request is a bare NFFG, it is probably an empty topo for domain
+      # deletion --> skip mapping to avoid BadInputException and forward
+      # topo to adaptation layer
+      if not continued_request_id:
         if nffg.is_bare():
           log.warning("No valid service request (VNFs/Flowrules/SGhops) has "
                       "been detected in SG request! Skip orchestration in "
@@ -106,19 +111,20 @@ class ResourceOrchestrator(AbstractOrchestrator):
           return nffg
         else:
           log.info("Request check: detected valid NFFG content!")
-        try:
-          # Run Nf-FG mapping orchestration
-          mapped_nffg = self.mapper.orchestrate(nffg, global_view)
-          log.debug("NF-FG instantiation is finished by %s" %
-                    self.__class__.__name__)
-          return mapped_nffg
-        except ProcessorError as e:
-          log.warning("Mapping pre/post processing was unsuccessful! "
-                      "Cause: %s" % e)
-          # Propagate the ProcessError to API layer
-          raise
-      else:
-        log.warning("Global view is not subclass of AbstractVirtualizer!")
+      try:
+        # Run NF-FG mapping orchestration
+        mapped_nffg = self.mapper.orchestrate(input_graph=nffg,
+                                              resource_view=global_view,
+                                              continued=bool(
+                                                continued_request_id))
+        log.debug("NF-FG instantiation is finished by %s" %
+                  self.__class__.__name__)
+        return mapped_nffg
+      except ProcessorError as e:
+        log.warning("Mapping pre/post processing was unsuccessful! "
+                    "Cause: %s" % e)
+        # Propagate the ProcessError to API layer
+        raise
     else:
       log.warning("Global view is not acquired correctly!")
     log.error("Abort orchestration process!")

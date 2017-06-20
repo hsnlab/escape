@@ -14,11 +14,10 @@
 """
 Contains classes relevant to Service Adaptation Sublayer functionality.
 """
-from escape.adapt.virtualization import AbstractVirtualizer
 from escape.service import log as log, LAYER_NAME
 from escape.service.sas_mapping import ServiceGraphMapper
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
-from escape.util.misc import notify_remote_visualizer, VERBOSE
+from escape.util.misc import VERBOSE
 from pox.lib.revent.revent import EventMixin, Event
 
 
@@ -55,7 +54,7 @@ class ServiceOrchestrator(AbstractOrchestrator):
     self.virtResManager = VirtualResourceManager()
     self.virtResManager.addListeners(layer_API, weak=True)
 
-  def initiate_service_graph (self, sg):
+  def initiate_service_graph (self, sg, continued_request_id=False):
     """
     Main function for initiating Service Graphs.
 
@@ -66,8 +65,13 @@ class ServiceOrchestrator(AbstractOrchestrator):
     """
     log.debug("Invoke %s to initiate SG(id=%s)" %
               (self.__class__.__name__, sg.id))
-    # Store newly created SG
-    self.sgManager.save(sg)
+    if not continued_request_id:
+      # Store newly created SG
+      self.sgManager.save(sg)
+    else:
+      # Use the original NFFG requested for getting the original request
+      nffg = self.sgManager.get(graph_id=continued_request_id)
+      log.info("Using original request for remapping: %s" % nffg)
     # Get virtual resource info as a Virtualizer
     virtual_view = self.virtResManager.virtual_view
     # Notify remote visualizer about resource view of this layer if it's needed
@@ -76,10 +80,10 @@ class ServiceOrchestrator(AbstractOrchestrator):
     # Log verbose service request
     log.log(VERBOSE, "Service layer request graph:\n%s" % sg.dump())
     if virtual_view is not None:
-      if isinstance(virtual_view, AbstractVirtualizer):
-        # If the request is a bare NFFG, it is probably an empty topo for domain
-        # deletion --> skip mapping to avoid BadInputException and forward
-        # topo to adaptation layer
+      # If the request is a bare NFFG, it is probably an empty topo for domain
+      # deletion --> skip mapping to avoid BadInputException and forward
+      # topo to adaptation layer
+      if not continued_request_id:
         if sg.is_bare():
           log.warning("No valid service request (VNFs/Flowrules/SGhops) has "
                       "been detected in SG request! Skip orchestration in "
@@ -98,18 +102,19 @@ class ServiceOrchestrator(AbstractOrchestrator):
           return sg
         else:
           log.info("Request check: detected valid NFFG content!")
-        try:
-          # Run orchestration before service mapping algorithm
-          mapped_nffg = self.mapper.orchestrate(sg, virtual_view)
-          log.debug("SG initiation is finished by %s" % self.__class__.__name__)
-          return mapped_nffg
-        except ProcessorError as e:
-          log.warning("Mapping pre/post processing was unsuccessful! "
-                      "Cause: %s" % e)
-          # Propagate the ProcessError to API layer
-          raise
-      else:
-        log.warning("Virtual view is not subclass of AbstractVirtualizer!")
+      try:
+        # Run orchestration before service mapping algorithm
+        mapped_nffg = self.mapper.orchestrate(input_graph=sg,
+                                              resource_view=virtual_view,
+                                              continued=bool(
+                                                continued_request_id))
+        log.debug("SG initiation is finished by %s" % self.__class__.__name__)
+        return mapped_nffg
+      except ProcessorError as e:
+        log.warning("Mapping pre/post processing was unsuccessful! "
+                    "Cause: %s" % e)
+        # Propagate the ProcessError to API layer
+        raise
     else:
       log.warning("Virtual view is not acquired correctly!")
     # Only goes there if there is a problem

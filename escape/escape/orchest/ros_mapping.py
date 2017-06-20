@@ -46,8 +46,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
   @classmethod
   def call_mapping_algorithm (cls, request, topology, profiling=False,
                               stats_type=stats.TYPE_ORCHESTRATION_MAPPING,
-                              stat_level=None,
-                              **params):
+                              stat_level=None, **params):
     """
     Template function to call the main algorithm.
     Provide an easy way to change the algorithm easily in child classes.
@@ -65,6 +64,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :return: mapping result
     :rtype: :class:`NFFG`
     """
+    log.debug("Call mapping algorithm with parameters: %s" % params)
     stat_level = stat_level if stat_level else cls.__name__
     stats.add_measurement_start_entry(type=stats_type, info=stat_level)
     try:
@@ -102,7 +102,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     return result
 
   @classmethod
-  def map (cls, graph, resource):
+  def map (cls, graph, resource, pre_state=None):
     """
     Default mapping algorithm of ESCAPEv2.
 
@@ -113,8 +113,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :return: mapped Network Function Forwarding Graph
     :rtype: :class:`NFFG`
     """
-    log.info("Invoke mapping algorithm: %s - request: %s resource: %s" % (
-      cls.__name__, graph, resource))
+    log.info("Invoke mapping algorithm: %s - request: %s resource: %s, "
+             "previous state: %s" % (cls.__name__, graph, resource, pre_state))
     if graph is None:
       log.error("Missing request NFFG! Abort mapping process...")
       return
@@ -133,9 +133,21 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
         mapper_params['mode'] = graph.mode
         log.debug("Setup mapping mode based on request: %s" %
                   mapper_params['mode'])
-      mapped_nffg = cls.call_mapping_algorithm(request=graph.copy(),
-                                               topology=resource.copy(),
-                                               **mapper_params)
+      if CONFIG.get_trial_and_error(layer=cls.LAYER_NAME):
+        log.info("Use 'trail and error' approach for mapping")
+        mapper_params['return_mapping_state'] = True
+        mapper_params['mapping_state'] = pre_state
+      mapping_result = cls.call_mapping_algorithm(request=graph.copy(),
+                                                  topology=resource.copy(),
+                                                  **mapper_params)
+      if isinstance(mapping_result, tuple or list):
+        if len(mapping_result) != 2:
+          log.error("Mapping result is invalid: %s" % repr(mapping_result))
+          mapped_nffg = None
+        else:
+          mapped_nffg = mapping_result[0]
+      else:
+        mapped_nffg = mapping_result
       # Set mapped NFFG id for original SG request tracking
       log.debug("Move request metadata into mapping result...")
       mapped_nffg.id = graph.id
@@ -148,7 +160,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
           mapped_nffg[sap.id].metadata = graph[sap.id].metadata.copy()
       log.info("Mapping algorithm: %s is finished on NF-FG: %s" %
                (cls.__name__, mapped_nffg))
-      return mapped_nffg
+      return mapping_result
     except MappingException as e:
       log.error(
         "Mapping algorithm unable to map given request! Cause:\n%s" % e.msg)
@@ -247,7 +259,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
   DEFAULT_STRATEGY = ESCAPEMappingStrategy
   """Default Mapper class as a fallback mapper"""
 
-  def __init__ (self, strategy=None):
+  def __init__ (self, strategy=None, mapping_state=None):
     """
     Init Resource Orchestrator mapper.
 
@@ -257,8 +269,9 @@ class ResourceOrchestrationMapper(AbstractMapper):
                                                       strategy=strategy)
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, self.strategy.__name__))
+    self.last_mapping_state = mapping_state
 
-  def _perform_mapping (self, input_graph, resource_view):
+  def _perform_mapping (self, input_graph, resource_view, continued=False):
     """
     Orchestrate mapping of given NF-FG on given global resource.
 
@@ -273,7 +286,9 @@ class ResourceOrchestrationMapper(AbstractMapper):
       log.error("Missing mapping request information! Abort mapping process!")
       return None
     log.debug("Request %s to launch orchestration on NF-FG: %s with View: "
-              "%s" % (self.__class__.__name__, input_graph, resource_view))
+              "%s, continued remap: %s" % (self.__class__.__name__,
+                                           input_graph, resource_view,
+                                           continued))
     # Steps before mapping (optional)
     log.debug("Request global resource info...")
     virt_resource = resource_view.get_resource_info()
@@ -309,7 +324,22 @@ class ResourceOrchestrationMapper(AbstractMapper):
       # Return with None
       return None
     else:
-      mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
+      state = self.last_mapping_state if continued else None
+      mapping_result = self.strategy.map(graph=input_graph,
+                                         resource=virt_resource,
+                                         pre_state=state)
+      if isinstance(mapping_result, tuple or list):
+        if len(mapping_result) != 2:
+          log.error("Mapping result is invalid: %s" % repr(mapping_result))
+          mapped_nffg = None
+        else:
+          mapped_nffg = mapping_result[0]
+          self.last_mapping_state = mapping_result[1]
+          log.debug(
+            "Cache returned mapping state: %s" % self.last_mapping_state)
+      else:
+        mapped_nffg = mapping_result
+      # Check error result
       if mapped_nffg is None:
         log.error("Mapping process is failed! Abort orchestration process.")
       else:

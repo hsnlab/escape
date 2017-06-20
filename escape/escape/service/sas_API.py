@@ -607,7 +607,7 @@ class ServiceLayerAPI(AbstractAPI):
     if not event.is_pending(event.result):
       self.__handle_mapping_result(nffg_id=event.id,
                                    fail=event.is_error(event.result))
-    # Quit ESCAPE if test mode is active
-    if get_global_parameter(name="QUIT_AFTER_PROCESS"):
-      stats.finish_request_measurement()
-      quit_with_ok("Detected QUIT mode! Exiting ESCAPE...")
+      # Quit ESCAPE if test mode is active
+      if get_global_parameter(name="QUIT_AFTER_PROCESS"):
+        stats.finish_request_measurement()
+        quit_with_ok("Detected QUIT mode! Exiting ESCAPE...")

@@ -508,7 +508,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type nffg: :class:`NFFG`
     :return: None
     """
-    log.getChild('API').info("Invoke instantiate_nffg on %s with NF-FG: %s " % (
+    log.getChild('API').info("Invoke instantiation on %s with NF-FG: %s " % (
       self.__class__.__name__, nffg.name))
     stats.add_measurement_start_entry(type=stats.TYPE_ORCHESTRATION,
                                       info=LAYER_NAME)
@@ -571,7 +571,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       else:
         log.debug("Difference calculation resulted empty subNFFGs!")
         log.info("No change has been detected in request! Skip mapping...")
-        log.getChild('API').debug("Invoked instantiate_nffg on %s is finished!"
+        log.getChild('API').debug("Invoked instantiation on %s is finished!"
                                   % self.__class__.__name__)
         self.__process_mapping_result(nffg_id=nffg.id, fail=False)
         return
@@ -609,7 +609,38 @@ class ResourceOrchestrationAPI(AbstractAPI):
                               result=InstantiationFinishedEvent.REFUSED_BY_VERIFICATION,
                               error=e)
 
+  @schedule_as_coop_task
+  def __proceed_trial_and_error (self, original_request_id):
+    """
+    :param original_request_id:
+    :return:
+    """
+    log.getChild('API').info("Invoke trial_and_error for remapping "
+                             "with request id: %s" % original_request_id)
+    mapped_nffg = self.orchestrator.instantiate_nffg(nffg=None,
+                                                     continued_request_id=original_request_id)
+    log.getChild('API').debug("Invoked trial_and_error on %s is finished!" %
+                              self.__class__.__name__)
+    nffg = self.orchestrator.nffgManager.get(nffg_id=original_request_id)
+    # If mapping is not threaded and finished with OK
+    if mapped_nffg is not None and not self.orchestrator.mapper.threaded:
+      self._proceed_to_install_NFFG(mapped_nffg=mapped_nffg,
+                                    original_request=nffg)
+    else:
+      log.warning("Something went wrong in trial_and_error instantiation: "
+                  "mapped service request is missing!")
+      self.__process_mapping_result(nffg_id=nffg.id, fail=True)
+      self.raiseEventNoErrors(InstantiationFinishedEvent,
+                              id=nffg.id,
+                              result=InstantiationFinishedEvent.MAPPING_ERROR)
+
   def __process_mapping_result (self, nffg_id, fail):
+    """
+
+    :param nffg_id:
+    :param fail:
+    :return:
+    """
     if not (hasattr(self, 'ros_api') and self.ros_api):
       return
     log.getChild('API').debug("Cache request status...")
@@ -787,6 +818,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.getChild('API').error(
         "NF-FG(%s) instantiation has been finished with error result: %s!" %
         (event.id, event.result))
+      if InstantiationFinishedEvent.is_deploy_error(event.result):
+        if CONFIG.get_trial_and_error(layer=LAYER_NAME):
+          log.info("TRIAL_AND_ERROR is enabled! Reschedule for mapping...")
+          self.__proceed_trial_and_error(original_request_id=event.id)
+          return
     if not event.is_pending(event.result):
       self.__process_mapping_result(nffg_id=event.id,
                                     fail=event.is_error(event.result))

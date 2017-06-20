@@ -4,6 +4,7 @@
       "module": "escape.service.sas_mapping",
       "class": "ServiceGraphMapper",
       "mapping-enabled": false,
+      "trial_and_error": false,
       "mapping-config": {
         "profiling": false
       }
@@ -34,6 +35,7 @@
       "module": "escape.orchest.ros_mapping",
       "class": "ResourceOrchestrationMapper",
       "mapping-enabled": true,
+      "trial_and_error": false,
       "mapping-config": {
         "profiling": false
       }
@@ -88,7 +90,8 @@
     "deployment": {
       "RESET-DOMAINS-BEFORE-INSTALL": false,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": true,
-      "ROLLBACK-ON-FAILURE": true
+      "ROLLBACK-ON-FAILURE": true,
+      "DOMAIN-DEPLOY-DELAY": 0
     },
     "INTERNAL": {
       "module": "escape.adapt.managers",

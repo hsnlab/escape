@@ -96,7 +96,7 @@ class ServiceGraphMapper(AbstractMapper):
   DEFAULT_STRATEGY = DefaultServiceMappingStrategy
   """Default Strategy class as a fallback strategy"""
 
-  def __init__ (self, strategy=None):
+  def __init__ (self, strategy=None, mapping_state=None):
     """
     Init Service mapper.
 
@@ -105,8 +105,9 @@ class ServiceGraphMapper(AbstractMapper):
     super(ServiceGraphMapper, self).__init__(LAYER_NAME, strategy)
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, self.strategy.__name__))
+    self.last_mapping_state = mapping_state
 
-  def _perform_mapping (self, input_graph, resource_view):
+  def _perform_mapping (self, input_graph, resource_view, continued=False):
     """
     Orchestrate mapping of given service graph on given virtual resource.
 
@@ -120,8 +121,10 @@ class ServiceGraphMapper(AbstractMapper):
     if input_graph is None:
       log.error("Missing service request information! Abort mapping process!")
       return None
-    log.debug("Request %s to launch orchestration on SG: %s with View: %s" % (
-      self.__class__.__name__, input_graph, resource_view))
+    log.debug("Request %s to launch orchestration on SG: %s with View: %s,"
+              "continued remap: %s" % (self.__class__.__name__,
+                                       input_graph, resource_view,
+                                       continued))
     # Steps before mapping (optional)
     log.debug("Request resource info from layer virtualizer...")
     virt_resource = resource_view.get_resource_info()
@@ -155,7 +158,21 @@ class ServiceGraphMapper(AbstractMapper):
       # Return with None
       return None
     else:
-      mapped_nffg = self.strategy.map(graph=input_graph, resource=virt_resource)
+      state = self.last_mapping_state if continued else None
+      mapping_result = self.strategy.map(graph=input_graph,
+                                         resource=virt_resource,
+                                         pre_state=state)
+      if isinstance(mapping_result, tuple or list):
+        if len(mapping_result) != 2:
+          log.error("Mapping result is invalid: %s" % repr(mapping_result))
+          mapped_nffg = None
+        else:
+          mapped_nffg = mapping_result[0]
+          self.last_mapping_state = mapping_result[1]
+          log.debug(
+            "Cache returned mapping state: %s" % self.last_mapping_state)
+      else:
+        mapped_nffg = mapping_result
       # Steps after mapping (optional) if the mapping was not threaded
       if mapped_nffg is None:
         log.error("Mapping process is failed! Abort orchestration process.")

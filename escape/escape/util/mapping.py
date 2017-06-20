@@ -38,7 +38,7 @@ class AbstractMappingStrategy(object):
     super(AbstractMappingStrategy, self).__init__()
 
   @classmethod
-  def map (cls, graph, resource):
+  def map (cls, graph, resource, pre_state=None):
     """
     Abstract function for mapping algorithm.
 
@@ -330,7 +330,7 @@ class AbstractMapper(EventMixin):
     """
     return self._threaded
 
-  def _perform_mapping (self, input_graph, resource_view):
+  def _perform_mapping (self, input_graph, resource_view, continued=False):
     """
     Abstract function for wrapping optional steps connected to initiate
     mapping algorithm.
@@ -352,7 +352,7 @@ class AbstractMapper(EventMixin):
     """
     raise NotImplementedError
 
-  def orchestrate (self, input_graph, resource_view):
+  def orchestrate (self, input_graph, resource_view, continued=False):
     """
     Abstract function for wrapping optional steps connected to orchestration.
 
@@ -388,7 +388,8 @@ class AbstractMapper(EventMixin):
         PreMapEvent, input_graph=input_graph, resource_graph=resource_graph)
     # Invoke mapping algorithm
     mapping_result = self._perform_mapping(input_graph=input_graph,
-                                           resource_view=resource_view)
+                                           resource_view=resource_view,
+                                           continued=continued)
     # Perform post-mapping validation
     # If the mapping is threaded skip post mapping here
     if not self._threaded:

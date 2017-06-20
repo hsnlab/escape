@@ -168,7 +168,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     if not deploy_status.still_pending:
       id = mapped_nffg.id
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
-      log.debug("Overall installation result: %s" % result)
+      log.info("Overall installation result: %s" % result)
       self.raiseEventNoErrors(InstallationFinishedEvent, id=id, result=result)
 
   @schedule_as_coop_task
