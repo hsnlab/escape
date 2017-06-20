@@ -58,7 +58,7 @@ class BasicErrorChecker(object):
       if line.startswith(cls.ERROR_PREFIX) or \
          line.startswith(cls.CRITICAL_PREFIX):
         err_msg = line.split(cls.SEPARATOR, 1)[1]
-        if not any(map(lambda x: x.startswith(err_msg), cls.SKIPPED_ERRORS)):
+        if any(map(lambda x: err_msg.startswith(x), cls.SKIPPED_ERRORS)):
           continue
         pos = len(result.log_output) - i
         return ''.join(
@@ -111,7 +111,8 @@ class WarningChecker(BasicErrorChecker):
     "NFIBManager has not been initialized!",
     "No configuration file was found for neo4j service!",
     "Installation process is still pending! Waiting for results...",
-    "One-step-update is enabled."
+    "One-step-update is enabled.",
+    "Detected already registered service request"
   ]
 
   @classmethod
