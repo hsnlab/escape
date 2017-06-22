@@ -664,7 +664,7 @@ class ControllerAdapter(object):
         # notify_remote_visualizer(
         #   data=self.DoVManager.dov.get_resource_info(), id=LAYER_NAME)
     elif deploy_status.still_pending:
-      log.warning("Installation process is still pending!"
+      log.warning("Installation process is still pending! "
                   "Waiting for results...")
     elif deploy_status.failed:
       log.error("%s installation was not successful!" % mapped_nffg)

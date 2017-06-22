@@ -1200,7 +1200,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # Ignore exception - assume the request was successful -> return True
       return True
     if status is not None:
-      log.debug("Request has been sent successfully!")
+      log.debug("Deploy request has been sent successfully!")
     return status
 
   def get_last_message_id (self):

@@ -109,7 +109,8 @@ class WarningChecker(BasicErrorChecker):
     "Physical interface:",
     "Skip starting xterms on SAPS according to global config",
     "NFIBManager has not been initialized!",
-    "No configuration file was found for neo4j service!"
+    "No configuration file was found for neo4j service!",
+    "Installation process is still pending! Waiting for results..."
   ]
 
   @classmethod
@@ -290,7 +291,7 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
   def verify_result (self):
     super(BasicSuccessfulTestCase, self).verify_result()
     if self.run_result.log_output is None:
-      raise RuntimeError("log_output is missing!")
+      raise RuntimeError("log output is missing!")
     # Detect TIMEOUT error
     self.assertFalse(self.command_runner.timeout_exceeded,
                      msg="Running timeout(%ss) is exceeded!" %
@@ -327,3 +328,25 @@ class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
     self.check_root_privilege()
     # Run test case
     super(RootPrivilegedSuccessfulTestCase, self).runTest()
+
+
+class TrialAndErrorTestCase(BasicSuccessfulTestCase):
+  """
+  """
+
+  def verify_result (self):
+    log.debug("\nVerifying results...")
+    if self.run_result.log_output is None:
+      raise RuntimeError("log output is missing!")
+    # Detect TIMEOUT error
+    self.assertFalse(self.command_runner.timeout_exceeded,
+                     msg="Running timeout(%ss) is exceeded!" %
+                         self.command_runner.kill_timeout)
+    # Search for successful orchestration message
+    error_result = self.detect_unsuccessful_result(self.run_result)
+    self.assertIsNone(error_result,
+                      msg="Unsuccessful result detected:\n%s" % error_result)
+    # Detect unexpected WARNINGs that possibly means abnormal behaviour
+    warning = self.detect_unexpected_warning(self.run_result)
+    self.assertIsNone(warning,
+                      msg="Unexpected WARNING detected:\n%s" % warning)
