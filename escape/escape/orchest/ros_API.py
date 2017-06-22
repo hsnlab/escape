@@ -427,7 +427,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
         else:
           log.error("URL is missing from domain: %s!" % domain)
           url = "N/A"
-        mapping.target.domain.set_value(url)
+        mapping.target.domain.set_value("%s@%s" % (domain, url))
     return response
 
   @schedule_as_coop_task
