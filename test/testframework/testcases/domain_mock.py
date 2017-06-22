@@ -24,7 +24,8 @@ from threading import Thread, Lock, Timer
 import requests
 from requests import ConnectionError
 
-from testframework.testcases.basic import BasicSuccessfulTestCase
+from testframework.testcases.basic import BasicSuccessfulTestCase, \
+  TrialAndErrorTestCase
 
 log = logging.getLogger()
 
@@ -477,6 +478,28 @@ class DomainMockingSuccessfulTestCase(BasicSuccessfulTestCase):
 
   def tearDown (self):
     super(DomainMockingSuccessfulTestCase, self).tearDown()
+    self.domain_mocker.shutdown()
+
+
+class DomainMockingTrailAndErrorTestCase(TrialAndErrorTestCase):
+  """
+  """
+
+  def __init__ (self, responses=None, **kwargs):
+    super(DomainMockingTrailAndErrorTestCase, self).__init__(**kwargs)
+    self.domain_mocker = DomainOrchestratorAPIMocker(**kwargs)
+    dir = self.test_case_info.full_testcase_path
+    if responses:
+      self.domain_mocker.register_responses(dirname=dir, responses=responses)
+    else:
+      self.domain_mocker.register_responses_from_dir(dirname=dir)
+
+  def setUp (self):
+    super(DomainMockingTrailAndErrorTestCase, self).setUp()
+    self.domain_mocker.start()
+
+  def tearDown (self):
+    super(DomainMockingTrailAndErrorTestCase, self).tearDown()
     self.domain_mocker.shutdown()
 
 
