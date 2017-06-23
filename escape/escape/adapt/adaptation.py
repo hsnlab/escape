@@ -626,28 +626,29 @@ class ControllerAdapter(object):
           log.warning("Skip DoV update with domain: %s! Cause: "
                       "Domain installation was unsuccessful!" % domain)
           continue
-
-      # If the domain manager does not poll the domain update here
-      # else polling takes care of domain updating
-      if isinstance(domain_mgr,
-                    AbstractRemoteDomainManager) and domain_mgr.polling:
-        log.info("Skip explicit DoV update for domain: %s. "
-                 "Cause: polling enabled!" % domain)
-        if part.is_bare():
-          log.info("Deploy request is bare! Consider deploy status OK")
-        else:
-          log.debug("Consider every deploy into a polled domain OK...")
+      if part.is_bare():
+        log.info("Deploy request is bare! Consider bare deploy status: OK")
         deploy_status.set_domain_ok(domain=domain)
-        log.debug("Installation status: %s" % deploy_status)
         continue
+      else:
+        # If the domain manager does not poll the domain update here
+        # else polling takes care of domain updating
+        if isinstance(domain_mgr,
+                      AbstractRemoteDomainManager) and domain_mgr.polling:
+          log.info("Skip explicit DoV update for domain: %s. "
+                   "Cause: polling enabled!" % domain)
+          log.debug("Consider every deploy into a polled domain OK...")
+          deploy_status.set_domain_ok(domain=domain)
+          log.debug("Installation status: %s" % deploy_status)
+          continue
 
-      if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
-         domain_mgr.callback_manager:
-        log.info("Skip explicit DoV update for domain: %s. "
-                 "Cause: callback registered!" % domain)
-        deploy_status.set_domain_waiting(domain=domain)
-        log.debug("Installation status: %s" % deploy_status)
-        continue
+        if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
+           domain_mgr.callback_manager:
+          log.info("Skip explicit DoV update for domain: %s. "
+                   "Cause: callback registered!" % domain)
+          deploy_status.set_domain_waiting(domain=domain)
+          log.debug("Installation status: %s" % deploy_status)
+          continue
 
       if domain_mgr.IS_INTERNAL_MANAGER:
         self.__perform_internal_mgr_update(mapped_nffg=mapped_nffg,

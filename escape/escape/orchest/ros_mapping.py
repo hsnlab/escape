@@ -347,6 +347,9 @@ class ResourceOrchestrationMapper(AbstractMapper):
         log.info("NF-FG: %s orchestration is finished by %s successfully!" % (
           input_graph, self.__class__.__name__))
       log.debug("Last mapping state: %s" % self.last_mapping_state)
+      log.info("Mapping iteration: %s" %
+        self.last_mapping_state.get_number_of_trials() if
+        self.last_mapping_state else None)
       return mapped_nffg
 
   def _mapping_finished (self, mapped_nffg):
