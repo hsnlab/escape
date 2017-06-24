@@ -70,7 +70,7 @@ If you don't want to use the complex install script or the included project setu
 then just create a sym-link to the relevant gitmodules file with the name `.gitmodules` 
 and update the submodule manually.
 
-```shell
+```bash
 $ ln -vfs .gitmodules.<PROJECT> .gitmodules
 $ git submodules update --init
 ```
@@ -100,7 +100,7 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
     into the VM with the name `id_rsa`. If you use a VM image then the following
     commands can be used in the VM to copy your RSA key from your host:
     
-    ```shell
+    ```bash
     $ cd
     $ mkdir .ssh
     $ scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
@@ -108,14 +108,14 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
     ```
 3. Clone the shared *escape* repository (the default folder name will be: `escape`).
 
-    ```shell
+    ```bash
     $ git clone <git repo URL> escape
     ```
 
 4. Install the necessary dependencies with the `install_dep.sh` script (system
     and Python packages, optionally the OpenYuma with VNFStarter module, etc.):
 
-    ```shell
+    ```bash
     $ cd escape
     $ ./install_dep.sh
     ```
@@ -130,7 +130,7 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
       
    See help menu for further parameters:
     
-   ```shell
+   ```bash
    $ ./install-dep.sh -h
    Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i] [-p project]
    Install script for ESCAPEv2
@@ -144,11 +144,12 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
         -i:   install components of (I)nfrastructure Layer for Local Orchestration
         -p:   explicitly setup project name based on: .gitmodules.<name>
     ```
+    .
     
 5. Run ESCAPE with one of the commands listed in a later section. To see the
     available arguments of the top stating script check the help menu:
     
-    ```shell
+    ```bash
     $ ./escape.py --help
     ```
     
@@ -165,7 +166,7 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
     the following command can be run in order to test the reachability between the initiated
     service access points (SAP) represented by the(``xterm``) windows with the ``ping`` command:
     
-    ```shell
+    ```bash
     $ ./escape.py -df -s examples/escape-mn-req.nffg
  
     # on SAP1 xterm
@@ -183,7 +184,7 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
 ESCAPE can be run in a Docker container. To create the basic image, issue the following command 
 in the project root:
 
-```shell
+```bash
 $ sudo docker build --rm --no-cache -t mdo/ro .
 ```
 
@@ -192,14 +193,14 @@ installs the required Python dependencies listed in `requirement.txt` and sets t
 
 To create and start a persistent container based on the _mdo/ro_ image, use the following commands:
 
-```shell
+```bash
 $ sudo docker create --name escape -p 8008:8008 -p 8888:8888 -it mdo/ro
 $ sudo docker start -i escape
 ```
 
 To create a one-time container, use the following command:
 
-```shell
+```bash
 $ sudo docker run --rm -p 8008:8008 -p 8888:8888 -ti mdo/ro
 ```
 
@@ -239,7 +240,7 @@ The documentation can be generated from source code with `generate-docs.sh` scri
 or directly with the `Makefile` in `escape/doc` directory.
 The generated doc can be found in `escape/doc/build/`.
 
-```shell
+```bash
 $ ./escape/doc/generate-doc.sh
 ```
 
