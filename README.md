@@ -146,8 +146,7 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
     
    Example: ./install-dep.sh -a 
    ```
-    
-    (Project name is detected automatically if it is not given)
+   (Project name is detected automatically if it is not given)
 
 5. Run ESCAPE with one of the commands listed in a later section. To see the
     available arguments of the top stating script check the help menu:
