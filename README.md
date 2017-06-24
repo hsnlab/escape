@@ -34,7 +34,7 @@ For detailed information see the online documentation: https://sb.tmit.bme.hu/es
 
 All the required dependencies for the full set of ESCAPE's features:
 
-```shell
+```bash
 $ sudo apt -y install python2.7 python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
     libssl-dev libffi-dev python-crypto openjdk-7-jdk neo4j=2.2.7 gcc make socat psmisc xterm \
     ssh iperf iproute telnet python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8 \
@@ -52,7 +52,7 @@ necessary packages regarding the given install parameters.
 For automatically setting up the submodules and its submodules recursively, 
 the `project-setup.sh` script has been added to the project.
 
-```text
+```bash
 $ ./project-setup.sh -h
 Setup submodules according to given project for ESCAPEe.
 If project name is not given the script tries to detect it
@@ -143,8 +143,11 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
         -h:   print this (H)elp message
         -i:   install components of (I)nfrastructure Layer for Local Orchestration
         -p:   explicitly setup project name based on: .gitmodules.<name>
-    ```
-    .
+    
+   Example: ./install-dep.sh -a 
+   ```
+    
+    (Project name is detected automatically if it is not given)
 
 5. Run ESCAPE with one of the commands listed in a later section. To see the
     available arguments of the top stating script check the help menu:
@@ -156,7 +159,7 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
     To verify ESCAPE in **MdO** role a dry-run can be performed without any command line flag.
     If ESCAPE is up and running, the following line will be logged to the console:
 
-    ```
+    ```bash
        > [core                   ] ESCAPEv2 is up.
     ```
 
