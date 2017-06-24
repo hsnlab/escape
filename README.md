@@ -121,15 +121,15 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
     ```
 
    In a high level the script above takes care of the following things:
-    
+
    * Setup sym-links and submodules for given project name
    * Install the necessary system and Python packages
    * Compile and install the `OpenYuma` tools with our `VNF_starter` module
    * Compile and install `Click` modular router and `The Click GUI`.
    * Install `neo4j` graph database for NFIB
-      
+
    See help menu for further parameters:
-    
+
    ```bash
    $ ./install-dep.sh -h
    Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i] [-p project]
@@ -145,35 +145,36 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
         -p:   explicitly setup project name based on: .gitmodules.<name>
     ```
     .
-    
+
 5. Run ESCAPE with one of the commands listed in a later section. To see the
     available arguments of the top stating script check the help menu:
-    
+
     ```bash
     $ ./escape.py --help
     ```
     
     To verify ESCAPE in **MdO** role a dry-run can be performed without any command line flag.
     If ESCAPE is up and running, the following line will be logged to the console:
-    
+
     ```
        > [core                   ] ESCAPEv2 is up.
     ```
-    
+
     This final log entry means that each component was installed and configured successfully.
-    
+
     To verify ESCAPE in **DO** role with the embedding engine and all of it's components,
     the following command can be run in order to test the reachability between the initiated
     service access points (SAP) represented by the(``xterm``) windows with the ``ping`` command:
-    
+
     ```bash
     $ ./escape.py -df -s examples/escape-mn-req.nffg
- 
+
     # on SAP1 xterm
     $ ping sap2
     # on SAP2 xterm
     $ ping sap1
     ```
+
     This command starts the full stack ESCAPE with the default topology (`examples/escape-mn-topo.nffg`)
     and initiate a service request consists of a *HeaderCompressor* and a *HeaderDecompressor* VNF
     for one direction and a simple *Forwarder* VNF for the backward direction between SAP1 and SAP2.
