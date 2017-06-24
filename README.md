@@ -34,7 +34,7 @@ For detailed information see the online documentation: https://sb.tmit.bme.hu/es
 
 All the required dependencies for the full set of ESCAPE's features:
 
-```bash
+```shell
 $ sudo apt -y install python2.7 python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
     libssl-dev libffi-dev python-crypto openjdk-7-jdk neo4j=2.2.7 gcc make socat psmisc xterm \
     ssh iperf iproute telnet python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8 \
@@ -70,7 +70,7 @@ If you don't want to use the complex install script or the included project setu
 then just create a sym-link to the relevant gitmodules file with the name `.gitmodules` 
 and update the submodule manually.
 
-```bash
+```shell
 $ ln -vfs .gitmodules.<PROJECT> .gitmodules
 $ git submodules update --init
 ```
@@ -89,33 +89,33 @@ However ESCAPE is developed on Xubuntu 16.04, some issues are experienced
 related to SAP-xterm initiation in case the platform was an Ubuntu 16.04 server
 image and ESCAPE was started through an SSH channel.
 Considering this limitation we recommend to use the older 14.04 LTS version in
-case ESCAPE is intended to run on a VM without any graphical interface.
+case ESCAPE is intended to run as a local Domain Orchestrator on a VM without any graphical interface.
 
 #### The preferred way:
 
 1. Download one of pre-build Ubuntu LTS VM image, create one in your preferred VM
-    manager or just use the default Docker image of Ubuntu.
+    manager (or just use the default Docker image of Ubuntu).
 
 2. Create the `.ssh` folder in the home directory and copy your private RSA key
     into the VM with the name `id_rsa`. If you use a VM image then the following
     commands can be used in the VM to copy your RSA key from your host:
     
-    ```bash
+    ```shell
     $ cd
     $ mkdir .ssh
     $ scp <your_user>@<host_ip>:~/.ssh/<your_ssh_key> ~/.ssh/id_rsa
     $ sudo chmod 700 .ssh && sudo chmod 600 .ssh/id_rsa
     ```
-3. Clone the shared escape repository (the default folder name will be: `escape`).
+3. Clone the shared *escape* repository (the default folder name will be: `escape`).
 
-    ```bash
+    ```shell
     $ git clone <git repo URL> escape
     ```
 
 4. Install the necessary dependencies with the `install_dep.sh` script (system
     and Python packages, optionally the OpenYuma with VNFStarter module, etc.):
 
-    ```bash
+    ```shell
     $ cd escape
     $ ./install_dep.sh
     ```
@@ -130,7 +130,7 @@ case ESCAPE is intended to run on a VM without any graphical interface.
       
    See help menu for further parameters:
     
-   ```
+   ```shell
    $ ./install-dep.sh -h
    Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i] [-p project]
    Install script for ESCAPEv2
@@ -144,11 +144,11 @@ case ESCAPE is intended to run on a VM without any graphical interface.
         -i:   install components of (I)nfrastructure Layer for Local Orchestration
         -p:   explicitly setup project name based on: .gitmodules.<name>
     ```
-
+    
 5. Run ESCAPE with one of the commands listed in a later section. To see the
     available arguments of the top stating script check the help menu:
     
-    ```bash
+    ```shell
     $ ./escape.py --help
     ```
     
@@ -165,7 +165,7 @@ case ESCAPE is intended to run on a VM without any graphical interface.
     the following command can be run in order to test the reachability between the initiated
     service access points (SAP) represented by the(``xterm``) windows with the ``ping`` command:
     
-    ```bash
+    ```shell
     $ ./escape.py -df -s examples/escape-mn-req.nffg
  
     # on SAP1 xterm
@@ -183,7 +183,7 @@ case ESCAPE is intended to run on a VM without any graphical interface.
 ESCAPE can be run in a Docker container. To create the basic image, issue the following command 
 in the project root:
 
-```bash
+```shell
 $ sudo docker build --rm --no-cache -t mdo/ro .
 ```
 
@@ -192,14 +192,14 @@ installs the required Python dependencies listed in `requirement.txt` and sets t
 
 To create and start a persistent container based on the _mdo/ro_ image, use the following commands:
 
-```bash
+```shell
 $ sudo docker create --name escape -p 8008:8008 -p 8888:8888 -it mdo/ro
 $ sudo docker start -i escape
 ```
 
 To create a one-time container, use the following command:
 
-```bash
+```shell
 $ sudo docker run --rm -p 8008:8008 -p 8888:8888 -ti mdo/ro
 ```
 
@@ -239,7 +239,7 @@ The documentation can be generated from source code with `generate-docs.sh` scri
 or directly with the `Makefile` in `escape/doc` directory.
 The generated doc can be found in `escape/doc/build/`.
 
-```bash
+```shell
 $ ./escape/doc/generate-doc.sh
 ```
 
