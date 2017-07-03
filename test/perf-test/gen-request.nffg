@@ -1,0 +1,520 @@
+{
+  "edge_sg_nexthops": [
+    {
+      "dst_node": "nf-0-1", 
+      "dst_port": "port2", 
+      "flowclass": "HTTP", 
+      "id": 1, 
+      "src_node": "nf00", 
+      "src_port": "port1"
+    }, 
+    {
+      "dst_node": "nf-0-9", 
+      "dst_port": "port18", 
+      "flowclass": "HTTP", 
+      "id": 9, 
+      "src_node": "nf00", 
+      "src_port": "port17"
+    }, 
+    {
+      "dst_node": "nf-0-12", 
+      "dst_port": "port24", 
+      "flowclass": "HTTP", 
+      "id": 12, 
+      "src_node": "nf-0-11", 
+      "src_port": "port23"
+    }, 
+    {
+      "dst_node": "nf-0-11", 
+      "dst_port": "port22", 
+      "flowclass": "HTTP", 
+      "id": 11, 
+      "src_node": "nf-0-10", 
+      "src_port": "port21"
+    }, 
+    {
+      "dst_node": "nf-0-14", 
+      "dst_port": "port28", 
+      "flowclass": "HTTP", 
+      "id": 14, 
+      "src_node": "nf-0-13", 
+      "src_port": "port27"
+    }, 
+    {
+      "dst_node": "nf-0-15", 
+      "dst_port": "port30", 
+      "flowclass": "HTTP", 
+      "id": 15, 
+      "src_node": "nf-0-14", 
+      "src_port": "port29"
+    }, 
+    {
+      "dst_node": "nf-0-16", 
+      "dst_port": "port32", 
+      "flowclass": "HTTP", 
+      "id": 16, 
+      "src_node": "nf-0-15", 
+      "src_port": "port31"
+    }, 
+    {
+      "dst_node": "nf-0-17", 
+      "dst_port": "port34", 
+      "flowclass": "HTTP", 
+      "id": 17, 
+      "src_node": "nf-0-16", 
+      "src_port": "port33"
+    }, 
+    {
+      "dst_node": "sap16", 
+      "dst_port": "port0", 
+      "flowclass": "HTTP", 
+      "id": 19, 
+      "src_node": "nf-0-17", 
+      "src_port": "port35"
+    }, 
+    {
+      "dst_node": "nf-0-3", 
+      "dst_port": "port6", 
+      "flowclass": "HTTP", 
+      "id": 3, 
+      "src_node": "nf-0-2", 
+      "src_port": "port5"
+    }, 
+    {
+      "dst_node": "nf-0-4", 
+      "dst_port": "port8", 
+      "flowclass": "HTTP", 
+      "id": 4, 
+      "src_node": "nf-0-3", 
+      "src_port": "port7"
+    }, 
+    {
+      "dst_node": "nf-0-2", 
+      "dst_port": "port4", 
+      "flowclass": "HTTP", 
+      "id": 2, 
+      "src_node": "nf-0-1", 
+      "src_port": "port3"
+    }, 
+    {
+      "dst_node": "nf-0-7", 
+      "dst_port": "port14", 
+      "flowclass": "HTTP", 
+      "id": 7, 
+      "src_node": "nf-0-6", 
+      "src_port": "port13"
+    }, 
+    {
+      "dst_node": "nf00", 
+      "dst_port": "port16", 
+      "flowclass": "HTTP", 
+      "id": 8, 
+      "src_node": "nf-0-7", 
+      "src_port": "port15"
+    }, 
+    {
+      "dst_node": "nf-0-5", 
+      "dst_port": "port10", 
+      "flowclass": "HTTP", 
+      "id": 5, 
+      "src_node": "nf-0-4", 
+      "src_port": "port9"
+    }, 
+    {
+      "dst_node": "nf-0-6", 
+      "dst_port": "port12", 
+      "flowclass": "HTTP", 
+      "id": 6, 
+      "src_node": "nf-0-5", 
+      "src_port": "port11"
+    }, 
+    {
+      "dst_node": "nf00", 
+      "dst_port": "port36", 
+      "flowclass": "HTTP", 
+      "id": 20, 
+      "src_node": "sap16", 
+      "src_port": "port0"
+    }, 
+    {
+      "dst_node": "nf-0-10", 
+      "dst_port": "port20", 
+      "flowclass": "HTTP", 
+      "id": 10, 
+      "src_node": "nf-0-9", 
+      "src_port": "port19"
+    }, 
+    {
+      "dst_node": "nf-0-13", 
+      "dst_port": "port26", 
+      "flowclass": "HTTP", 
+      "id": 13, 
+      "src_node": "nf-0-12", 
+      "src_port": "port25"
+    }
+  ], 
+  "node_nfs": [
+    {
+      "functional_type": "B", 
+      "id": "nf00", 
+      "name": "nf_middle0", 
+      "ports": [
+        {
+          "id": "port1"
+        }, 
+        {
+          "id": "port16"
+        }, 
+        {
+          "id": "port17"
+        }, 
+        {
+          "id": "port36"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "G", 
+      "id": "nf-0-11", 
+      "name": "nf11_G", 
+      "ports": [
+        {
+          "id": "port22"
+        }, 
+        {
+          "id": "port23"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "C", 
+      "id": "nf-0-10", 
+      "name": "nf10_C", 
+      "ports": [
+        {
+          "id": "port20"
+        }, 
+        {
+          "id": "port21"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "H", 
+      "id": "nf-0-13", 
+      "name": "nf13_H", 
+      "ports": [
+        {
+          "id": "port26"
+        }, 
+        {
+          "id": "port27"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "D", 
+      "id": "nf-0-14", 
+      "name": "nf14_D", 
+      "ports": [
+        {
+          "id": "port28"
+        }, 
+        {
+          "id": "port29"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "I", 
+      "id": "nf-0-15", 
+      "name": "nf15_I", 
+      "ports": [
+        {
+          "id": "port30"
+        }, 
+        {
+          "id": "port31"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "J", 
+      "id": "nf-0-16", 
+      "name": "nf16_J", 
+      "ports": [
+        {
+          "id": "port32"
+        }, 
+        {
+          "id": "port33"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "A", 
+      "id": "nf-0-17", 
+      "name": "nf17_A", 
+      "ports": [
+        {
+          "id": "port34"
+        }, 
+        {
+          "id": "port35"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "C", 
+      "id": "nf-0-2", 
+      "name": "nf2_C", 
+      "ports": [
+        {
+          "id": "port4"
+        }, 
+        {
+          "id": "port5"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "J", 
+      "id": "nf-0-3", 
+      "name": "nf3_J", 
+      "ports": [
+        {
+          "id": "port6"
+        }, 
+        {
+          "id": "port7"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "E", 
+      "id": "nf-0-1", 
+      "name": "nf1_E", 
+      "ports": [
+        {
+          "id": "port2"
+        }, 
+        {
+          "id": "port3"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "F", 
+      "id": "nf-0-6", 
+      "name": "nf6_F", 
+      "ports": [
+        {
+          "id": "port12"
+        }, 
+        {
+          "id": "port13"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "D", 
+      "id": "nf-0-7", 
+      "name": "nf7_D", 
+      "ports": [
+        {
+          "id": "port14"
+        }, 
+        {
+          "id": "port15"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "I", 
+      "id": "nf-0-4", 
+      "name": "nf4_I", 
+      "ports": [
+        {
+          "id": "port8"
+        }, 
+        {
+          "id": "port9"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "H", 
+      "id": "nf-0-5", 
+      "name": "nf5_H", 
+      "ports": [
+        {
+          "id": "port10"
+        }, 
+        {
+          "id": "port11"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "F", 
+      "id": "nf-0-9", 
+      "name": "nf9_F", 
+      "ports": [
+        {
+          "id": "port18"
+        }, 
+        {
+          "id": "port19"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }, 
+    {
+      "functional_type": "E", 
+      "id": "nf-0-12", 
+      "name": "nf12_E", 
+      "ports": [
+        {
+          "id": "port24"
+        }, 
+        {
+          "id": "port25"
+        }
+      ], 
+      "specification": {
+        "resources": {
+          "cpu": 1, 
+          "mem": 1, 
+          "storage": 1
+        }
+      }
+    }
+  ], 
+  "node_saps": [
+    {
+      "id": "sap16", 
+      "name": "sap16_name", 
+      "ports": [
+        {
+          "id": "port0"
+        }
+      ]
+    }
+  ], 
+  "parameters": {
+    "id": "8loops-req", 
+    "mode": "ADD", 
+    "version": "1.0"
+  }
+}

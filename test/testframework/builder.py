@@ -46,11 +46,11 @@ class TestCaseReader(object):
     :rtype: list[RunnableTestCaseInfo]
     """
     if not case_dirs:
-      case_dirs = sorted(os.listdir(self.tests_dir))
+      case_dirs = filter(lambda case: case.startswith(self.TEST_DIR_PREFIX),
+                         sorted(os.listdir(self.tests_dir)))
     cases = [RunnableTestCaseInfo(case_path=os.path.join(self.tests_dir,
                                                          case_dir))
-             for case_dir in case_dirs if
-             case_dir.startswith(self.TEST_DIR_PREFIX)]
+             for case_dir in case_dirs]
     return cases
 
 
