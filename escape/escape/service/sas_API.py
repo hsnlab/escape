@@ -181,6 +181,7 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
       if nffg.service_id is None:
         nffg.service_id = nffg.id
       nffg.id = params[self.MESSAGE_ID_NAME]
+      self.log.debug("Set NFFG id: %s" % nffg.id)
       nffg.metadata['params'] = params
       # self._proceed_API_call(self.API_CALL_REQUEST,
       #                        service_nffg=nffg,

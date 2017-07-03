@@ -989,11 +989,15 @@ class RequestScheduler(threading.Thread):
         self.__condition.notify()
 
   def schedule_request (self, id, layer, function, **kwargs):
+    # Reset request id if it was overwritten with different message-id
+    stats.set_request_id(request_id=id)
     self.__queue.put(APIRequest(id=id,
                                 layer=layer,
                                 function=function,
                                 kwargs=kwargs))
-    self.log.info("Schedule request on %s --> %s..." % (layer, function))
+    self.log.info("Schedule request: %s on %s --> %s..." % (id,
+                                                            layer,
+                                                            function))
     self.log.debug("Remained requests: %s" % self.__queue.qsize())
 
   def _proceed_API_call (self, request):

@@ -906,6 +906,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         nffg.service_id = nffg.id
       nffg.id = params.get(self.MESSAGE_ID_NAME)
       nffg.metadata['params'] = params
+      self.log.debug("Set NFFG id: %s" % nffg.id)
       self.server.scheduler.schedule_request(id=nffg.id,
                                              layer=self.bounded_layer,
                                              function=self.API_CALL_REQUEST,
@@ -1090,7 +1091,6 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       else:
         self.log.info('No mode parameter has been defined in body!')
     self.log.debug("Parsed NFFG install request: %s" % nffg)
-    stats.set_request_id(request_id=nffg.id)
     self.log.log(VERBOSE, "Full request:\n%s" % nffg.dump())
     return nffg
 
