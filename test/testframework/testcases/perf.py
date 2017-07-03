@@ -86,6 +86,19 @@ class DynamicPerformanceTestCase(DynamicallyGeneratedTestCase):
                                                     '*.config'))
     super(DynamicPerformanceTestCase, self).tearDown()
 
+  def verify_result (self):
+    super(BasicSuccessfulTestCase, self).verify_result()
+    if self.run_result.log_output is None:
+      raise RuntimeError("log output is missing!")
+    # Detect TIMEOUT error
+    self.assertFalse(self.command_runner.timeout_exceeded,
+                     msg="Running timeout(%ss) is exceeded!" %
+                         self.command_runner.kill_timeout)
+    # Search for successful orchestration message
+    error_result = self.detect_unsuccessful_result(self.run_result)
+    self.assertIsNone(error_result,
+                      msg="Unsuccessful result detected:\n%s" % error_result)
+
 
 class DynamicMockingPerformanceTestCase(DynamicPerformanceTestCase):
   """
