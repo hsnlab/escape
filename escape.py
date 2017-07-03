@@ -79,8 +79,13 @@ def clean ():
     remove_junks_at_shutdown()
     # Remove log files from /tmp
     remove_junks_at_boot()
-    for pid in run_cmd('pgrep -af "python %s"' % __file__).splitlines():
+    esc_proc_filter = 'pgrep -af "%s"' % os.path.basename(__file__)
+    for match in run_cmd(esc_proc_filter).splitlines():
+      pid, pname = match.split(' ', 1)
+      if "pgrep -af" in pname:
+        continue
       if str(pid) != str(os.getpid()):
+        print "Kill stucked ESCAPE process: %s" % match
         run_cmd("sudo -S kill %s" % pid)
     print "Cleaned."
     return
