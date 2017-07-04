@@ -148,7 +148,7 @@ class CommandRunner(object):
 
     :return: None
     """
-    log.debug("Terminate program under test...")
+    log.debug("Terminate program under test: %s" % self)
     if self._process:
       self._process.sendcontrol('c')
     if self.is_alive:

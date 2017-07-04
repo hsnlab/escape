@@ -156,6 +156,15 @@ class CallbackManager(HTTPServer, Thread):
     self.callback_event.clear()
     return str(self.last_result) == str(httplib.OK)
 
+  def __str__ (self):
+    return "%s(address: %s, timeout: %s)" % (self.__class__.__name__,
+                                             self.server_address,
+                                             self.timeout)
+
+  def shutdown (self):
+    log.debug("Shutdown %s..." % self)
+    super(CallbackManager, self).shutdown()
+
 
 # noinspection PyAbstractClass
 class RESTBasedServiceMixIn(EscapeTestCase):
@@ -237,18 +246,20 @@ class RESTBasedServiceMixIn(EscapeTestCase):
                    for file_name in os.listdir(testcase_dir)
                    if file_name.startswith(self.REQUEST_PREFIX)])
     log.debug("Sending requests with explicit backoff time: %s..." % self.delay)
-    for request_file in reqs:
-      # Wait for ESCAPE coming up, flushing to file - no callback yet
+    try:
+      for request_file in reqs:
+        # Wait for ESCAPE coming up, flushing to file - no callback yet
+        time.sleep(self.delay)
+        with open(request_file) as f:
+          ext = request_file.rsplit('.', 1)[-1]
+          ret = self._send_request(data=f.read(), ext=ext)
+          self.assertTrue(ret, msg="Got error while sending request: %s"
+                                   % request_file)
+      # Wait for last orchestration step before stop ESCAPE
       time.sleep(self.delay)
-      with open(request_file) as f:
-        ext = request_file.rsplit('.', 1)[-1]
-        ret = self._send_request(data=f.read(), ext=ext)
-        self.assertTrue(ret, msg="Got error while sending request: %s"
-                                 % request_file)
-    # Wait for last orchestration step before stop ESCAPE
-    time.sleep(self.delay)
-    if shutdown:
-      self.command_runner.stop()
+    finally:
+      if shutdown:
+        self.command_runner.stop()
 
   def send_requests_with_callback (self, shutdown=True):
     """
@@ -266,19 +277,21 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     self.command_runner.wait_for_ready()
     cb_url = cbmanager.url if self.callback else None
     log.debug("Sending requests and waiting for callbacks...")
-    for request in reqs:
-      with open(request) as f:
-        ext = request.rsplit('.', 1)[-1]
-        ret = self._send_request(data=f.read(), ext=ext, callback_url=cb_url)
-        self.assertTrue(ret,
-                        msg="Got error while sending request: %s" % request)
-      success = cbmanager.wait_for_callback()
-      self.assertTrue(success, msg="Service deploy error detected! "
-                                   "Callback returned with error: %s" %
-                                   cbmanager.last_result)
-    if shutdown:
-      cbmanager.shutdown()
-      self.command_runner.stop()
+    try:
+      for request in reqs:
+        with open(request) as f:
+          ext = request.rsplit('.', 1)[-1]
+          ret = self._send_request(data=f.read(), ext=ext, callback_url=cb_url)
+          self.assertTrue(ret,
+                          msg="Got error while sending request: %s" % request)
+        success = cbmanager.wait_for_callback()
+        self.assertTrue(success, msg="Service deploy error detected! "
+                                     "Callback returned with error: %s" %
+                                     cbmanager.last_result)
+    finally:
+      if shutdown:
+        cbmanager.shutdown()
+        self.command_runner.stop()
 
   def _send_request (self, data, ext, callback_url=None):
     """
