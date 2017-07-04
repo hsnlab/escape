@@ -170,7 +170,7 @@ class DynamicTestGenerator(BaseTestSuite):
     :type test_case_info: RunnableTestCaseInfo
     :type command_runner: ESCAPECommandRunner
     """
-    super(DynamicTestGenerator, self).__init__(**kwargs)
+    super(DynamicTestGenerator, self).__init__(kwargs.get("tests", ()))
     self.test_case_info = test_case_info
     self.command_runner = command_runner
     self.testcase_cfg = testcase_cfg

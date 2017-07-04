@@ -327,18 +327,20 @@ class RunnableTestCaseInfo(object):
       test case config file
     :rtype: tuple(object, dict)
     """
+    test_args = {}
     misc = imp.load_source("misc", os.path.join(os.path.abspath(
       os.path.dirname(__file__)), "../../escape/escape/util/misc.py"))
     with open(self.config_file_name, 'r') as f:
       config = json.load(f, object_hook=misc.unicode_to_str)
+    if self.CONFIG_CONTAINER_NAME in config:
+      test_args = copy.copy(config[self.CONFIG_CONTAINER_NAME])
       try:
-        test_args = copy.copy(config[self.CONFIG_CONTAINER_NAME])
         m = test_args.pop('module')
         c = test_args.pop('class')
         return getattr(importlib.import_module(m), c), test_args
-      except KeyError:
+      except (KeyError, ImportError):
         pass
-    return None, {}
+    return None, test_args
 
   def load_config (self):
     misc = imp.load_source("misc", os.path.join(os.path.abspath(
