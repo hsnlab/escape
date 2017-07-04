@@ -21,6 +21,8 @@ import re
 import string
 import sys
 
+from escape.nffg_lib.nffg_elements import Constraints
+
 try:
   # Import for ESCAPEv2
   from escape.nffg_lib.nffg import AbstractNFFG, NFFG, NodeSAP
@@ -1012,6 +1014,7 @@ class NFFGConverter(object):
           continue
 
       # Get resource values
+      self.log.debug("Parse flowrule resources...")
       if flowentry.resources.is_initialized():
         if flowentry.resources.bandwidth.is_initialized():
           try:
@@ -1030,10 +1033,40 @@ class NFFGConverter(object):
       else:
         fr_bw = fr_delay = None
 
+      # Add constraints
+      self.log.debug("Parse flowrule constraints...")
+      fr_constraints = Constraints()
+      if flowentry.constraints.is_initialized():
+        # Add affinity list
+        if flowentry.constraints.affinity.is_initialized():
+          for aff in flowentry.constraints.affinity.values():
+            aff = fr_constraints.add_affinity(id=aff.id.get_value(),
+                                              value=aff.object.get_value())
+            self.log.debug("Add affinity: %s to %s" % (aff, fr_id))
+        # Add antiaffinity list
+        if flowentry.constraints.antiaffinity.is_initialized():
+          for naff in flowentry.constraints.antiaffinity.values():
+            naff = fr_constraints.add_antiaffinity(id=naff.id.get_value(),
+                                                   value=naff.object.get_value())
+            self.log.debug("Add antiaffinity: %s to %s" % (naff, fr_id))
+        # Add variables dict
+        if flowentry.constraints.variable.is_initialized():
+          for var in flowentry.constraints.variable.values():
+            var = fr_constraints.add_variable(key=var.id.get_value(),
+                                              id=var.object.get_value())
+            self.log.debug("Add variable: %s to %s" % (var, fr_id))
+        # Add constraint list
+        if flowentry.constraints.constraint.is_initialized():
+          for constraint in flowentry.constraints.constraint.values():
+            formula = fr_constraints.add_constraint(
+              id=constraint.id.get_value(),
+              formula=constraint.formula.get_value())
+            self.log.debug("Add constraint: %s to %s" % (formula, fr_id))
+
       # Add flowrule to port
       fr = vport.add_flowrule(id=fr_id, match=fr_match, action=fr_action,
                               bandwidth=fr_bw, delay=fr_delay,
-                              external=fr_external)
+                              external=fr_external, constraints=fr_constraints)
 
       # Handle operation tag
       if flowentry.get_operation() is not None:
@@ -1179,7 +1212,7 @@ class NFFGConverter(object):
         # Add variables dict
         if vnode.constraints.variable.is_initialized():
           for var in vnode.constraints.variable.values():
-            infra.constraints.add_variable(
+            var = infra.constraints.add_variable(
               key=var.id.get_value(),
               id=var.object.get_value())
             self.log.debug("Add variable: %s to %s" % (var, infra.id))
@@ -1419,7 +1452,8 @@ class NFFGConverter(object):
                              dst_port=output,
                              flowclass=flowclass,
                              delay=flowrule.delay,
-                             bandwidth=flowrule.bandwidth)
+                             bandwidth=flowrule.bandwidth,
+                             constraints=flowrule.constraints)
         self.log.debug("Recreated SG hop: %s" % sg)
 
   def parse_from_Virtualizer (self, vdata, with_virt=False,
@@ -2110,7 +2144,7 @@ class NFFGConverter(object):
                                      object=v_var_node.get_path()))
     # Add constraint
     for id, cons in infra.constraints.constraint.iteritems():
-      self.log.debug("Add formula: %s for Infra: %s" % (cons, infra.id))
+      self.log.debug("Add formula: %s to Infra: %s" % (cons, infra.id))
       vnode.constraints.constraint.add(
         virt_lib.ConstraintsConstraint(id=str(id),
                                        formula=cons))
@@ -2156,8 +2190,53 @@ class NFFGConverter(object):
                                      object=v_var_node.get_path()))
     # Add constraint
     for id, cons in nf.constraints.constraint.iteritems():
-      self.log.debug("Add formula: %s for NF: %s" % (cons, nf.id))
+      self.log.debug("Add formula: %s to NF: %s" % (cons, nf.id))
       vnf.constraints.constraint.add(
+        virt_lib.ConstraintsConstraint(id=str(id),
+                                       formula=cons))
+
+  def __set_flowentry_constraints (self, vnode, flowrule, virtualizer):
+    v_fe = vnode.flowtable[str(flowrule.id)]
+    # Add affinity
+    for id, aff in flowrule.constraints.affinity.iteritems():
+      v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
+      if v_aff_node is None:
+        self.log.warning("Referenced Node: %s is not found for affinity!" % aff)
+        continue
+      self.log.debug("Found reference for affinity: %s in Flowrule: %s"
+                     % (aff, flowrule.id))
+      v_fe.constraints.affinity.add(
+        virt_lib.ConstraintsAffinity(id=str(id),
+                                     object=v_aff_node.get_path()))
+    # Add antiaffinity
+    for id, naff in flowrule.constraints.antiaffinity.iteritems():
+      v_naff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=naff)
+      if v_naff_node is None:
+        self.log.warning("Referenced Node: %s is not found for anti-affinity!"
+                         % naff)
+        continue
+      self.log.debug("Found reference for antiaffinity: %s in Flowrule: %s"
+                     % (naff, flowrule.id))
+      v_fe.constraints.antiaffinity.add(
+        virt_lib.ConstraintsAntiaffinity(id=str(id),
+                                         object=v_naff_node.get_path()))
+    # Add variable
+    for key, value in flowrule.constraints.variable.iteritems():
+      v_var_node = self._get_vnode_by_id(virtualizer=virtualizer, id=value)
+      if v_var_node is None:
+        self.log.warning("Referenced Node: %s is not found for variable: %s!"
+                         % (value, key))
+        continue
+      self.log.debug("Found reference for variable: %s in Flowrule: %s"
+                     % (key, flowrule.id))
+      v_fe.constraints.constraint.add(
+        virt_lib.ConstraintsVariable(id=str(key),
+                                     object=v_var_node.get_path()))
+    # Add constraint
+    for id, cons in flowrule.constraints.constraint.iteritems():
+      self.log.debug("Add constraint: %s:%s to Flowrule: %s"
+                     % (id, cons, flowrule.id))
+      v_fe.constraints.constraint.add(
         virt_lib.ConstraintsConstraint(id=str(id),
                                        formula=cons))
 
@@ -2185,6 +2264,11 @@ class NFFGConverter(object):
         self.__set_vnf_constraints(vnode=vnode,
                                    nf=nf,
                                    virtualizer=virtualizer)
+      for flowrule in infra.flowrules():
+        self.__set_flowentry_constraints(vnode=vnode,
+                                         flowrule=flowrule,
+                                         virtualizer=virtualizer)
+
 
   def dump_to_Virtualizer (self, nffg):
     """
