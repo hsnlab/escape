@@ -107,9 +107,12 @@ class TestSuitBuilder(object):
         log.info("Standalone mode: disable testcase timeout!")
         cmd_runner.setup_standalone_mode()
       # Override kill timeout if it is set in the config file
-      elif test_args and self.CONFIG_TIMEOUT_NAME in test_args:
-        cmd_runner.kill_timeout = max(self.kill_timeout,
-                                      test_args[self.CONFIG_TIMEOUT_NAME])
+      elif not self.kill_timeout and self.CONFIG_TIMEOUT_NAME in test_args:
+        cmd_runner.kill_timeout = test_args[self.CONFIG_TIMEOUT_NAME]
+        log.debug("Use explicit timeout from testcase config: %s"
+                  % cmd_runner.kill_timeout)
+      else:
+        log.debug("Use globally defined timeout: %s" % cmd_runner.kill_timeout)
       log.debug("Using %s" % cmd_runner)
       if TESTCASE_CLASS:
         return TESTCASE_CLASS(test_case_info=case_info,

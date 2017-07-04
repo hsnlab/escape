@@ -338,7 +338,19 @@ class RunnableTestCaseInfo(object):
         return getattr(importlib.import_module(m), c), test_args
       except KeyError:
         pass
-    return None, None
+    return None, {}
+
+  def load_config (self):
+    misc = imp.load_source("misc", os.path.join(os.path.abspath(
+      os.path.dirname(__file__)), "../../escape/escape/util/misc.py"))
+    with open(self.config_file_name, 'r') as f:
+      config = json.load(f, object_hook=misc.unicode_to_str)
+      try:
+        test_args = copy.copy(config[self.CONFIG_CONTAINER_NAME])
+        return test_args
+      except KeyError:
+        pass
+    return None
 
   def __repr__ (self):
     return "RunnableTestCase [%s]" % self.testcase_dir_name
