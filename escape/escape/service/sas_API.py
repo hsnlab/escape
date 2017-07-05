@@ -412,9 +412,13 @@ class ServiceLayerAPI(AbstractAPI):
       else:
         log.getChild('API').debug("No request info detected.")
     try:
-      # Initiate service request mapping
-      mapped_nffg = self.service_orchestrator.initiate_service_graph(
-        service_nffg)
+      if CONFIG.get_mapping_enabled(layer=LAYER_NAME):
+        # Initiate service request mapping
+        mapped_nffg = self.service_orchestrator.initiate_service_graph(
+          service_nffg)
+      else:
+        log.warning("Mapping is disabled! Skip instantiation step...")
+        mapped_nffg = service_nffg
       # Rewrite REMAP mode for backward compatibility
       if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
         mapped_nffg.mode = mapping_mode

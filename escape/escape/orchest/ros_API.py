@@ -537,7 +537,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     else:
       mapping_mode = None
       log.info("No mapping mode was detected!")
-    if nffg.status == NFFG.MAP_STATUS_SKIPPED:
+    if not CONFIG.get_mapping_enabled(layer=LAYER_NAME):
+      log.warning("Mapping is disabled! Skip difference calculation...")
+    elif nffg.status == NFFG.MAP_STATUS_SKIPPED:
       log.debug("Detected NFFG map status: %s! "
                 "Skip difference calculation and "
                 "proceed with original request..." % nffg.status)
@@ -579,8 +581,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.debug("Mode: %s detected from config! Skip difference calculation..."
                 % mapping_mode)
     try:
-      # Initiate request mapping
-      mapped_nffg = self.orchestrator.instantiate_nffg(nffg=nffg)
+      if CONFIG.get_mapping_enabled(layer=LAYER_NAME):
+        # Initiate request mapping
+        mapped_nffg = self.orchestrator.instantiate_nffg(nffg=nffg)
+      else:
+        log.warning("Mapping is disabled! Skip instantiation step...")
+        mapped_nffg = nffg
       # Rewrite REMAP mode for backward compatibility
       if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
         mapped_nffg.mode = mapping_mode

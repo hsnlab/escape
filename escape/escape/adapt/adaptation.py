@@ -552,6 +552,7 @@ class ControllerAdapter(object):
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
+    self.check_deploy_request(request=mapped_nffg)
     # Register mapped NFFG for managing statuses of install steps
     log.debug("Store mapped NFFG for domain status tracking...")
     deploy_status = self.status_mgr.register_service(nffg=mapped_nffg)
@@ -688,6 +689,19 @@ class ControllerAdapter(object):
     else:
       log.info("All installation processes have been finished!")
     return deploy_status
+
+  def check_deploy_request (self, request):
+    dov = self.DoVManager.dov.get_resource_info()
+    for node in request.infras:
+      if node.id not in dov.network:
+        log.warning("Deploy request: %s contains a non-existent infra node: %s!"
+                    % (request, node.id))
+      domain_name = dov[node.id].domain
+      if node.domain != domain_name:
+        log.debug("Synchronizing domain id for node: %s --> %s" % (node.id,
+                                                                   domain_name))
+        node.domain = domain_name
+    return request
 
   def __perform_internal_mgr_update (self, mapped_nffg, domain):
     """

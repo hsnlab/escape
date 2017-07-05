@@ -103,7 +103,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
             else:
               log.warning(
                 "Detected virtualized representation with multiple BiSBiS "
-                "nodes! Currently this type of virtualization is nut fully"
+                "nodes! Currently this type of virtualization is nut fully "
                 "supported!")
           else:
             log.debug("Detected full view representation!")
