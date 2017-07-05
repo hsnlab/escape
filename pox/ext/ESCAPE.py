@@ -50,7 +50,7 @@ def _start_components (event):
   # Launch Controller Adaptation Sublayer (CAS)
   from adaptation import launch
 
-  launch(with_infr=init_param['full'])
+  launch(with_infr=init_param['full'], dovapi=init_param['dovapi'])
   # Launch Resource Orchestration Sublayer (ROS)
   from orchestration import launch
 
@@ -77,8 +77,7 @@ def __init_loggers (loglevel, log, test):
   """
   # Import colourful logging
   if loglevel == 'VERBOSE':
-    setup_logging(**{'test_mode': True if test else False,
-                     'log_file': log})
+    setup_logging(**{'test_mode': True if test else False, 'log_file': log})
     # Set the Root logger level explicitly
     logging.getLogger('').setLevel("VERBOSE")
   else:
@@ -135,8 +134,8 @@ def __setup_pythonpath ():
 
 @poxutil.eval_args
 def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
-            full=False, loglevel="INFO", cfor=False, visualization=False,
-            mininet=None, test=False, log=None, quit=False):
+            dovapi=False, full=False, loglevel="INFO", cfor=False, quit=False,
+            visualization=False, mininet=None, test=False, log=None):
   """
   Launch function called by POX core when core is up.
 

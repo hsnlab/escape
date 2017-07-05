@@ -80,6 +80,14 @@
     }
   },
   "adaptation": {
+    "DOV-API": {
+      "module": "escape.adapt.cas_API",
+      "class": "DirectDoVRequestHandler",
+      "address": "0.0.0.0",
+      "prefix": "dov",
+      "port": 8889,
+      "unify_interface": true
+    },
     "MANAGERS": [],
     "DOV": {
       "ENSURE-UNIQUE-ID": true,

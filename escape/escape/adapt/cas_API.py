@@ -20,9 +20,12 @@ from escape.adapt import log as log  # Adaptation layer logger
 from escape.adapt.adaptation import ControllerAdapter, \
   InstallationFinishedEvent, \
   InfoRequestFinishedEvent
+from escape.adapt.virtualization import GlobalViewVirtualizer
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
-from escape.util.api import AbstractAPI
+from escape.orchest.ros_API import BasicUnifyRequestHandler
+from escape.util.api import AbstractAPI, RESTServer
+from escape.util.config import CONFIG
 from escape.util.misc import schedule_as_coop_task, quit_with_error
 from escape.util.stat import stats
 from pox.lib.revent.revent import Event
@@ -111,6 +114,8 @@ class ControllerAdaptationAPI(AbstractAPI):
         quit_with_error(msg=str(e), logger=log)
       else:
         log.debug("Graph representation is loaded successfully!")
+    if self._dovapi:
+      self._initialize_dov_api()
     log.info("Controller Adaptation Sublayer has been initialized!")
 
   def shutdown (self, event):
@@ -124,6 +129,38 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.info("Controller Adaptation Sublayer is going down...")
     self.controller_adapter.shutdown()
+
+  def _initialize_dov_api (self):
+    handler = CONFIG.get_dov_api_class()
+    if not handler:
+      log.error("Missing handler class for server in CAS layer!")
+      return
+    handler.bounded_layer = self._core_name
+    params = CONFIG.get_dov_api_params()
+    if 'prefix' in params:
+      handler.static_prefix = params['prefix']
+    if 'unify_interface' in params:
+      handler.virtualizer_format_enabled = params['unify_interface']
+    if 'diff' in params:
+      handler.DEFAULT_DIFF = bool(params['diff'])
+    address = (params.get('address'), params.get('port'))
+    self.dov_api = RESTServer(handler, *address)
+    self.dov_api.api_id = handler.LOGGER_NAME = "DoV-API"
+    self.dov_api.virtualizer_type = CONFIG.get_api_virtualizer(
+      layer_name=LAYER_NAME, api_name=self.dov_api.api_id)
+    handler.log.info("Init DOV-API for %s on %s:%s!" % (
+      self.dov_api.api_id, address[0], address[1]))
+    dov = self.controller_adapter.DoVManager.dov
+    self.dov_api_view = GlobalViewVirtualizer(id=self.dov_api.api_id,
+                                              global_view=dov)
+    log.debug("Created default Virtualizer View for DOV-API: %s"
+              % self.dov_api_view)
+    self.dov_api.start()
+    handler.log.debug(
+      "Enforced configuration for %s: virtualizer type: %s, interface: %s, "
+      "diff: %s" % (self.dov_api.api_id, self.dov_api.virtualizer_type,
+                    "UNIFY" if handler.virtualizer_format_enabled else
+                    "Internal-NFFG", handler.DEFAULT_DIFF))
 
   ##############################################################################
   # UNIFY Or - Ca API functions starts here
@@ -215,3 +252,57 @@ class ControllerAdaptationAPI(AbstractAPI):
     dov = self.controller_adapter.DoVManager.dov
     log.getChild('API').debug("Sending back DoV: %s..." % dov)
     self.raiseEventNoErrors(GlobalResInfoEvent, dov)
+
+  ##############################################################################
+  # Agent API functions starts here
+  ##############################################################################
+
+  def api_cas_get_config (self):
+    """
+    Implementation of REST-API RPC: get-config. Return with the global
+    resource as an :class:`NFFG` if it has been changed otherwise return with
+    False.
+
+    :return: global resource view (DoV)
+    :rtype: :class:`NFFG` or False
+    """
+    # return self.controller_adapter.DoVManager.dov.get_resource_info()
+    log.getChild('[DOV-API]').debug("Requesting Virtualizer for DoV-API")
+    if self.dov_api_view is not None:
+      # Check the topology is initialized
+      if self.dov_api_view.revision is None:
+        log.getChild('[DOV-API]').debug("DoV has not initialized yet! "
+                                        "Force to get default topology...")
+      else:
+        # Check if the resource is changed
+        if self.dov_api.topology_revision == self.dov_api_view.revision:
+          # If resource has not been changed return False
+          # This causes to response with the cached topology
+          return False
+        else:
+          log.getChild('[DOV-API]').debug("Response cache is outdated "
+                                          "(new revision: %s)!"
+                                          % self.dov_api_view.revision)
+      res = self.dov_api_view.get_resource_info()
+      self.dov_api.topology_revision = self.dov_api_view.revision
+      return res
+    else:
+      log.error("Virtualizer(id=%s) assigned to DoV-API is not found!" %
+                self.dov_api.api_id)
+
+  def api_cas_edit_config (self, nffg, params):
+    pass
+
+
+class DirectDoVRequestHandler(BasicUnifyRequestHandler):
+  LOGGER_NAME = "Dov-API"
+  log = log.getChild("[%s]" % LOGGER_NAME)
+  # Name mapper to avoid Python naming constraint
+  rpc_mapper = {
+    'get-config': "get_config",
+    'edit-config': "edit_config"
+  }
+  """Name mapper to avoid Python naming constraint"""
+  # Bound function
+  API_CALL_RESOURCE = 'api_cas_get_config'
+  API_CALL_REQUEST = 'api_cas_edit_config'

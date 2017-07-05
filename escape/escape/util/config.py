@@ -569,6 +569,29 @@ class ESCAPEConfig(object):
   # ADAPTATION layer getters
   ##############################################################################
 
+  def get_dov_api_class(self):
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration[ADAPT]['DOV-API']['module']),
+        self.__configuration[ADAPT]['DOV-API']['class'], None)
+    except KeyError:
+      return None
+
+  def get_dov_api_params (self):
+    """
+    Return the Cf-Or API params for agent request handler.
+
+    :return: params
+    :rtype: dict
+    """
+    try:
+      params = self.__configuration[ADAPT]['DOV-API'].copy()
+      del params['module']
+      del params['class']
+      return params
+    except KeyError:
+      return {}
+
   def get_component (self, component, parent=None):
     """
     Return with the class of the adaptation component.

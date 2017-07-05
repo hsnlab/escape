@@ -105,9 +105,12 @@ def main ():
                       help="run in AGENT mode: start the infrastructure layer "
                            "with the ROS REST-API (without the Service "
                            "sublayer (SAS))")
+  escape.add_argument("-b", "--bypassapi", action="store_true", default=False,
+                      help="start the REST-API to bypass embedding and access "
+                           "to the DoV directly")
   escape.add_argument("-c", "--config", metavar="path", type=str,
-                      # default="pox/escape.config",
-                      help="override default config filename")
+                      help="use external config file to extend the default "
+                           "configuration")
   escape.add_argument("-d", "--debug", action="count", default=0,
                       help="run the ESCAPE in debug mode (can use multiple "
                            "times for more verbose logging)")
@@ -135,7 +138,7 @@ def main ():
   escape.add_argument("+q", "++quit", action="store_false", default=False,
                       help="explicitly disable quit mode")
   escape.add_argument("-r", "--rosapi", action="store_true", default=False,
-                      help="start the REST-API for the Resource Orchestration "
+                      help="start REST-API for the Resource Orchestration "
                            "sublayer (ROS)")
   escape.add_argument("-s", "--service", metavar="file", type=str,
                       help="skip the SAS REST-API initiation and read the "
@@ -212,6 +215,10 @@ def main ():
   # Start an REST-API for the Cf-Or interface
   if args.cfor:
     cmd.append("--cfor")
+
+  # Start an REST-API for the Adaptation Layer
+  if args.bypassapi:
+    cmd.append("--dovapi")
 
   # Enable Visualization
   if args.visualization:

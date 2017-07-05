@@ -40,7 +40,7 @@ def _start_layer (event):
 
 
 @poxutil.eval_args
-def launch (mapped_nffg='', with_infr=False, standalone=False):
+def launch (mapped_nffg='', with_infr=False, standalone=False, dovapi=False):
   """
   Launch function called by POX core when core is up.
 
