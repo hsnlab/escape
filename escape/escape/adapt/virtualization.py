@@ -576,24 +576,8 @@ class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
                                                 global_view=global_view,
                                                 type=self.TYPE)
 
-  def get_resource_info (self):
-    """
-    Return with the unfiltered global view.
-
-    :return: Virtual resource info
-    :rtype: :class:`NFFG`
-    """
-    # Leave the dirty mechanism operational
-    self._dirty = False
-    log.debug(
-      "No filtering in Virtualizer: %s. Return full global resource..." %
-      self.TYPE)
-    # Currently we NOT filter the global view just propagate to other layers
-    # and entities intact
-    return self.global_view.get_resource_info()
-
   def _acquire_resource (self):
-    pass
+    return self.global_view.get_resource_info()
 
 
 class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
