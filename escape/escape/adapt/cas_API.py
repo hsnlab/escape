@@ -291,7 +291,9 @@ class ControllerAdaptationAPI(AbstractAPI):
                 self.dov_api.api_id)
 
   def api_cas_edit_config (self, nffg, params):
-    pass
+    log.getChild('[DOV-API]').info("Invoke instantiation on %s with NF-FG: "
+                                   "%s " % (self.__class__.__name__, nffg.name))
+    self.__proceed_installation(mapped_nffg=nffg)
 
 
 class DirectDoVRequestHandler(BasicUnifyRequestHandler):
