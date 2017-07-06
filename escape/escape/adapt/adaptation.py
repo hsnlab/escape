@@ -1130,14 +1130,16 @@ class ControllerAdapter(object):
       success = domain_mgr.request_info_from_domain(req_id=id,
                                                     info_part=info_part)
       if not success:
-        log.warning("Request was unsuccessful!")
+        log.warning("Info request: %s in domain: %s was unsuccessful!"
+                    % (status.id, domain))
         status.set_domain_failed(domain=domain)
     if status.success:
-      log.info("All 'info' requests were successful!")
+      log.info("All 'info' sub-requests were successful!")
     elif status.failed:
-      log.error("Info request: %s was unsuccessful!" % status.id)
+      log.error("Top Info request: %s was unsuccessful!" % status.id)
     elif status.still_pending:
-      log.info("All 'info' requests have been finished! Waiting for results...")
+      log.info("All 'info' sub-requests have been finished! "
+               "Waiting for results...")
     log.debug("Info request status: %s" % status)
     return status
 
@@ -1415,13 +1417,14 @@ class DomainRequestManager(object):
       if s.id == id:
         log.warning("Detected already registered service request: %s in %s! "
                     "Reset deploy statuses..." % (id, self.__class__.__name__))
-      s.reset_statuses()
-      return s
+        s.reset_statuses()
+        self._last = s
+        return s
     else:
       status = DomainRequestStatus(id=id, domains=domains, data=data)
       self._services.append(status)
       self._last = status
-      log.debug("Request with id: %s is registered for status management!" % id)
+      log.info("Request with id: %s is registered for status management!" % id)
       log.debug("Status: %s" % status)
       return status
 
