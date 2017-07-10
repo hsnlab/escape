@@ -1396,9 +1396,9 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :return: status if the installation was success
     :rtype: bool
     """
-    if nffg_part.is_bare():
-      self.log.info(">>> Splitted part is a bare NFFG! Skip domain deploy...")
-      return True
+    # if nffg_part.is_bare():
+    #   self.log.info(">>> Splitted part is a bare NFFG! Skip domain deploy...")
+    #   return True
     self.log.info(">>> Install %s domain part..." % self.domain_name)
     try:
       log.debug("Request and store the most recent domain topology....")
