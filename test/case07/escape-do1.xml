@@ -16,8 +16,10 @@
 				<port>
 					<id>port-SAP14</id>
 					<port_type>port-sap</port_type>
+					<name>no name</name>
 					<sap>SAP14</sap>
 					<sap_data>
+						<technology>IP, 8</technology>
 						<resources>
 							<delay>2.5</delay>
 							<bandwidth>10</bandwidth>
