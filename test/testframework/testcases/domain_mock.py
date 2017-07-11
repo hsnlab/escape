@@ -47,7 +47,8 @@ class RPCCallMock(object):
   A mock class for an RPC call.
   """
 
-  def __init__ (self, rpc_name, response_path=None, code=None, timeout=None):
+  def __init__ (self, rpc_name, response_path=None, code=None, timeout=None,
+                trials=None):
     """
     :param rpc_name: name of the rpc call e.g get-config
     :type rpc_name: str
@@ -60,10 +61,11 @@ class RPCCallMock(object):
     self.response_path = response_path
     self.code = code if code else httplib.OK
     self.timeout = timeout
+    self._trials = trials
 
   def __repr__ (self):
-    return "CallMock(response: %s, code: %s, timeout=%s)" \
-           % (self.response_path, self.code, self.timeout)
+    return "CallMock(response: %s, code: %s, timeout=%s, trials: %s)" \
+           % (self.response_path, self.code, self.timeout, self._trials)
 
   def get_response_body (self):
     if not self.response_path:
@@ -71,6 +73,17 @@ class RPCCallMock(object):
     with open(self.response_path) as f:
       log.debug("Read response from file: %s" % self.response_path)
       return f.read()
+
+  def has_trial_remained (self):
+    if self._trials is None:
+      return True
+    else:
+      return bool(self._trials)
+
+  def decrease_trials (self):
+    if isinstance(self._trials, int):
+      self._trials -= 1
+      log.debug("Remained trials: %s" % self._trials)
 
 
 class DomainMock(object):
@@ -101,6 +114,14 @@ class DomainMock(object):
     :rtype: RPCCallMock
     """
     return self.calls.get(rpc_name, None)
+
+  def remove_call (self, rpc_name):
+    if rpc_name in self.calls:
+      del self.calls[rpc_name]
+      log.debug(
+        "Removed RPC call: %s from domain: %s" % (rpc_name, self.domain))
+    else:
+      log.warning("No RPC call was found for deletion with name: %s" % rpc_name)
 
   def __repr__ (self):
     return "ResponseMock(domain: %s, calls: %s)" % (self.domain, self.calls)
@@ -151,13 +172,17 @@ class DORequestHandler(BaseHTTPRequestHandler):
     if domain not in self.server.responses:
       self._return_default(call=call)
       return
-    call_mock = self.server.responses[domain].get_call(call)
+    call_mock = self.server.responses[domain].get_call(rpc_name=call)
     if call_mock is None:
-      self._return_default(call=call)
-      return
-    self._return_response(code=call_mock.code,
-                          mock=call_mock,
-                          timeout=call_mock.timeout)
+      return self._return_default(call=call)
+    else:
+      self._return_response(code=call_mock.code,
+                            mock=call_mock,
+                            timeout=call_mock.timeout)
+      call_mock.decrease_trials()
+      if not call_mock.has_trial_remained():
+        self.server.responses[domain].remove_call(rpc_name=call)
+        log.debug("Remained calls: %s" % self.server.responses[domain])
 
   def __get_request_params (self):
     """
@@ -262,7 +287,7 @@ class DORequestHandler(BaseHTTPRequestHandler):
                                  body=body,
                                  msg_id=msg_id,
                                  timeout=timeout)
-      log.debug("Request accepted by default if callback is used")
+      log.debug("Request accepted by default if callback is used...")
       code = httplib.OK if body else httplib.ACCEPTED
     self.send_response(code=code)
     if body:
@@ -383,13 +408,14 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     for resp in responses:
       if not {"domain", "rpc", "return"}.issubset(set(resp)):
         log.error("Defined response is malformed: %s!" % resp)
-      domain, rpc, ret = resp.get("domain"), resp.get("rpc"), resp.get("return")
+      domain, rpc, ret = resp.get('domain'), resp.get('rpc'), resp.get('return')
       if domain not in self.responses:
         self.responses[domain] = DomainMock(domain=domain)
       if isinstance(ret, int):
         self.responses[domain].add_call(rpc_name=rpc,
                                         code=ret,
-                                        timeout=resp.get('timeout'))
+                                        timeout=resp.get('timeout'),
+                                        trials=resp.get('trials'))
       else:
         path = os.path.join(dirname, ret)
         code = httplib.ACCEPTED if rpc == RPC_EDIT_CONFIG else httplib.OK

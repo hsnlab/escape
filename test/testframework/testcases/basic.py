@@ -113,7 +113,8 @@ class WarningChecker(BasicErrorChecker):
     "No configuration file was found for neo4j service!",
     "Installation process is still pending! Waiting for results...",
     "One-step-update is enabled.",
-    "Detected already registered service request"
+    "Detected already registered service request",
+    "Found non-existent infra node"
   ]
 
   @classmethod
