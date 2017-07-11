@@ -28,7 +28,7 @@ from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
 from escape.util.misc import VERBOSE, unicode_to_str, quit_with_error
 from escape.util.pox_extension import POXCoreRegisterMetaClass
-from pox.core import log, core
+from pox.core import log
 
 # Store the project root where escape.py is started in
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__) + "/../../../")
@@ -569,7 +569,7 @@ class ESCAPEConfig(object):
   # ADAPTATION layer getters
   ##############################################################################
 
-  def get_dov_api_class(self):
+  def get_dov_api_class (self):
     try:
       return getattr(importlib.import_module(
         self.__configuration[ADAPT]['DOV-API']['module']),
@@ -588,6 +588,19 @@ class ESCAPEConfig(object):
       params = self.__configuration[ADAPT]['DOV-API'].copy()
       del params['module']
       del params['class']
+      return params
+    except KeyError:
+      return {}
+
+  def get_vnfm_enabled (self):
+    try:
+      return self.__configuration[ADAPT]['VNFM']['enabled']
+    except KeyError:
+      return False
+
+  def get_vnfm_config (self):
+    try:
+      params = self.__configuration[ADAPT]['VNFM'].copy()
       return params
     except KeyError:
       return {}

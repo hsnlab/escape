@@ -536,7 +536,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.info("Detected mapping mode from NFFG: %s" % mapping_mode)
     else:
       mapping_mode = None
-      log.info("No mapping mode was detected!")
+      log.info("No mapping mode was defined explicitly!")
     if not CONFIG.get_mapping_enabled(layer=LAYER_NAME):
       log.warning("Mapping is disabled! Skip difference calculation...")
     elif nffg.status == NFFG.MAP_STATUS_SKIPPED:

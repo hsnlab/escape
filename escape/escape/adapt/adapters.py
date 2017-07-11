@@ -1139,7 +1139,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                 self._base_url)
       return
 
-  def edit_config (self, data, diff=False, message_id=None, callback=None):
+  def edit_config (self, data, diff=False, message_id=None, callback=None,
+                   full_conversion=False):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 
@@ -1158,14 +1159,23 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     log.debug("Prepare edit-config request for remote agent at: %s" %
               self._base_url)
-    if isinstance(data, NFFG):
-      log.debug("Convert NFFG to XML/Virtualizer format...")
-      vdata = self.converter.adapt_mapping_into_Virtualizer(
-        virtualizer=self.last_virtualizer, nffg=data, reinstall=diff)
-      log.log(VERBOSE, "Adapted Virtualizer:\n%s" % vdata.xml())
-    elif isinstance(data, Virtualizer):
+    if isinstance(data, Virtualizer):
       # Nothing to do
       vdata = data
+    elif isinstance(data, NFFG):
+      log.debug("Convert NFFG to XML/Virtualizer format...")
+      if self.last_virtualizer is None:
+        log.debug("Missing last received Virtualizer! "
+                  "Updating last topology view now...")
+        self.get_config()
+        if self.last_virtualizer is None:
+          return False
+      if full_conversion:
+        vdata = self.converter.dump_to_Virtualizer(nffg=data)
+      else:
+        vdata = self.converter.adapt_mapping_into_Virtualizer(
+          virtualizer=self.last_virtualizer, nffg=data, reinstall=diff)
+      log.log(VERBOSE, "Adapted Virtualizer:\n%s" % vdata.xml())
     else:
       raise RuntimeError("Not supported config format: %s for 'edit-config'!" %
                          type(data))
@@ -1490,7 +1500,8 @@ class RemoteESCAPEv2RESTAdapter(UnifyRESTAdapter, RemoteESCAPEv2API):
                 self._base_url)
       return
 
-  def edit_config (self, data, diff=False, message_id=None, callback=None):
+  def edit_config (self, data, diff=False, message_id=None, callback=None,
+                   full_conversion=False):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 

@@ -1119,7 +1119,8 @@ class DefaultUnifyDomainAPI(object):
     """
     raise NotImplementedError
 
-  def edit_config (self, data, diff=False, message_id=None, callback=None):
+  def edit_config (self, data, diff=False, message_id=None, callback=None,
+                   full_conversion=False):
     """
     Send the requested configuration with a netconf-like "edit-config" command.
 

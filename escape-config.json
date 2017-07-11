@@ -86,7 +86,15 @@
       "address": "0.0.0.0",
       "prefix": "dov",
       "port": 8889,
+      "diff": false,
       "unify_interface": true
+    },
+    "VNFM" : {
+      "enabled": true,
+      "url": "http://127.0.0.1:9999",
+      "prefix": "escape",
+      "timeout": 2,
+      "diff": false
     },
     "MANAGERS": [],
     "DOV": {

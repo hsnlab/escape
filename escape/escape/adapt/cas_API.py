@@ -180,7 +180,8 @@ class ControllerAdaptationAPI(AbstractAPI):
                                 original_request=event.original_request)
 
   @schedule_as_coop_task
-  def __proceed_installation (self, mapped_nffg, original_request=None):
+  def __proceed_installation (self, mapped_nffg, original_request=None,
+                              direct_deploy=False):
     """
     Helper function to instantiate the NFFG mapping from different source.
 
@@ -193,20 +194,27 @@ class ControllerAdaptationAPI(AbstractAPI):
     stats.add_measurement_start_entry(type=stats.TYPE_DEPLOY,
                                       info=LAYER_NAME)
     try:
-      deploy_status = self.controller_adapter.install_nffg(mapped_nffg,
-                                                           original_request)
+      deploy_status = self.controller_adapter.install_nffg(
+        mapped_nffg=mapped_nffg, original_request=original_request,
+        direct_deploy=direct_deploy)
     except Exception:
       log.error("Something went wrong during NFFG installation!")
       self.raiseEventNoErrors(InstallationFinishedEvent,
+                              id=mapped_nffg.id,
                               result=InstallationFinishedEvent.DEPLOY_ERROR)
       raise
     log.getChild('API').debug("Invoked install_nffg on %s is finished!" %
                               self.__class__.__name__)
-    if not deploy_status.still_pending:
-      id = mapped_nffg.id
+    if deploy_status is None:
+      log.error("Something went wrong during NFFG installation!")
+      self.raiseEventNoErrors(InstallationFinishedEvent,
+                              id=mapped_nffg.id,
+                              result=InstallationFinishedEvent.DEPLOY_ERROR)
+    elif not deploy_status.still_pending:
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
       log.info("Overall installation result: %s" % result)
-      self.raiseEventNoErrors(InstallationFinishedEvent, id=id, result=result)
+      self.raiseEventNoErrors(InstallationFinishedEvent,
+                              id=mapped_nffg.id, result=result)
 
   @schedule_as_coop_task
   def _handle_CollectMonitoringDataEvent (self, event):
@@ -293,7 +301,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   def api_cas_edit_config (self, nffg, params):
     log.getChild('[DOV-API]').info("Invoke instantiation on %s with NF-FG: "
                                    "%s " % (self.__class__.__name__, nffg.name))
-    self.__proceed_installation(mapped_nffg=nffg)
+    self.__proceed_installation(mapped_nffg=nffg, direct_deploy=True)
 
 
 class DirectDoVRequestHandler(BasicUnifyRequestHandler):

@@ -22,6 +22,7 @@ import weakref
 
 import escape.adapt.managers as mgrs
 from escape.adapt import log as log
+from escape.adapt.adapters import UnifyRESTAdapter
 from escape.adapt.managers import UnifyDomainManager
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
@@ -538,7 +539,8 @@ class ControllerAdapter(object):
     # Stop initiated DomainManagers
     self.domains.stop_initiated_mgrs()
 
-  def install_nffg (self, mapped_nffg, original_request=None):
+  def install_nffg (self, mapped_nffg, original_request=None,
+                    direct_deploy=False):
     """
     Start NF-FG installation.
 
@@ -552,13 +554,28 @@ class ControllerAdapter(object):
     """
     log.debug("Invoke %s to install NF-FG(%s)" % (
       self.__class__.__name__, mapped_nffg.name))
-    self.check_deploy_request(request=mapped_nffg)
+    self.collate_deploy_request(request=mapped_nffg)
     # Register mapped NFFG for managing statuses of install steps
     log.debug("Store mapped NFFG for domain status tracking...")
     deploy_status = self.status_mgr.register_service(nffg=mapped_nffg)
-    if not deploy_status:
+    if deploy_status is None:
       log.error("Missing deploy status for request: %s. Skip deployment..."
                 % mapped_nffg.id)
+      return
+    if not direct_deploy:
+      if CONFIG.get_vnfm_enabled():
+        log.info("VNFM is enabled! Skip deploy process and call external "
+                 "component...")
+        if self.forward_to_vnfm(nffg=mapped_nffg, deploy_status=deploy_status):
+          log.info("Waiting for external component...")
+        return deploy_status
+          # TODO - handle scheduled request --> propagate request status in
+          # event
+      else:
+        log.debug("VNFM is disabled! Proceed with deploy...")
+    else:
+      log.debug("Direct deploy is set! "
+                "Bypass external VNFM and proceed with deploy...")
     self.DoVManager.backup_dov_state()
     # If DoV update is based on status updates, rewrite the whole DoV as the
     # first step
@@ -627,29 +644,24 @@ class ControllerAdapter(object):
           log.warning("Skip DoV update with domain: %s! Cause: "
                       "Domain installation was unsuccessful!" % domain)
           continue
-      if part.is_bare():
-        log.info("Deploy request is bare! Consider bare deploy status: OK")
+      # If the domain manager does not poll the domain update here
+      # else polling takes care of domain updating
+      if isinstance(domain_mgr,
+                    AbstractRemoteDomainManager) and domain_mgr.polling:
+        log.info("Skip explicit DoV update for domain: %s. "
+                 "Cause: polling enabled!" % domain)
+        log.debug("Consider every deploy into a polled domain OK...")
         deploy_status.set_domain_ok(domain=domain)
+        log.debug("Installation status: %s" % deploy_status)
         continue
-      else:
-        # If the domain manager does not poll the domain update here
-        # else polling takes care of domain updating
-        if isinstance(domain_mgr,
-                      AbstractRemoteDomainManager) and domain_mgr.polling:
-          log.info("Skip explicit DoV update for domain: %s. "
-                   "Cause: polling enabled!" % domain)
-          log.debug("Consider every deploy into a polled domain OK...")
-          deploy_status.set_domain_ok(domain=domain)
-          log.debug("Installation status: %s" % deploy_status)
-          continue
 
-        if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
-           domain_mgr.callback_manager:
-          log.info("Skip explicit DoV update for domain: %s. "
-                   "Cause: callback registered!" % domain)
-          deploy_status.set_domain_waiting(domain=domain)
-          log.debug("Installation status: %s" % deploy_status)
-          continue
+      if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
+         domain_mgr.callback_manager:
+        log.info("Skip explicit DoV update for domain: %s. "
+                 "Cause: callback registered!" % domain)
+        deploy_status.set_domain_waiting(domain=domain)
+        log.debug("Installation status: %s" % deploy_status)
+        continue
 
       if domain_mgr.IS_INTERNAL_MANAGER:
         self.__perform_internal_mgr_update(mapped_nffg=mapped_nffg,
@@ -690,18 +702,45 @@ class ControllerAdapter(object):
       log.info("All installation processes have been finished!")
     return deploy_status
 
-  def check_deploy_request (self, request):
+  def collate_deploy_request (self, request):
+    log.debug("Collate deploy request node IDs...")
     dov = self.DoVManager.dov.get_resource_info()
     for node in request.infras:
       if node.id not in dov.network:
-        log.warning("Deploy request: %s contains a non-existent infra node: %s!"
-                    % (request, node.id))
+        log.warning("Found non-existent infra node: %s in deploy request: %s!"
+                    % (node.id, request))
+        continue
       domain_name = dov[node.id].domain
       if node.domain != domain_name:
-        log.debug("Synchronizing domain id for node: %s --> %s" % (node.id,
-                                                                   domain_name))
+        log.debug("Collating domain id for node: %s --> %s" % (node.id,
+                                                               domain_name))
         node.domain = domain_name
     return request
+
+  def forward_to_vnfm (self, nffg, deploy_status):
+    try:
+      vnfm_config = CONFIG.get_vnfm_config()
+      log.debug("Acquired external component config: %s" % vnfm_config)
+      rest_adapter = UnifyRESTAdapter(url=vnfm_config.get('url'),
+                                      prefix=vnfm_config.get('prefix'),
+                                      domain_name="VNFM")
+      # Skip removing domain name from ids
+      rest_adapter.converter.ensure_unique_id = False
+      if 'timeout' in vnfm_config:
+        log.debug("Set explicit timeout: %s" % vnfm_config['timeout'])
+        rest_adapter.CONNECTION_TIMEOUT = vnfm_config['timeout']
+      log.debug("Convert deploy request to Virtualizer...")
+      virtualizer = rest_adapter.converter.dump_to_Virtualizer(nffg=nffg)
+      status = rest_adapter.edit_config(data=virtualizer,
+                                        diff=vnfm_config.get('diff', False))
+      if status is None:
+        log.error("External VNFM component call was unsuccessful!")
+        return False
+      else:
+        log.debug("Deploy status: %s" % deploy_status)
+        return True
+    except:
+      log.error("Something went wrong during external VNFM component call!")
 
   def __perform_internal_mgr_update (self, mapped_nffg, domain):
     """
