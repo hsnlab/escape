@@ -89,8 +89,8 @@ def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
 
   :param tests_dir: main test dir contains the test cases
   :type tests_dir: str
-  :param show_output: print te test output on the console
-  :type show_output: bool
+  :param show_output: print the test output on the console
+  :type show_output: int
   :param run_only_tests: only run the given test cases
   :type run_only_tests: list[str]
   :param kill_timeout: kill timeout
@@ -122,15 +122,16 @@ def parse_cmd_args ():
                                    prog="run_tests.py")
   parser.add_argument("-f", "--failfast", action="store_true", default=False,
                       help="Stop on first failure")
-  parser.add_argument("-o", "--show-output", action="store_true", default=False,
-                      help="Show ESCAPE output")
+  parser.add_argument("-o", "--show-output", action="count", default=0,
+                      help="Show ESCAPE output (can use multiple "
+                           "times for more verbose logging)")
   parser.add_argument("testcases", nargs="*",
                       help="list test case names you want to run. Example: "
                            "./run_tests.py case05 case03 --show-output")
-  parser.add_argument("-t", "--timeout",  metavar="t", type=int,
+  parser.add_argument("-t", "--timeout", metavar="t", type=int,
                       help="define explicit timeout in sec (default: %ss)" %
                            CommandRunner.KILL_TIMEOUT)
-  parser.add_argument("-s", "--standalone",  action="store_true", default=False,
+  parser.add_argument("-s", "--standalone", action="store_true", default=False,
                       help="run standalone mode: no timeout, no quitting")
   parser.add_argument("-v", "--verbose", action="store_true", default=False,
                       help="Run in verbose mode and show output")

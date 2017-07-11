@@ -185,6 +185,10 @@ class ESCAPECommandRunner(CommandRunner):
   def timeout_exceeded (self):
     return self.timeouted
 
+  def setup_verbose_logging (self):
+    log.debug("Detect VERBOSE mode --> Add more 'debug' flag")
+    self._command.extend(('--debug',) * 2)
+
   def setup_standalone_mode (self):
     log.debug("Detected standalone mode --> Disable timeout")
     self.kill_timeout = None

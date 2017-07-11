@@ -113,6 +113,8 @@ class TestSuitBuilder(object):
                   % cmd_runner.kill_timeout)
       else:
         log.debug("Use globally defined timeout: %s" % cmd_runner.kill_timeout)
+      if self.show_output == 2:
+        cmd_runner.setup_verbose_logging()
       log.debug("Using %s" % cmd_runner)
       if TESTCASE_CLASS:
         return TESTCASE_CLASS(test_case_info=case_info,
