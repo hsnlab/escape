@@ -91,6 +91,7 @@ class WarningChecker(BasicErrorChecker):
   Container class for the unexpected warning detection functions.
   """
   ACCEPTABLE_WARNINGS = [
+    "Mapping is disabled!",
     "Mapping algorithm in Layer: service is disabled!",
     "Mapping algorithm in Layer: orchestration is disabled!",
     "Scheduler didn't quit in time",

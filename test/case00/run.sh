@@ -26,7 +26,7 @@ echo
 ## Test case header - END
 
 # Define run command here
-ESCAPE_CMD="${ESCAPE} --debug -d --test --quit --log ${CWD}/escape.log \
+ESCAPE_CMD="${ESCAPE} --debug --test --quit --log ${CWD}/escape.log \
             --config ${CWD}/test.config --service ${CWD}/request.nffg"
 
 # Invoke ESCAPE with test parameters

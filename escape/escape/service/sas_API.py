@@ -419,6 +419,8 @@ class ServiceLayerAPI(AbstractAPI):
       else:
         log.warning("Mapping is disabled! Skip instantiation step...")
         mapped_nffg = service_nffg
+        mapped_nffg.status = NFFG.MAP_STATUS_SKIPPED
+        log.debug("Mark NFFG status: %s!" % mapped_nffg.status)
       # Rewrite REMAP mode for backward compatibility
       if mapped_nffg is not None and mapping_mode == NFFG.MODE_REMAP:
         mapped_nffg.mode = mapping_mode
