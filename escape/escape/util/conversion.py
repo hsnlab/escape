@@ -1570,9 +1570,6 @@ class NFFGConverter(object):
           if '|' in str(port.id):
             continue
         v_port = virt_lib.Port(id=str(port.id))
-        # Detect Port properties
-        v_port.name.set_value(port.name)
-        v_port.capability.set_value(port.capability)
         # If SAP property is exist: this port connected to a SAP
         if port.sap is not None:
           v_port.sap.set_value(port.sap)
@@ -1582,9 +1579,8 @@ class NFFGConverter(object):
         # during SAP detection the SAP<->Node port-type will be overridden
         v_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_ABSTRACT)
         # Additional values of SAP/NF will be set later
-        # Migrate port metadata
-        for name, value in port.metadata.iteritems():
-          v_port.metadata.add(virt_lib.MetadataMetadata(key=name, value=value))
+        # Migrate port attributes
+        self.__copy_port_attrs(v_port=v_port, port=port)
         # port_type: port-abstract & sap: -    -->  regular port
         # port_type: port-abstract & sap: <SAP...>    -->  was connected to
         # an inter-domain port - set this data in Virtualizer
@@ -1656,37 +1652,37 @@ class NFFGConverter(object):
         self.log.debug("Added intra-BiSBiS resource link [%s --> %s] "
                        "with delay: %s" % (src, dst, delay))
 
-  def __set_vsap_port (self, v_sap_port, sap_port):
+  def __copy_port_attrs (self, v_port, port):
     # Set sap.name if it has not used for storing SAP.id
-    if sap_port.name is not None:
-      v_sap_port.name.set_value(sap_port.name)
+    if port.name is not None:
+      v_port.name.set_value(port.name)
     # Convert other SAP-port-specific data
-    v_sap_port.capability.set_value(sap_port.capability)
-    v_sap_port.sap_data.technology.set_value(sap_port.technology)
-    v_sap_port.sap_data.role.set_value(sap_port.role)
-    v_sap_port.sap_data.resources.delay.set_value(sap_port.delay)
-    v_sap_port.sap_data.resources.bandwidth.set_value(sap_port.bandwidth)
-    v_sap_port.sap_data.resources.cost.set_value(sap_port.cost)
-    v_sap_port.control.controller.set_value(sap_port.controller)
-    v_sap_port.control.orchestrator.set_value(sap_port.orchestrator)
-    v_sap_port.addresses.l2.set_value(sap_port.l2)
-    v_sap_port.addresses.l4.set_value(sap_port.l4)
-    for l3 in sap_port.l3:
-      v_sap_port.addresses.l3.add(
+    v_port.capability.set_value(port.capability)
+    v_port.sap_data.technology.set_value(port.technology)
+    v_port.sap_data.role.set_value(port.role)
+    v_port.sap_data.resources.delay.set_value(port.delay)
+    v_port.sap_data.resources.bandwidth.set_value(port.bandwidth)
+    v_port.sap_data.resources.cost.set_value(port.cost)
+    v_port.control.controller.set_value(port.controller)
+    v_port.control.orchestrator.set_value(port.orchestrator)
+    v_port.addresses.l2.set_value(port.l2)
+    v_port.addresses.l4.set_value(port.l4)
+    for l3 in port.l3:
+      v_port.addresses.l3.add(
         virt_lib.L3_address(id=l3.id,
                             name=l3.name,
                             configure=l3.configure,
                             requested=l3.requested,
                             provided=l3.provided))
     # Migrate metadata
-    for key, value in sap_port.metadata.iteritems():
-      v_sap_port.metadata.add(virt_lib.MetadataMetadata(key=key,
-                                                        value=value))
-    if sap_port.operation is not None:
+    for key, value in port.metadata.iteritems():
+      v_port.metadata.add(virt_lib.MetadataMetadata(key=key,
+                                                    value=value))
+    if port.operation is not None:
       self.log.debug("Convert operation tag: %s for port: %s" % (
-        sap_port.operation, sap_port.id))
-      v_sap_port.set_operation(operation=sap_port.operation,
-                               recursive=False)
+        port.operation, port.id))
+      v_port.set_operation(operation=port.operation,
+                           recursive=False)
 
   def _convert_nffg_saps (self, nffg, virtualizer):
     """
@@ -1734,7 +1730,7 @@ class NFFGConverter(object):
         else:
           # If sap is not inter-domain SAP, use name field to store sap id and
           v_sap_port.name.set_value("%s:%s" % (self.SAP_NAME_PREFIX, sap.id))
-        self.__set_vsap_port(v_sap_port=v_sap_port, sap_port=sap_port)
+        self.__copy_port_attrs(v_port=v_sap_port, port=sap_port)
         self.log.debug(
           "Convert %s to port: %s in infra: %s" % (sap, link.dst.id, n))
 
@@ -2269,7 +2265,6 @@ class NFFGConverter(object):
                                          flowrule=flowrule,
                                          virtualizer=virtualizer)
 
-
   def dump_to_Virtualizer (self, nffg):
     """
     Convert given :class:`NFFG` to Virtualizer format.
@@ -2400,7 +2395,7 @@ class NFFGConverter(object):
       if len(sap.ports) > 1:
         self.log.warning("Multiple SAP port detected!")
       sap_port = sap.ports.container[0]
-      self.__set_vsap_port(v_sap_port=v_sap_port, sap_port=sap_port)
+      self.__copy_port_attrs(v_port=v_sap_port, port=sap_port)
       self.log.debug("Added SAP port: %s" % v_sap_port.id.get_value())
     return base
 
