@@ -10,6 +10,7 @@
             <ports>
                 <port>
                     <id>p1</id>
+                    <name>EE1-p1 port</name>
                     <port_type>port-abstract</port_type>
                 </port>
             </ports>
@@ -122,6 +123,10 @@
                     <id>p3</id>
                     <name>SAP:SAP1</name>
                     <port_type>port-sap</port_type>
+                    <sap_data>
+                        <technology>port technology</technology>
+                        <role>no role</role>
+                    </sap_data>
                 </port>
             </ports>
             <links>
@@ -214,9 +219,12 @@
                 </port>
                 <port>
                     <id>p4</id>
+                    <name>port p4</name>
                     <port_type>port-sap</port_type>
                     <sap>SAP14</sap>
                     <sap_data>
+                        <technology>port technology</technology>
+                        <role>no role</role>
                         <resources>
                             <delay>2.5</delay>
                             <bandwidth>10</bandwidth>
@@ -405,5 +413,5 @@
             </resources>
         </link>
     </links>
-    <version>2016-07-08; compiled at 2016-10-12  13:43:31</version>
+    <version>2016-07-08; compiled at 2016-10-12 13:43:31</version>
 </virtualizer>
