@@ -448,42 +448,7 @@ class NFFGConverter(object):
         # Add port properties as property to Infra port
         infra_port = infra.add_port(id=infra_port_id)
         self.log.debug("Added infra port: %s" % infra_port)
-        if vport.name.is_initialized():
-          # infra_port.add_property("name", vport.name.get_value())
-          infra_port.name = vport.name.get_value()
-        # If sap is set and port_type is port-abstract -> this port
-        # connected to an inter-domain SAP before -> save this metadata
-        if vport.sap.is_initialized():
-          infra_port.add_property("sap", vport.sap.get_value())
-          infra_port.sap = vport.sap.get_value()
-        if vport.capability.is_initialized():
-          infra_port.capability = vport.capability.get_value()
-          self.log.debug("Added capability: %s" % sap_port.capability)
-        if vport.addresses.is_initialized():
-          self.log.debug("Translate addresses...")
-          sap_port.l2 = vport.addresses.l2.get_value()
-          sap_port.l4 = vport.addresses.l4.get_value()
-          for l3 in vport.addresses.l3.itervalues():
-            sap_port.l3.add_l3address(id=l3.id.get_value(),
-                                      name=l3.name.get_value(),
-                                      configure=l3.configure.get_value(),
-                                      client=l3.client.get_value(),
-                                      requested=l3.requested.get_value(),
-                                      provided=l3.provided.get_value())
-        if vport.control.is_initialized() or vport.sap_data.is_initialized():
-          self.log.warning(
-            "Unexpected values: <sap_data> and <control> are not "
-            "converted in case of non-sap infra ports!")
-        # Add metadata from non-sap port to infra port metadata
-        for key in vport.metadata:
-          infra_port.add_metadata(name=key,
-                                  value=vport.metadata[key].value.get_value())
-        # Handle operation tag
-        if vport.get_operation() is not None:
-          self.log.debug("Found operation tag: %s for port: %s" % (
-            vport.get_operation(), vport.id.get_value()))
-          infra_port.operation = vport.get_operation()
-
+        self.__copy_vport_attrs(port=infra_port, vport=vport)
         self.log.debug("Added static %s" % infra_port)
       else:
         self.log.warning("Port type for port: %s is not defined!" % vport)
@@ -1656,6 +1621,7 @@ class NFFGConverter(object):
     # Set sap.name if it has not used for storing SAP.id
     if port.name is not None:
       v_port.name.set_value(port.name)
+      self.log.debug("Added name: %s" %  v_port.name.get_value())
     # Convert other SAP-port-specific data
     v_port.capability.set_value(port.capability)
     v_port.sap_data.technology.set_value(port.technology)
@@ -1683,6 +1649,64 @@ class NFFGConverter(object):
         port.operation, port.id))
       v_port.set_operation(operation=port.operation,
                            recursive=False)
+
+  def __copy_vport_attrs (self, port, vport):
+    if vport.name.is_initialized():
+      # infra_port.add_property("name", vport.name.get_value())
+      port.name = vport.name.get_value()
+    self.log.debug("Added name: %s" % port.name)
+    # If sap is set and port_type is port-abstract -> this port
+    # connected to an inter-domain SAP before -> save this metadata
+    if vport.sap.is_initialized():
+      port.add_property("sap", vport.sap.get_value())
+      port.sap = vport.sap.get_value()
+    if vport.capability.is_initialized():
+      port.capability = vport.capability.get_value()
+      self.log.debug("Added capability: %s" % port.capability)
+    if vport.sap_data.is_initialized():
+      if vport.sap_data.technology.is_initialized():
+        port.technology = vport.sap_data.technology.get_value()
+        self.log.debug("Added technology: %s" % port.technology)
+      if vport.sap_data.role.is_initialized():
+        port.role = vport.sap_data.technology.get_value()
+        self.log.debug("Added role: %s" % port.role)
+      if vport.sap_data.resources.is_initialized():
+        if vport.sap_data.resources.delay.is_initialized():
+          port.delay = vport.sap_data.resources.delay.get_value()
+          self.log.debug("Added delay: %s" % port.delay)
+        if vport.sap_data.resources.bandwidth.is_initialized():
+          port.bandwidth = vport.sap_data.resources.bandwidth.get_value()
+          self.log.debug("Added bandwidth: %s" % port.bandwidth)
+        if vport.sap_data.resources.cost.is_initialized():
+          port.cost = vport.sap_data.resources.cost.get_value()
+          self.log.debug("Added cost: %s" % port.cost)
+    if vport.control.is_initialized():
+      if vport.control.controller.is_initialized():
+        port.controller = vport.conntrol.controller.get_value()
+        self.log.debug("Added controller: %s" % port.controller)
+      if vport.control.orchestrator.is_initialized():
+        port.orchestrator = vport.conntrol.orchestrator.get_value()
+        self.log.debug("Added orchestrator: %s" % port.orchestrator)
+    if vport.addresses.is_initialized():
+      self.log.debug("Translate addresses...")
+      vport.l2 = vport.addresses.l2.get_value()
+      vport.l4 = vport.addresses.l4.get_value()
+      for l3 in vport.addresses.l3.itervalues():
+        vport.l3.add_l3address(id=l3.id.get_value(),
+                                  name=l3.name.get_value(),
+                                  configure=l3.configure.get_value(),
+                                  client=l3.client.get_value(),
+                                  requested=l3.requested.get_value(),
+                                  provided=l3.provided.get_value())
+    # Add metadata from non-sap port to infra port metadata
+    for key in vport.metadata:
+      port.add_metadata(name=key, value=vport.metadata[key].value.get_value())
+    # Handle operation tag
+    if vport.get_operation() is not None:
+      self.log.debug("Found operation tag: %s for port: %s" % (
+        vport.get_operation(), vport.id.get_value()))
+      port.operation = vport.get_operation()
+    pass
 
   def _convert_nffg_saps (self, nffg, virtualizer):
     """

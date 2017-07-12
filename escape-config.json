@@ -90,7 +90,7 @@
       "unify_interface": true
     },
     "VNFM" : {
-      "enabled": true,
+      "enabled": false,
       "url": "http://127.0.0.1:9999",
       "prefix": "escape",
       "timeout": 2,
