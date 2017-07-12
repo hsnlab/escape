@@ -125,13 +125,17 @@ def main ():
                       help="run an interactive shell for observing internal "
                            "states")
   escape.add_argument("-l", "--log", metavar="file", type=str,
-                      help="define log file path explicitly"
+                      help="define log file path explicitly "
                            "(default: log/escape.log)")
   escape.add_argument("-m", "--mininet", metavar="file", type=str,
                       help="read the Mininet topology from the given file")
   escape.add_argument("-n", "--nosignal", action="store_true", default=False,
-                      help="run ESCAPE in a sub-shell that prevents propagation"
-                           "of received SIGNALs")
+                      help="run ESCAPE in a sub-shell that prevents "
+                           "propagation of received SIGNALs")
+  escape.add_argument("-o", "--openflow", action="store", type=int, nargs="?",
+                      const=6633, metavar="port",
+                      help="initiate internal OpenFlow module with given "
+                           "listening port (default: 6633)")
   escape.add_argument("-q", "--quit", action="store_true", default=False,
                       help="quit right after the first service request has "
                            "processed")
@@ -237,6 +241,10 @@ def main ():
   if args.interactive:
     cmd.append("py")
     cmd.append("--completion")
+
+  print args
+  if args.openflow:
+    cmd.extend(("openflow.of_01", "--port=%s" % args.openflow))
 
   # Add optional POX modules
   cmd.extend(args.modules)
