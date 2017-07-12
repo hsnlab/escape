@@ -288,6 +288,12 @@ class ServiceLayerAPI(AbstractAPI):
       self._initiate_gui()
     log.info("Service Layer has been initialized!")
 
+  def post_up_hook (self, event):
+    if not self._sg_file:
+      self.rest_api.ping_response_code = self.rest_api.POST_UP_PING_CODE
+      log.debug("Setup 'ping' response code: %s for REST-API: %s"
+                % (self.rest_api.ping_response_code, self.rest_api.api_id))
+
   def shutdown (self, event):
     """
     .. seealso::

@@ -139,6 +139,8 @@ class AbstractAPI(EventMixin):
       # Subscribe for GoingDownEvent to finalize API classes
       # shutdown() function will be called if POX's core going down
       core.addListenerByName('GoingDownEvent', self.shutdown)
+      # Subscribe for UpEvent to call functions after everithing is up
+      core.addListenerByName('UpEvent', self.post_up_hook)
       # Subscribe core event for advanced functions
       # Listeners' name must follow POX naming conventions
       core.addListeners(self)
@@ -174,6 +176,19 @@ class AbstractAPI(EventMixin):
   def shutdown (self, event):
     """
     Finalization, deallocation, etc. of actual component.
+
+    Should be overwritten by child classes.
+
+    :param event: shutdown event raised by POX core
+    :type event: GoingDownEvent
+    :return: None
+    """
+    pass
+
+  def post_up_hook (self, event):
+    """
+    Post hook function for component need to execute commands after
+    everything is up and running.
 
     Should be overwritten by child classes.
 
@@ -357,6 +372,9 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
   """
   CALLBACK_TIMEOUT = 1.0
 
+  PRE_UP_PING_CODE = httplib.ACCEPTED
+  POST_UP_PING_CODE = httplib.OK
+
   def __init__ (self, RequestHandlerClass, address='127.0.0.1', port=8008):
     """
       Set up an :class:`BaseHTTPServer.HTTPServer` in a different
@@ -382,6 +400,7 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
     self.last_response = None
     self.topology_revision = None
     self.scheduler = RequestScheduler()
+    self.ping_response_code = self.PRE_UP_PING_CODE
 
   def start (self):
     """
@@ -913,13 +932,18 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
     :return: None
     """
-    response_body = "OK"
-    self.send_response(httplib.OK)
+    if self.server.ping_response_code == self.server.POST_UP_PING_CODE:
+      response_body = "OK"
+    else:
+      response_body = "INITIALIZING"
+    self.send_response(code=self.server.ping_response_code)
     self.send_header('Content-Type', 'text/plain')
     self.send_header('Content-Length', len(response_body))
     self.send_REST_headers()
     self.end_headers()
     self.wfile.write(response_body)
+    self.log.debug("Sent response: %s, %s" % (self.server.ping_response_code,
+                                              response_body))
 
   def version (self, params):
     """
@@ -928,8 +952,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     :return: None
     """
     self.log.debug("Call REST-API function: version")
-    self.send_json_response({"name": __project__,
-                             "version": get_escape_version()})
+    body = {"name": __project__,
+            "version": get_escape_version()}
+    self.send_json_response(body)
+    self.log.debug("Sent response: %s" % body)
 
   def operations (self, params):
     """

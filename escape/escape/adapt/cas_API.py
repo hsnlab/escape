@@ -118,6 +118,12 @@ class ControllerAdaptationAPI(AbstractAPI):
       self._initialize_dov_api()
     log.info("Controller Adaptation Sublayer has been initialized!")
 
+  def post_up_hook (self, event):
+    if self._dovapi:
+      self.dov_api.ping_response_code = self.dov_api.POST_UP_PING_CODE
+      log.debug("Setup 'ping' response code: %s for REST-API: %s"
+                % (self.dov_api.ping_response_code, self.dov_api.api_id))
+
   def shutdown (self, event):
     """
     .. seealso::

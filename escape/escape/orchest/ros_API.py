@@ -175,6 +175,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if self._agent:
       log.warning("In AGENT mode Service Layer is not going to be initialized!")
 
+  def post_up_hook (self, event):
+    if self._rosapi:
+      self.ros_api.ping_response_code = self.ros_api.POST_UP_PING_CODE
+      log.debug("Setup 'ping' response code: %s for REST-API: %s"
+                % (self.ros_api.ping_response_code, self.ros_api.api_id))
+
   def shutdown (self, event):
     """
     .. seealso::
@@ -636,7 +642,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
                                     original_request=nffg)
     else:
       log.error("Something went wrong in trial_and_error instantiation: "
-                  "mapped service request is missing!")
+                "mapped service request is missing!")
       self.__process_mapping_result(nffg_id=nffg.id, fail=True)
       self.raiseEventNoErrors(InstantiationFinishedEvent,
                               id=nffg.id,
