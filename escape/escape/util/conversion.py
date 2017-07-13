@@ -18,14 +18,12 @@ Contains helper classes for conversion between different NF-FG representations.
 import json
 import logging
 import re
-import string
 import sys
-
-from escape.nffg_lib.nffg_elements import Constraints
 
 try:
   # Import for ESCAPEv2
-  from escape.nffg_lib.nffg import AbstractNFFG, NFFG, NodeSAP
+  from escape.nffg_lib.nffg import AbstractNFFG, NFFG, NodeSAP, NFFGToolBox
+  from escape.nffg_lib.nffg_elements import Constraints
   from escape.util.misc import VERBOSE, unicode_to_str, remove_units
 except (ImportError, AttributeError):
   import os
@@ -34,7 +32,8 @@ except (ImportError, AttributeError):
             "../util/"):
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), p)))
   # Import for standalone running
-  from nffg import AbstractNFFG, NFFG
+  from nffg import AbstractNFFG, NFFG, NFFGToolBox
+  from nffg_elements import Constraints
   from misc import VERBOSE, unicode_to_str, remove_units
 
 try:
@@ -1345,6 +1344,71 @@ class NFFGConverter(object):
       nffg.add_metadata(name=key,
                         value=virtualizer.metadata[key].value.get_value())
 
+  def __process_variables (self, infra, vars):
+    frs = []
+    type = set()
+    for var in vars:
+      var = var.strip()
+      for fr in infra.flowrules():
+        if fr.delay == var:
+          frs.append(fr)
+          type.add("delay")
+        if fr.bandwidth == var:
+          frs.append(fr)
+          type.add("bandwidth")
+    if len(type) != 1:
+      self.log.warning("Variables: %s refer to multiple type of fields: %s"
+                       % (vars, type))
+      return None, None
+    type = type.pop()
+    return frs, type
+
+  def _parse_virtualizer_requirement (self, nffg, virtualizer):
+    self.log.debug("Process requirement formulas...")
+    reqs = {}
+    for infra in nffg.infras:
+      deletable_ids = []
+      for i, (id, formula) in enumerate(
+         infra.constraints.constraint.iteritems()):
+        self.log.debug("Detected formula: %s" % formula)
+        try:
+          splitted = formula.split('|')
+          vars = splitted[0].strip().split('+')
+          value = float(splitted[-1])
+        except:
+          self.log.warning("Wrong formula format: %s" % formula)
+          continue
+        frs, type = self.__process_variables(infra=infra, vars=vars)
+        if not (frs or type):
+          continue
+        # Recreate sg_path
+        sg_path = [fr.id for fr in frs]
+        self.log.debug("Recreated sg_hop list: %s" % sg_path)
+        try:
+          sport = NFFGToolBox.get_inport_of_flowrule(infra, frs[0].id)
+          dport = NFFGToolBox.get_output_port_of_flowrule(infra, frs[-1])
+        except RuntimeError as e:
+          self.log.error("Referred port is missing from infra node: %s" % e)
+          continue
+        if (sport, dport) not in reqs:
+          req_link = nffg.add_req(src_port=sport,
+                                  dst_port=dport,
+                                  id="req%s" % i,
+                                  sg_path=sg_path)
+          self.log.debug("Created requirement link: %s" % req_link)
+          reqs[(sport, dport)] = req_link
+        else:
+          req_link = reqs[(sport, dport)]
+        setattr(req_link, type, value)
+        self.log.debug("Set requirement value: %s --> %s" % (type, value))
+        # Remove variables from flowrules
+        for fr in frs:
+          setattr(fr, type, None)
+        # Mark formula for deletion
+        deletable_ids.append(id)
+      for formula_id in deletable_ids:
+        infra.constraints.del_constraint(id=formula_id)
+
   def _parse_sghops_from_flowrules (self, nffg):
     """
     Recreate the SG hop links based on the flowrules.
@@ -1466,8 +1530,10 @@ class NFFGConverter(object):
     self._parse_virtualizer_nodes(nffg=nffg, virtualizer=virtualizer)
     # Parse Infrastructure links from Virtualizer
     self._parse_virtualizer_links(nffg=nffg, virtualizer=virtualizer)
-    # Parse Metadata and Requirement links from Virtualizer
+    # Parse Metadata and from Virtualizer
     self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
+    # Parse requirement links from Virtualizer
+    self._parse_virtualizer_requirement(nffg=nffg, virtualizer=virtualizer)
     # If the received NFFG is a SingleBiSBiS, recreate the SG hop links
     # which are in compliance with flowrules in SBB node
     if create_sg_hops:
@@ -1563,36 +1629,6 @@ class NFFGConverter(object):
       # Add infra to virtualizer
       virtualizer.nodes.add(v_node)
 
-      # Define full-mesh intra-links for nodes to set bandwidth and delay
-      # values
-      # Detect the number of ports
-      # port_num = len(v_node.ports.port._data)
-      # if port_num > 1:
-      #   # There are valid port-pairs
-      #   for i, port_pair in enumerate(itertools.permutations(
-      #      (p.id.get_value() for p in v_node.ports), 2)):
-      #     link_id = "link-%s-%s" % (v_node.ports[port_pair[0]].id.get_value(),
-      #                               v_node.ports[port_pair[1]].id.get_value())
-      #     # Create link
-      #     v_link = virt_lib.Link(id=link_id,
-      #                            src=v_node.ports[port_pair[0]],
-      #                            dst=v_node.ports[port_pair[1]])
-      #     delay = infra.delay_matrix.get_delay(src=port_pair[0],
-      #                                          dst=port_pair[1])
-      #     if delay is not None:
-      #       v_link.resources.delay.set_value(delay)
-      #     v_node.links.add(v_link)
-      # elif port_num == 1:
-      #   # Only one port in infra - create loop-edge
-      #   v_link_src = v_link_dst = iter(v_node.ports).next()
-      #   v_link = virt_lib.Link(id="resource-link",
-      #                          src=v_link_src,
-      #                          dst=v_link_dst,
-      #                          resources=virt_lib.Link_resource(
-      #                            delay=infra.resources.delay,
-      #                            bandwidth=infra.resources.bandwidth))
-      #   v_node.links.add(v_link)
-
       # Add intra-node link based on delay_matrix
       for src, dst, delay in infra.delay_matrix:
         if src in v_node.ports.port.keys():
@@ -1621,7 +1657,7 @@ class NFFGConverter(object):
     # Set sap.name if it has not used for storing SAP.id
     if port.name is not None:
       v_port.name.set_value(port.name)
-      self.log.debug("Added name: %s" %  v_port.name.get_value())
+      self.log.debug("Added name: %s" % v_port.name.get_value())
     # Convert other SAP-port-specific data
     v_port.capability.set_value(port.capability)
     v_port.sap_data.technology.set_value(port.technology)
@@ -1693,11 +1729,11 @@ class NFFGConverter(object):
       vport.l4 = vport.addresses.l4.get_value()
       for l3 in vport.addresses.l3.itervalues():
         vport.l3.add_l3address(id=l3.id.get_value(),
-                                  name=l3.name.get_value(),
-                                  configure=l3.configure.get_value(),
-                                  client=l3.client.get_value(),
-                                  requested=l3.requested.get_value(),
-                                  provided=l3.provided.get_value())
+                               name=l3.name.get_value(),
+                               configure=l3.configure.get_value(),
+                               client=l3.client.get_value(),
+                               requested=l3.requested.get_value(),
+                               provided=l3.provided.get_value())
     # Add metadata from non-sap port to infra port metadata
     for key in vport.metadata:
       port.add_metadata(name=key, value=vport.metadata[key].value.get_value())
@@ -1827,19 +1863,62 @@ class NFFGConverter(object):
         infra_id = self.recreate_original_id(id=infra_id)
       self.log.debug("Detected infra node: %s for requirement link: %s" %
                      (infra_id, req))
-      meta_value = json.dumps({"bandwidth": {"value": "%.3f" % req.bandwidth,
-                                             "path": req.sg_path},
-                               "delay": {"value": "%.3f" % req.delay,
-                                         "path": req.sg_path}
-                               # Replace " with ' to avoid ugly HTTP escaping
-                               #  and remove whitespaces
-                               })
-      meta_value = meta_value.translate(string.maketrans('"', "'"),
-                                        string.whitespace)
-      self.log.debug("Generated metadata value: %s" % meta_value)
-      virtualizer.nodes[infra_id].metadata.add(
-        item=virt_lib.MetadataMetadata(key="constraint:%s" % req.id,
-                                       value=meta_value))
+      # Assembly delay req
+      if req.delay is not None:
+        self.log.debug("Creating formula for delay requirement...")
+        formula = []
+        for hop in req.sg_path:
+          try:
+            v_fe = virtualizer.nodes[infra_id].flowtable[str(hop)]
+          except:
+            self.log.warning("Flowrule: %s was not found in Virtualizer!" % hop)
+            continue
+          try:
+            var_delay = v_fe.resources.delay.get_value()
+          except:
+            var_delay = None
+          if not (var_delay and str(var_delay).startswith('$')):
+            dvar = "$d" + str(v_fe.id.get_value())
+            self.log.warning("Delay value: %s is not a variable! "
+                             "Replacing with: %s" % (var_delay, dvar))
+            v_fe.resources.delay.set_value(dvar)
+            formula.append("$d" + str(v_fe.id.get_value()))
+          else:
+            formula.append(var_delay)
+            log.debug("Registered delay variable: %s" % var_delay)
+        formula = '+'.join(formula) + "|max|%s" % req.delay
+        self.log.debug("Generated delay formula: %s" % formula)
+        virtualizer.nodes[infra_id].constraints.constraint.add(
+          virt_lib.ConstraintsConstraint(id="delay-" + str(req.id),
+                                         formula=formula))
+      # Assemble bandwidth req
+      if req.bandwidth is not None:
+        self.log.debug("Creating formula for bandwidth requirement...")
+        formula = []
+        for hop in req.sg_path:
+          try:
+            v_fe = virtualizer.nodes[infra_id].flowtable[str(hop)]
+          except:
+            self.log.warning("Flowrule: %s was not found in Virtualizer!" % hop)
+            continue
+          try:
+            var_bw = v_fe.resources.bandwidth.get_value()
+          except:
+            var_bw = None
+          if not (var_bw and str(var_bw).startswith('$')):
+            bwvar = "$bw" + str(v_fe.id.get_value())
+            self.log.warning("Bandwidth value: %s is not a variable! "
+                             "Replacing with: %s" % (var_bw, bwvar))
+            v_fe.resources.bandwidth.set_value(bwvar)
+            formula.append("$bw" + str(v_fe.id.get_value()))
+          else:
+            formula.append(var_bw)
+            self.log.debug("Registered bandwidth variable: %s" % var_bw)
+        formula = '+'.join(formula) + "||%s" % req.bandwidth
+        self.log.debug("Generated bandwidth formula: %s" % formula)
+        virtualizer.nodes[infra_id].constraints.constraint.add(
+          virt_lib.ConstraintsConstraint(id="bandwidth-" + str(req.id),
+                                         formula=formula))
 
   def __assemble_virt_nf (self, nf):
     # Create Node object for NF
