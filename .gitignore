@@ -27,5 +27,6 @@ log/*
 /test/case*/out-*
 /test/case*/gen-*
 /test/results.xml
+/test/tester/*
 unify_virtualizer/yang
 gui/

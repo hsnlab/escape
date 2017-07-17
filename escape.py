@@ -242,7 +242,6 @@ def main ():
     cmd.append("py")
     cmd.append("--completion")
 
-  print args
   if args.openflow:
     cmd.extend(("openflow.of_01", "--port=%s" % args.openflow))
 

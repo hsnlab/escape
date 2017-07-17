@@ -1,0 +1,356 @@
+{
+  "parameters": {
+    "id": "d34feed8-689b-11e7-9b7b-d05099c14011",
+    "name": "Single-BiSBiS-View",
+    "service_id": "SingleBiSBiS",
+    "version": "1.0",
+    "mode": "ADD"
+  },
+  "node_nfs": [
+    {
+      "id": "PID__2770",
+      "name": "PID",
+      "ports": [
+        {
+          "id": 0,
+          "sap": "PIDSAP",
+          "sap_data": {
+            "role": "provider"
+          }
+        }
+      ],
+      "functional_type": "balance_server:latest",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "SAPblue",
+      "name": "SAPblue",
+      "ports": [
+        {
+          "id": "SAPblue",
+          "name": "SAPblue",
+          "sap_data": {
+            "technology": "{'iface': 5}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAPssh",
+      "name": "SAPssh",
+      "ports": [
+        {
+          "id": "SAPssh",
+          "name": "SAPssh",
+          "sap_data": {
+            "technology": "{'iface': 4}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAP14",
+      "name": "SAP14",
+      "ports": [
+        {
+          "id": "SAP14",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAP14"
+          },
+          "name": "SAP14",
+          "sap": "SAP14",
+          "sap_data": {
+            "technology": "{'iface': 1}",
+            "resources": {
+              "delay": 10.0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAP24",
+      "name": "SAP24",
+      "ports": [
+        {
+          "id": "SAP24",
+          "property": {
+            "type": "inter-domain",
+            "sap": "SAP24"
+          },
+          "name": "SAP24",
+          "sap": "SAP24",
+          "sap_data": {
+            "technology": "{'iface': 3}",
+            "resources": {
+              "delay": 20.0
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "SingleBiSBiS",
+      "name": "SingleBiSBiS",
+      "ports": [
+        {
+          "id": "SAP14",
+          "property": {
+            "sap": "SAP14"
+          },
+          "name": "SAP14",
+          "sap": "SAP14",
+          "sap_data": {
+            "technology": "{'iface': 1}",
+            "resources": {
+              "delay": 10.0
+            }
+          }
+        },
+        {
+          "id": "SAP24",
+          "property": {
+            "sap": "SAP24"
+          },
+          "name": "SAP24",
+          "sap": "SAP24",
+          "sap_data": {
+            "technology": "{'iface': 3}",
+            "resources": {
+              "delay": 20.0
+            }
+          }
+        },
+        {
+          "id": "SAPblue",
+          "name": "SAPblue",
+          "sap_data": {
+            "technology": "{'iface': 5}"
+          },
+          "flowrules": [
+            {
+              "id": 4012,
+              "match": "in_port=SAPblue;flowclass=dl_type=0x0800,nw_dst=192.168.1.156",
+              "action": "output=SingleBiSBiS|PID__2770|0"
+            },
+            {
+              "id": 4013,
+              "match": "in_port=SAPblue;flowclass=dl_type=0x0800,nw_dst=192.168.1.157",
+              "action": "output=SAPblue;UNTAG"
+            },
+            {
+              "id": 4014,
+              "match": "in_port=SAPblue;flowclass=dl_type=0x0800,nw_dst=192.168.1.158",
+              "action": "output=SAPblue;UNTAG"
+            }
+          ]
+        },
+        {
+          "id": "SAPssh",
+          "name": "SAPssh",
+          "sap_data": {
+            "technology": "{'iface': 4}"
+          }
+        },
+        {
+          "id": "SingleBiSBiS|PID__2770|0",
+          "flowrules": [
+            {
+              "id": 4009,
+              "match": "in_port=SingleBiSBiS|PID__2770|0;flowclass=dl_type=0x0800,nw_dst=192.168.1.156",
+              "action": "output=SingleBiSBiS|PID__2770|0"
+            },
+            {
+              "id": 4010,
+              "match": "in_port=SingleBiSBiS|PID__2770|0;flowclass=dl_type=0x0800,nw_dst=192.168.1.157",
+              "action": "output=SAPblue;UNTAG"
+            },
+            {
+              "id": 4011,
+              "match": "in_port=SingleBiSBiS|PID__2770|0;flowclass=dl_type=0x0800,nw_dst=192.168.1.158",
+              "action": "output=SAPblue;UNTAG"
+            }
+          ]
+        }
+      ],
+      "domain": "REMOTE",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "fe2sap",
+        "router",
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 9.0,
+        "mem": 50721069056.0,
+        "storage": 25010148352.0,
+        "delay": 0.0
+      },
+      "delay_matrix": {
+        "SAP14": {
+          "SAP24": 30.0,
+          "SAPblue": 10.0,
+          "SAPssh": 10.0
+        },
+        "SAP24": {
+          "SAP14": 30.0,
+          "SAPblue": 20.0,
+          "SAPssh": 20.0
+        },
+        "SAPblue": {
+          "SAP14": 10.0,
+          "SAP24": 20.0,
+          "SAPssh": 0.0
+        },
+        "SAPssh": {
+          "SAP14": 10.0,
+          "SAP24": 20.0,
+          "SAPblue": 0.0
+        }
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "d34feed9-689b-11e7-9b7b-d05099c14011",
+      "src_node": "PID__2770",
+      "src_port": 0,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|PID__2770|0"
+    },
+    {
+      "id": "SAPssh-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPssh",
+      "dst_node": "SAPssh",
+      "dst_port": "SAPssh",
+      "backward": true
+    },
+    {
+      "id": "d34feeda-689b-11e7-9b7b-d05099c14011",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|PID__2770|0",
+      "dst_node": "PID__2770",
+      "dst_port": 0,
+      "backward": true
+    },
+    {
+      "id": "SAP14-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAP14",
+      "dst_node": "SAP14",
+      "dst_port": "SAP14",
+      "delay": 10.0,
+      "backward": true
+    },
+    {
+      "id": "SAPblue-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPblue",
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "backward": true
+    },
+    {
+      "id": "SAP24-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAP24",
+      "dst_node": "SAP24",
+      "dst_port": "SAP24",
+      "delay": 20.0,
+      "backward": true
+    },
+    {
+      "id": "SAPblue-SingleBiSBiS-link",
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPblue"
+    },
+    {
+      "id": "SAPssh-SingleBiSBiS-link",
+      "src_node": "SAPssh",
+      "src_port": "SAPssh",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPssh"
+    },
+    {
+      "id": "SAP14-SingleBiSBiS-link",
+      "src_node": "SAP14",
+      "src_port": "SAP14",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAP14",
+      "delay": 10.0
+    },
+    {
+      "id": "SAP24-SingleBiSBiS-link",
+      "src_node": "SAP24",
+      "src_port": "SAP24",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAP24",
+      "delay": 20.0
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": 4009,
+      "src_node": "PID__2770",
+      "src_port": 0,
+      "dst_node": "PID__2770",
+      "dst_port": 0,
+      "flowclass": "dl_type=0x0800,nw_dst=192.168.1.156"
+    },
+    {
+      "id": 4010,
+      "src_node": "PID__2770",
+      "src_port": 0,
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "flowclass": "dl_type=0x0800,nw_dst=192.168.1.157"
+    },
+    {
+      "id": 4011,
+      "src_node": "PID__2770",
+      "src_port": 0,
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "flowclass": "dl_type=0x0800,nw_dst=192.168.1.158"
+    },
+    {
+      "id": 4012,
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "PID__2770",
+      "dst_port": 0,
+      "flowclass": "dl_type=0x0800,nw_dst=192.168.1.156"
+    },
+    {
+      "id": 4013,
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "flowclass": "dl_type=0x0800,nw_dst=192.168.1.157"
+    },
+    {
+      "id": 4014,
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "flowclass": "dl_type=0x0800,nw_dst=192.168.1.158"
+    }
+  ]
+}
