@@ -1879,7 +1879,7 @@ class NFFGConverter(object):
             var_delay = None
           if not (var_delay and str(var_delay).startswith('$')):
             dvar = "$d" + str(v_fe.id.get_value())
-            self.log.warning("Delay value: %s is not a variable! "
+            self.log.debug("Delay value: %s is not a variable! "
                              "Replacing with: %s" % (var_delay, dvar))
             v_fe.resources.delay.set_value(dvar)
             formula.append("$d" + str(v_fe.id.get_value()))
@@ -1907,7 +1907,7 @@ class NFFGConverter(object):
             var_bw = None
           if not (var_bw and str(var_bw).startswith('$')):
             bwvar = "$bw" + str(v_fe.id.get_value())
-            self.log.warning("Bandwidth value: %s is not a variable! "
+            self.log.debug("Bandwidth value: %s is not a variable! "
                              "Replacing with: %s" % (var_bw, bwvar))
             v_fe.resources.bandwidth.set_value(bwvar)
             formula.append("$bw" + str(v_fe.id.get_value()))

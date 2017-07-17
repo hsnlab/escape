@@ -507,12 +507,12 @@ class DomainMockingSuccessfulTestCase(BasicSuccessfulTestCase):
     self.domain_mocker.shutdown()
 
 
-class DomainMockingTrailAndErrorTestCase(TrialAndErrorTestCase):
+class DomainMockingTrialAndErrorTestCase(TrialAndErrorTestCase):
   """
   """
 
   def __init__ (self, responses=None, **kwargs):
-    super(DomainMockingTrailAndErrorTestCase, self).__init__(**kwargs)
+    super(DomainMockingTrialAndErrorTestCase, self).__init__(**kwargs)
     self.domain_mocker = DomainOrchestratorAPIMocker(**kwargs)
     dir = self.test_case_info.full_testcase_path
     if responses:
@@ -521,11 +521,11 @@ class DomainMockingTrailAndErrorTestCase(TrialAndErrorTestCase):
       self.domain_mocker.register_responses_from_dir(dirname=dir)
 
   def setUp (self):
-    super(DomainMockingTrailAndErrorTestCase, self).setUp()
+    super(DomainMockingTrialAndErrorTestCase, self).setUp()
     self.domain_mocker.start()
 
   def tearDown (self):
-    super(DomainMockingTrailAndErrorTestCase, self).tearDown()
+    super(DomainMockingTrialAndErrorTestCase, self).tearDown()
     self.domain_mocker.shutdown()
 
 

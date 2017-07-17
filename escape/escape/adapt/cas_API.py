@@ -119,6 +119,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.info("Controller Adaptation Sublayer has been initialized!")
 
   def post_up_hook (self, event):
+    log.debug("Call post Up event hook for layer: %s" % self._core_name)
     if self._dovapi:
       self.dov_api.ping_response_code = self.dov_api.POST_UP_PING_CODE
       log.debug("Setup 'ping' response code: %s for REST-API: %s"
@@ -201,7 +202,8 @@ class ControllerAdaptationAPI(AbstractAPI):
                                       info=LAYER_NAME)
     try:
       deploy_status = self.controller_adapter.install_nffg(
-        mapped_nffg=mapped_nffg, original_request=original_request,
+        mapped_nffg=mapped_nffg,
+        original_request=original_request,
         direct_deploy=direct_deploy)
     except Exception:
       log.error("Something went wrong during NFFG installation!")
@@ -221,6 +223,9 @@ class ControllerAdaptationAPI(AbstractAPI):
       log.info("Overall installation result: %s" % result)
       self.raiseEventNoErrors(InstallationFinishedEvent,
                               id=mapped_nffg.id, result=result)
+    elif deploy_status.standby:
+      if self._dovapi:
+        self.dov_api.scheduler.set_orchestration_standby()
 
   @schedule_as_coop_task
   def _handle_CollectMonitoringDataEvent (self, event):
@@ -307,6 +312,18 @@ class ControllerAdaptationAPI(AbstractAPI):
   def api_cas_edit_config (self, nffg, params):
     log.getChild('[DOV-API]').info("Invoke instantiation on %s with NF-FG: "
                                    "%s " % (self.__class__.__name__, nffg.name))
+    deploy_status = self.controller_adapter.status_mgr.get_last_status()
+    if deploy_status is None:
+      log.warning("Received direct DoV rewrite request from external component "
+                  "without any preliminary deploy request!")
+    else:
+      if deploy_status.id != nffg.id:
+        log.error("Received direct deploy request id: %s is different from "
+                  "service request under deploy: %s" % (nffg.id,
+                                                        deploy_status.id))
+        return
+      else:
+        self.controller_adapter.cancel_vnfm_timer()
     self.__proceed_installation(mapped_nffg=nffg, direct_deploy=True)
 
 

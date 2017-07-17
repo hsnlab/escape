@@ -134,7 +134,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
         log.debug("Setup mapping mode based on request: %s" %
                   mapper_params['mode'])
       if CONFIG.get_trial_and_error(layer=cls.LAYER_NAME):
-        log.info("Use 'trail and error' approach for mapping")
+        log.info("Use 'trial and error' approach for mapping")
         mapper_params['return_mapping_state'] = True
         mapper_params['mapping_state'] = pre_state
       mapping_result = cls.call_mapping_algorithm(request=graph.copy(),
@@ -347,9 +347,10 @@ class ResourceOrchestrationMapper(AbstractMapper):
         log.info("NF-FG: %s orchestration is finished by %s successfully!" % (
           input_graph, self.__class__.__name__))
       log.debug("Last mapping state: %s" % self.last_mapping_state)
-      log.info("Mapping iteration: %s" %
-        self.last_mapping_state.get_number_of_trials() if
-        self.last_mapping_state else None)
+      if self.last_mapping_state:
+        log.debug("Mapping iteration: %s" %
+                  self.last_mapping_state.get_number_of_trials() if
+                  self.last_mapping_state else None)
       return mapped_nffg
 
   def _mapping_finished (self, mapped_nffg):

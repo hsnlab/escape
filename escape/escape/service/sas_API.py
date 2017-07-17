@@ -289,6 +289,7 @@ class ServiceLayerAPI(AbstractAPI):
     log.info("Service Layer has been initialized!")
 
   def post_up_hook (self, event):
+    log.debug("Call post Up event hook for layer: %s" % self._core_name)
     if not self._sg_file:
       self.rest_api.ping_response_code = self.rest_api.POST_UP_PING_CODE
       log.debug("Setup 'ping' response code: %s for REST-API: %s"

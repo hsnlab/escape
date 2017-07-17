@@ -176,6 +176,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.warning("In AGENT mode Service Layer is not going to be initialized!")
 
   def post_up_hook (self, event):
+    log.debug("Call post Up event hook for layer: %s" % self._core_name)
     if self._rosapi:
       self.ros_api.ping_response_code = self.ros_api.POST_UP_PING_CODE
       log.debug("Setup 'ping' response code: %s for REST-API: %s"

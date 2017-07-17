@@ -992,6 +992,7 @@ class RequestScheduler(threading.Thread):
     self.__hooks = {}
     self.__condition = threading.Condition()
     self.__progress = None
+    self.__standby = False
     self.log = core.getLogger("SCHEDULER")
     self.start()
     self.log.info('Init %s' % self)
@@ -1017,14 +1018,28 @@ class RequestScheduler(threading.Thread):
   def schedule_request (self, id, layer, function, **kwargs):
     # Reset request id if it was overwritten with different message-id
     stats.set_request_id(request_id=id)
-    self.__queue.put(APIRequest(id=id,
-                                layer=layer,
-                                function=function,
-                                kwargs=kwargs))
-    self.log.info("Schedule request: %s on %s --> %s..." % (id,
-                                                            layer,
-                                                            function))
+    request = APIRequest(id=id,
+                         layer=layer,
+                         function=function,
+                         kwargs=kwargs)
+    if not self.__standby:
+      self.__queue.put(request)
+      self.log.info("Schedule request: %s on %s --> %s..." % (id,
+                                                              layer,
+                                                              function))
+    else:
+      if id == self.__progress:
+        self.log.info("Continue service request in standby mode: %s..." % id)
+        self._proceed_API_call(request)
+      else:
+        self.log.error("Received request: %s is different from request in "
+                       "standby: %s" % (id, self.__progress))
     self.log.debug("Remained requests: %s" % self.__queue.qsize())
+
+  def set_orchestration_standby (self):
+    self.__standby = True
+    self.log.info("Set request in progress: %s in standby mode"
+                  % self.__progress)
 
   def _proceed_API_call (self, request):
     """

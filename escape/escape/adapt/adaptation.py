@@ -36,6 +36,7 @@ from escape.util.misc import notify_remote_visualizer, VERBOSE
 from escape.util.stat import stats
 from escape.util.virtualizer_helper import get_nfs_from_info, \
   strip_info_by_nfs, get_bb_nf_from_path
+from pox.lib.recoco import Timer
 from virtualizer_info import Info
 
 
@@ -500,6 +501,8 @@ class ControllerAdapter(object):
     # Set a weak reference to avoid circular dependencies
     self._layer_API = weakref.proxy(layer_API)
     self._with_infr = with_infr
+    # Timer for VNFM
+    self.__vnfm_timer = None
     # Set virtualizer-related components
     self.DoVManager = GlobalResourceManager()
     self.domains = ComponentConfigurator(self)
@@ -556,6 +559,7 @@ class ControllerAdapter(object):
       self.__class__.__name__, mapped_nffg.name))
     self.collate_deploy_request(request=mapped_nffg)
     # Register mapped NFFG for managing statuses of install steps
+
     log.debug("Store mapped NFFG for domain status tracking...")
     deploy_status = self.status_mgr.register_service(nffg=mapped_nffg)
     if deploy_status is None:
@@ -568,9 +572,12 @@ class ControllerAdapter(object):
                  "component...")
         if self.forward_to_vnfm(nffg=mapped_nffg, deploy_status=deploy_status):
           log.info("Waiting for external component...")
+          deploy_status.set_standby()
+        else:
+          log.debug("Clear deploy status...")
+          deploy_status.clear()
+        log.debug("Deploy status: %s" % deploy_status)
         return deploy_status
-          # TODO - handle scheduled request --> propagate request status in
-          # event
       else:
         log.debug("VNFM is disabled! Proceed with deploy...")
     else:
@@ -737,10 +744,26 @@ class ControllerAdapter(object):
         log.error("External VNFM component call was unsuccessful!")
         return False
       else:
-        log.debug("Deploy status: %s" % deploy_status)
+        timeout = vnfm_config.get('timeout', 30)
+        log.debug("Using timeout for external VNFM: %ss!" % timeout)
+        self.__vnfm_timer = Timer(timeout,
+                                  self._vnfm_timeout_expired,
+                                  kw=dict(deploy_id=deploy_status.id,
+                                          timeout=timeout),
+                                  started=True)
         return True
     except:
       log.error("Something went wrong during external VNFM component call!")
+
+  def _vnfm_timeout_expired (self, deploy_id, timeout):
+    log.warning("External VNFM timeout: %ss has expired!" % timeout)
+    self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
+                                       id=deploy_id,
+                                       result=InstallationFinishedEvent.DEPLOY_ERROR)
+
+  def cancel_vnfm_timer (self):
+    if self.__vnfm_timer:
+      self.__vnfm_timer.cancel()
 
   def __perform_internal_mgr_update (self, mapped_nffg, domain):
     """
@@ -1340,6 +1363,7 @@ class DomainRequestStatus(object):
   def __init__ (self, id, domains, data=None):
     self.__id = id
     self.__statuses = {}.fromkeys(domains, self.INITIALIZED)
+    self.__standby = False
     self.data = data
 
   @property
@@ -1349,6 +1373,22 @@ class DomainRequestStatus(object):
   def reset_statuses (self):
     for domain in self.__statuses:
       self.__statuses[domain] = self.INITIALIZED
+
+  def set_standby (self):
+    log.debug("Put request: %s in standby mode" % self.__id)
+    self.__standby = True
+
+  @property
+  def standby (self):
+    return self.__standby
+
+  def set_active (self):
+    if self.__standby:
+      log.debug("Continue request: %s " % self.__id)
+      self.__standby = False
+
+  def clear (self):
+    self.__statuses.clear()
 
   @property
   def still_pending (self):
