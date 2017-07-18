@@ -240,8 +240,11 @@ class NFFGConverter(object):
     for kv in action_part:
       op = kv.split('=')
       if op[0] not in self.GENERAL_OPERATIONS:
-        self.log.warning("Unsupported action operand: %s" % op[0])
-        return
+        # self.log.warning("Unsupported action operand: %s" % op[0])
+        # return
+        self.log.debug("Explicit action operand detected: %s" % op[0])
+        ret.append(kv)
+        continue
       if op[0] == self.OP_TAG:
         # E.g.: <action>push_tag:0x0037</action>
         try:
