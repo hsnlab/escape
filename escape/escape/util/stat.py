@@ -143,7 +143,7 @@ class OrchestrationStatCollector(object):
     if not file_name:
       file_name = "%s/%s.stat" % (self.stat_folder, self.__request_id)
     if os.path.exists(file_name):
-      log.warning("Stat file for request: %s already exists! Overriding..."
+      log.warning("Stat file for request already exists: %s! Overriding..."
                   % file_name)
     with open(file_name, "w") as f:
       if raw:

@@ -114,7 +114,8 @@ class WarningChecker(BasicErrorChecker):
     "Installation process is still pending! Waiting for results...",
     "One-step-update is enabled.",
     "Detected already registered service request",
-    "Found non-existent infra node"
+    "Found non-existent infra node",
+    "Stat file for request already exists:"
   ]
 
   @classmethod
