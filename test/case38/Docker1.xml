@@ -1,0 +1,58 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>v1</id>
+	<nodes>
+		<node>
+			<id>DOCKER_HOST</id>
+			<name>node1-Linux</name>
+			<type>Linux-4.4.0-45-generic-#66-Ubuntu SMP Wed Oct 19 14:12:37 UTC 2016</type>
+			<ports>
+				<port>
+					<id>1</id>
+					<name>INTERNET</name>
+					<port_type>port-sap</port_type>
+					<sap>INTERNET:20.1.0.0/24</sap>
+					<sap_data>
+						<technology>{'if': 'ens9', 'floating_ip': '20.1.0.2'}</technology>
+						<role>provider</role>
+					</sap_data>
+				</port>
+				<port>
+					<id>SAP100</id>
+					<name>SAP100</name>
+					<port_type>port-sap</port_type>
+				</port>
+				<port>
+					<id>SAPBME5TONIC</id>
+					<name>SAPBME5TONIC</name>
+					<port_type>port-sap</port_type>
+					<sap>SAPBME5TONIC</sap>
+					<sap_data>
+						<resources>
+							<delay>70</delay>
+						</resources>
+					</sap_data>
+				</port>
+			</ports>
+			<resources>
+				<cpu>30</cpu>
+				<mem>65630363648</mem>
+				<storage>33590239232</storage>
+			</resources>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<id>docker</id>
+						<name>general_docker_container</name>
+						<type>docker</type>
+					</node>
+					<node>
+						<id>fe2sap</id>
+						<name>fe2sap</name>
+						<type>fe2sap</type>
+					</node>
+				</supported_NFs>
+			</capabilities>
+		</node>
+	</nodes>
+</virtualizer>
