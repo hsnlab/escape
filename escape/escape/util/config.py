@@ -16,17 +16,18 @@ Contains manager and handling functions for global ESCAPE configuration.
 """
 import collections
 import importlib
-import json
 import os
 import pprint
 import urlparse
 from distutils.util import strtobool
 
+import yaml
+
 from escape.adapt import LAYER_NAME as ADAPT
 from escape.infr import LAYER_NAME as INFR
 from escape.orchest import LAYER_NAME as ORCHEST
 from escape.service import LAYER_NAME as SERVICE
-from escape.util.misc import VERBOSE, unicode_to_str, quit_with_error
+from escape.util.misc import VERBOSE, quit_with_error
 from escape.util.pox_extension import POXCoreRegisterMetaClass
 from pox.core import log
 
@@ -58,7 +59,7 @@ class ESCAPEConfig(object):
   LAYERS = (SERVICE, ORCHEST, ADAPT, INFR)
   """Predefined layer names"""
   # Default additional config name
-  DEFAULT_CONFIG_FILE = "escape-config.json"  # relative to project root
+  DEFAULT_CONFIG_FILE = "escape-config.yaml"  # relative to project root
   """Path of the default config file"""
 
   def __init__ (self, default=None):
@@ -110,17 +111,10 @@ class ESCAPEConfig(object):
     """
     try:
       with open(path) as f:
-        if path.endswith('yml'):
-          import yaml
-          return yaml.safe_load(f)
-        elif path.endswith('json') or path.endswith('config'):
-          return json.load(f, object_hook=unicode_to_str)
-        else:
-          raise ConfigurationError(
-            "Unsupported configuration extension: %s" % path)
+        return yaml.safe_load(f)
     except IOError:
       quit_with_error('Default config file: %s is not found!' % path)
-    except Exception as e:
+    except (yaml.YAMLError, Exception) as e:
       quit_with_error("An error occurred when load configuration: %s" % e)
 
   def __initialize_from_file (self, path):

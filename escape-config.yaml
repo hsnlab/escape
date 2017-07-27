@@ -1,0 +1,256 @@
+service:
+    MAPPER:
+        module: escape.service.sas_mapping
+        class: ServiceGraphMapper
+        mapping-enabled: false
+        trial_and_error: false
+        mapping-config:
+            profiling: false
+    STRATEGY:
+        module: escape.service.sas_mapping
+        class: DefaultServiceMappingStrategy
+        THREADED: false
+    PROCESSOR:
+        module: escape.util.mapping
+        class: ProcessorSkipper
+        enabled: false
+    REST-API:
+        module: escape.service.sas_API
+        class: ServiceRequestHandler
+        address: 0.0.0.0
+        prefix: escape
+        port: 8008
+        unify_interface: false
+    SERVICE-LAYER-ID: ESCAPE-SERVICE
+    SCHEDULED_SERVICE_REQUEST_DELAY: 3
+orchestration:
+    MAPPER:
+        module: escape.orchest.ros_mapping
+        class: ResourceOrchestrationMapper
+        mapping-enabled: true
+        trial_and_error: false
+        mapping-config:
+            profiling: false
+    STRATEGY:
+        module: escape.orchest.ros_mapping
+        class: ESCAPEMappingStrategy
+        THREADED: false
+    PROCESSOR:
+        module: escape.util.mapping
+        class: ProcessorSkipper
+        enabled: true
+    ESCAPE-SERVICE:
+        virtualizer_type: SINGLE
+    Cf-Or:
+        module: escape.orchest.ros_API
+        class: CfOrRequestHandler
+        virtualizer_type: GLOBAL
+        diff: true
+        address: 0.0.0.0
+        port: 8889
+        prefix: escape/dov
+        unify_interface: true
+    Sl-Or:
+        module: escape.orchest.ros_API
+        class: Extended5GExRequestHandler
+        virtualizer_type: ZERO-DELAYED-SBB
+        diff: true
+        address: 0.0.0.0
+        port: 8888
+        prefix: escape
+        unify_interface: true
+    neo4j:
+        host: localhost
+        port: 7474
+        manage-neo4j-service: false
+adaptation:
+    DOV-API:
+        module: escape.adapt.cas_API
+        class: DirectDoVRequestHandler
+        address: 0.0.0.0
+        prefix: dov
+        port: 8889
+        diff: false
+        unify_interface: true
+    VNFM:
+        enabled: false
+        url: http://127.0.0.1:9999
+        prefix: escape
+        timeout: 30
+        diff: false
+    MANAGERS: []
+    DOV:
+        ENSURE-UNIQUE-ID: true
+        USE-REMERGE-UPDATE-STRATEGY: true
+        USE-STATUS-BASED-UPDATE: false
+        ONE-STEP-UPDATE: true
+    deployment:
+        RESET-DOMAINS-BEFORE-INSTALL: false
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+        ROLLBACK-ON-FAILURE: true
+        DOMAIN-DEPLOY-DELAY: 0
+    INTERNAL:
+        module: escape.adapt.managers
+        class: InternalDomainManager
+        domain_name: INTERNAL
+        poll: false
+        adapters:
+            CONTROLLER:
+                module: escape.adapt.adapters
+                class: InternalPOXAdapter
+                name: null
+                address: 127.0.0.1
+                port: 6653
+                keepalive: false
+                sap_if_prefix: eth
+            MANAGEMENT:
+                module: escape.adapt.adapters
+                class: VNFStarterAdapter
+                server: 127.0.0.1
+                port: 830
+                username: mininet
+                password: mininet
+                timeout: 5
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: InternalMininetAdapter
+                net: null
+    SDN:
+        module: escape.adapt.managers
+        class: SDNDomainManager
+        domain_name: SDN-MICROTIK
+        poll: false
+        adapters:
+            CONTROLLER:
+                module: escape.adapt.adapters
+                class: SDNDomainPOXAdapter
+                name: null
+                address: 0.0.0.0
+                port: 6633
+                keepalive: false
+                binding:
+                    MT2: 365441792307142
+                    MT1: 365441792306724
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: SDNDomainTopoAdapter
+                path: examples/sdn-topo.nffg
+    OPENSTACK:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: OPENSTACK
+        diff: true
+        poll: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: UnifyRESTAdapter
+                prefix: ro/os
+                url: http://127.0.0.1:8899
+                timeout: 1
+                features:
+                    antiaffinity: true
+    REMOTE-ESCAPE:
+        module: escape.adapt.managers
+        class: RemoteESCAPEDomainManager
+        domain_name: REMOTE-ESCAPE
+        poll: false
+        diff: true
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: RemoteESCAPEv2RESTAdapter
+                url: http://192.168.50.128:8888
+                prefix: escape
+                unify_interface: true
+                timeout: 5
+    BGP-LS-SPEAKER:
+        module: escape.adapt.managers
+        class: BGPLSBasedExternalDomainManager
+        domain_name: BGP-LS
+        poll: false
+        diff: null
+        bgp_domain_id: 0.0.0.2
+        prototype: EXTERNAL
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: BGPLSRESTAdapter
+                url: http://localhost:8088
+                prefix: restconf/data
+                timeout: 5
+    DOCKER:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: DOCKER
+        diff: true
+        poll: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: UnifyRESTAdapter
+                prefix: ro/os
+                url: http://127.0.0.1:8899
+                timeout: 1
+            CALLBACK:
+                enabled: true
+                address: 0.0.0.0
+                port: 9000
+                callback_url: http://localhost:9000/callback2
+                explicit_update: false
+    EXTERNAL:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: null
+        poll: true
+        diff: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: UnifyRESTAdapter
+                url: null
+                prefix: null
+                timeout: 5
+    STATIC-NFFG:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: STATIC-NFFG
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: NFFGBasedStaticFileAdapter
+                path: examples/escape-mn-topo.nffg
+                log_dir: log/
+                backward_links: false
+    STATIC-XML:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: STATIC-XML
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: examples/test-sdn-domain.xml
+                log_dir: log/
+                diff: true
+infrastructure:
+    TOPO: examples/escape-mn-topo.nffg
+    SHUTDOWN-CLEAN: true
+    SAP-xterms: true
+    Controller:
+        ip: 127.0.0.1
+        port: 6653
+    NETWORK-OPTS: {}
+    EE: null
+    Link: null
+    SAP: null
+    Switch: null
+    FALLBACK-TOPO:
+        module: escape.infr.topology
+        class: FallbackDynamicTopology
+visualization:
+    url: http://127.0.0.1:9999
+    rpc: notification
+    params:
+        instance: ESCAPE
+    headers: {}
