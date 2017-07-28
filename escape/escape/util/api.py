@@ -662,9 +662,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
     :return: None
     """
-    self.log.debug(
-      ">>> Got HTTP request: %s" % str(self.raw_requestline).rstrip())
-    http_method = self.command.upper()
+    self.log.debug(">>> Got HTTP %s request: %s:%s --> %s"
+                   % (self.command, self.client_address[0],
+                      self.client_address[1], self.path))
+    http_method = self.command
     real_path = urlparse.urlparse(self.path).path
     try:
       prefix = '/%s/' % self.static_prefix
