@@ -552,6 +552,8 @@ class ControllerAdapter(object):
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: :class:`NFFG`
+    :param original_request: top level, original :class:`NFFG` request
+    :type original_request: :class:`NFFG`
     :return: deploy result
     :rtype: DomainRequestStatus
     """
@@ -598,7 +600,7 @@ class ControllerAdapter(object):
                   "Skip domain notification steps" % mapped_nffg)
       # Return with deploy result: fail
       return deploy_status
-    NFFGToolBox.rewrite_interdomain_tags(slices)
+    NFFGToolBox.rewrite_interdomain_tags(slices, original_request)
     log.info("Notify initiated domains: %s" %
              [d for d in self.domains.initiated])
     # Perform domain installations
