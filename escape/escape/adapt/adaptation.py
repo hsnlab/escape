@@ -600,7 +600,7 @@ class ControllerAdapter(object):
                   "Skip domain notification steps" % mapped_nffg)
       # Return with deploy result: fail
       return deploy_status
-    NFFGToolBox.rewrite_interdomain_tags(slices, original_request)
+    NFFGToolBox.rewrite_interdomain_tags(slices)
     log.info("Notify initiated domains: %s" %
              [d for d in self.domains.initiated])
     # Perform domain installations
