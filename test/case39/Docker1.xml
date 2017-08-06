@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>v1</id>
+	<name>slice1</name>
+	<nodes>
+		<node>
+			<id>DOCKER_HOST</id>
+			<ports>
+				<port>
+					<id>1</id>
+					<name>INTERNET</name>
+					<port_type>port-sap</port_type>
+					<sap>INTERNET:20.1.0.0/24</sap>
+					<sap_data>
+						<technology>{'if': 'ens9', 'floating_ip': '20.1.0.2'}</technology>
+						<role>provider</role>
+					</sap_data>
+				</port>
+			</ports>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<id>docker</id>
+						<name>docker</name>
+						<type>docker</type>
+					</node>
+				</supported_NFs>
+			</capabilities>
+		</node>
+	</nodes>
+</virtualizer>
