@@ -146,12 +146,13 @@ class DORequestHandler(BaseHTTPRequestHandler):
                format % args))
 
   def do_POST (self):
-    self.process_request()
+    self.process_request(
+      body=self.rfile.read(int(self.headers.getheader('Content-Length'))))
 
   def do_GET (self):
     self.process_request()
 
-  def process_request (self):
+  def process_request (self, body=None):
     """
     Process the received request and respond according to registered response
     mocks or the default response policy.
@@ -172,6 +173,7 @@ class DORequestHandler(BaseHTTPRequestHandler):
     if domain not in self.server.responses:
       self._return_default(call=call)
       return
+    self.server.dump_message(data=body, domain=domain, call=call)
     call_mock = self.server.responses[domain].get_call(rpc_name=call)
     if call_mock is None:
       return self._return_default(call=call)
@@ -309,7 +311,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
   DEFAULT_CALLBACK_DELAY = 1.0
 
   def __init__ (self, address="localhost", port=DEFAULT_PORT,
-                callback_delay=DEFAULT_CALLBACK_DELAY, **kwargs):
+                callback_delay=DEFAULT_CALLBACK_DELAY, case_dir=None, **kwargs):
     Thread.__init__(self, name="%s(%s:%s)" % (self.__class__.__name__,
                                               address, port))
     # do not bind the socket in the constructor when the class is expected to be
@@ -317,6 +319,7 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
     HTTPServer.__init__(self, (address, port), DORequestHandler,
                         bind_and_activate=False)
     self.callback_delay = float(callback_delay)
+    self.case_dir = case_dir
     self.daemon = True
     self.responses = {}
     self.msg_cntr = 0
@@ -333,6 +336,19 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
       level = logging.WARNING
     logging.getLogger("requests").setLevel(level)
     logging.getLogger("urllib3").setLevel(level)
+
+  def dump_message (self, data, domain, call):
+    if not data or call != RPC_EDIT_CONFIG:
+      return
+    if data.startswith('{'):
+      ext = "nffg"
+    elif data.startswith('<'):
+      ext = "xml"
+    else:
+      ext = "log"
+    file_name = "out-%s-%s-%s.%s" % (self.msg_cntr, domain, call, ext)
+    with open(os.path.join(self.case_dir, file_name), "w") as f:
+      f.write(data)
 
   def bind_and_activate (self):
     """
@@ -491,7 +507,8 @@ class DomainMockingSuccessfulTestCase(BasicSuccessfulTestCase):
 
   def __init__ (self, responses=None, **kwargs):
     super(DomainMockingSuccessfulTestCase, self).__init__(**kwargs)
-    self.domain_mocker = DomainOrchestratorAPIMocker(**kwargs)
+    self.domain_mocker = DomainOrchestratorAPIMocker(
+      case_dir=self.test_case_info.full_testcase_path, **kwargs)
     dir = self.test_case_info.full_testcase_path
     if responses:
       self.domain_mocker.register_responses(dirname=dir, responses=responses)
@@ -513,7 +530,8 @@ class DomainMockingTrialAndErrorTestCase(TrialAndErrorTestCase):
 
   def __init__ (self, responses=None, **kwargs):
     super(DomainMockingTrialAndErrorTestCase, self).__init__(**kwargs)
-    self.domain_mocker = DomainOrchestratorAPIMocker(**kwargs)
+    self.domain_mocker = DomainOrchestratorAPIMocker(
+      case_dir=self.test_case_info.full_testcase_path, **kwargs)
     dir = self.test_case_info.full_testcase_path
     if responses:
       self.domain_mocker.register_responses(dirname=dir, responses=responses)

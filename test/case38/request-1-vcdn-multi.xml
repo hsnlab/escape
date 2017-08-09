@@ -1,0 +1,89 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>b278b96b-720d-11e7-8b44-0242ac120006</id>
+	<nodes>
+		<node>
+			<id>SingleBiSBiS</id>
+			<NF_instances>
+				<node operation="create">
+					<id>vCDN_0_b278b96b-720d-11e7-8b44-0242ac120006</id>
+					<name>vCDN</name>
+					<type>docker</type>
+					<ports>
+						<port>
+							<id>1</id>
+							<port_type>port-sap</port_type>
+							<sap>INTERNET:20.1.0.0/24</sap>
+							<sap_data>
+								<role>consumer</role>
+							</sap_data>
+							<addresses>
+								<l4>{'8088/tcp': ('', 8088), '3000/tcp': ('', 3000), '1935/tcp': ('', 1935), '8086/tcp': ('', 8086), '8087/tcp': ('', 8087)}</l4>
+							</addresses>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>2.0</mem>
+						<storage>8.0</storage>
+					</resources>
+					<metadata>
+						<key>command</key>
+						<value>/sbin/entrypoint.sh</value>
+					</metadata>
+					<metadata>
+						<key>environment</key>
+						<value>{'WSE_LIC': 'ENGP4-ct4de-8EXrt-awhcd-E6tNV-fYbZE', 'WSE_MGR_USER': 'wowza', 'WSE_MGR_PASS': 'wowza'}</value>
+					</metadata>
+					<metadata>
+						<key>image</key>
+						<value>5gex.tmit.bme.hu/vcdn:latest</value>
+					</metadata>
+					<metadata>
+						<key>store_id</key>
+						<value>11</value>
+					</metadata>
+				</node>
+				<node operation="create">
+					<id>vCDN_1_b278b96b-720d-11e7-8b44-0242ac120006</id>
+					<name>vCDN</name>
+					<type>docker</type>
+					<ports>
+						<port>
+							<id>1</id>
+							<port_type>port-sap</port_type>
+							<sap>INTERNET:20.2.0.0/24</sap>
+							<sap_data>
+								<role>consumer</role>
+							</sap_data>
+							<addresses>
+								<l4>{'8088/tcp': ('', 8088), '3000/tcp': ('', 3000), '1935/tcp': ('', 1935), '8086/tcp': ('', 8086), '8087/tcp': ('', 8087)}</l4>
+							</addresses>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>2.0</mem>
+						<storage>8.0</storage>
+					</resources>
+					<metadata>
+						<key>command</key>
+						<value>/sbin/entrypoint.sh</value>
+					</metadata>
+					<metadata>
+						<key>environment</key>
+						<value>{'WSE_LIC': 'ENGP4-ct4de-8EXrt-awhcd-E6tNV-fYbZE', 'WSE_MGR_USER': 'wowza', 'WSE_MGR_PASS': 'wowza'}</value>
+					</metadata>
+					<metadata>
+						<key>image</key>
+						<value>5gex.tmit.bme.hu/vcdn:latest</value>
+					</metadata>
+					<metadata>
+						<key>store_id</key>
+						<value>11</value>
+					</metadata>
+				</node>
+			</NF_instances>
+		</node>
+	</nodes>
+</virtualizer>

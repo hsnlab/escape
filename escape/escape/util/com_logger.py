@@ -16,6 +16,7 @@ Contains functions and classes for remote visualization.
 """
 import logging
 import os
+import shutil
 import threading
 import time
 import urlparse
@@ -171,30 +172,44 @@ class RemoteVisualizer(Session):
 
 class MessageDumper(object):
   __metaclass__ = Singleton
-  DIR = "log/trails"
+  DIR = "log/trails/"
   __lock = threading.Lock()
 
   def __init__ (self):
     self.__cntr = 0
     self.__clear_trails()
+    self.__init()
 
   @wrapt.synchronized(__lock)
   def increase_cntr (self):
     self.__cntr += 1
     return self.__cntr
 
+  def __init (self):
+    self.log_dir = self.DIR + time.strftime("%Y%m%d%H%M%S")
+    for i in xrange(1, 10):
+      if not os.path.exists(os.path.join(PROJECT_ROOT, self.log_dir)):
+        os.mkdir(os.path.join(PROJECT_ROOT, self.log_dir))
+        break
+      else:
+        self.log_dir += "+"
+    else:
+      log.warning("Log dir: %s has already exist for given timestamp prefix!")
+
   def __clear_trails (self):
     log.debug("Remove trails...")
     for f in os.listdir(os.path.join(PROJECT_ROOT, self.DIR)):
-      if f != ".placeholder":
-        os.remove(os.path.join(PROJECT_ROOT, self.DIR, f))
+      if f != ".placeholder" and not f.startswith(time.strftime("%Y%m%d")):
+        # os.remove(os.path.join(PROJECT_ROOT, self.log_dir, f))
+        shutil.rmtree(os.path.join(PROJECT_ROOT, self.DIR, f),
+                      ignore_errors=True)
 
   def dump_to_file (self, data, unique):
     if not isinstance(data, basestring):
       log.error("Data is not str: %s" % type(data))
       return
-    trails = os.path.join(PROJECT_ROOT, self.DIR)
-    date = time.strftime("%Y%m%d%H%M")
+    trails = os.path.join(PROJECT_ROOT, self.log_dir)
+    date = time.strftime("%Y%m%d%H%M%S")
     cntr = self.increase_cntr()
     file_path = os.path.join(trails,
                              "%s_%03d_%s.log" % (date, cntr, unique))

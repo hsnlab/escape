@@ -971,7 +971,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     if resource_nffg is False:
       self.log.debug(
         "Global resource has not changed (revision: %s)! "
-        "Respond with cached topology..." % self.server.topology_revision)
+        "Send topology from cache..." % self.server.topology_revision)
       if self.server.last_response is None:
         log.warning("Cached topology is missing!")
         self.send_error(code=httplib.NOT_FOUND,

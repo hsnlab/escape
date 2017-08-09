@@ -552,6 +552,8 @@ class ControllerAdapter(object):
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: :class:`NFFG`
+    :param original_request: top level, original :class:`NFFG` request
+    :type original_request: :class:`NFFG`
     :return: deploy result
     :rtype: DomainRequestStatus
     """
@@ -1291,7 +1293,7 @@ class ControllerAdapter(object):
     for id in (domain_mgr.managed_domain_ids - new_ids):
       log.info("Detected disconnected domain from external DomainManager! "
                "BGP id: %s" % id)
-      MessageDumper().dump_to_file(data=topo_nffg,
+      MessageDumper().dump_to_file(data=topo_nffg.dump(),
                                    unique="%s-changed" % event.domain)
       # Remove lost domain
       if id in domain_mgr.managed_domain_ids:
@@ -1315,7 +1317,7 @@ class ControllerAdapter(object):
         return
       log.info("New domain detected from external DomainManager! "
                "BGP id: %s, Orchestrator URL: %s" % (id, orchestrator_url))
-      MessageDumper().dump_to_file(data=topo_nffg,
+      MessageDumper().dump_to_file(data=topo_nffg.dump(),
                                    unique="%s-changed" % event.domain)
       # Track new domain
       domain_mgr.managed_domain_ids.add(id)
