@@ -1,0 +1,300 @@
+{
+  "parameters": {
+    "id": "7cabb262-7cda-11e7-8bed-3065ec956147",
+    "name": "Single-BiSBiS-View",
+    "service_id": "SingleBiSBiS",
+    "version": "1.0",
+    "mode": "ADD"
+  },
+  "node_nfs": [
+    {
+      "id": "1-PID1",
+      "name": "1-PID1",
+      "ports": [
+        {
+          "id": 1,
+          "sap": "PIDSAP",
+          "sap_data": {
+            "role": "provider"
+          }
+        }
+      ],
+      "constraints": {
+        "antiaffinity": {
+          "2": "1-PID2"
+        }
+      },
+      "functional_type": "balance_server:latest",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0
+        }
+      }
+    },
+    {
+      "id": "1-PID2",
+      "name": "1-PID2",
+      "ports": [
+        {
+          "id": 1,
+          "sap": "PIDSAP",
+          "sap_data": {
+            "role": "provider"
+          }
+        }
+      ],
+      "constraints": {
+        "antiaffinity": {
+          "1": "1-PID1"
+        }
+      },
+      "functional_type": "balance_server:latest",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "SAPblue",
+      "name": "SAPblue",
+      "ports": [
+        {
+          "id": "SAPblue",
+          "name": "SAPblue",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAPred",
+      "name": "SAPred",
+      "ports": [
+        {
+          "id": "SAPred",
+          "name": "SAPred",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          }
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "SingleBiSBiS",
+      "name": "SingleBiSBiS",
+      "ports": [
+        {
+          "id": "SAPblue",
+          "name": "SAPblue",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          },
+          "flowrules": [
+            {
+              "id": 11,
+              "match": "in_port=SAPblue",
+              "action": "output=SingleBiSBiS|1-PID1|1",
+              "constraints": {
+                "constraint": {
+                  "antiaffinity": "(1,2)"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "SAPred",
+          "name": "SAPred",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          },
+          "flowrules": [
+            {
+              "id": 21,
+              "match": "in_port=SAPred",
+              "action": "output=SingleBiSBiS|1-PID2|1",
+              "constraints": {
+                "constraint": {
+                  "antiaffinity": "(2,1)"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS|1-PID1|1",
+          "flowrules": [
+            {
+              "id": 12,
+              "match": "in_port=SingleBiSBiS|1-PID1|1",
+              "action": "output=SAPblue",
+              "constraints": {
+                "constraint": {
+                  "antiaffinity": "(1,2)"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS|1-PID2|1",
+          "flowrules": [
+            {
+              "id": 22,
+              "match": "in_port=SingleBiSBiS|1-PID2|1",
+              "action": "output=SAPred",
+              "constraints": {
+                "constraint": {
+                  "antiaffinity": "(2,1)"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "domain": "REMOTE",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "fe2sap",
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 36.0,
+        "mem": 202884276224.0,
+        "storage": 100040593408.0,
+        "delay": 0.0
+      },
+      "delay_matrix": {
+        "SAPblue": {
+          "SAPred": 0.0
+        },
+        "SAPred": {
+          "SAPblue": 0.0
+        }
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "SAPblue-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPblue",
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "backward": true
+    },
+    {
+      "id": "7cabb264-7cda-11e7-8bed-3065ec956147",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|1-PID1|1",
+      "dst_node": "1-PID1",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "SAPred-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPred",
+      "dst_node": "SAPred",
+      "dst_port": "SAPred",
+      "backward": true
+    },
+    {
+      "id": "7cabb266-7cda-11e7-8bed-3065ec956147",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|1-PID2|1",
+      "dst_node": "1-PID2",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "SAPblue-SingleBiSBiS-link",
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPblue"
+    },
+    {
+      "id": "7cabb263-7cda-11e7-8bed-3065ec956147",
+      "src_node": "1-PID1",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|1-PID1|1"
+    },
+    {
+      "id": "SAPred-SingleBiSBiS-link",
+      "src_node": "SAPred",
+      "src_port": "SAPred",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPred"
+    },
+    {
+      "id": "7cabb265-7cda-11e7-8bed-3065ec956147",
+      "src_node": "1-PID2",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|1-PID2|1"
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": 11,
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "1-PID1",
+      "dst_port": 1,
+      "constraints": {
+        "constraint": {
+          "antiaffinity": "(1,2)"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "src_node": "1-PID1",
+      "src_port": 1,
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "constraints": {
+        "constraint": {
+          "antiaffinity": "(1,2)"
+        }
+      }
+    },
+    {
+      "id": 21,
+      "src_node": "SAPred",
+      "src_port": "SAPred",
+      "dst_node": "1-PID2",
+      "dst_port": 1,
+      "constraints": {
+        "constraint": {
+          "antiaffinity": "(2,1)"
+        }
+      }
+    },
+    {
+      "id": 22,
+      "src_node": "1-PID2",
+      "src_port": 1,
+      "dst_node": "SAPred",
+      "dst_port": "SAPred",
+      "constraints": {
+        "constraint": {
+          "antiaffinity": "(2,1)"
+        }
+      }
+    }
+  ]
+}

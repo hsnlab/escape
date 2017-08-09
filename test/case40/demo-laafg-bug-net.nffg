@@ -1,0 +1,515 @@
+{
+  "parameters": {
+    "id": "DoV",
+    "name": "DoV",
+    "version": "1.0"
+  },
+  "node_saps": [
+    {
+      "id": "SAPred",
+      "name": "SAPred",
+      "ports": [
+        {
+          "id": "SAPred",
+          "name": "SAPred",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAPblue",
+      "name": "SAPblue",
+      "ports": [
+        {
+          "id": "SAPblue",
+          "name": "SAPblue",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          }
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "DOCKER1@DOCKER-1",
+      "name": "DOCKER HOST1",
+      "ports": [
+        {
+          "id": "SAP31",
+          "property": {
+            "sap": "SAP31",
+            "type": "inter-domain"
+          },
+          "name": "SAP31",
+          "sap": "SAP31"
+        }
+      ],
+      "domain": "DOCKER-1",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "fe2sap"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 51200.0,
+        "storage": 1024.0
+      }
+    },
+    {
+      "id": "DOCKER3@DOCKER-3",
+      "name": "DOCKER HOST3",
+      "ports": [
+        {
+          "id": "SAP43",
+          "property": {
+            "sap": "SAP43",
+            "type": "inter-domain"
+          },
+          "name": "SAP43",
+          "sap": "SAP43"
+        }
+      ],
+      "domain": "DOCKER-3",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "fe2sap"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 51200.0,
+        "storage": 1024.0
+      }
+    },
+    {
+      "id": "DOCKER4@DOCKER-4",
+      "name": "DOCKER HOST4",
+      "ports": [
+        {
+          "id": "SAP44",
+          "property": {
+            "sap": "SAP44",
+            "type": "inter-domain"
+          },
+          "name": "SAP44",
+          "sap": "SAP44"
+        }
+      ],
+      "domain": "DOCKER-4",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "fe2sap"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 51200.0,
+        "storage": 1024.0
+      }
+    },
+    {
+      "id": "SDN2@SDN-2",
+      "name": "SDN2 single BiSBiS node",
+      "ports": [
+        {
+          "id": "SAP23",
+          "property": {
+            "sap": "SAP23",
+            "type": "inter-domain"
+          },
+          "name": "SAP23",
+          "sap": "SAP23",
+          "sap_data": {
+            "technology": "{'iface': 1}"
+          }
+        },
+        {
+          "id": "SAP24",
+          "property": {
+            "sap": "SAP24",
+            "type": "inter-domain"
+          },
+          "name": "SAP24",
+          "sap": "SAP24",
+          "sap_data": {
+            "technology": "{'iface': 2}"
+          }
+        },
+        {
+          "id": "SAPblue",
+          "name": "SAPblue",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          }
+        }
+      ],
+      "domain": "SDN-2",
+      "type": "BiSBiS",
+      "supported": [
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 4.0,
+        "mem": 50721017856.0,
+        "storage": 25010147328.0
+      }
+    },
+    {
+      "id": "SDN3@SDN-3",
+      "name": "SDN3 single BiSBiS node",
+      "ports": [
+        {
+          "id": "SAP13",
+          "property": {
+            "sap": "SAP13",
+            "type": "inter-domain"
+          },
+          "name": "SAP13",
+          "sap": "SAP13",
+          "sap_data": {
+            "technology": "{'iface': 1}"
+          }
+        },
+        {
+          "id": "SAP23",
+          "property": {
+            "sap": "SAP23",
+            "type": "inter-domain"
+          },
+          "name": "SAP23",
+          "sap": "SAP23",
+          "sap_data": {
+            "technology": "{'iface': 2}"
+          }
+        },
+        {
+          "id": "SAP31",
+          "property": {
+            "sap": "SAP31",
+            "type": "inter-domain"
+          },
+          "name": "SAP31",
+          "sap": "SAP31",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          }
+        },
+        {
+          "id": "SAP32",
+          "property": {
+            "sap": "SAP32",
+            "type": "inter-domain"
+          },
+          "name": "SAP32",
+          "sap": "SAP32",
+          "sap_data": {
+            "technology": "{'iface': 4}"
+          }
+        }
+      ],
+      "domain": "SDN-3",
+      "type": "BiSBiS",
+      "supported": [
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 4.0,
+        "mem": 50721017856.0,
+        "storage": 25010147328.0
+      }
+    },
+    {
+      "id": "SDN1@SDN-1",
+      "name": "SDN1 single BiSBiS node",
+      "ports": [
+        {
+          "id": "SAP13",
+          "property": {
+            "sap": "SAP13",
+            "type": "inter-domain"
+          },
+          "name": "SAP13",
+          "sap": "SAP13",
+          "sap_data": {
+            "technology": "{'iface': 1}"
+          }
+        },
+        {
+          "id": "SAP14",
+          "property": {
+            "sap": "SAP14",
+            "type": "inter-domain"
+          },
+          "name": "SAP14",
+          "sap": "SAP14",
+          "sap_data": {
+            "technology": "{'iface': 2}"
+          }
+        },
+        {
+          "id": "SAPred",
+          "name": "SAPred",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          }
+        }
+      ],
+      "domain": "SDN-1",
+      "type": "BiSBiS",
+      "supported": [
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 4.0,
+        "mem": 50721017856.0,
+        "storage": 25010147328.0
+      }
+    },
+    {
+      "id": "SDN4@SDN-4",
+      "name": "SDN4 single BiSBiS node",
+      "ports": [
+        {
+          "id": "SAP14",
+          "property": {
+            "sap": "SAP14",
+            "type": "inter-domain"
+          },
+          "name": "SAP14",
+          "sap": "SAP14",
+          "sap_data": {
+            "technology": "{'iface': 1}"
+          }
+        },
+        {
+          "id": "SAP24",
+          "property": {
+            "sap": "SAP24",
+            "type": "inter-domain"
+          },
+          "name": "SAP24",
+          "sap": "SAP24",
+          "sap_data": {
+            "technology": "{'iface': 2}"
+          }
+        },
+        {
+          "id": "SAP43",
+          "property": {
+            "sap": "SAP43",
+            "type": "inter-domain"
+          },
+          "name": "SAP43",
+          "sap": "SAP43",
+          "sap_data": {
+            "technology": "{'iface': 3}"
+          }
+        },
+        {
+          "id": "SAP44",
+          "property": {
+            "sap": "SAP44",
+            "type": "inter-domain"
+          },
+          "name": "SAP44",
+          "sap": "SAP44",
+          "sap_data": {
+            "technology": "{'iface': 4}"
+          }
+        }
+      ],
+      "domain": "SDN-4",
+      "type": "BiSBiS",
+      "supported": [
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 4.0,
+        "mem": 50721017856.0,
+        "storage": 25010147328.0
+      }
+    },
+    {
+      "id": "DOCKER2@DOCKER-2",
+      "name": "DOCKER HOST2",
+      "ports": [
+        {
+          "id": "SAP32",
+          "property": {
+            "sap": "SAP32",
+            "type": "inter-domain"
+          },
+          "name": "SAP32",
+          "sap": "SAP32"
+        }
+      ],
+      "domain": "DOCKER-2",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "fe2sap"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 51200.0,
+        "storage": 1024.0
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "SAPred-SDN1@SDN-1-link",
+      "src_node": "SAPred",
+      "src_port": "SAPred",
+      "dst_node": "SDN1@SDN-1",
+      "dst_port": "SAPred"
+    },
+    {
+      "id": "inter-domain-link-SAP31-back",
+      "src_node": "DOCKER1@DOCKER-1",
+      "src_port": "SAP31",
+      "dst_node": "SDN3@SDN-3",
+      "dst_port": "SAP31",
+      "backward": true
+    },
+    {
+      "id": "SAPblue-SDN2@SDN-2-link",
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "SDN2@SDN-2",
+      "dst_port": "SAPblue"
+    },
+    {
+      "id": "inter-domain-link-SAP43-back",
+      "src_node": "DOCKER3@DOCKER-3",
+      "src_port": "SAP43",
+      "dst_node": "SDN4@SDN-4",
+      "dst_port": "SAP43",
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAP44-back",
+      "src_node": "DOCKER4@DOCKER-4",
+      "src_port": "SAP44",
+      "dst_node": "SDN4@SDN-4",
+      "dst_port": "SAP44",
+      "backward": true
+    },
+    {
+      "id": "SAPblue-SDN2@SDN-2-link-back",
+      "src_node": "SDN2@SDN-2",
+      "src_port": "SAPblue",
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAP24",
+      "src_node": "SDN2@SDN-2",
+      "src_port": "SAP24",
+      "dst_node": "SDN4@SDN-4",
+      "dst_port": "SAP24"
+    },
+    {
+      "id": "inter-domain-link-SAP23",
+      "src_node": "SDN2@SDN-2",
+      "src_port": "SAP23",
+      "dst_node": "SDN3@SDN-3",
+      "dst_port": "SAP23"
+    },
+    {
+      "id": "inter-domain-link-SAP23-back",
+      "src_node": "SDN3@SDN-3",
+      "src_port": "SAP23",
+      "dst_node": "SDN2@SDN-2",
+      "dst_port": "SAP23",
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAP31",
+      "src_node": "SDN3@SDN-3",
+      "src_port": "SAP31",
+      "dst_node": "DOCKER1@DOCKER-1",
+      "dst_port": "SAP31"
+    },
+    {
+      "id": "inter-domain-link-SAP32",
+      "src_node": "SDN3@SDN-3",
+      "src_port": "SAP32",
+      "dst_node": "DOCKER2@DOCKER-2",
+      "dst_port": "SAP32"
+    },
+    {
+      "id": "inter-domain-link-SAP13-back",
+      "src_node": "SDN3@SDN-3",
+      "src_port": "SAP13",
+      "dst_node": "SDN1@SDN-1",
+      "dst_port": "SAP13",
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAP14",
+      "src_node": "SDN1@SDN-1",
+      "src_port": "SAP14",
+      "dst_node": "SDN4@SDN-4",
+      "dst_port": "SAP14"
+    },
+    {
+      "id": "inter-domain-link-SAP13",
+      "src_node": "SDN1@SDN-1",
+      "src_port": "SAP13",
+      "dst_node": "SDN3@SDN-3",
+      "dst_port": "SAP13"
+    },
+    {
+      "id": "SAPred-SDN1@SDN-1-link-back",
+      "src_node": "SDN1@SDN-1",
+      "src_port": "SAPred",
+      "dst_node": "SAPred",
+      "dst_port": "SAPred",
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAP24-back",
+      "src_node": "SDN4@SDN-4",
+      "src_port": "SAP24",
+      "dst_node": "SDN2@SDN-2",
+      "dst_port": "SAP24",
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAP44",
+      "src_node": "SDN4@SDN-4",
+      "src_port": "SAP44",
+      "dst_node": "DOCKER4@DOCKER-4",
+      "dst_port": "SAP44"
+    },
+    {
+      "id": "inter-domain-link-SAP43",
+      "src_node": "SDN4@SDN-4",
+      "src_port": "SAP43",
+      "dst_node": "DOCKER3@DOCKER-3",
+      "dst_port": "SAP43"
+    },
+    {
+      "id": "inter-domain-link-SAP14-back",
+      "src_node": "SDN4@SDN-4",
+      "src_port": "SAP14",
+      "dst_node": "SDN1@SDN-1",
+      "dst_port": "SAP14",
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAP32-back",
+      "src_node": "DOCKER2@DOCKER-2",
+      "src_port": "SAP32",
+      "dst_node": "SDN3@SDN-3",
+      "dst_port": "SAP32",
+      "backward": true
+    }
+  ]
+}
