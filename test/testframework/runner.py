@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import copy
-import imp
 import importlib
-import json
 import logging
 import os
 import sys
@@ -22,6 +20,8 @@ import threading
 from collections import Iterable
 
 import pexpect
+import yaml
+from yaml.error import YAMLError
 
 log = logging.getLogger()
 
@@ -332,10 +332,12 @@ class RunnableTestCaseInfo(object):
     :rtype: tuple(object, dict)
     """
     test_args = {}
-    misc = imp.load_source("misc", os.path.join(os.path.abspath(
-      os.path.dirname(__file__)), "../../escape/escape/util/misc.py"))
-    with open(self.config_file_name, 'r') as f:
-      config = json.load(f, object_hook=misc.unicode_to_str)
+    try:
+      with open(self.config_file_name, 'r') as f:
+        config = yaml.safe_load(f)
+    except (IOError, YAMLError) as e:
+      log.error("Failed to load configuration file: %s" % e)
+      return None
     if self.CONFIG_CONTAINER_NAME in config:
       test_args = copy.copy(config[self.CONFIG_CONTAINER_NAME])
       try:
@@ -347,15 +349,17 @@ class RunnableTestCaseInfo(object):
     return None, test_args
 
   def load_config (self):
-    misc = imp.load_source("misc", os.path.join(os.path.abspath(
-      os.path.dirname(__file__)), "../../escape/escape/util/misc.py"))
-    with open(self.config_file_name, 'r') as f:
-      config = json.load(f, object_hook=misc.unicode_to_str)
-      try:
-        test_args = copy.copy(config[self.CONFIG_CONTAINER_NAME])
-        return test_args
-      except KeyError:
-        pass
+    try:
+      with open(self.config_file_name, 'r') as f:
+        config = yaml.safe_load(f)
+    except (IOError, YAMLError) as e:
+      log.error("Failed to load configuration file: %s" % e)
+      return None
+    try:
+      test_args = copy.copy(config[self.CONFIG_CONTAINER_NAME])
+      return test_args
+    except KeyError:
+      pass
     return None
 
   def __repr__ (self):

@@ -96,13 +96,17 @@ class TestSuitBuilder(object):
     """
     # Check running script
     if not os.path.exists(case_info.test_command):
-      raise Exception("Running script: %s for testcase: %s was not found!"
+      log.error("Running script: %s for testcase: %s was not found!"
                       % (case_info.test_command, case_info.full_testcase_path))
+      return
     # Create CommandRunner for test case
     cmd_runner = self._create_command_runner(case_info=case_info)
     # Create TestCase class
     if os.path.exists(case_info.config_file_name):
-      TESTCASE_CLASS, test_args = case_info.load_test_case_class()
+      klass_info = case_info.load_test_case_class()
+      if klass_info is None:
+        return
+      TESTCASE_CLASS, test_args = klass_info
       if self.standalone:
         log.info("Standalone mode: disable testcase timeout!")
         cmd_runner.setup_standalone_mode()
@@ -136,7 +140,9 @@ class TestSuitBuilder(object):
     test_cases = list()
     for case_info in tests:
       try:
-        test_cases.append(self.build_from_config(case_info=case_info))
+        test_case = self.build_from_config(case_info=case_info)
+        if test_case:
+          test_cases.append(test_case)
       except Exception as e:
         # log.error("Testcase loading failed: %s" % e.message)
         log.error(traceback.format_exc())
