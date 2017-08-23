@@ -358,6 +358,12 @@ class AbstractDomainManager(EventMixin):
     """
     raise NotImplementedError
 
+  def reset_domain (self):
+    """
+    Reset the Domain according to the first received config.
+    """
+    raise NotImplementedError
+
   def clear_domain (self):
     """
     Clear the Domain according to the first received config.
@@ -616,6 +622,12 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
 
     :raise: :any:`exceptions.NotImplementedError`
     :return: None
+    """
+    raise NotImplementedError
+
+  def reset_domain (self):
+    """
+    Reset the Domain according to the first received config.
     """
     raise NotImplementedError
 

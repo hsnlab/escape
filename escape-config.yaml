@@ -86,6 +86,7 @@ adaptation:
         ONE-STEP-UPDATE: true
     deployment:
         RESET-DOMAINS-BEFORE-INSTALL: false
+        RESET-DOMAINS-AFTER-SHUTDOWN: false
         CLEAR-DOMAINS-AFTER-SHUTDOWN: true
         ROLLBACK-ON-FAILURE: true
         DOMAIN-DEPLOY-DELAY: 0

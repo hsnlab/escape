@@ -105,6 +105,7 @@
     },
     "deployment": {
       "RESET-DOMAINS-BEFORE-INSTALL": false,
+      "RESET-DOMAINS-AFTER-SHUTDOWN": false,
       "CLEAR-DOMAINS-AFTER-SHUTDOWN": true,
       "ROLLBACK-ON-FAILURE": true,
       "DOMAIN-DEPLOY-DELAY": 0
@@ -181,23 +182,6 @@
           "features": {
             "antiaffinity": true
           }
-        }
-      }
-    },
-    "REMOTE-ESCAPE": {
-      "module": "escape.adapt.managers",
-      "class": "RemoteESCAPEDomainManager",
-      "domain_name": "REMOTE-ESCAPE",
-      "poll": false,
-      "diff": true,
-      "adapters": {
-        "REMOTE": {
-          "module": "escape.adapt.adapters",
-          "class": "RemoteESCAPEv2RESTAdapter",
-          "url": "http://192.168.50.128:8888",
-          "prefix": "escape",
-          "unify_interface": true,
-          "timeout": 5
         }
       }
     },

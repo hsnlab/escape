@@ -721,9 +721,22 @@ class ESCAPEConfig(object):
           return None
     return external_mgrs if external_mgrs else None
 
-  def clear_domains_after_shutdown (self):
+  def reset_domains_after_shutdown (self):
     """
     Return with the shutdown strategy to reset domain or not.
+
+    :return: reset domain after shutdown or not (default: False)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT]['deployment'][
+        'RESET-DOMAINS-AFTER-SHUTDOWN']
+    except KeyError:
+      return True
+
+  def clear_domains_after_shutdown (self):
+    """
+    Return with the shutdown strategy to clear domain or not.
 
     :return: clear domain after shutdown or not (default: True)
     :rtype: bool

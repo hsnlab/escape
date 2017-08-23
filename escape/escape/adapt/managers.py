@@ -21,7 +21,6 @@ import re
 
 from ncclient import NCClientError
 
-from escape.adapt.adapters import RemoteESCAPEv2RESTAdapter, UnifyRESTAdapter
 from escape.adapt.callback import CallbackManager
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
@@ -155,6 +154,15 @@ class BasicDomainManager(AbstractDomainManager):
       self.log.debug("SimpleTopologyManager skip the step by default...")
     # Return with successful result by default
     return True
+
+  def reset_domain (self):
+    """
+    Clear domain.
+
+    :return: cleanup result
+    :rtype: bool
+    """
+    self.clear_domain()
 
   def clear_domain (self):
     """
@@ -377,6 +385,9 @@ class InternalDomainManager(AbstractDomainManager):
     result = (self._delete_running_nfs(),  # Just for sure remove NFs
               self._delete_flowrules())  # and flowrules
     return all(result)
+
+  def reset_domain (self):
+    self.clear_domain()
 
   def _delete_running_nfs (self, nffg=None):
     """
@@ -1105,139 +1116,8 @@ class SDNDomainManager(AbstractDomainManager):
     # Remove flowrules
     return self._delete_flowrules(nffg_part=sdn_topo)
 
-
-class RemoteESCAPEDomainManager(AbstractRemoteDomainManager):
-  """
-  Manager class to handle communication with other ESCAPEv2 processes started
-  in agent-mode through a REST-API which is provided by the Resource
-  Orchestration Sublayer.
-
-  .. note::
-    Uses :class:`RemoteESCAPEv2RESTAdapter` for communicate with the remote
-    domain.
-  """
-  # Domain name
-  name = "REMOTE-ESCAPE"
-  # Default domain name
-  DEFAULT_DOMAIN_NAME = "REMOTE"
-
-  def __init__ (self, domain_name=DEFAULT_DOMAIN_NAME, *args, **kwargs):
-    """
-    Init.
-
-    :param domain_name: the domain name
-    :type domain_name: str
-    :param args: optional param list
-    :type args: list
-    :param kwargs: optional keywords
-    :type kwargs: dict
-    :return: None
-    """
-    log.debug(
-      "Create RemoteESCAPEDomainManager with domain name: %s" % domain_name)
-    super(RemoteESCAPEDomainManager, self).__init__(domain_name=domain_name,
-                                                    *args, **kwargs)
-
-  def init (self, configurator, **kwargs):
-    """
-    Initialize Internal DomainManager.
-
-    :param configurator: component configurator for configuring adapters
-    :type configurator: :any:`ComponentConfigurator`
-    :param kwargs: optional parameters
-    :type kwargs: dict
-    :return: None
-    """
-    # Call abstract init to execute common operations
-    super(RemoteESCAPEDomainManager, self).init(configurator, **kwargs)
-    self.log.info(
-      "DomainManager for %s domain has been initialized!" % self.domain_name)
-
-  def initiate_adapters (self, configurator):
-    """
-    Init Adapters.
-
-    :param configurator: component configurator for configuring adapters
-    :type configurator: :any:`ComponentConfigurator`
-    :return: None
-    """
-    # Init adapter for remote ESCAPEv2 domain
-    self.topoAdapter = configurator.load_component(
-      component_name=AbstractESCAPEAdapter.TYPE_REMOTE,
-      parent=self._adapters_cfg)
-
-  def finit (self):
-    """
-    Stop polling and release dependent components.
-
-    :return: None
-    """
-    super(RemoteESCAPEDomainManager, self).finit()
-    self.topoAdapter.finit()
-
-  def install_nffg (self, nffg_part):
-    """
-    Install an :class:`NFFG` related to the internal domain.
-
-    :param nffg_part: NF-FG need to be deployed
-    :type nffg_part: :class:`NFFG`
-    :return: installation was success or not
-    :rtype: bool
-    """
-    self.log.info(">>> Install %s domain part..." % self.domain_name)
-    try:
-      if not self.polling and self._diff:
-        self.log.debug(
-          "Polling is disabled. Requesting the most recent topology "
-          "from domain: %s for installation..." % self.domain_name)
-        # Request the most recent topo, which will update the cached
-        # last_virtualizer for the diff calculation
-        self.topoAdapter.get_config()
-      status = self.topoAdapter.edit_config(nffg_part, diff=self._diff)
-      return True if status is not None else False
-    except:
-      self.log.exception("Got exception during NFFG installation into: %s." %
-                         self.domain_name)
-      return False
-
-  def clear_domain (self):
-    """
-    Reset remote domain based on the original (first response) topology.
-
-    :return: cleanup result
-    :rtype: bool
-    """
-    empty_cfg = self.topoAdapter.get_original_topology()
-    if empty_cfg is None:
-      self.log.warning("Missing original topology in %s domain! "
-                       "Skip domain resetting..." % self.domain_name)
-      return
-    self.log.info("Reset %s domain based on original topology description..." %
-                  self.domain_name)
-    # If poll is enabled then the last requested topo is most likely the most
-    # recent topo else request the topology for the most recent one and compute
-    # diff if it is necessary
-    if not self.polling and self._diff:
-      self.log.debug("Polling is disabled. Requesting the most recent topology "
-                     "from domain: %s for domain clearing..." %
-                     self.domain_name)
-      if (isinstance(self.topoAdapter, RemoteESCAPEv2RESTAdapter) and
-            self.topoAdapter._unify_interface) or \
-         isinstance(self.topoAdapter, UnifyRESTAdapter):
-        recent_topo = self.topoAdapter.get_config()
-        if recent_topo is not None:
-          self.log.debug("Explicitly calculating diff for domain clearing...")
-          diff = recent_topo.diff(empty_cfg)
-          status = self.topoAdapter.edit_config(data=diff)
-        else:
-          self.log.error("Skip domain resetting: %s! "
-                         "Requested topology is missing!" % self.domain_name)
-          return False
-      else:
-        status = False
-    else:
-      status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
-    return True if status is not None else False
+  def reset_domain (self):
+    self.clear_domain()
 
 
 class UnifyDomainManager(AbstractRemoteDomainManager):
@@ -1467,7 +1347,59 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                          self.domain_name)
       return False
 
+  @staticmethod
+  def _split_virtualizer_topology (virtualizer):
+    """
+    Remove NFs and Flowrules from given topology.
+
+    :param virtualizer: topology
+    :type virtualizer: :any:`Virtualizer`
+    :return:
+    """
+    for node in virtualizer.nodes:
+      # Remove NFs
+      node.NF_instances.node._data.clear()
+      # Remove flowrules
+      node.flowtable.flowentry._data.clear()
+    return virtualizer
+
   def clear_domain (self):
+    """
+    Reset remote domain based on the original (first response) topology.
+
+    :return: cleanup result
+    :rtype: bool
+    """
+    empty_cfg = self.topoAdapter.get_original_topology()
+    if empty_cfg is None:
+      self.log.warning("Missing original topology in %s domain! "
+                       "Skip domain resetting..." % self.domain_name)
+      return
+    self.log.info("Reset %s domain based on original topology description..." %
+                  self.domain_name)
+    # If poll is enabled then the last requested topo is most likely the most
+    # recent topo else request the topology for the most recent one and compute
+    # diff if it is necessary
+    if not self.polling and self._diff:
+      self.log.debug("Polling is disabled. Requesting the most recent topology "
+                     "from domain: %s for domain clearing..." %
+                     self.domain_name)
+      recent_topo = self.topoAdapter.get_config()
+      if recent_topo is not None:
+        self.log.debug("Strip original topology...")
+        empty_cfg = self._split_virtualizer_topology(virtualizer=empty_cfg)
+        self.log.debug("Explicitly calculating diff for domain clearing...")
+        diff = recent_topo.diff(empty_cfg)
+        status = self.topoAdapter.edit_config(data=diff, diff=False)
+      else:
+        self.log.error("Skip domain resetting: %s! "
+                       "Requested topology is missing!" % self.domain_name)
+        return False
+    else:
+      status = self.topoAdapter.edit_config(data=empty_cfg, diff=self._diff)
+    return True if status is not None else False
+
+  def reset_domain (self):
     """
     Reset remote domain based on the original (first response) topology.
 
@@ -1665,6 +1597,18 @@ class ExternalDomainManager(AbstractRemoteDomainManager):
     """
     super(ExternalDomainManager, self).finit()
 
+  def reset_domain (self):
+    """
+    External DomainManager should not receive cleanup NFFGs.
+    Return with success cleanup result by default for avoiding running errors.
+
+    :return: cleanup success
+    :rtype: bool
+    """
+    self.log.warning("External DomainManager: %s received reset call! "
+                     "Skip processing..." % self.name)
+    return True
+
   def clear_domain (self):
     """
     External DomainManager should not receive cleanup NFFGs.
@@ -1673,7 +1617,7 @@ class ExternalDomainManager(AbstractRemoteDomainManager):
     :return: cleanup success
     :rtype: bool
     """
-    self.log.warning("External DomainManager: %s received cleanup call! "
+    self.log.warning("External DomainManager: %s received clear call! "
                      "Skip processing..." % self.name)
     return True
 

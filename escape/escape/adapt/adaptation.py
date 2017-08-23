@@ -447,9 +447,9 @@ class ComponentConfigurator(object):
     # Internal domain is hard coded with the name: INTERNAL
     self.start_mgr(name=mgrs.InternalDomainManager.name)
 
-  def clear_initiated_mgrs (self):
+  def reset_initiated_mgrs (self):
     """
-    Clear initiated DomainManagers based on the first received config.
+    Reset initiated DomainManagers based on the first received config.
 
     :return: None
     """
@@ -457,9 +457,23 @@ class ComponentConfigurator(object):
     for name, mgr in self:
       if not mgr.IS_EXTERNAL_MANAGER:
         try:
-          mgr.clear_domain()
+          mgr.reset_domain()
         except:
           log.exception("Got exception during domain resetting!")
+
+  def clear_initiated_mgrs (self):
+    """
+    Clear initiated DomainManagers based on the first received config.
+
+    :return: None
+    """
+    log.info("Cleanup detected domains before shutdown...")
+    for name, mgr in self:
+      if not mgr.IS_EXTERNAL_MANAGER:
+        try:
+          mgr.clear_domain()
+        except:
+          log.exception("Got exception during domain cleanup!")
 
   def stop_initiated_mgrs (self):
     """
@@ -537,7 +551,9 @@ class ControllerAdapter(object):
     :return: None
     """
     # Clear DomainManagers config if needed
-    if CONFIG.clear_domains_after_shutdown() is True:
+    if CONFIG.reset_domains_after_shutdown():
+      self.domains.reset_initiated_mgrs()
+    elif CONFIG.clear_domains_after_shutdown():
       self.domains.clear_initiated_mgrs()
     # Stop initiated DomainManagers
     self.domains.stop_initiated_mgrs()
@@ -620,7 +636,7 @@ class ControllerAdapter(object):
       if CONFIG.reset_domains_before_install():
         log.debug("Reset %s domain before deploying mapped NFFG..." %
                   domain_mgr.domain_name)
-        domain_mgr.clear_domain()
+        domain_mgr.reset_domain()
       log.info("Delegate splitted part: %s to %s" % (part, domain_mgr))
       # Invoke DomainAdapter's install
       domain_install_result = domain_mgr.install_nffg(part)
