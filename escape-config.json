@@ -73,7 +73,7 @@
       "prefix": "escape",
       "unify_interface": true
     },
-    "neo4j": {
+    "NFIB": {
       "host": "localhost",
       "port": 7474,
       "manage-neo4j-service": false

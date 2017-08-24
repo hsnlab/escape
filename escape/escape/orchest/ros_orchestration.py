@@ -20,6 +20,7 @@ from collections import OrderedDict
 from escape.adapt.virtualization import VirtualizerManager
 from escape.orchest import log as log, LAYER_NAME
 from escape.orchest.ros_mapping import ResourceOrchestrationMapper
+from escape.util.config import CONFIG
 from escape.util.mapping import AbstractOrchestrator, ProcessorError
 from escape.util.misc import VERBOSE
 from escape.util.virtualizer_helper import detect_bb_nf_from_path, \
@@ -50,6 +51,13 @@ class ResourceOrchestrator(AbstractOrchestrator):
     # collected
     self.virtualizerManager = VirtualizerManager()
     self.virtualizerManager.addListeners(layer_API, weak=True)
+    if CONFIG.get_nfib_enabled():
+      # Init NFIB manager
+      from escape.orchest.nfib_mgmt import NFIBManager
+      self.nfibManager = NFIBManager().initialize()
+    else:
+      log.debug("NFIB component is disabled!")
+      self.nfibManager = None
 
   def finalize (self):
     """
@@ -57,7 +65,8 @@ class ResourceOrchestrator(AbstractOrchestrator):
 
     :return: None
     """
-    pass
+    if self.nfibManager:
+      self.nfibManager.finalize()
 
   def instantiate_nffg (self, nffg, continued_request_id=False):
     """

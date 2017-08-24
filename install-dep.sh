@@ -63,12 +63,6 @@ function env_setup {
 }
 
 ### Constants
-
-# Component versions
-JAVA_VERSION=7
-NEO4J_VERSION=2.2.7
-
-# Other constants
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 BINDIR=/usr/bin
@@ -117,11 +111,6 @@ function install_core {
 
     sudo apt-get install -y software-properties-common
 
-    if [[ ! $(sudo apt-cache search openjdk-${JAVA_VERSION}-jdk) ]]; then
-        info "=== Add OpenJDK repository and install Java $JAVA_VERSION ==="
-        sudo add-apt-repository -y ppa:openjdk-r/ppa
-    fi
-
     if [ "$DISTRIB_ID" = "Ubuntu" ]; then
         if [ "$DISTRIB_RELEASE" = "14.04" ]; then
             info "=== Add 3rd party PPA repo for most recent Python2.7 ==="
@@ -136,16 +125,27 @@ function install_core {
 
     info "=== Install ESCAPEv2 core dependencies ==="
     sudo apt-get update
-    # Install Java 8 explicitly
-    sudo apt-get install -y openjdk-${JAVA_VERSION}-jdk
     # Install Python 2.7.13 explicitly
     sudo apt-get install -y python2.7 python-dev python-pip
-    # Install dependencies
-    sudo apt-get install -y python-crypto zlib1g-dev libxml2-dev libxslt1-dev \
-                            libssl-dev libffi-dev neo4j=${NEO4J_VERSION}
 
     info "=== Install ESCAPEv2 Python dependencies ==="
     sudo -H pip install --upgrade -r requirements.txt
+}
+
+function install_nfib_dep {
+    env_setup
+    info "=== Install Neo4j and bindings for NFIB component ==="
+    # Component versions
+    local JAVA_VERSION=7
+    local NEO4J_VERSION=2.2.7
+
+    if [[ ! $(sudo apt-cache search openjdk-${JAVA_VERSION}-jdk) ]]; then
+        info "=== Add OpenJDK repository and install Java $JAVA_VERSION ==="
+        sudo add-apt-repository -y ppa:openjdk-r/ppa
+    fi
+
+    # Install Java 8 explicitly
+    sudo apt-get install -y openjdk-${JAVA_VERSION}-jdk neo4j=${NEO4J_VERSION}
 
     info "=== Configure neo4j graph database ==="
     # Disable authentication in /etc/neo4j/neo4j.conf <-- neo4j >= 3.0
@@ -163,6 +163,13 @@ function install_core {
     # Freeze neo4j version
     echo "Mark current version of neo4j: $NEO4J_VERSION as held back..."
     sudo apt-mark hold neo4j
+
+    # Install dependencies for Python libs
+    sudo apt-get install -y python-crypto zlib1g-dev libxml2-dev libxslt1-dev \
+                            libssl-dev libffi-dev
+
+    # Install Python dependencies
+    sudo pip install --no-cache-dir Jinja2 py2neo ncclient cryptography==1.3.1
 }
 
 function install_mn_dep {
@@ -302,6 +309,8 @@ EOF
         info "=== Pre-installed Mininet not detected! Try to install mn dependencies... ==="
         install_mn_dep
     fi
+
+    install_nfib_dep
 }
 
 # Install development dependencies as tornado for scripts in ./tools,
@@ -337,11 +346,10 @@ function all {
 
 # Print help
 function print_usage {
-    echo -e "Usage: $0 [-a] [-c] [-d] [-g] [-h] [-i] [-p project]"
+    echo -e "Usage: $0 [-c] [-d] [-g] [-h] [-i] [-p project]"
     echo -e "Install script for ESCAPEv2\n"
     echo -e "options:"
-    echo -e "\t-a:   (default) install (A)ll ESCAPEv2 components (identical with -cgi)"
-    echo -e "\t-c:   install (C)ore dependencies for Global Orchestration"
+    echo -e "\t-c:   (default) install (C)ore dependencies for Global Orchestration"
     echo -e "\t-d:   install additional dependencies for (D)evelopment and test tools"
     echo -e "\t-g:   install dependencies for our rudimentary (G)UI"
     echo -e "\t-h:   print this (H)elp message"
@@ -352,7 +360,7 @@ function print_usage {
 
 if [ $# -eq 0 ]; then
     # No param was given, call all with default project
-    all
+    install_core
 else
     # Parse optional project parameter
     while getopts ':p:' OPTION; do
@@ -362,15 +370,15 @@ else
     done
     OPTIND=1    # Reset getopts
     info "User project config: ${PROJECT:-N/A}"
-    while getopts 'acdghip:' OPTION; do
+    while getopts 'cdghip:' OPTION; do
         case ${OPTION} in
-            a)  all;;
             c)  install_core;;
             d)  install_dev;;
             g)  install_gui;;
             h)  print_usage;;
             i)  install_infra;;
-            p)  if [ $# -eq 2 ]; then all; fi;; # If only -p was set, call all else skip
+            # If only -p was set, call install_core else skip
+            p)  if [ $# -eq 2 ]; then install_core; fi;;
             \?)  print_usage;;
         esac
     done
