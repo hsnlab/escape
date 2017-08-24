@@ -64,6 +64,8 @@ def main (args):
   with output_context_manager as output:
     # Create the Runner class which runs the test cases collected in a
     # TestSuite object
+    if args.failfast:
+      log.info("Using failfast mode!")
     test_runner = XMLTestRunner(output=output,
                                 verbosity=2,
                                 failfast=args.failfast)

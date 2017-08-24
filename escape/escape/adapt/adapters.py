@@ -942,7 +942,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: None
     """
     log.debug("Cache generated 'edit-config' request...")
-    self.__last_request = data.full_copy()
+    # self.__last_request = data.full_copy()
+    self.__last_request = data
 
   def __is_changed (self, new_data):
     """
