@@ -7,4 +7,4 @@
 #elif type apk >> /dev/null; then
 #    apk add ${SHELL_DEPS}
 #fi
-pip install pexpect unittest-xml-reporting pyyaml requests
+sudo -H pip install pexpect unittest-xml-reporting pyyaml requests

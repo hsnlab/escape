@@ -169,7 +169,7 @@ function install_nfib_dep {
                             libssl-dev libffi-dev
 
     # Install Python dependencies
-    sudo pip install --no-cache-dir Jinja2 py2neo ncclient cryptography==1.3.1
+    sudo -H pip install --no-cache-dir Jinja2 py2neo ncclient cryptography==1.3.1
 }
 
 function install_mn_dep {
