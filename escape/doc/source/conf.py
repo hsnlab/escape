@@ -294,7 +294,7 @@ texinfo_documents = [(master_doc, 'ESCAPEv2', u'ESCAPEv2 Documentation', author,
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
   'python': ('https://docs.python.org/2.7/', None),
-  'ncclient': ('http://ncclient.readthedocs.org/en/latest/', None),
+  'ncclient': ('http://ncclient.readthedocs.io/en/latest/', None),
   'networkx': ('http://networkx.readthedocs.io/en/networkx-1.11/', None),
   'requests': ('http://docs.python-requests.org/en/latest/', None)
 }
