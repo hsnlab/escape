@@ -27,7 +27,7 @@ echo
 
 # Define run command here
 ESCAPE_CMD="${ESCAPE} --debug --test --quit --log ${CWD}/escape.log \
-            --config ${CWD}/test.config --rosapi"
+            --config ${CWD}/test-config.yaml --rosapi"
 
 # Invoke ESCAPE with test parameters
 ${RUN_WITH_MEASUREMENT} ${ESCAPE_CMD} $@

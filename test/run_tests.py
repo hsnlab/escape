@@ -16,7 +16,9 @@ import argparse
 import logging
 import os
 import sys
+import time
 import unittest
+from datetime import timedelta
 
 from xmlrunner import XMLTestRunner
 
@@ -39,7 +41,8 @@ def main (args):
   :rtype: int
   """
   # Print header
-  log.info("Start ESCAPE test")
+  tstart = time.time()
+  log.info("Start ESCAPE tests")
   log.info("-" * 70)
   if args.timeout:
     log.info("Set kill timeout for test cases: %ds\n" % args.timeout)
@@ -52,11 +55,6 @@ def main (args):
   sum_test_cases = test_suite.countTestCases()
   log.info("-" * 70)
   log.info("Read %d test cases" % sum_test_cases)
-  if not sum_test_cases:
-    # Footer
-    log.info("-" * 70)
-    log.info("End ESCAPE test")
-    return 0
   # Run test suite in the specific context
   results = []
   if args.verbose:
@@ -71,14 +69,18 @@ def main (args):
                                 failfast=args.failfast)
     try:
       # Run the test cases and collect the results
-      results.append(test_runner.run(test_suite))
+      if sum_test_cases:
+        results.append(test_runner.run(test_suite))
     except KeyboardInterrupt:
       log.warning("\n\nReceived KeyboardInterrupt! Abort running test suite...")
   # Evaluate results values
   was_success = all(map(lambda res: res.wasSuccessful(), results))
   # Print footer
   log.info("-" * 70)
-  log.info("End ESCAPE test")
+  delta = time.time() - tstart
+  log.info("Total elapsed time: %s sec" % timedelta(seconds=delta))
+  log.info("-" * 70)
+  log.info("End ESCAPE tests")
   return 0 if was_success else 1
 
 

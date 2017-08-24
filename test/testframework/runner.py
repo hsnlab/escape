@@ -263,7 +263,7 @@ class RunnableTestCaseInfo(object):
   Container class for storing the relevant information and config values of a
   test case.
   """
-  CONFIG_FILE_NAME = "test.config"
+  CONFIG_FILE_NAME = "test-config.yaml"
   CONFIG_CONTAINER_NAME = "test"
   RUNNER_SCRIPT_NAME = "run.sh"
   README_FILE_NAME = "README.txt"

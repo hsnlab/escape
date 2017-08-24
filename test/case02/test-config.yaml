@@ -1,0 +1,19 @@
+service:
+    MAPPER:
+        mapping-enabled: true
+    SERVICE-LAYER-ID: ESCAPE-SERVICE
+orchestration:
+    MAPPER:
+        mapping-enabled: true
+    ESCAPE-SERVICE:
+        virtualizer_type: SINGLE
+adaptation:
+    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    MANAGERS: []
+infrastructure:
+    TOPO: test/case02/mn-topology.nffg
+    SAP-xterms: false
+test:
+    module: testframework.testcases.basic
+    class: RootPrivilegedSuccessfulTestCase
+    timeout: 5

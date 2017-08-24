@@ -1,0 +1,24 @@
+service:
+    MAPPER:
+        mapping-enabled: false
+    SCHEDULED_SERVICE_REQUEST_DELAY: 0
+orchestration:
+    MAPPER:
+        mapping-enabled: false
+adaptation:
+    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    MANAGERS:
+    - MININET
+    MININET:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: MININET
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: NFFGBasedStaticFileAdapter
+                path: test/case00/mn-topology.nffg
+                log_dir: test/case00
+                check_backward_links: true
+test:
+    timeout: 5

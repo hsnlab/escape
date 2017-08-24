@@ -1,0 +1,36 @@
+service:
+    MAPPER:
+        mapping-enabled: true
+    SCHEDULED_SERVICE_REQUEST_DELAY: 0
+orchestration:
+    MAPPER:
+        mapping-enabled: true
+adaptation:
+    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    MANAGERS:
+    - DO-1
+    - DO-2
+    DO-1:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: DO-1
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: NFFGBasedStaticFileAdapter
+                path: test/case04/escape-do1.nffg
+                log_dir: test/case04
+                check_backward_links: true
+    DO-2:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: DO-2
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: NFFGBasedStaticFileAdapter
+                path: test/case04/escape-do2.nffg
+                log_dir: test/case04
+                check_backward_links: true
+test:
+    timeout: 5
