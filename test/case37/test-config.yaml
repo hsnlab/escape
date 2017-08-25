@@ -20,3 +20,5 @@ adaptation:
                 path: test/case37/escape-mn-topo-bidirectional.nffg
                 log_dir: test/case37
                 check_backward_links: true
+test:
+    timeout: 5

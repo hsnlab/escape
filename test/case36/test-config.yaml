@@ -23,3 +23,5 @@ adaptation:
                 path: test/case36/vpn-vnfm4.xml
                 log_dir: test/case36
                 diff: true
+test:
+    timeout: 5
