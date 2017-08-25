@@ -1,0 +1,118 @@
+### ESCAPE configuration ###
+service:
+    MAPPER:
+        # Only one-layer mapping is enabled
+        mapping-enabled: false
+orchestration:
+    MAPPER:
+        mapping-enabled: true
+adaptation:
+    # Enable the only test Domain Manager
+    MANAGERS:
+    - TESTDOMAIN
+    TESTDOMAIN:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: NFFGBasedStaticFileAdapter
+                # Define the topology file for the Domain Manager
+                path: test/example/<topo file name>.nffg
+                log_dir: test/example
+
+### Testframework configuration ###
+test:
+    # Module and class used for this testcase
+    # If class and module are not defined the BasicSuccessfulTestCase testcase
+    # class will be used by default
+    module: testframework.testcases.basic
+    class: BasicSuccessfulTestCase
+    # Explicit timeout value for the actual testcase
+    timeout: 5
+    # Request configuration which are used to dynamically generate requests by
+    # DynamicallyGeneratedTestCase
+    request_cfg:
+        # Name of the generator function which generates the requests
+        # The generator functions are searched in generator/generator.py file
+        generator: eight_loop_requests
+        # Required configuration parameters of the generator function
+        abc_nf_types_len: 10
+        chain_maxlen: 8
+        eightloops: 3
+        loops: false
+        multiple_scs: false
+        max_bw: 7
+        max_cpu: 4
+        max_link_bw: 70
+        max_link_delay: 1
+        max_mem: 1600
+        max_sc_count: 2
+        max_storage: 3
+        max_e2e_lat_multiplier: 20
+        min_e2e_lat_multiplier: 1.1
+        sap_cnt: 10
+        # Seed value of the generation, could be a single int, a list for
+        # explicit values or 2 size tuple for intervals
+        seed: 0
+        supported_nf_cnt: 6
+        use_saps_once: false
+        vnf_sharing: 0.0
+        r: 2
+        h: 3
+        # Optional topology file which is used for the request generation
+        substrate: example/topology.nffg
+    # Configuration for dynamically generated topologies
+    topology_cfg:
+        generator: networkx_resource_generator
+        # Required configuration parameters of the generator function
+        seed: 0
+        func_name: erdos_renyi_graph
+        n: 35
+        p: 0.45
+        sap_cnt: 33
+        max_link_delay: 2
+    # If the defined testcase class is a dynamic TestSuit generator, the config
+    # of the generated TestCase classes listed here
+    testcase_cfg:
+        # Module and class name of the generated testcase
+        module: testframework.testcases.dynamic
+        class: DynamicallyGeneratedTestCase
+        # Same configuration as above
+        request_cfg:
+        topology_cfg:
+    # Dynamic test generator: use full combination of request and topologies or
+    # just make pairs based on generation order
+    full_combination: true
+    # Number of generated requests based on testcase_cfg/request_cfg
+    num_of_requests: 10
+    # Number of generated topologies based on testcase_cfg/topology_cfg
+    num_of_topos: 0
+    # REST-API of ESCAPE for REST-based request definition
+    url: http://localhost:8008/escape/sg
+    # Enable requesting callback for service requests
+    callback: true
+    # Address and port on which the testframework's domain mocking component
+    # listens
+    address: localhost
+    port: 7000
+    # Additional delay before sending back the response
+    callback_delay: 0.1
+    # Predefined domain responses for testcases using domain mocking
+    # Domain requests which does not match any of the listed requests get a
+    # default response code
+    responses:
+        # Domain name
+    -   domain: docker1
+        # Name of REST call
+        rpc: get-config
+        # Return value, could be a number for HTTP response code or a filename
+        # for response body
+        return: 00-docker1.xml
+    -   domain: ddo1
+        rpc: edit-config
+        return: 500
+        # Number of trials the domain mocker component responses with the
+        # explicitly given return value  before use the default return value
+        trials: 5
+

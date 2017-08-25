@@ -125,9 +125,9 @@ def parse_cmd_args ():
                                    add_help=True,
                                    prog="run_tests.py")
   parser.add_argument("-f", "--failfast", action="store_true", default=False,
-                      help="Stop on first failure")
+                      help="stop on first failure")
   parser.add_argument("-o", "--show-output", action="count", default=0,
-                      help="Show ESCAPE output (can use multiple "
+                      help="show ESCAPE output (can use multiple "
                            "times for more verbose logging)")
   parser.add_argument("testcases", nargs="*",
                       help="list test case names you want to run. Example: "
@@ -138,7 +138,7 @@ def parse_cmd_args ():
   parser.add_argument("-s", "--standalone", action="store_true", default=False,
                       help="run standalone mode: no timeout, no quitting")
   parser.add_argument("-v", "--verbose", action="store_true", default=False,
-                      help="Run in verbose mode and show output")
+                      help="run testframework in verbose mode and show output")
   return parser.parse_args()
 
 
