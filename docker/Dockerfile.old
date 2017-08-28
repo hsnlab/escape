@@ -10,7 +10,7 @@ WORKDIR /opt/escape
 COPY . ./
 RUN apt-get install git
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
-EXPOSE 8008 8888
+EXPOSE 8008 8888 9000
 ENV PYTHONUNBUFFERED 1
 ENTRYPOINT ["python", "escape.py"]
 CMD ["--debug", "--rosapi", "--config", "config/escape-static-dummy.config"]

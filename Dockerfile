@@ -12,7 +12,7 @@ COPY . ./
 RUN apk add --update --no-cache \
     --repository http://dl-3.alpinelinux.org/alpine/edge/community/ py-numpy
 RUN pip install --no-cache-dir -U $(grep -v -e \# -e numpy requirements.txt)
-EXPOSE 8008 8888
+EXPOSE 8008 8888 9000
 ENV PYTHONUNBUFFERED 1
 ENTRYPOINT ["python", "escape.py"]
 CMD ["--debug", "--rosapi", "--config", "config/escape-static-dummy.config"]

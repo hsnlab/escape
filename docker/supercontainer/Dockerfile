@@ -28,7 +28,7 @@ RUN apt-get update && apt-get -y install sudo git wget && \
     rm -rf  /root/.ssh && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 # REST-APIs:  Service Layer  |  Resource Orchestration Layer  |  Cf-Or
-EXPOSE 8008 8888 8889
+EXPOSE 8008 8888 8889 9000
 # Set starting script which start required services and init a shell
 CMD 'docker/startup.sh';'/bin/bash'
 
