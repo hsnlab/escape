@@ -28,8 +28,8 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9001
+                explicit_address: localhost
+                explicit_port: 9000
                 explicit_update: false
     DDO2:
         module: escape.adapt.managers
@@ -46,8 +46,6 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9002
                 explicit_update: false
     TRANSPORT1:
         module: escape.adapt.managers
@@ -64,8 +62,6 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9003
                 explicit_update: false
     TRANSPORT2:
         module: escape.adapt.managers
@@ -82,8 +78,6 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9004
                 explicit_update: false
 test:
     module: testframework.testcases.domain_mock

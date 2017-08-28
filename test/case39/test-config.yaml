@@ -26,8 +26,6 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9001
                 explicit_update: false
 test:
     module: testframework.testcases.harness

@@ -28,9 +28,6 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9000
-                callback_url: ''
                 explicit_update: false
     OPENSTACK:
         module: escape.adapt.managers
@@ -47,8 +44,6 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9001
                 explicit_update: false
     DOCKER-1:
         module: escape.adapt.managers
@@ -65,9 +60,8 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9002
-                callback_url: http://localhost:9002/callback/yyy
+                explicit_address: 0.0.0.0
+                explicit_port: 9000
                 explicit_update: false
     DOCKER-2:
         module: escape.adapt.managers
@@ -84,8 +78,6 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9003
                 explicit_update: false
     RYU:
         module: escape.adapt.managers
@@ -102,9 +94,8 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                address: localhost
-                port: 9004
-                callback_url: http://localhost:9004/callback/zzz
+                explicit_address: 120.0.0.1
+                explicit_port: 9000
                 explicit_update: false
 test:
     module: testframework.testcases.domain_mock
