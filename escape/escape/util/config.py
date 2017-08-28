@@ -599,6 +599,12 @@ class ESCAPEConfig(object):
     except KeyError:
       return {}
 
+  def get_callback_config (self):
+    try:
+      return self.__configuration[ADAPT]['CALLBACK'].copy()
+    except KeyError:
+      return {}
+
   def get_component (self, component, parent=None):
     """
     Return with the class of the adaptation component.

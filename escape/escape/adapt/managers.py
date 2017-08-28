@@ -418,6 +418,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   DEFAULT_DOMAIN_NAME = "UNIFY"
   CALLBACK_CONFIG_NAME = "CALLBACK"
   CALLBACK_ENABLED_NAME = "enabled"
+  CALLBACK_HOST = "explicit_host"
+  CALLBACK_PORT = "explicit_port"
   CALLBACK_EXPLICIT_DOMAIN_UPDATE = "explicit_update"
   CALLBACK_TYPE_INSTALL = "INSTALL"
   CALLBACK_TYPE_INFO = "INFO"
@@ -464,8 +466,13 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     super(UnifyDomainManager, self).init(configurator, **kwargs)
     cb_cfg = self._adapters_cfg.get(self.CALLBACK_CONFIG_NAME, None)
     if cb_cfg and cb_cfg.get(self.CALLBACK_ENABLED_NAME, None):
-      self.callback_manager = CallbackManager(**cb_cfg)
-      self.callback_manager.start()
+      self.callback_manager = CallbackManager.initialize_on_demand()
+      explicit_host = cb_cfg.get(self.CALLBACK_HOST)
+      explicit_port = cb_cfg.get(self.CALLBACK_PORT)
+      if explicit_host and explicit_port:
+        self.callback_manager.register_url(domain=self.domain_name,
+                                           host=explicit_host,
+                                           port=explicit_port)
     self.log.info("DomainManager for %s domain has been initialized!" %
                   self.domain_name)
 
@@ -495,7 +502,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   def get_last_request (self):
     return self.topoAdapter.last_request
 
-  def _setup_callback (self, hook, type, req_id, msg_id=None, data=None):
+  def _setup_callback (self, hook, type, req_id, msg_id=None, data=None,
+                       timeout=None):
     """
 
     :param hook:
@@ -514,10 +522,12 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       self.log.debug("Used message-id for callback: %s"
                      % msg_id)
       return self.callback_manager.subscribe_callback(hook=hook,
-                                                      type=type,
                                                       cb_id=msg_id,
+                                                      domain=self.domain_name,
                                                       req_id=req_id,
-                                                      data=data)
+                                                      type=type,
+                                                      data=data,
+                                                      timeout=timeout)
 
   def request_info_from_domain (self, info_part, req_id):
     """
@@ -530,7 +540,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     try:
       request_params = {"message_id": "info-%s" % req_id}
       if self.callback_manager is not None:
-        cb_url = self.callback_manager.url
+        cb_url = self.callback_manager.get_url(domain=self.domain_name)
         log.debug("Set callback URL: %s" % cb_url)
         request_params["callback"] = cb_url
         self._setup_callback(hook=self.info_hook,
@@ -568,7 +578,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       request_params = {"diff": self._diff,
                         "message_id": "edit-config-%s" % nffg_part.id}
       if self.callback_manager is not None:
-        cb_url = self.callback_manager.url
+        cb_url = self.callback_manager.get_url(domain=self.domain_name)
         log.debug("Set callback URL: %s" % cb_url)
         request_params["callback"] = cb_url
         cb = self._setup_callback(hook=self.edit_config_hook,
@@ -577,10 +587,10 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                                   type=self.CALLBACK_TYPE_INSTALL,
                                   data=nffg_part)
       status = self.topoAdapter.edit_config(nffg_part, **request_params)
-      if status is None:
-        if self.callback_manager is not None:
-          self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id)
-          return False
+      if status is None and self.callback_manager is not None:
+        self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id,
+                                                   domain=self.domain_name)
+        return False
       else:
         return True
     except:
@@ -605,7 +615,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       request_params = {"diff": self._diff,
                         "message_id": "rollback-%s" % request_id}
       if self.callback_manager is not None:
-        cb_url = self.callback_manager.url
+        cb_url = self.callback_manager.get_url(domain=self.domain_name)
         log.debug("Set callback URL: %s" % cb_url)
         request_params["callback"] = cb_url
         cb = self._setup_callback(hook=self.edit_config_hook,
@@ -613,11 +623,11 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                                   msg_id=request_params.get('message_id'),
                                   type=self.CALLBACK_TYPE_RESET)
       status = self.topoAdapter.edit_config(reset_state, **request_params)
-      if status is None:
-        if self.callback_manager is not None:
-          self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id)
-          self.disable_reset_mode()
-          return False
+      if status is None and self.callback_manager is not None:
+        self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id,
+                                                   domain=self.domain_name)
+        self.disable_reset_mode()
+        return False
       else:
         return True
     except:
@@ -720,7 +730,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     self.log.debug("Callback hook (%s) invoked with callback id: %s" %
                    (callback.type, callback.callback_id))
-    self.callback_manager.unsubscribe_callback(cb_id=callback.callback_id)
+    self.callback_manager.unsubscribe_callback(cb_id=callback.callback_id,
+                                               domain=self.domain_name)
     if callback.type == self.CALLBACK_TYPE_INSTALL:
       event_class = EditConfigHookEvent
     elif callback.type == self.CALLBACK_TYPE_RESET:
@@ -780,7 +791,8 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     self.log.debug("Callback hook (%s) invoked with callback id: %s" %
                    (callback.type, callback.callback_id))
-    self.callback_manager.unsubscribe_callback(cb_id=callback.callback_id)
+    self.callback_manager.unsubscribe_callback(cb_id=callback.callback_id,
+                                               domain=self.domain_name)
     if callback.result_code == 0:
       self.log.warning(
         "Registered callback for request: %s, domain: %s exceeded timeout(%s)!"

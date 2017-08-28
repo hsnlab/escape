@@ -79,6 +79,10 @@ adaptation:
         prefix: escape
         timeout: 30
         diff: false
+    CALLBACK:
+        address: 0.0.0.0
+        port: 9000
+        timeout: 5
     MANAGERS: []
     DOV:
         ENSURE-UNIQUE-ID: true
@@ -152,20 +156,6 @@ adaptation:
                 timeout: 1
                 features:
                     antiaffinity: true
-    REMOTE-ESCAPE:
-        module: escape.adapt.managers
-        class: RemoteESCAPEDomainManager
-        domain_name: REMOTE-ESCAPE
-        poll: false
-        diff: true
-        adapters:
-            REMOTE:
-                module: escape.adapt.adapters
-                class: RemoteESCAPEv2RESTAdapter
-                url: http://192.168.50.128:8888
-                prefix: escape
-                unify_interface: true
-                timeout: 5
     BGP-LS-SPEAKER:
         module: escape.adapt.managers
         class: BGPLSBasedExternalDomainManager
@@ -196,9 +186,8 @@ adaptation:
                 timeout: 1
             CALLBACK:
                 enabled: true
-                address: 0.0.0.0
-                port: 9000
-                callback_url: http://localhost:9000/callback2
+                explicit_host: 192.168.0.1
+                explicit_port: 9001
                 explicit_update: false
     EXTERNAL:
         module: escape.adapt.managers
