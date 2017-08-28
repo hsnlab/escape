@@ -1,0 +1,50 @@
+service:
+    MAPPER:
+        mapping-enabled: false
+orchestration:
+    Sl-Or:
+        virtualizer_type: SINGLE
+adaptation:
+    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    MANAGERS:
+    - Docker2
+    - OPENSTACK
+    - SDN2
+    Docker2:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: Docker2
+        diff: true
+        poll: false
+        adapters:
+            REMOTE:
+                timeout: 2
+                module: escape.adapt.adapters
+                class: UnifyRESTAdapter
+                prefix: ro/docker2
+                url: http://192.168.0.20:8899
+    OPENSTACK:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: OPENSTACK
+        diff: true
+        poll: false
+        adapters:
+            REMOTE:
+                timeout: 4
+                module: escape.adapt.adapters
+                class: UnifyRESTAdapter
+                prefix: ro/openstack
+                url: http://192.168.0.20:8899
+    SDN2:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: SDN2
+        diff: true
+        poll: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: UnifyRESTAdapter
+                prefix: /ro/sdn2
+                url: http://192.168.0.20:8899
