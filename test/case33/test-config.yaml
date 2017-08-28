@@ -7,7 +7,8 @@ orchestration:
         mapping-enabled: true
         trial_and_error: true
 adaptation:
-    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    deployment:
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: true
     MANAGERS:
     - DDO1
     - DDO2

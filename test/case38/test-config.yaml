@@ -8,7 +8,8 @@ orchestration:
     Sl-Or:
         virtualizer_type: SINGLE
 adaptation:
-    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    deployment:
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: true
     MANAGERS:
     - Docker1
     - 0.0.0.2-BGP-LS

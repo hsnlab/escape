@@ -10,7 +10,6 @@ orchestration:
     Sl-Or:
         virtualizer_type: GLOBAL
 adaptation:
-    CLEAR-DOMAINS-AFTER-SHUTDOWN: false
     MANAGERS:
     - STATIC
     STATIC:

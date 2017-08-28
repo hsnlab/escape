@@ -8,7 +8,8 @@ orchestration:
     Sl-Or:
         virtualizer_type: GLOBAL
 adaptation:
-    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    deployment:
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: true
     MANAGERS:
     - Docker1
     Docker1:

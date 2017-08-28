@@ -9,7 +9,6 @@ orchestration:
         virtualizer_type: GLOBAL
         diff: true
 adaptation:
-    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
     MANAGERS:
     - VPN-VNFM4
     VPN-VNFM4:

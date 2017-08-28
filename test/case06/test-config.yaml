@@ -6,7 +6,6 @@ orchestration:
     MAPPER:
         mapping-enabled: true
 adaptation:
-    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
     MANAGERS:
     - MN-STATIC
     MN-STATIC:

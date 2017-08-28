@@ -5,7 +5,8 @@ orchestration:
     MAPPER:
         mapping-enabled: true
 adaptation:
-    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    deployment:
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: true
     MANAGERS: []
 infrastructure:
     TOPO: test/case01/mn-topology.nffg

@@ -15,7 +15,8 @@ orchestration:
     ESCAPE-SERVICE:
         virtualizer_type: SINGLE
 adaptation:
-    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    deployment:
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: true
     MANAGERS:
     - TOPO
     TOPO:
@@ -41,40 +42,14 @@ test:
         class: DynamicallyGeneratedTestCase
         request_cfg:
             generator: balanced_tree_request
-            seed:
-            - 0
-            - 1
-            - 2
-            - 2
-            - 3
-            - 3
-            - 5
-            - 5
-            - 6
-            - 6
-            - 7
-            - 8
-            - 9
+            seed: [0, 1, 2, 2, 3, 3, 5, 5, 6, 6, 7, 8, 9]
             h: 4
             r: 2
             min_link_delay: 2
             max_link_delay: 4
         topology_cfg:
             generator: networkx_resource_generator
-            seed:
-            - 4
-            - 1
-            - 4
-            - 8
-            - 0
-            - 4
-            - 5
-            - 6
-            - 3
-            - 9
-            - 3
-            - 0
-            - 7
+            seed: [4, 1, 4, 8, 0, 4, 5, 6, 3, 9, 3, 0, 7]
             func_name: erdos_renyi_graph
             n: 35
             p: 0.45
