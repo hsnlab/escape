@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import argparse
 import sys
 from collections import OrderedDict
 
@@ -72,4 +73,9 @@ if __name__ == "__main__":
   if len(sys.argv) < 2:
     print "Missing argument: %s [file name]" % sys.argv[0]
     sys.exit(1)
-  main(file_name=sys.argv[1])
+  parser = argparse.ArgumentParser(
+    description="Convert ESCAPE's config file from JSON into YAML format.",
+    add_help=True)
+  parser.add_argument("file", type=str, help="config file name")
+  args = parser.parse_args()
+  main(file_name=args.file)
