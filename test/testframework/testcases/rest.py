@@ -102,7 +102,7 @@ class CallbackManager(HTTPServer, Thread):
   Can wait for a callback in a blocking manner.
   """
   DEFAULT_SERVER_ADDRESS = "localhost"
-  DEFAULT_PORT = 9000
+  DEFAULT_PORT = 9999
   DEFAULT_WAIT_TIMEOUT = 30
 
   def __init__ (self, address=DEFAULT_SERVER_ADDRESS, port=DEFAULT_PORT,
