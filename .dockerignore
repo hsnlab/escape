@@ -1,10 +1,10 @@
-# Ignore git files
-# Add .git folder to be able to use git describe command for versioning
-#**/.git*
 # Ignore all the non-required codes, tools and packages for mininal ESCAPE in MdO
 Jenkinsfile
+Dockerfile
 OpenYuma
 Unify_ncagent
 test
 tools
 .idea
+log/trails/*
+log/*.log
