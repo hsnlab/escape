@@ -380,11 +380,14 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
   # Polling interval
   POLL_INTERVAL = 3
   """Polling interval"""
+  KEEPALIVE_INTERVAL = 3
+  """Keepalive interval"""
   # Request formats
   DEFAULT_DIFF_VALUE = False
   """Request formats"""
 
-  def __init__ (self, domain_name=None, adapters=None, **kwargs):
+  def __init__ (self, domain_name=None, adapters=None, poll=None, diff=None,
+                keepalive=None, **kwargs):
     """
     Init.
 
@@ -401,14 +404,9 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
                                                       **kwargs)
     # Timer for polling function
     self.__timer = None
-    if 'poll' in kwargs:
-      self._poll = bool(kwargs['poll'])
-    else:
-      self._poll = False
-    if 'diff' in kwargs:
-      self._diff = bool(kwargs['diff'])
-    else:
-      self._diff = self.DEFAULT_DIFF_VALUE
+    self._poll = poll if poll is not None else False
+    self._diff = diff if diff is not None else self.DEFAULT_DIFF_VALUE
+    self._keepalive = keepalive if keepalive else False
     self.log.debug("Enforced configuration for %s: poll: %s, diff: %s" % (
       self.__class__.__name__, self._poll, self._diff))
 
@@ -444,7 +442,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     self._load_adapters(configurator=configurator, **kwargs)
     # Skip to start polling if it's set
     if not self._poll:
-      # Try to request/parse/update Mininet topology
+      # Try to request/parse/update topology
       if not self._detect_topology():
         self.log.warning(
           "%s domain not confirmed during init!" % self.domain_name)
@@ -455,7 +453,13 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
                                 domain=self.domain_name,
                                 data=self.internal_topo,
                                 cause=DomainChangedEvent.TYPE.DOMAIN_UP)
+      if self._keepalive:
+        self.log.debug("Keepalive is enbled! Start sending ping messages...")
+        self.start_keepalive()
     else:
+      if self._keepalive:
+        self.log.warning("Keepalive feature is disabled "
+                         "when polling is enabled!")
       self.log.info("Start polling %s domain..." % self.domain_name)
       self.start_polling(self.POLL_INTERVAL)
 
@@ -478,8 +482,38 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
 
     :return: None
     """
-    self.stop_polling()
+    self.stop_timer()
     super(AbstractRemoteDomainManager, self).finit()
+
+  ##############################################################################
+  # Common functions for keepalive feature
+  ##############################################################################
+
+  def start_keepalive (self, interval=5):
+    if self._poll:
+      self.log.warning("Call sending_keepalive when polling is enabled!")
+      return
+    if self.__timer:
+      return
+    self.__timer = Timer(interval, self.is_alive, recurring=True, started=True,
+                         selfStoppable=True)
+
+  def is_alive (self):
+    if not self._detected:
+      if self._detect_topology():
+        # Domain is reachable
+        self.raiseEventNoErrors(DomainChangedEvent,
+                                domain=self.domain_name,
+                                data=self.internal_topo,
+                                cause=DomainChangedEvent.TYPE.DOMAIN_UP)
+    else:
+      if not self.topoAdapter.check_domain_reachable():
+        self.log.warning("Lost connection with %s agent!" % self.domain_name)
+        self._detected = False
+        self.internal_topo = None
+        self.raiseEventNoErrors(DomainChangedEvent,
+                                domain=self.domain_name,
+                                cause=DomainChangedEvent.TYPE.DOMAIN_DOWN)
 
   ##############################################################################
   # Common functions for polling
@@ -512,7 +546,7 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     self.__timer = Timer(interval, self.poll, recurring=True, started=True,
                          selfStoppable=True)
 
-  def stop_polling (self):
+  def stop_timer (self):
     """
     Stop timer.
 

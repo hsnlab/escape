@@ -658,12 +658,16 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :return: cleanup result
     :rtype: bool
     """
+    if not self._detected:
+      self.log.warning("Domain: %s is not detected! Skip domain cleanup..."
+                       % self.domain_name)
+      return True
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
       self.log.warning("Missing original topology in %s domain! "
                        "Skip domain resetting..." % self.domain_name)
       return
-    self.log.info("Reset %s domain based on original topology description..." %
+    self.log.info("RClear %s domain based on original topology description..." %
                   self.domain_name)
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute
@@ -694,6 +698,10 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     :return: cleanup result
     :rtype: bool
     """
+    if not self._detected:
+      self.log.warning("Domain: %s is not detected! Skip domain reset..."
+                       % self.domain_name)
+      return True
     empty_cfg = self.topoAdapter.get_original_topology()
     if empty_cfg is None:
       self.log.warning("Missing original topology in %s domain! "

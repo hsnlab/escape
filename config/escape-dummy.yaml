@@ -32,6 +32,7 @@ adaptation:
         domain_name: OPENSTACK
         diff: true
         poll: false
+        keepalive: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -45,6 +46,7 @@ adaptation:
         domain_name: DOCKER-1
         diff: true
         poll: false
+        keepalive: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters

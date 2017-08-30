@@ -147,6 +147,7 @@ adaptation:
         domain_name: OPENSTACK
         diff: true
         poll: false
+        keepalive: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -156,6 +157,25 @@ adaptation:
                 timeout: 1
                 features:
                     antiaffinity: true
+    DOCKER:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: DOCKER
+        diff: true
+        poll: false
+        keepalive: off
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: UnifyRESTAdapter
+                prefix: ro/os
+                url: http://127.0.0.1:8899
+                timeout: 1
+            CALLBACK:
+                enabled: true
+                explicit_host: 192.168.0.1
+                explicit_port: 9001
+                explicit_update: false
     BGP-LS-SPEAKER:
         module: escape.adapt.managers
         class: BGPLSBasedExternalDomainManager
@@ -171,24 +191,6 @@ adaptation:
                 url: http://localhost:8088
                 prefix: restconf/data
                 timeout: 5
-    DOCKER:
-        module: escape.adapt.managers
-        class: UnifyDomainManager
-        domain_name: DOCKER
-        diff: true
-        poll: false
-        adapters:
-            REMOTE:
-                module: escape.adapt.adapters
-                class: UnifyRESTAdapter
-                prefix: ro/os
-                url: http://127.0.0.1:8899
-                timeout: 1
-            CALLBACK:
-                enabled: true
-                explicit_host: 192.168.0.1
-                explicit_port: 9001
-                explicit_update: false
     EXTERNAL:
         module: escape.adapt.managers
         class: UnifyDomainManager
