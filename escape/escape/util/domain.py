@@ -1139,40 +1139,6 @@ class DefaultUnifyDomainAPI(object):
     raise NotImplementedError
 
 
-class OpenStackAPI(DefaultUnifyDomainAPI):
-  """
-  Define interface for managing OpenStack domain.
-
-  .. note::
-    Fitted to the API of ETH REST-like server which rely on virtualizer3!
-
-  Follows the MixIn design pattern approach to support OpenStack functionality.
-  """
-  pass
-
-
-class UniversalNodeAPI(DefaultUnifyDomainAPI):
-  """
-  Define interface for managing Universal Node domain.
-
-  .. note::
-    Fitted to the API of ETH REST-like server which rely on virtualizer3!
-
-  Follows the MixIn design pattern approach to support UN functionality.
-  """
-  pass
-
-
-class RemoteESCAPEv2API(DefaultUnifyDomainAPI):
-  """
-  Define interface for managing remote ESCAPEv2 domain.
-
-  Follows the MixIn design pattern approach to support remote ESCAPEv2
-  functionality.
-  """
-  pass
-
-
 class BGPLSbasedTopologyManagerAPI(object):
   """
   Define interface for managing external domains using REST-API of
