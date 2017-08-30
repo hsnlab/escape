@@ -46,24 +46,31 @@ function build {
     info "======================================================================"
     info "===                        Build test image                        ==="
     info "======================================================================"
-
-    docker build --force-rm --no-cache -t "$IMAGE" -f testframework/Dockerfile ..
+    docker build --force-rm --no-cache -t ${IMAGE} -f testframework/Dockerfile ..
 }
 
 function run () {
-    if [ -z $(docker images -q "$IMAGE") ]; then build; fi
-
+    if [ -z $(docker images -q ${IMAGE} ) ]; then build; fi
     info "======================================================================"
     info "===                            Run tests                           ==="
     info "======================================================================"
-
-    docker run --rm --volume "$PWD/..:/opt/escape" -ti "$IMAGE" "$@"
+    docker run --rm --volume "$PWD/../escape:/opt/escape/escape:ro" \
+                    --volume "$PWD:/opt/escape/test" -ti ${IMAGE} ${@}
 }
 
-while getopts ':bh:' OPTION; do
+function clean () {
+    info "======================================================================"
+    info "===                             Cleanup                            ==="
+    info "======================================================================"
+    if [ ! -z $(docker images -q ${IMAGE} ) ]; then docker rmi ${IMAGE}; fi
+    ../tools/clear_docker.sh
+}
+
+while getopts ':bch:' OPTION; do
     case ${OPTION} in
         b|--build)  build && exit;;
+        c|--clean)  clean && exit;;
         h)  print_help && exit;;
     esac
 done
-run "$@"
+run ${@}

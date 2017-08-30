@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-
+# Exited containers
+EXITED=$(docker ps --no-trunc -aqf status=exited)
 # Clear containers
-sudo docker rm $(docker ps --no-trunc -aqf status=exited)
+if [ -n "$EXITED" ]; then sudo docker rm ${EXITED}; fi
 # Clear images
-sudo docker rmi $(docker images -q -f "dangling=true")
+DANGLING=$(docker images -q -f "dangling=true")
+if [ -n "$DANGLING" ]; then sudo docker rmi ${DANGLING}; fi
 sudo docker images

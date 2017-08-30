@@ -74,7 +74,8 @@ def main (args):
       if sum_test_cases:
         results.append(test_runner.run(test_suite))
     except KeyboardInterrupt:
-      log.warning("\n\nReceived KeyboardInterrupt! Abort running test suite...")
+      log.warning("\nReceived KeyboardInterrupt! "
+                  "Abort running main test suite...")
   # Evaluate results values
   was_success = all(map(lambda res: res.wasSuccessful(), results))
   # Print footer
