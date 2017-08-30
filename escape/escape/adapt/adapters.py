@@ -855,7 +855,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     if self.__original_virtualizer is None:
       log.debug("Store Virtualizer(id: %s, name: %s) as the original domain "
                 "config..." % (virt.id.get_value(), virt.name.get_value()))
-      self.__original_virtualizer = virt.full_copy()
+      # self.__original_virtualizer = virt.full_copy()
+      # Copy reference instead of full_copy to avoid overhead
+      self.__original_virtualizer = virt
     log.debug("Used domain name for conversion: %s" % self.domain_name)
     return nffg
 
@@ -928,7 +930,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: None
     """
     log.debug("Cache received 'get-config' response...")
-    self.__last_virtualizer = data.full_copy()
+    # self.__last_virtualizer = data.full_copy()
+    # Copy reference instead of full_copy to avoid overhead
+    self.__last_virtualizer = data
 
   def get_topo_cache (self):
     return self.__last_virtualizer
@@ -943,6 +947,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     log.debug("Cache generated 'edit-config' request...")
     # self.__last_request = data.full_copy()
+    # Copy reference instead of full_copy to avoid overhead
     self.__last_request = data
 
   def __is_changed (self, new_data):
