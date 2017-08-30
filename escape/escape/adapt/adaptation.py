@@ -552,6 +552,8 @@ class ControllerAdapter(object):
 
     :param mapped_nffg: mapped NF-FG instance which need to be installed
     :type mapped_nffg: :class:`NFFG`
+    :param original_request: top level, original :class:`NFFG` request
+    :type original_request: :class:`NFFG`
     :return: deploy result
     :rtype: DomainRequestStatus
     """
