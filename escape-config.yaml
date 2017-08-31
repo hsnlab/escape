@@ -3,7 +3,6 @@ service:
         module: escape.service.sas_mapping
         class: ServiceGraphMapper
         mapping-enabled: false
-        trial_and_error: false
         mapping-config:
             profiling: false
     STRATEGY:

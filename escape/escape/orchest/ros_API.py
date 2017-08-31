@@ -838,6 +838,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
           log.info("TRIAL_AND_ERROR is enabled! Reschedule for mapping...")
           self.__proceed_trial_and_error(original_request_id=event.id)
           return
+        else:
+          log.debug("TRIAL_AND_ERROR is disabled! Proceeding...")
     if not event.is_pending(event.result):
       self.__process_mapping_result(nffg_id=event.id,
                                     fail=event.is_error(event.result))
