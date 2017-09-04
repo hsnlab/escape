@@ -641,7 +641,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     Remove NFs and Flowrules from given topology.
 
     :param virtualizer: topology
-    :type virtualizer: :any:`Virtualizer`
+    :type virtualizer: :class:`Virtualizer`
     :return:
     """
     for node in virtualizer.nodes:
@@ -667,7 +667,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       self.log.warning("Missing original topology in %s domain! "
                        "Skip domain resetting..." % self.domain_name)
       return
-    self.log.info("RClear %s domain based on original topology description..." %
+    self.log.info("Clear %s domain based on original topology description..." %
                   self.domain_name)
     # If poll is enabled then the last requested topo is most likely the most
     # recent topo else request the topology for the most recent one and compute

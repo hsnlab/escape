@@ -185,7 +185,7 @@ class CallbackManager(HTTPServer, Thread):
     self.__domain_proxy = {}
     self.daemon = True
     self.__blocking_mutex = threading.Event()
-    log.debug("Initiate %s" % self.__class__.__name__)
+    log.debug("Init %s" % self.__class__.__name__)
 
   @classmethod
   def initialize_on_demand (cls):
@@ -241,11 +241,11 @@ class CallbackManager(HTTPServer, Thread):
       self.server_close()
 
   def start (self):
-    if not self.is_alive():
+    if not self.isAlive():
       super(CallbackManager, self).start()
 
   def shutdown (self):
-    if self.is_alive():
+    if self.isAlive():
       super(CallbackManager, self).shutdown()
 
   def subscribe_callback (self, hook, cb_id, domain, type, req_id=None,
