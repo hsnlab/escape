@@ -497,7 +497,10 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     super(UnifyDomainManager, self).finit()
     self.topoAdapter.finit()
     if self.callback_manager:
-      self.callback_manager.shutdown()
+      try:
+        self.callback_manager.shutdown()
+      except KeyboardInterrupt:
+        pass
 
   def get_last_request (self):
     return self.topoAdapter.last_request

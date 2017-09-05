@@ -834,7 +834,7 @@ class ControllerAdapter(object):
     if not CONFIG.rollback_on_failure():
       return
     log.info("Rollback mode is enabled! Resetting previous state....")
-    status.data = previous_state
+    status.set_mapping_result(data=previous_state)
     log.debug("Current status: %s" % status)
     for domain in status.domains:
       domain_mgr = self.domains.get_component_by_domain(domain_name=domain)
@@ -1382,15 +1382,27 @@ class DomainRequestStatus(object):
     self.__id = id
     self.__statuses = {}.fromkeys(domains, self.INITIALIZED)
     self.__standby = False
-    self.data = data
+    self.__data = data
 
   @property
   def id (self):
     return self.__id
 
-  def reset_statuses (self):
+  @property
+  def data (self):
+    return self.__data
+
+  def set_mapping_result (self, data):
+    log.debug("Set mapping result: %s for service request: %s"
+              % (data.id, self.__id))
+    self.__data = data
+
+  def reset_status (self, data):
+    log.debug("Clear domain status...")
     for domain in self.__statuses:
       self.__statuses[domain] = self.INITIALIZED
+    self.set_mapping_result(data=data)
+    self.reset_standby()
 
   def set_standby (self):
     log.debug("Put request: %s in standby mode" % self.__id)
@@ -1403,6 +1415,11 @@ class DomainRequestStatus(object):
   def set_active (self):
     if self.__standby:
       log.debug("Continue request: %s " % self.__id)
+      self.__standby = False
+
+  def reset_standby (self):
+    if self.__standby:
+      log.debug("Reset request to active mode")
       self.__standby = False
 
   def clear (self):
@@ -1513,8 +1530,8 @@ class DomainRequestManager(object):
     for s in self._services:
       if s.id == id:
         log.warning("Detected already registered service request: %s in %s! "
-                    "Reset deploy statuses..." % (id, self.__class__.__name__))
-        s.reset_statuses()
+                    "Reset deploy status..." % (id, self.__class__.__name__))
+        s.reset_status(data=data)
         self._last = s
         return s
     else:
@@ -1592,6 +1609,7 @@ class GlobalResourceManager(object):
   def backup_dov_state (self):
     log.debug("Backup current DoV state...")
     self.__backup = self.dov.get_resource_info()
+    self.__backup.id = (self.__backup.id + "-backup")
 
   def get_backup_state (self):
     log.debug("Acquire previous DoV state...")
