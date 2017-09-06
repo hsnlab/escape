@@ -66,11 +66,11 @@ function clean () {
     ../tools/clear_docker.sh
 }
 
-while getopts ':bch:' OPTION; do
+while getopts ':bch' OPTION; do
     case ${OPTION} in
         b|--build)  build && exit;;
         c|--clean)  clean && exit;;
-        h)  print_help && exit;;
+        h)  print_help;;
     esac
 done
 run ${@}
