@@ -10,13 +10,6 @@ Classes of the module:
    escape.nffg_lib.nffg
    :parts: 1
 
-:any:`AbstractNFFG` represents the common function for an NFFG representation.
-
-:class:`NFFG` is the internal representation of an NFFG.
-
-:class:`NFFGToolBox` contains helper functions for :class:`NFFG` handling and
-operations.
-
 Module contents
 ---------------
 

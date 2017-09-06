@@ -9,15 +9,6 @@ Classes of the module:
    escape.service.sas_orchestration
    :parts: 1
 
-:any:`ServiceOrchestrator` orchestrates SG mapping and centralize layer logic.
-
-:any:`SGManager` stores and handles Service Graphs.
-
-:any:`MissingVirtualViewEvent` can signal missing virtual info.
-
-:any:`VirtualResourceManager` contains the functionality tided to the
-layer's virtual view and virtual resources.
-
 Module contents
 ---------------
 

@@ -87,7 +87,19 @@ class GetGlobalResInfoEvent(Event):
 
 
 class CollectMonitoringDataEvent(Event):
+  """
+  Event for sending Info request to CAS.
+  """
+
   def __init__ (self, info, id):
+    """
+    Init.
+
+    :param info: Info structure
+    :type info: :class:`Virtualizer`
+    :param id: unique id
+    :type id: str or int
+    """
     super(CollectMonitoringDataEvent, self).__init__()
     self.info = info
     self.id = id
@@ -176,6 +188,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.warning("In AGENT mode Service Layer is not going to be initialized!")
 
   def post_up_hook (self, event):
+    """
+    Perform tasks after ESCAPE is up.
+
+    :param event: event object
+    :type event: :class:`UpEvent`
+    :return: None
+    """
     log.debug("Call post Up event hook for layer: %s" % self._core_name)
     if self._rosapi:
       self.ros_api.ping_response_code = self.ros_api.POST_UP_PING_CODE
@@ -278,7 +297,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def __get_slor_resource_view (self):
     """
-    Return with the Virtualizer object assigned to the Sl-Or interface.
+    :return: Return with the Virtualizer object assigned to the Sl-Or interface.
+    :rtype: :any:`AbstractVirtualizer`
     """
     virt_mgr = self.orchestrator.virtualizerManager
     return virt_mgr.get_virtual_view(virtualizer_id=self.ros_api.api_id,
@@ -317,12 +337,16 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
                 self.ros_api.api_id)
 
+  # noinspection PyUnusedLocal
   def api_ros_edit_config (self, nffg, params):
     """
     Implementation of REST-API RPC: edit-config
 
     :param nffg: NFFG need to deploy
     :type nffg: :class:`NFFG`
+    :param params: original request params
+    :type params: dict
+    :return: None
     """
     log.getChild('[Sl-Or]').info("Invoke install_nffg on %s with SG: %s " % (
       self.__class__.__name__, nffg))
@@ -439,6 +463,14 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   @schedule_as_coop_task
   def api_ros_info (self, info, id):
+    """
+    Main entry point to process a received Info request.
+
+    :param info: parsed Info structure
+    :type info: :class:`Info`
+    :param id: unique id
+    :type id: str or int
+    """
     slor_topo = self.__get_slor_resource_view().get_resource_info()
     splitted = self.orchestrator.filter_info_request(info=info,
                                                      slor_topo=slor_topo)
@@ -627,8 +659,11 @@ class ResourceOrchestrationAPI(AbstractAPI):
   @schedule_as_coop_task
   def __proceed_trial_and_error (self, original_request_id):
     """
-    :param original_request_id:
-    :return:
+    Perform remapping task after a failed deploy trial.
+
+    :param original_request_id: original request id
+    :type original_request_id: str or int
+    :return: None
     """
     log.getChild('API').info("Invoke trial_and_error for remapping "
                              "with request id: %s" % original_request_id)
@@ -651,10 +686,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
   def __process_mapping_result (self, nffg_id, fail):
     """
+    Perform common tasks after the mapping alg has run and deploy is performed.
 
-    :param nffg_id:
-    :param fail:
-    :return:
+    :param nffg_id: deployed NFFG id
+    :type nffg_id: str or int
+    :param fail: mark the deploy step was failed
+    :type fail: bool
+    :return: None
     """
     if not (hasattr(self, 'ros_api') and self.ros_api):
       return
@@ -750,6 +788,16 @@ class ResourceOrchestrationAPI(AbstractAPI):
       self.__process_info_result(status=event.status, fail=True)
 
   def __process_info_result (self, status, fail):
+    """
+    Perform common tasks after an Info request was processed and responses were
+    collected.
+
+    :param status: deploy status
+    :type status: :any:`DomainRequestStatus`
+    :param fail: mark the Info step was failed
+    :type fail: bool
+    :return: None
+    """
     if hasattr(self, 'ros_api') and self.ros_api:
       log.getChild('API').debug("Cache collected 'info' request status...")
       req_status = self.ros_api.request_cache.get_request(message_id=status.id)
@@ -792,6 +840,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
   # UNIFY Or - Ca API functions starts here
   ##############################################################################
 
+  # noinspection PyUnusedLocal
   def _handle_MissingGlobalViewEvent (self, event):
     """
     Request Global infrastructure View from CAS (UNIFY Or - CA API).
@@ -1336,9 +1385,12 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
 
   def info (self, params):
     """
+    Process received Info request, propagate relevant parts to domains an
+    respond withe the collected and unified responses.
 
-    :param params:
-    :return:
+    :param params: request params
+    :type params: dict
+    :return: None
     """
     self.log.debug("Call %s function: info" % self.LOGGER_NAME)
     raw_body = self._get_body()

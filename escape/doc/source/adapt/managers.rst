@@ -13,24 +13,6 @@ Classes of the module:
    escape.adapt.managers
    :parts: 1
 
-:any:`GetLocalDomainViewEvent` implements an event for requesting the
-Global View (DoV).
-
-:any:`InternalDomainManager` represent the top class for interacting with the
-emulated infrastructure.
-
-:any:`SDNDomainManager` interacts and handles legacy OpenFlow 1.0 switches
-aggregated into a separate domain.
-
-:any:`RemoteESCAPEDomainManager` ensures the connection with a different ESCAPE
-instance started in agent mode.
-
-:any:`ExternalDomainManager` implements the related functionality for
-managing/detecting external domain from other providers.
-
-:any:`BGPLSBasedExternalDomainManager` implements an external manager which uses
-the TopologyManager component to detect external domains though BGP-LS protocol.
-
 Module contents
 ---------------
 

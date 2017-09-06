@@ -19,7 +19,7 @@ import weakref
 
 from wrapt.decorators import synchronized
 
-import escape.adapt
+from escape.adapt import log
 from escape.adapt.policy_enforcement import PolicyEnforcementMetaClass
 from escape.nffg_lib.nffg import NFFGToolBox, NFFG
 from escape.util.config import CONFIG
@@ -29,7 +29,7 @@ from pox.lib.revent.revent import EventMixin, Event
 # Common reference name for the DomainVirtualizer
 DoV = "DoV"
 """Common reference name for the DomainVirtualizer"""
-log = escape.adapt.log.getChild("view")
+log = log.getChild("view")
 
 
 class DoVChangedEvent(Event):
@@ -129,6 +129,7 @@ class AbstractFilteringVirtualizer(AbstractVirtualizer):
   """
   REVISION_SEED = 1
 
+  # noinspection PyUnusedLocal
   def __init__ (self, id, global_view, type):
     """
     Init.
@@ -270,6 +271,7 @@ class DomainVirtualizer(AbstractVirtualizer):
   # Reentrant lock to synchronize the access to the DoV
   __DoV_lock = threading.RLock()
 
+  # noinspection PyUnusedLocal
   def __init__ (self, mgr, global_res=None, **kwargs):
     """
     Init.
@@ -559,6 +561,7 @@ class GlobalViewVirtualizer(AbstractFilteringVirtualizer):
   TYPE = 'GLOBAL'
   """Type name of the Virtualizer"""
 
+  # noinspection PyUnusedLocal
   def __init__ (self, global_view, id, **kwargs):
     """
     Init.
@@ -589,6 +592,7 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
   TYPE = 'SINGLE'
   """Type name of the Virtualizer"""
 
+  # noinspection PyUnusedLocal
   def __init__ (self, global_view, id, **kwargs):
     """
     Init.
@@ -653,6 +657,7 @@ class LocalSingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
   TYPE = 'SINGLE-LOCAL'
   """Type name of the Virtualizer"""
 
+  # noinspection PyUnusedLocal
   def __init__ (self, global_view, id, **kwargs):
     """
     Init.

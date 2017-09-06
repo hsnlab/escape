@@ -9,11 +9,6 @@ Classes of the module:
    escape.infr.il_API
    :parts: 1
 
-:any:`DeploymentFinishedEvent` can send status info about NFFG deployment.
-
-:any:`InfrastructureLayerAPI` represents the IL layer and implement all
-related functionality.
-
 Module contents
 ---------------
 

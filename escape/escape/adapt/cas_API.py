@@ -119,6 +119,13 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.info("Controller Adaptation Sublayer has been initialized!")
 
   def post_up_hook (self, event):
+    """
+    Perform tasks after ESCAPE is up.
+
+    :param event: event object
+    :type event: :class:`UpEvent`
+    :return: None
+    """
     log.debug("Call post Up event hook for layer: %s" % self._core_name)
     if self._dovapi:
       self.dov_api.ping_response_code = self.dov_api.POST_UP_PING_CODE
@@ -230,9 +237,11 @@ class ControllerAdaptationAPI(AbstractAPI):
   @schedule_as_coop_task
   def _handle_CollectMonitoringDataEvent (self, event):
     """
+    Propagate Info request to the domain.
 
-    :param event:
-    :return:
+    :param event: event object
+    :type event: :class:`CollectMonitoringDataEvent`
+    :return: None
     """
     log.getChild('API').info("Received recursive monitoring request from %s "
                              "Layer" % event.source._core_name.title())
@@ -261,7 +270,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     Generate global resource info and send back to ROS.
 
     :param event: event object
-    :type event: :any:`GetGlobalResInfoEvent`
+    :type event: :class:`GetGlobalResInfoEvent`
     :return: None
     """
     log.getChild('API').debug(
@@ -309,7 +318,18 @@ class ControllerAdaptationAPI(AbstractAPI):
       log.error("Virtualizer(id=%s) assigned to DoV-API is not found!" %
                 self.dov_api.api_id)
 
+  # noinspection PyUnusedLocal
   def api_cas_edit_config (self, nffg, params):
+    """
+    Implement edit-config call for CAS layer. Receive edit-config request from
+    external component and directly forward data for deployment.
+
+    :param nffg: received request
+    :type nffg: :class:`NFFG`
+    :param params: request params
+    :type params: dict
+    :return: None
+    """
     log.getChild('[DOV-API]').info("Invoke instantiation on %s with NF-FG: "
                                    "%s " % (self.__class__.__name__, nffg.name))
     deploy_status = self.controller_adapter.status_mgr.get_last_status()
@@ -328,6 +348,9 @@ class ControllerAdaptationAPI(AbstractAPI):
 
 
 class DirectDoVRequestHandler(BasicUnifyRequestHandler):
+  """
+  Dedicated request handler class for CAS REST-API.
+  """
   LOGGER_NAME = "Dov-API"
   log = log.getChild("[%s]" % LOGGER_NAME)
   # Name mapper to avoid Python naming constraint

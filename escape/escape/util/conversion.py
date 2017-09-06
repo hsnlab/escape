@@ -50,6 +50,7 @@ except (ImportError, AttributeError):
   from virtualizer import __version__ as V_VERSION, Virtualizer
 
 
+# noinspection PyShadowingNames
 class NFFGConverter(object):
   """
   Convert different representation of NFFG in both ways.
@@ -1331,7 +1332,8 @@ class NFFGConverter(object):
       added_links.append(
         "%s:%s-%s:%s" % (src_node, src_port, dst_node, dst_port))
 
-  def _parse_virtualizer_metadata (self, nffg, virtualizer):
+  @staticmethod
+  def _parse_virtualizer_metadata (nffg, virtualizer):
     """
     Parse metadata from Virtualizer.
 
@@ -1347,10 +1349,10 @@ class NFFGConverter(object):
       nffg.add_metadata(name=key,
                         value=virtualizer.metadata[key].value.get_value())
 
-  def __process_variables (self, infra, vars):
+  def __process_variables (self, infra, variables):
     frs = []
     type = set()
-    for var in vars:
+    for var in variables:
       var = var.strip()
       for fr in infra.flowrules():
         if fr.delay == var:
@@ -1361,12 +1363,12 @@ class NFFGConverter(object):
           type.add("bandwidth")
     if len(type) != 1:
       self.log.warning("Variables: %s refer to multiple type of fields: %s"
-                       % (vars, type))
+                       % (variables, type))
       return None, None
     type = type.pop()
     return frs, type
 
-  def _parse_virtualizer_requirement (self, nffg, virtualizer):
+  def _parse_virtualizer_requirement (self, nffg):
     self.log.debug("Process requirement formulas...")
     reqs = {}
     for infra in nffg.infras:
@@ -1376,12 +1378,12 @@ class NFFGConverter(object):
         self.log.debug("Detected formula: %s" % formula)
         try:
           splitted = formula.split('|')
-          vars = splitted[0].strip().split('+')
+          variables = splitted[0].strip().split('+')
           value = float(splitted[-1])
         except:
           self.log.warning("Wrong formula format: %s" % formula)
           continue
-        frs, type = self.__process_variables(infra=infra, vars=vars)
+        frs, type = self.__process_variables(infra=infra, variables=variables)
         if not (frs or type):
           continue
         # Recreate sg_path
@@ -1536,7 +1538,7 @@ class NFFGConverter(object):
     # Parse Metadata and from Virtualizer
     self._parse_virtualizer_metadata(nffg=nffg, virtualizer=virtualizer)
     # Parse requirement links from Virtualizer
-    self._parse_virtualizer_requirement(nffg=nffg, virtualizer=virtualizer)
+    self._parse_virtualizer_requirement(nffg=nffg)
     # If the received NFFG is a SingleBiSBiS, recreate the SG hop links
     # which are in compliance with flowrules in SBB node
     if create_sg_hops:
@@ -1883,7 +1885,7 @@ class NFFGConverter(object):
           if not (var_delay and str(var_delay).startswith('$')):
             dvar = "$d" + str(v_fe.id.get_value())
             self.log.debug("Delay value: %s is not a variable! "
-                             "Replacing with: %s" % (var_delay, dvar))
+                           "Replacing with: %s" % (var_delay, dvar))
             v_fe.resources.delay.set_value(dvar)
             formula.append("$d" + str(v_fe.id.get_value()))
           else:
@@ -1911,7 +1913,7 @@ class NFFGConverter(object):
           if not (var_bw and str(var_bw).startswith('$')):
             bwvar = "$bw" + str(v_fe.id.get_value())
             self.log.debug("Bandwidth value: %s is not a variable! "
-                             "Replacing with: %s" % (var_bw, bwvar))
+                           "Replacing with: %s" % (var_bw, bwvar))
             v_fe.resources.bandwidth.set_value(bwvar)
             formula.append("$bw" + str(v_fe.id.get_value()))
           else:
@@ -2638,7 +2640,8 @@ class NFFGConverter(object):
     return base
 
 
-class UC3MNFFGConverter():
+# noinspection PyShadowingNames
+class UC3MNFFGConverter(object):
   """
   Convert JSON-based UC3M format to :class:`NFFG`.
 
@@ -2775,58 +2778,6 @@ class UC3MNFFGConverter():
       if item.startswith('port[id='):
         port_id = item.split('=')[1].rstrip(']')
     return node_id, port_id
-
-
-def test_NFFGConverter (path):
-  """
-  Test function for internal testing.
-
-  :return: None
-  """
-  import logging
-
-  logging.basicConfig(level=logging.DEBUG)
-  log = logging.getLogger(__name__)
-  c = NFFGConverter(domain="OPENSTACK",
-                    # ensure_unique_id=True,
-                    logger=log)
-  # with open(
-  # "../../../../examples/escape-mn-mapped-test.nffg") as f:
-  # "../../../gui/escape-2sbb-mapped.nffg") as f:
-  # "../../../examples/hwloc2nffg_IntelXeonE5-2620-rhea.nffg") as f:
-  # nffg = NFFG.parse(raw_data=f.read())
-  # nffg.duplicate_static_links()
-  # log.debug("Parsed NFFG:\n%s" % nffg.dump())
-  # virt = c.dump_to_Virtualizer(nffg=nffg)
-  # log.debug("Converted:")
-  # log.debug(virt.xml())
-  # log.debug("Reconvert to NFFG:")
-  # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
-  # log.debug(nffg.dump())
-
-  # nffg = NFFG.parse_from_file("../../../examples/escape-sbb-mapped.nffg")
-  nffg = NFFG.parse_from_file(path)
-  log.info("Parsed NFFG:\n%s" % nffg.dump())
-  virt = c.dump_to_Virtualizer(nffg=nffg)
-  log.info("Reconverted Virtualizer:\n%s" % virt.xml())
-
-  # # v = virt_lib.Virtualizer.parse_from_file(
-  # #   "../../../examples/escape-sbb-mapped.xml")
-  # # nffg = c.parse_from_Virtualizer(vdata=v.xml())
-  # nffg = c.parse_from_Virtualizer(vdata=virt.xml())
-  # log.debug(nffg.dump())
-
-
-def test_UC3MNFFGConverter ():
-  import logging
-
-  logging.basicConfig(level=VERBOSE)
-  log = logging.getLogger(__name__)
-  c = UC3MNFFGConverter(domain="BGP-LS", logger=log)
-  with open("examples/UC3M_json_example.json") as f:
-    data = f.read()
-  nffg = c.parse_from_raw(raw_data=data)
-  print nffg.dump()
 
 
 if __name__ == "__main__":

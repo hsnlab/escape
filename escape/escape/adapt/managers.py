@@ -55,14 +55,23 @@ class AbstractHookEvent(Event):
 
 
 class EditConfigHookEvent(AbstractHookEvent):
+  """
+  Event class for handling callback caused by an edit-config install request.
+  """
   pass
 
 
 class InfoHookEvent(AbstractHookEvent):
+  """
+  Event class for handling callback caused by a recursive Info request.
+  """
   pass
 
 
 class ResetHookEvent(AbstractHookEvent):
+  """
+  Event class for handling callback caused by an edit-config reset request.
+  """
   pass
 
 
@@ -245,6 +254,10 @@ class SDNDomainManager(AbstractDomainManager):
 
   @property
   def controller_name (self):
+    """
+    :return: Return with the adapter name
+    :rtype: str
+    """
     return self.controlAdapter.task_name
 
   def install_nffg (self, nffg_part):
@@ -395,6 +408,11 @@ class SDNDomainManager(AbstractDomainManager):
     return self._delete_flowrules(nffg_part=sdn_topo)
 
   def reset_domain (self):
+    """
+    Reset domain to the fisrt received state.
+
+    :return: None
+    """
     self.clear_domain()
 
 
@@ -446,10 +464,20 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     self.__last_success_state = None
 
   def enable_reset_mode (self):
+    """
+    Set RESET mode.
+
+    :return: None
+    """
     self.log.debug("Enable reset mode for: %s" % self)
     self.__reset_mode = True
 
   def disable_reset_mode (self):
+    """
+    Disable reset mode.
+
+    :return: None
+    """
     self.log.debug("Disable reset mode for: %s" % self)
     self.__reset_mode = False
 
@@ -503,17 +531,29 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         pass
 
   def get_last_request (self):
+    """
+    :return: Return with the last sent request.
+    :rtype: :class:`Virtualizer` or :class:`NFFG`
+    """
     return self.topoAdapter.last_request
 
   def _setup_callback (self, hook, type, req_id, msg_id=None, data=None,
                        timeout=None):
     """
+    Initiate and register callback manager for callbacks.
 
-    :param hook:
-    :param type:
-    :param req_id:
-    :param data:
-    :return:
+    :param hook: hook function
+    :type hook: callable
+    :param type: callback type
+    :type type: str
+    :param req_id: original request ID (optional)
+    :type req_id: str or int
+    :param data: optional callback data (optional)
+    :type data: object
+    :param timeout: explicit timeout value (optional)
+    :type timeout: float
+    :return: created callback object
+    :rtype: :class:`Callback`
     """
     if self.callback_manager is not None:
       if msg_id is None:
@@ -534,10 +574,14 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
 
   def request_info_from_domain (self, info_part, req_id):
     """
+    Send Info request to domain and setup callback for response.
 
-    :param info_part:
-    :param req_id:
-    :return:
+    :param info_part: related part of original Info request
+    :type info_part: :class:`Info`
+    :param req_id: request ID
+    :type req_id: str or int
+    :return: status if the RPC call was success
+    :rtype: bool
     """
     self.log.debug("Request monitoring info from domain: %s" % self.domain_name)
     try:
@@ -580,6 +624,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                 "Last successful state:\n%s" % self.__last_success_state.xml())
       request_params = {"diff": self._diff,
                         "message_id": "edit-config-%s" % nffg_part.id}
+      cb = None
       if self.callback_manager is not None:
         cb_url = self.callback_manager.get_url(domain=self.domain_name)
         log.debug("Set callback URL: %s" % cb_url)
@@ -590,7 +635,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                                   type=self.CALLBACK_TYPE_INSTALL,
                                   data=nffg_part)
       status = self.topoAdapter.edit_config(nffg_part, **request_params)
-      if status is None and self.callback_manager is not None:
+      if status and self.callback_manager and cb:
         self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id,
                                                    domain=self.domain_name)
         return False
@@ -603,9 +648,13 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
 
   def rollback_install (self, request_id):
     """
+    Perform the rollback by sending the backup state to domain and setup
+    callback handler if needed.
 
-    :param request_id:
-    :return:
+    :param request_id: request ID
+    :type request_id: str or int
+    :return: status if the Info call was success
+    :rtype: bool
     """
     self.log.info(">>> Rollback domain: %s" % self.domain_name)
     self.enable_reset_mode()
@@ -617,6 +666,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
               "Full RESET topology:\n%s" % reset_state)
       request_params = {"diff": self._diff,
                         "message_id": "rollback-%s" % request_id}
+      cb = None
       if self.callback_manager is not None:
         cb_url = self.callback_manager.get_url(domain=self.domain_name)
         log.debug("Set callback URL: %s" % cb_url)
@@ -626,7 +676,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                                   msg_id=request_params.get('message_id'),
                                   type=self.CALLBACK_TYPE_RESET)
       status = self.topoAdapter.edit_config(reset_state, **request_params)
-      if status is None and self.callback_manager is not None:
+      if status and self.callback_manager:
         self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id,
                                                    domain=self.domain_name)
         self.disable_reset_mode()
@@ -639,13 +689,14 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       return False
 
   @staticmethod
-  def _split_virtualizer_topology (virtualizer):
+  def _strip_virtualizer_topology (virtualizer):
     """
     Remove NFs and Flowrules from given topology.
 
     :param virtualizer: topology
     :type virtualizer: :class:`Virtualizer`
-    :return:
+    :return: stripped Virtualizer
+    :rtype: :class:`Virtualizer`
     """
     for node in virtualizer.nodes:
       # Remove NFs
@@ -682,7 +733,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       recent_topo = self.topoAdapter.get_config()
       if recent_topo is not None:
         self.log.debug("Strip original topology...")
-        empty_cfg = self._split_virtualizer_topology(virtualizer=empty_cfg)
+        empty_cfg = self._strip_virtualizer_topology(virtualizer=empty_cfg)
         self.log.debug("Explicitly calculating diff for domain clearing...")
         diff = recent_topo.diff(empty_cfg)
         status = self.topoAdapter.edit_config(data=diff, diff=False)
@@ -735,9 +786,12 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   @schedule_as_coop_task
   def edit_config_hook (self, callback):
     """
+    Handle callback caused by an edit-config install call and process
+    callback data.
 
-    :param callback:
-    :return:
+    :param callback: callback object
+    :type callback: :class:`Callback`
+    :return: None
     """
     self.log.debug("Callback hook (%s) invoked with callback id: %s" %
                    (callback.type, callback.callback_id))
@@ -796,9 +850,11 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   @schedule_as_coop_task
   def info_hook (self, callback):
     """
+    Handle callback caused by an Info call and process callback data.
 
-    :param callback:
-    :return:
+    :param callback: callback object
+    :type callback: :class:`Callback`
+    :return: None
     """
     self.log.debug("Callback hook (%s) invoked with callback id: %s" %
                    (callback.type, callback.callback_id))

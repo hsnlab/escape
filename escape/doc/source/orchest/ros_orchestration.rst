@@ -9,11 +9,6 @@ Classes of the module:
    escape.orchest.ros_orchestration
    :parts: 1
 
-:any:`ResourceOrchestrator` orchestrates :class:`NFFG` mapping and centralize
-layer logic.
-
-:any:`NFFGManager` stores and handles Network Function Forwarding Graphs.
-
 Module contents
 ---------------
 

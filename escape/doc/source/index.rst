@@ -529,8 +529,9 @@ Usage:
 .. code-block:: text
 
     $ ./escape.py -h
-    usage: escape.py [-h] [-v] [-a] [-c path] [-d] [-e] [-f] [-g] [-i] [-l file]
-                     [-m file] [-p] [-r] [-s file] [-t] [-q] [-x] [-V] [-4]
+    usage: escape.py [-h] [-v] [-a] [-b] [-c path] [-d] [-e] [-f] [-g] [-i]
+                     [-l file] [-m file] [-n] [-o [port]] [-q] [+q] [-r] [-s file]
+                     [-t] [-x] [-V] [-4]
                      ...
 
     ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet,
@@ -543,30 +544,36 @@ Usage:
     ESCAPEv2 arguments:
       -a, --agent           run in AGENT mode: start the infrastructure layer with
                             the ROS REST-API (without the Service sublayer (SAS))
+      -b, --bypassapi       start the REST-API to bypass embedding and access to
+                            the DoV directly
       -c path, --config path
-                            override default config filename
+                            use external config file to extend the default
+                            configuration
       -d, --debug           run the ESCAPE in debug mode (can use multiple times
                             for more verbose logging)
       -e, --environment     run ESCAPEv2 in the pre-defined virtualenv
       -f, --full            run the infrastructure layer also
-      -g, --gui             initiate the graph-viewer GUI app which automatically
-                            connects to the ROS REST-API
+      -g, --gui             (OBSOLETE) initiate the graph-viewer GUI app which
+                            automatically connects to the ROS REST-API
       -i, --interactive     run an interactive shell for observing internal states
-      -l file, --log file   add log file explicitly for test mode (default:
+      -l file, --log file   define log file path explicitly (default:
                             log/escape.log)
       -m file, --mininet file
                             read the Mininet topology from the given file
-      -p, --POXlike         start ESCAPEv2 in the actual interpreter using ./pox
-                            as working directory instead of using a separate shell
-                            process with POX's own PYTHON env
-      -r, --rosapi          start the REST-API for the Resource Orchestration
-                            sublayer (ROS)
+      -n, --nosignal        run ESCAPE in a sub-shell that prevents propagation of
+                            received SIGNALs
+      -o [port], --openflow [port]
+                            initiate internal OpenFlow module with given listening
+                            port (default: 6633)
+      -q, --quit            quit right after the first service request has
+                            processed
+      +q, ++quit            explicitly disable quit mode
+      -r, --rosapi          start REST-API for the Resource Orchestration sublayer
+                            (ROS)
       -s file, --service file
                             skip the SAS REST-API initiation and read the service
                             request from the given file
       -t, --test            run in test mode
-      -q, --quit            quit right after the first service request has
-                            processed
       -x, --clean           run the cleanup task standalone and kill remained
                             programs, interfaces, veth parts and junk files
       -V, --visualization   run the visualization module to send data to a remote
@@ -898,9 +905,10 @@ configuration entries of the main layers and its subcomponents.
 
 As an example, several additional configuration files can be found under the ``config`` folder.
 
-.. include:: escape-config.json
+.. include:: escape-config.yaml
     :literal:
-    :code: json
+    :code: yaml
+
 
 Configuration structure
 -----------------------
@@ -1161,7 +1169,7 @@ Schematic config description of domain adapters:
 
         `net`
             (:any:`object`) Optional network object for :class:`mininet.net.Mininet`.
-            Works only with :any:`InternalMininetAdapter`. Only for development!
+            Works only with :class:`InternalMininetAdapter`. Only for development!
         `path`
             (:any:`string`) Path of the static topology description :class:`NFFG` file, e.g. ``examples/sdn-topo.nffg``.
             Works only with ``SDNDomainTopoAdapter``.
@@ -1347,8 +1355,7 @@ To run the test see the main running script:
 .. code-block:: text
 
     $ ./run_tests.py -h
-    usage: run_tests.py [-h] [--failfast] [--show-output] [--timeout t]
-                        [--standalone] [--verbose]
+    usage: run_tests.py [-h] [-f] [-o] [-t t] [-s] [-v]
                         [testcases [testcases ...]]
 
     ESCAPE Test runner
@@ -1359,11 +1366,12 @@ To run the test see the main running script:
 
     optional arguments:
       -h, --help         show this help message and exit
-      --failfast, -f     Stop on first failure
-      --show-output, -o  Show ESCAPE output
-      --timeout t, -t t  define explicit timeout in sec (default: 30s)
-      --standalone, -s   run standalone mode: no timeout, no quitting
-      --verbose, -v      Run in verbose mode and show output
+      -f, --failfast     stop on first failure
+      -o, --show-output  show ESCAPE output (can use multiple times for more
+                         verbose logging)
+      -t t, --timeout t  define explicit timeout in sec (default: 60s)
+      -s, --standalone   run standalone mode: no timeout, no quitting
+
 
 Documentation
 =============

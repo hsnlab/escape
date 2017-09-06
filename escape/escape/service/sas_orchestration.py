@@ -60,6 +60,9 @@ class ServiceOrchestrator(AbstractOrchestrator):
 
     :param sg: service graph stored in NFFG instance
     :type sg: :class:`NFFG`
+    :param continued_request_id: use explicit request id if request is
+      continued after a trial and error (default: False)
+    :type continued_request_id: str or None
     :return: NF-FG description
     :rtype: :class:`NFFG`
     """

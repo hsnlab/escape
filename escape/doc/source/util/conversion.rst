@@ -9,12 +9,6 @@ Classes of the module:
    escape.util.conversion
    :parts: 1
 
-:any:`NFFGConverter` contains conversation logic from Virtualizer to :class:`NFFG`
-representations.
-
-:any:`UC3MNFFGConverter` contains conversation logic from JSON-based topology
-information to :class:`NFFG` representations.
-
 Module contents
 ---------------
 

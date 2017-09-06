@@ -68,10 +68,26 @@ class BaseResultEvent(Event):
 
   @classmethod
   def is_deploy_error (cls, result):
+    """
+    Return if the result value means error.
+
+    :param result: result value
+    :type result: str
+    :return: is error
+    :rtype: bool
+    """
     return result in (cls.DEPLOY_ERROR, cls.RESET, cls.RESET_ERROR, cls.ERROR)
 
   @classmethod
   def is_pending (cls, result):
+    """
+    Return if the result value means a pending state.
+
+    :param result: result value
+    :type result: str
+    :return: is pending
+    :rtype: bool
+    """
     return result in (cls.INITIATED, cls.IN_PROGRESS)
 
 
@@ -203,6 +219,7 @@ class AbstractDomainManager(EventMixin):
   # Abstract functions for component control
   ##############################################################################
 
+  # noinspection PyUnusedLocal
   def _load_adapters (self, configurator, **kwargs):
     """
     Initiate Adapters using given configurator and predefined config.
@@ -421,6 +438,10 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     return self._detected
 
   def get_domain_url (self):
+    """
+    :return: Return the configured domain URL extracted from DomainAdapter.
+    :rtype: str
+    """
     if isinstance(self.topoAdapter, AbstractRESTAdapter):
       return self.topoAdapter.URL
 
@@ -490,6 +511,13 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
   ##############################################################################
 
   def start_keepalive (self, interval=5):
+    """
+    Start sending keepalive messages.
+
+    :param interval: keepalive interval
+    :type interval: int
+    :return: None
+    """
     if self._poll:
       self.log.warning("Call sending_keepalive when polling is enabled!")
       return
@@ -499,6 +527,12 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
                          selfStoppable=True)
 
   def is_alive (self):
+    """
+    Keepalive hook function to detect whether the managed domain is alive and
+    raise event according to domain state.
+
+    :return: None
+    """
     if not self._detected:
       if self._detect_topology():
         # Domain is reachable
@@ -834,11 +868,11 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
     log.debug("Setup OF interface and initiate handler object for connection: "
               "(%s, %i)" % (address, port))
     from pox.openflow.of_01 import launch
-    of = launch(name=name, address=address, port=port)
+    of_module = launch(name=name, address=address, port=port)
     # Start listening for OpenFlow connections
-    of.start()
+    of_module.start()
     self.task_name = name if name else "of_01"
-    of.name = self.task_name
+    of_module.name = self.task_name
     # register OpenFlow event listeners
     self.openflow.addListeners(self)
     log.debug(
@@ -873,7 +907,9 @@ class AbstractOFControllerAdapter(AbstractESCAPEAdapter):
       conn.disconnect(
         "Connection: %s has reached timeout: %s!" % (conn, cls._switch_timeout))
 
-  def filter_connections (self, event):
+  # noinspection PyUnusedLocal
+  @staticmethod
+  def filter_connections (event):
     """
     Handle which connection should be handled by this Adapter class.
 
@@ -1178,6 +1214,8 @@ class DefaultUnifyDomainAPI(object):
     :type message_id: str
     :param callback: callback URL
     :type callback: str
+    :param full_conversion: use full conversion instead of adaptation
+    :type full_conversion: bool
     :return: status code
     :rtype: str
     :raise: :any:`exceptions.NotImplementedError`
@@ -1185,6 +1223,7 @@ class DefaultUnifyDomainAPI(object):
     raise NotImplementedError
 
 
+# noinspection PyAbstractClass
 class OpenStackAPI(DefaultUnifyDomainAPI):
   """
   Define interface for managing OpenStack domain.
@@ -1197,6 +1236,7 @@ class OpenStackAPI(DefaultUnifyDomainAPI):
   pass
 
 
+# noinspection PyAbstractClass
 class UniversalNodeAPI(DefaultUnifyDomainAPI):
   """
   Define interface for managing Universal Node domain.
@@ -1209,6 +1249,7 @@ class UniversalNodeAPI(DefaultUnifyDomainAPI):
   pass
 
 
+# noinspection PyAbstractClass
 class RemoteESCAPEv2API(DefaultUnifyDomainAPI):
   """
   Define interface for managing remote ESCAPEv2 domain.

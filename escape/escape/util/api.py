@@ -57,6 +57,7 @@ class AbstractAPI(EventMixin):
   # _eventMixin_events = set()
 
   def __init__ (self, standalone=False, **kwargs):
+    # noinspection PyUnresolvedReferences
     """
     Abstract class constructor.
 
@@ -158,6 +159,14 @@ class AbstractAPI(EventMixin):
       quit_with_error(msg="Abort ESCAPEv2 initialization...", exception=e)
 
   def get_dependent_component (self, name):
+    """
+    Return with the name of dependent layer component by given name.
+
+    :param name: dependency
+    :type name: str
+    :return: dependent component object
+    :rtype: :class:`AbstractAPI`
+    """
     return getattr(self, "_%s_" % name) if name in self.dependencies else None
 
   def initialize (self):
@@ -180,7 +189,7 @@ class AbstractAPI(EventMixin):
     Should be overwritten by child classes.
 
     :param event: shutdown event raised by POX core
-    :type event: GoingDownEvent
+    :type event: :class:`GoingDownEvent`
     :return: None
     """
     pass
@@ -193,7 +202,7 @@ class AbstractAPI(EventMixin):
     Should be overwritten by child classes.
 
     :param event: shutdown event raised by POX core
-    :type event: GoingDownEvent
+    :type event: :class:`GoingDownEvent`
     :return: None
     """
     pass
@@ -232,6 +241,10 @@ class AbstractAPI(EventMixin):
 
 
 class RequestStatus(object):
+  """
+  Container class for store information about a service request and its
+  deploy status.
+  """
   # State constants
   INITIATED = "INITIATED"
   PROCESSING = "PROCESSING"
@@ -240,12 +253,28 @@ class RequestStatus(object):
   UNKNOWN = "UNKNOWN"
 
   def __init__ (self, message_id, status, nffg_id=None, params=None):
+    """
+    Init.
+
+    :param message_id: original message Id
+    :type message_id: str or int
+    :param status: initial request status
+    :type status: str
+    :param nffg_id: request NFFG id
+    :type nffg_id: str or int
+    :param params: original request params
+    :type params: dict
+    """
     self.message_id = message_id
     self.status = status
     self.nffg_id = nffg_id
     self.params = params if params else {}
 
   def get_callback (self):
+    """
+    :return: Callback URL coded in request params
+    :rtype: str or None
+    """
     if 'call-back' in self.params:
       return urllib.unquote(self.params['call-back'])
     else:
@@ -267,6 +296,17 @@ class RequestCache(object):
     self.__cache = dict()
 
   def cache_request (self, message_id, status=None, params=None):
+    """
+    Register and store service request.
+
+    :param message_id: original message Id
+    :type message_id: str or int
+    :param status: initial request status
+    :type status: str
+    :param params: original request params
+    :type params: dict
+    :return: None
+    """
     status = status if status else RequestStatus.INITIATED
     self.__cache[message_id] = RequestStatus(message_id=message_id,
                                              status=status,
@@ -276,8 +316,10 @@ class RequestCache(object):
     """
     Add a request to the cache.
 
-    :param nffg: request id
+    :param nffg: request NFFG
     :type nffg: :class:`NFFG`
+    :return: request status ID
+    :rtype: str or int
     """
     try:
       key = nffg.metadata['params']['message-id']
@@ -324,16 +366,31 @@ class RequestCache(object):
       pass
 
   def set_success_result (self, id):
-    return self.set_result(id=id, result=RequestStatus.SUCCESS)
+    """
+    Set successful result for service request given by id.
+
+    :param id: service request id
+    :type id: str or int
+    :return: None
+    """
+    self.set_result(id=id, result=RequestStatus.SUCCESS)
 
   def set_error_result (self, id):
+    """
+    Set failed result for service request given by id.
+
+    :param id: service request id
+    :type id: str or int
+    :return: None
+    """
     return self.set_result(id=id, result=RequestStatus.ERROR)
 
   def get_request (self, message_id):
     """
+    Return with the service request status given by id.
 
-    :param message_id:
-    :rtype: RequestStatus
+    :param message_id: service request status
+    :rtype: :class:`RequestStatus`
     """
     try:
       return self.__cache[message_id]
@@ -342,9 +399,11 @@ class RequestCache(object):
 
   def get_request_by_nffg_id (self, nffg_id):
     """
+    Return with request status object given by NFFG id.
 
-    :param nffg_id:
-    :rtype: RequestStatus
+    :param nffg_id: NFFG id
+    :type nffg_id: str or int
+    :rtype: :class:`RequestStatus`
     """
     for req in self.__cache.itervalues():
       if req.nffg_id == nffg_id:
@@ -357,6 +416,8 @@ class RequestCache(object):
 
     :param id: request id
     :type id: str or int
+    :return: request status
+    :rtype: str
     """
     try:
       return self.__cache[id].status
@@ -433,6 +494,16 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
       pass
 
   def invoke_callback (self, message_id, body=None):
+    """
+    Perform the callback call based on service status and callback URL.
+
+    :param message_id: service request id
+    :type message_id: str or int
+    :param body: optional callback body
+    :type body: str
+    :return: status code of the call
+    :rtype: int
+    """
     status = self.get_status_by_message_id(message_id=message_id)
     if "call-back" not in status.params:
       return None
@@ -460,9 +531,12 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
 
   def get_status_by_message_id (self, message_id):
     """
+    Return with deploy status given by message id.
 
-    :param message_id:
-    :rtype: RequestStatus
+    :param message_id: service request id
+    :type message_id: str or int
+    :return: request status
+    :rtype: :class:`RequestStatus`
     """
     return self.request_cache.get_request(message_id)
 
@@ -631,6 +705,12 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     self.wfile.close()
 
   def get_request_params (self):
+    """
+    Parse request params from URL.
+
+    :return: parsed params
+    :rtype: dict
+    """
     params = {}
     query = urlparse.urlparse(self.path).query
     if query:
@@ -776,6 +856,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     """
     Send back acknowledge message.
 
+    :param code: use explicit response code
+    :type code: int
     :param message_id: response body
     :param message_id: dict
     :return: None
@@ -794,6 +876,10 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     """
     Send requested data.
 
+    :param code: use explicit response code
+    :type code: int
+    :param content: use explicit content type
+    :type content: str
     :param raw_data: data in JSON format
     :type raw_data: dict
     :param encoding: Set data encoding (optional)
@@ -816,6 +902,8 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
     :param data: data in JSON format
     :type data: dict
+    :param code: use explicit response code
+    :type code: int
     :param encoding: Set data encoding (optional)
     :type encoding: str
     :return: None
@@ -927,10 +1015,12 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
   # Basic REST-API functions
   ##############################################################################
 
+  # noinspection PyUnusedLocal
   def ping (self, params):
     """
     For testing REST API aliveness and reachability.
 
+    :param params: additional params (skipped)
     :return: None
     """
     if self.server.ping_response_code == self.server.POST_UP_PING_CODE:
@@ -946,10 +1036,12 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     self.log.debug("Sent response: %s, %s" % (self.server.ping_response_code,
                                               response_body))
 
+  # noinspection PyUnusedLocal
   def version (self, params):
     """
     Return with version
 
+    :param params: additional params (skipped)
     :return: None
     """
     self.log.debug("Call REST-API function: version")
@@ -958,10 +1050,12 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     self.send_json_response(body)
     self.log.debug("Sent response: %s" % body)
 
+  # noinspection PyUnusedLocal
   def operations (self, params):
     """
     Return with allowed operations
 
+    :param params: additional params (skipped)
     :return: None
     """
     self.log.debug("Call REST-API function: operations")
@@ -969,7 +1063,21 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
 
 
 class APIRequest(object):
+  """
+  Main container class for scheduling a service request for orchestration
+  """
+
   def __init__ (self, id, layer, function, kwargs):
+    """
+    Init.
+
+    :param id: request id
+    :type id: str or int
+    :param layer: layer name
+    :type layer: str
+    :param function: main entry point of orchestration
+    :type function: callable
+    """
     self.id = id
     self.layer = layer
     self.function = function
@@ -982,11 +1090,16 @@ class APIRequest(object):
 
 class RequestScheduler(threading.Thread):
   """
+  Manager class for registering and scheduling service requests registered from
+  other thread.
   """
   __metaclass__ = POXCoreRegisterMetaClass
   _core_name = "RequestScheduler"
 
   def __init__ (self):
+    """
+    Init.
+    """
     super(RequestScheduler, self).__init__(name=self._core_name)
     self.daemon = True
     self.__queue = Queue()
@@ -1000,9 +1113,20 @@ class RequestScheduler(threading.Thread):
 
   @property
   def orchestration_in_progress (self):
+    """
+    :return: If any service request orchestration is in progress
+    :rtype: bool
+    """
     return self.__progress is not None
 
   def set_orchestration_finished (self, id):
+    """
+    Mark a service request given by id finished.
+
+    :param id: service request id
+    :type id: str or int
+    :return: None
+    """
     if self.__progress is None:
       self.log.debug("No orchestration in progress!")
     elif self.__progress != id:
@@ -1017,6 +1141,19 @@ class RequestScheduler(threading.Thread):
         self.__condition.notify()
 
   def schedule_request (self, id, layer, function, **kwargs):
+    """
+    Schedule a service request with the given data.
+
+    :param id: request id
+    :type id: str or int
+    :param layer: layer name
+    :type layer: str
+    :param function: main entry point of orchestration
+    :type function: callable
+    :param kwargs: additional params
+    :type kwargs: dict
+    :return: None
+    """
     # Reset request id if it was overwritten with different message-id
     stats.set_request_id(request_id=id)
     request = APIRequest(id=id,
@@ -1038,6 +1175,11 @@ class RequestScheduler(threading.Thread):
     self.log.debug("Remained requests: %s" % self.__queue.qsize())
 
   def set_orchestration_standby (self):
+    """
+    Set service orchestration into standby state.
+
+    :return: None
+    """
     self.__standby = True
     self.log.info("Set request in progress: %s in standby mode"
                   % self.__progress)
@@ -1066,6 +1208,11 @@ class RequestScheduler(threading.Thread):
                           'ABORT function call!' % request.layer)
 
   def run (self):
+    """
+    Start service scheduler.
+
+    :return: None
+    """
     while True:
       with self.__condition:
         if self.__progress:

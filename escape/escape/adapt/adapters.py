@@ -26,6 +26,7 @@ from escape.util.config import CONFIG, PROJECT_ROOT
 from escape.util.conversion import NFFGConverter, UC3MNFFGConverter
 from escape.util.domain import *
 from escape.util.misc import unicode_to_str
+from pox.lib.util import dpid_to_str
 from virtualizer import Virtualizer
 
 
@@ -188,7 +189,7 @@ class InternalPOXAdapter(AbstractOFControllerAdapter):
     # the Infra id
     for port in ports:
       # If all other port starts with this name --> internal port
-      if all(map(lambda p: p.startswith(port), ports)):
+      if all(map(lambda pp: pp.startswith(port), ports)):
         from pox.lib.util import dpid_to_str
         log.debug("Identified Infra(id: %s) on OF connection: %s" % (
           port, dpid_to_str(dpid)))
@@ -351,7 +352,7 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     :type file_name: str
     :param data: received data
     :type data: str
-    :return: write tu file was success or not
+    :return: write to file was success or not
     :rtype: bool
     """
     file_name = os.path.join(PROJECT_ROOT, self.LOG_DIR, file_name)
@@ -517,9 +518,9 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     recent Virtualizer acquired by get-config.
 
     :param changed: Virtualizer containing new install
-    :type changed: Virtualizer
+    :type changed: :class:`Virtualizer`
     :return: the difference
-    :rtype: Virtualizer
+    :rtype: :class:`Virtualizer`
     """
     # base = Virtualizer.parse_from_text(text=self.last_virtualizer.xml())
     base = self.virtualizer
@@ -558,6 +559,12 @@ class SDNDomainTopoAdapter(NFFGBasedStaticFileAdapter):
   type = AbstractESCAPEAdapter.TYPE_TOPOLOGY
 
   def __init__ (self, path=None, *args, **kwargs):
+    """
+    Init.
+
+    :param path: topology file path
+    :type path: str
+    """
     super(SDNDomainTopoAdapter, self).__init__(path=path, *args, **kwargs)
     log.debug(
       "Init SDNDomainTopoAdapter - type: %s, domain: %s, optional path: %s" % (
@@ -633,10 +640,18 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   @property
   def last_virtualizer (self):
+    """
+    :return: Return the last received topology.
+    :rtype: :class:`Virtualizer`
+    """
     return self.__last_virtualizer
 
   @property
   def last_request (self):
+    """
+    :return: Return the last sent request .
+    :rtype: :class:`Virtualizer`
+    """
     return self.__last_request
 
   def ping (self):
@@ -664,7 +679,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :param filter: request a filtered description instead of full
     :type filter: str
     :return: infrastructure view in the original format
-    :rtype: :class:`virtualizer.Virtualizer`
+    :rtype: :class:`Virtualizer`
     """
     log.debug("Send get-config request to remote agent: %s" % self._base_url)
     # Get topology from remote agent handling every exception
@@ -699,13 +714,15 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     Remote domains always expect diff of mapping changes.
 
     :param data: whole domain view
-    :type data: :any::`NFFG`
+    :type data: :class:`NFFG`
     :param diff: send the diff of the mapping request (default: False)
     :param diff: bool
     :param message_id: optional message id
     :type message_id: str
     :param callback: callback URL
     :type callback: str
+    :param full_conversion: do full conversion instead of adapt (default: False)
+    :type full_conversion: bool
     :return: status code or the returned message-id if it is set
     :rtype: str
     """
@@ -767,8 +784,8 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def get_last_message_id (self):
     """
-
-    :return:
+    :return: Return the last sent request id
+    :rtype: str or int
     """
     if self._response is not None:
       return self._response.headers.get(self.MESSAGE_ID_NAME, None)
@@ -777,11 +794,16 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
 
   def info (self, info, callback=None, message_id=None):
     """
+    Send the given Info request to the domain orchestrator.
 
-    :param info:
-    :param callback:
-    :param message_id:
-    :return:
+    :param info: Info object
+    :type info: :class:`Info`
+    :param callback: callback URL
+    :type callback: str
+    :param message_id: optional message id
+    :type message_id: str
+    :return: status code or the returned message-id if it is set
+    :rtype: str
     """
     log.log(VERBOSE, "Generated Info:\n%s" % info.xml())
     params = {}
@@ -806,9 +828,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       return True
     if status is not None:
       log.debug("Info request has been sent successfully!")
-      # msg_id = self.get_last_message_id()
-      # if msg_id is not None:
-      #   log.debug("Detected message-id from response: %s" % msg_id)
     return status
 
   def get_original_topology (self):
@@ -816,7 +835,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     Return the original topology as a Virtualizer.
 
     :return: the original topology
-    :rtype: Virtualizer
+    :rtype: :class:`Virtualizer`
     """
     return self.__original_virtualizer
 
@@ -865,8 +884,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     """
     Process features config and transform collected topo according to these.
 
-    :param nffg:
-    :return:
+    :param nffg: base NFFG
+    :type nffg: :class:`NFFG`
+    :return: None
     """
     self.log.debug("Checking features...")
     if self.features.get(self.FEATURE_ANTIAFFINITY, False):
@@ -926,7 +946,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     Cache last received Virtualizer topology.
 
     :param data: received Virtualizer
-    :type data: Virtualizer
+    :type data: :class:`Virtualizer`
     :return: None
     """
     log.debug("Cache received 'get-config' response...")
@@ -942,7 +962,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     Cache calculated and converted request.
 
     :param data: request Virtualizer
-    :type data: Virtualizer
+    :type data: :class:`Virtualizer`
     :return: None
     """
     log.debug("Cache generated 'edit-config' request...")
@@ -956,7 +976,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     ``last_virtualizer``.
 
     :param new_data: new Virtualizer object
-    :type new_data: Virtualizer
+    :type new_data: :class:`Virtualizer`
     :return: is different or not
     :rtype: bool
     """
@@ -978,9 +998,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     recent Virtualizer acquired by get-config.
 
     :param changed: Virtualizer containing new install
-    :type changed: Virtualizer
+    :type changed: :class:`Virtualizer`
     :return: the difference
-    :rtype: Virtualizer
+    :rtype: :class:`Virtualizer`
     """
     # base = Virtualizer.parse_from_text(text=self.last_virtualizer.xml())
     base = self.last_virtualizer

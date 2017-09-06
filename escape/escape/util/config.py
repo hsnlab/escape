@@ -306,7 +306,7 @@ class ESCAPEConfig(object):
 
   def get_mapping_enabled (self, layer):
     """
-    Return the mapping process is enabled for the ``layer`` or not.
+    Return whether the mapping process is enabled for the ``layer`` or not.
 
     :param layer: layer name
     :type layer: str
@@ -396,7 +396,7 @@ class ESCAPEConfig(object):
 
   def get_processor_enabled (self, layer):
     """
-    Return the mapping process is enabled for the ``layer`` or not.
+    Return whether the mapping process is enabled for the ``layer`` or not.
 
     :param layer: layer name
     :type layer: str
@@ -564,6 +564,13 @@ class ESCAPEConfig(object):
   ##############################################################################
 
   def get_dov_api_class (self):
+    """
+    Return with the request handler class of DoV REST API.
+
+    :return: REST API class
+    :rtype: :any:`AbstractRequestHandler`
+    :return:
+    """
     try:
       return getattr(importlib.import_module(
         self.__configuration[ADAPT]['DOV-API']['module']),
@@ -587,12 +594,24 @@ class ESCAPEConfig(object):
       return {}
 
   def get_vnfm_enabled (self):
+    """
+    Return whether the VNFM component tis enabled.
+
+    :return: VNFM is enabled or not
+    :rtype: bool
+    """
     try:
       return self.__configuration[ADAPT]['VNFM']['enabled']
     except KeyError:
       return False
 
   def get_vnfm_config (self):
+    """
+    Return the VNFM external component configuration.
+
+    :return: VNFM config
+    :rtype: dict
+    """
     try:
       params = self.__configuration[ADAPT]['VNFM'].copy()
       return params
@@ -600,6 +619,12 @@ class ESCAPEConfig(object):
       return {}
 
   def get_callback_config (self):
+    """
+    Return the common callback configuration for :class:`CallbackManager`.
+
+    :return: callback manager config
+    :rtype: dict
+    """
     try:
       return self.__configuration[ADAPT]['CALLBACK'].copy()
     except KeyError:
@@ -768,6 +793,7 @@ class ESCAPEConfig(object):
 
   def rollback_on_failure (self):
     """
+    :return:  Return whether rollback mode is enabled.
     :rtype: bool
     """
     try:
@@ -777,6 +803,7 @@ class ESCAPEConfig(object):
 
   def domain_deploy_delay (self):
     """
+    :return: Return explicit delay value injected before deployment.
     :rtype: int
     """
     try:
@@ -827,6 +854,7 @@ class ESCAPEConfig(object):
 
   def one_step_update (self):
     """
+    :return: Return whether on-step-update is enabled.
     :rtype: bool
     """
     try:

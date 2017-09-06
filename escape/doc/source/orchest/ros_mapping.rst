@@ -9,14 +9,6 @@ Classes of the module:
    escape.orchest.ros_mapping
    :parts: 1
 
-:any:`ESCAPEMappingStrategy` implements a default :class:`NFFG` mapping algorithm
-of ESCAPEv2.
-
-:any:`NFFGMappingFinishedEvent` can signal the state of NFFG mapping.
-
-:any:`ResourceOrchestrationMapper` perform the supplementary tasks for
-:class:`NFFG` mapping.
-
 Module contents
 ---------------
 

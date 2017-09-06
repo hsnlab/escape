@@ -9,14 +9,6 @@ Classes of the module:
    escape.adapt.policy_enforcement
    :parts: 1
 
-:any:`PolicyEnforcementError` represents a violation during the policy
-checking process.
-
-:any:`PolicyEnforcementMetaClass` contains the main general logic which
-handles the Virtualizers and enforce policies.
-
-:any:`PolicyEnforcement` implements the actual enforcement logic.
-
 Module contents
 ---------------
 

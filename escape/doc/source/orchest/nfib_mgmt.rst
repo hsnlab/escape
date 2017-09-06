@@ -9,8 +9,6 @@ Classes of the module:
    escape.orchest.nfib_mgmt
    :parts: 1
 
-:any:`NFIBManager` manages the handling of Network Function Information Base.
-
 Module contents
 ---------------
 

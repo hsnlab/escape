@@ -146,10 +146,11 @@ def run_cmd (cmd):
 
 
 def enum (*sequential, **named):
+  # noinspection PyUnresolvedReferences
   """
   Helper function to define enumeration. E.g.:
 
-    >>> Numbers = enum(ONE=1, TWO=2, THREE='three')
+    >>> Numbers1 = enum(ONE=1, TWO=2, THREE='three')
     >>> Numbers = enum('ZERO', 'ONE', 'TWO')
     >>> Numbers.ONE
     1
@@ -304,6 +305,7 @@ class Singleton(type):
   """
   _instances = {}
 
+  # noinspection PyArgumentList
   def __call__ (cls, *args, **kwargs):
     """
     Override.
@@ -468,10 +470,8 @@ def notify_remote_visualizer (data, url=None, **kwargs):
   If url is given use this address to send instead of the url defined in the
   global config.
 
-  :param data: data need to send
-  :type data: :class:`NFFG` or Virtualizer
-  :param id: id of the data, needs for the remote server
-  :type id: str
+  :param data: topology description need to send
+  :type data: :class:`NFFG` or :class:`Virtualizer`
   :param url: additional URL (acquired from config by default)
   :type url: str
   :param kwargs: optional parameters for request lib
@@ -584,6 +584,7 @@ def port_tester (host, port, interval=1, period=5,
   """
   log.debug(
     "Testing port: %s on host: %s with interval: %ss" % (host, port, interval))
+  # noinspection PyArgumentList
   for i in xrange(1, period):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:

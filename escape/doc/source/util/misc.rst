@@ -9,11 +9,6 @@ Classes of the module:
    escape.util.misc
    :parts: 1
 
-:any:`SimpleStandaloneHelper` is a helper class for mimic a minimal layer
-API as a dependency for other layer APIs to handles events.
-
-:any:`Singleton` is a metaclass to implements singleton object.
-
 Module contents
 ---------------
 

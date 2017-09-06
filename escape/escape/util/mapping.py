@@ -369,6 +369,8 @@ class AbstractMapper(EventMixin):
     :type input_graph: :class:`NFFG`
     :param resource_view: resource information
     :type resource_view: :any:`AbstractVirtualizer`
+    :param continued: mark if the orchestration was continued
+    :type continued: bool
     :raise: NotImplementedError
     :return: mapped graph
     :rtype: :class:`NFFG`

@@ -480,6 +480,9 @@ class InternalDomainManager(AbstractDomainManager):
   .. note::
     Uses :class:`InternalMininetAdapter` for managing the emulated network and
     :class:`InternalPOXAdapter` for controlling the network.
+
+  .. deprecated::
+    No longer maintained!
   """
   # DomainManager name
   name = "INTERNAL"

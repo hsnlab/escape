@@ -16,4 +16,5 @@ Submodules
     :titlesonly:
 
     il_API
+    topo_manager
     topology

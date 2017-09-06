@@ -1,16 +1,12 @@
 *com_logger.py* module
 ======================
 
-Contains abstract classes for concrete layer API modules.
-
-Classes of the module:
+Contains classes for notifying remote visualization entity and implementing
+trail feature for advanced debugging.
 
 .. inheritance-diagram::
    escape.util.com_logger
    :parts: 1
-
-:any:`RemoteVisualizer` contains the basic mechanism to send an :class:`NFFG` to
-a remote server for the purpose of visualization.
 
 Module contents
 ---------------

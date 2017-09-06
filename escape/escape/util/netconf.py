@@ -234,11 +234,11 @@ class AbstractNETCONFAdapter(object):
       print "Received raw RPC reply:\n", self._rpc_reply_as_xml
     parser = etree.XMLParser(ns_clean=True)
     if data:
-      buffer = StringIO(data)
+      data_buffer = StringIO(data)
     else:
-      buffer = StringIO(self._rpc_reply_as_xml)
+      data_buffer = StringIO(self._rpc_reply_as_xml)
     # PARSE THE NEW RPC-REPLY XML
-    dom = etree.parse(buffer, parser)
+    dom = etree.parse(data_buffer, parser)
     # dom.getroot() = <rpc_reply .... > ... </rpc_reply>
     mainContents = dom.getroot()
     # alright, lets get all the important data with the following recursion
@@ -404,10 +404,10 @@ class AbstractNETCONFAdapter(object):
       request_data = self._create_rpc_request(rpc_name, **params)
       self._invoke_rpc(request_data)
       return self._parse_rpc_response()
-    except RPCError as e:
+    except RPCError as rpc_error:
       if no_rpc_error:
         result = {"rpc-reply": "Error"}
-        result.update(e.to_dict())
+        result.update(rpc_error.to_dict())
         return result
       else:
         raise

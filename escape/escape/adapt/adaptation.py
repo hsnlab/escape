@@ -25,6 +25,7 @@ from escape.adapt import log as log
 from escape.adapt.adapters import UnifyRESTAdapter
 from escape.adapt.managers import UnifyDomainManager
 from escape.adapt.virtualization import DomainVirtualizer
+from escape.infr.topo_manager import InternalDomainManager
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
@@ -60,6 +61,14 @@ class InstallationFinishedEvent(mgrs.BaseResultEvent):
 
   @classmethod
   def get_result_from_status (cls, deploy_status):
+    """
+    Convert deploy status to overall result.
+
+    :param deploy_status: deploy status object
+    :type deploy_status: :any:`DomainRequestStatus`
+    :return: overall service status
+    :type: str
+    """
     if deploy_status.success:
       return cls.DEPLOYED
     elif deploy_status.still_pending:
@@ -75,13 +84,33 @@ class InstallationFinishedEvent(mgrs.BaseResultEvent):
 
 
 class InfoRequestFinishedEvent(mgrs.BaseResultEvent):
+  """
+  Event for signalling end of Info request processing.
+  """
+
   def __init__ (self, result, status=None):
+    """
+    Init.
+
+    :param result: overall result
+    :type result: str
+    :param status: deploy status
+    :type status: :any:`DomainRequestStatus`
+    """
     super(InfoRequestFinishedEvent, self).__init__()
     self.result = result
     self.status = status
 
   @classmethod
   def get_result_from_status (cls, req_status):
+    """
+    Convert request status to overall result.
+
+    :param req_status: deploy status
+    :type req_status: :any:`DomainRequestStatus`
+    :return: overall result
+    :rtype: str
+    """
     if req_status.success:
       return cls.SUCCESS
     elif req_status.still_pending:
@@ -394,11 +423,11 @@ class ComponentConfigurator(object):
     """
     log.info("Initialize additional DomainManagers from config...")
     # very dummy initialization
-    mgrs = CONFIG.get_managers()
-    if not mgrs:
+    enabled_mgrs = CONFIG.get_managers()
+    if not enabled_mgrs:
       log.info("No DomainManager has been configured!")
       return
-    for mgr_name in mgrs:
+    for mgr_name in enabled_mgrs:
       # Get manager parameters from config
       mgr_cfg = CONFIG.get_component_params(component=mgr_name)
       if 'domain_name' in mgr_cfg:
@@ -440,12 +469,12 @@ class ComponentConfigurator(object):
     if loaded_local_mgr:
       log.warning("A local DomainManager has already been initiated with the "
                   "name: %s! Skip initiation of default local DomainManager: %s"
-                  % (loaded_local_mgr, mgrs.InternalDomainManager.name))
+                  % (loaded_local_mgr, InternalDomainManager.name))
       return
     log.debug("Init DomainManager for local domain based on config: %s" %
-              mgrs.InternalDomainManager.name)
+              InternalDomainManager.name)
     # Internal domain is hard coded with the name: INTERNAL
-    self.start_mgr(name=mgrs.InternalDomainManager.name)
+    self.start_mgr(name=InternalDomainManager.name)
 
   def reset_initiated_mgrs (self):
     """
@@ -570,6 +599,8 @@ class ControllerAdapter(object):
     :type mapped_nffg: :class:`NFFG`
     :param original_request: top level, original :class:`NFFG` request
     :type original_request: :class:`NFFG`
+    :param direct_deploy: skip external hook call before deploy (default: False)
+    :type direct_deploy: bool
     :return: deploy result
     :rtype: DomainRequestStatus
     """
@@ -728,6 +759,15 @@ class ControllerAdapter(object):
     return deploy_status
 
   def collate_deploy_request (self, request):
+    """
+    Collate request BiSBiS node IDs to the existent nodes in DoV and correct
+    domain name in request.
+
+    :param request: service request
+    :type request: :class:`NFFG`
+    :return: corrected request
+    :rtype: :class:`NFFG`
+    """
     log.debug("Collate deploy request node IDs...")
     dov = self.DoVManager.dov.get_resource_info()
     for node in request.infras:
@@ -743,6 +783,16 @@ class ControllerAdapter(object):
     return request
 
   def forward_to_vnfm (self, nffg, deploy_status):
+    """
+    Send given NFFG to an external component using its REST-API.
+
+    :param nffg: un-deployed request
+    :type nffg: :class:`NFFG`
+    :param deploy_status: deploy status
+    :type deploy_status: :any:`DomainRequestStatus`
+    :return: result of REST call
+    :rtype: bool
+    """
     try:
       vnfm_config = CONFIG.get_vnfm_config()
       log.debug("Acquired external component config: %s" % vnfm_config)
@@ -774,21 +824,38 @@ class ControllerAdapter(object):
       log.error("Something went wrong during external VNFM component call!")
 
   def _vnfm_timeout_expired (self, deploy_id, timeout):
+    """
+    Handle expired timeout of external VNFM call and raise event.
+
+    :param deploy_id: deploy status ID
+    :type deploy_id: str or int
+    :param timeout: timeout value in sec
+    :type timeout: int
+    :return: None
+    """
     log.warning("External VNFM timeout: %ss has expired!" % timeout)
     self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                        id=deploy_id,
                                        result=InstallationFinishedEvent.DEPLOY_ERROR)
 
   def cancel_vnfm_timer (self):
+    """
+    Cancel timer defined for external VNFM call.
+
+    :return: None
+    """
     if self.__vnfm_timer:
       self.__vnfm_timer.cancel()
 
   def __perform_internal_mgr_update (self, mapped_nffg, domain):
     """
+    Update DoV state if ESCAPE is a local Domain Orchestrator.
 
-    :param mapped_nffg:
-    :param domain:
-    :return:
+    :param mapped_nffg: mapped NFFG
+    :type mapped_nffg: :class:`NFFG`
+    :param domain: domain name
+    :type domain: str
+    :return: None
     """
     # If the internalDM is the only initiated mgr, we can override the
     # whole DoV
@@ -827,9 +894,13 @@ class ControllerAdapter(object):
 
   def __do_rollback (self, status, previous_state):
     """
+    Initiate and perform the rollback feature.
 
-    :type status: DomainRequestStatus
-    :return:
+    :param status: deploy status object
+    :type status: :class:`DomainRequestStatus`
+    :param previous_state: previous state stored before deploy
+    :type previous_state: :class:`NFFG`
+    :return: None
     """
     if not CONFIG.rollback_on_failure():
       return
@@ -871,7 +942,7 @@ class ControllerAdapter(object):
     store and enforce changes into DoV.
 
     :param event: event object
-    :type event: :any:`DomainChangedEvent`
+    :type event: :class:`DomainChangedEvent`
     :return: None
     """
     if isinstance(event.source, AbstractDomainManager) \
@@ -932,10 +1003,11 @@ class ControllerAdapter(object):
 
   def _handle_EditConfigHookEvent (self, event):
     """
+    Handle event raised by received callback of a standard edit-config request.
 
-    :param event:
-    :type event: escape.adapt.managers.EditConfigHookEvent
-    :return:
+    :param event: raised event
+    :type event: :class:`EditConfigHookEvent`
+    :return: None
     """
     log.debug("Received %s event..." % event.__class__.__name__)
     request_id = event.callback.request_id
@@ -960,7 +1032,7 @@ class ControllerAdapter(object):
         log.info("All installation process has been finished for request: %s! "
                  "Result: %s" % (deploy_status.id, deploy_status.status))
         if CONFIG.one_step_update():
-          log.debug("One-step-update is enabled. Update DoV now...")
+          log.info("One-step-update is enabled. Update DoV now...")
           self.DoVManager.set_global_view(nffg=deploy_status.data)
       elif deploy_status.failed:
         log.error("All installation process has been finished for request: %s! "
@@ -983,10 +1055,11 @@ class ControllerAdapter(object):
 
   def _handle_ResetHookEvent (self, event):
     """
+    Handle event raised by received callback of a rollback request.
 
-    :param event:
-    :type event: escape.adapt.managers.EditConfigHookEvent
-    :return:
+    :param event: raised event
+    :type event: :class:`ResetHookEvent`
+    :return: None
     """
     log.debug("Received %s event..." % event.__class__.__name__)
     request_id = event.callback.request_id
@@ -1028,10 +1101,11 @@ class ControllerAdapter(object):
 
   def _handle_InfoHookEvent (self, event):
     """
+    Handle event raised by received callback of an Info request.
 
-    :param event:
-    :type event: escape.adapt.managers.InfoHookEvent
-    :return:
+    :param event: raised event
+    :type event: :class:`InfoHookEvent`
+    :return: None
     """
     log.debug("Received %s event..." % event.__class__.__name__)
     request_id = event.callback.request_id
@@ -1069,15 +1143,18 @@ class ControllerAdapter(object):
 
   def collect_domain_urls (self, mapping):
     """
+    Extend the given mapping info structure with related domain URLs.
 
-    :param mapping:
-    :return:
+    :param mapping: collected mapping info
+    :type mapping: dict
+    :return: updated mapping info structure
+    :rtype: dict
     """
-    for map in mapping:
+    for m in mapping:
       try:
-        domain = map['bisbis']['domain']
+        domain = m['bisbis']['domain']
       except KeyError:
-        log.error("Missing domain from mapping:\n%s" % map)
+        log.error("Missing domain from mapping:\n%s" % m)
         continue
       url = self.get_domain_url(domain=domain)
       if url:
@@ -1085,14 +1162,17 @@ class ControllerAdapter(object):
       else:
         log.error("URL is missing from domain: %s!" % domain)
         url = "N/A"
-      map['bisbis']['url'] = url
+      m['bisbis']['url'] = url
     return mapping
 
   def get_domain_url (self, domain):
     """
+    Return the configured domain URL based on given `domain` name.
 
-    :param domain:
-    :return:
+    :param domain: domain name
+    :type domain: str
+    :return: URL
+    :rtype: str
     """
     mgr = self.domains.get_component_by_domain(domain_name=domain)
     if not mgr:
@@ -1106,6 +1186,15 @@ class ControllerAdapter(object):
       return mgr.get_domain_url()
 
   def __resolve_nodes_in_info (self, info):
+    """
+    Resolve the node path in given `info` structure using the full topology
+    view. Return with the collected path binding in reverse ordered way.
+
+    :param info: info request structure
+    :type info: :class:`Info`
+    :return: reverse ordered path binding
+    :rtype: dict
+    """
     log.debug("Resolve NF paths...")
     reverse_binding = {}
     dov = self.DoVManager.dov.get_resource_info()
@@ -1135,7 +1224,19 @@ class ControllerAdapter(object):
         log.debug("Overrided new path for NF --> %s" % e.object.get_value())
     return reverse_binding
 
-  def __reset_node_ids (self, info, binding):
+  @staticmethod
+  def __reset_node_ids (info, binding):
+    """
+    Reset node path in given `info` strucure with a previously collected
+    reverse path binding structure.
+
+    :param info: received Info object
+    :type info: :class:`Info`
+    :param binding: reversed node path bindings
+    :type binding: dict
+    :return: updated info object
+    :rtype: :class:`Info`
+    """
     log.debug("Reset NF paths...")
     for attr in (getattr(info, e) for e in info._sorted_children):
       rewrite = []
@@ -1162,9 +1263,11 @@ class ControllerAdapter(object):
 
   def __split_info_request_by_domain (self, info):
     """
+    Split the given `info` structure based on domains.
 
-    :param info:
-    :return:
+    :param info: received Info object
+    :type info: :class:`Info`
+    :return: splitted info dict keyed by domain names
     :rtype: dict
     """
     dov = self.DoVManager.dov.get_resource_info()
@@ -1182,7 +1285,15 @@ class ControllerAdapter(object):
 
   def propagate_info_requests (self, id, info):
     """
-    :return:
+    Process the received Info request and propagate the relevant part to the
+    domain orchestrators.
+
+    :param id: Info request ID
+    :type id: str or int
+    :param info: received Info object
+    :type info: :class:`Info`
+    :return: request status
+    :rtype: :class:`DomainRequestStatus`
     """
     binding = self.__resolve_nodes_in_info(info=info)
     splitted = self.__split_info_request_by_domain(info=info)
@@ -1371,6 +1482,9 @@ class ControllerAdapter(object):
 
 
 class DomainRequestStatus(object):
+  """
+  Container class for storing related information about a service request.
+  """
   INITIALIZED = "INITIALIZED"
   OK = "OK"
   WAITING = "WAITING"
@@ -1379,6 +1493,16 @@ class DomainRequestStatus(object):
   RESET_FAILED = "RESET_FAILED"
 
   def __init__ (self, id, domains, data=None):
+    """
+    Init.
+
+    :param id: request ID
+    :type id: str or int
+    :param domains: domains affected by the request
+    :type domains: set
+    :param data: service request under deploy (optional)
+    :type data: :class:`NFFG`
+    """
     self.__id = id
     self.__statuses = {}.fromkeys(domains, self.INITIALIZED)
     self.__standby = False
@@ -1386,18 +1510,44 @@ class DomainRequestStatus(object):
 
   @property
   def id (self):
+    """
+    Return service ID.
+
+    :return: service ID
+    :rtype: str or int
+    """
     return self.__id
 
   @property
   def data (self):
+    """
+    Return data.
+
+    :return: data
+    :rtype: :class:`NFFG` or
+    """
     return self.__data
 
   def set_mapping_result (self, data):
+    """
+    Overwrite the stored service request under deploy.
+
+    :param data: new service request
+    :type data: :class:`NFFG`
+    :return: None
+    """
     log.debug("Set mapping result: %s for service request: %s"
               % (data.id, self.__id))
     self.__data = data
 
-  def reset_status (self, data):
+  def reset_status (self, data=None):
+    """
+    Reset the object state and use the given data as service request.
+
+    :param data: optional service request
+    :type data: :class:`NFFG`
+    :return: None
+    """
     log.debug("Clear domain status...")
     for domain in self.__statuses:
       self.__statuses[domain] = self.INITIALIZED
@@ -1405,28 +1555,58 @@ class DomainRequestStatus(object):
     self.reset_standby()
 
   def set_standby (self):
+    """
+    Set deploy status object in `standby` state.
+
+    :return: None
+    """
     log.debug("Put request: %s in standby mode" % self.__id)
     self.__standby = True
 
   @property
   def standby (self):
+    """
+    Return standby state.
+
+    :return: standby
+    :rtype: bool
+    """
     return self.__standby
 
   def set_active (self):
+    """
+    Set deploy status object in `active` state.
+
+    :return: None
+    """
     if self.__standby:
       log.debug("Continue request: %s " % self.__id)
       self.__standby = False
 
   def reset_standby (self):
+    """
+    Reset standby state to default value.
+
+    :return: None
+    """
     if self.__standby:
       log.debug("Reset request to active mode")
       self.__standby = False
 
   def clear (self):
+    """
+    Clear tracked domain statuses.
+
+    :return: None
+    """
     self.__statuses.clear()
 
   @property
   def still_pending (self):
+    """
+    :return: Return True if the deployment is still pending
+    :rtype: bool
+    """
     if self.__statuses:
       return any(map(lambda s: s in (self.INITIALIZED, self.WAITING),
                      self.__statuses.itervalues()))
@@ -1435,6 +1615,10 @@ class DomainRequestStatus(object):
 
   @property
   def success (self):
+    """
+    :return: Return True if the deployment was successful
+    :rtype: bool
+    """
     if self.__statuses:
       return all(map(lambda s: s == self.OK,
                      self.__statuses.itervalues()))
@@ -1443,6 +1627,10 @@ class DomainRequestStatus(object):
 
   @property
   def reset (self):
+    """
+    :return: Return True if the service was successfuly reset
+    :rtype: bool
+    """
     if self.__statuses:
       return all(map(lambda s: s == self.RESET,
                      self.__statuses.itervalues()))
@@ -1451,16 +1639,30 @@ class DomainRequestStatus(object):
 
   @property
   def failed (self):
+    """
+    :return: Return True if the deployment was failed
+    :rtype: bool
+    """
     return any(map(lambda s: s == self.FAILED,
                    self.__statuses.itervalues()))
 
   @property
   def reset_failed (self):
+    """
+    :return: Return True if the service was unsuccessfully reset
+    :rtype: bool
+    """
     return any(map(lambda s: s == self.RESET_FAILED,
                    self.__statuses.itervalues()))
 
   @property
   def status (self):
+    """
+    Return the overall deploy status.
+
+    :return: deploy status
+    :rtype: str
+    """
     for s in self.statuses:
       if s == self.FAILED:
         return self.FAILED
@@ -1477,10 +1679,18 @@ class DomainRequestStatus(object):
 
   @property
   def domains (self):
+    """
+    :return: Tracked domains names
+    :rtype: tuple
+    """
     return self.__statuses.keys()
 
   @property
   def statuses (self):
+    """
+    :return: Tracked domain statuses
+    :rtype: tuple
+    """
     return self.__statuses.values()
 
   def __str__ (self):
@@ -1488,9 +1698,27 @@ class DomainRequestStatus(object):
                                 self.__id, str(self.__statuses))
 
   def get_domain_status (self, domain):
+    """
+    Return with the given domain deploy status.
+
+    :param domain: domain name
+    :type domain: str
+    :return: deploy status
+    :rtype: str
+    """
     return self.__statuses.get(domain)
 
   def set_domain (self, domain, status):
+    """
+    Set the given domain wioht the given status value.
+
+    :param domain: domain name
+    :type domain: str
+    :param status: deploy status
+    :type status: str
+    :return: domain status object
+    :rtype: :class:`DomainRequestStatus`
+    """
     if domain not in self.__statuses:
       raise RuntimeError("Updated domain: %s is not registered!" % domain)
     self.__statuses[domain] = status
@@ -1500,33 +1728,92 @@ class DomainRequestStatus(object):
     return self
 
   def set_domain_ok (self, domain):
+    """
+    Set successful domain status for given domain.
+
+    :param domain: domain name
+    :type domain: str
+    :return: domain status object
+    :rtype: :class:`DomainRequestStatus`
+    """
     log.debug("Set install status: %s for domain: %s" % (self.OK, domain))
     return self.set_domain(domain=domain, status=self.OK)
 
   def set_domain_waiting (self, domain):
+    """
+    Set pending domain status for given domain.
+
+    :param domain: domain name
+    :type domain: str
+    :return: domain status object
+    :rtype: :class:`DomainRequestStatus`
+    """
     log.debug("Set install status: %s for domain: %s" % (self.WAITING, domain))
     return self.set_domain(domain=domain, status=self.WAITING)
 
   def set_domain_failed (self, domain):
+    """
+    Set failed domain status for given domain.
+
+    :param domain: domain name
+    :type domain: str
+    :return: domain status object
+    :rtype: :class:`DomainRequestStatus`
+    """
     log.debug("Set install status: %s for domain: %s" % (self.FAILED, domain))
     return self.set_domain(domain=domain, status=self.FAILED)
 
   def set_domain_reset (self, domain):
+    """
+    Set reset domain status for given domain.
+
+    :param domain: domain name
+    :type domain: str
+    :return: domain status object
+    :rtype: :class:`DomainRequestStatus`
+    """
     log.debug("Set install status: %s for domain: %s" % (self.RESET, domain))
     return self.set_domain(domain=domain, status=self.RESET)
 
   def set_domain_reset_failed (self, domain):
+    """
+    Set faield reset domain status for given domain.
+
+    :param domain: domain name
+    :type domain: str
+    :return: domain status object
+    :rtype: :class:`DomainRequestStatus`
+    """
     log.debug("Set install status: %s for domain: %s" % (self.RESET_FAILED,
                                                          domain))
     return self.set_domain(domain=domain, status=self.RESET_FAILED)
 
 
 class DomainRequestManager(object):
+  """
+  Manager class to register service requests for managing deployment.
+  """
+
   def __init__ (self):
+    """
+    Init.
+    """
     self._services = []
     self._last = None
 
   def register_request (self, id, domains, data=None):
+    """
+    Register a service request.
+
+    :param id: request ID
+    :type id: str or int
+    :param domains: domains affected by the request
+    :type domains: set
+    :param data: service request under deploy (optional)
+    :type data: :class:`NFFG`
+    :return: created deploy status object
+    :rtype: :class:`DomainRequestStatus`
+    """
     for s in self._services:
       if s.id == id:
         log.warning("Detected already registered service request: %s in %s! "
@@ -1543,24 +1830,32 @@ class DomainRequestManager(object):
       return status
 
   def get_last_status (self):
+    """
+    :return: Last registered deploy status object
+    :rtype: :class:`DomainRequestStatus`
+    """
     return self._last
 
   def register_service (self, nffg):
     """
+    Wrapper function to register a service request using the request object.
 
-    :param nffg:
-    :return:
-    :rtype: DomainRequestStatus
+    :param nffg: service request
+    :type nffg: :class:`NFFG`
+    :return: created deploy status object
+    :rtype: :class:`DomainRequestStatus`
     """
     domains = NFFGToolBox.detect_domains(nffg=nffg)
     return self.register_request(id=nffg.id, domains=domains, data=nffg)
 
   def get_status (self, id):
     """
+    Return the deploy status object of the given ID.
 
-    :param id:
-    :return:
-    :rtype: DomainRequestStatus
+    :param id: service request ID
+    :type id: str or int
+    :return: created deploy status object
+    :rtype: :class:`DomainRequestStatus`
     """
     for status in self._services:
       if status.id == id:
@@ -1607,11 +1902,22 @@ class GlobalResourceManager(object):
     return tuple(self.tracked)
 
   def backup_dov_state (self):
+    """
+    Backup current state of DoV.
+
+    :return: None
+    """
     log.debug("Backup current DoV state...")
     self.__backup = self.dov.get_resource_info()
     self.__backup.id = (self.__backup.id + "-backup")
 
   def get_backup_state (self):
+    """
+    Return with the stored beckup.
+
+    :return: stashed DoV
+    :rtype: :class:`NFFG`
+    """
     log.debug("Acquire previous DoV state...")
     return self.__backup
 

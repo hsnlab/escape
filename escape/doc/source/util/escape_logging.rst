@@ -1,16 +1,12 @@
-*api.py* module
-===============
+The *escape_logging.py* main module
+===================================
 
-Contains abstract classes for concrete layer API modules.
-
-.. inheritance-diagram::
-   escape.util.api
-   :parts: 1
+Contains setup function for centralized logging.
 
 Module contents
 ---------------
 
-.. automodule:: escape.util.api
+.. automodule:: escape_logging
    :members:
    :private-members:
    :special-members:

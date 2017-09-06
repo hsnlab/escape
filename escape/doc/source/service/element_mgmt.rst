@@ -9,10 +9,6 @@ Classes of the module:
    escape.service.element_mgmt
    :parts: 1
 
-:any:`AbstractElementManager` is an abstract class for element managers.
-
-:any:`ClickManager` represent the interface to Click elements.
-
 Module contents
 ---------------
 

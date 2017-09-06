@@ -59,6 +59,10 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :type topology: :class:`NFFG`
     :param profiling: enables cProfile for mapping which bring big overhead
     :type profiling: bool
+    :param stats_type: use explicit identifier for statistic
+    :type stats_type: int
+    :param stat_level: use explicit level for statistic
+    :type stat_level: str
     :param params: additional mapping parameters
     :type params: dict
     :return: mapping result
@@ -78,6 +82,13 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
 
   @staticmethod
   def cprofiler_decorator (func, *args, **kwargs):
+    """
+    Run the given function with CProfiler.
+
+    :param func: profiled function
+    :type func: callable
+    :return: return value of given function
+    """
     profiler = cProfile.Profile(builtins=False, subcalls=False)
     try:
       profiler.enable()
@@ -93,6 +104,13 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
 
   @staticmethod
   def timer_decorator (func, *args, **kwargs):
+    """
+    Decorator function to measure the runtime of given function.
+
+    :param func: profiled function
+    :type func: callable
+    :return: return value of given function
+    """
     start = time.time()
     try:
       result = func(*args, **kwargs)
@@ -110,6 +128,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :type graph: :class:`NFFG`
     :param resource: global virtual resource info
     :type resource: :class:`NFFG`
+    :param pre_state: use mapping state for continued mapping
+    :type pre_state: :class:`MappingState`
     :return: mapped Network Function Forwarding Graph
     :rtype: :class:`NFFG`
     """
@@ -180,6 +200,15 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
 
   @classmethod
   def _resolve_external_ports (cls, graph, resource):
+    """
+    Preprocess given graph object wiht given resource and detect external ports.
+
+    :param graph: request graph
+    :type graph: :class:`NFFG`
+    :param resource: resource graph
+    :type resource: :class:`NFFG`
+    :return: None
+    """
     log.debug("Resolving optional external flowrules...")
     for infra in graph.infras:
       for port in infra.ports:

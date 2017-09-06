@@ -68,12 +68,15 @@ class ResourceOrchestrator(AbstractOrchestrator):
     if self.nfibManager:
       self.nfibManager.finalize()
 
-  def instantiate_nffg (self, nffg, continued_request_id=False):
+  def instantiate_nffg (self, nffg, continued_request_id=None):
     """
     Main API function for NF-FG instantiation.
 
     :param nffg: NFFG instance
     :type nffg: :class:`NFFG`
+    :param continued_request_id: use explicit request id if request is
+      continued after a trial and error (default: False)
+    :type continued_request_id: str or None
     :return: mapped NFFG instance
     :rtype: :class:`NFFG`
     """
@@ -159,32 +162,7 @@ class ResourceOrchestrator(AbstractOrchestrator):
   @staticmethod
   def __collect_binding (dov, nfs):
     """
-    Collect mapping of given NFs on the global view(DoV) with the structure:
-
-    .. code-block:: json
-
-      [
-        {
-          "bisbis": {
-            "domain": null,
-            "id": "EE2"
-          },
-          "nf": {
-            "id": "fwd",
-            "ports": [
-              {
-                "id": 1,
-                "management": {
-                  "22/tcp": [
-                    "0.0.0.0",
-                    20000
-                  ]
-                }
-              }
-            ]
-          }
-        }
-      ]
+    Collect mapping of given NFs on the global view(DoV).
 
     :param dov: global topology
     :type dov: :class:`NFFG`
@@ -231,10 +209,15 @@ class ResourceOrchestrator(AbstractOrchestrator):
 
   def collect_mappings (self, mappings, slor_topo):
     """
+    Collect mapping information of NF in given mappings and return with an
+    extended mapping structure.
 
-    :param mappings:
-    :param slor_topo:
-    :return:
+    :param mappings: received mapping object
+    :type mappings: :class:`Virtualizer`
+    :param slor_topo: layer view of topology
+    :type slor_topo: :class:`NFFG`
+    :return: mapping structure extended with embedding info
+    :rtype: :class:`Virtualizer`
     """
     dov = self.virtualizerManager.dov.get_resource_info()
     response = mappings.full_copy()
@@ -267,12 +250,17 @@ class ResourceOrchestrator(AbstractOrchestrator):
       mapping.target.domain.set_value(domain)
     return response
 
-  def filter_info_request (self, info, slor_topo):
+  @staticmethod
+  def filter_info_request (info, slor_topo):
     """
+    Filter out non-existent NFs from original request.
 
-    :param info:
-    :param slor_topo:
-    :return:
+    :param info: parsed info object
+    :type info: :class:`Info`
+    :param slor_topo: layer view of topology
+    :type slor_topo: :class:`NFFG`
+    :return: original and modified Info object
+    :rtype: :class:`Info`
     """
     log.debug("Filter info request based on layer view: %s..." % slor_topo.id)
     info = info.full_copy()

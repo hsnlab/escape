@@ -1,16 +1,12 @@
-*api.py* module
-===============
+*virtualizer_helper.py* module
+==============================
 
-Contains abstract classes for concrete layer API modules.
-
-.. inheritance-diagram::
-   escape.util.api
-   :parts: 1
+Contains helper functions for managinf Virtualizer objects.
 
 Module contents
 ---------------
 
-.. automodule:: escape.util.api
+.. automodule:: escape.util.virtualizer_helper
    :members:
    :private-members:
    :special-members:

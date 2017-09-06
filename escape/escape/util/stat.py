@@ -23,10 +23,19 @@ log = core.getLogger("STAT")
 
 _StatEntry = namedtuple("StatEntry",
                         ('id', 'type', 'info', 'cmd', 'timestamp'))
+"""Timestamp class for memory efficient storing."""
 
 
-class StatEntry(_StatEntry):
+class StatTimestamp(_StatEntry):
+  """
+  Container class for storing information of a specific timestamp.
+  """
+
   def dump (self):
+    """
+    :return: Return the timestamp info in a merged string.
+    :rtype: str
+    """
     return ",".join((str(self.id),
                      OrchestrationStatCollector.get_type_name(self.type),
                      str(self.info),
@@ -35,6 +44,10 @@ class StatEntry(_StatEntry):
 
 
 class OrchestrationStatCollector(object):
+  """
+  Manager class to collect and persist timestamp values of an orchestration
+  process.
+  """
   __metaclass__ = Singleton
 
   PREFIX = 'TYPE_'
@@ -50,6 +63,13 @@ class OrchestrationStatCollector(object):
   CMD_STOP = "END"
 
   def __init__ (self, stat_folder):
+    """
+    Init.
+
+    :param stat_folder: location of the stat file
+    :type stat_folder: str
+    :return: None
+    """
     self.stat_folder = stat_folder
     log.debug("Setup stat collector with folder: %s" % stat_folder)
     self.__cntr = 0
@@ -59,26 +79,59 @@ class OrchestrationStatCollector(object):
       os.mkdir(self.stat_folder)
     self.clear_stats()
 
-  def set_request_id(self, request_id):
+  def set_request_id (self, request_id):
+    """
+    Set the request Id of the service request under orchestration.
+
+    :param request_id: service request id
+    :type request_id: str or int
+    :return: None
+    """
     self.__request_id = request_id
 
   @classmethod
   def get_type_name (cls, number):
+    """
+    Return the type name related to the given type number.
+
+    :param number: type number
+    :type number: int
+    :return: type name
+    :rtype: str
+    """
     for t in cls.__dict__.keys():
       if t.startswith(cls.PREFIX) and getattr(cls, t) == number:
         return t[len(cls.PREFIX):]
 
   def __increase_cntr (self):
+    """
+    Increase unique counter.
+
+    :return: increased counter
+    :rtype: int
+    """
     self.__cntr += 1
     return self.__cntr
 
   def clear_stats (self):
+    """
+    Remove unnecessary stat files.
+
+    :return: None
+    """
     log.debug("Remove stats files...")
     for f in os.listdir(os.path.join(PROJECT_ROOT, self.stat_folder)):
       if f != ".placeholder":
         os.remove(os.path.join(PROJECT_ROOT, self.stat_folder, f))
 
   def init_request_measurement (self, request_id):
+    """
+    Initialize measurement of a service request orchestration.
+
+    :param request_id: service request id
+    :type request_id: str or int
+    :return: None
+    """
     if self.__request_id != request_id:
       self.reset()
     self.__request_id = request_id
@@ -86,43 +139,82 @@ class OrchestrationStatCollector(object):
                                      info=self.__request_id)
 
   def finish_request_measurement (self):
+    """
+    Stop measurement of the actual service request orchestration and dump
+    result into file.
+
+    :return: None
+    """
     self.add_measurement_end_entry(type=self.TYPE_OVERALL,
                                    info=self.__request_id)
     self.dump_to_file()
 
   def reset (self):
+    """
+    Clear measurement values.
+
+    :return: None
+    """
     self.__request_id = None
     del self.__measured_values[:]
 
   def add_measurement_start_entry (self, type, info=None):
-    se = StatEntry(id=self.__increase_cntr(),
-                   type=type,
-                   info=info,
-                   cmd=self.CMD_START,
-                   timestamp=time.time())
+    """
+    Add a starting timestamp with the given parameters to the statistic.
+
+    :param type: timestamp type
+    :type type: str
+    :param info: additional info
+    :type info: str
+    :return: None
+    """
+    se = StatTimestamp(id=self.__increase_cntr(),
+                       type=type,
+                       info=info,
+                       cmd=self.CMD_START,
+                       timestamp=time.time())
     log.debug("Measurement timestamp: %s" % str(se))
     self.__measured_values.append(se)
 
   def add_measurement_end_entry (self, type, info=None):
-    se = StatEntry(id=self.__increase_cntr(),
-                   type=type,
-                   info=info,
-                   cmd=self.CMD_STOP,
-                   timestamp=time.time())
+    """
+    Add a ending timestamp with the given parameters to the statistic.
+
+    :param type: timestamp type
+    :type type: str
+    :param info: additional info
+    :type info: str
+    :return: None
+    """
+    se = StatTimestamp(id=self.__increase_cntr(),
+                       type=type,
+                       info=info,
+                       cmd=self.CMD_STOP,
+                       timestamp=time.time())
     log.debug("Measurement timestamp: %s" % str(se))
     self.__measured_values.append(se)
 
   def raw_stat (self):
+    """
+    :return: Return the list of raw measured values
+    :rtype: list
+    """
     return self.__measured_values
 
   def _get_measured_types (self):
-    types = []
-    for entry in self.__measured_values:
-      if entry.type not in types:
-        types.append(entry.type)
-    return types
+    """
+    :return: Return the types of the stored timestamps.
+    :rtype: set
+    """
+    return {mv.type for mv in self.__measured_values}
 
   def calculate_stat_values (self):
+    """
+    Process the raw timestamps and conclude derived measurements.
+
+    :return: derived measurements
+    :rtype: str
+    """
     processed = []
     for _type in self._get_measured_types():
       if _type != self.TYPE_DEPLOY_DOMAIN:
@@ -136,10 +228,21 @@ class OrchestrationStatCollector(object):
             for e in self.__measured_values[dd.id:]:
               if e.info.startswith(dd.info):
                 processed.append("- %s: %s" % (dd.info,
-                                             e.timestamp - dd.timestamp))
+                                               e.timestamp - dd.timestamp))
     return processed
 
   def dump_to_file (self, file_name=None, raw=True, calculated=False):
+    """
+    Dump the measured timestamps into a file.
+
+    :param file_name: use explicit file name
+    :type file_name: str
+    :param raw: dump raw measurements
+    :type raw: bool
+    :param calculated: dump derived measurements
+    :type calculated: bool
+    :return: None
+    """
     if not file_name:
       file_name = "%s/%s.stat" % (self.stat_folder, self.__request_id)
     if os.path.exists(file_name):

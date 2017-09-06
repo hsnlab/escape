@@ -10,15 +10,6 @@ Classes of the module:
    escape.adapt.adaptation
    :parts: 1
 
-:class:`ComponentConfigurator` creates, initializes, stores and manages different
-adaptation components, i.e. derived classes of :class:`AbstractDomainManager` and
-:class:`AbstractESCAPEAdapter`.
-
-:class:`ControllerAdapter` implements the centralized functionality of high-level
-adaptation and installation of :class:`NFFG`.
-
-:class:`GlobalResourceManager` stores and manages the global Virtualizer.
-
 Module contents
 ---------------
 

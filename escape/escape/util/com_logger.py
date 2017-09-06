@@ -117,7 +117,7 @@ class RemoteVisualizer(Session):
     Convert given NFFG into Virtualizer format if needed.
 
     :param data: topology description need to send
-    :type data: :class:`NFFG` or Virtualizer
+    :type data: :class:`NFFG` or :class:`Virtualizer`
     :param id: id of the data, needs for the remote server
     :type id: str
     :param url: additional URL (optional)
@@ -171,21 +171,39 @@ class RemoteVisualizer(Session):
 
 
 class MessageDumper(object):
+  """
+  Dump messages into file in thread-safe way.
+  """
   __metaclass__ = Singleton
   DIR = "log/trails/"
+  """Default log dir"""
   __lock = threading.Lock()
 
   def __init__ (self):
+    """
+    Init.
+    """
     self.__cntr = 0
     self.__clear_trails()
     self.__init()
 
   @wrapt.synchronized(__lock)
   def increase_cntr (self):
+    """
+    Increase file counter.
+
+    :return: increased counter value
+    :rtype: int
+    """
     self.__cntr += 1
     return self.__cntr
 
   def __init (self):
+    """
+    Initialize log dir structure.
+
+    :return: None
+    """
     self.log_dir = self.DIR + time.strftime("%Y%m%d%H%M%S")
     for i in xrange(1, 10):
       if not os.path.exists(os.path.join(PROJECT_ROOT, self.log_dir)):
@@ -197,6 +215,11 @@ class MessageDumper(object):
       log.warning("Log dir: %s has already exist for given timestamp prefix!")
 
   def __clear_trails (self):
+    """
+    Clear unnecessary log files.
+
+    :return: None
+    """
     log.debug("Remove trails...")
     for f in os.listdir(os.path.join(PROJECT_ROOT, self.DIR)):
       if f != ".placeholder" and not f.startswith(time.strftime("%Y%m%d")):
@@ -205,6 +228,15 @@ class MessageDumper(object):
                       ignore_errors=True)
 
   def dump_to_file (self, data, unique):
+    """
+    Dump given raw data into file.
+
+    :param data: raw data
+    :type data: str
+    :param unique: unique name part
+    :type unique: str
+    :return: None
+    """
     if not isinstance(data, basestring):
       log.error("Data is not str: %s" % type(data))
       return

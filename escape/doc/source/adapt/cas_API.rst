@@ -10,17 +10,6 @@ Classes of the module:
    escape.adapt.cas_API
    :parts: 1
 
-:any:`GlobalResInfoEvent` can send back global resource info requested from
-upper layer.
-
-:any:`InstallationFinishedEvent` can send back status about the NFFG
-installation.
-
-:any:`DeployNFFGEvent` can send NFFG to Infrastructure layer for deploying.
-
-:any:`ControllerAdaptationAPI` represents the CAS layer and implement all
-related functionality.
-
 Module contents
 ---------------
 

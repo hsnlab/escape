@@ -183,9 +183,6 @@ class ServiceRequestHandler(BasicUnifyRequestHandler):
       nffg.id = params[self.MESSAGE_ID_NAME]
       self.log.debug("Set NFFG id: %s" % nffg.id)
       nffg.metadata['params'] = params
-      # self._proceed_API_call(self.API_CALL_REQUEST,
-      #                        service_nffg=nffg,
-      #                        params=params)
       self.server.scheduler.schedule_request(id=nffg.id,
                                              layer=self.bounded_layer,
                                              function=self.API_CALL_REQUEST,
@@ -289,6 +286,13 @@ class ServiceLayerAPI(AbstractAPI):
     log.info("Service Layer has been initialized!")
 
   def post_up_hook (self, event):
+    """
+    Perform tasks after ESCAPE is up.
+
+    :param event: event object
+    :type event: :class:`UpEvent`
+    :return: None
+    """
     log.debug("Call post Up event hook for layer: %s" % self._core_name)
     if not self._sg_file:
       self.rest_api.ping_response_code = self.rest_api.POST_UP_PING_CODE
@@ -363,6 +367,7 @@ class ServiceLayerAPI(AbstractAPI):
   # UNIFY U - Sl API functions starts here
   ##############################################################################
 
+  # noinspection PyUnusedLocal
   @schedule_as_coop_task
   def api_sas_sg_request (self, service_nffg, *args, **kwargs):
     """
@@ -372,8 +377,9 @@ class ServiceLayerAPI(AbstractAPI):
     :type service_nffg: :class:`NFFG`
     :return: None
     """
-    self.__proceed_sg_request(service_nffg)
+    self.__proceed_sg_request(service_nffg=service_nffg)
 
+  # noinspection PyUnusedLocal
   @schedule_delayed_as_coop_task(delay=SCHEDULED_SERVICE_REQUEST_DELAY)
   def api_sas_sg_request_delayed (self, service_nffg, *args, **kwargs):
     """
@@ -383,7 +389,7 @@ class ServiceLayerAPI(AbstractAPI):
     :type service_nffg: :class:`NFFG`
     :return: None
     """
-    return self.__proceed_sg_request(service_nffg)
+    return self.__proceed_sg_request(service_nffg=service_nffg)
 
   def __proceed_sg_request (self, service_nffg):
     """
@@ -459,14 +465,34 @@ class ServiceLayerAPI(AbstractAPI):
           result=InstantiationFinishedEvent.REFUSED_BY_VERIFICATION,
           error=e))
 
-  def __sg_preprocessing (self, nffg):
+  @staticmethod
+  def __sg_preprocessing (nffg):
+    """
+    Preprocess given :class:`NFFG` based on request mode.
+
+    :param nffg: received service request
+    :type nffg: :class:`NFFG`
+    :return: modified request
+    :rtype: :class:`NFFG`
+    """
     if nffg.mode == NFFG.MODE_DEL:
       log.debug("Explicitly mark NF nodes in DELETE request...")
       for nf in nffg.nfs:
         nf.operation = NFFG.OP_DELETE
         log.debug("%s --> %s" % (nf.id, nf.operation))
+    return nffg
 
   def __handle_mapping_result (self, nffg_id, fail):
+    """
+    Perform necessary task for callback and cache functionality based on mapping
+    result.
+
+    :param nffg_id: request ID
+    :type nffg_id: str or int
+    :param fail: mapping result
+    :type fail: bool
+    :return: None
+    """
     if not (hasattr(self, 'rest_api') and self.rest_api):
       return
     log.getChild('API').debug("Cache request status...")
@@ -572,6 +598,7 @@ class ServiceLayerAPI(AbstractAPI):
   # UNIFY Sl - Or API functions starts here
   ##############################################################################
 
+  # noinspection PyUnusedLocal
   def _handle_MissingVirtualViewEvent (self, event):
     """
     Request virtual resource info from Orchestration layer (UNIFY Sl - Or API).

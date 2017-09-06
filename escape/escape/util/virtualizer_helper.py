@@ -22,6 +22,14 @@ NODE_NF_PATTERN = r'.*nodes/node\[id=(.*?)\]/NF_instances/node\[id=(.*?)\]'
 
 
 def get_nf_from_path (path):
+  """
+  Return the NF id from a Virtualizer path.
+
+  :param path: path
+  :type path: str
+  :return: extracted NF name
+  :rtype: str
+  """
   mapping_regex = re.compile(NODE_NF_PATTERN)
   match = mapping_regex.match(path)
   if match is None:
@@ -31,6 +39,14 @@ def get_nf_from_path (path):
 
 
 def get_bb_nf_from_path (path):
+  """
+  Return the BiSBiS node and NF id from a Virtualizer path.
+
+  :param path: path
+  :type path: str
+  :return: extracted BB and NF name
+  :rtype: tuple
+  """
   mapping_regex = re.compile(NODE_NF_PATTERN)
   match = mapping_regex.match(path)
   if match is None:
@@ -40,6 +56,16 @@ def get_bb_nf_from_path (path):
 
 
 def detect_bb_nf_from_path (path, topo):
+  """
+  Return the existing BiSBis and NF id referred by given path from topology.
+
+  :param path: path
+  :type path: str
+  :param topo: topology object
+  :type topo: :class:`NFFG`
+  :return: extracted NF name
+  :rtype: tuple
+  """
   bb, nf = get_bb_nf_from_path(path=path)
   if bb not in topo or nf not in topo:
     log.warning("Missing requested element: %s on %s from topo!" % (nf, bb))
@@ -49,6 +75,14 @@ def detect_bb_nf_from_path (path, topo):
 
 
 def get_nfs_from_info (info):
+  """
+  Return NF IDs defined in Info request.
+
+  :param info: Info object
+  :type info: :class:`Info`
+  :return: Nf Ids
+  :rtype: set
+  """
   nfs = set()
   log.debug("Extract NFs from info request...")
   for attr in (getattr(info, e) for e in info._sorted_children):
@@ -65,6 +99,17 @@ def get_nfs_from_info (info):
 
 
 def strip_info_by_nfs (info, nfs):
+  """
+  Remove Info element from given Info structure where the referred NF is not
+  in given nfs collection.
+
+  :param info: Info object
+  :type info: :class:`Info`
+  :param nfs: collection of NF IDs
+  :type nfs: list or set
+  :return: stripped Info object
+  :rtype: :class:`Info`
+  """
   info = info.full_copy()
   for attr in (getattr(info, e) for e in info._sorted_children):
     deletable = []
