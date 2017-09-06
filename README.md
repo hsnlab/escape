@@ -28,26 +28,35 @@ Orchestrator when an extended version of Mininet network emulation
 platform is used as an infrastructure which is able to run Network
 Functions and realize dataplane connectivity.
 
+## Full documentation
+
 For detailed information see the online documentation: https://sb.tmit.bme.hu/escape/
 
 ## Installation
 
-All the required dependencies for the full set of ESCAPE's features:
-
-```bash
-$ sudo apt -y install python2.7 python-dev python-pip zlib1g-dev libxml2-dev libxslt1-dev \
-    libssl-dev libffi-dev python-crypto openjdk-7-jdk neo4j=2.2.7 gcc make socat psmisc xterm \
-    ssh iperf iproute telnet python-setuptools cgroup-bin ethtool help2man pyflakes pylint pep8 \
-    openvswitch-switch automake ssh libssh2-1-dev libgcrypt11-dev libncurses5-dev libglib2.0-dev \
-    libgtk2.0-dev graphviz texlive-latex-extra
-
-$ sudo pip -H install numpy jinja2 py2neo networkx requests ncclient cryptography==1.3.1 tornado \
-    sphinx networkx_viewer
-```
+#### Setup scripts
 
 The `install_dep.sh` script is responsible for managing the dependencies. It sets
 the required sym-links, updates the related submodules and installs only the 
 necessary packages regarding the given install parameters.
+
+```bash
+$ ./install-dep.sh -h
+Detected platform is Ubuntu, version: 16.04!
+User project config: N/A
+Usage: ./install-dep.sh [-c] [-d] [-g] [-h] [-i] [-p project]
+Install script for ESCAPEv2
+
+options:
+	-c:   (default) install (C)ore dependencies for Global Orchestration
+	-d:   install additional dependencies for (D)evelopment and test tools
+	-g:   install dependencies for our rudimentary (G)UI (deprecated)
+	-h:   print this (H)elp message
+	-i:   install components of (I)nfrastructure Layer
+		for Local Orchestration (deprecated)
+	-p:   explicitly setup project name based on: .gitmodules.<name>
+		instead of automatic detection
+```
 
 For automatically setting up the submodules and its submodules recursively, 
 the `project-setup.sh` script has been added to the project.
@@ -83,13 +92,7 @@ The recommended Python version, in which the development and mostly the testing
 are performed, is the standard CPython **2.7.13**.
 
 The best choice of platform on wich ESCAPE is recommended to install and the
-`install-dep.sh` is tested is **Ubuntu 16.04.2 LTS**.
-
-However ESCAPE is developed on Xubuntu 16.04, some issues are experienced
-related to SAP-xterm initiation in case the platform was an Ubuntu 16.04 server
-image and ESCAPE was started through an SSH channel.
-Considering this limitation we recommend to use the older 14.04 LTS version in
-case ESCAPE is intended to run as a local Domain Orchestrator on a VM without any graphical interface.
+`install-dep.sh` is tested is **Ubuntu 16.04.3 LTS**.
 
 #### The preferred way:
 
@@ -124,29 +127,12 @@ case ESCAPE is intended to run as a local Domain Orchestrator on a VM without an
 
    * Setup sym-links and submodules for given project name
    * Install the necessary system and Python packages
+   
+   In case of installed Infrastructure layer:
+   
    * Compile and install the `OpenYuma` tools with our `VNF_starter` module
    * Compile and install `Click` modular router and `The Click GUI`.
    * Install `neo4j` graph database for NFIB
-
-   See help menu for further parameters:
-
-   ```bash
-   $ ./install-dep.sh -h
-   Usage: ./install-dep.sh [-a] [-c] [-d] [-g] [-h] [-i] [-p project]
-   Install script for ESCAPEv2
-
-   options:
-        -a:   (default) install (A)ll ESCAPEv2 components (identical with -cgi)
-        -c:   install (C)ore dependencies for Global Orchestration
-        -d:   install additional dependencies for (D)evelopment and test tools
-        -g:   install dependencies for our rudimentary (G)UI
-        -h:   print this (H)elp message
-        -i:   install components of (I)nfrastructure Layer for Local Orchestration
-        -p:   explicitly setup project name based on: .gitmodules.<name>
-    
-   Example: ./install-dep.sh -a 
-   ```
-   (Project name is detected automatically if it is not given)
 
 5. Run ESCAPE with one of the commands listed in a later section. To see the
     available arguments of the top stating script check the help menu:
@@ -217,8 +203,8 @@ the `test` folder.
 Dependent packages for the test can be installed with the `install_requirements.sh` script.
 To run the test see the main test runner script:
 
-```
-$ ./test/run_tests.py -h
+```bash
+$ ./run_tests.py -h
 usage: run_tests.py [-h] [-f] [-o] [-t t] [-s] [-v]
                     [testcases [testcases ...]]
 
@@ -230,17 +216,33 @@ positional arguments:
 
 optional arguments:
   -h, --help         show this help message and exit
-  -f, --failfast     Stop on first failure
-  -o, --show-output  Show ESCAPE output
-  -t t, --timeout t  define explicit timeout in sec (default: 30s)
+  -f, --failfast     stop on first failure
+  -o, --show-output  show ESCAPE output (can use multiple times for more
+                     verbose logging)
+  -t t, --timeout t  define explicit timeout in sec (default: 60s)
   -s, --standalone   run standalone mode: no timeout, no quitting
-  -v, --verbose      Run in verbose mode and show output
+  -v, --verbose      run testframework in verbose mode and show output
+```
+
+To run the testcases in a Docker container, use the ``dockerized-test.sh `` script:
+
+```bash
+$ ./dockerized-test.sh -h
+Run testcases in a docker container.
+
+Usage: ./dockerized-test.sh [-b] | ...
+Parameters:
+	 -b, --build   force to rebuild the Docker image
+	 -h, --help    show this help message and exit
+	 ...           runner parameters, see run_tests.py -h
+
+Example: ./dockerized-test.sh -b | ./dockerized-test.sh case15 -o
 ```
 
 ## Documentation
 
 The documentation can be generated from source code with `generate-docs.sh` script
-or directly with the `Makefile` in `escape/doc` directory.
+or directly with the `Makefile` under `escape/doc` directory.
 The generated doc can be found in `escape/doc/build/`.
 
 ```bash

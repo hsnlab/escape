@@ -320,7 +320,7 @@ function install_dev {
     info "=========================================================="
     info "==  Installing additional dependencies for development  =="
     info "=========================================================="
-    sudo apt-get install -y graphviz texlive-latex-extra
+    sudo apt-get install -y graphviz texlive-latex-extra latexmk
     sudo -H pip install sphinx
     # Install test requirements
     . ${DIR}/test/install_requirements.sh
@@ -351,10 +351,10 @@ function print_usage {
     echo -e "options:"
     echo -e "\t-c:   (default) install (C)ore dependencies for Global Orchestration"
     echo -e "\t-d:   install additional dependencies for (D)evelopment and test tools"
-    echo -e "\t-g:   install dependencies for our rudimentary (G)UI"
+    echo -e "\t-g:   install dependencies for our rudimentary (G)UI (deprecated)"
     echo -e "\t-h:   print this (H)elp message"
-    echo -e "\t-i:   install components of (I)nfrastructure Layer for Local Orchestration"
-    echo -e "\t-p:   explicitly setup project name based on: .gitmodules.<name>"
+    echo -e "\t-i:   install components of (I)nfrastructure Layer\n\t\tfor Local Orchestration (deprecated)"
+    echo -e "\t-p:   explicitly setup project name based on: .gitmodules.<name>\n\t\tinstead of automatic detection"
     exit 2
 }
 
