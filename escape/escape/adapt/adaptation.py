@@ -592,6 +592,7 @@ class ControllerAdapter(object):
       log.debug("Status-based update is enabled! "
                 "Rewrite DoV with mapping result...")
       self.DoVManager.rewrite_global_view_with_status(nffg=mapped_nffg)
+    notify_remote_visualizer(data=mapped_nffg, params={"event": "datastore"})
     # Split the mapped NFFG into slices based on domains
     slices = NFFGToolBox.split_into_domains(nffg=mapped_nffg, log=log)
     # If no Infranode in the NFFG, no domain can be detected and slicing by it
