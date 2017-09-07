@@ -15,7 +15,7 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
-    Service Layer (SL) <service>
-    Resource Orchestration Sublayer (ROS) <orchestration>
-    Controller Adaptation Sublayer (CAS) <adaptation>
-    Infrastructure Layer (IL) <infrastructure>
+    Service Layer (SL) <layers/service>
+    Resource Orchestration Sublayer (ROS) <layers/orchestration>
+    Controller Adaptation Sublayer (CAS) <layers/adaptation>
+    Infrastructure Layer (IL) <layers/infrastructure>

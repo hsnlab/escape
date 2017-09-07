@@ -16,4 +16,4 @@ Service related classes
     :maxdepth: 2
     :titlesonly:
 
-    service/service
+    ../service/service

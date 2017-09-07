@@ -16,4 +16,4 @@ Infrastructure related classes
     :maxdepth: 2
     :titlesonly:
 
-    infr/infr
+    ../infr/infr

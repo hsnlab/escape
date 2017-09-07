@@ -1386,7 +1386,7 @@ class Extended5GExRequestHandler(BasicUnifyRequestHandler):
   def info (self, params):
     """
     Process received Info request, propagate relevant parts to domains an
-    respond withe the collected and unified responses.
+    respond with the collected and unified responses.
 
     :param params: request params
     :type params: dict

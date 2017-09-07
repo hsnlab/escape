@@ -1,7 +1,7 @@
-The *adaptation.py* main module
-===============================
+The *orchestration.py* main module
+==================================
 
-.. automodule:: adaptation
+.. automodule:: orchestration
    :members:
    :private-members:
    :special-members:
@@ -9,11 +9,11 @@ The *adaptation.py* main module
    :undoc-members:
    :show-inheritance:
 
-Adaptation related classes
-++++++++++++++++++++++++++
+Orchestration related classes
++++++++++++++++++++++++++++++
 
 .. toctree::
     :maxdepth: 2
     :titlesonly:
 
-    adapt/adapt
+    ../orchest/orchest
