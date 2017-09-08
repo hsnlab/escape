@@ -1,248 +1,477 @@
+################################################################################
+###                        Service layer configuration                       ###
+################################################################################
 service:
+    # Mapping manager configuration
     MAPPER:
+        # Used Mapper class
         module: escape.service.sas_mapping
         class: ServiceGraphMapper
+        # Enable/disable mapping on the actual layer
         mapping-enabled: false
+        # Mapping configuration used by the embedding function directly
         mapping-config:
-            profiling: false
+            # Use cProfile to measure mapping performance
+            profiling: off
+    # Embedding strategy configuration
     STRATEGY:
+        # Used Strategy class
         module: escape.service.sas_mapping
         class: DefaultServiceMappingStrategy
-        THREADED: false
+        # Run algorithm in a separated thread
+        THREADED: no
+    # Pre/postprocessing configuration
     PROCESSOR:
+        # Used Processor class
         module: escape.util.mapping
         class: ProcessorSkipper
+        # Enable/disable processing
         enabled: false
+    # REST-API configuration
     REST-API:
+        # Used Handler class
         module: escape.service.sas_API
         class: ServiceRequestHandler
+        # Bound address and port of listening socket
         address: 0.0.0.0
-        prefix: escape
         port: 8008
+        # Used static prefix for the URL paths
+        prefix: escape
+        # Enable XML-based Virtualizer format instead of using internal
+        # JSON-based NFFG format
         unify_interface: false
+    # Internal identification of Service layer
     SERVICE-LAYER-ID: ESCAPE-SERVICE
+    # Additional delay before mapping for services read from file
     SCHEDULED_SERVICE_REQUEST_DELAY: 3
+################################################################################
+###                     Orchestration layer configuration                    ###
+################################################################################
 orchestration:
+    # Mapping manager configuration
     MAPPER:
+        # Used Mapper class
         module: escape.orchest.ros_mapping
         class: ResourceOrchestrationMapper
+        # Enable/disable mapping on the actual layer
         mapping-enabled: true
-        trial_and_error: false
+        # Use periodic trial and error feature for mapping
+        trial_and_error: off
+        # Mapping configuration used by the embedding function directly
         mapping-config:
-            profiling: false
+            # Use cProfile to measure mapping performance
+            profiling: off
+    # Embedding strategy configuration
     STRATEGY:
+        # Used Strategy class
         module: escape.orchest.ros_mapping
         class: ESCAPEMappingStrategy
-        THREADED: false
+        # Run algorithm in a separated thread
+        THREADED: no
+    # Pre/postprocessing configuration
     PROCESSOR:
+        # Used Processor class
         module: escape.util.mapping
         class: ProcessorSkipper
+        # Enable/disable processing
         enabled: true
+    # Configuration of provided topology information for Service layer
     ESCAPE-SERVICE:
+        # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
         virtualizer_type: SINGLE
+    # REST-API configuration
     Cf-Or:
+        # Used Handler class
         module: escape.orchest.ros_API
         class: CfOrRequestHandler
-        virtualizer_type: GLOBAL
-        diff: true
+        # Bound address and port of listening socket
         address: 0.0.0.0
         port: 8889
+        # Used static prefix for the URL paths
         prefix: escape/dov
+        # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
+        virtualizer_type: GLOBAL
+        # Enable XML-based Virtualizer format instead of using internal
+        # JSON-based NFFG format
         unify_interface: true
+        # Consider in and out data as a difference of Virtualizers
+        diff: true
+    # REST-API configuration
     Sl-Or:
+        # Used Handler class
         module: escape.orchest.ros_API
         class: Extended5GExRequestHandler
-        virtualizer_type: ZERO-DELAYED-SBB
-        diff: true
+        # Bound address and port of listening socket
         address: 0.0.0.0
         port: 8888
+        # Used static prefix for the URL paths
         prefix: escape
+        # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
+        virtualizer_type: ZERO-DELAYED-SBB
+        # Enable XML-based Virtualizer format instead of using internal
+        # JSON-based NFFG format
         unify_interface: true
+        # Consider in and out data as a difference of Virtualizers
+        diff: true
+    # Neo4j-supported NFIB configuration
     NFIB:
+        # Enable/disable using NFIB manager
         enable: false
+        # Address and port of Neo4j server API
         host: localhost
         port: 7474
+        # Manage local neo4j server start/stop
         manage-neo4j-service: false
+################################################################################
+###                      Adaptation layer configuration                      ###
+################################################################################
 adaptation:
+    # REST-API configuration
     DOV-API:
+        # Used Handler class
         module: escape.adapt.cas_API
         class: DirectDoVRequestHandler
+        # Bound address and port of listening socket
         address: 0.0.0.0
-        prefix: dov
         port: 8889
-        diff: false
+        # Used static prefix for the URL paths
+        prefix: dov
+        # Enable XML-based Virtualizer format instead of using internal
+        # JSON-based NFFG format
         unify_interface: true
-    VNFM:
-        enabled: false
-        url: http://127.0.0.1:9999
-        prefix: escape
-        timeout: 30
+        # Consider in and out data as a difference of Virtualizers
         diff: false
+    # External VNFM component configuration
+    VNFM:
+        # Enable/disable using external component to alter mapped topology
+        # before deployment
+        enabled: false
+        # URL of external component REST-API
+        url: http://127.0.0.1:9999
+        # Used static prefix for REST calls
+        prefix: escape
+        # Consider in and out data as a difference of Virtualizers
+        diff: false
+        # Connection timeout value in sec
+        timeout: 30
+    # Callback manager configuration
     CALLBACK:
+        # Bound address and port of listening socket
         address: 0.0.0.0
         port: 9000
+        # Connection timeout value in sec
         timeout: 5
-    MANAGERS: []
+    # Basic configuration related to DoV management
     DOV:
-        ENSURE-UNIQUE-ID: true
+        # Generate unique ID for every nodes collected from domains
+        ENSURE-UNIQUE-ID: on
+        # Enable REMERGE strategy for updating DoV instead of partial update
         USE-REMERGE-UPDATE-STRATEGY: true
+        # Use status field to track component deployment instead of merging
         USE-STATUS-BASED-UPDATE: false
+        # Update the global topology in one step instead of per-domains
         ONE-STEP-UPDATE: true
+    # Basic configuration related to domain management
     deployment:
+        # Reset each domain before sending deploy requests
         RESET-DOMAINS-BEFORE-INSTALL: false
+        # Reset domains with initial topology at shutdown
         RESET-DOMAINS-AFTER-SHUTDOWN: false
+        # Clear all NFs and flowrules from domains at shutdown
         CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+        # Rollback to previous topology state in case of failed deployment
         ROLLBACK-ON-FAILURE: true
+        # Additional delay before deployment
         DOMAIN-DEPLOY-DELAY: 0
+    # Enabled domain managers
+    MANAGERS: []
+###########    Example configuration of different domain managers    ###########
+    # Internal Mininet-based domain manager configuration
     INTERNAL:
+        # Used domain manager class
         module: escape.infr.topo_manager
         class: InternalDomainManager
+        # Explicit name of the managed domain
+        # If domain name is not set the domain manger name will be used
         domain_name: INTERNAL
+        # Enable domain polling to detect and update domain topology view
         poll: false
+        # Adapters configuration used by domain manager
         adapters:
+            # Adapter configuration for traffic steering
             CONTROLLER:
+                # Used domain adapter class
                 module: escape.adapt.adapter
                 class: InternalPOXAdapter
+                # Explicit name of OpenFlow component used internally
                 name: null
+                # Bound address and port of local OpenFlow controller
                 address: 127.0.0.1
                 port: 6653
-                keepalive: false
+                # Enable sending Openflow Echo messages to OF switches
+                keepalive: off
+                # Used interface prefix to detect DPID-switch association
                 sap_if_prefix: eth
+            # Adapter configuration for VNF management
             MANAGEMENT:
+                # Used domain adapter class
                 module: escape.infr.topo_manager
                 class: VNFStarterAdapter
+                # Address and port of NETCONF server
                 server: 127.0.0.1
                 port: 830
+                # Credentials for SSH channel
                 username: mininet
                 password: mininet
+                # Connection timeout value in sec
                 timeout: 5
+            # Adapter configuration for topology management
             TOPOLOGY:
+                # Used domain manager class
                 module: escape.infr.topo_manager
                 class: InternalMininetAdapter
-                net: null
+    # Plain SDN domain manager based on Openflow
     SDN:
+        # Used domain manager class
         module: escape.adapt.managers
         class: SDNDomainManager
+        # Explicit name of the managed domain
+        # If domain name is not set the domain manger name will be used
         domain_name: SDN-MICROTIK
+        # Enable domain polling to detect and update domain topology view
         poll: false
+        # Adapters configuration used by domain manager
         adapters:
+            # Adapter configuration for traffic steering
             CONTROLLER:
+                # Used domain adapter class
                 module: escape.adapt.adapter
                 class: SDNDomainPOXAdapter
+                # Explicit name of OpenFlow component used internally
                 name: null
+                # Bound address and port of local OpenFlow controller
                 address: 0.0.0.0
                 port: 6633
+                # Enable sending Openflow Echo messages to OF switches
                 keepalive: false
+                # Explicit binding of BiSBiS node id to DPID
                 binding:
                     MT2: 365441792307142
                     MT1: 365441792306724
+            # Adapter configuration for topology management
             TOPOLOGY:
+                # Used domain adapter class
                 module: escape.adapt.adapters
                 class: SDNDomainTopoAdapter
+                # Path of the shown SDN domain topology view
+                # Can be relative to project's root
                 path: examples/sdn-topo.nffg
+    # Domain manager using UNIFY interface
     OPENSTACK:
+        # Used domain manager class
         module: escape.adapt.managers
         class: UnifyDomainManager
+        # Explicit name of the managed domain
+        # If domain name is not set the domain manger name will be used
         domain_name: OPENSTACK
+        # Consider in and out data as a difference of Virtualizers
         diff: true
+        # Enable domain polling to detect and update domain topology view
         poll: false
+        # Enable sending ping messages to detect domain up/down events
         keepalive: on
+        # Adapters configuration used by domain manager
         adapters:
+            # Adapter configuration for UNIFY interface
             REMOTE:
+                # Used domain adapter class
                 module: escape.adapt.adapters
                 class: UnifyRESTAdapter
-                prefix: ro/os
+                # Used URL and static prefix for REST calls
                 url: http://127.0.0.1:8899
+                prefix: ro/os
+                # Connection timeout value in sec
                 timeout: 1
+                # Additional features
                 features:
+                    # Enable delegating antiaffinity property into domain
                     antiaffinity: true
+    # Domain manager using UNIFY interface
     DOCKER:
+        # Used domain manager class
         module: escape.adapt.managers
         class: UnifyDomainManager
+        # Explicit name of the managed domain
+        # If domain name is not set the domain manger name will be used
         domain_name: DOCKER
+        # Consider in and out data as a difference of Virtualizers
         diff: true
+        # Enable domain polling to detect and update domain topology view
         poll: false
+        # Enable sending ping messages to detect domain up/down events
         keepalive: off
+        # Adapters configuration used by domain manager
         adapters:
+            # Adapter configuration for UNIFY interface
             REMOTE:
+                # Used domain adapter class
                 module: escape.adapt.adapters
                 class: UnifyRESTAdapter
-                prefix: ro/os
+                # Used URL and static prefix for REST calls
                 url: http://127.0.0.1:8899
+                prefix: ro/os
+                # Connection timeout value in sec
                 timeout: 1
+            # Callback configuration for actual domain
             CALLBACK:
+                # Enable using callback to track service deployment
                 enabled: true
+                # Use explicit address and port to generate callback URL when
+                # ESCAPE is behind NAT
                 explicit_host: 192.168.0.1
                 explicit_port: 9001
+                # Refresh the domain topology after a received successful callback
                 explicit_update: false
+    # Domain manager for BGP-LS-based domain detection
     BGP-LS-SPEAKER:
+        # Used domain manager class
         module: escape.adapt.managers
         class: BGPLSBasedExternalDomainManager
+        # Explicit name of the managed domain
+        # If domain name is not set the domain manger name will be used
         domain_name: BGP-LS
+        # Enable domain polling to detect and update domain topology view
         poll: false
+        # Consider in and out data as a difference of Virtualizers
         diff: null
+        # Define own BGP identification to filter out own domain node from global
+        # BGP topology
         bgp_domain_id: 0.0.0.2
+        # Used domain manager configuration for detected domain
         prototype: EXTERNAL
+        # Adapters configuration used by domain manager
         adapters:
+            # Adapter configuration for UNIFY interface
             REMOTE:
+                # Used domain adapter class
                 module: escape.adapt.adapters
                 class: BGPLSRESTAdapter
+                # Used URL and static prefix for REST calls
                 url: http://localhost:8088
                 prefix: restconf/data
+                # Connection timeout value in sec
                 timeout: 5
+    # Domain manager for domains automatically detected through BGP-LS
     EXTERNAL:
+        # Used domain manager class
         module: escape.adapt.managers
         class: UnifyDomainManager
+        # Explicit name of the managed domain
+        # If domain name is not set the domain manger name will be used
         domain_name: null
+        # Enable domain polling to detect and update domain topology view
         poll: true
+        # Consider in and out data as a difference of Virtualizers
         diff: false
+        # Adapters configuration used by domain manager
         adapters:
+            # Adapter configuration for UNIFY interface
             REMOTE:
+                # Used domain adapter class
                 module: escape.adapt.adapters
                 class: UnifyRESTAdapter
+                # URL and port values are filled out from BGP domain view
                 url: null
                 prefix: null
+                # Connection timeout value in sec
                 timeout: 5
+    # Domain manager for testing purposes
     STATIC-NFFG:
+        # Used domain manager class
         module: escape.adapt.managers
         class: BasicDomainManager
+        # Explicit name of the managed domain
+        # If domain name is not set the domain manger name will be used
         domain_name: STATIC-NFFG
+        # Adapters configuration used by domain manager
         adapters:
+            # Adapter configuration for topology management
             TOPOLOGY:
+                # Used domain adapter class
                 module: escape.adapt.adapters
                 class: NFFGBasedStaticFileAdapter
+                # Path of the NFFG-based topology file of faked domain
+                # Can be relative to project's root
                 path: examples/escape-mn-topo.nffg
+                # Path of location of dumped out messages
+                # Can be relative to project's root
                 log_dir: log/
+                # Check and create backward links
                 backward_links: false
+    # Domain manager for testing purposes
     STATIC-XML:
+        # Used domain manager class
         module: escape.adapt.managers
         class: BasicDomainManager
+        # Explicit name of the managed domain
+        # If domain name is not set the domain manger name will be used
         domain_name: STATIC-XML
+        # Adapters configuration used by domain manager
         adapters:
+            # Adapter configuration for topology management
             TOPOLOGY:
+                # Used domain adapter class
                 module: escape.adapt.adapters
                 class: VirtualizerBasedStaticFileAdapter
+                # Path of the XML-based topology file of faked domain
+                # Can be relative to project's root
                 path: examples/test-sdn-domain.xml
+                # Path of location of dumped out messages
+                # Can be relative to project's root
                 log_dir: log/
+                 # Consider topology file as a difference of Virtualizers
                 diff: true
+################################################################################
+###                    Infrastructure layer configuration                    ###
+################################################################################
 infrastructure:
+    # Path of used topology file. Can be relative to project's root
     TOPO: examples/escape-mn-topo.nffg
-    SHUTDOWN-CLEAN: true
-    SAP-xterms: true
+    # Cleanup emulated topology after shutdown
+    SHUTDOWN-CLEAN: on
+    # Initiate xterm windows to SAP nodes
+    SAP-xterms: on
+    # Additional controller configuration for nodes
     Controller:
+        # Used OpenFlow controller address and port
         ip: 127.0.0.1
         port: 6653
+    # Additional network emulation parameters
     NETWORK-OPTS: {}
+    # Additional Execution Environment parameters
     EE: null
+    # Additional emulated link parameters
     Link: null
+    # Additional SAP node parameters
     SAP: null
+    # Additional emulated switch parameters
     Switch: null
+    # Fallback configuration of emulated network
     FALLBACK-TOPO:
+        # Used class representing fallback topology
         module: escape.infr.topology
         class: FallbackDynamicTopology
+################################################################################
+###                    Remote visualization configuration                    ###
+################################################################################
 visualization:
+    # URL of remote visualization component
     url: http://127.0.0.1:9999
+    # Used RPC name
     rpc: notification
+    # Additional URL parameters for REST calls
     params:
+        # Define unique instance identification
         instance: ESCAPE
+    # Additional HTTP headers for REST calls
     headers: {}
