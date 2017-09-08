@@ -111,17 +111,17 @@ class RemoteVisualizer(Session):
     logging.getLogger("requests").setLevel(level)
     logging.getLogger("urllib3").setLevel(level)
 
-  def send_notification (self, data, url=None, **kwargs):
+  def send_notification (self, data, url=None, unique_id=None, **kwargs):
     """
     Send given data to a remote server for visualization.
     Convert given NFFG into Virtualizer format if needed.
 
     :param data: topology description need to send
     :type data: :class:`NFFG` or :class:`Virtualizer`
-    :param id: id of the data, needs for the remote server
-    :type id: str
     :param url: additional URL (optional)
     :type url: str
+    :param unique_id: use given ID as NFFG id
+    :type unique_id: str or int
     :param kwargs: additional params to request
     :type kwargs: dict
     :return: response text
@@ -145,6 +145,8 @@ class RemoteVisualizer(Session):
         self.log.warning(
           "Unsupported data type: %s! Skip notification..." % type(data))
         return
+      if unique_id:
+        data.id.set_value(value=unique_id)
       # If additional params is not empty dict -> override the basic params
       if 'headers' in kwargs:
         kwargs['headers'].update(self.basic_headers)

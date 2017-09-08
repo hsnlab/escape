@@ -464,7 +464,7 @@ def get_escape_revision ():
   return escape.__project__, get_escape_version(), get_escape_branch_name()
 
 
-def notify_remote_visualizer (data, url=None, **kwargs):
+def notify_remote_visualizer (data, url=None, unique_id=None, **kwargs):
   """
   Send the given data to a remote visualization server.
   If url is given use this address to send instead of the url defined in the
@@ -474,6 +474,8 @@ def notify_remote_visualizer (data, url=None, **kwargs):
   :type data: :class:`NFFG` or :class:`Virtualizer`
   :param url: additional URL (acquired from config by default)
   :type url: str
+  :param unique_id: use given ID as NFFG id
+  :type unique_id: str or int
   :param kwargs: optional parameters for request lib
   :type kwargs: dict
   :return: response
@@ -481,7 +483,8 @@ def notify_remote_visualizer (data, url=None, **kwargs):
   """
   from pox.core import core
   if core.hasComponent('visualizer'):
-    return core.visualizer.send_notification(data=data, url=url, **kwargs)
+    return core.visualizer.send_notification(data=data, url=url,
+                                             unique_id=unique_id, **kwargs)
 
 
 def do_profile (func):
