@@ -25,7 +25,6 @@ from escape.adapt import log as log
 from escape.adapt.adapters import UnifyRESTAdapter
 from escape.adapt.managers import UnifyDomainManager
 from escape.adapt.virtualization import DomainVirtualizer
-from escape.infr.topo_manager import InternalDomainManager
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
@@ -464,6 +463,7 @@ class ComponentConfigurator(object):
 
     :return: None
     """
+    from escape.infr.topo_manager import InternalDomainManager
     loaded_local_mgr = [name for name, mgr in self.__repository.iteritems() if
                         mgr.IS_INTERNAL_MANAGER]
     if loaded_local_mgr:

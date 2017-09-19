@@ -58,6 +58,13 @@ function run () {
                     --volume "$PWD:/opt/escape/test" -ti ${IMAGE} ${@}
 }
 
+function run_debug () {
+    if [ -z $(docker images -q ${IMAGE} ) ]; then build; fi
+    info "Start interactive shell in image: $IMAGE"
+    docker run --rm --volume "$PWD/../escape:/opt/escape/escape:ro" \
+                --volume "$PWD:/opt/escape/test" --entrypoint sh -ti ${IMAGE}
+}
+
 function clean () {
     info "======================================================================"
     info "===                             Cleanup                            ==="
@@ -66,10 +73,11 @@ function clean () {
     ../tools/clear_docker.sh
 }
 
-while getopts ':bch' OPTION; do
+while getopts ':bcdh' OPTION; do
     case ${OPTION} in
-        b|--build)  build && exit;;
-        c|--clean)  clean && exit;;
+        b|--build)  build; shift $((OPTIND-1)); exit;;
+        d|--debug)  run_debug && exit;;
+        c|--clean)  clean; exit;;
         h)  print_help;;
     esac
 done
