@@ -17,9 +17,10 @@ The logger module for ESCAPE.
 Based on pretty_logger: /pox/pox/samples/pretty_log.py
 """
 import logging
+import os
 
 import pox.log
-from pox.core import log
+from pox.core import log, _ext_path
 from pox.log import color, level
 
 # Add new VERBOSE log level to root logger
@@ -43,7 +44,7 @@ FILE_LOGGER_FORMAT = "|%(levelname)s" \
                      "|%(asctime)s" \
                      "|---|%(message)s"
 # Log file name
-LOG_FILE = "log/escape.log"
+LOG_FILE = os.path.realpath(_ext_path + "../log/escape.log")
 
 
 def setup_logging (test_mode=False, log_file=None, **kw):
