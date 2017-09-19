@@ -436,7 +436,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   DEFAULT_DOMAIN_NAME = "UNIFY"
   CALLBACK_CONFIG_NAME = "CALLBACK"
   CALLBACK_ENABLED_NAME = "enabled"
-  CALLBACK_HOST = "explicit_address"
+  CALLBACK_HOST = "explicit_host"
   CALLBACK_PORT = "explicit_port"
   CALLBACK_EXPLICIT_DOMAIN_UPDATE = "explicit_update"
   CALLBACK_TYPE_INSTALL = "INSTALL"

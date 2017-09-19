@@ -29,7 +29,7 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                explicit_address: localhost
+                explicit_host: localhost
                 explicit_port: 9000
                 explicit_update: false
     DDO2:

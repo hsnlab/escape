@@ -62,7 +62,7 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                #explicit_address: 0.0.0.0
+                #explicit_host: 0.0.0.0
                 explicit_port: 9000
                 explicit_update: false
     DOCKER-2:
@@ -96,7 +96,7 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                explicit_address: 127.0.0.1
+                explicit_host: 127.0.0.1
                 #explicit_port: 9000
                 explicit_update: false
 test:
