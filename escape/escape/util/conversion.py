@@ -375,6 +375,7 @@ class NFFGConverter(object):
               except ValueError:
                 sap_port.delay = infra_port.delay = \
                   vport.sap_data.resources.delay.get_value()
+              self.log.debug("Added delay: %s" % sap_port.delay)
             if vport.sap_data.resources.bandwidth.is_initialized():
               try:
                 sap_port.bandwidth = infra_port.bandwidth = float(
@@ -382,6 +383,7 @@ class NFFGConverter(object):
               except ValueError:
                 sap_port.bandwidth = infra_port.bandwidth = \
                   vport.sap_data.resources.bandwidth.get_value()
+              self.log.debug("Added bandwidth: %s" % sap_port.bandwidth)
             if vport.sap_data.resources.cost.is_initialized():
               try:
                 sap_port.cost = infra_port.cost = float(
@@ -389,6 +391,7 @@ class NFFGConverter(object):
               except ValueError:
                 sap_port.cost = infra_port.cost = \
                   vport.sap_data.resources.cost.get_value()
+              self.log.debug("Added cost: %s" % sap_port.cost)
         if vport.control.is_initialized():
           sap_port.controller = infra_port.controller = \
             vport.control.controller.get_value()

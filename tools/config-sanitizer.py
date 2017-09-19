@@ -70,9 +70,6 @@ def main (file_name):
 
 
 if __name__ == "__main__":
-  if len(sys.argv) < 2:
-    print "Missing argument: %s [file name]" % sys.argv[0]
-    sys.exit(1)
   parser = argparse.ArgumentParser(
     description="Convert ESCAPE's config file from JSON into YAML format.",
     add_help=True)

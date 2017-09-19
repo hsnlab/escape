@@ -61,6 +61,14 @@ orchestration:
         mapping-config:
             # Use cProfile to measure mapping performance
             profiling: off
+            ### Mapping algorithm running parameters
+            bw_factor: 1
+            res_factor: 1
+            lat_factor: 1
+            propagate_e2e_reqs: true
+            bt_limit: 6
+            bt_branching_factor: 3
+            mode: ADD
     # Embedding strategy configuration
     STRATEGY:
         # Used Strategy class
@@ -186,7 +194,7 @@ adaptation:
     # Enabled domain managers
     MANAGERS: []
 ###########    Example configuration of different domain managers    ###########
-    # Internal Mininet-based domain manager configuration
+    ### Internal Mininet-based domain manager configuration
     INTERNAL:
         # Used domain manager class
         module: escape.infr.topo_manager
@@ -230,7 +238,7 @@ adaptation:
                 # Used domain manager class
                 module: escape.infr.topo_manager
                 class: InternalMininetAdapter
-    # Plain SDN domain manager based on Openflow
+    ### Plain SDN domain manager based on Openflow
     SDN:
         # Used domain manager class
         module: escape.adapt.managers
@@ -266,7 +274,7 @@ adaptation:
                 # Path of the shown SDN domain topology view
                 # Can be relative to project's root
                 path: examples/sdn-topo.nffg
-    # Domain manager using UNIFY interface
+    ### Domain manager using UNIFY interface
     OPENSTACK:
         # Used domain manager class
         module: escape.adapt.managers
@@ -296,7 +304,7 @@ adaptation:
                 features:
                     # Enable delegating antiaffinity property into domain
                     antiaffinity: true
-    # Domain manager using UNIFY interface
+    ### Domain manager using UNIFY interface
     DOCKER:
         # Used domain manager class
         module: escape.adapt.managers
@@ -332,7 +340,7 @@ adaptation:
                 explicit_port: 9001
                 # Refresh the domain topology after a received successful callback
                 explicit_update: false
-    # Domain manager for BGP-LS-based domain detection
+    ### Domain manager for BGP-LS-based domain detection
     BGP-LS-SPEAKER:
         # Used domain manager class
         module: escape.adapt.managers
@@ -361,7 +369,7 @@ adaptation:
                 prefix: restconf/data
                 # Connection timeout value in sec
                 timeout: 5
-    # Domain manager for domains automatically detected through BGP-LS
+    ### Domain manager for domains automatically detected through BGP-LS
     EXTERNAL:
         # Used domain manager class
         module: escape.adapt.managers
@@ -385,7 +393,7 @@ adaptation:
                 prefix: null
                 # Connection timeout value in sec
                 timeout: 5
-    # Domain manager for testing purposes
+    ### Domain manager for testing purposes
     STATIC-NFFG:
         # Used domain manager class
         module: escape.adapt.managers
@@ -408,7 +416,7 @@ adaptation:
                 log_dir: log/
                 # Check and create backward links
                 backward_links: false
-    # Domain manager for testing purposes
+    ### Domain manager for testing purposes
     STATIC-XML:
         # Used domain manager class
         module: escape.adapt.managers
