@@ -203,6 +203,7 @@ class Callback(object):
     if not self.__timer:
       log.debug("Setup timeout: %s for callback: %s"
                 % (timeout, self.callback_id))
+      kwargs['domain'] = self.domain
       self.__timer = Timer(timeout, hook, kwargs=kwargs)
       self.__timer.start()
     else:
@@ -285,7 +286,7 @@ class CallbackManager(HTTPServer, Thread):
     callback_manager.start()
     return callback_manager
 
-  def register_url (self, domain, host, port):
+  def register_url (self, domain, host=None, port=None):
     """
     Register callback URL for given `domain` instead of using a calculated one.
 
@@ -297,6 +298,10 @@ class CallbackManager(HTTPServer, Thread):
     :type port: str or int
     :return: None
     """
+    if not host:
+      host = self.server_address[0]
+    if not port:
+      port = self.server_address[1]
     if domain in self.__domain_proxy:
       log.warning("Overriding domain address: %s for domain %s"
                   % (self.__domain_proxy[domain], domain))

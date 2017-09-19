@@ -436,7 +436,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
   DEFAULT_DOMAIN_NAME = "UNIFY"
   CALLBACK_CONFIG_NAME = "CALLBACK"
   CALLBACK_ENABLED_NAME = "enabled"
-  CALLBACK_HOST = "explicit_host"
+  CALLBACK_HOST = "explicit_address"
   CALLBACK_PORT = "explicit_port"
   CALLBACK_EXPLICIT_DOMAIN_UPDATE = "explicit_update"
   CALLBACK_TYPE_INSTALL = "INSTALL"
@@ -497,7 +497,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
       self.callback_manager = CallbackManager.initialize_on_demand()
       explicit_host = cb_cfg.get(self.CALLBACK_HOST)
       explicit_port = cb_cfg.get(self.CALLBACK_PORT)
-      if explicit_host and explicit_port:
+      if explicit_host or explicit_port:
         self.callback_manager.register_url(domain=self.domain_name,
                                            host=explicit_host,
                                            port=explicit_port)

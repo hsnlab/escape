@@ -187,7 +187,7 @@ adaptation:
         # Clear all NFs and flowrules from domains at shutdown
         CLEAR-DOMAINS-AFTER-SHUTDOWN: true
         # Rollback to previous topology state in case of failed deployment
-        ROLLBACK-ON-FAILURE: true
+        ROLLBACK-ON-FAILURE: on
         # Additional delay before deployment
         DOMAIN-DEPLOY-DELAY: 0
     # Enabled domain managers

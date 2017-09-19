@@ -8,6 +8,7 @@ orchestration:
 adaptation:
     deployment:
         CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+        ROLLBACK-ON-FAILURE: off
     MANAGERS:
     - MININET
     - OPENSTACK
@@ -61,7 +62,7 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                explicit_address: 0.0.0.0
+                #explicit_address: 0.0.0.0
                 explicit_port: 9000
                 explicit_update: false
     DOCKER-2:
@@ -95,8 +96,8 @@ adaptation:
                 timeout: 2
             CALLBACK:
                 enabled: true
-                explicit_address: 120.0.0.1
-                explicit_port: 9000
+                explicit_address: 127.0.0.1
+                #explicit_port: 9000
                 explicit_update: false
 test:
     module: testframework.testcases.domain_mock
