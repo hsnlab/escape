@@ -68,7 +68,6 @@ orchestration:
             propagate_e2e_reqs: true
             bt_limit: 6
             bt_branching_factor: 3
-            mode: ADD
     # Embedding strategy configuration
     STRATEGY:
         # Used Strategy class
