@@ -56,7 +56,7 @@ def main (args):
   log.info("-" * 70)
   log.info("Read %d test cases" % sum_test_cases)
   # Run test suite in the specific context
-  results = []
+  results = None
   if args.verbose:
     output_context_manager = Tee(filename=REPORT_FILE)
   else:
@@ -72,19 +72,18 @@ def main (args):
     try:
       # Run the test cases and collect the results
       if sum_test_cases:
-        results.append(test_runner.run(test_suite))
+        results = test_runner.run(test_suite)
     except KeyboardInterrupt:
       log.warning("\nReceived KeyboardInterrupt! "
                   "Abort running main test suite...")
-  # Evaluate results values
-  was_success = all(map(lambda res: res.wasSuccessful(), results))
   # Print footer
   log.info("-" * 70)
   delta = time.time() - tstart
   log.info("Total elapsed time: %s sec" % timedelta(seconds=delta))
   log.info("-" * 70)
   log.info("End ESCAPE tests")
-  return 0 if was_success else 1
+  # Evaluate results values
+  return results.wasSuccessful() if results is not None else False
 
 
 def create_test_suite (tests_dir, show_output=False, run_only_tests=None,
@@ -148,4 +147,4 @@ if __name__ == "__main__":
   if args.verbose:
     log.setLevel(logging.DEBUG)
   result = main(args)
-  sys.exit(result)
+  sys.exit(int(not result))
