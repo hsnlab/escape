@@ -28,6 +28,8 @@ from functools import wraps
 from subprocess import STDOUT, Popen, PIPE
 
 # Log level constant for additional VERBOSE level
+import sys
+
 VERBOSE = 5
 """Verbose logging level"""
 
@@ -190,7 +192,7 @@ def quit_with_error (msg, logger=None, exception=None):
   if exception:
     logger.exception("Caught exception: %s" % exception)
   core.quit()
-  os._exit(1)
+  os._exit(os.EX_SOFTWARE)
 
 
 def quit_with_ok (msg=None, logger=None):

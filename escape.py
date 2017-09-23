@@ -260,7 +260,7 @@ def main ():
     except IOError as e:
       print "Virtualenv is not set properly:\n%s" % e
       print "Remove the '.set_virtualenv' file or configure the virtualenv!"
-      os._exit(1)
+      exit(os.EX_DATAERR)
 
   # Activate virtual environment if necessary
   if args.environment:
