@@ -1678,12 +1678,11 @@ class NFFGConverter(object):
     v_port.addresses.l2.set_value(port.l2)
     v_port.addresses.l4.set_value(port.l4)
     for l3 in port.l3:
-      v_port.addresses.l3.add(
-        virt_lib.L3_address(id=l3.id,
-                            name=l3.name,
-                            configure=l3.configure,
-                            requested=l3.requested,
-                            provided=l3.provided))
+      v_port.addresses.l3.add(virt_lib.L3_address(id=l3.id,
+                                                  name=l3.name,
+                                                  configure=l3.configure,
+                                                  requested=l3.requested,
+                                                  provided=l3.provided))
     # Migrate metadata
     for key, value in port.metadata.iteritems():
       v_port.metadata.add(virt_lib.MetadataMetadata(key=key,
@@ -1733,15 +1732,15 @@ class NFFGConverter(object):
         self.log.debug("Added orchestrator: %s" % port.orchestrator)
     if vport.addresses.is_initialized():
       self.log.debug("Translate addresses...")
-      vport.l2 = vport.addresses.l2.get_value()
-      vport.l4 = vport.addresses.l4.get_value()
+      port.l2 = vport.addresses.l2.get_value()
+      port.l4 = vport.addresses.l4.get_value()
       for l3 in vport.addresses.l3.itervalues():
-        vport.l3.add_l3address(id=l3.id.get_value(),
-                               name=l3.name.get_value(),
-                               configure=l3.configure.get_value(),
-                               client=l3.client.get_value(),
-                               requested=l3.requested.get_value(),
-                               provided=l3.provided.get_value())
+        port.l3.add_l3address(id=l3.id.get_value(),
+                              name=l3.name.get_value(),
+                              configure=l3.configure.get_value(),
+                              client=l3.client.get_value(),
+                              requested=l3.requested.get_value(),
+                              provided=l3.provided.get_value())
     # Add metadata from non-sap port to infra port metadata
     for key in vport.metadata:
       port.add_metadata(name=key, value=vport.metadata[key].value.get_value())
