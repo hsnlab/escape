@@ -29,18 +29,21 @@ function info() {
     echo -e "${GREEN}$1${NC}"
 }
 
+IMAGE="escape-test"
+
 function print_help {
     echo -e "Run testcases in a docker container.\n"
     echo -e "Usage: $0 [-b] | ..."
     echo -e "Parameters:"
     echo -e "\t -b, --build   force to rebuild the Docker image"
+    echo -e "\t -c, --clean   remove the test image: $IMAGE"
+    echo -e "\t -d, --debug   run an interactive container based on $IMAGE"
     echo -e "\t -h, --help    show this help message and exit"
     echo -e "\t ...           runner parameters, see run_tests.py -h"
     echo -e "\nExample: $0 -b | $0 case15 -o"
     exit 2
 }
 
-IMAGE="escape-test"
 
 function build {
     info "======================================================================"

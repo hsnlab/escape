@@ -4,7 +4,7 @@
 	<name>Mover topology with mapped NFs and provider SAP11, SAP33</name>
 	<nodes>
 		<node>
-			<id>SingleBiSBiS@UN1</id>
+			<id>SingleBiSBiSUN1</id>
 			<name>Unify DOCKER 1 domain single node representation</name>
 			<type>BiSBiS</type>
 			<ports>
@@ -168,7 +168,7 @@
 			</flowtable>
 		</node>
 		<node>
-			<id>SingleBiSBiS@UN2</id>
+			<id>SingleBiSBiSUN2</id>
 			<name>Unify DOCKER 2 domain single node representation</name>
 			<type>BiSBiS</type>
 			<ports>
@@ -358,7 +358,7 @@
 			</flowtable>
 		</node>
 		<node>
-			<id>SingleBiSBiS@UN3</id>
+			<id>SingleBiSBiSUN3</id>
 			<name>Unify DOCKER 3 domain single node representation</name>
 			<type>BiSBiS</type>
 			<ports>
@@ -809,32 +809,32 @@
 	<links>
 		<link>
 			<id>inter-domain-link-SAP12</id>
-			<src>../../../nodes/node[id=SingleBiSBiS@UN1]/ports/port[id=2]</src>
-			<dst>../../../nodes/node[id=SingleBiSBiS@UN2]/ports/port[id=1]</dst>
+			<src>../../../nodes/node[id=SingleBiSBiSUN1]/ports/port[id=2]</src>
+			<dst>../../../nodes/node[id=SingleBiSBiSUN2]/ports/port[id=1]</dst>
 			<resources>
 				<delay>0</delay>
 			</resources>
 		</link>
 		<link>
 			<id>inter-domain-link-SAP12-back</id>
-			<src>../../../nodes/node[id=SingleBiSBiS@UN2]/ports/port[id=1]</src>
-			<dst>../../../nodes/node[id=SingleBiSBiS@UN1]/ports/port[id=2]</dst>
+			<src>../../../nodes/node[id=SingleBiSBiSUN2]/ports/port[id=1]</src>
+			<dst>../../../nodes/node[id=SingleBiSBiSUN1]/ports/port[id=2]</dst>
 			<resources>
 				<delay>0</delay>
 			</resources>
 		</link>
 		<link>
 			<id>inter-domain-link-SAP23</id>
-			<src>../../../nodes/node[id=SingleBiSBiS@UN2]/ports/port[id=2]</src>
-			<dst>../../../nodes/node[id=SingleBiSBiS@UN3]/ports/port[id=1]</dst>
+			<src>../../../nodes/node[id=SingleBiSBiSUN2]/ports/port[id=2]</src>
+			<dst>../../../nodes/node[id=SingleBiSBiSUN3]/ports/port[id=1]</dst>
 			<resources>
 				<delay>0</delay>
 			</resources>
 		</link>
 		<link>
 			<id>inter-domain-link-SAP23-back</id>
-			<src>../../../nodes/node[id=SingleBiSBiS@UN3]/ports/port[id=1]</src>
-			<dst>../../../nodes/node[id=SingleBiSBiS@UN2]/ports/port[id=2]</dst>
+			<src>../../../nodes/node[id=SingleBiSBiSUN3]/ports/port[id=1]</src>
+			<dst>../../../nodes/node[id=SingleBiSBiSUN2]/ports/port[id=2]</dst>
 			<resources>
 				<delay>0</delay>
 			</resources>
