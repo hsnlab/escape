@@ -368,7 +368,7 @@ class DirectDoVRequestHandler(BasicUnifyRequestHandler):
     # Force disable adding domain to BB nodes that are parts of DoV
     self.converter._unique_bb_id = False
     # Force enable adding domain to BB nodes that are parts of DoV
-    self.converter._unique_bb_id = True
+    self.converter._unique_nf_id = True
     self.log.debug("Forced ID management for %s: unique BiSBiS ID: %s,"
                    " unique NF ID: %s" % (self.__class__.__name__,
                                           self.converter._unique_bb_id,

@@ -558,8 +558,6 @@ class NFFGConverter(object):
       else:
         nf_bandwidth = None
       # Create NodeNF
-      print nf_id
-      print vnode.xml()
       nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
                        dep_type=nf_dep_type, cpu=nf_cpu, mem=nf_mem,
                        storage=nf_storage, delay=nf_delay,
