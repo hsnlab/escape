@@ -636,6 +636,9 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
   """Default communication approach"""
   MESSAGE_ID_NAME = "message-id"
 
+  def setup(self):
+    BaseHTTPRequestHandler.setup(self)
+
   def do_GET (self):
     """
     Get information about an entity. R for CRUD convention.

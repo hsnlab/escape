@@ -946,6 +946,14 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   API_CALL_RESOURCE = 'api_ros_get_config'
   API_CALL_REQUEST = 'api_ros_edit_config'
 
+  def setup (self):
+    super(BasicUnifyRequestHandler, self).setup()
+    self.converter = NFFGConverter(
+      unique_bb_id=CONFIG.ensure_unique_bisbis_id(),
+      unique_nf_id=CONFIG.ensure_unique_vnf_id(),
+      domain="REMOTE",
+      logger=log)
+
   def get_config (self, params):
     """
     Response configuration.
@@ -1036,8 +1044,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       # Convert required NFFG if needed
       if self.virtualizer_format_enabled:
         self.log.debug("Convert internal NFFG to Virtualizer...")
-        converter = NFFGConverter(logger=log)
-        v_topology = converter.dump_to_Virtualizer(nffg=resource_nffg)
+        v_topology = self.converter.dump_to_Virtualizer(nffg=resource_nffg)
         # Cache converted data for edit-config patching
         self.log.debug("Cache converted topology...")
         self.server.last_response = v_topology
@@ -1115,8 +1122,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
           # Convert required NFFG if needed
           if self.virtualizer_format_enabled:
             self.log.debug("Convert internal NFFG to Virtualizer...")
-            converter = NFFGConverter(logger=log)
-            v_topology = converter.dump_to_Virtualizer(nffg=config)
+            v_topology = self.converter.dump_to_Virtualizer(nffg=config)
             # Cache converted data for edit-config patching
             self.log.debug("Cache converted topology...")
             self.server.last_response = v_topology
@@ -1130,8 +1136,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       self.log.log(VERBOSE, "Received full request:\n%s" % full_cfg.xml())
       # Convert response's body to NFFG
       self.log.info("Converting full request data...")
-      converter = NFFGConverter(domain="REMOTE", logger=log)
-      nffg = converter.parse_from_Virtualizer(vdata=full_cfg)
+      nffg = self.converter.parse_from_Virtualizer(vdata=full_cfg)
     else:
       if self.headers.get("Content-Type") != "application/json":
         self.log.error("Received data is not in JSON format despite of the "
@@ -1171,6 +1176,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     self.log.info("Patching cached topology with received diff...")
     # full_request = self.server.last_response.full_copy()
     full_request = Virtualizer.parse_from_text(self.server.last_response.xml())
+    print full_request.xml()
     full_request.patch(source=diff)
     # return full_request
     # Perform hack to resolve inconsistency

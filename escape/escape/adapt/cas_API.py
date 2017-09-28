@@ -362,3 +362,14 @@ class DirectDoVRequestHandler(BasicUnifyRequestHandler):
   # Bound function
   API_CALL_RESOURCE = 'api_cas_get_config'
   API_CALL_REQUEST = 'api_cas_edit_config'
+
+  def setup (self):
+    super(DirectDoVRequestHandler, self).setup()
+    # Force disable adding domain to BB nodes that are parts of DoV
+    self.converter._unique_bb_id = False
+    # Force enable adding domain to BB nodes that are parts of DoV
+    self.converter._unique_bb_id = True
+    self.log.debug("Forced ID management for %s: unique BiSBiS ID: %s,"
+                   " unique NF ID: %s" % (self.__class__.__name__,
+                                          self.converter._unique_bb_id,
+                                          self.converter._unique_nf_id))

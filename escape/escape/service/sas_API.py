@@ -258,7 +258,9 @@ class ServiceLayerAPI(AbstractAPI):
           nffg = NFFG.parse(raw_data=service_request)
         elif service_request.startswith('<'):
           log.debug("Detected format: XML - Parsing from Virtualizer format...")
-          converter = NFFGConverter(domain="INTERNAL", logger=log)
+          converter = NFFGConverter(domain="INTERNAL", logger=log,
+                                    unique_bb_id=CONFIG.ensure_unique_bisbis_id(),
+                                    unique_nf_id=CONFIG.ensure_unique_vnf_id())
           nffg = converter.parse_from_Virtualizer(vdata=service_request)
         else:
           log.warning("Detected unexpected format...")

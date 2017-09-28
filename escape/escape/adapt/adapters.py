@@ -482,8 +482,11 @@ class VirtualizerBasedStaticFileAdapter(StaticFileAdapter):
     log.debug("Init %s - type: %s, domain: %s, path: %s, diff: %s" % (
       self.__class__.__name__, self.type, domain_name, path, diff))
     # Converter object
-    self.converter = NFFGConverter(domain=domain_name, logger=log,
-                                   ensure_unique_id=CONFIG.ensure_unique_id())
+    self.converter = NFFGConverter(
+      unique_bb_id=CONFIG.ensure_unique_bisbis_id(),
+      unique_nf_id=CONFIG.ensure_unique_vnf_id(),
+      domain=domain_name,
+      logger=log)
     super(VirtualizerBasedStaticFileAdapter, self).__init__(
       domain_name=domain_name, path=path, **kwargs)
     self.diff = diff
@@ -630,8 +633,11 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     log.debug("Init %s - type: %s, domain: %s, URL: %s" % (
       self.__class__.__name__, self.type, self.domain_name, url))
     # Converter object
-    self.converter = NFFGConverter(domain=self.domain_name, logger=log,
-                                   ensure_unique_id=CONFIG.ensure_unique_id())
+    self.converter = NFFGConverter(
+      unique_bb_id=CONFIG.ensure_unique_bisbis_id(),
+      unique_nf_id=CONFIG.ensure_unique_vnf_id(),
+      domain=self.domain_name,
+      logger=log)
     self.features = features if features is not None else {}
     # Cache for parsed Virtualizer
     self.__last_virtualizer = None

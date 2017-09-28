@@ -838,17 +838,31 @@ class ESCAPEConfig(object):
     except KeyError:
       return False
 
-  def ensure_unique_id (self):
+  def ensure_unique_bisbis_id (self):
     """
     Return with the ID generations strategy for nodes.
     If it is set, id of nodes will be generated with the domain name as a
-    prefix to ensure unique id globally.
+    postfix to ensure unique id globally.
 
     :return: id generation strategy (default: False)
     :rtype: bool
     """
     try:
-      return self.__configuration[ADAPT]['DOV']['ENSURE-UNIQUE-ID']
+      return self.__configuration[ADAPT]['DOV']['ENSURE-UNIQUE-BiSBiS-ID']
+    except KeyError:
+      return False
+
+  def ensure_unique_vnf_id (self):
+    """
+    Return with the ID generations strategy for VNFs.
+    If it is set, id of nodes will be generated with the container BiSBiS node
+    id as a postfix to ensure unique id globally.
+
+    :return: id generation strategy (default: False)
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT]['DOV']['ENSURE-UNIQUE-VNF-ID']
     except KeyError:
       return False
 

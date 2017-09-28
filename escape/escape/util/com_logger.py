@@ -94,7 +94,9 @@ class RemoteVisualizer(Session):
     self.log.info("Setup remote Visualizer with URL: %s" % self._url)
     # Store the last request
     self._response = None
-    self.converter = NFFGConverter(domain="ESCAPE", logger=self.log)
+    self.converter = NFFGConverter(domain="ESCAPE", logger=log,
+                                   unique_bb_id=CONFIG.ensure_unique_bisbis_id(),
+                                   unique_nf_id=CONFIG.ensure_unique_vnf_id())
     # Suppress low level logging
     self.__suppress_requests_logging()
 

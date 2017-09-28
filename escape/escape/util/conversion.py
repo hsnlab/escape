@@ -85,7 +85,8 @@ class NFFGConverter(object):
   # Hard-coded constants
   REQUIREMENT_PREFIX = "REQ"
 
-  def __init__ (self, domain=None, logger=None, ensure_unique_id=None):
+  def __init__ (self, domain=None, logger=None, unique_bb_id=False,
+                unique_nf_id=True):
     """
     Init.
 
@@ -93,14 +94,15 @@ class NFFGConverter(object):
     :type domain: str
     :param logger: optional logger
     :type logger: str or :any:`logging.Logger`
-    :param ensure_unique_id: generate unique id for nodes
-    :type ensure_unique_id: bool
+    :param unique_bb_id: generate unique id for nodes
+    :type unique_bb_id: bool
     :return: None
     """
     # Save domain name for define domain attribute in infras
     self.domain = domain
     # If clarify_id is True, add domain name as a prefix to the node ids
-    self.ensure_unique_id = ensure_unique_id
+    self._unique_bb_id = unique_bb_id
+    self._unique_nf_id = unique_nf_id
     self.log = logger if logger is not None else logging.getLogger(__name__)
     self.log.debug('Created NFFGConverter with domain name: %s' % self.domain)
 
@@ -153,7 +155,7 @@ class NFFGConverter(object):
         raise RuntimeError("Unrecognizable key: %s" % kv[0])
     return ret
 
-  def generate_unique_id (self, id):
+  def __gen_unique_bb_id (self, v_node):
     """
     Generate a unique identifier based on original ID, delimiter and marker.
 
@@ -162,19 +164,56 @@ class NFFGConverter(object):
     :return: unique ID
     :rtype: str
     """
-    return "%s%s%s" % (id, self.UNIQUE_ID_DELIMITER, self.domain)
+    if self._unique_bb_id:
+      return "%s%s%s" % (v_node.id.get_value(),
+                         self.UNIQUE_ID_DELIMITER,
+                         self.domain)
+    else:
+      return v_node.id.get_as_text()
 
-  @classmethod
-  def recreate_original_id (cls, id):
+  def __gen_unique_nf_id (self, v_vnf, bb_id=None):
+    print v_vnf.id.get_value()
+    print bb_id
+    if self._unique_nf_id:
+      # Use explicit BB node id
+      if bb_id is None:
+        return "%s%s%s" % (v_vnf.id.get_value(),
+                           self.UNIQUE_ID_DELIMITER,
+                           v_vnf.get_parent().get_parent().id.get_value())
+      else:
+        return "%s%s%s" % (v_vnf.id.get_value(),
+                           self.UNIQUE_ID_DELIMITER,
+                           bb_id)
+    else:
+      return v_vnf.id.get_as_text()
+
+  def recreate_bb_id (self, id):
     """
     Recreate original ID based by removing trailing unique marker.
 
     :param id: unique id
-    :type id: object
+    :type id: str
     :return: original ID
     :rtype: str
     """
-    return str(id).rsplit(cls.UNIQUE_ID_DELIMITER, 1)[0]
+    if self._unique_bb_id:
+      return str(id).rsplit(self.UNIQUE_ID_DELIMITER, 1)[0]
+    else:
+      return str(id)
+
+  def recreate_nf_id (self, id):
+    """
+    Recreate original ID based by removing trailing unique marker.
+
+    :param id: unique id
+    :type id: str
+    :return: original ID
+    :rtype: str
+    """
+    if self._unique_nf_id:
+      return str(id).split(self.UNIQUE_ID_DELIMITER, 1)[0]
+    else:
+      return str(id)
 
   def _convert_flowrule_match (self, match):
     """
@@ -457,7 +496,7 @@ class NFFGConverter(object):
         self.__copy_vport_attrs(port=infra_port, vport=vport)
         self.log.debug("Added static %s" % infra_port)
       else:
-        self.log.warning("Port type for port: %s is not defined!" % vport)
+        self.log.warning("Port type is not defined for port: %s " % vport)
 
   def _parse_virtualizer_node_nfs (self, nffg, infra, vnode):
     """
@@ -474,7 +513,7 @@ class NFFGConverter(object):
     # Create NF instances
     for v_vnf in vnode.NF_instances:
       # Get NF params
-      nf_id = v_vnf.id.get_value()  # Mandatory - nf.id
+      nf_id = self.__gen_unique_nf_id(v_vnf=v_vnf, bb_id=infra.id)  # Mandatory
       nf_name = v_vnf.name.get_value()  # Optional - nf.name, default = None
       nf_ftype = v_vnf.type.get_value()  # Optional - nf.type, default = None
       # No deployment_type in Virtualizer try to get if from metadata
@@ -521,6 +560,8 @@ class NFFGConverter(object):
       else:
         nf_bandwidth = None
       # Create NodeNF
+      print nf_id
+      print vnode.xml()
       nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
                        dep_type=nf_dep_type, cpu=nf_cpu, mem=nf_mem,
                        storage=nf_storage, delay=nf_delay,
@@ -685,9 +726,9 @@ class NFFGConverter(object):
   @staticmethod
   def __parse_external_port (flowentry):
     """
-    
-    :param flowentry: 
-    :return: 
+
+    :param flowentry:
+    :return:
     """
     res = re.match(r"(.*)://.*node\[id=(.*?)\].*port\[id=(.*?)\].*", flowentry)
     if len(res.groups()) != 3:
@@ -729,10 +770,7 @@ class NFFGConverter(object):
         ext_domain, ext_node, ext_port = self.__parse_external_port(
           flowentry.port.get_value())
         vport_id = "%s:%s@%s" % (ext_node, ext_port, ext_domain)
-        if self.ensure_unique_id:
-          bb_node = nffg[self.generate_unique_id(id=vnode.id.get_value())]
-        else:
-          bb_node = nffg[vnode.id.get_value()]
+        bb_node = nffg[self.__gen_unique_bb_id(vnode)]
         if vport_id in bb_node.ports:
           self.log.debug("External port: %s already exits! Skip creating..."
                          % vport_id)
@@ -777,12 +815,9 @@ class NFFGConverter(object):
           v_src_nf = v_fe_port.get_parent().get_parent()
           v_src_node = v_src_nf.get_parent().get_parent()
           # Add domain name to the node id if unique_id is set
-          if self.ensure_unique_id:
-            src_node = self.generate_unique_id(id=v_src_node.id.get_value())
-          else:
-            src_node = v_src_node.id.get_as_text()
-          fr_match += self.LABEL_DELIMITER.join((src_node,
-                                                 v_src_nf.id.get_as_text(),
+          src_node = self.__gen_unique_bb_id(v_src_node)
+          src_nf = self.__gen_unique_nf_id(v_vnf=v_src_nf, bb_id=infra.id)
+          fr_match += self.LABEL_DELIMITER.join((src_node, src_nf,
                                                  v_fe_port.id.get_as_text()))
         else:
           # Else just Infra port --> add only the port number
@@ -798,10 +833,7 @@ class NFFGConverter(object):
         ext_domain, ext_node, ext_port = self.__parse_external_port(
           flowentry.out.get_value())
         ext_port_id = "%s:%s@%s" % (ext_node, ext_port, ext_domain)
-        if self.ensure_unique_id:
-          bb_node = nffg[self.generate_unique_id(id=vnode.id.get_value())]
-        else:
-          bb_node = nffg[vnode.id.get_value()]
+        bb_node = nffg[self.__gen_unique_bb_id(vnode)]
         if ext_port_id in bb_node.ports:
           self.log.debug("External port: %s already exits! Skip creatiing..." %
                          ext_port_id)
@@ -847,12 +879,9 @@ class NFFGConverter(object):
         if "NF_instances" in flowentry.out.get_as_text():
           v_dst_nf = v_fe_out.get_parent().get_parent()
           v_dst_node = v_dst_nf.get_parent().get_parent()
-          if self.ensure_unique_id:
-            dst_node = self.generate_unique_id(id=v_dst_node.id.get_value())
-          else:
-            dst_node = v_dst_node.id.get_as_text()
-          fr_action += self.LABEL_DELIMITER.join((dst_node,
-                                                  v_dst_nf.id.get_as_text(),
+          dst_node = self.__gen_unique_bb_id(v_dst_node)
+          dst_nf = self.__gen_unique_nf_id(v_vnf=v_dst_nf, bb_id=infra.id)
+          fr_action += self.LABEL_DELIMITER.join((dst_node, dst_nf,
                                                   v_fe_out.id.get_as_text()))
         else:
           # Else just Infra port --> add only the port number
@@ -965,7 +994,8 @@ class NFFGConverter(object):
             vport = nffg[infra.id].ports[vport_id]
           # If the port is a VNF port -> get the dynamic port in the Infra
           else:
-            _vnf_id = v_fe_port.get_parent().get_parent().id.get_value()
+            _vnf_id = self.__gen_unique_nf_id(
+              v_vnf=v_fe_port.get_parent().get_parent(), bb_id=infra.id)
             _dyn_port = [l.dst.id for u, v, l in
                          nffg.network.edges_iter([_vnf_id], data=True) if
                          l.type == NFFG.TYPE_LINK_DYNAMIC and str(l.src.id) ==
@@ -981,7 +1011,7 @@ class NFFGConverter(object):
         except RuntimeError as e:
           self.log.error("Port: %s is not found in the NFFG: "
                          "%s from the flowrule:\n%s" %
-                         (vport_id, e.message, flowentry))
+                         (vport_id, e.message, flowentry.xml()))
           continue
 
       # Get resource values
@@ -1060,11 +1090,8 @@ class NFFGConverter(object):
     # Iterate over virtualizer/nodes --> node = Infra
     for vnode in virtualizer.nodes:
       # Node params
-      if self.ensure_unique_id:
-        # Add domain name to the node id if unique_id is set
-        node_id = self.generate_unique_id(id=vnode.id.get_value())
-      else:
-        node_id = vnode.id.get_value()  # Mandatory - node.id
+      # Add domain name to the node id if unique_id is set
+      node_id = self.__gen_unique_bb_id(vnode)
       if vnode.name.is_initialized():  # Optional - node.name
         node_name = vnode.name.get_value()
       else:
@@ -1282,10 +1309,7 @@ class NFFGConverter(object):
           "Got unexpected exception during acquisition of link's src Port!")
       src_node = src_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
-      if self.ensure_unique_id:
-        src_node_id = self.generate_unique_id(id=src_node.id.get_value())
-      else:
-        src_node_id = src_node.id.get_value()
+      src_node_id = self.__gen_unique_bb_id(src_node)
       try:
         dst_port = vlink.dst.get_target()
       except:
@@ -1293,10 +1317,7 @@ class NFFGConverter(object):
           "Got unexpected exception during acquisition of link's dst Port!")
       dst_node = dst_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
-      if self.ensure_unique_id:
-        dst_node_id = self.generate_unique_id(id=dst_node.id.get_value())
-      else:
-        dst_node_id = dst_node.id.get_value()
+      dst_node_id = self.__gen_unique_bb_id(dst_node)
       try:
         src_port_id = int(src_port.id.get_value())
       except ValueError:
@@ -1565,10 +1586,7 @@ class NFFGConverter(object):
     self.log.debug("Converting infras...")
     for infra in nffg.infras:
       # Check in it's needed to remove domain from the end of id
-      if self.ensure_unique_id:
-        v_node_id = self.recreate_original_id(id=infra.id)
-      else:
-        v_node_id = infra.id
+      v_node_id = self.recreate_bb_id(id=infra.id)
       v_node_name = infra.name  # optional
       v_node_type = infra.infra_type  # Mandatory
       v_node = virt_lib.Infra_node(id=v_node_id,
@@ -1769,10 +1787,7 @@ class NFFGConverter(object):
           continue
         sap_port = link.src
         # Rewrite port-type to port-sap
-        if self.ensure_unique_id:
-          infra_id = self.recreate_original_id(id=n)
-        else:
-          infra_id = str(n)
+        infra_id = self.recreate_bb_id(id=n)
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
         v_sap_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
 
@@ -1825,12 +1840,8 @@ class NFFGConverter(object):
       self.log.debug(
         "Added link: Node: %s, port: %s <--> Node: %s, port: %s" % (
           link.src.node.id, link.src.id, link.dst.node.id, link.dst.id))
-      if self.ensure_unique_id:
-        src_node_id = self.recreate_original_id(id=link.src.node.id)
-        dst_node_id = self.recreate_original_id(id=link.dst.node.id)
-      else:
-        src_node_id = str(link.src.node.id)
-        dst_node_id = str(link.dst.node.id)
+      src_node_id = self.recreate_bb_id(id=link.src.node.id)
+      dst_node_id = self.recreate_bb_id(id=link.dst.node.id)
       v_link = virt_lib.Link(
         id=link.id,
         src=virtualizer.nodes[src_node_id].ports[str(link.src.id)],
@@ -1865,9 +1876,7 @@ class NFFGConverter(object):
         self.log.warning("Requirement link has wrong format: src/dst port is "
                          "not connected to the same BiSBiS node!")
         continue
-      infra_id = req.src.node.id
-      if self.ensure_unique_id:
-        infra_id = self.recreate_original_id(id=infra_id)
+      infra_id = self.recreate_bb_id(id=req.src.node.id)
       self.log.debug("Detected infra node: %s for requirement link: %s" %
                      (infra_id, req))
       # Assembly delay req
@@ -1928,8 +1937,9 @@ class NFFGConverter(object):
                                          formula=formula))
 
   def __assemble_virt_nf (self, nf):
+    v_nf_id = self.recreate_nf_id(nf.id)
     # Create Node object for NF
-    v_nf = virt_lib.Node(id=nf.id,
+    v_nf = virt_lib.Node(id=v_nf_id,
                          name=nf.name,
                          type=nf.functional_type,
                          status=nf.status,
@@ -2033,10 +2043,7 @@ class NFFGConverter(object):
       # than one port
       discovered_nfs = []
       # Recreate the original Node id
-      if self.ensure_unique_id:
-        v_node_id = self.recreate_original_id(id=infra.id)
-      else:
-        v_node_id = str(infra.id)
+      v_node_id = self.recreate_bb_id(id=infra.id)
       # Check in Infra exists in the Virtualizer
       if v_node_id not in virtualizer.nodes.node.keys():
         self.log.warning(
@@ -2047,18 +2054,19 @@ class NFFGConverter(object):
       v_node = virtualizer.nodes[v_node_id]
       # Check every outgoing edge and observe only the NF neighbours
       for nf in nffg.running_nfs(infra.id):
+        v_nf_id = self.recreate_nf_id(nf.id)
         # Skip already detected NFs
-        if nf.id in discovered_nfs:
+        if v_nf_id in discovered_nfs:
           continue
         # Check if the NF is exist in the InfraNode
-        if str(nf.id) not in v_node.NF_instances.node.keys():
+        if v_nf_id not in v_node.NF_instances.node.keys():
           self.log.debug("Found uninitiated NF: %s in mapped NFFG" % nf)
           # Create Node object for NF
           v_nf = self.__assemble_virt_nf(nf=nf)
           # Add NF to Infra object
           v_node.NF_instances.add(v_nf)
           # Cache discovered NF
-          discovered_nfs.append(nf.id)
+          discovered_nfs.append(v_nf_id)
           self.log.debug(
             "Added NF: %s to Infra node(id=%s, name=%s, type=%s)" % (
               nf, v_node.id.get_as_text(),
@@ -2067,7 +2075,7 @@ class NFFGConverter(object):
           # Add NF ports
           for port in nf.ports:
             v_nf_port = self.__assemble_virt_nf_port(port=port)
-            v_node.NF_instances[str(nf.id)].ports.add(v_nf_port)
+            v_node.NF_instances[v_nf.id.get_value()].ports.add(v_nf_port)
             self.log.debug("Added Port: %s to NF node: %s" %
                            (port, v_nf.id.get_as_text()))
         else:
@@ -2089,10 +2097,7 @@ class NFFGConverter(object):
     # Check every infra Node
     for infra in nffg.infras:
       # Recreate the original Node id
-      if self.ensure_unique_id:
-        v_node_id = self.recreate_original_id(id=infra.id)
-      else:
-        v_node_id = str(infra.id)
+      v_node_id = self.recreate_bb_id(id=infra.id)
       # Check in Infra exists in the Virtualizer
       if v_node_id not in virtualizer.nodes.node.keys():
         self.log.warning(
@@ -2120,9 +2125,9 @@ class NFFGConverter(object):
             continue
           # Check if the src port is a physical or virtual port
           in_port = fe[0].split('=')[1]
-          if str(port.id) in v_node.ports.port.keys():
+          if in_port in v_node.ports.port.keys():
             # Flowrule in_port is a phy port in Infra Node
-            in_port = v_node.ports[str(port.id)]
+            in_port = v_node.ports[in_port]
             self.log.debug("Identify in_port: %s in match as a physical port "
                            "in the Virtualizer" % in_port.id.get_as_text())
           else:
@@ -2141,8 +2146,8 @@ class NFFGConverter(object):
                                "conversion..." % in_port)
               continue
             v_nf_port = v_nf_port[0]
-            in_port = v_node.NF_instances[str(v_nf_port.node.id)].ports[
-              str(v_nf_port.id)]
+            v_nf_id = self.recreate_nf_id(v_nf_port.node.id)
+            in_port = v_node.NF_instances[v_nf_id].ports[str(v_nf_port.id)]
             self.log.debug("Found associated NF port: node=%s, port=%s" % (
               in_port.get_parent().get_parent().id.get_as_text(),
               in_port.id.get_as_text()))
@@ -2156,9 +2161,9 @@ class NFFGConverter(object):
             continue
           # Check if the dst port is a physical or virtual port
           out_port = fe[0].split('=')[1]
-          if str(out_port) in v_node.ports.port.keys():
+          if out_port in v_node.ports.port.keys():
             # Flowrule output is a phy port in Infra Node
-            out_port = v_node.ports[str(out_port)]
+            out_port = v_node.ports[out_port]
             self.log.debug("Identify outport: %s in action as a physical port "
                            "in the Virtualizer" % out_port.id.get_as_text())
           else:
@@ -2176,8 +2181,8 @@ class NFFGConverter(object):
                                "conversion..." % out_port)
               continue
             v_nf_port = v_nf_port[0]
-            out_port = v_node.NF_instances[str(v_nf_port.node.id)].ports[
-              str(v_nf_port.id)]
+            v_nf_id = self.recreate_nf_id(v_nf_port.node.id)
+            out_port = v_node.NF_instances[v_nf_id].ports[str(v_nf_port.id)]
             self.log.debug("Found associated NF port: node=%s, port=%s" % (
               # out_port.parent.parent.parent.id.get_as_text(),
               out_port.get_parent().get_parent().id.get_as_text(),
@@ -2256,7 +2261,8 @@ class NFFGConverter(object):
                                        formula=cons))
 
   def __set_vnf_constraints (self, vnode, nf, virtualizer):
-    vnf = vnode.NF_instances[nf.id]
+    v_nf_id = self.recreate_nf_id(nf.id)
+    vnf = vnode.NF_instances[v_nf_id]
     # Add affinity
     for id, aff in nf.constraints.affinity.iteritems():
       v_aff_node = self._get_vnode_by_id(virtualizer=virtualizer, id=aff)
@@ -2350,10 +2356,7 @@ class NFFGConverter(object):
     self.log.debug("Convert constraints...")
     for infra in nffg.infras:
       # Recreate the original Node id
-      if self.ensure_unique_id:
-        v_node_id = self.recreate_original_id(id=infra.id)
-      else:
-        v_node_id = str(infra.id)
+      v_node_id = self.recreate_bb_id(id=infra.id)
       # Check if Infra exists in the Virtualizer
       if v_node_id not in virtualizer.nodes.node.keys():
         self.log.warning(
@@ -2479,7 +2482,7 @@ class NFFGConverter(object):
 
   def _generate_sbb_base (self, request):
     """
-    Generate a SingleBiSBiS node for service request conversion utilize the 
+    Generate a SingleBiSBiS node for service request conversion utilize the
     topology specific data and SAPs from the given `request`.
 
     :param request: utilized service request
@@ -2511,7 +2514,7 @@ class NFFGConverter(object):
 
   def convert_service_request_init (self, request, base=None, reinstall=False):
     """
-    Convert service requests (given in NFFG format) into Virtualizer format 
+    Convert service requests (given in NFFG format) into Virtualizer format
     using the given `base` Virtualizer.
 
     :param request: service request

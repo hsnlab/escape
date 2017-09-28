@@ -147,7 +147,7 @@ adaptation:
         # JSON-based NFFG format
         unify_interface: true
         # Consider in and out data as a difference of Virtualizers
-        diff: false
+        diff: true
     # External VNFM component configuration
     VNFM:
         # Enable/disable using external component to alter mapped topology
@@ -171,7 +171,9 @@ adaptation:
     # Basic configuration related to DoV management
     DOV:
         # Generate unique ID for every nodes collected from domains
-        ENSURE-UNIQUE-ID: on
+        ENSURE-UNIQUE-BiSBiS-ID: on
+        # Generate unique ID for every NF nodes as well
+        ENSURE-UNIQUE-VNF-ID: on
         # Enable REMERGE strategy for updating DoV instead of partial update
         USE-REMERGE-UPDATE-STRATEGY: true
         # Use status field to track component deployment instead of merging
