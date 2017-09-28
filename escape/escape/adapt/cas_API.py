@@ -222,7 +222,7 @@ class ControllerAdaptationAPI(AbstractAPI):
         direct_deploy=direct_deploy)
     except Exception:
       log.error("Something went wrong during NFFG installation!")
-      self.__process_mapping_result(nffg_id=mapped_nffg.id, fail=True)
+      self._process_mapping_result(nffg_id=mapped_nffg.id, fail=True)
       self.raiseEventNoErrors(InstallationFinishedEvent,
                               id=mapped_nffg.id,
                               result=InstallationFinishedEvent.DEPLOY_ERROR)
@@ -231,7 +231,7 @@ class ControllerAdaptationAPI(AbstractAPI):
                               self.__class__.__name__)
     if deploy_status is None:
       log.error("Something went wrong during NFFG installation!")
-      self.__process_mapping_result(nffg_id=mapped_nffg.id, fail=True)
+      self._process_mapping_result(nffg_id=mapped_nffg.id, fail=True)
       self.raiseEventNoErrors(InstallationFinishedEvent,
                               id=mapped_nffg.id,
                               result=InstallationFinishedEvent.DEPLOY_ERROR)
@@ -239,14 +239,14 @@ class ControllerAdaptationAPI(AbstractAPI):
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
       log.info("Overall installation result: %s" % result)
       is_fail = InstallationFinishedEvent.is_error(result)
-      self.__process_mapping_result(nffg_id=mapped_nffg.id, fail=is_fail)
+      self._process_mapping_result(nffg_id=mapped_nffg.id, fail=is_fail)
       self.raiseEventNoErrors(InstallationFinishedEvent,
                               id=mapped_nffg.id, result=result)
     elif deploy_status.standby:
       if self._dovapi:
         self.dov_api.scheduler.set_orchestration_standby()
 
-  def __process_mapping_result(self, nffg_id, fail):
+  def _process_mapping_result(self, nffg_id, fail):
     if not (hasattr(self, 'dov_api') and self.dov_api):
       print "no dov api"
       return
