@@ -24,7 +24,7 @@ from escape.adapt.virtualization import GlobalViewVirtualizer
 from escape.infr import LAYER_NAME as INFR_LAYER_NAME
 from escape.nffg_lib.nffg import NFFG
 from escape.orchest.ros_API import BasicUnifyRequestHandler
-from escape.util.api import AbstractAPI, RESTServer
+from escape.util.api import AbstractAPI, RESTServer, RequestScheduler
 from escape.util.config import CONFIG
 from escape.util.misc import schedule_as_coop_task, quit_with_error
 from escape.util.stat import stats
@@ -205,6 +205,14 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, mapped_nffg))
+    if hasattr(self, 'dov_api') and self.dov_api:
+      log.getChild('API').debug("Store received DoV request...")
+      msg_id = self.dov_api.request_cache.cache_request_by_nffg(mapped_nffg)
+      if msg_id is not None:
+        self.dov_api.request_cache.set_in_progress(id=msg_id)
+        log.getChild('API').debug("Request is stored with id: %s" % msg_id)
+      else:
+        log.getChild('API').debug("No request info detected.")
     stats.add_measurement_start_entry(type=stats.TYPE_DEPLOY,
                                       info=LAYER_NAME)
     try:
@@ -214,25 +222,58 @@ class ControllerAdaptationAPI(AbstractAPI):
         direct_deploy=direct_deploy)
     except Exception:
       log.error("Something went wrong during NFFG installation!")
+      self.__process_mapping_result(nffg_id=mapped_nffg.id, fail=True)
       self.raiseEventNoErrors(InstallationFinishedEvent,
                               id=mapped_nffg.id,
                               result=InstallationFinishedEvent.DEPLOY_ERROR)
-      raise
+      return
     log.getChild('API').debug("Invoked install_nffg on %s is finished!" %
                               self.__class__.__name__)
     if deploy_status is None:
       log.error("Something went wrong during NFFG installation!")
+      self.__process_mapping_result(nffg_id=mapped_nffg.id, fail=True)
       self.raiseEventNoErrors(InstallationFinishedEvent,
                               id=mapped_nffg.id,
                               result=InstallationFinishedEvent.DEPLOY_ERROR)
     elif not deploy_status.still_pending:
       result = InstallationFinishedEvent.get_result_from_status(deploy_status)
       log.info("Overall installation result: %s" % result)
+      is_fail = InstallationFinishedEvent.is_error(result)
+      self.__process_mapping_result(nffg_id=mapped_nffg.id, fail=is_fail)
       self.raiseEventNoErrors(InstallationFinishedEvent,
                               id=mapped_nffg.id, result=result)
     elif deploy_status.standby:
       if self._dovapi:
         self.dov_api.scheduler.set_orchestration_standby()
+
+  def __process_mapping_result(self, nffg_id, fail):
+    if not (hasattr(self, 'dov_api') and self.dov_api):
+      print "no dov api"
+      return
+    print "dov api ok"
+    log.getChild('API').debug("Cache request status...")
+    req_status = self.dov_api.request_cache.get_request_by_nffg_id(nffg_id)
+    if req_status is None:
+      log.getChild('API').debug("Request status is missing for NFFG: %s! "
+                                "Skip result processing..." % nffg_id)
+      return
+    log.getChild('API').debug("Process mapping result...")
+    message_id = req_status.message_id
+    if message_id is not None:
+      if fail:
+        self.dov_api.request_cache.set_error_result(id=message_id)
+      else:
+        self.dov_api.request_cache.set_success_result(id=message_id)
+      log.info("Set request status: %s for message: %s"
+               % (req_status.status, req_status.message_id))
+      ret = self.dov_api.invoke_callback(message_id=message_id)
+      if ret is None:
+        log.getChild('API').debug("No callback was defined!")
+      else:
+        log.getChild('API').debug(
+          "Callback: %s has invoked with return value: %s" % (
+            req_status.get_callback(), ret))
+    RequestScheduler().set_orchestration_finished(id=nffg_id)
 
   @schedule_as_coop_task
   def _handle_CollectMonitoringDataEvent (self, event):

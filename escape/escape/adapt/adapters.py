@@ -356,7 +356,7 @@ class StaticFileAdapter(AbstractESCAPEAdapter):
     :rtype: bool
     """
     file_name = os.path.join(PROJECT_ROOT, self.LOG_DIR, file_name)
-    self.log.info("Dump received request into file: %s..." % file_name)
+    self.log.debug("Dump received request into file: %s..." % file_name)
     self.log.log(VERBOSE, "Dumped data:\n%s" % data)
     try:
       with open(file_name, mode='w+') as f:

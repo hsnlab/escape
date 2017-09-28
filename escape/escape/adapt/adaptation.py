@@ -1051,6 +1051,9 @@ class ControllerAdapter(object):
       log.info("Overall installation result: %s" % result)
       # Rollback set back the domains to WAITING status
       if not deploy_status.still_pending:
+        is_fail = InstallationFinishedEvent.is_error(result)
+        self._layer_API.__process_mapping_result(nffg_id=request_id,
+                                                 fail=is_fail)
         self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                            id=request_id,
                                            result=result)
