@@ -172,8 +172,6 @@ class NFFGConverter(object):
       return v_node.id.get_as_text()
 
   def __gen_unique_nf_id (self, v_vnf, bb_id=None):
-    print v_vnf.id.get_value()
-    print bb_id
     if self._unique_nf_id:
       # Use explicit BB node id
       if bb_id is None:

@@ -951,7 +951,6 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     self.converter = NFFGConverter(
       unique_bb_id=CONFIG.ensure_unique_bisbis_id(),
       unique_nf_id=CONFIG.ensure_unique_vnf_id(),
-      domain="REMOTE",
       logger=log)
 
   def get_config (self, params):
@@ -1176,7 +1175,6 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
     self.log.info("Patching cached topology with received diff...")
     # full_request = self.server.last_response.full_copy()
     full_request = Virtualizer.parse_from_text(self.server.last_response.xml())
-    print full_request.xml()
     full_request.patch(source=diff)
     # return full_request
     # Perform hack to resolve inconsistency
