@@ -26,6 +26,7 @@ from escape.nffg_lib.nffg import NFFG
 from escape.orchest.ros_API import BasicUnifyRequestHandler
 from escape.util.api import AbstractAPI, RESTServer, RequestScheduler
 from escape.util.config import CONFIG
+from escape.util.conversion import NFFGConverter
 from escape.util.misc import schedule_as_coop_task, quit_with_error
 from escape.util.stat import stats
 from pox.lib.revent.revent import Event
@@ -220,8 +221,8 @@ class ControllerAdaptationAPI(AbstractAPI):
         mapped_nffg=mapped_nffg,
         original_request=original_request,
         direct_deploy=direct_deploy)
-    except Exception:
-      log.error("Something went wrong during NFFG installation!")
+    except Exception as e:
+      log.error("Something went wrong during NFFG installation: %s" % e)
       self._process_mapping_result(nffg_id=mapped_nffg.id, fail=True)
       self.raiseEventNoErrors(InstallationFinishedEvent,
                               id=mapped_nffg.id,
@@ -230,7 +231,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     log.getChild('API').debug("Invoked install_nffg on %s is finished!" %
                               self.__class__.__name__)
     if deploy_status is None:
-      log.error("Something went wrong during NFFG installation!")
+      log.error("Deploy status is missing!")
       self._process_mapping_result(nffg_id=mapped_nffg.id, fail=True)
       self.raiseEventNoErrors(InstallationFinishedEvent,
                               id=mapped_nffg.id,
@@ -246,11 +247,9 @@ class ControllerAdaptationAPI(AbstractAPI):
       if self._dovapi:
         self.dov_api.scheduler.set_orchestration_standby()
 
-  def _process_mapping_result(self, nffg_id, fail):
+  def _process_mapping_result (self, nffg_id, fail):
     if not (hasattr(self, 'dov_api') and self.dov_api):
-      print "no dov api"
       return
-    print "dov api ok"
     log.getChild('API').debug("Cache request status...")
     req_status = self.dov_api.request_cache.get_request_by_nffg_id(nffg_id)
     if req_status is None:
@@ -406,6 +405,9 @@ class DirectDoVRequestHandler(BasicUnifyRequestHandler):
 
   def setup (self):
     super(DirectDoVRequestHandler, self).setup()
+    self.converter = NFFGConverter(unique_bb_id=False,
+                                   unique_nf_id=True,
+                                   logger=log)
     # Force disable adding domain to BB nodes that are parts of DoV
     self.converter._unique_bb_id = False
     # Force enable adding domain to BB nodes that are parts of DoV
