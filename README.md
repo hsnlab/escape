@@ -40,7 +40,7 @@ The `install_dep.sh` script is responsible for managing the dependencies. It set
 the required sym-links, updates the related submodules and installs only the 
 necessary packages regarding the given install parameters.
 
-```bash
+```text
 $ ./install-dep.sh -h
 Detected platform is Ubuntu, version: 16.04!
 User project config: N/A
@@ -61,7 +61,7 @@ options:
 For automatically setting up the submodules and its submodules recursively, 
 the `project-setup.sh` script has been added to the project.
 
-```bash
+```text
 $ ./project-setup.sh -h
 Setup submodules according to given project for ESCAPEe.
 If project name is not given the script tries to detect it
@@ -203,7 +203,7 @@ the `test` folder.
 Dependent packages for the test can be installed with the `install_requirements.sh` script.
 To run the test see the main test runner script:
 
-```bash
+```text
 $ ./run_tests.py -h
 usage: run_tests.py [-h] [-f] [-o] [-t t] [-s] [-v]
                     [testcases [testcases ...]]
@@ -226,7 +226,7 @@ optional arguments:
 
 To run the testcases in a Docker container, use the ``dockerized-test.sh `` script:
 
-```bash
+```text
 $ ./dockerized-test.sh -h
 Run testcases in a docker container.
 
