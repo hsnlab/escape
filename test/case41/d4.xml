@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>42</id>
+	<nodes>
+		<node>
+			<id>d4</id>
+			<ports>
+				<port>
+					<id>SAPblue</id>
+					<port_type>port-sap</port_type>
+					<sap>SAPblue</sap>
+				</port>
+				<port>
+					<id>d3-d4</id>
+					<port_type>port-sap</port_type>
+					<sap>d3-d4</sap>
+					<sap_data>
+						<technology>IP,option B</technology>
+					</sap_data>
+				</port>
+				<port>
+					<id>d4-d5</id>
+					<port_type>port-sap</port_type>
+					<sap>d4-d5</sap>
+					<sap_data>
+						<technology>IP,option B</technology>
+					</sap_data>
+				</port>
+			</ports>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<id>router4</id>
+						<type>router</type>
+					</node>
+				</supported_NFs>
+			</capabilities>
+		</node>
+	</nodes>
+</virtualizer>

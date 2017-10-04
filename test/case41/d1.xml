@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>42</id>
+	<nodes>
+		<node>
+			<id>d1</id>
+			<ports>
+				<port>
+					<id>SAPred</id>
+					<port_type>port-sap</port_type>
+					<sap>SAPred</sap>
+				</port>
+				<port>
+					<id>d1-d2</id>
+					<port_type>port-sap</port_type>
+					<sap>d1-d2</sap>
+					<sap_data>
+						<technology>IP,option B</technology>
+					</sap_data>
+				</port>
+			</ports>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<id>balance_server:latest1</id>
+						<type>balance_server:latest</type>
+					</node>
+					<node>
+						<id>router1</id>
+						<type>router</type>
+					</node>
+					<node>
+						<id>splitter1</id>
+						<type>splitter</type>
+					</node>
+				</supported_NFs>
+			</capabilities>
+		</node>
+	</nodes>
+</virtualizer>

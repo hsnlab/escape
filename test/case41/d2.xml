@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>42</id>
+	<nodes>
+		<node>
+			<id>d2</id>
+			<ports>
+				<port>
+					<id>SAPssh</id>
+					<port_type>port-sap</port_type>
+					<sap>SAPssh</sap>
+				</port>
+				<port>
+					<id>d1-d2</id>
+					<port_type>port-sap</port_type>
+					<sap>d1-d2</sap>
+					<sap_data>
+						<technology>IP,option B</technology>
+					</sap_data>
+				</port>
+				<port>
+					<id>d2-d3</id>
+					<port_type>port-sap</port_type>
+					<sap>d2-d3</sap>
+					<sap_data>
+						<technology>IP,option B</technology>
+					</sap_data>
+				</port>
+			</ports>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<id>balance_server:latest2</id>
+						<type>balance_server:latest</type>
+					</node>
+					<node>
+						<id>router2</id>
+						<type>router</type>
+					</node>
+					<node>
+						<id>splitter2</id>
+						<type>splitter</type>
+					</node>
+				</supported_NFs>
+			</capabilities>
+		</node>
+	</nodes>
+</virtualizer>

@@ -16,8 +16,7 @@ import os
 from unittest.case import TestCase
 from unittest.util import strclass
 
-from testframework.runner import EscapeRunResult, RunnableTestCaseInfo, \
-  ESCAPECommandRunner
+from testframework.runner import EscapeRunResult, ESCAPECommandRunner
 
 log = logging.getLogger()
 ESCAPE_LOG_FILE_NAME = "escape.log"

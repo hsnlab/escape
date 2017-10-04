@@ -21,7 +21,6 @@ from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread, Event
 
 import requests
-
 from testframework.testcases.basic import EscapeTestCase, \
   BasicSuccessfulTestCase
 
@@ -331,3 +330,11 @@ class RESTBasedSuccessfulTestCase(BasicSuccessfulTestCase,
 
   def __init__ (self, **kwargs):
     super(RESTBasedSuccessfulTestCase, self).__init__(**kwargs)
+
+
+class DoVAPISuccessfulTestCase(RESTBasedSuccessfulTestCase):
+  def setUp (self):
+    super(DoVAPISuccessfulTestCase, self).setUp()
+    self.ACCEPTABLE_WARNINGS.append(
+      "Received direct DoV rewrite request from external component without "
+      "any preliminary deploy request!")

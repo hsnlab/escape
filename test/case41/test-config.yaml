@@ -1,0 +1,72 @@
+service:
+    MAPPER:
+        mapping-enabled: false
+    SCHEDULED_SERVICE_REQUEST_DELAY: 0
+orchestration:
+    MAPPER:
+        mapping-enabled: true
+adaptation:
+    deployment:
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: false
+    MANAGERS:
+    - D1
+    - D2
+    - D3
+    - D4
+    - D5
+    D1:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: D1
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: test/case41/d1.xml
+                log_dir: test/case41
+    D2:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: D2
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: test/case41/d2.xml
+                log_dir: test/case41
+    D3:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: D3
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: test/case41/d3.xml
+                log_dir: test/case41
+    D4:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: D4
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: test/case41/d4.xml
+                log_dir: test/case41
+    D5:
+        module: escape.adapt.managers
+        class: BasicDomainManager
+        domain_name: D5
+        adapters:
+            TOPOLOGY:
+                module: escape.adapt.adapters
+                class: VirtualizerBasedStaticFileAdapter
+                path: test/case41/d5.xml
+                log_dir: test/case41
+test:
+    module: testframework.testcases.rest
+    class: DoVAPISuccessfulTestCase
+    timeout: 10
+    url: http://localhost:8889/dov/edit-config?blocking=
+    callback: yes

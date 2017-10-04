@@ -1,0 +1,320 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>DoV</id>
+	<nodes>
+		<node>
+			<id>d1@D1</id>
+			<NF_instances>
+				<node operation="create">
+					<id>router1</id>
+					<type>router</type>
+					<ports>
+						<port>
+							<id>SAPred.2</id>
+							<port_type>port-abstract</port_type>
+						</port>
+						<port>
+							<id>d1-d2</id>
+							<port_type>port-abstract</port_type>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>1.0</mem>
+						<storage>1.0</storage>
+					</resources>
+					<metadata>
+						<key>forwarding</key>
+						<value>192.168.10.2:SAPred.2,192.168.10.2:d1-d2,192.168.10.2:d1-d2</value>
+					</metadata>
+				</node>
+			</NF_instances>
+			<flowtable>
+				<flowentry operation="create">
+					<id>4021</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d1@D1]/NF_instances/node[id=router1]/ports/port[id=d1-d2]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d1@D1]/ports/port[id=d1-d2]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4029</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d1@D1]/ports/port[id=d1-d2]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d1@D1]/NF_instances/node[id=router1]/ports/port[id=d1-d2]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>83</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d1@D1]/ports/port[id=SAPred]</port>
+					<match>dl_tag=0x0053</match>
+					<action>pop_tag</action>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d1@D1]/NF_instances/node[id=router1]/ports/port[id=SAPred.2]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>84</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d1@D1]/NF_instances/node[id=router1]/ports/port[id=SAPred.2]</port>
+					<action>push_tag:0x0054</action>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d1@D1]/ports/port[id=SAPred]</out>
+				</flowentry>
+			</flowtable>
+		</node>
+		<node>
+			<id>d2@D2</id>
+			<NF_instances>
+				<node operation="create">
+					<id>router1</id>
+					<type>router</type>
+					<ports>
+						<port>
+							<id>d1-d2</id>
+							<port_type>port-abstract</port_type>
+							<sap_data>
+								<technology>option B</technology>
+							</sap_data>
+						</port>
+						<port>
+							<id>d2-d3</id>
+							<port_type>port-abstract</port_type>
+							<sap_data>
+								<technology>option B</technology>
+							</sap_data>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>1.0</mem>
+						<storage>1.0</storage>
+					</resources>
+					<metadata>
+						<key>forwarding</key>
+						<value>10.1.200.10:d2-d3,192.168.1.157:d2-d3,192.168.10.2:d1-d2</value>
+					</metadata>
+				</node>
+			</NF_instances>
+			<flowtable>
+				<flowentry operation="create">
+					<id>4019</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/ports/port[id=d2-d3]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/NF_instances/node[id=router1]/ports/port[id=d2-d3]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4020</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/ports/port[id=d1-d2]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/NF_instances/node[id=router1]/ports/port[id=d1-d2]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4027</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/NF_instances/node[id=router1]/ports/port[id=d2-d3]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/ports/port[id=d2-d3]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4028</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/NF_instances/node[id=router1]/ports/port[id=d1-d2]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/ports/port[id=d1-d2]</out>
+				</flowentry>
+			</flowtable>
+		</node>
+		<node>
+			<id>d3@D3</id>
+			<NF_instances>
+				<node operation="create">
+					<id>router1</id>
+					<type>router</type>
+					<ports>
+						<port>
+							<id>d2-d3</id>
+							<port_type>port-abstract</port_type>
+						</port>
+						<port>
+							<id>d3-d4</id>
+							<port_type>port-abstract</port_type>
+							<sap_data>
+								<technology>option B</technology>
+							</sap_data>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>1.0</mem>
+						<storage>1.0</storage>
+					</resources>
+					<metadata>
+						<key>forwarding</key>
+						<value>10.1.200.10:d3-d4,192.168.1.157:d3-d4,192.168.10.2:d2-d3</value>
+					</metadata>
+				</node>
+			</NF_instances>
+			<flowtable>
+				<flowentry operation="create">
+					<id>4022</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d3@D3]/ports/port[id=d3-d4]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d3@D3]/NF_instances/node[id=router1]/ports/port[id=d3-d4]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4023</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d3@D3]/NF_instances/node[id=router1]/ports/port[id=d2-d3]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d3@D3]/ports/port[id=d2-d3]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4030</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d3@D3]/ports/port[id=d2-d3]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d3@D3]/NF_instances/node[id=router1]/ports/port[id=d2-d3]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4031</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d3@D3]/NF_instances/node[id=router1]/ports/port[id=d3-d4]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d3@D3]/ports/port[id=d3-d4]</out>
+				</flowentry>
+			</flowtable>
+		</node>
+		<node>
+			<id>d4@D4</id>
+			<NF_instances>
+				<node operation="create">
+					<id>router1</id>
+					<type>router</type>
+					<ports>
+						<port>
+							<id>SAPblue.0</id>
+							<port_type>port-abstract</port_type>
+						</port>
+						<port>
+							<id>d3-d4</id>
+							<port_type>port-abstract</port_type>
+						</port>
+						<port>
+							<id>d4-d5</id>
+							<port_type>port-abstract</port_type>
+							<sap_data>
+								<technology>option B</technology>
+							</sap_data>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>1.0</mem>
+						<storage>1.0</storage>
+					</resources>
+					<metadata>
+						<key>forwarding</key>
+						<value>10.1.200.10:d4-d5,192.168.1.157:SAPblue.0,192.168.10.2:d3-d4</value>
+					</metadata>
+				</node>
+			</NF_instances>
+			<flowtable>
+				<flowentry operation="create">
+					<id>4024</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=d4-d5]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=d4-d5]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4025</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=d3-d4]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=d3-d4]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4032</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=d3-d4]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=d3-d4]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4033</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=d4-d5]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=d4-d5]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>73</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=SAPblue]</port>
+					<match>dl_tag=0x0049</match>
+					<action>pop_tag</action>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=SAPblue.0]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>74</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=SAPblue.0]</port>
+					<action>push_tag:0x004a</action>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=SAPblue]</out>
+				</flowentry>
+			</flowtable>
+		</node>
+		<node>
+			<id>d5@D5</id>
+			<NF_instances>
+				<node operation="create">
+					<id>router1</id>
+					<type>router</type>
+					<ports>
+						<port>
+							<id>1</id>
+							<port_type>port-abstract</port_type>
+						</port>
+						<port>
+							<id>d4-d5</id>
+							<port_type>port-abstract</port_type>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>1.0</mem>
+						<storage>1.0</storage>
+					</resources>
+					<metadata>
+						<key>forwarding</key>
+						<value>10.1.200.10:1,192.168.10.2:d4-d5,192.168.10.2:d4-d5</value>
+					</metadata>
+				</node>
+				<node operation="create">
+					<id>vision</id>
+					<name>vision</name>
+					<type>balance_color_vision:latest</type>
+					<ports>
+						<port>
+							<id>1</id>
+							<port_type>port-abstract</port_type>
+						</port>
+					</ports>
+					<resources>
+						<cpu>1.0</cpu>
+						<mem>1.0</mem>
+						<storage>0.0</storage>
+					</resources>
+				</node>
+			</NF_instances>
+			<flowtable>
+				<flowentry operation="create">
+					<id>13</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d5@D5]/NF_instances/node[id=router1]/ports/port[id=1]</port>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d5@D5]/NF_instances/node[id=vision]/ports/port[id=1]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>14</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d5@D5]/NF_instances/node[id=vision]/ports/port[id=1]</port>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d5@D5]/NF_instances/node[id=router1]/ports/port[id=1]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4026</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d5@D5]/NF_instances/node[id=router1]/ports/port[id=d4-d5]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d5@D5]/ports/port[id=d4-d5]</out>
+				</flowentry>
+				<flowentry operation="create">
+					<id>4034</id>
+					<port>/virtualizer[id=DoV]/nodes/node[id=d5@D5]/ports/port[id=d4-d5]</port>
+					<match>route_target=65000:1</match>
+					<out>/virtualizer[id=DoV]/nodes/node[id=d5@D5]/NF_instances/node[id=router1]/ports/port[id=d4-d5]</out>
+				</flowentry>
+			</flowtable>
+		</node>
+	</nodes>
+</virtualizer>

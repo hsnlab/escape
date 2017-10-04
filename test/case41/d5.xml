@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<virtualizer>
+	<id>42</id>
+	<nodes>
+		<node>
+			<id>d5</id>
+			<ports>
+				<port>
+					<id>d4-d5</id>
+					<port_type>port-sap</port_type>
+					<sap>d4-d5</sap>
+					<sap_data>
+						<technology>IP,option B</technology>
+					</sap_data>
+				</port>
+			</ports>
+			<capabilities>
+				<supported_NFs>
+					<node>
+						<id>balance_color_vision:latest5</id>
+						<type>balance_color_vision:latest</type>
+					</node>
+					<node>
+						<id>router5</id>
+						<type>router</type>
+					</node>
+				</supported_NFs>
+			</capabilities>
+		</node>
+	</nodes>
+</virtualizer>
