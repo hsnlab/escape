@@ -3,7 +3,7 @@
 	<id>42</id>
 	<nodes>
 		<node>
-			<id>d4</id>
+			<id>SingleBiSBiS</id>
 			<ports>
 				<port>
 					<id>SAPblue</id>

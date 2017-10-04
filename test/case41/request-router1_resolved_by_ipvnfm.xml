@@ -58,7 +58,7 @@
 			</flowtable>
 		</node>
 		<node>
-			<id>d2@D2</id>
+			<id>SingleBiSBiS@D2</id>
 			<NF_instances>
 				<node operation="create">
 					<id>router1</id>
@@ -93,27 +93,27 @@
 			<flowtable>
 				<flowentry operation="create">
 					<id>4019</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/ports/port[id=d2-d3]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D2]/ports/port[id=d2-d3]</port>
 					<match>route_target=65000:1</match>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/NF_instances/node[id=router1]/ports/port[id=d2-d3]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D2]/NF_instances/node[id=router1]/ports/port[id=d2-d3]</out>
 				</flowentry>
 				<flowentry operation="create">
 					<id>4020</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/ports/port[id=d1-d2]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D2]/ports/port[id=d1-d2]</port>
 					<match>route_target=65000:1</match>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/NF_instances/node[id=router1]/ports/port[id=d1-d2]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D2]/NF_instances/node[id=router1]/ports/port[id=d1-d2]</out>
 				</flowentry>
 				<flowentry operation="create">
 					<id>4027</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/NF_instances/node[id=router1]/ports/port[id=d2-d3]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D2]/NF_instances/node[id=router1]/ports/port[id=d2-d3]</port>
 					<match>route_target=65000:1</match>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/ports/port[id=d2-d3]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D2]/ports/port[id=d2-d3]</out>
 				</flowentry>
 				<flowentry operation="create">
 					<id>4028</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/NF_instances/node[id=router1]/ports/port[id=d1-d2]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D2]/NF_instances/node[id=router1]/ports/port[id=d1-d2]</port>
 					<match>route_target=65000:1</match>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d2@D2]/ports/port[id=d1-d2]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D2]/ports/port[id=d1-d2]</out>
 				</flowentry>
 			</flowtable>
 		</node>
@@ -175,7 +175,7 @@
 			</flowtable>
 		</node>
 		<node>
-			<id>d4@D4</id>
+			<id>SingleBiSBiS@D4</id>
 			<NF_instances>
 				<node operation="create">
 					<id>router1</id>
@@ -211,40 +211,40 @@
 			<flowtable>
 				<flowentry operation="create">
 					<id>4024</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=d4-d5]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/ports/port[id=d4-d5]</port>
 					<match>route_target=65000:1</match>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=d4-d5]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/NF_instances/node[id=router1]/ports/port[id=d4-d5]</out>
 				</flowentry>
 				<flowentry operation="create">
 					<id>4025</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=d3-d4]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/NF_instances/node[id=router1]/ports/port[id=d3-d4]</port>
 					<match>route_target=65000:1</match>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=d3-d4]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/ports/port[id=d3-d4]</out>
 				</flowentry>
 				<flowentry operation="create">
 					<id>4032</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=d3-d4]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/ports/port[id=d3-d4]</port>
 					<match>route_target=65000:1</match>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=d3-d4]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/NF_instances/node[id=router1]/ports/port[id=d3-d4]</out>
 				</flowentry>
 				<flowentry operation="create">
 					<id>4033</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=d4-d5]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/NF_instances/node[id=router1]/ports/port[id=d4-d5]</port>
 					<match>route_target=65000:1</match>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=d4-d5]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/ports/port[id=d4-d5]</out>
 				</flowentry>
 				<flowentry operation="create">
 					<id>73</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=SAPblue]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/ports/port[id=SAPblue]</port>
 					<match>dl_tag=0x0049</match>
 					<action>pop_tag</action>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=SAPblue.0]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/NF_instances/node[id=router1]/ports/port[id=SAPblue.0]</out>
 				</flowentry>
 				<flowentry operation="create">
 					<id>74</id>
-					<port>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/NF_instances/node[id=router1]/ports/port[id=SAPblue.0]</port>
+					<port>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/NF_instances/node[id=router1]/ports/port[id=SAPblue.0]</port>
 					<action>push_tag:0x004a</action>
-					<out>/virtualizer[id=DoV]/nodes/node[id=d4@D4]/ports/port[id=SAPblue]</out>
+					<out>/virtualizer[id=DoV]/nodes/node[id=SingleBiSBiS@D4]/ports/port[id=SAPblue]</out>
 				</flowentry>
 			</flowtable>
 		</node>

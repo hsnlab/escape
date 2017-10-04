@@ -18,6 +18,7 @@ import httplib
 import json
 import os.path
 import threading
+import traceback
 import urllib
 import urlparse
 import uuid
@@ -785,7 +786,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     except:
       # Got unexpected exception
       self.send_error(httplib.INTERNAL_SERVER_ERROR)
-      raise
+      self.log.error("\n%s" % traceback.format_exc())
     finally:
       self.func_name = None
       self.wfile.flush()
@@ -961,7 +962,7 @@ class AbstractRequestHandler(BaseHTTPRequestHandler, object):
     :type mformat: str
     :return: None
     """
-    self.log.warning("%s - - [%s] %s" % (
+    self.log.error("%s - - [%s] %s" % (
       self.client_address[0], self.log_date_time_string(), mformat % args))
 
   def log_message (self, mformat, *args):

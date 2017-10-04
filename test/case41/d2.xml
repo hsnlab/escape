@@ -3,7 +3,7 @@
 	<id>42</id>
 	<nodes>
 		<node>
-			<id>d2</id>
+			<id>SingleBiSBiS</id>
 			<ports>
 				<port>
 					<id>SAPssh</id>
