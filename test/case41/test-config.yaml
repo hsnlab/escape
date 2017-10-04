@@ -67,6 +67,6 @@ adaptation:
 test:
     module: testframework.testcases.rest
     class: DoVAPISuccessfulTestCase
-    timeout: 10
+    timeout: 5
     url: http://localhost:8889/dov/edit-config?blocking=
     callback: yes
