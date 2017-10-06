@@ -20,10 +20,9 @@ import time
 import urlparse
 import weakref
 
-import escape.adapt.managers as mgrs
 from escape.adapt import log as log
 from escape.adapt.adapters import UnifyRESTAdapter
-from escape.adapt.managers import UnifyDomainManager
+from escape.adapt.managers import UnifyDomainManager, BaseResultEvent
 from escape.adapt.virtualization import DomainVirtualizer
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.util.com_logger import MessageDumper
@@ -40,7 +39,7 @@ from pox.lib.recoco import Timer
 from virtualizer_info import Info
 
 
-class InstallationFinishedEvent(mgrs.BaseResultEvent):
+class InstallationFinishedEvent(BaseResultEvent):
   """
   Event for signalling end of mapping process.
   """
@@ -82,7 +81,7 @@ class InstallationFinishedEvent(mgrs.BaseResultEvent):
       return cls.UNKNOWN
 
 
-class InfoRequestFinishedEvent(mgrs.BaseResultEvent):
+class InfoRequestFinishedEvent(BaseResultEvent):
   """
   Event for signalling end of Info request processing.
   """
@@ -710,13 +709,17 @@ class ControllerAdapter(object):
                     AbstractRemoteDomainManager) and domain_mgr.polling:
         log.info("Skip explicit DoV update for domain: %s. "
                  "Cause: polling enabled!" % domain)
-        log.debug("Consider every deploy into a polled domain OK...")
-        deploy_status.set_domain_ok(domain=domain)
-        log.debug("Installation status: %s" % deploy_status)
-        continue
+        if isinstance(domain_mgr,
+                      UnifyDomainManager) and domain_mgr.callback_manager:
+          log.debug("Callback is enabled for domain: %s!")
+        else:
+          log.debug("Consider deploy into a polled domain OK...")
+          deploy_status.set_domain_ok(domain=domain)
+          log.debug("Installation status: %s" % deploy_status)
+          continue
 
-      if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
-         domain_mgr.callback_manager:
+      if isinstance(domain_mgr,
+                    UnifyDomainManager) and domain_mgr.callback_manager:
         log.info("Skip explicit DoV update for domain: %s. "
                  "Cause: callback registered!" % domain)
         deploy_status.set_domain_waiting(domain=domain)
@@ -745,7 +748,7 @@ class ControllerAdapter(object):
     log.debug("Overall installation status: %s" % deploy_status)
     # Post-mapping steps
     if deploy_status.success:
-      log.info("All installation processes have been finished with success! ")
+      log.info("All installation processes have been finished with success!")
       if CONFIG.one_step_update():
         log.debug("One-step-update is enabled. Update DoV now...")
         self.DoVManager.set_global_view(nffg=deploy_status.data)
@@ -925,11 +928,22 @@ class ControllerAdapter(object):
             log.debug("RESET request has been failed!")
             status.set_domain_failed(domain=domain)
             continue
-          if isinstance(domain_mgr, mgrs.UnifyDomainManager) and \
-             domain_mgr.callback_manager:
+          if isinstance(domain_mgr,
+                        AbstractRemoteDomainManager) and domain_mgr.polling:
+            log.debug("Polling in domain: %s is enabled! "
+                      "Set rollback status to RESET" % domain)
+            status.set_domain_reset(domain=domain)
+          elif isinstance(domain_mgr,
+                          UnifyDomainManager) and domain_mgr.callback_manager:
             status.set_domain_waiting(domain=domain)
           else:
             status.set_domain_reset(domain=domain)
+            if not CONFIG.one_step_update():
+              log.debug("Extract domain state from previous state...")
+              reset_state = NFFGToolBox.extract_domain(domain=domain,
+                                                       nffg=previous_state)
+              self.DoVManager.update_domain(domain=domain,
+                                            nffg=reset_state)
         else:
           log.debug("Domain: %s is not affected. Skip rollback..." % domain)
       else:
@@ -972,13 +986,14 @@ class ControllerAdapter(object):
       self.DoVManager.update_domain(domain=event.domain,
                                     nffg=event.data)
       # Handle install status in case the DomainManager is polling the domain
-      if isinstance(event.source, AbstractRemoteDomainManager) \
-         and not event.source.polling:
+      if isinstance(event.source,
+                    AbstractRemoteDomainManager) and not event.source.polling:
         return
       deploy_status = self.status_mgr.get_last_status()
       if deploy_status:
         if deploy_status.get_domain_status(event.domain) == deploy_status.OK:
-          log.debug("Domain: %s is already set OK. Skip overall status check..")
+          log.debug("Domain: %s is already set OK. "
+                    "Skip overall status check...")
           return
         deploy_status.set_domain_ok(event.domain)
         if not deploy_status.still_pending:
@@ -1025,11 +1040,20 @@ class ControllerAdapter(object):
       deploy_status.set_domain_ok(domain=event.domain)
       if isinstance(event.callback.data, NFFG):
         log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
-      if CONFIG.one_step_update():
-        log.debug("One-step-update is enabled. Skip explicit domain update!")
+      domain_mgr = self.domains.get_component_by_domain(event.domain)
+      if domain_mgr is None:
+        log.error("DomainManager for domain: %s is not found!" % event.domain)
+        return
+      if isinstance(domain_mgr,
+                    AbstractRemoteDomainManager) and domain_mgr.polling:
+        log.debug("Polling in domain: %s is enabled! Skip explicit update..."
+                  % event.domain)
       else:
-        self.DoVManager.update_domain(domain=event.domain,
-                                      nffg=event.callback.data)
+        if CONFIG.one_step_update():
+          log.debug("One-step-update is enabled. Skip explicit domain update!")
+        else:
+          self.DoVManager.update_domain(domain=event.domain,
+                                        nffg=event.callback.data)
     log.debug("Installation status: %s" % deploy_status)
     if not deploy_status.still_pending:
       if deploy_status.success:
@@ -1053,7 +1077,7 @@ class ControllerAdapter(object):
       if not deploy_status.still_pending:
         is_fail = InstallationFinishedEvent.is_error(result)
         self._layer_API._process_mapping_result(nffg_id=request_id,
-                                                 fail=is_fail)
+                                                fail=is_fail)
         self._layer_API.raiseEventNoErrors(InstallationFinishedEvent,
                                            id=request_id,
                                            result=result)
@@ -1078,13 +1102,15 @@ class ControllerAdapter(object):
       log.debug("Update success status for ROLLBACK request: %s..."
                 % request_id)
       deploy_status.set_domain_reset(domain=event.domain)
-      # if isinstance(event.callback.data, NFFG):
-      #   log.log(VERBOSE, "Changed topology:\n%s" % event.callback.data.dump())
-      # self.DoVManager.update_domain(domain=event.domain,
-      #                               nffg=event.callback.data)
-      # TODO domain update
       if CONFIG.one_step_update():
         log.debug("One-step-update is enabled. Skip explicit domain update!")
+      else:
+        log.debug("Extract domain state from previous state...")
+        previous_state = self.DoVManager.get_backup_state()
+        reset_state = NFFGToolBox.extract_domain(domain=event.domain,
+                                                 nffg=previous_state)
+        self.DoVManager.update_domain(domain=event.domain,
+                                      nffg=reset_state)
     log.debug("Rollback status: %s" % deploy_status)
     if not deploy_status.still_pending:
       if deploy_status.reset:

@@ -15,6 +15,7 @@
 Contains classes which implement :class:`NFFG` mapping functionality.
 """
 import cProfile
+import pprint
 import pstats
 import time
 
@@ -68,7 +69,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :return: mapping result
     :rtype: :class:`NFFG`
     """
-    log.debug("Call mapping algorithm with parameters: %s" % params)
+    log.debug("Call mapping algorithm with parameters:\n%s" %
+              pprint.pformat(params))
     stat_level = stat_level if stat_level else cls.__name__
     stats.add_measurement_start_entry(type=stats_type, info=stat_level)
     try:
