@@ -995,7 +995,13 @@ class ControllerAdapter(object):
           log.debug("Domain: %s is already set OK. "
                     "Skip overall status check...")
           return
+        if isinstance(event.source,
+                      UnifyDomainManager) and event.source.callback_manager:
+          log.debug("Callback is enabled for domain: %s! "
+                    "Skip overall status check..." % event.domain)
+          return
         deploy_status.set_domain_ok(event.domain)
+        log.debug("Installation status: %s" % deploy_status)
         if not deploy_status.still_pending:
           if deploy_status.success:
             log.info("All installation process has been finished for request:"
