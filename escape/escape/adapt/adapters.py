@@ -986,17 +986,26 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: is different or not
     :rtype: bool
     """
-    # changes = new_data.copy()
-    # changes.reduce(self.last_virtualizer)
     changes = self.last_virtualizer.diff(new_data)
-    element = changes.get_next()
-    if element is None:
-      return False
-    # Skip version tag
-    elif element.get_tag() == "version" and element.get_next() is None:
-      return False
-    else:
-      return True
+    # for sub_element in changes:
+    #   if sub_element is None:
+    #     # No other sub element --> no difference
+    #     return False
+    #   # Skip version tag / old format and id / new format
+    #   elif sub_element.get_tag() in ('version', 'id'):
+    #     continue
+    #   else:
+    #     # Unexpected sub element --> different
+    #     return True
+    next_sub = changes.get_next()
+    while next_sub is not None:
+      # Skip version tag / old format and id / new format
+      if next_sub.get_tag() not in ('version', 'id'):
+        return True
+      else:
+        next_sub = next_sub.get_next()
+    return False
+
 
   def __calculate_diff (self, changed):
     """

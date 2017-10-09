@@ -288,7 +288,7 @@ adaptation:
         # Enable domain polling to detect and update domain topology view
         poll: false
         # Enable sending ping messages to detect domain up/down events
-        keepalive: on
+        keepalive: off
         # Adapters configuration used by domain manager
         adapters:
             # Adapter configuration for UNIFY interface

@@ -1018,7 +1018,7 @@ class ControllerAdapter(object):
                                              id=deploy_status.id,
                                              result=result)
       else:
-        log.warning("No deploy-status could be retrieved from manager!")
+        log.debug("No service under deployment: deploy-status is missing!")
 
   def _handle_EditConfigHookEvent (self, event):
     """
