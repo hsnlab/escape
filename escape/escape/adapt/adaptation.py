@@ -929,13 +929,13 @@ class ControllerAdapter(object):
             status.set_domain_failed(domain=domain)
             continue
           if isinstance(domain_mgr,
-                        AbstractRemoteDomainManager) and domain_mgr.polling:
+                        UnifyDomainManager) and domain_mgr.callback_manager:
+            status.set_domain_waiting(domain=domain)
+          elif isinstance(domain_mgr,
+                          AbstractRemoteDomainManager) and domain_mgr.polling:
             log.debug("Polling in domain: %s is enabled! "
                       "Set rollback status to RESET" % domain)
             status.set_domain_reset(domain=domain)
-          elif isinstance(domain_mgr,
-                          UnifyDomainManager) and domain_mgr.callback_manager:
-            status.set_domain_waiting(domain=domain)
           else:
             status.set_domain_reset(domain=domain)
             if not CONFIG.one_step_update():
