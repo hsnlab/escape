@@ -87,7 +87,7 @@ class NFFGConverter(object):
   REQUIREMENT_PREFIX = "REQ"
 
   def __init__ (self, domain=None, logger=None, unique_bb_id=False,
-                unique_nf_id=True):
+                unique_nf_id=False):
     """
     Init.
 
@@ -165,7 +165,7 @@ class NFFGConverter(object):
     :return: unique ID
     :rtype: str
     """
-    if self.__unique_bb_id:
+    if self.__unique_bb_id and self.domain:
       return "%s%s%s" % (v_node.id.get_value(),
                          self.UNIQUE_ID_DELIMITER,
                          self.domain)
