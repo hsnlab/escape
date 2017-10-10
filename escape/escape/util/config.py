@@ -876,6 +876,16 @@ class ESCAPEConfig(object):
     except KeyError:
       return True
 
+  def no_poll_during_deployment (self):
+    """
+    :return: Return whether polling is disabled during service deployment
+    :rtype: bool
+    """
+    try:
+      return self.__configuration[ADAPT]['DOV']['NO-POLL-DURING-DEPLOYMENT']
+    except KeyError:
+      return True
+
   def get_sdn_topology (self):
     """
     Return the path of the SDN topology config file.

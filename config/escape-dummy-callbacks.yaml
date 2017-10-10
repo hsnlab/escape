@@ -6,7 +6,21 @@ orchestration:
     ESCAPE-SERVICE:
         virtualizer_type: SINGLE
 adaptation:
-    CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+    CALLBACK:
+        address: 127.0.0.1
+        port: 9000
+        timeout: 5
+    DOV:
+        # Generate unique ID for every nodes collected from domains
+        ENSURE-UNIQUE-BiSBiS-ID: on
+        # Generate unique ID for every NF nodes as well
+        ENSURE-UNIQUE-VNF-ID: on
+        # Enable REMERGE strategy for updating DoV instead of partial update
+        USE-REMERGE-UPDATE-STRATEGY: true
+        # Use status field to track component deployment instead of merging
+        USE-STATUS-BASED-UPDATE: false
+        # Update the global topology in one step instead of per-domains
+        ONE-STEP-UPDATE: false
     MANAGERS:
     - MININET
     - OPENSTACK
@@ -18,19 +32,21 @@ adaptation:
         class: UnifyDomainManager
         domain_name: MININET
         diff: true
-        poll: false
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
                 class: UnifyRESTAdapter
                 prefix: ro/mininet
                 url: http://127.0.0.1:8899
+            CALLBACK:
+                enabled: true
     OPENSTACK:
         module: escape.adapt.managers
         class: UnifyDomainManager
         domain_name: OPENSTACK
         diff: true
-        poll: false
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -38,12 +54,14 @@ adaptation:
                 prefix: ro/os
                 url: http://127.0.0.1:8899
                 timeout: 1
+            CALLBACK:
+                enabled: true
     DOCKER-1:
         module: escape.adapt.managers
         class: UnifyDomainManager
         domain_name: DOCKER-1
         diff: true
-        poll: false
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -51,17 +69,13 @@ adaptation:
                 prefix: ro/docker1
                 url: http://127.0.0.1:8899
             CALLBACK:
-                enabled: false
-                address: 0.0.0.0
-                port: 9000
-                timeout: false
-                explicit_update: false
+                enabled: true
     UN:
         module: escape.adapt.managers
         class: UnifyDomainManager
         domain_name: UN
         diff: true
-        poll: false
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -70,16 +84,12 @@ adaptation:
                 url: http://127.0.0.1:8899
             CALLBACK:
                 enabled: true
-                address: 0.0.0.0
-                port: 9000
-                timeout: 5.0
-                explicit_update: false
     RYU:
         module: escape.adapt.managers
         class: UnifyDomainManager
         domain_name: RYU
         diff: true
-        poll: false
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -88,11 +98,3 @@ adaptation:
                 url: http://127.0.0.1:8899
             CALLBACK:
                 enabled: true
-                address: 0.0.0.0
-                port: 9001
-                timeout: 7
-                explicit_update: false
-infrastructure: {}
-visualization:
-    url: http://192.168.1.206:2222
-    rpc: /notification

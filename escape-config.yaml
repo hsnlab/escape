@@ -8,7 +8,7 @@ service:
         module: escape.service.sas_mapping
         class: ServiceGraphMapper
         # Enable/disable mapping on the actual layer
-        mapping-enabled: false
+        mapping-enabled: no
         # Mapping configuration used by the embedding function directly
         mapping-config:
             # Use cProfile to measure mapping performance
@@ -26,7 +26,7 @@ service:
         module: escape.util.mapping
         class: ProcessorSkipper
         # Enable/disable processing
-        enabled: false
+        enabled: no
     # REST-API configuration
     REST-API:
         # Used Handler class
@@ -54,7 +54,7 @@ orchestration:
         module: escape.orchest.ros_mapping
         class: ResourceOrchestrationMapper
         # Enable/disable mapping on the actual layer
-        mapping-enabled: true
+        mapping-enabled: yes
         # Use periodic trial and error feature for mapping
         trial_and_error: off
         # Mapping configuration used by the embedding function directly
@@ -65,7 +65,7 @@ orchestration:
             bw_factor: 1
             res_factor: 1
             lat_factor: 1
-            propagate_e2e_reqs: true
+            propagate_e2e_reqs: yes
             bt_limit: 6
             bt_branching_factor: 3
     # Embedding strategy configuration
@@ -81,7 +81,7 @@ orchestration:
         module: escape.util.mapping
         class: ProcessorSkipper
         # Enable/disable processing
-        enabled: true
+        enabled: yes
     # Configuration of provided topology information for Service layer
     ESCAPE-SERVICE:
         # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
@@ -102,7 +102,7 @@ orchestration:
         # JSON-based NFFG format
         unify_interface: true
         # Consider in and out data as a difference of Virtualizers
-        diff: true
+        diff: yes
     # REST-API configuration
     Sl-Or:
         # Used Handler class
@@ -119,16 +119,16 @@ orchestration:
         # JSON-based NFFG format
         unify_interface: true
         # Consider in and out data as a difference of Virtualizers
-        diff: true
+        diff: yes
     # Neo4j-supported NFIB configuration
     NFIB:
         # Enable/disable using NFIB manager
-        enable: false
+        enable: no
         # Address and port of Neo4j server API
         host: localhost
         port: 7474
         # Manage local neo4j server start/stop
-        manage-neo4j-service: false
+        manage-neo4j-service: no
 ################################################################################
 ###                      Adaptation layer configuration                      ###
 ################################################################################
@@ -147,18 +147,18 @@ adaptation:
         # JSON-based NFFG format
         unify_interface: true
         # Consider in and out data as a difference of Virtualizers
-        diff: true
+        diff: yes
     # External VNFM component configuration
     VNFM:
         # Enable/disable using external component to alter mapped topology
         # before deployment
-        enabled: false
+        enabled: no
         # URL of external component REST-API
         url: http://127.0.0.1:9999
         # Used static prefix for REST calls
         prefix: escape
         # Consider in and out data as a difference of Virtualizers
-        diff: false
+        diff: yes
         # Connection timeout value in sec
         timeout: 30
     # Callback manager configuration
@@ -171,26 +171,34 @@ adaptation:
     # Basic configuration related to DoV management
     DOV:
         # Generate unique ID for every nodes collected from domains
+        # format: <original BB id>@<domain name>
         ENSURE-UNIQUE-BiSBiS-ID: on
         # Generate unique ID for every NF nodes as well
+        # format: <original NF id>@<original BB id>@<domain name>
         ENSURE-UNIQUE-VNF-ID: on
         # Enable REMERGE strategy for updating DoV instead of partial update
-        USE-REMERGE-UPDATE-STRATEGY: true
+        # partial update keeps additional links removed by domain remerge but
+        # cannot keep tracking specific changes e.g. removed port
+        USE-REMERGE-UPDATE-STRATEGY: yes
         # Use status field to track component deployment instead of merging
-        USE-STATUS-BASED-UPDATE: false
-        # Update the global topology in one step instead of per-domains
-        ONE-STEP-UPDATE: true
+        # (in testing phase)
+        USE-STATUS-BASED-UPDATE: no
+        # Update the global topology in one step at the end of a service
+        # deployment instead of per-domains on-the-fly
+        ONE-STEP-UPDATE: on
+        # Disable polling of domains if a service request is under deployment
+        NO-POLL-DURING-DEPLOYMENT: yes
     # Basic configuration related to domain management
     deployment:
         # Reset each domain before sending deploy requests
-        RESET-DOMAINS-BEFORE-INSTALL: false
+        RESET-DOMAINS-BEFORE-INSTALL: no
         # Reset domains with initial topology at shutdown
-        RESET-DOMAINS-AFTER-SHUTDOWN: false
+        RESET-DOMAINS-AFTER-SHUTDOWN: no
         # Clear all NFs and flowrules from domains at shutdown
-        CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: yes
         # Rollback to previous topology state in case of failed deployment
         ROLLBACK-ON-FAILURE: on
-        # Additional delay before deployment
+        # Additional delay between mapping and deployment
         DOMAIN-DEPLOY-DELAY: 0
     # Enabled domain managers
     MANAGERS: []
@@ -204,7 +212,7 @@ adaptation:
         # If domain name is not set the domain manger name will be used
         domain_name: INTERNAL
         # Enable domain polling to detect and update domain topology view
-        poll: false
+        poll: off
         # Adapters configuration used by domain manager
         adapters:
             # Adapter configuration for traffic steering
@@ -248,7 +256,7 @@ adaptation:
         # If domain name is not set the domain manger name will be used
         domain_name: SDN-MICROTIK
         # Enable domain polling to detect and update domain topology view
-        poll: false
+        poll: off
         # Adapters configuration used by domain manager
         adapters:
             # Adapter configuration for traffic steering
@@ -262,7 +270,7 @@ adaptation:
                 address: 0.0.0.0
                 port: 6633
                 # Enable sending Openflow Echo messages to OF switches
-                keepalive: false
+                keepalive: off
                 # Explicit binding of BiSBiS node id to DPID
                 binding:
                     MT2: 365441792307142
@@ -284,9 +292,9 @@ adaptation:
         # If domain name is not set the domain manger name will be used
         domain_name: OPENSTACK
         # Consider in and out data as a difference of Virtualizers
-        diff: true
+        diff: yes
         # Enable domain polling to detect and update domain topology view
-        poll: false
+        poll: off
         # Enable sending ping messages to detect domain up/down events
         keepalive: off
         # Adapters configuration used by domain manager
@@ -304,7 +312,7 @@ adaptation:
                 # Additional features
                 features:
                     # Enable delegating antiaffinity property into domain
-                    antiaffinity: true
+                    antiaffinity: yes
     ### Domain manager using UNIFY interface
     DOCKER:
         # Used domain manager class
@@ -314,9 +322,9 @@ adaptation:
         # If domain name is not set the domain manger name will be used
         domain_name: DOCKER
         # Consider in and out data as a difference of Virtualizers
-        diff: true
+        diff: yes
         # Enable domain polling to detect and update domain topology view
-        poll: false
+        poll: off
         # Enable sending ping messages to detect domain up/down events
         keepalive: off
         # Adapters configuration used by domain manager
@@ -334,13 +342,13 @@ adaptation:
             # Callback configuration for actual domain
             CALLBACK:
                 # Enable using callback to track service deployment
-                enabled: true
+                enabled: yes
                 # Use explicit address and port to generate callback URL when
                 # ESCAPE is behind NAT
                 explicit_host: 192.168.0.1
                 explicit_port: 9001
                 # Refresh the domain topology after a received successful callback
-                explicit_update: false
+                explicit_update: no
     ### Domain manager for BGP-LS-based domain detection
     BGP-LS-SPEAKER:
         # Used domain manager class
@@ -350,7 +358,7 @@ adaptation:
         # If domain name is not set the domain manger name will be used
         domain_name: BGP-LS
         # Enable domain polling to detect and update domain topology view
-        poll: false
+        poll: off
         # Consider in and out data as a difference of Virtualizers
         diff: null
         # Define own BGP identification to filter out own domain node from global
@@ -379,9 +387,9 @@ adaptation:
         # If domain name is not set the domain manger name will be used
         domain_name: null
         # Enable domain polling to detect and update domain topology view
-        poll: true
+        poll: on
         # Consider in and out data as a difference of Virtualizers
-        diff: false
+        diff: no
         # Adapters configuration used by domain manager
         adapters:
             # Adapter configuration for UNIFY interface
@@ -416,7 +424,7 @@ adaptation:
                 # Can be relative to project's root
                 log_dir: log/
                 # Check and create backward links
-                backward_links: false
+                backward_links: no
     ### Domain manager for testing purposes
     STATIC-XML:
         # Used domain manager class
@@ -439,7 +447,7 @@ adaptation:
                 # Can be relative to project's root
                 log_dir: log/
                  # Consider topology file as a difference of Virtualizers
-                diff: true
+                diff: yes
 ################################################################################
 ###                    Infrastructure layer configuration                    ###
 ################################################################################

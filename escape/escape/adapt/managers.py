@@ -17,6 +17,8 @@ domain management. Uses Adapter classes for ensuring protocol-specific
 connections with entities in the particular domain.
 """
 from escape.adapt.callback import CallbackManager
+from escape.util.api import RequestScheduler
+from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.misc import get_global_parameter, schedule_as_coop_task
@@ -460,6 +462,7 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                                              **kwargs)
     self.callback_manager = None
     """:type: CallbackManager"""
+    self.__disable_poll_during_deployment = CONFIG.no_poll_during_deployment()
     self.__reset_mode = False
     self.__last_success_state = None
 
@@ -529,6 +532,13 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         self.callback_manager.shutdown()
       except KeyboardInterrupt:
         pass
+
+  def poll (self):
+    if RequestScheduler().orchestration_in_progress:
+      if self.__disable_poll_during_deployment:
+        self.log.log(VERBOSE, "Polling is disabled during service deployment!")
+        return
+    super(UnifyDomainManager, self).poll()
 
   def get_last_request (self):
     """

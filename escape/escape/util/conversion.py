@@ -22,7 +22,8 @@ import sys
 
 try:
   # Import for ESCAPEv2
-  from escape.nffg_lib.nffg import AbstractNFFG, NFFG, NodeSAP, NFFGToolBox
+  from escape.nffg_lib.nffg import AbstractNFFG, NFFG, NodeSAP, NFFGToolBox, \
+    VERSION as N_VERSION
   from escape.nffg_lib.nffg_elements import Constraints
   from escape.util.misc import VERBOSE, unicode_to_str, remove_units
 except (ImportError, AttributeError):
@@ -32,7 +33,7 @@ except (ImportError, AttributeError):
             "../util/"):
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), p)))
   # Import for standalone running
-  from nffg import AbstractNFFG, NFFG, NFFGToolBox
+  from nffg import AbstractNFFG, NFFG, NFFGToolBox, VERSION as N_VERSION
   from nffg_elements import Constraints
   from misc import VERBOSE, unicode_to_str, remove_units
 
@@ -1524,7 +1525,7 @@ class NFFGConverter(object):
     """
     self.log.debug(
       "START conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
-        V_VERSION, NFFG.version))
+        V_VERSION, N_VERSION))
     # Already in Virtualizer format
     if isinstance(vdata, virt_lib.Virtualizer):
       virtualizer = vdata
@@ -1564,7 +1565,7 @@ class NFFGConverter(object):
     else:
       self.log.debug("Skip SG hop recreation...")
     self.log.debug("END conversion: Virtualizer(ver: %s) --> NFFG(ver: %s)" % (
-      V_VERSION, NFFG.version))
+      V_VERSION, N_VERSION))
     return (nffg, virtualizer) if with_virt else nffg
 
   def _convert_nffg_infras (self, nffg, virtualizer):
@@ -2384,7 +2385,7 @@ class NFFGConverter(object):
     """
     self.log.debug(
       "START conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
-        NFFG.version, V_VERSION))
+        N_VERSION, V_VERSION))
 
     self.log.debug("Converting data to XML-based Virtualizer structure...")
     # Create Virtualizer with default id,name
@@ -2416,7 +2417,7 @@ class NFFGConverter(object):
     virtualizer.bind(relative=True)
     self.log.debug(
       "END conversion: NFFG(ver: %s) --> Virtualizer(ver: %s)" % (
-        NFFG.version, V_VERSION))
+        N_VERSION, V_VERSION))
     # Return with created Virtualizer
     return virtualizer
 

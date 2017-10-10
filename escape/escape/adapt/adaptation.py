@@ -711,7 +711,7 @@ class ControllerAdapter(object):
                  "Cause: polling enabled!" % domain)
         if isinstance(domain_mgr,
                       UnifyDomainManager) and domain_mgr.callback_manager:
-          log.debug("Callback is enabled for domain: %s!")
+          log.debug("Callback is enabled for domain: %s!" % domain)
         else:
           log.debug("Consider deploy into a polled domain OK...")
           deploy_status.set_domain_ok(domain=domain)
@@ -993,7 +993,7 @@ class ControllerAdapter(object):
       if deploy_status:
         if deploy_status.get_domain_status(event.domain) == deploy_status.OK:
           log.debug("Domain: %s is already set OK. "
-                    "Skip overall status check...")
+                    "Skip overall status check..." % event.domain)
           return
         if isinstance(event.source,
                       UnifyDomainManager) and event.source.callback_manager:
