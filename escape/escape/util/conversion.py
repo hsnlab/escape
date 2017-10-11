@@ -756,6 +756,10 @@ class NFFGConverter(object):
 
       # e.g. in_port=1(;TAG=SAP1|comp|1)
       fr_match = "in_port="
+      if not flowentry.port.is_initialized():
+        self.log.error("Port attribute is missing from flowrule:\n%s"
+                       % flowentry.xml())
+        continue
       # Check if the in port is an external port (that does not exist)
       if "://" in flowentry.port.get_as_text():
         self.log.debug("Detected external in port reference: %s"
@@ -820,6 +824,10 @@ class NFFGConverter(object):
 
       # Pre-check target-less dst port flowrule
       fr_action = "output="
+      if not flowentry.out.is_initialized():
+        self.log.error("Out attribute is missing from flowrule:\n%s"
+                       % flowentry.xml())
+        continue
       if "://" in flowentry.out.get_as_text():
         self.log.debug("Detected external out port reference: %s"
                        % flowentry.out.get_as_text())

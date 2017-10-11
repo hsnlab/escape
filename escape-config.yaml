@@ -175,7 +175,7 @@ adaptation:
         ENSURE-UNIQUE-BiSBiS-ID: on
         # Generate unique ID for every NF nodes as well
         # format: <original NF id>@<original BB id>@<domain name>
-        ENSURE-UNIQUE-VNF-ID: on
+        ENSURE-UNIQUE-VNF-ID: off
         # Enable REMERGE strategy for updating DoV instead of partial update
         # partial update keeps additional links removed by domain remerge but
         # cannot keep tracking specific changes e.g. removed port
