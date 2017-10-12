@@ -122,7 +122,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     return result
 
   @classmethod
-  def map (cls, graph, resource, pre_state=None):
+  def map (cls, graph, resource, persistent=None, pre_state=None):
     """
     Default mapping algorithm of ESCAPEv2.
 
@@ -130,6 +130,8 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
     :type graph: :class:`NFFG`
     :param resource: global virtual resource info
     :type resource: :class:`NFFG`
+    :param persistent: use persistent state object
+    :type persistent: object
     :param pre_state: use mapping state for continued mapping
     :type pre_state: :class:`MappingState`
     :return: mapped Network Function Forwarding Graph
@@ -148,6 +150,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
       cls._resolve_external_ports(graph, resource)
       # Copy mapping config
       mapper_params = CONFIG.get_mapping_config(layer=cls.LAYER_NAME).copy()
+      mapper_params['persistent'] = persistent
       if 'mode' in mapper_params and mapper_params['mode']:
         log.debug("Setup mapping mode from configuration: %s" %
                   mapper_params['mode'])
@@ -163,11 +166,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
                                                   topology=resource.copy(),
                                                   **mapper_params)
       if isinstance(mapping_result, tuple or list):
-        if len(mapping_result) != 2:
-          log.error("Mapping result is invalid: %s" % repr(mapping_result))
-          mapped_nffg = None
-        else:
-          mapped_nffg = mapping_result[0]
+        mapped_nffg = mapping_result[0]
       else:
         mapped_nffg = mapping_result
       # Set mapped NFFG id for original SG request tracking
@@ -197,7 +196,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
         "Mapping algorithm fails due to internal error! Cause:\n%s" % e.msg)
       log.error("Mapping algorithm on %s is aborted!" % graph)
       return
-    except:
+    except Exception:
       log.exception("Got unexpected error during mapping process!")
 
   @classmethod
@@ -290,7 +289,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
   DEFAULT_STRATEGY = ESCAPEMappingStrategy
   """Default Mapper class as a fallback mapper"""
 
-  def __init__ (self, strategy=None, mapping_state=None):
+  def __init__ (self, strategy=None, mapping_state=None, persistent_state=None):
     """
     Init Resource Orchestrator mapper.
 
@@ -301,6 +300,7 @@ class ResourceOrchestrationMapper(AbstractMapper):
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, self.strategy.__name__))
     self.last_mapping_state = mapping_state
+    self.persistent_state = persistent_state
 
   def _perform_mapping (self, input_graph, resource_view, continued=False):
     """
@@ -358,16 +358,25 @@ class ResourceOrchestrationMapper(AbstractMapper):
       state = self.last_mapping_state if continued else None
       mapping_result = self.strategy.map(graph=input_graph,
                                          resource=virt_resource,
+                                         persistent=self.persistent_state,
                                          pre_state=state)
       if isinstance(mapping_result, tuple or list):
-        if len(mapping_result) != 2:
-          log.error("Mapping result is invalid: %s" % repr(mapping_result))
-          mapped_nffg = None
-        else:
+        if len(mapping_result) == 2:
           mapped_nffg = mapping_result[0]
-          self.last_mapping_state = mapping_result[1]
+          self.persistent_state = mapping_result[1]
+          log.debug(
+            "Cache returned persistent state: %s" % self.persistent_state)
+        elif len(mapping_result) == 3:
+          mapped_nffg = mapping_result[0]
+          self.persistent_state = mapping_result[1]
+          log.debug(
+            "Cache returned persistent state: %s" % self.persistent_state)
+          self.last_mapping_state = mapping_result[2]
           log.debug(
             "Cache returned mapping state: %s" % self.last_mapping_state)
+        else:
+          log.error("Mapping result is invalid: %s" % repr(mapping_result))
+          mapped_nffg = None
       else:
         mapped_nffg = mapping_result
       # Check error result
