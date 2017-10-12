@@ -13,6 +13,13 @@ service:
         mapping-config:
             # Use cProfile to measure mapping performance
             profiling: off
+            ### Mapping algorithm running parameters
+            bw_factor: 1.0
+            res_factor: 1.0
+            lat_factor: 1.0
+            propagate_e2e_reqs: yes
+            bt_limit: 6
+            bt_branching_factor: 3
     # Embedding strategy configuration
     STRATEGY:
         # Used Strategy class
@@ -62,9 +69,9 @@ orchestration:
             # Use cProfile to measure mapping performance
             profiling: off
             ### Mapping algorithm running parameters
-            bw_factor: 1
-            res_factor: 1
-            lat_factor: 1
+            bw_factor: 1.0
+            res_factor: 1.0
+            lat_factor: 1.0
             propagate_e2e_reqs: yes
             bt_limit: 6
             bt_branching_factor: 3

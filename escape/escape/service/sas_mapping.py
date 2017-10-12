@@ -96,7 +96,7 @@ class ServiceGraphMapper(AbstractMapper):
   DEFAULT_STRATEGY = DefaultServiceMappingStrategy
   """Default Strategy class as a fallback strategy"""
 
-  def __init__ (self, strategy=None, mapping_state=None):
+  def __init__ (self, strategy=None, mapping_state=None, persistent_state=None):
     """
     Init Service mapper.
 
@@ -106,6 +106,7 @@ class ServiceGraphMapper(AbstractMapper):
     log.debug("Init %s with strategy: %s" % (
       self.__class__.__name__, self.strategy.__name__))
     self.last_mapping_state = mapping_state
+    self.persistent_state = persistent_state
 
   def _perform_mapping (self, input_graph, resource_view, continued=False):
     """
@@ -163,14 +164,22 @@ class ServiceGraphMapper(AbstractMapper):
                                          resource=virt_resource,
                                          pre_state=state)
       if isinstance(mapping_result, tuple or list):
-        if len(mapping_result) != 2:
-          log.error("Mapping result is invalid: %s" % repr(mapping_result))
-          mapped_nffg = None
-        else:
+        if len(mapping_result) == 2:
           mapped_nffg = mapping_result[0]
-          self.last_mapping_state = mapping_result[1]
+          self.persistent_state = mapping_result[1]
+          log.debug(
+            "Cache returned persistent state: %s" % self.persistent_state)
+        elif len(mapping_result) == 3:
+          mapped_nffg = mapping_result[0]
+          self.persistent_state = mapping_result[1]
+          log.debug(
+            "Cache returned persistent state: %s" % self.persistent_state)
+          self.last_mapping_state = mapping_result[2]
           log.debug(
             "Cache returned mapping state: %s" % self.last_mapping_state)
+        else:
+          log.error("Mapping result is invalid: %s" % repr(mapping_result))
+          mapped_nffg = None
       else:
         mapped_nffg = mapping_result
       # Steps after mapping (optional) if the mapping was not threaded
@@ -182,8 +191,8 @@ class ServiceGraphMapper(AbstractMapper):
       log.debug("Last mapping state: %s" % self.last_mapping_state)
       if self.last_mapping_state:
         log.debug("Mapping iteration: %s" %
-          self.last_mapping_state.get_number_of_trials() if
-          self.last_mapping_state else None)
+                  self.last_mapping_state.get_number_of_trials() if
+                  self.last_mapping_state else None)
       return mapped_nffg
 
   def _mapping_finished (self, mapped_nffg):
