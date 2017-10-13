@@ -67,7 +67,7 @@ def networkx_resource_generator (func_name, seed=0, max_cpu=40, max_mem=16000,
   gen = NameGenerator()
 
   for infra_id in nx_graph.nodes_iter():
-    infra = nffg.add_infra(id=infra_id,
+    infra = nffg.add_infra(id="infra" + str(infra_id),
                            bandwidth=rnd.random() * max_link_bw * 1000,
                            cpu=rnd.random() * max_cpu,
                            mem=rnd.random() * max_mem,
@@ -75,8 +75,8 @@ def networkx_resource_generator (func_name, seed=0, max_cpu=40, max_mem=16000,
     infra.add_supported_type(rnd.sample(nf_types, supported_nf_cnt))
 
   for i, j in nx_graph.edges_iter():
-    infra1 = nffg.network.node[i]
-    infra2 = nffg.network.node[j]
+    infra1 = nffg.network.node["infra" + str(i)]
+    infra2 = nffg.network.node["infra" + str(j)]
     nffg.add_undirected_link(port1=infra1.add_port(id=gen.get_name("port")),
                              port2=infra2.add_port(id=gen.get_name("port")),
                              p1p2id=gen.get_name("link"),

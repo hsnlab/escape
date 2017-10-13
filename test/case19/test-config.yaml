@@ -35,21 +35,21 @@ test:
     class: DynamicTestGenerator
     timeout: 60
     full_combination: false
-    num_of_requests: 13
-    num_of_topos: 13
+    num_of_requests: 12
+    num_of_topos: 12
     testcase_cfg:
         module: testframework.testcases.dynamic
         class: DynamicallyGeneratedTestCase
         request_cfg:
             generator: balanced_tree_request
-            seed: [1, 6, 7, 8, 9, 12, 13, 14, 15, 16, 19, 20, 28]
+            seed: [1, 6, 7, 8, 9, 13, 14, 15, 16, 19, 20, 28]
             h: 3
             r: 2
             min_link_delay: 2
             max_link_delay: 4
         topology_cfg:
             generator: networkx_resource_generator
-            seed: [1, 6, 7, 8, 9, 12, 13, 14, 15, 16, 19, 20, 28]
+            seed: [1, 6, 7, 8, 9, 13, 14, 15, 16, 19, 20, 28]
             func_name: erdos_renyi_graph
             n: 27
             p: 0.40
