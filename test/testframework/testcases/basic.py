@@ -315,6 +315,13 @@ class BasicSuccessfulTestCase(EscapeTestCase, WarningChecker):
                       msg="Unexpected WARNING detected:\n%s" % warning)
 
 
+class ExtendableSuccessfulTestCase(BasicSuccessfulTestCase):
+
+  def __init__(self, skipped_warnings=None, **kwargs):
+    super(ExtendableSuccessfulTestCase, self).__init__(**kwargs)
+    if isinstance(skipped_warnings, list or tuple):
+      self.ACCEPTABLE_WARNINGS.extend(skipped_warnings)
+
 class RootPrivilegedSuccessfulTestCase(BasicSuccessfulTestCase):
   """
   Skip the test if the root password is requested on the console.

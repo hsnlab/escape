@@ -22,4 +22,8 @@ adaptation:
                 log_dir: test/case34
                 check_backward_links: true
 test:
+    module: testframework.testcases.basic
+    class: ExtendableSuccessfulTestCase
+    skipped_warnings:
+    - "There are multiple neighbors or parallel static links towards SAP"
     timeout: 5
