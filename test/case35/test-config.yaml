@@ -5,6 +5,8 @@ service:
 orchestration:
     MAPPER:
         mapping-enabled: true
+        mapping-config:
+            bt_limit: 12
 adaptation:
     MANAGERS:
     - DOV

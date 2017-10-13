@@ -33,7 +33,7 @@ adaptation:
 test:
     module: testframework.testcases.dynamic
     class: DynamicTestGenerator
-    timeout: 60
+    timeout: 65
     full_combination: false
     num_of_requests: 12
     num_of_topos: 12

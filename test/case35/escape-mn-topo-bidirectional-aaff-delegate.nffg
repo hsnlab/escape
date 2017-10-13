@@ -324,42 +324,6 @@
       "dst_port": 2,
       "delay": 1.5,
       "bandwidth": 10.0
-    },
-    {
-      "id": "mn-link9",
-      "src_node": "SAP1",
-      "src_port": 1,
-      "dst_node": "SW2",
-      "dst_port": 6,
-      "delay": 1.5,
-      "bandwidth": 10.0
-    },
-    {
-      "id": "mn-link9-back",
-      "src_node": "SW2",
-      "src_port": 6,
-      "dst_node": "SAP1",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10.0
-    },
-    {
-      "id": "mn-link10",
-      "src_node": "SAP2",
-      "src_port": 1,
-      "dst_node": "SW1",
-      "dst_port": 5,
-      "delay": 1.5,
-      "bandwidth": 10.0
-    },
-    {
-      "id": "mn-link10-back",
-      "src_node": "SW1",
-      "src_port": 5,
-      "dst_node": "SAP2",
-      "dst_port": 1,
-      "delay": 1.5,
-      "bandwidth": 10.0
     }
   ]
 }
