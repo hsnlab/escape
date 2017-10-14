@@ -121,3 +121,38 @@ def strip_info_by_nfs (info, nfs):
     for d in deletable:
       attr.remove(d)
   return info
+
+
+def is_empty (virtualizer, skipped=('version', 'id')):
+  """
+  Return True if the given Virtualizer object has no important child element.
+
+  :param virtualizer: virtualizer object
+  :type virtualizer: :class:`Virtualizer`
+  :param skipped: non-significant child name
+  :type skipped: tuple or list
+  :return: is empty
+  :rtype: bool
+  """
+  next_child = virtualizer.get_next()
+  while next_child is not None:
+    # Skip version tag (old format) and id (new format)
+    if next_child.get_tag() not in skipped:
+      return False
+    else:
+      next_child = next_child.get_next()
+  return True
+
+
+def is_identical (base, new):
+  """
+  Return True if the base and new Virtualizer object is identical.
+
+  :param base: first Virtualizer object
+  :type base: :class:`Virtualizer`
+  :param new: first Virtualizer object
+  :type new: :class:`Virtualizer`
+  :return: is identical
+  :rtype: bool
+  """
+  return is_empty(virtualizer=base.diff(new))

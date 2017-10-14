@@ -644,13 +644,14 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                                   msg_id=request_params.get('message_id'),
                                   type=self.CALLBACK_TYPE_INSTALL,
                                   data=nffg_part)
-      status = self.topoAdapter.edit_config(nffg_part, **request_params)
-      if status and self.callback_manager and cb:
-        self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id,
-                                                   domain=self.domain_name)
-        return False
-      else:
-        return True
+      response = self.topoAdapter.edit_config(nffg_part, **request_params)
+      if self.callback_manager and cb:
+        if response is None or response == 0:
+          log.debug("Unsubscribe callback of unsuccessful request!")
+          self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id,
+                                                     domain=self.domain_name)
+          return response
+      return response is not None
     except:
       self.log.exception("Got exception during NFFG installation into: %s." %
                          self.domain_name)
@@ -685,14 +686,15 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                                   req_id=request_id,
                                   msg_id=request_params.get('message_id'),
                                   type=self.CALLBACK_TYPE_RESET)
-      status = self.topoAdapter.edit_config(reset_state, **request_params)
-      if status and self.callback_manager:
-        self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id,
-                                                   domain=self.domain_name)
-        self.disable_reset_mode()
-        return False
-      else:
-        return True
+      response = self.topoAdapter.edit_config(reset_state, **request_params)
+      if self.callback_manager and cb:
+        if response is None or response == 0:
+          log.debug("Unsubscribe callback of unsuccessful request!")
+          self.callback_manager.unsubscribe_callback(cb_id=cb.callback_id,
+                                                     domain=self.domain_name)
+          self.disable_reset_mode()
+          return response
+      return response is not None
     except:
       self.log.exception("Got exception during NFFG installation into: %s." %
                          self.domain_name)

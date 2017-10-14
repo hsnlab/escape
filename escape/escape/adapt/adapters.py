@@ -26,6 +26,7 @@ from escape.util.config import CONFIG, PROJECT_ROOT
 from escape.util.conversion import NFFGConverter, UC3MNFFGConverter
 from escape.util.domain import *
 from escape.util.misc import unicode_to_str
+from escape.util.virtualizer_helper import is_identical, is_empty
 from pox.lib.util import dpid_to_str
 from virtualizer import Virtualizer
 
@@ -615,6 +616,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   MESSAGE_ID_NAME = "message-id"
   CALLBACK_NAME = "call-back"
   FEATURE_ANTIAFFINITY = "antiaffinity"
+  SKIPPED_REQUEST = 0
 
   def __init__ (self, url, prefix="", features=None, **kwargs):
     """
@@ -729,7 +731,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type callback: str
     :param full_conversion: do full conversion instead of adapt (default: False)
     :type full_conversion: bool
-    :return: status code or the returned message-id if it is set
+    :return: response data / empty str if request was successful else None
     :rtype: str
     """
     log.debug("Prepare edit-config request for remote agent at: %s" %
@@ -761,9 +763,12 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     else:
       log.debug("Using given Virtualizer as full mapping request")
     plain_data = vdata.xml()
+    log.log(VERBOSE, "Generated Virtualizer:\n%s" % plain_data)
+    if is_empty(virtualizer=vdata):
+      log.info("Generated edit-config request is empty! Skip sending...")
+      return self.SKIPPED_REQUEST
     log.debug("Send request to %s domain agent at %s..." %
               (self.domain_name, self._base_url))
-    log.log(VERBOSE, "Generated Virtualizer:\n%s" % plain_data)
     params = {}
     if message_id is not None:
       params[self.MESSAGE_ID_NAME] = message_id
@@ -774,7 +779,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     MessageDumper().dump_to_file(data=plain_data,
                                  unique="%s-edit-config" % self.domain_name)
     try:
-      status = self.send_with_timeout(method=self.POST,
+      response = self.send_with_timeout(method=self.POST,
                                       url='edit-config',
                                       body=plain_data,
                                       params=params)
@@ -784,9 +789,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         " Ignore exception..." % self.CONNECTION_TIMEOUT)
       # Ignore exception - assume the request was successful -> return True
       return True
-    if status is not None:
+    if response is not None:
       log.debug("Deploy request has been sent successfully!")
-    return status
+    return response
 
   def get_last_message_id (self):
     """
@@ -986,26 +991,7 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :return: is different or not
     :rtype: bool
     """
-    changes = self.last_virtualizer.diff(new_data)
-    # for sub_element in changes:
-    #   if sub_element is None:
-    #     # No other sub element --> no difference
-    #     return False
-    #   # Skip version tag / old format and id / new format
-    #   elif sub_element.get_tag() in ('version', 'id'):
-    #     continue
-    #   else:
-    #     # Unexpected sub element --> different
-    #     return True
-    next_sub = changes.get_next()
-    while next_sub is not None:
-      # Skip version tag / old format and id / new format
-      if next_sub.get_tag() not in ('version', 'id'):
-        return True
-      else:
-        next_sub = next_sub.get_next()
-    return False
-
+    return not is_identical(base=self.last_virtualizer, new=new_data)
 
   def __calculate_diff (self, changed):
     """

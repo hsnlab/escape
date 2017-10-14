@@ -675,16 +675,7 @@ class ControllerAdapter(object):
       # Invoke DomainAdapter's install
       domain_install_result = domain_mgr.install_nffg(part)
       # Update the DoV based on the mapping result covering some corner case
-      if domain_install_result:
-        log.info("Installation of %s in %s was successful!" % (part, domain))
-        if self.DoVManager.status_updates:
-          log.debug("Update installed part with collective result: %s" %
-                    NFFG.STATUS_DEPLOY)
-          # Update successful status info of mapped elements in NFFG part for
-          # DoV update
-          NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_DEPLOY,
-                                         log=log)
-      else:
+      if domain_install_result is None:
         log.error("Installation of %s in %s was unsuccessful!" % (part, domain))
         log.debug("Update installed part with collective result: %s" %
                   NFFG.STATUS_FAIL)
@@ -703,6 +694,19 @@ class ControllerAdapter(object):
           log.warning("Skip DoV update with domain: %s! Cause: "
                       "Domain installation was unsuccessful!" % domain)
           continue
+      if domain_install_result == 0:
+        log.info("Installation of %s in %s was skipped!" % (part, domain))
+        deploy_status.set_domain_ok(domain=domain)
+        log.debug("Installation status: %s" % deploy_status)
+        continue
+      log.info("Installation of %s in %s was successful!" % (part, domain))
+      if self.DoVManager.status_updates:
+        log.debug("Update installed part with collective result: %s" %
+                  NFFG.STATUS_DEPLOY)
+        # Update successful status info of mapped elements in NFFG part for
+        # DoV update
+        NFFGToolBox.update_status_info(nffg=part, status=NFFG.STATUS_DEPLOY,
+                                       log=log)
       # If the domain manager does not poll the domain update here
       # else polling takes care of domain updating
       if isinstance(domain_mgr,
