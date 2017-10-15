@@ -1,5 +1,9 @@
 # ESCAPEv2: Extensible Service ChAin Prototyping Environment using Mininet, Click, NETCONF and POX
 
+[![GitHub last commit](https://img.shields.io/github/last-commit/hsnlab/escape.svg)](https://github.com/hsnlab/escape/commits/master)
+[![GitHub contributors](https://img.shields.io/github/contributors/hsnlab/escape.svg)](https://github.com/hsnlab/escape/graphs/contributors)
+[![license](https://img.shields.io/github/license/hsnlab/escape.svg)](https://github.com/hsnlab/escape)
+    
 ## Introduction
 
 On the one hand, ESCAPE (Extensible Service ChAin Prototyping Environment) is a
