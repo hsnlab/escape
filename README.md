@@ -93,7 +93,7 @@ for explicit compiling or installation. The only requirement need to be
 pre-installed is a Python interpreter.
 
 The recommended Python version, in which the development and mostly the testing
-are performed, is the standard CPython **2.7.13**.
+are performed, is the standard CPython **2.7.14**.
 
 The best choice of platform on wich ESCAPE is recommended to install and the
 `install-dep.sh` is tested is **Ubuntu 16.04.3 LTS**.
@@ -187,14 +187,14 @@ installs the required Python dependencies listed in `requirement.txt` and sets t
 To create and start a persistent container based on the _mdo/ro_ image, use the following commands:
 
 ```bash
-$ sudo docker create --name escape -p 8008:8008 -p 8888:8888 -it mdo/ro
+$ sudo docker create --name escape -p 8008:8008 -p 8888:8888 -p 9000:9000 -it mdo/ro
 $ sudo docker start -i escape
 ```
 
 To create a one-time container, use the following command:
 
 ```bash
-$ sudo docker run --rm -p 8008:8008 -p 8888:8888 -ti mdo/ro
+$ sudo docker run --rm -p 8008:8008 -p 8888:8888 p 9000:9000 -ti mdo/ro
 ```
 
 Other helper scripts for the dockerization can be found under the ``docker`` folder.
@@ -231,12 +231,13 @@ optional arguments:
 To run the testcases in a Docker container, use the ``dockerized-test.sh `` script:
 
 ```text
-$ ./dockerized-test.sh -h
 Run testcases in a docker container.
 
 Usage: ./dockerized-test.sh [-b] | ...
 Parameters:
 	 -b, --build   force to rebuild the Docker image
+	 -c, --clean   remove the test image: escape-test
+	 -d, --debug   run an interactive container based on escape-test
 	 -h, --help    show this help message and exit
 	 ...           runner parameters, see run_tests.py -h
 
