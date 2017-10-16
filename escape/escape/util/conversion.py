@@ -723,7 +723,7 @@ class NFFGConverter(object):
     """
 
     :param flowentry:
-    :return:
+    :return: (domain name, node id, port id)
     """
     res = re.match(r"(.*)://.*node\[id=(.*?)\].*port\[id=(.*?)\].*", flowentry)
     if len(res.groups()) != 3:

@@ -461,28 +461,26 @@ class AbstractRemoteDomainManager(AbstractDomainManager):
     """
     # Load and initiate adapters using the initiate_adapters() template func
     self._load_adapters(configurator=configurator, **kwargs)
-    # Skip to start polling if it's set
-    if not self._poll:
-      # Try to request/parse/update topology
-      if not self._detect_topology():
-        self.log.warning(
-          "%s domain not confirmed during init!" % self.domain_name)
-      else:
-        # Notify all components for topology change --> this event causes
-        # the DoV updating
-        self.raiseEventNoErrors(DomainChangedEvent,
-                                domain=self.domain_name,
-                                data=self.internal_topo,
-                                cause=DomainChangedEvent.TYPE.DOMAIN_UP)
-      if self._keepalive:
-        self.log.debug("Keepalive is enbled! Start sending ping messages...")
-        self.start_keepalive()
+    # Try to request/parse/update topology
+    if not self._detect_topology():
+      self.log.warning(
+        "%s domain not confirmed during init!" % self.domain_name)
     else:
+      # Notify all components for topology change --> this event causes
+      # the DoV updating
+      self.raiseEventNoErrors(DomainChangedEvent,
+                              domain=self.domain_name,
+                              data=self.internal_topo,
+                              cause=DomainChangedEvent.TYPE.DOMAIN_UP)
+    if self._poll:
       if self._keepalive:
         self.log.warning("Keepalive feature is disabled "
                          "when polling is enabled!")
       self.log.info("Start polling %s domain..." % self.domain_name)
       self.start_polling(self.POLL_INTERVAL)
+    elif self._keepalive:
+      self.log.debug("Keepalive is enabled! Start sending ping messages...")
+      self.start_keepalive()
 
   def initiate_adapters (self, configurator):
     """
