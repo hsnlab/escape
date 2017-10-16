@@ -802,6 +802,8 @@ class NFFGConverter(object):
           ext_sap_port.role = "EXTERNAL"
           nffg.add_undirected_link(port1=vport, port2=ext_sap_port)
           self.log.debug("Created external SAP: %s" % ext_sap)
+        # Set v_fe_port for further use
+        v_fe_port = None
       else:
         try:
           v_fe_port = flowentry.port.get_target()
@@ -870,6 +872,8 @@ class NFFGConverter(object):
           ext_sap_port.role = "EXTERNAL"
           nffg.add_undirected_link(port1=ext_vport, port2=ext_sap_port)
           self.log.debug("Created external SAP: %s" % ext_sap)
+        # Set v_fe_out for further use
+        v_fe_out = None
       else:
         try:
           v_fe_out = flowentry.out.get_target()
@@ -899,7 +903,9 @@ class NFFGConverter(object):
           elif op.startswith(self.MATCH_TAG):
             # if src or dst was a SAP: SAP.id == port.name
             # if scr or dst is a VNF port name of parent of port
-            if v_fe_port.port_type.get_as_text() == \
+            if v_fe_port is None:
+              _src_name = "external"
+            elif v_fe_port.port_type.get_as_text() == \
                self.TYPE_VIRTUALIZER_PORT_SAP:
               # If port is an inter-domain SAP port --> port.sap
               if v_fe_port.sap.is_initialized() and v_fe_port.sap.get_value():
@@ -914,7 +920,9 @@ class NFFGConverter(object):
             else:
               _src_name = v_fe_port.get_parent().get_parent().id.get_as_text()
             # If port is an inter-domain SAP port --> port.sap
-            if v_fe_out.port_type.get_as_text() == \
+            if v_fe_out is None:
+              _dst_name = "external"
+            elif v_fe_out.port_type.get_as_text() == \
                self.TYPE_VIRTUALIZER_PORT_SAP:
               # If port is an inter-domain SAP port --> port.sap
               if v_fe_out.sap.is_initialized() and v_fe_port.sap.get_value():
@@ -931,7 +939,7 @@ class NFFGConverter(object):
             # Convert from int/hex to int
             _tag = int(op.split('=')[1], base=0)
             fr_match += ";%s=%s" % (self.OP_TAG, self.LABEL_DELIMITER.join(
-              (str(_src_name), str(_dst_name), str(_tag))))
+              (_src_name, _dst_name, str(_tag))))
           else:
             # Everything else is must come from flowclass
             fr_match += ";%s=%s" % (self.OP_FLOWCLASS, op)
@@ -945,7 +953,9 @@ class NFFGConverter(object):
             # tag: src element name | dst element name | tag
             # if src or dst was a SAP: SAP.id == port.name
             # if scr or dst is a VNF port name of parent of port
-            if v_fe_port.port_type.get_as_text() == \
+            if v_fe_port is None:
+              _src_name = "external"
+            elif v_fe_port.port_type.get_as_text() == \
                self.TYPE_VIRTUALIZER_PORT_SAP:
               # If port is an inter-domain SAP port --> port.sap
               if v_fe_port.sap.is_initialized() and v_fe_port.sap.get_value():
@@ -959,7 +969,9 @@ class NFFGConverter(object):
                 _src_name = v_fe_port.name.get_as_text()
             else:
               _src_name = v_fe_port.get_parent().get_parent().id.get_as_text()
-            if v_fe_out.port_type.get_as_text() == \
+            if v_fe_out is None:
+              _dst_name = "external"
+            elif v_fe_out.port_type.get_as_text() == \
                self.TYPE_VIRTUALIZER_PORT_SAP:
               # If port is an inter-domain SAP port --> port.sap
               if v_fe_out.sap.is_initialized() and v_fe_out.sap.get_value():
@@ -975,7 +987,7 @@ class NFFGConverter(object):
             # Convert from int/hex to int
             _tag = int(op.split(':')[1], base=0)
             fr_action += ";%s=%s" % (self.OP_TAG, self.LABEL_DELIMITER.join(
-              (str(_src_name), str(_dst_name), str(_tag))))
+              (_src_name, _dst_name, str(_tag))))
           # e.g. <action>strip_vlan</action> --> output=EE2|fwd|1;UNTAG
           elif op.startswith(self.ACTION_POP_TAG):
             fr_action += ";%s" % self.OP_UNTAG
