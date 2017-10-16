@@ -44,7 +44,7 @@ adaptation:
         class: UnifyDomainManager
         domain_name: DOCKER-1
         diff: true
-        poll: false
+        poll: true
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -68,7 +68,7 @@ adaptation:
         class: UnifyDomainManager
         domain_name: RYU
         diff: true
-        poll: false
+        poll: true
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
