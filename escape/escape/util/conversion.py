@@ -160,8 +160,7 @@ class NFFGConverter(object):
     """
     Generate a unique identifier based on original ID, delimiter and marker.
 
-    :param id: original ID
-    :type id: str
+    :param v_node: virtualizer node object
     :return: unique ID
     :rtype: str
     """
@@ -426,6 +425,14 @@ class NFFGConverter(object):
                 sap_port.cost = infra_port.cost = \
                   vport.sap_data.resources.cost.get_value()
               self.log.debug("Added cost: %s" % sap_port.cost)
+            if vport.sap_data.resources.qos.is_initialized():
+              try:
+                sap_port.qos = infra_port.qos = \
+                  vport.sap_data.resources.qos.get_value()
+              except ValueError:
+                sap_port.qos = infra_port.qos = \
+                  vport.sap_data.resources.qos.get_value()
+              self.log.debug("Added qos: %s" % sap_port.qos)
         if vport.control.is_initialized():
           sap_port.controller = infra_port.controller = \
             vport.control.controller.get_value()
@@ -465,7 +472,8 @@ class NFFGConverter(object):
           port1=sap_port,
           port2=infra_port,
           delay=sap_port.delay,
-          bandwidth=sap_port.bandwidth)
+          bandwidth=sap_port.bandwidth,
+          cost=sap_port.cost, qos=sap_port.qos)
         # Handle operation tag
         if vport.get_operation() is not None:
           self.log.debug("Found operation tag: %s for port: %s" % (
@@ -612,6 +620,11 @@ class NFFGConverter(object):
             except ValueError as e:
               self.log.warning(
                 "Skip constraint conversion due to error: %s" % e)
+        if v_vnf.constraints.restorability.is_initialized():
+          nf.constraints.restorability = \
+            v_vnf.constraints.restorability.get_as_text()
+          self.log.debug("Add restorability: %s to %s"
+                         % (nf.constraints.restorability, nf.id))
 
       # Add NF metadata
       for key in v_vnf.metadata:
@@ -1046,8 +1059,16 @@ class NFFGConverter(object):
             fr_delay = flowentry.resources.delay.get_value()
         else:
           fr_delay = None
+        if flowentry.resources.cost.is_initialized():
+          fr_cost = flowentry.resources.cost.get_value()
+        else:
+          fr_cost = None
+        if flowentry.resources.qos.is_initialized():
+          fr_qos = flowentry.resources.qos.get_value()
+        else:
+          fr_qos = None
       else:
-        fr_bw = fr_delay = None
+        fr_bw = fr_delay = fr_cost = fr_qos = None
 
       # Add constraints
       self.log.debug("Parse flowrule constraints...")
@@ -1078,11 +1099,17 @@ class NFFGConverter(object):
               id=constraint.id.get_value(),
               formula=constraint.formula.get_value())
             self.log.debug("Add constraint: %s to %s" % (formula, fr_id))
+        if flowentry.constraints.restorability.is_initialized():
+          fr_constraints.restorability = \
+            flowentry.constraints.restorability.get_as_text()
+          self.log.debug("Add restorability: %s to %s"
+                         % (fr_constraints.restorability, fr_id))
 
-      # Add flowrule to port
+          # Add flowrule to port
       fr = vport.add_flowrule(id=fr_id, match=fr_match, action=fr_action,
-                              bandwidth=fr_bw, delay=fr_delay,
-                              external=fr_external, constraints=fr_constraints)
+                              bandwidth=fr_bw, delay=fr_delay, cost=fr_cost,
+                              qos=fr_qos, external=fr_external,
+                              constraints=fr_constraints)
 
       # Handle operation tag
       if flowentry.get_operation() is not None:
@@ -1350,6 +1377,8 @@ class NFFGConverter(object):
           if vlink.resources.delay.is_initialized() else None
         params['bandwidth'] = float(vlink.resources.bandwidth.get_value()) \
           if vlink.resources.bandwidth.is_initialized() else None
+        params['cost'] = vlink.resources.cost.get_value()
+        params['qos'] = vlink.resources.qos.get_value()
       # Check the link is a possible backward link
       possible_backward = (
         "%s:%s-%s:%s" % (dst_node_id, dst_port_id, src_node_id, src_port_id))
@@ -1706,6 +1735,7 @@ class NFFGConverter(object):
     v_port.sap_data.resources.delay.set_value(port.delay)
     v_port.sap_data.resources.bandwidth.set_value(port.bandwidth)
     v_port.sap_data.resources.cost.set_value(port.cost)
+    v_port.sap_data.resources.qos.set_value(port.qos)
     v_port.control.controller.set_value(port.controller)
     v_port.control.orchestrator.set_value(port.orchestrator)
     v_port.addresses.l2.set_value(port.l2)
@@ -1756,6 +1786,9 @@ class NFFGConverter(object):
         if vport.sap_data.resources.cost.is_initialized():
           port.cost = vport.sap_data.resources.cost.get_value()
           self.log.debug("Added cost: %s" % port.cost)
+        if vport.sap_data.resources.qos.is_initialized():
+          port.qos = vport.sap_data.resources.qos.get_value()
+          self.log.debug("Added qos: %s" % port.qos)
     if vport.control.is_initialized():
       if vport.control.controller.is_initialized():
         port.controller = vport.conntrol.controller.get_value()
@@ -1862,7 +1895,8 @@ class NFFGConverter(object):
         src=virtualizer.nodes[src_node_id].ports[str(link.src.id)],
         dst=virtualizer.nodes[dst_node_id].ports[str(link.dst.id)],
         resources=virt_lib.Link_resource(delay=link.delay,
-                                         bandwidth=link.bandwidth))
+                                         bandwidth=link.bandwidth,
+                                         cost=link.cost, qos=link.qos))
       # Handel operation tag
       if link.operation is not None:
         self.log.debug(
@@ -2013,6 +2047,7 @@ class NFFGConverter(object):
     v_nf_port.sap_data.resources.bandwidth.set_value(
       port.bandwidth)
     v_nf_port.sap_data.resources.cost.set_value(port.cost)
+    v_nf_port.sap_data.resources.qos.set_value(port.qos)
     if any((port.controller, port.orchestrator)):
       self.log.debug("Translate controller...")
     v_nf_port.control.controller.set_value(port.controller)
@@ -2206,7 +2241,8 @@ class NFFGConverter(object):
           action = self._convert_flowrule_action(fr.action)
           # Process resource fields
           _resources = virt_lib.Link_resource(delay=fr.delay,
-                                              bandwidth=fr.bandwidth)
+                                              bandwidth=fr.bandwidth,
+                                              cost=fr.cost, qos=fr.qos)
           # Flowrule name is not used
           v_fe_name = None
           # Add Flowentry with converted params
@@ -2275,6 +2311,11 @@ class NFFGConverter(object):
       vnode.constraints.constraint.add(
         virt_lib.ConstraintsConstraint(id=str(id),
                                        formula=cons))
+    # Add restorability
+    if infra.constraints.restorability is not None:
+      self.log.debug("Add restorability: %s to Infra: %s"
+                     % (infra.constraints.restorability, infra.id))
+      vnode.constraints.restorability.set_value(infra.constraints.restorability)
 
   def __set_vnf_constraints (self, vnode, nf, virtualizer):
     v_nf_id = self.recreate_nf_id(nf.id)
@@ -2322,6 +2363,11 @@ class NFFGConverter(object):
       vnf.constraints.constraint.add(
         virt_lib.ConstraintsConstraint(id=str(id),
                                        formula=cons))
+    # Add restorability
+    if nf.constraints.restorability is not None:
+      self.log.debug("Add restorability: %s to NF: %s"
+                     % (nf.constraints.restorability, nf.id))
+      vnf.constraints.restorability.set_value(nf.constraints.restorability)
 
   def __set_flowentry_constraints (self, vnode, flowrule, virtualizer):
     v_fe = vnode.flowtable[str(flowrule.id)]
@@ -2367,6 +2413,12 @@ class NFFGConverter(object):
       v_fe.constraints.constraint.add(
         virt_lib.ConstraintsConstraint(id=str(id),
                                        formula=cons))
+    # Add restorability
+    if flowrule.constraints.restorability is not None:
+      self.log.debug("Add restorability: %s to Flowrule: %s"
+                     % (flowrule.constraints.restorability, flowrule.id))
+      v_fe.constraints.restorability.set_value(
+        flowrule.constraints.restorability)
 
   def _convert_nffg_constraints (self, virtualizer, nffg):
     self.log.debug("Convert constraints...")
