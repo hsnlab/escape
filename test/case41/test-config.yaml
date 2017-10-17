@@ -6,6 +6,14 @@ orchestration:
     MAPPER:
         mapping-enabled: true
 adaptation:
+    DOV-API:
+        module: escape.adapt.cas_API
+        class: DirectDoVRequestHandler
+        address: 127.0.0.1
+        port: 8889
+        prefix: dov
+        unify_interface: yes
+        diff: yes
     deployment:
         CLEAR-DOMAINS-AFTER-SHUTDOWN: false
     MANAGERS:

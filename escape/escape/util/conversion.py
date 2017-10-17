@@ -763,7 +763,7 @@ class NFFGConverter(object):
       # Check if the in port is an external port (that does not exist)
       if "://" in flowentry.port.get_as_text():
         self.log.debug("Detected external in port reference: %s"
-                       % flowentry.out.get_as_text())
+                       % flowentry.port.get_as_text())
         # Mark flowrule as external so SG recreation can skip it
         fr_external = True
         ext_domain, ext_node, ext_port = self.__parse_external_port(

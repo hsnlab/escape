@@ -615,7 +615,6 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
   type = AbstractESCAPEAdapter.TYPE_REMOTE
   MESSAGE_ID_NAME = "message-id"
   CALLBACK_NAME = "call-back"
-  FEATURE_ANTIAFFINITY = "antiaffinity"
   SKIPPED_REQUEST = 0
 
   def __init__ (self, url, prefix="", features=None, **kwargs):
@@ -780,9 +779,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
                                  unique="%s-edit-config" % self.domain_name)
     try:
       response = self.send_with_timeout(method=self.POST,
-                                      url='edit-config',
-                                      body=plain_data,
-                                      params=params)
+                                        url='edit-config',
+                                        body=plain_data,
+                                        params=params)
     except Timeout:
       log.warning(
         "Reached timeout(%ss) while waiting for 'edit-config' response!"
@@ -899,12 +898,10 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     :type nffg: :class:`NFFG`
     :return: None
     """
-    self.log.debug("Checking features...")
-    if self.features.get(self.FEATURE_ANTIAFFINITY, False):
-      self.log.debug("Adding %s feature to infra nodes"
-                     % self.FEATURE_ANTIAFFINITY)
+    if self.features:
+      self.log.debug("Adding features: %s to infra nodes..." % self.features)
       for infra in nffg.infras:
-        infra.mapping_features[self.FEATURE_ANTIAFFINITY] = True
+        infra.mapping_features.update(self.features)
 
   def check_topology_changed (self):
     """
@@ -950,7 +947,9 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
       # Cache new topo
       self.__cache_topology(virt)
       # Return with the changed topo in NFFG
-      return self.converter.parse_from_Virtualizer(vdata=virt)
+      changed_topo = self.converter.parse_from_Virtualizer(vdata=virt)
+      self.__process_features(nffg=changed_topo)
+      return changed_topo
 
   def __cache_topology (self, data):
     """
