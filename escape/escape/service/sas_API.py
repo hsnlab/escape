@@ -336,6 +336,7 @@ class ServiceLayerAPI(AbstractAPI):
     self.rest_api.api_id = handler.LOGGER_NAME = "U-Sl"
     handler.log.info("Init REST-API for %s on %s:%s!" % (
       self.rest_api.api_id, address[0], address[1]))
+    self.rest_api.virtualizer_params = params.get('virtualizer_params', {})
     self.rest_api.start()
     handler.log.debug("Enforced configuration for %s: interface: %s" % (
       self.rest_api.api_id,

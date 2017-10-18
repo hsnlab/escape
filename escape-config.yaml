@@ -93,6 +93,11 @@ orchestration:
     ESCAPE-SERVICE:
         # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
         virtualizer_type: SINGLE
+        # Specific parameters for dedicated Virtualizer type
+        virtualizer_params:
+          # Used ID for generated SingleBiSBiS view
+          # Use $env_var format to acquire the ID from the environment variable
+          sbb_id: SingleBiSBiS
     # REST-API configuration
     Cf-Or:
         # Used Handler class
@@ -105,6 +110,11 @@ orchestration:
         prefix: escape/dov
         # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
         virtualizer_type: GLOBAL
+        # Specific parameters for dedicated Virtualizer type
+        virtualizer_params:
+          # Used ID for generated SingleBiSBiS view
+          # Use $env_var format to acquire the ID from the environment variable
+          sbb_id: SingleBiSBiS
         # Enable XML-based Virtualizer format instead of using internal
         # JSON-based NFFG format
         unify_interface: true
@@ -122,6 +132,11 @@ orchestration:
         prefix: escape
         # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
         virtualizer_type: ZERO-DELAYED-SBB
+        # Specific parameters for dedicated Virtualizer type
+        virtualizer_params:
+          # Used ID for generated SingleBiSBiS view
+          # Use $env_var format to acquire the ID from the environment variable
+          sbb_id: SingleBiSBiS
         # Enable XML-based Virtualizer format instead of using internal
         # JSON-based NFFG format
         unify_interface: true

@@ -301,8 +301,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: :any:`AbstractVirtualizer`
     """
     virt_mgr = self.orchestrator.virtualizerManager
+    params = CONFIG.get_virtualizer_params(api_id=self.ros_api.api_id)
     return virt_mgr.get_virtual_view(virtualizer_id=self.ros_api.api_id,
-                                     type=self.ros_api.virtualizer_type)
+                                     type=self.ros_api.virtualizer_type,
+                                     **params)
 
   def api_ros_get_config (self):
     """
@@ -489,8 +491,10 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :rtype: :any:`AbstractVirtualizer`
     """
     virt_mgr = self.orchestrator.virtualizerManager
+    params = CONFIG.get_virtualizer_params(api_id=self.cfor_api.api_id)
     return virt_mgr.get_virtual_view(virtualizer_id=self.cfor_api.api_id,
-                                     type=self.cfor_api.virtualizer_type)
+                                     type=self.cfor_api.virtualizer_type,
+                                     **params)
 
   def api_cfor_get_config (self):
     """
@@ -760,8 +764,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Virtualizer type for Sl-Or API
     virtualizer_type = CONFIG.get_api_virtualizer(layer_name=LAYER_NAME,
                                                   api_name=event.sid)
+    params = CONFIG.get_virtualizer_params(api_id=event.sid)
     v = self.orchestrator.virtualizerManager.get_virtual_view(
-      event.sid, type=virtualizer_type)
+      virtualizer_id=event.sid, type=virtualizer_type, **params)
     if v is None:
       log.getChild('API').error("Missing Virtualizer for id: %s!" % event.sid)
       return
