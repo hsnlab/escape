@@ -1,6 +1,6 @@
 {
   "parameters": {
-    "id": "req2",
+    "id": "req1",
     "name": "DoV", 
     "version": "1.0",
     "mode": "REMAP"
@@ -27,14 +27,14 @@
 	  }
         }
       ], 
-      "constraints": {
+      "constraints":
+      {
         "affinity": {
-          "11": "NF2"
+          "11": "mover"
         },
         "antiaffinity": {
-          "312555": "controller2",
-          "456": "camtest",
-          "123": "controller1"
+          "312555": "controller2", 
+	  "456": "camtest"
         },
         "variable": {
           "$A": "NF3"
@@ -102,13 +102,9 @@
         }
       ], 
       "constraints": {
-        "affinity": {
-          "567": "NF2"
-        },
         "antiaffinity": {
-          "2314": "javacontroller",
-          "1": "controller1",
-          "2": "controller2"
+	      "2314": "javacontroller",
+          "567": "controller2"
         },
         "variable": {
           "$A": "NF3"
@@ -148,11 +144,10 @@
       ],
       "constraints": {
         "affinity": {
-          "987": "NF2"
+          "987": "dal"
         },
         "antiaffinity": {
-          "678": "javacontroller",
-          "22222": "controller1"
+          "678": "javacontroller"
         },
         "variable": {
           "$A": "NF3"
@@ -189,15 +184,10 @@
             ]
           }
         }
-      ], 
+      ],
       "metadata": {
         "environment": "{'DAL_NODES': '192.168.1.23', 'UDP_LISTEN_PORT': '50000'}"
-      },
-      "constraints": {
-        "antiaffinity": {
-          "61178": "controller2"
-        }
-      },
+      }, 
       "functional_type": "controller1:1.0", 
       "specification": {
         "resources": {
