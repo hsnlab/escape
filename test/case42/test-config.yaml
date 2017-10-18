@@ -1,0 +1,66 @@
+service:
+    MAPPER:
+        mapping-enabled: false
+    SCHEDULED_SERVICE_REQUEST_DELAY: 0
+orchestration:
+    MAPPER:
+        mapping-enabled: true
+adaptation:
+    deployment:
+        CLEAR-DOMAINS-AFTER-SHUTDOWN: true
+        ROLLBACK-ON-FAILURE: true
+    CALLBACK:
+        # Bound address and port of listening socket
+        address: 127.0.0.1
+        # Connection timeout value in sec
+        timeout: 10
+    MANAGERS:
+    - tilab-dom
+    - bgpls0003
+    tilab-dom:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: tilab-dom
+        diff: true
+        poll: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: UnifyRESTAdapter
+                prefix: tilab-dom
+                url: http://localhost:7000
+                timeout: 2
+            CALLBACK:
+                enabled: true
+                explicit_update: false
+    bgpls0003:
+        module: escape.adapt.managers
+        class: UnifyDomainManager
+        domain_name: bgpls0003
+        diff: true
+        poll: false
+        adapters:
+            REMOTE:
+                module: escape.adapt.adapters
+                class: UnifyRESTAdapter
+                prefix: bgpls0003
+                url: http://localhost:7000
+                timeout: 2
+            CALLBACK:
+                enabled: true
+                explicit_update: false
+test:
+    module: testframework.testcases.harness
+    class: FullLayerHarnessTestCase
+    url: http://localhost:8888/escape/edit-config
+    callback: true
+    timeout: 10
+    address: localhost
+    port: 7000
+    responses:
+    -   domain: tilab-dom
+        rpc: get-config
+        return: tilab-dom.xml
+    -   domain: bgpls0003
+        rpc: get-config
+        return: bgpls0003.xml
