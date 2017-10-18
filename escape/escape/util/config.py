@@ -593,6 +593,12 @@ class ESCAPEConfig(object):
     except KeyError:
       return {}
 
+  def get_virtualizer_params (self, api_id):
+    try:
+      return self.__configuration[ORCHEST][api_id]["virtualizer_params"]
+    except KeyError:
+      return {}
+
   def get_vnfm_enabled (self):
     """
     Return whether the VNFM component tis enabled.

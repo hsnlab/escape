@@ -17,6 +17,7 @@ Contains components relevant to virtualization of resources and views.
 import threading
 import weakref
 
+import os
 from wrapt.decorators import synchronized
 
 from escape.adapt import log
@@ -593,7 +594,7 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
   """Type name of the Virtualizer"""
 
   # noinspection PyUnusedLocal
-  def __init__ (self, global_view, id, **kwargs):
+  def __init__ (self, global_view, id, sbb_id=None, **kwargs):
     """
     Init.
 
@@ -609,6 +610,7 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
     super(SingleBiSBiSVirtualizer, self).__init__(id=id,
                                                   global_view=global_view,
                                                   type=self.TYPE)
+    self.sbb_id = sbb_id
 
   def _acquire_resource (self):
     """
@@ -626,8 +628,15 @@ class SingleBiSBiSVirtualizer(AbstractFilteringVirtualizer):
         "topology!")
       return dov
     else:
+      if str(self.sbb_id).startswith('$'):
+        if str(self.sbb_id)[1:] in os.environ:
+          self.sbb_id = os.environ.get(str(self.sbb_id)[1:])
+          log.debug("Detected SBB id from environment variable: %s"
+                    % self.sbb_id)
       # Generate the Single BiSBiS representation
-      sbb = NFFGToolBox.generate_SBB_representation(nffg=dov, log=log)
+      sbb = NFFGToolBox.generate_SBB_representation(nffg=dov,
+                                                    sbb_id=self.sbb_id,
+                                                    log=log)
       log.log(VERBOSE, "Generated SBB:\n%s" % sbb.dump())
       return sbb
 
@@ -824,16 +833,16 @@ class VirtualizerManager(EventMixin):
           self._virtualizers[virtualizer_id] = virtualizer_class(self.dov,
                                                                  virtualizer_id,
                                                                  **kwargs)
-          log.debug("Generated Virtualizer with type: %s id: %s" % (
-            type, virtualizer_id))
+          log.debug("Generated Virtualizer with type: %s id: %s, params: %s" % (
+            type, virtualizer_id, kwargs))
         # Not supported format
         else:
           log.error("Unsupported Virtualizer type: %s" % type)
           return
       # If a specific AbstractVirtualizer type was given
       elif cls is not None:
-        log.debug("Generating Virtualizer type: %s with id: %s" %
-                  (cls.__name__, virtualizer_id))
+        log.debug("Generating Virtualizer type: %s with id: %s, params: %s" %
+                  (cls.__name__, virtualizer_id, kwargs))
         self._virtualizers[virtualizer_id] = cls(self.dov, virtualizer_id,
                                                  **kwargs)
       # Generate a Single BiS-BiS Virtualizer by default

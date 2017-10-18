@@ -458,6 +458,7 @@ class RESTServer(ThreadingMixIn, HTTPServer, object):
     self.request_cache = RequestCache()
     self.api_id = None
     self.virtualizer_type = None
+    self.virtualizer_params = None
     # Cache for the last response to avoid topo recreation
     self.last_response = None
     self.topology_revision = None
