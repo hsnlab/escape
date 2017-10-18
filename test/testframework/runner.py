@@ -164,7 +164,10 @@ class CommandRunner(object):
     return copy.deepcopy(self)
 
   def cleanup (self):
-    # self.__process = None
+    log.debug("Cleanup %s..." % self.__class__.__name__)
+    self._process = None
+    self.__killed = False
+    self.__killed = False
     pass
 
 
@@ -256,6 +259,11 @@ class ESCAPECommandRunner(CommandRunner):
     # Call super explicitly because _process is defined in the parent class
     # so from child class process cannot be terminated
     super(ESCAPECommandRunner, self).stop()
+
+  def reset(self):
+    log.debug("Reset %s status..." % self.__class__.__name__)
+    self.timeouted = False
+    self.__ready.clear()
 
 
 class RunnableTestCaseInfo(object):

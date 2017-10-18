@@ -111,6 +111,7 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
                                              file_name=self.TOPOLOGY_FILE_NAME)
 
   def tearDown (self):
+    super(DynamicallyGeneratedTestCase, self).tearDown()
     # Skip input deletion if the test case was unsuccessful for further
     # investigation
     if not self.success:
@@ -129,7 +130,6 @@ class DynamicallyGeneratedTestCase(BasicSuccessfulTestCase):
                                self.TOPOLOGY_FILE_NAME))
       except OSError:
         pass
-    super(DynamicallyGeneratedTestCase, self).tearDown()
 
 
 class DynamicTestGenerator(BaseTestSuite):

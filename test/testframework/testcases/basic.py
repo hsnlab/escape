@@ -226,6 +226,7 @@ class EscapeTestCase(TestCase):
     """
     log.debug("\nTear down fixture...")
     self.terminate_testcase()
+    self.command_runner.reset()
     super(EscapeTestCase, self).tearDown()
 
   def verify_result (self):
