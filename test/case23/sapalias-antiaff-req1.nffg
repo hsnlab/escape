@@ -28,9 +28,6 @@
         }
       ], 
       "constraints": {
-        "affinity": {
-          "11": "NF2"
-        },
         "antiaffinity": {
           "312555": "controller2", 
 	  "456": "camtest"
@@ -101,9 +98,6 @@
         }
       ], 
       "constraints": {
-        "affinity": {
-          "567": "NF2"
-        },
         "antiaffinity": {
 	  "2314": "javacontroller"
         },
@@ -145,7 +139,7 @@
       ],
       "constraints": {
         "affinity": {
-          "987": "NF2"
+          "987": "dal"
         },
         "antiaffinity": {
           "678": "javacontroller"
@@ -185,7 +179,13 @@
             ]
           }
         }
-      ], 
+      ],
+      "constraints":
+        {
+          "affinity": {
+            "11": "mover"
+          }
+        },
       "metadata": {
         "environment": "{'DAL_NODES': '192.168.1.23', 'UDP_LISTEN_PORT': '50000'}"
       }, 
