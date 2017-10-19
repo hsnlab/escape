@@ -14,12 +14,41 @@ service:
             # Use cProfile to measure mapping performance
             profiling: off
             ### Mapping algorithm running parameters
+            ## All the factors control the objective function value of mapping
+            ## one service graph link and one VNF where the link leads in a
+            ## single atomic greedy step.
+            # weight of bandwidth based pereference value component on the path
+            # leading to the possible host of the VNF
             bw_factor: 1.0
-            res_factor: 1.0
+            # weight of the latency based preference value component on the path
+            # leading to the possible host of the VNF. Consists of two averaged
+            # subcomponents: (a) how close is the possible host to the host of
+            # the service graph link's beginning, (b) how far is the possible
+            # host from the shortest path between the beginning of the service
+            # graph link and the host of the ending of the service chain.
             lat_factor: 1.0
+            # weight of the node resource based preference value component of
+            # the possible host of the VNF. It incorporates cpu, memory,
+            # storage utilization on the node.
+            res_factor: 1.0
+            # Sets whether the end-to-end service chain requirements should be
+            # divided between all corresponding BiSBiS nodes.
             propagate_e2e_reqs: yes
-            bt_limit: 6
+            # Backtracking depth limit of the preference value based greedy
+            # search. One backtracking level is considered to be one atomic
+            # mapping of SG link and VNF, or one SG link connecting two already
+            # mapped VNF or SAP.
+            bt_limit: 10
+            # Branching factor of the backtracking procedure, which controls
+            # how many other possibilites should be remembered for one
+            # backtracking level.
             bt_branching_factor: 3
+            # Sets whether the mapping algorithm should return its internal
+            # state, so the greedy search could be continued for further
+            # solutions, when this object is given back through the
+            # 'mapping_state' parameter.
+            return_mapping_state: false
+            # mapping_state: None
     # Embedding strategy configuration
     STRATEGY:
         # Used Strategy class
