@@ -817,6 +817,7 @@ class ControllerAdapter(object):
         rest_adapter.CONNECTION_TIMEOUT = vnfm_config['timeout']
       log.debug("Convert deploy request to Virtualizer...")
       virtualizer = rest_adapter.converter.dump_to_Virtualizer(nffg=nffg)
+      virtualizer.id.set_value("DoV")
       status = rest_adapter.edit_config(data=virtualizer,
                                         diff=vnfm_config.get('diff', False))
       if status is None:
