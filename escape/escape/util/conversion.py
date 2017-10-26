@@ -107,6 +107,10 @@ class NFFGConverter(object):
     self.log = logger if logger is not None else logging.getLogger(__name__)
     self.log.debug('Created NFFGConverter with domain name: %s' % self.domain)
 
+  def disable_unique_bb_id(self):
+    self.log.debug("Disable unique BiSBiS id recreation!")
+    self.__unique_bb_id = False
+
   @classmethod
   def field_splitter (cls, type, field):
     """
@@ -1697,7 +1701,11 @@ class NFFGConverter(object):
         v_node.capabilities.supported_NFs.add(virt_lib.Node(id=sup, type=sup))
 
       # Add infra to virtualizer
-      virtualizer.nodes.add(v_node)
+      if v_node_id in virtualizer.nodes.node.keys():
+        self.log.warning("Virtualizer node: %s already exists in Virtualizer: "
+                         "%s!" % (v_node_id, virtualizer.id.get_value()))
+      else:
+        virtualizer.nodes.add(v_node)
 
       # Add intra-node link based on delay_matrix
       for src, dst, delay in infra.delay_matrix:
@@ -1833,9 +1841,11 @@ class NFFGConverter(object):
       for s, n, link in nffg.network.edges_iter([sap.id], data=True):
         if link.type != NFFG.TYPE_LINK_STATIC:
           continue
+        print s, n, link
         sap_port = link.src
         # Rewrite port-type to port-sap
         infra_id = self.recreate_bb_id(id=n)
+        print virtualizer.xml()
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
         v_sap_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
 
@@ -1862,7 +1872,7 @@ class NFFGConverter(object):
           v_sap_port.name.set_value("%s:%s" % (self.SAP_NAME_PREFIX, sap.id))
         self.__copy_port_attrs(v_port=v_sap_port, port=sap_port)
         self.log.debug(
-          "Convert %s to port: %s in infra: %s" % (sap, link.dst.id, n))
+          "Converted %s to port: %s in infra: %s" % (sap, link.dst.id, n))
 
   def _convert_nffg_edges (self, nffg, virtualizer):
     """

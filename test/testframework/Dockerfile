@@ -8,7 +8,7 @@ COPY . /opt/escape
 WORKDIR /opt/escape/test
 # Install py-numpy from APK repo to avoid using gcc to compile C extension code
 RUN apk add --repository http://dl-3.alpinelinux.org/alpine/edge/community/ \
-            --no-cache py-numpy=1.13.1-r0
+            --no-cache py-numpy
 RUN pip install --no-cache-dir --upgrade \
     $(grep -v -e \# -e numpy ../requirements.txt) pexpect unittest-xml-reporting
 ENV PYTHONUNBUFFERED 1

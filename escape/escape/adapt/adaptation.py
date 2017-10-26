@@ -811,7 +811,7 @@ class ControllerAdapter(object):
                                       prefix=vnfm_config.get('prefix'),
                                       domain_name="VNFM")
       # Skip removing domain name from ids
-      rest_adapter.converter.ensure_unique_bisbis_id = False
+      rest_adapter.converter.disable_unique_bb_id()
       if 'timeout' in vnfm_config:
         log.debug("Set explicit timeout: %s" % vnfm_config['timeout'])
         rest_adapter.CONNECTION_TIMEOUT = vnfm_config['timeout']

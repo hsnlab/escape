@@ -954,7 +954,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
   def setup (self):
     super(BasicUnifyRequestHandler, self).setup()
     self.converter = NFFGConverter(
-      unique_bb_id=CONFIG.ensure_unique_bisbis_id(),
+      unique_bb_id=False,
       unique_nf_id=CONFIG.ensure_unique_vnf_id(),
       logger=log)
 
