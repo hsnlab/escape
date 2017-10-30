@@ -1841,11 +1841,11 @@ class NFFGConverter(object):
       for s, n, link in nffg.network.edges_iter([sap.id], data=True):
         if link.type != NFFG.TYPE_LINK_STATIC:
           continue
-        print s, n, link
+        # print s, n, link
         sap_port = link.src
         # Rewrite port-type to port-sap
         infra_id = self.recreate_bb_id(id=n)
-        print virtualizer.xml()
+        # print virtualizer.xml()
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
         v_sap_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
 
