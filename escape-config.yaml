@@ -269,7 +269,7 @@ adaptation:
             # Adapter configuration for traffic steering
             CONTROLLER:
                 # Used domain adapter class
-                module: escape.adapt.adapter
+                module: escape.adapt.adapters
                 class: InternalPOXAdapter
                 # Explicit name of OpenFlow component used internally
                 name: null

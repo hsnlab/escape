@@ -20,6 +20,7 @@ import logging
 import os
 import pstats
 import re
+import shutil
 import socket
 import time
 import warnings
@@ -28,7 +29,6 @@ from functools import wraps
 from subprocess import STDOUT, Popen, PIPE
 
 # Log level constant for additional VERBOSE level
-import sys
 
 VERBOSE = 5
 """Verbose logging level"""
@@ -392,8 +392,9 @@ def remove_junks_at_boot (log=logging.getLogger("cleanup")):
   trails = os.getcwd() + "/log/trails"
   if os.path.exists(trails):
     for f in os.listdir(os.getcwd() + "/log/trails"):
-      if f != ".placeholder":
-        os.remove(os.path.join(os.getcwd(), "log/trails", f))
+      if f != ".placeholder" and not f.startswith(time.strftime("%Y%m%d")):
+        shutil.rmtree(os.path.join(os.getcwd(), "log/trails", f),
+                      ignore_errors=True)
   run_cmd('rm -f /tmp/*.log')
   for f in os.listdir('/tmp'):
     if re.search('.*-startup-cfg.xml|ncxserver_.*', f):
