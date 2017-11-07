@@ -372,18 +372,19 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.getChild('[DOV-API]').info("Invoke instantiation on %s with NF-FG: "
                                    "%s " % (self.__class__.__name__, nffg.name))
-    deploy_status = self.controller_adapter.status_mgr.get_last_status()
-    if deploy_status is None:
-      log.warning("Received direct DoV rewrite request from external component "
-                  "without any preliminary deploy request!")
-    else:
-      if deploy_status.id != nffg.id:
-        log.error("Received direct deploy request id: %s is different from "
-                  "service request under deploy: %s" % (nffg.id,
-                                                        deploy_status.id))
-        return
+    if CONFIG.get_vnfm_enabled():
+      deploy_status = self.controller_adapter.status_mgr.get_last_status()
+      if deploy_status is None:
+        log.warning("Received direct DoV rewrite request from external "
+                    "component without any preliminary deploy request!")
       else:
-        self.controller_adapter.cancel_vnfm_timer()
+        if deploy_status.id != nffg.id:
+          log.error("Received direct deploy request id: %s is different from "
+                    "service request under deploy: %s" % (nffg.id,
+                                                          deploy_status.id))
+          return
+        else:
+          self.controller_adapter.cancel_vnfm_timer()
     self.__proceed_installation(mapped_nffg=nffg, direct_deploy=True)
 
 
