@@ -47,6 +47,10 @@ def _start_components (event):
     from infrastructure import launch
 
     launch(topo=init_param['mininet'])
+  # Launch RESt-API Sublayer
+  from rest_api import launch
+
+  launch()
   # Launch Controller Adaptation Sublayer (CAS)
   from adaptation import launch
 

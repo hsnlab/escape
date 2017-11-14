@@ -107,7 +107,7 @@ class NFFGConverter(object):
     self.log = logger if logger is not None else logging.getLogger(__name__)
     self.log.debug('Created NFFGConverter with domain name: %s' % self.domain)
 
-  def disable_unique_bb_id(self):
+  def disable_unique_bb_id (self):
     self.log.debug("Disable unique BiSBiS id recreation!")
     self.__unique_bb_id = False
 
@@ -824,9 +824,9 @@ class NFFGConverter(object):
       else:
         try:
           v_fe_port = flowentry.port.get_target()
-        except:
-          self.log.exception("Got unexpected exception during acquisition of "
-                             "IN Port in Flowentry: %s!" % flowentry.xml())
+        except ValueError as e:
+          self.log.error("Got unexpected exception during acquisition of "
+                         "IN Port in Flowentry: %s!" % e)
           continue
         # Check if src port is a VNF port --> create the tagged port name
         if "NF_instances" in flowentry.port.get_as_text():
@@ -894,10 +894,9 @@ class NFFGConverter(object):
       else:
         try:
           v_fe_out = flowentry.out.get_target()
-        except:
-          self.log.exception(
-            "Got unexpected exception during acquisition of OUT "
-            "Port in Flowentry: %s!" % flowentry.xml())
+        except ValueError as e:
+          self.log.error("Got unexpected exception during acquisition of OUT "
+                         "Port in Flowentry: %s!" % e)
           continue
         # Check if dst port is a VNF port --> create the tagged port name
         if "NF_instances" in flowentry.out.get_as_text():
@@ -1350,17 +1349,18 @@ class NFFGConverter(object):
     for vlink in virtualizer.links:
       try:
         src_port = vlink.src.get_target()
-      except:
-        self.log.exception(
-          "Got unexpected exception during acquisition of link's src Port!")
+      except ValueError as e:
+        self.log.error("Got unexpected exception during acquisition of link's "
+                       "src Port: %s" % e)
+        continue
       src_node = src_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       src_node_id = self._gen_unique_bb_id(src_node)
       try:
         dst_port = vlink.dst.get_target()
-      except:
-        self.log.exception(
-          "Got unexpected exception during acquisition of link's dst Port!")
+      except ValueError as e:
+        self.log.error("Got unexpected exception during acquisition of link's "
+                       "dst Port: %s" % e)
       dst_node = dst_port.get_parent().get_parent()
       # Add domain name to the node id if unique_id is set
       dst_node_id = self._gen_unique_bb_id(dst_node)

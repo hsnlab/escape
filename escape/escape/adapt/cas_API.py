@@ -82,7 +82,7 @@ class ControllerAdaptationAPI(AbstractAPI):
                         DeployNFFGEvent, InfoRequestFinishedEvent}
 
   # Dependencies
-  # None
+  dependencies = ('REST-API',)
 
   def __init__ (self, standalone=False, **kwargs):
     """

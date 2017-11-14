@@ -144,7 +144,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
                         CollectMonitoringDataEvent}
   """Events raised by this class"""
   # Dependencies
-  dependencies = ('adaptation',)
+  dependencies = ('adaptation', 'REST-API')
   """Layer dependencies"""
 
   def __init__ (self, standalone=False, **kwargs):

@@ -210,7 +210,7 @@ class ServiceLayerAPI(AbstractAPI):
                         PostMapEvent}
   """Events raised by this class"""
   # Dependencies
-  dependencies = ('orchestration',)
+  dependencies = ('orchestration', 'REST-API')
   """Layer dependencies"""
 
   def __init__ (self, standalone=False, **kwargs):
