@@ -18,8 +18,8 @@ adaptation:
             TOPOLOGY:
                 module: escape.adapt.adapters
                 class: NFFGBasedStaticFileAdapter
-                path: test/case34/escape-mn-topo-bidirectional-aaff-delegate.nffg
-                log_dir: test/case34
+                path: test/case35/escape-mn-topo-bidirectional-aaff-delegate.nffg
+                log_dir: test/case35
                 check_backward_links: true
 test:
     module: testframework.testcases.basic

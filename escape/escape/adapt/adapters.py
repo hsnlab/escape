@@ -26,6 +26,7 @@ from escape.util.config import CONFIG, PROJECT_ROOT
 from escape.util.conversion import NFFGConverter, UC3MNFFGConverter
 from escape.util.domain import *
 from escape.util.misc import unicode_to_str
+from escape.util.stat import stats
 from escape.util.virtualizer_helper import is_identical, is_empty
 from pox.lib.util import dpid_to_str
 from virtualizer import Virtualizer
@@ -746,11 +747,15 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
         self.get_config()
         if self.last_virtualizer is None:
           return False
+      stats.add_measurement_start_entry(type=stats.TYPE_CONVERSION,
+                                        info="%s-deploy" % self.domain_name)
       if full_conversion:
         vdata = self.converter.dump_to_Virtualizer(nffg=data)
       else:
         vdata = self.converter.adapt_mapping_into_Virtualizer(
           virtualizer=self.last_virtualizer, nffg=data, reinstall=diff)
+      stats.add_measurement_end_entry(type=stats.TYPE_CONVERSION,
+                                      info="%s-deploy" % self.domain_name)
       log.log(VERBOSE, "Adapted Virtualizer:\n%s" % vdata.xml())
     else:
       raise RuntimeError("Not supported config format: %s for 'edit-config'!" %
@@ -758,7 +763,11 @@ class UnifyRESTAdapter(AbstractRESTAdapter, AbstractESCAPEAdapter,
     self.__cache_request(data=vdata)
     if diff:
       log.debug("DIFF is enabled. Calculating difference of mapping changes...")
+      stats.add_measurement_start_entry(type=stats.TYPE_PROCESSING,
+                                        info="%s-DIFF" % self.domain_name)
       vdata = self.__calculate_diff(vdata)
+      stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
+                                      info="%s-DIFF" % self.domain_name)
     else:
       log.debug("Using given Virtualizer as full mapping request")
     plain_data = vdata.xml()

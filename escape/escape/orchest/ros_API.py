@@ -1012,6 +1012,8 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         else:
           self.log.debug("Check topology changes...")
         config = self._proceed_API_call(self.API_CALL_RESOURCE)
+        stats.add_measurement_start_entry(type=stats.TYPE_PROCESSING,
+                                          info="RECREATE-FULL-REQUEST")
         if config is None:
           self.log.error("Requested resource info is missing!")
           self.send_error(code=httplib.NOT_FOUND,
@@ -1032,12 +1034,18 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
             self.server.last_response = config
         # Perform patching
         full_cfg = self.__recreate_full_request(diff=received_cfg)
+        stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
+                                          info="RECREATE-FULL-REQUEST")
       else:
         full_cfg = received_cfg
       self.log.log(VERBOSE, "Received full request:\n%s" % full_cfg.xml())
       # Convert response's body to NFFG
       self.log.info("Converting full request data...")
+      stats.add_measurement_start_entry(type=stats.TYPE_CONVERSION,
+                                        info="VIRTUALIZER-->NFFG")
       nffg = self.converter.parse_from_Virtualizer(vdata=full_cfg)
+      stats.add_measurement_end_entry(type=stats.TYPE_CONVERSION,
+                                        info="VIRTUALIZER-->NFFG")
     else:
       if self.headers.get("Content-Type") != "application/json":
         self.log.error("Received data is not in JSON format despite of the "

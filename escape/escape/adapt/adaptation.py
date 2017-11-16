@@ -20,7 +20,7 @@ import time
 import urlparse
 import weakref
 
-from escape.adapt import log as log
+from escape.adapt import log as log, LAYER_NAME
 from escape.adapt.adapters import UnifyRESTAdapter
 from escape.adapt.managers import UnifyDomainManager, BaseResultEvent
 from escape.adapt.virtualization import DomainVirtualizer
@@ -54,8 +54,6 @@ class InstallationFinishedEvent(BaseResultEvent):
     super(InstallationFinishedEvent, self).__init__()
     self.id = id
     self.result = result
-    stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY,
-                                    info=log.name)
 
   @classmethod
   def get_result_from_status (cls, deploy_status):
@@ -674,6 +672,8 @@ class ControllerAdapter(object):
       log.info("Delegate splitted part: %s to %s" % (part, domain_mgr))
       # Invoke DomainAdapter's install
       domain_install_result = domain_mgr.install_nffg(part)
+      stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_DOMAIN,
+                                      info=domain)
       # Update the DoV based on the mapping result covering some corner case
       if domain_install_result is None:
         log.error("Installation of %s in %s was unsuccessful!" % (part, domain))
@@ -750,6 +750,8 @@ class ControllerAdapter(object):
     # END of domain deploy loop
     log.info("NF-FG installation is finished by %s" % self.__class__.__name__)
     log.debug("Overall installation status: %s" % deploy_status)
+    stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY,
+                                    info=LAYER_NAME)
     # Post-mapping steps
     if deploy_status.success:
       log.info("All installation processes have been finished with success!")
