@@ -5,6 +5,10 @@ service:
 orchestration:
     MAPPER:
         mapping-enabled: true
+        mapping-config:
+            bt_limit: 18
+            bt_branching_factor: 4
+
 adaptation:
     MANAGERS:
     - DOV
@@ -16,7 +20,7 @@ adaptation:
             TOPOLOGY:
                 module: escape.adapt.adapters
                 class: NFFGBasedStaticFileAdapter
-                path: test/case34/escape-mn-topo-bidirectional-aaff-delegate.nffg
+                path: test/case34/escape-mn-topo-bidirectional-aaff-capable.nffg
                 log_dir: test/case34
                 check_backward_links: true
 test:
