@@ -22,6 +22,7 @@ from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
 from escape.util.domain import *
 from escape.util.misc import get_global_parameter, schedule_as_coop_task
+from escape.util.stat import stats
 from pox.lib.util import dpid_to_str
 
 
@@ -645,6 +646,15 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                                   type=self.CALLBACK_TYPE_INSTALL,
                                   data=nffg_part)
       response = self.topoAdapter.edit_config(nffg_part, **request_params)
+      stats.add_measurement_start_entry(type=stats.TYPE_DEPLOY_REQUEST,
+                                        info="%s-%s"
+                                             % (self.domain_name,
+                                                "with_callback" if
+                                                self.callback_manager else
+                                                "direct"))
+      if not self.callback_manager:
+        stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_REQUEST,
+                                        info="%s-direct" % self.domain_name)
       if self.callback_manager and cb:
         if response is None or response == 0:
           log.debug("Unsubscribe callback of unsuccessful request!")
@@ -822,6 +832,9 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         return
       else:
         self.disable_reset_mode()
+    stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_REQUEST,
+                                    info="%s-callback-received"
+                                         % self.domain_name)
     # Process result code
     if callback.result_code == 0:
       self.log.warning("Registered %scallback for request: %s, domain: %s "

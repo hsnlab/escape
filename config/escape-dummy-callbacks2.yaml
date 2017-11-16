@@ -32,7 +32,7 @@ adaptation:
         class: UnifyDomainManager
         domain_name: MININET
         diff: true
-        poll: off
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -46,7 +46,7 @@ adaptation:
         class: UnifyDomainManager
         domain_name: OPENSTACK
         diff: true
-        poll: off
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -61,7 +61,7 @@ adaptation:
         class: UnifyDomainManager
         domain_name: DOCKER-1
         diff: true
-        poll: off
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -75,7 +75,7 @@ adaptation:
         class: UnifyDomainManager
         domain_name: UN
         diff: true
-        poll: off
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
@@ -89,7 +89,7 @@ adaptation:
         class: UnifyDomainManager
         domain_name: RYU
         diff: true
-        poll: off
+        poll: on
         adapters:
             REMOTE:
                 module: escape.adapt.adapters
