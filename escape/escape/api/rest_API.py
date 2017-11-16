@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import importlib
+import logging
 import threading
 
 from flask import request
@@ -51,14 +51,21 @@ class RestInterfaceAPI(AbstractAPI):
     self.api.start()
 
   @staticmethod
-  def request_logger ():
+  def incoming_logger ():
     log.debug(">>> Got HTTP %s request: %s --> %s, body: %s"
               % (request.method, request.remote_addr, request.url,
                  len(request.data)))
 
+  @staticmethod
+  def outcoming_logger (response):
+    log.debug(">>> HTTP request: [%s] %s - %s ended!"
+              % (request.method, request.url, response.status))
+    return response
+
   def initialize (self):
     log.debug("Initializing REST-API Sublayer...")
-    self.api.server_api.app.before_request(self.request_logger)
+    self.api.server_api.app.before_request(self.incoming_logger)
+    self.api.server_api.app.after_request(self.outcoming_logger)
     self.api.server_api.add_resource(AbstractLayerResourceHandler,
                                      self.BASIC_ROUTE_TEMPLATE,
                                      resource_class_kwargs={'layer_api': self})
@@ -100,8 +107,8 @@ class RestInterfaceAPI(AbstractAPI):
     if entry_point is not None and callable(entry_point):
       return entry_point(*args, **kwargs)
     else:
-      raise RuntimeError('Mistyped or not implemented API function call: %s' %
-                         rpc)
+      raise RuntimeError(
+        'Mistyped or not implemented API function call: %s' % rpc)
 
 
 class MainApiServer(object):
@@ -131,6 +138,7 @@ class MainApiServer(object):
       app=Flask(__name__))
     self.server_api = Api(app=self.__werkzeug_server.app,
                           prefix='/' + CONFIG.get_rest_api_prefix())
+    logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
   def start (self):
     if not self.started:
@@ -143,7 +151,8 @@ class MainApiServer(object):
       self.started = False
 
   def run (self):
-    log.debug("Starting server....")
+    log.info("Starting REST server on: %s:%s"
+             % self.__werkzeug_server.server_address)
     try:
       self.__werkzeug_server.serve_forever()
     except Exception as e:
@@ -162,6 +171,11 @@ class AbstractLayerResourceHandler(Resource):
   POST_RPCS = ['ping']
 
   def __init__ (self, layer_api):
+    """
+
+    :param layer_api:
+    :type layer_api: :any:`RestInterfaceAPI`
+    """
     self.layer_api = layer_api
 
   def get (self, rpc):
@@ -179,8 +193,6 @@ class AbstractLayerResourceHandler(Resource):
       return {'name': __project__, 'version': get_escape_version()}
     if rpc == 'ping':
       return ("OK", 200) if self.layer_api.is_up else ("INITIALIZING", 202)
-    else:
-      return self.layer_api.proceed_API_call(self.LAYER_NAME, rpc=rpc)
 
 
 class OrchestrationLayerResourceHandler(AbstractLayerResourceHandler):
@@ -193,6 +205,23 @@ class OrchestrationLayerResourceHandler(AbstractLayerResourceHandler):
 
   def __init__ (self, *args, **kwargs):
     super(OrchestrationLayerResourceHandler, self).__init__(*args, **kwargs)
+
+  def get (self, rpc):
+    if rpc == 'get-config':
+      self.layer_api.proceed_API_call(layer=self.LAYER_NAME,
+                                      rpc=rpc)
+    elif rpc == 'edit-config':
+      pass
+    elif rpc == 'status':
+      pass
+    elif rpc == 'info':
+      pass
+    elif rpc == 'mapping-info':
+      pass
+    elif rpc == 'mappings':
+      pass
+    else:
+      return super(OrchestrationLayerResourceHandler, self).get(rpc=rpc)
 
 
 class ServiceLayerResourceHandler(OrchestrationLayerResourceHandler):
