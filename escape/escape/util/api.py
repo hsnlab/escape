@@ -166,7 +166,7 @@ class AbstractAPI(EventMixin):
     :param name: dependency
     :type name: str
     :return: dependent component object
-    :rtype: :class:`AbstractAPI`
+    :rtype: :any:`AbstractAPI`
     """
     return getattr(self, "_%s_" % name) if name in self.dependencies else None
 

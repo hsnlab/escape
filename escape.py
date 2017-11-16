@@ -156,8 +156,6 @@ def main ():
                       default=False,
                       help="run the visualization module to send data to a "
                            "remote server")
-  escape.add_argument("-4", "--cfor", action="store_true", default=False,
-                      help="start the REST-API for the Cf-Or interface")
   # Add remaining POX modules
   escape.add_argument("modules", metavar="...", nargs=argparse.REMAINDER,
                       help="optional POX modules")
@@ -215,10 +213,6 @@ def main ():
   # Start the REST-API for the ROS layer
   if args.rosapi or args.gui:
     cmd.append("--rosapi")
-
-  # Start an REST-API for the Cf-Or interface
-  if args.cfor:
-    cmd.append("--cfor")
 
   # Start an REST-API for the Adaptation Layer
   if args.bypassapi:

@@ -119,20 +119,6 @@ class ControllerAdaptationAPI(AbstractAPI):
       self._initialize_dov_api()
     log.info("Controller Adaptation Sublayer has been initialized!")
 
-  def post_up_hook (self, event):
-    """
-    Perform tasks after ESCAPE is up.
-
-    :param event: event object
-    :type event: :class:`UpEvent`
-    :return: None
-    """
-    log.debug("Call post Up event hook for layer: %s" % self._core_name)
-    if self._dovapi:
-      self.dov_api.ping_response_code = self.dov_api.POST_UP_PING_CODE
-      log.debug("Setup 'ping' response code: %s for REST-API: %s"
-                % (self.dov_api.ping_response_code, self.dov_api.api_id))
-
   def shutdown (self, event):
     """
     .. seealso::
@@ -146,6 +132,10 @@ class ControllerAdaptationAPI(AbstractAPI):
     self.controller_adapter.shutdown()
 
   def _initialize_dov_api (self):
+    rest_api = self.get_dependent_component('REST-API')
+    rest_api.register_component(component=self)
+    return
+
     handler = CONFIG.get_dov_api_class()
     if not handler:
       log.error("Missing handler class for server in CAS layer!")
@@ -325,7 +315,7 @@ class ControllerAdaptationAPI(AbstractAPI):
   # Agent API functions starts here
   ##############################################################################
 
-  def api_cas_get_config (self):
+  def rest_api_get_config (self):
     """
     Implementation of REST-API RPC: get-config. Return with the global
     resource as an :class:`NFFG` if it has been changed otherwise return with
@@ -359,7 +349,7 @@ class ControllerAdaptationAPI(AbstractAPI):
                 self.dov_api.api_id)
 
   # noinspection PyUnusedLocal
-  def api_cas_edit_config (self, nffg, params):
+  def rest_api_edit_config (self, nffg, params):
     """
     Implement edit-config call for CAS layer. Receive edit-config request from
     external component and directly forward data for deployment.

@@ -1,7 +1,47 @@
 ################################################################################
 ###                           REST-API configuration                         ###
 ################################################################################
-REST-API: {}
+REST-API:
+  host: 0.0.0.0
+  port: 8888
+  prefix: escape
+  resources:
+    service:
+        # Used Handler class
+        module: escape.api.rest_API
+        class: ServiceLayerResourceHandler
+        # Enable XML-based Virtualizer format instead of using internal
+        # JSON-based NFFG format
+        unify_interface: false
+    orchestration:
+        # Used Handler class
+        module: escape.api.rest_API
+        class: OrchestrationLayerResourceHandler
+        # Enable XML-based Virtualizer format instead of using internal
+        # JSON-based NFFG format
+        unify_interface: false
+                # Used Handler class
+        # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
+        virtualizer_type: ZERO-DELAYED-SBB
+        # Specific parameters for dedicated Virtualizer type
+        virtualizer_params:
+          # Used ID for generated SingleBiSBiS view
+          # Use $env_var format to acquire the ID from environment variable
+          sbb_id: SingleBiSBiS
+        # Enable XML-based Virtualizer format instead of using internal
+        # JSON-based NFFG format
+        unify_interface: true
+        # Consider in and out data as a difference of Virtualizers
+        diff: yes
+    adaptation:
+        # Used Handler class
+        module: escape.api.rest_API
+        class: AdaptationLayerResourceHandler
+        # Enable XML-based Virtualizer format instead of using internal
+        # JSON-based NFFG format
+        unify_interface: true
+        # Consider in and out data as a difference of Virtualizers
+        diff: yes
 ################################################################################
 ###                        Service layer configuration                       ###
 ################################################################################
@@ -38,19 +78,6 @@ service:
         class: ProcessorSkipper
         # Enable/disable processing
         enabled: no
-    # REST-API configuration
-    REST-API:
-        # Used Handler class
-        module: escape.service.sas_API
-        class: ServiceRequestHandler
-        # Bound address and port of listening socket
-        address: 0.0.0.0
-        port: 8008
-        # Used static prefix for the URL paths
-        prefix: escape
-        # Enable XML-based Virtualizer format instead of using internal
-        # JSON-based NFFG format
-        unify_interface: false
     # Internal identification of Service layer
     SERVICE-LAYER-ID: ESCAPE-SERVICE
     # Additional delay before mapping for services read from file
@@ -131,50 +158,6 @@ orchestration:
           # Used ID for generated SingleBiSBiS view
           # Use $env_var format to acquire the ID from environment variable
           sbb_id: SingleBiSBiS
-    # REST-API configuration
-    Cf-Or:
-        # Used Handler class
-        module: escape.orchest.ros_API
-        class: CfOrRequestHandler
-        # Bound address and port of listening socket
-        address: 0.0.0.0
-        port: 8889
-        # Used static prefix for the URL paths
-        prefix: escape/dov
-        # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
-        virtualizer_type: GLOBAL
-        # Specific parameters for dedicated Virtualizer type
-        virtualizer_params:
-          # Used ID for generated SingleBiSBiS view
-          # Use $env_var format to acquire the ID from environment variable
-          sbb_id: SingleBiSBiS
-        # Enable XML-based Virtualizer format instead of using internal
-        # JSON-based NFFG format
-        unify_interface: true
-        # Consider in and out data as a difference of Virtualizers
-        diff: yes
-    # REST-API configuration
-    Sl-Or:
-        # Used Handler class
-        module: escape.orchest.ros_API
-        class: Extended5GExRequestHandler
-        # Bound address and port of listening socket
-        address: 0.0.0.0
-        port: 8888
-        # Used static prefix for the URL paths
-        prefix: escape
-        # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
-        virtualizer_type: ZERO-DELAYED-SBB
-        # Specific parameters for dedicated Virtualizer type
-        virtualizer_params:
-          # Used ID for generated SingleBiSBiS view
-          # Use $env_var format to acquire the ID from environment variable
-          sbb_id: SingleBiSBiS
-        # Enable XML-based Virtualizer format instead of using internal
-        # JSON-based NFFG format
-        unify_interface: true
-        # Consider in and out data as a difference of Virtualizers
-        diff: yes
     # Neo4j-supported NFIB configuration
     NFIB:
         # Enable/disable using NFIB manager
@@ -188,21 +171,6 @@ orchestration:
 ###                      Adaptation layer configuration                      ###
 ################################################################################
 adaptation:
-    # REST-API configuration
-    DOV-API:
-        # Used Handler class
-        module: escape.adapt.cas_API
-        class: DirectDoVRequestHandler
-        # Bound address and port of listening socket
-        address: 0.0.0.0
-        port: 8889
-        # Used static prefix for the URL paths
-        prefix: dov
-        # Enable XML-based Virtualizer format instead of using internal
-        # JSON-based NFFG format
-        unify_interface: true
-        # Consider in and out data as a difference of Virtualizers
-        diff: yes
     # External VNFM component configuration
     VNFM:
         # Enable/disable using external component to alter mapped topology

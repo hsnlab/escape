@@ -287,20 +287,6 @@ class ServiceLayerAPI(AbstractAPI):
       self._initiate_gui()
     log.info("Service Layer has been initialized!")
 
-  def post_up_hook (self, event):
-    """
-    Perform tasks after ESCAPE is up.
-
-    :param event: event object
-    :type event: :class:`UpEvent`
-    :return: None
-    """
-    log.debug("Call post Up event hook for layer: %s" % self._core_name)
-    if not self._sg_file:
-      self.rest_api.ping_response_code = self.rest_api.POST_UP_PING_CODE
-      log.debug("Setup 'ping' response code: %s for REST-API: %s"
-                % (self.rest_api.ping_response_code, self.rest_api.api_id))
-
   def shutdown (self, event):
     """
     .. seealso::
@@ -309,9 +295,6 @@ class ServiceLayerAPI(AbstractAPI):
     :param event: event object
     """
     log.info("Service Layer is going down...")
-    if hasattr(self, 'rest_api') and self.rest_api:
-      log.debug("REST-API: %s is shutting down..." % self.rest_api.api_id)
-      # self.rest_api.stop()
     if self.gui_proc:
       log.debug("Shut down GUI process - PID: %s" % self.gui_proc.pid)
       self.gui_proc.terminate()
@@ -322,6 +305,9 @@ class ServiceLayerAPI(AbstractAPI):
 
     :return: None
     """
+    rest_api = self.get_dependent_component('REST-API')
+    rest_api.register_component(component=self)
+    return
     # set bounded layer name here to avoid circular dependency problem
     handler = CONFIG.get_sas_api_class()
     handler.bounded_layer = self._core_name

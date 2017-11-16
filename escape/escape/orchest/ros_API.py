@@ -180,26 +180,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Initiate ROS REST-API if needed
     if self._agent or self._rosapi:
       self._initiate_ros_api()
-    # Initiate Cf-Or REST-API if needed
-    if self._cfor:
-      self._initiate_cfor_api()
     log.info("Resource Orchestration Sublayer has been initialized!")
     if self._agent:
       log.warning("In AGENT mode Service Layer is not going to be initialized!")
-
-  def post_up_hook (self, event):
-    """
-    Perform tasks after ESCAPE is up.
-
-    :param event: event object
-    :type event: :class:`UpEvent`
-    :return: None
-    """
-    log.debug("Call post Up event hook for layer: %s" % self._core_name)
-    if self._rosapi:
-      self.ros_api.ping_response_code = self.ros_api.POST_UP_PING_CODE
-      log.debug("Setup 'ping' response code: %s for REST-API: %s"
-                % (self.ros_api.ping_response_code, self.ros_api.api_id))
 
   def shutdown (self, event):
     """
@@ -210,12 +193,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     log.info("Resource Orchestration Sublayer is going down...")
     self.orchestrator.finalize()
-    if self._agent or self._rosapi:
-      log.debug("REST-API: %s is shutting down..." % self.ros_api.api_id)
-      # self.ros_api.stop()
-    if self._cfor:
-      log.debug("REST-API: %s is shutting down..." % self.cfor_api.api_id)
-      # self.cfor_api.stop()
 
   def _initiate_ros_api (self):
     """
@@ -226,6 +203,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
 
     :return: None
     """
+    rest_api = self.get_dependent_component('REST-API')
+    rest_api.register_component(component=self)
+    return
     # set bounded layer name here to avoid circular dependency problem
     handler = CONFIG.get_ros_agent_class()
     if not handler:
@@ -306,7 +286,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
                                      type=self.ros_api.virtualizer_type,
                                      **params)
 
-  def api_ros_get_config (self):
+  def rest_api_get_config (self):
     """
     Implementation of REST-API RPC: get-config. Return with the global
     resource as an :class:`NFFG` if it has been changed otherwise return with
@@ -340,7 +320,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
                 self.ros_api.api_id)
 
   # noinspection PyUnusedLocal
-  def api_ros_edit_config (self, nffg, params):
+  def rest_api_edit_config (self, nffg, params):
     """
     Implementation of REST-API RPC: edit-config
 

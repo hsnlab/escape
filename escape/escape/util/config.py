@@ -440,6 +440,53 @@ class ESCAPEConfig(object):
       return None
 
   ##############################################################################
+  # REST_API layer getters
+  ##############################################################################
+
+  def get_rest_api_resource_class (self, layer):
+    """
+    """
+    try:
+      return getattr(importlib.import_module(
+        self.__configuration['REST-API']['resources'][layer]['module']),
+        self.__configuration['REST-API']['resources'][layer]['class'], None)
+    except KeyError:
+      return None
+
+  def get_rest_api_prefix (self):
+    try:
+      return self.__configuration['REST-API']['prefix']
+    except KeyError:
+      return ''
+
+  def get_rest_api_host (self):
+    try:
+      return self.__configuration['REST-API'].get('host')
+    except KeyError:
+      return None
+
+  def get_rest_api_port (self):
+    try:
+      return self.__configuration['REST-API'].get('port')
+    except KeyError:
+      return None
+
+  def get_rest_api_resource_params (self, layer):
+    """
+    Return the Cf-Or API params for agent request handler.
+
+    :return: params
+    :rtype: dict
+    """
+    try:
+      params = self.__configuration['REST-API']['resources'][layer].copy()
+      del params['module']
+      del params['class']
+      return params
+    except KeyError:
+      return {}
+
+  ##############################################################################
   # SERVICE layer getters
   ##############################################################################
 
@@ -454,35 +501,6 @@ class ESCAPEConfig(object):
       return self.__configuration[SERVICE]['SERVICE-LAYER-ID']
     except KeyError:
       return None
-
-  def get_sas_api_class (self):
-    """
-    Return with the request handler class of Service Layer REST API.
-
-    :return: REST API class
-    :rtype: :any:`AbstractRequestHandler`
-    """
-    try:
-      return getattr(importlib.import_module(
-        self.__configuration[SERVICE]['REST-API']['module']),
-        self.__configuration[SERVICE]['REST-API']['class'], None)
-    except KeyError:
-      return None
-
-  def get_sas_agent_params (self):
-    """
-    Return the Cf-Or API params for agent request handler.
-
-    :return: params
-    :rtype: dict
-    """
-    try:
-      params = self.__configuration[SERVICE]['REST-API'].copy()
-      del params['module']
-      del params['class']
-      return params
-    except KeyError:
-      return {}
 
   def get_sas_request_delay (self):
     """
@@ -501,97 +519,9 @@ class ESCAPEConfig(object):
   # ORCHESTRATION layer getters
   ##############################################################################
 
-  def get_ros_agent_class (self):
-    """
-    Return with the request handler class of Agent REST API.
-
-    :return: agent class
-    :rtype: :any:`AbstractRequestHandler`
-    """
-    try:
-      return getattr(importlib.import_module(
-        self.__configuration[ORCHEST]['Sl-Or']['module']),
-        self.__configuration[ORCHEST]['Sl-Or']['class'], None)
-    except KeyError:
-      return None
-
-  def get_ros_agent_params (self):
-    """
-    Return the REST API params for agent request handler.
-
-    :return: params
-    :rtype: dict
-    """
-    try:
-      params = self.__configuration[ORCHEST]['Sl-Or'].copy()
-      del params['module']
-      del params['class']
-      return params
-    except KeyError:
-      return {}
-
-  def get_cfor_api_class (self):
-    """
-    Return with the request handler class of Cf-Or REST API.
-
-    :return: REST API class
-    :rtype: :any:`AbstractRequestHandler`
-    """
-    try:
-      return getattr(importlib.import_module(
-        self.__configuration[ORCHEST]['Cf-Or']['module']),
-        self.__configuration[ORCHEST]['Cf-Or']['class'], None)
-    except KeyError:
-      return None
-
-  def get_cfor_agent_params (self):
-    """
-    Return the Cf-Or API params for agent request handler.
-
-    :return: params
-    :rtype: dict
-    """
-    try:
-      params = self.__configuration[ORCHEST]['Cf-Or'].copy()
-      del params['module']
-      del params['class']
-      return params
-    except KeyError:
-      return {}
-
   ##############################################################################
   # ADAPTATION layer getters
   ##############################################################################
-
-  def get_dov_api_class (self):
-    """
-    Return with the request handler class of DoV REST API.
-
-    :return: REST API class
-    :rtype: :any:`AbstractRequestHandler`
-    :return:
-    """
-    try:
-      return getattr(importlib.import_module(
-        self.__configuration[ADAPT]['DOV-API']['module']),
-        self.__configuration[ADAPT]['DOV-API']['class'], None)
-    except KeyError:
-      return None
-
-  def get_dov_api_params (self):
-    """
-    Return the Cf-Or API params for agent request handler.
-
-    :return: params
-    :rtype: dict
-    """
-    try:
-      params = self.__configuration[ADAPT]['DOV-API'].copy()
-      del params['module']
-      del params['class']
-      return params
-    except KeyError:
-      return {}
 
   def get_virtualizer_params (self, api_id):
     try:
