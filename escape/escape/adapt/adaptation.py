@@ -672,8 +672,8 @@ class ControllerAdapter(object):
       log.info("Delegate splitted part: %s to %s" % (part, domain_mgr))
       # Invoke DomainAdapter's install
       domain_install_result = domain_mgr.install_nffg(part)
-      stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_DOMAIN,
-                                      info=domain)
+      # stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_DOMAIN,
+      #                                 info=domain)
       # Update the DoV based on the mapping result covering some corner case
       if domain_install_result is None:
         log.error("Installation of %s in %s was unsuccessful!" % (part, domain))

@@ -651,10 +651,15 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
                                              % (self.domain_name,
                                                 "with_callback" if
                                                 self.callback_manager else
-                                                "direct"))
+                                                "no_callback"))
       if not self.callback_manager:
         stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_REQUEST,
-                                        info="%s-direct" % self.domain_name)
+                                        info="%s-no_callback" %
+                                             self.domain_name)
+      else:
+        stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_REQUEST,
+                                        info="%s-with_callback" %
+                                             self.domain_name)
       if self.callback_manager and cb:
         if response is None or response == 0:
           log.debug("Unsubscribe callback of unsuccessful request!")
@@ -817,6 +822,9 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
     """
     self.log.debug("Callback hook (%s) invoked with callback id: %s" %
                    (callback.type, callback.callback_id))
+    stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_CALLBACK,
+                                    info="%s-callback_handling"
+                                         % self.domain_name)
     self.callback_manager.unsubscribe_callback(cb_id=callback.callback_id,
                                                domain=self.domain_name)
     if callback.type == self.CALLBACK_TYPE_INSTALL:
@@ -832,9 +840,6 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         return
       else:
         self.disable_reset_mode()
-    stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_REQUEST,
-                                    info="%s-callback-received"
-                                         % self.domain_name)
     # Process result code
     if callback.result_code == 0:
       self.log.warning("Registered %scallback for request: %s, domain: %s "
