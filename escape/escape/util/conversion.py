@@ -107,7 +107,7 @@ class NFFGConverter(object):
     self.log = logger if logger is not None else logging.getLogger(__name__)
     self.log.debug('Created NFFGConverter with domain name: %s' % self.domain)
 
-  def disable_unique_bb_id(self):
+  def disable_unique_bb_id (self):
     self.log.debug("Disable unique BiSBiS id recreation!")
     self.__unique_bb_id = False
 
@@ -1150,6 +1150,8 @@ class NFFGConverter(object):
         node_cpu = vnode.resources.cpu.get_as_text().split(' ')[0]
         node_mem = vnode.resources.mem.get_as_text().split(' ')[0]
         node_storage = vnode.resources.storage.get_as_text().split(' ')[0]
+        node_cost = vnode.resources.cost.get_value()
+        node_zone = vnode.resources.zone.get_value()
         try:
           node_cpu = float(node_cpu) if node_cpu is not None else None
         except ValueError as e:
@@ -1165,7 +1167,7 @@ class NFFGConverter(object):
           self.log.warning("Resource storage value is not valid number: %s" % e)
       else:
         # Default value for cpu,mem,storage: None
-        node_cpu = node_mem = node_storage = None
+        node_cpu = node_mem = node_storage = node_cost = node_zone = None
       # Try to get bw value from metadata
       if 'bandwidth' in vnode.metadata:
         # Converted to float in Infra constructor
@@ -1203,6 +1205,7 @@ class NFFGConverter(object):
       # Add Infra Node to NFFG
       infra = nffg.add_infra(id=node_id, name=node_name, domain=node_domain,
                              infra_type=node_type, cpu=node_cpu, mem=node_mem,
+                             cost=node_cost, zone=node_zone,
                              storage=node_storage, delay=node_delay,
                              bandwidth=node_bw)
       self.log.debug("Created INFRA node: %s" % infra)
@@ -1644,6 +1647,8 @@ class NFFGConverter(object):
       v_node.resources.cpu.set_value(infra.resources.cpu)
       v_node.resources.mem.set_value(infra.resources.mem)
       v_node.resources.storage.set_value(infra.resources.storage)
+      v_node.resources.cost.set_value(infra.resources.cost)
+      v_node.resources.zone.set_value(infra.resources.zone)
 
       # Migrate metadata
       for key, value in infra.metadata.iteritems():
