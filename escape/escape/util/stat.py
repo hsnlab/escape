@@ -21,8 +21,7 @@ from pox.core import core
 
 log = core.getLogger("STAT")
 
-_StatEntry = namedtuple("StatEntry",
-                        ('id', 'type', 'info', 'cmd', 'timestamp'))
+_StatEntry = namedtuple("StatEntry", ('id', 'type', 'info', 'cmd', 'timestamp'))
 """Timestamp class for memory efficient storing."""
 
 
@@ -47,21 +46,27 @@ class OrchestrationStatCollector(object):
   """
   Manager class to collect and persist timestamp values of an orchestration
   process.
+
+  General structure of a timestamp entry in file:
+    <counter>,<TYPE>,<arbitrary info>,<CMD>,<timestamp>
   """
   __metaclass__ = Singleton
 
   PREFIX = 'TYPE_'
-  TYPE_OVERALL = 0
-  TYPE_SCHEDULED = 1
-  TYPE_SERVICE = 2
-  TYPE_SERVICE_MAPPING = 21
-  TYPE_ORCHESTRATION = 3
-  TYPE_ORCHESTRATION_MAPPING = 31
-  TYPE_DEPLOY = 4
-  TYPE_DEPLOY_DOMAIN = 41
-  TYPE_DEPLOY_REQUEST = 42
-  TYPE_PROCESSING = 5
-  TYPE_CONVERSION = 6
+  # Type constants
+  TYPE_OVERALL = 0  # Mark the overall time from receiving until process end
+  TYPE_SCHEDULED = 1  # Mark aggregate time interval of request processing
+  TYPE_SERVICE = 2  # Mark time interval spent in Service sublayer
+  TYPE_SERVICE_MAPPING = 21  # Pure time spent by mapping alg. in sublayer
+  TYPE_ORCHESTRATION = 3  # Mark time interval spent in Orchestration sublayer
+  TYPE_ORCHESTRATION_MAPPING = 31  # Pure time spent by mapping alg. in sublayer
+  TYPE_DEPLOY = 4  # Mark time interval of adaptation
+  TYPE_DEPLOY_DOMAIN = 41  # Mark the time interval of one domain deployment
+  TYPE_DEPLOY_REQUEST = 42  # Mark the interval of one edit-config REST call
+  TYPE_DEPLOY_CALLBACK = 43  # Mark time interval of callback idle
+  TYPE_PROCESSING = 5  # Mark interval of specific kind of data processing step
+  TYPE_CONVERSION = 6  # Mark interval of a data conversion step
+  # Command constants
   CMD_START = "START"
   CMD_STOP = "END"
 

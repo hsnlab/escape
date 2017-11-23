@@ -19,6 +19,7 @@ from threading import Thread, Timer
 from escape.adapt import log as log
 from escape.util.config import CONFIG
 from escape.util.misc import Singleton
+from escape.util.stat import stats
 
 log = log.getChild('callback')
 
@@ -462,6 +463,8 @@ class CallbackManager(HTTPServer, Thread):
     if cb is None:
       log.error("Missing callback: %s from register!" % msg_id)
       return
+    stats.add_measurement_start_entry(type=stats.TYPE_DEPLOY_CALLBACK,
+                                      info="%s-callback_received" % domain)
     cb.result_code = result
     cb.body = body
     if cb.hook is None:
