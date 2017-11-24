@@ -328,14 +328,12 @@ def deprecated (func):
   :rtype: :any:`collections.Callable`
   """
 
+  @wraps(func)
   def newFunc (*args, **kwargs):
     warnings.warn("Call to deprecated function %s." % func.__name__,
                   category=DeprecationWarning, stacklevel=2)
     return func(*args, **kwargs)
 
-  newFunc.__name__ = func.__name__
-  newFunc.__doc__ = func.__doc__
-  newFunc.__dict__.update(func.__dict__)
   return newFunc
 
 
@@ -498,6 +496,7 @@ def do_profile (func):
   :return: result of the decorated function
   """
 
+  @wraps(func)
   def decorator_func (*args, **kwargs):
     """
     Decorator function.

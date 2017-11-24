@@ -1,0 +1,299 @@
+{
+  "parameters": {
+    "id": "INTERNAL",
+    "name": "Internal-Mininet-Topology",
+    "version": "1.0"
+  },
+  "node_saps": [
+    {
+      "id": "SAP14",
+      "name": "SAP14",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "binding": "eth0"
+    },
+    {
+      "id": "SAP1",
+      "name": "SAP1",
+      "ports": [
+        {
+          "id": 1,
+          "property": {
+            "ip": "10.0.0.1/24",
+            "mac": "00:00:00:00:00:01"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SAP2",
+      "name": "SAP2",
+      "ports": [
+        {
+          "id": 1,
+          "property": {
+            "ip": "10.0.0.2/24",
+            "mac": "00:00:00:00:00:02"
+          }
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "EE1",
+      "name": "ee-infra-1",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "headerCompressor",
+        "headerDecompressor",
+        "simpleForwarder"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 5.0,
+        "storage": 20.0,
+        "delay": 0.9,
+        "bandwidth": 5000.0
+      }
+    },
+    {
+      "id": "EE2",
+      "name": "ee-infra-2",
+      "ports": [
+        {
+          "id": 1
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "EE",
+      "supported": [
+        "headerCompressor",
+        "headerDecompressor",
+        "simpleForwarder"
+      ],
+      "resources": {
+        "cpu": 5.0,
+        "mem": 5.0,
+        "storage": 20.0,
+        "delay": 0.9,
+        "bandwidth": 5000.0
+      }
+    },
+    {
+      "id": "SW1",
+      "name": "switch-1",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 3
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.2,
+        "bandwidth": 10000.0
+      },
+      "delay_matrix": {
+        "1": {
+          "2": 0.3,
+          "3": 0.3
+        },
+        "2": {
+          "1": 0.3,
+          "3": 0.3
+        },
+        "3": {
+          "1": 0.3,
+          "2": 0.3
+        }
+      }
+    },
+    {
+      "id": "SW2",
+      "name": "switch-2",
+      "ports": [
+        {
+          "id": 1
+        },
+        {
+          "id": 2
+        },
+        {
+          "id": 3
+        },
+        {
+          "id": 4,
+          "property": {
+            "type": "inter-domain"
+          }
+        }
+      ],
+      "domain": "INTERNAL",
+      "type": "SDN-SWITCH",
+      "resources": {
+        "cpu": 0.0,
+        "mem": 0.0,
+        "storage": 0.0,
+        "delay": 0.2,
+        "bandwidth": 10000.0
+      },
+      "delay_matrix": {
+        "1": {
+          "2": 0.3,
+          "3": 0.3,
+          "4": 0.3
+        },
+        "2": {
+          "1": 0.3,
+          "3": 0.3,
+          "4": 0.3
+        },
+        "3": {
+          "1": 0.3,
+          "2": 0.3,
+          "4": 0.3
+        },
+        "4": {
+          "1": 0.3,
+          "2": 0.3,
+          "3": 0.3
+        }
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "mn-link1",
+      "src_node": "EE1",
+      "src_port": 1,
+      "dst_node": "SW1",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link2",
+      "src_node": "EE2",
+      "src_port": 1,
+      "dst_node": "SW2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link3",
+      "src_node": "SW1",
+      "src_port": 2,
+      "dst_node": "SW2",
+      "dst_port": 2,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link1-back",
+      "src_node": "SW1",
+      "src_port": 1,
+      "dst_node": "EE1",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link4",
+      "src_node": "SW1",
+      "src_port": 3,
+      "dst_node": "SAP1",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link6-back",
+      "src_node": "SAP14",
+      "src_port": 1,
+      "dst_node": "SW2",
+      "dst_port": 4,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link3-back",
+      "src_node": "SW2",
+      "src_port": 2,
+      "dst_node": "SW1",
+      "dst_port": 2,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link6",
+      "src_node": "SW2",
+      "src_port": 4,
+      "dst_node": "SAP14",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link5",
+      "src_node": "SW2",
+      "src_port": 3,
+      "dst_node": "SAP2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0
+    },
+    {
+      "id": "mn-link2-back",
+      "src_node": "SW2",
+      "src_port": 1,
+      "dst_node": "EE2",
+      "dst_port": 1,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link4-back",
+      "src_node": "SAP1",
+      "src_port": 1,
+      "dst_node": "SW1",
+      "dst_port": 3,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    },
+    {
+      "id": "mn-link5-back",
+      "src_node": "SAP2",
+      "src_port": 1,
+      "dst_node": "SW2",
+      "dst_port": 3,
+      "delay": 1.5,
+      "bandwidth": 10.0,
+      "backward": true
+    }
+  ]
+}

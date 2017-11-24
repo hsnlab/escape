@@ -2,7 +2,8 @@
   "parameters": {
     "id": "ServiceRequest03",
     "name": "SG-decomp",
-    "version": "1.0"
+    "version": "1.0",
+    "mode": "ADD"
   },
   "node_nfs": [
     {
