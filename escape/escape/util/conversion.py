@@ -803,6 +803,7 @@ class NFFGConverter(object):
           vport.add_property("domain", ext_domain)
           vport.add_property("node", ext_node)
           vport.add_property("port", ext_port)
+          vport.add_property("path", flowentry.port.get_as_text())
         fr_match += vport_id
         # Add SAP to request
         if vport_id in nffg and vport_id in nffg[vport_id].ports:
@@ -817,6 +818,7 @@ class NFFGConverter(object):
           ext_sap = nffg.add_sap(id=vport_id)
           ext_sap_port = ext_sap.add_port(id=vport_id)
           ext_sap_port.role = "EXTERNAL"
+          ext_sap_port.add_property("path", flowentry.port.get_as_text())
           nffg.add_undirected_link(port1=vport, port2=ext_sap_port)
           self.log.debug("Created external SAP: %s" % ext_sap)
         # Set v_fe_port for further use
@@ -873,6 +875,7 @@ class NFFGConverter(object):
           ext_vport.add_property("domain", ext_domain)
           ext_vport.add_property("node", ext_node)
           ext_vport.add_property("port", ext_port)
+          ext_vport.add_property("path", flowentry.out.get_as_text())
         fr_action += ext_port_id
         # Add SAP to request
         if ext_port_id in nffg and ext_port_id in nffg[ext_port_id].ports:
@@ -887,6 +890,7 @@ class NFFGConverter(object):
           ext_sap = nffg.add_sap(id=ext_port_id)
           ext_sap_port = ext_sap.add_port(id=ext_port_id)
           ext_sap_port.role = "EXTERNAL"
+          ext_sap_port.add_property("path", flowentry.out.get_as_text())
           nffg.add_undirected_link(port1=ext_vport, port2=ext_sap_port)
           self.log.debug("Created external SAP: %s" % ext_sap)
         # Set v_fe_out for further use
@@ -1852,6 +1856,11 @@ class NFFGConverter(object):
         infra_id = self.recreate_bb_id(id=n)
         # print virtualizer.xml()
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
+        if link.src.role == "EXTERNAL":
+          self.log.debug("SAP: %s is an EXTERNAL dynamic SAP. Removing..."
+                         % sap.id)
+          virtualizer.nodes[infra_id].ports.remove(v_sap_port)
+          continue
         v_sap_port.port_type.set_value(self.TYPE_VIRTUALIZER_PORT_SAP)
 
         # Check if the SAP is an inter-domain SAP
@@ -2196,26 +2205,35 @@ class NFFGConverter(object):
             self.log.debug("Identify in_port: %s in match as a physical port "
                            "in the Virtualizer" % in_port.id.get_as_text())
           else:
-            self.log.debug("Identify in_port: %s in match as a dynamic port. "
-                           "Tracking associated NF port in the "
-                           "Virtualizer..." % in_port)
-            # in_port is a dynamic port --> search for connected NF's port
-            v_nf_port = [l.dst for u, v, l in
-                         nffg.network.out_edges_iter([infra.id], data=True)
-                         if l.type == NFFG.TYPE_LINK_DYNAMIC and
-                         str(l.src.id) == in_port]
-            # There should be only one link between infra and NF
-            if len(v_nf_port) < 1:
-              self.log.warning("NF port is not found for dynamic Infra port: "
-                               "%s defined in match field! Skip flowrule "
-                               "conversion..." % in_port)
-              continue
-            v_nf_port = v_nf_port[0]
-            v_nf_id = self.recreate_nf_id(v_nf_port.node.id)
-            in_port = v_node.NF_instances[v_nf_id].ports[str(v_nf_port.id)]
-            self.log.debug("Found associated NF port: node=%s, port=%s" % (
-              in_port.get_parent().get_parent().id.get_as_text(),
-              in_port.id.get_as_text()))
+            ext_sap = [l.dst for u, v, l in
+                       nffg.network.out_edges_iter([infra.id], data=True)
+                       if l.dst.node.type == "SAP" and
+                       str(l.src.id) == in_port and l.dst.role == "EXTERNAL"]
+            if len(ext_sap) > 0:
+              self.log.debug("Identify in_port: %s in match as an EXTERNAL "
+                             "port." % in_port)
+              in_port = ext_sap[0].get_property("path")
+            else:
+              self.log.debug("Identify in_port: %s in match as a dynamic port. "
+                             "Tracking associated NF port in the "
+                             "Virtualizer..." % in_port)
+              # in_port is a dynamic port --> search for connected NF's port
+              v_nf_port = [l.dst for u, v, l in
+                           nffg.network.out_edges_iter([infra.id], data=True)
+                           if l.type == NFFG.TYPE_LINK_DYNAMIC and
+                           str(l.src.id) == in_port]
+              # There should be only one link between infra and NF
+              if len(v_nf_port) < 1:
+                self.log.warning("NF port is not found for dynamic Infra port: "
+                                 "%s defined in match field! Skip flowrule "
+                                 "conversion..." % in_port)
+                continue
+              v_nf_port = v_nf_port[0]
+              v_nf_id = self.recreate_nf_id(v_nf_port.node.id)
+              in_port = v_node.NF_instances[v_nf_id].ports[str(v_nf_port.id)]
+              self.log.debug("Found associated NF port: node=%s, port=%s" % (
+                in_port.get_parent().get_parent().id.get_as_text(),
+                in_port.id.get_as_text()))
           # Process match field
           match = self._convert_flowrule_match(fr.match)
           # Check if action starts with outport
@@ -2232,26 +2250,35 @@ class NFFGConverter(object):
             self.log.debug("Identify outport: %s in action as a physical port "
                            "in the Virtualizer" % out_port.id.get_as_text())
           else:
-            self.log.debug("Identify outport: %s in action as a dynamic port. "
-                           "Track associated NF port in the Virtualizer..." %
-                           out_port)
-            # out_port is a dynamic port --> search for connected NF's port
-            v_nf_port = [l.dst for u, v, l in
-                         nffg.network.out_edges_iter([infra.id], data=True)
-                         if l.type == NFFG.TYPE_LINK_DYNAMIC and
-                         str(l.src.id) == out_port]
-            if len(v_nf_port) < 1:
-              self.log.warning("NF port is not found for dynamic Infra port: "
-                               "%s defined in action field! Skip flowrule "
-                               "conversion..." % out_port)
-              continue
-            v_nf_port = v_nf_port[0]
-            v_nf_id = self.recreate_nf_id(v_nf_port.node.id)
-            out_port = v_node.NF_instances[v_nf_id].ports[str(v_nf_port.id)]
-            self.log.debug("Found associated NF port: node=%s, port=%s" % (
-              # out_port.parent.parent.parent.id.get_as_text(),
-              out_port.get_parent().get_parent().id.get_as_text(),
-              out_port.id.get_as_text()))
+            ext_sap = [l.dst for u, v, l in
+                       nffg.network.out_edges_iter([infra.id], data=True)
+                       if l.dst.node.type == "SAP" and
+                       str(l.src.id) == out_port and l.dst.role == "EXTERNAL"]
+            if len(ext_sap) > 0:
+              self.log.debug("Identify out_port: %s in action as an EXTERNAL "
+                             "port." % out_port)
+              out_port = ext_sap[0].get_property("path")
+            else:
+              self.log.debug(
+                "Identify outport: %s in action as a dynamic port. "
+                "Track associated NF port in the Virtualizer..." %
+                out_port)
+              # out_port is a dynamic port --> search for connected NF's port
+              v_nf_port = [l.dst for u, v, l in
+                           nffg.network.out_edges_iter([infra.id], data=True)
+                           if l.type == NFFG.TYPE_LINK_DYNAMIC and
+                           str(l.src.id) == out_port]
+              if len(v_nf_port) < 1:
+                self.log.warning("NF port is not found for dynamic Infra port: "
+                                 "%s defined in action field! Skip flowrule "
+                                 "conversion..." % out_port)
+                continue
+              v_nf_port = v_nf_port[0]
+              v_nf_id = self.recreate_nf_id(v_nf_port.node.id)
+              out_port = v_node.NF_instances[v_nf_id].ports[str(v_nf_port.id)]
+              self.log.debug("Found associated NF port: node=%s, port=%s" % (
+                out_port.get_parent().get_parent().id.get_as_text(),
+                out_port.id.get_as_text()))
           # Process action field
           action = self._convert_flowrule_action(fr.action)
           # Process resource fields
