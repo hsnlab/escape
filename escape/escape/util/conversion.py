@@ -542,6 +542,10 @@ class NFFGConverter(object):
           nf_storage = v_vnf.resources.storage.get_as_text().split(' ')[0]
         else:
           nf_storage = None
+        if v_vnf.resources.cost.is_initialized():
+          nf_cost = v_vnf.resources.cost.get_as_text().split(' ')[0]
+        else:
+          nf_cost = None
         try:
           nf_cpu = float(nf_cpu) if nf_cpu is not None else None
         except ValueError as e:
@@ -555,8 +559,13 @@ class NFFGConverter(object):
         except ValueError as e:
           self.log.warning(
             "Resource storage value is not valid number: %s" % e)
+        try:
+          nf_cost = float(nf_cost) if nf_cost is not None else None
+        except ValueError as e:
+          self.log.warning(
+            "Resource cost value is not valid number: %s" % e)
       else:
-        nf_cpu = nf_mem = nf_storage = None
+        nf_cpu = nf_mem = nf_storage = nf_cost = None
       # Get remained NF resources from metadata
       if 'delay' in v_vnf.metadata.keys():
         nf_delay = v_vnf.metadata['delay'].value.get_value()
@@ -569,7 +578,7 @@ class NFFGConverter(object):
       # Create NodeNF
       nf = nffg.add_nf(id=nf_id, name=nf_name, func_type=nf_ftype,
                        dep_type=nf_dep_type, cpu=nf_cpu, mem=nf_mem,
-                       storage=nf_storage, delay=nf_delay,
+                       storage=nf_storage, delay=nf_delay, cost=nf_cost,
                        bandwidth=nf_bandwidth)
       if v_vnf.status.is_initialized():
         nf.status = v_vnf.status.get_value()
