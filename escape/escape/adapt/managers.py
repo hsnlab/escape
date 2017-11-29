@@ -541,6 +541,10 @@ class UnifyDomainManager(AbstractRemoteDomainManager):
         return
     super(UnifyDomainManager, self).poll()
 
+  def update_topology_cache (self):
+    self.log.debug("Update topology cache...")
+    self.topoAdapter.get_config()
+
   def get_last_request (self):
     """
     :return: Return with the last sent request.
