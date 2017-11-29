@@ -202,7 +202,7 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
   @classmethod
   def _resolve_external_ports (cls, graph, resource):
     """
-    Preprocess given graph object wiht given resource and detect external ports.
+    Preprocess given graph object with given resource and detect external ports.
 
     :param graph: request graph
     :type graph: :class:`NFFG`
@@ -241,24 +241,25 @@ class ESCAPEMappingStrategy(AbstractMappingStrategy):
         port.sap = bb_port.sap
         log.debug("Updated external SAP tag: %s" % port.sap)
         # Add ext SAP/SAP port/BB port based on external port to resource graph
-        res_sap = resource.add_sap(id=port.id)
-        res_sap_port = res_sap.add_port(id=port.id)
-        res_sap_port.sap = bb_port.sap
-        res_sap_port.role = port.role
-        res_sap_port.properties.update(port.properties)
-        res_port = bb_node.add_port(id=port.id)
-        res_port.sap = bb_port.sap
-        res_port.role = port.role
-        res_port.properties.update(port.properties)
-        resource.add_undirected_link(port1=res_port, port2=res_sap_port)
-        log.debug("Created external resource SAP: %s" % res_sap)
-        # Update SAP port in request as well
-        ext_sap = graph[res_sap.id]
-        ext_sap_port = ext_sap.ports.container[0]
-        ext_sap_port.sap = res_sap_port.sap
-        ext_sap_port.role = res_sap_port.role
-        ext_sap_port.properties.update(res_sap_port.properties)
-        log.debug("Updated external SAP: %s" % ext_sap)
+        if port.id not in bb_node.ports:
+          res_sap = resource.add_sap(id=port.id)
+          res_sap_port = res_sap.add_port(id=port.id)
+          res_sap_port.sap = bb_port.sap
+          res_sap_port.role = port.role
+          res_sap_port.properties.update(port.properties)
+          res_port = bb_node.add_port(id=port.id)
+          res_port.sap = bb_port.sap
+          res_port.role = port.role
+          res_port.properties.update(port.properties)
+          resource.add_undirected_link(port1=res_port, port2=res_sap_port)
+          log.debug("Created external resource SAP: %s" % res_sap)
+          # Update SAP port in request as well
+          ext_sap = graph[res_sap.id]
+          ext_sap_port = ext_sap.ports.container[0]
+          ext_sap_port.sap = res_sap_port.sap
+          ext_sap_port.role = res_sap_port.role
+          ext_sap_port.properties.update(res_sap_port.properties)
+          log.debug("Updated external SAP: %s" % ext_sap)
 
 
 class NFFGMappingFinishedEvent(Event):

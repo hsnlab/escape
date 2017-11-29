@@ -794,7 +794,7 @@ class NFFGConverter(object):
         fr_external = True
         ext_domain, ext_node, ext_port = self.__parse_external_port(
           flowentry.port.get_value())
-        vport_id = "%s:%s@%s" % (ext_node, ext_port, ext_domain)
+        vport_id = "EXTERNAL:%s" % ext_port
         bb_node = nffg[self._gen_unique_bb_id(vnode)]
         if vport_id in bb_node.ports:
           self.log.debug("External port: %s already exits! Skip creating..."
@@ -865,10 +865,10 @@ class NFFGConverter(object):
         fr_external = True
         ext_domain, ext_node, ext_port = self.__parse_external_port(
           flowentry.out.get_value())
-        ext_port_id = "%s:%s@%s" % (ext_node, ext_port, ext_domain)
+        ext_port_id = "EXTERNAL:%s" % ext_port
         bb_node = nffg[self._gen_unique_bb_id(vnode)]
         if ext_port_id in bb_node.ports:
-          self.log.debug("External port: %s already exits! Skip creatiing..." %
+          self.log.debug("External port: %s already exits! Skip creating..." %
                          ext_port_id)
           ext_vport = bb_node.ports[ext_port_id]
         else:
@@ -1692,6 +1692,10 @@ class NFFGConverter(object):
           # port is not a number
           if '|' in str(port.id):
             continue
+        if str(port.id).startswith("EXTERNAL"):
+          self.log.debug("Port: %s in infra %s is EXTERNAL. Skip adding..."
+                         % (port.id, infra.id))
+          continue
         v_port = virt_lib.Port(id=str(port.id))
         # If SAP property is exist: this port connected to a SAP
         if port.sap is not None:
@@ -1730,14 +1734,14 @@ class NFFGConverter(object):
         if src in v_node.ports.port.keys():
           v_link_src = v_node.ports[src]
         else:
-          self.log.warning("Missing port: %s from Virtualizer node: %s"
-                           % (src, v_node_id))
+          # self.log.warning("Missing port: %s from Virtualizer node: %s"
+          #                  % (src, v_node_id))
           continue
         if dst in v_node.ports.port.keys():
           v_link_dst = v_node.ports[dst]
         else:
-          self.log.warning("Missing port: %s from Virtualizer node: %s"
-                           % (dst, v_node_id))
+          # self.log.warning("Missing port: %s from Virtualizer node: %s"
+          #                  % (dst, v_node_id))
           continue
         v_link = virt_lib.Link(id="link-%s-%s" % (v_link_src.id.get_value(),
                                                   v_link_dst.id.get_value()),
@@ -1856,14 +1860,16 @@ class NFFGConverter(object):
     self.log.debug("Converting SAPs...")
     # Rewrite SAP - Node ports to add SAP to Virtualizer
     for sap in nffg.saps:
+      if str(sap.id).startswith("EXTERNAL"):
+        self.log.debug("SAP: %s is an EXTERNAL dynamic SAP. Skipping..."
+                       % sap.id)
+        continue
       for s, n, link in nffg.network.edges_iter([sap.id], data=True):
         if link.type != NFFG.TYPE_LINK_STATIC:
           continue
-        # print s, n, link
         sap_port = link.src
         # Rewrite port-type to port-sap
         infra_id = self.recreate_bb_id(id=n)
-        # print virtualizer.xml()
         v_sap_port = virtualizer.nodes[infra_id].ports[str(link.dst.id)]
         if link.src.role == "EXTERNAL":
           self.log.debug("SAP: %s is an EXTERNAL dynamic SAP. Removing..."
