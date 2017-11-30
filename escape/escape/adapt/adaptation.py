@@ -672,8 +672,6 @@ class ControllerAdapter(object):
       log.info("Delegate splitted part: %s to %s" % (part, domain_mgr))
       # Invoke DomainAdapter's install
       domain_install_result = domain_mgr.install_nffg(part)
-      # stats.add_measurement_end_entry(type=stats.TYPE_DEPLOY_DOMAIN,
-      #                                 info=domain)
       # Update the DoV based on the mapping result covering some corner case
       if domain_install_result is None:
         log.error("Installation of %s in %s was unsuccessful!" % (part, domain))
@@ -1057,16 +1055,15 @@ class ControllerAdapter(object):
       if domain_mgr is None:
         log.error("DomainManager for domain: %s is not found!" % event.domain)
         return
-      if isinstance(domain_mgr,
-                    AbstractRemoteDomainManager) and domain_mgr.polling:
+      if isinstance(domain_mgr, UnifyDomainManager) and domain_mgr.polling:
         log.debug("Polling in domain: %s is enabled! Skip explicit update..."
                   % event.domain)
+        domain_mgr.update_topology_cache()
+      if CONFIG.one_step_update():
+        log.debug("One-step-update is enabled. Skip explicit domain update!")
       else:
-        if CONFIG.one_step_update():
-          log.debug("One-step-update is enabled. Skip explicit domain update!")
-        else:
-          self.DoVManager.update_domain(domain=event.domain,
-                                        nffg=event.callback.data)
+        self.DoVManager.update_domain(domain=event.domain,
+                                      nffg=event.callback.data)
     log.debug("Installation status: %s" % deploy_status)
     if not deploy_status.still_pending:
       if deploy_status.success:
@@ -1115,6 +1112,11 @@ class ControllerAdapter(object):
       log.debug("Update success status for ROLLBACK request: %s..."
                 % request_id)
       deploy_status.set_domain_reset(domain=event.domain)
+      domain_mgr = self.domains.get_component_by_domain(event.domain)
+      if isinstance(domain_mgr, UnifyDomainManager) and domain_mgr.polling:
+        log.debug("Polling in domain: %s is enabled! Skip explicit update..."
+                  % event.domain)
+        domain_mgr.update_topology_cache()
       if CONFIG.one_step_update():
         log.debug("One-step-update is enabled. Skip explicit domain update!")
       else:
