@@ -955,7 +955,7 @@ class NFFGConverter(object):
             elif v_fe_out.port_type.get_as_text() == \
                self.TYPE_VIRTUALIZER_PORT_SAP:
               # If port is an inter-domain SAP port --> port.sap
-              if v_fe_out.sap.is_initialized() and v_fe_port.sap.get_value():
+              if v_fe_out.sap.is_initialized() and v_fe_out.sap.get_value():
                 _dst_name = v_fe_out.sap.get_as_text()
               # If port is local SAP --> SAP:<sap_name>
               elif v_fe_out.name.is_initialized() and str(
