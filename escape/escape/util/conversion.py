@@ -595,8 +595,8 @@ class NFFGConverter(object):
               aff = nf.constraints.add_affinity(id=aff.id.get_value(),
                                                 value=aff_id)
               self.log.debug("Add affinity: %s to %s" % (aff, nf.id))
-            except ValueError as e:
-              self.log.warning(
+            except StandardError as e:
+              self.log.exception(
                 "Skip affinity conversion due to error: %s" % e)
         # Add antiaffinity list
         if v_vnf.constraints.antiaffinity.is_initialized():
@@ -607,8 +607,8 @@ class NFFGConverter(object):
               naff = nf.constraints.add_antiaffinity(id=naff.id.get_value(),
                                                      value=naff_id)
               self.log.debug("Add antiaffinity: %s to %s" % (naff, nf.id))
-            except ValueError as e:
-              self.log.warning(
+            except StandardError as e:
+              self.log.exception(
                 "Skip anti-affinity conversion due to error: %s" % e)
         # Add variables dict
         if v_vnf.constraints.variable.is_initialized():
@@ -619,8 +619,8 @@ class NFFGConverter(object):
               var = nf.constraints.add_variable(key=var.id.get_value(),
                                                 id=var_id)
               self.log.debug("Add variable: %s to %s" % (var, nf.id))
-            except ValueError as e:
-              self.log.warning(
+            except StandardError as e:
+              self.log.exception(
                 "Skip variable conversion due to error: %s" % e)
         # Add constraint list
         if v_vnf.constraints.constraint.is_initialized():
@@ -630,8 +630,8 @@ class NFFGConverter(object):
                 id=constraint.id.get_value(),
                 formula=constraint.formula.get_value())
               self.log.debug("Add constraint: %s to %s" % (formula, nf.id))
-            except ValueError as e:
-              self.log.warning(
+            except StandardError as e:
+              self.log.exception(
                 "Skip constraint conversion due to error: %s" % e)
         if v_vnf.constraints.restorability.is_initialized():
           nf.constraints.restorability = \
@@ -835,7 +835,7 @@ class NFFGConverter(object):
       else:
         try:
           v_fe_port = flowentry.port.get_target()
-        except:
+        except StandardError:
           self.log.exception("Got unexpected exception during acquisition of "
                              "IN Port in Flowentry: %s!" % flowentry.xml())
           continue
@@ -907,7 +907,7 @@ class NFFGConverter(object):
       else:
         try:
           v_fe_out = flowentry.out.get_target()
-        except:
+        except StandardError:
           self.log.exception(
             "Got unexpected exception during acquisition of OUT "
             "Port in Flowentry: %s!" % flowentry.xml())
@@ -1226,8 +1226,14 @@ class NFFGConverter(object):
       for vlink in vnode.links:
         if vlink.resources.is_initialized() and \
            vlink.resources.delay.is_initialized():
-          dm_src = vlink.src.get_target().id.get_value()
-          dm_dst = vlink.dst.get_target().id.get_value()
+          try:
+            dm_src = vlink.src.get_target().id.get_value()
+            dm_dst = vlink.dst.get_target().id.get_value()
+          except StandardError:
+            self.log.exception(
+              "Got unexpected exception during acquisition of src/dst "
+              "Port in Link: %s!" % vlink.xml())
+            continue
           dm_delay = float(vlink.resources.delay.get_value())
           infra.delay_matrix.add_delay(src=dm_src, dst=dm_dst, delay=dm_delay)
           self.log.debug("Added delay: %s to delay matrix [%s --> %s]"
@@ -1366,7 +1372,7 @@ class NFFGConverter(object):
     for vlink in virtualizer.links:
       try:
         src_port = vlink.src.get_target()
-      except:
+      except StandardError:
         self.log.exception(
           "Got unexpected exception during acquisition of link's src Port!")
       src_node = src_port.get_parent().get_parent()
@@ -1374,7 +1380,7 @@ class NFFGConverter(object):
       src_node_id = self._gen_unique_bb_id(src_node)
       try:
         dst_port = vlink.dst.get_target()
-      except:
+      except StandardError:
         self.log.exception(
           "Got unexpected exception during acquisition of link's dst Port!")
       dst_node = dst_port.get_parent().get_parent()
