@@ -1077,7 +1077,10 @@ class NFFGConverter(object):
         else:
           fr_delay = None
         if flowentry.resources.cost.is_initialized():
-          fr_cost = flowentry.resources.cost.get_value()
+          try:
+            fr_cost = float(flowentry.resources.cost.get_value())
+          except ValueError:
+            fr_cost = flowentry.resources.cost.get_value()
         else:
           fr_cost = None
         if flowentry.resources.qos.is_initialized():
