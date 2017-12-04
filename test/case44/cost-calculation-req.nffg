@@ -1,0 +1,260 @@
+{
+  "parameters": {
+    "id": "d38d7a38-d366-11e7-952f-3052cb2bc387",
+    "name": "Single-BiSBiS-View",
+    "service_id": "SingleBiSBiS",
+    "version": "1.0",
+    "mode": "ADD"
+  },
+  "node_nfs": [
+    {
+      "id": "1-PID1",
+      "name": "1-PID1",
+      "ports": [
+        {
+          "id": 1,
+          "sap": "PIDSAP",
+          "sap_data": {
+            "role": "provider"
+          },
+          "addresses": {
+            "l2": "12:6f:70:ff:81:91",
+            "l3": [
+              {
+                "id": "private",
+                "requested": "10.1.100.10/24"
+              }
+            ]
+          }
+        }
+      ],
+      "functional_type": "balance_server:latest",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0
+        }
+      }
+    },
+    {
+      "id": "1-PID2",
+      "name": "1-PID2",
+      "ports": [
+        {
+          "id": 1,
+          "sap": "PIDSAP",
+          "sap_data": {
+            "role": "provider"
+          },
+          "addresses": {
+            "l2": "12:6f:70:ff:81:91",
+            "l3": [
+              {
+                "id": "private",
+                "requested": "10.1.101.10/24"
+              }
+            ]
+          }
+        }
+      ],
+      "functional_type": "balance_server:latest",
+      "specification": {
+        "resources": {
+          "cpu": 1.0,
+          "mem": 1.0,
+          "storage": 0.0,
+          "cost": 1500
+        }
+      }
+    }
+  ],
+  "node_saps": [
+    {
+      "id": "SAPblue",
+      "name": "SAPblue",
+      "ports": [
+        {
+          "id": "SAPblue",
+          "name": "SAPblue"
+        }
+      ]
+    },
+    {
+      "id": "SAPred",
+      "name": "SAPred",
+      "ports": [
+        {
+          "id": "SAPred",
+          "name": "SAPred"
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "SingleBiSBiS",
+      "name": "SingleBiSBiS",
+      "ports": [
+        {
+          "id": "SAPblue",
+          "name": "SAPblue",
+          "flowrules": [
+            {
+              "id": 11,
+              "match": "in_port=SAPblue",
+              "action": "output=SingleBiSBiS|1-PID2|1"
+            }
+          ]
+        },
+        {
+          "id": "SAPred",
+          "name": "SAPred",
+          "flowrules": [
+            {
+              "id": 21,
+              "match": "in_port=SAPred",
+              "action": "output=SingleBiSBiS|1-PID1|1"
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS|1-PID1|1",
+          "flowrules": [
+            {
+              "id": 22,
+              "match": "in_port=SingleBiSBiS|1-PID1|1",
+              "action": "output=SAPred;strip_vlan,mod_dl_dst:88:d7:f6:06:24:b4"
+            }
+          ]
+        },
+        {
+          "id": "SingleBiSBiS|1-PID2|1",
+          "flowrules": [
+            {
+              "id": 12,
+              "match": "in_port=SingleBiSBiS|1-PID2|1",
+              "action": "output=SAPblue;strip_vlan,mod_dl_dst:9c:5c:8e:af:2e:e0"
+            }
+          ]
+        }
+      ],
+      "domain": "VIRTUAL",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_color_vision:latest",
+        "balance_server:latest",
+        "fe2sap",
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 62020.0,
+        "mem": 152163258419000.0,
+        "storage": 75030446057000.0,
+        "delay": 0.0
+      },
+      "delay_matrix": {
+        "SAPblue": {
+          "SAPred": 0.0
+        },
+        "SAPred": {
+          "SAPblue": 0.0
+        }
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "SAPblue-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPblue",
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "backward": true
+    },
+    {
+      "id": "d38d7a3a-d366-11e7-952f-3052cb2bc387",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|1-PID1|1",
+      "dst_node": "1-PID1",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "SAPred-SingleBiSBiS-link-back",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SAPred",
+      "dst_node": "SAPred",
+      "dst_port": "SAPred",
+      "backward": true
+    },
+    {
+      "id": "d38d7a3c-d366-11e7-952f-3052cb2bc387",
+      "src_node": "SingleBiSBiS",
+      "src_port": "SingleBiSBiS|1-PID2|1",
+      "dst_node": "1-PID2",
+      "dst_port": 1,
+      "backward": true
+    },
+    {
+      "id": "SAPblue-SingleBiSBiS-link",
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPblue"
+    },
+    {
+      "id": "d38d7a39-d366-11e7-952f-3052cb2bc387",
+      "src_node": "1-PID1",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|1-PID1|1"
+    },
+    {
+      "id": "SAPred-SingleBiSBiS-link",
+      "src_node": "SAPred",
+      "src_port": "SAPred",
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SAPred"
+    },
+    {
+      "id": "d38d7a3b-d366-11e7-952f-3052cb2bc387",
+      "src_node": "1-PID2",
+      "src_port": 1,
+      "dst_node": "SingleBiSBiS",
+      "dst_port": "SingleBiSBiS|1-PID2|1"
+    }
+  ],
+  "edge_sg_nexthops": [
+    {
+      "id": 11,
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "1-PID2",
+      "dst_port": 1
+    },
+    {
+      "id": 22,
+      "src_node": "1-PID1",
+      "src_port": 1,
+      "dst_node": "SAPred",
+      "dst_port": "SAPred",
+      "additional_actions": "strip_vlan,mod_dl_dst:88:d7:f6:06:24:b4"
+    },
+    {
+      "id": 21,
+      "src_node": "SAPred",
+      "src_port": "SAPred",
+      "dst_node": "1-PID1",
+      "dst_port": 1
+    },
+    {
+      "id": 12,
+      "src_node": "1-PID2",
+      "src_port": 1,
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "additional_actions": "strip_vlan,mod_dl_dst:9c:5c:8e:af:2e:e0"
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "parameters": {
+    "id": "DoV",
+    "name": "DoV",
+    "version": "1.0"
+  },
+  "node_saps": [
+    {
+      "id": "SAPred",
+      "name": "SAPred",
+      "ports": [
+        {
+          "id": "SAPred",
+          "name": "SAPred"
+        }
+      ]
+    },
+    {
+      "id": "SAPblue",
+      "name": "SAPblue",
+      "ports": [
+        {
+          "id": "SAPblue",
+          "name": "SAPblue"
+        }
+      ]
+    }
+  ],
+  "node_infras": [
+    {
+      "id": "DOCKER_HOST3@DOCKER-3",
+      "name": "DC3",
+      "ports": [
+        {
+          "id": "SAP23",
+          "property": {
+            "sap": "SAP23",
+            "type": "inter-domain"
+          },
+          "name": "SAP23",
+          "sap": "SAP23",
+          "sap_data": {
+            "resources": {
+              "delay": 10.0
+            }
+          }
+        }
+      ],
+      "domain": "DOCKER-3",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "balance_color_vision:latest",
+        "fe2sap"
+      ],
+      "resources": {
+        "cpu": 20.0,
+        "mem": 51200.0,
+        "storage": 1024.0,
+        "cost": 1000
+      }
+    },
+    {
+      "id": "BiSBiS@ESCAPE-2",
+      "name": "SingleBiSBiS",
+      "ports": [
+        {
+          "id": "SAP23",
+          "property": {
+            "sap": "SAP23",
+            "type": "inter-domain"
+          },
+          "name": "SAP23",
+          "sap": "SAP23",
+          "sap_data": {
+            "resources": {
+              "delay": 10.0
+            }
+          }
+        },
+        {
+          "id": "SAPblue",
+          "name": "SAPblue"
+        },
+        {
+          "id": "SAPred",
+          "name": "SAPred"
+        }
+      ],
+      "domain": "ESCAPE-2",
+      "type": "BiSBiS",
+      "supported": [
+        "balance_server:latest",
+        "fe2sap",
+        "splitter"
+      ],
+      "resources": {
+        "cpu": 62000.0,
+        "mem": 152163258368000.0,
+        "storage": 75030446056000.0,
+        "delay": 0.0
+      },
+      "mapping_features": {
+        "antiaffinity": false
+      },
+      "delay_matrix": {
+        "SAP23": {
+          "SAPblue": 30.0,
+          "SAPred": 30.0
+        },
+        "SAPblue": {
+          "SAP23": 30.0,
+          "SAPred": 2.0
+        },
+        "SAPred": {
+          "SAP23": 30.0,
+          "SAPblue": 2.0
+        }
+      }
+    }
+  ],
+  "edge_links": [
+    {
+      "id": "SAPred-BiSBiS@ESCAPE-2-link",
+      "src_node": "SAPred",
+      "src_port": "SAPred",
+      "dst_node": "BiSBiS@ESCAPE-2",
+      "dst_port": "SAPred"
+    },
+    {
+      "id": "SAPblue-BiSBiS@ESCAPE-2-link",
+      "src_node": "SAPblue",
+      "src_port": "SAPblue",
+      "dst_node": "BiSBiS@ESCAPE-2",
+      "dst_port": "SAPblue"
+    },
+    {
+      "id": "inter-domain-link-SAP23-back",
+      "src_node": "DOCKER_HOST3@DOCKER-3",
+      "src_port": "SAP23",
+      "dst_node": "BiSBiS@ESCAPE-2",
+      "dst_port": "SAP23",
+      "delay": 10.0,
+      "backward": true
+    },
+    {
+      "id": "SAPblue-BiSBiS@ESCAPE-2-link-back",
+      "src_node": "BiSBiS@ESCAPE-2",
+      "src_port": "SAPblue",
+      "dst_node": "SAPblue",
+      "dst_port": "SAPblue",
+      "backward": true
+    },
+    {
+      "id": "inter-domain-link-SAP23",
+      "src_node": "BiSBiS@ESCAPE-2",
+      "src_port": "SAP23",
+      "dst_node": "DOCKER_HOST3@DOCKER-3",
+      "dst_port": "SAP23",
+      "delay": 10.0
+    },
+    {
+      "id": "SAPred-BiSBiS@ESCAPE-2-link-back",
+      "src_node": "BiSBiS@ESCAPE-2",
+      "src_port": "SAPred",
+      "dst_node": "SAPred",
+      "dst_port": "SAPred",
+      "backward": true
+    }
+  ]
+}

@@ -328,9 +328,10 @@ class DomainOrchestratorAPIMocker(HTTPServer, Thread):
 
   @staticmethod
   def _suppress_requests_logging (level=None):
+    import logging
     if level is not None:
       level = level
-    elif log.getEffectiveLevel() < logging.INFO:
+    elif log.getEffectiveLevel() < logging.DEBUG:
       level = log.getEffectiveLevel()
     else:
       level = logging.WARNING
