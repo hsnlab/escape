@@ -84,7 +84,12 @@ class AbstractNETCONFAdapter(object):
     :return: None
     """
     import logging
-    level = level if level is not None else logging.WARNING
+    if level is not None:
+      level = level
+    elif log.getEffectiveLevel() < logging.DEBUG:
+      level = log.getEffectiveLevel()
+    else:
+      level = logging.WARNING
     logging.getLogger("ncclient").setLevel(level)
 
   @property

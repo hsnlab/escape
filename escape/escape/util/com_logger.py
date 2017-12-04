@@ -109,7 +109,13 @@ class RemoteVisualizer(Session):
     :type level: str
     :return: None
     """
-    level = level if level is not None else logging.WARNING
+    import logging
+    if level is not None:
+      level = level
+    elif log.getEffectiveLevel() < logging.DEBUG:
+      level = log.getEffectiveLevel()
+    else:
+      level = logging.WARNING
     logging.getLogger("requests").setLevel(level)
     logging.getLogger("urllib3").setLevel(level)
 

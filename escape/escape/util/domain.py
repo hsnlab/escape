@@ -1341,7 +1341,7 @@ class AbstractRESTAdapter(Session):
     import logging
     if level is not None:
       level = level
-    elif log.getEffectiveLevel() < logging.INFO:
+    elif log.getEffectiveLevel() < logging.DEBUG:
       level = log.getEffectiveLevel()
     else:
       level = logging.WARNING
