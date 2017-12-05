@@ -25,7 +25,7 @@ from escape.nffg_lib.nffg import NFFGToolBox
 from escape.orchest import LAYER_NAME  # Orchestration layer logger
 from escape.orchest import log as log
 from escape.orchest.ros_orchestration import ResourceOrchestrator
-from escape.util.api import AbstractAPI, RESTServer, RequestStatus, \
+from escape.util.api import AbstractAPI, RequestStatus, \
   RequestScheduler
 from escape.util.api import AbstractRequestHandler
 from escape.util.com_logger import MessageDumper
@@ -156,6 +156,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Mandatory super() call
     self.orchestrator = None
     """:type: ResourceOrchestrator"""
+    self.converter = NFFGConverter(unique_bb_id=False,
+                                   unique_nf_id=CONFIG.ensure_unique_vnf_id(),
+                                   logger=log)
+    self.rest_api_cfg = CONFIG.get_rest_api_config(layer=self._core_name)
+    self.topology_revision = None
+    self.last_response = None
     self.log = log.getChild('API')
     super(ResourceOrchestrationAPI, self).__init__(standalone, **kwargs)
 
@@ -206,36 +212,6 @@ class ResourceOrchestrationAPI(AbstractAPI):
     """
     rest_api = self.get_dependent_component('REST-API')
     rest_api.register_component(component=self)
-    return
-    # set bounded layer name here to avoid circular dependency problem
-    handler = CONFIG.get_ros_agent_class()
-    if not handler:
-      log.error("Missing handler class for server in ROS layer!")
-      return
-    handler.bounded_layer = self._core_name
-    params = CONFIG.get_ros_agent_params()
-    # can override from global config
-    if 'prefix' in params:
-      handler.static_prefix = params['prefix']
-    if 'unify_interface' in params:
-      handler.virtualizer_format_enabled = params['unify_interface']
-    if 'diff' in params:
-      handler.DEFAULT_DIFF = bool(params['diff'])
-    address = (params.get('address'), params.get('port'))
-    # Virtualizer ID of the Sl-Or interface
-    self.ros_api = RESTServer(handler, *address)
-    self.ros_api.api_id = handler.LOGGER_NAME = "Sl-Or"
-    # Virtualizer type for Sl-Or API
-    self.ros_api.virtualizer_type = CONFIG.get_api_virtualizer(
-      layer_name=LAYER_NAME, api_name=self.ros_api.api_id)
-    handler.log.info("Init REST-API for %s on %s:%s!" % (
-      self.ros_api.api_id, address[0], address[1]))
-    self.ros_api.start()
-    handler.log.debug(
-      "Enforced configuration for %s: virtualizer type: %s, interface: %s, "
-      "diff: %s" % (self.ros_api.api_id, self.ros_api.virtualizer_type,
-                    "UNIFY" if handler.virtualizer_format_enabled else
-                    "Internal-NFFG", handler.DEFAULT_DIFF))
     if self._agent:
       log.info("REST-API is set in AGENT mode")
 
@@ -275,19 +251,32 @@ class ResourceOrchestrationAPI(AbstractAPI):
                        "Force to get default topology...")
       else:
         # Check if the resource is changed
-        if self.ros_api.topology_revision == slor_virt.revision:
+        if self.topology_revision == slor_virt.revision:
           # If resource has not been changed return False
           # This causes to response with the cached topology
-          return False
+          self.log.debug("Global resource has not changed (revision: %s)! "
+                         % slor_virt.revision)
+          log.debug("Send topology from cache...")
+          if self.last_response is None:
+            log.error("Cached topology is missing!")
+            return
+          else:
+            return self.last_response
         else:
           self.log.debug("Response cache is outdated (new revision: %s)!"
                          % slor_virt.revision)
+      # Get topo view as NFFG
       res = slor_virt.get_resource_info()
-      self.ros_api.topology_revision = slor_virt.revision
+      self.topology_revision = slor_virt.revision
+      self.log.debug("Updated revision number: %s" % self.topology_revision)
+      if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
+        self.log.debug("Convert internal NFFG to Virtualizer...")
+        res = self.converter.dump_to_Virtualizer(nffg=res)
+      log.debug("Cache acquired topology...")
+      self.last_response = res
       return res
     else:
-      log.error("Virtualizer(id=%s) assigned to REST-API is not found!" %
-                self.ros_api.api_id)
+      log.error("Virtualizer assigned to %s is not found!" % self._core_name)
 
   # noinspection PyUnusedLocal
   def rest_api_edit_config (self, nffg, params):
@@ -1035,7 +1024,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
         # Perform patching
         full_cfg = self.__recreate_full_request(diff=received_cfg)
         stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
-                                          info="RECREATE-FULL-REQUEST")
+                                        info="RECREATE-FULL-REQUEST")
       else:
         full_cfg = received_cfg
       self.log.log(VERBOSE, "Received full request:\n%s" % full_cfg.xml())
@@ -1045,7 +1034,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
                                         info="VIRTUALIZER-->NFFG")
       nffg = self.converter.parse_from_Virtualizer(vdata=full_cfg)
       stats.add_measurement_end_entry(type=stats.TYPE_CONVERSION,
-                                        info="VIRTUALIZER-->NFFG")
+                                      info="VIRTUALIZER-->NFFG")
     else:
       if self.headers.get("Content-Type") != "application/json":
         self.log.error("Received data is not in JSON format despite of the "

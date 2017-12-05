@@ -24,9 +24,6 @@ REST-API:
         # Used Handler class
         module: escape.api.rest_API
         class: OrchestrationAPIManager
-        # Enable XML-based Virtualizer format instead of using internal
-        # JSON-based NFFG format
-        unify_interface: false
         # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
         virtualizer_type: ZERO-DELAYED-SBB
         # Specific parameters for dedicated Virtualizer type

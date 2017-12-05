@@ -443,6 +443,15 @@ class ESCAPEConfig(object):
     except KeyError:
       return None
 
+  def get_rest_api_config (self, layer):
+    try:
+      cfg = self.__config['REST-API']['resources'][layer].copy()
+      del cfg['module']
+      del cfg['class']
+      return cfg
+    except KeyError:
+      return {}
+
   def get_rest_api_host (self):
     try:
       return self.__config['REST-API'].get('host')

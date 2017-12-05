@@ -21,9 +21,12 @@ from flask.views import View
 from werkzeug.serving import make_server
 
 from escape.api import LAYER_NAME, log
+from escape.nffg_lib import NFFG
 from escape.util.api import AbstractAPI
+from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
 from escape.util.misc import get_escape_version
+from virtualizer import Virtualizer
 
 
 class RestInterfaceAPI(AbstractAPI):
@@ -35,7 +38,7 @@ class RestInterfaceAPI(AbstractAPI):
 
   def __init__ (self, standalone=False, **kwargs):
     log.info("Starting REST-API Sublayer...")
-    self.server = MainApiServer()
+    self.__server = MainApiServer()
     self.__entry_point_cache = {}
     self.mgrs = {}
     self.is_up = False
@@ -44,7 +47,7 @@ class RestInterfaceAPI(AbstractAPI):
 
   def post_up_hook (self, event):
     self.is_up = True
-    self.server.start()
+    self.__server.start()
 
   @staticmethod
   def incoming_logger ():
@@ -60,18 +63,18 @@ class RestInterfaceAPI(AbstractAPI):
 
   def initialize (self):
     log.debug("Initializing REST-API Sublayer...")
-    self.server.flask.before_request(self.incoming_logger)
-    self.server.flask.after_request(self.outcoming_logger)
+    self.__server.flask.before_request(self.incoming_logger)
+    self.__server.flask.after_request(self.outcoming_logger)
     # Add <prefix>/version rule by default
-    self.server.flask.add_url_rule(rule="/%s/version" % self.prefix,
-                                   view_func=get_escape_version)
+    self.__server.flask.add_url_rule(rule="/%s/version" % self.prefix,
+                                     view_func=get_escape_version)
     # Add custom exception handling
-    self.server.flask.register_error_handler(Exception,
-                                             self.unhandled_exception)
+    self.__server.flask.register_error_handler(Exception,
+                                               self.unhandled_exception)
 
   def shutdown (self, event):
     log.info("REST-API Sublayer is going down...")
-    self.server.stop()
+    self.__server.stop()
 
   def register_component (self, component):
     component_name = component._core_name
@@ -81,10 +84,11 @@ class RestInterfaceAPI(AbstractAPI):
                 % component_name)
       return
     mgr = mgr_klass(layer_api=self)
-    mgr.register_routes(app=self.server.flask)
+    mgr.register_routes(app=self.__server.flask)
     self._register_entry_points(component=component)
     self.mgrs[mgr.LAYER_NAME] = mgr
-    log.debug("Register component: %s into %s" % (component_name, self.server))
+    log.debug(
+      "Register component: %s into %s" % (component_name, self.__server))
 
   @staticmethod
   def pythonify_rpc_name (name):
@@ -217,6 +221,18 @@ class GetConfigView(AbstractAPIView):
     topo_resource = self.mgr.handle(rpc=self.name)
     if topo_resource is None:
       return Response("Resource info is missing!", httplib.NOT_FOUND)
+    else:
+      if isinstance(topo_resource, Virtualizer):
+        data, mime = topo_resource.xml(), "application/xml"
+      elif isinstance(topo_resource, NFFG):
+        data, mime = topo_resource.dump(), "application/json"
+      else:
+        log.error("Unexpected topology format!")
+        return
+    MessageDumper().dump_to_file(data=data,
+                                 unique="ESCAPE-%s-get-config" %
+                                        self.mgr.LAYER_NAME)
+    return Response(response=data, status=httplib.OK, mimetype=mime)
 
 
 class EditConfigView(AbstractAPIView):
@@ -294,8 +310,9 @@ class AbstractAPIManager(object):
                        view_func=view.as_view(name=view.name, mgr=self))
       log.debug("Registered rule: %s" % view.name)
 
-  def handle (self, rpc):
-    return self.layer_api.proceed_API_call(layer=self.LAYER_NAME, rpc=rpc)
+  def handle (self, rpc, *args, **kwargs):
+    return self.layer_api.proceed_API_call(layer=self.LAYER_NAME,
+                                           rpc=rpc, *args, **kwargs)
 
 
 class ServiceAPIManager(AbstractAPIManager):
