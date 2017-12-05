@@ -9,7 +9,7 @@ REST-API:
     service:
         # Used Handler class
         module: escape.api.rest_API
-        class: ServiceLayerResourceHandler
+        class: ServiceAPIManager
         # Enable XML-based Virtualizer format instead of using internal
         # JSON-based NFFG format
         unify_interface: false
@@ -23,11 +23,10 @@ REST-API:
     orchestration:
         # Used Handler class
         module: escape.api.rest_API
-        class: OrchestrationLayerResourceHandler
+        class: OrchestrationAPIManager
         # Enable XML-based Virtualizer format instead of using internal
         # JSON-based NFFG format
         unify_interface: false
-                # Used Handler class
         # Used topology abstraction: SINGLE | GLOBAL | ZERO-DELAYED-SBB
         virtualizer_type: ZERO-DELAYED-SBB
         # Specific parameters for dedicated Virtualizer type
@@ -43,7 +42,7 @@ REST-API:
     adaptation:
         # Used Handler class
         module: escape.api.rest_API
-        class: AdaptationLayerResourceHandler
+        class: AdaptationAPIManager
         # Enable XML-based Virtualizer format instead of using internal
         # JSON-based NFFG format
         unify_interface: true

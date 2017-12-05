@@ -14,20 +14,15 @@
 import logging
 import threading
 
-from flask import request
+from flask import request, Response
 from flask.app import Flask
-from flask_restful import Api, Resource
+from flask.views import View
 from werkzeug.serving import make_server
 
-from escape import __project__
 from escape.api import LAYER_NAME, log
 from escape.util.api import AbstractAPI
 from escape.util.config import CONFIG
 from escape.util.misc import get_escape_version
-
-AVAILABLE_RPCS = repr(('ping',
-                       'get-config',
-                       'edit-config'))
 
 
 class RestInterfaceAPI(AbstractAPI):
@@ -36,19 +31,19 @@ class RestInterfaceAPI(AbstractAPI):
   """
   _core_name = LAYER_NAME
   ENTRY_POINT_PREFIX = 'rest_api_'
-  BASIC_ROUTE_TEMPLATE = '/<any("version", "ping"):rpc>'
-  URL_ROUTE_TEMPLATE = '/{layer_name!s}/<any%s:rpc>' % AVAILABLE_RPCS
 
   def __init__ (self, standalone=False, **kwargs):
     log.info("Starting REST-API Sublayer...")
-    self.api = MainApiServer()
+    self.server = MainApiServer()
     self.__entry_point_cache = {}
+    self.mgrs = {}
     self.is_up = False
+    self.prefix = CONFIG.get_rest_api_prefix()
     super(RestInterfaceAPI, self).__init__(standalone, **kwargs)
 
   def post_up_hook (self, event):
     self.is_up = True
-    self.api.start()
+    self.server.start()
 
   @staticmethod
   def incoming_logger ():
@@ -64,27 +59,28 @@ class RestInterfaceAPI(AbstractAPI):
 
   def initialize (self):
     log.debug("Initializing REST-API Sublayer...")
-    self.api.server_api.app.before_request(self.incoming_logger)
-    self.api.server_api.app.after_request(self.outcoming_logger)
-    self.api.server_api.add_resource(AbstractLayerResourceHandler,
-                                     self.BASIC_ROUTE_TEMPLATE,
-                                     resource_class_kwargs={'layer_api': self})
+    self.server.flask.before_request(self.incoming_logger)
+    self.server.flask.after_request(self.outcoming_logger)
+    # Add <prefix>/version rule by default
+    self.server.flask.add_url_rule(rule="/%s/version" % self.prefix,
+                                   view_func=get_escape_version)
 
   def shutdown (self, event):
     log.info("REST-API Sublayer is going down...")
-    self.api.stop()
+    self.server.stop()
 
   def register_component (self, component):
     component_name = component._core_name
-    resource_klass = CONFIG.get_rest_api_resource_class(layer=component_name)
-    if resource_klass is None:
-      log.eroor("REST-API configuration si missing for component: %s"
+    mgr_klass = CONFIG.get_rest_api_resource_class(layer=component_name)
+    if mgr_klass is None:
+      log.error("REST-API configuration is missing for component: %s"
                 % component_name)
-    url_path = self.URL_ROUTE_TEMPLATE.format(layer_name=component_name)
-    self.api.server_api.add_resource(resource_klass, url_path,
-                                     resource_class_kwargs={'layer_api': self})
-    log.debug("Register component: %s into %s" % (component_name, self.api))
+      return
+    mgr = mgr_klass(layer_api=self)
+    mgr.register_routes(app=self.server.flask)
     self._register_entry_points(component=component)
+    self.mgrs[mgr.LAYER_NAME] = mgr
+    log.debug("Register component: %s into %s" % (component_name, self.server))
 
   @staticmethod
   def pythonify_rpc_name (name):
@@ -97,7 +93,7 @@ class RestInterfaceAPI(AbstractAPI):
       rpc_name = self.pythonify_rpc_name(meth[len(self.ENTRY_POINT_PREFIX):])
       self.__entry_point_cache[(layer_name, rpc_name)] = getattr(component,
                                                                  meth)
-      log.debug("Registered call handler: %s" % meth)
+      log.debug("Registered RPC call handler: %s" % meth)
 
   def proceed_API_call (self, layer, rpc, *args, **kwargs):
     """
@@ -124,20 +120,19 @@ class MainApiServer(object):
     self.started = False
     self.__create_server()
     log.debug("Created RESTful API object with url_prefix: %s" %
-              self.server_api.prefix)
+              self.flask)
 
   def __str__ (self):
-    return str(self.server_api.app)
+    return str(self.flask)
 
   def __create_server (self):
     host = CONFIG.get_rest_api_host()
     port = CONFIG.get_rest_api_port()
-    self.__werkzeug_server = make_server(
-      host=host if host else self.DEFAULT_HOST,
-      port=port if port else self.DEFAULT_PORT,
-      app=Flask(__name__))
-    self.server_api = Api(app=self.__werkzeug_server.app,
-                          prefix='/' + CONFIG.get_rest_api_prefix())
+    self.flask = Flask(__name__)
+    self.__werkzeug = make_server(host=host if host else self.DEFAULT_HOST,
+                                  port=port if port else self.DEFAULT_PORT,
+                                  app=self.flask)
+    # Suppress low level logging
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
   def start (self):
@@ -151,82 +146,168 @@ class MainApiServer(object):
       self.started = False
 
   def run (self):
-    log.info("Starting REST server on: %s:%s"
-             % self.__werkzeug_server.server_address)
+    log.info("Starting REST server on: %s:%s" % self.__werkzeug.server_address)
     try:
-      self.__werkzeug_server.serve_forever()
+      self.__werkzeug.serve_forever()
     except Exception as e:
       log.exception("Got exception in REST-API loop: %s" % e)
 
   def shutdown (self):
-    log.debug("Shutdown server...")
-    self.__werkzeug_server.shutdown()
+    log.debug("Shutdown REST server...")
+    self.__werkzeug.shutdown()
 
 
-class AbstractLayerResourceHandler(Resource):
-  """
-  """
+class AbstractAPIView(View):
+  name = None
+  method = None
+
+  def __init__ (self, mgr):
+    """
+
+    :param mgr:
+    :type mgr: :class:`AbstractAPIManager`
+    """
+    self.mgr = mgr
+
+  def dispatch_request (self):
+    raise NotImplementedError
+
+
+class PingView(AbstractAPIView):
+  name = 'ping'
+  methods = ('GET', 'POST')
+
+  def dispatch_request (self):
+    if self.mgr.layer_api.is_up:
+      return Response('OK', 200)
+    else:
+      return Response('OK', 202)
+
+
+class SGView(AbstractAPIView):
+  name = 'sg'
+  methods = ('POST',)
+
+  def dispatch_request (self):
+    pass  # TODO
+
+
+class TopologyView(AbstractAPIView):
+  name = 'topology'
+  methods = ('GET', 'POST')
+
+  def dispatch_request (self):
+    pass  # TODO
+
+
+class GetConfigView(AbstractAPIView):
+  name = 'get-config'
+  methods = ('GET', 'POST')
+
+  def dispatch_request (self):
+    self.mgr.handle(rpc=self.name)
+
+
+class EditConfigView(AbstractAPIView):
+  name = 'edit-config'
+  methods = ('POST',)
+
+  def dispatch_request (self):
+    pass  # TODO
+
+
+class StatusView(AbstractAPIView):
+  name = 'status'
+  methods = ('GET',)
+
+  def dispatch_request (self):
+    pass  # TODO
+
+
+class MappingInfoView(AbstractAPIView):
+  name = 'mapping-info'
+  methods = ('GET',)
+
+  def dispatch_request (self):
+    pass  # TODO
+
+
+class MappingsView(AbstractAPIView):
+  name = 'mappings'
+  methods = ('POST',)
+
+  def dispatch_request (self):
+    pass  # TODO
+
+
+class InfoView(AbstractAPIView):
+  name = 'info'
+  methods = ('POST',)
+
+  def dispatch_request (self):
+    pass  # TODO
+
+
+class AbstractAPIManager(object):
   LAYER_NAME = None
-  GET_RPCS = ['ping', 'version']
-  POST_RPCS = ['ping']
+  VIEWS = None
 
   def __init__ (self, layer_api):
     """
-
-    :param layer_api:
-    :type layer_api: :any:`RestInterfaceAPI`
+    :type layer_api: :class:`RestInterfaceAPI`
     """
     self.layer_api = layer_api
 
-  def get (self, rpc):
-    if rpc not in self.GET_RPCS:
-      raise RuntimeError("RPC name: %s is not allowed!" % rpc)
-    return self._process_rpc(rpc)
+  def __get_rule (self, view):
+    return "/%s/%s/%s" % (self.layer_api.prefix, self.LAYER_NAME, view.name)
 
-  def post (self, rpc):
-    if rpc not in self.POST_RPCS:
-      raise RuntimeError("RPC name: %s is not allowed!" % rpc)
-    return self._process_rpc(rpc)
+  def __get_endpoint (self, view):
+    return "%s/%s" % (self.LAYER_NAME, view.name)
 
-  def _process_rpc (self, rpc):
-    if rpc == 'version':
-      return {'name': __project__, 'version': get_escape_version()}
-    if rpc == 'ping':
-      return ("OK", 200) if self.layer_api.is_up else ("INITIALIZING", 202)
+  def _add_route (self, app, view):
+    """
+    :type app: :class:`Flask`
+    :type app: :class:`AbstractView`
+    """
+    app.add_url_rule(rule=self.__get_rule(view=view),
+                     endpoint=self.__get_endpoint(view=view),
+                     view_func=view.as_view(name=view.name, mgr=self))
+
+  def register_routes (self, app):
+    """
+    :type app: :class:`Flask`
+    """
+    for view in self.VIEWS:
+      app.add_url_rule(rule=self.__get_rule(view=view),
+                       endpoint=self.__get_endpoint(view=view),
+                       view_func=view.as_view(name=view.name, mgr=self))
+      log.debug("Registered rule: %s" % view.name)
+
+  def handle (self, rpc):
+    return self.layer_api.proceed_API_call(layer=self.LAYER_NAME, rpc=rpc)
 
 
-class OrchestrationLayerResourceHandler(AbstractLayerResourceHandler):
-  """
-  """
+class ServiceAPIManager(AbstractAPIManager):
+  LAYER_NAME = 'service'
+  VIEWS = (PingView,
+           TopologyView,
+           SGView,
+           StatusView)
+
+
+class OrchestrationAPIManager(AbstractAPIManager):
   LAYER_NAME = 'orchestration'
-  GET_RPCS = ['get-config'] + AbstractLayerResourceHandler.GET_RPCS
-  POST_RPCS = ['get-config',
-               'edit-config'] + AbstractLayerResourceHandler.POST_RPCS
-
-  def __init__ (self, *args, **kwargs):
-    super(OrchestrationLayerResourceHandler, self).__init__(*args, **kwargs)
-
-  def get (self, rpc):
-    if rpc == 'get-config':
-      self.layer_api.proceed_API_call(layer=self.LAYER_NAME,
-                                      rpc=rpc)
-    elif rpc == 'edit-config':
-      pass
-    elif rpc == 'status':
-      pass
-    elif rpc == 'info':
-      pass
-    elif rpc == 'mapping-info':
-      pass
-    elif rpc == 'mappings':
-      pass
-    else:
-      return super(OrchestrationLayerResourceHandler, self).get(rpc=rpc)
+  VIEWS = (PingView,
+           GetConfigView,
+           EditConfigView,
+           StatusView,
+           MappingInfoView,
+           MappingsView,
+           InfoView)
 
 
-class ServiceLayerResourceHandler(OrchestrationLayerResourceHandler):
-  pass
-
-
-class AdaptationLayerResourceHandler(OrchestrationLayerResourceHandler):
-  pass
+class AdaptationAPIManager(AbstractAPIManager):
+  LAYER_NAME = 'adaptation'
+  VIEWS = (PingView,
+           GetConfigView,
+           EditConfigView)

@@ -441,7 +441,7 @@ class ESCAPEConfig(object):
     try:
       return self.__config['REST-API']['prefix']
     except KeyError:
-      return ''
+      return None
 
   def get_rest_api_host (self):
     try:
