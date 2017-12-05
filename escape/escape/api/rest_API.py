@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import httplib
 import logging
 import threading
 
@@ -64,6 +65,9 @@ class RestInterfaceAPI(AbstractAPI):
     # Add <prefix>/version rule by default
     self.server.flask.add_url_rule(rule="/%s/version" % self.prefix,
                                    view_func=get_escape_version)
+    # Add custom exception handling
+    self.server.flask.register_error_handler(Exception,
+                                             self.unhandled_exception)
 
   def shutdown (self, event):
     log.info("REST-API Sublayer is going down...")
@@ -105,6 +109,11 @@ class RestInterfaceAPI(AbstractAPI):
     else:
       raise RuntimeError(
         'Mistyped or not implemented API function call: %s' % rpc)
+
+  @staticmethod
+  def unhandled_exception (ex):
+    log.exception("Got unexpected exception: %s" % ex)
+    return Response(status=httplib.INTERNAL_SERVER_ERROR)
 
 
 class MainApiServer(object):
@@ -179,9 +188,9 @@ class PingView(AbstractAPIView):
 
   def dispatch_request (self):
     if self.mgr.layer_api.is_up:
-      return Response('OK', 200)
+      return Response('OK', httplib.OK)
     else:
-      return Response('OK', 202)
+      return Response('INITIALIZING', httplib.ACCEPTED)
 
 
 class SGView(AbstractAPIView):
@@ -205,7 +214,9 @@ class GetConfigView(AbstractAPIView):
   methods = ('GET', 'POST')
 
   def dispatch_request (self):
-    self.mgr.handle(rpc=self.name)
+    topo_resource = self.mgr.handle(rpc=self.name)
+    if topo_resource is None:
+      return Response("Resource info is missing!", httplib.NOT_FOUND)
 
 
 class EditConfigView(AbstractAPIView):
