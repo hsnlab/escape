@@ -30,6 +30,7 @@ from escape.util.config import CONFIG
 from escape.util.misc import get_escape_version
 from escape.util.stat import stats
 from virtualizer import Virtualizer
+from virtualizer_info import Info
 from virtualizer_mappings import Mappings
 
 
@@ -367,7 +368,17 @@ class InfoView(AbstractAPIView):
   methods = ('POST',)
 
   def dispatch_request (self):
-    pass  # TODO
+    if not request.data:
+      log.error("No data received!")
+      return Response("Request data is missing!", httplib.BAD_REQUEST)
+    # Get message-id
+    MessageDumper().dump_to_file(data=request.data,
+                                 unique="ESCAPE-%s-info" %
+                                        self.mgr.LAYER_NAME)
+    info = Info.parse_from_text(text=request.data)
+    msg_id = self.get_message_id()
+    self.proceed(info=info, id=msg_id, params=request.args.to_dict(flat=True))
+    return Response(status=httplib.ACCEPTED)
 
 
 class AbstractAPIManager(object):

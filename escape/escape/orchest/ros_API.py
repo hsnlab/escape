@@ -433,7 +433,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     return response
 
   @schedule_as_coop_task
-  def rest_api_info (self, info, id):
+  def rest_api_info (self, info, id, params):
     """
     Main entry point to process a received Info request.
 
@@ -442,6 +442,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :param id: unique id
     :type id: str or int
     """
+    self.log.debug("Cache 'info' request params with id: %s" % id)
+    self.request_cache.cache_request(message_id=id, params=params)
     slor_topo = self.__get_slor_resource_view().get_resource_info()
     splitted = self.orchestrator.filter_info_request(info=info,
                                                      slor_topo=slor_topo)
