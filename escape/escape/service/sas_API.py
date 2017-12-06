@@ -19,13 +19,14 @@ import httplib
 import os
 from subprocess import Popen
 
+from escape.api.rest_API import RESTAPIManager
 from escape.nffg_lib.nffg import NFFG, NFFGToolBox
 from escape.orchest.ros_API import InstantiationFinishedEvent, \
   BasicUnifyRequestHandler
 from escape.service import LAYER_NAME, log as log  # Service layer logger
 from escape.service.element_mgmt import ClickManager
 from escape.service.sas_orchestration import ServiceOrchestrator
-from escape.util.api import AbstractAPI, RESTServer, AbstractRequestHandler, \
+from escape.util.api import AbstractAPI, AbstractRequestHandler, \
   RequestStatus, RequestScheduler
 from escape.util.config import CONFIG
 from escape.util.conversion import NFFGConverter
@@ -227,6 +228,9 @@ class ServiceLayerAPI(AbstractAPI):
     self.service_orchestrator = None
     """:type ServiceOrchestrator"""
     self.gui_proc = None
+    self.api_mgr = RESTAPIManager(unique_bb_id=False,
+                                  unique_nf_id=CONFIG.ensure_unique_vnf_id(),
+                                  logger=log)
     super(ServiceLayerAPI, self).__init__(standalone, **kwargs)
 
   def initialize (self):
@@ -274,7 +278,7 @@ class ServiceLayerAPI(AbstractAPI):
         log.info("Schedule service request delayed by %d seconds..."
                  % SCHEDULED_SERVICE_REQUEST_DELAY)
         stats.set_request_id(request_id=nffg.id)
-        self.api_sas_sg_request_delayed(service_nffg=nffg)
+        self.api_sas_sg_delayed(service_nffg=nffg)
       except (ValueError, IOError, TypeError) as e:
         log.error(
           "Can't load service request from file because of: " + str(e))
@@ -308,25 +312,6 @@ class ServiceLayerAPI(AbstractAPI):
     rest_api = self.get_dependent_component('REST-API')
     rest_api.register_component(component=self)
     return
-    # set bounded layer name here to avoid circular dependency problem
-    handler = CONFIG.get_sas_api_class()
-    handler.bounded_layer = self._core_name
-    params = CONFIG.get_sas_agent_params()
-    # can override from global config
-    if 'prefix' in params:
-      handler.prefix = params['prefix']
-    if 'unify_interface' in params:
-      handler.virtualizer_format_enabled = params['unify_interface']
-    address = (params.get('address'), params.get('port'))
-    self.rest_api = RESTServer(handler, *address)
-    self.rest_api.api_id = handler.LOGGER_NAME = "U-Sl"
-    handler.log.info("Init REST-API for %s on %s:%s!" % (
-      self.rest_api.api_id, address[0], address[1]))
-    self.rest_api.virtualizer_params = params.get('virtualizer_params', {})
-    self.rest_api.start()
-    handler.log.debug("Enforced configuration for %s: interface: %s" % (
-      self.rest_api.api_id,
-      "UNIFY" if handler.virtualizer_format_enabled else "Internal-NFFG"))
 
   def _initiate_gui (self):
     """
@@ -358,7 +343,7 @@ class ServiceLayerAPI(AbstractAPI):
 
   # noinspection PyUnusedLocal
   @schedule_as_coop_task
-  def api_sas_sg_request (self, service_nffg, *args, **kwargs):
+  def api_sas_sg (self, service_nffg, *args, **kwargs):
     """
     Initiate service graph in a cooperative micro-task.
 
@@ -366,11 +351,11 @@ class ServiceLayerAPI(AbstractAPI):
     :type service_nffg: :class:`NFFG`
     :return: None
     """
-    self.__proceed_sg_request(service_nffg=service_nffg)
+    self.__proceed_sg_request(id=service_nffg.id, data=service_nffg)
 
   # noinspection PyUnusedLocal
   @schedule_delayed_as_coop_task(delay=SCHEDULED_SERVICE_REQUEST_DELAY)
-  def api_sas_sg_request_delayed (self, service_nffg, *args, **kwargs):
+  def api_sas_sg_delayed (self, service_nffg, *args, **kwargs):
     """
     Initiate service graph in a cooperative micro-task.
 
@@ -378,19 +363,48 @@ class ServiceLayerAPI(AbstractAPI):
     :type service_nffg: :class:`NFFG`
     :return: None
     """
-    return self.__proceed_sg_request(service_nffg=service_nffg)
+    return self.__proceed_sg_request(id=service_nffg.id,
+                                     data=service_nffg)
 
-  def __proceed_sg_request (self, service_nffg):
+  def __proceed_sg_request (self, id, data, params=None):
     """
     Initiate a Service Graph (UNIFY U-Sl API).
 
-    :param service_nffg: service graph instance
-    :type service_nffg: :class:`NFFG`
     :return: None
     """
-    log.getChild('API').info("Invoke request_service on %s with SG: %s " %
-                             (self.__class__.__name__, service_nffg))
+    log.info("Invoke preprocessing on %s with SG: %s "
+             % (self.__class__.__name__, id))
     stats.add_measurement_start_entry(type=stats.TYPE_SERVICE, info=LAYER_NAME)
+    if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
+      log.debug("Virtualizer format enabled! Start conversion step...")
+      if CONFIG.get_rest_api_config(self._core_name)['diff']:
+        log.debug("Diff format enabled! Start patching step...")
+        if self.api_mgr.last_response is None:
+          log.info("Missing cached Virtualizer! Acquiring topology now...")
+          self.api_sas_topology()
+        stats.add_measurement_start_entry(type=stats.TYPE_PROCESSING,
+                                          info="RECREATE-FULL-REQUEST")
+        log.info("Patching cached topology with received diff...")
+        full_req = self.api_mgr.last_response.full_copy()
+        full_req.patch(source=data)
+        stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
+                                        info="RECREATE-FULL-REQUEST")
+      else:
+        full_req = data
+      log.info("Converting full request data...")
+      stats.add_measurement_start_entry(type=stats.TYPE_CONVERSION,
+                                        info="VIRTUALIZER-->NFFG")
+      service_nffg = self.api_mgr.converter.parse_from_Virtualizer(
+        vdata=full_req)
+      stats.add_measurement_end_entry(type=stats.TYPE_CONVERSION,
+                                      info="VIRTUALIZER-->NFFG")
+    else:
+      service_nffg = data
+    log.debug("Set NFFG id: %s" % id)
+    if service_nffg.service_id is None:
+      service_nffg.service_id = service_nffg.id
+      service_nffg.id = id
+    service_nffg.add_metadata(name="params", value=params)
     # Check if mapping mode is set globally in CONFIG
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:
@@ -482,10 +496,8 @@ class ServiceLayerAPI(AbstractAPI):
     :type fail: bool
     :return: None
     """
-    if not (hasattr(self, 'rest_api') and self.rest_api):
-      return
     log.getChild('API').debug("Cache request status...")
-    req_status = self.rest_api.request_cache.get_request_by_nffg_id(nffg_id)
+    req_status = self.api_mgr.request_cache.get_request_by_nffg_id(nffg_id)
     if req_status is None:
       log.getChild('API').debug("Request status is missing for NFFG: %s! "
                                 "Skip result processing..." % nffg_id)
@@ -494,10 +506,10 @@ class ServiceLayerAPI(AbstractAPI):
     message_id = req_status.message_id
     if message_id is not None:
       if fail:
-        self.rest_api.request_cache.set_error_result(id=message_id)
+        self.api_mgr.request_cache.set_error_result(id=message_id)
       else:
-        self.rest_api.request_cache.set_success_result(id=message_id)
-      ret = self.rest_api.invoke_callback(message_id=message_id)
+        self.api_mgr.request_cache.set_success_result(id=message_id)
+      ret = self.api_mgr.invoke_callback(message_id=message_id)
       if ret is None:
         log.getChild('API').debug("No callback was defined!")
       else:
@@ -515,7 +527,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     return self.service_orchestrator.virtResManager.virtual_view
 
-  def api_sas_get_topology (self):
+  def api_sas_topology (self):
     """
     Return with the topology description.
 
@@ -526,13 +538,40 @@ class ServiceLayerAPI(AbstractAPI):
     # Get or if not available then request the layer's Virtualizer
     sas_virt = self.__get_sas_resource_view()
     if sas_virt is not None:
-      log.getChild('[U-Sl]').debug("Generate topo description...")
+      if sas_virt.revision is None:
+        log.debug("Not initialized yet!")
+      else:
+        # Check if the resource is changed
+        if self.api_mgr.topology_revision == sas_virt.revision:
+          # If resource has not been changed return False
+          # This causes to response with the cached topology
+          log.debug("Global resource has not changed (revision: %s)! "
+                         % sas_virt.revision)
+          log.debug("Send topology from cache...")
+          if self.api_mgr.last_response is None:
+            log.error("Cached topology is missing!")
+            return
+          else:
+            return self.api_mgr.last_response
+        else:
+          log.debug("Response cache is outdated (new revision: %s)!"
+                         % sas_virt.revision)
+        log.getChild('[U-Sl]').debug("Generate topo description...")
       # return with the virtual view as an NFFG
-      return sas_virt.get_resource_info()
+      res = sas_virt.get_resource_info()
+      self.api_mgr.topology_revision = sas_virt.revision
+      log.debug("Updated revision number: %s"
+                     % self.api_mgr.topology_revision)
+      if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
+        log.debug("Convert internal NFFG to Virtualizer...")
+        res = self.api_mgr.converter.dump_to_Virtualizer(nffg=res)
+      log.debug("Cache acquired topology...")
+      self.api_mgr.last_response = res
+      return res
     else:
       log.getChild('[U-Sl]').error(
         "Virtualizer(id=%s) assigned to REST-API is not found!" %
-        self.rest_api.api_id)
+        self._core_name)
 
   def api_sas_status (self, message_id):
     """
@@ -546,7 +585,7 @@ class ServiceLayerAPI(AbstractAPI):
     :return: state
     :rtype: str
     """
-    status = self.rest_api.request_cache.get_domain_status(id=message_id)
+    status = self.api_mgr.request_cache.get_domain_status(id=message_id)
     if status == RequestStatus.SUCCESS:
       return 200, None
     elif status == RequestStatus.UNKNOWN:

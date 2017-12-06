@@ -17,16 +17,19 @@ import logging
 import threading
 import uuid
 
+import requests
 from flask import request, Response
 from flask.app import Flask
 from flask.views import View
+from requests import RequestException, Timeout
 from werkzeug.serving import make_server
 
 from escape.api import LAYER_NAME, log
 from escape.nffg_lib import NFFG
-from escape.util.api import AbstractAPI, RequestScheduler
+from escape.util.api import AbstractAPI, RequestScheduler, RequestCache
 from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
+from escape.util.conversion import NFFGConverter
 from escape.util.misc import get_escape_version
 from escape.util.stat import stats
 from virtualizer import Virtualizer
@@ -174,6 +177,52 @@ class MainApiServer(object):
   def shutdown (self):
     log.debug("Shutdown REST server...")
     self.__werkzeug.shutdown()
+
+
+class RESTAPIManager(object):
+  CALLBACK_TIMEOUT = 3.0
+
+  def __init__ (self, **kwargs):
+    self.converter = NFFGConverter(**kwargs)
+    self.request_cache = RequestCache()
+    self.topology_revision = None
+    self.last_response = None
+
+  def invoke_callback (self, message_id, body=None):
+    """
+    Perform the callback call based on service status and callback URL.
+
+    :param message_id: service request id
+    :type message_id: str or int
+    :param body: optional callback body
+    :type body: str
+    :return: status code of the call
+    :rtype: int
+    """
+    status = self.request_cache.get_request(message_id)
+    if "call-back" not in status.params:
+      return None
+    callback_url = status.get_callback()
+    if 'message-id' in status.params:
+      msg_id = status.params.get('message-id')
+    else:
+      msg_id = status.message_id
+    params = {'message-id': msg_id}
+    if status.status == status.SUCCESS:
+      params['response-code'] = httplib.OK
+      if not body:
+        body = "OK"
+    else:
+      params['response-code'] = httplib.INTERNAL_SERVER_ERROR
+      if not body:
+        # TODO - return with failed part of the request??
+        body = "TODO"
+    try:
+      ret = requests.post(url=callback_url, params=params, data=body,
+                          timeout=self.CALLBACK_TIMEOUT)
+      return ret.status_code
+    except (RequestException, Timeout):
+      return -1
 
 
 class AbstractAPIView(View):

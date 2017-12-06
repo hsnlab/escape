@@ -20,13 +20,14 @@ import json
 import pprint
 
 from escape.adapt.adaptation import InfoRequestFinishedEvent
+from escape.api.rest_API import RESTAPIManager
 from escape.nffg_lib.nffg import NFFG
 from escape.nffg_lib.nffg import NFFGToolBox
 from escape.orchest import LAYER_NAME  # Orchestration layer logger
 from escape.orchest import log as log
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RequestStatus, \
-  RequestScheduler, RequestCache
+  RequestScheduler
 from escape.util.api import AbstractRequestHandler
 from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
@@ -156,13 +157,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     # Mandatory super() call
     self.orchestrator = None
     """:type: ResourceOrchestrator"""
-    self.converter = NFFGConverter(unique_bb_id=False,
-                                   unique_nf_id=CONFIG.ensure_unique_vnf_id(),
-                                   logger=log)
-    self.api_cfg = CONFIG.get_rest_api_config(layer=self._core_name)
-    self.request_cache = RequestCache()
-    self.topology_revision = None
-    self.last_response = None
+    self.api_mgr = RESTAPIManager(unique_bb_id=False,
+                                  unique_nf_id=CONFIG.ensure_unique_vnf_id(),
+                                  logger=log)
     self.log = log.getChild('API')
     super(ResourceOrchestrationAPI, self).__init__(standalone, **kwargs)
 
@@ -252,35 +249,36 @@ class ResourceOrchestrationAPI(AbstractAPI):
                        "Force to get default topology...")
       else:
         # Check if the resource is changed
-        if self.topology_revision == slor_virt.revision:
+        if self.api_mgr.topology_revision == slor_virt.revision:
           # If resource has not been changed return False
           # This causes to response with the cached topology
           self.log.debug("Global resource has not changed (revision: %s)! "
                          % slor_virt.revision)
           log.debug("Send topology from cache...")
-          if self.last_response is None:
+          if self.api_mgr.last_response is None:
             log.error("Cached topology is missing!")
             return
           else:
-            return self.last_response
+            return self.api_mgr.last_response
         else:
           self.log.debug("Response cache is outdated (new revision: %s)!"
                          % slor_virt.revision)
       # Get topo view as NFFG
       res = slor_virt.get_resource_info()
-      self.topology_revision = slor_virt.revision
-      self.log.debug("Updated revision number: %s" % self.topology_revision)
+      self.api_mgr.topology_revision = slor_virt.revision
+      self.log.debug("Updated revision number: %s"
+                     % self.api_mgr.topology_revision)
       if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
         self.log.debug("Convert internal NFFG to Virtualizer...")
-        res = self.converter.dump_to_Virtualizer(nffg=res)
+        res = self.api_mgr.converter.dump_to_Virtualizer(nffg=res)
       log.debug("Cache acquired topology...")
-      self.last_response = res
+      self.api_mgr.last_response = res
       return res
     else:
       log.error("Virtualizer assigned to %s is not found!" % self._core_name)
 
   # noinspection PyUnusedLocal
-  def rest_api_edit_config (self, id, data, params):
+  def rest_api_edit_config (self, id, data, params=None):
     """
     Implementation of REST-API RPC: edit-config
 
@@ -298,13 +296,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
       self.log.debug("Virtualizer format enabled! Start conversion step...")
       if CONFIG.get_rest_api_config(self._core_name)['diff']:
         self.log.debug("Diff format enabled! Start patching step...")
-        if self.last_response is None:
+        if self.api_mgr.last_response is None:
           self.log.info("Missing cached Virtualizer! Acquiring topology now...")
           self.rest_api_get_config()
         stats.add_measurement_start_entry(type=stats.TYPE_PROCESSING,
                                           info="RECREATE-FULL-REQUEST")
         self.log.info("Patching cached topology with received diff...")
-        full_req = self.last_response.full_copy()
+        full_req = self.api_mgr.last_response.full_copy()
         full_req.patch(source=data)
         stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
                                         info="RECREATE-FULL-REQUEST")
@@ -313,7 +311,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
       self.log.info("Converting full request data...")
       stats.add_measurement_start_entry(type=stats.TYPE_CONVERSION,
                                         info="VIRTUALIZER-->NFFG")
-      nffg = self.converter.parse_from_Virtualizer(vdata=full_req)
+      nffg = self.api_mgr.converter.parse_from_Virtualizer(vdata=full_req)
       stats.add_measurement_end_entry(type=stats.TYPE_CONVERSION,
                                       info="VIRTUALIZER-->NFFG")
     else:
@@ -322,7 +320,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if nffg.service_id is None:
       nffg.service_id = nffg.id
     nffg.id = id
-    nffg.add_metadata(name="params", value=params)
+    if params:
+      nffg.add_metadata(name="params", value=params)
     self.log.debug("Proceeding request: %s to instantiation..." % id)
     # Get resource view of the interface
     res = self.__get_slor_resource_view().get_resource_info()
@@ -366,7 +365,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: state
     :rtype: str
     """
-    status = self.request_cache.get_status(id=message_id)
+    status = self.api_mgr.request_cache.get_status(id=message_id)
     if status == RequestStatus.SUCCESS:
       return httplib.OK, None
     elif status == RequestStatus.UNKNOWN:
@@ -443,7 +442,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type id: str or int
     """
     self.log.debug("Cache 'info' request params with id: %s" % id)
-    self.request_cache.cache_request(message_id=id, params=params)
+    self.api_mgr.request_cache.cache_request(message_id=id, params=params)
     slor_topo = self.__get_slor_resource_view().get_resource_info()
     splitted = self.orchestrator.filter_info_request(info=info,
                                                      slor_topo=slor_topo)
@@ -487,9 +486,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     log.debug("Got resource view for difference calculation: %s" %
               resource_nffg)
     self.log.debug("Store received NFFG request info...")
-    msg_id = self.request_cache.cache_request_by_nffg(nffg=nffg)
+    msg_id = self.api_mgr.request_cache.cache_request_by_nffg(nffg=nffg)
     if msg_id is not None:
-      self.request_cache.set_in_progress(id=msg_id)
+      self.api_mgr.request_cache.set_in_progress(id=msg_id)
       self.log.debug("Request is stored with id: %s" % msg_id)
     else:
       self.log.debug("No request info detected.")
@@ -623,7 +622,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     self.log.debug("Cache request status...")
-    req_status = self.request_cache.get_request_by_nffg_id(nffg_id)
+    req_status = self.api_mgr.request_cache.get_request_by_nffg_id(nffg_id)
     if req_status is None:
       self.log.debug("Request status is missing for NFFG: %s! "
                      "Skip result processing..." % nffg_id)
@@ -632,12 +631,12 @@ class ResourceOrchestrationAPI(AbstractAPI):
     message_id = req_status.message_id
     if message_id is not None:
       if fail:
-        self.request_cache.set_error_result(id=message_id)
+        self.api_mgr.request_cache.set_error_result(id=message_id)
       else:
-        self.request_cache.set_success_result(id=message_id)
+        self.api_mgr.request_cache.set_success_result(id=message_id)
       log.info("Set request status: %s for message: %s"
                % (req_status.status, req_status.message_id))
-      ret = self.ros_api.invoke_callback(message_id=message_id)
+      ret = self.api_mgr.invoke_callback(message_id=message_id)
       if ret is None:
         self.log.debug("No callback was defined!")
       else:
@@ -683,9 +682,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
                    str(event.source._core_name).title())
     # Currently view is a Virtualizer to keep ESCAPE fast
     # Virtualizer type for Sl-Or API
-    virtualizer_type = CONFIG.get_api_virtualizer(layer_name=LAYER_NAME,
-                                                  api_name=event.sid)
-    params = CONFIG.get_virtualizer_params(api_id=event.sid)
+    virtualizer_type = CONFIG.get_api_virtualizer(layer=LAYER_NAME)
+    params = CONFIG.get_virtualizer_params(layer=LAYER_NAME)
     v = self.orchestrator.virtualizerManager.get_virtual_view(
       virtualizer_id=event.sid, type=virtualizer_type, **params)
     if v is None:
@@ -723,23 +721,23 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: None
     """
     self.log.debug("Cache collected 'info' request status...")
-    req_status = self.request_cache.get_request(message_id=status.id)
+    req_status = self.api_mgr.request_cache.get_request(message_id=status.id)
     if req_status is None:
       self.log.debug("Request status is missing: %s! "
                      "Skip result processing..." % status.id)
       return
     self.log.debug("Process collected info result...")
     if fail:
-      self.request_cache.set_error_result(id=status.id)
+      self.api_mgr.request_cache.set_error_result(id=status.id)
       body = None
     else:
-      self.request_cache.set_success_result(id=status.id)
+      self.api_mgr.request_cache.set_success_result(id=status.id)
       body = status.data[0]
       body = body.xml() if isinstance(body, Info) else str(body)
     log.info("Set request status: %s for message: %s"
              % (req_status.status, req_status.message_id))
     log.log(VERBOSE, "Collected Info data:\n%s" % body)
-    ret = self.ros_api.invoke_callback(message_id=status.id, body=body)
+    ret = self.api_mgr.invoke_callback(message_id=status.id, body=body)
     if ret is None:
       self.log.debug("No callback was defined!")
     else:
