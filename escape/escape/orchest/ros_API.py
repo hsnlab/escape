@@ -26,7 +26,7 @@ from escape.orchest import LAYER_NAME  # Orchestration layer logger
 from escape.orchest import log as log
 from escape.orchest.ros_orchestration import ResourceOrchestrator
 from escape.util.api import AbstractAPI, RequestStatus, \
-  RequestScheduler
+  RequestScheduler, RequestCache
 from escape.util.api import AbstractRequestHandler
 from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
@@ -159,7 +159,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     self.converter = NFFGConverter(unique_bb_id=False,
                                    unique_nf_id=CONFIG.ensure_unique_vnf_id(),
                                    logger=log)
-    self.rest_api_cfg = CONFIG.get_rest_api_config(layer=self._core_name)
+    self.api_cfg = CONFIG.get_rest_api_config(layer=self._core_name)
+    self.request_cache = RequestCache()
     self.topology_revision = None
     self.last_response = None
     self.log = log.getChild('API')
@@ -279,26 +280,54 @@ class ResourceOrchestrationAPI(AbstractAPI):
       log.error("Virtualizer assigned to %s is not found!" % self._core_name)
 
   # noinspection PyUnusedLocal
-  def rest_api_edit_config (self, nffg, params):
+  def rest_api_edit_config (self, id, data, params):
     """
     Implementation of REST-API RPC: edit-config
 
-    :param nffg: NFFG need to deploy
-    :type nffg: :class:`NFFG`
     :param params: original request params
     :type params: dict
     :return: None
     """
-    self.log.info("Invoke install_nffg on %s with SG: %s "
-                  % (self.__class__.__name__, nffg))
+    self.log.info("Invoke preprocessing on %s with SG: %s "
+                  % (self.__class__.__name__, id))
     if self._agent:
       # ESCAPE serves as a local orchestrator, probably with infrastructure
       # layer --> rewrite domain
-      nffg = self.__update_nffg_domain(nffg_part=nffg)
+      nffg = self.__update_nffg_domain(nffg_part=data)
+    if CONFIG.get_rest_api_config(self._core_name)['unify_interface']:
+      self.log.debug("Virtualizer format enabled! Start conversion step...")
+      if CONFIG.get_rest_api_config(self._core_name)['diff']:
+        self.log.debug("Diff format enabled! Start patching step...")
+        if self.last_response is None:
+          self.log.info("Missing cached Virtualizer! Acquiring topology now...")
+          self.rest_api_get_config()
+        stats.add_measurement_start_entry(type=stats.TYPE_PROCESSING,
+                                          info="RECREATE-FULL-REQUEST")
+        self.log.info("Patching cached topology with received diff...")
+        full_req = self.last_response.full_copy()
+        full_req.patch(source=data)
+        stats.add_measurement_end_entry(type=stats.TYPE_PROCESSING,
+                                        info="RECREATE-FULL-REQUEST")
+      else:
+        full_req = data
+      self.log.info("Converting full request data...")
+      stats.add_measurement_start_entry(type=stats.TYPE_CONVERSION,
+                                        info="VIRTUALIZER-->NFFG")
+      nffg = self.converter.parse_from_Virtualizer(vdata=full_req)
+      stats.add_measurement_end_entry(type=stats.TYPE_CONVERSION,
+                                      info="VIRTUALIZER-->NFFG")
+    else:
+      nffg = data
+    self.log.debug("Set NFFG id: %s" % id)
+    if nffg.service_id is None:
+      nffg.service_id = nffg.id
+    nffg.id = id
+    self.log.debug("Proceeding request: %s to instantiation..." % id)
     # Get resource view of the interface
     res = self.__get_slor_resource_view().get_resource_info()
     # ESCAPE serves as a global or proxy orchestrator
     self.__proceed_instantiation(nffg=nffg, resource_nffg=res)
+    self.log.info("Preprocessing on %s ended!" % self.__class__.__name__)
 
   @staticmethod
   def __update_nffg_domain (nffg_part, domain_name=None):
@@ -454,14 +483,13 @@ class ResourceOrchestrationAPI(AbstractAPI):
       return
     log.debug("Got resource view for difference calculation: %s" %
               resource_nffg)
-    if hasattr(self, 'ros_api') and self.ros_api:
-      self.log.debug("Store received NFFG request info...")
-      msg_id = self.ros_api.request_cache.cache_request_by_nffg(nffg=nffg)
-      if msg_id is not None:
-        self.ros_api.request_cache.set_in_progress(id=msg_id)
-        self.log.debug("Request is stored with id: %s" % msg_id)
-      else:
-        self.log.debug("No request info detected.")
+    self.log.debug("Store received NFFG request info...")
+    msg_id = self.request_cache.cache_request_by_nffg(nffg=nffg)
+    if msg_id is not None:
+      self.request_cache.set_in_progress(id=msg_id)
+      self.log.debug("Request is stored with id: %s" % msg_id)
+    else:
+      self.log.debug("No request info detected.")
     # Check if mapping mode is set globally in CONFIG
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:

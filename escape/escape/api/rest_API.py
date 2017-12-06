@@ -14,6 +14,7 @@
 import httplib
 import logging
 import threading
+import uuid
 
 from flask import request, Response
 from flask.app import Flask
@@ -22,10 +23,11 @@ from werkzeug.serving import make_server
 
 from escape.api import LAYER_NAME, log
 from escape.nffg_lib import NFFG
-from escape.util.api import AbstractAPI
+from escape.util.api import AbstractAPI, RequestScheduler
 from escape.util.com_logger import MessageDumper
 from escape.util.config import CONFIG
 from escape.util.misc import get_escape_version
+from escape.util.stat import stats
 from virtualizer import Virtualizer
 
 
@@ -101,15 +103,16 @@ class RestInterfaceAPI(AbstractAPI):
       rpc_name = self.pythonify_rpc_name(meth[len(self.ENTRY_POINT_PREFIX):])
       self.__entry_point_cache[(layer_name, rpc_name)] = getattr(component,
                                                                  meth)
-      log.debug("Registered RPC call handler: %s" % meth)
+    log.debug("Registered RPC call handlers: %s"
+              % map(lambda e: e[1], self.__entry_point_cache.iterkeys()))
 
-  def proceed_API_call (self, layer, rpc, *args, **kwargs):
+  def get_entry_point (self, layer, rpc):
     """
     """
     entry_point = self.__entry_point_cache.get((layer,
                                                 self.pythonify_rpc_name(rpc)))
     if entry_point is not None and callable(entry_point):
-      return entry_point(*args, **kwargs)
+      return entry_point
     else:
       raise RuntimeError(
         'Mistyped or not implemented API function call: %s' % rpc)
@@ -171,6 +174,7 @@ class MainApiServer(object):
 
 
 class AbstractAPIView(View):
+  MESSAGE_ID_NAME = "message-id"
   name = None
   method = None
 
@@ -184,6 +188,14 @@ class AbstractAPIView(View):
 
   def dispatch_request (self):
     raise NotImplementedError
+
+  def get_message_id (self):
+    if self.MESSAGE_ID_NAME in request.args:
+      return request.args[self.MESSAGE_ID_NAME]
+    elif self.MESSAGE_ID_NAME in request.headers:
+      return request.headers[self.MESSAGE_ID_NAME]
+    else:
+      return str(uuid.uuid1())
 
 
 class PingView(AbstractAPIView):
@@ -237,10 +249,54 @@ class GetConfigView(AbstractAPIView):
 
 class EditConfigView(AbstractAPIView):
   name = 'edit-config'
-  methods = ('POST',)
+  methods = ('POST', 'PUT')
 
   def dispatch_request (self):
-    pass  # TODO
+    """
+    :return:
+    """
+    if not request.data:
+      log.error("No data received!")
+      return Response("Request data is missing!", httplib.BAD_REQUEST)
+    # Get message-id
+    unique = "ESCAPE-%s-edit-config" % self.mgr.LAYER_NAME
+    # Trailing
+    stats.init_request_measurement(request_id=unique)
+    MessageDumper().dump_to_file(data=request.data, unique=unique)
+    # Parsing
+    log.debug("Parsing request (body_size: %s)..." % len(request.data))
+    if CONFIG.get_rest_api_config(self.mgr.LAYER_NAME)['unify_interface']:
+      req = Virtualizer.parse_from_text(text=request.data)
+    else:
+      req = NFFG.parse(raw_data=request.data)
+      if req.mode:
+        log.info("Detected mapping mode in request body: %s" % req.mode)
+      else:
+        if request.method == 'POST':
+          req.mode = req.MODE_ADD
+          log.debug(
+            'Add mapping mode: %s based on HTTP verb: %s' % (req.mode,
+                                                             request.method))
+        elif request.method == 'PUT':
+          req.mode = NFFG.MODE_DEL
+          log.debug(
+            'Add mapping mode: %s based on HTTP verb: %s' % (req.mode,
+                                                             request.method))
+        else:
+          log.info('No mode parameter has been defined in body!')
+    log.debug("Request parsing ended...")
+    # Scheduling
+    params = request.args.to_dict(flat=True)
+    msg_id = self.get_message_id()
+    log.info("Acquired message-id: %s" % msg_id)
+    entry_point = self.mgr.layer_api.get_entry_point(layer=self.mgr.LAYER_NAME,
+                                                     rpc=self.name)
+    self.mgr.scheduler.schedule_request(id=msg_id,
+                                        layer=self.mgr.LAYER_NAME,
+                                        hook=entry_point,
+                                        data=req,
+                                        params=params)
+    return Response(status=httplib.ACCEPTED)
 
 
 class StatusView(AbstractAPIView):
@@ -284,6 +340,7 @@ class AbstractAPIManager(object):
     :type layer_api: :class:`RestInterfaceAPI`
     """
     self.layer_api = layer_api
+    self.scheduler = RequestScheduler()
 
   def __get_rule (self, view):
     return "/%s/%s/%s" % (self.layer_api.prefix, self.LAYER_NAME, view.name)
@@ -311,8 +368,8 @@ class AbstractAPIManager(object):
       log.debug("Registered rule: %s" % view.name)
 
   def handle (self, rpc, *args, **kwargs):
-    return self.layer_api.proceed_API_call(layer=self.LAYER_NAME,
-                                           rpc=rpc, *args, **kwargs)
+    entry_point = self.layer_api.get_entry_point(layer=self.LAYER_NAME, rpc=rpc)
+    return entry_point(*args, **kwargs)
 
 
 class ServiceAPIManager(AbstractAPIManager):
