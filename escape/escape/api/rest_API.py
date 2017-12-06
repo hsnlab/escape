@@ -209,22 +209,6 @@ class PingView(AbstractAPIView):
       return Response('INITIALIZING', httplib.ACCEPTED)
 
 
-class SGView(AbstractAPIView):
-  name = 'sg'
-  methods = ('POST',)
-
-  def dispatch_request (self):
-    pass  # TODO
-
-
-class TopologyView(AbstractAPIView):
-  name = 'topology'
-  methods = ('GET', 'POST')
-
-  def dispatch_request (self):
-    pass  # TODO
-
-
 class GetConfigView(AbstractAPIView):
   name = 'get-config'
   methods = ('GET', 'POST')
@@ -297,6 +281,16 @@ class EditConfigView(AbstractAPIView):
                                         data=req,
                                         params=params)
     return Response(status=httplib.ACCEPTED, headers={"message-id": msg_id})
+
+
+class TopologyView(GetConfigView):
+  name = 'topology'
+  methods = ('GET', 'POST')
+
+
+class SGView(EditConfigView):
+  name = 'sg'
+  methods = ('POST',)
 
 
 class StatusView(AbstractAPIView):
