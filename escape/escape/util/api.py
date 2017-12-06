@@ -323,7 +323,7 @@ class RequestCache(object):
     :rtype: str or int
     """
     try:
-      key = nffg.metadata['params']['message-id']
+      key = nffg.id
       self.__cache[key] = RequestStatus(message_id=key,
                                         nffg_id=nffg.id,
                                         status=RequestStatus.INITIATED,

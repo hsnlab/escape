@@ -203,7 +203,7 @@ class ControllerAdaptationAPI(AbstractAPI):
         self.dov_api.request_cache.set_in_progress(id=msg_id)
         log.getChild('API').debug("Request is stored with id: %s" % msg_id)
       else:
-        log.getChild('API').debug("No request info detected.")
+        log.getChild('API').warning("No request info detected.")
     stats.add_measurement_start_entry(type=stats.TYPE_DEPLOY,
                                       info=LAYER_NAME)
     try:

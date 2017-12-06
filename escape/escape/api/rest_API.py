@@ -296,7 +296,7 @@ class EditConfigView(AbstractAPIView):
                                         hook=entry_point,
                                         data=req,
                                         params=params)
-    return Response(status=httplib.ACCEPTED)
+    return Response(status=httplib.ACCEPTED, headers={"message-id": msg_id})
 
 
 class StatusView(AbstractAPIView):
@@ -304,7 +304,16 @@ class StatusView(AbstractAPIView):
   methods = ('GET',)
 
   def dispatch_request (self):
-    pass  # TODO
+    if self.MESSAGE_ID_NAME in request.args:
+      message_id = request.args[self.MESSAGE_ID_NAME]
+    elif self.MESSAGE_ID_NAME in request.headers:
+      message_id = request.headers[self.MESSAGE_ID_NAME]
+    else:
+      return Response("No message-id was given!", status=httplib.BAD_REQUEST)
+    log.debug("Detected message-id: %s" % message_id)
+    code, result = self.mgr.handle(rpc=self.name, message_id=message_id)
+    log.debug("Responded status code: %s, data: %s" % (code, result))
+    return Response(result, status=code, headers={"message-id": message_id})
 
 
 class MappingInfoView(AbstractAPIView):

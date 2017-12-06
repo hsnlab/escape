@@ -322,6 +322,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     if nffg.service_id is None:
       nffg.service_id = nffg.id
     nffg.id = id
+    nffg.add_metadata(name="params", value=params)
     self.log.debug("Proceeding request: %s to instantiation..." % id)
     # Get resource view of the interface
     res = self.__get_slor_resource_view().get_resource_info()
@@ -365,7 +366,7 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :return: state
     :rtype: str
     """
-    status = self.ros_api.request_cache.get_domain_status(id=message_id)
+    status = self.request_cache.get_status(id=message_id)
     if status == RequestStatus.SUCCESS:
       return httplib.OK, None
     elif status == RequestStatus.UNKNOWN:
@@ -619,10 +620,8 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type fail: bool
     :return: None
     """
-    if not (hasattr(self, 'ros_api') and self.ros_api):
-      return
     self.log.debug("Cache request status...")
-    req_status = self.ros_api.request_cache.get_request_by_nffg_id(nffg_id)
+    req_status = self.request_cache.get_request_by_nffg_id(nffg_id)
     if req_status is None:
       self.log.debug("Request status is missing for NFFG: %s! "
                      "Skip result processing..." % nffg_id)
@@ -631,9 +630,9 @@ class ResourceOrchestrationAPI(AbstractAPI):
     message_id = req_status.message_id
     if message_id is not None:
       if fail:
-        self.ros_api.request_cache.set_error_result(id=message_id)
+        self.request_cache.set_error_result(id=message_id)
       else:
-        self.ros_api.request_cache.set_success_result(id=message_id)
+        self.request_cache.set_success_result(id=message_id)
       log.info("Set request status: %s for message: %s"
                % (req_status.status, req_status.message_id))
       ret = self.ros_api.invoke_callback(message_id=message_id)
@@ -721,31 +720,30 @@ class ResourceOrchestrationAPI(AbstractAPI):
     :type fail: bool
     :return: None
     """
-    if hasattr(self, 'ros_api') and self.ros_api:
-      self.log.debug("Cache collected 'info' request status...")
-      req_status = self.ros_api.request_cache.get_request(message_id=status.id)
-      if req_status is None:
-        self.log.debug("Request status is missing: %s! "
-                       "Skip result processing..." % status.id)
-        return
-      self.log.debug("Process collected info result...")
-      if fail:
-        self.ros_api.request_cache.set_error_result(id=status.id)
-        body = None
-      else:
-        self.ros_api.request_cache.set_success_result(id=status.id)
-        body = status.data[0]
-        body = body.xml() if isinstance(body, Info) else str(body)
-      log.info("Set request status: %s for message: %s"
-               % (req_status.status, req_status.message_id))
-      log.log(VERBOSE, "Collected Info data:\n%s" % body)
-      ret = self.ros_api.invoke_callback(message_id=status.id, body=body)
-      if ret is None:
-        self.log.debug("No callback was defined!")
-      else:
-        self.log.info("Callback: %s has invoked with return value: %s" % (
-          req_status.get_callback(), ret))
-        # TODO - handle remained request-cache -> remove or store for a while??
+    self.log.debug("Cache collected 'info' request status...")
+    req_status = self.request_cache.get_request(message_id=status.id)
+    if req_status is None:
+      self.log.debug("Request status is missing: %s! "
+                     "Skip result processing..." % status.id)
+      return
+    self.log.debug("Process collected info result...")
+    if fail:
+      self.request_cache.set_error_result(id=status.id)
+      body = None
+    else:
+      self.request_cache.set_success_result(id=status.id)
+      body = status.data[0]
+      body = body.xml() if isinstance(body, Info) else str(body)
+    log.info("Set request status: %s for message: %s"
+             % (req_status.status, req_status.message_id))
+    log.log(VERBOSE, "Collected Info data:\n%s" % body)
+    ret = self.ros_api.invoke_callback(message_id=status.id, body=body)
+    if ret is None:
+      self.log.debug("No callback was defined!")
+    else:
+      self.log.info("Callback: %s has invoked with return value: %s" % (
+        req_status.get_callback(), ret))
+      # TODO - handle remained request-cache -> remove or store for a while??
 
   def _handle_NFFGMappingFinishedEvent (self, event):
     """
