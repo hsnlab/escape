@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import httplib
+import json
 import logging
 import threading
 import uuid
@@ -29,6 +30,7 @@ from escape.util.config import CONFIG
 from escape.util.misc import get_escape_version
 from escape.util.stat import stats
 from virtualizer import Virtualizer
+from virtualizer_mappings import Mappings
 
 
 class RestInterfaceAPI(AbstractAPI):
@@ -186,7 +188,7 @@ class AbstractAPIView(View):
     """
     self.mgr = mgr
 
-  def dispatch_request (self):
+  def dispatch_request (self, *args, **kwargs):
     raise NotImplementedError
 
   def get_message_id (self):
@@ -196,6 +198,9 @@ class AbstractAPIView(View):
       return request.headers[self.MESSAGE_ID_NAME]
     else:
       return str(uuid.uuid1())
+
+  def proceed (self, *args, **kwargs):
+    return self.mgr.handle(rpc=self.name, *args, **kwargs)
 
 
 class PingView(AbstractAPIView):
@@ -209,42 +214,26 @@ class PingView(AbstractAPIView):
       return Response('INITIALIZING', httplib.ACCEPTED)
 
 
-class SGView(AbstractAPIView):
-  name = 'sg'
-  methods = ('POST',)
-
-  def dispatch_request (self):
-    pass  # TODO
-
-
-class TopologyView(AbstractAPIView):
-  name = 'topology'
-  methods = ('GET', 'POST')
-
-  def dispatch_request (self):
-    pass  # TODO
-
-
 class GetConfigView(AbstractAPIView):
   name = 'get-config'
   methods = ('GET', 'POST')
 
   def dispatch_request (self):
-    topo_resource = self.mgr.handle(rpc=self.name)
+    topo_resource = self.proceed()
     if topo_resource is None:
       return Response("Resource info is missing!", httplib.NOT_FOUND)
     else:
       if isinstance(topo_resource, Virtualizer):
-        data, mime = topo_resource.xml(), "application/xml"
+        data, cont_type = topo_resource.xml(), "application/xml"
       elif isinstance(topo_resource, NFFG):
-        data, mime = topo_resource.dump(), "application/json"
+        data, cont_type = topo_resource.dump(), "application/json"
       else:
         log.error("Unexpected topology format!")
         return
     MessageDumper().dump_to_file(data=data,
                                  unique="ESCAPE-%s-get-config" %
                                         self.mgr.LAYER_NAME)
-    return Response(response=data, status=httplib.OK, mimetype=mime)
+    return Response(response=data, status=httplib.OK, content_type=cont_type)
 
 
 class EditConfigView(AbstractAPIView):
@@ -299,6 +288,16 @@ class EditConfigView(AbstractAPIView):
     return Response(status=httplib.ACCEPTED, headers={"message-id": msg_id})
 
 
+class TopologyView(GetConfigView):
+  name = 'topology'
+  methods = ('GET', 'POST')
+
+
+class SGView(EditConfigView):
+  name = 'sg'
+  methods = ('POST',)
+
+
 class StatusView(AbstractAPIView):
   name = 'status'
   methods = ('GET',)
@@ -311,17 +310,31 @@ class StatusView(AbstractAPIView):
     else:
       return Response("No message-id was given!", status=httplib.BAD_REQUEST)
     log.debug("Detected message-id: %s" % message_id)
-    code, result = self.mgr.handle(rpc=self.name, message_id=message_id)
+    code, result = self.proceed(message_id=message_id)
     log.debug("Responded status code: %s, data: %s" % (code, result))
+    MessageDumper().dump_to_file(data=repr((code, result)),
+                                 unique="ESCAPE-%s-status" %
+                                        self.mgr.LAYER_NAME)
     return Response(result, status=code, headers={"message-id": message_id})
 
 
 class MappingInfoView(AbstractAPIView):
+  RULE_TEMPLATE = "/{prefix}/{layer}/{rpc}/<service_id>"
   name = 'mapping-info'
   methods = ('GET',)
 
-  def dispatch_request (self):
-    pass  # TODO
+  def dispatch_request (self, service_id):
+    log.debug("Detected service id: %s" % service_id)
+    mapping_info = self.proceed(service_id=service_id)
+    if isinstance(mapping_info, basestring):
+      return Response(response=mapping_info, status=httplib.BAD_REQUEST)
+    MessageDumper().dump_to_file(data=json.dumps(mapping_info, indent=4),
+                                 unique="ESCAPE-%s-status" %
+                                        self.mgr.LAYER_NAME)
+    log.debug("Sending collected mapping info...")
+    return Response(response=json.dumps(mapping_info),
+                    status=httplib.OK,
+                    content_type="application/json")
 
 
 class MappingsView(AbstractAPIView):
@@ -329,7 +342,24 @@ class MappingsView(AbstractAPIView):
   methods = ('POST',)
 
   def dispatch_request (self):
-    pass  # TODO
+    if not request.data:
+      log.error("No data received!")
+      return Response("Request data is missing!", httplib.BAD_REQUEST)
+    # Get message-id
+    MessageDumper().dump_to_file(data=request.data,
+                                 unique="ESCAPE-%s-mappings" %
+                                        self.mgr.LAYER_NAME)
+    mappings = Mappings.parse_from_text(text=request.data)
+    mappings = self.proceed(mappings=mappings)
+    if not mappings:
+      log.error("Calculated mapping data is missing!")
+      return Response(status=httplib.INTERNAL_SERVER_ERROR)
+    log.debug("Sending collected mapping info...")
+    data = mappings.xml()
+    MessageDumper().dump_to_file(data=data,
+                                 unique="ESCAPE-%s-mappings-response" %
+                                        self.mgr.LAYER_NAME)
+    return Response(data, status=httplib.OK, content_type="application/xml")
 
 
 class InfoView(AbstractAPIView):
@@ -341,6 +371,7 @@ class InfoView(AbstractAPIView):
 
 
 class AbstractAPIManager(object):
+  RULE_TEMPLATE = "/{prefix}/{layer}/{rpc}"
   LAYER_NAME = None
   VIEWS = None
 
@@ -352,7 +383,14 @@ class AbstractAPIManager(object):
     self.scheduler = RequestScheduler()
 
   def __get_rule (self, view):
-    return "/%s/%s/%s" % (self.layer_api.prefix, self.LAYER_NAME, view.name)
+    if hasattr(view, "RULE_TEMPLATE"):
+      return view.RULE_TEMPLATE.format(prefix=self.layer_api.prefix,
+                                       layer=self.LAYER_NAME,
+                                       rpc=view.name)
+    else:
+      return self.RULE_TEMPLATE.format(prefix=self.layer_api.prefix,
+                                       layer=self.LAYER_NAME,
+                                       rpc=view.name)
 
   def __get_endpoint (self, view):
     return "%s/%s" % (self.LAYER_NAME, view.name)

@@ -513,10 +513,6 @@ class ESCAPEConfig(object):
     """
     Return the type of the assigned Virtualizer.
 
-    :param layer_name: main layer of the API
-    :type layer_name: str
-    :param api_name: name of the REST-API in the global config.
-    :type api_name: str
     :return: type of the Virtualizer as in :any:`VirtualizerManager`
     :rtype: str
     """
@@ -531,8 +527,6 @@ class ESCAPEConfig(object):
         'virtualizer_params']
     except KeyError:
       return {}
-
-
 
   ##############################################################################
   # ADAPTATION layer getters
@@ -1095,10 +1089,12 @@ class ESCAPEConfig(object):
     :rtype: str
     """
     if domain is None:
-      slor = self.get_ros_agent_params()
-      return "http://%s:%s/%s" % (slor.get("address", "localhost"),
-                                  slor.get("port", ''),
-                                  slor.get("prefix", ''))
+      host = self.get_rest_api_host()
+      port = self.get_rest_api_port()
+      prefix = self.get_rest_api_prefix()
+      return "http://%s:%s/%s" % (host if host else "localhost",
+                                  port if port else "",
+                                  prefix if prefix else "")
     mgr = self.get_manager_by_domain(domain=domain)
     if mgr is None:
       log.warning("DomainManager config is not found for domain: %s" % domain)
