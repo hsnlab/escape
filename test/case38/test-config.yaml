@@ -48,7 +48,7 @@ adaptation:
 test:
     module: testframework.testcases.harness
     class: FullLayerHarnessTestCase
-    url: http://localhost:8888/escape/edit-config
+    url: http://localhost:8888/escape/orchestration/edit-config
     callback: true
     timeout: 20
     address: localhost
