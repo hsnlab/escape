@@ -278,7 +278,7 @@ class ServiceLayerAPI(AbstractAPI):
         log.info("Schedule service request delayed by %d seconds..."
                  % SCHEDULED_SERVICE_REQUEST_DELAY)
         stats.set_request_id(request_id=nffg.id)
-        self.api_sas_sg_delayed(service_nffg=nffg)
+        self.api_sg_delayed(id=nffg.id, data=nffg)
       except (ValueError, IOError, TypeError) as e:
         log.error(
           "Can't load service request from file because of: " + str(e))
@@ -343,28 +343,23 @@ class ServiceLayerAPI(AbstractAPI):
 
   # noinspection PyUnusedLocal
   @schedule_as_coop_task
-  def api_sas_sg (self, service_nffg, *args, **kwargs):
+  def rest_api_sg (self, id, data, *args, **kwargs):
     """
     Initiate service graph in a cooperative micro-task.
 
-    :param service_nffg: service graph instance
-    :type service_nffg: :class:`NFFG`
     :return: None
     """
-    self.__proceed_sg_request(id=service_nffg.id, data=service_nffg)
+    self.__proceed_sg_request(id=id, data=data, **kwargs)
 
   # noinspection PyUnusedLocal
   @schedule_delayed_as_coop_task(delay=SCHEDULED_SERVICE_REQUEST_DELAY)
-  def api_sas_sg_delayed (self, service_nffg, *args, **kwargs):
+  def api_sg_delayed (self, id, data, *args, **kwargs):
     """
     Initiate service graph in a cooperative micro-task.
 
-    :param service_nffg: service graph instance
-    :type service_nffg: :class:`NFFG`
     :return: None
     """
-    return self.__proceed_sg_request(id=service_nffg.id,
-                                     data=service_nffg)
+    return self.__proceed_sg_request(id=id, data=data)
 
   def __proceed_sg_request (self, id, data, params=None):
     """
@@ -381,7 +376,7 @@ class ServiceLayerAPI(AbstractAPI):
         log.debug("Diff format enabled! Start patching step...")
         if self.api_mgr.last_response is None:
           log.info("Missing cached Virtualizer! Acquiring topology now...")
-          self.api_sas_topology()
+          self.rest_api_topology()
         stats.add_measurement_start_entry(type=stats.TYPE_PROCESSING,
                                           info="RECREATE-FULL-REQUEST")
         log.info("Patching cached topology with received diff...")
@@ -403,8 +398,9 @@ class ServiceLayerAPI(AbstractAPI):
     log.debug("Set NFFG id: %s" % id)
     if service_nffg.service_id is None:
       service_nffg.service_id = service_nffg.id
-      service_nffg.id = id
+    service_nffg.id = id
     service_nffg.add_metadata(name="params", value=params)
+    print service_nffg.dump()
     # Check if mapping mode is set globally in CONFIG
     mapper_params = CONFIG.get_mapping_config(layer=LAYER_NAME)
     if 'mode' in mapper_params and mapper_params['mode'] is not None:
@@ -418,15 +414,14 @@ class ServiceLayerAPI(AbstractAPI):
       log.info("No mapping mode was detected!")
     self.__sg_preprocessing(nffg=service_nffg)
     # Store request if it is received on REST-API
-    if hasattr(self, 'rest_api') and self.rest_api:
-      log.getChild('API').debug("Store received NFFG request info...")
-      msg_id = self.rest_api.request_cache.cache_request_by_nffg(
-        nffg=service_nffg)
-      if msg_id is not None:
-        self.rest_api.request_cache.set_in_progress(id=msg_id)
-        log.getChild('API').debug("Request is stored with id: %s" % msg_id)
-      else:
-        log.getChild('API').debug("No request info detected.")
+    log.getChild('API').debug("Store received NFFG request info...")
+    msg_id = self.api_mgr.request_cache.cache_request_by_nffg(
+      nffg=service_nffg)
+    if msg_id is not None:
+      self.api_mgr.request_cache.set_in_progress(id=msg_id)
+      log.getChild('API').debug("Request is stored with id: %s" % msg_id)
+    else:
+      log.getChild('API').debug("No request info detected.")
     try:
       if CONFIG.get_mapping_enabled(layer=LAYER_NAME):
         # Initiate service request mapping
@@ -527,7 +522,7 @@ class ServiceLayerAPI(AbstractAPI):
     """
     return self.service_orchestrator.virtResManager.virtual_view
 
-  def api_sas_topology (self):
+  def rest_api_topology (self):
     """
     Return with the topology description.
 

@@ -328,6 +328,7 @@ class EditConfigView(AbstractAPIView):
     params = request.args.to_dict(flat=True)
     msg_id = self.get_message_id()
     log.info("Acquired message-id: %s" % msg_id)
+    params[self.MESSAGE_ID_NAME] = msg_id
     entry_point = self.mgr.layer_api.get_entry_point(layer=self.mgr.LAYER_NAME,
                                                      rpc=self.name)
     self.mgr.scheduler.schedule_request(id=msg_id,
@@ -345,7 +346,7 @@ class TopologyView(GetConfigView):
 
 class SGView(EditConfigView):
   name = 'sg'
-  methods = ('POST',)
+  methods = ('POST', 'PUT')
 
 
 class StatusView(AbstractAPIView):
@@ -469,10 +470,11 @@ class AbstractAPIManager(object):
     :type app: :class:`Flask`
     """
     for view in self.VIEWS:
-      app.add_url_rule(rule=self.__get_rule(view=view),
+      rule = self.__get_rule(view=view)
+      app.add_url_rule(rule=rule,
                        endpoint=self.__get_endpoint(view=view),
                        view_func=view.as_view(name=view.name, mgr=self))
-      log.debug("Registered rule: %s" % view.name)
+      log.debug("Registered rule: %s" % rule)
 
   def handle (self, rpc, *args, **kwargs):
     entry_point = self.layer_api.get_entry_point(layer=self.LAYER_NAME, rpc=rpc)

@@ -98,7 +98,7 @@ class ControllerAdaptationAPI(AbstractAPI):
     # Mandatory super() call
     self.controller_adapter = None
     self.api_mgr = RESTAPIManager(unique_bb_id=False,
-                                  unique_nf_id=CONFIG.ensure_unique_vnf_id(),
+                                  unique_nf_id=True,
                                   logger=log)
     super(ControllerAdaptationAPI, self).__init__(standalone, **kwargs)
 
@@ -174,14 +174,6 @@ class ControllerAdaptationAPI(AbstractAPI):
     """
     log.getChild('API').info("Invoke install_nffg on %s with NF-FG: %s " % (
       self.__class__.__name__, mapped_nffg))
-    if hasattr(self, 'dov_api') and self.dov_api:
-      log.getChild('API').debug("Store received DoV request...")
-      msg_id = self.dov_api.request_cache.cache_request_by_nffg(mapped_nffg)
-      if msg_id is not None:
-        self.dov_api.request_cache.set_in_progress(id=msg_id)
-        log.getChild('API').debug("Request is stored with id: %s" % msg_id)
-      else:
-        log.getChild('API').warning("No request info detected.")
     stats.add_measurement_start_entry(type=stats.TYPE_DEPLOY,
                                       info=LAYER_NAME)
     try:
@@ -216,6 +208,12 @@ class ControllerAdaptationAPI(AbstractAPI):
         RequestScheduler().set_orchestration_standby()
 
   def _process_mapping_result (self, nffg_id, fail):
+    """
+
+    :param nffg_id:
+    :param fail:
+    :return:
+    """
     log.getChild('API').debug("Cache request status...")
     req_status = self.api_mgr.request_cache.get_request_by_nffg_id(nffg_id)
     if req_status is None:
@@ -394,6 +392,13 @@ class ControllerAdaptationAPI(AbstractAPI):
           return
         else:
           self.controller_adapter.cancel_vnfm_timer()
+    log.getChild('API').debug("Store received DoV request...")
+    msg_id = self.api_mgr.request_cache.cache_request_by_nffg(nffg=nffg)
+    if msg_id is not None:
+      self.api_mgr.request_cache.set_in_progress(id=msg_id)
+      log.getChild('API').debug("Request is stored with id: %s" % msg_id)
+    else:
+      log.getChild('API').warning("No request info detected.")
     self.__proceed_installation(mapped_nffg=nffg, direct_deploy=True)
 
 
