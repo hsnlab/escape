@@ -819,7 +819,8 @@ class ESCAPEConfig(object):
 
   def flowrule_stitching (self):
     try:
-      return self.__config[ADAPT]['deployment']['ENABLE-FLOWRULE-STITCHING']
+      return self.__configuration[ADAPT]['deployment'][
+        'ENABLE-FLOWRULE-STITCHING']
     except KeyError:
       return True
 
