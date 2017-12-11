@@ -750,6 +750,13 @@ class ESCAPEConfig(object):
     except KeyError:
       return 0
 
+  def flowrule_stitching (self):
+    try:
+      return self.__configuration[ADAPT]['deployment'][
+        'ENABLE-FLOWRULE-STITCHING']
+    except KeyError:
+      return True
+
   def use_remerge_update_strategy (self):
     """
     Return True if the re-merge update strategy is enabled in DoV updating
