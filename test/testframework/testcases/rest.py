@@ -14,23 +14,15 @@
 import httplib
 import logging
 import os
-import sys
 import time
 import urlparse
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread, Event
 
 import requests
-from testframework.testcases.basic import EscapeTestCase, \
-  BasicSuccessfulTestCase
 
-try:
-  from escape.nffg_lib.nffg import NFFG
-except:
-  sys.path.append(os.path.abspath(
-    os.path.join(os.path.dirname(__file__),
-                 "../../../escape/escape/nffg_lib/")))
-  from nffg import NFFG
+from testframework.testcases.basic import (EscapeTestCase,
+                                           BasicSuccessfulTestCase)
 
 log = logging.getLogger()
 

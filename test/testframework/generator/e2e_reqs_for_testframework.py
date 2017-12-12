@@ -11,33 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Generates request graphs for ESCAPE Test Framework's mapping focused tests.
 """
-
 import copy
 import logging
 import math
-import os
 import random
-import sys
 
 import networkx as nx
+# noinspection PyUnresolvedReferences
+from nffg_lib.nffg import NFFG
 
 from sg_generator import NameGenerator
-
-# Needed to run the Algorithm scripts in the parent folder.
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
-try:
-  from escape.nffg_lib.nffg import NFFG, NFFGToolBox
-except ImportError:
-  import sys, os
-
-  sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                               "../../../escape/escape/nffg_lib/")))
-  from nffg import NFFG, NFFGToolBox
 
 log = logging.getLogger("StressTest")
 # log.setLevel(logging.DEBUG)
@@ -133,7 +119,7 @@ def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
         # whether we should share now.
         p = rnd.random()
         if multiSC and \
-              p < vnf_sharing_probabilty and len(current_nfs) > 0:
+           p < vnf_sharing_probabilty and len(current_nfs) > 0:
           # this influences the the given VNF sharing probability...
           if reduce(lambda a, b: a and b, [v in nfs_this_sc for
                                            v in current_nfs]):
@@ -156,7 +142,8 @@ def generateRequestForCarrierTopo (all_saps_ending, all_saps_beginning,
 
         nfs_this_sc.append(nf)
         newport = nf.add_port(id=gen.get_name("port"))
-        sglink = nffg.add_sglink(last_req_port, newport, id=gen.get_name("link"))
+        sglink = nffg.add_sglink(last_req_port, newport,
+                                 id=gen.get_name("link"))
         sg_path.append(sglink.id)
         last_req_port = nf.add_port(id=gen.get_name("port"))
 

@@ -12,20 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Generates requests that which can be used as standard test SG-s to cover 
 most/all functionalities of ESCAPE.
 """
-
-import os
 import random
 import string
-import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             "../../../escape/escape/nffg_lib/")))
-from nffg import NFFG
+# noinspection PyUnresolvedReferences
+from nffg_lib.nffg import NFFG
 
 
 class NameGenerator(object):
