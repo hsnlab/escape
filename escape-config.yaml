@@ -103,7 +103,19 @@ orchestration:
             # solutions, when this object is given back through the
             # 'mapping_state' parameter.
             return_mapping_state: false
-            # mapping_state: None
+            # How much the deviation from the shortest path between current
+            # position and (sub)chain destination should be punished.
+            lat_aspect_dst_orientation: 0.5
+            # Weight of length of a single request link's mapped path delay.
+            lat_aspect_local_dist: 0.5
+            # max number of alternative path to be considered during VNF
+            #placement towards the same host.
+            max_alternative_path_to_host: 3
+            # Forwards a limit on the deployment cost of the cost of second
+            # preferred VNF mapping on the current orchestration.
+            set_vnf_deployment_cost_limit: yes
+
+
     # Embedding strategy configuration
     STRATEGY:
         # Used Strategy class
