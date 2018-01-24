@@ -249,6 +249,8 @@ adaptation:
         CLEAR-DOMAINS-AFTER-SHUTDOWN: yes
         # Rollback to previous topology state in case of failed deployment
         ROLLBACK-ON-FAILURE: on
+        # Set tag conversion to use global inter-domain tags
+        ENABLE-FLOWRULE-STITCHING: on
         # Additional delay between mapping and deployment
         DOMAIN-DEPLOY-DELAY: 0
     # Enabled domain managers
