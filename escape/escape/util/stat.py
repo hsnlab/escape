@@ -70,21 +70,21 @@ class OrchestrationStatCollector(object):
   CMD_START = "START"
   CMD_STOP = "END"
 
-  def __init__ (self, stat_folder):
+  def __init__ (self, stats_folder):
     """
     Init.
 
-    :param stat_folder: location of the stat file
-    :type stat_folder: str
+    :param stats_folder: location of the stat file
+    :type stats_folder: str
     :return: None
     """
-    self.stat_folder = stat_folder
-    log.debug("Setup stat collector with folder: %s" % stat_folder)
+    self.stats_folder = stats_folder
+    log.debug("Setup stat collector with folder: %s" % stats_folder)
     self.__cntr = 0
     self.__measured_values = []
     self.__request_id = None
-    if not os.path.exists(self.stat_folder):
-      os.mkdir(self.stat_folder)
+    if not os.path.exists(self.stats_folder):
+      os.mkdir(self.stats_folder)
     self.clear_stats()
 
   def set_request_id (self, request_id):
@@ -128,9 +128,9 @@ class OrchestrationStatCollector(object):
     :return: None
     """
     log.debug("Remove stats files...")
-    for f in os.listdir(os.path.join(PROJECT_ROOT, self.stat_folder)):
+    for f in os.listdir(self.stats_folder):
       if f != ".placeholder":
-        os.remove(os.path.join(PROJECT_ROOT, self.stat_folder, f))
+        os.remove(os.path.join(self.stats_folder, f))
 
   def init_request_measurement (self, request_id):
     """
@@ -171,7 +171,7 @@ class OrchestrationStatCollector(object):
     Add a starting timestamp with the given parameters to the statistic.
 
     :param type: timestamp type
-    :type type: str
+    :type type: str or int
     :param info: additional info
     :type info: str
     :return: None
@@ -252,7 +252,7 @@ class OrchestrationStatCollector(object):
     :return: None
     """
     if not file_name:
-      file_name = "%s/%s.stat" % (self.stat_folder, self.__request_id)
+      file_name = "%s/%s.stat" % (self.stats_folder, self.__request_id)
     if os.path.exists(file_name):
       log.warning("Stat file for request already exists: %s! Overwriting..."
                   % file_name)
@@ -267,4 +267,10 @@ class OrchestrationStatCollector(object):
     log.info("Stat for service request is dumped into: %s" % file_name)
 
 
-stats = OrchestrationStatCollector(PROJECT_ROOT + "/log/stats")
+stats = None
+
+
+def initialize (stats_folder="log/stats"):
+  stats_folder = os.path.join(PROJECT_ROOT, stats_folder)
+  global stats
+  stats = OrchestrationStatCollector(stats_folder=stats_folder)

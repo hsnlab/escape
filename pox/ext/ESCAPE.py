@@ -86,6 +86,14 @@ def __init_loggers (loglevel, log, test):
                      'log_file': log})
 
 
+def __init_stats (stats_folder):
+  if stats_folder is None:
+    stats_folder = "log/stats"
+  core_log.info("Initialize stats folder: %s" % stats_folder)
+  from escape.util.stat import initialize
+  initialize(stats_folder=stats_folder)
+
+
 def __init_config (config, test, quit):
   """
   Init configuration.
@@ -135,7 +143,7 @@ def __setup_pythonpath ():
 @poxutil.eval_args
 def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
             dovapi=False, full=False, loglevel="INFO", cfor=False, quit=False,
-            visualization=False, mininet=None, test=False, log=None):
+            visualization=False, mininet=None, test=False, log=None, stat=None):
   """
   Launch function called by POX core when core is up.
 
@@ -173,6 +181,7 @@ def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
   __setup_pythonpath()
   __init_loggers(loglevel=loglevel, log=log, test=test)
   __init_config(config=config, test=test, quit=quit)
+  __init_stats(stats_folder=stat)
   __print_header()
 
   if visualization:

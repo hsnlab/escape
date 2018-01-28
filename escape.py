@@ -147,6 +147,9 @@ def main ():
   escape.add_argument("-s", "--service", metavar="file", type=str,
                       help="skip the SAS REST-API initiation and read the "
                            "service request from the given file")
+  escape.add_argument("--stat", metavar="file", type=str,
+                      help="define stat folder path explicitly "
+                           "(default: log/stats)")
   escape.add_argument("-t", "--test", action="store_true", default=False,
                       help="run in test mode")
   escape.add_argument("-x", "--clean", action="store_true", default=False,
@@ -186,8 +189,12 @@ def main ():
 
   if args.test:
     cmd.append("--test")
+
   if args.log:
     cmd.append("--log=%s" % args.log)
+
+  if args.stat:
+    cmd.append("--stat=%s" % args.stat)
 
   if args.quit:
     cmd.append("--quit")
