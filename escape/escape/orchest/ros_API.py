@@ -968,7 +968,7 @@ class BasicUnifyRequestHandler(AbstractRequestHandler):
       AbstractRequestHandler.__init__(self, request, client_address, server)
     except IOError as e:
       if e.errno == errno.EPIPE:
-        self.log.debug("Got premature request during init: %s" % e)
+        pass
       else:
         raise
 
