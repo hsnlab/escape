@@ -63,7 +63,7 @@ def _start_components (event):
     launch(sg_file=init_param['sg_file'], gui=init_param['gui'])
 
 
-def __init_loggers (loglevel, log, test):
+def __init_loggers (loglevel, log, test, log_folder=None):
   """
   Init loggers.
 
@@ -77,13 +77,14 @@ def __init_loggers (loglevel, log, test):
   """
   # Import colourful logging
   if loglevel == 'VERBOSE':
-    setup_logging(**{'test_mode': True if test else False, 'log_file': log})
+    setup_logging(test_mode=True if test else False, log_file=log,
+                  log_folder=log_folder)
     # Set the Root logger level explicitly
     logging.getLogger('').setLevel("VERBOSE")
   else:
     # Launch pretty logger with specific log level
-    setup_logging(**{loglevel: True, 'test_mode': True if test else False,
-                     'log_file': log})
+    setup_logging(test_mode=True if test else False, loglevel=True,
+                  log_file=log, log_folder=log_folder)
 
 
 def __init_stats (stats_folder):
@@ -143,7 +144,8 @@ def __setup_pythonpath ():
 @poxutil.eval_args
 def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
             dovapi=False, full=False, loglevel="INFO", cfor=False, quit=False,
-            visualization=False, mininet=None, test=False, log=None, stat=None):
+            visualization=False, mininet=None, test=False, log=None,
+            log_folder=None):
   """
   Launch function called by POX core when core is up.
 
@@ -179,9 +181,8 @@ def launch (sg_file=None, config=None, gui=False, agent=False, rosapi=False,
   init_param.update(locals())
 
   __setup_pythonpath()
-  __init_loggers(loglevel=loglevel, log=log, test=test)
+  __init_loggers(loglevel=loglevel, log=log, test=test, log_folder=log_folder)
   __init_config(config=config, test=test, quit=quit)
-  __init_stats(stats_folder=stat)
   __print_header()
 
   if visualization:

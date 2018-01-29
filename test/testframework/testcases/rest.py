@@ -150,7 +150,7 @@ class CallbackManager(HTTPServer, Thread):
   def __str__ (self):
     return "%s(address: %s, timeout: %s)" % (self.__class__.__name__,
                                              self.server_address,
-                                             self.timeout)
+                                             self.wait_timeout)
 
   def shutdown (self):
     log.debug("Shutdown %s..." % self)

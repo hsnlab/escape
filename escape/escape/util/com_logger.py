@@ -14,7 +14,6 @@
 """
 Contains functions and classes for remote visualization.
 """
-import logging
 import os
 import shutil
 import threading
@@ -33,6 +32,7 @@ from escape.service import LAYER_NAME as SERVICE
 from escape.util.config import CONFIG, PROJECT_ROOT
 from escape.util.conversion import NFFGConverter
 from escape.util.misc import Singleton
+from escape_logging import LOG_FOLDER
 from pox.core import core
 
 log = core.getLogger("logger")
@@ -185,7 +185,7 @@ class MessageDumper(object):
   Dump messages into file in thread-safe way.
   """
   __metaclass__ = Singleton
-  DIR = "log/trails/"
+  DIR = os.path.join(LOG_FOLDER, "trails/")
   """Default log dir"""
   __lock = threading.Lock()
 

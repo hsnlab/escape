@@ -15,8 +15,8 @@ import os
 import time
 from collections import namedtuple
 
-from escape.util.config import PROJECT_ROOT
 from escape.util.misc import Singleton
+from escape_logging import LOG_FOLDER
 from pox.core import core
 
 log = core.getLogger("STAT")
@@ -189,7 +189,7 @@ class OrchestrationStatCollector(object):
     Add a ending timestamp with the given parameters to the statistic.
 
     :param type: timestamp type
-    :type type: str
+    :type type: str or int
     :param info: additional info
     :type info: str
     :return: None
@@ -267,10 +267,5 @@ class OrchestrationStatCollector(object):
     log.info("Stat for service request is dumped into: %s" % file_name)
 
 
-stats = None
-
-
-def initialize (stats_folder="log/stats"):
-  stats_folder = os.path.join(PROJECT_ROOT, stats_folder)
-  global stats
-  stats = OrchestrationStatCollector(stats_folder=stats_folder)
+stats = OrchestrationStatCollector(stats_folder=os.path.join(LOG_FOLDER,
+                                                             "stats"))
