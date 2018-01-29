@@ -231,11 +231,15 @@ class MessageDumper(object):
     :return: None
     """
     log.debug("Remove trails...")
-    for f in os.listdir(os.path.join(PROJECT_ROOT, self.DIR)):
-      if f != ".placeholder" and not f.startswith(time.strftime("%Y%m%d")):
-        # os.remove(os.path.join(PROJECT_ROOT, self.log_dir, f))
-        shutil.rmtree(os.path.join(PROJECT_ROOT, self.DIR, f),
-                      ignore_errors=True)
+    trail_dir = os.path.join(PROJECT_ROOT, self.DIR)
+    if not os.path.exists(trail_dir):
+      os.makedirs(trail_dir)
+    else:
+      for f in os.listdir(trail_dir):
+        if f != ".placeholder" and not f.startswith(time.strftime("%Y%m%d")):
+          # os.remove(os.path.join(PROJECT_ROOT, self.log_dir, f))
+          shutil.rmtree(os.path.join(PROJECT_ROOT, self.DIR, f),
+                        ignore_errors=True)
 
   def dump_to_file (self, data, unique):
     """
