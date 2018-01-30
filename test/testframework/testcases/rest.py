@@ -292,7 +292,7 @@ class RESTBasedServiceMixIn(EscapeTestCase):
     :param data: raw request data
     :type data: str
     :param ext: file extension to define request format
-    :type ext: str
+    :type ext: basestring
     :return: request sending was successful or not
     :rtype: bool
     """

@@ -260,7 +260,7 @@ class OrchestrationStatCollector(object):
       if raw:
         for line in self.raw_stat():
           f.write(line.dump() + '\n')
-      f.write('=' * 80 + '\n')
+      # f.write('=' * 80 + '\n')
       if calculated:
         for line in self.calculate_stat_values():
           f.write(line + '\n')
