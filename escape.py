@@ -127,7 +127,7 @@ def main ():
   escape.add_argument("-l", "--log", metavar="file", type=str,
                       help="define log file path explicitly "
                            "(default: log/escape.log)")
-  escape.add_argument("--log_folder", metavar="file", type=str,
+  escape.add_argument("--log_folder", metavar="path", type=str,
                       help="define log folder path explicitly (default: log/)")
   escape.add_argument("-m", "--mininet", metavar="file", type=str,
                       help="read the Mininet topology from the given file")

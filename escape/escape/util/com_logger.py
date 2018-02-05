@@ -216,8 +216,8 @@ class MessageDumper(object):
     """
     self.log_dir = self.DIR + time.strftime("%Y%m%d%H%M%S")
     for i in xrange(1, 10):
-      if not os.path.exists(os.path.join(PROJECT_ROOT, self.log_dir)):
-        os.mkdir(os.path.join(PROJECT_ROOT, self.log_dir))
+      if not os.path.exists(self.log_dir):
+        os.mkdir(self.log_dir)
         break
       else:
         self.log_dir += "+"
@@ -254,10 +254,9 @@ class MessageDumper(object):
     if not isinstance(data, basestring):
       log.error("Data is not str: %s" % type(data))
       return
-    trails = os.path.join(PROJECT_ROOT, self.log_dir)
     date = time.strftime("%Y%m%d%H%M%S")
     cntr = self.increase_cntr()
-    file_path = os.path.join(trails,
+    file_path = os.path.join(self.log_dir,
                              "%s_%03d_%s.log" % (date, cntr, unique))
     if os.path.exists(file_path):
       log.warning("File path exist! %s" % file_path)

@@ -58,6 +58,13 @@ def setup_logging (test_mode=False, log_file=None, log_folder=None, **kwargs):
   :type log_file: str
   :return: None
   """
+  global LOG_FOLDER
+  if log_folder is not None:
+    LOG_FOLDER = log_folder
+  if not os.path.exists(LOG_FOLDER):
+    os.makedirs(LOG_FOLDER)
+  if log_file is None:
+    log_file = os.path.join(LOG_FOLDER, "escape.log")
   # Enable logging in specific logging level
   level.launch(**kwargs)
   # Launch colorful logging
@@ -75,13 +82,6 @@ def setup_logging (test_mode=False, log_file=None, log_folder=None, **kwargs):
     log.info("Setup logger - formatter: %s, level: %s"
              % (setup_logging.__module__,
                 logging.getLevelName(log.getEffectiveLevel())))
-  if log_folder is not None:
-    global LOG_FOLDER
-    LOG_FOLDER = log_folder
-  if not os.path.exists(LOG_FOLDER):
-    os.makedirs(LOG_FOLDER)
-  if log_file is None:
-    log_file = os.path.join(LOG_FOLDER, "escape.log")
   if log_file:
     # Define additional logger for logging to file
     pox.log.launch(format=FILE_LOGGER_FORMAT, file=log_file + ',w')
