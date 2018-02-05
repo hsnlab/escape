@@ -77,14 +77,13 @@ def __init_loggers (loglevel, log, test, log_folder=None):
   """
   # Import colourful logging
   if loglevel == 'VERBOSE':
-    setup_logging(test_mode=True if test else False, log_file=log,
-                  log_folder=log_folder)
+    setup_logging(**{'test_mode': True if test else False, 'log_file': log})
     # Set the Root logger level explicitly
     logging.getLogger('').setLevel("VERBOSE")
   else:
     # Launch pretty logger with specific log level
-    setup_logging(test_mode=True if test else False, loglevel=True,
-                  log_file=log, log_folder=log_folder)
+    setup_logging(**{loglevel: True, 'test_mode': True if test else False,
+                     'log_file': log})
 
 
 def __init_stats (stats_folder):
