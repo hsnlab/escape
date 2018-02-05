@@ -302,7 +302,6 @@ class ResourceOrchestrationMapper(AbstractMapper):
       self.__class__.__name__, self.strategy.__name__))
     self.last_mapping_state = mapping_state
     self.persistent_state = persistent_state
-    quit_with_code(42)
 
   def _perform_mapping (self, input_graph, resource_view, continued=False):
     """
